@@ -1,0 +1,16 @@
+[package]
+name = "token"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
+description = "Stylus Token Standards"
+
+[dependencies]
+alloy-primitives = { version = "0.3.1", default-features = false }
+alloy-sol-types = { version = "0.3.1", default-features = false }
+mini-alloc = "0.4.2"
+stylus-sdk = "0.4.2"
+
+[features]
+export-abi = ["stylus-sdk/export-abi"]
