@@ -1,3 +1,7 @@
 /target
 
 .env
+
+**/node_modules/
+
+docs/build/
