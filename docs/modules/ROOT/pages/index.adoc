@@ -6,3 +6,6 @@
 A library of drop-in, secure implementations of smart contracts for {stylus} using the {stylus-rust-sdk}.
 
 WARNING: This repo contains highly experimental code. *Use at your own risk.*
+
+// TODO: Update link to project after project creation.
+NOTE: You can track our roadmap in our https://github.com/orgs/OpenZeppelin/projects[Github Project].
