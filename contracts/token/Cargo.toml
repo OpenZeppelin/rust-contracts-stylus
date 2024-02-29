@@ -10,7 +10,8 @@ description = "Stylus Token Standards"
 alloy-primitives = { version = "0.3.1", default-features = false }
 alloy-sol-types = { version = "0.3.1", default-features = false }
 mini-alloc = "0.4.2"
-stylus-sdk = "0.4.2"
+stylus-sdk = "0.4.3"
+stylus-proc = "0.4.3"
 
 [features]
 export-abi = ["stylus-sdk/export-abi"]

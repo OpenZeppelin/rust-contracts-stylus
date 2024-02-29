@@ -1,19 +1,19 @@
-use std::marker::PhantomData;
+use alloc::{borrow::ToOwned, string::String, vec};
+use core::marker::PhantomData;
+use stylus_proc::SolidityError;
 
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{sol, SolError};
+use alloy_sol_types::sol;
 use stylus_sdk::{
     evm, msg,
     stylus_proc::{external, sol_storage},
 };
 
-// ERC20 Events.
 sol! {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// ERC20 Errors.
 sol! {
     error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
     error ERC20InvalidSender(address sender);
@@ -23,6 +23,7 @@ sol! {
     error ERC20InvalidSpender(address spender);
 }
 
+#[derive(SolidityError)]
 pub enum Erc20Error {
     InsufficientBalance(ERC20InsufficientBalance),
     InvalidSender(ERC20InvalidSender),
@@ -30,19 +31,6 @@ pub enum Erc20Error {
     InsufficientAllowance(ERC20InsufficientAllowance),
     InvalidApprover(ERC20InvalidApprover),
     InvalidSpender(ERC20InvalidSpender),
-}
-
-impl From<Erc20Error> for Vec<u8> {
-    fn from(err: Erc20Error) -> Vec<u8> {
-        match err {
-            Erc20Error::InsufficientBalance(e) => e.encode(),
-            Erc20Error::InvalidSender(e) => e.encode(),
-            Erc20Error::InvalidReceiver(e) => e.encode(),
-            Erc20Error::InsufficientAllowance(e) => e.encode(),
-            Erc20Error::InvalidApprover(e) => e.encode(),
-            Erc20Error::InvalidSpender(e) => e.encode(),
-        }
-    }
 }
 
 sol_storage! {
@@ -66,26 +54,24 @@ impl<Metadata> Erc20<Metadata>
 where
     Metadata: IErc20Metadata,
 {
-    pub fn name() -> Result<String, Erc20Error> {
-        Ok(Metadata::NAME.to_owned())
+    pub fn name() -> String {
+        Metadata::NAME.to_owned()
     }
 
-    pub fn symbol() -> Result<String, Erc20Error> {
-        Ok(Metadata::SYMBOL.to_owned())
+    pub fn symbol() -> String {
+        Metadata::SYMBOL.to_owned()
     }
 
-    pub fn decimals() -> Result<u8, Erc20Error> {
-        Ok(Metadata::DECIMALS)
+    pub fn decimals() -> u8 {
+        Metadata::DECIMALS
     }
 
-    pub fn total_supply(&self) -> Result<U256, Erc20Error> {
-        let total_supply = self._total_supply.get();
-        Ok(total_supply)
+    pub fn total_supply(&self) -> U256 {
+        self._total_supply.get()
     }
 
-    pub fn balance_of(&self, account: Address) -> Result<U256, Erc20Error> {
-        let balance = self._balances.get(account);
-        Ok(balance)
+    pub fn balance_of(&self, account: Address) -> U256 {
+        self._balances.get(account)
     }
 
     pub fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Erc20Error> {
@@ -105,9 +91,8 @@ where
         Ok(true)
     }
 
-    pub fn allowance(&self, owner: Address, spender: Address) -> Result<U256, Erc20Error> {
-        let allowance = self._allowances.get(owner).get(spender);
-        Ok(allowance)
+    pub fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self._allowances.get(owner).get(spender)
     }
 
     pub fn approve(&mut self, spender: Address, value: U256) -> Result<bool, Erc20Error> {
