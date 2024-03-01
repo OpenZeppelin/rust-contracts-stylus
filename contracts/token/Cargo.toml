@@ -15,3 +15,6 @@ stylus-proc = "0.4.3"
 
 [features]
 export-abi = ["stylus-sdk/export-abi"]
+
+[lib]
+crate-type = ["lib", "cdylib"]

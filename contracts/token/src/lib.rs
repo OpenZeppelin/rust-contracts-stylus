@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "export-abi"), no_main)]
+#![cfg_attr(not(feature = "export-abi"), no_main, no_std)]
 extern crate alloc;
 
 #[cfg(target_arch = "wasm32")]
