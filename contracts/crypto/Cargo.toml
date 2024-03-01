@@ -1,10 +1,10 @@
 [package]
-name = "token"
+name = "crypto-contracts"
 version = "0.1.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
-description = "Stylus Token Standards"
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+description = "Stylus Cryptography Utilities"
 
 [dependencies]
 alloy-primitives = { version = "0.3.1", default-features = false }
