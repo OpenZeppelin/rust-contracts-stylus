@@ -2,5 +2,5 @@
 
 #[cfg(feature = "export-abi")]
 fn main() {
-    token::main();
+    crypto_contracts::main();
 }

@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "export-abi"), no_main, no_std)]
+#![cfg_attr(not(feature = "export-abi"), no_std)]
 extern crate alloc;
 
 #[cfg(target_arch = "wasm32")]
@@ -7,9 +7,8 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 mod erc20;
 
-use stylus_sdk::stylus_proc::{entrypoint, external, sol_storage};
-
 use erc20::{Erc20, IErc20Metadata};
+use stylus_sdk::stylus_proc::{entrypoint, external, sol_storage};
 
 struct TokenMetadata;
 
