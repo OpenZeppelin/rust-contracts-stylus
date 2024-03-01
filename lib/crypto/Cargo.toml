@@ -9,3 +9,6 @@ description = "Cryptography Utilities"
 [dependencies]
 alloy-primitives = { version = "0.6.4", default-features = false }
 alloy-sol-types = { version = "0.6.4", default-features = false }
+
+[dev-dependencies]
+const-hex = "1.11.1"
