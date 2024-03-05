@@ -1,12 +1,39 @@
+//! This module deals with verification of Merkle Tree proofs.
+//!
+//! The tree and the proofs can be generated using OpenZeppelin's
+//! https://github.com/OpenZeppelin/merkle-tree[JavaScript library].
+//! You will find a quickstart guide in its README.
+//!
+//! WARNING: You should avoid using leaf values that are 64 bytes long prior to
+//! hashing, or use a hash function other than keccak256 for hashing leaves.
+//! This is because the concatenation of a sorted pair of internal nodes in
+//! the Merkle tree could be reinterpreted as a leaf value.
+//! OpenZeppelin's JavaScript library generates Merkle trees that are safe
+//! against this attack out of the box.
+//!
+//! Note that this implementation requires the consumer to use `alloy`.
 use alloy_primitives::B256;
 use alloy_sol_types::SolValue;
 
+/// A common interface to represent any hasher.
+///
+/// It serves as an adapter for consumers to use `verify` with the
+/// hashing algorithm of their choice.
 pub trait Hasher {
     type Hash: Copy + From<B256>;
 
     fn hash(&mut self, data: &[u8]) -> Self::Hash;
 }
 
+/// Verify a `leaf` is part of a Merkle tree defined by `root` by using
+/// `proof` and a `hasher`.
+///
+/// The `proof` provided must contain sibling hashes on the branch
+/// starting from the leaf to the root of the tree. Each pair of
+/// leaves and each pair of pre-images are assumed to be sorted.
+///
+/// A new root is rebuilt by traversing the Merkle tree up. A `proof`
+/// is valid if and only if the rebuilt hash matches the root of the tree.
 pub fn verify<H: Hasher<Hash = B256>>(
     proof: &[B256],
     root: B256,
@@ -20,6 +47,7 @@ pub fn verify<H: Hasher<Hash = B256>>(
     leaf == root
 }
 
+/// Sorts the pair (a, b) and hashes the result with `hasher`.
 fn sorted_hash<H: Hasher<Hash = B256>>(mut a: B256, mut b: B256, hasher: &mut H) -> B256 {
     if a >= b {
         (a, b) = (b, a);
@@ -37,6 +65,7 @@ mod tests {
 
     use super::{verify, Hasher};
 
+    /// Forwards calls to `alloy_primitives::keccak256`.
     struct Keccak256;
     impl Hasher for Keccak256 {
         type Hash = B256;
@@ -64,12 +93,12 @@ mod tests {
         const ROOT: &str = "0xb89eb120147840e813a77109b44063488a346b4ca15686185cf314320560d3f3";
         const LEAF_A: &str = "0x6efbf77e320741a027b50f02224545461f97cd83762d5fbfeb894b9eb3287c16";
         const LEAF_B: &str = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc";
-        const PROOF: &str = r"0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc
-                              0x1629d3b5b09b30449d258e35bbd09dd5e8a3abb91425ef810dc27eef995f7490
-                              0x633d21baee4bbe5ed5c51ac0c68f7946b8f28d2937f0ca7ef5e1ea9dbda52e7a
-                              0x8a65d3006581737a3bab46d9e4775dbc1821b1ea813d350a13fcd4f15a8942ec
-                              0xd6c3f3e36cd23ba32443f6a687ecea44ebfe2b8759a62cccf7759ec1fb563c76
-                              0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115";
+        const PROOF: &str = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc
+                             0x1629d3b5b09b30449d258e35bbd09dd5e8a3abb91425ef810dc27eef995f7490
+                             0x633d21baee4bbe5ed5c51ac0c68f7946b8f28d2937f0ca7ef5e1ea9dbda52e7a
+                             0x8a65d3006581737a3bab46d9e4775dbc1821b1ea813d350a13fcd4f15a8942ec
+                             0xd6c3f3e36cd23ba32443f6a687ecea44ebfe2b8759a62cccf7759ec1fb563c76
+                             0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115";
 
         let root = B256::from_hex(ROOT).unwrap();
         let leaf_a = B256::from_hex(LEAF_A).unwrap();
@@ -84,8 +113,8 @@ mod tests {
 
         let mut hasher = Keccak256;
         let no_such_leaf = sorted_hash(leaf_a, leaf_b, &mut hasher);
-        let proof: Vec<_> = proof.into_iter().skip(1).collect();
-        let valid = verify(&proof, root, no_such_leaf, hasher);
+        let proof = &proof[1..];
+        let valid = verify(proof, root, no_such_leaf, hasher);
         assert!(valid);
     }
 
@@ -124,8 +153,8 @@ mod tests {
         // const proof = merkleTree.getProof(['a']);
         const ROOT: &str = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
         const LEAF: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-        const PROOF: &str = r"0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
-                              0x9cf5a63718145ba968a01c1d557020181c5b252f665cf7386d370eddb176517b";
+        const PROOF: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
+                             0x9cf5a63718145ba968a01c1d557020181c5b252f665cf7386d370eddb176517b";
 
         let root = B256::from_hex(ROOT).unwrap();
         let leaf = B256::from_hex(LEAF).unwrap();
@@ -134,8 +163,8 @@ mod tests {
             .map(|h| B256::from_hex(h.trim()).unwrap())
             .collect();
 
-        let bad_proof: Vec<_> = proof.into_iter().take(1).collect();
-        let valid = verify(&bad_proof, root, leaf, Keccak256);
+        let bad_proof = &proof[..1];
+        let valid = verify(bad_proof, root, leaf, Keccak256);
         assert!(!valid);
     }
 }
