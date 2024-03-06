@@ -4,74 +4,156 @@
 //! https://github.com/OpenZeppelin/merkle-tree[JavaScript library].
 //! You will find a quickstart guide in its README.
 //!
-//! WARNING: You should avoid using leaf values that are 64 bytes long prior to
-//! hashing, or use a hash function other than keccak256 for hashing leaves.
-//! This is because the concatenation of a sorted pair of internal nodes in
-//! the Merkle tree could be reinterpreted as a leaf value.
-//! OpenZeppelin's JavaScript library generates Merkle trees that are safe
-//! against this attack out of the box.
-//!
-//! Note that this implementation requires the consumer to use `alloy`.
-use alloy_primitives::B256;
-use alloy_sol_types::SolValue;
+//! WARNING: You should avoid using leaf values that are 64 bytes long
+//! prior to hashing, or use a hash function other than keccak256 for
+//! hashing leaves. This is because the concatenation of a sorted pair
+//! of internal nodes in the Merkle tree could be reinterpreted as a
+//! leaf value. OpenZeppelin's JavaScript library generates Merkle trees
+//! that are safe against this attack out of the box.
+type Bytes32 = [u8; 32];
 
-/// A common interface to represent any hasher.
+/// A common interface to represent an arbitrary hasher.
 ///
-/// It serves as an adapter for consumers to use `verify` with the
+/// `Hasher` serves as an adapter for consumers to use `verify` with the
 /// hashing algorithm of their choice.
 pub trait Hasher {
-    type Hash: Copy + From<B256>;
+    type Hash: Copy;
 
     fn hash(&mut self, data: &[u8]) -> Self::Hash;
 }
 
-/// Verify a `leaf` is part of a Merkle tree defined by `root` by using
+/// Verify that `leaf` is part of a Merkle tree defined by `root` by using
 /// `proof` and a `hasher`.
 ///
-/// The `proof` provided must contain sibling hashes on the branch
-/// starting from the leaf to the root of the tree. Each pair of
-/// leaves and each pair of pre-images are assumed to be sorted.
+/// A new root is rebuilt by traversing up the Merkle tree. The `proof`
+/// provided must contain sibling hashes on the branch starting from the
+/// leaf to the root of the tree. Each pair of leaves and each pair of
+/// pre-images are assumed to be sorted.
 ///
-/// A new root is rebuilt by traversing the Merkle tree up. A `proof`
-/// is valid if and only if the rebuilt hash matches the root of the tree.
-pub fn verify<H: Hasher<Hash = B256>>(
-    proof: &[B256],
-    root: B256,
-    mut leaf: B256,
+/// A `proof` is valid if and only if the rebuilt hash matches the root
+/// of the tree.
+pub fn verify<H: Hasher<Hash = Bytes32>>(
+    proof: &[Bytes32],
+    root: Bytes32,
+    mut leaf: Bytes32,
     mut hasher: H,
 ) -> bool {
-    for i in 0..proof.len() {
-        leaf = sorted_hash(leaf, proof[i], &mut hasher);
+    for &hash in proof {
+        leaf = sorted_hash(leaf, hash, &mut hasher);
     }
 
     leaf == root
 }
 
-/// Sorts the pair (a, b) and hashes the result with `hasher`.
-fn sorted_hash<H: Hasher<Hash = B256>>(mut a: B256, mut b: B256, hasher: &mut H) -> B256 {
+/// Sort the pair `(a, b)` and hash the result with `hasher`.
+fn sorted_hash<H: Hasher<Hash = Bytes32>>(
+    mut a: Bytes32,
+    mut b: Bytes32,
+    hasher: &mut H,
+) -> Bytes32 {
     if a >= b {
         (a, b) = (b, a);
     }
 
-    hasher.hash(&[a, b].abi_encode())
+    hasher.hash(&[a, b].concat())
+}
+
+/// An error that occurred while verifying a multi-proof.
+#[derive(thiserror::Error, Debug)]
+pub enum MultiProofError {
+    #[error("invalid multi-proof length")]
+    InvalidProofLength,
+}
+
+/// Verify multiple `leaves` can be simultaneously proven to be a part of
+/// a Merkle tree defined by `root` by using a `proof` with `proof_flags`
+/// and a `hasher`.
+///
+/// The `proof` must contain the sibling hashes one would need to rebuild
+/// the root starting from `leaves`. `proof_flags` represents whether a
+/// hash must be computed using a `proof` member. A new root is rebuilt by
+/// starting from the `leaves` and traversing up the Merkle tree.
+///
+/// The procedure incrementally reconstructs all inner nodes by combining
+/// a leaf/inner node with either another leaf/inner node or a `proof`
+/// sibling node, depending on each proof flag being true or false
+/// respectively, i.e., the `i`-th hash must be computed using the proof if
+/// `proof_flags[i] == false`.
+///
+/// CAUTION: Not all Merkle trees admit multiproofs. To use multiproofs,
+/// it is sufficient to ensure that:
+/// - The tree is complete (but not necessarily perfect).
+/// - The leaves to be proven are in the opposite order they appear in
+/// the tree (i.e., as seen from right to left starting at the deepest
+/// layer and continuing at the next layer).
+pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
+    proof: &[Bytes32],
+    proof_flags: &[bool],
+    root: Bytes32,
+    leaves: &[Bytes32],
+    mut hasher: H,
+) -> Result<bool, MultiProofError> {
+    let total_hashes = proof_flags.len();
+    if leaves.len() + proof.len() != total_hashes + 1 {
+        return Err(MultiProofError::InvalidProofLength);
+    }
+    if total_hashes == 0 {
+        // We can safely assume that either `leaves` or `proof` is not empty
+        // given the previous check. We use `unwrap_or_else` to avoid eagerly
+        // evaluating `proof[0]`, which may panic.
+        let rebuilt_root = *leaves.first().unwrap_or_else(|| &proof[0]);
+        return Ok(root == rebuilt_root);
+    }
+
+    // `hashes` represents a queue of hashes, our "main queue".
+    let mut hashes = Vec::with_capacity(total_hashes + leaves.len());
+    hashes.extend(leaves);
+    // The `xxx_pos` values are "pointers" to the next value to consume in each queue.
+    // We use them to mimic a queue's pop operation.
+    let mut proof_pos = 0;
+    let mut hashes_pos = 0;
+    // At each step, we compute the next hash using two values:
+    // - A value from the "main queue". Consume all the leaves, then all the hashes but the root.
+    // - A value from the "main queue" (merging branches) or a member of the `proof`, depending on `flag`.
+    for &flag in proof_flags {
+        let a = hashes[hashes_pos];
+        hashes_pos += 1;
+
+        let b = if flag {
+            let b = hashes[hashes_pos];
+            hashes_pos += 1;
+            b
+        } else {
+            let b = proof[proof_pos];
+            proof_pos += 1;
+            b
+        };
+
+        hashes.push(sorted_hash(a, b, &mut hasher));
+    }
+
+    // We know that `total_hashes > 0`.
+    let rebuilt_root = hashes[total_hashes + leaves.len() - 1];
+    Ok(root == rebuilt_root)
 }
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{keccak256, B256};
+    use alloy_primitives::keccak256;
     use const_hex::FromHex;
+    use rand::{thread_rng, RngCore};
 
-    use crate::merkle::sorted_hash;
+    use crate::merkle::{sorted_hash, verify_multi_proof};
 
-    use super::{verify, Hasher};
+    use super::{verify, Bytes32, Hasher};
 
     /// Forwards calls to `alloy_primitives::keccak256`.
     struct Keccak256;
     impl Hasher for Keccak256 {
-        type Hash = B256;
+        type Hash = Bytes32;
 
         fn hash(&mut self, data: &[u8]) -> Self::Hash {
-            keccak256(data)
+            *keccak256(data)
         }
     }
 
@@ -100,22 +182,22 @@ mod tests {
                              0xd6c3f3e36cd23ba32443f6a687ecea44ebfe2b8759a62cccf7759ec1fb563c76
                              0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115";
 
-        let root = B256::from_hex(ROOT).unwrap();
-        let leaf_a = B256::from_hex(LEAF_A).unwrap();
-        let leaf_b = B256::from_hex(LEAF_B).unwrap();
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let leaf_a = Bytes32::from_hex(LEAF_A).unwrap();
+        let leaf_b = Bytes32::from_hex(LEAF_B).unwrap();
         let proof: Vec<_> = PROOF
             .lines()
-            .map(|h| B256::from_hex(h.trim()).unwrap())
+            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
             .collect();
 
-        let valid = verify(&proof, root, leaf_a, Keccak256);
-        assert!(valid);
+        let verification = verify(&proof, root, leaf_a, Keccak256);
+        assert!(verification);
 
         let mut hasher = Keccak256;
         let no_such_leaf = sorted_hash(leaf_a, leaf_b, &mut hasher);
         let proof = &proof[1..];
-        let valid = verify(proof, root, no_such_leaf, hasher);
-        assert!(valid);
+        let verification = verify(proof, root, no_such_leaf, hasher);
+        assert!(verification);
     }
 
     #[test]
@@ -135,12 +217,12 @@ mod tests {
         const LEAF: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
         const PROOF: &str = "0x7b0c6cd04b82bfc0e250030a5d2690c52585e0cc6a4f3bc7909d7723b0236ece";
 
-        let root = B256::from_hex(ROOT).unwrap();
-        let leaf = B256::from_hex(LEAF).unwrap();
-        let proof = B256::from_hex(PROOF).unwrap();
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let leaf = Bytes32::from_hex(LEAF).unwrap();
+        let proof = Bytes32::from_hex(PROOF).unwrap();
 
-        let valid = verify(&[proof], root, leaf, Keccak256);
-        assert!(!valid);
+        let verification = verify(&[proof], root, leaf, Keccak256);
+        assert!(!verification);
     }
 
     #[test]
@@ -156,15 +238,219 @@ mod tests {
         const PROOF: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
                              0x9cf5a63718145ba968a01c1d557020181c5b252f665cf7386d370eddb176517b";
 
-        let root = B256::from_hex(ROOT).unwrap();
-        let leaf = B256::from_hex(LEAF).unwrap();
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let leaf = Bytes32::from_hex(LEAF).unwrap();
         let proof: Vec<_> = PROOF
             .lines()
-            .map(|h| B256::from_hex(h.trim()).unwrap())
+            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
             .collect();
 
         let bad_proof = &proof[..1];
-        let valid = verify(bad_proof, root, leaf, Keccak256);
-        assert!(!valid);
+        let verification = verify(bad_proof, root, leaf, Keccak256);
+        assert!(!verification);
+    }
+
+    #[test]
+    fn verifies_valid_multi_proof() {
+        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
+        //
+        // const root = merkleTree.root;
+        // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('bdf'));
+        // const hashes = leaves.map(e => merkleTree.leafHash(e));
+        const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+        const LEAVES: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
+                              0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
+                              0xeba909cf4bb90c6922771d7f126ad0fd11dfde93f3937a196274e1ac20fd2f5b";
+        const PROOF: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
+                             0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
+
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let leaves: Vec<_> = LEAVES
+            .lines()
+            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+            .collect();
+        let proof: Vec<_> = PROOF
+            .lines()
+            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+            .collect();
+        let proof_flags = [false, true, false, true];
+
+        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        assert!(verification.unwrap());
+    }
+
+    #[test]
+    fn rejects_invalid_multi_proof() {
+        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
+        // const otherMerkleTree = StandardMerkleTree.of(toElements('ghi'), ['string']);
+        //
+        // const root = merkleTree.root;
+        // const { proof, proofFlags, leaves } = otherMerkleTree.getMultiProof(toElements('ghi'));
+        // const hashes = leaves.map(e => merkleTree.leafHash(e));
+        const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+        const LEAVES: &str = "0x34e6ce3d0d73f6bff2ee1e865833d58e283570976d70b05f45c989ef651ef742
+                              0xaa28358fb75b314c899e16d7975e029d18b4457fd8fd831f2e6c17ffd17a1d7e
+                              0xe0fd7e6916ff95d933525adae392a17e247819ebecc2e63202dfec7005c60560";
+
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let leaves: Vec<_> = LEAVES
+            .lines()
+            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+            .collect();
+        let proof: Vec<_> = vec![];
+        let proof_flags = [true, true];
+
+        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        assert!(!verification.unwrap());
+    }
+
+    #[test]
+    fn errors_invalid_multi_proof_leaves() {
+        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
+        //
+        // const root = merkleTree.root;
+        // const hashA = merkleTree.leafHash(['a']);
+        // const hashB = merkleTree.leafHash(['b']);
+        // const hashCD = hashPair(
+        //   ethers.toBeArray(merkleTree.leafHash(['c'])),
+        //   ethers.toBeArray(merkleTree.leafHash(['d'])),
+        // );
+        // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
+        // const fill = ethers.randomBytes(32);
+        const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
+        const HASH_A: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        const HASH_B: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
+        const HASH_CD: &str = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
+        const HASH_E: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
+
+        let hash_a = Bytes32::from_hex(HASH_A).unwrap();
+        let hash_b = Bytes32::from_hex(HASH_B).unwrap();
+        let hash_cd = Bytes32::from_hex(HASH_CD).unwrap();
+        let hash_e = Bytes32::from_hex(HASH_E).unwrap();
+
+        let mut random_bytes = [0u8; 32];
+        thread_rng().fill_bytes(&mut random_bytes);
+        let fill = Bytes32::from(random_bytes);
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let proof = vec![hash_b, fill, hash_cd];
+
+        let proof_flags = [false, false, false];
+        let leaves = vec![hash_a, hash_e];
+        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        assert!(verification.is_err());
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_multi_proof_len_invalid() {
+        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
+        //
+        // const root = merkleTree.root;
+        // const hashA = merkleTree.leafHash(['a']);
+        // const hashB = merkleTree.leafHash(['b']);
+        // const hashCD = hashPair(
+        //   ethers.toBeArray(merkleTree.leafHash(['c'])),
+        //   ethers.toBeArray(merkleTree.leafHash(['d'])),
+        // );
+        // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
+        // const fill = ethers.randomBytes(32);
+        const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
+        const HASH_A: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        const HASH_B: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
+        const HASH_CD: &str = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
+        const HASH_E: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
+
+        let hash_a = Bytes32::from_hex(HASH_A).unwrap();
+        let hash_b = Bytes32::from_hex(HASH_B).unwrap();
+        let hash_cd = Bytes32::from_hex(HASH_CD).unwrap();
+        let hash_e = Bytes32::from_hex(HASH_E).unwrap();
+
+        let mut random_bytes = [0u8; 32];
+        thread_rng().fill_bytes(&mut random_bytes);
+        let fill = Bytes32::from(random_bytes);
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let proof = vec![hash_b, fill, hash_cd];
+        let proof_flags = [false, false, false, false];
+        let leaves = vec![hash_e, hash_a];
+
+        let _ = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+    }
+
+    #[test]
+    fn verifies_single_leaf_multi_proof() {
+        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        // const merkleTree = StandardMerkleTree.of(toElements('a'), ['string']);
+        //
+        // const root = merkleTree.root;
+        // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('a'));
+        // const hashes = leaves.map(e => merkleTree.leafHash(e));
+        const ROOT: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let proof = vec![];
+        let proof_flags = [];
+        let leaves = vec![root];
+
+        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        assert!(verification.unwrap());
+    }
+
+    #[test]
+    fn verifies_empty_leaves_multi_proof() {
+        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
+        //
+        // const root = merkleTree.root;
+        const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
+
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let proof = vec![root];
+        let proof_flags = [];
+        let leaves = vec![];
+
+        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        assert!(verification.unwrap());
+    }
+
+    #[test]
+    #[should_panic]
+    /// Panics when processing manipulated proofs with a zero-value node at depth 1.
+    fn panics_manipulated_multi_proof() {
+        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        // // Create a merkle tree that contains a zero leaf at depth 1
+        // const leave = ethers.id('real leaf');
+        // const root = hashPair(ethers.toBeArray(leave), Buffer.alloc(32, 0));
+        //
+        // // Now we can pass any **malicious** fake leaves as valid!
+        // const maliciousLeaves = ['malicious', 'leaves'].map(ethers.id)
+        //                          .map(ethers.toBeArray).sort(Buffer.compare);
+        // // Note that this JS implementation does not pass a ZERO leaf here.
+        // const maliciousProof = [leave, leave];
+        // const maliciousProofFlags = [true, true, false];
+        const ROOT: &str = "0xf2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
+        const LEAF: &str = "0x5e941ddd8f313c0b39f92562c0eca709c3d91360965d396aaef584b3fa76889a";
+        const MALICIOUS_LEAVES: &str = "0x1f23ad5fc0ee6ccbe2f3d30df856758f05ad9d03408a51a99c1c9f0854309db2
+                                        0x613994f4e324d0667c07857cd5d147994bc917da5d07ee63fc3f0a1fe8a18e34";
+
+        let root = Bytes32::from_hex(ROOT).unwrap();
+        let leaf = Bytes32::from_hex(LEAF).unwrap();
+        let malicious_proof = [leaf, leaf];
+        let malicious_proof_flags = [true, true, false];
+        let malicious_leaves: Vec<_> = MALICIOUS_LEAVES
+            .lines()
+            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+            .collect();
+
+        let _ = verify_multi_proof(
+            &malicious_proof,
+            &malicious_proof_flags,
+            root,
+            &malicious_leaves,
+            Keccak256,
+        );
     }
 }
