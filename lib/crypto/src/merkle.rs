@@ -86,6 +86,12 @@ pub enum MultiProofError {
 /// - The leaves to be proven are in the opposite order they appear in
 /// the tree (i.e., as seen from right to left starting at the deepest
 /// layer and continuing at the next layer).
+///
+/// NOTE: This implementation is *not* equivalent to it's Solidity
+/// counterpart. In Rust, access to uninitialized memory panics, which
+/// means we don't need to check that the whole proof array has been
+/// processed. Both implementations will revert for the same inputs, but
+/// for different reasons. See https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p
 pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     proof: &[Bytes32],
     proof_flags: &[bool],
@@ -428,7 +434,6 @@ mod tests {
         // // Now we can pass any **malicious** fake leaves as valid!
         // const maliciousLeaves = ['malicious', 'leaves'].map(ethers.id)
         //                          .map(ethers.toBeArray).sort(Buffer.compare);
-        // // Note that this JS implementation does not pass a ZERO leaf here.
         // const maliciousProof = [leave, leave];
         // const maliciousProofFlags = [true, true, false];
         const ROOT: &str = "0xf2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
