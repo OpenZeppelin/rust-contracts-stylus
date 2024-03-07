@@ -10,6 +10,8 @@
 //! of internal nodes in the Merkle tree could be reinterpreted as a
 //! leaf value. OpenZeppelin's JavaScript library generates Merkle trees
 //! that are safe against this attack out of the box.
+use alloc::vec::Vec;
+
 type Bytes32 = [u8; 32];
 
 /// A common interface to represent an arbitrary hasher.
