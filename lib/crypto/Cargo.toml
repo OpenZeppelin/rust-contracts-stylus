@@ -14,3 +14,8 @@ thiserror = "1.0.57"
 [dev-dependencies]
 const-hex = "1.11.1"
 rand = "0.8.5"
+
+[features]
+default = []
+merkle = []
+multi_proof = ["merkle"]

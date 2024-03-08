@@ -54,6 +54,7 @@ pub enum MultiProofError {
     InvalidProofLength,
 }
 
+#[cfg(feature = "multi_proof")]
 /// Verify multiple `leaves` can be simultaneously proven to be a part of
 /// a Merkle tree defined by `root` by using a `proof` with `proof_flags`
 /// and a `hasher`.
