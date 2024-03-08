@@ -1,9 +1,8 @@
 :stylus: https://docs.arbitrum.io/stylus/stylus-gentle-introduction[Stylus]
-:stylus-rust-sdk: https://github.com/OffchainLabs/stylus-sdk-rs[Rust SDK]
 
 = Contracts for Stylus
 
-A library of drop-in, secure implementations of smart contracts for {stylus} using the {stylus-rust-sdk}.
+*A library for secure smart contract development* written in Rust for {stylus}.
 
 WARNING: This repo contains highly experimental code. *Use at your own risk.*
 
