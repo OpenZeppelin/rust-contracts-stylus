@@ -47,19 +47,6 @@ pub fn verify<H: Hasher<Hash = Bytes32>>(
     leaf == root
 }
 
-/// Sort the pair `(a, b)` and hash the result with `hasher`.
-fn sorted_hash<H: Hasher<Hash = Bytes32>>(
-    mut a: Bytes32,
-    mut b: Bytes32,
-    hasher: &mut H,
-) -> Bytes32 {
-    if a >= b {
-        (a, b) = (b, a);
-    }
-
-    hasher.hash(&[a, b].concat())
-}
-
 /// An error that occurred while verifying a multi-proof.
 #[derive(thiserror::Error, Debug)]
 pub enum MultiProofError {
@@ -143,6 +130,22 @@ pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     // We know that `total_hashes > 0`.
     let rebuilt_root = hashes[total_hashes + leaves.len() - 1];
     Ok(root == rebuilt_root)
+}
+
+/// Sort the pair `(a, b)` and hash the result with `hasher`.
+fn sorted_hash<H: Hasher<Hash = Bytes32>>(
+    mut a: Bytes32,
+    mut b: Bytes32,
+    hasher: &mut H,
+) -> Bytes32 {
+    if a >= b {
+        (a, b) = (b, a);
+    }
+
+    let mut buffer = [0u8; 64];
+    buffer[..32].copy_from_slice(&a);
+    buffer[32..].copy_from_slice(&b);
+    hasher.hash(&buffer)
 }
 
 #[cfg(test)]
