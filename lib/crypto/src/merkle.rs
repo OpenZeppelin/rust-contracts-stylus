@@ -151,13 +151,11 @@ fn sorted_hash<H: Hasher<Hash = Bytes32>>(
 
 #[cfg(test)]
 mod tests {
+    use super::{verify, Bytes32, Hasher};
+    use crate::merkle::{sorted_hash, verify_multi_proof};
     use alloy_primitives::keccak256;
     use const_hex::FromHex;
     use rand::{thread_rng, RngCore};
-
-    use crate::merkle::{sorted_hash, verify_multi_proof};
-
-    use super::{verify, Bytes32, Hasher};
 
     /// Forwards calls to `alloy_primitives::keccak256`.
     struct Keccak256;

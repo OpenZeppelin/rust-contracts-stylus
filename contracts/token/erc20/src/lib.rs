@@ -12,8 +12,8 @@ use stylus_sdk::stylus_proc::{entrypoint, external, sol_storage};
 
 struct TokenMetadata;
 
-pub const TOKEN_NAME: &'static str = "Token";
-pub const TOKEN_SYMBOL: &'static str = "TKN";
+pub const TOKEN_NAME: &str = "Token";
+pub const TOKEN_SYMBOL: &str = "TKN";
 pub const TOKEN_DECIMALS: u8 = 6;
 
 impl IErc20Metadata for TokenMetadata {
