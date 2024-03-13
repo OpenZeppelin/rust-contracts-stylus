@@ -13,8 +13,6 @@ in the [OpenZeppelin Forum].
 
 You can [open an issue] to suggest a feature or report a minor bug.
 
-TODO: Describe procedure for serious security issues.
-
 If you believe your issue may be due to user error and not a problem in the
 library, consider instead posting a question on the [OpenZeppelin Forum].
 
@@ -26,7 +24,7 @@ around the use cases that motivate it. Features are prioritized according to
 the impact they may have on the ecosystem, so we appreciate information showing
 that the impact could be high.
 
-[security policy]: TODO
+[security policy]: https://github.com/OpenZeppelin/openzeppelin-contracts/security
 [open an issue]: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/new/choose
 
 ## Submitting a pull request
@@ -40,8 +38,6 @@ changes are accepted without prior discussion.
 
 Make sure to read and follow the [engineering guidelines](./GUIDELINES.md). Run
 linter and tests to make sure your pull request is good before submitting it.
-
-TODO: Decide how to keep a changelog.
 
 If you're looking for a good place to start, look for issues labelled
 ["good first issue"].
