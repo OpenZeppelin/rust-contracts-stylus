@@ -74,7 +74,11 @@ where
         self._balances.get(account)
     }
 
-    pub fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Erc20Error> {
+    pub fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Erc20Error> {
         let from = msg::sender();
         if from == Address::ZERO {
             return Err(Erc20Error::InvalidSender(ERC20InvalidSender {
@@ -95,7 +99,11 @@ where
         self._allowances.get(owner).get(spender)
     }
 
-    pub fn approve(&mut self, spender: Address, value: U256) -> Result<bool, Erc20Error> {
+    pub fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Erc20Error> {
         let owner = msg::sender();
         if owner == Address::ZERO {
             return Err(Erc20Error::InvalidApprover(ERC20InvalidApprover {
@@ -109,11 +117,7 @@ where
         }
 
         self._allowances.setter(owner).insert(spender, value);
-        evm::log(Approval {
-            owner,
-            spender,
-            value,
-        });
+        evm::log(Approval { owner, spender, value });
         Ok(true)
     }
 
@@ -146,14 +150,21 @@ impl<Metadata> Erc20<Metadata>
 where
     Metadata: IErc20Metadata,
 {
-    fn _transfer(&mut self, from: Address, to: Address, value: U256) -> Result<(), Erc20Error> {
+    fn _transfer(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Erc20Error> {
         let from_balance = self._balances.get(from);
         if from_balance < value {
-            return Err(Erc20Error::InsufficientBalance(ERC20InsufficientBalance {
-                sender: from,
-                balance: from_balance,
-                needed: value,
-            }));
+            return Err(Erc20Error::InsufficientBalance(
+                ERC20InsufficientBalance {
+                    sender: from,
+                    balance: from_balance,
+                    needed: value,
+                },
+            ));
         }
 
         let from_balance = from_balance - value;
@@ -181,9 +192,7 @@ where
                 ));
             }
 
-            self._allowances
-                .setter(owner)
-                .insert(spender, allowed - value);
+            self._allowances.setter(owner).insert(spender, allowed - value);
         }
 
         Ok(())

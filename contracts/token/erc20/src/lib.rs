@@ -17,9 +17,9 @@ pub const TOKEN_SYMBOL: &str = "TKN";
 pub const TOKEN_DECIMALS: u8 = 6;
 
 impl IErc20Metadata for TokenMetadata {
+    const DECIMALS: u8 = TOKEN_DECIMALS;
     const NAME: &'static str = TOKEN_NAME;
     const SYMBOL: &'static str = TOKEN_SYMBOL;
-    const DECIMALS: u8 = TOKEN_DECIMALS;
 }
 
 sol_storage! {

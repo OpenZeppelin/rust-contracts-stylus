@@ -292,7 +292,8 @@ mod tests {
             .collect();
         let proof_flags = [false, true, false, true];
 
-        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        let verification =
+            verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
         assert!(verification.unwrap());
     }
 
@@ -321,7 +322,8 @@ mod tests {
         let proof: Vec<_> = vec![];
         let proof_flags = [true, true];
 
-        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        let verification =
+            verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
         assert!(!verification.unwrap());
     }
 
@@ -361,7 +363,8 @@ mod tests {
 
         let proof_flags = [false, false, false];
         let leaves = vec![hash_a, hash_e];
-        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        let verification =
+            verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
         assert!(verification.is_err());
     }
 
@@ -402,7 +405,8 @@ mod tests {
         let proof_flags = [false, false, false, false];
         let leaves = vec![hash_e, hash_a];
 
-        let _ = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        let _ =
+            verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
     }
 
     #[test]
@@ -423,7 +427,8 @@ mod tests {
         let proof_flags = [];
         let leaves = vec![root];
 
-        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        let verification =
+            verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
         assert!(verification.unwrap());
     }
 
@@ -443,7 +448,8 @@ mod tests {
         let proof_flags = [];
         let leaves = vec![];
 
-        let verification = verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+        let verification =
+            verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
         assert!(verification.unwrap());
     }
 
