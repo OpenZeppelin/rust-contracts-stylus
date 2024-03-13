@@ -2,7 +2,8 @@
 
 Common cryptographic procedures for a blockchain environment.
 
-> [!WARNING] `crypto` is still `0.*.*`, so breaking changes
+> [!WARNING]
+> Note that `crypto` is still `0.*.*`, so breaking changes
 > [may occur at any time](https://semver.org/#spec-item-4). If you must depend
 > on `crypto`, we recommend pinning to a specific version, i.e., `=0.y.z`.
 
@@ -10,9 +11,15 @@ Common cryptographic procedures for a blockchain environment.
 
 [`merkle.rs`](lib/crypto/src/merkle.rs) provides:
 
-* A `verify` function which can prove that some value is part of a [Merkle tree].
-* A `verify_multi_proof` function which can prove multiple values are part of a [Merkle tree].
+- A `verify` function which can prove that some value is part of a
+  [Merkle tree].
+- A `verify_multi_proof` function which can prove multiple values are part of a
+  [Merkle tree].
 
 [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 
-TODO: Document feature flags.
+## Feature Flags
+
+This crate exposes its modules behind feature gates to ensure the bare minimum
+is included in consumer condebases. You can check the current feature flags in
+the [Cargo.toml](./Cargo.toml) file.

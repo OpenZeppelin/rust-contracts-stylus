@@ -117,7 +117,8 @@ This is enforced by `rustfmt`. Note that this is a `nightly` feature.
 
 ### Variable naming
 
-Use short 1-letter names when the variable scope is only a few lines, or the context is
+Use short 1-letter names when the variable scope is only a few lines, or the
+context is
 obvious, eg.
 
 ```rust
@@ -148,10 +149,10 @@ and/or object and repeating that would be redundant.
 
 ## Dependencies
 
-Before adding any code dependencies, check with the maintainers if this is okay.
-In general, we try not to add external dependencies unless it's necessary.
-Dependencies increase counter-party risk, build-time, attack surface, and
-make code harder to audit.
+Before adding any code dependencies, check with the maintainers if this is
+okay. In general, we try not to add external dependencies unless it's
+necessary. Dependencies increase counter-party risk, build-time, attack
+surface, and make code harder to audit.
 
 We also optimize for binary size, which means we try to keep generated code to
 a minimum and adding dependencies is one of the biggest sources of code bloat.
