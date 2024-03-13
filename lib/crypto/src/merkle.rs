@@ -1,7 +1,7 @@
 //! This module deals with verification of Merkle Tree proofs.
 //!
 //! The tree and the proofs can be generated using OpenZeppelin's
-//! https://github.com/OpenZeppelin/merkle-tree[JavaScript library].
+//! <https://github.com/OpenZeppelin/merkle-tree>.
 //! You will find a quickstart guide in its README.
 //!
 //! WARNING: You should avoid using leaf values that are 64 bytes long
@@ -81,7 +81,7 @@ pub enum MultiProofError {
 /// counterpart. In Rust, access to uninitialized memory panics, which
 /// means we don't need to check that the whole proof array has been
 /// processed. Both implementations will revert for the same inputs, but
-/// for different reasons. See https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p
+/// for different reasons. See <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
 pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     proof: &[Bytes32],
     proof_flags: &[bool],
@@ -151,11 +151,12 @@ fn sorted_hash<H: Hasher<Hash = Bytes32>>(
 
 #[cfg(test)]
 mod tests {
-    use super::{verify, Bytes32, Hasher};
-    use crate::merkle::{sorted_hash, verify_multi_proof};
     use alloy_primitives::keccak256;
     use const_hex::FromHex;
     use rand::{thread_rng, RngCore};
+
+    use super::{verify, Bytes32, Hasher};
+    use crate::merkle::{sorted_hash, verify_multi_proof};
 
     /// Forwards calls to `alloy_primitives::keccak256`.
     struct Keccak256;
@@ -240,9 +241,11 @@ mod tests {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
         // const merkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
         //
+        // ```js
         // const root = merkleTree.root;
         // const leaf = merkleTree.leafHash(['a']);
         // const proof = merkleTree.getProof(['a']);
+        // ```
         const ROOT: &str = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
         const LEAF: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
         const PROOF: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
@@ -263,11 +266,14 @@ mod tests {
     #[test]
     fn verifies_valid_multi_proof() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        //
+        // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
         //
         // const root = merkleTree.root;
         // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('bdf'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
+        // ```
         const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
         const LEAVES: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
                               0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
@@ -293,12 +299,15 @@ mod tests {
     #[test]
     fn rejects_invalid_multi_proof() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        //
+        // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
         // const otherMerkleTree = StandardMerkleTree.of(toElements('ghi'), ['string']);
         //
         // const root = merkleTree.root;
         // const { proof, proofFlags, leaves } = otherMerkleTree.getMultiProof(toElements('ghi'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
+        // ```
         const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
         const LEAVES: &str = "0x34e6ce3d0d73f6bff2ee1e865833d58e283570976d70b05f45c989ef651ef742
                               0xaa28358fb75b314c899e16d7975e029d18b4457fd8fd831f2e6c17ffd17a1d7e
@@ -319,6 +328,8 @@ mod tests {
     #[test]
     fn errors_invalid_multi_proof_leaves() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        //
+        // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
         // const root = merkleTree.root;
@@ -330,6 +341,7 @@ mod tests {
         // );
         // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
         // const fill = ethers.randomBytes(32);
+        // ```
         const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
         const HASH_A: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
         const HASH_B: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
@@ -357,6 +369,8 @@ mod tests {
     #[should_panic]
     fn panics_multi_proof_len_invalid() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        //
+        // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
         // const root = merkleTree.root;
@@ -368,6 +382,7 @@ mod tests {
         // );
         // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
         // const fill = ethers.randomBytes(32);
+        // ```
         const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
         const HASH_A: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
         const HASH_B: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
@@ -393,11 +408,14 @@ mod tests {
     #[test]
     fn verifies_single_leaf_multi_proof() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        //
+        // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('a'), ['string']);
         //
         // const root = merkleTree.root;
         // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('a'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
+        // ```
         const ROOT: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
 
         let root = Bytes32::from_hex(ROOT).unwrap();
@@ -412,9 +430,12 @@ mod tests {
     #[test]
     fn verifies_empty_leaves_multi_proof() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        //
+        // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
         // const root = merkleTree.root;
+        // ```
         const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
 
         let root = Bytes32::from_hex(ROOT).unwrap();
@@ -431,6 +452,8 @@ mod tests {
     /// Panics when processing manipulated proofs with a zero-value node at depth 1.
     fn panics_manipulated_multi_proof() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
+        //
+        // ```js
         // // Create a merkle tree that contains a zero leaf at depth 1
         // const leave = ethers.id('real leaf');
         // const root = hashPair(ethers.toBeArray(leave), Buffer.alloc(32, 0));
@@ -440,6 +463,7 @@ mod tests {
         //                          .map(ethers.toBeArray).sort(Buffer.compare);
         // const maliciousProof = [leave, leave];
         // const maliciousProofFlags = [true, true, false];
+        // ```
         const ROOT: &str = "0xf2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
         const LEAF: &str = "0x5e941ddd8f313c0b39f92562c0eca709c3d91360965d396aaef584b3fa76889a";
         const MALICIOUS_LEAVES: &str = "0x1f23ad5fc0ee6ccbe2f3d30df856758f05ad9d03408a51a99c1c9f0854309db2

@@ -1,9 +1,9 @@
 use alloc::{borrow::ToOwned, string::String, vec};
 use core::marker::PhantomData;
-use stylus_proc::SolidityError;
 
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
+use stylus_proc::SolidityError;
 use stylus_sdk::{
     evm, msg,
     stylus_proc::{external, sol_storage},
