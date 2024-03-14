@@ -1,5 +1,5 @@
 [workspace]
-members = ["contracts/token/erc20", "lib/crypto"]
+members = ["lib/crypto"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.

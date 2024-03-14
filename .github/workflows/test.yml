@@ -50,10 +50,10 @@ jobs:
         run: cargo generate-lockfile
         # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
-        run: cargo test --locked --all-features --all-targets
+        run: cargo test --locked --all-features --all-targets --workspace
         # https://github.com/rust-lang/cargo/issues/6669
       - name: cargo test --doc
-        run: cargo test --locked --all-features --doc
+        run: cargo test --locked --all-features --doc --workspace
   os-check:
     # Run cargo test on MacOS and Windows.
     runs-on: ${{ matrix.os }}
@@ -61,7 +61,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest]
+        # Windows fails because of `stylus-proc`.
+        # os: [macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,7 +74,7 @@ jobs:
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
       - name: cargo test
-        run: cargo test --locked --all-features --all-targets
+        run: cargo test --locked --all-features --all-targets --workspace
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
     # is compatible with codecov.io.
