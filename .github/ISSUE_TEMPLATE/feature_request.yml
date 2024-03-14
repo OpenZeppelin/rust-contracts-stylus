@@ -1,0 +1,24 @@
+name: 🎁 Feature Request
+description: Suggest an idea for this project ⚡️
+title: "🎁 [Feature Request]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill this feature request!
+  - type: textarea
+    id: feature
+    attributes:
+      label: What is the feature you would like to see?
+      description: Is your feature request related to a specific problem? Is it just a crazy idea? Tell us about it!
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Contribution Guidelines
+      description: By submitting this issue, you agree to follow our [Contribution Guidelines](https://github.com/OpenZeppelin/rust-contracts-stylus/blob/main/CONTRIBUTING.md)
+      options:
+        - label: I agree to follow this project's Contribution Guidelines
+          required: true

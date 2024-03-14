@@ -1,23 +1,26 @@
 [workspace]
 members = ["contracts/token/erc20", "lib/crypto"]
 
-# Explicitly set the resolver to version 2, which is the default for packages with edition >= 2021
+# Explicitly set the resolver to version 2, which is the default for packages
+# with edition >= 2021.
 # https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html
 resolver = "2"
 
 
 [workspace.package]
+authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 keywords = ["arbitrum", "ethereum", "stylus"]
+repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 
 [profile.release]
-codegen-units = 1        
-panic = "abort"          
-opt-level = "z"          
-strip = true             
-lto = true               
-debug = false            
-rpath = false            
-debug-assertions = false 
-incremental = false      
+codegen-units = 1
+panic = "abort"
+opt-level = "z"
+strip = true
+lto = true
+debug = false
+rpath = false
+debug-assertions = false
+incremental = false
