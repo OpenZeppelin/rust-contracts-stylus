@@ -34,6 +34,40 @@ pub trait Hasher {
 ///
 /// A `proof` is valid if and only if the rebuilt hash matches the root
 /// of the tree.
+///
+/// # Arguments
+///
+/// * `proof` - A slice of hashes that constitute the merkle proof.
+/// * `root` - The root of the merkle tree, in bytes.
+/// * `leaf` - The leaf of the merkle tree to proof, in bytes.
+/// * `hasher` - The hashing algorithm to use.
+///
+/// # Examples
+///
+/// ```
+/// # use const_hex::FromHex;
+/// # use alloy_primitives::keccak256;
+/// # struct Keccak256;
+/// # impl crypto::merkle::Hasher for Keccak256 {
+/// #     type Hash = Bytes32;
+/// #
+/// #     fn hash(&mut self, data: &[u8]) -> Self::Hash {
+/// #         *keccak256(data)
+/// #     }
+/// # }
+/// type Bytes32 = [u8; 32];
+///
+/// const ROOT: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+/// const LEAF: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+/// const PROOF: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+///
+/// let root = Bytes32::from_hex(ROOT).unwrap();
+/// let leaf = Bytes32::from_hex(LEAF).unwrap();
+/// let proof = Bytes32::from_hex(PROOF).unwrap();
+///
+/// let verification = crypto::merkle::verify(&[proof], root, leaf, Keccak256);
+/// assert!(!verification);
+/// ```
 pub fn verify<H: Hasher<Hash = Bytes32>>(
     proof: &[Bytes32],
     root: Bytes32,
