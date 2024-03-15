@@ -47,11 +47,23 @@ pub fn verify<H: Hasher<Hash = Bytes32>>(
     leaf == root
 }
 
+#[derive(core::fmt::Debug)]
 /// An error that occurred while verifying a multi-proof.
-#[derive(thiserror::Error, Debug)]
+///
+/// TODO: Once <https://github.com/rust-lang/rust/issues/103765> is resolved,
+/// we should derive `core::error::Error`.
 pub enum MultiProofError {
-    #[error("invalid multi-proof length")]
     InvalidProofLength,
+}
+
+impl core::fmt::Display for MultiProofError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let msg = match self {
+            MultiProofError::InvalidProofLength => "invalid multi-proof length",
+        };
+
+        write!(f, "{msg}")
+    }
 }
 
 #[cfg(feature = "multi_proof")]

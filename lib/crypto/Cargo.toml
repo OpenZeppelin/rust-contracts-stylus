@@ -8,8 +8,6 @@ description = "Cryptography Utilities"
 
 [dependencies]
 alloy-primitives = { version = "0.6.4", default-features = false }
-alloy-sol-types = { version = "0.6.4", default-features = false }
-thiserror = "1.0.57"
 
 [dev-dependencies]
 const-hex = "1.11.1"
