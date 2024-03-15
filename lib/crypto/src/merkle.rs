@@ -47,6 +47,7 @@ pub trait Hasher {
 /// ```
 /// # use const_hex::FromHex;
 /// # use alloy_primitives::keccak256;
+/// # use crypto::merkle::verify;
 /// # struct Keccak256;
 /// # impl crypto::merkle::Hasher for Keccak256 {
 /// #     type Hash = Bytes32;
@@ -65,7 +66,7 @@ pub trait Hasher {
 /// let leaf = Bytes32::from_hex(LEAF).unwrap();
 /// let proof = Bytes32::from_hex(PROOF).unwrap();
 ///
-/// let verification = crypto::merkle::verify(&[proof], root, leaf, Keccak256);
+/// let verification = verify(&[proof], root, leaf, Keccak256);
 /// assert!(!verification);
 /// ```
 pub fn verify<H: Hasher<Hash = Bytes32>>(
@@ -128,6 +129,55 @@ impl core::fmt::Display for MultiProofError {
 /// means we don't need to check that the whole proof array has been
 /// processed. Both implementations will revert for the same inputs, but
 /// for different reasons. See <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
+///
+/// # Arguments
+///
+/// * `proof` - A slice of hashes that constitute the merkle proof.
+/// * `proof_flags` - A slice of booleans that determine whether to hash leaves
+/// or the proof.
+/// * `root` - The root of the merkle tree, in bytes.
+/// * `leaves` - A slice of hashes that constitute the leaves of the merkle
+/// tree to be proven, each leaf in bytes.
+/// * `hasher` - The hashing algorithm to use.
+///
+/// # Examples
+///
+/// ```
+/// # use const_hex::FromHex;
+/// # use alloy_primitives::keccak256;
+/// # use crypto::merkle::verify_multi_proof;
+/// # struct Keccak256;
+/// # impl crypto::merkle::Hasher for Keccak256 {
+/// #     type Hash = Bytes32;
+/// #
+/// #     fn hash(&mut self, data: &[u8]) -> Self::Hash {
+/// #         *keccak256(data)
+/// #     }
+/// # }
+/// type Bytes32 = [u8; 32];
+///
+/// const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+/// const LEAVES: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
+///                       0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
+///                       0xeba909cf4bb90c6922771d7f126ad0fd11dfde93f3937a196274e1ac20fd2f5b";
+/// const PROOF: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
+///                      0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
+///
+/// let root = Bytes32::from_hex(ROOT).unwrap();
+/// let leaves: Vec<_> = LEAVES
+///     .lines()
+///     .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+///     .collect();
+/// let proof: Vec<_> = PROOF
+///     .lines()
+///     .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+///     .collect();
+/// let proof_flags = [false, true, false, true];
+///
+/// let verification =
+///     verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+/// assert!(verification.unwrap());
+/// ```
 pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     proof: &[Bytes32],
     proof_flags: &[bool],
