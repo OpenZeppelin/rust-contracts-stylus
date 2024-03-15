@@ -1,10 +1,12 @@
 [package]
 name = "crypto"
-version = "0.1.0"
-edition.workspace = true
-license.workspace = true
-keywords.workspace = true
+categories = ["cryptography", "algorithms", "no-std", "wasm"]
 description = "Cryptography Utilities"
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+version = "0.1.0"
 
 [dependencies]
 alloy-primitives = { version = "0.6.4", default-features = false }

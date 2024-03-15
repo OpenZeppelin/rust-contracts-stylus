@@ -10,6 +10,7 @@
 //! of internal nodes in the Merkle tree could be reinterpreted as a
 //! leaf value. OpenZeppelin's JavaScript library generates Merkle trees
 //! that are safe against this attack out of the box.
+//!
 use alloc::vec::Vec;
 
 type Bytes32 = [u8; 32];
@@ -19,8 +20,9 @@ type Bytes32 = [u8; 32];
 /// `Hasher` serves as an adapter for consumers to use `verify` with the
 /// hashing algorithm of their choice.
 pub trait Hasher {
+    /// The type of a value resulting from hashing some data.
     type Hash: Copy;
-
+    /// Hash arbitrary data resulting in a value of type `Self::Hash`.
     fn hash(&mut self, data: &[u8]) -> Self::Hash;
 }
 
@@ -88,6 +90,8 @@ pub fn verify<H: Hasher<Hash = Bytes32>>(
 /// TODO: Once <https://github.com/rust-lang/rust/issues/103765> is resolved,
 /// we should derive `core::error::Error`.
 pub enum MultiProofError {
+    /// The number of leaves and proof members does not match the amount of
+    /// hashes necessary to complete the verification.
     InvalidProofLength,
 }
 
@@ -178,6 +182,15 @@ impl core::fmt::Display for MultiProofError {
 ///     verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
 /// assert!(verification.unwrap());
 /// ```
+///
+/// # Errors
+///
+/// Will return `Err` if the arguments are well-formed, but invalid.
+///
+/// # Panics
+///
+/// Will panic with an out-of-bounds error if the proof is malicious. See
+/// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
 pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     proof: &[Bytes32],
     proof_flags: &[bool],
