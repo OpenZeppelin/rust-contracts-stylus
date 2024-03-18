@@ -144,6 +144,15 @@ impl core::fmt::Display for MultiProofError {
 /// tree to be proven, each leaf in bytes.
 /// * `hasher` - The hashing algorithm to use.
 ///
+/// # Errors
+///
+/// Will return `Err` if the arguments are well-formed, but invalid.
+///
+/// # Panics
+///
+/// Will panic with an out-of-bounds error if the proof is malicious. See
+/// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
+///
 /// # Examples
 ///
 /// ```
@@ -182,15 +191,6 @@ impl core::fmt::Display for MultiProofError {
 ///     verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
 /// assert!(verification.unwrap());
 /// ```
-///
-/// # Errors
-///
-/// Will return `Err` if the arguments are well-formed, but invalid.
-///
-/// # Panics
-///
-/// Will panic with an out-of-bounds error if the proof is malicious. See
-/// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
 pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     proof: &[Bytes32],
     proof_flags: &[bool],
