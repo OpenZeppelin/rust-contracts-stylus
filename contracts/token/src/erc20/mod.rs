@@ -4,10 +4,9 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! ERC-20 applications.
-use stylus_proc::SolidityError;
-
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
+use stylus_proc::SolidityError;
 use stylus_sdk::{
     evm, msg,
     stylus_proc::{external, sol_storage},
