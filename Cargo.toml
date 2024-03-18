@@ -22,3 +22,6 @@ debug = false
 rpath = false
 debug-assertions = false
 incremental = false
+
+[profile.dev]
+panic = "abort"
