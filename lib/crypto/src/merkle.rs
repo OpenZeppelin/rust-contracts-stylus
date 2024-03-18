@@ -21,9 +21,9 @@ type Bytes32 = [u8; 32];
 /// hashing algorithm of their choice.
 pub trait Hasher {
     /// The type of a value resulting from hashing some data.
-    type Hash: Copy;
+    type Hash;
     /// Hash arbitrary data resulting in a value of type `Self::Hash`.
-    fn hash(&mut self, data: &[u8]) -> Self::Hash;
+    fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash;
 }
 
 /// Verify that `leaf` is part of a Merkle tree defined by `root` by using
@@ -53,19 +53,19 @@ pub trait Hasher {
 /// # struct Keccak256;
 /// # impl crypto::merkle::Hasher for Keccak256 {
 /// #     type Hash = Bytes32;
-/// #
-/// #     fn hash(&mut self, data: &[u8]) -> Self::Hash {
-/// #         *keccak256(data)
+/// #     fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash {
+/// #         let bytes = data.as_ref();
+/// #         *keccak256(bytes)
 /// #     }
 /// # }
 /// type Bytes32 = [u8; 32];
 ///
-/// const ROOT: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
-/// const LEAF: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+/// const ROOT:  &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+/// const LEAF:  &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 /// const PROOF: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 ///
-/// let root = Bytes32::from_hex(ROOT).unwrap();
-/// let leaf = Bytes32::from_hex(LEAF).unwrap();
+/// let root  = Bytes32::from_hex(ROOT).unwrap();
+/// let leaf  = Bytes32::from_hex(LEAF).unwrap();
 /// let proof = Bytes32::from_hex(PROOF).unwrap();
 ///
 /// let verification = verify(&[proof], root, leaf, Keccak256);
@@ -153,19 +153,19 @@ impl core::fmt::Display for MultiProofError {
 /// # struct Keccak256;
 /// # impl crypto::merkle::Hasher for Keccak256 {
 /// #     type Hash = Bytes32;
-/// #
-/// #     fn hash(&mut self, data: &[u8]) -> Self::Hash {
-/// #         *keccak256(data)
+/// #     fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash {
+/// #         let bytes = data.as_ref();
+/// #         *keccak256(bytes)
 /// #     }
 /// # }
 /// type Bytes32 = [u8; 32];
 ///
-/// const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+/// const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
 /// const LEAVES: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
 ///                       0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
 ///                       0xeba909cf4bb90c6922771d7f126ad0fd11dfde93f3937a196274e1ac20fd2f5b";
-/// const PROOF: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
-///                      0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
+/// const PROOF: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
+///                       0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
 ///
 /// let root = Bytes32::from_hex(ROOT).unwrap();
 /// let leaves: Vec<_> = LEAVES
@@ -224,14 +224,13 @@ pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
         let a = hashes[hashes_pos];
         hashes_pos += 1;
 
-        let b = if flag {
-            let b = hashes[hashes_pos];
+        let b;
+        if flag {
+            b = hashes[hashes_pos];
             hashes_pos += 1;
-            b
         } else {
-            let b = proof[proof_pos];
+            b = proof[proof_pos];
             proof_pos += 1;
-            b
         };
 
         hashes.push(sorted_hash(a, b, &mut hasher));
@@ -255,7 +254,7 @@ fn sorted_hash<H: Hasher<Hash = Bytes32>>(
     let mut buffer = [0u8; 64];
     buffer[..32].copy_from_slice(&a);
     buffer[32..].copy_from_slice(&b);
-    hasher.hash(&buffer)
+    hasher.hash(buffer)
 }
 
 #[cfg(test)]
@@ -272,8 +271,9 @@ mod tests {
     impl Hasher for Keccak256 {
         type Hash = Bytes32;
 
-        fn hash(&mut self, data: &[u8]) -> Self::Hash {
-            *keccak256(data)
+        fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash {
+            let bytes = data.as_ref();
+            *keccak256(bytes)
         }
     }
 
@@ -292,15 +292,15 @@ mod tests {
         // const hash = merkleTree.leafHash(['A']);
         // const proof = merkleTree.getProof(['A']);
         // ```
-        const ROOT: &str = "0xb89eb120147840e813a77109b44063488a346b4ca15686185cf314320560d3f3";
+        const ROOT: &str   = "0xb89eb120147840e813a77109b44063488a346b4ca15686185cf314320560d3f3";
         const LEAF_A: &str = "0x6efbf77e320741a027b50f02224545461f97cd83762d5fbfeb894b9eb3287c16";
         const LEAF_B: &str = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc";
-        const PROOF: &str = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc
-                             0x1629d3b5b09b30449d258e35bbd09dd5e8a3abb91425ef810dc27eef995f7490
-                             0x633d21baee4bbe5ed5c51ac0c68f7946b8f28d2937f0ca7ef5e1ea9dbda52e7a
-                             0x8a65d3006581737a3bab46d9e4775dbc1821b1ea813d350a13fcd4f15a8942ec
-                             0xd6c3f3e36cd23ba32443f6a687ecea44ebfe2b8759a62cccf7759ec1fb563c76
-                             0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115";
+        const PROOF: &str  = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc
+                              0x1629d3b5b09b30449d258e35bbd09dd5e8a3abb91425ef810dc27eef995f7490
+                              0x633d21baee4bbe5ed5c51ac0c68f7946b8f28d2937f0ca7ef5e1ea9dbda52e7a
+                              0x8a65d3006581737a3bab46d9e4775dbc1821b1ea813d350a13fcd4f15a8942ec
+                              0xd6c3f3e36cd23ba32443f6a687ecea44ebfe2b8759a62cccf7759ec1fb563c76
+                              0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115";
 
         let root = Bytes32::from_hex(ROOT).unwrap();
         let leaf_a = Bytes32::from_hex(LEAF_A).unwrap();
@@ -333,8 +333,8 @@ mod tests {
         // const leaf = correctMerkleTree.leafHash(['a']);
         // const proof = otherMerkleTree.getProof(['d']);
         // ```
-        const ROOT: &str = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
-        const LEAF: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        const ROOT: &str  = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
+        const LEAF: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
         const PROOF: &str = "0x7b0c6cd04b82bfc0e250030a5d2690c52585e0cc6a4f3bc7909d7723b0236ece";
 
         let root = Bytes32::from_hex(ROOT).unwrap();
@@ -355,8 +355,8 @@ mod tests {
         // const leaf = merkleTree.leafHash(['a']);
         // const proof = merkleTree.getProof(['a']);
         // ```
-        const ROOT: &str = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
-        const LEAF: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        const ROOT: &str  = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
+        const LEAF: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
         const PROOF: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
                              0x9cf5a63718145ba968a01c1d557020181c5b252f665cf7386d370eddb176517b";
 
@@ -383,12 +383,12 @@ mod tests {
         // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('bdf'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
         // ```
-        const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+        const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
         const LEAVES: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
                               0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
                               0xeba909cf4bb90c6922771d7f126ad0fd11dfde93f3937a196274e1ac20fd2f5b";
-        const PROOF: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
-                             0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
+        const PROOF: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
+                              0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
 
         let root = Bytes32::from_hex(ROOT).unwrap();
         let leaves: Vec<_> = LEAVES
@@ -418,7 +418,7 @@ mod tests {
         // const { proof, proofFlags, leaves } = otherMerkleTree.getMultiProof(toElements('ghi'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
         // ```
-        const ROOT: &str = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+        const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
         const LEAVES: &str = "0x34e6ce3d0d73f6bff2ee1e865833d58e283570976d70b05f45c989ef651ef742
                               0xaa28358fb75b314c899e16d7975e029d18b4457fd8fd831f2e6c17ffd17a1d7e
                               0xe0fd7e6916ff95d933525adae392a17e247819ebecc2e63202dfec7005c60560";
@@ -453,11 +453,11 @@ mod tests {
         // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
         // const fill = ethers.randomBytes(32);
         // ```
-        const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
-        const HASH_A: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-        const HASH_B: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
+        const ROOT: &str    = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
+        const HASH_A: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        const HASH_B: &str  = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
         const HASH_CD: &str = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
-        const HASH_E: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
+        const HASH_E: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
 
         let hash_a = Bytes32::from_hex(HASH_A).unwrap();
         let hash_b = Bytes32::from_hex(HASH_B).unwrap();
@@ -495,11 +495,11 @@ mod tests {
         // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
         // const fill = ethers.randomBytes(32);
         // ```
-        const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
-        const HASH_A: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-        const HASH_B: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
+        const ROOT: &str    = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
+        const HASH_A: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        const HASH_B: &str  = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
         const HASH_CD: &str = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
-        const HASH_E: &str = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
+        const HASH_E: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
 
         let hash_a = Bytes32::from_hex(HASH_A).unwrap();
         let hash_b = Bytes32::from_hex(HASH_B).unwrap();
@@ -579,8 +579,8 @@ mod tests {
         // const maliciousProof = [leave, leave];
         // const maliciousProofFlags = [true, true, false];
         // ```
-        const ROOT: &str = "0xf2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
-        const LEAF: &str = "0x5e941ddd8f313c0b39f92562c0eca709c3d91360965d396aaef584b3fa76889a";
+        const ROOT: &str             = "0xf2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
+        const LEAF: &str             = "0x5e941ddd8f313c0b39f92562c0eca709c3d91360965d396aaef584b3fa76889a";
         const MALICIOUS_LEAVES: &str = "0x1f23ad5fc0ee6ccbe2f3d30df856758f05ad9d03408a51a99c1c9f0854309db2
                                         0x613994f4e324d0667c07857cd5d147994bc917da5d07ee63fc3f0a1fe8a18e34";
 
