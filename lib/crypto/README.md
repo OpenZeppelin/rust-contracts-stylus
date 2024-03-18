@@ -21,5 +21,5 @@ Common cryptographic procedures for a blockchain environment.
 ## Feature Flags
 
 This crate exposes its modules behind feature gates to ensure the bare minimum
-is included in consumer condebases. You can check the current feature flags in
+is included in consumer codebases. You can check the current feature flags in
 the [Cargo.toml](./Cargo.toml) file.

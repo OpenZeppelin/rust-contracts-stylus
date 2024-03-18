@@ -84,11 +84,11 @@ pub fn verify<H: Hasher<Hash = Bytes32>>(
     leaf == root
 }
 
-#[derive(core::fmt::Debug)]
 /// An error that occurred while verifying a multi-proof.
 ///
 /// TODO: Once <https://github.com/rust-lang/rust/issues/103765> is resolved,
 /// we should derive `core::error::Error`.
+#[derive(core::fmt::Debug)]
 pub enum MultiProofError {
     /// The number of leaves and proof members does not match the amount of
     /// hashes necessary to complete the verification.
@@ -105,7 +105,6 @@ impl core::fmt::Display for MultiProofError {
     }
 }
 
-#[cfg(feature = "multi_proof")]
 /// Verify multiple `leaves` can be simultaneously proven to be a part of
 /// a Merkle tree defined by `root` by using a `proof` with `proof_flags`
 /// and a `hasher`.
@@ -191,6 +190,7 @@ impl core::fmt::Display for MultiProofError {
 ///     verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
 /// assert!(verification.unwrap());
 /// ```
+#[cfg(feature = "multi_proof")]
 pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     proof: &[Bytes32],
     proof_flags: &[bool],
