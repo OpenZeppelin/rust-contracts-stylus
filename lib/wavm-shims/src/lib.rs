@@ -1,9 +1,7 @@
 //! Shim crate to mock Stylus's `vm_hooks`.
+use std::{collections::HashMap, ptr, slice, sync::Mutex};
+
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
-use std::ptr;
-use std::slice;
-use std::sync::Mutex;
 use tiny_keccak::{Hasher, Keccak};
 
 pub const WORD_BYTES: usize = 32;

@@ -352,7 +352,6 @@ impl ERC20 {
 
 #[cfg(test)]
 mod tests {
-    use crate::erc20::ERC20;
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::{
         msg,
@@ -360,6 +359,8 @@ mod tests {
     };
     #[allow(unused_imports)]
     use wavm_shims::*;
+
+    use crate::erc20::ERC20;
 
     fn init_token() -> ERC20 {
         let root = U256::ZERO;
