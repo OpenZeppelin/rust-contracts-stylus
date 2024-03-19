@@ -30,14 +30,17 @@ sol! {
     /// * `sender` - Address whose tokens are being transferred.
     /// * `balance` - Current balance for the interacting account.
     /// * `needed` - Minimum amount required to perform a transfer.
+    #[derive(Debug)]
     error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
     /// Indicates a failure with the token `sender`. Used in transfers.
     ///
     /// * `sender` - Address whose tokens are being transferred.
+    #[derive(Debug)]
     error ERC20InvalidSender(address sender);
     /// Indicates a failure with the token `receiver`. Used in transfers.
     ///
     /// * `receiver` - Address to which the tokens are being transferred.
+    #[derive(Debug)]
     error ERC20InvalidReceiver(address receiver);
     /// Indicates a failure with the `spender`’s `allowance`. Used in
     /// transfers.
@@ -47,24 +50,27 @@ sol! {
     /// * `allowance` - Amount of tokens a `spender` is allowed to operate
     /// with.
     /// * `needed` - Minimum amount required to perform a transfer.
+    #[derive(Debug)]
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals.
     ///
     /// * `approver` - Address initiating an approval operation.
+    #[derive(Debug)]
     error ERC20InvalidApprover(address approver);
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     ///
     /// * `spender` - Address that may be allowed to operate on tokens without
     /// being their owner.
+    #[derive(Debug)]
     error ERC20InvalidSpender(address spender);
 }
 
 /// An ERC-20 error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
-#[derive(SolidityError)]
+#[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error related to the current balance of `sender`. Used in
     /// transfers.
@@ -341,5 +347,58 @@ impl ERC20 {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::erc20::ERC20;
+    use alloy_primitives::{address, Address, U256};
+    use stylus_sdk::{
+        msg,
+        storage::{StorageMap, StorageType, StorageU256},
+    };
+    #[allow(unused_imports)]
+    use wavm_shims::*;
+
+    fn init_token() -> ERC20 {
+        let root = U256::ZERO;
+        let token = ERC20 {
+            _balances: unsafe { StorageMap::new(root, 0) },
+            _allowances: unsafe { StorageMap::new(root + U256::from(32), 0) },
+            _total_supply: unsafe {
+                StorageU256::new(root + U256::from(64), 0)
+            },
+        };
+
+        token
+    }
+
+    #[test]
+    fn reads_balance() {
+        let token = init_token();
+        let balance = token.balance_of(Address::ZERO);
+        assert_eq!(balance, U256::ZERO);
+    }
+
+    #[test]
+    fn transfers_from() {
+        let mut token = init_token();
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+
+        // Alice approves `msg::sender`.
+        let one = U256::from(1);
+        token._allowances.setter(alice).setter(msg::sender()).set(one);
+
+        // Mint some tokens for Alice.
+        let two = U256::from(2);
+        token._balances.setter(alice).set(two);
+        assert_eq!(two, token.balance_of(alice));
+
+        token.transfer_from(alice, bob, one).unwrap();
+
+        assert_eq!(one, token.balance_of(alice));
+        assert_eq!(one, token.balance_of(bob));
     }
 }
