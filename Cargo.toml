@@ -1,5 +1,5 @@
 [workspace]
-members = ["contracts/token", "lib/crypto"]
+members = ["contracts/token", "lib/crypto", "lib/wavm-shims"]
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
 # https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html
