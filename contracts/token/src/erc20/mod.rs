@@ -358,48 +358,87 @@ mod tests {
         storage::{StorageMap, StorageType, StorageU256},
     };
     #[allow(unused_imports)]
-    use wavm_shims::*;
+    use test_utils::*;
 
-    use crate::erc20::ERC20;
+    use crate::erc20::{Error, ERC20};
 
-    fn init_token() -> ERC20 {
-        let root = U256::ZERO;
-        let token = ERC20 {
-            _balances: unsafe { StorageMap::new(root, 0) },
-            _allowances: unsafe { StorageMap::new(root + U256::from(32), 0) },
-            _total_supply: unsafe {
-                StorageU256::new(root + U256::from(64), 0)
-            },
-        };
+    impl Default for ERC20 {
+        fn default() -> Self {
+            let root = U256::ZERO;
+            let token = ERC20 {
+                _balances: unsafe { StorageMap::new(root, 0) },
+                _allowances: unsafe {
+                    StorageMap::new(root + U256::from(32), 0)
+                },
+                _total_supply: unsafe {
+                    StorageU256::new(root + U256::from(64), 0)
+                },
+            };
 
-        token
+            token
+        }
     }
 
     #[test]
     fn reads_balance() {
-        let token = init_token();
-        let balance = token.balance_of(Address::ZERO);
-        assert_eq!(balance, U256::ZERO);
+        test_utils::with_storage::<ERC20>(|token| {
+            let balance = token.balance_of(Address::ZERO);
+            assert_eq!(balance, U256::ZERO);
+        })
     }
 
     #[test]
     fn transfers_from() {
-        let mut token = init_token();
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        test_utils::with_storage::<ERC20>(|token| {
+            let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+            let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
-        // Alice approves `msg::sender`.
-        let one = U256::from(1);
-        token._allowances.setter(alice).setter(msg::sender()).set(one);
+            // Alice approves `msg::sender`.
+            let one = U256::from(1);
+            token._allowances.setter(alice).setter(msg::sender()).set(one);
 
-        // Mint some tokens for Alice.
-        let two = U256::from(2);
-        token._balances.setter(alice).set(two);
-        assert_eq!(two, token.balance_of(alice));
+            // Mint some tokens for Alice.
+            let two = U256::from(2);
+            token._balances.setter(alice).set(two);
+            assert_eq!(two, token.balance_of(alice));
 
-        token.transfer_from(alice, bob, one).unwrap();
+            token.transfer_from(alice, bob, one).unwrap();
 
-        assert_eq!(one, token.balance_of(alice));
-        assert_eq!(one, token.balance_of(bob));
+            assert_eq!(one, token.balance_of(alice));
+            assert_eq!(one, token.balance_of(bob));
+        })
+    }
+
+    #[test]
+    fn transfer_errors_when_insufficient_balance() {
+        test_utils::with_storage::<ERC20>(|token| {
+            let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+            let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+
+            // Alice approves `msg::sender`.
+            let one = U256::from(1);
+            token._allowances.setter(alice).setter(msg::sender()).set(one);
+            assert_eq!(U256::ZERO, token.balance_of(alice));
+
+            let one = U256::from(1);
+            let result = token.transfer_from(alice, bob, one);
+            assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+        })
+    }
+
+    #[test]
+    fn transfer_errors_when_insufficient_allowance() {
+        test_utils::with_storage::<ERC20>(|token| {
+            let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+            let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+
+            // Mint some tokens for Alice.
+            let one = U256::from(1);
+            token._balances.setter(alice).set(one);
+            assert_eq!(one, token.balance_of(alice));
+
+            let result = token.transfer_from(alice, bob, one);
+            assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
+        })
     }
 }

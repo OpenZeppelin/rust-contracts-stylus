@@ -16,7 +16,7 @@ stylus-proc = { version = "0.4.3", default-features = false }
 mini-alloc = "0.4.2"
 
 [dev-dependencies]
-wavm-shims = { path = "../../lib/wavm-shims" }
+test-utils = { path = "../test-utils" }
 
 [features]
 default = []
