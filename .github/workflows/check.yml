@@ -5,6 +5,7 @@ name: check
 # - clippy: checks that the code does not contain any `clippy` warnings.
 # - doc: checks that the code can be documented without errors.
 # - hack: check combinations of feature flags.
+# - typos: checks for typos across the repo.
 permissions:
   contents: read
 # This configuration allows maintainers of this repo to create a branch and
@@ -15,7 +16,7 @@ on:
     branches: [main]
   pull_request:
 # If new code is pushed to a PR branch, then cancel in progress workflows for
-# that PR. Ensures that we don't waste CI time, and returns results quicker
+# that PR. Ensures that we don't waste CI time, and returns results quicker.
 # https://github.com/jonhoo/rust-ci-conf/pull/5
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -95,6 +96,14 @@ jobs:
       - name: cargo install cargo-hack
         uses: taiki-e/install-action@cargo-hack
       # Intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
-      # --feature-powerset runs for every combination of features
+      # `--feature-powerset` runs for every combination of features.
       - name: cargo hack
         run: cargo hack --feature-powerset check --release
+  typos:
+    runs-on: ubuntu-latest
+    name: ubuntu / stable / typos
+    steps:
+      - name: Checkout Actions Repository
+        uses: actions/checkout@v4
+      - name: Check spelling of files in the workspace
+        uses: crate-ci/typos@master
