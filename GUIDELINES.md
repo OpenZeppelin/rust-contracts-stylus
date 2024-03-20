@@ -68,7 +68,7 @@ The following code guidelines will help make code review smoother:
 
 Use `unwrap` only in either of three circumstances:
 
-- Based on manual static anaylsis, you've concluded that it's impossible for
+- Based on manual static analysis, you've concluded that it's impossible for
   the code to panic; so unwrapping is _safe_. An example would be:
 
 ```rust
