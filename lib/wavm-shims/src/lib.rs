@@ -7,6 +7,21 @@ use tiny_keccak::{Hasher, Keccak};
 pub const WORD_BYTES: usize = 32;
 pub type Bytes32 = [u8; WORD_BYTES];
 
+#[no_mangle]
+pub extern "C" fn native_keccak256(
+    bytes: *const u8,
+    len: usize,
+    output: *mut u8,
+) {
+    let mut hasher = Keccak::v256();
+
+    let data = unsafe { slice::from_raw_parts(bytes, len) };
+    hasher.update(data);
+
+    let output = unsafe { slice::from_raw_parts_mut(output, WORD_BYTES) };
+    hasher.finalize(output);
+}
+
 pub static STORAGE: Lazy<Mutex<HashMap<Bytes32, Bytes32>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 

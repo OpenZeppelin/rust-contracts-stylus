@@ -1,7 +1,7 @@
 [package]
 name = "token"
-categories = ["cryptography", "algorithms", "no-std", "wasm"]
-description = "Cryptography Utilities"
+categories = ["no-std", "wasm"]
+description = "Token Standards for Stylus"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
