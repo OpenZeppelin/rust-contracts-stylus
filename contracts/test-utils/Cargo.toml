@@ -1,0 +1,12 @@
+[package]
+name = "test-utils"
+categories = []
+description = "Test utilities"
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+version = "0.1.0"
+
+[dependencies]
+wavm-shims = { path = "../../lib/wavm-shims" }
