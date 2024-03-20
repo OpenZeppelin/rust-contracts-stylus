@@ -33,7 +33,39 @@ mod tests {
 }
 ```
 
----
+Note that for proper usage, tests should have exclusive access to storage,
+since they run in parallel, which may cause undesired results.
+
+One solution is to wrap tests with a function that acquires a global mutex:
+
+```rust
+use std::sync::{Mutex, MutexGuard};
+
+pub use wavm_shims::*;
+
+pub static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
+
+pub fn acquire_storage() -> MutexGuard<'static, ()> {
+    STORAGE_MUTEX.lock().unwrap()
+}
+
+pub fn with_storage<C: Default>(closure: impl FnOnce(&mut C)) {
+    let _lock = acquire_storage();
+    let mut contract = C::default();
+    closure(&mut contract);
+    reset_storage();
+}
+
+#[test]
+fn reads_balance() {
+    test_utils::with_storage::<ERC20>(|token| {
+        let balance = token.balance_of(Address::ZERO);
+        assert_eq!(balance, U256::ZERO);
+    })
+}
+```
+
+### Notice
 
 We maintain this crate on a best-effort basis. We use it extensively on our own
 tests, so we will add here any symbols we may need. However, since we expect

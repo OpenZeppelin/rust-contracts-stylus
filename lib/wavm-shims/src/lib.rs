@@ -3,13 +3,16 @@
 //! Most of the documentation is taken from the [Stylus source].
 //!
 //! [Stylus source]: https://github.com/OffchainLabs/stylus/blob/484efac4f56fb70f96d4890748b8ec2543d88acd/arbitrator/wasm-libraries/user-host-trait/src/lib.rs
-use std::{collections::HashMap, ptr, slice, sync::Mutex};
+use std::slice;
 
-use once_cell::sync::Lazy;
+use storage::{read_bytes32, write_bytes32, STORAGE};
 use tiny_keccak::{Hasher, Keccak};
 
-pub const WORD_BYTES: usize = 32;
-pub type Bytes32 = [u8; WORD_BYTES];
+mod storage;
+pub use storage::reset_storage;
+
+const WORD_BYTES: usize = 32;
+type Bytes32 = [u8; WORD_BYTES];
 
 /// Efficiently computes the [`keccak256`] hash of the given preimage.
 /// The semantics are equivalent to that of the EVM's [`SHA3`] opcode.
@@ -29,22 +32,6 @@ pub unsafe extern "C" fn native_keccak256(
 
     let output = unsafe { slice::from_raw_parts_mut(output, WORD_BYTES) };
     hasher.finalize(output);
-}
-
-/// Storage mock: A global mutable key-value store.
-pub static STORAGE: Lazy<Mutex<HashMap<Bytes32, Bytes32>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
-
-/// Read the word at address `key`.
-pub unsafe fn read_bytes32(key: *const u8) -> Bytes32 {
-    let mut res = Bytes32::default();
-    ptr::copy(key, res.as_mut_ptr(), WORD_BYTES);
-    res
-}
-
-/// Write the word `val` to the location pointed by `key`.
-pub unsafe fn write_bytes32(key: *mut u8, val: Bytes32) {
-    ptr::copy(val.as_ptr(), key, WORD_BYTES);
 }
 
 /// Reads a 32-byte value from permanent storage. Stylus's storage format is
