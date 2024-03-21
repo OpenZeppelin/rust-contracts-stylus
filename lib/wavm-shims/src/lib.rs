@@ -3,6 +3,9 @@
 //! Most of the documentation is taken from the [Stylus source].
 //!
 //! [Stylus source]: https://github.com/OffchainLabs/stylus/blob/484efac4f56fb70f96d4890748b8ec2543d88acd/arbitrator/wasm-libraries/user-host-trait/src/lib.rs
+//!
+//! We allow unsafe here because safety is guaranteed by the Stylus team.
+#![allow(clippy::missing_safety_doc)]
 use std::slice;
 
 use storage::{read_bytes32, write_bytes32, STORAGE};
