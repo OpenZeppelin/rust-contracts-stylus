@@ -76,7 +76,7 @@ pub unsafe extern "C" fn storage_store_bytes32(
     STORAGE.lock().unwrap().insert(key, value);
 }
 
-///
+/// Dummy msg sender set for tests.
 pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
 /// Gets the address of the account that called the program. For normal
@@ -94,4 +94,20 @@ pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
     let addr = const_hex::const_decode_to_array::<20>(MSG_SENDER).unwrap();
     std::ptr::copy(addr.as_ptr(), sender, 20);
+}
+
+/// Emits an EVM log with the given number of topics and data, the first bytes
+/// of which should be the 32-byte-aligned topic data. The semantics are
+/// equivalent to that of the EVM's [`LOG0`], [`LOG1`], [`LOG2`], [`LOG3`], and
+/// [`LOG4`] opcodes based on the number of topics specified. Requesting more
+/// than `4` topics will induce a revert.
+///
+/// [`LOG0`]: https://www.evm.codes/#a0
+/// [`LOG1`]: https://www.evm.codes/#a1
+/// [`LOG2`]: https://www.evm.codes/#a2
+/// [`LOG3`]: https://www.evm.codes/#a3
+/// [`LOG4`]: https://www.evm.codes/#a4
+#[no_mangle]
+pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
+    // No-op: we don't check for events in our unit-tests.
 }
