@@ -52,12 +52,6 @@ sol! {
     /// * `needed` - Minimum amount required to perform a transfer.
     #[derive(Debug)]
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-    /// Indicates a failure with the `approver` of a token to be approved. Used
-    /// in approvals.
-    ///
-    /// * `approver` - Address initiating an approval operation.
-    #[derive(Debug)]
-    error ERC20InvalidApprover(address approver);
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     ///
@@ -82,9 +76,6 @@ pub enum Error {
     /// Indicates a failure with the `spender`’s `allowance`. Used in
     /// transfers.
     InsufficientAllowance(ERC20InsufficientAllowance),
-    /// Indicates a failure with the `approver` of a token to be approved. Used
-    /// in approvals.
-    InvalidApprover(ERC20InvalidApprover),
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     InvalidSpender(ERC20InvalidSpender),
