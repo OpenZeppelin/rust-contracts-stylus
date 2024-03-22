@@ -1,4 +1,4 @@
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../../README.md")]
 #![warn(missing_docs, unreachable_pub, rust_2021_compatibility)]
 #![warn(clippy::all, clippy::pedantic)]
 #![cfg_attr(not(test), no_std, no_main)]
@@ -9,6 +9,11 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 #[cfg(any(test, erc20))]
 pub mod erc20;
+#[cfg(test)]
+mod test_utils;
+
+#[cfg(test)]
+extern crate std;
 
 #[cfg(not(any(test, target_arch = "wasm32-unknown-unknown")))]
 #[panic_handler]

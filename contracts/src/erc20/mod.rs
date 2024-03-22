@@ -343,13 +343,13 @@ impl ERC20 {
 
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)]
+    use crate::test_utils;
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::{
         msg,
         storage::{StorageMap, StorageType, StorageU256},
     };
-    #[allow(unused_imports)]
-    use test_utils::*;
 
     use crate::erc20::{Error, ERC20};
 
