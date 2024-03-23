@@ -5,3 +5,4 @@ imports_granularity = "Crate"
 reorder_impl_items = true
 use_field_init_shorthand = true
 use_small_heuristics = "Max"
+wrap_comments = true

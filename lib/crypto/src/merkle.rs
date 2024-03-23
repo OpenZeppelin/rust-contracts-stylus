@@ -10,7 +10,6 @@
 //! of internal nodes in the Merkle tree could be reinterpreted as a
 //! leaf value. OpenZeppelin's JavaScript library generates Merkle trees
 //! that are safe against this attack out of the box.
-//!
 use alloc::vec::Vec;
 
 type Bytes32 = [u8; 32];
@@ -213,13 +212,15 @@ pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
     // `hashes` represents a queue of hashes, our "main queue".
     let mut hashes = Vec::with_capacity(total_hashes + leaves.len());
     hashes.extend(leaves);
-    // The `xxx_pos` values are "pointers" to the next value to consume in each queue.
-    // We use them to mimic a queue's pop operation.
+    // The `xxx_pos` values are "pointers" to the next value to consume in each
+    // queue. We use them to mimic a queue's pop operation.
     let mut proof_pos = 0;
     let mut hashes_pos = 0;
     // At each step, we compute the next hash using two values:
-    // - A value from the "main queue". Consume all the leaves, then all the hashes but the root.
-    // - A value from the "main queue" (merging branches) or a member of the `proof`, depending on `flag`.
+    // - A value from the "main queue". Consume all the leaves, then all the
+    //   hashes but the root.
+    // - A value from the "main queue" (merging branches) or a member of the
+    //   `proof`, depending on `flag`.
     for &flag in proof_flags {
         let a = hashes[hashes_pos];
         hashes_pos += 1;
@@ -280,7 +281,6 @@ mod tests {
     #[test]
     fn verifies_valid_proofs() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        // They correspond to:
         //
         // ```js
         // const merkleTree = StandardMerkleTree.of(
@@ -323,7 +323,6 @@ mod tests {
     #[test]
     fn rejects_invalid_proofs() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        // They correspond to:
         //
         // ```js
         // const correctMerkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
@@ -348,9 +347,10 @@ mod tests {
     #[test]
     fn rejects_proofs_with_invalid_length() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        // const merkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
         //
         // ```js
+        // const merkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
+        //
         // const root = merkleTree.root;
         // const leaf = merkleTree.leafHash(['a']);
         // const proof = merkleTree.getProof(['a']);
@@ -564,7 +564,8 @@ mod tests {
 
     #[test]
     #[should_panic]
-    /// Panics when processing manipulated proofs with a zero-value node at depth 1.
+    /// Panics when processing manipulated proofs with a zero-value node at
+    /// depth 1.
     fn panics_manipulated_multi_proof() {
         // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
         //
