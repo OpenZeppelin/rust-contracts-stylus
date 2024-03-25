@@ -1,7 +1,7 @@
 name: 🎁 Feature Request
 description: Suggest an idea for this project ⚡️
-title: "🎁 [Feature Request]: "
-labels: ["enhancement"]
+title: "[Feature]: "
+labels: ["type: feature", "needs triage"]
 body:
   - type: markdown
     attributes:
