@@ -348,10 +348,10 @@ mod tests {
         msg,
         storage::{StorageMap, StorageType, StorageU256},
     };
-    #[allow(unused_imports)]
-    use test_utils::*;
 
     use crate::erc20::{Error, ERC20};
+    #[allow(unused_imports)]
+    use crate::test_utils;
 
     impl Default for ERC20 {
         fn default() -> Self {

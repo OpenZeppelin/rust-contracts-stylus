@@ -1,7 +1,8 @@
 [package]
-name = "token"
+# TODO: Figure out public name before v0.1.0 release.
+name = "contracts"
 categories = ["no-std", "wasm"]
-description = "Token Standards for Stylus"
+description = "Contracts for Stylus"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
@@ -16,11 +17,12 @@ stylus-proc = { version = "0.4.3", default-features = false }
 mini-alloc = "0.4.2"
 
 [dev-dependencies]
-test-utils = { path = "../test-utils" }
+wavm-shims = { path = "../lib/wavm-shims" }
 
 [features]
 default = []
 erc20 = []
+erc721 = []
 
 [lib]
 # The Stylus team sets new crates with the following types:
