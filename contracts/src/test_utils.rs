@@ -1,7 +1,7 @@
 //! Unit-testing utilities for Stylus contracts.
 use std::sync::{Mutex, MutexGuard};
 
-pub use wavm_shims::*;
+pub(crate) use wavm_shims::*;
 
 /// A global static mutex.
 ///
@@ -10,15 +10,15 @@ pub use wavm_shims::*;
 /// accesses storage in an non-overlapping manner.
 ///
 /// See [`with_storage`].
-pub static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
+pub(crate) static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
 
 /// Acquires access to storage.
-pub fn acquire_storage() -> MutexGuard<'static, ()> {
+pub(crate) fn acquire_storage() -> MutexGuard<'static, ()> {
     STORAGE_MUTEX.lock().unwrap()
 }
 
 /// Decorates a closure by running it with exclusive access to storage.
-pub fn with_storage<C: Default>(closure: impl FnOnce(&mut C)) {
+pub(crate) fn with_storage<C: Default>(closure: impl FnOnce(&mut C)) {
     let _lock = acquire_storage();
     let mut contract = C::default();
     closure(&mut contract);
