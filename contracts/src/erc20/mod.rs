@@ -343,8 +343,6 @@ impl ERC20 {
 
 #[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
-    use crate::test_utils;
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::{
         msg,
@@ -352,6 +350,8 @@ mod tests {
     };
 
     use crate::erc20::{Error, ERC20};
+    #[allow(unused_imports)]
+    use crate::test_utils;
 
     impl Default for ERC20 {
         fn default() -> Self {

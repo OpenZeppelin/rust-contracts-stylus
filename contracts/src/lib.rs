@@ -9,6 +9,8 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 #[cfg(any(test, erc20))]
 pub mod erc20;
+#[cfg(any(test, erc721))]
+pub mod erc721;
 #[cfg(test)]
 mod test_utils;
 

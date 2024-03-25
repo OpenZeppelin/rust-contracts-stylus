@@ -21,6 +21,7 @@ wavm-shims = { path = "../lib/wavm-shims" }
 [features]
 default = []
 erc20 = []
+erc721 = []
 
 [lib]
 # The Stylus team sets new crates with the following types:
