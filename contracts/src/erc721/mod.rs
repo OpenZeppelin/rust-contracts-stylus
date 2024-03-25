@@ -28,13 +28,15 @@ sol_storage! {
 sol! {
     /// Emitted when `tokenId` token is transferred from `from` to `to`.
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-
+    
     /// Emitted when `owner` enables `approved` to manage the `tokenId` token.
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-
+    
     /// Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+}
 
+sol! {
     /// Indicates that an address can't be an owner.
     /// For example, `address(0)` is a forbidden owner in ERC-20. Used in balance queries.
     error ERC721InvalidOwner(address owner);
