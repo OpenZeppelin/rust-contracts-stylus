@@ -14,10 +14,10 @@ use stylus_sdk::{
 sol! {
     /// Emitted when `tokenId` token is transferred from `from` to `to`.
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-    
+
     /// Emitted when `owner` enables `approved` to manage the `tokenId` token.
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-    
+
     /// Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 }
@@ -107,18 +107,16 @@ sol_storage! {
 
 #[external]
 impl<T: Erc721Info> Erc721<T> {
-    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
-    #[selector(name = "tokenURI")]
-    pub fn token_uri(token_id: U256) -> Result<String, Erc721Error> {
-        let token_uri = if T::BASE_URI.is_empty() {
-            "".to_string()
-        } else {
-            T::BASE_URI.to_string() + &token_id.to_string()
-        };
-        Ok(token_uri)
-    }
-
     /// Returns the number of tokens in ``owner``'s account.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account of the token's owner.
+    ///
+    /// # Returns
+    ///
+    /// The balance of the owner.
     pub fn balance_of(&self, owner: Address) -> Result<U256, Erc721Error> {
         if owner == Address::ZERO {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
@@ -128,9 +126,18 @@ impl<T: Erc721Info> Erc721<T> {
 
     /// Returns the owner of the `token_id` token.
     ///
-    /// Requirements:
+    /// # Arguments
     ///
-    /// - `token_id` must exist.
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Token id as a number
+    ///
+    /// # Returns
+    ///
+    /// The owner of the token.
+    ///
+    /// # Requirements
+    ///
+    /// * `token_id` must exist.
     pub fn owner_of(&self, token_id: U256) -> Result<Address, Erc721Error> {
         self.require_owned(token_id)
     }
@@ -138,25 +145,38 @@ impl<T: Erc721Info> Erc721<T> {
     /// Safely transfers `token_id` token from `from` to `to`, checking first that contract recipients
     /// are aware of the ERC-721 protocol to prevent tokens from being forever locked.
     ///
-    /// Requirements:
+    /// # Arguments
     ///
-    /// - `from` cannot be the zero address.
-    /// - `to` cannot be the zero address.
-    /// - `token_id` token must exist and be owned by `from`.
-    /// - If the caller is not `from`, it must have been allowed to move this token by either {approve} or
-    ///   {setApprovalForAll}.
-    /// - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
-    ///   a safe transfer.
+    /// * `storage` - Write access to the contract's state.
+    /// * `from` - Account of the sender
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
     ///
-    /// Emits a {Transfer} event.
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    ///
+    /// # Requirements
+    ///
+    /// * `from` cannot be the zero address.
+    /// * `to` cannot be the zero address.
+    /// * `token_id` token must exist and be owned by `from`.
+    /// * If the caller is not `from`, it must have been allowed to move this token by either {approve} or
+    /// * {setApprovalForAll}.
+    /// * If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
+    /// * a safe transfer.
+    ///
+    /// # Events
+    ///
+    /// A {Transfer} event.
     pub fn safe_transfer_from(
-        toplevel_storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
+        storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
         from: Address,
         to: Address,
         token_id: U256,
     ) -> Result<(), Erc721Error> {
         Self::safe_transfer_from_with_data(
-            toplevel_storage,
+            storage,
             from,
             to,
             token_id,
@@ -166,27 +186,41 @@ impl<T: Erc721Info> Erc721<T> {
 
     /// Safely transfers `token_id` token from `from` to `to`.
     ///
-    /// Requirements:
+    /// # Arguments
     ///
-    /// - `from` cannot be the zero address.
-    /// - `to` cannot be the zero address.
-    /// - `token_id` token must exist and be owned by `from`.
-    /// - If the caller is not `from`, it must be approved to move this token by either {approve} or {set_approval_for_all}.
-    /// - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
-    ///   a safe transfer.
+    /// * `storage` - Write access to the contract's state.
+    /// * `from` - Account of the sender
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
+    /// * `data` - Additional data with no specified format, sent in call to `to`
     ///
-    /// Emits a {Transfer} event.
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    ///
+    /// # Requirements
+    ///
+    /// * `from` cannot be the zero address.
+    /// * `to` cannot be the zero address.
+    /// * `token_id` token must exist and be owned by `from`.
+    /// * If the caller is not `from`, it must be approved to move this token by either {approve} or {set_approval_for_all}.
+    /// * If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
+    /// * a safe transfer.
+    ///
+    /// # Events
+    ///
+    /// A {Transfer} event.
     #[selector(name = "safeTransferFrom")]
     pub fn safe_transfer_from_with_data(
-        toplevel_storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
+        storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Erc721Error> {
-        toplevel_storage.borrow_mut().transfer_from(from, to, token_id)?;
+        storage.borrow_mut().transfer_from(from, to, token_id)?;
         Self::check_on_erc721_received(
-            toplevel_storage,
+            storage,
             msg::sender(),
             from,
             to,
@@ -201,14 +235,23 @@ impl<T: Erc721Info> Erc721<T> {
     /// or else they may be permanently lost. Usage of {safe_transfer_from} prevents loss, though the caller must
     /// understand this adds an external call which potentially creates a reentrancy vulnerability.
     ///
-    /// Requirements:
+    /// # Arguments
+    /// 
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account of the sender
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
     ///
-    /// - `from` cannot be the zero address.
-    /// - `to` cannot be the zero address.
-    /// - `token_id` token must be owned by `from`.
-    /// - If the caller is not `from`, it must be approved to move this token by either {approve} or {set_approval_for_all}.
+    /// # Requirements:
     ///
-    /// Emits a {Transfer} event.
+    /// * `from` cannot be the zero address.
+    /// * `to` cannot be the zero address.
+    /// * `token_id` token must be owned by `from`.
+    /// * If the caller is not `from`, it must be approved to move this token by either {approve} or {set_approval_for_all}.
+    ///
+    /// # Events
+    ///
+    /// A {Transfer} event.
     pub fn transfer_from(
         &mut self,
         from: Address,
@@ -240,10 +283,17 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// Only a single account can be approved at a time, so approving the zero address clears previous approvals.
     ///
-    /// Requirements:
+    /// # Arguments
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
+    /// 
+    /// # Requirements:
     ///
     /// - The caller must own the token or be an approved operator.
     /// - `token_id` must exist.
+    ///
+    /// # Events
     ///
     /// Emits an {Approval} event.
     pub fn approve(
@@ -257,9 +307,16 @@ impl<T: Erc721Info> Erc721<T> {
     /// Approve or remove `operator` as an operator for the caller.
     /// Operators can call {transfer_from} or {safe_transfer_from} for any token owned by the caller.
     ///
-    /// Requirements:
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `operator` - Account add to the set of authorized operators.
+    /// * `approved` - Flag that that set approval or disapproval for the operator.
+    ///
+    /// # Requirements:
     ///
     /// - The `operator` cannot be the address zero.
+    ///
     ///
     /// Emits an {ApprovalForAll} event.
     pub fn set_approval_for_all(
@@ -272,7 +329,12 @@ impl<T: Erc721Info> Erc721<T> {
 
     /// Returns the account approved for `token_id` token.
     ///
-    /// Requirements:
+    /// # Arguments
+    /// 
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Token id as a number
+    ///
+    /// # Requirements:
     ///
     /// - `token_id` must exist.
     pub fn get_approved(&self, token_id: U256) -> Result<Address, Erc721Error> {
@@ -281,6 +343,12 @@ impl<T: Erc721Info> Erc721<T> {
     }
 
     /// Returns if the `operator` is allowed to manage all the assets of `owner`.
+    ///
+    /// # Arguments
+    /// 
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account of the token's owner.
+    /// * `operator` - Account to add to the set of authorized operators.
     ///
     /// See {set_approval_for_all}
     pub fn is_approved_for_all(
@@ -299,6 +367,11 @@ impl<T: Erc721Info> Erc721<T> {
     /// core ERC-721 logic MUST be matched with the use of {_increaseBalance} to keep balances
     /// consistent with ownership. The invariant to preserve is that for any address `a` the value returned by
     /// `balance_of(a)` must be equal to the number of tokens such that `owner_of_inner(token_id)` is `a`.
+    ///
+    /// # Arguments
+    /// 
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Token id as a number
     pub fn owner_of_inner(
         &self,
         token_id: U256,
@@ -307,6 +380,11 @@ impl<T: Erc721Info> Erc721<T> {
     }
 
     /// Returns the approved address for `token_id`. Returns 0 if `token_id` is not minted.
+    ///
+    /// # Arguments
+    /// 
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Token id as a number
     pub fn get_approved_inner(
         &self,
         token_id: U256,
@@ -319,6 +397,12 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// WARNING: This function assumes that `owner` is the actual owner of `token_id` and does not verify this
     /// assumption.
+    ///
+    /// # Arguments
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account of the token's owner.
+    /// * `spender` - Account that will spend token.
+    /// * `token_id` - Token id as a number
     pub fn is_authorized(
         &self,
         owner: Address,
@@ -338,6 +422,13 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// WARNING: This function assumes that `owner` is the actual owner of `token_id` and does not verify this
     /// assumption.
+    ///
+    /// # Arguments
+    /// 
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account of the token's owner.
+    /// * `spender` - Account that will spend token.
+    /// * `token_id` - Token id as a number
     pub fn check_authorized(
         &self,
         owner: Address,
@@ -366,6 +457,12 @@ impl<T: Erc721Info> Erc721<T> {
     /// WARNING: Increasing an account's balance using this function tends to be paired with an override of the
     /// {owner_of_inner} function to resolve the ownership of the corresponding tokens so that balances and ownership
     /// remain consistent with one another.
+    ///
+    /// # Arguments
+    /// * `account` - Account to increase balance.
+    /// * `value` - The number of tokens to increase balance.
+    /// 
+    /// * `&mut self` - Write access to the contract's state.
     pub fn increase_balance(&mut self, account: Address, value: U256) {
         self.balances.setter(account).add_assign_unchecked(value);
     }
@@ -376,9 +473,18 @@ impl<T: Erc721Info> Erc721<T> {
     /// The `auth` argument is optional. If the value passed is non 0, then this function will check that
     /// `auth` is either the owner of the token, or approved to operate on the token (by the owner).
     ///
-    /// Emits a {Transfer} event.
-    ///
     /// NOTE: If overriding this function in a way that tracks balances, see also {_increaseBalance}.
+    ///
+    /// # Arguments
+    /// 
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `to` - Account of the recipient.
+    /// * `token_id` - Token id as a number.
+    /// * `auth` - Account used for authorization of the update. 
+    ///
+    /// # Events
+    /// 
+    /// Emits a {Transfer} event.
     pub fn update(
         &mut self,
         to: Address,
@@ -414,10 +520,16 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// WARNING: Usage of this method is discouraged, use {safe_mint} whenever possible
     ///
-    /// Requirements:
+    /// # Arguments
+    /// 
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
     ///
-    /// - `token_id` must not exist.
-    /// - `to` cannot be the zero address.
+    /// # Requirements:
+    ///
+    /// * `token_id` must not exist.
+    /// * `to` cannot be the zero address.
     ///
     /// Emits a {Transfer} event.
     pub fn mint(
@@ -440,15 +552,22 @@ impl<T: Erc721Info> Erc721<T> {
 
     /// Same as {xref-ERC721-safe_mint-address-uint256-}[`_safeMint`], with an additional `data` parameter which is
     /// forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
+    ///
+    /// # Arguments
+    /// 
+    /// * `storage` - Write access to the contract's state.
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
+    /// * `data` - Additional data with no specified format, sent in call to `to`
     pub fn safe_mint(
-        toplevel_storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
+        storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Erc721Error> {
-        toplevel_storage.borrow_mut().mint(to, token_id)?;
+        storage.borrow_mut().mint(to, token_id)?;
         Self::check_on_erc721_received(
-            toplevel_storage,
+            storage,
             msg::sender(),
             Address::ZERO,
             to,
@@ -461,9 +580,14 @@ impl<T: Erc721Info> Erc721<T> {
     /// The approval is cleared when the token is burned.
     /// This is an internal function that does not check if the sender is authorized to operate on the token.
     ///
-    /// Requirements:
+    /// # Arguments
+    /// 
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token_id` - Token id as a number
     ///
-    /// - `token_id` must exist.
+    /// # Requirements:
+    ///
+    /// * `token_id` must exist.
     ///
     /// Emits a {Transfer} event.
     pub fn burn(&mut self, token_id: U256) -> Result<(), Erc721Error> {
@@ -479,10 +603,17 @@ impl<T: Erc721Info> Erc721<T> {
     /// Transfers `token_id` from `from` to `to`.
     ///  As opposed to {transferFrom}, this imposes no restrictions on msg.sender.
     ///
-    /// Requirements:
+    /// # Arguments
+    /// 
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account of the sender
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
     ///
-    /// - `to` cannot be the zero address.
-    /// - `token_id` token must be owned by `from`.
+    /// # Requirements:
+    ///
+    /// * `to` cannot be the zero address.
+    /// * `token_id` token must be owned by `from`.
     ///
     /// Emits a {Transfer} event.
     pub fn transfer(
@@ -514,6 +645,14 @@ impl<T: Erc721Info> Erc721<T> {
 
     /// Same as {xref-ERC721-safe_transfer-address-address-uint256-}[`_safeTransfer`], with an additional `data` parameter which is
     /// forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
+    ///
+    /// # Arguments
+    /// 
+    /// * `storage` - Write access to the contract's state.
+    /// * `from` - Account of the sender
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
+    /// * `data` - Additional data with no specified format, sent in call to `to`
     pub fn safe_transfer(
         storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
         from: Address,
@@ -534,6 +673,13 @@ impl<T: Erc721Info> Erc721<T> {
 
     /// Variant of `approve_inner` with an optional flag to enable or disable the {Approval} event. The event is not
     /// emitted in the context of transfers.
+    ///
+    /// # Arguments
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
+    /// * `auth` - Account used for authorization of the update. 
+    /// * `emit_event` - Emit ['Approval'] event flag.
     pub fn approve_inner(
         &mut self,
         to: Address,
@@ -554,7 +700,7 @@ impl<T: Erc721Info> Erc721<T> {
             }
 
             if emit_event {
-                evm::log(Approval { owner, approved: to, tokenId: token_id })
+                evm::log(Approval { owner, approved: to, tokenId: token_id });
             }
         }
 
@@ -564,8 +710,14 @@ impl<T: Erc721Info> Erc721<T> {
 
     /// Approve `operator` to operate on all of `owner` tokens
     ///
-    /// Requirements:
-    /// - operator can't be the address zero.
+    /// # Arguments
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `owner` - Account the token's owner.
+    /// * `operator` - Account to add to the set of authorized operators.
+    /// * `approved` - Flag that that set approval or disapproval for the operator.
+    ///
+    /// # Requirements:
+    /// * operator can't be the address zero.
     ///
     /// Emits an {ApprovalForAll} event.
     pub fn set_approval_for_all_inner(
@@ -586,6 +738,10 @@ impl<T: Erc721Info> Erc721<T> {
     /// Returns the owner.
     ///
     /// Overrides to ownership logic should be done to {owner_of_inner}.
+    ///
+    /// # Arguments
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Token id as a number
     pub fn require_owned(
         &self,
         token_id: U256,
@@ -603,6 +759,14 @@ impl<T: Erc721Info> Erc721<T> {
     /// The acceptance call is not executed and treated as a no-op if the target address is doesn't contain code (i.e. an EOA).
     /// Otherwise, the recipient must implement {IERC721Receiver-onERC721Received} and return the acceptance magic value to accept
     /// the transfer.
+    ///
+    /// # Arguments
+    /// * `storage` - Write access to the contract's state.
+    /// * `operator` - Account to add to the set of authorized operators.
+    /// * `from` - Account of the sender
+    /// * `to` - Account of the recipient
+    /// * `token_id` - Token id as a number
+    /// * `data` - Additional data with no specified format, sent in call to `to`
     pub fn check_on_erc721_received(
         storage: &mut impl TopLevelStorage,
         operator: Address,
