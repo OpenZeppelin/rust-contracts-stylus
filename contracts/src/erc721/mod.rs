@@ -7,7 +7,7 @@ use stylus_sdk::{
     alloy_primitives::{Address, U256},
     alloy_sol_types::{sol, SolError},
     call::Call,
-    evm, function_selector, msg,
+    evm, msg,
     prelude::*,
 };
 
@@ -64,7 +64,7 @@ impl<T: SolError> From<T> for Erc721Error {
 }
 
 sol_interface! {
-    /// ERC-721 token receiver interface
+    /// ERC-721 token receiver interface.
     /// Interface for any contract that wants to support safeTransfers
     /// from ERC-721 asset contracts.
     interface IERC721Receiver {
@@ -168,7 +168,7 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// # Events
     ///
-    /// A {Transfer} event.
+    /// Emits a [`Transfer`] event.
     pub fn safe_transfer_from(
         storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
         from: Address,
@@ -203,13 +203,13 @@ impl<T: Erc721Info> Erc721<T> {
     /// * `from` cannot be the zero address.
     /// * `to` cannot be the zero address.
     /// * `token_id` token must exist and be owned by `from`.
-    /// * If the caller is not `from`, it must be approved to move this token by either {approve} or {set_approval_for_all}.
+    /// * If the caller is not `from`, it must be approved to move this token by either {approve} or [`set_approval_for_all`].
     /// * If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
     /// * a safe transfer.
     ///
     /// # Events
     ///
-    /// A {Transfer} event.
+    /// Emits a [`Transfer`] event.
     #[selector(name = "safeTransferFrom")]
     pub fn safe_transfer_from_with_data(
         storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
@@ -236,7 +236,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// understand this adds an external call which potentially creates a reentrancy vulnerability.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `from` - Account of the sender
     /// * `to` - Account of the recipient
@@ -247,11 +247,11 @@ impl<T: Erc721Info> Erc721<T> {
     /// * `from` cannot be the zero address.
     /// * `to` cannot be the zero address.
     /// * `token_id` token must be owned by `from`.
-    /// * If the caller is not `from`, it must be approved to move this token by either {approve} or {set_approval_for_all}.
+    /// * If the caller is not `from`, it must be approved to move this token by either {approve} or [`set_approval_for_all`].
     ///
     /// # Events
     ///
-    /// A {Transfer} event.
+    /// Emits a [`Transfer`] event.
     pub fn transfer_from(
         &mut self,
         from: Address,
@@ -287,7 +287,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient
     /// * `token_id` - Token id as a number
-    /// 
+    ///
     /// # Requirements:
     ///
     /// - The caller must own the token or be an approved operator.
@@ -295,7 +295,7 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// # Events
     ///
-    /// Emits an {Approval} event.
+    /// Emits an [`Approval`] event.
     pub fn approve(
         &mut self,
         to: Address,
@@ -315,10 +315,11 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// # Requirements:
     ///
-    /// - The `operator` cannot be the address zero.
+    /// * The `operator` cannot be the address zero.
     ///
+    /// # Events
     ///
-    /// Emits an {ApprovalForAll} event.
+    /// Emits an [`ApprovalForAll`] event.
     pub fn set_approval_for_all(
         &mut self,
         operator: Address,
@@ -330,13 +331,13 @@ impl<T: Erc721Info> Erc721<T> {
     /// Returns the account approved for `token_id` token.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
     ///
     /// # Requirements:
     ///
-    /// - `token_id` must exist.
+    /// * `token_id` must exist.
     pub fn get_approved(&self, token_id: U256) -> Result<Address, Erc721Error> {
         self.require_owned(token_id)?;
         self.get_approved_inner(token_id)
@@ -345,12 +346,14 @@ impl<T: Erc721Info> Erc721<T> {
     /// Returns if the `operator` is allowed to manage all the assets of `owner`.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account of the token's owner.
     /// * `operator` - Account to add to the set of authorized operators.
     ///
-    /// See {set_approval_for_all}
+    /// # Events
+    /// 
+    /// Emits an [`set_approval_for_all`] event
     pub fn is_approved_for_all(
         &self,
         owner: Address,
@@ -369,7 +372,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// `balance_of(a)` must be equal to the number of tokens such that `owner_of_inner(token_id)` is `a`.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
     pub fn owner_of_inner(
@@ -382,7 +385,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// Returns the approved address for `token_id`. Returns 0 if `token_id` is not minted.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
     pub fn get_approved_inner(
@@ -424,7 +427,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// assumption.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account of the token's owner.
     /// * `spender` - Account that will spend token.
@@ -458,11 +461,11 @@ impl<T: Erc721Info> Erc721<T> {
     /// {owner_of_inner} function to resolve the ownership of the corresponding tokens so that balances and ownership
     /// remain consistent with one another.
     ///
-    /// # Arguments
-    /// * `account` - Account to increase balance.
-    /// * `value` - The number of tokens to increase balance.
+    /// # Arguments    
     /// 
     /// * `&mut self` - Write access to the contract's state.
+    /// * `account` - Account to increase balance.
+    /// * `value` - The number of tokens to increase balance.
     pub fn increase_balance(&mut self, account: Address, value: U256) {
         self.balances.setter(account).add_assign_unchecked(value);
     }
@@ -476,15 +479,15 @@ impl<T: Erc721Info> Erc721<T> {
     /// NOTE: If overriding this function in a way that tracks balances, see also {_increaseBalance}.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
-    /// * `auth` - Account used for authorization of the update. 
+    /// * `auth` - Account used for authorization of the update.
     ///
     /// # Events
-    /// 
-    /// Emits a {Transfer} event.
+    ///
+    /// Emits a [`Transfer`] event.
     pub fn update(
         &mut self,
         to: Address,
@@ -521,7 +524,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// WARNING: Usage of this method is discouraged, use {safe_mint} whenever possible
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient
     /// * `token_id` - Token id as a number
@@ -531,7 +534,9 @@ impl<T: Erc721Info> Erc721<T> {
     /// * `token_id` must not exist.
     /// * `to` cannot be the zero address.
     ///
-    /// Emits a {Transfer} event.
+    /// # Events
+    /// 
+    /// Emits a [`Transfer`] event.
     pub fn mint(
         &mut self,
         to: Address,
@@ -554,7 +559,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `storage` - Write access to the contract's state.
     /// * `to` - Account of the recipient
     /// * `token_id` - Token id as a number
@@ -581,7 +586,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// This is an internal function that does not check if the sender is authorized to operate on the token.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `token_id` - Token id as a number
     ///
@@ -589,7 +594,9 @@ impl<T: Erc721Info> Erc721<T> {
     ///
     /// * `token_id` must exist.
     ///
-    /// Emits a {Transfer} event.
+    /// # Events
+    /// 
+    /// Emits a [`Transfer`] event.
     pub fn burn(&mut self, token_id: U256) -> Result<(), Erc721Error> {
         let previous_owner =
             self.update(Address::ZERO, token_id, Address::ZERO)?;
@@ -604,7 +611,7 @@ impl<T: Erc721Info> Erc721<T> {
     ///  As opposed to {transferFrom}, this imposes no restrictions on msg.sender.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `from` - Account of the sender
     /// * `to` - Account of the recipient
@@ -615,7 +622,9 @@ impl<T: Erc721Info> Erc721<T> {
     /// * `to` cannot be the zero address.
     /// * `token_id` token must be owned by `from`.
     ///
-    /// Emits a {Transfer} event.
+    /// # Events
+    /// 
+    /// Emits a [`Transfer`] event.
     pub fn transfer(
         &mut self,
         from: Address,
@@ -647,7 +656,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `storage` - Write access to the contract's state.
     /// * `from` - Account of the sender
     /// * `to` - Account of the recipient
@@ -678,7 +687,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient
     /// * `token_id` - Token id as a number
-    /// * `auth` - Account used for authorization of the update. 
+    /// * `auth` - Account used for authorization of the update.
     /// * `emit_event` - Emit ['Approval'] event flag.
     pub fn approve_inner(
         &mut self,
@@ -719,6 +728,8 @@ impl<T: Erc721Info> Erc721<T> {
     /// # Requirements:
     /// * operator can't be the address zero.
     ///
+    /// # Events
+    /// 
     /// Emits an {ApprovalForAll} event.
     pub fn set_approval_for_all_inner(
         &mut self,
