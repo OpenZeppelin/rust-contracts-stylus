@@ -11,20 +11,6 @@ use stylus_sdk::{
     prelude::*,
 };
 
-sol_storage! {
-    pub struct Erc721<T> {
-        mapping(uint256 => address) owners;
-
-        mapping(address => uint256) balances;
-
-        mapping(uint256 => address) token_approvals;
-
-        mapping(address => mapping(address => bool)) operator_approvals;
-
-        PhantomData<T> phantom_data;
-    }
-}
-
 sol! {
     /// Emitted when `tokenId` token is transferred from `from` to `to`.
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
@@ -63,6 +49,20 @@ sol! {
     error ERC721InvalidOperator(address operator);
 }
 
+pub struct Erc721Error(Vec<u8>);
+
+impl From<Erc721Error> for Vec<u8> {
+    fn from(value: Erc721Error) -> Vec<u8> {
+        value.0
+    }
+}
+
+impl<T: SolError> From<T> for Erc721Error {
+    fn from(value: T) -> Self {
+        Self(value.encode())
+    }
+}
+
 sol_interface! {
     /// ERC-721 token receiver interface
     /// Interface for any contract that wants to support safeTransfers
@@ -91,18 +91,17 @@ pub trait Erc721Info {
     const BASE_URI: &'static str;
 }
 
-pub struct Erc721Error(Vec<u8>);
+sol_storage! {
+    pub struct Erc721<T> {
+        mapping(uint256 => address) owners;
 
-// NOTE: According to current implementation of stylus every error should be converted to Vec<u8>
-impl From<Erc721Error> for Vec<u8> {
-    fn from(value: Erc721Error) -> Vec<u8> {
-        value.0
-    }
-}
+        mapping(address => uint256) balances;
 
-impl<T: SolError> From<T> for Erc721Error {
-    fn from(value: T) -> Self {
-        Self(value.encode())
+        mapping(uint256 => address) token_approvals;
+
+        mapping(address => mapping(address => bool)) operator_approvals;
+
+        PhantomData<T> phantom_data;
     }
 }
 
@@ -368,7 +367,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// {owner_of_inner} function to resolve the ownership of the corresponding tokens so that balances and ownership
     /// remain consistent with one another.
     pub fn increase_balance(&mut self, account: Address, value: U256) {
-        self.balances.setter(account).add_assign_unchecked(value)
+        self.balances.setter(account).add_assign_unchecked(value);
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively mints (or burns) if the current owner
