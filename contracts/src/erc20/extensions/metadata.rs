@@ -1,5 +1,6 @@
 //! Optional metadata of the ERC-20 standard.
 use alloc::string::String;
+
 use alloy_primitives::U8;
 use stylus_proc::{external, sol_storage};
 
@@ -80,11 +81,9 @@ mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageString, StorageType, StorageU8};
 
+    use super::{Metadata, DEFAULT_DECIMALS};
     #[allow(unused_imports)]
     use crate::test_utils;
-
-    use super::Metadata;
-    use super::DEFAULT_DECIMALS;
 
     impl Default for Metadata {
         fn default() -> Self {
