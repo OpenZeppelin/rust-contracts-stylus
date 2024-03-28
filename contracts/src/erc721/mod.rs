@@ -1,7 +1,7 @@
+use derive_more::From;
 use std::borrow::BorrowMut;
 use std::prelude::v1::{Box, String, ToString, Vec};
 use std::vec;
-use derive_more::From;
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
@@ -92,14 +92,14 @@ sol! {
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
 #[derive(SolidityError, Debug, From)]
 pub enum Error {
-    ERC721InvalidOwner(ERC721InvalidOwner),
-    ERC721NonexistentToken(ERC721NonexistentToken),
-    ERC721IncorrectOwner(ERC721IncorrectOwner),
-    ERC721InvalidSender(ERC721InvalidSender),
-    ERC721InvalidReceiver(ERC721InvalidReceiver),
-    ERC721InsufficientApproval(ERC721InsufficientApproval),
-    ERC721InvalidApprover(ERC721InvalidApprover),
-    ERC721InvalidOperator(ERC721InvalidOperator),
+    InvalidOwner(ERC721InvalidOwner),
+    NonexistentToken(ERC721NonexistentToken),
+    IncorrectOwner(ERC721IncorrectOwner),
+    InvalidSender(ERC721InvalidSender),
+    InvalidReceiver(ERC721InvalidReceiver),
+    InsufficientApproval(ERC721InsufficientApproval),
+    InvalidApprover(ERC721InvalidApprover),
+    InvalidOperator(ERC721InvalidOperator),
 }
 
 sol_interface! {
@@ -301,7 +301,7 @@ impl Erc721 {
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
-                token_id: token_id,
+                token_id,
                 owner: previous_owner,
             }
             .into());
@@ -465,13 +465,10 @@ impl Erc721 {
     ) -> Result<(), Error> {
         if !self.is_authorized(owner, spender, token_id)? {
             return if owner == Address::ZERO {
-                Err(ERC721NonexistentToken { token_id: token_id }.into())
+                Err(ERC721NonexistentToken { token_id }.into())
             } else {
-                Err(ERC721InsufficientApproval {
-                    operator: spender,
-                    token_id: token_id,
-                }
-                .into())
+                Err(ERC721InsufficientApproval { operator: spender, token_id }
+                    .into())
             };
         }
         Ok(())
@@ -539,7 +536,7 @@ impl Erc721 {
 
         self.owners.setter(token_id).set(to);
 
-        evm::log(Transfer { from, to, token_id: token_id });
+        evm::log(Transfer { from, to, token_id });
 
         Ok(from)
     }
@@ -622,7 +619,7 @@ impl Erc721 {
         let previous_owner =
             self.update(Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner == Address::ZERO {
-            Err(ERC721NonexistentToken { token_id: token_id }.into())
+            Err(ERC721NonexistentToken { token_id }.into())
         } else {
             Ok(())
         }
@@ -660,11 +657,11 @@ impl Erc721 {
 
         let previous_owner = self.update(to, token_id, Address::ZERO)?;
         if previous_owner == Address::ZERO {
-            Err(ERC721NonexistentToken { token_id: token_id }.into())
+            Err(ERC721NonexistentToken { token_id }.into())
         } else if previous_owner != from {
             Err(ERC721IncorrectOwner {
                 sender: from,
-                token_id: token_id,
+                token_id,
                 owner: previous_owner,
             }
             .into())
@@ -730,7 +727,7 @@ impl Erc721 {
             }
 
             if emit_event {
-                evm::log(Approval { owner, approved: to, token_id: token_id });
+                evm::log(Approval { owner, approved: to, token_id });
             }
         }
 
@@ -777,7 +774,7 @@ impl Erc721 {
     pub fn require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self.owner_of_inner(token_id)?;
         if owner == Address::ZERO {
-            return Err(ERC721NonexistentToken { token_id: token_id }.into());
+            return Err(ERC721NonexistentToken { token_id }.into());
         }
         Ok(owner)
     }
@@ -823,7 +820,7 @@ impl Erc721 {
                         Ok(())
                     }
                 }
-                Err(_) => Err(ERC721InvalidReceiver{receiver: to}.into()),
+                Err(_) => Err(ERC721InvalidReceiver { receiver: to }.into()),
             };
         }
         Ok(())
@@ -852,7 +849,7 @@ impl<'a> IncrementalMath<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::erc721::{Erc721, Error};
+    use crate::erc721::{ERC721InvalidSender, Erc721, Error};
     #[allow(unused_imports)]
     use crate::test_utils;
     use alloy_primitives::{address, Address, U256};
@@ -895,7 +892,29 @@ mod tests {
         });
     }
 
-
+    #[test]
+    fn error_mint_second_nft() {
+        test_utils::with_storage::<Erc721>(|token| {
+            let token_id = random_token_id();
+            token.mint(ALICE, token_id).expect("mint token first time");
+            match token.mint(ALICE, token_id) {
+                Ok(_) => {
+                    panic!(
+                        "Second mint of the same token should not be possible"
+                    )
+                }
+                Err(e) => match e {
+                    Error::InvalidSender(ERC721InvalidSender {
+                        sender: Address::ZERO,
+                    }) => {}
+                    e => {
+                        panic!("Invalid error - {e:?}");
+                    }
+                },
+            };
+        });
+    }
+    
     pub fn random_token_id() -> U256 {
         let num: u32 = rand::random();
         num.try_into().expect("conversion to U256")
