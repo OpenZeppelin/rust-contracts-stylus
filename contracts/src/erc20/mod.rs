@@ -12,6 +12,8 @@ use stylus_sdk::{
     stylus_proc::{external, sol_storage},
 };
 
+pub mod extensions;
+
 sol! {
     /// Emitted when `value` tokens are moved from one account (`from`) to
     /// another (`to`).
@@ -356,7 +358,7 @@ mod tests {
     impl Default for ERC20 {
         fn default() -> Self {
             let root = U256::ZERO;
-            let token = ERC20 {
+            ERC20 {
                 _balances: unsafe { StorageMap::new(root, 0) },
                 _allowances: unsafe {
                     StorageMap::new(root + U256::from(32), 0)
@@ -364,9 +366,7 @@ mod tests {
                 _total_supply: unsafe {
                     StorageU256::new(root + U256::from(64), 0)
                 },
-            };
-
-            token
+            }
         }
     }
 
