@@ -19,6 +19,7 @@ derive_more = "0.99.17"
 
 [dev-dependencies]
 wavm-shims = { path = "../lib/wavm-shims" }
+rand = "0.8.5"
 
 [features]
 default = []

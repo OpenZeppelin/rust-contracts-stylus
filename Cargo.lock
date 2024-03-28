@@ -129,6 +129,7 @@ dependencies = [
  "alloy-sol-types",
  "derive_more",
  "mini-alloc",
+ "rand",
  "stylus-proc",
  "stylus-sdk",
  "wavm-shims",

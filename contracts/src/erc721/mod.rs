@@ -861,6 +861,9 @@ mod tests {
         storage::{StorageMap, StorageType, StorageU256},
     };
 
+    const ALICE: Address = address!("01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478");
+    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
+
     impl Default for Erc721 {
         fn default() -> Self {
             let root = U256::ZERO;
@@ -879,18 +882,22 @@ mod tests {
     }
 
     #[test]
-    fn reads_balance() {
+    fn mint_nft_and_check_balance() {
         test_utils::with_storage::<Erc721>(|token| {
-            // TODO#q create random address
-            let address = address!("01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478");
-            let balance = token.balance_of(address);
-            assert_eq!(U256::ZERO, balance.unwrap());
+            let token_id = random_token_id();
+            token.mint(ALICE, token_id).expect("mint token");
+            let owner = token.owner_of(token_id).expect("owner address");
+            assert_eq!(owner, ALICE);
 
-            let owner = msg::sender();
+            let balance = token.balance_of(ALICE).expect("balance of owner");
             let one = U256::from(1);
-            token.balances.setter(owner).set(one);
-            let balance = token.balance_of(owner);
-            assert_eq!(one, balance.unwrap());
+            assert!(balance >= one);
         });
+    }
+
+
+    pub fn random_token_id() -> U256 {
+        let num: u32 = rand::random();
+        num.try_into().expect("conversion to U256")
     }
 }
