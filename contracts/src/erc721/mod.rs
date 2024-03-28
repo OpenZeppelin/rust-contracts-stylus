@@ -1,7 +1,7 @@
 use std::borrow::BorrowMut;
-use std::marker::PhantomData;
-use std::prelude::v1::{String, ToString, Vec};
+use std::prelude::v1::{Box, String, ToString, Vec};
 use std::vec;
+use derive_more::From;
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
@@ -57,19 +57,19 @@ sol! {
     error ERC721InvalidOperator(address operator);
 }
 
-#[derive(Debug)]
-pub struct Error(Vec<u8>);
-
-impl From<Error> for Vec<u8> {
-    fn from(value: Error) -> Vec<u8> {
-        value.0
-    }
-}
-
-impl<T: SolError> From<T> for Error {
-    fn from(value: T) -> Self {
-        Self(value.encode())
-    }
+/// An ERC-721 error defined as described in [ERC-6093].
+///
+/// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
+#[derive(SolidityError, Debug, From)]
+pub enum Error {
+    ERC721InvalidOwner(ERC721InvalidOwner),
+    ERC721NonexistentToken(ERC721NonexistentToken),
+    ERC721IncorrectOwner(ERC721IncorrectOwner),
+    ERC721InvalidSender(ERC721InvalidSender),
+    ERC721InvalidReceiver(ERC721InvalidReceiver),
+    ERC721InsufficientApproval(ERC721InsufficientApproval),
+    ERC721InvalidApprover(ERC721InvalidApprover),
+    ERC721InvalidOperator(ERC721InvalidOperator),
 }
 
 sol_interface! {
@@ -353,7 +353,7 @@ impl Erc721 {
     /// * `operator` - Account to add to the set of authorized operators.
     ///
     /// # Events
-    /// 
+    ///
     /// Emits an [`set_approval_for_all`] event
     pub fn is_approved_for_all(
         &self,
@@ -376,10 +376,7 @@ impl Erc721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
-    pub fn owner_of_inner(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, Error> {
+    pub fn owner_of_inner(&self, token_id: U256) -> Result<Address, Error> {
         Ok(self.owners.get(token_id))
     }
 
@@ -389,10 +386,7 @@ impl Erc721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
-    pub fn get_approved_inner(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, Error> {
+    pub fn get_approved_inner(&self, token_id: U256) -> Result<Address, Error> {
         Ok(self.token_approvals.get(token_id))
     }
 
@@ -463,7 +457,7 @@ impl Erc721 {
     /// remain consistent with one another.
     ///
     /// # Arguments    
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
@@ -536,13 +530,9 @@ impl Erc721 {
     /// * `to` cannot be the zero address.
     ///
     /// # Events
-    /// 
+    ///
     /// Emits a [`Transfer`] event.
-    pub fn mint(
-        &mut self,
-        to: Address,
-        token_id: U256,
-    ) -> Result<(), Error> {
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to == Address::ZERO {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
@@ -596,7 +586,7 @@ impl Erc721 {
     /// * `token_id` must exist.
     ///
     /// # Events
-    /// 
+    ///
     /// Emits a [`Transfer`] event.
     pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
@@ -624,7 +614,7 @@ impl Erc721 {
     /// * `token_id` token must be owned by `from`.
     ///
     /// # Events
-    /// 
+    ///
     /// Emits a [`Transfer`] event.
     pub fn transfer(
         &mut self,
@@ -730,7 +720,7 @@ impl Erc721 {
     /// * operator can't be the address zero.
     ///
     /// # Events
-    /// 
+    ///
     /// Emits an {ApprovalForAll} event.
     pub fn set_approval_for_all_inner(
         &mut self,
@@ -754,10 +744,7 @@ impl Erc721 {
     /// # Arguments
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
-    pub fn require_owned(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, Error> {
+    pub fn require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self.owner_of_inner(token_id)?;
         if owner == Address::ZERO {
             return Err(ERC721NonexistentToken { tokenId: token_id }.into());
@@ -787,6 +774,7 @@ impl Erc721 {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
+        // TODO: compute INTERFACE_ID at compile time
         const IERC721RECEIVER_INTERFACE_ID: u32 = 0x150b7a02;
         if to.has_code() {
             let call = Call::new_in(storage);
@@ -805,7 +793,7 @@ impl Erc721 {
                         Ok(())
                     }
                 }
-                Err(err) => Err(Error(err.into())),
+                Err(_) => Err(ERC721InvalidReceiver{receiver: to}.into()),
             };
         }
         Ok(())
@@ -832,33 +820,33 @@ impl<'a> IncrementalMath<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
+    use crate::erc721::{Erc721, Error};
+    #[allow(unused_imports)]
+    use crate::test_utils;
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::{
         msg,
         storage::{StorageMap, StorageType, StorageU256},
     };
-    use crate::erc721::{Error, Erc721};
-    #[allow(unused_imports)]
-    use crate::test_utils;
 
     impl Default for Erc721 {
         fn default() -> Self {
             let root = U256::ZERO;
-            let token = Erc721 {
+
+            Erc721 {
                 owners: unsafe { StorageMap::new(root, 0) },
                 balances: unsafe { StorageMap::new(root + U256::from(32), 0) },
-                token_approvals: unsafe { StorageMap::new(root + U256::from(64), 0) },
-                operator_approvals: unsafe { StorageMap::new(root + U256::from(96), 0) },
-            };
-
-            token
+                token_approvals: unsafe {
+                    StorageMap::new(root + U256::from(64), 0)
+                },
+                operator_approvals: unsafe {
+                    StorageMap::new(root + U256::from(96), 0)
+                },
+            }
         }
     }
-
 
     #[test]
     fn reads_balance() {

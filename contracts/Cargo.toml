@@ -15,6 +15,7 @@ alloy-sol-types = { version = "0.3.1", default-features = false }
 stylus-sdk = { version = "0.4.3", default-features = false }
 stylus-proc = { version = "0.4.3", default-features = false }
 mini-alloc = "0.4.2"
+derive_more = "0.99.17"
 
 [dev-dependencies]
 wavm-shims = { path = "../lib/wavm-shims" }
