@@ -13,47 +13,77 @@ use stylus_sdk::{
 
 sol! {
     /// Emitted when `tokenId` token is transferred from `from` to `to`.
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    ///
+    /// * `from` - Address from which token will be transferred.
+    /// * `to` - Address where token will be transferred.
+    /// * `token_id` - Token id as a number.
+    event Transfer(address indexed from, address indexed to, uint256 indexed token_id);
 
     /// Emitted when `owner` enables `approved` to manage the `tokenId` token.
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    ///
+    /// * `owner` - Address of the owner of the token.
+    /// * `approved` - Address of the approver.
+    /// * `token_id` - Token id as a number.
+    event Approval(address indexed owner, address indexed approved, uint256 indexed token_id);
 
     /// Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
+    ///
+    /// * `owner` - Address of the owner of the token.
+    /// * `operator` - Address of an operator that will manage operations on the token.
+    /// * `token_id` - Token id as a number.
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 }
 
 sol! {
     /// Indicates that an address can't be an owner.
     /// For example, `address(0)` is a forbidden owner in ERC-20. Used in balance queries.
+    ///
+    /// * `owner` - Incorrect address of the owner.
     #[derive(Debug)]
     error ERC721InvalidOwner(address owner);
 
     /// Indicates a `tokenId` whose `owner` is the zero address.
+    ///
+    /// * `token_id` - Token id as a number.
     #[derive(Debug)]
-    error ERC721NonexistentToken(uint256 tokenId);
+    error ERC721NonexistentToken(uint256 token_id);
 
     /// Indicates an error related to the ownership over a particular token. Used in transfers.
+    ///
+    /// * `sender` - Address whose token being transferred.
+    /// * `token_id` - Token id as a number.
+    /// * `owner` - Address of the owner of the token.
     #[derive(Debug)]
-    error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
+    error ERC721IncorrectOwner(address sender, uint256 token_id, address owner);
 
     /// Indicates a failure with the token `sender`. Used in transfers.
+    ///
+    /// * `sender` - An address whose token being transferred.
     #[derive(Debug)]
     error ERC721InvalidSender(address sender);
 
     /// Indicates a failure with the token `receiver`. Used in transfers.
+    ///
+    /// * `receiver` - Address that receives token.
     #[derive(Debug)]
     error ERC721InvalidReceiver(address receiver);
 
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
+    ///
+    /// * `address` - Address of an operator that wasn't approved.
+    /// * `token_id` - Token id as a number.
     #[derive(Debug)]
-    error ERC721InsufficientApproval(address operator, uint256 tokenId);
+    error ERC721InsufficientApproval(address operator, uint256 token_id);
 
     /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+    ///
+    /// * `address` - Address of an approver that failed to approve.
     #[derive(Debug)]
     error ERC721InvalidApprover(address approver);
 
     /// Indicates a failure with the `operator` to be approved. Used in approvals.
     #[derive(Debug)]
+    /// * `operator` - Incorrect address of the operator.
     error ERC721InvalidOperator(address operator);
 }
 
@@ -88,7 +118,7 @@ sol_interface! {
         function onERC721Received(
             address operator,
             address from,
-            uint256 tokenId,
+            uint256 token_id,
             bytes calldata data
         ) external returns (bytes4);
     }
@@ -271,7 +301,7 @@ impl Erc721 {
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
-                tokenId: token_id,
+                token_id: token_id,
                 owner: previous_owner,
             }
             .into());
@@ -435,11 +465,11 @@ impl Erc721 {
     ) -> Result<(), Error> {
         if !self.is_authorized(owner, spender, token_id)? {
             return if owner == Address::ZERO {
-                Err(ERC721NonexistentToken { tokenId: token_id }.into())
+                Err(ERC721NonexistentToken { token_id: token_id }.into())
             } else {
                 Err(ERC721InsufficientApproval {
                     operator: spender,
-                    tokenId: token_id,
+                    token_id: token_id,
                 }
                 .into())
             };
@@ -509,7 +539,7 @@ impl Erc721 {
 
         self.owners.setter(token_id).set(to);
 
-        evm::log(Transfer { from, to, tokenId: token_id });
+        evm::log(Transfer { from, to, token_id: token_id });
 
         Ok(from)
     }
@@ -592,7 +622,7 @@ impl Erc721 {
         let previous_owner =
             self.update(Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner == Address::ZERO {
-            Err(ERC721NonexistentToken { tokenId: token_id }.into())
+            Err(ERC721NonexistentToken { token_id: token_id }.into())
         } else {
             Ok(())
         }
@@ -630,11 +660,11 @@ impl Erc721 {
 
         let previous_owner = self.update(to, token_id, Address::ZERO)?;
         if previous_owner == Address::ZERO {
-            Err(ERC721NonexistentToken { tokenId: token_id }.into())
+            Err(ERC721NonexistentToken { token_id: token_id }.into())
         } else if previous_owner != from {
             Err(ERC721IncorrectOwner {
                 sender: from,
-                tokenId: token_id,
+                token_id: token_id,
                 owner: previous_owner,
             }
             .into())
@@ -700,7 +730,7 @@ impl Erc721 {
             }
 
             if emit_event {
-                evm::log(Approval { owner, approved: to, tokenId: token_id });
+                evm::log(Approval { owner, approved: to, token_id: token_id });
             }
         }
 
@@ -747,7 +777,7 @@ impl Erc721 {
     pub fn require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self.owner_of_inner(token_id)?;
         if owner == Address::ZERO {
-            return Err(ERC721NonexistentToken { tokenId: token_id }.into());
+            return Err(ERC721NonexistentToken { token_id: token_id }.into());
         }
         Ok(owner)
     }
