@@ -25,39 +25,48 @@ sol! {
 sol! {
     /// Indicates that an address can't be an owner.
     /// For example, `address(0)` is a forbidden owner in ERC-20. Used in balance queries.
+    #[derive(Debug)]
     error ERC721InvalidOwner(address owner);
 
     /// Indicates a `tokenId` whose `owner` is the zero address.
+    #[derive(Debug)]
     error ERC721NonexistentToken(uint256 tokenId);
 
     /// Indicates an error related to the ownership over a particular token. Used in transfers.
+    #[derive(Debug)]
     error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
 
     /// Indicates a failure with the token `sender`. Used in transfers.
+    #[derive(Debug)]
     error ERC721InvalidSender(address sender);
 
     /// Indicates a failure with the token `receiver`. Used in transfers.
+    #[derive(Debug)]
     error ERC721InvalidReceiver(address receiver);
 
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
+    #[derive(Debug)]
     error ERC721InsufficientApproval(address operator, uint256 tokenId);
 
     /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+    #[derive(Debug)]
     error ERC721InvalidApprover(address approver);
 
     /// Indicates a failure with the `operator` to be approved. Used in approvals.
+    #[derive(Debug)]
     error ERC721InvalidOperator(address operator);
 }
 
-pub struct Erc721Error(Vec<u8>);
+#[derive(Debug)]
+pub struct Error(Vec<u8>);
 
-impl From<Erc721Error> for Vec<u8> {
-    fn from(value: Erc721Error) -> Vec<u8> {
+impl From<Error> for Vec<u8> {
+    fn from(value: Error) -> Vec<u8> {
         value.0
     }
 }
 
-impl<T: SolError> From<T> for Erc721Error {
+impl<T: SolError> From<T> for Error {
     fn from(value: T) -> Self {
         Self(value.encode())
     }
@@ -85,14 +94,8 @@ sol_interface! {
     }
 }
 
-pub trait Erc721Info {
-    const NAME: &'static str;
-    const SYMBOL: &'static str;
-    const BASE_URI: &'static str;
-}
-
 sol_storage! {
-    pub struct Erc721<T> {
+    pub struct Erc721 {
         mapping(uint256 => address) owners;
 
         mapping(address => uint256) balances;
@@ -100,13 +103,11 @@ sol_storage! {
         mapping(uint256 => address) token_approvals;
 
         mapping(address => mapping(address => bool)) operator_approvals;
-
-        PhantomData<T> phantom_data;
     }
 }
 
 #[external]
-impl<T: Erc721Info> Erc721<T> {
+impl Erc721 {
     /// Returns the number of tokens in ``owner``'s account.
     ///
     /// # Arguments
@@ -117,7 +118,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// # Returns
     ///
     /// The balance of the owner.
-    pub fn balance_of(&self, owner: Address) -> Result<U256, Erc721Error> {
+    pub fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner == Address::ZERO {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
@@ -138,7 +139,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// # Requirements
     ///
     /// * `token_id` must exist.
-    pub fn owner_of(&self, token_id: U256) -> Result<Address, Erc721Error> {
+    pub fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
         self.require_owned(token_id)
     }
 
@@ -174,7 +175,7 @@ impl<T: Erc721Info> Erc721<T> {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         Self::safe_transfer_from_with_data(
             storage,
             from,
@@ -217,7 +218,7 @@ impl<T: Erc721Info> Erc721<T> {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         storage.borrow_mut().transfer_from(from, to, token_id)?;
         Self::check_on_erc721_received(
             storage,
@@ -257,7 +258,7 @@ impl<T: Erc721Info> Erc721<T> {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         if to == Address::ZERO {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
@@ -300,7 +301,7 @@ impl<T: Erc721Info> Erc721<T> {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         self.approve_inner(to, token_id, msg::sender(), true)
     }
 
@@ -324,7 +325,7 @@ impl<T: Erc721Info> Erc721<T> {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         self.set_approval_for_all_inner(msg::sender(), operator, approved)
     }
 
@@ -338,7 +339,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// # Requirements:
     ///
     /// * `token_id` must exist.
-    pub fn get_approved(&self, token_id: U256) -> Result<Address, Erc721Error> {
+    pub fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
         self.require_owned(token_id)?;
         self.get_approved_inner(token_id)
     }
@@ -358,12 +359,12 @@ impl<T: Erc721Info> Erc721<T> {
         &self,
         owner: Address,
         operator: Address,
-    ) -> Result<bool, Erc721Error> {
+    ) -> Result<bool, Error> {
         Ok(self.operator_approvals.get(owner).get(operator))
     }
 }
 
-impl<T: Erc721Info> Erc721<T> {
+impl Erc721 {
     /// Returns the owner of the `token_id`. Does NOT revert if token doesn't exist
     ///
     /// IMPORTANT: Any overrides to this function that add ownership of tokens not tracked by the
@@ -378,7 +379,7 @@ impl<T: Erc721Info> Erc721<T> {
     pub fn owner_of_inner(
         &self,
         token_id: U256,
-    ) -> Result<Address, Erc721Error> {
+    ) -> Result<Address, Error> {
         Ok(self.owners.get(token_id))
     }
 
@@ -391,7 +392,7 @@ impl<T: Erc721Info> Erc721<T> {
     pub fn get_approved_inner(
         &self,
         token_id: U256,
-    ) -> Result<Address, Erc721Error> {
+    ) -> Result<Address, Error> {
         Ok(self.token_approvals.get(token_id))
     }
 
@@ -411,7 +412,7 @@ impl<T: Erc721Info> Erc721<T> {
         owner: Address,
         spender: Address,
         token_id: U256,
-    ) -> Result<bool, Erc721Error> {
+    ) -> Result<bool, Error> {
         let is_authorized = spender != Address::ZERO
             && (owner == spender
                 || self.is_approved_for_all(owner, spender)?
@@ -437,7 +438,7 @@ impl<T: Erc721Info> Erc721<T> {
         owner: Address,
         spender: Address,
         token_id: U256,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         if !self.is_authorized(owner, spender, token_id)? {
             return if owner == Address::ZERO {
                 Err(ERC721NonexistentToken { tokenId: token_id }.into())
@@ -493,7 +494,7 @@ impl<T: Erc721Info> Erc721<T> {
         to: Address,
         token_id: U256,
         auth: Address,
-    ) -> Result<Address, Erc721Error> {
+    ) -> Result<Address, Error> {
         let from = self.owner_of_inner(token_id)?;
 
         // Perform (optional) operator check
@@ -541,7 +542,7 @@ impl<T: Erc721Info> Erc721<T> {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         if to == Address::ZERO {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
@@ -569,7 +570,7 @@ impl<T: Erc721Info> Erc721<T> {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         storage.borrow_mut().mint(to, token_id)?;
         Self::check_on_erc721_received(
             storage,
@@ -597,7 +598,7 @@ impl<T: Erc721Info> Erc721<T> {
     /// # Events
     /// 
     /// Emits a [`Transfer`] event.
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Erc721Error> {
+    pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
             self.update(Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner == Address::ZERO {
@@ -630,7 +631,7 @@ impl<T: Erc721Info> Erc721<T> {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         if to == Address::ZERO {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
@@ -668,7 +669,7 @@ impl<T: Erc721Info> Erc721<T> {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         storage.borrow_mut().transfer(from, to, token_id)?;
         Self::check_on_erc721_received(
             storage,
@@ -695,7 +696,7 @@ impl<T: Erc721Info> Erc721<T> {
         token_id: U256,
         auth: Address,
         emit_event: bool,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         // Avoid reading the owner unless necessary
         if emit_event || auth != Address::ZERO {
             let owner = self.require_owned(token_id)?;
@@ -736,7 +737,7 @@ impl<T: Erc721Info> Erc721<T> {
         owner: Address,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         if operator == Address::ZERO {
             return Err(ERC721InvalidOperator { operator }.into());
         }
@@ -756,7 +757,7 @@ impl<T: Erc721Info> Erc721<T> {
     pub fn require_owned(
         &self,
         token_id: U256,
-    ) -> Result<Address, Erc721Error> {
+    ) -> Result<Address, Error> {
         let owner = self.owner_of_inner(token_id)?;
         if owner == Address::ZERO {
             return Err(ERC721NonexistentToken { tokenId: token_id }.into());
@@ -785,7 +786,7 @@ impl<T: Erc721Info> Erc721<T> {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Erc721Error> {
+    ) -> Result<(), Error> {
         const IERC721RECEIVER_INTERFACE_ID: u32 = 0x150b7a02;
         if to.has_code() {
             let call = Call::new_in(storage);
@@ -804,14 +805,14 @@ impl<T: Erc721Info> Erc721<T> {
                         Ok(())
                     }
                 }
-                Err(err) => Err(Erc721Error(err.into())),
+                Err(err) => Err(Error(err.into())),
             };
         }
         Ok(())
     }
 }
 
-use stylus_sdk::storage::{StorageGuardMut, StorageUint};
+use stylus_sdk::storage::{StorageGuardMut, StorageMap, StorageUint};
 
 pub trait IncrementalMath<T> {
     fn add_assign_unchecked(&mut self, rhs: T);
@@ -828,5 +829,50 @@ impl<'a> IncrementalMath<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
     fn sub_assign_unchecked(&mut self, rhs: U256) {
         let new_balance = self.get() - rhs;
         self.set(new_balance);
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use alloy_primitives::{address, Address, U256};
+    use stylus_sdk::{
+        msg,
+        storage::{StorageMap, StorageType, StorageU256},
+    };
+    use crate::erc721::{Error, Erc721};
+    #[allow(unused_imports)]
+    use crate::test_utils;
+
+    impl Default for Erc721 {
+        fn default() -> Self {
+            let root = U256::ZERO;
+            let token = Erc721 {
+                owners: unsafe { StorageMap::new(root, 0) },
+                balances: unsafe { StorageMap::new(root + U256::from(32), 0) },
+                token_approvals: unsafe { StorageMap::new(root + U256::from(64), 0) },
+                operator_approvals: unsafe { StorageMap::new(root + U256::from(96), 0) },
+            };
+
+            token
+        }
+    }
+
+
+    #[test]
+    fn reads_balance() {
+        test_utils::with_storage::<Erc721>(|token| {
+            // TODO#q create random address
+            let address = address!("01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478");
+            let balance = token.balance_of(address);
+            assert_eq!(U256::ZERO, balance.unwrap());
+
+            let owner = msg::sender();
+            let one = U256::from(1);
+            token.balances.setter(owner).set(one);
+            let balance = token.balance_of(owner);
+            assert_eq!(one, balance.unwrap());
+        });
     }
 }
