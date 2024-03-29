@@ -13,6 +13,12 @@ sol_storage! {
         string _name;
         /// Token symbol.
         string _symbol;
+        /// Initialization marker. If true this means that the constructor was
+        /// called.
+        ///
+        /// This field should be unnecessary once constructors are supported in
+        /// the SDK.
+        bool _initialized
     }
 }
 
@@ -30,8 +36,13 @@ impl Metadata {
     /// * `name` - The name of the token.
     /// * `symbol` - The symbol of the token.
     pub fn constructor(&mut self, name: String, symbol: String) {
+        if self._initialized.get() == true {
+            return;
+        }
+
         self._name.set_str(name);
         self._symbol.set_str(symbol);
+        self._initialized.set(true);
     }
 
     /// Returns the name of the token.
@@ -79,7 +90,7 @@ impl Metadata {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::U256;
-    use stylus_sdk::storage::{StorageString, StorageType};
+    use stylus_sdk::storage::{StorageBool, StorageString, StorageType};
 
     use super::{Metadata, DEFAULT_DECIMALS};
     #[allow(unused_imports)]
@@ -93,6 +104,9 @@ mod tests {
                 _symbol: unsafe {
                     StorageString::new(root + U256::from(32), 0)
                 },
+                _initialized: unsafe {
+                    StorageBool::new(root + U256::from(64), 0)
+                },
             }
         }
     }
@@ -103,21 +117,44 @@ mod tests {
             let name = meta.name();
             let symbol = meta.symbol();
             let decimals = meta.decimals();
+            let initialized = meta._initialized.get();
             assert_eq!(name, "");
             assert_eq!(symbol, "");
-            assert_eq!(decimals, 0);
+            assert_eq!(decimals, DEFAULT_DECIMALS);
+            assert_eq!(initialized, false);
 
             const NAME: &str = "Meta";
             const SYMBOL: &str = "Symbol";
-
             meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
 
             let name = meta.name();
             let symbol = meta.symbol();
             let decimals = meta.decimals();
+            let initialized = meta._initialized.get();
             assert_eq!(name, NAME);
             assert_eq!(symbol, SYMBOL);
             assert_eq!(decimals, DEFAULT_DECIMALS);
+            assert_eq!(initialized, true);
+        })
+    }
+
+    #[test]
+    fn constructs_only_once() {
+        test_utils::with_storage::<Metadata>(|meta| {
+            const NAME: &str = "Meta";
+            const SYMBOL: &str = "Symbol";
+            meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
+
+            meta.constructor("Invalid".to_owned(), "Invalid".to_owned());
+
+            let name = meta.name();
+            let symbol = meta.symbol();
+            let decimals = meta.decimals();
+            let initialized = meta._initialized.get();
+            assert_eq!(name, NAME);
+            assert_eq!(symbol, SYMBOL);
+            assert_eq!(decimals, DEFAULT_DECIMALS);
+            assert_eq!(initialized, true);
         })
     }
 }
