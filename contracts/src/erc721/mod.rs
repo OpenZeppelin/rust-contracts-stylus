@@ -914,7 +914,21 @@ mod tests {
             };
         });
     }
-    
+
+    #[test]
+    fn transfer_nft() {
+        test_utils::with_storage::<Erc721>(|token| {
+            let alice = msg::sender();
+            let token_id = random_token_id();
+            token.mint(alice, token_id).expect("mint nft to alice");
+            token
+                .transfer_from(alice, BOB, token_id)
+                .expect("transfer from alice to bob");
+            let owner = token.owner_of(token_id).expect("new owner of nft");
+            assert_eq!(owner, BOB);
+        });
+    }
+   
     pub fn random_token_id() -> U256 {
         let num: u32 = rand::random();
         num.try_into().expect("conversion to U256")
