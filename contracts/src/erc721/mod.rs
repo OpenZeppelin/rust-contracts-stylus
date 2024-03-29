@@ -531,7 +531,7 @@ impl Erc721 {
         }
 
         if to != Address::ZERO {
-            self.balances.setter(to).add_assign_unchecked(U256::from(1))
+            self.balances.setter(to).add_assign_unchecked(U256::from(1));
         }
 
         self.owners.setter(token_id).set(to);
@@ -979,7 +979,30 @@ mod tests {
         });
     }
 
-    pub fn random_token_id() -> U256 {
+    #[test]
+    fn error_not_approved_nft_transfer() {
+        test_utils::with_storage::<Erc721>(|token| {
+            let token_id = random_token_id();
+            token.mint(BOB, token_id).expect("mint token");
+            match token.transfer_from(BOB, *ALICE, token_id) {
+                Ok(_) => {
+                    panic!("Transfer of not approved token should not happen");
+                }
+                Err(e) => match e {
+                    Error::InsufficientApproval(
+                        ERC721InsufficientApproval { operator, token_id: t_id },
+                    ) if operator == *ALICE && t_id == token_id => {}
+                    e => {
+                        panic!("Invalid error - {e:?}");
+                    }
+                },
+            };
+        });
+    }
+    
+    // TODO: add mock for on_erc721_received
+
+    fn random_token_id() -> U256 {
         let num: u32 = rand::random();
         num.try_into().expect("conversion to U256")
     }
