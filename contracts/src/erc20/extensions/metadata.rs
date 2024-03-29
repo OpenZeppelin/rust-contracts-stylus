@@ -1,7 +1,6 @@
 //! Optional metadata of the ERC-20 standard.
 use alloc::string::String;
 
-use alloy_primitives::U8;
 use stylus_proc::{external, sol_storage};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
@@ -14,8 +13,6 @@ sol_storage! {
         string _name;
         /// Token symbol.
         string _symbol;
-        /// Token symbol.
-        uint8 _decimals;
     }
 }
 
@@ -35,7 +32,6 @@ impl Metadata {
     pub fn constructor(&mut self, name: String, symbol: String) {
         self._name.set_str(name);
         self._symbol.set_str(symbol);
-        self._decimals.set(U8::from(DEFAULT_DECIMALS));
     }
 
     /// Returns the name of the token.
@@ -66,20 +62,24 @@ impl Metadata {
     /// between Ether and Wei. This is the default value returned by this
     /// function ([`DEFAULT_DECIMALS`]), unless it's overridden.
     ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    ///
     /// NOTE: This information is only used for *display* purposes: in
     /// no way it affects any of the arithmetic of the contract, including
     /// [`ERC20::balance_of`] and [`ERC20::transfer`].
     pub fn decimals(&self) -> u8 {
         // TODO: Use `U8` an avoid the conversion once https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
         // gets resolved.
-        self._decimals.get().byte(0)
+        DEFAULT_DECIMALS
     }
 }
 
 #[cfg(test)]
 mod tests {
     use alloy_primitives::U256;
-    use stylus_sdk::storage::{StorageString, StorageType, StorageU8};
+    use stylus_sdk::storage::{StorageString, StorageType};
 
     use super::{Metadata, DEFAULT_DECIMALS};
     #[allow(unused_imports)]
@@ -93,7 +93,6 @@ mod tests {
                 _symbol: unsafe {
                     StorageString::new(root + U256::from(32), 0)
                 },
-                _decimals: unsafe { StorageU8::new(root + U256::from(64), 0) },
             }
         }
     }
