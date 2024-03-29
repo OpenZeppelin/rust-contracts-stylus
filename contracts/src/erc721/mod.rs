@@ -849,16 +849,19 @@ impl<'a> IncrementalMath<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::erc721::{ERC721InvalidSender, Erc721, Error};
+    use crate::erc721::*;
     #[allow(unused_imports)]
     use crate::test_utils;
     use alloy_primitives::{address, Address, U256};
+    use once_cell::sync::Lazy;
     use stylus_sdk::{
         msg,
         storage::{StorageMap, StorageType, StorageU256},
     };
 
-    const ALICE: Address = address!("01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478");
+    // NOTE: Alice is always the sender of the message
+    static ALICE: Lazy<Address> = Lazy::new(msg::sender);
+
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     impl Default for Erc721 {
@@ -882,11 +885,11 @@ mod tests {
     fn mint_nft_and_check_balance() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(ALICE, token_id).expect("mint token");
+            token.mint(*ALICE, token_id).expect("mint token");
             let owner = token.owner_of(token_id).expect("owner address");
-            assert_eq!(owner, ALICE);
+            assert_eq!(owner, *ALICE);
 
-            let balance = token.balance_of(ALICE).expect("balance of owner");
+            let balance = token.balance_of(*ALICE).expect("balance of owner");
             let one = U256::from(1);
             assert!(balance >= one);
         });
@@ -896,8 +899,8 @@ mod tests {
     fn error_mint_second_nft() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(ALICE, token_id).expect("mint token first time");
-            match token.mint(ALICE, token_id) {
+            token.mint(*ALICE, token_id).expect("mint token first time");
+            match token.mint(*ALICE, token_id) {
                 Ok(_) => {
                     panic!(
                         "Second mint of the same token should not be possible"
@@ -918,17 +921,38 @@ mod tests {
     #[test]
     fn transfer_nft() {
         test_utils::with_storage::<Erc721>(|token| {
-            let alice = msg::sender();
             let token_id = random_token_id();
-            token.mint(alice, token_id).expect("mint nft to alice");
+            token.mint(*ALICE, token_id).expect("mint nft to alice");
             token
-                .transfer_from(alice, BOB, token_id)
+                .transfer_from(*ALICE, BOB, token_id)
                 .expect("transfer from alice to bob");
             let owner = token.owner_of(token_id).expect("new owner of nft");
             assert_eq!(owner, BOB);
         });
     }
-   
+
+    #[test]
+    fn error_transfer_nonexistent_nft() {
+        test_utils::with_storage::<Erc721>(|token| {
+            let token_id = random_token_id();
+            match token.transfer_from(*ALICE, BOB, token_id) {
+                Ok(_) => {
+                    panic!(
+                        "Transfer of a non existent nft should not be possible"
+                    )
+                }
+                Err(e) => match e {
+                    Error::NonexistentToken(ERC721NonexistentToken {
+                        token_id: t_id,
+                    }) if t_id == token_id => {}
+                    e => {
+                        panic!("Invalid error - {e:?}");
+                    }
+                },
+            }
+        });
+    }
+
     pub fn random_token_id() -> U256 {
         let num: u32 = rand::random();
         num.try_into().expect("conversion to U256")
