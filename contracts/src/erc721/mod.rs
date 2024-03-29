@@ -953,6 +953,32 @@ mod tests {
         });
     }
 
+    #[test]
+    fn approve_nft_transfer() {
+        test_utils::with_storage::<Erc721>(|token| {
+            let token_id = random_token_id();
+            token.mint(*ALICE, token_id).expect("mint token");
+            token
+                .approve(BOB, token_id)
+                .expect("approve bob for operations on token");
+            assert_eq!(token.token_approvals.get(token_id), BOB);
+        });
+    }
+
+    #[test]
+    fn transfer_approved_nft() {
+        test_utils::with_storage::<Erc721>(|token| {
+            let token_id = random_token_id();
+            token.mint(BOB, token_id).expect("mint token");
+            token.token_approvals.setter(token_id).set(*ALICE);
+            token
+                .transfer_from(BOB, *ALICE, token_id)
+                .expect("transfer Bob's token to Alice");
+            let owner = token.owner_of(token_id).expect("owner of token");
+            assert_eq!(owner, *ALICE);
+        });
+    }
+
     pub fn random_token_id() -> U256 {
         let num: u32 = rand::random();
         num.try_into().expect("conversion to U256")
