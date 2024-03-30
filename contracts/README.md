@@ -14,4 +14,4 @@ Robust, reliable, and secure smart contracts for the Arbitrum Stylus upgrade.
 > been audited nor thoroughly reviewed for security vulnerabilities. Do not use
 > in production.
 
-Refer to our [Security Policy](SECURITY.md) for more details.
+Refer to our [Security Policy](../SECURITY.md) for more details.

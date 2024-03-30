@@ -9,7 +9,7 @@ Common cryptographic procedures for a blockchain environment.
 
 ## Verifying Merkle Proofs
 
-[`merkle.rs`](lib/crypto/src/merkle.rs) provides:
+[`merkle.rs`](./src/merkle.rs) provides:
 
 - A `verify` function which can prove that some value is part of a
   [Merkle tree].
@@ -31,4 +31,4 @@ the [Cargo.toml](./Cargo.toml) file.
 > been audited nor thoroughly reviewed for security vulnerabilities. Do not use
 > in production.
 
-Refer to our [Security Policy](SECURITY.md) for more details.
+Refer to our [Security Policy](../../SECURITY.md) for more details.
