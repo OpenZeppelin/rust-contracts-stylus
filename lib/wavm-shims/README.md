@@ -74,5 +74,14 @@ this to be a temporary solution, don't expect us to address all requests.
 That being said, please do open an issue to start a discussion, keeping in mind
 our [code of conduct] and [contribution guidelines].
 
-[code of conduct]: ../../CODE_OF_CONDUCT.md
-[contribution guidelines]: ../../CONTRIBUTING.md
+[code of conduct]: CODE_OF_CONDUCT.md
+[contribution guidelines]: CONTRIBUTING.md
+
+## Security
+
+> [!WARNING]
+> This project is still in a very early and experimental phase. It has never
+> been audited nor thoroughly reviewed for security vulnerabilities. Do not use
+> in production.
+
+Refer to our [Security Policy](SECURITY.md) for more details.
