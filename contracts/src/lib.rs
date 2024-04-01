@@ -2,6 +2,7 @@
 #![warn(missing_docs, unreachable_pub, rust_2021_compatibility)]
 #![warn(clippy::all, clippy::pedantic)]
 #![cfg_attr(not(test), no_std, no_main)]
+#[macro_use]
 extern crate alloc;
 
 #[global_allocator]

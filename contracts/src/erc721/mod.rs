@@ -1,6 +1,5 @@
+use core::borrow::BorrowMut;
 use derive_more::From;
-use std::borrow::BorrowMut;
-use std::vec;
 use stylus_sdk::storage::{StorageGuardMut, StorageUint};
 use stylus_sdk::{
     abi::Bytes,
