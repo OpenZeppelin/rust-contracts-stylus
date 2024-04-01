@@ -76,3 +76,12 @@ our [code of conduct] and [contribution guidelines].
 
 [code of conduct]: ../../CODE_OF_CONDUCT.md
 [contribution guidelines]: ../../CONTRIBUTING.md
+
+## Security
+
+> [!WARNING]
+> This project is still in a very early and experimental phase. It has never
+> been audited nor thoroughly reviewed for security vulnerabilities. Do not use
+> in production.
+
+Refer to our [Security Policy](../../SECURITY.md) for more details.
