@@ -1,7 +1,7 @@
 use derive_more::From;
 use std::borrow::BorrowMut;
-use std::prelude::v1::{Box, String, ToString, Vec};
 use std::vec;
+use stylus_sdk::storage::{StorageGuardMut, StorageUint};
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
@@ -170,7 +170,7 @@ impl Erc721 {
     ///
     /// * `token_id` must exist.
     pub fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
-        self.require_owned(token_id)
+        self._require_owned(token_id)
     }
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first that contract recipients
@@ -250,7 +250,7 @@ impl Erc721 {
         data: Bytes,
     ) -> Result<(), Error> {
         storage.borrow_mut().transfer_from(from, to, token_id)?;
-        Self::check_on_erc721_received(
+        Self::_check_on_erc721_received(
             storage,
             msg::sender(),
             from,
@@ -297,7 +297,7 @@ impl Erc721 {
 
         // Setting an "auth" arguments enables the `_isAuthorized` check which verifies that the token exists
         // (from != 0). Therefore, it is not needed to verify that the return value is not 0 here.
-        let previous_owner = self.update(to, token_id, msg::sender())?;
+        let previous_owner = self._update(to, token_id, msg::sender())?;
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
@@ -332,7 +332,7 @@ impl Erc721 {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        self.approve_inner(to, token_id, msg::sender(), true)
+        self._approve(to, token_id, msg::sender(), true)
     }
 
     /// Approve or remove `operator` as an operator for the caller.
@@ -356,7 +356,7 @@ impl Erc721 {
         operator: Address,
         approved: bool,
     ) -> Result<(), Error> {
-        self.set_approval_for_all_inner(msg::sender(), operator, approved)
+        self._set_approval_for_all(msg::sender(), operator, approved)
     }
 
     /// Returns the account approved for `token_id` token.
@@ -370,8 +370,8 @@ impl Erc721 {
     ///
     /// * `token_id` must exist.
     pub fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
-        self.require_owned(token_id)?;
-        self.get_approved_inner(token_id)
+        self._require_owned(token_id)?;
+        self._get_approved_inner(token_id)
     }
 
     /// Returns if the `operator` is allowed to manage all the assets of `owner`.
@@ -406,7 +406,7 @@ impl Erc721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
-    pub fn owner_of_inner(&self, token_id: U256) -> Result<Address, Error> {
+    pub fn _owner_of_inner(&self, token_id: U256) -> Result<Address, Error> {
         Ok(self.owners.get(token_id))
     }
 
@@ -416,7 +416,10 @@ impl Erc721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
-    pub fn get_approved_inner(&self, token_id: U256) -> Result<Address, Error> {
+    pub fn _get_approved_inner(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, Error> {
         Ok(self.token_approvals.get(token_id))
     }
 
@@ -431,7 +434,7 @@ impl Erc721 {
     /// * `owner` - Account of the token's owner.
     /// * `spender` - Account that will spend token.
     /// * `token_id` - Token id as a number
-    pub fn is_authorized(
+    pub fn _is_authorized(
         &self,
         owner: Address,
         spender: Address,
@@ -440,7 +443,7 @@ impl Erc721 {
         let is_authorized = spender != Address::ZERO
             && (owner == spender
                 || self.is_approved_for_all(owner, spender)?
-                || self.get_approved_inner(token_id)? == spender);
+                || self._get_approved_inner(token_id)? == spender);
         Ok(is_authorized)
     }
 
@@ -457,13 +460,13 @@ impl Erc721 {
     /// * `owner` - Account of the token's owner.
     /// * `spender` - Account that will spend token.
     /// * `token_id` - Token id as a number
-    pub fn check_authorized(
+    pub fn _check_authorized(
         &self,
         owner: Address,
         spender: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        if !self.is_authorized(owner, spender, token_id)? {
+        if !self._is_authorized(owner, spender, token_id)? {
             return if owner == Address::ZERO {
                 Err(ERC721NonexistentToken { token_id }.into())
             } else {
@@ -488,7 +491,7 @@ impl Erc721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
-    pub fn increase_balance(&mut self, account: Address, value: U256) {
+    pub fn _increase_balance(&mut self, account: Address, value: U256) {
         self.balances.setter(account).add_assign_unchecked(value);
     }
 
@@ -510,23 +513,23 @@ impl Erc721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn update(
+    pub fn _update(
         &mut self,
         to: Address,
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let from = self.owner_of_inner(token_id)?;
+        let from = self._owner_of_inner(token_id)?;
 
         // Perform (optional) operator check
         if auth != Address::ZERO {
-            self.check_authorized(from, auth, token_id)?;
+            self._check_authorized(from, auth, token_id)?;
         }
 
         // Execute the update
         if from != Address::ZERO {
             // Clear approval. No need to re-authorize or emit the Approval event
-            self.approve_inner(Address::ZERO, token_id, Address::ZERO, false)?;
+            self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
             self.balances.setter(from).sub_assign_unchecked(U256::from(1));
         }
 
@@ -559,14 +562,14 @@ impl Erc721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to == Address::ZERO {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
             );
         }
 
-        let previous_owner = self.update(to, token_id, Address::ZERO)?;
+        let previous_owner = self._update(to, token_id, Address::ZERO)?;
         if previous_owner != Address::ZERO {
             return Err(ERC721InvalidSender { sender: Address::ZERO }.into());
         }
@@ -582,14 +585,14 @@ impl Erc721 {
     /// * `to` - Account of the recipient
     /// * `token_id` - Token id as a number
     /// * `data` - Additional data with no specified format, sent in call to `to`
-    pub fn safe_mint(
+    pub fn _safe_mint(
         storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        storage.borrow_mut().mint(to, token_id)?;
-        Self::check_on_erc721_received(
+        storage.borrow_mut()._mint(to, token_id)?;
+        Self::_check_on_erc721_received(
             storage,
             msg::sender(),
             Address::ZERO,
@@ -615,9 +618,9 @@ impl Erc721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
+    pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
-            self.update(Address::ZERO, token_id, Address::ZERO)?;
+            self._update(Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner == Address::ZERO {
             Err(ERC721NonexistentToken { token_id }.into())
         } else {
@@ -643,7 +646,7 @@ impl Erc721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn transfer(
+    pub fn _transfer(
         &mut self,
         from: Address,
         to: Address,
@@ -655,7 +658,7 @@ impl Erc721 {
             );
         }
 
-        let previous_owner = self.update(to, token_id, Address::ZERO)?;
+        let previous_owner = self._update(to, token_id, Address::ZERO)?;
         if previous_owner == Address::ZERO {
             Err(ERC721NonexistentToken { token_id }.into())
         } else if previous_owner != from {
@@ -680,15 +683,15 @@ impl Erc721 {
     /// * `to` - Account of the recipient
     /// * `token_id` - Token id as a number
     /// * `data` - Additional data with no specified format, sent in call to `to`
-    pub fn safe_transfer(
+    pub fn _safe_transfer(
         storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        storage.borrow_mut().transfer(from, to, token_id)?;
-        Self::check_on_erc721_received(
+        storage.borrow_mut()._transfer(from, to, token_id)?;
+        Self::_check_on_erc721_received(
             storage,
             msg::sender(),
             from,
@@ -707,7 +710,7 @@ impl Erc721 {
     /// * `token_id` - Token id as a number
     /// * `auth` - Account used for authorization of the update.
     /// * `emit_event` - Emit ['Approval'] event flag.
-    pub fn approve_inner(
+    pub fn _approve(
         &mut self,
         to: Address,
         token_id: U256,
@@ -716,7 +719,7 @@ impl Erc721 {
     ) -> Result<(), Error> {
         // Avoid reading the owner unless necessary
         if emit_event || auth != Address::ZERO {
-            let owner = self.require_owned(token_id)?;
+            let owner = self._require_owned(token_id)?;
 
             // We do not use _isAuthorized because single-token approvals should not be able to call approve
             if auth != Address::ZERO
@@ -749,7 +752,7 @@ impl Erc721 {
     /// # Events
     ///
     /// Emits an {ApprovalForAll} event.
-    pub fn set_approval_for_all_inner(
+    pub fn _set_approval_for_all(
         &mut self,
         owner: Address,
         operator: Address,
@@ -771,8 +774,8 @@ impl Erc721 {
     /// # Arguments
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number
-    pub fn require_owned(&self, token_id: U256) -> Result<Address, Error> {
-        let owner = self.owner_of_inner(token_id)?;
+    pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
+        let owner = self._owner_of_inner(token_id)?;
         if owner == Address::ZERO {
             return Err(ERC721NonexistentToken { token_id }.into());
         }
@@ -793,7 +796,7 @@ impl Erc721 {
     /// * `to` - Account of the recipient
     /// * `token_id` - Token id as a number
     /// * `data` - Additional data with no specified format, sent in call to `to`
-    pub fn check_on_erc721_received(
+    pub fn _check_on_erc721_received(
         storage: &mut impl TopLevelStorage,
         operator: Address,
         from: Address,
@@ -801,7 +804,7 @@ impl Erc721 {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        // TODO: compute INTERFACE_ID at compile time
+        // TODO: think how we can retrieve INTERFACE_ID at compile time
         const IERC721RECEIVER_INTERFACE_ID: u32 = 0x150b7a02;
         if to.has_code() {
             let call = Call::new_in(storage);
@@ -827,8 +830,6 @@ impl Erc721 {
     }
 }
 
-use stylus_sdk::storage::{StorageGuardMut, StorageMap, StorageUint};
-
 pub trait IncrementalMath<T> {
     fn add_assign_unchecked(&mut self, rhs: T);
 
@@ -849,15 +850,16 @@ impl<'a> IncrementalMath<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::erc721::*;
-    #[allow(unused_imports)]
-    use crate::test_utils;
     use alloy_primitives::{address, Address, U256};
     use once_cell::sync::Lazy;
     use stylus_sdk::{
         msg,
-        storage::{StorageMap, StorageType, StorageU256},
+        storage::{StorageMap, StorageType},
     };
+
+    use crate::erc721::*;
+    #[allow(unused_imports)]
+    use crate::test_utils;
 
     // NOTE: Alice is always the sender of the message
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);
@@ -885,7 +887,7 @@ mod tests {
     fn mint_nft_and_check_balance() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(*ALICE, token_id).expect("mint token");
+            token._mint(*ALICE, token_id).expect("mint token");
             let owner = token.owner_of(token_id).expect("owner address");
             assert_eq!(owner, *ALICE);
 
@@ -899,8 +901,8 @@ mod tests {
     fn error_mint_second_nft() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(*ALICE, token_id).expect("mint token first time");
-            match token.mint(*ALICE, token_id) {
+            token._mint(*ALICE, token_id).expect("mint token first time");
+            match token._mint(*ALICE, token_id) {
                 Ok(_) => {
                     panic!(
                         "Second mint of the same token should not be possible"
@@ -922,7 +924,7 @@ mod tests {
     fn transfer_nft() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(*ALICE, token_id).expect("mint nft to alice");
+            token._mint(*ALICE, token_id).expect("mint nft to alice");
             token
                 .transfer_from(*ALICE, BOB, token_id)
                 .expect("transfer from alice to bob");
@@ -957,7 +959,7 @@ mod tests {
     fn approve_nft_transfer() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(*ALICE, token_id).expect("mint token");
+            token._mint(*ALICE, token_id).expect("mint token");
             token
                 .approve(BOB, token_id)
                 .expect("approve bob for operations on token");
@@ -969,7 +971,7 @@ mod tests {
     fn transfer_approved_nft() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(BOB, token_id).expect("mint token");
+            token._mint(BOB, token_id).expect("mint token");
             token.token_approvals.setter(token_id).set(*ALICE);
             token
                 .transfer_from(BOB, *ALICE, token_id)
@@ -983,7 +985,7 @@ mod tests {
     fn error_not_approved_nft_transfer() {
         test_utils::with_storage::<Erc721>(|token| {
             let token_id = random_token_id();
-            token.mint(BOB, token_id).expect("mint token");
+            token._mint(BOB, token_id).expect("mint token");
             match token.transfer_from(BOB, *ALICE, token_id) {
                 Ok(_) => {
                     panic!("Transfer of not approved token should not happen");
@@ -999,8 +1001,10 @@ mod tests {
             };
         });
     }
-    
-    // TODO: add mock for on_erc721_received
+
+    // TODO: add set_approval_for_all test
+
+    // TODO: add mock test for on_erc721_received
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();
