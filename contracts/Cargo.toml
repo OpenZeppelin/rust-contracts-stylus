@@ -22,6 +22,7 @@ wavm-shims = { path = "../lib/wavm-shims" }
 [features]
 default = []
 erc20 = []
+erc20_metadata = ["erc20"]
 erc721 = []
 
 [lib]
