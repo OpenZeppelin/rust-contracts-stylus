@@ -142,6 +142,10 @@ impl ERC721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account of the token's owner.
+    ///
+    /// # Errors
+    ///
+    /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is returned.
     pub fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner == Address::ZERO {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
@@ -155,6 +159,10 @@ impl ERC721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
     ///
     /// # Requirements
     ///
@@ -172,6 +180,15 @@ impl ERC721 {
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
+    /// * If caller does not have right to approve then [`Error::InsufficientApproval`] is returned.
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface id or
+    /// returned with error then [`Error::InvalidReceiver`] is returned.
     ///
     /// # Requirements
     ///
@@ -210,6 +227,15 @@ impl ERC721 {
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in call to `to`.
+    ///
+    /// # Errors
+    ///
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
+    /// * If caller does not have right to approve then [`Error::InsufficientApproval`] is returned.
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface id or
+    /// returned with error then [`Error::InvalidReceiver`] is returned.
     ///
     /// # Requirements
     ///
@@ -254,6 +280,13 @@ impl ERC721 {
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
+    /// * If caller does not have right to approve then [`Error::InsufficientApproval`] is returned.
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
     ///
     /// # Requirements:
     ///
@@ -300,6 +333,12 @@ impl ERC721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    /// * If `auth` does not have a right to approve this token then [`Error::InvalidApprover`]
+    /// is returned
     ///
     /// # Requirements:
     ///
@@ -412,7 +451,7 @@ impl ERC721 {
     /// assumption.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account of the token's owner.
     /// * `spender` - Account that will spend token.
@@ -443,6 +482,11 @@ impl ERC721 {
     /// * `owner` - Account of the token's owner.
     /// * `spender` - Account that will spend token.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    /// * If spender does not have right to approve then [`Error::InsufficientApproval`] is returned.
     pub fn _check_authorized(
         &self,
         owner: Address,
@@ -493,6 +537,13 @@ impl ERC721 {
     /// * `token_id` - Token id as a number.
     /// * `auth` - Account used for authorization of the update.
     ///
+    /// # Errors
+    ///
+    /// * If token does not exist and `auth` is not `Address::ZERO` then
+    /// [`Error::NonexistentToken`] is returned.
+    /// * If `auth` is not `Address::ZERO` and `auth` does not have a right to approve this token
+    /// then [`Error::InsufficientApproval`] ßis returned.
+    ///
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
@@ -536,6 +587,11 @@ impl ERC721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * If `token_id` already exist then [`Error::InvalidSender`] is returned.
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
     ///
     /// # Requirements:
     ///
@@ -604,6 +660,10 @@ impl ERC721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `token_id` - Token id as a number.
     ///
+    /// # Errors
+    ///
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    ///
     /// # Requirements:
     ///
     /// * `token_id` must exist.
@@ -630,6 +690,12 @@ impl ERC721 {
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
+    /// * If `token_id` does not exist then [`Error::ERC721NonexistentToken`] is returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
     ///
     /// # Requirements:
     ///
@@ -680,6 +746,12 @@ impl ERC721 {
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in call to `to`.
+    ///
+    /// # Errors
+    ///
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
+    /// * If `token_id` does not exist then [`Error::ERC721NonexistentToken`] is returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
     /// 
     /// # Requirements:
     /// 
@@ -712,12 +784,18 @@ impl ERC721 {
     /// emitted in the context of transfers.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `auth` - Account used for authorization of the update.
     /// * `emit_event` - Emit an [`Approval`] event flag.
+    ///
+    /// # Errors
+    ///
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    /// * If `auth` does not have a right to approve this token then [`Error::InvalidApprover`]
+    /// is returned
     ///
     /// # Events
     /// Emits an [`Approval`] event.
@@ -752,14 +830,18 @@ impl ERC721 {
     /// Approve `operator` to operate on all of `owner` tokens.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - Account the token's owner.
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `approved` - Flag that set approval or disapproval for the operator.
     ///
-    /// # Requirements:
+    /// # Errors
     /// 
+    /// * If `operator` is `Address::ZERO` then [`Error::InvalidOperator`] is returned.
+    ///
+    /// # Requirements:
+    ///
     /// * operator can't be the address zero.
     ///
     /// # Events
@@ -784,8 +866,12 @@ impl ERC721 {
     ///
     /// Overrides to ownership logic should be done to [`Self::_owner_of_inner`].
     ///
-    /// # Arguments
+    /// # Errors
     /// 
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    ///
+    /// # Arguments
+    ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
@@ -804,13 +890,18 @@ impl ERC721 {
     /// the transfer.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `storage` - Write access to the contract's state.
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in call to `to`.
+    /// 
+    /// # Errors
+    /// 
+    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface id or
+    /// returned with error then [`Error::InvalidReceiver`] is returned.
     pub fn _check_on_erc721_received(
         storage: &mut impl TopLevelStorage,
         operator: Address,
