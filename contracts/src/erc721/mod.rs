@@ -4,7 +4,7 @@ use derive_more::From;
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
-    alloy_sol_types::{sol, SolError},
+    alloy_sol_types::sol,
     call::Call,
     evm, msg,
     prelude::*,
@@ -392,6 +392,11 @@ impl ERC721 {
     /// * `approved` - Flag that that set approval or disapproval for the
     ///   operator.
     ///
+    /// # Errors
+    ///
+    /// * If `operator` is `Address::ZERO` then [`Error::InvalidOperator`] is
+    ///   returned.
+    ///
     /// # Requirements:
     ///
     /// * The `operator` cannot be the address zero.
@@ -414,12 +419,16 @@ impl ERC721 {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     ///
+    /// # Errors
+    ///
+    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    ///
     /// # Requirements:
     ///
     /// * `token_id` must exist.
     pub fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
         self._require_owned(token_id)?;
-        self._get_approved_inner(token_id)
+        Ok(self._get_approved_inner(token_id))
     }
 
     /// Returns if the `operator` is allowed to manage all the assets of
@@ -438,8 +447,8 @@ impl ERC721 {
         &self,
         owner: Address,
         operator: Address,
-    ) -> Result<bool, Error> {
-        Ok(self.operator_approvals.get(owner).get(operator))
+    ) -> bool {
+        self.operator_approvals.get(owner).get(operator)
     }
 }
 
@@ -458,8 +467,8 @@ impl ERC721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
-    pub fn _owner_of_inner(&self, token_id: U256) -> Result<Address, Error> {
-        Ok(self.owners.get(token_id))
+    pub fn _owner_of_inner(&self, token_id: U256) -> Address {
+        self.owners.get(token_id)
     }
 
     /// Returns the approved address for `token_id`. Returns 0 if `token_id` is
@@ -469,11 +478,8 @@ impl ERC721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
-    pub fn _get_approved_inner(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, Error> {
-        Ok(self.token_approvals.get(token_id))
+    pub fn _get_approved_inner(&self, token_id: U256) -> Address {
+        self.token_approvals.get(token_id)
     }
 
     /// Returns whether `spender` is allowed to manage `owner`'s tokens, or
@@ -493,12 +499,11 @@ impl ERC721 {
         owner: Address,
         spender: Address,
         token_id: U256,
-    ) -> Result<bool, Error> {
-        let is_authorized = spender != Address::ZERO
+    ) -> bool {
+        spender != Address::ZERO
             && (owner == spender
-                || self.is_approved_for_all(owner, spender)?
-                || self._get_approved_inner(token_id)? == spender);
-        Ok(is_authorized)
+                || self.is_approved_for_all(owner, spender)
+                || self._get_approved_inner(token_id) == spender)
     }
 
     /// Checks if `spender` can operate on `token_id`, assuming the provided
@@ -527,7 +532,7 @@ impl ERC721 {
         spender: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        if !self._is_authorized(owner, spender, token_id)? {
+        if !self._is_authorized(owner, spender, token_id) {
             return if owner == Address::ZERO {
                 Err(ERC721NonexistentToken { token_id }.into())
             } else {
@@ -595,7 +600,7 @@ impl ERC721 {
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let from = self._owner_of_inner(token_id)?;
+        let from = self._owner_of_inner(token_id);
 
         // Perform (optional) operator check
         if auth != Address::ZERO {
@@ -671,6 +676,15 @@ impl ERC721 {
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in call to
     ///   `to`.
+    ///
+    /// # Errors
+    ///
+    /// * If `token_id` already exist then [`Error::InvalidSender`] is returned.
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
+    ///   returned.
+    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or returned with error then [`Error::InvalidReceiver`] is
+    ///   returned.
     ///
     /// # Requirements:
     ///
@@ -877,7 +891,7 @@ impl ERC721 {
             // not be able to call approve
             if auth != Address::ZERO
                 && owner != auth
-                && !self.is_approved_for_all(owner, auth)?
+                && !self.is_approved_for_all(owner, auth)
             {
                 return Err(ERC721InvalidApprover { approver: auth }.into());
             }
@@ -941,7 +955,7 @@ impl ERC721 {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
-        let owner = self._owner_of_inner(token_id)?;
+        let owner = self._owner_of_inner(token_id);
         if owner == Address::ZERO {
             return Err(ERC721NonexistentToken { token_id }.into());
         }
@@ -971,8 +985,8 @@ impl ERC721 {
     /// # Errors
     ///
     /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///   interface id or
-    /// returned with error then [`Error::InvalidReceiver`] is returned.
+    ///   interface id or returned with error then [`Error::InvalidReceiver`] is
+    ///   returned.
     pub fn _check_on_erc721_received(
         storage: &mut impl TopLevelStorage,
         operator: Address,
@@ -1028,12 +1042,9 @@ impl<'a> IncrementalMath<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
+    use alloy_primitives::address;
     use once_cell::sync::Lazy;
-    use stylus_sdk::{
-        msg,
-        storage::{StorageMap, StorageType},
-    };
+    use stylus_sdk::storage::StorageMap;
 
     use crate::erc721::*;
     #[allow(unused_imports)]
