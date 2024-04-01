@@ -1,6 +1,6 @@
 use core::borrow::BorrowMut;
+
 use derive_more::From;
-use stylus_sdk::storage::{StorageGuardMut, StorageUint};
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
@@ -8,6 +8,7 @@ use stylus_sdk::{
     call::Call,
     evm, msg,
     prelude::*,
+    storage::{StorageGuardMut, StorageUint},
 };
 
 sol! {
@@ -145,7 +146,8 @@ impl ERC721 {
     ///
     /// # Errors
     ///
-    /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is returned.
+    /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is
+    ///   returned.
     pub fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner == Address::ZERO {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
@@ -171,8 +173,9 @@ impl ERC721 {
         self._require_owned(token_id)
     }
 
-    /// Safely transfers `token_id` token from `from` to `to`, checking first that contract recipients
-    /// are aware of the ERC-721 protocol to prevent tokens from being forever locked.
+    /// Safely transfers `token_id` token from `from` to `to`, checking first
+    /// that contract recipients are aware of the ERC-721 protocol to
+    /// prevent tokens from being forever locked.
     ///
     /// # Arguments
     ///
@@ -183,11 +186,15 @@ impl ERC721 {
     ///
     /// # Errors
     ///
-    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
-    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
-    /// * If caller does not have right to approve then [`Error::InsufficientApproval`] is returned.
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
+    ///   returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is
+    ///   returned.
+    /// * If caller does not have right to approve then
+    ///   [`Error::InsufficientApproval`] is returned.
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
-    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface id or
+    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or
     /// returned with error then [`Error::InvalidReceiver`] is returned.
     ///
     /// # Requirements
@@ -195,9 +202,11 @@ impl ERC721 {
     /// * `from` cannot be the zero address.
     /// * `to` cannot be the zero address.
     /// * `token_id` token must exist and be owned by `from`.
-    /// * If the caller is not `from`, it must have been allowed to move this token by either [`Self::approve`] or
+    /// * If the caller is not `from`, it must have been allowed to move this
+    ///   token by either [`Self::approve`] or
     /// * [`Self::set_approval_for_all`].
-    /// * If `to` refers to a smart contract, it must implement [`IERC721Receiver::on_erc_721_received`], which is called upon
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon
     /// * a safe transfer.
     ///
     /// # Events
@@ -226,15 +235,20 @@ impl ERC721 {
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
-    /// * `data` - Additional data with no specified format, sent in call to `to`.
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
     ///
     /// # Errors
     ///
-    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
-    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
-    /// * If caller does not have right to approve then [`Error::InsufficientApproval`] is returned.
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
+    ///   returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is
+    ///   returned.
+    /// * If caller does not have right to approve then
+    ///   [`Error::InsufficientApproval`] is returned.
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
-    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface id or
+    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or
     /// returned with error then [`Error::InvalidReceiver`] is returned.
     ///
     /// # Requirements
@@ -242,8 +256,10 @@ impl ERC721 {
     /// * `from` cannot be the zero address.
     /// * `to` cannot be the zero address.
     /// * `token_id` token must exist and be owned by `from`.
-    /// * If the caller is not `from`, it must be approved to move this token by either [`Self::_approve`] or [`Self::set_approval_for_all`].
-    /// * If `to` refers to a smart contract, it must implement [`IERC721Receiver::on_erc_721_received`], which is called upon
+    /// * If the caller is not `from`, it must be approved to move this token by
+    ///   either [`Self::_approve`] or [`Self::set_approval_for_all`].
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon
     /// * a safe transfer.
     ///
     /// # Events
@@ -270,9 +286,11 @@ impl ERC721 {
 
     /// Transfers `token_id` token from `from` to `to`.
     ///
-    /// WARNING: Note that the caller is responsible to confirm that the recipient is capable of receiving ERC-721
-    /// or else they may be permanently lost. Usage of [`Self::safe_transfer_from`] prevents loss, though the caller must
-    /// understand this adds an external call which potentially creates a reentrancy vulnerability.
+    /// WARNING: Note that the caller is responsible to confirm that the
+    /// recipient is capable of receiving ERC-721 or else they may be
+    /// permanently lost. Usage of [`Self::safe_transfer_from`] prevents loss,
+    /// though the caller must understand this adds an external call which
+    /// potentially creates a reentrancy vulnerability.
     ///
     /// # Arguments
     ///
@@ -283,9 +301,12 @@ impl ERC721 {
     ///
     /// # Errors
     ///
-    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
-    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
-    /// * If caller does not have right to approve then [`Error::InsufficientApproval`] is returned.
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
+    ///   returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is
+    ///   returned.
+    /// * If caller does not have right to approve then
+    ///   [`Error::InsufficientApproval`] is returned.
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
     ///
     /// # Requirements:
@@ -293,7 +314,8 @@ impl ERC721 {
     /// * `from` cannot be the zero address.
     /// * `to` cannot be the zero address.
     /// * `token_id` token must be owned by `from`.
-    /// * If the caller is not `from`, it must be approved to move this token by either [`Self::approve`] or [`Self::set_approval_for_all`].
+    /// * If the caller is not `from`, it must be approved to move this token by
+    ///   either [`Self::approve`] or [`Self::set_approval_for_all`].
     ///
     /// # Events
     ///
@@ -310,8 +332,9 @@ impl ERC721 {
             );
         }
 
-        // Setting an "auth" arguments enables the `_isAuthorized` check which verifies that the token exists
-        // (from != 0). Therefore, it is not needed to verify that the return value is not 0 here.
+        // Setting an "auth" arguments enables the `_isAuthorized` check which
+        // verifies that the token exists (from != 0). Therefore, it is
+        // not needed to verify that the return value is not 0 here.
         let previous_owner = self._update(to, token_id, msg::sender())?;
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
@@ -324,10 +347,11 @@ impl ERC721 {
         Ok(())
     }
 
-    /// Gives permission to `to` to transfer `token_id` token to another account.
-    /// The approval is cleared when the token is transferred.
+    /// Gives permission to `to` to transfer `token_id` token to another
+    /// account. The approval is cleared when the token is transferred.
     ///
-    /// Only a single account can be approved at a time, so approving the zero address clears previous approvals.
+    /// Only a single account can be approved at a time, so approving the zero
+    /// address clears previous approvals.
     ///
     /// # Arguments
     /// * `&mut self` - Write access to the contract's state.
@@ -337,7 +361,8 @@ impl ERC721 {
     /// # Errors
     ///
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
-    /// * If `auth` does not have a right to approve this token then [`Error::InvalidApprover`]
+    /// * If `auth` does not have a right to approve this token then
+    ///   [`Error::InvalidApprover`]
     /// is returned
     ///
     /// # Requirements:
@@ -357,13 +382,15 @@ impl ERC721 {
     }
 
     /// Approve or remove `operator` as an operator for the caller.
-    /// Operators can call [`Self::transfer_from`] or [`Self::safe_transfer_from`] for any token owned by the caller.
+    /// Operators can call [`Self::transfer_from`] or
+    /// [`Self::safe_transfer_from`] for any token owned by the caller.
     ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - Account add to the set of authorized operators.
-    /// * `approved` - Flag that that set approval or disapproval for the operator.
+    /// * `approved` - Flag that that set approval or disapproval for the
+    ///   operator.
     ///
     /// # Requirements:
     ///
@@ -395,7 +422,8 @@ impl ERC721 {
         self._get_approved_inner(token_id)
     }
 
-    /// Returns if the `operator` is allowed to manage all the assets of `owner`.
+    /// Returns if the `operator` is allowed to manage all the assets of
+    /// `owner`.
     ///
     /// # Arguments
     ///
@@ -416,12 +444,15 @@ impl ERC721 {
 }
 
 impl ERC721 {
-    /// Returns the owner of the `token_id`. Does NOT revert if token doesn't exist.
+    /// Returns the owner of the `token_id`. Does NOT revert if token doesn't
+    /// exist.
     ///
-    /// IMPORTANT: Any overrides to this function that add ownership of tokens not tracked by the
-    /// core ERC-721 logic MUST be matched with the use of [`Self::_increase_balance`] to keep balances
-    /// consistent with ownership. The invariant to preserve is that for any address `a` the value returned by
-    /// `balance_of(a)` must be equal to the number of tokens such that `owner_of_inner(token_id)` is `a`.
+    /// IMPORTANT: Any overrides to this function that add ownership of tokens
+    /// not tracked by the core ERC-721 logic MUST be matched with the use
+    /// of [`Self::_increase_balance`] to keep balances consistent with
+    /// ownership. The invariant to preserve is that for any address `a` the
+    /// value returned by `balance_of(a)` must be equal to the number of
+    /// tokens such that `owner_of_inner(token_id)` is `a`.
     ///
     /// # Arguments
     ///
@@ -431,7 +462,8 @@ impl ERC721 {
         Ok(self.owners.get(token_id))
     }
 
-    /// Returns the approved address for `token_id`. Returns 0 if `token_id` is not minted.
+    /// Returns the approved address for `token_id`. Returns 0 if `token_id` is
+    /// not minted.
     ///
     /// # Arguments
     ///
@@ -444,11 +476,11 @@ impl ERC721 {
         Ok(self.token_approvals.get(token_id))
     }
 
-    /// Returns whether `spender` is allowed to manage `owner`'s tokens, or `token_id` in
-    /// particular (ignoring whether it is owned by `owner`).
+    /// Returns whether `spender` is allowed to manage `owner`'s tokens, or
+    /// `token_id` in particular (ignoring whether it is owned by `owner`).
     ///
-    /// WARNING: This function assumes that `owner` is the actual owner of `token_id` and does not verify this
-    /// assumption.
+    /// WARNING: This function assumes that `owner` is the actual owner of
+    /// `token_id` and does not verify this assumption.
     ///
     /// # Arguments
     ///
@@ -469,12 +501,13 @@ impl ERC721 {
         Ok(is_authorized)
     }
 
-    /// Checks if `spender` can operate on `token_id`, assuming the provided `owner` is the actual owner.
-    /// Reverts if `spender` does not have approval from the provided `owner` for the given token or for all its assets
-    /// the `spender` for the specific `token_id`.
+    /// Checks if `spender` can operate on `token_id`, assuming the provided
+    /// `owner` is the actual owner. Reverts if `spender` does not have
+    /// approval from the provided `owner` for the given token or for all its
+    /// assets the `spender` for the specific `token_id`.
     ///
-    /// WARNING: This function assumes that `owner` is the actual owner of `token_id` and does not verify this
-    /// assumption.
+    /// WARNING: This function assumes that `owner` is the actual owner of
+    /// `token_id` and does not verify this assumption.
     ///
     /// # Arguments
     ///
@@ -486,7 +519,8 @@ impl ERC721 {
     /// # Errors
     ///
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
-    /// * If spender does not have right to approve then [`Error::InsufficientApproval`] is returned.
+    /// * If spender does not have right to approve then
+    ///   [`Error::InsufficientApproval`] is returned.
     pub fn _check_authorized(
         &self,
         owner: Address,
@@ -504,14 +538,18 @@ impl ERC721 {
         Ok(())
     }
 
-    /// Unsafe write access to the balances, used by extensions that "mint" tokens using an [`Self::owner_of`] override.
+    /// Unsafe write access to the balances, used by extensions that "mint"
+    /// tokens using an [`Self::owner_of`] override.
     ///
-    /// NOTE: the value is limited to type(uint128).max. This protect against _balance overflow. It is unrealistic that
-    /// a uint256 would ever overflow from increments when these increments are bounded to uint128 values.
+    /// NOTE: the value is limited to type(uint128).max. This protect against
+    /// _balance overflow. It is unrealistic that a uint256 would ever
+    /// overflow from increments when these increments are bounded to uint128
+    /// values.
     ///
-    /// WARNING: Increasing an account's balance using this function tends to be paired with an override of the
-    /// [`Self::_owner_of_inner`] function to resolve the ownership of the corresponding tokens so that balances and ownership
-    /// remain consistent with one another.
+    /// WARNING: Increasing an account's balance using this function tends to be
+    /// paired with an override of the [`Self::_owner_of_inner`] function to
+    /// resolve the ownership of the corresponding tokens so that balances and
+    /// ownership remain consistent with one another.
     ///
     /// # Arguments    
     ///
@@ -522,13 +560,16 @@ impl ERC721 {
         self.balances.setter(account).add_assign_unchecked(value);
     }
 
-    /// Transfers `token_id` from its current owner to `to`, or alternatively mints (or burns) if the current owner
-    /// (or `to`) is the zero address. Returns the owner of the `token_id` before the update.
+    /// Transfers `token_id` from its current owner to `to`, or alternatively
+    /// mints (or burns) if the current owner (or `to`) is the zero address.
+    /// Returns the owner of the `token_id` before the update.
     ///
-    /// The `auth` argument is optional. If the value passed is non 0, then this function will check that
-    /// `auth` is either the owner of the token, or approved to operate on the token (by the owner).
+    /// The `auth` argument is optional. If the value passed is non 0, then this
+    /// function will check that `auth` is either the owner of the token, or
+    /// approved to operate on the token (by the owner).
     ///
-    /// NOTE: If overriding this function in a way that tracks balances, see also [`Self::_increase_balance`].
+    /// NOTE: If overriding this function in a way that tracks balances, see
+    /// also [`Self::_increase_balance`].
     ///
     /// # Arguments
     ///
@@ -541,7 +582,8 @@ impl ERC721 {
     ///
     /// * If token does not exist and `auth` is not `Address::ZERO` then
     /// [`Error::NonexistentToken`] is returned.
-    /// * If `auth` is not `Address::ZERO` and `auth` does not have a right to approve this token
+    /// * If `auth` is not `Address::ZERO` and `auth` does not have a right to
+    ///   approve this token
     /// then [`Error::InsufficientApproval`] ßis returned.
     ///
     /// # Events
@@ -562,7 +604,8 @@ impl ERC721 {
 
         // Execute the update
         if from != Address::ZERO {
-            // Clear approval. No need to re-authorize or emit the Approval event
+            // Clear approval. No need to re-authorize or emit the Approval
+            // event
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
             self.balances.setter(from).sub_assign_unchecked(U256::from(1));
         }
@@ -580,7 +623,8 @@ impl ERC721 {
 
     /// Mints `token_id` and transfers it to `to`.
     ///
-    /// WARNING: Usage of this method is discouraged, use [`Self::_safe_mint`] whenever possible.
+    /// WARNING: Usage of this method is discouraged, use [`Self::_safe_mint`]
+    /// whenever possible.
     ///
     /// # Arguments
     ///
@@ -591,7 +635,8 @@ impl ERC721 {
     /// # Errors
     ///
     /// * If `token_id` already exist then [`Error::InvalidSender`] is returned.
-    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
+    ///   returned.
     ///
     /// # Requirements:
     ///
@@ -616,20 +661,23 @@ impl ERC721 {
     }
 
     /// Mints `tokenId`, transfers it to `to` and checks for `to` acceptance.
-    /// An additional `data` parameter is forwarded to [`IERC721Receiver::on_erc_721_received`]
-    /// to contract recipients.
+    /// An additional `data` parameter is forwarded to
+    /// [`IERC721Receiver::on_erc_721_received`] to contract recipients.
     ///
     /// # Arguments
     ///
     /// * `storage` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
-    /// * `data` - Additional data with no specified format, sent in call to `to`.
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
     ///
     /// # Requirements:
     ///
     /// * `tokenId` must not exist.
-    /// * If `to` refers to a smart contract, it must implement [`IERC721Receiver::on_erc_721_received`], which is called upon a safe transfer.
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a safe
+    ///   transfer.
     ///
     /// # Events
     ///
@@ -653,7 +701,8 @@ impl ERC721 {
 
     /// Destroys `token_id`.
     /// The approval is cleared when the token is burned.
-    /// This is an internal function that does not check if the sender is authorized to operate on the token.
+    /// This is an internal function that does not check if the sender is
+    /// authorized to operate on the token.
     ///
     /// # Arguments
     ///
@@ -682,7 +731,8 @@ impl ERC721 {
     }
 
     /// Transfers `token_id` from `from` to `to`.
-    /// As opposed to [`transferFrom`], this imposes no restrictions on msg.sender.
+    /// As opposed to [`transferFrom`], this imposes no restrictions on
+    /// msg.sender.
     ///
     /// # Arguments
     ///
@@ -693,9 +743,12 @@ impl ERC721 {
     ///
     /// # Errors
     ///
-    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
-    /// * If `token_id` does not exist then [`Error::ERC721NonexistentToken`] is returned.
-    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
+    ///   returned.
+    /// * If `token_id` does not exist then [`Error::ERC721NonexistentToken`] is
+    ///   returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is
+    ///   returned.
     ///
     /// # Requirements:
     ///
@@ -732,34 +785,42 @@ impl ERC721 {
         }
     }
 
-    /// Safely transfers `tokenId` token from `from` to `to`, checking that contract recipients
-    /// are aware of the ERC-721 standard to prevent tokens from being forever locked.
-    /// `data` is additional data, it has no specified format and it is sent in call to `to`.
-    /// This internal function is like [`Self::safe_transfer_from`] in the sense that it invokes
-    /// [`IERC721Receiver::on_erc_721_received`] on the receiver, and can be used to e.g.
-    /// implement alternative mechanisms to perform token transfer, such as signature-based.
-    /// 
+    /// Safely transfers `tokenId` token from `from` to `to`, checking that
+    /// contract recipients are aware of the ERC-721 standard to prevent
+    /// tokens from being forever locked. `data` is additional data, it has
+    /// no specified format and it is sent in call to `to`. This internal
+    /// function is like [`Self::safe_transfer_from`] in the sense that it
+    /// invokes [`IERC721Receiver::on_erc_721_received`] on the receiver,
+    /// and can be used to e.g. implement alternative mechanisms to perform
+    /// token transfer, such as signature-based.
+    ///
     /// # Arguments
     ///
     /// * `storage` - Write access to the contract's state.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
-    /// * `data` - Additional data with no specified format, sent in call to `to`.
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
     ///
     /// # Errors
     ///
-    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is returned.
-    /// * If `token_id` does not exist then [`Error::ERC721NonexistentToken`] is returned.
-    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is returned.
-    /// 
+    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
+    ///   returned.
+    /// * If `token_id` does not exist then [`Error::ERC721NonexistentToken`] is
+    ///   returned.
+    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is
+    ///   returned.
+    ///
     /// # Requirements:
-    /// 
+    ///
     /// * `tokenId` token must exist and be owned by `from`.
     /// * `to` cannot be the zero address.
     /// * `from` cannot be the zero address.
-    /// * If `to` refers to a smart contract, it must implement [`IERC721Receiver::on_erc_721_received`], which is called upon a safe transfer.
-    /// 
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a safe
+    ///   transfer.
+    ///
     /// # Events
     /// Emits a [`Transfer`] event.
     pub fn _safe_transfer(
@@ -780,8 +841,9 @@ impl ERC721 {
         )
     }
 
-    /// Variant of `approve_inner` with an optional flag to enable or disable the [`Approval`] event. The event is not
-    /// emitted in the context of transfers.
+    /// Variant of `approve_inner` with an optional flag to enable or disable
+    /// the [`Approval`] event. The event is not emitted in the context of
+    /// transfers.
     ///
     /// # Arguments
     ///
@@ -794,7 +856,8 @@ impl ERC721 {
     /// # Errors
     ///
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
-    /// * If `auth` does not have a right to approve this token then [`Error::InvalidApprover`]
+    /// * If `auth` does not have a right to approve this token then
+    ///   [`Error::InvalidApprover`]
     /// is returned
     ///
     /// # Events
@@ -810,7 +873,8 @@ impl ERC721 {
         if emit_event || auth != Address::ZERO {
             let owner = self._require_owned(token_id)?;
 
-            // We do not use _isAuthorized because single-token approvals should not be able to call approve
+            // We do not use _isAuthorized because single-token approvals should
+            // not be able to call approve
             if auth != Address::ZERO
                 && owner != auth
                 && !self.is_approved_for_all(owner, auth)?
@@ -837,8 +901,9 @@ impl ERC721 {
     /// * `approved` - Flag that set approval or disapproval for the operator.
     ///
     /// # Errors
-    /// 
-    /// * If `operator` is `Address::ZERO` then [`Error::InvalidOperator`] is returned.
+    ///
+    /// * If `operator` is `Address::ZERO` then [`Error::InvalidOperator`] is
+    ///   returned.
     ///
     /// # Requirements:
     ///
@@ -861,13 +926,14 @@ impl ERC721 {
         Ok(())
     }
 
-    /// Reverts if the `token_id` doesn't have a current owner (it hasn't been minted, or it has been burned).
-    /// Returns the owner.
+    /// Reverts if the `token_id` doesn't have a current owner (it hasn't been
+    /// minted, or it has been burned). Returns the owner.
     ///
-    /// Overrides to ownership logic should be done to [`Self::_owner_of_inner`].
+    /// Overrides to ownership logic should be done to
+    /// [`Self::_owner_of_inner`].
     ///
     /// # Errors
-    /// 
+    ///
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
     ///
     /// # Arguments
@@ -882,12 +948,15 @@ impl ERC721 {
         Ok(owner)
     }
 
-    /// Performs an acceptance check for the provided `operator` by calling [`IERC721Receiver::on_erc_721_received`]
-    /// on the `to` address. The `operator` is generally the address that initiated the token transfer (i.e. `msg::sender()`).
+    /// Performs an acceptance check for the provided `operator` by calling
+    /// [`IERC721Receiver::on_erc_721_received`] on the `to` address. The
+    /// `operator` is generally the address that initiated the token transfer
+    /// (i.e. `msg::sender()`).
     ///
-    /// The acceptance call is not executed and treated as a no-op if the target address doesn't contain code (i.e. an EOA).
-    /// Otherwise, the recipient must implement [`IERC721Receiver::on_erc_721_received`] and return the acceptance magic value to accept
-    /// the transfer.
+    /// The acceptance call is not executed and treated as a no-op if the target
+    /// address doesn't contain code (i.e. an EOA). Otherwise, the recipient
+    /// must implement [`IERC721Receiver::on_erc_721_received`] and return the
+    /// acceptance magic value to accept the transfer.
     ///
     /// # Arguments
     ///
@@ -896,11 +965,13 @@ impl ERC721 {
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
-    /// * `data` - Additional data with no specified format, sent in call to `to`.
-    /// 
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
+    ///
     /// # Errors
-    /// 
-    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface id or
+    ///
+    /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or
     /// returned with error then [`Error::InvalidReceiver`] is returned.
     pub fn _check_on_erc721_received(
         storage: &mut impl TopLevelStorage,
@@ -936,6 +1007,7 @@ impl ERC721 {
     }
 }
 
+// TODO: make it common for all contracts or remove/inline
 pub trait IncrementalMath<T> {
     fn add_assign_unchecked(&mut self, rhs: T);
 
