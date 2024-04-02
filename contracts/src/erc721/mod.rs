@@ -354,6 +354,7 @@ impl ERC721 {
     /// address clears previous approvals.
     ///
     /// # Arguments
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
