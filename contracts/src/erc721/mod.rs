@@ -125,13 +125,13 @@ sol_interface! {
 
 sol_storage! {
     pub struct ERC721 {
-        mapping(uint256 => address) owners;
+        mapping(uint256 => address) _owners;
 
-        mapping(address => uint256) balances;
+        mapping(address => uint256) _balances;
 
-        mapping(uint256 => address) token_approvals;
+        mapping(uint256 => address) _token_approvals;
 
-        mapping(address => mapping(address => bool)) operator_approvals;
+        mapping(address => mapping(address => bool)) _operator_approvals;
     }
 }
 
@@ -152,7 +152,7 @@ impl ERC721 {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
-        Ok(self.balances.get(owner))
+        Ok(self._balances.get(owner))
     }
 
     /// Returns the owner of the `token_id` token.
@@ -449,7 +449,7 @@ impl ERC721 {
         owner: Address,
         operator: Address,
     ) -> bool {
-        self.operator_approvals.get(owner).get(operator)
+        self._operator_approvals.get(owner).get(operator)
     }
 }
 
@@ -469,7 +469,7 @@ impl ERC721 {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     pub fn _owner_of_inner(&self, token_id: U256) -> Address {
-        self.owners.get(token_id)
+        self._owners.get(token_id)
     }
 
     /// Returns the approved address for `token_id`. Returns 0 if `token_id` is
@@ -480,7 +480,7 @@ impl ERC721 {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     pub fn _get_approved_inner(&self, token_id: U256) -> Address {
-        self.token_approvals.get(token_id)
+        self._token_approvals.get(token_id)
     }
 
     /// Returns whether `spender` is allowed to manage `owner`'s tokens, or
@@ -563,7 +563,7 @@ impl ERC721 {
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
     pub fn _increase_balance(&mut self, account: Address, value: U256) {
-        self.balances.setter(account).add_assign_unchecked(value);
+        self._balances.setter(account).add_assign_unchecked(value);
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
@@ -613,14 +613,14 @@ impl ERC721 {
             // Clear approval. No need to re-authorize or emit the Approval
             // event
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self.balances.setter(from).sub_assign_unchecked(U256::from(1));
+            self._balances.setter(from).sub_assign_unchecked(U256::from(1));
         }
 
         if !to.is_zero() {
-            self.balances.setter(to).add_assign_unchecked(U256::from(1));
+            self._balances.setter(to).add_assign_unchecked(U256::from(1));
         }
 
-        self.owners.setter(token_id).set(to);
+        self._owners.setter(token_id).set(to);
 
         evm::log(Transfer { from, to, token_id });
 
@@ -902,7 +902,7 @@ impl ERC721 {
             }
         }
 
-        self.token_approvals.setter(token_id).set(to);
+        self._token_approvals.setter(token_id).set(to);
         Ok(())
     }
 
@@ -936,7 +936,7 @@ impl ERC721 {
         if operator.is_zero() {
             return Err(ERC721InvalidOperator { operator }.into());
         }
-        self.operator_approvals.setter(owner).setter(operator).set(approved);
+        self._operator_approvals.setter(owner).setter(operator).set(approved);
         evm::log(ApprovalForAll { owner, operator, approved });
         Ok(())
     }
@@ -1061,12 +1061,12 @@ mod tests {
             let root = U256::ZERO;
 
             ERC721 {
-                owners: unsafe { StorageMap::new(root, 0) },
-                balances: unsafe { StorageMap::new(root + U256::from(32), 0) },
-                token_approvals: unsafe {
+                _owners: unsafe { StorageMap::new(root, 0) },
+                _balances: unsafe { StorageMap::new(root + U256::from(32), 0) },
+                _token_approvals: unsafe {
                     StorageMap::new(root + U256::from(64), 0)
                 },
-                operator_approvals: unsafe {
+                _operator_approvals: unsafe {
                     StorageMap::new(root + U256::from(96), 0)
                 },
             }
@@ -1153,7 +1153,7 @@ mod tests {
             token
                 .approve(BOB, token_id)
                 .expect("approve bob for operations on token");
-            assert_eq!(token.token_approvals.get(token_id), BOB);
+            assert_eq!(token._token_approvals.get(token_id), BOB);
         });
     }
 
@@ -1162,7 +1162,7 @@ mod tests {
         test_utils::with_storage::<ERC721>(|token| {
             let token_id = random_token_id();
             token._mint(BOB, token_id).expect("mint token");
-            token.token_approvals.setter(token_id).set(*ALICE);
+            token._token_approvals.setter(token_id).set(*ALICE);
             token
                 .transfer_from(BOB, *ALICE, token_id)
                 .expect("transfer Bob's token to Alice");
