@@ -149,7 +149,7 @@ impl ERC721 {
     /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is
     ///   returned.
     pub fn balance_of(&self, owner: Address) -> Result<U256, Error> {
-        if owner == Address::ZERO {
+        if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
         Ok(self.balances.get(owner))
@@ -326,7 +326,7 @@ impl ERC721 {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        if to == Address::ZERO {
+        if to.is_zero() {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
             );
@@ -501,7 +501,7 @@ impl ERC721 {
         spender: Address,
         token_id: U256,
     ) -> bool {
-        spender != Address::ZERO
+        !spender.is_zero()
             && (owner == spender
                 || self.is_approved_for_all(owner, spender)
                 || self._get_approved_inner(token_id) == spender)
@@ -534,7 +534,7 @@ impl ERC721 {
         token_id: U256,
     ) -> Result<(), Error> {
         if !self._is_authorized(owner, spender, token_id) {
-            return if owner == Address::ZERO {
+            return if owner.is_zero() {
                 Err(ERC721NonexistentToken { token_id }.into())
             } else {
                 Err(ERC721InsufficientApproval { operator: spender, token_id }
@@ -604,19 +604,19 @@ impl ERC721 {
         let from = self._owner_of_inner(token_id);
 
         // Perform (optional) operator check
-        if auth != Address::ZERO {
+        if !auth.is_zero() {
             self._check_authorized(from, auth, token_id)?;
         }
 
         // Execute the update
-        if from != Address::ZERO {
+        if !from.is_zero() {
             // Clear approval. No need to re-authorize or emit the Approval
             // event
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
             self.balances.setter(from).sub_assign_unchecked(U256::from(1));
         }
 
-        if to != Address::ZERO {
+        if !to.is_zero() {
             self.balances.setter(to).add_assign_unchecked(U256::from(1));
         }
 
@@ -653,14 +653,14 @@ impl ERC721 {
     ///
     /// Emits a [`Transfer`] event.
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
-        if to == Address::ZERO {
+        if to.is_zero() {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
             );
         }
 
         let previous_owner = self._update(to, token_id, Address::ZERO)?;
-        if previous_owner != Address::ZERO {
+        if !previous_owner.is_zero() {
             return Err(ERC721InvalidSender { sender: Address::ZERO }.into());
         }
         Ok(())
@@ -738,7 +738,7 @@ impl ERC721 {
     pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
-        if previous_owner == Address::ZERO {
+        if previous_owner.is_zero() {
             Err(ERC721NonexistentToken { token_id }.into())
         } else {
             Ok(())
@@ -779,14 +779,14 @@ impl ERC721 {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        if to == Address::ZERO {
+        if to.is_zero() {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
             );
         }
 
         let previous_owner = self._update(to, token_id, Address::ZERO)?;
-        if previous_owner == Address::ZERO {
+        if previous_owner.is_zero() {
             Err(ERC721NonexistentToken { token_id }.into())
         } else if previous_owner != from {
             Err(ERC721IncorrectOwner {
@@ -885,12 +885,12 @@ impl ERC721 {
         emit_event: bool,
     ) -> Result<(), Error> {
         // Avoid reading the owner unless necessary
-        if emit_event || auth != Address::ZERO {
+        if emit_event || !auth.is_zero() {
             let owner = self._require_owned(token_id)?;
 
             // We do not use _isAuthorized because single-token approvals should
             // not be able to call approve
-            if auth != Address::ZERO
+            if !auth.is_zero()
                 && owner != auth
                 && !self.is_approved_for_all(owner, auth)
             {
@@ -933,7 +933,7 @@ impl ERC721 {
         operator: Address,
         approved: bool,
     ) -> Result<(), Error> {
-        if operator == Address::ZERO {
+        if operator.is_zero() {
             return Err(ERC721InvalidOperator { operator }.into());
         }
         self.operator_approvals.setter(owner).setter(operator).set(approved);
@@ -957,7 +957,7 @@ impl ERC721 {
     /// * `token_id` - Token id as a number.
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self._owner_of_inner(token_id);
-        if owner == Address::ZERO {
+        if owner.is_zero() {
             return Err(ERC721NonexistentToken { token_id }.into());
         }
         Ok(owner)
