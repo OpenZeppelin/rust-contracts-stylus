@@ -82,8 +82,8 @@ sol! {
     error ERC721InvalidApprover(address approver);
 
     /// Indicates a failure with the `operator` to be approved. Used in approvals.
-    #[derive(Debug)]
     /// * `operator` - Incorrect address of the operator.
+    #[derive(Debug)]
     error ERC721InvalidOperator(address operator);
 }
 
