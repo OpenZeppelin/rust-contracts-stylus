@@ -1,6 +1,6 @@
 [package]
-name = "wavm-shims"
-description = "Stylus WebAssembly VM Shims"
+name = "grip"
+description = "Unit Testing for Stylus"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
@@ -8,6 +8,7 @@ repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
-tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 const-hex = "1.11.1"
 once_cell = { version = "1.19.0" }
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+grip-proc = { path = "../grip-proc" }
