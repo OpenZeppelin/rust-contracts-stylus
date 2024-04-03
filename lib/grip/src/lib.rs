@@ -1,7 +1,6 @@
 #![doc = include_str!("../README.md")]
 mod context;
 pub mod prelude;
-mod proc;
 mod shims;
 mod storage;
 
