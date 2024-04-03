@@ -135,6 +135,11 @@ sol_storage! {
     }
 }
 
+// NOTE: implementation of `TopLevelStorage` to be able refer to &mut self when
+// calling other contracts and not `&mut (impl TopLevelStorage +
+// BorrowMut<Self>)`. Should be fixed in future by stylus team.
+unsafe impl TopLevelStorage for ERC721 {}
+
 #[external]
 impl ERC721 {
     /// Returns the number of tokens in `owner` 's account.
@@ -179,7 +184,7 @@ impl ERC721 {
     ///
     /// # Arguments
     ///
-    /// * `storage` - Write access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
@@ -213,25 +218,19 @@ impl ERC721 {
     ///
     /// Emits a [`Transfer`] event.
     pub fn safe_transfer_from(
-        storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
+        &mut self,
         from: Address,
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        Self::safe_transfer_from_with_data(
-            storage,
-            from,
-            to,
-            token_id,
-            vec![].into(),
-        )
+        self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
     /// Safely transfers `token_id` token from `from` to `to`.
     ///
     /// # Arguments
     ///
-    /// * `storage` - Write access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
@@ -267,21 +266,14 @@ impl ERC721 {
     /// Emits a [`Transfer`] event.
     #[selector(name = "safeTransferFrom")]
     pub fn safe_transfer_from_with_data(
-        storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
+        &mut self,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        storage.borrow_mut().transfer_from(from, to, token_id)?;
-        Self::_check_on_erc721_received(
-            storage,
-            msg::sender(),
-            from,
-            to,
-            token_id,
-            data,
-        )
+        self.transfer_from(from, to, token_id)?;
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
     }
 
     /// Transfers `token_id` token from `from` to `to`.
@@ -672,7 +664,7 @@ impl ERC721 {
     ///
     /// # Arguments
     ///
-    /// * `storage` - Write access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in call to
@@ -698,14 +690,13 @@ impl ERC721 {
     ///
     /// Emits a [`Transfer`] event.
     pub fn _safe_mint(
-        storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
+        &mut self,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        storage.borrow_mut()._mint(to, token_id)?;
-        Self::_check_on_erc721_received(
-            storage,
+        self._mint(to, token_id)?;
+        self._check_on_erc721_received(
             msg::sender(),
             Address::ZERO,
             to,
@@ -811,7 +802,7 @@ impl ERC721 {
     ///
     /// # Arguments
     ///
-    /// * `storage` - Write access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
@@ -839,15 +830,15 @@ impl ERC721 {
     /// # Events
     /// Emits a [`Transfer`] event.
     pub fn _safe_transfer(
-        storage: &mut (impl TopLevelStorage + BorrowMut<Self>),
+        &mut self,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        storage.borrow_mut()._transfer(from, to, token_id)?;
+        self._transfer(from, to, token_id)?;
         Self::_check_on_erc721_received(
-            storage,
+            self,
             msg::sender(),
             from,
             to,
@@ -975,7 +966,7 @@ impl ERC721 {
     ///
     /// # Arguments
     ///
-    /// * `storage` - Write access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
@@ -989,7 +980,7 @@ impl ERC721 {
     ///   interface id or returned with error then [`Error::InvalidReceiver`] is
     ///   returned.
     pub fn _check_on_erc721_received(
-        storage: &mut impl TopLevelStorage,
+        &mut self,
         operator: Address,
         from: Address,
         to: Address,
@@ -999,7 +990,7 @@ impl ERC721 {
         // TODO: think how we can retrieve INTERFACE_ID at compile time
         const IERC721RECEIVER_INTERFACE_ID: u32 = 0x150b7a02;
         if to.has_code() {
-            let call = Call::new_in(storage);
+            let call = Call::new_in(self);
             return match IERC721Receiver::new(to).on_erc_721_received(
                 call,
                 operator,
