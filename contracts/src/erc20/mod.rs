@@ -61,6 +61,11 @@ sol! {
     /// being their owner.
     #[derive(Debug)]
     error ERC20InvalidSpender(address spender);
+
+    /// Indicates a failure where an overflow error in math occured. Used in
+    /// `_update`.
+    #[derive(Debug)]
+    error ERC20Overflow();
 }
 
 /// An ERC-20 error defined as described in [ERC-6093].
@@ -81,6 +86,9 @@ pub enum Error {
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     InvalidSpender(ERC20InvalidSpender),
+    /// Indicates a failure where an overflow error in math occured. Used in
+    /// `_update`.
+    Overflow(ERC20Overflow),
 }
 
 sol_storage! {
@@ -142,12 +150,6 @@ impl ERC20 {
         value: U256,
     ) -> Result<bool, Error> {
         let from = msg::sender();
-        if to == Address::ZERO {
-            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
-                receiver: Address::ZERO,
-            }));
-        }
-
         self._transfer(from, to, value)?;
         evm::log(Transfer { from, to, value });
         Ok(true)
@@ -246,17 +248,6 @@ impl ERC20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Error> {
-        if from == Address::ZERO {
-            return Err(Error::InvalidSender(ERC20InvalidSender {
-                sender: Address::ZERO,
-            }));
-        }
-        if to == Address::ZERO {
-            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
-                receiver: Address::ZERO,
-            }));
-        }
-
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
@@ -285,19 +276,83 @@ impl ERC20 {
         to: Address,
         value: U256,
     ) -> Result<(), Error> {
-        let from_balance = self._balances.get(from);
-        if from_balance < value {
-            return Err(Error::InsufficientBalance(ERC20InsufficientBalance {
-                sender: from,
-                balance: from_balance,
-                needed: value,
+        if from == Address::ZERO {
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: Address::ZERO,
+            }));
+        }
+        if to == Address::ZERO {
+            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
+                receiver: Address::ZERO,
             }));
         }
 
-        let from_balance = from_balance - value;
-        self._balances.insert(from, from_balance);
-        let to_balance = self._balances.get(to);
-        self._balances.insert(to, to_balance + value);
+        self._update(from, to, value)?;
+
+        Ok(())
+    }
+
+    /// Transfers a `value` amount of tokens from `from` to `to`,
+    /// or alternatively mints (or burns) if `from` (or `to`) is the zero address.
+    ///
+    /// All customizations to transfers, mints, and burns should be done by using this function.
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - Owner's address.
+    /// * `to` - Recipient's address.
+    /// * `value` - Amount to be transferred.
+    ///
+    /// # Events
+    ///
+    /// * `Transfer`
+    pub fn _update(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        if from.is_zero() {
+            // Mint operation.
+            // Overflow check required:
+            // The rest of the code assumes that _total_supply never overflows
+            // TODO: Think about SafeMath library
+            let total_supply = self
+                .total_supply()
+                .checked_add(value)
+                .ok_or(Error::Overflow(ERC20Overflow {}))?;
+            self._total_supply.set(total_supply);
+        } else {
+            let from_balance = self._balances.get(from);
+            if from_balance < value {
+                return Err(Error::InsufficientBalance(
+                    ERC20InsufficientBalance {
+                        sender: from,
+                        balance: from_balance,
+                        needed: value,
+                    },
+                ));
+            } else {
+                // Overflow not possible:
+                // value <= from_balance <= _total_supply.
+                self._balances.setter(from).set(from_balance - value);
+            }
+        }
+
+        if to.is_zero() {
+            let total_supply = self.total_supply();
+            // Overflow not possible:
+            // value <= _total_supply or value <= from_balance <= _total_supply.
+            self._total_supply.set(total_supply - value);
+        } else {
+            let balance_to = self._balances.get(to);
+            // Overflow not possible:
+            // balance + value is at most total_supply, which fits into a U256.
+            self._balances.setter(to).set(balance_to + value);
+        }
+
+        evm::log(Transfer { from, to, value });
+
         Ok(())
     }
 
