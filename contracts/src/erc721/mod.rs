@@ -36,7 +36,7 @@ sol! {
 
 sol! {
     /// Indicates that an address can't be an owner.
-    /// For example, `address(0)` is a forbidden owner in ERC-20. Used in balance queries.
+    /// For example, `address(0)` is a forbidden owner in ERC-721. Used in balance queries.
     ///
     /// * `owner` - Incorrect address of the owner.
     #[derive(Debug)]
