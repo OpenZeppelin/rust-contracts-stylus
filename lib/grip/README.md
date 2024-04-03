@@ -1,23 +1,40 @@
 # Grip - Unit Testing for Stylus
 
+This crate enables unit-testing for Stylus contracts. It abstracts away the
+machinery necessary for writing tests behind a `#[grip::test]` procedural
+macro.
+
 The name `grip` is an analogy to the place where you put your fingers to hold a
 stylus pen.
 
-Note that currently, test suites using `grip::test` will run serially because
-of global access to storage.
-
 ## Usage
 
-Annotate tests with `#[grip::test]` instead of `#[test]` to get access to the
-affordances:
+Annotate tests with `#[grip::test]` instead of `#[test]` to get access to VM
+affordances.
 
-Import these shims in your test modules as `grip::prelude::*` to populate the
-namespace with the appropriate symbols.
+Note that we require contracts to implement `core::default::Default`. This
+implementation should match the way solidity would lay out the contract's state
+in storage, so that the tests are as close as possible to the real environment.
 
-```rust,ignore
+```rust
 #[cfg(test)]
 mod tests {
     use contracts::erc20::ERC20;
+
+    impl Default for ERC20 {
+        fn default() -> Self {
+            let root = U256::ZERO;
+            ERC20 {
+                _balances: unsafe { StorageMap::new(root, 0) },
+                _allowances: unsafe {
+                    StorageMap::new(root + U256::from(32), 0)
+                },
+                _total_supply: unsafe {
+                    StorageU256::new(root + U256::from(64), 0)
+                },
+            }
+        }
+    }
 
     #[grip::test]
     fn reads_balance(contract: ERC20) {
@@ -33,12 +50,15 @@ behave the same as `#[test]`.
 ```rust,ignore
 #[cfg(test)]
 mod tests {
-    #[grip::test] // Equivalent to #[test]
-    fn test_fn() {
-        ...
+    #[grip::test]
+     fn t() { // If no params, it expands to a `#[test]`.
+        // ...
     }
 }
 ```
+
+Note that currently, test suites using `grip::test` will run serially because
+of global access to storage.
 
 ### Notice
 

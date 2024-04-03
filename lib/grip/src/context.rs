@@ -1,4 +1,4 @@
-//! Unit-testing utilities for Stylus contracts.
+//! Unit-testing context for Stylus contracts.
 use std::sync::{Mutex, MutexGuard};
 
 use crate::storage::reset_storage;

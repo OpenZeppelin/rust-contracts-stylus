@@ -1,4 +1,4 @@
-//! Storage operations shims.
+//! Shims for storage operations.
 use std::{collections::HashMap, ptr, sync::Mutex};
 
 use once_cell::sync::Lazy;

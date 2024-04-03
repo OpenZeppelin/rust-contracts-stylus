@@ -1,4 +1,4 @@
-#![doc = include_str!("../README.md")]
+//! Procedural macro definitions used in `grip`.
 use proc_macro::TokenStream;
 
 mod test;
@@ -33,7 +33,7 @@ mod test;
 /// #[cfg(test)]
 /// mod tests {
 ///     #[grip::test]
-///     fn t() { // Since it has no params, it defaults to being a `#[test]`.
+///     fn t() { // If no params, it expands to a `#[test]`.
 ///         ...
 ///     }
 /// }

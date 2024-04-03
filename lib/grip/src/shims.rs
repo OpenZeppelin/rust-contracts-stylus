@@ -1,5 +1,3 @@
-//! # WAVM Shims
-//!
 //! Shims that mock common host imports in Stylus `wasm` programs.
 //!
 //! Most of the documentation is taken from the [Stylus source].

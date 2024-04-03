@@ -1,7 +1,9 @@
+//! Defines the `#[grip::test]` procedural macro.
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, FnArg};
 
+/// Shorthand to print nice errors.
 macro_rules! error {
     ($tokens:expr, $($msg:expr),+ $(,)?) => {{
         let error = syn::Error::new(syn::spanned::Spanned::span(&$tokens), format!($($msg),+));
@@ -12,6 +14,9 @@ macro_rules! error {
     }};
 }
 
+/// Defines a unit test that provides access to Stylus' execution context.
+///
+/// For more information see [`crate::test`].
 pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let item_fn = parse_macro_input!(input as syn::ItemFn);
     let attrs = &item_fn.attrs;
@@ -33,8 +38,8 @@ pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
         .into();
     }
 
-    // We can unwrap because we handle the above. We don't support more than
-    // one parameters for now, so we skip them.
+    // We can unwrap because we handle the empty case above. We don't support
+    // more than one parameter for now, so we skip them.
     let arg = fn_args.first().unwrap();
     let FnArg::Typed(arg) = arg else {
         error!(arg, "unexpected receiver argument in test signature");
