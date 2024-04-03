@@ -1,4 +1,3 @@
-pub use crate::context::with_context;
-pub use crate::grip_proc::test;
-pub use crate::shims::*;
-pub use crate::storage::reset_storage;
+pub use crate::{
+    context::with_context, grip_proc::test, shims::*, storage::reset_storage,
+};

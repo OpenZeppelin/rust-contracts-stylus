@@ -74,8 +74,9 @@
 #![allow(clippy::missing_safety_doc)]
 use std::slice;
 
-use crate::storage::{read_bytes32, write_bytes32, STORAGE};
 use tiny_keccak::{Hasher, Keccak};
+
+use crate::storage::{read_bytes32, write_bytes32, STORAGE};
 
 pub(crate) const WORD_BYTES: usize = 32;
 pub(crate) type Bytes32 = [u8; WORD_BYTES];
