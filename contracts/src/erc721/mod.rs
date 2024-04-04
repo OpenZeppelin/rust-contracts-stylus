@@ -12,10 +12,10 @@ use stylus_sdk::{
 };
 
 sol! {
-    /// Emitted when `tokenId` token is transferred from `from` to `to`.
+    /// Emitted when the `tokenId` token is transferred from `from` to `to`.
     ///
-    /// * `from` - Address from which token will be transferred.
-    /// * `to` - Address where token will be transferred.
+    /// * `from` - Address from which the token will be transferred.
+    /// * `to` - Address where the token will be transferred to.
     /// * `token_id` - Token id as a number.
     event Transfer(address indexed from, address indexed to, uint256 indexed token_id);
 
