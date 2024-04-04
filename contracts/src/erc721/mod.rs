@@ -100,7 +100,6 @@ pub enum Error {
     InvalidOperator(ERC721InvalidOperator),
 }
 
-// TODO: better to keep it at separate module
 sol_interface! {
     /// ERC-721 token receiver interface.
     /// Interface for any contract that wants to support safeTransfers
@@ -221,6 +220,7 @@ impl ERC721 {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
+        // TODO: use bytes! macro later
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
