@@ -53,7 +53,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.58",
  "syn-solidity",
  "tiny-keccak",
 ]
@@ -127,10 +127,10 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives 0.3.3",
  "alloy-sol-types",
+ "grip",
  "mini-alloc",
  "stylus-proc",
  "stylus-sdk",
- "wavm-shims",
 ]
 
 [[package]]
@@ -241,6 +241,25 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "wasi",
+]
+
+[[package]]
+name = "grip"
+version = "0.1.0"
+dependencies = [
+ "const-hex",
+ "grip-proc",
+ "once_cell",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "grip-proc"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.58",
 ]
 
 [[package]]
@@ -498,7 +517,7 @@ checksum = "7eb0b34b42edc17f6b7cac84a52a1c5f0e1bb2227e997ca9011ea3dd34e8610b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.58",
 ]
 
 [[package]]
@@ -559,9 +578,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.55"
+version = "2.0.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "002a1b3dbf967edfafc32655d0f377ab0bb7b994aa1d32c8cc7e9b8bf3ebb8f0"
+checksum = "44cfb93f38070beee36b3fef7d4f5a16f27751d94b187b666a5cc5e9b0d30687"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -576,7 +595,7 @@ checksum = "e5f995d2140b0f751dbe94365be2591edbf3d1b75dcfaeac14183abbd2ff07bd"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.55",
+ "syn 2.0.58",
 ]
 
 [[package]]
@@ -629,15 +648,6 @@ name = "wasi"
 version = "0.11.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
-
-[[package]]
-name = "wavm-shims"
-version = "0.1.0"
-dependencies = [
- "const-hex",
- "once_cell",
- "tiny-keccak",
-]
 
 [[package]]
 name = "wee_alloc"
