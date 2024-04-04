@@ -482,7 +482,7 @@ mod tests {
 
         // Mint some tokens for Alice.
         let two = U256::from(2);
-        contract._balances.setter(alice).set(two);
+        contract._update(Address::ZERO, alice, two).unwrap();
         assert_eq!(two, contract.balance_of(alice));
 
         contract.transfer_from(alice, bob, one).unwrap();
@@ -495,20 +495,22 @@ mod tests {
     fn transfers_from(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let sender = msg::sender();
 
         // Alice approves `msg::sender`.
         let one = U256::from(1);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract._allowances.setter(alice).setter(sender).set(one);
 
         // Mint some tokens for Alice.
         let two = U256::from(2);
-        contract._balances.setter(alice).set(two);
+        contract._update(Address::ZERO, alice, two).unwrap();
         assert_eq!(two, contract.balance_of(alice));
 
         contract.transfer_from(alice, bob, one).unwrap();
 
         assert_eq!(one, contract.balance_of(alice));
         assert_eq!(one, contract.balance_of(bob));
+        assert_eq!(U256::ZERO, contract.allowance(alice, sender));
     }
 
     #[grip::test]
@@ -555,7 +557,7 @@ mod tests {
 
         // Mint some tokens for Alice.
         let one = U256::from(1);
-        contract._balances.setter(alice).set(one);
+        contract._update(Address::ZERO, alice, one).unwrap();
         assert_eq!(one, contract.balance_of(alice));
 
         let result = contract.transfer_from(alice, bob, one);
