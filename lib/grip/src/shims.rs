@@ -1,21 +1,83 @@
-//! Shim crate to mock Stylus's `vm_hooks`.
+//! Shims that mock common host imports in Stylus `wasm` programs.
 //!
 //! Most of the documentation is taken from the [Stylus source].
 //!
 //! [Stylus source]: https://github.com/OffchainLabs/stylus/blob/484efac4f56fb70f96d4890748b8ec2543d88acd/arbitrator/wasm-libraries/user-host-trait/src/lib.rs
 //!
 //! We allow unsafe here because safety is guaranteed by the Stylus team.
+//!
+//! ## Motivation
+//!
+//! Without these shims we can't currently run unit tests for stylus contracts,
+//! since the symbols the compiled binaries expect to find are not there.
+//!
+//! If you run `cargo test` on a fresh Stylus project, it will error with:
+//!
+//! ```terminal
+//! dyld[97792]: missing symbol called
+//! ```
+//!
+//! This crate is a temporary solution until the Stylus team provides us with a
+//! different and more stable mechanism for unit-testing our contracts.
+//!
+//! ## Usage
+//!
+//! Import these shims in your test modules as `grip::prelude::*` to populate
+//! the namespace with the appropriate symbols.
+//!
+//! ```rust,ignore
+//! #[cfg(test)]
+//! mod tests {
+//!     use contracts::erc20::ERC20;
+//!
+//!     #[grip::test]
+//!     fn reads_balance(contract: ERC20) {
+//!         let balance = contract.balance_of(Address::ZERO); // Access storage.
+//!         assert_eq!(balance, U256::ZERO);
+//!     }
+//! }
+//! ```
+//!
+//! Note that for proper usage, tests should have exclusive access to storage,
+//! since they run in parallel, which may cause undesired results.
+//!
+//! One solution is to wrap tests with a function that acquires a global mutex:
+//!
+//! ```rust,no_run
+//! use std::sync::{Mutex, MutexGuard};
+//!
+//! use grip::prelude::reset_storage;
+//!
+//! pub static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
+//!
+//! pub fn acquire_storage() -> MutexGuard<'static, ()> {
+//!     STORAGE_MUTEX.lock().unwrap()
+//! }
+//!
+//! pub fn with_context<C: Default>(closure: impl FnOnce(&mut C)) {
+//!     let _lock = acquire_storage();
+//!     let mut contract = C::default();
+//!     closure(&mut contract);
+//!     reset_storage();
+//! }
+//!
+//! #[test]
+//! fn reads_balance() {
+//!     grid::context::with_context::<ERC20>(|token| {
+//!         let balance = token.balance_of(Address::ZERO);
+//!         assert_eq!(balance, U256::ZERO);
+//!     })
+//! }
+//! ```
 #![allow(clippy::missing_safety_doc)]
 use std::slice;
 
-use storage::{read_bytes32, write_bytes32, STORAGE};
 use tiny_keccak::{Hasher, Keccak};
 
-mod storage;
-pub use storage::reset_storage;
+use crate::storage::{read_bytes32, write_bytes32, STORAGE};
 
-const WORD_BYTES: usize = 32;
-type Bytes32 = [u8; WORD_BYTES];
+pub(crate) const WORD_BYTES: usize = 32;
+pub(crate) type Bytes32 = [u8; WORD_BYTES];
 
 /// Efficiently computes the [`keccak256`] hash of the given preimage.
 /// The semantics are equivalent to that of the EVM's [`SHA3`] opcode.

@@ -93,8 +93,6 @@ mod tests {
     use stylus_sdk::storage::{StorageBool, StorageString, StorageType};
 
     use super::{Metadata, DEFAULT_DECIMALS};
-    #[allow(unused_imports)]
-    use crate::test_utils;
 
     impl Default for Metadata {
         fn default() -> Self {
@@ -111,50 +109,46 @@ mod tests {
         }
     }
 
-    #[test]
-    fn constructs() {
-        test_utils::with_storage::<Metadata>(|meta| {
-            let name = meta.name();
-            let symbol = meta.symbol();
-            let decimals = meta.decimals();
-            let initialized = meta._initialized.get();
-            assert_eq!(name, "");
-            assert_eq!(symbol, "");
-            assert_eq!(decimals, DEFAULT_DECIMALS);
-            assert_eq!(initialized, false);
+    #[grip::test]
+    fn constructs(meta: Metadata) {
+        let name = meta.name();
+        let symbol = meta.symbol();
+        let decimals = meta.decimals();
+        let initialized = meta._initialized.get();
+        assert_eq!(name, "");
+        assert_eq!(symbol, "");
+        assert_eq!(decimals, DEFAULT_DECIMALS);
+        assert_eq!(initialized, false);
 
-            const NAME: &str = "Meta";
-            const SYMBOL: &str = "Symbol";
-            meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
+        const NAME: &str = "Meta";
+        const SYMBOL: &str = "Symbol";
+        meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
 
-            let name = meta.name();
-            let symbol = meta.symbol();
-            let decimals = meta.decimals();
-            let initialized = meta._initialized.get();
-            assert_eq!(name, NAME);
-            assert_eq!(symbol, SYMBOL);
-            assert_eq!(decimals, DEFAULT_DECIMALS);
-            assert_eq!(initialized, true);
-        })
+        let name = meta.name();
+        let symbol = meta.symbol();
+        let decimals = meta.decimals();
+        let initialized = meta._initialized.get();
+        assert_eq!(name, NAME);
+        assert_eq!(symbol, SYMBOL);
+        assert_eq!(decimals, DEFAULT_DECIMALS);
+        assert_eq!(initialized, true);
     }
 
-    #[test]
-    fn constructs_only_once() {
-        test_utils::with_storage::<Metadata>(|meta| {
-            const NAME: &str = "Meta";
-            const SYMBOL: &str = "Symbol";
-            meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
+    #[grip::test]
+    fn constructs_only_once(meta: Metadata) {
+        const NAME: &str = "Meta";
+        const SYMBOL: &str = "Symbol";
+        meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
 
-            meta.constructor("Invalid".to_owned(), "Invalid".to_owned());
+        meta.constructor("Invalid".to_owned(), "Invalid".to_owned());
 
-            let name = meta.name();
-            let symbol = meta.symbol();
-            let decimals = meta.decimals();
-            let initialized = meta._initialized.get();
-            assert_eq!(name, NAME);
-            assert_eq!(symbol, SYMBOL);
-            assert_eq!(decimals, DEFAULT_DECIMALS);
-            assert_eq!(initialized, true);
-        })
+        let name = meta.name();
+        let symbol = meta.symbol();
+        let decimals = meta.decimals();
+        let initialized = meta._initialized.get();
+        assert_eq!(name, NAME);
+        assert_eq!(symbol, SYMBOL);
+        assert_eq!(decimals, DEFAULT_DECIMALS);
+        assert_eq!(initialized, true);
     }
 }
