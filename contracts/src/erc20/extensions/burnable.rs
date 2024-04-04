@@ -24,6 +24,8 @@ impl ERC20Burnable {
     ///
     /// * `value` - Amount to be burnt.
     ///
+    /// # Errors
+    ///
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
     pub fn burn(&mut self, value: U256) -> Result<(), Error> {
@@ -39,6 +41,8 @@ impl ERC20Burnable {
     ///
     /// * `account` - Owner's address.
     /// * `value` - Amount to be burnt.
+    ///
+    /// # Errors
     ///
     /// If not enough allowance is available, then the error
     /// [`Error::InsufficientAllowance`] is returned.

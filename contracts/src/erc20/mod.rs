@@ -530,6 +530,11 @@ mod tests {
     fn transfer_from_errors_when_invalid_sender(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
+        contract
+            ._allowances
+            .setter(Address::ZERO)
+            .setter(msg::sender())
+            .set(one);
         let result = contract.transfer_from(Address::ZERO, alice, one);
         assert!(matches!(result, Err(Error::InvalidSender(_))));
     }
@@ -538,6 +543,7 @@ mod tests {
     fn transfer_from_errors_when_invalid_receiver(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
+        contract._allowances.setter(alice).setter(msg::sender()).set(one);
         let result = contract.transfer_from(alice, Address::ZERO, one);
         assert!(matches!(result, Err(Error::InvalidReceiver(_))));
     }
