@@ -62,7 +62,7 @@ sol! {
     #[derive(Debug)]
     error ERC20InvalidSpender(address spender);
 
-    /// Indicates a failure where an overflow error in math occured. Used in
+    /// Indicates a failure where an overflow error in math occurred. Used in
     /// `_update`.
     #[derive(Debug)]
     error ERC20Overflow();
@@ -86,7 +86,7 @@ pub enum Error {
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     InvalidSpender(ERC20InvalidSpender),
-    /// Indicates a failure where an overflow error in math occured. Used in
+    /// Indicates a failure where an overflow error in math occurred. Used in
     /// `_update`.
     Overflow(ERC20Overflow),
 }
@@ -268,6 +268,10 @@ impl ERC20 {
     ///
     /// # Errors
     ///
+    /// * If the `from` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// * If the `to` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
     fn _transfer(
@@ -303,9 +307,12 @@ impl ERC20 {
     /// * `to` - Recipient's address.
     /// * `value` - Amount to be transferred.
     ///
-    /// # Events
+    /// # Errors
     ///
-    /// * `Transfer`
+    /// If a math overflow error occurs, then the error
+    /// [`Error::Overflow`] is returned.
+    /// If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
     pub fn _update(
         &mut self,
         from: Address,
@@ -354,6 +361,35 @@ impl ERC20 {
         evm::log(Transfer { from, to, value });
 
         Ok(())
+    }
+
+    /// Destroys a `value` amount of tokens from `account`,
+    /// lowering the total supply.
+    ///
+    /// Relies on the `update` mechanism.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - Owner's address.
+    /// * `value` - Amount to be burnt.
+    ///
+    /// # Errors
+    ///
+    /// * If the `from` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
+    pub fn _burn(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        if account == Address::ZERO {
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: Address::ZERO,
+            }));
+        }
+        self._update(account, Address::ZERO, value)
     }
 
     /// Updates `owner`'s allowance for `spender` based on spent `value`.

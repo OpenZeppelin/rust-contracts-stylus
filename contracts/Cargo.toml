@@ -23,6 +23,7 @@ grip = { path = "../lib/grip" }
 default = []
 erc20 = []
 erc20_metadata = ["erc20"]
+erc20_burnable = ["erc20"]
 erc721 = []
 
 [lib]
@@ -42,9 +43,9 @@ erc721 = []
 # SDK. We don't set `lib` here because our contracts are meant to be used as an
 # addition to other contracts. For this use case, the abi of those contracts
 # will contain ours.
-# 
+#
 # The trade-off is being able to run `cargo test` with conditional compilation
 # vs being able to run `cargo stylus export-abi`.
-# 
+#
 # This may change in the future, so this behavior should not be relied upon.
 crate-type = ["cdylib"]
