@@ -50,7 +50,7 @@ sol! {
 
     /// Indicates an error related to the ownership over a particular token. Used in transfers.
     ///
-    /// * `sender` - Address whose token being transferred.
+    /// * `sender` - Address whose tokens are being transferred.
     /// * `token_id` - Token id as a number.
     /// * `owner` - Address of the owner of the token.
     #[derive(Debug)]
