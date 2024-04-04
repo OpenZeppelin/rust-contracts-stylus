@@ -899,7 +899,7 @@ impl ERC721 {
         Ok(())
     }
 
-    /// Approve `operator` to operate on all of `owner` tokens.
+    /// Approve `operator` to operate on all of `owner`'s tokens.
     ///
     /// # Arguments
     ///
