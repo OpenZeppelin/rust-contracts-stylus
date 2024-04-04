@@ -584,7 +584,7 @@ impl ERC721 {
     /// [`Error::NonexistentToken`] is returned.
     /// * If `auth` is not `Address::ZERO` and `auth` does not have a right to
     ///   approve this token
-    /// then [`Error::InsufficientApproval`] ßis returned.
+    /// then [`Error::InsufficientApproval`] is returned.
     ///
     /// # Events
     ///
