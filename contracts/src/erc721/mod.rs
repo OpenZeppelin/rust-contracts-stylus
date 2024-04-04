@@ -906,7 +906,7 @@ impl ERC721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - Account the token's owner.
     /// * `operator` - Account to add to the set of authorized operators.
-    /// * `approved` - Flag that set approval or disapproval for the operator.
+    /// * `approved` - Whether or not permission will be granted. If true, this means `operator` will be allowed to manage `owner`'s assets.
     ///
     /// # Errors
     ///
