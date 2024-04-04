@@ -1,7 +1,7 @@
+use alloy_primitives::{fixed_bytes, Address, FixedBytes, U128, U256};
 use derive_more::From;
 use stylus_sdk::{
     abi::Bytes,
-    alloy_primitives::{Address, U128, U256},
     alloy_sol_types::sol,
     call::Call,
     evm, msg,
@@ -904,7 +904,8 @@ impl ERC721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - Account the token's owner.
     /// * `operator` - Account to add to the set of authorized operators.
-    /// * `approved` - Whether permission will be granted. If true, this means `operator` will be allowed to manage `owner`'s assets.
+    /// * `approved` - Whether permission will be granted. If true, this means
+    ///   `operator` will be allowed to manage `owner`'s assets.
     ///
     /// # Errors
     ///
@@ -987,8 +988,9 @@ impl ERC721 {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        // TODO: think how we can retrieve INTERFACE_ID at compile time
-        const IERC721RECEIVER_INTERFACE_ID: u32 = 0x150b7a02;
+        const IERC721RECEIVER_INTERFACE_ID: FixedBytes<4> =
+            fixed_bytes!("150b7a02");
+
         if to.has_code() {
             let call = Call::new_in(self);
             return match IERC721Receiver::new(to).on_erc_721_received(
@@ -999,8 +1001,7 @@ impl ERC721 {
                 data.to_vec(),
             ) {
                 Ok(result) => {
-                    let received_interface_id = u32::from_be_bytes(result.0);
-                    if received_interface_id != IERC721RECEIVER_INTERFACE_ID {
+                    if result != IERC721RECEIVER_INTERFACE_ID {
                         Err(ERC721InvalidReceiver { receiver: to }.into())
                     } else {
                         Ok(())
