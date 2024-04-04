@@ -3,7 +3,7 @@ use core::borrow::BorrowMut;
 use derive_more::From;
 use stylus_sdk::{
     abi::Bytes,
-    alloy_primitives::{Address, U256},
+    alloy_primitives::{Address, U128, U256},
     alloy_sol_types::sol,
     call::Call,
     evm, msg,
@@ -554,8 +554,10 @@ impl ERC721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
-    pub fn _increase_balance(&mut self, account: Address, value: U256) {
-        self._balances.setter(account).add_assign_unchecked(value);
+    // TODO: right now this function is pointless since it is not used. But once
+    // we will be able to override internal functions it will make a difference
+    pub fn _increase_balance(&mut self, account: Address, value: U128) {
+        self._balances.setter(account).add_assign_unchecked(U256::from(value));
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
