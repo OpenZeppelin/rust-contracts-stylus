@@ -915,7 +915,7 @@ impl ERC721 {
     ///
     /// # Requirements:
     ///
-    /// * operator can't be the address zero.
+    /// * `operator` can't be the address zero.
     ///
     /// # Events
     ///
