@@ -1,5 +1,3 @@
-use core::borrow::BorrowMut;
-
 use derive_more::From;
 use stylus_sdk::{
     abi::Bytes,
