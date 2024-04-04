@@ -30,7 +30,7 @@ sol! {
     ///
     /// * `owner` - Address of the owner of the token.
     /// * `operator` - Address of an operator that will manage operations on the token.
-    /// * `approved` - Approved or not permission been granted.
+    /// * `approved` - Whether or not permission has been granted. If true, this means `operator` will be allowed to manage `owner`'s assets.
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 }
 
