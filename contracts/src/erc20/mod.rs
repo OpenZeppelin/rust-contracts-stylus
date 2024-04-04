@@ -297,9 +297,11 @@ impl ERC20 {
     }
 
     /// Transfers a `value` amount of tokens from `from` to `to`,
-    /// or alternatively mints (or burns) if `from` (or `to`) is the zero address.
+    /// or alternatively mints (or burns)
+    /// if `from` (or `to`) is the zero address.
     ///
-    /// All customizations to transfers, mints, and burns should be done by using this function.
+    /// All customizations to transfers, mints, and burns
+    /// should be done by using this function.
     ///
     /// # Arguments
     ///
