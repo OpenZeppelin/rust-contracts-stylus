@@ -65,9 +65,8 @@ mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::msg;
 
-    use crate::erc20::{Error, ERC20};
-
     use super::ERC20Burnable;
+    use crate::erc20::{Error, ERC20};
 
     impl Default for ERC20Burnable {
         fn default() -> Self {
