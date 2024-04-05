@@ -11,6 +11,7 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 pub mod erc20;
 #[cfg(any(test, erc721))]
 pub mod erc721;
+mod utils;
 
 #[cfg(not(any(test, target_arch = "wasm32-unknown-unknown")))]
 #[panic_handler]

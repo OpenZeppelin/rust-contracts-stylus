@@ -1,13 +1,10 @@
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, U128, U256};
 use derive_more::From;
 use stylus_sdk::{
-    abi::Bytes,
-    alloy_sol_types::sol,
-    call::Call,
-    evm, msg,
-    prelude::*,
-    storage::{StorageGuardMut, StorageUint},
+    abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
 };
+
+use crate::utils::{AddAssignUnchecked, SubAssignUnchecked};
 
 sol! {
     /// Emitted when the `tokenId` token is transferred from `from` to `to`.
@@ -1011,25 +1008,6 @@ impl ERC721 {
             };
         }
         Ok(())
-    }
-}
-
-// TODO: make it common for all contracts or remove/inline
-pub trait IncrementalMath<T> {
-    fn add_assign_unchecked(&mut self, rhs: T);
-
-    fn sub_assign_unchecked(&mut self, rhs: T);
-}
-
-impl<'a> IncrementalMath<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
-    fn add_assign_unchecked(&mut self, rhs: U256) {
-        let new_balance = self.get() + rhs;
-        self.set(new_balance);
-    }
-
-    fn sub_assign_unchecked(&mut self, rhs: U256) {
-        let new_balance = self.get() - rhs;
-        self.set(new_balance);
     }
 }
 
