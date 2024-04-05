@@ -7,7 +7,6 @@ extern crate alloc;
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
-#[cfg(any(test, erc20, erc721))]
 mod arithmetic;
 #[cfg(any(test, erc20))]
 pub mod erc20;
