@@ -12,6 +12,8 @@ mod arithmetic;
 pub mod erc20;
 #[cfg(any(feature = "std", feature = "erc721"))]
 pub mod erc721;
+#[cfg(any(feature = "std", feature = "erc20_pausable"))]
+pub mod utils;
 
 #[cfg(not(any(feature = "std", target_arch = "wasm32-unknown-unknown")))]
 #[panic_handler]
