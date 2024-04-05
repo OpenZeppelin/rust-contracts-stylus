@@ -100,14 +100,15 @@ pub enum Error {
 
 sol_interface! {
     /// ERC-721 token receiver interface.
-    /// Interface for any contract that wants to support safeTransfers
+    ///
+    /// Interface for any contract that wants to support `safeTransfers`
     /// from ERC-721 asset contracts.
     interface IERC721Receiver {
         /// Whenever an [`ERC721`] `tokenId` token is transferred to this contract via [`ERC721::safe_transfer_from`]
         /// by `operator` from `from`, this function is called.
         ///
-        /// It must return its Solidity selector to confirm the token transfer.
-        /// If any other value is returned or the interface is not implemented by the recipient, the transfer will be
+        /// It must return its function selector to confirm the token transfer. If
+        /// any other value is returned or the interface is not implemented by the recipient, the transfer will be
         /// reverted.
         function onERC721Received(
             address operator,
@@ -130,14 +131,14 @@ sol_storage! {
     }
 }
 
-// NOTE: implementation of `TopLevelStorage` to be able refer to &mut self when
-// calling other contracts and not `&mut (impl TopLevelStorage +
-// BorrowMut<Self>)`. Should be fixed in future by stylus team.
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for ERC721 {}
 
 #[external]
 impl ERC721 {
-    /// Returns the number of tokens in `owner` 's account.
+    /// Returns the number of tokens in `owner`'s account.
     ///
     /// # Arguments
     ///
@@ -164,7 +165,7 @@ impl ERC721 {
     ///
     /// # Errors
     ///
-    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    /// * If the token does not exist then [`Error::NonexistentToken`] is returned.
     ///
     /// # Requirements
     ///
@@ -188,20 +189,20 @@ impl ERC721 {
     ///
     /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
     ///   returned.
-    /// * If previous owner is not `from` then [`Error::IncorrectOwner`] is
+    /// * If the previous owner is not `from` then [`Error::IncorrectOwner`] is
     ///   returned.
-    /// * If caller does not have right to approve then
+    /// * If the caller does not have the right to approve then
     ///   [`Error::InsufficientApproval`] is returned.
-    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
+    /// * If the token does not exist then [`Error::NonexistentToken`] is returned.
     /// * If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///   interface id or
-    /// returned with error then [`Error::InvalidReceiver`] is returned.
+    ///   interface id or returned with error then [`Error::InvalidReceiver`]
+    ///   is returned.
     ///
     /// # Requirements
     ///
     /// * `from` cannot be the zero address.
     /// * `to` cannot be the zero address.
-    /// * `token_id` token must exist and be owned by `from`.
+    /// * The `token_id` token must exist and be owned by `from`.
     /// * If the caller is not `from`, it must have been allowed to move this
     ///   token by either [`Self::approve`] or
     /// * [`Self::set_approval_for_all`].
