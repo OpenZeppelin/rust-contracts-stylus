@@ -1095,7 +1095,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer_nft(contract: ERC721) {
+    fn transfers(contract: ERC721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("mint nft to alice");
         contract
