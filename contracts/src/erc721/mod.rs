@@ -72,7 +72,7 @@ sol! {
 
     /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
     ///
-    /// * `approver` - Address of an approver that failed to approve.
+    /// * `approver` - Address initiating an approval operation.
     #[derive(Debug)]
     error ERC721InvalidApprover(address approver);
 
