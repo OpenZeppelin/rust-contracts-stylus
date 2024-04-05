@@ -53,7 +53,7 @@ sol! {
 
     /// Indicates a failure with the token `sender`. Used in transfers.
     ///
-    /// * `sender` - An address whose token being transferred.
+    /// * `sender` - An address whose token is being transferred.
     #[derive(Debug)]
     error ERC721InvalidSender(address sender);
 
