@@ -201,7 +201,7 @@ impl ERC20 {
         value: U256,
     ) -> Result<bool, Error> {
         let owner = msg::sender();
-        if spender == Address::ZERO {
+        if spender.is_zero() {
             return Err(Error::InvalidSpender(ERC20InvalidSpender {
                 spender: Address::ZERO,
             }));
@@ -250,7 +250,6 @@ impl ERC20 {
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
-
         Ok(true)
     }
 }
@@ -283,12 +282,12 @@ impl ERC20 {
         to: Address,
         value: U256,
     ) -> Result<(), Error> {
-        if from == Address::ZERO {
+        if from.is_zero() {
             return Err(Error::InvalidSender(ERC20InvalidSender {
                 sender: Address::ZERO,
             }));
         }
-        if to == Address::ZERO {
+        if to.is_zero() {
             return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
                 receiver: Address::ZERO,
             }));
