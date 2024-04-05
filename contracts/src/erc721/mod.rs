@@ -355,8 +355,8 @@ impl ERC721 {
     ///
     /// # Requirements:
     ///
-    /// - The caller must own the token or be an approved operator.
-    /// - `token_id` must exist.
+    /// * The caller must own the token or be an approved operator.
+    /// * `token_id` must exist.
     ///
     /// # Events
     ///
@@ -904,7 +904,6 @@ impl ERC721 {
     /// * `owner` - Account the token's owner.
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `approved` - Whether permission will be granted. If true, this means
-    ///   `operator` will be allowed to manage `owner`'s assets.
     ///
     /// # Errors
     ///
