@@ -702,7 +702,7 @@ impl ERC721 {
     }
 
     /// Destroys `token_id`.
-    /// 
+    ///
     /// The approval is cleared when the token is burned. This is an
     /// internal function that does not check if the sender is authorized
     /// to operate on the token.
@@ -838,13 +838,7 @@ impl ERC721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
-        self._check_on_erc721_received(
-            msg::sender(),
-            from,
-            to,
-            token_id,
-            data,
-        )
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
     }
 
     /// Variant of `approve_inner` with an optional flag to enable or disable
@@ -881,9 +875,9 @@ impl ERC721 {
 
             // We do not use [`Self::_is_authorized`] because single-token approvals should
             // not be able to call `approve`.
-            if auth.is_zero()
-                || owner == auth
-                || self.is_approved_for_all(owner, auth)
+            if !auth.is_zero()
+                && owner != auth
+                && !self.is_approved_for_all(owner, auth)
             {
                 return Err(ERC721InvalidApprover { approver: auth }.into());
             }
