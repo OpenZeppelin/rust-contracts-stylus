@@ -151,7 +151,6 @@ impl ERC20 {
     ) -> Result<bool, Error> {
         let from = msg::sender();
         self._transfer(from, to, value)?;
-        evm::log(Transfer { from, to, value });
         Ok(true)
     }
 
@@ -274,6 +273,10 @@ impl ERC20 {
     /// [`Error::InvalidReceiver`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     fn _transfer(
         &mut self,
         from: Address,
@@ -315,6 +318,10 @@ impl ERC20 {
     /// [`Error::Overflow`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     pub fn _update(
         &mut self,
         from: Address,
@@ -324,7 +331,8 @@ impl ERC20 {
         if from.is_zero() {
             // Mint operation.
             // Overflow check required:
-            // The rest of the code assumes that _total_supply never overflows
+            // The rest of the code assumes that
+            // `_total_supply` never overflows.
             // TODO: Think about SafeMath library
             let total_supply = self
                 .total_supply()
@@ -381,6 +389,10 @@ impl ERC20 {
     /// [`Error::InvalidSender`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     pub fn _burn(
         &mut self,
         account: Address,

@@ -28,6 +28,10 @@ impl ERC20Burnable {
     ///
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     pub fn burn(&mut self, value: U256) -> Result<(), Error> {
         self.erc20._burn(msg::sender(), value)
     }
@@ -50,6 +54,10 @@ impl ERC20Burnable {
     /// [`Error::InvalidSender`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     pub fn burn_from(
         &mut self,
         account: Address,
