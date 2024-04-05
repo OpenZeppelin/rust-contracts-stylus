@@ -1069,29 +1069,23 @@ mod tests {
     }
 
     #[grip::test]
-    fn mints(contract: ERC721) {
+    fn mint(contract: ERC721) {
         let token_id = random_token_id();
-        contract
-            ._mint(*ALICE, token_id)
-            .expect("should mint a token for Alice");
-        let owner = contract
-            .owner_of(token_id)
-            .expect("should get the owner of the token");
+        contract._mint(*ALICE, token_id).expect("mint a token for Alice");
+        let owner =
+            contract.owner_of(token_id).expect("get the owner of the token");
         assert_eq!(owner, *ALICE);
 
-        let balance = contract
-            .balance_of(*ALICE)
-            .expect("should get the balance of Alice");
+        let balance =
+            contract.balance_of(*ALICE).expect("get the balance of Alice");
         let one = U256::from(1);
         assert!(balance >= one);
     }
 
     #[grip::test]
-    fn errors_when_reusing_token_id(contract: ERC721) {
+    fn error_when_reusing_token_id(contract: ERC721) {
         let token_id = random_token_id();
-        contract
-            ._mint(*ALICE, token_id)
-            .expect("should mint the token a first time");
+        contract._mint(*ALICE, token_id).expect("mint the token a first time");
         let err = contract
             ._mint(*ALICE, token_id)
             .expect_err("should not mint a token id twice");
@@ -1102,23 +1096,23 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfers(contract: ERC721) {
+    fn transfer(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(*ALICE, token_id).expect("should mint a token to Alice");
+        contract._mint(*ALICE, token_id).expect("mint a token to Alice");
         contract
             .transfer_from(*ALICE, BOB, token_id)
             .expect("transfer from Alice to Bob");
         let owner =
-            contract.owner_of(token_id).expect("new owner of the token");
+            contract.owner_of(token_id).expect("get the owner of the token");
         assert_eq!(owner, BOB);
     }
 
     #[grip::test]
-    fn errors_when_transfers_nonexistent_token(contract: ERC721) {
+    fn error_when_transfers_nonexistent_token(contract: ERC721) {
         let token_id = random_token_id();
-        let err = contract.transfer_from(*ALICE, BOB, token_id).expect_err(
-            "transfer of a non existent token should not be possible",
-        );
+        let err = contract
+            .transfer_from(*ALICE, BOB, token_id)
+            .expect_err("should not transfer a non existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -1145,17 +1139,18 @@ mod tests {
         contract
             .transfer_from(BOB, *ALICE, token_id)
             .expect("transfer Bob's token to Alice");
-        let owner = contract.owner_of(token_id).expect("owner of the token");
+        let owner =
+            contract.owner_of(token_id).expect("get the owner of the token");
         assert_eq!(owner, *ALICE);
     }
 
     #[grip::test]
-    fn error_when_not_approved_token_transfer(contract: ERC721) {
+    fn error_when_transfer_unapproved_token(contract: ERC721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("mint token to Bob");
         let err = contract
             .transfer_from(BOB, *ALICE, token_id)
-            .expect_err("transfer of not approved token should not happen");
+            .expect_err("should not transfer unapproved token");
         assert!(matches!(
             err,
             Error::InsufficientApproval(ERC721InsufficientApproval {
