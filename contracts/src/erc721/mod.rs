@@ -1106,7 +1106,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn error_transfer_nonexistent_nft(contract: ERC721) {
+    fn errors_when_transfers_nonexistent_nft(contract: ERC721) {
         let token_id = random_token_id();
         match contract.transfer_from(*ALICE, BOB, token_id) {
             Ok(_) => {
