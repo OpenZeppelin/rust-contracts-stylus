@@ -1076,22 +1076,16 @@ mod tests {
     }
 
     #[grip::test]
-    fn error_mint_second_nft(contract: ERC721) {
+    fn errors_when_reusing_token_id(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(*ALICE, token_id).expect("mint token first time");
-        match contract._mint(*ALICE, token_id) {
-            Ok(_) => {
-                panic!("Second mint of the same token should not be possible")
-            }
-            Err(e) => match e {
-                Error::InvalidSender(ERC721InvalidSender {
-                    sender: Address::ZERO,
-                }) => {}
-                e => {
-                    panic!("Invalid error - {e:?}");
-                }
-            },
-        };
+        contract._mint(*ALICE, token_id).expect("should mint the token a first time");
+        let actual = token
+            ._mint(*ALICE, token_id)
+            .expect_err("should not mint a token id twice");
+        let expected = Error::InvalidSender(ERC721InvalidSender {
+            sender: Address::ZERO,
+        });
+        assert!(matches!(actual, expected));
     }
 
     #[grip::test]
