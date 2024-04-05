@@ -7,11 +7,11 @@ extern crate alloc;
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
+mod arithmetic;
 #[cfg(any(test, erc20))]
 pub mod erc20;
 #[cfg(any(test, erc721))]
 pub mod erc721;
-mod arithmetic;
 
 #[cfg(not(any(test, target_arch = "wasm32-unknown-unknown")))]
 #[panic_handler]
