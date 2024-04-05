@@ -1,7 +1,7 @@
 use alloy_primitives::U256;
 use stylus_sdk::storage::{StorageGuardMut, StorageUint};
 
-pub trait AddAssignUnchecked<T> {
+pub(crate) trait AddAssignUnchecked<T> {
     fn add_assign_unchecked(&mut self, rhs: T);
 }
 
@@ -12,7 +12,7 @@ impl<'a> AddAssignUnchecked<U256> for StorageGuardMut<'a, StorageUint<256, 4>> {
     }
 }
 
-pub trait SubAssignUnchecked<T> {
+pub(crate) trait SubAssignUnchecked<T> {
     fn sub_assign_unchecked(&mut self, rhs: T);
 }
 
