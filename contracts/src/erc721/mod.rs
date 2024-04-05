@@ -4,7 +4,7 @@ use stylus_sdk::{
     abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
 };
 
-use crate::utils::{AddAssignUnchecked, SubAssignUnchecked};
+use crate::arithmetic::{AddAssignUnchecked, SubAssignUnchecked};
 
 sol! {
     /// Emitted when the `tokenId` token is transferred from `from` to `to`.
