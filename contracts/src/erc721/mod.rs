@@ -350,8 +350,7 @@ impl ERC721 {
     ///
     /// * If token does not exist then [`Error::NonexistentToken`] is returned.
     /// * If `auth` does not have a right to approve this token then
-    ///   [`Error::InvalidApprover`]
-    /// is returned
+    ///   [`Error::InvalidApprover`] is returned.
     ///
     /// # Requirements:
     ///
