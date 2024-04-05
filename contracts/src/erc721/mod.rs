@@ -1066,11 +1066,11 @@ mod tests {
     #[grip::test]
     fn mints(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(*ALICE, token_id).expect("mint token");
-        let owner = contract.owner_of(token_id).expect("owner address");
+        contract._mint(*ALICE, token_id).expect("should mint an nft for Alice");
+        let owner = contract.owner_of(token_id).expect("should get the owner of the nft");
         assert_eq!(owner, *ALICE);
 
-        let balance = contract.balance_of(*ALICE).expect("balance of owner");
+        let balance = contract.balance_of(*ALICE).expect("should get the balance of Alice");
         let one = U256::from(1);
         assert!(balance >= one);
     }
