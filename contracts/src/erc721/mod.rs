@@ -1064,7 +1064,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn mint_nft_and_check_balance(contract: ERC721) {
+    fn mints(contract: ERC721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("mint token");
         let owner = contract.owner_of(token_id).expect("owner address");
