@@ -1063,14 +1063,25 @@ mod tests {
         }
     }
 
+    fn random_token_id() -> U256 {
+        let num: u32 = rand::random();
+        num.try_into().expect("conversion to U256")
+    }
+
     #[grip::test]
     fn mints(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(*ALICE, token_id).expect("should mint an nft for Alice");
-        let owner = contract.owner_of(token_id).expect("should get the owner of the nft");
+        contract
+            ._mint(*ALICE, token_id)
+            .expect("should mint a token for Alice");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should get the owner of the token");
         assert_eq!(owner, *ALICE);
 
-        let balance = contract.balance_of(*ALICE).expect("should get the balance of Alice");
+        let balance = contract
+            .balance_of(*ALICE)
+            .expect("should get the balance of Alice");
         let one = U256::from(1);
         assert!(balance >= one);
     }
@@ -1078,47 +1089,46 @@ mod tests {
     #[grip::test]
     fn errors_when_reusing_token_id(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(*ALICE, token_id).expect("should mint the token a first time");
-        let actual = token
+        contract
+            ._mint(*ALICE, token_id)
+            .expect("should mint the token a first time");
+        let err = contract
             ._mint(*ALICE, token_id)
             .expect_err("should not mint a token id twice");
-        let expected = Error::InvalidSender(ERC721InvalidSender {
-            sender: Address::ZERO,
-        });
-        assert!(matches!(actual, expected));
+        assert!(matches!(
+            err,
+            Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
+        ));
     }
 
     #[grip::test]
     fn transfers(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(*ALICE, token_id).expect("mint nft to alice");
+        contract._mint(*ALICE, token_id).expect("should mint a token to Alice");
         contract
             .transfer_from(*ALICE, BOB, token_id)
-            .expect("transfer from alice to bob");
-        let owner = contract.owner_of(token_id).expect("new owner of nft");
+            .expect("transfer from Alice to Bob");
+        let owner =
+            contract.owner_of(token_id).expect("new owner of the token");
         assert_eq!(owner, BOB);
     }
 
     #[grip::test]
-    fn errors_when_transfers_nonexistent_nft(contract: ERC721) {
+    fn errors_when_transfers_nonexistent_token(contract: ERC721) {
         let token_id = random_token_id();
-        match contract.transfer_from(*ALICE, BOB, token_id) {
-            Ok(_) => {
-                panic!("Transfer of a non existent nft should not be possible")
-            }
-            Err(e) => match e {
-                Error::NonexistentToken(ERC721NonexistentToken {
+        let err = contract.transfer_from(*ALICE, BOB, token_id).expect_err(
+            "transfer of a non existent token should not be possible",
+        );
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
                     token_id: t_id,
-                }) if t_id == token_id => {}
-                e => {
-                    panic!("Invalid error - {e:?}");
-                }
-            },
-        }
+            }) if t_id == token_id
+        ));
     }
 
     #[grip::test]
-    fn approve_nft_transfer(contract: ERC721) {
+    fn approve_token_transfer(contract: ERC721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("mint token");
         contract
@@ -1128,43 +1138,34 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer_approved_nft(contract: ERC721) {
+    fn transfer_approved_token(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(BOB, token_id).expect("mint token");
+        contract._mint(BOB, token_id).expect("mint token to Bob");
         contract._token_approvals.setter(token_id).set(*ALICE);
         contract
             .transfer_from(BOB, *ALICE, token_id)
             .expect("transfer Bob's token to Alice");
-        let owner = contract.owner_of(token_id).expect("owner of token");
+        let owner = contract.owner_of(token_id).expect("owner of the token");
         assert_eq!(owner, *ALICE);
     }
 
     #[grip::test]
-    fn error_not_approved_nft_transfer(contract: ERC721) {
+    fn error_when_not_approved_token_transfer(contract: ERC721) {
         let token_id = random_token_id();
-        contract._mint(BOB, token_id).expect("mint token");
-        match contract.transfer_from(BOB, *ALICE, token_id) {
-            Ok(_) => {
-                panic!("Transfer of not approved token should not happen");
-            }
-            Err(e) => match e {
-                Error::InsufficientApproval(ERC721InsufficientApproval {
+        contract._mint(BOB, token_id).expect("mint token to Bob");
+        let err = contract
+            .transfer_from(BOB, *ALICE, token_id)
+            .expect_err("transfer of not approved token should not happen");
+        assert!(matches!(
+            err,
+            Error::InsufficientApproval(ERC721InsufficientApproval {
                     operator,
                     token_id: t_id,
-                }) if operator == *ALICE && t_id == token_id => {}
-                e => {
-                    panic!("Invalid error - {e:?}");
-                }
-            },
-        };
+            }) if operator == *ALICE && t_id == token_id
+        ));
     }
 
     // TODO: add set_approval_for_all test
 
     // TODO: add mock test for on_erc721_received
-
-    fn random_token_id() -> U256 {
-        let num: u32 = rand::random();
-        num.try_into().expect("conversion to U256")
-    }
 }
