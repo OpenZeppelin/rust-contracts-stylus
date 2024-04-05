@@ -59,7 +59,7 @@ sol! {
 
     /// Indicates a failure with the token `receiver`. Used in transfers.
     ///
-    /// * `receiver` - Address that receives token.
+    /// * `receiver` - Address that receives the token.
     #[derive(Debug)]
     error ERC721InvalidReceiver(address receiver);
 
