@@ -789,7 +789,9 @@ impl ERC721 {
 
     /// Safely transfers `tokenId` token from `from` to `to`, checking that
     /// contract recipients are aware of the ERC-721 standard to prevent
-    /// tokens from being forever locked. `data` is additional data, it has
+    /// tokens from being forever locked.
+    ///
+    /// `data` is additional data, it has
     /// no specified format and it is sent in call to `to`. This internal
     /// function is like [`Self::safe_transfer_from`] in the sense that it
     /// invokes [`IERC721Receiver::on_erc_721_received`] on the receiver,
