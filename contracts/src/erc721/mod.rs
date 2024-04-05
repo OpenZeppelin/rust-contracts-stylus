@@ -77,7 +77,8 @@ sol! {
     error ERC721InvalidApprover(address approver);
 
     /// Indicates a failure with the `operator` to be approved. Used in approvals.
-    /// * `operator` - Incorrect address of the operator.
+    ///
+    /// * `operator` - Address that may be allowed to operate on tokens without being their owner.
     #[derive(Debug)]
     error ERC721InvalidOperator(address operator);
 }
