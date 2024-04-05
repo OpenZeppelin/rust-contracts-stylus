@@ -65,7 +65,7 @@ sol! {
 
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     ///
-    /// * `operator` - Address of an operator that wasn't approved.
+    /// * `operator` - Address that may be allowed to operate on tokens without being their owner.
     /// * `token_id` - Token id as a number.
     #[derive(Debug)]
     error ERC721InsufficientApproval(address operator, uint256 token_id);
