@@ -10,12 +10,13 @@ repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
-alloy-primitives = { version = "0.3.1", default-features = false }
-alloy-sol-types = { version = "0.3.1", default-features = false }
-stylus-sdk = { version = "0.4.3", default-features = false }
-stylus-proc = { version = "0.4.3", default-features = false }
-mini-alloc = "0.4.2"
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+mini-alloc.workspace = true
 derive_more = "0.99.17"
+cfg-if = "1.0"
 
 [dev-dependencies]
 grip = { path = "../lib/grip" }
@@ -24,6 +25,7 @@ once_cell = "1.19.0"
 
 [features]
 default = []
+tests = []
 erc20 = []
 erc20_metadata = ["erc20"]
 erc721 = []
@@ -50,4 +52,4 @@ erc721 = []
 # vs being able to run `cargo stylus export-abi`.
 # 
 # This may change in the future, so this behavior should not be relied upon.
-crate-type = ["cdylib"]
+crate-type = ["lib", "cdylib"]

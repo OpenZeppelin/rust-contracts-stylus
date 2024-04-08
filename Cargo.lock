@@ -127,6 +127,7 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives 0.3.3",
  "alloy-sol-types",
+ "cfg-if 1.0.0",
  "derive_more",
  "grip",
  "mini-alloc",
@@ -224,6 +225,16 @@ name = "dunce"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56ce8c6da7551ec6c462cbaf3bfbc75131ebbfa1c944aeaa9dab51ca1c5f0c3b"
+
+[[package]]
+name = "erc20-example"
+version = "0.0.0"
+dependencies = [
+ "contracts",
+ "mini-alloc",
+ "stylus-proc",
+ "stylus-sdk",
+]
 
 [[package]]
 name = "generic-array"
@@ -382,12 +393,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "31b476131c3c86cb68032fdc5cb6d5a1045e3e42d96b69fa599fd77701e1f5bf"
 dependencies = [
  "bitflags",
- "lazy_static",
  "num-traits",
  "rand",
  "rand_chacha",
  "rand_xorshift",
- "regex-syntax",
  "unarray",
 ]
 

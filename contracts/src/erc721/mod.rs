@@ -1,3 +1,5 @@
+use alloc::vec;
+
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, U128, U256};
 use derive_more::From;
 use stylus_sdk::{
@@ -1017,7 +1019,7 @@ impl ERC721 {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "tests"))]
 mod tests {
     use alloy_primitives::address;
     use once_cell::sync::Lazy;
