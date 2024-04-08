@@ -31,25 +31,4 @@ erc20_metadata = ["erc20"]
 erc721 = []
 
 [lib]
-# The Stylus team sets new crates with the following types:
-# `lib` - The default, which gets turned to `rlib` by cargo and is needed to
-# link the crate as a dependency of binaries.
-# `cdylib` - A dynamic system library to be loaded from `wasm`.
-#
-# See <https://doc.rust-lang.org/reference/linkage.html>
-#
-# This means our crate would be built twice: once as a rust library and once as
-# a dynamic library. When running `cargo test`, cargo invokes rustc twice, but
-# when it build the rust library, it doesn't set the `test` feature flag, so we
-# can't use it.
-#
-# The reason to add `lib` is to be able to use the `export-abi` feature of the
-# SDK. We don't set `lib` here because our contracts are meant to be used as an
-# addition to other contracts. For this use case, the abi of those contracts
-# will contain ours.
-# 
-# The trade-off is being able to run `cargo test` with conditional compilation
-# vs being able to run `cargo stylus export-abi`.
-# 
-# This may change in the future, so this behavior should not be relied upon.
 crate-type = ["lib", "cdylib"]
