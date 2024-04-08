@@ -549,7 +549,7 @@ impl ERC721 {
     /// resolve the ownership of the corresponding tokens so that balances and
     /// ownership remain consistent with one another.
     ///
-    /// # Arguments    
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Account to increase balance.
