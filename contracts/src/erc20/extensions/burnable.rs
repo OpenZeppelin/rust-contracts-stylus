@@ -1,89 +1,86 @@
-use stylus_sdk::{
-    alloy_primitives::{Address, U256},
-    msg,
-    prelude::*,
-};
+macro_rules! derive_erc20_burnable {
+    () => {
+        /// Destroys a `value` amount of tokens from the caller.
+        /// lowering the total supply.
+        ///
+        /// Relies on the `update` mechanism.
+        ///
+        /// # Arguments
+        ///
+        /// * `value` - Amount to be burnt.
+        ///
+        /// # Errors
+        ///
+        /// If the `from` address doesn't have enough tokens, then the error
+        /// [`Error::InsufficientBalance`] is returned.
+        ///
+        /// # Events
+        ///
+        /// Emits a [`Transfer`] event.
+        pub(crate) fn burn(&mut self, value: U256) -> Result<(), Error> {
+            self.erc20._burn(msg::sender(), value)
+        }
 
-use crate::erc20::{Error, ERC20};
-
-sol_storage! {
-    pub struct ERC20Burnable {
-        ERC20 erc20;
-    }
-}
-
-#[external]
-#[inherit(ERC20)]
-impl ERC20Burnable {
-    /// Destroys a `value` amount of tokens from the caller.
-    /// lowering the total supply.
-    ///
-    /// Relies on the `update` mechanism.
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - Amount to be burnt.
-    ///
-    /// # Errors
-    ///
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    pub fn burn(&mut self, value: U256) -> Result<(), Error> {
-        self.erc20._burn(msg::sender(), value)
-    }
-
-    /// Destroys a `value` amount of tokens from `account`,
-    /// lowering the total supply.
-    ///
-    /// Relies on the `update` mechanism.
-    ///
-    /// # Arguments
-    ///
-    /// * `account` - Owner's address.
-    /// * `value` - Amount to be burnt.
-    ///
-    /// # Errors
-    ///
-    /// If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
-    /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    pub fn burn_from(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Error> {
-        self.erc20._spend_allowance(account, msg::sender(), value)?;
-        self.erc20._burn(account, value)
-    }
+        /// Destroys a `value` amount of tokens from `account`,
+        /// lowering the total supply.
+        ///
+        /// Relies on the `update` mechanism.
+        ///
+        /// # Arguments
+        ///
+        /// * `account` - Owner's address.
+        /// * `value` - Amount to be burnt.
+        ///
+        /// # Errors
+        ///
+        /// If not enough allowance is available, then the error
+        /// [`Error::InsufficientAllowance`] is returned.
+        /// * If the `from` address is `Address::ZERO`, then the error
+        /// [`Error::InvalidSender`] is returned.
+        /// If the `from` address doesn't have enough tokens, then the error
+        /// [`Error::InsufficientBalance`] is returned.
+        ///
+        /// # Events
+        ///
+        /// Emits a [`Transfer`] event.
+        pub(crate) fn burn_from(
+            &mut self,
+            account: Address,
+            value: U256,
+        ) -> Result<(), Error> {
+            self.erc20._spend_allowance(account, msg::sender(), value)?;
+            self.erc20._burn(account, value)
+        }
+    };
 }
 
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::msg;
+    use stylus_sdk::{msg, prelude::*};
 
-    use super::ERC20Burnable;
     use crate::erc20::{Error, ERC20};
 
-    impl Default for ERC20Burnable {
+    sol_storage! {
+        pub struct TestERC20Burnable {
+            ERC20 erc20;
+        }
+    }
+
+    #[external]
+    #[inherit(ERC20)]
+    impl TestERC20Burnable {
+        derive_erc20_burnable!();
+    }
+
+    impl Default for TestERC20Burnable {
         fn default() -> Self {
             Self { erc20: ERC20::default() }
         }
     }
 
     #[grip::test]
-    fn burns(contract: ERC20Burnable) {
+    fn burns(contract: TestERC20Burnable) {
         let zero = U256::ZERO;
         let one = U256::from(1);
 
@@ -104,7 +101,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_errors_when_insufficient_balance(contract: ERC20Burnable) {
+    fn burns_errors_when_insufficient_balance(contract: TestERC20Burnable) {
         let one = U256::from(1);
         let sender = msg::sender();
 
@@ -116,7 +113,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burn_from(contract: ERC20Burnable) {
+    fn burn_from(contract: TestERC20Burnable) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let sender = msg::sender();
 
@@ -138,7 +135,9 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_from_errors_when_insufficient_balance(contract: ERC20Burnable) {
+    fn burns_from_errors_when_insufficient_balance(
+        contract: TestERC20Burnable,
+    ) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // Alice approves `msg::sender`.
@@ -152,7 +151,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_from_errors_when_invalid_sender(contract: ERC20Burnable) {
+    fn burns_from_errors_when_invalid_sender(contract: TestERC20Burnable) {
         let one = U256::from(1);
         contract
             .erc20
@@ -165,7 +164,9 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_from_errors_when_insufficient_allowance(contract: ERC20Burnable) {
+    fn burns_from_errors_when_insufficient_allowance(
+        contract: TestERC20Burnable,
+    ) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // Mint some tokens for Alice.
