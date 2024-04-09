@@ -62,10 +62,6 @@ sol! {
     #[derive(Debug)]
     error ERC20InvalidSpender(address spender);
 
-    /// Indicates a failure where an overflow error in math occurred. Used in
-    /// `_update`.
-    #[derive(Debug)]
-    error ERC20ArithmeticOverflow();
 }
 
 /// An ERC-20 error defined as described in [ERC-6093].
@@ -86,9 +82,6 @@ pub enum Error {
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     InvalidSpender(ERC20InvalidSpender),
-    /// Indicates a failure where an overflow error in math occurred. Used in
-    /// `_update`.
-    ArithmeticOverflow(ERC20ArithmeticOverflow),
 }
 
 sol_storage! {
@@ -333,11 +326,8 @@ impl ERC20 {
             // The rest of the code assumes that
             // `_total_supply` never overflows.
             // TODO: Think about SafeMath library
-            let total_supply = self
-                .total_supply()
-                .checked_add(value)
-                .ok_or(Error::ArithmeticOverflow(ERC20ArithmeticOverflow {}))?;
-            self._total_supply.set(total_supply);
+            let total_supply = self.total_supply();
+            self._total_supply.set(total_supply + value);
         } else {
             let from_balance = self._balances.get(from);
             if from_balance < value {
@@ -503,6 +493,7 @@ mod tests {
     }
 
     #[grip::test]
+    #[should_panic]
     fn update_mint_errors_arithmetic_overflow(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -513,18 +504,8 @@ mod tests {
         contract
             ._update(Address::ZERO, alice, U256::MAX)
             .expect("ERC20::_update should work");
-
-        // Store initial balance & supply
-        let initial_balance = contract.balance_of(alice);
-        let initial_supply = contract.total_supply();
-
-        // Mint action should NOT work -- `ArithmeticOverflow`
-        let result = contract._update(Address::ZERO, alice, one);
-        assert!(matches!(result, Err(Error::ArithmeticOverflow(_))));
-
-        // Check proper state (before revert)
-        assert_eq!(initial_balance, contract.balance_of(alice));
-        assert_eq!(initial_supply, contract.total_supply());
+        // Mint action should NOT work -- overflow on `_total_supply`.
+        let _result = contract._update(Address::ZERO, alice, one);
     }
 
     #[grip::test]
