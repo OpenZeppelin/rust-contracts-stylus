@@ -87,7 +87,7 @@ impl Metadata {
     }
 }
 
-#[cfg(all(test, feature = "tests"))]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageBool, StorageString, StorageType};

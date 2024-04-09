@@ -1035,7 +1035,7 @@ impl ERC721 {
     }
 }
 
-#[cfg(all(test, feature = "tests"))]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::address;
     use once_cell::sync::Lazy;
