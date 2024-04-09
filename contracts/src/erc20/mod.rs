@@ -321,17 +321,13 @@ impl ERC20 {
         value: U256,
     ) -> Result<(), Error> {
         if from.is_zero() {
-            // Mint operation.
-            // Overflow check required:
-            // The rest of the code assumes that
-            // `_total_supply` never overflows.
-            // TODO: Think about SafeMath library
-            let total_supply = self.total_supply();
-            self._total_supply.set(
-                total_supply
-                    .checked_add(value)
-                    .expect("Should not exceed U256::MAX for `_total_supply"),
-            );
+            // Mint operation. Overflow check required: the rest of the code
+            // assumes that `_total_supply` never overflows.
+            let total_supply = self
+                .total_supply()
+                .checked_add(value)
+                .expect("Should not exceed `U256::MAX` for `_total_supply`");
+            self._total_supply.set(total_supply);
         } else {
             let from_balance = self._balances.get(from);
             if from_balance < value {
