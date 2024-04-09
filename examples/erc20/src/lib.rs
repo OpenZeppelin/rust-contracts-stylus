@@ -19,7 +19,7 @@ sol_storage! {
 }
 
 #[external]
-#[inherit(ERC20)]
+#[inherit(ERC20, Metadata)]
 impl Token {
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
