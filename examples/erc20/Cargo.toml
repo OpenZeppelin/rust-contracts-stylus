@@ -1,0 +1,16 @@
+[package]
+name = "erc20-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version = "0.0.0"
+
+[dependencies]
+contracts = { path = "../../contracts", features = ["erc20", "erc20_metadata"] }
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+mini-alloc.workspace = true
+
+[lib]
+crate-type = ["lib", "cdylib"]

@@ -10,12 +10,13 @@ repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
-alloy-primitives = { version = "0.3.1", default-features = false }
-alloy-sol-types = { version = "0.3.1", default-features = false }
-stylus-sdk = { version = "0.4.3", default-features = false }
-stylus-proc = { version = "0.4.3", default-features = false }
-mini-alloc = "0.4.2"
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+mini-alloc.workspace = true
 derive_more = "0.99.17"
+cfg-if = "1.0"
 
 [dev-dependencies]
 grip = { path = "../lib/grip" }
@@ -24,31 +25,11 @@ once_cell = "1.19.0"
 
 [features]
 default = []
+tests = []
 erc20 = []
 erc20_metadata = ["erc20"]
 erc20_burnable = ["erc20"]
 erc721 = []
 
 [lib]
-# The Stylus team sets new crates with the following types:
-# `lib` - The default, which gets turned to `rlib` by cargo and is needed to
-# link the crate as a dependency of binaries.
-# `cdylib` - A dynamic system library to be loaded from `wasm`.
-#
-# See <https://doc.rust-lang.org/reference/linkage.html>
-#
-# This means our crate would be built twice: once as a rust library and once as
-# a dynamic library. When running `cargo test`, cargo invokes rustc twice, but
-# when it build the rust library, it doesn't set the `test` feature flag, so we
-# can't use it.
-#
-# The reason to add `lib` is to be able to use the `export-abi` feature of the
-# SDK. We don't set `lib` here because our contracts are meant to be used as an
-# addition to other contracts. For this use case, the abi of those contracts
-# will contain ours.
-#
-# The trade-off is being able to run `cargo test` with conditional compilation
-# vs being able to run `cargo stylus export-abi`.
-#
-# This may change in the future, so this behavior should not be relied upon.
-crate-type = ["cdylib"]
+crate-type = ["lib", "cdylib"]

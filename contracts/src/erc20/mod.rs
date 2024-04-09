@@ -437,7 +437,7 @@ impl ERC20 {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "tests"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::{
