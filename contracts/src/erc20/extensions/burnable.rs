@@ -1,8 +1,16 @@
 //! Optional Burnable extension of the ERC-20 standard.
+
 #[macro_export]
 /// This macro provides implementation of ERC-20 Burnable extension.
-/// It adds `burn` and `burn_from` function.
-macro_rules! derive_erc20_burnable {
+///
+/// It adds `burn` and `burn_from` function
+/// to a custom token that contains `ERC20 erc20` attribute.
+///
+/// Requires import of:
+/// * alloy_primitives::{Address, U256}
+/// * contracts::erc20::{Error, ERC20}
+/// * stylus_sdk::msg
+macro_rules! impl_erc20_burnable {
     () => {
         /// Destroys a `value` amount of tokens from the caller.
         /// lowering the total supply.
@@ -74,7 +82,7 @@ mod tests {
     #[external]
     #[inherit(ERC20)]
     impl TestERC20Burnable {
-        derive_erc20_burnable!();
+        impl_erc20_burnable!();
     }
 
     impl Default for TestERC20Burnable {
