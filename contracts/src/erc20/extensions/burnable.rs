@@ -1,3 +1,7 @@
+//! Optional Burnable extension of the ERC-20 standard.
+#[macro_export]
+/// This macro provides implementation of ERC-20 Burnable extension.
+/// It adds `burn` and `burn_from` function.
 macro_rules! derive_erc20_burnable {
     () => {
         /// Destroys a `value` amount of tokens from the caller.

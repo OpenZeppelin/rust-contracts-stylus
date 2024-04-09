@@ -3,8 +3,15 @@ extern crate alloc;
 
 use alloc::string::String;
 
-use contracts::erc20::{extensions::Metadata, ERC20};
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use alloy_primitives::{Address, U256};
+use contracts::{
+    derive_erc20_burnable,
+    erc20::{extensions::Metadata, Error, ERC20},
+};
+use stylus_sdk::{
+    msg,
+    prelude::{entrypoint, external, sol_storage},
+};
 
 const DECIMALS: u8 = 10;
 
@@ -21,6 +28,8 @@ sol_storage! {
 #[external]
 #[inherit(ERC20, Metadata)]
 impl Token {
+    derive_erc20_burnable!();
+
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
     }

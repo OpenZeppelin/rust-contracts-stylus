@@ -7,7 +7,8 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-contracts = { path = "../../contracts", features = ["erc20", "erc20_metadata"] }
+contracts = { path = "../../contracts", features = ["erc20_metadata", "erc20_burnable"] }
+alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
