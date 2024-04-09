@@ -25,6 +25,10 @@ impl Token {
         self.metadata.constructor(name, symbol);
     }
 
+    // Overrides the default [`Metadata::decimals`], and sets it to `10`.
+    //
+    // If you don't provide this method in the `entrypoint` contract, it will
+    // default to `18`.
     pub fn decimals(&self) -> u8 {
         DECIMALS
     }
