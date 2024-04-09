@@ -1,3 +1,6 @@
+//! Implementation of the ERC-721 token standard.
+use alloc::vec;
+
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, U128, U256};
 use derive_more::From;
 use stylus_sdk::{
@@ -88,13 +91,26 @@ sol! {
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
 #[derive(SolidityError, Debug, From)]
 pub enum Error {
+    /// Indicates that an address can't be an owner.
+    /// For example, `address(0)` is a forbidden owner in ERC-721. Used in
+    /// balance queries.
     InvalidOwner(ERC721InvalidOwner),
+    /// Indicates a `tokenId` whose `owner` is the zero address.
     NonexistentToken(ERC721NonexistentToken),
+    /// Indicates an error related to the ownership over a particular token.
+    /// Used in transfers.
     IncorrectOwner(ERC721IncorrectOwner),
+    /// Indicates a failure with the token `sender`. Used in transfers.
     InvalidSender(ERC721InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC721InvalidReceiver),
+    /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals.
     InvalidApprover(ERC721InvalidApprover),
+    /// Indicates a failure with the `operator` to be approved. Used in
+    /// approvals.
     InvalidOperator(ERC721InvalidOperator),
 }
 
@@ -120,13 +136,15 @@ sol_interface! {
 }
 
 sol_storage! {
+    /// State of an ERC-721 token.
     pub struct ERC721 {
+        /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
-
+        /// Maps users to balances.
         mapping(address => uint256) _balances;
-
+        /// Maps tokens to approvals.
         mapping(uint256 => address) _token_approvals;
-
+        /// Maps owners to a mapping of operator approvals.
         mapping(address => mapping(address => bool)) _operator_approvals;
     }
 }
@@ -272,7 +290,7 @@ impl ERC721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
     }
 
     /// Transfers `token_id` token from `from` to `to`.
@@ -706,7 +724,7 @@ impl ERC721 {
             Address::ZERO,
             to,
             token_id,
-            data,
+            &data,
         )
     }
 
@@ -847,7 +865,7 @@ impl ERC721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
     }
 
     /// Variant of `approve_inner` with an optional flag to enable or disable
@@ -989,7 +1007,7 @@ impl ERC721 {
         from: Address,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         const IERC721RECEIVER_INTERFACE_ID: FixedBytes<4> =
             fixed_bytes!("150b7a02");
@@ -1017,7 +1035,7 @@ impl ERC721 {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "tests"))]
 mod tests {
     use alloy_primitives::address;
     use once_cell::sync::Lazy;

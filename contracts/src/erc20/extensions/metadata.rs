@@ -36,7 +36,7 @@ impl Metadata {
     /// * `name` - The name of the token.
     /// * `symbol` - The symbol of the token.
     pub fn constructor(&mut self, name: String, symbol: String) {
-        if self._initialized.get() == true {
+        if self._initialized.get() {
             return;
         }
 
@@ -87,7 +87,7 @@ impl Metadata {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "tests"))]
 mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageBool, StorageString, StorageType};
