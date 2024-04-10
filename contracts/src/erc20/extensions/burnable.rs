@@ -1,10 +1,10 @@
 //! Optional Burnable extension of the ERC-20 standard.
 
-#[macro_export]
 /// This macro provides an implementation of the ERC-20 Burnable extension.
 ///
 /// It adds the `burn` and `burn_from` functions, and expects the token
 /// to contain `ERC20 erc20` as a field. See [`crate::ERC20`].
+#[macro_export]
 macro_rules! erc20_burnable_impl {
     () => {
         /// Destroys a `value` amount of tokens from the caller.
