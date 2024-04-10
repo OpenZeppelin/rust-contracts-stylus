@@ -3,17 +3,10 @@ extern crate alloc;
 
 use alloc::string::String;
 
-// Import required by ERC20Burnable extension.
-use alloy_primitives::{Address, U256};
-// Import Metadata extension.
-use contracts::erc20::extensions::Metadata;
-// Import ERC20 token and its Errors.
-use contracts::erc20::{Error, ERC20};
-// Import implementation of ERC20Burnable extension.
-use contracts::impl_erc20_burnable;
-// Import required by ERC20Burnable extension.
-use stylus_sdk::msg;
-// Stylus imports to build a smart contract.
+use contracts::{
+    erc20::{extensions::Metadata, Error, ERC20},
+    impl_erc20_burnable,
+};
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 const DECIMALS: u8 = 10;
@@ -32,7 +25,7 @@ sol_storage! {
 #[inherit(ERC20, Metadata)]
 impl Token {
     // This macro implements ERC20Burnable functions -- `burn` and `burn_from`.
-    // Uses `erc20` Token's attribute.
+    // Expects an `ERC20 erc20` as a field of `Token`.
     impl_erc20_burnable!();
 
     pub fn constructor(&mut self, name: String, symbol: String) {

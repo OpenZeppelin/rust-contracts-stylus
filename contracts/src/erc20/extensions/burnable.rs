@@ -1,15 +1,10 @@
 //! Optional Burnable extension of the ERC-20 standard.
 
 #[macro_export]
-/// This macro provides implementation of ERC-20 Burnable extension.
+/// This macro provides an implementation of the ERC-20 Burnable extension.
 ///
-/// It adds `burn` and `burn_from` function
-/// to a custom token that contains `ERC20 erc20` attribute.
-///
-/// Requires import of:
-/// * alloy_primitives::{Address, U256}
-/// * contracts::erc20::{Error, ERC20}
-/// * stylus_sdk::msg
+/// It adds the `burn` and `burn_from` functions, and expects the token
+/// to contain `ERC20 erc20` as a field. See [`crate::ERC20`].
 macro_rules! impl_erc20_burnable {
     () => {
         /// Destroys a `value` amount of tokens from the caller.
@@ -29,8 +24,11 @@ macro_rules! impl_erc20_burnable {
         /// # Events
         ///
         /// Emits a [`Transfer`] event.
-        pub(crate) fn burn(&mut self, value: U256) -> Result<(), Error> {
-            self.erc20._burn(msg::sender(), value)
+        pub(crate) fn burn(
+            &mut self,
+            value: alloy_primitives::U256,
+        ) -> Result<(), Error> {
+            self.erc20._burn(stylus_sdk::msg::sender(), value)
         }
 
         /// Destroys a `value` amount of tokens from `account`,
@@ -55,12 +53,16 @@ macro_rules! impl_erc20_burnable {
         /// # Events
         ///
         /// Emits a [`Transfer`] event.
-        pub(crate) fn burn_from(
+        pub fn burn_from(
             &mut self,
-            account: Address,
-            value: U256,
+            account: alloy_primitives::Address,
+            value: alloy_primitives::U256,
         ) -> Result<(), Error> {
-            self.erc20._spend_allowance(account, msg::sender(), value)?;
+            self.erc20._spend_allowance(
+                account,
+                stylus_sdk::msg::sender(),
+                value,
+            )?;
             self.erc20._burn(account, value)
         }
     };

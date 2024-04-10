@@ -304,10 +304,13 @@ impl ERC20 {
     /// * `to` - Recipient's address.
     /// * `value` - Amount to be transferred.
     ///
+    /// # Panics
+    ///
+    /// If `_total_supply` exceeds `U256::MAX`.
+    /// It may happen during `mint` operation.
+    ///
     /// # Errors
     ///
-    /// If a math overflow error occurs, then the error
-    /// [`Error::ArithmeticOverflow`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
     ///
@@ -338,11 +341,10 @@ impl ERC20 {
                         needed: value,
                     },
                 ));
-            } else {
-                // Overflow not possible:
-                // value <= from_balance <= _total_supply.
-                self._balances.setter(from).set(from_balance - value);
             }
+            // Overflow not possible:
+            // value <= from_balance <= _total_supply.
+            self._balances.setter(from).set(from_balance - value);
         }
 
         if to.is_zero() {
