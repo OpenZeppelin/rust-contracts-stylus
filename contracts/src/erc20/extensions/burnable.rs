@@ -5,7 +5,7 @@
 ///
 /// It adds the `burn` and `burn_from` functions, and expects the token
 /// to contain `ERC20 erc20` as a field. See [`crate::ERC20`].
-macro_rules! impl_erc20_burnable {
+macro_rules! erc20_burnable_impl {
     () => {
         /// Destroys a `value` amount of tokens from the caller.
         /// lowering the total supply.
@@ -27,8 +27,10 @@ macro_rules! impl_erc20_burnable {
         pub(crate) fn burn(
             &mut self,
             value: alloy_primitives::U256,
-        ) -> Result<(), Error> {
-            self.erc20._burn(stylus_sdk::msg::sender(), value)
+        ) -> Result<(), alloc::vec::Vec<u8>> {
+            self.erc20
+                ._burn(stylus_sdk::msg::sender(), value)
+                .map_err(|e| e.into())
         }
 
         /// Destroys a `value` amount of tokens from `account`,
@@ -53,17 +55,17 @@ macro_rules! impl_erc20_burnable {
         /// # Events
         ///
         /// Emits a [`Transfer`] event.
-        pub fn burn_from(
+        pub(crate) fn burn_from(
             &mut self,
             account: alloy_primitives::Address,
             value: alloy_primitives::U256,
-        ) -> Result<(), Error> {
+        ) -> Result<(), alloc::vec::Vec<u8>> {
             self.erc20._spend_allowance(
                 account,
                 stylus_sdk::msg::sender(),
                 value,
             )?;
-            self.erc20._burn(account, value)
+            self.erc20._burn(account, value).map_err(|e| e.into())
         }
     };
 }
@@ -73,7 +75,10 @@ mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::{msg, prelude::*};
 
-    use crate::erc20::{Error, ERC20};
+    use crate::erc20::{
+        ERC20InsufficientAllowance, ERC20InsufficientBalance,
+        ERC20InvalidSender, Error, ERC20,
+    };
 
     sol_storage! {
         pub struct TestERC20Burnable {
@@ -84,7 +89,7 @@ mod tests {
     #[external]
     #[inherit(ERC20)]
     impl TestERC20Burnable {
-        impl_erc20_burnable!();
+        erc20_burnable_impl!();
     }
 
     impl Default for TestERC20Burnable {
@@ -116,16 +121,23 @@ mod tests {
 
     #[grip::test]
     fn burns_errors_when_insufficient_balance(contract: TestERC20Burnable) {
+        let zero = U256::ZERO;
         let one = U256::from(1);
         let sender = msg::sender();
 
-        assert_eq!(U256::ZERO, contract.erc20.balance_of(sender));
+        assert_eq!(zero, contract.erc20.balance_of(sender));
 
         let result = contract.burn(one);
+        let expected_err: alloc::vec::Vec<u8> =
+            Error::InsufficientBalance(ERC20InsufficientBalance {
+                sender,
+                balance: zero,
+                needed: one,
+            })
+            .into();
 
-        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+        assert_eq!(result.unwrap_err(), expected_err);
     }
-
     #[grip::test]
     fn burn_from(contract: TestERC20Burnable) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
@@ -155,13 +167,22 @@ mod tests {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // Alice approves `msg::sender`.
+        let zero = U256::ZERO;
         let one = U256::from(1);
         contract.erc20._allowances.setter(alice).setter(msg::sender()).set(one);
-        assert_eq!(U256::ZERO, contract.erc20.balance_of(alice));
+        assert_eq!(zero, contract.erc20.balance_of(alice));
 
         let one = U256::from(1);
         let result = contract.burn_from(alice, one);
-        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+        let expected_err: alloc::vec::Vec<u8> =
+            Error::InsufficientBalance(ERC20InsufficientBalance {
+                sender: alice,
+                balance: zero,
+                needed: one,
+            })
+            .into();
+
+        assert_eq!(result.unwrap_err(), expected_err);
     }
 
     #[grip::test]
@@ -174,7 +195,11 @@ mod tests {
             .setter(msg::sender())
             .set(one);
         let result = contract.burn_from(Address::ZERO, one);
-        assert!(matches!(result, Err(Error::InvalidSender(_))));
+        let expected_err: alloc::vec::Vec<u8> =
+            Error::InvalidSender(ERC20InvalidSender { sender: Address::ZERO })
+                .into();
+
+        assert_eq!(result.unwrap_err(), expected_err);
     }
 
     #[grip::test]
@@ -189,6 +214,14 @@ mod tests {
         assert_eq!(one, contract.erc20.balance_of(alice));
 
         let result = contract.burn_from(alice, one);
-        assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
+        let expected_err: alloc::vec::Vec<u8> =
+            Error::InsufficientAllowance(ERC20InsufficientAllowance {
+                spender: msg::sender(),
+                allowance: U256::ZERO,
+                needed: one,
+            })
+            .into();
+
+        assert_eq!(result.unwrap_err(), expected_err);
     }
 }
