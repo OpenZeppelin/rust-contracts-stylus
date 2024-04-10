@@ -1,4 +1,3 @@
 * xref:index.adoc[Overview]
 
 * xref:crypto.adoc[Cryptography]
-

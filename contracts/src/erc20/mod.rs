@@ -61,6 +61,7 @@ sol! {
     /// being their owner.
     #[derive(Debug)]
     error ERC20InvalidSpender(address spender);
+
 }
 
 /// An ERC-20 error defined as described in [ERC-6093].
@@ -142,14 +143,7 @@ impl ERC20 {
         value: U256,
     ) -> Result<bool, Error> {
         let from = msg::sender();
-        if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
-                receiver: Address::ZERO,
-            }));
-        }
-
         self._transfer(from, to, value)?;
-        evm::log(Transfer { from, to, value });
         Ok(true)
     }
 
@@ -246,21 +240,9 @@ impl ERC20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Error> {
-        if from.is_zero() {
-            return Err(Error::InvalidSender(ERC20InvalidSender {
-                sender: Address::ZERO,
-            }));
-        }
-        if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
-                receiver: Address::ZERO,
-            }));
-        }
-
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
-
         Ok(true)
     }
 }
@@ -277,28 +259,142 @@ impl ERC20 {
     ///
     /// # Errors
     ///
+    /// * If the `from` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// * If the `to` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     fn _transfer(
         &mut self,
         from: Address,
         to: Address,
         value: U256,
     ) -> Result<(), Error> {
-        let from_balance = self._balances.get(from);
-        if from_balance < value {
-            return Err(Error::InsufficientBalance(ERC20InsufficientBalance {
-                sender: from,
-                balance: from_balance,
-                needed: value,
+        if from.is_zero() {
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: Address::ZERO,
+            }));
+        }
+        if to.is_zero() {
+            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
+                receiver: Address::ZERO,
             }));
         }
 
-        let from_balance = from_balance - value;
-        self._balances.insert(from, from_balance);
-        let to_balance = self._balances.get(to);
-        self._balances.insert(to, to_balance + value);
+        self._update(from, to, value)?;
+
         Ok(())
+    }
+
+    /// Transfers a `value` amount of tokens from `from` to `to`,
+    /// or alternatively mints (or burns)
+    /// if `from` (or `to`) is the zero address.
+    ///
+    /// All customizations to transfers, mints, and burns
+    /// should be done by using this function.
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - Owner's address.
+    /// * `to` - Recipient's address.
+    /// * `value` - Amount to be transferred.
+    ///
+    /// # Panics
+    ///
+    /// If `_total_supply` exceeds `U256::MAX`.
+    /// It may happen during `mint` operation.
+    ///
+    /// # Errors
+    ///
+    /// If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
+    pub fn _update(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        if from.is_zero() {
+            // Mint operation. Overflow check required: the rest of the code
+            // assumes that `_total_supply` never overflows.
+            let total_supply = self
+                .total_supply()
+                .checked_add(value)
+                .expect("Should not exceed `U256::MAX` for `_total_supply`");
+            self._total_supply.set(total_supply);
+        } else {
+            let from_balance = self._balances.get(from);
+            if from_balance < value {
+                return Err(Error::InsufficientBalance(
+                    ERC20InsufficientBalance {
+                        sender: from,
+                        balance: from_balance,
+                        needed: value,
+                    },
+                ));
+            }
+            // Overflow not possible:
+            // value <= from_balance <= _total_supply.
+            self._balances.setter(from).set(from_balance - value);
+        }
+
+        if to.is_zero() {
+            let total_supply = self.total_supply();
+            // Overflow not possible:
+            // value <= _total_supply or value <= from_balance <= _total_supply.
+            self._total_supply.set(total_supply - value);
+        } else {
+            let balance_to = self._balances.get(to);
+            // Overflow not possible:
+            // balance + value is at most total_supply, which fits into a U256.
+            self._balances.setter(to).set(balance_to + value);
+        }
+
+        evm::log(Transfer { from, to, value });
+
+        Ok(())
+    }
+
+    /// Destroys a `value` amount of tokens from `account`,
+    /// lowering the total supply.
+    ///
+    /// Relies on the `update` mechanism.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - Owner's address.
+    /// * `value` - Amount to be burnt.
+    ///
+    /// # Errors
+    ///
+    /// * If the `from` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
+    pub fn _burn(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        if account == Address::ZERO {
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: Address::ZERO,
+            }));
+        }
+        self._update(account, Address::ZERO, value)
     }
 
     /// Updates `owner`'s allowance for `spender` based on spent `value`.
@@ -381,6 +477,148 @@ mod tests {
     }
 
     #[grip::test]
+    fn update_mint(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let one = U256::from(1);
+
+        // Store initial balance & supply
+        let initial_balance = contract.balance_of(alice);
+        let initial_supply = contract.total_supply();
+
+        // Mint action should work
+        let result = contract._update(Address::ZERO, alice, one);
+        assert!(result.is_ok());
+
+        // Check updated balance & supply
+        assert_eq!(initial_balance + one, contract.balance_of(alice));
+        assert_eq!(initial_supply + one, contract.total_supply());
+    }
+
+    #[grip::test]
+    #[should_panic]
+    fn update_mint_errors_arithmetic_overflow(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let one = U256::from(1);
+        assert_eq!(U256::ZERO, contract.balance_of(alice));
+        assert_eq!(U256::ZERO, contract.total_supply());
+
+        // Initialize state for the test case -- Alice's balance as U256::MAX
+        contract
+            ._update(Address::ZERO, alice, U256::MAX)
+            .expect("ERC20::_update should work");
+        // Mint action should NOT work -- overflow on `_total_supply`.
+        let _result = contract._update(Address::ZERO, alice, one);
+    }
+
+    #[grip::test]
+    fn update_burn(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let one = U256::from(1);
+        let two = U256::from(2);
+
+        // Initialize state for the test case -- Alice's balance as `two`
+        contract
+            ._update(Address::ZERO, alice, two)
+            .expect("ERC20::_update should work");
+
+        // Store initial balance & supply
+        let initial_balance = contract.balance_of(alice);
+        let initial_supply = contract.total_supply();
+
+        // Burn action should work
+        let result = contract._update(alice, Address::ZERO, one);
+        assert!(result.is_ok());
+
+        // Check updated balance & supply
+        assert_eq!(initial_balance - one, contract.balance_of(alice));
+        assert_eq!(initial_supply - one, contract.total_supply());
+    }
+
+    #[grip::test]
+    fn update_burn_errors_insufficient_balance(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let one = U256::from(1);
+        let two = U256::from(2);
+
+        // Initialize state for the test case -- Alice's balance as `one`
+        contract
+            ._update(Address::ZERO, alice, one)
+            .expect("ERC20::_update should work");
+
+        // Store initial balance & supply
+        let initial_balance = contract.balance_of(alice);
+        let initial_supply = contract.total_supply();
+
+        // Burn action should NOT work -- `InsufficientBalance`
+        let result = contract._update(alice, Address::ZERO, two);
+        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+
+        // Check proper state (before revert)
+        assert_eq!(initial_balance, contract.balance_of(alice));
+        assert_eq!(initial_supply, contract.total_supply());
+    }
+
+    #[grip::test]
+    fn update_transfer(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let one = U256::from(1);
+
+        // Initialize state for the test case -- Alice's & Bob's balance as
+        // `one`
+        contract
+            ._update(Address::ZERO, alice, one)
+            .expect("ERC20::_update should work");
+        contract
+            ._update(Address::ZERO, bob, one)
+            .expect("ERC20::_update should work");
+
+        // Store initial balance & supply
+        let initial_alice_balance = contract.balance_of(alice);
+        let initial_bob_balance = contract.balance_of(bob);
+        let initial_supply = contract.total_supply();
+
+        // Transfer action should work
+        let result = contract._update(alice, bob, one);
+        assert!(result.is_ok());
+
+        // Check updated balance & supply
+        assert_eq!(initial_alice_balance - one, contract.balance_of(alice));
+        assert_eq!(initial_bob_balance + one, contract.balance_of(bob));
+        assert_eq!(initial_supply, contract.total_supply());
+    }
+
+    #[grip::test]
+    fn update_transfer_errors_insufficient_balance(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let one = U256::from(1);
+
+        // Initialize state for the test case -- Alice's & Bob's balance as
+        // `one`
+        contract
+            ._update(Address::ZERO, alice, one)
+            .expect("ERC20::_update should work");
+        contract
+            ._update(Address::ZERO, bob, one)
+            .expect("ERC20::_update should work");
+
+        // Store initial balance & supply
+        let initial_alice_balance = contract.balance_of(alice);
+        let initial_bob_balance = contract.balance_of(bob);
+        let initial_supply = contract.total_supply();
+
+        // Transfer action should NOT work -- `InsufficientBalance`
+        let result = contract._update(alice, bob, one + one);
+        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+
+        // Check proper state (before revert)
+        assert_eq!(initial_alice_balance, contract.balance_of(alice));
+        assert_eq!(initial_bob_balance, contract.balance_of(bob));
+        assert_eq!(initial_supply, contract.total_supply());
+    }
+
+    #[grip::test]
     fn transfers(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -391,7 +629,7 @@ mod tests {
 
         // Mint some tokens for Alice.
         let two = U256::from(2);
-        contract._balances.setter(alice).set(two);
+        contract._update(Address::ZERO, alice, two).unwrap();
         assert_eq!(two, contract.balance_of(alice));
 
         contract.transfer_from(alice, bob, one).unwrap();
@@ -404,20 +642,22 @@ mod tests {
     fn transfers_from(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let sender = msg::sender();
 
         // Alice approves `msg::sender`.
         let one = U256::from(1);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract._allowances.setter(alice).setter(sender).set(one);
 
         // Mint some tokens for Alice.
         let two = U256::from(2);
-        contract._balances.setter(alice).set(two);
+        contract._update(Address::ZERO, alice, two).unwrap();
         assert_eq!(two, contract.balance_of(alice));
 
         contract.transfer_from(alice, bob, one).unwrap();
 
         assert_eq!(one, contract.balance_of(alice));
         assert_eq!(one, contract.balance_of(bob));
+        assert_eq!(U256::ZERO, contract.allowance(alice, sender));
     }
 
     #[grip::test]
@@ -439,6 +679,11 @@ mod tests {
     fn transfer_from_errors_when_invalid_sender(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
+        contract
+            ._allowances
+            .setter(Address::ZERO)
+            .setter(msg::sender())
+            .set(one);
         let result = contract.transfer_from(Address::ZERO, alice, one);
         assert!(matches!(result, Err(Error::InvalidSender(_))));
     }
@@ -447,6 +692,7 @@ mod tests {
     fn transfer_from_errors_when_invalid_receiver(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
+        contract._allowances.setter(alice).setter(msg::sender()).set(one);
         let result = contract.transfer_from(alice, Address::ZERO, one);
         assert!(matches!(result, Err(Error::InvalidReceiver(_))));
     }
@@ -458,7 +704,7 @@ mod tests {
 
         // Mint some tokens for Alice.
         let one = U256::from(1);
-        contract._balances.setter(alice).set(one);
+        contract._update(Address::ZERO, alice, one).unwrap();
         assert_eq!(one, contract.balance_of(alice));
 
         let result = contract.transfer_from(alice, bob, one);

@@ -14,7 +14,10 @@ pub(crate) static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
 
 /// Acquires access to storage.
 pub(crate) fn acquire_storage() -> MutexGuard<'static, ()> {
-    STORAGE_MUTEX.lock().unwrap_or_else(|e| e.into_inner())
+    STORAGE_MUTEX.lock().unwrap_or_else(|e| {
+        reset_storage();
+        e.into_inner()
+    })
 }
 
 /// Decorates a closure by running it with exclusive access to storage.

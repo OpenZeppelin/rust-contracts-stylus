@@ -28,6 +28,7 @@ default = []
 
 erc20 = []
 erc20_metadata = ["erc20"]
+erc20_burnable = ["erc20"]
 erc721 = []
 
 # Enables using the standard library. This is not included in the default
