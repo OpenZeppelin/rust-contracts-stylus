@@ -5,7 +5,7 @@ use alloc::string::String;
 
 use contracts::{
     erc20::{extensions::Metadata, ERC20},
-    erc20_burnable_impl,
+    // erc20_burnable_impl,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
@@ -26,7 +26,7 @@ sol_storage! {
 impl Token {
     // This macro implements ERC20Burnable functions -- `burn` and `burn_from`.
     // Expects an `ERC20 erc20` as a field of `Token`.
-    erc20_burnable_impl!();
+    // erc20_burnable_impl!();
 
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
