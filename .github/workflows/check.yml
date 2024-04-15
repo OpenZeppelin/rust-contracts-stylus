@@ -106,4 +106,4 @@ jobs:
       - name: Checkout Actions Repository
         uses: actions/checkout@v4
       - name: Check spelling of files in the workspace
-        uses: crate-ci/typos@v1.20.7
+        uses: crate-ci/typos@v1.20.8
