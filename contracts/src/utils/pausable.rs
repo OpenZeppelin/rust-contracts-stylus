@@ -33,7 +33,28 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
-impl Pausable {
+pub trait IPausable {
+    /// Returns true if the contract is paused, and false otherwise.
+    fn paused(&self) -> Result<bool, Error>;
+
+    /// Triggers `Paused` state.
+    ///
+    /// # Errors
+    ///
+    /// * If the contract is in `Paused` state, then the error
+    /// [`Error::EnforcedPause`] is returned.
+    fn pause(&mut self) -> Result<(), Error>;
+
+    /// Triggers `Unpaused` state.
+    ///
+    /// # Errors
+    ///
+    /// * If the contract is in `Unpaused` state, then the error
+    /// [`Error::ExpectedPause`] is returned.
+    fn unpause(&mut self) -> Result<(), Error>;
+}
+
+pub trait IPausableModifier {
     /// Modifier to make a function callable
     /// only when the contract is NOT paused.
     ///
@@ -41,12 +62,7 @@ impl Pausable {
     ///
     /// * If the contract is in `Paused` state, then the error
     /// [`Error::EnforcedPause`] is returned.
-    pub fn when_not_paused(&self) -> Result<(), Error> {
-        if self._paused.get() {
-            return Err(Error::EnforcedPause(EnforcedPause {}));
-        }
-        Ok(())
-    }
+    fn when_not_paused(&self) -> Result<(), Error>;
 
     /// Modifier to make a function callable
     /// only when the contract is paused.
@@ -55,7 +71,18 @@ impl Pausable {
     ///
     /// * If the contract is in `Unpaused` state, then the error
     /// [`Error::ExpectedPause`] is returned.
-    pub fn when_paused(&self) -> Result<(), Error> {
+    fn when_paused(&self) -> Result<(), Error>;
+}
+
+impl IPausableModifier for Pausable {
+    fn when_not_paused(&self) -> Result<(), Error> {
+        if self._paused.get() {
+            return Err(Error::EnforcedPause(EnforcedPause {}));
+        }
+        Ok(())
+    }
+
+    fn when_paused(&self) -> Result<(), Error> {
         if !self._paused.get() {
             return Err(Error::ExpectedPause(ExpectedPause {}));
         }
@@ -65,32 +92,19 @@ impl Pausable {
 
 // External methods
 #[external]
-impl Pausable {
-    /// Returns true if the contract is paused, and false otherwise.
-    pub fn paused(&self) -> Result<bool, Error> {
+impl IPausable for Pausable {
+    fn paused(&self) -> Result<bool, Error> {
         Ok(self._paused.get())
     }
 
-    /// Triggers `Paused` state.
-    ///
-    /// # Errors
-    ///
-    /// * If the contract is in `Paused` state, then the error
-    /// [`Error::EnforcedPause`] is returned.
-    pub fn pause(&mut self) -> Result<(), Error> {
+    fn pause(&mut self) -> Result<(), Error> {
         self.when_not_paused()?;
         self._paused.set(true);
         evm::log(Paused { account: msg::sender() });
         Ok(())
     }
 
-    /// Triggers `Unpaused` state.
-    ///
-    /// # Errors
-    ///
-    /// * If the contract is in `Unpaused` state, then the error
-    /// [`Error::ExpectedPause`] is returned.
-    pub fn unpause(&mut self) -> Result<(), Error> {
+    fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
         self._paused.set(false);
         evm::log(Unpaused { account: msg::sender() });
@@ -103,7 +117,9 @@ mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageBool, StorageType};
 
-    use crate::utils::pausable::{Error, Pausable};
+    use crate::utils::pausable::{
+        Error, IPausable, IPausableModifier, Pausable,
+    };
 
     impl Default for Pausable {
         fn default() -> Self {
