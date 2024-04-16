@@ -73,6 +73,8 @@ pub enum Error {
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     InvalidSpender(ERC20InvalidSpender),
+    /// TODO!!!
+    PausableError(crate::utils::pausable::EnforcedPause),
 }
 
 pub trait IERC20Storage {
@@ -422,4 +424,39 @@ pub trait IERC20: IERC20Internal {
         self._transfer(from, to, value)?;
         Ok(true)
     }
+}
+
+/// TODO
+#[macro_export]
+macro_rules! ierc20_storage_impl {
+    () => {
+        fn _get_total_supply(&self) -> U256 {
+            self.erc20._get_total_supply()
+        }
+
+        fn _set_total_supply(&mut self, total_supply: U256) {
+            self.erc20._set_total_supply(total_supply)
+        }
+
+        fn _get_balance(&self, account: Address) -> U256 {
+            self.erc20._get_balance(account)
+        }
+
+        fn _set_balance(&mut self, account: Address, balance: U256) {
+            self.erc20._set_balance(account, balance)
+        }
+
+        fn _get_allowance(&self, owner: Address, spender: Address) -> U256 {
+            self.erc20._get_allowance(owner, spender)
+        }
+
+        fn _set_allowance(
+            &mut self,
+            owner: Address,
+            spender: Address,
+            allowance: U256,
+        ) {
+            self.erc20._set_allowance(owner, spender, allowance)
+        }
+    };
 }

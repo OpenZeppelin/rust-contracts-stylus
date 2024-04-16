@@ -70,7 +70,7 @@ mod tests {
     };
 
     use crate::erc20::{
-        ierc20::{IERC20Internal, IERC20},
+        ierc20::{IERC20Internal, IERC20Storage, IERC20},
         Error, ERC20,
     };
 
@@ -96,7 +96,7 @@ mod tests {
 
         let owner = msg::sender();
         let one = U256::from(1);
-        contract._balances.setter(owner).set(one);
+        contract._set_balance(owner, one);
         let balance = contract.balance_of(owner);
         assert_eq!(one, balance);
     }
@@ -250,7 +250,7 @@ mod tests {
 
         // Alice approves `msg::sender`.
         let one = U256::from(1);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract._set_allowance(alice, msg::sender(), one);
 
         // Mint some tokens for Alice.
         let two = U256::from(2);
@@ -271,7 +271,7 @@ mod tests {
 
         // Alice approves `msg::sender`.
         let one = U256::from(1);
-        contract._allowances.setter(alice).setter(sender).set(one);
+        contract._set_allowance(alice, sender, one);
 
         // Mint some tokens for Alice.
         let two = U256::from(2);
@@ -292,7 +292,7 @@ mod tests {
 
         // Alice approves `msg::sender`.
         let one = U256::from(1);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract._set_allowance(alice, msg::sender(), one);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
 
         let one = U256::from(1);
@@ -304,11 +304,7 @@ mod tests {
     fn transfer_from_errors_when_invalid_sender(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
-        contract
-            ._allowances
-            .setter(Address::ZERO)
-            .setter(msg::sender())
-            .set(one);
+        contract._set_allowance(Address::ZERO, msg::sender(), one);
         let result = contract.transfer_from(Address::ZERO, alice, one);
         assert!(matches!(result, Err(Error::InvalidSender(_))));
     }
@@ -317,7 +313,7 @@ mod tests {
     fn transfer_from_errors_when_invalid_receiver(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract._set_allowance(alice, msg::sender(), one);
         let result = contract.transfer_from(alice, Address::ZERO, one);
         assert!(matches!(result, Err(Error::InvalidReceiver(_))));
     }
@@ -345,7 +341,7 @@ mod tests {
         assert_eq!(U256::ZERO, allowance);
 
         let one = U256::from(1);
-        contract._allowances.setter(owner).setter(alice).set(one);
+        contract._set_allowance(owner, alice, one);
         let allowance = contract.allowance(owner, alice);
         assert_eq!(one, allowance);
     }

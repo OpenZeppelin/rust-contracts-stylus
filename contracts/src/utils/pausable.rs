@@ -3,6 +3,7 @@ use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{evm, msg};
 
 sol_storage! {
+    /// State of a Pausable
     pub struct Pausable {
         /// Indicates whether the contract is `Paused`
         bool _paused;
@@ -25,6 +26,7 @@ sol! {
     error ExpectedPause();
 }
 
+/// TODO docs
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// The operation failed because the contract is in `Paused` state.
@@ -33,9 +35,10 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
+/// TODO docs
 pub trait IPausable {
     /// Returns true if the contract is paused, and false otherwise.
-    fn paused(&self) -> Result<bool, Error>;
+    fn paused(&self) -> bool;
 
     /// Triggers `Paused` state.
     ///
@@ -52,9 +55,7 @@ pub trait IPausable {
     /// * If the contract is in `Unpaused` state, then the error
     /// [`Error::ExpectedPause`] is returned.
     fn unpause(&mut self) -> Result<(), Error>;
-}
 
-pub trait IPausableModifier {
     /// Modifier to make a function callable
     /// only when the contract is NOT paused.
     ///
@@ -74,27 +75,11 @@ pub trait IPausableModifier {
     fn when_paused(&self) -> Result<(), Error>;
 }
 
-impl IPausableModifier for Pausable {
-    fn when_not_paused(&self) -> Result<(), Error> {
-        if self._paused.get() {
-            return Err(Error::EnforcedPause(EnforcedPause {}));
-        }
-        Ok(())
-    }
-
-    fn when_paused(&self) -> Result<(), Error> {
-        if !self._paused.get() {
-            return Err(Error::ExpectedPause(ExpectedPause {}));
-        }
-        Ok(())
-    }
-}
-
 // External methods
 #[external]
 impl IPausable for Pausable {
-    fn paused(&self) -> Result<bool, Error> {
-        Ok(self._paused.get())
+    fn paused(&self) -> bool {
+        self._paused.get()
     }
 
     fn pause(&mut self) -> Result<(), Error> {
@@ -110,6 +95,20 @@ impl IPausable for Pausable {
         evm::log(Unpaused { account: msg::sender() });
         Ok(())
     }
+
+    fn when_not_paused(&self) -> Result<(), Error> {
+        if self._paused.get() {
+            return Err(Error::EnforcedPause(EnforcedPause {}));
+        }
+        Ok(())
+    }
+
+    fn when_paused(&self) -> Result<(), Error> {
+        if !self._paused.get() {
+            return Err(Error::ExpectedPause(ExpectedPause {}));
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -117,9 +116,7 @@ mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageBool, StorageType};
 
-    use crate::utils::pausable::{
-        Error, IPausable, IPausableModifier, Pausable,
-    };
+    use crate::utils::pausable::{Error, IPausable, Pausable};
 
     impl Default for Pausable {
         fn default() -> Self {
@@ -131,20 +128,17 @@ mod tests {
     fn paused_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);
-        let unpaused_result = contract.paused().expect("Paused must work");
-        assert_eq!(unpaused_result, false);
+        assert_eq!(contract.paused(), false);
         // Check for paused
         contract._paused.set(true);
-        let paused_result = contract.paused().expect("Paused must work");
-        assert_eq!(paused_result, true);
+        assert_eq!(contract.paused(), true);
     }
 
     #[grip::test]
     fn when_not_paused_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, false);
+        assert_eq!(contract.paused(), false);
 
         let result = contract.when_not_paused();
         assert!(result.is_ok());
@@ -154,8 +148,7 @@ mod tests {
     fn when_not_paused_errors_when_paused(contract: Pausable) {
         // Check for paused
         contract._paused.set(true);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, true);
+        assert_eq!(contract.paused(), true);
 
         let result = contract.when_not_paused();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
@@ -165,8 +158,7 @@ mod tests {
     fn when_paused_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(true);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, true);
+        assert_eq!(contract.paused(), true);
 
         let result = contract.when_paused();
         assert!(result.is_ok());
@@ -176,8 +168,7 @@ mod tests {
     fn when_paused_errors_when_not_paused(contract: Pausable) {
         // Check for paused
         contract._paused.set(false);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, false);
+        assert_eq!(contract.paused(), false);
 
         let result = contract.when_paused();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
@@ -187,53 +178,45 @@ mod tests {
     fn pause_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, false);
+        assert_eq!(contract.paused(), false);
 
         // Pause the contract
         contract.pause().expect("Pause action must work in unpaused state");
-        let paused_result = contract.paused().expect("Paused must work");
-        assert_eq!(paused_result, true);
+        assert_eq!(contract.paused(), true);
     }
 
     #[grip::test]
     fn pause_errors_when_already_paused(contract: Pausable) {
         // Check for paused
         contract._paused.set(true);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, true);
+        assert_eq!(contract.paused(), true);
 
         // Pause the paused contract
         let result = contract.pause();
-        let paused_result = contract.paused().expect("Paused must work");
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
-        assert_eq!(paused_result, true);
+        assert_eq!(contract.paused(), true);
     }
 
     #[grip::test]
     fn unpause_works(contract: Pausable) {
         // Check for paused
         contract._paused.set(true);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, true);
+        assert_eq!(contract.paused(), true);
 
         // Unpause the paused contract
         contract.unpause().expect("Unpause action must work in paused state");
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, false);
+        assert_eq!(contract.paused(), false);
     }
 
     #[grip::test]
     fn unpause_errors_when_already_unpaused(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);
-        let result = contract.paused().expect("Paused must work");
-        assert_eq!(result, false);
+        assert_eq!(contract.paused(), false);
 
         // Unpause the unpaused contract
         let result = contract.unpause();
-        let unpaused_result = contract.paused().expect("Paused must work");
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
-        assert_eq!(unpaused_result, false);
+        assert_eq!(contract.paused(), false);
     }
 }
