@@ -146,7 +146,6 @@ mod tests {
     }
 
     #[external]
-    #[inherit(ERC20)]
     impl TestERC20Burnable {
         erc20_burnable_impl!();
     }

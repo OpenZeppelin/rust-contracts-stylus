@@ -14,7 +14,8 @@ pub trait IERC20Pausable: IERC20 + IPausable {}
 
 use stylus_sdk::msg;
 
-struct ERC20Pausable<T: IERC20, P: IPausable> {
+/// TODO docs
+pub struct ERC20Pausable<T: IERC20, P: IPausable> {
     erc20: T,
     pausable: P,
 }
