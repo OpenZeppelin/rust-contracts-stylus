@@ -6,11 +6,11 @@ cfg_if::cfg_if! {
         pub use metadata::Metadata;
     }
 }
-// cfg_if::cfg_if! {
-//     if #[cfg(any(test, feature = "erc20_burnable"))] {
-//         pub mod burnable;
-//     }
-// }
+cfg_if::cfg_if! {
+    if #[cfg(any(test, feature = "erc20_burnable"))] {
+        pub mod burnable;
+    }
+}
 
 // cfg_if::cfg_if! {
 //     if #[cfg(any(test, feature = "erc20_pausable"))] {

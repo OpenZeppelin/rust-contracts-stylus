@@ -132,11 +132,8 @@ mod tests {
 
     use super::IERC20Burnable;
     use crate::erc20::{
-        ierc20::{
-            ERC20InsufficientAllowance, ERC20InsufficientBalance,
-            ERC20InvalidSender, IERC20Internal, IERC20,
-        },
-        Error, ERC20,
+        ERC20InsufficientAllowance, ERC20InsufficientBalance,
+        ERC20InvalidSender, Error, IERC20Virtual, ERC20, IERC20,
     };
 
     sol_storage! {
