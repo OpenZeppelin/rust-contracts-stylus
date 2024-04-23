@@ -232,9 +232,19 @@ version = "0.0.0"
 dependencies = [
  "alloy-primitives 0.3.3",
  "contracts",
+ "erc20-proc",
  "mini-alloc",
  "stylus-proc",
  "stylus-sdk",
+]
+
+[[package]]
+name = "erc20-proc"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.58",
 ]
 
 [[package]]

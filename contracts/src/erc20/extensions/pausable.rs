@@ -1,13 +1,11 @@
 use alloy_primitives::{Address, U256};
 
-use crate::{
+use crate::
     erc20::{
-        ierc20::{ERC20InvalidReceiver, ERC20InvalidSender, IERC20Storage},
-        Error, IERC20Internal, IERC20,
-    },
-    ierc20_storage_impl,
-    utils::pausable::IPausable,
-};
+        ERC20InvalidReceiver, ERC20InvalidSender,
+        Error, IERC20Virtual, IERC20,
+    };
+    use crate::utils::pausable::IPausable;
 
 /// TODO docs
 pub trait IERC20Pausable: IERC20 + IPausable {}
@@ -20,11 +18,8 @@ pub struct ERC20Pausable<T: IERC20, P: IPausable> {
     pausable: P,
 }
 
-impl<T: IERC20, P: IPausable> IERC20Storage for ERC20Pausable<T, P> {
-    ierc20_storage_impl!();
-}
 
-impl<T: IERC20, P: IPausable> IERC20Internal for ERC20Pausable<T, P> {
+impl<T: IERC20, P: IPausable> IERC20Virtual for ERC20Pausable<T, P> {
     fn _transfer(
         &mut self,
         from: Address,
@@ -161,7 +156,7 @@ mod tests {
         erc20::{
             self,
             extensions::pausable::ERC20Pausable,
-            ierc20::{IERC20Internal, IERC20Storage, IERC20},
+            ierc20::{IERC20Storage, IERC20Virtual, IERC20},
             Error as ERC20Error, ERC20,
         },
         utils::pausable::{self, Error as PausableError, IPausable, Pausable},

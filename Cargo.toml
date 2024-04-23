@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "contracts",
+  "erc20-proc",
   "lib/crypto",
   "lib/grip",
   "lib/grip-proc",

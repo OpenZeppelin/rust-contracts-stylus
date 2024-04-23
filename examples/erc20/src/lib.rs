@@ -10,6 +10,7 @@ use contracts::{
     },
     erc20_burnable_impl,
 };
+use erc20_proc::{IERC20Burnable, IERC20Storage, IERC20Virtual, IERC20};
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 const DECIMALS: u8 = 10;
@@ -17,19 +18,21 @@ const DECIMALS: u8 = 10;
 sol_storage! {
     #[entrypoint]
     struct Token {
-        ERC20 erc20;
+        #[borrow]
+        ERC20Burnable erc20;
         #[borrow]
         Metadata metadata;
+    }
+
+    #[derive(IERC20Storage, IERC20Virtual, IERC20, IERC20Burnable)]
+    struct ERC20Burnable {
+        ERC20 erc20;
     }
 }
 
 #[external]
 #[inherit(Metadata)]
 impl Token {
-    // This macro implements ERC20Burnable functions -- `burn` and `burn_from`.
-    // Expects an `ERC20 erc20` as a field of `Token`.
-    // erc20_impl!();
-
     // This macro implements ERC20Burnable functions -- `burn` and `burn_from`.
     // Expects an `ERC20 erc20` as a field of `Token`.
     erc20_burnable_impl!();

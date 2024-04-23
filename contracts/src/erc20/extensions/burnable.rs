@@ -3,7 +3,7 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::erc20::ERC20;
+use crate::erc20::{IERC20Virtual, ERC20};
 
 /// This macro provides an implementation of the ERC-20 Burnable extension.
 ///
@@ -70,7 +70,7 @@ macro_rules! erc20_burnable_impl {
 use crate::erc20::{Error, IERC20};
 
 /// TODO!
-pub trait IERC20Burnable: IERC20 {
+pub trait IERC20Burnable: IERC20 + IERC20Virtual {
     /// Destroys a `value` amount of tokens from the caller.
     /// lowering the total supply.
     ///
@@ -124,7 +124,6 @@ pub trait IERC20Burnable: IERC20 {
     }
 }
 
-impl IERC20Burnable for ERC20 {}
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{address, Address, U256};
@@ -135,6 +134,8 @@ mod tests {
         ERC20InsufficientAllowance, ERC20InsufficientBalance,
         ERC20InvalidSender, Error, IERC20Virtual, ERC20, IERC20,
     };
+
+    impl IERC20Burnable for ERC20 {}
 
     sol_storage! {
         pub struct TestERC20Burnable {

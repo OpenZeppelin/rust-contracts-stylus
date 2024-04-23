@@ -248,7 +248,60 @@ pub enum Error {
     PausableError(crate::utils::pausable::EnforcedPause),
 }
 
-pub trait IERC20Virtual {
+/// TODO
+pub trait IERC20Storage {
+    /// TODO
+    fn _get_total_supply(&self) -> U256;
+    /// TODO
+    fn _set_total_supply(&mut self, total_supply: U256);
+    /// TODO
+    fn _get_balance(&self, account: Address) -> U256;
+    /// TODO
+    fn _set_balance(&mut self, account: Address, balance: U256);
+    /// TODO
+    fn _get_allowance(&self, owner: Address, spender: Address) -> U256;
+    /// TODO
+    fn _set_allowance(
+        &mut self,
+        owner: Address,
+        spender: Address,
+        allowance: U256,
+    );
+}
+
+impl IERC20Storage for ERC20 {
+    fn _get_total_supply(&self) -> U256 {
+        self._total_supply.get()
+    }
+
+    fn _set_total_supply(&mut self, total_supply: U256) {
+        self._total_supply.set(total_supply)
+    }
+
+    fn _get_balance(&self, account: Address) -> U256 {
+        self._balances.get(account)
+    }
+
+    fn _set_balance(&mut self, account: Address, balance: U256) {
+        self._balances.setter(account).set(balance);
+    }
+
+    fn _get_allowance(&self, owner: Address, spender: Address) -> U256 {
+        self._allowances.get(owner).get(spender)
+    }
+
+    fn _set_allowance(
+        &mut self,
+        owner: Address,
+        spender: Address,
+        allowance: U256,
+    ) {
+        self._allowances.setter(owner).insert(spender, allowance);
+    }
+}
+
+/// TODO
+pub trait IERC20Virtual: IERC20Storage {
     /// Internal implementation of transferring tokens between two accounts.
     ///
     /// # Arguments
@@ -275,7 +328,22 @@ pub trait IERC20Virtual {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Error> {
+        if from.is_zero() {
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: Address::ZERO,
+            }));
+        }
+        if to.is_zero() {
+            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
+                receiver: Address::ZERO,
+            }));
+        }
+
+        self._update(from, to, value)?;
+
+        Ok(())
+    }
 
     /// Transfers a `value` amount of tokens from `from` to `to`,
     /// or alternatively mints (or burns)
@@ -308,7 +376,47 @@ pub trait IERC20Virtual {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Error> {
+        if from.is_zero() {
+            // Mint operation. Overflow check required: the rest of the code
+            // assumes that `_total_supply` never overflows.
+            let total_supply = self
+                ._get_total_supply()
+                .checked_add(value)
+                .expect("Should not exceed `U256::MAX` for `_total_supply`");
+            self._set_total_supply(total_supply);
+        } else {
+            let from_balance = self._get_balance(from);
+            if from_balance < value {
+                return Err(Error::InsufficientBalance(
+                    ERC20InsufficientBalance {
+                        sender: from,
+                        balance: from_balance,
+                        needed: value,
+                    },
+                ));
+            }
+            // Overflow not possible:
+            // value <= from_balance <= _total_supply.
+            self._set_balance(from, from_balance - value);
+        }
+
+        if to.is_zero() {
+            let total_supply = self._get_total_supply();
+            // Overflow not possible:
+            // value <= _total_supply or value <= from_balance <= _total_supply.
+            self._set_total_supply(total_supply - value);
+        } else {
+            let balance_to = self._get_balance(to);
+            // Overflow not possible:
+            // balance + value is at most total_supply, which fits into a U256.
+            self._set_balance(to, balance_to + value);
+        }
+
+        evm::log(Transfer { from, to, value });
+
+        Ok(())
+    }
 
     /// Destroys a `value` amount of tokens from `account`,
     /// lowering the total supply.
@@ -330,8 +438,14 @@ pub trait IERC20Virtual {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn _burn(&mut self, account: Address, value: U256) -> Result<(), Error>;
-
+    fn _burn(&mut self, account: Address, value: U256) -> Result<(), Error> {
+        if account == Address::ZERO {
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: Address::ZERO,
+            }));
+        }
+        self._update(account, Address::ZERO, value)
+    }
     /// Updates `owner`'s allowance for `spender` based on spent `value`.
     ///
     /// Does not update the allowance value in the case of infinite allowance.
@@ -352,7 +466,24 @@ pub trait IERC20Virtual {
         owner: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Error> {
+        let current_allowance = self._get_allowance(owner, spender);
+        if current_allowance != U256::MAX {
+            if current_allowance < value {
+                return Err(Error::InsufficientAllowance(
+                    ERC20InsufficientAllowance {
+                        spender,
+                        allowance: current_allowance,
+                        needed: value,
+                    },
+                ));
+            }
+
+            self._set_allowance(owner, spender, current_allowance - value);
+        }
+
+        Ok(())
+    }
 }
 
 /// Trait containing ERC20 Interface TODO
@@ -362,7 +493,9 @@ pub trait IERC20: IERC20Virtual {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn total_supply(&self) -> U256;
+    fn total_supply(&self) -> U256 {
+        self._get_total_supply()
+    }
 
     /// Returns the number of tokens owned by `account`.
     ///
@@ -370,7 +503,9 @@ pub trait IERC20: IERC20Virtual {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `account` - Account to get balance from.
-    fn balance_of(&self, account: Address) -> U256;
+    fn balance_of(&self, account: Address) -> U256 {
+        self._get_balance(account)
+    }
 
     /// Moves a `value` amount of tokens from the caller's account to `to`.
     ///
@@ -392,7 +527,11 @@ pub trait IERC20: IERC20Virtual {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error>;
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
+        let from = msg::sender();
+        self._transfer(from, to, value)?;
+        Ok(true)
+    }
 
     /// Returns the remaining number of tokens that `spender` will be allowed
     /// to spend on behalf of `owner` through `transfer_from`. This is zero by
@@ -405,7 +544,9 @@ pub trait IERC20: IERC20Virtual {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
-    fn allowance(&self, owner: Address, spender: Address) -> U256;
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self._get_allowance(owner, spender)
+    }
 
     /// Sets a `value` number of tokens as the allowance of `spender` over the
     /// caller's tokens.
@@ -433,8 +574,22 @@ pub trait IERC20: IERC20Virtual {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    fn approve(&mut self, spender: Address, value: U256)
-        -> Result<bool, Error>;
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Error> {
+        let owner = msg::sender();
+        if spender.is_zero() {
+            return Err(Error::InvalidSpender(ERC20InvalidSpender {
+                spender: Address::ZERO,
+            }));
+        }
+
+        self._set_allowance(owner, spender, value);
+        evm::log(Approval { owner, spender, value });
+        Ok(true)
+    }
 
     /// Moves a `value` number of tokens from `from` to `to` using the
     /// allowance mechanism. `value` is then deducted from the caller's
@@ -470,157 +625,6 @@ pub trait IERC20: IERC20Virtual {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Error>;
-}
-
-impl IERC20Virtual for ERC20 {
-    fn _transfer(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), Error> {
-        if from.is_zero() {
-            return Err(Error::InvalidSender(ERC20InvalidSender {
-                sender: Address::ZERO,
-            }));
-        }
-        if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
-                receiver: Address::ZERO,
-            }));
-        }
-
-        self._update(from, to, value)?;
-
-        Ok(())
-    }
-
-    fn _update(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), Error> {
-        if from.is_zero() {
-            // Mint operation. Overflow check required: the rest of the code
-            // assumes that `_total_supply` never overflows.
-            let total_supply =
-                self._total_supply.get().checked_add(value).expect(
-                    "Should not exceed `U256::MAX` for `_total_supply`",
-                );
-            self._total_supply.set(total_supply);
-        } else {
-            let from_balance = self._balances.get(from);
-            if from_balance < value {
-                return Err(Error::InsufficientBalance(
-                    ERC20InsufficientBalance {
-                        sender: from,
-                        balance: from_balance,
-                        needed: value,
-                    },
-                ));
-            }
-            // Overflow not possible:
-            // value <= from_balance <= _total_supply.
-            self._balances.setter(from).set(from_balance - value);
-        }
-
-        if to.is_zero() {
-            let total_supply = self._total_supply.get();
-            // Overflow not possible:
-            // value <= _total_supply or value <= from_balance <= _total_supply.
-            self._total_supply.set(total_supply - value);
-        } else {
-            let balance_to = self._balances.get(to);
-            // Overflow not possible:
-            // balance + value is at most total_supply, which fits into a U256.
-            self._balances.setter(to).set(balance_to + value);
-        }
-
-        evm::log(Transfer { from, to, value });
-
-        Ok(())
-    }
-
-    fn _burn(&mut self, account: Address, value: U256) -> Result<(), Error> {
-        if account == Address::ZERO {
-            return Err(Error::InvalidSender(ERC20InvalidSender {
-                sender: Address::ZERO,
-            }));
-        }
-        self._update(account, Address::ZERO, value)
-    }
-
-    fn _spend_allowance(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-    ) -> Result<(), Error> {
-        let current_allowance = self._allowances.get(owner).get(spender);
-        if current_allowance != U256::MAX {
-            if current_allowance < value {
-                return Err(Error::InsufficientAllowance(
-                    ERC20InsufficientAllowance {
-                        spender,
-                        allowance: current_allowance,
-                        needed: value,
-                    },
-                ));
-            }
-
-            self._allowances
-                .setter(owner)
-                .insert(spender, current_allowance - value);
-        }
-
-        Ok(())
-    }
-}
-
-#[external]
-impl IERC20 for ERC20 {
-    fn total_supply(&self) -> U256 {
-        self._total_supply.get()
-    }
-
-    fn balance_of(&self, account: Address) -> U256 {
-        self._balances.get(account)
-    }
-
-    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
-        let from = msg::sender();
-        self._transfer(from, to, value)?;
-        Ok(true)
-    }
-
-    fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        self._allowances.get(owner).get(spender)
-    }
-
-    fn approve(
-        &mut self,
-        spender: Address,
-        value: U256,
-    ) -> Result<bool, Error> {
-        let owner = msg::sender();
-        if spender.is_zero() {
-            return Err(Error::InvalidSpender(ERC20InvalidSpender {
-                spender: Address::ZERO,
-            }));
-        }
-
-        self._allowances.setter(owner).insert(spender, value);
-        evm::log(Approval { owner, spender, value });
-        Ok(true)
-    }
-
-    fn transfer_from(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
     ) -> Result<bool, Error> {
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
@@ -629,7 +633,10 @@ impl IERC20 for ERC20 {
     }
 }
 
-impl ERC20 {}
+impl IERC20Virtual for ERC20 {}
+
+#[external]
+impl IERC20 for ERC20 {}
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
