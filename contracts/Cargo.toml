@@ -29,6 +29,7 @@ default = []
 erc20 = []
 erc20_metadata = ["erc20"]
 erc20_burnable = ["erc20"]
+erc20_capped = ["erc20"]
 erc20_pausable = ["erc20"]
 erc721 = []
 

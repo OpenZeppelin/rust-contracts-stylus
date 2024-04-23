@@ -9,28 +9,35 @@ use contracts::{
     utils::pausable::{IPausable, Pausable},
 };
 use erc20_proc::{
-    IERC20Burnable, IERC20Pausable, IERC20Storage, IERC20Virtual, IPausable,
-    IERC20,
+    ICapped, IERC20Burnable, IERC20Capped, IERC20Pausable, IERC20Storage,
+    IERC20Virtual, IPausable, IERC20,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 const DECIMALS: u8 = 10;
-
 use contracts::{
-    erc20::extensions::burnable::IERC20Burnable, erc20_burnable_impl,
+    erc20::{extensions::burnable::IERC20Burnable, IERC20},
+    erc20_burnable_impl,
+    utils::capped::{Capped, ICapped},
 };
 
 sol_storage! {
     #[entrypoint]
     struct Token {
         #[borrow]
-        BurnablePausableERC20 erc20;
+        BurnableCappedPausableERC20 erc20;
         #[borrow]
         Metadata metadata;
     }
 
-    #[derive(IERC20Storage, IERC20, IERC20Virtual, IERC20Burnable, IPausable)]
-    struct BurnablePausableERC20 {
+    #[derive(IERC20Storage, IERC20, IERC20Virtual, IERC20Burnable, IPausable, ICapped)]
+    struct BurnableCappedPausableERC20 {
+        CappedPausableERC20 erc20;
+    }
+
+    #[derive(IERC20Storage, IERC20, IPausable, IERC20Capped)]
+    struct CappedPausableERC20 {
         PausableERC20 erc20;
+        Capped capped;
     }
 
     #[derive(IERC20Storage, IERC20, IERC20Pausable)]

@@ -12,8 +12,14 @@ cfg_if::cfg_if! {
     }
 }
 
-// cfg_if::cfg_if! {
-//     if #[cfg(any(test, feature = "erc20_pausable"))] {
-//         pub mod pausable;
-//     }
-// }
+cfg_if::cfg_if! {
+    if #[cfg(any(test, feature = "erc20_pausable"))] {
+        pub mod pausable;
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(any(test, feature = "erc20_capped"))] {
+        pub mod capped;
+    }
+}

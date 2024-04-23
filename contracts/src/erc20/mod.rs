@@ -245,7 +245,9 @@ pub enum Error {
     /// approvals.
     InvalidSpender(ERC20InvalidSpender),
     /// TODO!!!
-    PausableError(crate::utils::pausable::EnforcedPause),
+    ERC20PausableError(crate::utils::pausable::EnforcedPause),
+    /// Indicates a failure when total supply cap has been exceeded.
+    ERC20ExceededCap(crate::utils::capped::ExceededCap),
 }
 
 /// TODO

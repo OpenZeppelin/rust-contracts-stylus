@@ -1,19 +1,16 @@
 //! ERC20 Pausable extension TODO
 use alloy_primitives::{Address, U256};
-
-use crate::
-    erc20::{
-        ERC20InvalidReceiver, ERC20InvalidSender,
-        Error, IERC20Virtual, IERC20,
-    };
-    use crate::utils::pausable::IPausable;
-
 use stylus_sdk::msg;
+
+use crate::{
+    erc20::{
+        ERC20InvalidReceiver, ERC20InvalidSender, Error, IERC20Virtual, IERC20,
+    },
+    utils::pausable::IPausable,
+};
 
 /// TODO docs
 pub trait IERC20Pausable: IERC20Virtual + IERC20 + IPausable {}
-
-
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
@@ -446,8 +443,8 @@ mod tests {
     //     assert_eq!(contract.paused(), true);
 
     //     // Unpause the paused contract
-    //     contract.unpause().expect("Unpause action must work in paused state");
-    //     assert_eq!(contract.paused(), false);
+    //     contract.unpause().expect("Unpause action must work in paused
+    // state");     assert_eq!(contract.paused(), false);
     // }
 
     // #[grip::test]

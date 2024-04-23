@@ -14,9 +14,9 @@ sol_storage! {
 
 sol! {
     /// Emitted when the pause is triggered by an account.
-    event Paused(address account);
+    event Paused(address indexed account);
     /// Emitted when the unpause is lifted by an account.
-    event Unpaused(address account);
+    event Unpaused(address indexed account);
 }
 
 sol! {

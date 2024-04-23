@@ -5,3 +5,5 @@
 pub mod pausable;
 // }
 // }
+
+pub mod capped;
