@@ -34,7 +34,68 @@ pub fn ierc20_virtual_derive(input: TokenStream) -> TokenStream {
     let name = &input.ident;
 
     let expanded = quote! {
-        impl contracts::erc20::IERC20Virtual for #name {}
+        impl contracts::erc20::IERC20Virtual for #name {
+            fn _update(
+                &mut self,
+                from:  alloy_primitives::Address,
+                to:  alloy_primitives::Address,
+                value:  alloy_primitives::U256,
+            ) -> Result<(), crate::erc20::Error> {
+                // Call "wrapped" token
+                self.erc20._update(from, to, value)
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(IERC20Pausable)]
+pub fn ierc20_pausable_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let expanded = quote! {
+        impl contracts::erc20::IERC20Virtual for #name {
+            fn _update(
+                &mut self,
+                from:  alloy_primitives::Address,
+                to: alloy_primitives::Address,
+                value: alloy_primitives::U256,
+            ) -> Result<(), crate::erc20::Error> {
+                // Require `Unpaused` State
+                self.when_not_paused().map_err(|_e| {
+                    contracts::erc20::Error::PausableError(
+                        contracts::utils::pausable::EnforcedPause {},
+                    )
+                })?;
+                // Call "wrapped" token
+                self.erc20._update(from, to, value)
+            }
+        }
+
+        impl contracts::utils::pausable::IPausable for #name {
+            fn paused(&self) -> bool {
+                self.pausable.paused()
+            }
+
+            fn pause(&mut self) -> Result<(), contracts::utils::pausable::Error> {
+                self.pausable.pause()
+            }
+
+            fn unpause(&mut self) -> Result<(), contracts::utils::pausable::Error> {
+                self.pausable.unpause()
+            }
+
+            fn when_not_paused(&self) -> Result<(), contracts::utils::pausable::Error> {
+                self.pausable.when_not_paused()
+            }
+
+            fn when_paused(&self) -> Result<(), contracts::utils::pausable::Error> {
+                self.pausable.when_paused()
+            }
+
+        }
     };
 
     TokenStream::from(expanded)
@@ -77,5 +138,38 @@ pub fn ierc20_storage_derive(input: TokenStream) -> TokenStream {
             }
         }
     };
+    TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(IPausable)]
+pub fn ipausable_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let expanded = quote! {
+        impl contracts::utils::pausable::IPausable for #name {
+            fn paused(&self) -> bool {
+                self.erc20.paused()
+            }
+
+            fn pause(&mut self) -> Result<(), contracts::utils::pausable::Error> {
+                self.erc20.pause()
+            }
+
+            fn unpause(&mut self) -> Result<(), contracts::utils::pausable::Error> {
+                self.erc20.unpause()
+            }
+
+            fn when_not_paused(&self) -> Result<(), contracts::utils::pausable::Error> {
+                self.erc20.when_not_paused()
+            }
+
+            fn when_paused(&self) -> Result<(), contracts::utils::pausable::Error> {
+                self.erc20.when_paused()
+            }
+
+        }
+    };
+
     TokenStream::from(expanded)
 }

@@ -1,3 +1,5 @@
+//! Pausable Contract TODO
+
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{evm, msg};

@@ -3,7 +3,7 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::erc20::{IERC20Virtual, ERC20};
+use crate::erc20::IERC20Virtual;
 
 /// This macro provides an implementation of the ERC-20 Burnable extension.
 ///
