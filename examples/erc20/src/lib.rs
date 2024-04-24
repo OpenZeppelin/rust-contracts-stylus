@@ -3,9 +3,10 @@ extern crate alloc;
 
 use alloc::string::String;
 
+use alloy_primitives::{Address, U256};
 use contracts::{
-    erc20,
-    erc20::{extensions::Metadata, ERC20},
+    erc20::{self, extensions::Metadata, ERC20InvalidReceiver, ERC20},
+    erc20_capped_impl, erc20_impl, erc20_pausable_impl,
     utils::pausable::{IPausable, Pausable},
 };
 use erc20_proc::{
@@ -15,7 +16,7 @@ use erc20_proc::{
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 const DECIMALS: u8 = 10;
 use contracts::{
-    erc20::{extensions::burnable::IERC20Burnable, IERC20},
+    erc20::{extensions::burnable::IERC20Burnable, IERC20Virtual, IERC20},
     erc20_burnable_impl,
     utils::capped::{Capped, ICapped},
 };
@@ -50,9 +51,33 @@ sol_storage! {
 #[external]
 #[inherit(Metadata)]
 impl Token {
-    // This macro implements ERC20Burnable functions -- `burn` and `burn_from`.
-    // Expects an `ERC20 erc20` as a field of `Token`.
+    // Export ERC-20 features
+    erc20_impl!();
+
+    // Export ERC-20 Burnable features
     erc20_burnable_impl!();
+
+    // Export ERC-20 Capped features
+    erc20_capped_impl!();
+
+    // Export ERC-20 Pausable features
+    erc20_pausable_impl!();
+
+    // Add `mint` feature
+    fn mint(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), contracts::erc20::Error> {
+        if account.is_zero() {
+            return Err(contracts::erc20::Error::InvalidReceiver(
+                contracts::erc20::ERC20InvalidReceiver {
+                    receiver: Address::ZERO,
+                },
+            ));
+        }
+        self.erc20._update(Address::ZERO, account, value)
+    }
 
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);

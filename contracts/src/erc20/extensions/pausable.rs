@@ -1,13 +1,39 @@
 //! ERC20 Pausable extension TODO
-use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
-
 use crate::{
-    erc20::{
-        ERC20InvalidReceiver, ERC20InvalidSender, Error, IERC20Virtual, IERC20,
-    },
+    erc20::{IERC20Virtual, IERC20},
     utils::pausable::IPausable,
 };
+
+/// This macro provides an implementation of the ERC-20 Pausable extension.
+///
+/// It adds the `cap` and `set_cap` functions, and expects the token
+/// to contain `erc20` as a field that implements IERC20Capped trait.
+#[macro_export]
+macro_rules! erc20_pausable_impl {
+    () => {
+        pub(crate) fn paused(&self) -> bool {
+            self.erc20.paused()
+        }
+
+        pub(crate) fn pause(&mut self) -> Result<(), alloc::vec::Vec<u8>> {
+            self.erc20.pause().map_err(|e| e.into())
+        }
+
+        pub(crate) fn unpause(&mut self) -> Result<(), alloc::vec::Vec<u8>> {
+            self.erc20.unpause().map_err(|e| e.into())
+        }
+
+        pub(crate) fn when_not_paused(
+            &self,
+        ) -> Result<(), alloc::vec::Vec<u8>> {
+            self.erc20.when_not_paused().map_err(|e| e.into())
+        }
+
+        pub(crate) fn when_paused(&self) -> Result<(), alloc::vec::Vec<u8>> {
+            self.erc20.when_paused().map_err(|e| e.into())
+        }
+    };
+}
 
 /// TODO docs
 pub trait IERC20Pausable: IERC20Virtual + IERC20 + IPausable {}
