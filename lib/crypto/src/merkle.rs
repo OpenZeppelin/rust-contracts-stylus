@@ -260,6 +260,8 @@ fn sorted_hash<H: Hasher<Hash = Bytes32>>(
 
 #[cfg(test)]
 mod tests {
+    //! NOTE: The values used as input for these tests were all generated using
+    //! https://github.com/OpenZeppelin/merkle-tree.
     use alloy_primitives::keccak256;
     use const_hex::FromHex;
     use rand::{thread_rng, RngCore};
@@ -278,37 +280,49 @@ mod tests {
         }
     }
 
+    /// Shorthand for converting from a hex str to a fixed 32-bytes array.
+    macro_rules! hex_to_bytes_32 {
+        ($($var:ident = $bytes:expr);* $(;)?) => {
+            $(let $var = Bytes32::from_hex($bytes).unwrap();)*
+        };
+    }
+
+    /// Shorthand for converting from a string containing several address to
+    /// a fixed 32-bytes collection.
+    macro_rules! str_to_bytes_32 {
+        ($bytes:expr) => {
+            $bytes
+                .lines()
+                .map(|l| Bytes32::from_hex(l.trim()).unwrap())
+                .collect()
+        };
+    }
+
     #[test]
     fn verifies_valid_proofs() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(
         //   toElements('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='),
         //   ['string'],
         // );
         //
-        // const root = merkleTree.root;
-        // const hash = merkleTree.leafHash(['A']);
+        // const root  = merkleTree.root;
+        // const hash  = merkleTree.leafHash(['A']);
         // const proof = merkleTree.getProof(['A']);
         // ```
-        const ROOT: &str   = "0xb89eb120147840e813a77109b44063488a346b4ca15686185cf314320560d3f3";
-        const LEAF_A: &str = "0x6efbf77e320741a027b50f02224545461f97cd83762d5fbfeb894b9eb3287c16";
-        const LEAF_B: &str = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc";
-        const PROOF: &str  = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc
-                              0x1629d3b5b09b30449d258e35bbd09dd5e8a3abb91425ef810dc27eef995f7490
-                              0x633d21baee4bbe5ed5c51ac0c68f7946b8f28d2937f0ca7ef5e1ea9dbda52e7a
-                              0x8a65d3006581737a3bab46d9e4775dbc1821b1ea813d350a13fcd4f15a8942ec
-                              0xd6c3f3e36cd23ba32443f6a687ecea44ebfe2b8759a62cccf7759ec1fb563c76
-                              0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115";
-
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let leaf_a = Bytes32::from_hex(LEAF_A).unwrap();
-        let leaf_b = Bytes32::from_hex(LEAF_B).unwrap();
-        let proof: Vec<_> = PROOF
-            .lines()
-            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
-            .collect();
+        hex_to_bytes_32! {
+            root   = "0xb89eb120147840e813a77109b44063488a346b4ca15686185cf314320560d3f3";
+            leaf_a = "0x6efbf77e320741a027b50f02224545461f97cd83762d5fbfeb894b9eb3287c16";
+            leaf_b = "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc";
+        };
+        let proof: Vec<_> = str_to_bytes_32! {
+            "0x7051e21dd45e25ed8c605a53da6f77de151dcbf47b0e3ced3c5d8b61f4a13dbc
+             0x1629d3b5b09b30449d258e35bbd09dd5e8a3abb91425ef810dc27eef995f7490
+             0x633d21baee4bbe5ed5c51ac0c68f7946b8f28d2937f0ca7ef5e1ea9dbda52e7a
+             0x8a65d3006581737a3bab46d9e4775dbc1821b1ea813d350a13fcd4f15a8942ec
+             0xd6c3f3e36cd23ba32443f6a687ecea44ebfe2b8759a62cccf7759ec1fb563c76
+             0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115"
+        };
 
         let verification = verify(&proof, root, leaf_a, Keccak256);
         assert!(verification);
@@ -322,8 +336,6 @@ mod tests {
 
     #[test]
     fn rejects_invalid_proofs() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const correctMerkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
         // const otherMerkleTree = StandardMerkleTree.of(toElements('def'), ['string']);
@@ -332,13 +344,11 @@ mod tests {
         // const leaf = correctMerkleTree.leafHash(['a']);
         // const proof = otherMerkleTree.getProof(['d']);
         // ```
-        const ROOT: &str  = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
-        const LEAF: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-        const PROOF: &str = "0x7b0c6cd04b82bfc0e250030a5d2690c52585e0cc6a4f3bc7909d7723b0236ece";
-
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let leaf = Bytes32::from_hex(LEAF).unwrap();
-        let proof = Bytes32::from_hex(PROOF).unwrap();
+        hex_to_bytes_32! {
+            root  = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
+            leaf  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+            proof = "0x7b0c6cd04b82bfc0e250030a5d2690c52585e0cc6a4f3bc7909d7723b0236ece";
+        };
 
         let verification = verify(&[proof], root, leaf, Keccak256);
         assert!(!verification);
@@ -346,8 +356,6 @@ mod tests {
 
     #[test]
     fn rejects_proofs_with_invalid_length() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
         //
@@ -355,17 +363,14 @@ mod tests {
         // const leaf = merkleTree.leafHash(['a']);
         // const proof = merkleTree.getProof(['a']);
         // ```
-        const ROOT: &str  = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
-        const LEAF: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-        const PROOF: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
-                             0x9cf5a63718145ba968a01c1d557020181c5b252f665cf7386d370eddb176517b";
-
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let leaf = Bytes32::from_hex(LEAF).unwrap();
-        let proof: Vec<_> = PROOF
-            .lines()
-            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
-            .collect();
+        hex_to_bytes_32! {
+            root = "0xf2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
+            leaf = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        };
+        let proof: Vec<_> = str_to_bytes_32! {
+            "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
+             0x9cf5a63718145ba968a01c1d557020181c5b252f665cf7386d370eddb176517b"
+        };
 
         let bad_proof = &proof[..1];
         let verification = verify(bad_proof, root, leaf, Keccak256);
@@ -374,8 +379,6 @@ mod tests {
 
     #[test]
     fn verifies_valid_multi_proof() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
         //
@@ -383,24 +386,20 @@ mod tests {
         // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('bdf'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
         // ```
-        const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
-        const LEAVES: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
-                              0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
-                              0xeba909cf4bb90c6922771d7f126ad0fd11dfde93f3937a196274e1ac20fd2f5b";
-        const PROOF: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
-                              0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
+        hex_to_bytes_32! {
+            root = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+        };
+        let leaves: Vec<_> = str_to_bytes_32! {
+            "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
+             0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
+             0xeba909cf4bb90c6922771d7f126ad0fd11dfde93f3937a196274e1ac20fd2f5b"
+        };
+        let proof: Vec<_> = str_to_bytes_32! {
+            "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
+             0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f"
+        };
 
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let leaves: Vec<_> = LEAVES
-            .lines()
-            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
-            .collect();
-        let proof: Vec<_> = PROOF
-            .lines()
-            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
-            .collect();
         let proof_flags = [false, true, false, true];
-
         let verification =
             verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
         assert!(verification.unwrap());
@@ -408,8 +407,6 @@ mod tests {
 
     #[test]
     fn rejects_invalid_multi_proof() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
         // const otherMerkleTree = StandardMerkleTree.of(toElements('ghi'), ['string']);
@@ -418,17 +415,15 @@ mod tests {
         // const { proof, proofFlags, leaves } = otherMerkleTree.getMultiProof(toElements('ghi'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
         // ```
-        const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
-        const LEAVES: &str = "0x34e6ce3d0d73f6bff2ee1e865833d58e283570976d70b05f45c989ef651ef742
-                              0xaa28358fb75b314c899e16d7975e029d18b4457fd8fd831f2e6c17ffd17a1d7e
-                              0xe0fd7e6916ff95d933525adae392a17e247819ebecc2e63202dfec7005c60560";
-
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let leaves: Vec<_> = LEAVES
-            .lines()
-            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
-            .collect();
-        let proof: Vec<_> = vec![];
+        hex_to_bytes_32! {
+            root = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+        };
+        let leaves: Vec<_> = str_to_bytes_32! {
+            "0x34e6ce3d0d73f6bff2ee1e865833d58e283570976d70b05f45c989ef651ef742
+             0xaa28358fb75b314c899e16d7975e029d18b4457fd8fd831f2e6c17ffd17a1d7e
+             0xe0fd7e6916ff95d933525adae392a17e247819ebecc2e63202dfec7005c60560"
+        };
+        let proof = [];
         let proof_flags = [true, true];
 
         let verification =
@@ -438,8 +433,6 @@ mod tests {
 
     #[test]
     fn errors_invalid_multi_proof_leaves() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
@@ -453,25 +446,22 @@ mod tests {
         // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
         // const fill = ethers.randomBytes(32);
         // ```
-        const ROOT: &str    = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
-        const HASH_A: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-        const HASH_B: &str  = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
-        const HASH_CD: &str = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
-        const HASH_E: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
-
-        let hash_a = Bytes32::from_hex(HASH_A).unwrap();
-        let hash_b = Bytes32::from_hex(HASH_B).unwrap();
-        let hash_cd = Bytes32::from_hex(HASH_CD).unwrap();
-        let hash_e = Bytes32::from_hex(HASH_E).unwrap();
+        hex_to_bytes_32! {
+            root    = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
+            hash_a  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+            hash_b  = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
+            hash_cd = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
+            hash_e  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
+        };
 
         let mut random_bytes = [0u8; 32];
         thread_rng().fill_bytes(&mut random_bytes);
-        let fill = Bytes32::from(random_bytes);
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let proof = vec![hash_b, fill, hash_cd];
 
+        let fill = Bytes32::from(random_bytes);
+        let proof = [hash_b, fill, hash_cd];
         let proof_flags = [false, false, false];
-        let leaves = vec![hash_a, hash_e];
+        let leaves = [hash_a, hash_e];
+
         let verification =
             verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
         assert!(verification.is_err());
@@ -480,8 +470,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn panics_multi_proof_len_invalid() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
@@ -495,24 +483,21 @@ mod tests {
         // const hashE = merkleTree.leafHash(['e']); // incorrect (not part of the tree)
         // const fill = ethers.randomBytes(32);
         // ```
-        const ROOT: &str    = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
-        const HASH_A: &str  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-        const HASH_B: &str  = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
-        const HASH_CD: &str = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
-        const HASH_E: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
-
-        let hash_a = Bytes32::from_hex(HASH_A).unwrap();
-        let hash_b = Bytes32::from_hex(HASH_B).unwrap();
-        let hash_cd = Bytes32::from_hex(HASH_CD).unwrap();
-        let hash_e = Bytes32::from_hex(HASH_E).unwrap();
+        hex_to_bytes_32! {
+            root    = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
+            hash_a  = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+            hash_b  = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681";
+            hash_cd = "0x03707d7802a71ca56a8ad8028da98c4f1dbec55b31b4a25d536b5309cc20eda9";
+            hash_e  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e";
+        };
 
         let mut random_bytes = [0u8; 32];
         thread_rng().fill_bytes(&mut random_bytes);
+
         let fill = Bytes32::from(random_bytes);
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let proof = vec![hash_b, fill, hash_cd];
+        let proof = [hash_b, fill, hash_cd];
         let proof_flags = [false, false, false, false];
-        let leaves = vec![hash_e, hash_a];
+        let leaves = [hash_e, hash_a];
 
         let _ =
             verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
@@ -520,8 +505,6 @@ mod tests {
 
     #[test]
     fn verifies_single_leaf_multi_proof() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('a'), ['string']);
         //
@@ -529,12 +512,10 @@ mod tests {
         // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('a'));
         // const hashes = leaves.map(e => merkleTree.leafHash(e));
         // ```
-        const ROOT: &str = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
-
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let proof = vec![];
+        hex_to_bytes_32!(root = "0x9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c");
+        let proof = [];
         let proof_flags = [];
-        let leaves = vec![root];
+        let leaves = [root];
 
         let verification =
             verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
@@ -543,19 +524,15 @@ mod tests {
 
     #[test]
     fn verifies_empty_leaves_multi_proof() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
         // const root = merkleTree.root;
         // ```
-        const ROOT: &str = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9";
-
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let proof = vec![root];
+        hex_to_bytes_32!(root = "0x8f7234e8cfe39c08ca84a3a3e3274f574af26fd15165fe29e09cbab742daccd9");
+        let proof = [root];
         let proof_flags = [];
-        let leaves = vec![];
+        let leaves = [];
 
         let verification =
             verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
@@ -567,8 +544,6 @@ mod tests {
     /// Panics when processing manipulated proofs with a zero-value node at
     /// depth 1.
     fn panics_manipulated_multi_proof() {
-        // These values are generated using https://github.com/OpenZeppelin/merkle-tree.
-        //
         // ```js
         // // Create a merkle tree that contains a zero leaf at depth 1
         // const leave = ethers.id('real leaf');
@@ -580,19 +555,16 @@ mod tests {
         // const maliciousProof = [leave, leave];
         // const maliciousProofFlags = [true, true, false];
         // ```
-        const ROOT: &str             = "0xf2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
-        const LEAF: &str             = "0x5e941ddd8f313c0b39f92562c0eca709c3d91360965d396aaef584b3fa76889a";
-        const MALICIOUS_LEAVES: &str = "0x1f23ad5fc0ee6ccbe2f3d30df856758f05ad9d03408a51a99c1c9f0854309db2
-                                        0x613994f4e324d0667c07857cd5d147994bc917da5d07ee63fc3f0a1fe8a18e34";
-
-        let root = Bytes32::from_hex(ROOT).unwrap();
-        let leaf = Bytes32::from_hex(LEAF).unwrap();
+        hex_to_bytes_32! {
+            root = "0xf2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
+            leaf = "0x5e941ddd8f313c0b39f92562c0eca709c3d91360965d396aaef584b3fa76889a";
+        };
+        let malicious_leaves: Vec<_> = str_to_bytes_32! {
+            "0x1f23ad5fc0ee6ccbe2f3d30df856758f05ad9d03408a51a99c1c9f0854309db2
+             0x613994f4e324d0667c07857cd5d147994bc917da5d07ee63fc3f0a1fe8a18e34"
+        };
         let malicious_proof = [leaf, leaf];
         let malicious_proof_flags = [true, true, false];
-        let malicious_leaves: Vec<_> = MALICIOUS_LEAVES
-            .lines()
-            .map(|h| Bytes32::from_hex(h.trim()).unwrap())
-            .collect();
 
         let _ = verify_multi_proof(
             &malicious_proof,
