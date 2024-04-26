@@ -1,0 +1,18 @@
+[package]
+name = "proc-tests"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version = "0.1.0"
+
+[dependencies]
+
+[dev-dependencies]
+contracts = { path = "../contracts", features = ["erc20_metadata", "erc20_burnable", "erc20_pausable", "erc20_capped"] }
+erc20-proc = { path = "../erc20-proc" }
+grip = {path = "../lib/grip"}
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+mini-alloc.workspace = true

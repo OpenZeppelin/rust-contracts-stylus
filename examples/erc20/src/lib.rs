@@ -5,7 +5,7 @@ use alloc::string::String;
 
 use alloy_primitives::{Address, U256};
 use contracts::{
-    erc20::{self, extensions::Metadata, ERC20InvalidReceiver, ERC20},
+    erc20::{extensions::Metadata, ERC20},
     erc20_capped_impl, erc20_impl, erc20_pausable_impl,
     utils::pausable::{IPausable, Pausable},
 };
@@ -24,7 +24,6 @@ use contracts::{
 sol_storage! {
     #[entrypoint]
     struct Token {
-        #[borrow]
         BurnableCappedPausableERC20 erc20;
         #[borrow]
         Metadata metadata;

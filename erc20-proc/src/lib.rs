@@ -40,7 +40,7 @@ pub fn ierc20_virtual_derive(input: TokenStream) -> TokenStream {
                 from:  alloy_primitives::Address,
                 to:  alloy_primitives::Address,
                 value:  alloy_primitives::U256,
-            ) -> Result<(), crate::erc20::Error> {
+            ) -> Result<(), contracts::erc20::Error> {
                 // Call "wrapped" token
                 self.erc20._update(from, to, value)
             }
@@ -207,12 +207,9 @@ pub fn ierc20_capped_derive(input: TokenStream) -> TokenStream {
                 to: alloy_primitives::Address,
                 value: alloy_primitives::U256,
             ) -> Result<(), contracts::erc20::Error> {
-                // Call "wrapped" token
-                self.erc20._update(from, to, value)?;
-
-                if from.is_zero() {
+                 if from.is_zero() {
                     let max_supply = self.cap();
-                    let supply = self.total_supply();
+                    let supply = self.total_supply() + value;
                     if supply > max_supply {
                         return Err(contracts::erc20::Error::ERC20ExceededCap(
                             contracts::utils::capped::ExceededCap {
@@ -223,7 +220,8 @@ pub fn ierc20_capped_derive(input: TokenStream) -> TokenStream {
                     }
                 }
 
-                Ok(())
+                // Call "wrapped" token
+                self.erc20._update(from, to, value)
             }
         }
 
