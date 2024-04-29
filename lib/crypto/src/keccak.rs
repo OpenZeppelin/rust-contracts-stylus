@@ -8,6 +8,7 @@ pub struct KeccakBuilder;
 impl BuildHasher for KeccakBuilder {
     type Hasher = Keccak256;
 
+    #[inline]
     fn build_hasher(&self) -> Self::Hasher {
         Keccak256(Keccak::v256())
     }
