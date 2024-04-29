@@ -1,11 +1,22 @@
-//! Pausable Contract TODO
+//! Pausable Contract
+//!
+//! Contract module which allows implementing an emergency stop
+//! mechanism that can be triggered by an authorized account.
+//!
+//! This module should be used through inheritance and wrappers.
+//! It will make available the modifiers `IPausable::when_not_paused`
+//! and `IPausable::when_paused`, which can be applied to the functions
+//! of your contract.
+//!
+//! Note that they will not be pausable by simply including this module,
+//! only once the modifiers are put in place.
 
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{evm, msg};
 
 sol_storage! {
-    /// State of a Pausable
+    /// State of a Pausable contract.
     pub struct Pausable {
         /// Indicates whether the contract is `Paused`
         bool _paused;
@@ -13,31 +24,36 @@ sol_storage! {
 }
 
 sol! {
-    /// Emitted when the pause is triggered by an account.
+    /// Emitted when the `Pause` is triggered by an `account`.
     event Paused(address indexed account);
-    /// Emitted when the unpause is lifted by an account.
+    /// Emitted when the `Unpause` is lifted by an `account`.
     event Unpaused(address indexed account);
 }
 
 sol! {
-    /// The operation failed because the contract is in `Paused` state.
+    /// Indicates an error related to the operation that failed
+    /// because the contract had been in `Paused` state.
     #[derive(Debug)]
     error EnforcedPause();
-    /// The operation failed because the contract is in `Unpaused` state.
+    /// Indicates an error related to the operation that failed
+    /// because the contract had been in `Unpaused` state.
     #[derive(Debug)]
     error ExpectedPause();
 }
 
-/// TODO docs
+/// A Pausable error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// The operation failed because the contract is in `Paused` state.
+    /// Indicates an error related to the operation that failed
+    /// because the contract had been in `Paused` state.
     EnforcedPause(EnforcedPause),
-    /// The operation failed because the contract is in `Unpaused` state.
+    /// Indicates an error related to the operation that failed
+    /// because the contract had been in `Unpaused` state.
     ExpectedPause(ExpectedPause),
 }
 
-/// TODO docs
+#[allow(clippy::module_name_repetitions)]
+/// Interface of a `Pausable` contract.
 pub trait IPausable {
     /// Returns true if the contract is paused, and false otherwise.
     fn paused(&self) -> bool;
@@ -77,7 +93,7 @@ pub trait IPausable {
     fn when_paused(&self) -> Result<(), Error>;
 }
 
-// External methods
+/// Implementation of `IPausable` trait for Pausable contract.
 #[external]
 impl IPausable for Pausable {
     fn paused(&self) -> bool {

@@ -4,6 +4,7 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! ERC-20 applications.
+
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
@@ -19,7 +20,7 @@ pub mod extensions;
 /// It adds all the functions from the `IERC20` trait and expects the token
 /// to contain `erc20` attribute that implements `IERC20` trait too.
 ///
-/// Used to export interface for Stylus smart contract with a single
+/// Used to export interface for Stylus smart contracts with a single
 /// `#[external]` macro.
 #[allow(clippy::module_name_repetitions)]
 #[macro_export]
