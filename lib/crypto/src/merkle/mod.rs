@@ -245,7 +245,7 @@ impl core::fmt::Display for MultiProofError {
 
 impl Hash for [u8; 64] {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        state.update(self)
+        state.update(self);
     }
 }
 

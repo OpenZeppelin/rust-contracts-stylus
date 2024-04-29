@@ -20,7 +20,7 @@ impl Hasher for Keccak256 {
     type Output = [u8; 32];
 
     fn update(&mut self, input: &[u8]) {
-        self.0.update(input)
+        self.0.update(input);
     }
 
     fn finalize(self) -> Self::Output {
