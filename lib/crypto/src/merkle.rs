@@ -19,10 +19,10 @@ type Bytes32 = [u8; 32];
 /// `Hasher` serves as an adapter for consumers to use `verify` with the
 /// hashing algorithm of their choice.
 pub trait Hasher {
-    /// The type of a value resulting from hashing some data.
+    /// The type of a value resulting from hashing arbitrary bytes.
     type Hash;
-    /// Hash arbitrary data resulting in a value of type `Self::Hash`.
-    fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash;
+    /// Hash arbitrary bytes resulting in a value of type `Self::Hash`.
+    fn hash<A: AsRef<[u8]>>(&mut self, bytes: A) -> Self::Hash;
 }
 
 /// Verify that `leaf` is part of a Merkle tree defined by `root` by using
@@ -52,9 +52,8 @@ pub trait Hasher {
 /// # struct Keccak256;
 /// # impl crypto::merkle::Hasher for Keccak256 {
 /// #     type Hash = Bytes32;
-/// #     fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash {
-/// #         let bytes = data.as_ref();
-/// #         *keccak256(bytes)
+/// #     fn hash<A: AsRef<[u8]>>(&mut self, bytes: A) -> Self::Hash {
+/// #         *keccak256(bytes.as_ref())
 /// #     }
 /// # }
 /// type Bytes32 = [u8; 32];
@@ -160,9 +159,8 @@ impl core::fmt::Display for MultiProofError {
 /// # struct Keccak256;
 /// # impl crypto::merkle::Hasher for Keccak256 {
 /// #     type Hash = Bytes32;
-/// #     fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash {
-/// #         let bytes = data.as_ref();
-/// #         *keccak256(bytes)
+/// #     fn hash<A: AsRef<[u8]>>(&mut self, bytes: A) -> Self::Hash {
+/// #         *keccak256(bytes.as_ref())
 /// #     }
 /// # }
 /// type Bytes32 = [u8; 32];
@@ -243,6 +241,7 @@ pub fn verify_multi_proof<H: Hasher<Hash = Bytes32>>(
 }
 
 /// Sort the pair `(a, b)` and hash the result with `hasher`.
+#[inline]
 fn sorted_hash<H: Hasher<Hash = Bytes32>>(
     mut a: Bytes32,
     mut b: Bytes32,
@@ -274,9 +273,8 @@ mod tests {
     impl Hasher for Keccak256 {
         type Hash = Bytes32;
 
-        fn hash<A: AsRef<[u8]>>(&mut self, data: A) -> Self::Hash {
-            let bytes = data.as_ref();
-            *keccak256(bytes)
+        fn hash<A: AsRef<[u8]>>(&mut self, bytes: A) -> Self::Hash {
+            *keccak256(bytes.as_ref())
         }
     }
 
