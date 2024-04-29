@@ -1,4 +1,4 @@
-//! Pausable Contract
+//! Pausable Contract.
 //!
 //! Contract module which allows implementing an emergency stop
 //! mechanism that can be triggered by an authorized account.
@@ -16,9 +16,9 @@ use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{evm, msg};
 
 sol_storage! {
-    /// State of a Pausable contract.
+    /// State of a Pausable Contract.
     pub struct Pausable {
-        /// Indicates whether the contract is `Paused`
+        /// Indicates whether the contract is `Paused`.
         bool _paused;
     }
 }
@@ -52,8 +52,8 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
+/// Interface of a `Pausable` Contract.
 #[allow(clippy::module_name_repetitions)]
-/// Interface of a `Pausable` contract.
 pub trait IPausable {
     /// Returns true if the contract is paused, and false otherwise.
     fn paused(&self) -> bool;
@@ -93,7 +93,7 @@ pub trait IPausable {
     fn when_paused(&self) -> Result<(), Error>;
 }
 
-/// Implementation of `IPausable` trait for Pausable contract.
+/// Implementation of `IPausable` trait for Pausable Contract.
 #[external]
 impl IPausable for Pausable {
     fn paused(&self) -> bool {

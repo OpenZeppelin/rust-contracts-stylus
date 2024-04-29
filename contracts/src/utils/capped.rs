@@ -1,4 +1,11 @@
-//! Pausable Contract TODO
+//! Capped Contract.
+//!
+//! Contract module which allows implementing a cap mechanism.
+//!
+//! This module should be used through inheritance and wrappers.
+//!
+//! Note that they will not be capped by simply including this module,
+//! only once the checks are put in place.
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
@@ -6,37 +13,43 @@ use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{evm, msg};
 
 sol_storage! {
-    /// A cap to the supply of tokens.
+    /// State of a Capped Contract.
     pub struct Capped {
-        /// Cap
+        /// A cap to the supply of tokens.
         uint256 _cap;
     }
 }
 
 sol! {
-    /// Emitted when `_cap` is set.
+    /// Emitted when `_cap` is set to `cap` value
+    /// by an `account`.
     event Cap(address indexed account, uint256 cap);
 }
 
 sol! {
-    /// The operation failed because total supply cap has been exceeded.
+    /// Indicates an error related to the operation that failed
+    /// because `total_supply` exceeded the `_cap`.
     #[derive(Debug)]
     error ExceededCap(uint256 increasedSupply, uint256 cap);
-    /// The operation failed because the supplied cap is not a valid cap.
+    /// Indicates an error related to the operation that failed
+    /// because the supplied `cap` is not a valid cap value.
     #[derive(Debug)]
     error InvalidCap(uint256 cap);
 }
 
-/// TODO docs
+/// A Capped error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// The operation failed because the contract is in `Paused` state.
+    /// Indicates an error related to the operation that failed
+    /// because `total_supply` exceeded the `_cap`.
     ExceededCap(ExceededCap),
-    /// The operation failed because the contract is in `Unpaused` state.
+    /// Indicates an error related to the operation that failed
+    /// because the supplied `cap` is not a valid cap value.
     InvalidCap(InvalidCap),
 }
 
-/// TODO docs
+/// Interface of a `Capped` Contract.
+#[allow(clippy::module_name_repetitions)]
 pub trait ICapped {
     /// Returns the cap on the token's total supply.
     fn cap(&self) -> U256;
@@ -50,7 +63,7 @@ pub trait ICapped {
     fn set_cap(&mut self, cap: U256) -> Result<(), Error>;
 }
 
-// External methods
+/// Implementation of `ICapped` trait for Capped Contract.
 #[external]
 impl ICapped for Capped {
     fn cap(&self) -> U256 {
