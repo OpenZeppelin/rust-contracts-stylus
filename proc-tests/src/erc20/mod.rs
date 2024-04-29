@@ -359,6 +359,102 @@ fn transfer_errors_when_paused(contract: TestToken) {
 }
 
 #[grip::test]
+fn transfer_from(contract: TestToken) {
+    let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+
+    // Check `Unpaused` State
+    assert_eq!(contract.paused(), false);
+
+    // Set cap
+    let cap = U256::from(100);
+    contract.set_cap(cap).expect("ICapped::set_cap should work");
+
+    // Alice approves `msg::sender`.
+    let one = U256::from(1);
+    contract._set_allowance(alice, msg::sender(), one);
+
+    // Mint some tokens for Alice.
+    let two = U256::from(2);
+    contract._update(Address::ZERO, alice, two).unwrap();
+    assert_eq!(two, contract.balance_of(alice));
+
+    contract
+        .transfer_from(alice, bob, one)
+        .expect("IERC20::transfer should work");
+
+    assert_eq!(one, contract.balance_of(alice));
+    assert_eq!(one, contract.balance_of(bob));
+}
+
+#[grip::test]
+fn transfers_errors_when_paused(contract: TestToken) {
+    let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+
+    // Check `Unpaused` State
+    assert_eq!(contract.paused(), false);
+
+    // Set cap
+    let cap = U256::from(100);
+    contract.set_cap(cap).expect("ICapped::set_cap should work");
+
+    // Alice approves `msg::sender`.
+    let one = U256::from(1);
+    contract._set_allowance(alice, msg::sender(), one);
+
+    // Mint some tokens for Alice.
+    let two = U256::from(2);
+    contract._update(Address::ZERO, alice, two).unwrap();
+    assert_eq!(two, contract.balance_of(alice));
+
+    // Set `Paused` State
+    contract.pause().expect("IPausable::pause should work");
+    assert_eq!(contract.paused(), true);
+
+    let result = contract.transfer_from(alice, bob, one);
+    assert!(matches!(
+        result,
+        Err(contracts::erc20::Error::ERC20PausableError(_))
+    ));
+
+    assert_eq!(two, contract.balance_of(alice));
+    assert_eq!(U256::ZERO, contract.balance_of(bob));
+}
+
+#[grip::test]
+fn reads_allowance(contract: TestToken) {
+    let owner = msg::sender();
+    let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
+    let allowance = contract.allowance(owner, alice);
+    assert_eq!(U256::ZERO, allowance);
+
+    let one = U256::from(1);
+    contract._set_allowance(owner, alice, one);
+    let allowance = contract.allowance(owner, alice);
+    assert_eq!(one, allowance);
+}
+
+#[grip::test]
+fn approves(contract: TestToken) {
+    let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
+    // `msg::sender` approves Alice.
+    let one = U256::from(1);
+    contract.approve(alice, one).unwrap();
+    assert_eq!(one, contract._get_allowance(msg::sender(), alice));
+}
+
+#[grip::test]
+fn approve_errors_when_invalid_spender(contract: TestToken) {
+    // `msg::sender` approves `Address::ZERO`.
+    let one = U256::from(1);
+    let result = contract.approve(Address::ZERO, one);
+    assert!(matches!(result, Err(contracts::erc20::Error::InvalidSpender(_))));
+}
+
+#[grip::test]
 fn paused_works(contract: TestToken) {
     // Check `Unpaused` State
     assert_eq!(contract.paused(), false);

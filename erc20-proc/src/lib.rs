@@ -134,7 +134,7 @@ pub fn ierc20_storage_derive(input: TokenStream) -> TokenStream {
                 spender: alloy_primitives::Address,
                 allowance: alloy_primitives::U256,
             ) {
-                self._set_allowance(owner, spender, allowance);
+                self.erc20._set_allowance(owner, spender, allowance);
             }
         }
     };
