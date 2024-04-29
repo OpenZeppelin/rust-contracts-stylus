@@ -84,6 +84,7 @@ impl MerkleVerifier<KeccakBuilder> {
     /// let verification = MerkleVerifier::verify(&[proof], root, leaf);
     /// assert!(!verification);
     /// ```
+    #[must_use]
     pub fn verify(proof: &[Bytes32], root: Bytes32, mut leaf: Bytes32) -> bool {
         for &hash in proof {
             leaf = Self::hash_sorted_pair(leaf, hash);
