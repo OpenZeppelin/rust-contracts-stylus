@@ -1,6 +1,6 @@
 //! Implementation of the ERC-20 token standard.
 //!
-//! We have followed general OpenZeppelin Contracts guidelines: functions
+//! We have followed general ``OpenZeppelin`` Contracts guidelines: functions
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! ERC-20 applications.
@@ -16,26 +16,25 @@ pub mod extensions;
 
 /// This macro provides an implementation of the ERC-20 token.
 ///
-/// It adds the `burn` and `burn_from` functions, and expects the token
-/// to contain `ERC20 erc20` as a field. See [`crate::ERC20`].
+/// It adds all the functions from the `IERC20` trait and expects the token
+/// to contain `erc20` attribute that implements `IERC20` trait too.
+///
+/// Used to export interface for Stylus smart contract with a single
+/// `#[external]` macro.
+#[allow(clippy::module_name_repetitions)]
 #[macro_export]
 macro_rules! erc20_impl {
     () => {
         /// Returns the number of tokens in existence.
         ///
-        /// # Arguments
-        ///
-        /// * `&self` - Read access to the contract's state.
+        /// See [`IERC20::total_supply`].
         pub(crate) fn total_supply(&self) -> alloy_primitives::U256 {
             self.erc20.total_supply()
         }
 
         /// Returns the number of tokens owned by `account`.
         ///
-        /// # Arguments
-        ///
-        /// * `&self` - Read access to the contract's state.
-        /// * `account` - Account to get balance from.
+        /// See [`IERC20::balance_of`].
         pub(crate) fn balance_of(
             &self,
             account: alloy_primitives::Address,
@@ -47,22 +46,7 @@ macro_rules! erc20_impl {
         ///
         /// Returns a boolean value indicating whether the operation succeeded.
         ///
-        /// # Arguments
-        ///
-        /// * `&mut self` - Write access to the contract's state.
-        /// * `to` - Account to transfer tokens to.
-        /// * `value` - Number of tokens to transfer.
-        ///
-        /// # Errors
-        ///
-        /// * If the `to` address is `Address::ZERO`, then the error
-        /// [`Error::InvalidReceiver`] is returned.
-        /// * If the caller doesn't have a balance of at least `value`, then the
-        /// error [`Error::InsufficientBalance`] is returned.
-        ///
-        /// # Events
-        ///
-        /// Emits a [`Transfer`] event.
+        /// See [`IERC20::transfer`].
         pub(crate) fn transfer(
             &mut self,
             to: alloy_primitives::Address,
@@ -75,13 +59,7 @@ macro_rules! erc20_impl {
         /// allowed to spend on behalf of `owner` through `transfer_from`. This
         /// is zero by default.
         ///
-        /// This value changes when `approve` or `transfer_from` are called.
-        ///
-        /// # Arguments
-        ///
-        /// * `&self` - Read access to the contract's state.
-        /// * `owner` - Account that owns the tokens.
-        /// * `spender` - Account that will spend the tokens.
+        /// See [`IERC20::allowance`].
         pub(crate) fn allowance(
             &self,
             owner: alloy_primitives::Address,
@@ -95,27 +73,7 @@ macro_rules! erc20_impl {
         ///
         /// Returns a boolean value indicating whether the operation succeeded.
         ///
-        /// WARNING: Beware that changing an allowance with this method brings
-        /// the risk that someone may use both the old and the new allowance by
-        /// unfortunate transaction ordering. One possible solution to mitigate
-        /// this race condition is to first reduce the spender's allowance to 0
-        /// and set the desired value afterwards:
-        /// <https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729>
-        ///
-        /// # Arguments
-        ///
-        /// * `&mutself` - Write access to the contract's state.
-        /// * `owner` - Account that owns the tokens.
-        /// * `spender` - Account that will spend the tokens.
-        ///
-        /// # Errors
-        ///
-        /// If the `spender` address is `Address::ZERO`, then the error
-        /// [`Error::InvalidSpender`] is returned.
-        ///
-        /// # Events
-        ///
-        /// Emits an [`Approval`] event.
+        /// See [`IERC20::approve`].
         pub(crate) fn approve(
             &mut self,
             spender: alloy_primitives::Address,
@@ -130,29 +88,7 @@ macro_rules! erc20_impl {
         ///
         /// Returns a boolean value indicating whether the operation succeeded.
         ///
-        /// NOTE: If `value` is the maximum `uint256`, the allowance is not
-        /// updated on `transferFrom`. This is semantically equivalent to an
-        /// infinite approval.
-        ///
-        /// # Arguments
-        ///
-        /// * `&mut self` - Write access to the contract's state.
-        /// * `from` - Account to transfer tokens from.
-        /// * `to` - Account to transfer tokens to.
-        /// * `value` - Number of tokens to transfer.
-        ///
-        /// # Errors
-        ///
-        /// * If the `from` address is `Address::ZERO`, then the error
-        /// [`Error::InvalidSender`] is returned.
-        /// * If the `to` address is `Address::ZERO`, then the error
-        /// [`Error::InvalidReceiver`] is returned.
-        /// * If not enough allowance is available, then the error
-        /// [`Error::InsufficientAllowance`] is returned.
-        ///
-        /// # Events
-        ///
-        /// Emits a [`Transfer`] event.
+        /// See [`IERC20::transfer_from`].
         pub(crate) fn transfer_from(
             &mut self,
             from: alloy_primitives::Address,
@@ -250,19 +186,59 @@ pub enum Error {
     ERC20ExceededCap(crate::utils::capped::ExceededCap),
 }
 
-/// TODO
+/// Interface of storage management for ERC20 token.
 pub trait IERC20Storage {
-    /// TODO
+    /// Returns the number of tokens in existence.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn _get_total_supply(&self) -> U256;
-    /// TODO
+
+    /// Sets the number of tokens in existence.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `total_supply` - Number of tokens in existence.
     fn _set_total_supply(&mut self, total_supply: U256);
-    /// TODO
+
+    /// Returns the number of tokens owned by `account`.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `account` - Account to get balance from.
     fn _get_balance(&self, account: Address) -> U256;
-    /// TODO
+
+    /// Sets a `value` number of tokens owned by `account`.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `owner` - Account that owns the tokens.
+    /// * `value` - Number of tokens that the account has.
     fn _set_balance(&mut self, account: Address, balance: U256);
-    /// TODO
+
+    /// Returns the remaining number of tokens that `spender` will be allowed
+    /// to spend on behalf of `owner`. This is zero by default.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account that owns the tokens.
+    /// * `spender` - Account that will spend the tokens.
     fn _get_allowance(&self, owner: Address, spender: Address) -> U256;
-    /// TODO
+
+    /// Sets a `value` number of tokens as the allowance of `spender` over the
+    /// caller's tokens.
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `owner` - Account that owns the tokens.
+    /// * `spender` - Account that will spend the tokens.
     fn _set_allowance(
         &mut self,
         owner: Address,
@@ -271,13 +247,14 @@ pub trait IERC20Storage {
     );
 }
 
+/// Implementation of storage management [`IERC20Storage`] for ERC20 token.
 impl IERC20Storage for ERC20 {
     fn _get_total_supply(&self) -> U256 {
         self._total_supply.get()
     }
 
     fn _set_total_supply(&mut self, total_supply: U256) {
-        self._total_supply.set(total_supply)
+        self._total_supply.set(total_supply);
     }
 
     fn _get_balance(&self, account: Address) -> U256 {
@@ -302,7 +279,7 @@ impl IERC20Storage for ERC20 {
     }
 }
 
-/// TODO
+/// Interface of the ERC20 internal (private) functions.
 pub trait IERC20Virtual: IERC20Storage {
     /// Internal implementation of transferring tokens between two accounts.
     ///
@@ -448,6 +425,7 @@ pub trait IERC20Virtual: IERC20Storage {
         }
         self._update(account, Address::ZERO, value)
     }
+
     /// Updates `owner`'s allowance for `spender` based on spent `value`.
     ///
     /// Does not update the allowance value in the case of infinite allowance.
@@ -488,7 +466,7 @@ pub trait IERC20Virtual: IERC20Storage {
     }
 }
 
-/// Trait containing ERC20 Interface TODO
+/// Interface of the ERC20 standard as defined in the EIP.
 pub trait IERC20: IERC20Virtual {
     /// Returns the number of tokens in existence.
     ///
@@ -635,8 +613,10 @@ pub trait IERC20: IERC20Virtual {
     }
 }
 
+/// Default implementation of `IERC20Virtual` trait for `ERC20`.
 impl IERC20Virtual for ERC20 {}
 
+/// Default implementation of `IERC20` trait for `ERC20`.
 #[external]
 impl IERC20 for ERC20 {}
 
@@ -696,7 +676,9 @@ mod tests {
     }
 
     #[grip::test]
-    #[should_panic]
+    #[should_panic(
+        expected = "Should not exceed `U256::MAX` for `_total_supply`"
+    )]
     fn update_mint_errors_arithmetic_overflow(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
