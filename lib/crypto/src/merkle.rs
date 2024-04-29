@@ -249,7 +249,7 @@ fn sorted_hash<H: Hasher<Hash = Bytes32>>(
     hasher: &mut H,
 ) -> Bytes32 {
     if a >= b {
-        (a, b) = (b, a);
+        core::mem::swap(&mut a, &mut b);
     }
 
     let mut buffer = [0u8; 64];
