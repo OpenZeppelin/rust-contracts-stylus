@@ -9,7 +9,7 @@ repository.workspace = true
 version = "0.1.0"
 
 [dev-dependencies]
-alloy-primitives = { version = "0.6.4", default-features = false }
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 const-hex = { version = "1.11.1", default-features = false }
 rand = "0.8.5"
 
