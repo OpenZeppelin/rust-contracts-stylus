@@ -256,8 +256,7 @@ mod tests {
     use const_hex::FromHex;
     use rand::{thread_rng, RngCore};
 
-    use super::keccak::KeccakBuilder;
-    use super::{Bytes32, MerkleVerifier};
+    use super::{keccak::KeccakBuilder, Bytes32, MerkleVerifier};
 
     /// Shorthand for converting from a hex str to a fixed 32-bytes array.
     macro_rules! hex_to_bytes_32 {
