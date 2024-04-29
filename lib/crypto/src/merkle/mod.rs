@@ -13,10 +13,13 @@
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use crate::{
+use self::{
     hash::{BuildHasher, Hash, Hasher},
     keccak::KeccakBuilder,
 };
+
+pub mod hash;
+pub mod keccak;
 
 type Bytes32 = [u8; 32];
 
@@ -253,8 +256,8 @@ mod tests {
     use const_hex::FromHex;
     use rand::{thread_rng, RngCore};
 
+    use super::keccak::KeccakBuilder;
     use super::{Bytes32, MerkleVerifier};
-    use crate::keccak::KeccakBuilder;
 
     /// Shorthand for converting from a hex str to a fixed 32-bytes array.
     macro_rules! hex_to_bytes_32 {

@@ -5,8 +5,4 @@
 extern crate alloc;
 
 #[cfg(feature = "merkle")]
-pub mod hash;
-#[cfg(feature = "merkle")]
-pub mod keccak;
-#[cfg(feature = "merkle")]
 pub mod merkle;

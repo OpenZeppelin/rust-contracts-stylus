@@ -1,6 +1,6 @@
 use tiny_keccak::{Hasher as TinyHasher, Keccak};
 
-use crate::hash::{BuildHasher, Hasher};
+use super::hash::{BuildHasher, Hasher};
 
 #[derive(Default)]
 pub struct KeccakBuilder;
