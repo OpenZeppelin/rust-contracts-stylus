@@ -67,15 +67,7 @@ impl MerkleVerifier<KeccakBuilder> {
     ///
     /// ```
     /// # use const_hex::FromHex;
-    /// # use alloy_primitives::keccak256;
-    /// # use crypto::merkle::verify;
-    /// # struct Keccak256;
-    /// # impl crypto::merkle::Hasher for Keccak256 {
-    /// #     type Hash = Bytes32;
-    /// #     fn hash<B: AsRef<[u8]>>(&mut self, bytes: B) -> Self::Hash {
-    /// #         *keccak256(bytes.as_ref())
-    /// #     }
-    /// # }
+    /// # use crypto::merkle::MerkleVerifier;
     /// type Bytes32 = [u8; 32];
     ///
     /// const ROOT:  &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -86,7 +78,7 @@ impl MerkleVerifier<KeccakBuilder> {
     /// let leaf  = Bytes32::from_hex(LEAF).unwrap();
     /// let proof = Bytes32::from_hex(PROOF).unwrap();
     ///
-    /// let verification = verify(&[proof], root, leaf, Keccak256);
+    /// let verification = MerkleVerifier::verify(&[proof], root, leaf);
     /// assert!(!verification);
     /// ```
     pub fn verify(proof: &[Bytes32], root: Bytes32, mut leaf: Bytes32) -> bool {
@@ -149,15 +141,7 @@ impl MerkleVerifier<KeccakBuilder> {
     ///
     /// ```
     /// # use const_hex::FromHex;
-    /// # use alloy_primitives::keccak256;
-    /// # use crypto::merkle::verify_multi_proof;
-    /// # struct Keccak256;
-    /// # impl crypto::merkle::Hasher for Keccak256 {
-    /// #     type Hash = Bytes32;
-    /// #     fn hash<B: AsRef<[u8]>>(&mut self, bytes: B) -> Self::Hash {
-    /// #         *keccak256(bytes.as_ref())
-    /// #     }
-    /// # }
+    /// # use crypto::merkle::MerkleVerifier;
     /// type Bytes32 = [u8; 32];
     ///
     /// const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
@@ -179,7 +163,7 @@ impl MerkleVerifier<KeccakBuilder> {
     /// let proof_flags = [false, true, false, true];
     ///
     /// let verification =
-    ///     verify_multi_proof(&proof, &proof_flags, root, &leaves, Keccak256);
+    ///     MerkleVerifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
     /// assert!(verification.unwrap());
     /// ```
     #[cfg(feature = "multi_proof")]

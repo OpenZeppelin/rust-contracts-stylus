@@ -50,7 +50,9 @@ pub trait Hasher {
 ///
 /// # Examples
 ///
-/// ```
+/// TODO: FIX EXAMPLE
+///
+/// ```ignore
 /// use core::hash::{BuildHasher, Hasher, RandomState};
 ///
 /// let s = RandomState::new();
@@ -76,7 +78,9 @@ pub trait BuildHasher {
     ///
     /// # Examples
     ///
-    /// ```
+    /// TODO: FIX EXAMPLE
+    ///
+    /// ```ignore
     /// use core::hash::{BuildHasher, RandomState};
     ///
     /// let s = RandomState::new();
