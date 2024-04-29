@@ -274,6 +274,24 @@ mod tests {
         };
     }
 
+    /// Shorthand for converting from a hex str to a fixed 32-bytes array.
+    macro_rules! hex_to_bytes_32 {
+        ($($var:ident = $bytes:expr);* $(;)?) => {
+            $(let $var = Bytes32::from_hex($bytes).unwrap();)*
+        };
+    }
+
+    /// Shorthand for converting from a string containing several address to
+    /// a fixed 32-bytes collection.
+    macro_rules! str_to_bytes_32 {
+        ($bytes:expr) => {
+            $bytes
+                .lines()
+                .map(|l| Bytes32::from_hex(l.trim()).unwrap())
+                .collect()
+        };
+    }
+
     #[test]
     fn verifies_valid_proofs() {
         // ```js
