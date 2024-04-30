@@ -8,15 +8,6 @@ use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
 /// Implements `IERC20Burnable` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(IERC20Storage, IERC20, IERC20Virtual, IERC20Burnable)]
-/// struct BurnableERC20 {
-///     ERC20 erc20;
-/// }
-/// ```
 #[proc_macro_derive(IERC20Burnable)]
 pub fn ierc20_burnable_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -30,15 +21,6 @@ pub fn ierc20_burnable_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements `IERC20` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(IERC20Storage, IERC20, IERC20Virtual)]
-/// struct WrappedERC20 {
-///     ERC20 erc20;
-/// }
-/// ```
 #[proc_macro_derive(IERC20)]
 pub fn ierc20_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -52,15 +34,6 @@ pub fn ierc20_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements `IERC20Virtual` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(IERC20Storage, IERC20Virtual)]
-/// struct WrappedVirtualERC20 {
-///     ERC20 erc20;
-/// }
-/// ```
 #[proc_macro_derive(IERC20Virtual)]
 pub fn ierc20_virtual_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -84,16 +57,6 @@ pub fn ierc20_virtual_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements `IERC20Pausable` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(IERC20Storage, IERC20, IERC20Pausable)]
-/// struct PausableERC20 {
-///     ERC20 erc20;
-///     Pausable pausable
-/// }
-/// ```
 #[proc_macro_derive(IERC20Pausable)]
 pub fn ierc20_pausable_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -146,15 +109,6 @@ pub fn ierc20_pausable_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements `IERC20Storage` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(IERC20Storage)]
-/// struct WrappedERC20 {
-///     ERC20 erc20;
-/// }
-/// ```
 #[proc_macro_derive(IERC20Storage)]
 pub fn ierc20_storage_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -196,15 +150,6 @@ pub fn ierc20_storage_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements `IPausable` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(IPausable)]
-/// struct WrappedPausableERC20 {
-///     PausableERC20 erc20;
-/// }
-/// ```
 #[proc_macro_derive(IPausable)]
 pub fn ipausable_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -239,15 +184,6 @@ pub fn ipausable_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements `ICapped` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(ICapped)]
-/// struct WrappedCappedERC20 {
-///     CappedERC20 erc20;
-/// }
-/// ```
 #[proc_macro_derive(ICapped)]
 pub fn icapped_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -269,16 +205,6 @@ pub fn icapped_derive(input: TokenStream) -> TokenStream {
 }
 
 /// Implements `IERC20Capped` trait for a struct.
-///
-/// # Examples
-///
-/// ```
-/// #[derive(IERC20Storage, IERC20, IERC20Capped)]
-/// struct CappedERC20 {
-///     ERC20 erc20;
-///     Capped capped;
-/// }
-/// ```
 #[proc_macro_derive(IERC20Capped)]
 pub fn ierc20_capped_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
