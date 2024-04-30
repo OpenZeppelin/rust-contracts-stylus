@@ -1,9 +1,4 @@
-//! TODO docs
-
-// cfg_if::cfg_if! {
-// if #[cfg(any(test, feature = "erc20_pausable"))] {
-pub mod pausable;
-// }
-// }
+//! Smart Contracts for building tokens' extensions.
 
 pub mod capped;
+pub mod pausable;

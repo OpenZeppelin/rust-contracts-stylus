@@ -17,6 +17,7 @@ use stylus_sdk::{evm, msg};
 
 sol_storage! {
     /// State of a Pausable Contract.
+    #[allow(clippy::pub_underscore_fields)]
     pub struct Pausable {
         /// Indicates whether the contract is `Paused`.
         bool _paused;
@@ -25,8 +26,11 @@ sol_storage! {
 
 sol! {
     /// Emitted when the `Pause` is triggered by an `account`.
+    #[allow(missing_docs)]
     event Paused(address indexed account);
+
     /// Emitted when the `Unpause` is lifted by an `account`.
+    #[allow(missing_docs)]
     event Unpaused(address indexed account);
 }
 
@@ -35,6 +39,7 @@ sol! {
     /// because the contract had been in `Paused` state.
     #[derive(Debug)]
     error EnforcedPause();
+
     /// Indicates an error related to the operation that failed
     /// because the contract had been in `Unpaused` state.
     #[derive(Debug)]

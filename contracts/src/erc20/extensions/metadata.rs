@@ -8,6 +8,7 @@ pub const DEFAULT_DECIMALS: u8 = 18;
 
 sol_storage! {
     /// Optional metadata of the ERC-20 standard.
+    #[allow(clippy::pub_underscore_fields)]
     pub struct Metadata {
         /// Token name.
         string _name;

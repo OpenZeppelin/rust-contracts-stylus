@@ -143,6 +143,7 @@ mod tests {
     impl IERC20Burnable for ERC20 {}
 
     sol_storage! {
+        #[derive(Default)]
         pub struct TestERC20Burnable {
             ERC20 erc20;
         }
@@ -151,12 +152,6 @@ mod tests {
     #[external]
     impl TestERC20Burnable {
         erc20_burnable_impl!();
-    }
-
-    impl Default for TestERC20Burnable {
-        fn default() -> Self {
-            Self { erc20: ERC20::default() }
-        }
     }
 
     #[grip::test]

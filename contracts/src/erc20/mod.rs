@@ -103,6 +103,7 @@ macro_rules! erc20_impl {
 
 sol_storage! {
     /// State of an ERC20 token.
+    #[allow(clippy::pub_underscore_fields)]
     pub struct ERC20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;

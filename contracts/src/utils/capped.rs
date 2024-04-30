@@ -14,6 +14,7 @@ use stylus_sdk::{evm, msg};
 
 sol_storage! {
     /// State of a Capped Contract.
+    #[allow(clippy::pub_underscore_fields)]
     pub struct Capped {
         /// A cap to the supply of tokens.
         uint256 _cap;
@@ -23,6 +24,7 @@ sol_storage! {
 sol! {
     /// Emitted when `_cap` is set to `cap` value
     /// by an `account`.
+    #[allow(missing_docs)]
     event Cap(address indexed account, uint256 cap);
 }
 
@@ -30,10 +32,13 @@ sol! {
     /// Indicates an error related to the operation that failed
     /// because `total_supply` exceeded the `_cap`.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ExceededCap(uint256 increasedSupply, uint256 cap);
+
     /// Indicates an error related to the operation that failed
     /// because the supplied `cap` is not a valid cap value.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error InvalidCap(uint256 cap);
 }
 
