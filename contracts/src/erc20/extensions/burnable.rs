@@ -1,4 +1,8 @@
 //! Optional Burnable extension of the ERC-20 standard.
+//!
+//! Extension of ERC20 that allows token holders to destroy both
+//! their own tokens and those that they have an allowance for,
+//! in a way that can be recognized off-chain (via event analysis).
 
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
@@ -69,7 +73,8 @@ macro_rules! erc20_burnable_impl {
 }
 use crate::erc20::{Error, IERC20};
 
-/// TODO!
+/// Interface for ERC-20 Burnable extension.
+#[allow(clippy::module_name_repetitions)]
 pub trait IERC20Burnable: IERC20 + IERC20Virtual {
     /// Destroys a `value` amount of tokens from the caller.
     /// lowering the total supply.
