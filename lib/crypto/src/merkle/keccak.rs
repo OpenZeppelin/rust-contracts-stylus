@@ -1,7 +1,13 @@
+//! An interface to the default hasing algorithm used in this library's [merkle
+//! proofs][super].
 use tiny_keccak::{Hasher as TinyHasher, Keccak};
 
 use super::hash::{BuildHasher, Hasher};
 
+/// The default [`Hasher`] builder used in this library's [merkle
+/// proofs][super].
+///
+/// It instantiates a [`Keccak256`] hasher.
 #[derive(Default)]
 pub struct KeccakBuilder;
 
@@ -14,6 +20,10 @@ impl BuildHasher for KeccakBuilder {
     }
 }
 
+/// The default [`Hasher`] used in this library's [merkle proofs][super].
+///
+/// The underlying implementation is guaranteed to match that of the
+/// `keccak256` algorithm, commonly used in Ethereum.
 pub struct Keccak256(Keccak);
 
 impl Hasher for Keccak256 {

@@ -1,8 +1,8 @@
 //! Generic hashing support.
 //!
 //! This module provides a generic way to compute the [hash] of a value. It is
-//! intended to be used as a replacement for [`core::hash`], which is limited
-//! by the signature of [`core::hash::Hasher::finish`] returning a `u64`.
+//! intended to be used as a replacement for [`core::hash`], which we can't use
+//! because [`core::hash::Hasher::finish`] returns a `u64`.
 //!
 //! [hash]: https://en.wikipedia.org/wiki/Hash_function
 
@@ -21,9 +21,9 @@ pub trait Hash {
 /// data.
 ///
 /// `Hasher` provides a fairly basic interface for retrieving the generated hash
-/// (with [`finish`]), and writing integers as well as slices of bytes into an
-/// instance (with [`write`] and [`write_u8`] etc.). Most of the time, `Hasher`
-/// instances are used in conjunction with the [`Hash`] trait.
+/// (with [`finalize`]), and absorbing an arbitrary number of bytes (with
+/// [`update`]). Most of the time, `Hasher` instances are used in conjunction
+/// with the [`Hash`] trait.
 pub trait Hasher {
     /// The output type of this hasher.
     ///

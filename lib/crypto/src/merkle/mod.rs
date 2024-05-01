@@ -13,43 +13,41 @@
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use self::{
-    hash::{BuildHasher, Hash, Hasher},
-    keccak::KeccakBuilder,
-};
+use self::hash::{BuildHasher, Hash, Hasher};
 
 pub mod hash;
 pub mod keccak;
+pub use keccak::KeccakBuilder;
 
 type Bytes32 = [u8; 32];
 
-pub struct MerkleVerifier<State = KeccakBuilder>(PhantomData<State>)
+/// Sort the pair `(a, b)` and hash the result with `hasher`.
+#[inline]
+fn hash_sorted_pair<S>(
+    mut a: Bytes32,
+    mut b: Bytes32,
+    mut state: S,
+) -> S::Output
 where
-    State: BuildHasher + Default;
-
-impl<State> MerkleVerifier<State>
-where
-    State: BuildHasher + Default,
-    State::Hasher: Hasher<Output = Bytes32>,
+    S: Hasher,
 {
-    /// Sort the pair `(a, b)` and hash the result with `hasher`.
-    #[inline]
-    fn hash_sorted_pair(mut a: Bytes32, mut b: Bytes32) -> Bytes32 {
-        if a >= b {
-            core::mem::swap(&mut a, &mut b);
-        }
-
-        let mut buffer = [0u8; 64];
-        buffer[..32].copy_from_slice(&a);
-        buffer[32..].copy_from_slice(&b);
-
-        State::default().hash_one(buffer)
+    if a >= b {
+        core::mem::swap(&mut a, &mut b);
     }
+
+    state.update(&a);
+    state.update(&b);
+    state.finalize()
 }
 
-impl MerkleVerifier<KeccakBuilder> {
+/// Verify merkle proofs.
+pub struct Verifier<B = KeccakBuilder>(PhantomData<B>)
+where
+    B: BuildHasher;
+
+impl Verifier<KeccakBuilder> {
     /// Verify that `leaf` is part of a Merkle tree defined by `root` by using
-    /// `proof` and a `hasher`.
+    /// `proof` and the default `keccak256` hashing algorithm.
     ///
     /// A new root is rebuilt by traversing up the Merkle tree. The `proof`
     /// provided must contain sibling hashes on the branch starting from the
@@ -64,13 +62,12 @@ impl MerkleVerifier<KeccakBuilder> {
     /// * `proof` - A slice of hashes that constitute the merkle proof.
     /// * `root` - The root of the merkle tree, in bytes.
     /// * `leaf` - The leaf of the merkle tree to proof, in bytes.
-    /// * `hasher` - The hashing algorithm to use.
     ///
     /// # Examples
     ///
     /// ```
     /// # use const_hex::FromHex;
-    /// # use crypto::merkle::MerkleVerifier;
+    /// # use crypto::merkle::Verifier;
     /// type Bytes32 = [u8; 32];
     ///
     /// const ROOT:  &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -81,16 +78,17 @@ impl MerkleVerifier<KeccakBuilder> {
     /// let leaf  = Bytes32::from_hex(LEAF).unwrap();
     /// let proof = Bytes32::from_hex(PROOF).unwrap();
     ///
-    /// let verification = MerkleVerifier::verify(&[proof], root, leaf);
+    /// let verification = Verifier::verify(&[proof], root, leaf);
     /// assert!(!verification);
     /// ```
     #[must_use]
-    pub fn verify(proof: &[Bytes32], root: Bytes32, mut leaf: Bytes32) -> bool {
-        for &hash in proof {
-            leaf = Self::hash_sorted_pair(leaf, hash);
-        }
-
-        leaf == root
+    pub fn verify(proof: &[Bytes32], root: Bytes32, leaf: Bytes32) -> bool {
+        Verifier::verify_with_builder(
+            proof,
+            root,
+            leaf,
+            KeccakBuilder::default(),
+        )
     }
 
     /// Verify multiple `leaves` can be simultaneously proven to be a part of
@@ -130,7 +128,6 @@ impl MerkleVerifier<KeccakBuilder> {
     /// * `root` - The root of the merkle tree, in bytes.
     /// * `leaves` - A slice of hashes that constitute the leaves of the merkle
     /// tree to be proven, each leaf in bytes.
-    /// * `hasher` - The hashing algorithm to use.
     ///
     /// # Errors
     ///
@@ -145,7 +142,7 @@ impl MerkleVerifier<KeccakBuilder> {
     ///
     /// ```
     /// # use const_hex::FromHex;
-    /// # use crypto::merkle::MerkleVerifier;
+    /// # use crypto::merkle::Verifier;
     /// type Bytes32 = [u8; 32];
     ///
     /// const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
@@ -167,7 +164,7 @@ impl MerkleVerifier<KeccakBuilder> {
     /// let proof_flags = [false, true, false, true];
     ///
     /// let verification =
-    ///     MerkleVerifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+    ///     Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
     /// assert!(verification.unwrap());
     /// ```
     #[cfg(feature = "multi_proof")]
@@ -176,6 +173,159 @@ impl MerkleVerifier<KeccakBuilder> {
         proof_flags: &[bool],
         root: Bytes32,
         leaves: &[Bytes32],
+    ) -> Result<bool, MultiProofError> {
+        Verifier::verify_multi_proof_with_builder(
+            proof,
+            proof_flags,
+            root,
+            leaves,
+            KeccakBuilder::default(),
+        )
+    }
+}
+
+impl<B> Verifier<B>
+where
+    B: BuildHasher,
+    B::Hasher: Hasher<Output = Bytes32>,
+{
+    /// Verify that `leaf` is part of a Merkle tree defined by `root` by using
+    /// `proof` and a custom hashing algorithm defined by `builder`. See
+    /// [`BuildHasher`] for more information on how to construct a builder.
+    ///
+    /// WARNING: This is a lower-level function. For most use cases,
+    /// [`Verifier::verify`], which uses `keccak256` as a hashing algorithm,
+    /// should be enough. Using other hasing algorithm may have unexpected
+    /// results.
+    ///
+    /// # Arguments
+    ///
+    /// * `proof` - A slice of hashes that constitute the merkle proof.
+    /// * `root` - The root of the merkle tree, in bytes.
+    /// * `leaf` - The leaf of the merkle tree to proof, in bytes.
+    /// * `builder` - A [`BuildHasher`] that represents a hashing algorithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use const_hex::FromHex;
+    /// # use crypto::merkle::{KeccakBuilder, Verifier};
+    /// type Bytes32 = [u8; 32];
+    ///
+    /// const ROOT:  &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+    /// const LEAF:  &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+    /// const PROOF: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+    ///
+    /// let root  = Bytes32::from_hex(ROOT).unwrap();
+    /// let leaf  = Bytes32::from_hex(LEAF).unwrap();
+    /// let proof = Bytes32::from_hex(PROOF).unwrap();
+    ///
+    /// let verification = Verifier::verify_with_builder(&[proof], root, leaf, KeccakBuilder);
+    /// assert!(!verification);
+    /// ```
+    pub fn verify_with_builder(
+        proof: &[Bytes32],
+        root: Bytes32,
+        mut leaf: Bytes32,
+        builder: B,
+    ) -> bool {
+        for &hash in proof {
+            leaf = hash_sorted_pair(leaf, hash, builder.build_hasher());
+        }
+
+        leaf == root
+    }
+
+    /// Verify multiple `leaves` can be simultaneously proven to be a part of
+    /// a Merkle tree defined by `root` by using a `proof` with `proof_flags`
+    /// and a custom hashing algorithm defined by `builder`. See
+    /// [`BuildHasher`] for more information on how to construct a builder.
+    ///
+    /// WARNING: This is a lower-level function. For most use cases,
+    /// [`Verifier::verify_multi_proof`], which uses `keccak256` as a hashing
+    /// algorithm, should be enough. Using other hasing algorithm may have
+    /// unexpected results.
+    ///
+    /// The `proof` must contain the sibling hashes one would need to rebuild
+    /// the root starting from `leaves`. `proof_flags` represents whether a
+    /// hash must be computed using a `proof` member. A new root is rebuilt by
+    /// starting from the `leaves` and traversing up the Merkle tree.
+    ///
+    /// The procedure incrementally reconstructs all inner nodes by combining
+    /// a leaf/inner node with either another leaf/inner node or a `proof`
+    /// sibling node, depending on each proof flag being true or false
+    /// respectively, i.e., the `i`-th hash must be computed using the proof if
+    /// `proof_flags[i] == false`.
+    ///
+    /// CAUTION: Not all Merkle trees admit multiproofs. To use multiproofs,
+    /// it is sufficient to ensure that:
+    /// - The tree is complete (but not necessarily perfect).
+    /// - The leaves to be proven are in the opposite order they appear in
+    /// the tree (i.e., as seen from right to left starting at the deepest
+    /// layer and continuing at the next layer).
+    ///
+    /// NOTE: This implementation is *not* equivalent to it's Solidity
+    /// counterpart. In Rust, access to uninitialized memory panics, which
+    /// means we don't need to check that the whole proof array has been
+    /// processed. Both implementations will revert for the same inputs, but
+    /// for different reasons. See <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
+    ///
+    /// # Arguments
+    ///
+    /// * `proof` - A slice of hashes that constitute the merkle proof.
+    /// * `proof_flags` - A slice of booleans that determine whether to hash
+    ///   leaves
+    /// or the proof.
+    /// * `root` - The root of the merkle tree, in bytes.
+    /// * `leaves` - A slice of hashes that constitute the leaves of the merkle
+    /// tree to be proven, each leaf in bytes.
+    /// * `builder` - A [`BuildHasher`] that represents a hashing algorithm.
+    ///
+    /// # Errors
+    ///
+    /// Will return `Err` if the arguments are well-formed, but invalid.
+    ///
+    /// # Panics
+    ///
+    /// Will panic with an out-of-bounds error if the proof is malicious. See
+    /// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use const_hex::FromHex;
+    /// # use crypto::merkle::{KeccakBuilder, Verifier};
+    /// type Bytes32 = [u8; 32];
+    ///
+    /// const ROOT: &str   = "0x6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8";
+    /// const LEAVES: &str = "0x19ba6c6333e0e9a15bf67523e0676e2f23eb8e574092552d5e888c64a4bb3681
+    ///                       0xc62a8cfa41edc0ef6f6ae27a2985b7d39c7fea770787d7e104696c6e81f64848
+    ///                       0xeba909cf4bb90c6922771d7f126ad0fd11dfde93f3937a196274e1ac20fd2f5b";
+    /// const PROOF: &str  = "0x9a4f64e953595df82d1b4f570d34c4f4f0cfaf729a61e9d60e83e579e1aa283e
+    ///                       0x8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f";
+    ///
+    /// let root = Bytes32::from_hex(ROOT).unwrap();
+    /// let leaves: Vec<_> = LEAVES
+    ///     .lines()
+    ///     .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+    ///     .collect();
+    /// let proof: Vec<_> = PROOF
+    ///     .lines()
+    ///     .map(|h| Bytes32::from_hex(h.trim()).unwrap())
+    ///     .collect();
+    /// let proof_flags = [false, true, false, true];
+    ///
+    /// let verification =
+    ///     Verifier::verify_multi_proof_with_builder(&proof, &proof_flags, root, &leaves, KeccakBuilder);
+    /// assert!(verification.unwrap());
+    /// ```
+    #[cfg(feature = "multi_proof")]
+    pub fn verify_multi_proof_with_builder(
+        proof: &[Bytes32],
+        proof_flags: &[bool],
+        root: Bytes32,
+        leaves: &[Bytes32],
+        builder: B,
     ) -> Result<bool, MultiProofError> {
         let total_hashes = proof_flags.len();
         if leaves.len() + proof.len() != total_hashes + 1 {
@@ -214,7 +364,8 @@ impl MerkleVerifier<KeccakBuilder> {
                 proof_pos += 1;
             };
 
-            hashes.push(Self::hash_sorted_pair(a, b));
+            let hash = hash_sorted_pair(a, b, builder.build_hasher());
+            hashes.push(hash);
         }
 
         // We know that `total_hashes > 0`.
@@ -257,7 +408,8 @@ mod tests {
     use const_hex::FromHex;
     use rand::{thread_rng, RngCore};
 
-    use super::{keccak::KeccakBuilder, Bytes32, MerkleVerifier};
+    use super::{hash_sorted_pair, Bytes32, KeccakBuilder, Verifier};
+    use crate::merkle::hash::BuildHasher;
 
     /// Shorthand for converting from a hex str to a fixed 32-bytes array.
     macro_rules! hex_to_bytes_32 {
@@ -321,13 +473,13 @@ mod tests {
              0x276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115"
         };
 
-        let verification = MerkleVerifier::verify(&proof, root, leaf_a);
+        let verification = Verifier::verify(&proof, root, leaf_a);
         assert!(verification);
 
-        let no_such_leaf =
-            MerkleVerifier::<KeccakBuilder>::hash_sorted_pair(leaf_a, leaf_b);
+        let builder = KeccakBuilder::default().build_hasher();
+        let no_such_leaf = hash_sorted_pair(leaf_a, leaf_b, builder);
         let proof = &proof[1..];
-        let verification = MerkleVerifier::verify(proof, root, no_such_leaf);
+        let verification = Verifier::verify(proof, root, no_such_leaf);
         assert!(verification);
     }
 
@@ -347,7 +499,7 @@ mod tests {
             proof = "0x7b0c6cd04b82bfc0e250030a5d2690c52585e0cc6a4f3bc7909d7723b0236ece";
         };
 
-        let verification = MerkleVerifier::verify(&[proof], root, leaf);
+        let verification = Verifier::verify(&[proof], root, leaf);
         assert!(!verification);
     }
 
@@ -370,7 +522,7 @@ mod tests {
         };
 
         let bad_proof = &proof[..1];
-        let verification = MerkleVerifier::verify(bad_proof, root, leaf);
+        let verification = Verifier::verify(bad_proof, root, leaf);
         assert!(!verification);
     }
 
@@ -397,12 +549,8 @@ mod tests {
         };
 
         let proof_flags = [false, true, false, true];
-        let verification = MerkleVerifier::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
+        let verification =
+            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
         assert!(verification.unwrap());
     }
 
@@ -427,12 +575,8 @@ mod tests {
         let proof = [];
         let proof_flags = [true, true];
 
-        let verification = MerkleVerifier::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
+        let verification =
+            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
         assert!(!verification.unwrap());
     }
 
@@ -467,12 +611,8 @@ mod tests {
         let proof_flags = [false, false, false];
         let leaves = [hash_a, hash_e];
 
-        let verification = MerkleVerifier::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
+        let verification =
+            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
         assert!(verification.is_err());
     }
 
@@ -508,12 +648,8 @@ mod tests {
         let proof_flags = [false, false, false, false];
         let leaves = [hash_e, hash_a];
 
-        let _ = MerkleVerifier::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
+        let _ =
+            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
     }
 
     #[test]
@@ -530,7 +666,7 @@ mod tests {
         let proof_flags = [];
         let leaves = [root];
 
-        let verification = MerkleVerifier::<KeccakBuilder>::verify_multi_proof(
+        let verification = Verifier::<KeccakBuilder>::verify_multi_proof(
             &proof,
             &proof_flags,
             root,
@@ -551,12 +687,8 @@ mod tests {
         let proof_flags = [];
         let leaves = [];
 
-        let verification = MerkleVerifier::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
+        let verification =
+            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
         assert!(verification.unwrap());
     }
 
@@ -587,7 +719,7 @@ mod tests {
         let malicious_proof = [leaf, leaf];
         let malicious_proof_flags = [true, true, false];
 
-        let _ = MerkleVerifier::verify_multi_proof(
+        let _ = Verifier::verify_multi_proof(
             &malicious_proof,
             &malicious_proof_flags,
             root,
