@@ -1,4 +1,4 @@
-//! An interface to the default hasing algorithm used in this library's [merkle
+//! An interface to the default hashing algorithm used in this library's [merkle
 //! proofs][super].
 use tiny_keccak::{Hasher as TinyHasher, Keccak};
 

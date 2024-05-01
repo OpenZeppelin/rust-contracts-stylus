@@ -195,7 +195,7 @@ where
     ///
     /// WARNING: This is a lower-level function. For most use cases,
     /// [`Verifier::verify`], which uses `keccak256` as a hashing algorithm,
-    /// should be enough. Using other hasing algorithm may have unexpected
+    /// should be enough. Using other hashing algorithm may have unexpected
     /// results.
     ///
     /// # Arguments
@@ -243,7 +243,7 @@ where
     ///
     /// WARNING: This is a lower-level function. For most use cases,
     /// [`Verifier::verify_multi_proof`], which uses `keccak256` as a hashing
-    /// algorithm, should be enough. Using other hasing algorithm may have
+    /// algorithm, should be enough. Using other hashing algorithm may have
     /// unexpected results.
     ///
     /// The `proof` must contain the sibling hashes one would need to rebuild
