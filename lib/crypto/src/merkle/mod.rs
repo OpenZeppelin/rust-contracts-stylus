@@ -1,8 +1,8 @@
 //! This module deals with verification of Merkle Tree proofs.
 //!
-//! The tree and the proofs can be generated using `OpenZeppelin`'s
-//! <https://github.com/OpenZeppelin/merkle-tree>.
-//! You will find a quickstart guide in its README.
+//! The tree and the proofs can be generated using `OpenZeppelin`'s [merkle
+//! tree library][https://github.com/OpenZeppelin/merkle-tree]. You will find a
+//! quickstart guide in its README.
 //!
 //! WARNING: You should avoid using leaf values that are 64 bytes long
 //! prior to hashing, or use a hash function other than keccak256 for
@@ -35,8 +35,8 @@ where
         core::mem::swap(&mut a, &mut b);
     }
 
-    state.update(&a);
-    state.update(&b);
+    a.hash(&mut state);
+    b.hash(&mut state);
     state.finalize()
 }
 
@@ -372,12 +372,6 @@ impl core::fmt::Display for MultiProofError {
         };
 
         write!(f, "{msg}")
-    }
-}
-
-impl Hash for [u8; 64] {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        state.update(self);
     }
 }
 

@@ -2,7 +2,7 @@
 //! proofs][super].
 use tiny_keccak::{Hasher as TinyHasher, Keccak};
 
-use super::hash::{BuildHasher, Hasher};
+use super::hash::{BuildHasher, Hash, Hasher};
 
 /// The default [`Hasher`] builder used in this library's [merkle
 /// proofs][super].
@@ -30,13 +30,20 @@ pub struct Keccak256(Keccak);
 impl Hasher for Keccak256 {
     type Output = [u8; 32];
 
-    fn update(&mut self, input: &[u8]) {
-        self.0.update(input);
+    fn update(&mut self, input: impl AsRef<[u8]>) {
+        self.0.update(input.as_ref());
     }
 
     fn finalize(self) -> Self::Output {
         let mut buffer = [0u8; 32];
         self.0.finalize(&mut buffer);
         buffer
+    }
+}
+
+impl Hash for [u8; 32] {
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.update(self);
     }
 }

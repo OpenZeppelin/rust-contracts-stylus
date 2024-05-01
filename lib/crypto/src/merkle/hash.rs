@@ -8,8 +8,8 @@
 
 /// A hashable type.
 ///
-/// Types implementing `Hash` are able to be [`hash`]ed with an instance of
-/// [`Hasher`].
+/// Types implementing `Hash` are able to be [`Hash::hash`]ed with an instance
+/// of [`Hasher`].
 pub trait Hash {
     /// Feeds this value into the given [`Hasher`].
     fn hash<H: Hasher>(&self, state: &mut H);
@@ -21,20 +21,20 @@ pub trait Hash {
 /// data.
 ///
 /// `Hasher` provides a fairly basic interface for retrieving the generated hash
-/// (with [`finalize`]), and absorbing an arbitrary number of bytes (with
-/// [`update`]). Most of the time, `Hasher` instances are used in conjunction
-/// with the [`Hash`] trait.
+/// (with [`Hasher::finalize`]), and absorbing an arbitrary number of bytes
+/// (with [`Hasher::update`]). Most of the time, [`Hasher`] instances are used
+/// in conjunction with the [`Hash`] trait.
 pub trait Hasher {
     /// The output type of this hasher.
     ///
-    /// For [`core::hash`] types, it's `u64`. For [`tiny_keccak`] it's `[u8]`.
+    /// For [`core::hash`] types, it's `u64`. For [`tiny_keccak`], it's `[u8]`.
     /// For this crate, it's `[u8; 32]`.
     type Output;
 
     /// Absorb additional input. Can be called multiple times.
-    fn update(&mut self, input: &[u8]);
+    fn update(&mut self, input: impl AsRef<[u8]>);
 
-    /// Pad and squeeze the state to the output.
+    /// Output the hashing algorithm state.
     fn finalize(self) -> Self::Output;
 }
 
@@ -50,19 +50,18 @@ pub trait Hasher {
 ///
 /// # Examples
 ///
-/// TODO: FIX EXAMPLE
+/// ```rust
+/// use crypto::merkle::KeccakBuilder;
+/// use crypto::merkle::hash::{BuildHasher, Hash, Hasher};
 ///
-/// ```ignore
-/// use core::hash::{BuildHasher, Hasher, RandomState};
+/// let b = KeccakBuilder;
+/// let mut hasher_1 = b.build_hasher();
+/// let mut hasher_2 = b.build_hasher();
 ///
-/// let s = RandomState::new();
-/// let mut hasher_1 = s.build_hasher();
-/// let mut hasher_2 = s.build_hasher();
+/// hasher_1.update([1]);
+/// hasher_2.update([1]);
 ///
-/// hasher_1.write_u32(8128);
-/// hasher_2.write_u32(8128);
-///
-/// assert_eq!(hasher_1.finish(), hasher_2.finish());
+/// assert_eq!(hasher_1.finalize(), hasher_2.finalize());
 /// ```
 ///
 /// [`build_hasher`]: BuildHasher::build_hasher
@@ -78,13 +77,12 @@ pub trait BuildHasher {
     ///
     /// # Examples
     ///
-    /// TODO: FIX EXAMPLE
+    /// ```rust
+    /// use crypto::merkle::KeccakBuilder;
+    /// use crypto::merkle::hash::BuildHasher;
     ///
-    /// ```ignore
-    /// use core::hash::{BuildHasher, RandomState};
-    ///
-    /// let s = RandomState::new();
-    /// let new_s = s.build_hasher();
+    /// let b = KeccakBuilder;
+    /// let hasher = b.build_hasher();
     /// ```
     fn build_hasher(&self) -> Self::Hasher;
 
@@ -98,6 +96,21 @@ pub trait BuildHasher {
     /// implementation of [`Hash`].  The way to create a combined hash of
     /// multiple values is to call [`Hash::hash`] multiple times using the same
     /// [`Hasher`], not to call this method repeatedly and combine the results.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use crypto::merkle::KeccakBuilder;
+    /// use crypto::merkle::hash::{BuildHasher, Hash};
+    ///
+    /// let b = KeccakBuilder;
+    /// let hash_1 = b.hash_one([0u8; 32]);
+    /// let hash_2 = b.hash_one([0u8; 32]);
+    /// assert_eq!(hash_1, hash_2);
+    ///
+    /// let hash_1 = b.hash_one([1u8; 32]);
+    /// assert_ne!(hash_1, hash_2);
+    /// ```
     fn hash_one<Hashable>(
         &self,
         h: Hashable,
