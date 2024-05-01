@@ -1,6 +1,6 @@
 //! This module deals with verification of Merkle Tree proofs.
 //!
-//! The tree and the proofs can be generated using OpenZeppelin's
+//! The tree and the proofs can be generated using `OpenZeppelin`'s
 //! <https://github.com/OpenZeppelin/merkle-tree>.
 //! You will find a quickstart guide in its README.
 //!
@@ -8,7 +8,7 @@
 //! prior to hashing, or use a hash function other than keccak256 for
 //! hashing leaves. This is because the concatenation of a sorted pair
 //! of internal nodes in the Merkle tree could be reinterpreted as a
-//! leaf value. OpenZeppelin's JavaScript library generates Merkle trees
+//! leaf value. `OpenZeppelin`'s JavaScript library generates Merkle trees
 //! that are safe against this attack out of the box.
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -469,7 +469,7 @@ mod tests {
         let verification = Verifier::verify(&proof, root, leaf_a);
         assert!(verification);
 
-        let builder = KeccakBuilder::default().build_hasher();
+        let builder = KeccakBuilder.build_hasher();
         let no_such_leaf = hash_sorted_pair(leaf_a, leaf_b, builder);
         let proof = &proof[1..];
         let verification = Verifier::verify(proof, root, no_such_leaf);
