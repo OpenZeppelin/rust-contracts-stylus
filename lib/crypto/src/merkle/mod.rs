@@ -215,7 +215,7 @@ where
     /// let leaf  = Bytes32::from_hex(LEAF).unwrap();
     /// let proof = Bytes32::from_hex(PROOF).unwrap();
     ///
-    /// let verification = Verifier::verify_with_builder(&[proof], root, leaf, KeccakBuilder);
+    /// let verification = Verifier::verify_with_builder(&[proof], root, leaf, &KeccakBuilder);
     /// assert!(!verification);
     /// ```
     pub fn verify_with_builder(
@@ -306,7 +306,7 @@ where
     /// let proof_flags = [false, true, false, true];
     ///
     /// let verification =
-    ///     Verifier::verify_multi_proof_with_builder(&proof, &proof_flags, root, &leaves, KeccakBuilder);
+    ///     Verifier::verify_multi_proof_with_builder(&proof, &proof_flags, root, &leaves, &KeccakBuilder);
     /// assert!(verification.unwrap());
     /// ```
     #[cfg(feature = "multi-proof")]
