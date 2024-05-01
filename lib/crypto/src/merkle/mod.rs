@@ -83,12 +83,7 @@ impl Verifier<KeccakBuilder> {
     /// ```
     #[must_use]
     pub fn verify(proof: &[Bytes32], root: Bytes32, leaf: Bytes32) -> bool {
-        Verifier::verify_with_builder(
-            proof,
-            root,
-            leaf,
-            KeccakBuilder::default(),
-        )
+        Verifier::verify_with_builder(proof, root, leaf, &KeccakBuilder)
     }
 
     /// Verify multiple `leaves` can be simultaneously proven to be a part of
@@ -179,7 +174,7 @@ impl Verifier<KeccakBuilder> {
             proof_flags,
             root,
             leaves,
-            KeccakBuilder::default(),
+            &KeccakBuilder,
         )
     }
 }
@@ -227,7 +222,7 @@ where
         proof: &[Bytes32],
         root: Bytes32,
         mut leaf: Bytes32,
-        builder: B,
+        builder: &B,
     ) -> bool {
         for &hash in proof {
             leaf = hash_sorted_pair(leaf, hash, builder.build_hasher());
@@ -320,7 +315,7 @@ where
         proof_flags: &[bool],
         root: Bytes32,
         leaves: &[Bytes32],
-        builder: B,
+        builder: &B,
     ) -> Result<bool, MultiProofError> {
         let total_hashes = proof_flags.len();
         if leaves.len() + proof.len() != total_hashes + 1 {
@@ -426,24 +421,6 @@ mod tests {
 
     use super::{hash_sorted_pair, Bytes32, KeccakBuilder, Verifier};
     use crate::merkle::hash::BuildHasher;
-
-    /// Shorthand for converting from a hex str to a fixed 32-bytes array.
-    macro_rules! hex_to_bytes_32 {
-        ($($var:ident = $bytes:expr);* $(;)?) => {
-            $(let $var = Bytes32::from_hex($bytes).unwrap();)*
-        };
-    }
-
-    /// Shorthand for converting from a string containing several address to
-    /// a fixed 32-bytes collection.
-    macro_rules! str_to_bytes_32 {
-        ($bytes:expr) => {
-            $bytes
-                .lines()
-                .map(|l| Bytes32::from_hex(l.trim()).unwrap())
-                .collect()
-        };
-    }
 
     /// Shorthand for converting from a hex str to a fixed 32-bytes array.
     macro_rules! hex_to_bytes_32 {
