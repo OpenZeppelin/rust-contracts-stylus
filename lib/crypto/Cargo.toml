@@ -10,6 +10,7 @@ version = "0.1.0"
 
 [dependencies]
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+mini-alloc.workspace = true
 
 [dev-dependencies]
 const-hex = { version = "1.11.1", default-features = false }
@@ -18,4 +19,6 @@ rand = "0.8.5"
 [features]
 default = []
 merkle = []
-multi_proof = ["merkle"]
+multi-proof = ["merkle"]
+
+std = []
