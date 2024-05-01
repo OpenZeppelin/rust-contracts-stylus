@@ -285,11 +285,6 @@ where
     ///
     /// Will return `Err` if the arguments are well-formed, but invalid.
     ///
-    /// # Panics
-    ///
-    /// Will panic with an out-of-bounds error if the proof is malicious. See
-    /// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
-    ///
     /// # Examples
     ///
     /// ```
@@ -329,7 +324,7 @@ where
     ) -> Result<bool, MultiProofError> {
         let total_hashes = proof_flags.len();
         if leaves.len() + proof.len() != total_hashes + 1 {
-            return Err(MultiProofError::InvalidProofLength);
+            return Err(MultiProofError::InvalidTotalHashes);
         }
         if total_hashes == 0 {
             // We can safely assume that either `leaves` or `proof` is not empty
@@ -341,6 +336,7 @@ where
 
         // `hashes` represents a queue of hashes, our "main queue".
         let mut hashes = Vec::with_capacity(total_hashes + leaves.len());
+        // Which initially gets populated with the leaves.
         hashes.extend(leaves);
         // The `xxx_pos` values are "pointers" to the next value to consume in
         // each queue. We use them to mimic a queue's pop operation.
@@ -357,14 +353,18 @@ where
 
             let b;
             if flag {
-                b = hashes[hashes_pos];
+                b = hashes
+                    .get(hashes_pos)
+                    .ok_or(MultiProofError::InvalidRootChild)?;
                 hashes_pos += 1;
             } else {
-                b = proof[proof_pos];
+                b = proof
+                    .get(proof_pos)
+                    .ok_or(MultiProofError::InvalidProofLength)?;
                 proof_pos += 1;
             };
 
-            let hash = hash_sorted_pair(a, b, builder.build_hasher());
+            let hash = hash_sorted_pair(a, *b, builder.build_hasher());
             hashes.push(hash);
         }
 
@@ -380,15 +380,31 @@ where
 /// we should derive `core::error::Error`.
 #[derive(core::fmt::Debug)]
 pub enum MultiProofError {
-    /// The number of leaves and proof members does not match the amount of
-    /// hashes necessary to complete the verification.
+    /// The proof length does not match the flags.
     InvalidProofLength,
+    /// Tried to access uninitialized memory.
+    ///
+    /// This happens when the proof is too long, which makes the verification
+    /// procedure try to access uninitialized memory, which may result in an
+    /// invalid root.
+    ///
+    /// For more information see [this vulnerability].
+    ///
+    /// [this vulnerability]: https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p
+    InvalidRootChild,
+    /// The number of leaves and proof members does not match the number of
+    /// hashes necessary to complete the verification.
+    InvalidTotalHashes,
 }
 
 impl core::fmt::Display for MultiProofError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let msg = match self {
             MultiProofError::InvalidProofLength => "invalid multi-proof length",
+            MultiProofError::InvalidRootChild => "invalid root child generated",
+            MultiProofError::InvalidTotalHashes => {
+                "leaves.len() + proof.len() != total_hashes + 1"
+            }
         };
 
         write!(f, "{msg}")
@@ -617,8 +633,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn panics_multi_proof_len_invalid() {
+    fn errors_multi_proof_len_invalid() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
@@ -648,8 +663,9 @@ mod tests {
         let proof_flags = [false, false, false, false];
         let leaves = [hash_e, hash_a];
 
-        let _ =
+        let verification =
             Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+        assert!(verification.is_err());
     }
 
     #[test]
@@ -693,10 +709,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    /// Panics when processing manipulated proofs with a zero-value node at
+    /// Errors when processing manipulated proofs with a zero-value node at
     /// depth 1.
-    fn panics_manipulated_multi_proof() {
+    fn errors_manipulated_multi_proof() {
         // ```js
         // // Create a merkle tree that contains a zero leaf at depth 1
         // const leave = ethers.id('real leaf');
@@ -719,11 +734,12 @@ mod tests {
         let malicious_proof = [leaf, leaf];
         let malicious_proof_flags = [true, true, false];
 
-        let _ = Verifier::verify_multi_proof(
+        let verification = Verifier::verify_multi_proof(
             &malicious_proof,
             &malicious_proof_flags,
             root,
             &malicious_leaves,
         );
+        assert!(verification.is_err());
     }
 }
