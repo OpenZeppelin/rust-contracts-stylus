@@ -128,9 +128,9 @@ pub trait BuildHasher {
 
 /// Hash the pair `(a, b)` with `state`.
 #[inline]
-pub fn hash_pair<S, H>(a: H, b: H, mut state: S) -> S::Output
+pub fn hash_pair<S, H>(a: &H, b: &H, mut state: S) -> S::Output
 where
-    H: Hash,
+    H: Hash + ?Sized,
     S: Hasher,
 {
     a.hash(&mut state);
@@ -150,7 +150,7 @@ where
         core::mem::swap(&mut a, &mut b);
     }
 
-    hash_pair(a, b, state)
+    hash_pair(&a, &b, state)
 }
 
 #[cfg(all(test, feature = "std"))]
@@ -170,11 +170,11 @@ mod tests {
         let a = [1u8].as_slice();
         let b = [2u8].as_slice();
 
-        let r1 = hash_pair(a, b, builder.build_hasher());
-        let r2 = hash_pair(a, b, builder.build_hasher());
+        let r1 = hash_pair(&a, &b, builder.build_hasher());
+        let r2 = hash_pair(&a, &b, builder.build_hasher());
         assert_eq!(r1, r2);
 
-        let r3 = hash_pair(b, a, builder.build_hasher());
+        let r3 = hash_pair(&b, &a, builder.build_hasher());
         assert_ne!(r1, r3);
     }
 
