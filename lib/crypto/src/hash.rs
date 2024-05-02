@@ -51,8 +51,8 @@ pub trait Hasher {
 /// # Examples
 ///
 /// ```rust
-/// use crypto::merkle::KeccakBuilder;
-/// use crypto::merkle::hash::{BuildHasher, Hash, Hasher};
+/// use crypto::KeccakBuilder;
+/// use crypto::hash::{BuildHasher, Hash, Hasher};
 ///
 /// let b = KeccakBuilder;
 /// let mut hasher_1 = b.build_hasher();
@@ -78,8 +78,8 @@ pub trait BuildHasher {
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::merkle::KeccakBuilder;
-    /// use crypto::merkle::hash::BuildHasher;
+    /// use crypto::KeccakBuilder;
+    /// use crypto::hash::BuildHasher;
     ///
     /// let b = KeccakBuilder;
     /// let hasher = b.build_hasher();
@@ -100,8 +100,8 @@ pub trait BuildHasher {
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::merkle::KeccakBuilder;
-    /// use crypto::merkle::hash::{BuildHasher, Hash};
+    /// use crypto::KeccakBuilder;
+    /// use crypto::hash::{BuildHasher, Hash};
     ///
     /// let b = KeccakBuilder;
     /// let hash_1 = b.hash_one([0u8; 32]);
@@ -123,5 +123,69 @@ pub trait BuildHasher {
         let mut hasher = self.build_hasher();
         h.hash(&mut hasher);
         hasher.finalize()
+    }
+}
+
+/// Hash the pair `(a, b)` with `state`.
+#[inline]
+pub fn hash_pair<S, H>(a: H, b: H, mut state: S) -> S::Output
+where
+    H: Hash,
+    S: Hasher,
+{
+    a.hash(&mut state);
+    b.hash(&mut state);
+    state.finalize()
+}
+
+/// Sort the pair `(a, b)` and hash the result with `state`. Frequently used
+/// when working with merkle proofs.
+#[inline]
+pub fn commutative_hash_pair<S, H>(mut a: H, mut b: H, state: S) -> S::Output
+where
+    H: Hash + PartialOrd,
+    S: Hasher,
+{
+    if a > b {
+        core::mem::swap(&mut a, &mut b);
+    }
+
+    hash_pair(a, b, state)
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use super::{commutative_hash_pair, hash_pair, BuildHasher, Hash, Hasher};
+    use crate::KeccakBuilder;
+
+    impl Hash for &[u8] {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            state.update(self);
+        }
+    }
+
+    #[test]
+    fn hashes_pairs() {
+        let builder = KeccakBuilder;
+        let a = [1u8].as_slice();
+        let b = [2u8].as_slice();
+
+        let r1 = hash_pair(a, b, builder.build_hasher());
+        let r2 = hash_pair(a, b, builder.build_hasher());
+        assert_eq!(r1, r2);
+
+        let r3 = hash_pair(b, a, builder.build_hasher());
+        assert_ne!(r1, r3);
+    }
+
+    #[test]
+    fn commutatively_hashes_pairs() {
+        let builder = KeccakBuilder;
+        let a = [1u8].as_slice();
+        let b = [2u8].as_slice();
+
+        let r1 = commutative_hash_pair(a, b, builder.build_hasher());
+        let r2 = commutative_hash_pair(b, a, builder.build_hasher());
+        assert_eq!(r1, r2);
     }
 }

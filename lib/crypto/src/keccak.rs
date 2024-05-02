@@ -1,11 +1,11 @@
 //! An interface to the default hashing algorithm used in this library's [merkle
-//! proofs][super].
+//! proofs][crate].
 use tiny_keccak::{Hasher as TinyHasher, Keccak};
 
-use super::hash::{BuildHasher, Hash, Hasher};
+use crate::hash::{BuildHasher, Hash, Hasher};
 
 /// The default [`Hasher`] builder used in this library's [merkle
-/// proofs][super].
+/// proofs][crate].
 ///
 /// It instantiates a [`Keccak256`] hasher.
 #[allow(clippy::module_name_repetitions)]
@@ -20,7 +20,7 @@ impl BuildHasher for KeccakBuilder {
     }
 }
 
-/// The default [`Hasher`] used in this library's [merkle proofs][super].
+/// The default [`Hasher`] used in this library's [merkle proofs][crate].
 ///
 /// The underlying implementation is guaranteed to match that of the
 /// `keccak256` algorithm, commonly used in Ethereum.

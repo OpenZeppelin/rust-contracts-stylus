@@ -17,8 +17,7 @@ hex-literal = "0.4.1"
 rand = "0.8.5"
 
 [features]
-default = []
+std = []
+
 merkle = []
 multi-proof = ["merkle"]
-
-std = []

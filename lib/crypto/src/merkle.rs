@@ -13,32 +13,12 @@
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use self::hash::{BuildHasher, Hash, Hasher};
-
-pub mod hash;
-pub mod keccak;
-pub use keccak::KeccakBuilder;
+use crate::{
+    hash::{commutative_hash_pair, BuildHasher, Hasher},
+    KeccakBuilder,
+};
 
 type Bytes32 = [u8; 32];
-
-/// Sort the pair `(a, b)` and hash the result with `hasher`.
-#[inline]
-fn hash_sorted_pair<S>(
-    mut a: Bytes32,
-    mut b: Bytes32,
-    mut state: S,
-) -> S::Output
-where
-    S: Hasher,
-{
-    if a >= b {
-        core::mem::swap(&mut a, &mut b);
-    }
-
-    a.hash(&mut state);
-    b.hash(&mut state);
-    state.finalize()
-}
 
 /// Verify merkle proofs.
 pub struct Verifier<B = KeccakBuilder>(PhantomData<B>)
@@ -188,7 +168,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use crypto::merkle::{KeccakBuilder, Verifier};
+    /// use crypto::{merkle::Verifier, KeccakBuilder};
     /// use hex_literal::hex;
     ///
     /// let root  = hex!("0000000000000000000000000000000000000000000000000000000000000000");
@@ -205,7 +185,7 @@ where
         builder: &B,
     ) -> bool {
         for &hash in proof {
-            leaf = hash_sorted_pair(leaf, hash, builder.build_hasher());
+            leaf = commutative_hash_pair(leaf, hash, builder.build_hasher());
         }
 
         leaf == root
@@ -263,7 +243,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::merkle::{KeccakBuilder, Verifier};
+    /// use crypto::{merkle::Verifier, KeccakBuilder};
     /// use hex_literal::hex;
     ///
     /// let root   =  hex!("6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8");
@@ -328,7 +308,7 @@ where
                 proof_pos += 1;
             };
 
-            let hash = hash_sorted_pair(a, *b, builder.build_hasher());
+            let hash = commutative_hash_pair(a, *b, builder.build_hasher());
             hashes.push(hash);
         }
 
@@ -382,10 +362,11 @@ mod tests {
     use hex_literal::hex;
     use rand::{thread_rng, RngCore};
 
-    use super::{hash_sorted_pair, Bytes32, KeccakBuilder, Verifier};
-    use crate::merkle::hash::BuildHasher;
+    use super::{Bytes32, KeccakBuilder, Verifier};
+    use crate::hash::{commutative_hash_pair, BuildHasher};
 
-    /// Shorthand for converting from a hex str to a fixed 32-bytes array.
+    /// Shorthand for declaring variables converted from a hex literal to a
+    /// fixed 32-byte slice.
     macro_rules! bytes {
         ($($var:ident = $hex:literal);* $(;)?) => {
             $(
@@ -395,8 +376,8 @@ mod tests {
         };
     }
 
-    /// Shorthand for converting from a string containing several addresses to
-    /// a fixed 32-bytes collection.
+    /// Shorthand for converting from an array of hex literals to an array of
+    /// fixed 32-bytes slices.
     macro_rules! bytes_array {
         ($($s:literal),* $(,)?) => {
             [
@@ -435,7 +416,7 @@ mod tests {
         assert!(verification);
 
         let builder = KeccakBuilder.build_hasher();
-        let no_such_leaf = hash_sorted_pair(leaf_a, leaf_b, builder);
+        let no_such_leaf = commutative_hash_pair(leaf_a, leaf_b, builder);
         let proof = &proof[1..];
         let verification = Verifier::verify(proof, root, no_such_leaf);
         assert!(verification);

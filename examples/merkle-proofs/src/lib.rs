@@ -4,7 +4,10 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::B256;
-use crypto::merkle::{self, KeccakBuilder, Verifier};
+use crypto::{
+    merkle::{self, Verifier},
+    KeccakBuilder,
+};
 use stylus_proc::SolidityError;
 use stylus_sdk::{
     alloy_sol_types::sol,
