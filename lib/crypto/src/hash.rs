@@ -127,6 +127,7 @@ pub trait BuildHasher {
 }
 
 /// Hash the pair `(a, b)` with `state`.
+#[allow(clippy::module_name_repetitions)]
 #[inline]
 pub fn hash_pair<S, H>(a: &H, b: &H, mut state: S) -> S::Output
 where
