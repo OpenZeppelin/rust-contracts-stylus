@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::B256;
 use crypto::{
-    merkle::{self, Proof, Verifier},
+    merkle::{self, MultiProof, Proof, Verifier},
     KeccakBuilder,
 };
 use stylus_proc::SolidityError;
@@ -82,11 +82,8 @@ impl VerifierContract {
     ) -> Result<bool, VerifierError> {
         let proof: Vec<[u8; 32]> = proof.into_iter().map(|m| *m).collect();
         let leaves: Vec<[u8; 32]> = leaves.into_iter().map(|m| *m).collect();
-        Ok(Verifier::<KeccakBuilder>::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            *root,
-            &leaves,
-        )?)
+        let proof =
+            MultiProof::from_bytes(&proof, &proof_flags, *root, &leaves)?;
+        Ok(Verifier::<KeccakBuilder>::verify_multi_proof(&proof)?)
     }
 }

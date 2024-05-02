@@ -33,8 +33,36 @@ pub struct Proof<'p> {
 impl<'p> Proof<'p> {
     /// Creates a new `Proof` from the `proof`, `root` and `leaf` hashes.
     #[must_use]
-    pub fn new(proof: &'p [Bytes32], root: Bytes32, leaf: Bytes32) -> Self {
-        Self { members: proof, root, leaf }
+    pub fn new(members: &'p [Bytes32], root: Bytes32, leaf: Bytes32) -> Self {
+        Self { members, root, leaf }
+    }
+}
+
+/// A merkle multi-proof which may or may not be invalid.
+///
+/// Use [`Verifier::verify`] to check it's validity.
+#[cfg(feature = "multi-proof")]
+pub struct MultiProof<'p> {
+    members: &'p [Bytes32],
+    flags: &'p [bool],
+    root: Bytes32,
+    leaves: &'p [Bytes32],
+}
+
+impl<'p> MultiProof<'p> {
+    /// Instantiate a `MultiProof` with the corresponding proof data if the
+    /// lengths of the inputs are correct.
+    pub fn from_bytes(
+        proof: &'p [Bytes32],
+        flags: &'p [bool],
+        root: Bytes32,
+        leaves: &'p [Bytes32],
+    ) -> Result<Self, MultiProofError> {
+        if leaves.len() + proof.len() != flags.len() + 1 {
+            return Err(MultiProofError::InvalidTotalHashes);
+        }
+
+        Ok(Self { members: proof, flags, root, leaves })
     }
 }
 
@@ -131,7 +159,7 @@ impl Verifier<KeccakBuilder> {
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::merkle::Verifier;
+    /// use crypto::merkle::{MultiProof, Verifier};
     /// use hex_literal::hex;
     ///
     /// let root   =  hex!("6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8");
@@ -143,24 +171,16 @@ impl Verifier<KeccakBuilder> {
     ///
     /// let proof_flags = [false, true, false, true];
     ///
+    /// let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves).unwrap();
     /// let verification =
-    ///     Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+    ///     Verifier::verify_multi_proof(&proof);
     /// assert!(verification.unwrap());
     /// ```
     #[cfg(feature = "multi-proof")]
     pub fn verify_multi_proof(
-        proof: &[Bytes32],
-        proof_flags: &[bool],
-        root: Bytes32,
-        leaves: &[Bytes32],
+        proof: &MultiProof,
     ) -> Result<bool, MultiProofError> {
-        Verifier::verify_multi_proof_with_builder(
-            proof,
-            proof_flags,
-            root,
-            leaves,
-            &KeccakBuilder,
-        )
+        Verifier::verify_multi_proof_with_builder(proof, &KeccakBuilder)
     }
 }
 
@@ -259,7 +279,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::{merkle::Verifier, KeccakBuilder};
+    /// use crypto::{merkle::{Verifier, MultiProof}, KeccakBuilder};
     /// use hex_literal::hex;
     ///
     /// let root   =  hex!("6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8");
@@ -270,34 +290,31 @@ where
     ///               hex!("8076923e76cf01a7c048400a2304c9a9c23bbbdac3a98ea3946340fdafbba34f")];
     /// let proof_flags = [false, true, false, true];
     ///
+    /// let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves).unwrap();
     /// let verification =
-    ///     Verifier::verify_multi_proof_with_builder(&proof, &proof_flags, root, &leaves, &KeccakBuilder);
+    ///     Verifier::verify_multi_proof_with_builder(&proof, &KeccakBuilder);
     /// assert!(verification.unwrap());
     /// ```
     #[cfg(feature = "multi-proof")]
     pub fn verify_multi_proof_with_builder(
-        proof: &[Bytes32],
-        proof_flags: &[bool],
-        root: Bytes32,
-        leaves: &[Bytes32],
+        proof: &MultiProof,
         builder: &B,
     ) -> Result<bool, MultiProofError> {
-        let total_hashes = proof_flags.len();
-        if leaves.len() + proof.len() != total_hashes + 1 {
-            return Err(MultiProofError::InvalidTotalHashes);
-        }
+        let total_hashes = proof.flags.len();
         if total_hashes == 0 {
             // We can safely assume that either `leaves` or `proof` is not empty
             // given the previous check. We use `unwrap_or_else` to avoid
             // eagerly evaluating `proof[0]`, which may panic.
-            let rebuilt_root = *leaves.first().unwrap_or_else(|| &proof[0]);
-            return Ok(root == rebuilt_root);
+            let root =
+                *proof.leaves.first().unwrap_or_else(|| &proof.members[0]);
+            return Ok(proof.root == root);
         }
 
         // `hashes` represents a queue of hashes, our "main queue".
-        let mut hashes = Vec::with_capacity(total_hashes + leaves.len());
+        let leaves_count = proof.leaves.len();
+        let mut hashes = Vec::with_capacity(total_hashes + leaves_count);
         // Which initially gets populated with the leaves.
-        hashes.extend(leaves);
+        hashes.extend(proof.leaves);
         // The `xxx_pos` values are "pointers" to the next value to consume in
         // each queue. We use them to mimic a queue's pop operation.
         let mut proof_pos = 0;
@@ -307,18 +324,19 @@ where
         //   hashes but the root.
         // - A value from the "main queue" (merging branches) or a member of the
         //   `proof`, depending on `flag`.
-        for &flag in proof_flags {
+        for &consume_hash in proof.flags {
             let a = hashes[hashes_pos];
             hashes_pos += 1;
 
             let b;
-            if flag {
+            if consume_hash {
                 b = hashes
                     .get(hashes_pos)
                     .ok_or(MultiProofError::InvalidRootChild)?;
                 hashes_pos += 1;
             } else {
                 b = proof
+                    .members
                     .get(proof_pos)
                     .ok_or(MultiProofError::InvalidProofLength)?;
                 proof_pos += 1;
@@ -329,8 +347,8 @@ where
         }
 
         // We know that `total_hashes > 0`.
-        let rebuilt_root = hashes[total_hashes + leaves.len() - 1];
-        Ok(root == rebuilt_root)
+        let root = hashes[total_hashes + leaves_count - 1];
+        Ok(proof.root == root)
     }
 }
 
@@ -379,7 +397,10 @@ mod tests {
     use rand::{thread_rng, RngCore};
 
     use super::{Bytes32, KeccakBuilder, Proof, Verifier};
-    use crate::hash::{commutative_hash_pair, BuildHasher};
+    use crate::{
+        hash::{commutative_hash_pair, BuildHasher},
+        merkle::MultiProof,
+    };
 
     /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice.
@@ -508,8 +529,9 @@ mod tests {
         };
 
         let proof_flags = [false, true, false, true];
-        let verification =
-            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+        let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves)
+            .unwrap();
+        let verification = Verifier::verify_multi_proof(&proof);
         assert!(verification.unwrap());
     }
 
@@ -534,8 +556,9 @@ mod tests {
         let proof = [];
         let proof_flags = [true, true];
 
-        let verification =
-            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+        let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves)
+            .unwrap();
+        let verification = Verifier::verify_multi_proof(&proof);
         assert!(!verification.unwrap());
     }
 
@@ -570,9 +593,8 @@ mod tests {
         let proof_flags = [false, false, false];
         let leaves = [hash_a, hash_e];
 
-        let verification =
-            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
-        assert!(verification.is_err());
+        let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves);
+        assert!(proof.is_err());
     }
 
     #[test]
@@ -606,8 +628,9 @@ mod tests {
         let proof_flags = [false, false, false, false];
         let leaves = [hash_e, hash_a];
 
-        let verification =
-            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+        let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves)
+            .unwrap();
+        let verification = Verifier::verify_multi_proof(&proof);
         assert!(verification.is_err());
     }
 
@@ -625,12 +648,10 @@ mod tests {
         let proof_flags = [];
         let leaves = [root];
 
-        let verification = Verifier::<KeccakBuilder>::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
+        let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves)
+            .unwrap();
+        let verification =
+            Verifier::<KeccakBuilder>::verify_multi_proof(&proof);
         assert!(verification.unwrap());
     }
 
@@ -646,8 +667,9 @@ mod tests {
         let proof_flags = [];
         let leaves = [];
 
-        let verification =
-            Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+        let proof = MultiProof::from_bytes(&proof, &proof_flags, root, &leaves)
+            .unwrap();
+        let verification = Verifier::verify_multi_proof(&proof);
         assert!(verification.unwrap());
     }
 
@@ -677,12 +699,14 @@ mod tests {
         let malicious_proof = [leaf, leaf];
         let malicious_proof_flags = [true, true, false];
 
-        let verification = Verifier::verify_multi_proof(
+        let proof = MultiProof::from_bytes(
             &malicious_proof,
             &malicious_proof_flags,
             root,
             &malicious_leaves,
-        );
+        )
+        .unwrap();
+        let verification = Verifier::verify_multi_proof(&proof);
         assert!(verification.is_err());
     }
 }
