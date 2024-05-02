@@ -20,6 +20,24 @@ use crate::{
 
 type Bytes32 = [u8; 32];
 
+/// A merkle proof which may or may not be invalid.
+///
+/// Use [`Verifier::verify`] to check it's validity.
+#[derive(Clone, Copy)]
+pub struct Proof<'p> {
+    members: &'p [Bytes32],
+    root: Bytes32,
+    leaf: Bytes32,
+}
+
+impl<'p> Proof<'p> {
+    /// Creates a new `Proof` from the `proof`, `root` and `leaf` hashes.
+    #[must_use]
+    pub fn new(proof: &'p [Bytes32], root: Bytes32, leaf: Bytes32) -> Self {
+        Self { members: proof, root, leaf }
+    }
+}
+
 /// Verify merkle proofs.
 pub struct Verifier<B = KeccakBuilder>(PhantomData<B>)
 where
@@ -46,19 +64,21 @@ impl Verifier<KeccakBuilder> {
     /// # Examples
     ///
     /// ```
-    /// use crypto::merkle::Verifier;
+    /// use crypto::merkle::{Proof, Verifier};
     /// use hex_literal::hex;
     ///
     /// let root  = hex!("0000000000000000000000000000000000000000000000000000000000000000");
     /// let leaf  = hex!("0000000000000000000000000000000000000000000000000000000000000000");
     /// let proof = hex!("0000000000000000000000000000000000000000000000000000000000000000");
+    /// let proof = [proof];
     ///
-    /// let verification = Verifier::verify(&[proof], root, leaf);
+    /// let proof = Proof::new(&proof, root, leaf);
+    /// let verification = Verifier::verify(&proof);
     /// assert!(!verification);
     /// ```
     #[must_use]
-    pub fn verify(proof: &[Bytes32], root: Bytes32, leaf: Bytes32) -> bool {
-        Verifier::verify_with_builder(proof, root, leaf, &KeccakBuilder)
+    pub fn verify(proof: &Proof) -> bool {
+        Verifier::verify_with_builder(proof, &KeccakBuilder)
     }
 
     /// Verify multiple `leaves` can be simultaneously proven to be a part of
@@ -160,35 +180,31 @@ where
     ///
     /// # Arguments
     ///
-    /// * `proof` - A slice of hashes that constitute the merkle proof.
-    /// * `root` - The root of the merkle tree, in bytes.
-    /// * `leaf` - The leaf of the merkle tree to proof, in bytes.
+    /// * `proof`   - The proof to be verified.
     /// * `builder` - A [`BuildHasher`] that represents a hashing algorithm.
     ///
     /// # Examples
     ///
     /// ```
-    /// use crypto::{merkle::Verifier, KeccakBuilder};
+    /// use crypto::{merkle::{Proof, Verifier}, KeccakBuilder};
     /// use hex_literal::hex;
     ///
     /// let root  = hex!("0000000000000000000000000000000000000000000000000000000000000000");
     /// let leaf  = hex!("0000000000000000000000000000000000000000000000000000000000000000");
     /// let proof = hex!("0000000000000000000000000000000000000000000000000000000000000000");
+    /// let proof = [proof];
     ///
-    /// let verification = Verifier::verify_with_builder(&[proof], root, leaf, &KeccakBuilder);
+    /// let p = Proof::new(&proof, root, leaf);
+    /// let verification = Verifier::verify_with_builder(&p, &KeccakBuilder);
     /// assert!(!verification);
     /// ```
-    pub fn verify_with_builder(
-        proof: &[Bytes32],
-        root: Bytes32,
-        mut leaf: Bytes32,
-        builder: &B,
-    ) -> bool {
-        for &hash in proof {
+    pub fn verify_with_builder(proof: &Proof, builder: &B) -> bool {
+        let mut leaf = proof.leaf;
+        for &hash in proof.members {
             leaf = commutative_hash_pair(leaf, hash, builder.build_hasher());
         }
 
-        leaf == root
+        leaf == proof.root
     }
 
     /// Verify multiple `leaves` can be simultaneously proven to be a part of
@@ -362,7 +378,7 @@ mod tests {
     use hex_literal::hex;
     use rand::{thread_rng, RngCore};
 
-    use super::{Bytes32, KeccakBuilder, Verifier};
+    use super::{Bytes32, KeccakBuilder, Proof, Verifier};
     use crate::hash::{commutative_hash_pair, BuildHasher};
 
     /// Shorthand for declaring variables converted from a hex literal to a
@@ -412,13 +428,15 @@ mod tests {
             "276141cd72b9b81c67f7182ff8a550b76eb96de9248a3ec027ac048c79649115",
         };
 
-        let verification = Verifier::verify(&proof, root, leaf_a);
+        let p = Proof::new(&proof, root, leaf_a);
+        let verification = Verifier::verify(&p);
         assert!(verification);
 
         let builder = KeccakBuilder.build_hasher();
         let no_such_leaf = commutative_hash_pair(leaf_a, leaf_b, builder);
         let proof = &proof[1..];
-        let verification = Verifier::verify(proof, root, no_such_leaf);
+        let p = Proof::new(&proof, root, no_such_leaf);
+        let verification = Verifier::verify(&p);
         assert!(verification);
     }
 
@@ -438,7 +456,8 @@ mod tests {
             proof = "7b0c6cd04b82bfc0e250030a5d2690c52585e0cc6a4f3bc7909d7723b0236ece";
         };
 
-        let verification = Verifier::verify(&[proof], root, leaf);
+        let p = Proof::new(&[proof], root, leaf);
+        let verification = Verifier::verify(&p);
         assert!(!verification);
     }
 
@@ -461,7 +480,8 @@ mod tests {
         };
 
         let bad_proof = &proof[..1];
-        let verification = Verifier::verify(bad_proof, root, leaf);
+        let p = Proof::new(bad_proof, root, leaf);
+        let verification = Verifier::verify(&p);
         assert!(!verification);
     }
 

@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::B256;
 use crypto::{
-    merkle::{self, Verifier},
+    merkle::{self, Proof, Verifier},
     KeccakBuilder,
 };
 use stylus_proc::SolidityError;
@@ -69,7 +69,8 @@ sol_storage! {
 impl VerifierContract {
     pub fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
         let proof: Vec<[u8; 32]> = proof.into_iter().map(|m| *m).collect();
-        Verifier::<KeccakBuilder>::verify(&proof, *root, *leaf)
+        let proof = Proof::new(&proof, *root, *leaf);
+        Verifier::<KeccakBuilder>::verify(&proof)
     }
 
     pub fn verify_multi_proof(
