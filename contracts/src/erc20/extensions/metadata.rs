@@ -18,7 +18,7 @@ sol_storage! {
         ///
         /// This field should be unnecessary once constructors are supported in
         /// the SDK.
-        bool _initialized
+        bool _initialized;
     }
 }
 
