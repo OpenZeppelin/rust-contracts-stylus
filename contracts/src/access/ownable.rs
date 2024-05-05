@@ -140,3 +140,121 @@ impl Ownable {
         });
     }
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{address, Address, U256};
+    use stylus_sdk::{
+        msg,
+        storage::{StorageAddress, StorageBool, StorageType},
+    };
+
+    use super::{Error, Ownable};
+
+    impl Default for Ownable {
+        fn default() -> Self {
+            let root = U256::ZERO;
+            Ownable {
+                _owner: unsafe { StorageAddress::new(root, 0) },
+                _initialized: unsafe {
+                    StorageBool::new(root + U256::from(32), 0)
+                },
+            }
+        }
+    }
+
+    #[grip::test]
+    fn rejects_zero_address_initial_owner(contract: Ownable) {
+        // FIXME: Once constructors are supported this check should fail.
+        assert_eq!(contract._owner.get(), Address::ZERO);
+
+        let err = contract.constructor(Address::ZERO).unwrap_err();
+        assert!(matches!(err, Error::InvalidOwner(_)));
+    }
+
+    #[grip::test]
+    #[should_panic = "Ownable has already been initialized"]
+    fn initializes_owner_once(contract: Ownable) {
+        let result = contract.constructor(msg::sender());
+        assert!(result.is_ok());
+
+        let owner = contract._owner.get();
+        assert_eq!(owner, msg::sender());
+
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let _ = contract.constructor(alice);
+    }
+
+    #[grip::test]
+    fn reads_owner(contract: Ownable) {
+        let result = contract.constructor(msg::sender());
+        assert!(result.is_ok());
+
+        let owner = contract.owner();
+        assert_eq!(owner, msg::sender());
+    }
+
+    #[grip::test]
+    fn transfers_ownership(contract: Ownable) {
+        let result = contract.constructor(msg::sender());
+        assert!(result.is_ok());
+
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let _ = contract.transfer_ownership(alice).unwrap();
+        let owner = contract._owner.get();
+        assert_eq!(owner, alice);
+    }
+
+    #[grip::test]
+    fn prevents_non_onwers_from_transferring(contract: Ownable) {
+        // Alice must be set as owner, because we can't set the msg::sender yet.
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let result = contract.constructor(alice);
+        assert!(result.is_ok());
+
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let err = contract.transfer_ownership(bob).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[grip::test]
+    fn prevents_reaching_stuck_state(contract: Ownable) {
+        let result = contract.constructor(msg::sender());
+        assert!(result.is_ok());
+
+        let err = contract.transfer_ownership(Address::ZERO).unwrap_err();
+        assert!(matches!(err, Error::InvalidOwner(_)));
+    }
+
+    #[grip::test]
+    fn loses_ownership_after_renouncing(contract: Ownable) {
+        let result = contract.constructor(msg::sender());
+        assert!(result.is_ok());
+
+        let _ = contract.renounce_ownership();
+        let owner = contract._owner.get();
+        assert_eq!(owner, Address::ZERO);
+    }
+
+    #[grip::test]
+    fn prevents_non_owners_from_renouncing(contract: Ownable) {
+        // Alice must be set as owner, because we can't set the msg::sender yet.
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let result = contract.constructor(alice);
+        assert!(result.is_ok());
+
+        let err = contract.renounce_ownership().unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[grip::test]
+    fn recovers_access_using_internal_transfer(contract: Ownable) {
+        let result = contract.constructor(msg::sender());
+        assert!(result.is_ok());
+
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        contract._transfer_ownership(alice);
+        let owner = contract._owner.get();
+        assert_eq!(owner, alice);
+    }
+}
