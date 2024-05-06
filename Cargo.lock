@@ -28,22 +28,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "alloy-primitives"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "600d34d8de81e23b6d909c094e23b3d357e01ca36b78a8c5424c501eedbe86f0"
-dependencies = [
- "bytes",
- "cfg-if 1.0.0",
- "const-hex",
- "derive_more",
- "hex-literal",
- "itoa",
- "ruint",
- "tiny-keccak",
-]
-
-[[package]]
 name = "alloy-sol-macro"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -64,7 +48,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d5f347cb6bb307b3802ec455ef43ce00f5e590e0ceca3d2f3b070f5ee367e235"
 dependencies = [
- "alloy-primitives 0.3.3",
+ "alloy-primitives",
  "alloy-sol-macro",
  "const-hex",
 ]
@@ -125,7 +109,7 @@ dependencies = [
 name = "contracts"
 version = "0.1.0"
 dependencies = [
- "alloy-primitives 0.3.3",
+ "alloy-primitives",
  "alloy-sol-types",
  "cfg-if 1.0.0",
  "derive_more",
@@ -171,9 +155,10 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 name = "crypto"
 version = "0.1.0"
 dependencies = [
- "alloy-primitives 0.6.4",
- "const-hex",
+ "hex-literal",
+ "mini-alloc",
  "rand",
+ "tiny-keccak",
 ]
 
 [[package]]
@@ -230,7 +215,7 @@ checksum = "56ce8c6da7551ec6c462cbaf3bfbc75131ebbfa1c944aeaa9dab51ca1c5f0c3b"
 name = "erc20-example"
 version = "0.0.0"
 dependencies = [
- "alloy-primitives 0.3.3",
+ "alloy-primitives",
  "contracts",
  "mini-alloc",
  "stylus-proc",
@@ -345,6 +330,18 @@ name = "memory_units"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
+
+[[package]]
+name = "merkle-proofs-example"
+version = "0.0.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "crypto",
+ "mini-alloc",
+ "stylus-proc",
+ "stylus-sdk",
+]
 
 [[package]]
 name = "mini-alloc"
@@ -549,7 +546,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "366c3323b03fc99c7d0124cec4eee10e37a226a14b08829a416feec9f2ebb641"
 dependencies = [
- "alloy-primitives 0.3.3",
+ "alloy-primitives",
  "alloy-sol-types",
  "cfg-if 1.0.0",
  "convert_case 0.6.0",
@@ -568,7 +565,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74778bf11048b0155b937ee6d52440709d864aa488843238b62272e6c9bdbc1a"
 dependencies = [
- "alloy-primitives 0.3.3",
+ "alloy-primitives",
  "alloy-sol-types",
  "cfg-if 1.0.0",
  "derivative",
