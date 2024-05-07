@@ -8,12 +8,16 @@ license.workspace = true
 repository.workspace = true
 version = "0.1.0"
 
+[dependencies]
+mini-alloc.workspace = true
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+
 [dev-dependencies]
-alloy-primitives = { version = "0.6.4", default-features = false }
-const-hex = { version = "1.11.1", default-features = false }
+hex-literal = "0.4.1"
 rand = "0.8.5"
 
 [features]
-default = []
+std = []
+
 merkle = []
-multi_proof = ["merkle"]
+multi-proof = ["merkle"]
