@@ -120,7 +120,7 @@ impl Ownable {
     /// # Errors
     ///
     /// * If `new_owner` is the zero address, then this function returns an
-    /// [`Error::OwnableInvalidOnwer`] error.
+    /// [`Error::OwnableInvalidOwner`] error.
     pub fn transfer_ownership(
         &mut self,
         new_owner: Address,
