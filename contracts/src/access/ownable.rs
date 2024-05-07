@@ -73,7 +73,7 @@ impl Ownable {
     /// This ensures the contract is constructed only once.
     pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
         let is_initialized = self._initialized.get();
-        assert!(is_initialized, "Ownable has already been initialized");
+        assert!(!is_initialized, "Ownable has already been initialized");
 
         if initial_owner == Address::ZERO {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
