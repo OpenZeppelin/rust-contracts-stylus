@@ -1,3 +1,4 @@
-//! Contracts that implement access control mechanisms.
+//! Contracts implementing access control mechanisms.
 
+#[cfg(feature = "ownable")]
 pub mod ownable;

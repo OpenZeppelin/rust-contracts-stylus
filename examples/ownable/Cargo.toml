@@ -1,38 +1,21 @@
 [package]
-# TODO: Figure out public name before v0.1.0 release.
-name = "contracts"
-categories = ["no-std", "wasm"]
-description = "Contracts for Stylus"
+name = "ownable-example"
 edition.workspace = true
-keywords.workspace = true
 license.workspace = true
 repository.workspace = true
-version = "0.1.0"
+publish = false
+version = "0.0.0"
 
 [dependencies]
+contracts = { path = "../../contracts", features = ["ownable", "erc20"] }
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
-derive_more = "0.99.17"
-cfg-if = "1.0"
-
-[dev-dependencies]
-grip = { path = "../lib/grip" }
-rand = "0.8.5"
-once_cell = "1.19.0"
 
 [features]
 default = []
-
-erc20 = []
-erc20_metadata = ["erc20"]
-erc20_burnable = ["erc20"]
-erc721 = []
-
-access = []
-ownable = ["access"]
 
 # Enables using the standard library. This is not included in the default
 # features, because this crate is meant to be used in a `no_std` environment.

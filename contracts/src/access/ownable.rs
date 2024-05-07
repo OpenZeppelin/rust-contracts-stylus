@@ -28,7 +28,6 @@ sol! {
      /// The owner is not a valid owner account. (eg. `address(0)`)
     #[derive(Debug)]
     error OwnableInvalidOwner(address owner);
-
 }
 
 /// An error that occurred in the implementation of an `Ownable` contract.
