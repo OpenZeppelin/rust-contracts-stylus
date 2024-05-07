@@ -61,10 +61,19 @@ impl Ownable {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `initial_owner` - The initial owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * If `initial_owner` is the zero address, then [`Error::InvalidOwner`]
+    /// is returned.
+    ///
+    /// # Panics
+    ///
+    /// * If the contract is already initialized, then this function panics.
+    /// This ensures the contract is constructed only once.
     pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
-        if self._initialized.get() {
-            panic!("Ownable has already been initialized");
-        }
+        let is_initialized = self._initialized.get();
+        assert!(is_initialized, "Ownable has already been initialized");
 
         if initial_owner == Address::ZERO {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
@@ -83,7 +92,12 @@ impl Ownable {
         self._owner.get()
     }
 
-    /// Errors if called by any account other than the owner.
+    /// Checks if the [`msg::sender`] is set as the owner.
+    ///
+    /// # Errors
+    ///
+    /// * If called by any account other than the owner returns
+    /// [`Error::UnauthorizedAccount`].
     pub fn only_owner(&self) -> Result<(), Error> {
         let account = msg::sender();
         if self.owner() != account {
@@ -95,8 +109,18 @@ impl Ownable {
         Ok(())
     }
 
-    /// Transfers ownership of the contract to a new account (`new_owner`).
-    /// Can only be called by the current owner.
+    /// Transfers ownership of the contract to a new account (`new_owner`). Can
+    /// only be called by the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `new_owner` - The next owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * If `new_owner` is the zero address, then this function returns an
+    /// [`Error::OwnableInvalidOnwer`] error.
     pub fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -119,6 +143,10 @@ impl Ownable {
     ///
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby disabling any functionality that is only available to the owner.
+    ///
+    /// # Errors
+    ///
+    /// * If not called by the owner, then an [`Error::
     pub fn renounce_ownership(&mut self) -> Result<(), Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
