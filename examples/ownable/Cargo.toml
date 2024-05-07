@@ -9,18 +9,9 @@ version = "0.0.0"
 [dependencies]
 contracts = { path = "../../contracts", features = ["ownable", "erc20"] }
 alloy-primitives.workspace = true
-alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
-
-[features]
-default = []
-
-# Enables using the standard library. This is not included in the default
-# features, because this crate is meant to be used in a `no_std` environment.
-# Currently, the std feature is only used for testing purposes.
-std = []
 
 [lib]
 crate-type = ["lib", "cdylib"]

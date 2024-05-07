@@ -374,7 +374,6 @@ name = "ownable-example"
 version = "0.0.0"
 dependencies = [
  "alloy-primitives",
- "alloy-sol-types",
  "contracts",
  "mini-alloc",
  "stylus-proc",
