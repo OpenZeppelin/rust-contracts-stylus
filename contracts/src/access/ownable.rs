@@ -18,15 +18,18 @@ use stylus_sdk::{
 
 sol! {
     /// Emitted when ownership gets transferred between accounts.
+    #[allow(missing_docs)]
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 }
 
 sol! {
      /// The caller account is not authorized to perform an operation.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error OwnableUnauthorizedAccount(address account);
      /// The owner is not a valid owner account. (eg. `address(0)`)
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error OwnableInvalidOwner(address owner);
 }
 
