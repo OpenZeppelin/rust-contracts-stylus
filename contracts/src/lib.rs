@@ -13,6 +13,8 @@ pub mod erc20;
 #[cfg(any(feature = "std", feature = "erc721"))]
 pub mod erc721;
 
+pub mod utils;
+
 #[cfg(not(any(feature = "std", target_arch = "wasm32-unknown-unknown")))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
