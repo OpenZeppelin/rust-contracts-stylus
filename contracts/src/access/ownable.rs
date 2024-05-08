@@ -149,7 +149,8 @@ impl Ownable {
     ///
     /// # Errors
     ///
-    /// * If not called by the owner, then an [`Error::
+    /// * If not called by the owner, then an [`Error::UnauthorizedAccount`] is
+    /// returned.
     pub fn renounce_ownership(&mut self) -> Result<(), Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
@@ -160,6 +161,11 @@ impl Ownable {
 impl Ownable {
     /// Transfers ownership of the contract to a new account (`new_owner`).
     /// Internal function without access restriction.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `new_owner` - Account that's gonna be the next owner.
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let old_owner = self._owner.get();
         self._owner.set(new_owner);
