@@ -9,6 +9,15 @@ members = [
   "examples/erc721",
   "integration",
 ]
+default-members = [
+  "contracts",
+  "lib/crypto",
+  "lib/grip",
+  "lib/grip-proc",
+  "examples/erc20",
+  "examples/merkle-proofs",
+  "examples/erc721",
+]
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
 # https://doc.rust-lang.org/edition-guide/rust-2021/default-cargo-resolver.html
