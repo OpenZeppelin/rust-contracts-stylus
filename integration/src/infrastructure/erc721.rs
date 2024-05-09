@@ -60,6 +60,7 @@ impl Token for Erc721 {
     }
 }
 
+// TODO#q: remove call duplicates
 impl Client<Erc721> {
     pub async fn name(&self) -> eyre::Result<String> {
         self.caller
