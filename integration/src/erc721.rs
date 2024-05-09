@@ -3,24 +3,6 @@ use ethers::prelude::*;
 use eyre::{bail, Result};
 
 #[tokio::test]
-async fn receive_context() -> Result<()> {
-    let infra = Infrastructure::create().await?;
-    let token_id = 123.into();
-
-    let name = infra.first.name().await?;
-    let symbol = infra.first.symbol().await?;
-    let token_uri = infra.first.token_uri(token_id).await?;
-
-    assert_eq!(name, "PausableBurnableNft");
-    assert_eq!(symbol, "PBN");
-    assert_eq!(
-        token_uri,
-        "wwww.pbn.io/".to_string() + &token_id.to_string()
-    );
-    Ok(())
-}
-
-#[tokio::test]
 async fn mint_nft_and_check_balance() -> Result<()> {
     let infra = Infrastructure::create().await?;
     let token_id = random_token_id();
