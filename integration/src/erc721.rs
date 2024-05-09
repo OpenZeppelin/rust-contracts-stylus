@@ -8,13 +8,13 @@ async fn mint_nft_and_check_balance() -> Result<()> {
     let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
-        .first
-        .mint(infra.first.wallet.address(), token_id)
+        .alice
+        .mint(infra.alice.wallet.address(), token_id)
         .await?;
-    let owner = infra.first.owner_of(token_id).await?;
-    assert_eq!(owner, infra.first.wallet.address());
+    let owner = infra.alice.owner_of(token_id).await?;
+    assert_eq!(owner, infra.alice.wallet.address());
 
-    let balance = infra.first.balance_of(infra.first.wallet.address()).await?;
+    let balance = infra.alice.balance_of(infra.alice.wallet.address()).await?;
     assert!(balance >= U256::one());
     Ok(())
 }
@@ -24,12 +24,12 @@ async fn error_mint_second_nft() -> Result<()> {
     let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
-        .first
-        .mint(infra.first.wallet.address(), token_id)
+        .alice
+        .mint(infra.alice.wallet.address(), token_id)
         .await?;
     match infra
-        .first
-        .mint(infra.first.wallet.address(), token_id)
+        .alice
+        .mint(infra.alice.wallet.address(), token_id)
         .await
     {
         Ok(_) => {
@@ -46,19 +46,19 @@ async fn transfer_nft() -> Result<()> {
     let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
-        .first
-        .mint(infra.first.wallet.address(), token_id)
+        .alice
+        .mint(infra.alice.wallet.address(), token_id)
         .await?;
     let _ = infra
-        .first
+        .alice
         .transfer_from(
-            infra.first.wallet.address(),
-            infra.second.wallet.address(),
+            infra.alice.wallet.address(),
+            infra.bob.wallet.address(),
             token_id,
         )
         .await?;
-    let owner = infra.second.owner_of(token_id).await?;
-    assert_eq!(owner, infra.second.wallet.address());
+    let owner = infra.bob.owner_of(token_id).await?;
+    assert_eq!(owner, infra.bob.wallet.address());
     Ok(())
 }
 
@@ -67,10 +67,10 @@ async fn error_transfer_nonexistent_nft() -> Result<()> {
     let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     match infra
-        .first
+        .alice
         .transfer_from(
-            infra.first.wallet.address(),
-            infra.second.wallet.address(),
+            infra.alice.wallet.address(),
+            infra.bob.wallet.address(),
             token_id,
         )
         .await
@@ -87,23 +87,23 @@ async fn approve_nft_transfer() -> Result<()> {
     let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
-        .first
-        .mint(infra.first.wallet.address(), token_id)
+        .alice
+        .mint(infra.alice.wallet.address(), token_id)
         .await?;
     let _ = infra
-        .first
-        .approve(infra.second.wallet.address(), token_id)
+        .alice
+        .approve(infra.bob.wallet.address(), token_id)
         .await?;
     let _ = infra
-        .second
+        .bob
         .transfer_from(
-            infra.first.wallet.address(),
-            infra.second.wallet.address(),
+            infra.alice.wallet.address(),
+            infra.bob.wallet.address(),
             token_id,
         )
         .await?;
-    let owner = infra.second.owner_of(token_id).await?;
-    assert_eq!(owner, infra.second.wallet.address());
+    let owner = infra.bob.owner_of(token_id).await?;
+    assert_eq!(owner, infra.bob.wallet.address());
     Ok(())
 }
 
@@ -112,14 +112,14 @@ async fn error_not_approved_nft_transfer() -> Result<()> {
     let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
-        .first
-        .mint(infra.first.wallet.address(), token_id)
+        .alice
+        .mint(infra.alice.wallet.address(), token_id)
         .await?;
     match infra
-        .second
+        .bob
         .transfer_from(
-            infra.first.wallet.address(),
-            infra.second.wallet.address(),
+            infra.alice.wallet.address(),
+            infra.bob.wallet.address(),
             token_id,
         )
         .await
@@ -128,7 +128,7 @@ async fn error_not_approved_nft_transfer() -> Result<()> {
             bail!("Transfer of not approved token should not happen")
         }
         Err(e) => e.assert(ERC721InsufficientApproval {
-            operator: infra.second.wallet.address(),
+            operator: infra.bob.wallet.address(),
             token_id,
         }),
     }

@@ -13,25 +13,25 @@ use eyre::{bail, Context, ContextCompat, Report, Result};
 pub mod erc721;
 mod utils;
 
-const FIRST_PRIV_KEY_PATH: &str = "FIRST_PRIV_KEY_PATH";
-const SECOND_PRIV_KEY_PATH: &str = "SECOND_PRIV_KEY_PATH";
+const ALICE_PRIV_KEY_PATH: &str = "ALICE_PRIV_KEY_PATH";
+const BOB_PRIV_KEY_PATH: &str = "BOB_PRIV_KEY_PATH";
 const RPC_URL: &str = "RPC_URL";
 const STYLUS_PROGRAM_ADDRESS: &str = "STYLUS_PROGRAM_ADDRESS";
 
 pub struct Infrastructure<T: Token> {
-    pub first: Client<T>,
-    pub second: Client<T>,
+    pub alice: Client<T>,
+    pub bob: Client<T>,
 }
 
 impl<T: Token> Infrastructure<T> {
     pub async fn new() -> eyre::Result<Self> {
         dotenv().ok();
 
-        let first_priv_key_path = std::env::var(FIRST_PRIV_KEY_PATH)
-            .with_context(|| format!("Load {} env var", FIRST_PRIV_KEY_PATH))?;
-        let second_priv_key_path = std::env::var(SECOND_PRIV_KEY_PATH)
+        let alice_priv_key_path = std::env::var(ALICE_PRIV_KEY_PATH)
+            .with_context(|| format!("Load {} env var", ALICE_PRIV_KEY_PATH))?;
+        let bob_priv_key_path = std::env::var(BOB_PRIV_KEY_PATH)
             .with_context(|| {
-                format!("Load {} env var", SECOND_PRIV_KEY_PATH)
+                format!("Load {} env var", BOB_PRIV_KEY_PATH)
             })?;
         let rpc_url = std::env::var(RPC_URL)
             .with_context(|| format!("Load {} env var", RPC_URL))?;
@@ -42,22 +42,22 @@ impl<T: Token> Infrastructure<T> {
 
         let program_address: Address = stylus_program_address.parse()?;
         let provider = Provider::<Http>::try_from(rpc_url)?;
-        let first_priv_key =
-            std::fs::read_to_string(first_priv_key_path)?.trim().to_string();
-        let second_priv_key =
-            std::fs::read_to_string(second_priv_key_path)?.trim().to_string();
+        let alice_priv_key =
+            std::fs::read_to_string(alice_priv_key_path)?.trim().to_string();
+        let bob_priv_key =
+            std::fs::read_to_string(bob_priv_key_path)?.trim().to_string();
 
         Ok(Infrastructure {
-            first: Client::<T>::new(
+            alice: Client::new(
                 provider.clone(),
                 program_address,
-                first_priv_key,
+                alice_priv_key,
             )
             .await?,
-            second: Client::<T>::new(
+            bob: Client::new(
                 provider,
                 program_address,
-                second_priv_key,
+                bob_priv_key,
             )
             .await?,
         })
@@ -108,7 +108,7 @@ impl<E: AbiEncode> Assert<E> for Report {
         if received_err.contains(&expected_err) {
             Ok(())
         } else {
-            bail!("Different error expected: expected error is {expected_err}: received error is {received_err}")
+            bail!("Different error expected: Expected error is {expected_err}: Received error is {received_err}")
         }
     }
 }
