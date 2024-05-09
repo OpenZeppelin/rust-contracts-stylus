@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::string::String;
 
 use contracts::{
-    erc20::{extensions::Metadata, ERC20},
+    erc20::{extensions::metadata::Metadata, ERC20},
     erc20_burnable_impl,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};

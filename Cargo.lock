@@ -790,6 +790,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc721-example"
+version = "0.0.0"
+dependencies = [
+ "alloy-primitives",
+ "contracts",
+ "mini-alloc",
+ "stylus-proc",
+ "stylus-sdk",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
