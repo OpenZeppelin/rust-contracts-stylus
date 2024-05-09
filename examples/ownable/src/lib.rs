@@ -29,8 +29,6 @@ impl Token {
 
     pub fn transfer(&mut self, to: Address, value: U256) {
         self.ownable.only_owner().expect("caller doesn't own the contract");
-        self.erc20
-            .transfer(to, value)
-            .expect("recipient should not be Address::ZERO");
+        self.erc20.transfer(to, value).expect("should transfer the tokens");
     }
 }

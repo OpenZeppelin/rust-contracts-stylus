@@ -3,11 +3,11 @@
 //! specific functions.
 //!
 //! The initial owner is set to the address provided by the deployer. This can
-//! later be changed with {transferOwnership}.
+//! later be changed with [`Ownable::transfer_ownership`].
 //!
-//! This module is used through inheritance. It will make available the modifier
-//! `onlyOwner`, which can be applied to your functions to restrict their use to
-//! the owner.
+//! This module is used through inheritance. It will make available the
+//! [`Ownable::only_owner`] function, which can be called to restrict operations
+//! to the owner.
 use alloy_primitives::Address;
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
@@ -23,22 +23,26 @@ sol! {
 }
 
 sol! {
-     /// The caller account is not authorized to perform an operation.
+    /// The caller account is not authorized to perform an operation.
+    ///
+    /// * `account` - Account that was found to not be authorized.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error OwnableUnauthorizedAccount(address account);
-     /// The owner is not a valid owner account. (eg. `address(0)`)
+    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+    ///
+    /// * `owner` - Account that's not allowed to become the owner.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error OwnableInvalidOwner(address owner);
 }
 
-/// An error that occurred in the implementation of an `Ownable` contract.
+/// An error that occurred in the implementation of an [`Ownable`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// The caller account is not authorized to perform an operation.
     UnauthorizedAccount(OwnableUnauthorizedAccount),
-    /// The owner is not a valid owner account. (eg. `address(0)`)
+    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
     InvalidOwner(OwnableInvalidOwner),
 }
 
@@ -236,7 +240,9 @@ mod tests {
         assert!(result.is_ok());
 
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let _ = contract.transfer_ownership(alice).unwrap();
+        let _ = contract
+            .transfer_ownership(alice)
+            .expect("should transfer ownership");
         let owner = contract._owner.get();
         assert_eq!(owner, alice);
     }
