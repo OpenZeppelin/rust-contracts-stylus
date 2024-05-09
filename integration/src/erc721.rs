@@ -1,10 +1,11 @@
 use crate::infrastructure::*;
+use crate::infrastructure::erc721::*;
 use ethers::prelude::*;
 use eyre::{bail, Result};
 
 #[tokio::test]
 async fn mint_nft_and_check_balance() -> Result<()> {
-    let infra = Infrastructure::create().await?;
+    let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
         .first
@@ -20,7 +21,7 @@ async fn mint_nft_and_check_balance() -> Result<()> {
 
 #[tokio::test]
 async fn error_mint_second_nft() -> Result<()> {
-    let infra = Infrastructure::create().await?;
+    let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
         .first
@@ -34,7 +35,7 @@ async fn error_mint_second_nft() -> Result<()> {
         Ok(_) => {
             bail!("Second mint of the same token should not be possible")
         }
-        Err(e) => e.assert_has(ERC721InvalidSender {
+        Err(e) => e.assert(ERC721InvalidSender {
             sender: Address::zero(),
         }),
     }
@@ -42,7 +43,7 @@ async fn error_mint_second_nft() -> Result<()> {
 
 #[tokio::test]
 async fn transfer_nft() -> Result<()> {
-    let infra = Infrastructure::create().await?;
+    let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
         .first
@@ -63,7 +64,7 @@ async fn transfer_nft() -> Result<()> {
 
 #[tokio::test]
 async fn error_transfer_nonexistent_nft() -> Result<()> {
-    let infra = Infrastructure::create().await?;
+    let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     match infra
         .first
@@ -77,13 +78,13 @@ async fn error_transfer_nonexistent_nft() -> Result<()> {
         Ok(_) => {
             bail!("Transfer of a non existent nft should not be possible")
         }
-        Err(e) => e.assert_has(ERC721NonexistentToken { token_id }),
+        Err(e) => e.assert(ERC721NonexistentToken { token_id }),
     }
 }
 
 #[tokio::test]
 async fn approve_nft_transfer() -> Result<()> {
-    let infra = Infrastructure::create().await?;
+    let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
         .first
@@ -108,7 +109,7 @@ async fn approve_nft_transfer() -> Result<()> {
 
 #[tokio::test]
 async fn error_not_approved_nft_transfer() -> Result<()> {
-    let infra = Infrastructure::create().await?;
+    let infra = Infrastructure::new().await?;
     let token_id = random_token_id();
     let _ = infra
         .first
@@ -126,7 +127,7 @@ async fn error_not_approved_nft_transfer() -> Result<()> {
         Ok(_) => {
             bail!("Transfer of not approved token should not happen")
         }
-        Err(e) => e.assert_has(ERC721InsufficientApproval {
+        Err(e) => e.assert(ERC721InsufficientApproval {
             operator: infra.second.wallet.address(),
             token_id,
         }),
