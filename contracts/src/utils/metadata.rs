@@ -32,10 +32,14 @@ impl Metadata {
     /// * `&mut self` - Write access to the contract's state.
     /// * `name` - The name of the token.
     /// * `symbol` - The symbol of the token.
+    ///
+    /// # Panics
+    ///
+    /// * If the contract is already initialized, then this function panics.
+    /// This ensures the contract is constructed only once.
     pub fn constructor(&mut self, name: String, symbol: String) {
-        if self._initialized.get() {
-            return;
-        }
+        let is_initialized = self._initialized.get();
+        assert!(!is_initialized, "Metadata has already been initialized");
 
         self._name.set_str(name);
         self._symbol.set_str(symbol);
@@ -105,18 +109,12 @@ mod tests {
     }
 
     #[grip::test]
+    #[should_panic = "Metadata has already been initialized"]
     fn constructs_only_once(meta: Metadata) {
         const NAME: &str = "Meta";
         const SYMBOL: &str = "Symbol";
         meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
 
         meta.constructor("Invalid".to_owned(), "Invalid".to_owned());
-
-        let name = meta.name();
-        let symbol = meta.symbol();
-        let initialized = meta._initialized.get();
-        assert_eq!(name, NAME);
-        assert_eq!(symbol, SYMBOL);
-        assert_eq!(initialized, true);
     }
 }

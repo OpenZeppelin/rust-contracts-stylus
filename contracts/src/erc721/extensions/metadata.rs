@@ -1,30 +1,26 @@
-//! Optional metadata of the ERC-20 standard.
+//! Optional metadata of the ERC-721 standard.
 
 use alloc::string::String;
 
 use stylus_proc::{external, sol_storage};
 
-/// Number of decimals used by default on implementors of [`Metadata`].
-pub const DEFAULT_DECIMALS: u8 = 18;
-
 use crate::utils::Metadata;
 
 sol_storage! {
-    /// Metadata of the ERC20 token.
-    ///
-    /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
-    #[cfg_attr(test, derive(Default))]
-    pub struct ERC20Metadata {
+    /// Metadata of the ERC-721 token.
+    pub struct ERC721Metadata {
         /// Common Metadata.
-        Metadata _metadata
+        Metadata _metadata;
+        /// Base URI for tokens
+        string _base_uri;
     }
 }
 
-// TODO: Apply multi-level inheritance to export Metadata's functions.
+// FIXME: Apply multi-level inheritance to export Metadata's functions.
 // With the current version of SDK it is not possible.
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[external]
-impl ERC20Metadata {
+impl ERC721Metadata {
     /// Initializes a [`Metadata`] instance with the passed `name` and
     /// `symbol`. It also sets `decimals` to [`DEFAULT_DECIMALS`].
     ///
@@ -36,8 +32,19 @@ impl ERC20Metadata {
     /// * `&mut self` - Write access to the contract's state.
     /// * `name` - The name of the token.
     /// * `symbol` - The symbol of the token.
-    pub fn constructor(&mut self, name: String, symbol: String) {
+    ///
+    /// # Panics
+    ///
+    /// * If the contract is already initialized, then this function panics.
+    /// This ensures the contract is constructed only once.
+    pub fn constructor(
+        &mut self,
+        name: String,
+        symbol: String,
+        base_uri: String,
+    ) {
         self._metadata.constructor(name, symbol);
+        self._base_uri.set_str(base_uri);
     }
 
     /// Returns the name of the token.
@@ -58,67 +65,80 @@ impl ERC20Metadata {
         self._metadata.symbol()
     }
 
-    /// Returns the number of decimals used to get a user-friendly
-    /// representation of values of this token.
-    ///
-    /// For example, if `decimals` equals `2`, a balance of `505` tokens should
-    /// be displayed to a user as `5.05` (`505 / 10 ** 2`).
-    ///
-    /// Tokens usually opt for a value of `18`, imitating the relationship
-    /// between Ether and Wei. This is the default value returned by this
-    /// function ([`DEFAULT_DECIMALS`]), unless it's overridden.
+    /// Returns the base URI of the token.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    ///
-    /// NOTE: This information is only used for *display* purposes: in
-    /// no way it affects any of the arithmetic of the contract, including
-    /// [`ERC20::balance_of`] and [`ERC20::transfer`].
-    pub fn decimals(&self) -> u8 {
-        // TODO: Use `U8` an avoid the conversion once https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
-        // gets resolved.
-        DEFAULT_DECIMALS
+    pub fn base_uri(&self) -> String {
+        self._base_uri.get_string()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use alloy_primitives::U256;
+    use stylus_sdk::{prelude::StorageType, storage::StorageString};
 
-    use super::{ERC20Metadata, DEFAULT_DECIMALS};
+    use super::ERC721Metadata;
+    use crate::utils::Metadata;
 
+    impl Default for ERC721Metadata {
+        fn default() -> Self {
+            let root = U256::ZERO;
+            Self {
+                _metadata: Metadata::default(),
+                _base_uri: unsafe {
+                    StorageString::new(root + U256::from(96), 0)
+                },
+            }
+        }
+    }
     #[grip::test]
-    fn constructs(meta: ERC20Metadata) {
+    fn constructs(meta: ERC721Metadata) {
         let name = meta.name();
         let symbol = meta.symbol();
-        let decimals = meta.decimals();
         let initialized = meta._metadata._initialized.get();
         assert_eq!(name, "");
         assert_eq!(symbol, "");
-        assert_eq!(decimals, DEFAULT_DECIMALS);
         assert_eq!(initialized, false);
 
         const NAME: &str = "Meta";
         const SYMBOL: &str = "Symbol";
-        meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
+        const BASE_URI: &str = "URI";
+        meta.constructor(
+            NAME.to_owned(),
+            SYMBOL.to_owned(),
+            BASE_URI.to_owned(),
+        );
 
         let name = meta.name();
         let symbol = meta.symbol();
-        let decimals = meta.decimals();
         let initialized = meta._metadata._initialized.get();
+        let base_uri = meta.base_uri();
         assert_eq!(name, NAME);
         assert_eq!(symbol, SYMBOL);
-        assert_eq!(decimals, DEFAULT_DECIMALS);
         assert_eq!(initialized, true);
+        assert_eq!(base_uri, BASE_URI);
     }
 
     #[grip::test]
     #[should_panic = "Metadata has already been initialized"]
-    fn constructs_only_once(meta: ERC20Metadata) {
+    fn constructs_only_once(meta: ERC721Metadata) {
         const NAME: &str = "Meta";
         const SYMBOL: &str = "Symbol";
-        meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
+        const BASE_URI: &str = "URI";
 
-        meta.constructor("Invalid".to_owned(), "Invalid".to_owned());
+        meta.constructor(
+            NAME.to_owned(),
+            SYMBOL.to_owned(),
+            BASE_URI.to_owned(),
+        );
+
+        meta.constructor(
+            "Invalid".to_owned(),
+            "Invalid".to_owned(),
+            "Invalid".to_owned(),
+        );
     }
 }

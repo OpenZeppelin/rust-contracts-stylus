@@ -9,6 +9,8 @@ use stylus_sdk::{
 
 use crate::arithmetic::{AddAssignUnchecked, SubAssignUnchecked};
 
+pub mod extensions;
+
 sol! {
     /// Emitted when the `tokenId` token is transferred from `from` to `to`.
     ///
