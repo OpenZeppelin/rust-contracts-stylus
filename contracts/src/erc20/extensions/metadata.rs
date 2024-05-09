@@ -1,4 +1,4 @@
-//! Optional metadata of the ERC-20 standard.
+//! Optional Metadata of the ERC-20 standard.
 
 use alloc::string::String;
 
@@ -20,7 +20,7 @@ sol_storage! {
     }
 }
 
-// TODO: Apply multi-level inheritance to export Metadata's functions.
+// FIXME: Apply multi-level inheritance to export Metadata's functions.
 // With the current version of SDK it is not possible.
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[external]
@@ -36,6 +36,11 @@ impl ERC20Metadata {
     /// * `&mut self` - Write access to the contract's state.
     /// * `name` - The name of the token.
     /// * `symbol` - The symbol of the token.
+    ///
+    /// # Panics
+    ///
+    /// * If the contract is already initialized, then this function panics.
+    /// This ensures the contract is constructed only once.
     pub fn constructor(&mut self, name: String, symbol: String) {
         self._metadata.constructor(name, symbol);
     }

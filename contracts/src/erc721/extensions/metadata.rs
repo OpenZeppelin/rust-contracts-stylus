@@ -1,4 +1,4 @@
-//! Optional metadata of the ERC-721 standard.
+//! Optional Metadata of the ERC-721 standard.
 
 use alloc::string::String;
 
@@ -21,8 +21,8 @@ sol_storage! {
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[external]
 impl ERC721Metadata {
-    /// Initializes a [`Metadata`] instance with the passed `name` and
-    /// `symbol`. It also sets `decimals` to [`DEFAULT_DECIMALS`].
+    /// Initializes a [`Metadata`] instance with the passed `name`,
+    /// `symbol`, and `base_uri`.
     ///
     /// Note that there are no setters for these fields. This makes them
     /// immutable: they can only be set once at construction.
@@ -30,8 +30,9 @@ impl ERC721Metadata {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `name` - The name of the token.
-    /// * `symbol` - The symbol of the token.
+    /// * `name` - Token collection name.
+    /// * `symbol` - Token collection symbol.
+    /// * `base_uri` - Base of URI for tokens' collection.
     ///
     /// # Panics
     ///
@@ -47,7 +48,7 @@ impl ERC721Metadata {
         self._base_uri.set_str(base_uri);
     }
 
-    /// Returns the name of the token.
+    /// Returns the token collection name.
     ///
     /// # Arguments
     ///
@@ -56,7 +57,7 @@ impl ERC721Metadata {
         self._metadata.name()
     }
 
-    /// Returns the symbol of the token, usually a shorter version of the name.
+    /// Returns token collection symbol.
     ///
     /// # Arguments
     ///
@@ -65,7 +66,8 @@ impl ERC721Metadata {
         self._metadata.symbol()
     }
 
-    /// Returns the base URI of the token.
+    /// Returns the base of Uniform Resource Identifier (URI) for tokens'
+    /// collection.
     ///
     /// # Arguments
     ///
