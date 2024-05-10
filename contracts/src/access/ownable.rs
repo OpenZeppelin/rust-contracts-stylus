@@ -203,6 +203,8 @@ mod tests {
         }
     }
 
+    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
     #[grip::test]
     fn rejects_zero_address_initial_owner(contract: Ownable) {
         // FIXME: Once constructors are supported this check should fail.
@@ -221,8 +223,7 @@ mod tests {
         let owner = contract._owner.get();
         assert_eq!(owner, msg::sender());
 
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let _ = contract.constructor(alice);
+        let _ = contract.constructor(ALICE);
     }
 
     #[grip::test]
@@ -239,19 +240,17 @@ mod tests {
         let result = contract.constructor(msg::sender());
         assert!(result.is_ok());
 
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let _ = contract
-            .transfer_ownership(alice)
+            .transfer_ownership(ALICE)
             .expect("should transfer ownership");
         let owner = contract._owner.get();
-        assert_eq!(owner, alice);
+        assert_eq!(owner, ALICE);
     }
 
     #[grip::test]
     fn prevents_non_onwers_from_transferring(contract: Ownable) {
         // Alice must be set as owner, because we can't set the msg::sender yet.
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let result = contract.constructor(alice);
+        let result = contract.constructor(ALICE);
         assert!(result.is_ok());
 
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -281,8 +280,7 @@ mod tests {
     #[grip::test]
     fn prevents_non_owners_from_renouncing(contract: Ownable) {
         // Alice must be set as owner, because we can't set the msg::sender yet.
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let result = contract.constructor(alice);
+        let result = contract.constructor(ALICE);
         assert!(result.is_ok());
 
         let err = contract.renounce_ownership().unwrap_err();
@@ -294,9 +292,8 @@ mod tests {
         let result = contract.constructor(msg::sender());
         assert!(result.is_ok());
 
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        contract._transfer_ownership(alice);
+        contract._transfer_ownership(ALICE);
         let owner = contract._owner.get();
-        assert_eq!(owner, alice);
+        assert_eq!(owner, ALICE);
     }
 }
