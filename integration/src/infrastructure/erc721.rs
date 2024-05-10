@@ -55,6 +55,8 @@ abigen!(
 pub type Erc721 = Erc721Token<HttpMiddleware>;
 
 impl Token for Erc721 {
+    const STYLUS_PROGRAM_ADDRESS: &'static str = "ERC721_DEPLOYMENT_ADDRESS";
+
     fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self {
         Erc721Token::new(address, client)
     }
@@ -67,7 +69,7 @@ impl Client<Erc721> {
             .name()
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 
     pub async fn symbol(&self) -> eyre::Result<String> {
@@ -75,7 +77,7 @@ impl Client<Erc721> {
             .symbol()
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 
     pub async fn token_uri(&self, token_id: U256) -> eyre::Result<String> {
@@ -83,7 +85,7 @@ impl Client<Erc721> {
             .token_uri(token_id)
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 
     pub async fn balance_of(&self, owner: Address) -> eyre::Result<U256> {
@@ -91,7 +93,7 @@ impl Client<Erc721> {
             .balance_of(owner)
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 
     pub async fn mint(
@@ -102,9 +104,9 @@ impl Client<Erc721> {
         self.caller
             .mint(to, token_id)
             .send()
-            .await?
-            .await?
-            .context(format!("Error sending {}", function!()))
+            .await.context(format!("sending {}", function!()))?
+            .await.context(format!("sending {}", function!()))?
+            .context(format!("sending {}", function!()))
     }
 
     pub async fn burn(
@@ -114,9 +116,9 @@ impl Client<Erc721> {
         self.caller
             .burn(token_id)
             .send()
-            .await?
-            .await?
-            .context(format!("Error sending {}", function!()))
+            .await.context(format!("sending {}", function!()))?
+            .await.context(format!("sending {}", function!()))?
+            .context(format!("sending {}", function!()))
     }
 
     pub async fn transfer_from(
@@ -128,9 +130,9 @@ impl Client<Erc721> {
         self.caller
             .transfer_from(from, to, token_id)
             .send()
-            .await?
-            .await?
-            .context(format!("Error sending {}", function!()))
+            .await.context(format!("sending {}", function!()))?
+            .await.context(format!("sending {}", function!()))?
+            .context(format!("sending {}", function!()))
     }
 
     pub async fn owner_of(&self, token_id: U256) -> eyre::Result<Address> {
@@ -138,7 +140,7 @@ impl Client<Erc721> {
             .owner_of(token_id)
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 
     pub async fn approve(
@@ -149,9 +151,9 @@ impl Client<Erc721> {
         self.caller
             .approve(to, token_id)
             .send()
-            .await?
-            .await?
-            .context(format!("Error sending {}", function!()))
+            .await.context(format!("sending {}", function!()))?
+            .await.context(format!("sending {}", function!()))?
+            .context(format!("sending {}", function!()))
     }
 
     pub async fn get_approved(&self, token_id: U256) -> eyre::Result<Address> {
@@ -159,7 +161,7 @@ impl Client<Erc721> {
             .get_approved(token_id)
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 
     pub async fn paused(&self) -> eyre::Result<bool> {
@@ -167,25 +169,25 @@ impl Client<Erc721> {
             .paused()
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 
     pub async fn pause(&self) -> eyre::Result<TransactionReceipt> {
         self.caller
             .pause()
             .send()
-            .await?
-            .await?
-            .context(format!("Error sending {}", function!()))
+            .await.context(format!("sending {}", function!()))?
+            .await.context(format!("sending {}", function!()))?
+            .context(format!("sending {}", function!()))
     }
 
     pub async fn unpause(&self) -> eyre::Result<TransactionReceipt> {
         self.caller
             .unpause()
             .send()
-            .await?
-            .await?
-            .context(format!("Error sending {}", function!()))
+            .await.context(format!("sending {}", function!()))?
+            .await.context(format!("sending {}", function!()))?
+            .context(format!("sending {}", function!()))
     }
 
     pub async fn support_interface(
@@ -197,6 +199,6 @@ impl Client<Erc721> {
             .supports_interface(interface_id)
             .call()
             .await
-            .context(format!("Error calling {}", function!()))
+            .context(format!("calling {}", function!()))
     }
 }

@@ -35,10 +35,11 @@ impl<T: Token> Infrastructure<T> {
             })?;
         let rpc_url = std::env::var(RPC_URL)
             .with_context(|| format!("Load {} env var", RPC_URL))?;
-        let stylus_program_address = std::env::var(STYLUS_PROGRAM_ADDRESS)
+        let stylus_program_address = std::env::var(T::STYLUS_PROGRAM_ADDRESS)
             .with_context(|| {
-                format!("Load {} env var", STYLUS_PROGRAM_ADDRESS)
+                format!("Load {} env var", T::STYLUS_PROGRAM_ADDRESS)
             })?;
+        dbg!(&stylus_program_address);
 
         let program_address: Address = stylus_program_address.parse()?;
         let provider = Provider::<Http>::try_from(rpc_url)?;
@@ -66,9 +67,9 @@ pub struct Client<T: Token> {
 }
 
 pub trait Token {
-    fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self;
+    const STYLUS_PROGRAM_ADDRESS: &'static str;
     
-    // TODO#q: add get programm address method
+    fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self;
 }
 
 pub type HttpMiddleware = SignerMiddleware<Provider<Http>, LocalWallet>;
