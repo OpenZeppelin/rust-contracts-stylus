@@ -13,8 +13,8 @@ use eyre::{bail, Context, ContextCompat, Report, Result};
 pub mod erc721;
 mod utils;
 
-const ALICE_PRIV_KEY_PATH: &str = "ALICE_PRIV_KEY_PATH";
-const BOB_PRIV_KEY_PATH: &str = "BOB_PRIV_KEY_PATH";
+const ALICE_PRIV_KEY: &str = "ALICE_PRIV_KEY";
+const BOB_PRIV_KEY: &str = "BOB_PRIV_KEY";
 const RPC_URL: &str = "RPC_URL";
 const STYLUS_PROGRAM_ADDRESS: &str = "STYLUS_PROGRAM_ADDRESS";
 
@@ -27,11 +27,11 @@ impl<T: Token> Infrastructure<T> {
     pub async fn new() -> eyre::Result<Self> {
         dotenv().ok();
 
-        let alice_priv_key_path = std::env::var(ALICE_PRIV_KEY_PATH)
-            .with_context(|| format!("Load {} env var", ALICE_PRIV_KEY_PATH))?;
-        let bob_priv_key_path = std::env::var(BOB_PRIV_KEY_PATH)
+        let alice_priv_key = std::env::var(ALICE_PRIV_KEY)
+            .with_context(|| format!("Load {} env var", ALICE_PRIV_KEY))?;
+        let bob_priv_key = std::env::var(BOB_PRIV_KEY)
             .with_context(|| {
-                format!("Load {} env var", BOB_PRIV_KEY_PATH)
+                format!("Load {} env var", BOB_PRIV_KEY)
             })?;
         let rpc_url = std::env::var(RPC_URL)
             .with_context(|| format!("Load {} env var", RPC_URL))?;
@@ -42,10 +42,6 @@ impl<T: Token> Infrastructure<T> {
 
         let program_address: Address = stylus_program_address.parse()?;
         let provider = Provider::<Http>::try_from(rpc_url)?;
-        let alice_priv_key =
-            std::fs::read_to_string(alice_priv_key_path)?.trim().to_string();
-        let bob_priv_key =
-            std::fs::read_to_string(bob_priv_key_path)?.trim().to_string();
 
         Ok(Infrastructure {
             alice: Client::new(
@@ -71,6 +67,8 @@ pub struct Client<T: Token> {
 
 pub trait Token {
     fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self;
+    
+    // TODO#q: add get programm address method
 }
 
 pub type HttpMiddleware = SignerMiddleware<Provider<Http>, LocalWallet>;
