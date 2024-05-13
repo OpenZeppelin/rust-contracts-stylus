@@ -152,7 +152,7 @@ impl AccessControl {
     /// Returns the admin role that controls `role`. See [`Self::grant_role`]
     /// and [`Self::revoke_role`].
     ///
-    /// To change a role's adming, use [`Self::set_role_admin`].
+    /// To change a role's admin, use [`Self::set_role_admin`].
     ///
     /// # Arguments
     ///
