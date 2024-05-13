@@ -112,7 +112,6 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "cfg-if 1.0.0",
- "derive_more",
  "grip",
  "mini-alloc",
  "once_cell",
@@ -564,9 +563,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-proc"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "366c3323b03fc99c7d0124cec4eee10e37a226a14b08829a416feec9f2ebb641"
+checksum = "9f274700c5c74abfcc9068f96564615173d8fed72ea44afd1e4404bb04478c00"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -583,9 +582,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-sdk"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74778bf11048b0155b937ee6d52440709d864aa488843238b62272e6c9bdbc1a"
+checksum = "f4424e5f067b1b0922a4294efc01acaa1e36bfc7b31e6b0aed33d7221680f974"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",

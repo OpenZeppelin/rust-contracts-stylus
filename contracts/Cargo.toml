@@ -15,7 +15,6 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
-derive_more = "0.99.17"
 cfg-if = "1.0"
 
 [dev-dependencies]

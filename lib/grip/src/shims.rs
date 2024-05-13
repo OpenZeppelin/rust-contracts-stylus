@@ -132,7 +132,7 @@ pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
 ///
 /// [`SSTORE`]: https://www.evm.codes/#55
 #[no_mangle]
-pub unsafe extern "C" fn storage_store_bytes32(
+pub unsafe extern "C" fn storage_cache_bytes32(
     key: *const u8,
     value: *const u8,
 ) {
