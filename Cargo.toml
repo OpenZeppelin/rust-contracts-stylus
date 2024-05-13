@@ -7,6 +7,7 @@ members = [
   "examples/erc20",
   "examples/erc721",
   "examples/merkle-proofs",
+  "examples/ownable",
 ]
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.

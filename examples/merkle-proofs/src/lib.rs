@@ -14,12 +14,6 @@ use stylus_sdk::{
     prelude::{entrypoint, external, sol_storage},
 };
 
-sol! {
-    error MerkleProofInvalidMultiProofLength();
-    error MerkleProofInvalidRootChild();
-    error MerkleProofInvalidTotalHashes();
-}
-
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
@@ -31,6 +25,12 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
+}
+
+sol! {
+    error MerkleProofInvalidMultiProofLength();
+    error MerkleProofInvalidRootChild();
+    error MerkleProofInvalidTotalHashes();
 }
 
 #[derive(SolidityError)]
