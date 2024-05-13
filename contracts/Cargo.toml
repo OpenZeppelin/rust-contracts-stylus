@@ -37,6 +37,7 @@ erc721_metadata = ["erc721"]
 
 access = []
 ownable = ["access"]
+access_control = ["access"]
 
 # Enables using the standard library. This is not included in the default
 # features, because this crate is meant to be used in a `no_std` environment.
