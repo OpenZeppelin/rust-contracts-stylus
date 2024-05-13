@@ -1,6 +1,5 @@
 use std::{str::FromStr, sync::Arc};
 
-use dotenv::dotenv;
 use ethers::{
     abi::AbiEncode,
     middleware::{Middleware, SignerMiddleware},
@@ -9,7 +8,6 @@ use ethers::{
     types::{Address, U256},
 };
 use eyre::{bail, Context, ContextCompat, Report, Result};
-
 pub mod erc721;
 mod utils;
 
@@ -25,20 +23,16 @@ pub struct Infrastructure<T: Token> {
 
 impl<T: Token> Infrastructure<T> {
     pub async fn new() -> eyre::Result<Self> {
-        dotenv().ok();
-
         let alice_priv_key = std::env::var(ALICE_PRIV_KEY)
             .with_context(|| format!("Load {} env var", ALICE_PRIV_KEY))?;
         let bob_priv_key = std::env::var(BOB_PRIV_KEY)
-            .with_context(|| {
-                format!("Load {} env var", BOB_PRIV_KEY)
-            })?;
+            .with_context(|| format!("Load {} env var", BOB_PRIV_KEY))?;
         let rpc_url = std::env::var(RPC_URL)
             .with_context(|| format!("Load {} env var", RPC_URL))?;
         let stylus_program_address = std::env::var(T::STYLUS_PROGRAM_ADDRESS)
             .with_context(|| {
-                format!("Load {} env var", T::STYLUS_PROGRAM_ADDRESS)
-            })?;
+            format!("Load {} env var", T::STYLUS_PROGRAM_ADDRESS)
+        })?;
         dbg!(&stylus_program_address);
 
         let program_address: Address = stylus_program_address.parse()?;
@@ -51,12 +45,7 @@ impl<T: Token> Infrastructure<T> {
                 alice_priv_key,
             )
             .await?,
-            bob: Client::new(
-                provider,
-                program_address,
-                bob_priv_key,
-            )
-            .await?,
+            bob: Client::new(provider, program_address, bob_priv_key).await?,
         })
     }
 }
@@ -68,7 +57,7 @@ pub struct Client<T: Token> {
 
 pub trait Token {
     const STYLUS_PROGRAM_ADDRESS: &'static str;
-    
+
     fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self;
 }
 
