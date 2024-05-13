@@ -19,9 +19,11 @@ sol! {
     /// another (`to`).
     ///
     /// Note that `value` may be zero.
+    #[allow(missing_docs)]
     event Transfer(address indexed from, address indexed to, uint256 value);
     /// Emitted when the allowance of a `spender` for an `owner` is set by a
     /// call to `approve`. `value` is the new allowance.
+    #[allow(missing_docs)]
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -33,16 +35,19 @@ sol! {
     /// * `balance` - Current balance for the interacting account.
     /// * `needed` - Minimum amount required to perform a transfer.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
     /// Indicates a failure with the token `sender`. Used in transfers.
     ///
     /// * `sender` - Address whose tokens are being transferred.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC20InvalidSender(address sender);
     /// Indicates a failure with the token `receiver`. Used in transfers.
     ///
     /// * `receiver` - Address to which the tokens are being transferred.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC20InvalidReceiver(address receiver);
     /// Indicates a failure with the `spender`’s `allowance`. Used in
     /// transfers.
@@ -53,6 +58,7 @@ sol! {
     /// with.
     /// * `needed` - Minimum amount required to perform a transfer.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
@@ -60,6 +66,7 @@ sol! {
     /// * `spender` - Address that may be allowed to operate on tokens without
     /// being their owner.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC20InvalidSpender(address spender);
 
 }
