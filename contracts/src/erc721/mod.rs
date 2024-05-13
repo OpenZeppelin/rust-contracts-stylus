@@ -1037,10 +1037,10 @@ impl ERC721 {
                 data.to_vec(),
             ) {
                 Ok(result) => {
-                    if result != IERC721RECEIVER_INTERFACE_ID {
-                        Err(ERC721InvalidReceiver { receiver: to }.into())
-                    } else {
+                    if result == IERC721RECEIVER_INTERFACE_ID {
                         Ok(())
+                    } else {
+                        Err(ERC721InvalidReceiver { receiver: to }.into())
                     }
                 }
                 Err(_) => Err(ERC721InvalidReceiver { receiver: to }.into()),
@@ -1177,7 +1177,39 @@ mod tests {
         ));
     }
 
-    // TODO: add set_approval_for_all test
+    #[grip::test]
+    fn approval_for_all(contract: ERC721) {
+        contract._operator_approvals.setter(*ALICE).setter(BOB).set(false);
 
+        contract
+            .set_approval_for_all(BOB, true)
+            .expect("approve bob for operations on all Alice's tokens");
+        assert_eq!(contract.is_approved_for_all(*ALICE, BOB), true);
+
+        contract
+            .set_approval_for_all(BOB, false)
+            .expect("disapprove bob for operations on all Alice's tokens");
+        assert_eq!(contract.is_approved_for_all(*ALICE, BOB), false);
+    }
+
+    #[grip::test]
+    fn test_transfer_token_approved_for_all(contract: ERC721) {
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("mint token to Bob");
+
+        // As we cannot change msg::sender, we need to use this workaround.
+        contract._operator_approvals.setter(BOB).setter(*ALICE).set(true);
+
+        let approved_for_all = contract.is_approved_for_all(BOB, *ALICE);
+        assert_eq!(approved_for_all, true);
+
+        contract
+            .transfer_from(BOB, *ALICE, token_id)
+            .expect("transfer Bob's token to Alice");
+
+        let owner =
+            contract.owner_of(token_id).expect("get the owner of the token");
+        assert_eq!(owner, *ALICE);
+    }
     // TODO: add mock test for on_erc721_received
 }
