@@ -13,7 +13,6 @@ use ethers::{
 use eyre::{bail, Context, ContextCompat, Report, Result};
 
 pub mod erc721;
-mod utils;
 
 const ALICE_PRIV_KEY: &str = "ALICE_PRIV_KEY";
 const BOB_PRIV_KEY: &str = "BOB_PRIV_KEY";
