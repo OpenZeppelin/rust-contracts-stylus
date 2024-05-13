@@ -252,7 +252,8 @@ impl ERC721 {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        // TODO: use bytes! macro later
+        // TODO: Once the SDK supports the conversion,
+        // use alloy_primitives::bytes!("") here
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
@@ -1212,4 +1213,5 @@ mod tests {
         assert_eq!(owner, *ALICE);
     }
     // TODO: add mock test for on_erc721_received
+    // Should be done in integration tests.
 }
