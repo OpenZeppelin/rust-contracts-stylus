@@ -58,147 +58,147 @@ impl Token for Erc721 {
     const STYLUS_PROGRAM_ADDRESS: &'static str = "ERC721_DEPLOYMENT_ADDRESS";
 
     fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self {
-        Erc721Token::new(address, client)
+        Self::new(address, client)
     }
 }
 
 // TODO#q: remove call duplicates
-impl Client<Erc721> {
-    pub async fn name(&self) -> eyre::Result<String> {
-        self.caller
-            .name()
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-
-    pub async fn symbol(&self) -> eyre::Result<String> {
-        self.caller
-            .symbol()
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-
-    pub async fn token_uri(&self, token_id: U256) -> eyre::Result<String> {
-        self.caller
-            .token_uri(token_id)
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-
-    pub async fn balance_of(&self, owner: Address) -> eyre::Result<U256> {
-        self.caller
-            .balance_of(owner)
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-
-    pub async fn mint(
-        &self,
-        to: Address,
-        token_id: U256,
-    ) -> eyre::Result<TransactionReceipt> {
-        self.caller
-            .mint(to, token_id)
-            .send()
-            .await.context(format!("sending {}", function!()))?
-            .await.context(format!("sending {}", function!()))?
-            .context(format!("sending {}", function!()))
-    }
-
-    pub async fn burn(
-        &self,
-        token_id: U256,
-    ) -> eyre::Result<TransactionReceipt> {
-        self.caller
-            .burn(token_id)
-            .send()
-            .await.context(format!("sending {}", function!()))?
-            .await.context(format!("sending {}", function!()))?
-            .context(format!("sending {}", function!()))
-    }
-
-    pub async fn transfer_from(
-        &self,
-        from: Address,
-        to: Address,
-        token_id: U256,
-    ) -> eyre::Result<TransactionReceipt> {
-        self.caller
-            .transfer_from(from, to, token_id)
-            .send()
-            .await.context(format!("sending {}", function!()))?
-            .await.context(format!("sending {}", function!()))?
-            .context(format!("sending {}", function!()))
-    }
-
-    pub async fn owner_of(&self, token_id: U256) -> eyre::Result<Address> {
-        self.caller
-            .owner_of(token_id)
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-
-    pub async fn approve(
-        &self,
-        to: Address,
-        token_id: U256,
-    ) -> eyre::Result<TransactionReceipt> {
-        self.caller
-            .approve(to, token_id)
-            .send()
-            .await.context(format!("sending {}", function!()))?
-            .await.context(format!("sending {}", function!()))?
-            .context(format!("sending {}", function!()))
-    }
-
-    pub async fn get_approved(&self, token_id: U256) -> eyre::Result<Address> {
-        self.caller
-            .get_approved(token_id)
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-
-    pub async fn paused(&self) -> eyre::Result<bool> {
-        self.caller
-            .paused()
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-
-    pub async fn pause(&self) -> eyre::Result<TransactionReceipt> {
-        self.caller
-            .pause()
-            .send()
-            .await.context(format!("sending {}", function!()))?
-            .await.context(format!("sending {}", function!()))?
-            .context(format!("sending {}", function!()))
-    }
-
-    pub async fn unpause(&self) -> eyre::Result<TransactionReceipt> {
-        self.caller
-            .unpause()
-            .send()
-            .await.context(format!("sending {}", function!()))?
-            .await.context(format!("sending {}", function!()))?
-            .context(format!("sending {}", function!()))
-    }
-
-    pub async fn support_interface(
-        &self,
-        interface_id: u32,
-    ) -> eyre::Result<bool> {
-        let interface_id = interface_id.to_be_bytes();
-        self.caller
-            .supports_interface(interface_id)
-            .call()
-            .await
-            .context(format!("calling {}", function!()))
-    }
-}
+// impl Client<Erc721> {
+//     pub async fn name(&self) -> eyre::Result<String> {
+//         self.caller
+//             .name()
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// 
+//     pub async fn symbol(&self) -> eyre::Result<String> {
+//         self.caller
+//             .symbol()
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// 
+//     pub async fn token_uri(&self, token_id: U256) -> eyre::Result<String> {
+//         self.caller
+//             .token_uri(token_id)
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// 
+//     pub async fn balance_of(&self, owner: Address) -> eyre::Result<U256> {
+//         self.caller
+//             .balance_of(owner)
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// 
+//     pub async fn mint(
+//         &self,
+//         to: Address,
+//         token_id: U256,
+//     ) -> eyre::Result<TransactionReceipt> {
+//         self.caller
+//             .mint(to, token_id)
+//             .send()
+//             .await.context(format!("sending {}", function!()))?
+//             .await.context(format!("sending {}", function!()))?
+//             .context(format!("sending {}", function!()))
+//     }
+// 
+//     pub async fn burn(
+//         &self,
+//         token_id: U256,
+//     ) -> eyre::Result<TransactionReceipt> {
+//         self.caller
+//             .burn(token_id)
+//             .send()
+//             .await.context(format!("sending {}", function!()))?
+//             .await.context(format!("sending {}", function!()))?
+//             .context(format!("sending {}", function!()))
+//     }
+// 
+//     pub async fn transfer_from(
+//         &self,
+//         from: Address,
+//         to: Address,
+//         token_id: U256,
+//     ) -> eyre::Result<TransactionReceipt> {
+//         self.caller
+//             .transfer_from(from, to, token_id)
+//             .send()
+//             .await.context(format!("sending {}", function!()))?
+//             .await.context(format!("sending {}", function!()))?
+//             .context(format!("sending {}", function!()))
+//     }
+// 
+//     pub async fn owner_of(&self, token_id: U256) -> eyre::Result<Address> {
+//         self.caller
+//             .owner_of(token_id)
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// 
+//     pub async fn approve(
+//         &self,
+//         to: Address,
+//         token_id: U256,
+//     ) -> eyre::Result<TransactionReceipt> {
+//         self.caller
+//             .approve(to, token_id)
+//             .send()
+//             .await.context(format!("sending {}", function!()))?
+//             .await.context(format!("sending {}", function!()))?
+//             .context(format!("sending {}", function!()))
+//     }
+// 
+//     pub async fn get_approved(&self, token_id: U256) -> eyre::Result<Address> {
+//         self.caller
+//             .get_approved(token_id)
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// 
+//     pub async fn paused(&self) -> eyre::Result<bool> {
+//         self.caller
+//             .paused()
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// 
+//     pub async fn pause(&self) -> eyre::Result<TransactionReceipt> {
+//         self.caller
+//             .pause()
+//             .send()
+//             .await.context(format!("sending {}", function!()))?
+//             .await.context(format!("sending {}", function!()))?
+//             .context(format!("sending {}", function!()))
+//     }
+// 
+//     pub async fn unpause(&self) -> eyre::Result<TransactionReceipt> {
+//         self.caller
+//             .unpause()
+//             .send()
+//             .await.context(format!("sending {}", function!()))?
+//             .await.context(format!("sending {}", function!()))?
+//             .context(format!("sending {}", function!()))
+//     }
+// 
+//     pub async fn support_interface(
+//         &self,
+//         interface_id: u32,
+//     ) -> eyre::Result<bool> {
+//         let interface_id = interface_id.to_be_bytes();
+//         self.caller
+//             .supports_interface(interface_id)
+//             .call()
+//             .await
+//             .context(format!("calling {}", function!()))
+//     }
+// }

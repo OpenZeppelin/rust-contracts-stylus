@@ -15,7 +15,7 @@ deploy_contract () {
 
   DEPLOY_OUTPUT=$(cargo stylus deploy --wasm-file-path target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME" -e $RPC_URL --private-key $PRIVATE_KEY) || exit $?
 
-  echo "Contract $CONTRACT_CRATE_NAME successfully deployed to the local nitro node ($RPC_URL)."
+  echo "Contract $CONTRACT_CRATE_NAME successfully deployed to the stylus environment ($RPC_URL)."
 
   # extract randomly created contract deployment address
   DEPLOYMENT_ADDRESS="$(echo "$DEPLOY_OUTPUT" | grep 'Deploying program to address' | grep -oE "(0x)?[0-9a-fA-F]{40}")"

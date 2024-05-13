@@ -1,13 +1,17 @@
 use std::{str::FromStr, sync::Arc};
+use std::ops::Deref;
 
+use async_trait::async_trait;
 use ethers::{
-    abi::AbiEncode,
+    abi::{AbiEncode, Detokenize},
+    contract::ContractCall,
     middleware::{Middleware, SignerMiddleware},
     providers::{Http, Provider},
     signers::{LocalWallet, Signer},
-    types::{Address, U256},
+    types::{Address, TransactionReceipt, U256},
 };
 use eyre::{bail, Context, ContextCompat, Report, Result};
+
 pub mod erc721;
 mod utils;
 
@@ -55,9 +59,24 @@ pub struct Client<T: Token> {
     pub caller: T,
 }
 
+impl<T: Token> Deref for Client<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.caller
+    }
+}
+
 pub trait Token {
+    /// Deployed program address environment variable name for the contract.
+    /// 
+    /// e.g can be `MY_ERC721_TOKEN_DEPLOYMENT_ADDRESS`.
+    /// This env variable should address of the corresponding deployed program.
     const STYLUS_PROGRAM_ADDRESS: &'static str;
 
+    /// Abstracts token creation function.
+    /// 
+    /// e.g. `Self::new(address, client)`.
     fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self;
 }
 
@@ -68,7 +87,7 @@ impl<T: Token> Client<T> {
         provider: Provider<Http>,
         program_address: Address,
         priv_key: String,
-    ) -> eyre::Result<Self> {
+    ) -> Result<Self> {
         let wallet = LocalWallet::from_str(&priv_key)?;
         let chain_id = provider.get_chainid().await?.as_u64();
         let signer = Arc::new(SignerMiddleware::new(
@@ -98,5 +117,50 @@ impl<E: AbiEncode> Assert<E> for Report {
         } else {
             bail!("Different error expected: Expected error is {expected_err}: Received error is {received_err}")
         }
+    }
+}
+
+#[async_trait]
+pub trait ContextCall<R> {
+    /// Queries the blockchain via an `eth_call` for the provided transaction.
+    /// 
+    /// Wraps error with function info context.
+    ///
+    /// If executed on a non-state mutating smart contract function (i.e. `view`, `pure`)
+    /// then it will return the raw data from the chain.
+    ///
+    /// If executed on a mutating smart contract function, it will do a "dry run" of the call
+    /// and return the return type of the transaction without mutating the state
+    async fn ctx_call(self) -> Result<R>;
+}
+
+#[async_trait]
+impl<R: Detokenize + Send + Sync> ContextCall<R>
+    for ContractCall<HttpMiddleware, R>
+{
+    async fn ctx_call(self) -> Result<R> {
+        let function_name = self.function.name.clone();
+        self.call().await.context(format!("calling {function_name}"))
+    }
+}
+
+#[async_trait]
+pub trait ContextSend {
+    /// Signs and broadcasts the provided transaction.
+    /// 
+    /// Wraps error with function info context.
+    async fn ctx_send(self) -> Result<TransactionReceipt>;
+}
+
+#[async_trait]
+impl ContextSend for ContractCall<HttpMiddleware, ()> {
+    async fn ctx_send(self) -> Result<TransactionReceipt> {
+        let function_name = self.function.name.clone();
+        self.send()
+            .await
+            .context(format!("sending {function_name}"))?
+            .await
+            .context(format!("sending {function_name}"))?
+            .context(format!("sending {function_name}"))
     }
 }
