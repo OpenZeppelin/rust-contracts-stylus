@@ -16,6 +16,7 @@ sol! {
     /// * `from` - Address from which the token will be transferred.
     /// * `to` - Address where the token will be transferred to.
     /// * `token_id` - Token id as a number.
+    #[allow(missing_docs)]
     event Transfer(address indexed from, address indexed to, uint256 indexed token_id);
 
     /// Emitted when `owner` enables `approved` to manage the `token_id` token.
@@ -23,6 +24,7 @@ sol! {
     /// * `owner` - Address of the owner of the token.
     /// * `approved` - Address of the approver.
     /// * `token_id` - Token id as a number.
+    #[allow(missing_docs)]
     event Approval(address indexed owner, address indexed approved, uint256 indexed token_id);
 
     /// Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
@@ -30,21 +32,24 @@ sol! {
     /// * `owner` - Address of the owner of the token.
     /// * `operator` - Address of an operator that will manage operations on the token.
     /// * `approved` - Whether or not permission has been granted. If true, this means `operator` will be allowed to manage `owner`'s assets.
+    #[allow(missing_docs)]
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 }
 
 sol! {
     /// Indicates that an address can't be an owner.
-    /// For example, `address(0)` is a forbidden owner in ERC-721. Used in balance queries.
+    /// For example, `Address::ZERO` is a forbidden owner in ERC-721. Used in balance queries.
     ///
     /// * `owner` - The address deemed to be an invalid owner.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721InvalidOwner(address owner);
 
     /// Indicates a `token_id` whose `owner` is the zero address.
     ///
     /// * `token_id` - Token id as a number.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721NonexistentToken(uint256 token_id);
 
     /// Indicates an error related to the ownership over a particular token. Used in transfers.
@@ -53,18 +58,21 @@ sol! {
     /// * `token_id` - Token id as a number.
     /// * `owner` - Address of the owner of the token.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721IncorrectOwner(address sender, uint256 token_id, address owner);
 
     /// Indicates a failure with the token `sender`. Used in transfers.
     ///
     /// * `sender` - An address whose token is being transferred.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721InvalidSender(address sender);
 
     /// Indicates a failure with the token `receiver`. Used in transfers.
     ///
     /// * `receiver` - Address that receives the token.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721InvalidReceiver(address receiver);
 
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
@@ -72,18 +80,21 @@ sol! {
     /// * `operator` - Address that may be allowed to operate on tokens without being their owner.
     /// * `token_id` - Token id as a number.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721InsufficientApproval(address operator, uint256 token_id);
 
     /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
     ///
     /// * `approver` - Address initiating an approval operation.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721InvalidApprover(address approver);
 
     /// Indicates a failure with the `operator` to be approved. Used in approvals.
     ///
     /// * `operator` - Address that may be allowed to operate on tokens without being their owner.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     error ERC721InvalidOperator(address operator);
 }
 
@@ -93,7 +104,7 @@ sol! {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `address(0)` is a forbidden owner in ERC-721. Used in
+    /// For example, `Address::ZERO` is a forbidden owner in ERC-721. Used in
     /// balance queries.
     InvalidOwner(ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -127,6 +138,8 @@ sol_interface! {
         /// It must return its function selector to confirm the token transfer. If
         /// any other value is returned or the interface is not implemented by the recipient, the transfer will be
         /// reverted.
+
+        #[allow(missing_docs)]
         function onERC721Received(
             address operator,
             address from,
