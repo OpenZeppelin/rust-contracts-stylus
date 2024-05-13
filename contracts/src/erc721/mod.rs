@@ -11,14 +11,14 @@ use crate::arithmetic::{AddAssignUnchecked, SubAssignUnchecked};
 pub mod extensions;
 
 sol! {
-    /// Emitted when the `tokenId` token is transferred from `from` to `to`.
+    /// Emitted when the `token_id` token is transferred from `from` to `to`.
     ///
     /// * `from` - Address from which the token will be transferred.
     /// * `to` - Address where the token will be transferred to.
     /// * `token_id` - Token id as a number.
     event Transfer(address indexed from, address indexed to, uint256 indexed token_id);
 
-    /// Emitted when `owner` enables `approved` to manage the `tokenId` token.
+    /// Emitted when `owner` enables `approved` to manage the `token_id` token.
     ///
     /// * `owner` - Address of the owner of the token.
     /// * `approved` - Address of the approver.
@@ -41,7 +41,7 @@ sol! {
     #[derive(Debug)]
     error ERC721InvalidOwner(address owner);
 
-    /// Indicates a `tokenId` whose `owner` is the zero address.
+    /// Indicates a `token_id` whose `owner` is the zero address.
     ///
     /// * `token_id` - Token id as a number.
     #[derive(Debug)]
@@ -96,7 +96,7 @@ pub enum Error {
     /// For example, `address(0)` is a forbidden owner in ERC-721. Used in
     /// balance queries.
     InvalidOwner(ERC721InvalidOwner),
-    /// Indicates a `tokenId` whose `owner` is the zero address.
+    /// Indicates a `token_id` whose `owner` is the zero address.
     NonexistentToken(ERC721NonexistentToken),
     /// Indicates an error related to the ownership over a particular token.
     /// Used in transfers.
@@ -121,7 +121,7 @@ sol_interface! {
     /// Interface for any contract that wants to support `safeTransfers`
     /// from ERC-721 asset contracts.
     interface IERC721Receiver {
-        /// Whenever an [`ERC721`] `tokenId` token is transferred to this contract via [`ERC721::safe_transfer_from`]
+        /// Whenever an [`ERC721`] `token_id` token is transferred to this contract via [`ERC721::safe_transfer_from`]
         /// by `operator` from `from`, this function is called.
         ///
         /// It must return its function selector to confirm the token transfer. If
@@ -680,7 +680,8 @@ impl ERC721 {
         Ok(())
     }
 
-    /// Mints `tokenId`, transfers it to `to`, and checks for `to`'s acceptance.
+    /// Mints `token_id`, transfers it to `to`,
+    /// and checks for `to`'s acceptance.
     ///
     /// An additional `data` parameter is forwarded to
     /// [`IERC721Receiver::on_erc_721_received`] to contract recipients.
@@ -705,7 +706,7 @@ impl ERC721 {
     ///
     /// # Requirements:
     ///
-    /// * `tokenId` must not exist.
+    /// * `token_id` must not exist.
     /// * If `to` refers to a smart contract, it must implement
     ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a safe
     ///   transfer.
@@ -817,7 +818,7 @@ impl ERC721 {
         }
     }
 
-    /// Safely transfers `tokenId` token from `from` to `to`, checking that
+    /// Safely transfers `token_id` token from `from` to `to`, checking that
     /// contract recipients are aware of the ERC-721 standard to prevent
     /// tokens from being forever locked.
     ///
@@ -848,7 +849,7 @@ impl ERC721 {
     ///
     /// # Requirements:
     ///
-    /// * The `tokenId` token must exist and be owned by `from`.
+    /// * The `token_id` token must exist and be owned by `from`.
     /// * `to` cannot be the zero address.
     /// * `from` cannot be the zero address.
     /// * If `to` refers to a smart contract, it must implement
