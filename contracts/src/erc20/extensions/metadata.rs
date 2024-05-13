@@ -13,7 +13,6 @@ sol_storage! {
     /// Metadata of the ERC20 token.
     ///
     /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
-    #[cfg_attr(test, derive(Default))]
     pub struct ERC20Metadata {
         /// Common Metadata.
         Metadata _metadata
@@ -87,10 +86,17 @@ impl ERC20Metadata {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
 
     use super::{ERC20Metadata, DEFAULT_DECIMALS};
+    use crate::utils::Metadata;
+
+    impl Default for ERC20Metadata {
+        fn default() -> Self {
+            Self { _metadata: Metadata::default() }
+        }
+    }
 
     #[grip::test]
     fn constructs(meta: ERC20Metadata) {

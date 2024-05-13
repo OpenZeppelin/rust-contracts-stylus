@@ -77,7 +77,7 @@ impl ERC721Metadata {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::{prelude::StorageType, storage::StorageString};
@@ -96,6 +96,7 @@ mod tests {
             }
         }
     }
+
     #[grip::test]
     fn constructs(meta: ERC721Metadata) {
         let name = meta.name();
