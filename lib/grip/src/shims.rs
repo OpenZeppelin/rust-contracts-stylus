@@ -140,8 +140,9 @@ pub unsafe extern "C" fn storage_cache_bytes32(
     STORAGE.lock().unwrap().insert(key, value);
 }
 
-/// Persists any dirty values in the storage cache to the EVM state trie, dropping the cache entirely if requested.
-/// Analogous to repeated invocations of [`SSTORE`].
+/// Persists any dirty values in the storage cache to the EVM state trie,
+/// dropping the cache entirely if requested. Analogous to repeated invocations
+/// of [`SSTORE`].
 ///
 /// [`SSTORE`]: https://www.evm.codes/#55
 pub fn storage_flush_cache(_: bool) {
