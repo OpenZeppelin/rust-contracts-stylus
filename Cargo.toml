@@ -5,6 +5,7 @@ members = [
   "lib/grip",
   "lib/grip-proc",
   "examples/erc20",
+  "examples/erc721",
   "examples/merkle-proofs",
   "examples/ownable",
 ]

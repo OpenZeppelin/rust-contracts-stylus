@@ -1,4 +1,5 @@
-//! Optional metadata of the ERC-20 standard.
+//! Optional Metadata of the ERC-20 standard.
+
 use alloc::string::String;
 
 use stylus_proc::{external, sol_storage};
@@ -6,24 +7,23 @@ use stylus_proc::{external, sol_storage};
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
 
+use crate::utils::Metadata;
+
 sol_storage! {
-    /// Optional metadata of the ERC-20 standard.
-    pub struct Metadata {
-        /// Token name.
-        string _name;
-        /// Token symbol.
-        string _symbol;
-        /// Initialization marker. If true this means that the constructor was
-        /// called.
-        ///
-        /// This field should be unnecessary once constructors are supported in
-        /// the SDK.
-        bool _initialized;
+    /// Metadata of the ERC20 token.
+    ///
+    /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
+    pub struct ERC20Metadata {
+        /// Common Metadata.
+        Metadata _metadata
     }
 }
 
+// FIXME: Apply multi-level inheritance to export Metadata's functions.
+// With the current version of SDK it is not possible.
+// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[external]
-impl Metadata {
+impl ERC20Metadata {
     /// Initializes a [`Metadata`] instance with the passed `name` and
     /// `symbol`. It also sets `decimals` to [`DEFAULT_DECIMALS`].
     ///
@@ -35,14 +35,13 @@ impl Metadata {
     /// * `&mut self` - Write access to the contract's state.
     /// * `name` - The name of the token.
     /// * `symbol` - The symbol of the token.
+    ///
+    /// # Panics
+    ///
+    /// * If the contract is already initialized, then this function panics.
+    /// This ensures the contract is constructed only once.
     pub fn constructor(&mut self, name: String, symbol: String) {
-        if self._initialized.get() {
-            return;
-        }
-
-        self._name.set_str(name);
-        self._symbol.set_str(symbol);
-        self._initialized.set(true);
+        self._metadata.constructor(name, symbol);
     }
 
     /// Returns the name of the token.
@@ -51,7 +50,7 @@ impl Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     pub fn name(&self) -> String {
-        self._name.get_string()
+        self._metadata.name()
     }
 
     /// Returns the symbol of the token, usually a shorter version of the name.
@@ -60,7 +59,7 @@ impl Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     pub fn symbol(&self) -> String {
-        self._symbol.get_string()
+        self._metadata.symbol()
     }
 
     /// Returns the number of decimals used to get a user-friendly
@@ -89,32 +88,22 @@ impl Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
-    use stylus_sdk::storage::{StorageBool, StorageString, StorageType};
 
-    use super::{Metadata, DEFAULT_DECIMALS};
+    use super::{ERC20Metadata, DEFAULT_DECIMALS};
+    use crate::utils::Metadata;
 
-    impl Default for Metadata {
+    impl Default for ERC20Metadata {
         fn default() -> Self {
-            let root = U256::ZERO;
-            Metadata {
-                _name: unsafe { StorageString::new(root, 0) },
-                _symbol: unsafe {
-                    StorageString::new(root + U256::from(32), 0)
-                },
-                _initialized: unsafe {
-                    StorageBool::new(root + U256::from(64), 0)
-                },
-            }
+            Self { _metadata: Metadata::default() }
         }
     }
 
     #[grip::test]
-    fn constructs(meta: Metadata) {
+    fn constructs(meta: ERC20Metadata) {
         let name = meta.name();
         let symbol = meta.symbol();
         let decimals = meta.decimals();
-        let initialized = meta._initialized.get();
+        let initialized = meta._metadata._initialized.get();
         assert_eq!(name, "");
         assert_eq!(symbol, "");
         assert_eq!(decimals, DEFAULT_DECIMALS);
@@ -127,7 +116,7 @@ mod tests {
         let name = meta.name();
         let symbol = meta.symbol();
         let decimals = meta.decimals();
-        let initialized = meta._initialized.get();
+        let initialized = meta._metadata._initialized.get();
         assert_eq!(name, NAME);
         assert_eq!(symbol, SYMBOL);
         assert_eq!(decimals, DEFAULT_DECIMALS);
@@ -135,20 +124,12 @@ mod tests {
     }
 
     #[grip::test]
-    fn constructs_only_once(meta: Metadata) {
+    #[should_panic = "Metadata has already been initialized"]
+    fn constructs_only_once(meta: ERC20Metadata) {
         const NAME: &str = "Meta";
         const SYMBOL: &str = "Symbol";
         meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
 
         meta.constructor("Invalid".to_owned(), "Invalid".to_owned());
-
-        let name = meta.name();
-        let symbol = meta.symbol();
-        let decimals = meta.decimals();
-        let initialized = meta._initialized.get();
-        assert_eq!(name, NAME);
-        assert_eq!(symbol, SYMBOL);
-        assert_eq!(decimals, DEFAULT_DECIMALS);
-        assert_eq!(initialized, true);
     }
 }

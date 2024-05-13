@@ -26,10 +26,14 @@ once_cell = "1.19.0"
 [features]
 default = []
 
+# ERC-20
 erc20 = []
 erc20_metadata = ["erc20"]
 erc20_burnable = ["erc20"]
+
+# ERC-721
 erc721 = []
+erc721_metadata = ["erc721"]
 
 access = []
 ownable = ["access"]

@@ -11,10 +11,14 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 #[cfg(any(feature = "std", feature = "access"))]
 pub mod access;
 mod arithmetic;
+
 #[cfg(any(feature = "std", feature = "erc20"))]
 pub mod erc20;
+
 #[cfg(any(feature = "std", feature = "erc721"))]
 pub mod erc721;
+
+pub mod utils;
 
 #[cfg(not(any(feature = "std", target_arch = "wasm32-unknown-unknown")))]
 #[panic_handler]
