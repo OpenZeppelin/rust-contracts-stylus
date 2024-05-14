@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use contracts::{access::access_control::AccessControl, erc20::ERC20};
+use contracts::{access::control::AccessControl, erc20::ERC20};
 use stylus_sdk::{
     msg,
     prelude::{entrypoint, external, sol_storage},

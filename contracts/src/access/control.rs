@@ -130,6 +130,7 @@ impl AccessControl {
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
     /// * `account` - The account to check for membership.
+    #[must_use]
     pub fn has_role(&self, role: B256, account: Address) -> bool {
         self._roles.getter(role).has_role.get(account)
     }
@@ -158,6 +159,7 @@ impl AccessControl {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
+    #[must_use]
     pub fn get_role_admin(&self, role: B256) -> B256 {
         *self._roles.getter(role).admin_role
     }
@@ -246,6 +248,11 @@ impl AccessControl {
     /// * `role` - The role identifier.
     /// * `confirmation` - The account which will be revoked the role.
     ///
+    /// # Errors
+    ///
+    /// * If [`msg::sender`] is not the `confirmation` address, then
+    /// [`Error::BadConfirmation`] is returned.
+    ///
     /// # Events
     ///
     /// If the calling account has its `role` revoked, emits a [`RoleRevoked`]
@@ -332,7 +339,9 @@ impl AccessControl {
     ///
     /// May emit a [`RoleGranted`] event.
     pub fn _grant_role(&mut self, role: B256, account: Address) -> bool {
-        if !self.has_role(role, account) {
+        if self.has_role(role, account) {
+            false
+        } else {
             self._roles.setter(role).has_role.insert(account, true);
             evm::log(RoleGranted {
                 role: *role,
@@ -340,8 +349,6 @@ impl AccessControl {
                 sender: msg::sender(),
             });
             true
-        } else {
-            false
         }
     }
 
