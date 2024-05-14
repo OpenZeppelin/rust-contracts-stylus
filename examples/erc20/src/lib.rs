@@ -3,8 +3,11 @@ extern crate alloc;
 
 use alloc::string::String;
 
+use alloy_primitives::{Address, U256};
 use contracts::{
-    erc20::{extensions::metadata::Metadata, ERC20},
+    erc20::{
+        extensions::metadata::Metadata, ERC20InvalidReceiver, Error, ERC20,
+    },
     erc20_burnable_impl,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
@@ -38,5 +41,19 @@ impl Token {
     // default to `18`.
     pub fn decimals(&self) -> u8 {
         DECIMALS
+    }
+
+    pub fn mint(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        // TODO: create function _mint at erc20 similar to solidity
+        if account.is_zero() {
+            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
+                receiver: Address::ZERO,
+            }));
+        }
+        self.erc20._update(Address::ZERO, account, value)
     }
 }
