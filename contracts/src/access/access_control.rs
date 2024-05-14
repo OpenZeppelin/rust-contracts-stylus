@@ -225,7 +225,7 @@ impl AccessControl {
     ) -> Result<(), Error> {
         let admin_role = self.get_role_admin(role);
         self.only_role(admin_role)?;
-        self._grant_role(role, account);
+        self._revoke_role(role, account);
         Ok(())
     }
 
@@ -360,7 +360,7 @@ impl AccessControl {
     ///
     /// May emit a [`RoleRevoked`] event.
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
-        if !self.has_role(role, account) {
+        if self.has_role(role, account) {
             self._roles.setter(role).has_role.insert(account, false);
             evm::log(RoleRevoked {
                 role: *role,
@@ -371,5 +371,252 @@ impl AccessControl {
         } else {
             false
         }
+    }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{address, Address, U256};
+    use stylus_sdk::{
+        msg,
+        storage::{StorageMap, StorageType},
+    };
+
+    use super::{AccessControl, Error};
+
+    impl Default for AccessControl {
+        fn default() -> Self {
+            AccessControl { _roles: unsafe { StorageMap::new(U256::ZERO, 0) } }
+        }
+    }
+
+    /// Shorthand for declaring variables converted from a hex literla to a
+    /// fixed 32-byte slice;
+    macro_rules! roles {
+        ($($var:ident = $hex:literal);* $(;)?) => {
+            $(
+                const $var: [u8; 32] = alloy_primitives::hex!($hex);
+            )*
+        };
+    }
+
+    roles! {
+        ROLE       = "ed9ea7bc2a13bc59432ab07436e7f7f5450f82d4b48c401bed177bfaf36b1873";
+        OTHER_ROLE = "879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5";
+    }
+
+    #[rustfmt::skip]
+    const BOB  : Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
+    // Since we don't have constructors, we need to call this  to setup
+    // `msg::sender` as a member of `ROLE`.
+    //
+    // NOTE: Once we have support for setting `msg::sender` and constructor,
+    // this function shouldn't be needed.
+    fn _grant_role_to_msg_sender(contract: &mut AccessControl, role: [u8; 32]) {
+        contract
+            ._roles
+            .setter(role.into())
+            .has_role
+            .insert(msg::sender(), true);
+    }
+
+    #[grip::test]
+    fn default_role_is_default_admin(contract: AccessControl) {
+        let role_admin = contract.get_role_admin(ROLE.into());
+        assert_eq!(role_admin, AccessControl::DEFAULT_ADMIN_ROLE);
+    }
+
+    #[grip::test]
+    fn default_admin_roles_admin_is_itself(contract: AccessControl) {
+        const DEFAULT_ADMIN_ROLE: [u8; 32] = AccessControl::DEFAULT_ADMIN_ROLE;
+        let role_admin = contract.get_role_admin(DEFAULT_ADMIN_ROLE.into());
+        assert_eq!(role_admin, DEFAULT_ADMIN_ROLE);
+    }
+
+    #[grip::test]
+    fn non_admin_cannot_grant_role_to_others(contract: AccessControl) {
+        let err = contract.grant_role(ROLE.into(), ALICE).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[grip::test]
+    fn accounts_can_be_granted_roles_multiple_times(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
+
+        contract.grant_role(ROLE.into(), ALICE).unwrap();
+        contract.grant_role(ROLE.into(), ALICE).unwrap();
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, true);
+    }
+
+    #[grip::test]
+    fn not_granted_roles_can_be_revoked(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
+
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, false);
+        contract.revoke_role(ROLE.into(), ALICE).unwrap();
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, false);
+    }
+
+    #[grip::test]
+    fn admin_can_revoke_role(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
+        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, true);
+        contract.revoke_role(ROLE.into(), ALICE).unwrap();
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, false);
+    }
+
+    #[grip::test]
+    fn non_admin_cannot_revoke_role(contract: AccessControl) {
+        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, true);
+        let err = contract.revoke_role(ROLE.into(), ALICE).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[grip::test]
+    fn roles_can_be_revoked_multiple_times(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
+
+        contract.revoke_role(ROLE.into(), ALICE).unwrap();
+        contract.revoke_role(ROLE.into(), ALICE).unwrap();
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, false);
+    }
+
+    #[grip::test]
+    fn not_granted_roles_can_be_renounced(contract: AccessControl) {
+        // FIXME: We can't test this case because we can't check for events. We
+        // need to assert that a RoleRevoked event doesn't get emitted for this
+        // test to make sense.
+        contract.renounce_role(ROLE.into(), msg::sender()).unwrap();
+    }
+
+    #[grip::test]
+    fn bearer_can_renounce_role(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, ROLE);
+
+        let has_role = contract.has_role(ROLE.into(), msg::sender());
+        assert_eq!(has_role, true);
+        contract.renounce_role(ROLE.into(), msg::sender()).unwrap();
+        let has_role = contract.has_role(ROLE.into(), msg::sender());
+        assert_eq!(has_role, false);
+    }
+
+    #[grip::test]
+    fn only_sender_can_renounce(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, ROLE);
+        let err = contract.renounce_role(ROLE.into(), ALICE).unwrap_err();
+        assert!(matches!(err, Error::BadConfirmation(_)));
+    }
+
+    #[grip::test]
+    fn roles_can_be_renounced_multiple_times(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, ROLE);
+
+        let sender = msg::sender();
+        contract.renounce_role(ROLE.into(), sender).unwrap();
+        contract.renounce_role(ROLE.into(), sender).unwrap();
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, false);
+    }
+
+    #[grip::test]
+    fn a_roles_admin_role_can_change(contract: AccessControl) {
+        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+        _grant_role_to_msg_sender(contract, OTHER_ROLE);
+
+        let admin_role = contract.get_role_admin(ROLE.into());
+        assert_eq!(admin_role, OTHER_ROLE);
+    }
+
+    #[grip::test]
+    fn the_new_admin_can_grant_roles(contract: AccessControl) {
+        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+        _grant_role_to_msg_sender(contract, OTHER_ROLE);
+
+        contract.grant_role(ROLE.into(), ALICE).unwrap();
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, true);
+    }
+
+    #[grip::test]
+    fn the_new_admin_can_revoke_roles(contract: AccessControl) {
+        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+        _grant_role_to_msg_sender(contract, OTHER_ROLE);
+
+        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        contract.revoke_role(ROLE.into(), ALICE).unwrap();
+        let has_role = contract.has_role(ROLE.into(), ALICE);
+        assert_eq!(has_role, false);
+    }
+
+    #[grip::test]
+    fn previous_admins_no_longer_grant_roles(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, ROLE);
+        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+
+        let err = contract.grant_role(ROLE.into(), ALICE).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[grip::test]
+    fn previous_admins_no_longer_revoke_roles(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, ROLE);
+        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+
+        let err = contract.revoke_role(ROLE.into(), ALICE).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[grip::test]
+    fn does_not_revert_if_sender_has_role(contract: AccessControl) {
+        _grant_role_to_msg_sender(contract, ROLE);
+        contract._check_role(ROLE.into(), msg::sender()).unwrap();
+    }
+
+    #[grip::test]
+    fn reverts_if_sender_doesnt_have_role(contract: AccessControl) {
+        let err = contract._check_role(ROLE.into(), msg::sender()).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        let err =
+            contract._check_role(OTHER_ROLE.into(), msg::sender()).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[grip::test]
+    fn internal_grant_role_true_if_no_role(contract: AccessControl) {
+        let role_granted = contract._grant_role(ROLE.into(), ALICE);
+        assert_eq!(role_granted, true);
+    }
+
+    #[grip::test]
+    fn internal_grant_role_false_if_role(contract: AccessControl) {
+        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        let role_granted = contract._grant_role(ROLE.into(), ALICE);
+        assert_eq!(role_granted, false);
+    }
+
+    #[grip::test]
+    fn internal_revoke_role_true_if_role(contract: AccessControl) {
+        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
+        assert_eq!(role_revoked, true);
+    }
+
+    #[grip::test]
+    fn internal_revoke_role_false_if_no_role(contract: AccessControl) {
+        let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
+        assert_eq!(role_revoked, false);
     }
 }
