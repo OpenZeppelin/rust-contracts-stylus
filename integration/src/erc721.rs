@@ -3,6 +3,8 @@ use eyre::{bail, Result};
 
 use crate::infrastructure::{erc721::*, *};
 
+// TODO: add isolation with mutex per contract
+
 #[tokio::test]
 async fn mint_nft_and_check_balance() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;

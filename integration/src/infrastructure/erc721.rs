@@ -47,7 +47,7 @@ abigen!(
 pub type Erc721 = Erc721Token<HttpMiddleware>;
 
 impl Token for Erc721 {
-    const STYLUS_PROGRAM_ADDRESS: &'static str = "ERC721_DEPLOYMENT_ADDRESS";
+    const STYLUS_PROGRAM_ADDRESS: &'static str = "ERC721_EXAMPLE_DEPLOYMENT_ADDRESS";
 
     fn new<T: Into<Address>>(address: T, client: Arc<HttpMiddleware>) -> Self {
         Self::new(address, client)
