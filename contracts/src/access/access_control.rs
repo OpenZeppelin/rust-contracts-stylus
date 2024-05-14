@@ -405,8 +405,6 @@ mod tests {
         OTHER_ROLE = "879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5";
     }
 
-    #[rustfmt::skip]
-    const BOB  : Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
     // Since we don't have constructors, we need to call this  to setup
