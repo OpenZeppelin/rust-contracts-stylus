@@ -1,7 +1,7 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 
 use alloy_primitives::U256;
 use contracts::erc721::{
