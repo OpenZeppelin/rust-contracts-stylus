@@ -144,7 +144,6 @@ mod tests {
 
     #[grip::test]
     fn cap_works(contract: Capped) {
-        // Check `cap` value
         let value = U256::from(2024);
         contract._cap.set(value);
         assert_eq!(contract.cap(), value);
