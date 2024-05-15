@@ -6,3 +6,10 @@ cfg_if::cfg_if! {
         pub use metadata::Metadata;
     }
 }
+
+cfg_if::cfg_if! {
+    if #[cfg(any(test, feature = "erc20_capped"))] {
+        pub mod capped;
+        pub use capped::Capped;
+    }
+}
