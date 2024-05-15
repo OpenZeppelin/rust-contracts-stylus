@@ -33,6 +33,7 @@ erc20_burnable = ["erc20"]
 # ERC-721
 erc721 = []
 erc721_metadata = ["erc721"]
+erc721_uri_storage = ["erc721"]
 
 access = []
 ownable = ["access"]
