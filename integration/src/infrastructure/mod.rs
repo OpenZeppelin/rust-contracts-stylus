@@ -66,7 +66,7 @@ pub struct Client<T: Token> {
     pub caller: T,
 }
 
-// Lets not to mention `caller` property every time we call a function.
+// Allows not to mention `caller` property every time we call a function.
 impl<T: Token> Deref for Client<T> {
     type Target = T;
 
@@ -81,7 +81,7 @@ pub trait Token {
     /// Deployed program address environment variable name for the contract.
     ///
     /// e.g can be `ERC721_EXAMPLE_DEPLOYMENT_ADDRESS`.
-    /// Formed by template <CRATE_NAME>_DEPLOYMENT_ADDRESS
+    /// Formed by the template <CRATE_NAME>_DEPLOYMENT_ADDRESS
     /// where <CRATE_NAME> is the "SCREAMING_SNAKE_CASE" conversion of the crate
     /// name from the `./examples` directory.
     /// That environment variable should store an address of the corresponding

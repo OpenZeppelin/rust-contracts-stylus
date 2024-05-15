@@ -147,3 +147,5 @@ async fn error_not_approved_nft_transfer() -> Result<()> {
         }),
     }
 }
+
+// TODO: add more tests for erc721
