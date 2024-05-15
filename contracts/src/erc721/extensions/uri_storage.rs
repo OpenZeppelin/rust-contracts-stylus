@@ -17,19 +17,15 @@ sol_storage! {
 }
 
 sol! {
-    /// This event emits when the metadata of a token is changed.
-    /// So that the third-party platforms such as NFT market could
-    /// timely update the images and related attributes of the NFT.
+    /// This event gets emitted when the metadata of a token is changed.
     ///
-    /// Event comes from IERC409.
+    /// The event comes from IERC4096.
     #[allow(missing_docs)]
     event MetadataUpdate(uint256 token_id);
 
-    /// This event emits when the metadata of a range of tokens is changed.
-    /// So that the third-party platforms such as NFT market could
-    /// timely update the images and related attributes of the NFTs.
+    /// This event gets emitted when the metadata of a range of tokens is changed.
     ///
-    /// Event comes from IERC409.
+    /// Event comes from IERC4096.
     #[allow(missing_docs)]
     event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
 }
