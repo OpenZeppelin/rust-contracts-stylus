@@ -42,6 +42,7 @@ impl ERC721UriStorage {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Id of a token.
+    #[must_use]
     pub fn token_uri(&self, token_id: U256) -> String {
         self._token_uris.get(token_id).get_string()
     }
