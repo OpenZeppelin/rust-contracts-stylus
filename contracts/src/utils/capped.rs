@@ -129,7 +129,7 @@ mod tests {
             .constructor(U256::from(2024))
             .expect("Capped::constructor should work for proper `cap` value");
 
-        let _ = capped.constructor(U256::from(4048));
+        capped.constructor(U256::from(4048)).unwrap();
     }
 
     #[grip::test]
