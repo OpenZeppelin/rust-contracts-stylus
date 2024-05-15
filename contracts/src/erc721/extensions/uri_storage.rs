@@ -11,7 +11,7 @@ use stylus_sdk::evm;
 sol_storage! {
     /// Uri Storage.
     pub struct ERC721UriStorage {
-        /// Optional mapping for token URIs
+        /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;
     }
 }
