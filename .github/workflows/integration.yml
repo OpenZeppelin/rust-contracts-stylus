@@ -1,0 +1,50 @@
+name: integration
+# TODO#q: add workflow description
+permissions:
+  contents: read
+on:
+  push:
+    branches: [main]
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  integration:
+    name: integration testing suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+      - name: set up rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: wasm32-unknown-unknown, 
+          toolchain: 1.77.0
+      - name: install cargo-stylus
+        run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
+      - name: setup nitro node
+        run: \
+          # clone nitro test node repo
+          git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git && cd nitro-testnode
+          
+          # setup nitro test node
+          ./test-node.bash --no-run --init
+          ./test-node.bash --detach
+          
+          # fund Alice's wallet
+          ./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10000
+          # fund Bob's wallet
+          ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
+        shell: zsh
+      - name: run integration tests
+        run: ./integration/test.sh
+        shell: zsh

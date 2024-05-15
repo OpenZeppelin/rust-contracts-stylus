@@ -38,10 +38,12 @@ export RPC_URL=${RPC_URL:-http://localhost:8547}
 
 cargo build --release --target wasm32-unknown-unknown
 
+# TODO#q: try to deploy contracts asynchronously
 for CRATE_NAME in $(get_example_crate_names)
 do
   deploy_contract "$CRATE_NAME"
 
+  # TODO#q: move to to deploy_contract
   DEPLOYMENT_ADDRESS_ENV_VAR_NAME="${${CRATE_NAME//-/_}:u}_DEPLOYMENT_ADDRESS"
 
   # export dynamically created variable
@@ -50,4 +52,5 @@ do
   set +a
 done
 
+# TODO: run tests in parallel when concurrency scope will be per contract
 RUST_TEST_THREADS=1 cargo test -p integration
