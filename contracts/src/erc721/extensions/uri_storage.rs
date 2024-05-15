@@ -49,7 +49,7 @@ impl ERC721UriStorage {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `interface_id` - Interface id to be checked.
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    pub fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         // Interface ID as defined in ERC-4906. This does not correspond to a
         // traditional interface ID as ERC-4906 only defines events and does not
         // include any external function.
@@ -62,7 +62,7 @@ impl ERC721UriStorage {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Id of a token.
-    fn token_uri(&self, token_id: U256) -> String {
+    pub fn token_uri(&self, token_id: U256) -> String {
         //
         self._token_uris.get(token_id).get_string()
     }
@@ -77,7 +77,7 @@ impl ERC721UriStorage {
     ///
     /// # Events
     /// May emit a [`MetadataUpdate`] event.
-    fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+    pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
