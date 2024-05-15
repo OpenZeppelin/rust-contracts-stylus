@@ -25,8 +25,8 @@ sol_storage! {
 #[external]
 #[inherit(ERC721, ERC721Metadata, ERC721UriStorage)]
 impl Token {
-    // We need to properly initialize all Token's attributes.
-    // For that we need to call each attributes' constructor if exists.
+    // We need to properly initialize all of Token's attributes.
+    // For that, we need to call each attribute's constructor if it exists.
     //
     // NOTE: This is a temporary solution for state initialization.
     pub fn constructor(
