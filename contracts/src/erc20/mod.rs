@@ -301,7 +301,7 @@ impl ERC20 {
     /// Creates a `value` amount of tokens and assigns them to `account`,
     /// by transferring it from `Address::ZERO`.
     ///
-    /// Relies on the `_update` mechanism
+    /// Relies on the `_update` mechanism.
     ///
     /// # Panics
     ///
