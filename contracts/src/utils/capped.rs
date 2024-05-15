@@ -3,7 +3,7 @@
 //! Contract module which allows implementing a cap mechanism.
 //!
 //! Note that they will not be capped by simply including this module,
-//! only once the checks are put in place.
+//! but only once the checks are put in place.
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
