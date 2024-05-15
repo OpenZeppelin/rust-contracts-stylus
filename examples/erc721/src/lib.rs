@@ -38,9 +38,10 @@ impl Token {
         self.metadata.constructor(name, symbol, base_uri);
     }
 
-    // Override [`ERC721UriStorage::token_uri`].
-    // Provide concatenation of Base URI from [`ERC721Metadata`]
-    // and `token_uri` from [`ERC721UriStorage`]
+    // Overrides [`ERC721UriStorage::token_uri`].
+    //
+    // Returns the concatenation of the Base URI from [`ERC721Metadata`]
+    // and the Token URI from [`ERC721UriStorage`].
     pub fn token_uri(&self, token_id: U256) -> String {
         let mut uri = self.metadata.base_uri();
         let token_uri = self.uri_storage.token_uri(token_id);
