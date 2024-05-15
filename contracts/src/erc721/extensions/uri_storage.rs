@@ -8,14 +8,6 @@ use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage};
 use stylus_sdk::evm;
 
-sol_storage! {
-    /// Uri Storage.
-    pub struct ERC721UriStorage {
-        /// Optional mapping for token URIs.
-        mapping(uint256 => string) _token_uris;
-    }
-}
-
 sol! {
     /// This event gets emitted when the metadata of a token is changed.
     ///
@@ -28,6 +20,14 @@ sol! {
     /// Event comes from IERC4096.
     #[allow(missing_docs)]
     event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
+}
+
+sol_storage! {
+    /// Uri Storage.
+    pub struct ERC721UriStorage {
+        /// Optional mapping for token URIs.
+        mapping(uint256 => string) _token_uris;
+    }
 }
 
 #[external]
@@ -49,7 +49,7 @@ impl ERC721UriStorage {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `token_id` - Id of a token.
-    /// * `token_uri` - .
+    /// * `token_uri` - URI for the token.
     ///
     /// # Events
     /// Emits a [`MetadataUpdate`] event.
@@ -78,7 +78,7 @@ mod tests {
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();
-        num.try_into().expect("conversion to U256")
+        U256::from(num)
     }
 
     #[grip::test]
