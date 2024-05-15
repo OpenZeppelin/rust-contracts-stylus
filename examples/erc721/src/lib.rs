@@ -45,7 +45,7 @@ impl Token {
         let mut uri = self.metadata.base_uri();
         let token_uri = self.uri_storage.token_uri(token_id);
 
-        // Concatenate the Base URI and Token URI
+        // Concatenate the Base URI and Token URI.
         uri.push_str(&token_uri);
 
         uri
