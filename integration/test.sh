@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 set -o pipefail
 
 # Deploy contract by rust crate name.
@@ -43,8 +43,8 @@ for CRATE_NAME in $(get_example_crate_names)
 do
   deploy_contract "$CRATE_NAME"
 
-  # TODO#q: move to to deploy_contract
-  DEPLOYMENT_ADDRESS_ENV_VAR_NAME="${${CRATE_NAME//-/_}:u}_DEPLOYMENT_ADDRESS"
+  # TODO#q: move to deploy_contract function
+  DEPLOYMENT_ADDRESS_ENV_VAR_NAME="$(echo "$CRATE_NAME" | tr '-' '_' | tr '[:lower:]' '[:upper:]')_DEPLOYMENT_ADDRESS"
 
   # export dynamically created variable
   set -a

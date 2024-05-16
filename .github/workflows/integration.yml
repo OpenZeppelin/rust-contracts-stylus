@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -29,6 +29,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          save-always: true #TODO#q: remove it when github pipeline stop failing
       - name: set up rust
         uses: dtolnay/rust-toolchain@stable
         with:
