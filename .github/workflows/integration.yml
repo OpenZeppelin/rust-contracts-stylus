@@ -3,12 +3,11 @@ name: integration
 # - spins local nitro node
 # - deploys and check every contract at `./examples` directory
 # - runs integration test suite against all contracts deployed locally
-# TODO#q: cache nitro node images and nitro-testnode sources since it is a bottleneck for the routine
 permissions:
   contents: read
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -33,12 +32,13 @@ jobs:
       - name: set up rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          target: wasm32-unknown-unknown, 
+          target: wasm32-unknown-unknown, x86_64-unknown-linux-gnu
           toolchain: 1.77.0
+        #TODO#q: cache nitro node images and nitro-testnode sources since it is a bottleneck for the routine
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
       - name: setup nitro node
-        run: \
+        run: |
           # clone nitro test node repo
           git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git && cd nitro-testnode
           
