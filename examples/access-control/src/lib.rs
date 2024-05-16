@@ -45,13 +45,14 @@ impl Token {
         Ok(())
     }
 
-    pub fn transfer(
+    pub fn transfer_from(
         &mut self,
+        from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<bool, Vec<u8>> {
         self.access.only_role(Token::TRANSFER_ROLE.into())?;
-        self.erc20.transfer(to, value)?;
-        Ok(())
+        let transfer_result = self.erc20.transfer_from(from, to, value)?;
+        Ok(transfer_result)
     }
 }

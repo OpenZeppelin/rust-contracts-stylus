@@ -28,7 +28,7 @@
 //!
 //! Roles can be granted and revoked dynamically via the `grant_role` and
 //! `revoke_role` functions. Each role has an associated admin role, and only
-//! accounts that have a role's admin role can call `grant_role` and
+//! accounts that have a `role`'s `admin_role` can call `grant_role` and
 //! `revoke_role`.
 //!
 //! By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which
@@ -64,7 +64,7 @@ sol! {
     /// `sender` is the account that originated the contract call. This account
     /// bears the admin role (for the granted role).
     /// Expected in cases where the role was granted using the internal
-    /// [`AccessControl::grantRole`].
+    /// [`AccessControl::grant_role`].
     #[allow(missing_docs)]
     event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
     /// Emitted when `account` is revoked `role`.
@@ -240,7 +240,7 @@ impl AccessControl {
     ///
     /// # Requirements:
     ///
-    /// * The caller must be `callerConfirmation`.
+    /// * The caller must be `caller_confirmation`.
     ///
     /// # Arguments
     ///
