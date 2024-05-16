@@ -18,7 +18,6 @@ const ALICE_PRIV_KEY: &str = "ALICE_PRIV_KEY";
 const BOB_PRIV_KEY: &str = "BOB_PRIV_KEY";
 const RPC_URL: &str = "RPC_URL";
 
-
 /// Integration testing infrastructure that allows to act on behalf of `alice`
 /// and `bob` accounts.
 pub struct Infrastructure<T: Token> {
@@ -60,7 +59,8 @@ impl<T: Token> Infrastructure<T> {
     }
 }
 
-/// Client of participant that allows to check wallet address and call contract functions.
+/// Client of participant that allows to check wallet address and call contract
+/// functions.
 pub struct Client<T: Token> {
     pub wallet: LocalWallet,
     pub caller: T,
@@ -74,7 +74,6 @@ impl<T: Token> Deref for Client<T> {
         &self.caller
     }
 }
-
 
 /// Abstraction for the deployed contract.
 pub trait Token {

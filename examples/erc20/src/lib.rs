@@ -5,7 +5,7 @@ use alloc::string::String;
 
 use alloy_primitives::{Address, U256};
 use contracts::{
-    erc20::{extensions::ERC20Metadata, ERC20, Error, ERC20InvalidReceiver},
+    erc20::{extensions::ERC20Metadata, ERC20InvalidReceiver, Error, ERC20},
     erc20_burnable_impl,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
@@ -41,11 +41,7 @@ impl Token {
         DECIMALS
     }
 
-    pub fn mint(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Error> {
+    pub fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
         // TODO: create function _mint at erc20 similar to solidity
         if account.is_zero() {
             return Err(Error::InvalidReceiver(ERC20InvalidReceiver {

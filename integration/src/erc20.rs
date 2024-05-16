@@ -10,13 +10,13 @@ async fn mint() -> Result<()> {
 
     let initial_balance =
         infra.alice.balance_of(infra.alice.wallet.address()).ctx_call().await?;
-    let initial_supply =
-        infra.alice.total_supply().ctx_call().await?;
-    
+    let initial_supply = infra.alice.total_supply().ctx_call().await?;
+
     let _ =
         infra.alice.mint(infra.alice.wallet.address(), one).ctx_send().await?;
-    
-    let new_balance = infra.alice.balance_of(infra.alice.wallet.address()).ctx_call().await?;
+
+    let new_balance =
+        infra.alice.balance_of(infra.alice.wallet.address()).ctx_call().await?;
     let new_supply = infra.alice.total_supply().ctx_call().await?;
 
     assert_eq!(initial_balance + one, new_balance);
