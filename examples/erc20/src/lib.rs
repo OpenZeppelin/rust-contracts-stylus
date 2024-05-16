@@ -5,9 +5,11 @@ use alloc::{string::String, vec::Vec};
 
 use alloy_primitives::{Address, U256};
 use contracts::{
-    erc20::{extensions::ERC20Metadata, ERC20},
+    erc20::{
+        extensions::{capped, Capped, ERC20Metadata},
+        ERC20,
+    },
     erc20_burnable_impl,
-    utils::Capped,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
@@ -57,6 +59,9 @@ impl Token {
 
     // Add token minting feature.
     // Make sure to handle `Capped` properly.
+    //
+    // You should not call [`ERC20::_update`] to mint tokens,
+    // while it will break `Capped` mechanism.
     pub fn mint(
         &mut self,
         account: Address,
@@ -65,8 +70,8 @@ impl Token {
         let max_supply = self.capped.cap();
         let supply = self.erc20.total_supply() + value;
         if supply > max_supply {
-            return Err(contracts::utils::capped::Error::ExceededCap(
-                contracts::utils::capped::ExceededCap {
+            return Err(capped::Error::ExceededCap(
+                capped::ERC20ExceededCap {
                     increased_supply: supply,
                     cap: max_supply,
                 },

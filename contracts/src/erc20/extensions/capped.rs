@@ -1,6 +1,6 @@
 //! Capped Contract.
 //!
-//! Contract module which allows implementing a cap mechanism.
+//! Extension of [`ERC20`] that adds a cap to the supply of tokens.
 //!
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
@@ -27,13 +27,13 @@ sol! {
     /// because `total_supply` exceeded the `_cap`.
     #[derive(Debug)]
     #[allow(missing_docs)]
-    error ExceededCap(uint256 increased_supply, uint256 cap);
+    error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
 
     /// Indicates an error related to the operation that failed
     /// because the supplied `cap` is not a valid cap value.
     #[derive(Debug)]
     #[allow(missing_docs)]
-    error InvalidCap(uint256 cap);
+    error ERC20InvalidCap(uint256 cap);
 }
 
 /// A Capped error.
@@ -41,10 +41,10 @@ sol! {
 pub enum Error {
     /// Indicates an error related to the operation that failed
     /// because `total_supply` exceeded the `_cap`.
-    ExceededCap(ExceededCap),
+    ExceededCap(ERC20ExceededCap),
     /// Indicates an error related to the operation that failed
     /// because the supplied `cap` is not a valid cap value.
-    InvalidCap(InvalidCap),
+    InvalidCap(ERC20InvalidCap),
 }
 
 #[external]
@@ -74,7 +74,7 @@ impl Capped {
         assert!(!is_initialized, "Capped has already been initialized");
 
         if cap.is_zero() {
-            return Err(Error::InvalidCap(InvalidCap { cap }));
+            return Err(Error::InvalidCap(ERC20InvalidCap { cap }));
         }
 
         self._cap.set(cap);
