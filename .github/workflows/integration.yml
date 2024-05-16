@@ -56,7 +56,7 @@ jobs:
           git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git && cd nitro-testnode
           
           # setup nitro test node
-          ./test-node.bash --no-run --init
+          ./test-node.bash --no-run --init --no-tokenbridge
           ./test-node.bash --detach
           
           # fund Alice's wallet

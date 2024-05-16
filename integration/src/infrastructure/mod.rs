@@ -93,6 +93,7 @@ pub trait Token {
     fn new(address: Address, client: Arc<HttpMiddleware>) -> Self;
 }
 
+// TODO#q: parse crate name with this macro
 #[macro_export]
 macro_rules! token_impl {
     ($token_type:ty, $program_address:expr) => {
