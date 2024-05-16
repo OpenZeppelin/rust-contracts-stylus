@@ -3,6 +3,7 @@ name: integration
 # - spins local nitro node
 # - deploys and check every contract at `./examples` directory
 # - runs integration test suite against all contracts deployed locally
+# TODO#q: cache nitro node images and nitro-testnode sources since it is a bottleneck for the routine
 permissions:
   contents: read
 on:
@@ -12,6 +13,8 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
 jobs:
   integration:
     name: integration testing suite
@@ -34,7 +37,6 @@ jobs:
           toolchain: 1.77.0
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
-      # TODO#q: cache nitro node images and nitro-testnode sources since it is a bottleneck for the routine
       - name: setup nitro node
         run: \
           # clone nitro test node repo
