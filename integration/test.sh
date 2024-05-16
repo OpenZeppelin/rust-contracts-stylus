@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o pipefail
 
+# make sure we will be running script from the project root.
+mydir=$(dirname $0)
+cd "$mydir" || exit
+cd ..
+
 # Deploy contract by rust crate name.
 # Sets $DEPLOYMENT_ADDRESS environment variable after successful deployment.
 deploy_contract () {

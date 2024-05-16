@@ -5,8 +5,6 @@ use crate::infrastructure::{erc721::*, *};
 
 // TODO: add isolation with mutex per contract
 
-// TODO#q: refactor these tests similarly to unit tests
-
 #[tokio::test]
 async fn mint() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;

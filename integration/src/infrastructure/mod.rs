@@ -93,6 +93,19 @@ pub trait Token {
     fn new(address: Address, client: Arc<HttpMiddleware>) -> Self;
 }
 
+#[macro_export]
+macro_rules! token_impl {
+    ($token_type:ty, $program_address:expr) => {
+        impl Token for $token_type {
+            const STYLUS_PROGRAM_ADDRESS: &'static str = $program_address;
+
+            fn new(address: Address, client: Arc<HttpMiddleware>) -> Self {
+                Self::new(address, client)
+            }
+        }
+    };
+}
+
 pub type HttpMiddleware = SignerMiddleware<Provider<Http>, LocalWallet>;
 
 impl<T: Token> Client<T> {

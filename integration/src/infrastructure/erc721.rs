@@ -3,6 +3,7 @@ use std::sync::Arc;
 use ethers::{addressbook::Address, contract::abigen};
 
 use crate::infrastructure::{HttpMiddleware, Token};
+use crate::token_impl;
 
 abigen!(
     Erc721Token,
@@ -45,12 +46,4 @@ abigen!(
 );
 
 pub type Erc721 = Erc721Token<HttpMiddleware>;
-
-impl Token for Erc721 {
-    const STYLUS_PROGRAM_ADDRESS: &'static str =
-        "ERC721_EXAMPLE_DEPLOYMENT_ADDRESS";
-
-    fn new(address: Address, client: Arc<HttpMiddleware>) -> Self {
-        Self::new(address, client)
-    }
-}
+token_impl!(Erc721, "ERC721_EXAMPLE_DEPLOYMENT_ADDRESS");

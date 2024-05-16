@@ -42,15 +42,7 @@ abigen!(
 Then add wrapper type for the contract:
 ```rust
 pub type Erc20 = Erc20Token<HttpMiddleware>;
-
-impl Token for Erc20 {
-    const STYLUS_PROGRAM_ADDRESS: &'static str =
-        "ERC20_EXAMPLE_DEPLOYMENT_ADDRESS";
-
-    fn new(address: Address, client: Arc<HttpMiddleware>) -> Self {
-        Self::new(address, client)
-    }
-}
+token_impl!(Erc20, "ERC20_EXAMPLE_DEPLOYMENT_ADDRESS");
 ```
 Function `new` should forward call to the contract factory method.
 `STYLUS_PROGRAM_ADDRESS` should have a value of formed by the template `<CRATE_NAME>_DEPLOYMENT_ADDRESS`
