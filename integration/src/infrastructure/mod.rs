@@ -168,6 +168,7 @@ pub trait ContextSend {
     async fn ctx_send(self) -> Result<TransactionReceipt>;
 }
 
+// TODO#q: add wallet owner name to to ContractCall (self.tx.from())
 #[async_trait]
 impl ContextSend for ContractCall<HttpMiddleware, ()> {
     async fn ctx_send(self) -> Result<TransactionReceipt> {

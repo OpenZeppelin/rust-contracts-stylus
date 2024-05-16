@@ -23,21 +23,33 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          save-always: true #TODO#q: remove it when github pipeline stop failing
+          #TODO#q: remove save-always policy when github pipeline stop failing
+          save-always: true
+
+      - name: cache cargo-stylus
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/.crates.toml
+          key: ${{ runner.os }}-cargo-bin-cargo-stylus@0.2.1
+          save-always: true
+
       - name: set up rust
         uses: dtolnay/rust-toolchain@stable
         with:
           target: wasm32-unknown-unknown, x86_64-unknown-linux-gnu
           toolchain: 1.77.0
-        #TODO#q: cache nitro node images and nitro-testnode sources since it is a bottleneck for the routine
+
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
+
+        #TODO#q: cache nitro node images and nitro-testnode sources since it is a bottleneck for the routine
       - name: setup nitro node
         run: |
           # clone nitro test node repo
@@ -51,5 +63,6 @@ jobs:
           ./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10000
           # fund Bob's wallet
           ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
+
       - name: run integration tests
         run: ./integration/test.sh

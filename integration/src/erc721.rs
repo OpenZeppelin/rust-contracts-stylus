@@ -8,7 +8,7 @@ use crate::infrastructure::{erc721::*, *};
 // TODO#q: refactor these tests similarly to unit tests
 
 #[tokio::test]
-async fn mint_nft_and_check_balance() -> Result<()> {
+async fn mint() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = infra
@@ -26,7 +26,7 @@ async fn mint_nft_and_check_balance() -> Result<()> {
 }
 
 #[tokio::test]
-async fn error_mint_second_nft() -> Result<()> {
+async fn error_when_reusing_token_id() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = infra
@@ -34,21 +34,16 @@ async fn error_mint_second_nft() -> Result<()> {
         .mint(infra.alice.wallet.address(), token_id)
         .ctx_send()
         .await?;
-    match infra
+    let err = infra
         .alice
         .mint(infra.alice.wallet.address(), token_id)
         .ctx_send()
-        .await
-    {
-        Ok(_) => {
-            bail!("Second mint of the same token should not be possible")
-        }
-        Err(e) => e.assert(ERC721InvalidSender { sender: Address::zero() }),
-    }
+        .await.expect_err("should not mint a token id twice");
+    err.assert(ERC721InvalidSender { sender: Address::zero() })
 }
 
 #[tokio::test]
-async fn transfer_nft() -> Result<()> {
+async fn transfer() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = infra
@@ -71,10 +66,10 @@ async fn transfer_nft() -> Result<()> {
 }
 
 #[tokio::test]
-async fn error_transfer_nonexistent_nft() -> Result<()> {
+async fn error_when_transfer_nonexistent_token() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;
     let token_id = random_token_id();
-    match infra
+    let err = infra
         .alice
         .transfer_from(
             infra.alice.wallet.address(),
@@ -83,16 +78,12 @@ async fn error_transfer_nonexistent_nft() -> Result<()> {
         )
         .ctx_send()
         .await
-    {
-        Ok(_) => {
-            bail!("Transfer of a non existent nft should not be possible")
-        }
-        Err(e) => e.assert(ERC721NonexistentToken { token_id }),
-    }
+        .expect_err("should not transfer a non existent token");
+    err.assert(ERC721NonexistentToken { token_id })
 }
 
 #[tokio::test]
-async fn approve_nft_transfer() -> Result<()> {
+async fn approve_token_transfer() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = infra
@@ -120,7 +111,7 @@ async fn approve_nft_transfer() -> Result<()> {
 }
 
 #[tokio::test]
-async fn error_not_approved_nft_transfer() -> Result<()> {
+async fn error_when_transfer_unapproved_token() -> Result<()> {
     let infra = Infrastructure::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = infra
@@ -128,7 +119,7 @@ async fn error_not_approved_nft_transfer() -> Result<()> {
         .mint(infra.alice.wallet.address(), token_id)
         .ctx_send()
         .await?;
-    match infra
+    let err = infra
         .bob
         .transfer_from(
             infra.alice.wallet.address(),
@@ -137,15 +128,11 @@ async fn error_not_approved_nft_transfer() -> Result<()> {
         )
         .ctx_send()
         .await
-    {
-        Ok(_) => {
-            bail!("Transfer of not approved token should not happen")
-        }
-        Err(e) => e.assert(ERC721InsufficientApproval {
-            operator: infra.bob.wallet.address(),
-            token_id,
-        }),
-    }
+        .expect_err("should not transfer unapproved token");
+    err.assert(ERC721InsufficientApproval {
+        operator: infra.bob.wallet.address(),
+        token_id,
+    })
 }
 
 // TODO: add more tests for erc721
