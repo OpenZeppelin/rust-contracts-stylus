@@ -240,7 +240,7 @@ impl AccessControl {
     ///
     /// # Requirements:
     ///
-    /// * The caller must be `caller_confirmation`.
+    /// * The caller must be `confirmation`.
     ///
     /// # Arguments
     ///
