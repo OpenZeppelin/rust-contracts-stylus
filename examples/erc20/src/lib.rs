@@ -5,9 +5,7 @@ use alloc::string::String;
 
 use alloy_primitives::{Address, U256};
 use contracts::{
-    erc20::{
-        extensions::metadata::Metadata, ERC20InvalidReceiver, Error, ERC20,
-    },
+    erc20::{extensions::ERC20Metadata, ERC20, Error, ERC20InvalidReceiver},
     erc20_burnable_impl,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
@@ -20,12 +18,12 @@ sol_storage! {
         #[borrow]
         ERC20 erc20;
         #[borrow]
-        Metadata metadata;
+        ERC20Metadata metadata;
     }
 }
 
 #[external]
-#[inherit(ERC20, Metadata)]
+#[inherit(ERC20, ERC20Metadata)]
 impl Token {
     // This macro implements ERC20Burnable functions -- `burn` and `burn_from`.
     // Expects an `ERC20 erc20` as a field of `Token`.
