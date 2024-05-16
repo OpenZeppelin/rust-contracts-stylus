@@ -104,7 +104,8 @@ impl Pausable {
     ///
     /// * If the contract is in `Paused` state, then the error
     /// [`Error::EnforcedPause`] is returned.
-    fn pause(&mut self) -> Result<(), Error> {
+
+    pub fn pause(&mut self) -> Result<(), Error> {
         self.when_not_paused()?;
         self._paused.set(true);
         evm::log(Paused { account: msg::sender() });
@@ -121,7 +122,7 @@ impl Pausable {
     ///
     /// * If the contract is in `Unpaused` state, then the error
     /// [`Error::ExpectedPause`] is returned.
-    fn unpause(&mut self) -> Result<(), Error> {
+    pub fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
         self._paused.set(false);
         evm::log(Unpaused { account: msg::sender() });
@@ -139,7 +140,7 @@ impl Pausable {
     ///
     /// * If the contract is in `Paused` state, then the error
     /// [`Error::EnforcedPause`] is returned.
-    fn when_not_paused(&self) -> Result<(), Error> {
+    pub fn when_not_paused(&self) -> Result<(), Error> {
         if self._paused.get() {
             return Err(Error::EnforcedPause(EnforcedPause {}));
         }
@@ -157,7 +158,7 @@ impl Pausable {
     ///
     /// * If the contract is in `Unpaused` state, then the error
     /// [`Error::ExpectedPause`] is returned.
-    fn when_paused(&self) -> Result<(), Error> {
+    pub fn when_paused(&self) -> Result<(), Error> {
         if !self._paused.get() {
             return Err(Error::ExpectedPause(ExpectedPause {}));
         }
