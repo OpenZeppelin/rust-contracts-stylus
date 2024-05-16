@@ -36,7 +36,8 @@ async fn error_when_reusing_token_id() -> Result<()> {
         .alice
         .mint(infra.alice.wallet.address(), token_id)
         .ctx_send()
-        .await.expect_err("should not mint a token id twice");
+        .await
+        .expect_err("should not mint a token id twice");
     err.assert(ERC721InvalidSender { sender: Address::zero() })
 }
 

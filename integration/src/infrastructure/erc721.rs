@@ -2,8 +2,10 @@ use std::sync::Arc;
 
 use ethers::{addressbook::Address, contract::abigen};
 
-use crate::infrastructure::{HttpMiddleware, Token};
-use crate::token_impl;
+use crate::{
+    infrastructure::{HttpMiddleware, Token},
+    token_impl,
+};
 
 abigen!(
     Erc721Token,
