@@ -50,11 +50,11 @@ export RPC_URL=${RPC_URL:-http://localhost:8547}
 
 cargo build --release --target wasm32-unknown-unknown
 
-# TODO#q: try to deploy contracts asynchronously
+# TODO: deploy contracts asynchronously
 for CRATE_NAME in $(get_example_crate_names)
 do
   deploy_contract "$CRATE_NAME"
 done
 
-# TODO: run tests in parallel when concurrency scope will be per contract
+# TODO: run tests in parallel when concurrency scope will be per test/contract
 RUST_TEST_THREADS=1 cargo test -p integration

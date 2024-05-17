@@ -28,8 +28,6 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          #TODO#q: remove save-always policy when github pipeline stop failing
-          save-always: true
 
       - name: cache cargo-stylus
         uses: actions/cache@v4
@@ -49,7 +47,6 @@ jobs:
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
 
-        #TODO#q: cache nitro node images and nitro-testnode sources since it is a bottleneck for the routine
       - name: setup nitro node
         run: |
           # clone nitro test node repo

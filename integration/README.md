@@ -2,7 +2,7 @@
 
 ## Run tests
 
-Deploying every contract from `./examples` directory and running integration tests.
+Deploy every contract from `./examples` directory and running integration tests.
 
 ### Against local nitro node
 

@@ -36,7 +36,7 @@ impl<T: Contract> Infrastructure<T> {
     /// and <CRATE_NAME>_DEPLOYMENT_ADDRESS
     /// where <CRATE_NAME> is the "SCREAMING_SNAKE_CASE" conversion of the crate
     /// name from the `./examples` directory.
-    pub async fn new() -> eyre::Result<Self> {
+    pub async fn new() -> Result<Self> {
         let alice_priv_key = std::env::var(ALICE_PRIV_KEY)
             .with_context(|| format!("Load {} env var", ALICE_PRIV_KEY))?;
         let bob_priv_key = std::env::var(BOB_PRIV_KEY)
@@ -196,7 +196,7 @@ impl<R: Detokenize + Send + Sync> ContextCall<R>
 {
     async fn ctx_call(self) -> Result<R> {
         let function_name = self.function.name.clone();
-        self.call().await.context(format!("calling {function_name}"))
+        self.call().await.context(format!("call {function_name}"))
     }
 }
 
@@ -208,16 +208,15 @@ pub trait ContextSend {
     async fn ctx_send(self) -> Result<TransactionReceipt>;
 }
 
-// TODO#q: add wallet owner name to to ContractCall (self.tx.from())
 #[async_trait]
 impl ContextSend for ContractCall<HttpMiddleware, ()> {
     async fn ctx_send(self) -> Result<TransactionReceipt> {
         let function_name = self.function.name.clone();
         self.send()
             .await
-            .context(format!("sending {function_name}"))?
+            .context(format!("send {function_name}"))?
             .await
-            .context(format!("sending {function_name}"))?
-            .context(format!("sending {function_name}"))
+            .context(format!("send {function_name}"))?
+            .context(format!("send {function_name}"))
     }
 }
