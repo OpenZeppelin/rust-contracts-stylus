@@ -81,6 +81,7 @@ impl Token {
         account: Address,
         value: U256,
     ) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
         let max_supply = self.capped.cap();
         let supply = self.erc20.total_supply() + value;
         if supply > max_supply {
