@@ -29,6 +29,13 @@ deploy_contract () {
     echo "Error: Couldn't retrieve deployment address for a contract $CONTRACT_CRATE_NAME."
     exit 1
   fi
+
+  DEPLOYMENT_ADDRESS_ENV_VAR_NAME="$(echo "$CRATE_NAME" | tr '-' '_' | tr '[:lower:]' '[:upper:]')_DEPLOYMENT_ADDRESS"
+
+  # export dynamically created variable
+  set -a
+  printf -v "$DEPLOYMENT_ADDRESS_ENV_VAR_NAME" "%s" "$DEPLOYMENT_ADDRESS"
+  set +a
 }
 
 # Retrieve all contract's crate names in `./examples` directory.
@@ -47,14 +54,6 @@ cargo build --release --target wasm32-unknown-unknown
 for CRATE_NAME in $(get_example_crate_names)
 do
   deploy_contract "$CRATE_NAME"
-
-  # TODO#q: move to deploy_contract function
-  DEPLOYMENT_ADDRESS_ENV_VAR_NAME="$(echo "$CRATE_NAME" | tr '-' '_' | tr '[:lower:]' '[:upper:]')_DEPLOYMENT_ADDRESS"
-
-  # export dynamically created variable
-  set -a
-  printf -v "$DEPLOYMENT_ADDRESS_ENV_VAR_NAME" "%s" "$DEPLOYMENT_ADDRESS"
-  set +a
 done
 
 # TODO: run tests in parallel when concurrency scope will be per contract

@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
 use ethers::prelude::*;
 
-use crate::{infrastructure::*, token_impl};
+use crate::{infrastructure::*, link_to_crate};
 
 abigen!(
     Erc20Token,
@@ -30,4 +28,4 @@ abigen!(
 );
 
 pub type Erc20 = Erc20Token<HttpMiddleware>;
-token_impl!(Erc20, "ERC20_EXAMPLE_DEPLOYMENT_ADDRESS");
+link_to_crate!(Erc20, "erc20-example");

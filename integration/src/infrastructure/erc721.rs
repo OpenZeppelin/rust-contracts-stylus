@@ -1,11 +1,6 @@
-use std::sync::Arc;
+use ethers::contract::abigen;
 
-use ethers::{addressbook::Address, contract::abigen};
-
-use crate::{
-    infrastructure::{HttpMiddleware, Token},
-    token_impl,
-};
+use crate::{infrastructure::HttpMiddleware, link_to_crate};
 
 abigen!(
     Erc721Token,
@@ -48,4 +43,4 @@ abigen!(
 );
 
 pub type Erc721 = Erc721Token<HttpMiddleware>;
-token_impl!(Erc721, "ERC721_EXAMPLE_DEPLOYMENT_ADDRESS");
+link_to_crate!(Erc721, "erc721-example");

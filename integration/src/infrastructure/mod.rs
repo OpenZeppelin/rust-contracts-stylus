@@ -1,7 +1,11 @@
 pub mod erc20;
 pub mod erc721;
 
-use std::{ops::Deref, str::FromStr, sync::Arc};
+use std::{
+    ops::{Add, Deref},
+    str::FromStr,
+    sync::Arc,
+};
 
 use async_trait::async_trait;
 use ethers::{
@@ -20,12 +24,12 @@ const RPC_URL: &str = "RPC_URL";
 
 /// Integration testing infrastructure that allows to act on behalf of `alice`
 /// and `bob` accounts.
-pub struct Infrastructure<T: Token> {
+pub struct Infrastructure<T: Contract> {
     pub alice: Client<T>,
     pub bob: Client<T>,
 }
 
-impl<T: Token> Infrastructure<T> {
+impl<T: Contract> Infrastructure<T> {
     /// Constructs new instance of an integration testing infrastructure.
     ///
     /// Requires env variables `ALICE_PRIV_KEY`, `BOB_PRIV_KEY`, `RPC_URL`
@@ -39,12 +43,17 @@ impl<T: Token> Infrastructure<T> {
             .with_context(|| format!("Load {} env var", BOB_PRIV_KEY))?;
         let rpc_url = std::env::var(RPC_URL)
             .with_context(|| format!("Load {} env var", RPC_URL))?;
-        let stylus_program_address = std::env::var(T::STYLUS_PROGRAM_ADDRESS)
-            .with_context(|| {
-            format!("Load {} env var", T::STYLUS_PROGRAM_ADDRESS)
-        })?;
 
-        let program_address: Address = stylus_program_address.parse()?;
+        let program_address_env_name = T::CRATE_NAME
+            .replace('-', "_")
+            .to_ascii_uppercase()
+            .add("_DEPLOYMENT_ADDRESS");
+        let program_address: Address = std::env::var(&program_address_env_name)
+            .with_context(|| {
+                format!("Load {} env var", program_address_env_name)
+            })?
+            .parse()?;
+
         let provider = Provider::<Http>::try_from(rpc_url)?;
 
         Ok(Infrastructure {
@@ -61,31 +70,26 @@ impl<T: Token> Infrastructure<T> {
 
 /// Client of participant that allows to check wallet address and call contract
 /// functions.
-pub struct Client<T: Token> {
+pub struct Client<T: Contract> {
     pub wallet: LocalWallet,
-    pub caller: T,
+    pub contract: T,
 }
 
-// Allows not to mention `caller` property every time we call a function.
-impl<T: Token> Deref for Client<T> {
+// Allows not to mention `contract` property every time we call a function.
+impl<T: Contract> Deref for Client<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        &self.caller
+        &self.contract
     }
 }
 
 /// Abstraction for the deployed contract.
-pub trait Token {
-    /// Deployed program address environment variable name for the contract.
+pub trait Contract {
+    /// Crate name of the contract.
     ///
-    /// e.g can be `ERC721_EXAMPLE_DEPLOYMENT_ADDRESS`.
-    /// Formed by the template <CRATE_NAME>_DEPLOYMENT_ADDRESS
-    /// where <CRATE_NAME> is the "SCREAMING_SNAKE_CASE" conversion of the crate
-    /// name from the `./examples` directory.
-    /// That environment variable should store an address of the corresponding
-    /// deployed program.
-    const STYLUS_PROGRAM_ADDRESS: &'static str;
+    /// e.g can be `erc721-example`.
+    const CRATE_NAME: &'static str;
 
     /// Abstracts token creation function.
     ///
@@ -93,14 +97,36 @@ pub trait Token {
     fn new(address: Address, client: Arc<HttpMiddleware>) -> Self;
 }
 
-// TODO#q: parse crate name with this macro
+/// Link `abigen!` contract to the crate name in `./examples` directory.
+///
+/// # Example
+/// ```
+/// use integration::{link_to_crate, infrastructure::HttpMiddleware};
+/// use ethers::contract::abigen;
+///
+/// abigen!(
+///     Erc20Token,
+///     r#"[
+///         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)
+///         function mint(address account, uint256 amount) external
+///         
+///         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)
+///     ]"#
+/// );
+///
+/// pub type Erc20 = Erc20Token<HttpMiddleware>;
+/// link_to_crate!(Erc20, "erc20-example");
+/// ```
 #[macro_export]
-macro_rules! token_impl {
+macro_rules! link_to_crate {
     ($token_type:ty, $program_address:expr) => {
-        impl Token for $token_type {
-            const STYLUS_PROGRAM_ADDRESS: &'static str = $program_address;
+        impl $crate::infrastructure::Contract for $token_type {
+            const CRATE_NAME: &'static str = $program_address;
 
-            fn new(address: Address, client: Arc<HttpMiddleware>) -> Self {
+            fn new(
+                address: ethers::types::Address,
+                client: std::sync::Arc<HttpMiddleware>,
+            ) -> Self {
                 Self::new(address, client)
             }
         }
@@ -109,7 +135,7 @@ macro_rules! token_impl {
 
 pub type HttpMiddleware = SignerMiddleware<Provider<Http>, LocalWallet>;
 
-impl<T: Token> Client<T> {
+impl<T: Contract> Client<T> {
     pub async fn new(
         provider: Provider<Http>,
         program_address: Address,
@@ -122,7 +148,7 @@ impl<T: Token> Client<T> {
             wallet.clone().with_chain_id(chain_id),
         ));
         let caller = T::new(program_address, signer);
-        Ok(Self { wallet, caller })
+        Ok(Self { wallet, contract: caller })
     }
 }
 
