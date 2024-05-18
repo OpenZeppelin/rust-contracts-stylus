@@ -298,6 +298,36 @@ impl ERC20 {
         Ok(())
     }
 
+    /// Creates a `value` amount of tokens and assigns them to `account`,
+    /// by transferring it from `Address::ZERO`.
+    ///
+    /// Relies on the `_update` mechanism.
+    ///
+    /// # Panics
+    ///
+    /// If `_total_supply` exceeds `U256::MAX`.
+    ///
+    /// # Errors
+    ///
+    /// If the `account` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
+    pub fn _mint(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        if account.is_zero() {
+            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
+                receiver: Address::ZERO,
+            }));
+        }
+        self._update(Address::ZERO, account, value)
+    }
+
     /// Transfers a `value` amount of tokens from `from` to `to`,
     /// or alternatively mints (or burns)
     /// if `from` (or `to`) is the zero address.
@@ -502,7 +532,7 @@ mod tests {
     }
 
     #[grip::test]
-    #[should_panic]
+    #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
     fn update_mint_errors_arithmetic_overflow(contract: ERC20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -515,6 +545,58 @@ mod tests {
             .expect("ERC20::_update should work");
         // Mint action should NOT work -- overflow on `_total_supply`.
         let _result = contract._update(Address::ZERO, alice, one);
+    }
+
+    #[grip::test]
+    fn mint_works(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let one = U256::from(1);
+
+        // Store initial balance & supply
+        let initial_balance = contract.balance_of(alice);
+        let initial_supply = contract.total_supply();
+
+        // Mint action should work
+        let result = contract._mint(alice, one);
+        assert!(result.is_ok());
+
+        // Check updated balance & supply
+        assert_eq!(initial_balance + one, contract.balance_of(alice));
+        assert_eq!(initial_supply + one, contract.total_supply());
+    }
+
+    #[grip::test]
+    fn mint_errors_invalid_receiver(contract: ERC20) {
+        let receiver = Address::ZERO;
+        let one = U256::from(1);
+
+        // Store initial balance & supply
+        let initial_balance = contract.balance_of(receiver);
+        let initial_supply = contract.total_supply();
+
+        // Mint action should work
+        let result = contract._mint(receiver, one);
+        assert!(matches!(result, Err(Error::InvalidReceiver(_))));
+
+        // Check updated balance & supply
+        assert_eq!(initial_balance, contract.balance_of(receiver));
+        assert_eq!(initial_supply, contract.total_supply());
+    }
+
+    #[grip::test]
+    #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
+    fn mint_errors_arithmetic_overflow(contract: ERC20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let one = U256::from(1);
+        assert_eq!(U256::ZERO, contract.balance_of(alice));
+        assert_eq!(U256::ZERO, contract.total_supply());
+
+        // Initialize state for the test case -- Alice's balance as U256::MAX
+        contract
+            ._update(Address::ZERO, alice, U256::MAX)
+            .expect("ERC20::_update should work");
+        // Mint action should NOT work -- overflow on `_total_supply`.
+        let _result = contract._mint(alice, one);
     }
 
     #[grip::test]
