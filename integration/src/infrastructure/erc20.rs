@@ -5,7 +5,8 @@ use crate::{infrastructure::*, link_to_crate};
 abigen!(
     Erc20Token,
     r#"[
-        function init(uint256) external
+        function constructor(string memory name, string memory symbol, uint256 cap) external
+
         function name() external view returns (string)
         function symbol() external view returns (string)
         function decimals() external view returns (uint8)

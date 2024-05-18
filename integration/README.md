@@ -6,9 +6,21 @@ Deploy every contract from `./examples` directory and running integration tests.
 
 ### Against local nitro node
 
-Set up first a local nitro node according to
-this [guide](https://github.com/OffchainLabs/nitro-testnode/blob/release/README.md) and run this command from the
-project root:
+Set up first a local nitro node according to this [guide](https://github.com/OffchainLabs/nitro-testnode/blob/release/README.md)
+
+```terminal
+# setup nitro test node in detached mode
+# docker images should be shutdown manually later
+./test-node.bash --no-run --init --no-tokenbridge
+./test-node.bash --detach
+
+# fund Alice's wallet
+./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10000
+# fund Bob's wallet
+./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
+```
+
+Run integration testing  command from the project root:
 
 ```terminal
     ./integration/test.sh
