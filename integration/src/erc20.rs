@@ -6,7 +6,7 @@ use crate::infrastructure::{erc20::*, *};
 #[tokio::test]
 async fn mint() -> Result<()> {
     let Infrastructure { alice, bob } = Infrastructure::<Erc20>::new().await?;
-    // TODO: has a nicer support for custom constructors
+    // TODO: have a nicer support for custom constructors
     let _ = alice
         .constructor("MyErc20".to_string(), "MRC".to_string(), U256::from(10))
         .ctx_send()
