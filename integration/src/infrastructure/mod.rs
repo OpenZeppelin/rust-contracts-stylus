@@ -22,8 +22,8 @@ const ALICE_PRIV_KEY: &str = "ALICE_PRIV_KEY";
 const BOB_PRIV_KEY: &str = "BOB_PRIV_KEY";
 const RPC_URL: &str = "RPC_URL";
 
-/// Integration testing infrastructure that allows to act on behalf of `alice`
-/// and `bob` accounts.
+/// Integration testing infrastructure that allows to act on behalf of `Alice`
+/// and `Bob` accounts.
 pub struct Infrastructure<T: Contract> {
     pub alice: Client<T>,
     pub bob: Client<T>,
