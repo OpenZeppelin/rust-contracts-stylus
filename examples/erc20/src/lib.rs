@@ -6,10 +6,10 @@ use alloc::{string::String, vec::Vec};
 use alloy_primitives::{Address, U256};
 use contracts::{
     erc20::{
-        extensions::{capped, Capped, ERC20Metadata},
+        extensions::{capped, Capped, ERC20Metadata, IERC20Burnable},
         ERC20,
     },
-    erc20_burnable_impl,
+    utils::Pausable,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
@@ -24,16 +24,14 @@ sol_storage! {
         ERC20Metadata metadata;
         #[borrow]
         Capped capped;
+        #[borrow]
+        Pausable pausable;
     }
 }
 
 #[external]
-#[inherit(ERC20, ERC20Metadata, Capped)]
+#[inherit(ERC20, ERC20Metadata, Capped, Pausable)]
 impl Token {
-    // This macro implements ERC20Burnable functions -- `burn` and `burn_from`.
-    // Expects an `ERC20 erc20` as a field of `Token`.
-    erc20_burnable_impl!();
-
     // We need to properly initialize all Token's attributes.
     // For that we need to call each attributes' constructor if exists.
     //
@@ -43,9 +41,11 @@ impl Token {
         name: String,
         symbol: String,
         cap: U256,
+        paused: bool,
     ) -> Result<(), Vec<u8>> {
         self.metadata.constructor(name, symbol);
         self.capped.constructor(cap)?;
+        self.pausable.constructor(paused);
         Ok(())
     }
 
@@ -55,6 +55,20 @@ impl Token {
     // default to `18`.
     pub fn decimals(&self) -> u8 {
         DECIMALS
+    }
+
+    pub fn burn(&mut self, value: U256) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc20.burn(value).map_err(|e| e.into())
+    }
+
+    pub fn burn_from(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc20.burn_from(account, value).map_err(|e| e.into())
     }
 
     // Add token minting feature.
@@ -67,6 +81,7 @@ impl Token {
         account: Address,
         value: U256,
     ) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
         let max_supply = self.capped.cap();
         let supply = self.erc20.total_supply() + value;
         if supply > max_supply {
@@ -80,5 +95,24 @@ impl Token {
 
         self.erc20._mint(account, value)?;
         Ok(())
+    }
+
+    pub fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc20.transfer(to, value).map_err(|e| e.into())
+    }
+
+    pub fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
     }
 }
