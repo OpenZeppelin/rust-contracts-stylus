@@ -1081,7 +1081,7 @@ mod tests {
         }
     }
 
-    fn random_token_id() -> U256 {
+    pub(crate) fn random_token_id() -> U256 {
         let num: u32 = rand::random();
         num.try_into().expect("conversion to U256")
     }
