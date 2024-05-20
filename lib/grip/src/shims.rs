@@ -120,6 +120,7 @@ pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
     unsafe { write_bytes32(out, value) };
 }
 
+// TODO: change it when 0.5.0 release will work with a nitro test node
 /// Stores a 32-byte value to permanent storage. Stylus's storage format is
 /// identical to that of the EVM. This means that, under the hood, this hostio
 /// is storing a 32-byte value into the EVM state trie at offset `key`.
