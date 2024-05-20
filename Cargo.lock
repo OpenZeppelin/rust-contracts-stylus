@@ -702,6 +702,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56ce8c6da7551ec6c462cbaf3bfbc75131ebbfa1c944aeaa9dab51ca1c5f0c3b"
 
 [[package]]
+name = "e2e-tests"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "ethers",
+ "eyre",
+ "tokio",
+]
+
+[[package]]
 name = "ecdsa"
 version = "0.16.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1639,16 +1649,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if 1.0.0",
-]
-
-[[package]]
-name = "integration"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "ethers",
- "eyre",
- "tokio",
 ]
 
 [[package]]
