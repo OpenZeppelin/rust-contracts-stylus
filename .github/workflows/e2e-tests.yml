@@ -18,7 +18,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  test:
+  e2e-tests:
     name: integration tests suite
     runs-on: ubuntu-latest
     steps:
@@ -45,7 +45,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           target: wasm32-unknown-unknown, x86_64-unknown-linux-gnu
-          toolchain: 1.77.0
+          toolchain: 1.70
 
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
@@ -54,11 +54,13 @@ jobs:
         run: |
           # clone nitro test node repo
           git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git && cd nitro-testnode
+          git reset --hard f5ac2b2271b59827915258471bdf99a1426b5671
           
           # setup nitro test node
           ./test-node.bash --no-run --init --no-tokenbridge
           ./test-node.bash --detach
           
+          # TODO: remove hard coded wallets when user creation will be per test case
           # fund Alice's wallet
           ./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10000
           # fund Bob's wallet
