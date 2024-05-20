@@ -1,8 +1,11 @@
 name: integration
-# This is an integration workflow that runs following jobs:
-# - integration-test: Spins local nitro node.
-# Deploys and check every contract at `./examples` directory.
-# Runs integration test suite against all contracts deployed locally.
+# This workflow runs our integration tests suite.
+#
+# It roughly follows this steps:
+# - A local `nitro-testnode` gets spun up.
+# - Contracts get deployed to the local node.
+# - A few addresses get funded.
+# - The test suite runs.
 permissions:
   contents: read
 on:
