@@ -1,5 +1,5 @@
-name: integration
-# This workflow runs our integration tests suite.
+name: e2e-tests
+# This workflow runs our end-to-end tests suite.
 #
 # It roughly follows this steps:
 # - A local `nitro-testnode` gets spun up.
@@ -19,7 +19,7 @@ env:
   CARGO_TERM_COLOR: always
 jobs:
   test:
-    name: integration testing suite
+    name: integration tests suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
