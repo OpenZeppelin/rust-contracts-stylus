@@ -9,5 +9,13 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc20_burnable"))] {
         pub mod burnable;
+        pub use burnable::IERC20Burnable;
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(any(test, feature = "erc20_capped"))] {
+        pub mod capped;
+        pub use capped::Capped;
     }
 }

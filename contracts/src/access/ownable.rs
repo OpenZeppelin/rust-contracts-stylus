@@ -19,7 +19,7 @@ use stylus_sdk::{
 sol! {
     /// Emitted when ownership gets transferred between accounts.
     #[allow(missing_docs)]
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
 }
 
 sol! {
@@ -171,13 +171,9 @@ impl Ownable {
     /// * `&mut self` - Write access to the contract's state.
     /// * `new_owner` - Account that's gonna be the next owner.
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
-        let old_owner = self._owner.get();
+        let previous_owner = self._owner.get();
         self._owner.set(new_owner);
-
-        evm::log(OwnershipTransferred {
-            previousOwner: old_owner,
-            newOwner: new_owner,
-        });
+        evm::log(OwnershipTransferred { previous_owner, new_owner });
     }
 }
 
