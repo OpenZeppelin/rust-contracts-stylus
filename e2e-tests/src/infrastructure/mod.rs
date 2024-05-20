@@ -24,12 +24,12 @@ const RPC_URL: &str = "RPC_URL";
 
 /// Integration testing infrastructure that allows to act on behalf of `Alice`
 /// and `Bob` accounts.
-pub struct Infrastructure<T: Contract> {
+pub struct Context<T: Contract> {
     pub alice: Client<T>,
     pub bob: Client<T>,
 }
 
-impl<T: Contract> Infrastructure<T> {
+impl<T: Contract> Context<T> {
     /// Constructs new instance of an integration testing infrastructure.
     ///
     /// Requires env variables `ALICE_PRIV_KEY`, `BOB_PRIV_KEY`, `RPC_URL`
@@ -56,7 +56,7 @@ impl<T: Contract> Infrastructure<T> {
 
         let provider = Provider::<Http>::try_from(rpc_url)?;
 
-        Ok(Infrastructure {
+        Ok(Context {
             alice: Client::new(
                 provider.clone(),
                 program_address,

@@ -5,7 +5,7 @@ use crate::infrastructure::{erc721::*, *};
 
 #[tokio::test]
 async fn mint() -> Result<()> {
-    let Infrastructure { alice, bob } = Infrastructure::<Erc721>::new().await?;
+    let Context { alice, bob } = Context::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
     let owner = alice.owner_of(token_id).ctx_call().await?;
@@ -18,7 +18,7 @@ async fn mint() -> Result<()> {
 
 #[tokio::test]
 async fn error_when_reusing_token_id() -> Result<()> {
-    let Infrastructure { alice, bob } = Infrastructure::<Erc721>::new().await?;
+    let Context { alice, bob } = Context::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
     let err = alice
@@ -31,7 +31,7 @@ async fn error_when_reusing_token_id() -> Result<()> {
 
 #[tokio::test]
 async fn transfer() -> Result<()> {
-    let Infrastructure { alice, bob } = Infrastructure::<Erc721>::new().await?;
+    let Context { alice, bob } = Context::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
     let _ = alice
@@ -45,7 +45,7 @@ async fn transfer() -> Result<()> {
 
 #[tokio::test]
 async fn error_when_transfer_nonexistent_token() -> Result<()> {
-    let Infrastructure { alice, bob } = Infrastructure::<Erc721>::new().await?;
+    let Context { alice, bob } = Context::<Erc721>::new().await?;
     let token_id = random_token_id();
     let err = alice
         .transfer_from(alice.wallet.address(), bob.wallet.address(), token_id)
@@ -57,7 +57,7 @@ async fn error_when_transfer_nonexistent_token() -> Result<()> {
 
 #[tokio::test]
 async fn approve_token_transfer() -> Result<()> {
-    let Infrastructure { alice, bob } = Infrastructure::<Erc721>::new().await?;
+    let Context { alice, bob } = Context::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
     let _ = alice.approve(bob.wallet.address(), token_id).ctx_send().await?;
@@ -72,7 +72,7 @@ async fn approve_token_transfer() -> Result<()> {
 
 #[tokio::test]
 async fn error_when_transfer_unapproved_token() -> Result<()> {
-    let Infrastructure { alice, bob } = Infrastructure::<Erc721>::new().await?;
+    let Context { alice, bob } = Context::<Erc721>::new().await?;
     let token_id = random_token_id();
     let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
     let err = bob
