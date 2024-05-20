@@ -24,7 +24,7 @@ this [guide](https://github.com/OffchainLabs/nitro-testnode/blob/release/README.
 Run integration testing command:
 
 ```terminal
-    ./integration/test.sh
+    ./e2e-tests/test.sh
 ```
 
 ### Against stylus dev net
@@ -37,14 +37,14 @@ Run this command:
     ALICE_PRIV_KEY=0x... \
     BOB_PRIV_KEY=0x... \
     RPC_URL=https://stylus-testnet.arbitrum.io/rpc \
-        ./integration/test.sh
+        ./e2e-tests//test.sh
 ```
 
 ## Add test for the new contract
 
 Assuming that contract associated crate exists at `./examples` directory
 with the crate name `erc20-example`.
-Add ethereum contracts to `./integration/src/infrastructure` directory like:
+Add ethereum contracts to `./e2e-tests//src/infrastructure` directory like:
 
 ```rust
 ethers::contract::abigen!(

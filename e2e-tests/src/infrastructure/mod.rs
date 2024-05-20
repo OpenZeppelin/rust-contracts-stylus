@@ -101,7 +101,7 @@ pub trait Contract {
 ///
 /// # Example
 /// ```
-/// use integration::{link_to_crate, infrastructure::HttpMiddleware};
+/// use e2e-tests::{link_to_crate, infrastructure::HttpMiddleware};
 /// use ethers::contract::abigen;
 ///
 /// abigen!(
