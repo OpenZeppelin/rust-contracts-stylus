@@ -8,7 +8,7 @@ async fn mint() -> Result<()> {
     let Infrastructure { alice, bob } = Infrastructure::<Erc20>::new().await?;
     // TODO: have a nicer support for custom constructors
     let _ = alice
-        .constructor("MyErc20".to_string(), "MRC".to_string(), U256::from(10))
+        .constructor("MyErc20".to_string(), "MRC".to_string(), U256::from(10), false)
         .ctx_send()
         .await?;
     let one = U256::from(1);

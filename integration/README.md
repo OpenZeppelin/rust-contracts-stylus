@@ -6,7 +6,8 @@ Deploy every contract from `./examples` directory and running integration tests.
 
 ### Against local nitro node
 
-Set up first a local nitro node according to this [guide](https://github.com/OffchainLabs/nitro-testnode/blob/release/README.md)
+Set up first a local nitro node according to
+this [guide](https://github.com/OffchainLabs/nitro-testnode/blob/release/README.md)
 
 ```terminal
 # setup nitro test node in detached mode
@@ -20,7 +21,7 @@ Set up first a local nitro node according to this [guide](https://github.com/Off
 ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
 ```
 
-Run integration testing  command from the project root:
+Run integration testing command:
 
 ```terminal
     ./integration/test.sh
@@ -30,7 +31,7 @@ Run integration testing  command from the project root:
 
 `ALICE_PRIV_KEY` and `BOB_PRIV_KEY` should be valid funded wallets.
 `RPC_URL` should contain url of the stylus testnet.
-Run this command from the project root:
+Run this command:
 
 ```terminal
     ALICE_PRIV_KEY=0x... \
