@@ -1,7 +1,7 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 
 use alloy_primitives::U256;
 use contracts::erc721::{
@@ -39,15 +39,24 @@ impl Token {
     }
 
     // Overrides [`ERC721UriStorage::token_uri`].
-    //
-    // Returns the concatenation of the Base URI from [`ERC721Metadata`]
-    // and the Token URI from [`ERC721UriStorage`].
+    // Returns the Uniform Resource Identifier (URI) for tokenId token.
     pub fn token_uri(&self, token_id: U256) -> String {
-        let mut uri = self.metadata.base_uri();
+        let base = self.metadata.base_uri();
         let token_uri = self.uri_storage.token_uri(token_id);
 
-        // Concatenate the Base URI and Token URI.
-        uri.push_str(&token_uri);
+        // If there is no base URI, return the token URI.
+        if base.is_empty() {
+            return token_uri;
+        }
+
+        let mut uri = base;
+        // If both are set, concatenate the baseURI and tokenURI (via
+        // string.concat).
+        if !token_uri.is_empty() {
+            uri.push_str(&token_uri);
+        } else {
+            uri.push_str(&token_id.to_string());
+        }
 
         uri
     }

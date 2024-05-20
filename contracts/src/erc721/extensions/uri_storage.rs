@@ -30,19 +30,7 @@ sol_storage! {
     }
 }
 
-#[external]
 impl ERC721UriStorage {
-    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - Id of a token.
-    #[must_use]
-    pub fn token_uri(&self, token_id: U256) -> String {
-        self._token_uris.get(token_id).get_string()
-    }
-
     /// Sets `token_uri` as the tokenURI of `token_id`.
     ///
     /// # Arguments
@@ -56,6 +44,20 @@ impl ERC721UriStorage {
     pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
+    }
+}
+
+#[external]
+impl ERC721UriStorage {
+    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Id of a token.
+    #[must_use]
+    pub fn token_uri(&self, token_id: U256) -> String {
+        self._token_uris.get(token_id).get_string()
     }
 }
 
