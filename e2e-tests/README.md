@@ -68,5 +68,5 @@ link_to_crate!(Erc20, "erc20-example");
 Tests should create new infrastructure instance like this:
 
 ```rust
-let infra = Infrastructure::<Erc20>::new().await?;
+let context = E2EContext::<Erc20>::new().await?;
 ```

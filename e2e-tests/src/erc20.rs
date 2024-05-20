@@ -5,7 +5,7 @@ use crate::infrastructure::{erc20::*, *};
 
 #[tokio::test]
 async fn mint() -> Result<()> {
-    let Context { alice, bob } = Context::<Erc20>::new().await?;
+    let E2EContext { alice, bob } = E2EContext::<Erc20>::new().await?;
     // TODO: have a nicer support for custom constructors
     let _ = alice
         .constructor(

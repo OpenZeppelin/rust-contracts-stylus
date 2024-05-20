@@ -22,14 +22,14 @@ const ALICE_PRIV_KEY: &str = "ALICE_PRIV_KEY";
 const BOB_PRIV_KEY: &str = "BOB_PRIV_KEY";
 const RPC_URL: &str = "RPC_URL";
 
-/// Integration testing infrastructure that allows to act on behalf of `Alice`
+/// End-to-end testing context that allows to act on behalf of `Alice`
 /// and `Bob` accounts.
-pub struct Context<T: Contract> {
+pub struct E2EContext<T: Contract> {
     pub alice: Client<T>,
     pub bob: Client<T>,
 }
 
-impl<T: Contract> Context<T> {
+impl<T: Contract> E2EContext<T> {
     /// Constructs new instance of an integration testing infrastructure.
     ///
     /// Requires env variables `ALICE_PRIV_KEY`, `BOB_PRIV_KEY`, `RPC_URL`
@@ -56,7 +56,7 @@ impl<T: Contract> Context<T> {
 
         let provider = Provider::<Http>::try_from(rpc_url)?;
 
-        Ok(Context {
+        Ok(E2EContext {
             alice: Client::new(
                 provider.clone(),
                 program_address,

@@ -57,4 +57,4 @@ do
 done
 
 # TODO: run tests in parallel when concurrency scope will be per test/contract
-RUST_TEST_THREADS=1 cargo test -p e2e-tests --all-features
+RUST_TEST_THREADS=1 cargo test -p e2e-tests
