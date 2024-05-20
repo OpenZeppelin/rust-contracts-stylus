@@ -1,6 +1,6 @@
 use ethers::prelude::*;
 
-use crate::{infrastructure::*, link_to_crate};
+use crate::infrastructure::*;
 
 abigen!(
     Erc20Token,

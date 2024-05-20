@@ -706,6 +706,7 @@ name = "e2e-tests"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "cfg-if 1.0.0",
  "ethers",
  "eyre",
  "tokio",

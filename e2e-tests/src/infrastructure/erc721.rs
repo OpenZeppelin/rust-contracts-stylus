@@ -1,6 +1,6 @@
 use ethers::contract::abigen;
 
-use crate::{infrastructure::HttpMiddleware, link_to_crate};
+use crate::infrastructure::*;
 
 abigen!(
     Erc721Token,

@@ -2,7 +2,7 @@
 set -o pipefail
 
 # make sure we will be running script from the project root.
-mydir=$(dirname $0)
+mydir=$(dirname "$0")
 cd "$mydir" || exit
 cd ..
 
@@ -57,4 +57,4 @@ do
 done
 
 # TODO: run tests in parallel when concurrency scope will be per test/contract
-RUST_TEST_THREADS=1 cargo test -p e2e-tests
+RUST_TEST_THREADS=1 cargo test -p e2e-tests --all-features

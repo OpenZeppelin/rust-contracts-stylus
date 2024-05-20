@@ -117,7 +117,6 @@ pub trait Contract {
 /// pub type Erc20 = Erc20Token<HttpMiddleware>;
 /// link_to_crate!(Erc20, "erc20-example");
 /// ```
-#[macro_export]
 macro_rules! link_to_crate {
     ($token_type:ty, $program_address:expr) => {
         impl $crate::infrastructure::Contract for $token_type {
@@ -132,6 +131,8 @@ macro_rules! link_to_crate {
         }
     };
 }
+
+pub(crate) use link_to_crate;
 
 pub type HttpMiddleware = SignerMiddleware<Provider<Http>, LocalWallet>;
 

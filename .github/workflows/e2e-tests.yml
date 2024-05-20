@@ -54,7 +54,7 @@ jobs:
         run: |
           # clone nitro test node repo
           git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git && cd nitro-testnode
-          git reset --hard f5ac2b2271b59827915258471bdf99a1426b5671
+          git reset --hard 1886f4b89f5c20fd5b0c2cf3d08a009ee73e45ca
           
           # setup nitro test node
           ./test-node.bash --no-run --init --no-tokenbridge
