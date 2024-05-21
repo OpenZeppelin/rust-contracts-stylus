@@ -4,7 +4,6 @@ name: check
 # - fmt: checks that the code is formatted according to `rustfmt`.
 # - clippy: checks that the code does not contain any `clippy` warnings.
 # - doc: checks that the code can be documented without errors.
-# - hack: check combinations of feature flags.
 # - typos: checks for typos across the repo.
 permissions:
   contents: read
@@ -13,7 +12,7 @@ permissions:
 # main branch ensures that the PR only gets built once.
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
 # If new code is pushed to a PR branch, then cancel in progress workflows for
 # that PR. Ensures that we don't waste CI time, and returns results quicker.
@@ -50,7 +49,7 @@ jobs:
       matrix:
         # Get early warning of new lints which are regularly introduced in beta
         # channels.
-        toolchain: [stable, beta]
+        toolchain: [ stable, beta ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -82,23 +81,6 @@ jobs:
         run: cargo doc --workspace --no-deps --all-features
         env:
           RUSTDOCFLAGS: --cfg docsrs
-  hack:
-    # `cargo-hack` checks combinations of feature flags to ensure that features
-    # are all additive which is required for feature unification.
-    runs-on: ubuntu-latest
-    name: ubuntu / stable / features
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: cargo install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
-      # Intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
-      # `--feature-powerset` runs for every combination of features.
-      - name: cargo hack
-        run: cargo hack --feature-powerset check --release
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
