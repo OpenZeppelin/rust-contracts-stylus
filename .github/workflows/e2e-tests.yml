@@ -45,7 +45,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           target: wasm32-unknown-unknown, x86_64-unknown-linux-gnu
-          toolchain: 1.77.0
+          toolchain: 1.75.0
 
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
