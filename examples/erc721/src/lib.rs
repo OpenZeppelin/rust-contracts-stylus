@@ -3,7 +3,7 @@ extern crate alloc;
 
 use alloc::string::{String, ToString};
 
-use alloy_primitives::{U256, Address};
+use alloy_primitives::{Address, U256};
 use contracts::erc721::{
     extensions::{ERC721Metadata, ERC721UriStorage},
     ERC721,
