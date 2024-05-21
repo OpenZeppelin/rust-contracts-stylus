@@ -9,7 +9,7 @@ use alloc::{
 use alloy_primitives::{Address, U256};
 use contracts::{
     erc721::{
-        extensions::{ERC721Metadata, ERC721UriStorage},
+        extensions::{ERC721Metadata, ERC721UriStorage, IERC721Burnable},
         ERC721,
     },
     utils::Pausable,
@@ -47,6 +47,11 @@ impl Token {
         base_uri: String,
     ) {
         self.metadata.constructor(name, symbol, base_uri);
+    }
+
+    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc721.burn(token_id).map_err(|e| e.into())
     }
 
     // Overrides [`ERC721UriStorage::token_uri`].
