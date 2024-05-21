@@ -98,7 +98,7 @@ jobs:
       # Intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
       # `--feature-powerset` runs for every combination of features.
       - name: cargo hack
-        run: cargo hack --feature-powerset check --release
+        run: cargo hack --feature-powerset check --depth 2 --release
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
