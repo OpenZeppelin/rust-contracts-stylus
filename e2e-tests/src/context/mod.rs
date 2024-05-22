@@ -119,7 +119,7 @@ pub trait Contract {
 /// ```
 macro_rules! link_to_crate {
     ($token_type:ty, $program_address:expr) => {
-        impl $crate::infrastructure::Contract for $token_type {
+        impl $crate::context::Contract for $token_type {
             const CRATE_NAME: &'static str = $program_address;
 
             fn new(

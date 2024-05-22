@@ -44,7 +44,7 @@ Run this command:
 
 Assuming that contract associated crate exists at `./examples` directory
 with the crate name `erc20-example`.
-Add ethereum contracts to `./e2e-tests//src/infrastructure` directory like:
+Add ethereum contracts to `./e2e-tests/src/context` directory like:
 
 ```rust
 ethers::contract::abigen!(

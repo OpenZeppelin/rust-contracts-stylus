@@ -1,7 +1,7 @@
 use ethers::prelude::*;
 use eyre::Result;
 
-use crate::infrastructure::{erc721::*, *};
+use crate::context::{erc721::*, *};
 
 #[tokio::test]
 async fn mint() -> Result<()> {
