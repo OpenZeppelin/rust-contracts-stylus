@@ -30,7 +30,7 @@ pub struct E2EContext<T: Contract> {
 }
 
 impl<T: Contract> E2EContext<T> {
-    /// Constructs new instance of an integration testing infrastructure.
+    /// Constructs new instance of an integration testing context.
     ///
     /// Requires env variables `ALICE_PRIV_KEY`, `BOB_PRIV_KEY`, `RPC_URL`
     /// and <CRATE_NAME>_DEPLOYMENT_ADDRESS
@@ -101,7 +101,7 @@ pub trait Contract {
 ///
 /// # Example
 /// ```
-/// use e2e-tests::{link_to_crate, infrastructure::HttpMiddleware};
+/// use e2e-tests::{link_to_crate, context::HttpMiddleware};
 /// use ethers::contract::abigen;
 ///
 /// abigen!(
