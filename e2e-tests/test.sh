@@ -16,9 +16,18 @@ deploy_contract () {
 
   echo "Deploying contract $CONTRACT_CRATE_NAME."
 
-  DEPLOY_OUTPUT=$(cargo stylus deploy --wasm-file-path ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME" -e "$RPC_URL" --private-key "$PRIVATE_KEY") || exit $?
+  DEPLOY_OUTPUT=$(cargo stylus deploy --wasm-file-path ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME" -e "$RPC_URL" --private-key "$PRIVATE_KEY" --nightly) || exit $?
 
-  echo "Contract $CONTRACT_CRATE_NAME successfully deployed to the stylus environment ($RPC_URL)."
+  # extract compressed wasm binary size
+  # NOTE: optimistically relying on the 'Compressed WASM size to be deployed onchain' string in output
+  WASM_BIN_SIZE="$(echo "$DEPLOY_OUTPUT" | grep 'Compressed WASM size to be deployed onchain' | grep -oE "\d*\.\d* KB")"
+
+  if [[ -z "$WASM_BIN_SIZE" ]]
+  then
+    echo "Contract $CONTRACT_CRATE_NAME successfully deployed to the stylus environment ($RPC_URL)."
+  else
+    echo "Contract $CONTRACT_CRATE_NAME successfully deployed to the stylus environment ($RPC_URL). Wasm binary size is $WASM_BIN_SIZE"
+  fi
 
   # extract randomly created contract deployment address
   # NOTE: optimistically relying on the 'Deploying program to address' string in output
@@ -48,7 +57,7 @@ export ALICE_PRIV_KEY=${ALICE_PRIV_KEY:-0x5744b91fe94e38f7cde31b0cc83e7fa1f45e31
 export BOB_PRIV_KEY=${BOB_PRIV_KEY:-0xa038232e463efa8ad57de6f88cd3c68ed64d1981daff2dcc015bce7eaf53db9d}
 export RPC_URL=${RPC_URL:-http://localhost:8547}
 
-cargo build --release --target wasm32-unknown-unknown
+cargo +nightly build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
 
 # TODO: deploy contracts asynchronously
 for CRATE_NAME in $(get_example_crate_names)
