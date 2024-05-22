@@ -19,8 +19,8 @@ deploy_contract () {
   DEPLOY_OUTPUT=$(cargo stylus deploy --wasm-file-path ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME" -e "$RPC_URL" --private-key "$PRIVATE_KEY" --nightly) || exit $?
 
   # extract compressed wasm binary size
-  # NOTE: optimistically relying on the 'Compressed WASM size' string in output
-  WASM_BIN_SIZE="$(echo "$DEPLOY_OUTPUT" | grep 'Compressed WASM size' | grep -oE "\d*\.\d* KB")"
+  # NOTE: optimistically relying on the 'Compressed WASM size to be deployed' string in output
+  WASM_BIN_SIZE="$(echo "$DEPLOY_OUTPUT" | grep 'Compressed WASM size to be deployed' | grep -oE "[0-9]*\.[0-9]* KB")"
 
   if [[ -z "$WASM_BIN_SIZE" ]]
   then
