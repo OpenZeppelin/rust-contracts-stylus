@@ -1,11 +1,14 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloc::string::{String, ToString};
+use alloc::{
+    string::{String, ToString},
+    vec::Vec,
+};
 
 use alloy_primitives::{Address, U256};
 use contracts::erc721::{
-    extensions::{ERC721Metadata, ERC721UriStorage},
+    extensions::{ERC721Metadata, ERC721UriStorage, IERC721Burnable},
     ERC721,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
@@ -44,6 +47,10 @@ impl Token {
         token_id: U256,
     ) -> Result<(), contracts::erc721::Error> {
         self.erc721._mint(to, token_id)
+    }
+
+    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+        self.erc721.burn(token_id).map_err(|e| e.into())
     }
 
     // Overrides [`ERC721UriStorage::token_uri`].
