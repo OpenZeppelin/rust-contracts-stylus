@@ -42,10 +42,11 @@ jobs:
           save-always: true
 
       - name: set up rust
-        uses: dtolnay/rust-toolchain@nightly-2024-01-01
+        uses: dtolnay/rust-toolchain@master
         with:
           target: wasm32-unknown-unknown
           components: rust-src
+          toolchain: nightly-2024-01-01
 
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
