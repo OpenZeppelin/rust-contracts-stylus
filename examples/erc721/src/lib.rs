@@ -28,19 +28,6 @@ sol_storage! {
 #[external]
 #[inherit(ERC721, ERC721Metadata, ERC721UriStorage)]
 impl Token {
-    // We need to properly initialize all of Token's attributes.
-    // For that, we need to call each attribute's constructor if it exists.
-    //
-    // NOTE: This is a temporary solution for state initialization.
-    pub fn constructor(
-        &mut self,
-        name: String,
-        symbol: String,
-        base_uri: String,
-    ) {
-        self.metadata.constructor(name, symbol, base_uri);
-    }
-
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.erc721.burn(token_id).map_err(|e| e.into())
     }
