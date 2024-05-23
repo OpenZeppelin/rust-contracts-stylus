@@ -51,12 +51,6 @@ sol_storage! {
     pub struct Ownable {
         /// The current owner of this contract.
         address _owner;
-        /// Initialization marker. If true this means that the constructor was
-        /// called.
-        ///
-        /// This field should be unnecessary once constructors are supported in
-        /// the SDK.
-        bool _initialized;
     }
 }
 
@@ -150,7 +144,7 @@ mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::{
         msg,
-        storage::{StorageAddress, StorageBool, StorageType},
+        storage::{StorageAddress, StorageType},
     };
 
     use super::{Error, Ownable};
@@ -158,12 +152,7 @@ mod tests {
     impl Default for Ownable {
         fn default() -> Self {
             let root = U256::ZERO;
-            Ownable {
-                _owner: unsafe { StorageAddress::new(root, 0) },
-                _initialized: unsafe {
-                    StorageBool::new(root + U256::from(32), 0)
-                },
-            }
+            Ownable { _owner: unsafe { StorageAddress::new(root, 0) } }
         }
     }
 
@@ -173,36 +162,18 @@ mod tests {
     fn rejects_zero_address_initial_owner(contract: Ownable) {
         // FIXME: Once constructors are supported this check should fail.
         assert_eq!(contract._owner.get(), Address::ZERO);
-
-        let err = contract.constructor(Address::ZERO).unwrap_err();
-        assert!(matches!(err, Error::InvalidOwner(_)));
-    }
-
-    #[grip::test]
-    #[should_panic = "Ownable has already been initialized"]
-    fn initializes_owner_once(contract: Ownable) {
-        let result = contract.constructor(msg::sender());
-        assert!(result.is_ok());
-
-        let owner = contract._owner.get();
-        assert_eq!(owner, msg::sender());
-
-        let _ = contract.constructor(ALICE);
     }
 
     #[grip::test]
     fn reads_owner(contract: Ownable) {
-        let result = contract.constructor(msg::sender());
-        assert!(result.is_ok());
-
+        contract._owner.set(msg::sender());
         let owner = contract.owner();
         assert_eq!(owner, msg::sender());
     }
 
     #[grip::test]
     fn transfers_ownership(contract: Ownable) {
-        let result = contract.constructor(msg::sender());
-        assert!(result.is_ok());
+        contract._owner.set(msg::sender());
 
         let _ = contract
             .transfer_ownership(ALICE)
@@ -214,8 +185,7 @@ mod tests {
     #[grip::test]
     fn prevents_non_onwers_from_transferring(contract: Ownable) {
         // Alice must be set as owner, because we can't set the msg::sender yet.
-        let result = contract.constructor(ALICE);
-        assert!(result.is_ok());
+        contract._owner.set(ALICE);
 
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let err = contract.transfer_ownership(bob).unwrap_err();
@@ -224,8 +194,7 @@ mod tests {
 
     #[grip::test]
     fn prevents_reaching_stuck_state(contract: Ownable) {
-        let result = contract.constructor(msg::sender());
-        assert!(result.is_ok());
+        contract._owner.set(msg::sender());
 
         let err = contract.transfer_ownership(Address::ZERO).unwrap_err();
         assert!(matches!(err, Error::InvalidOwner(_)));
@@ -233,8 +202,7 @@ mod tests {
 
     #[grip::test]
     fn loses_ownership_after_renouncing(contract: Ownable) {
-        let result = contract.constructor(msg::sender());
-        assert!(result.is_ok());
+        contract._owner.set(msg::sender());
 
         let _ = contract.renounce_ownership();
         let owner = contract._owner.get();
@@ -244,8 +212,7 @@ mod tests {
     #[grip::test]
     fn prevents_non_owners_from_renouncing(contract: Ownable) {
         // Alice must be set as owner, because we can't set the msg::sender yet.
-        let result = contract.constructor(ALICE);
-        assert!(result.is_ok());
+        contract._owner.set(ALICE);
 
         let err = contract.renounce_ownership().unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
@@ -253,8 +220,7 @@ mod tests {
 
     #[grip::test]
     fn recovers_access_using_internal_transfer(contract: Ownable) {
-        let result = contract.constructor(msg::sender());
-        assert!(result.is_ok());
+        contract._owner.set(ALICE);
 
         contract._transfer_ownership(ALICE);
         let owner = contract._owner.get();
