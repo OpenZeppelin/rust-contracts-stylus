@@ -196,7 +196,7 @@ impl<R: Detokenize + Send + Sync> ContextCall<R>
     for ContractCall<HttpMiddleware, R>
 {
     async fn ctx_call(self) -> Result<R> {
-        let function_name = self.function.name.clone();
+        let function_name = &self.function.name;
         self.call().await.context(format!("call {function_name}"))
     }
 }
@@ -212,7 +212,7 @@ pub trait ContextSend {
 #[async_trait]
 impl ContextSend for ContractCall<HttpMiddleware, ()> {
     async fn ctx_send(self) -> Result<TransactionReceipt> {
-        let function_name = self.function.name.clone();
+        let function_name = &self.function.name;
         self.send()
             .await
             .context(format!("send {function_name}"))?
