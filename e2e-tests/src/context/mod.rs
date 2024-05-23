@@ -117,7 +117,7 @@ pub trait Contract {
 /// link_to_crate!(Erc20, "erc20-example");
 /// ```
 macro_rules! link_to_crate {
-    ($token_type: ty, $program_address: literal) => {
+    ($token_type:ty, $program_address:literal) => {
         impl $crate::context::Contract for $token_type {
             const CRATE_NAME: &'static str = $program_address;
 
