@@ -42,7 +42,7 @@ jobs:
           save-always: true
 
       - name: set up rust
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@nightly-2024-01-01
         with:
           target: wasm32-unknown-unknown
           components: rust-src
