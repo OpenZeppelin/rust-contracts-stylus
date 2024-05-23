@@ -1,89 +1,103 @@
-use ethers::prelude::*;
-use eyre::Result;
+use e2e_grip::prelude::*;
 
-use crate::context::{erc721::*, *};
+use crate::abi::erc721::*;
 
-#[tokio::test]
-async fn mint() -> Result<()> {
-    let E2EContext { alice, bob } = E2EContext::<Erc721>::new().await?;
+#[e2e_grip::test]
+async fn mint(alice: User) -> Result<()> {
+    let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
-    let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
-    let owner = alice.owner_of(token_id).ctx_call().await?;
-    assert_eq!(owner, alice.wallet.address());
+    let _ =
+        alice.uses(erc721).mint(alice.address(), token_id).ctx_send().await?;
+    let owner = alice.uses(erc721).owner_of(token_id).ctx_call().await?;
+    assert_eq!(owner, alice.address());
 
-    let balance = alice.balance_of(alice.wallet.address()).ctx_call().await?;
+    let balance =
+        alice.uses(erc721).balance_of(alice.address()).ctx_call().await?;
     assert!(balance >= U256::one());
     Ok(())
 }
 
-#[tokio::test]
-async fn error_when_reusing_token_id() -> Result<()> {
-    let E2EContext { alice, bob } = E2EContext::<Erc721>::new().await?;
+#[e2e_grip::test]
+async fn error_when_reusing_token_id(alice: User) -> Result<()> {
+    let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
-    let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
+    let _ =
+        alice.uses(erc721).mint(alice.address(), token_id).ctx_send().await?;
     let err = alice
-        .mint(alice.wallet.address(), token_id)
+        .uses(erc721)
+        .mint(alice.address(), token_id)
         .ctx_send()
         .await
         .expect_err("should not mint a token id twice");
     err.assert(ERC721InvalidSender { sender: Address::zero() })
 }
 
-#[tokio::test]
-async fn transfer() -> Result<()> {
-    let E2EContext { alice, bob } = E2EContext::<Erc721>::new().await?;
+#[e2e_grip::test]
+async fn transfer(alice: User, bob: User) -> Result<()> {
+    let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
-    let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
+    let _ =
+        alice.uses(erc721).mint(alice.address(), token_id).ctx_send().await?;
     let _ = alice
-        .transfer_from(alice.wallet.address(), bob.wallet.address(), token_id)
+        .uses(erc721)
+        .transfer_from(alice.address(), bob.address(), token_id)
         .ctx_send()
         .await?;
-    let owner = bob.owner_of(token_id).ctx_call().await?;
-    assert_eq!(owner, bob.wallet.address());
+    let owner = bob.uses(erc721).owner_of(token_id).ctx_call().await?;
+    assert_eq!(owner, bob.address());
     Ok(())
 }
 
-#[tokio::test]
-async fn error_when_transfer_nonexistent_token() -> Result<()> {
-    let E2EContext { alice, bob } = E2EContext::<Erc721>::new().await?;
+#[e2e_grip::test]
+async fn error_when_transfer_nonexistent_token(
+    alice: User,
+    bob: User,
+) -> Result<()> {
+    let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
     let err = alice
-        .transfer_from(alice.wallet.address(), bob.wallet.address(), token_id)
+        .uses(erc721)
+        .transfer_from(alice.address(), bob.address(), token_id)
         .ctx_send()
         .await
         .expect_err("should not transfer a non existent token");
     err.assert(ERC721NonexistentToken { token_id })
 }
 
-#[tokio::test]
-async fn approve_token_transfer() -> Result<()> {
-    let E2EContext { alice, bob } = E2EContext::<Erc721>::new().await?;
+#[e2e_grip::test]
+async fn approve_token_transfer(alice: User, bob: User) -> Result<()> {
+    let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
-    let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
-    let _ = alice.approve(bob.wallet.address(), token_id).ctx_send().await?;
+    let _ =
+        alice.uses(erc721).mint(alice.address(), token_id).ctx_send().await?;
+    let _ =
+        alice.uses(erc721).approve(bob.address(), token_id).ctx_send().await?;
     let _ = bob
-        .transfer_from(alice.wallet.address(), bob.wallet.address(), token_id)
+        .uses(erc721)
+        .transfer_from(alice.address(), bob.address(), token_id)
         .ctx_send()
         .await?;
-    let owner = bob.owner_of(token_id).ctx_call().await?;
-    assert_eq!(owner, bob.wallet.address());
+    let owner = bob.uses(erc721).owner_of(token_id).ctx_call().await?;
+    assert_eq!(owner, bob.address());
     Ok(())
 }
 
-#[tokio::test]
-async fn error_when_transfer_unapproved_token() -> Result<()> {
-    let E2EContext { alice, bob } = E2EContext::<Erc721>::new().await?;
+#[e2e_grip::test]
+async fn error_when_transfer_unapproved_token(
+    alice: User,
+    bob: User,
+) -> Result<()> {
+    let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
-    let _ = alice.mint(alice.wallet.address(), token_id).ctx_send().await?;
+    let _ =
+        alice.uses(erc721).mint(alice.address(), token_id).ctx_send().await?;
     let err = bob
-        .transfer_from(alice.wallet.address(), bob.wallet.address(), token_id)
+        .uses(erc721)
+        .transfer_from(alice.address(), bob.address(), token_id)
         .ctx_send()
         .await
         .expect_err("should not transfer unapproved token");
-    err.assert(ERC721InsufficientApproval {
-        operator: bob.wallet.address(),
-        token_id,
-    })
+    err.assert(ERC721InsufficientApproval { operator: bob.address(), token_id })
 }
 
 // TODO: add more tests for erc721

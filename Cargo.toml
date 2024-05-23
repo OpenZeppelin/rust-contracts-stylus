@@ -9,7 +9,9 @@ members = [
     "examples/merkle-proofs",
     "examples/ownable",
     "examples/access-control",
-    "e2e-tests",
+    "e2e-tests", 
+    "lib/e2e-grip", 
+    "lib/e2e-grip-proc",
 ]
 default-members = [
     "contracts",
@@ -21,6 +23,7 @@ default-members = [
     "examples/merkle-proofs",
     "examples/ownable",
     "examples/access-control",
+    "lib/e2e-grip-proc",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages

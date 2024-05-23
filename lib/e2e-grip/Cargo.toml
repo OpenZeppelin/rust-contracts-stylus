@@ -1,0 +1,18 @@
+[package]
+name = "e2e-grip"
+description = "End-to-end Testing for Stylus"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+repository.workspace = true
+
+[dependencies]
+tokio = { version = "1.12.0", features = ["full", "process"] }
+ethers = "2.0"
+eyre = "0.6.8"
+async-trait = "0.1.80"
+regex = "1.10.4"
+once_cell = "1.19.0"
+e2e-grip-proc = { path = "../e2e-grip-proc" }
