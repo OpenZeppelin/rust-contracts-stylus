@@ -37,12 +37,15 @@ impl<T: Contract> E2EContext<T> {
     /// where <CRATE_NAME> is the "SCREAMING_SNAKE_CASE" conversion of the crate
     /// name from the `./examples` directory.
     pub async fn new() -> Result<Self> {
-        let alice_priv_key = std::env::var(ALICE_PRIV_KEY)
-            .with_context(|| format!("failed to load {} env var", ALICE_PRIV_KEY))?;
-        let bob_priv_key = std::env::var(BOB_PRIV_KEY)
-            .with_context(|| format!("Load {} env var", BOB_PRIV_KEY))?;
+        let alice_priv_key =
+            std::env::var(ALICE_PRIV_KEY).with_context(|| {
+                format!("failed to load {} env var", ALICE_PRIV_KEY)
+            })?;
+        let bob_priv_key = std::env::var(BOB_PRIV_KEY).with_context(|| {
+            format!("failed to load {} env var", BOB_PRIV_KEY)
+        })?;
         let rpc_url = std::env::var(RPC_URL)
-            .with_context(|| format!("Load {} env var", RPC_URL))?;
+            .with_context(|| format!("failed to load {} env var", RPC_URL))?;
 
         let program_address_env_name = T::CRATE_NAME
             .replace('-', "_")
