@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o pipefail
+set -e
 
 # make sure we will be running script from the project root.
 mydir=$(dirname "$0")
@@ -47,10 +47,11 @@ deploy_contract () {
   set +a
 }
 
-# Retrieve all contract's crate names in `./examples` directory.
+# Retrieve all alphanumeric contract's crate names in `./examples` directory.
 get_example_crate_names () {
+  # shellcheck disable=SC2038
   # NOTE: optimistically relying on the 'name = ' string at Cargo.toml file
-  find ./examples -type f -print0 -name "Cargo.toml" | xargs -0 grep 'name = ' | grep -oE '".*"' | tr -d "'\""
+  find ./examples -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
 }
 
 export ALICE_PRIV_KEY=${ALICE_PRIV_KEY:-0x5744b91fe94e38f7cde31b0cc83e7fa1f45e31c053d015b9fb8c9ab3298f8a2d}
