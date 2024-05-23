@@ -1,4 +1,4 @@
-use ethers::contract::abigen;
+use ethers::prelude::*;
 
 use crate::context::*;
 
