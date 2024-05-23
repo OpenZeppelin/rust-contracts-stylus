@@ -15,7 +15,7 @@ use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 sol_storage! {
     #[entrypoint]
-    struct Token {
+    struct ERC721Example {
         #[borrow]
         ERC721 erc721;
         #[borrow]
@@ -27,7 +27,7 @@ sol_storage! {
 
 #[external]
 #[inherit(ERC721, ERC721Metadata, ERC721UriStorage)]
-impl Token {
+impl ERC721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.erc721.burn(token_id).map_err(|e| e.into())
     }

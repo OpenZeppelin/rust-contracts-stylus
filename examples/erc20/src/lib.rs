@@ -17,7 +17,7 @@ const DECIMALS: u8 = 10;
 
 sol_storage! {
     #[entrypoint]
-    struct Token {
+    struct ERC20Example {
         #[borrow]
         ERC20 erc20;
         #[borrow]
@@ -31,7 +31,7 @@ sol_storage! {
 
 #[external]
 #[inherit(ERC20, ERC20Metadata, Capped, Pausable)]
-impl Token {
+impl ERC20Example {
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.
     //
     // If you don't provide this method in the `entrypoint` contract, it will

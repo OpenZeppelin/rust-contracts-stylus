@@ -62,38 +62,6 @@ sol_storage! {
 
 #[external]
 impl Ownable {
-    /// Initializes an [`Ownable`] instance with the given `initial_owner`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `initial_owner` - The initial owner of this contract.
-    ///
-    /// # Errors
-    ///
-    /// * If `initial_owner` is the zero address, then [`Error::InvalidOwner`]
-    /// is returned.
-    ///
-    /// # Panics
-    ///
-    /// * If the contract is already initialized, then this function panics.
-    /// This ensures the contract is constructed only once.
-    pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
-        let is_initialized = self._initialized.get();
-        assert!(!is_initialized, "Ownable has already been initialized");
-
-        if initial_owner == Address::ZERO {
-            return Err(Error::InvalidOwner(OwnableInvalidOwner {
-                owner: Address::ZERO,
-            }));
-        }
-
-        self._transfer_ownership(initial_owner);
-        self._initialized.set(true);
-
-        Ok(())
-    }
-
     /// Returns the address of the current owner.
     pub fn owner(&self) -> Address {
         self._owner.get()
