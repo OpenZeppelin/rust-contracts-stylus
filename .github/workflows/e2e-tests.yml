@@ -45,6 +45,7 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
         with:
           target: wasm32-unknown-unknown
+          components: rust-src
 
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
