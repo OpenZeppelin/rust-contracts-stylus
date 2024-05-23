@@ -53,7 +53,7 @@ impl<T: Contract> E2EContext<T> {
             .add("_DEPLOYMENT_ADDRESS");
         let program_address: Address = std::env::var(&program_address_env_name)
             .with_context(|| {
-                format!("Load {} env var", program_address_env_name)
+                format!("failed to load {} env var", program_address_env_name)
             })?
             .parse()?;
 
