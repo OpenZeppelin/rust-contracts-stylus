@@ -47,6 +47,8 @@ jobs:
           target: wasm32-unknown-unknown
           components: rust-src
           toolchain: nightly-2024-01-01
+          
+      - run: export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
 
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
@@ -68,6 +70,4 @@ jobs:
           ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
 
       - name: run integration tests
-        run: |
-          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./e2e-tests/test.sh
+        run: ./e2e-tests/test.sh
