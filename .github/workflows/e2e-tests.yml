@@ -42,7 +42,7 @@ jobs:
           save-always: true
 
       - name: set up rust
-        uses: dtolnay/rust-toolchain@@nightly
+        uses: dtolnay/rust-toolchain@nightly
         with:
           target: wasm32-unknown-unknown, x86_64-unknown-linux-gnu
 
