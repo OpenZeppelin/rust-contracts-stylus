@@ -75,7 +75,6 @@ pub struct Client<T: Contract> {
     pub contract: T,
 }
 
-// Allows not to mention `contract` property every time we call a function.
 impl<T: Contract> Deref for Client<T> {
     type Target = T;
 
