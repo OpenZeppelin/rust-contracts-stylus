@@ -6,12 +6,18 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::U256;
-use contracts::erc721::{
-    extensions::{ERC721Metadata, ERC721UriStorage, IERC721Burnable},
-    ERC721,
+use alloy_primitives::{Address, U256};
+use contracts::{
+    erc721::{
+        extensions::{ERC721Metadata, ERC721UriStorage, IERC721Burnable},
+        ERC721,
+    },
+    utils::Pausable,
 };
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use stylus_sdk::{
+    abi::Bytes,
+    prelude::{entrypoint, external, sol_storage},
+};
 
 sol_storage! {
     #[entrypoint]
@@ -22,11 +28,13 @@ sol_storage! {
         ERC721Metadata metadata;
         #[borrow]
         ERC721UriStorage uri_storage;
+        #[borrow]
+        Pausable pausable;
     }
 }
 
 #[external]
-#[inherit(ERC721, ERC721Metadata, ERC721UriStorage)]
+#[inherit(ERC721, ERC721Metadata, ERC721UriStorage, Pausable)]
 impl Token {
     // We need to properly initialize all of Token's attributes.
     // For that, we need to call each attribute's constructor if it exists.
@@ -42,6 +50,7 @@ impl Token {
     }
 
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
         self.erc721.burn(token_id).map_err(|e| e.into())
     }
 
@@ -66,5 +75,39 @@ impl Token {
         }
 
         uri
+    }
+
+    pub fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc721.safe_transfer_from(from, to, token_id).map_err(|e| e.into())
+    }
+
+    #[selector(name = "safeTransferFrom")]
+    pub fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc721
+            .safe_transfer_from_with_data(from, to, token_id, data)
+            .map_err(|e| e.into())
+    }
+
+    pub fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc721.transfer_from(from, to, token_id).map_err(|e| e.into())
     }
 }
