@@ -193,7 +193,7 @@ Some other examples of automation are:
 
 Always check your code with the linter (`clippy`), by running:
 
-    $ cargo clippy --workspace --tests --all-features
+    $ cargo clippy --tests --all-features
 
 And make sure your code is formatted with, using:
 
@@ -205,14 +205,14 @@ Finally, ensure there is no trailing whitespace anywhere.
 
 Make sure all tests are passing with:
 
-    $ cargo test --workspace --all-features
+    $ cargo test --all-features
 
 ### Checking the docs
 
 If you make documentation changes, you may want to check whether there are any
 warnings or errors:
 
-    $ cargo doc --workspace --all-features
+    $ cargo doc --all-features
 
 ## Pull requests
 

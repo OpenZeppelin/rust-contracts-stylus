@@ -49,6 +49,11 @@ impl Token {
         self.metadata.constructor(name, symbol, base_uri);
     }
 
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc721._mint(to, token_id).map_err(|e| e.into())
+    }
+
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
         self.erc721.burn(token_id).map_err(|e| e.into())

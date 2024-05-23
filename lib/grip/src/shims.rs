@@ -120,33 +120,25 @@ pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
     unsafe { write_bytes32(out, value) };
 }
 
-/// Writes a 32-byte value to the permanent storage cache. Stylus's storage
-/// format is identical to that of the EVM. This means that, under the hood,
-/// this hostio represents storing a 32-byte value into the EVM state trie at
-/// offset `key`. Refunds are tabulated exactly as in the EVM. The semantics,
+// TODO: change it when 0.5.0 release will work with a nitro test node
+/// Stores a 32-byte value to permanent storage. Stylus's storage format is
+/// identical to that of the EVM. This means that, under the hood, this hostio
+/// is storing a 32-byte value into the EVM state trie at offset `key`.
+/// Furthermore, refunds are tabulated exactly as in the EVM. The semantics,
 /// then, are equivalent to that of the EVM's [`SSTORE`] opcode.
 ///
-/// Note: because the value is cached, one must call `storage_flush_cache` to
-/// persist it.
+/// Note: we require the [`SSTORE`] sentry per EVM rules. The `gas_cost`
+/// returned by the EVM API may exceed this amount, but that's ok because the
+/// predominant cost is due to state bloat concerns.
 ///
 /// [`SSTORE`]: https://www.evm.codes/#55
 #[no_mangle]
-pub unsafe extern "C" fn storage_cache_bytes32(
+pub unsafe extern "C" fn storage_store_bytes32(
     key: *const u8,
     value: *const u8,
 ) {
     let (key, value) = unsafe { (read_bytes32(key), read_bytes32(value)) };
-
     STORAGE.lock().unwrap().insert(key, value);
-}
-
-/// Persists any dirty values in the storage cache to the EVM state trie,
-/// dropping the cache entirely if requested. Analogous to repeated invocations
-/// of [`SSTORE`].
-///
-/// [`SSTORE`]: https://www.evm.codes/#55
-pub fn storage_flush_cache(_: bool) {
-    // No-op: we don't use the cache in our unit-tests.
 }
 
 /// Dummy msg sender set for tests.
