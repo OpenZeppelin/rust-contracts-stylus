@@ -1,7 +1,7 @@
 name: e2e-tests
 # This workflow runs our end-to-end tests suite.
 #
-# It roughly follows this steps:
+# It roughly follows these steps:
 # - A local `nitro-testnode` gets spun up.
 # - Contracts get deployed to the local node.
 # - A few addresses get funded.
