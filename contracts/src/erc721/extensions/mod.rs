@@ -8,6 +8,13 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
+    if #[cfg(any(test, feature = "erc721_enumerable"))] {
+        pub mod enumerable;
+        pub use enumerable::ERC721Enumerable;
+    }
+}
+
+cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc721_metadata"))] {
         pub mod metadata;
         pub use metadata::ERC721Metadata;
