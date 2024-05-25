@@ -36,6 +36,11 @@ sol_storage! {
 #[external]
 #[inherit(ERC721, ERC721Metadata, ERC721UriStorage, Pausable)]
 impl ERC721Example {
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        self.erc721._mint(to, token_id).map_err(|e| e.into())
+    }
+
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
         self.erc721.burn(token_id).map_err(|e| e.into())

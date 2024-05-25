@@ -1,0 +1,74 @@
+name: e2e-tests
+# This workflow runs our end-to-end tests suite.
+#
+# It roughly follows these steps:
+# - A local `nitro-testnode` gets spun up.
+# - Contracts get deployed to the local node.
+# - A few addresses get funded.
+# - The test suite runs.
+permissions:
+  contents: read
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  e2e-tests:
+    name: integration tests suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+
+      - name: cache cargo-stylus
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/.crates.toml
+          key: ${{ runner.os }}-cargo-bin-cargo-stylus@0.2.1
+          save-always: true
+
+      - name: set up rust
+        uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          target: wasm32-unknown-unknown
+          components: rust-src
+          toolchain: nightly-2024-01-01
+
+      - name: install cargo-stylus
+        run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
+
+      - name: setup nitro node
+        run: |
+          # clone nitro test node repo
+          git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git && cd nitro-testnode
+          git checkout 1886f4b89f5c20fd5b0c2cf3d08a009ee73e45ca
+          
+          # setup nitro test node
+          ./test-node.bash --no-run --init --no-tokenbridge
+          ./test-node.bash --detach
+          
+          # TODO: remove hard coded wallets when user creation will be per test case
+          # fund Alice's wallet
+          ./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10000
+          # fund Bob's wallet
+          ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
+
+      - name: run integration tests
+        run: |
+          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
+          ./e2e-tests/test.sh

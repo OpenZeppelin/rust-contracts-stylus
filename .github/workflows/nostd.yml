@@ -6,7 +6,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -19,7 +19,7 @@ jobs:
     name: ${{ matrix.target }}
     strategy:
       matrix:
-        target: [wasm32-unknown-unknown]
+        target: [ wasm32-unknown-unknown ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,4 +29,4 @@ jobs:
       - name: rustup target add ${{ matrix.target }}
         run: rustup target add ${{ matrix.target }}
       - name: cargo check
-        run: cargo check --release --target ${{ matrix.target }} --no-default-features --workspace --all-features
+        run: cargo check --release --target ${{ matrix.target }} --no-default-features --all-features
