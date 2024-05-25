@@ -37,24 +37,22 @@ impl<T: Contract> E2EContext<T> {
     /// where <CRATE_NAME> is the "SCREAMING_SNAKE_CASE" conversion of the crate
     /// name from the `./examples` directory.
     pub async fn new() -> Result<Self> {
-        let alice_priv_key =
-            std::env::var(ALICE_PRIV_KEY).with_context(|| {
-                format!("failed to load {} env var", ALICE_PRIV_KEY)
-            })?;
-        let bob_priv_key = std::env::var(BOB_PRIV_KEY).with_context(|| {
-            format!("failed to load {} env var", BOB_PRIV_KEY)
-        })?;
+        let alice_priv_key = std::env::var(ALICE_PRIV_KEY)
+            .wrap_err(format!("failed to load {} env var", ALICE_PRIV_KEY))?;
+        let bob_priv_key = std::env::var(BOB_PRIV_KEY)
+            .wrap_err(format!("failed to load {} env var", BOB_PRIV_KEY))?;
         let rpc_url = std::env::var(RPC_URL)
-            .with_context(|| format!("failed to load {} env var", RPC_URL))?;
+            .wrap_err(format!("failed to load {} env var", RPC_URL))?;
 
         let program_address_env_name = T::CRATE_NAME
             .replace('-', "_")
             .to_ascii_uppercase()
             .add("_DEPLOYMENT_ADDRESS");
         let program_address: Address = std::env::var(&program_address_env_name)
-            .with_context(|| {
-                format!("failed to load {} env var", program_address_env_name)
-            })?
+            .wrap_err(format!(
+                "failed to load {} env var",
+                program_address_env_name
+            ))?
             .parse()?;
 
         let provider = Provider::<Http>::try_from(rpc_url)?;
