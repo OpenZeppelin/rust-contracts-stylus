@@ -47,7 +47,7 @@ async fn mint() -> Result<()> {
     let args: Vec<u8> = args.abi_encode().into_iter().skip(4).collect();
     let args = alloy::hex::encode(args);
     let contract_addr =
-        deploy(&ctx.rpc_url().to_string(), alice_pk, Some(args))?;
+        deploy(&ctx.rpc_url().to_string(), alice_pk, Some(args)).await?;
 
     let contract = Erc20::new(contract_addr, &alice);
 

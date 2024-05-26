@@ -4,7 +4,7 @@ use alloy::primitives::Address;
 use eyre::Context;
 use koba::config::Deploy;
 
-pub fn deploy(
+pub async fn deploy(
     rpc_url: &str,
     private_key: &str,
     args: Option<String>,
@@ -39,6 +39,6 @@ pub fn deploy(
         endpoint: rpc_url.to_owned(),
     };
 
-    let address = koba::deploy(&config)?;
+    let address = koba::deploy(&config).await?;
     Ok(address)
 }
