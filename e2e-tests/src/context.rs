@@ -30,24 +30,22 @@ pub type Signer = FillProvider<
 >;
 
 pub struct Context {
-    signers: Vec<Signer>,
     rpc_url: Url,
+    private_keys: Vec<String>,
+    signers: Vec<Signer>,
 }
 
 impl Context {
-    pub fn new(rpc_url: Url, s: &[Signer]) -> Self {
-        let mut signers = Vec::with_capacity(s.len());
-        signers.extend_from_slice(s);
-
-        Self { rpc_url, signers }
-    }
-
-    pub fn rpc_endpoint(&self) -> &Url {
+    pub fn rpc_url(&self) -> &Url {
         &self.rpc_url
     }
 
     pub fn signers(&self) -> &[Signer] {
         &self.signers
+    }
+
+    pub fn private_keys(&self) -> &[String] {
+        &self.private_keys
     }
 }
 
@@ -57,15 +55,17 @@ pub fn build_context() -> Context {
         .parse()
         .expect("failed to parse RPC_URL string into a URL");
 
-    let signers: Vec<Signer> = vec![ALICE_PRIV_KEY, BOB_PRIV_KEY]
-        .into_iter()
+    let private_keys = vec![ALICE_PRIV_KEY.to_owned(), BOB_PRIV_KEY.to_owned()];
+    let signers: Vec<Signer> = private_keys
+        .clone()
+        .iter()
         .map(|pk| {
             get_signer_from_env(pk, &rpc_url)
                 .expect("failed to get signer from env")
         })
         .collect();
 
-    Context::new(rpc_url, &signers)
+    Context { rpc_url, private_keys, signers }
 }
 
 fn get_signer_from_env(var: &str, rpc_url: &Url) -> eyre::Result<Signer> {

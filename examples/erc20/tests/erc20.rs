@@ -1,11 +1,13 @@
-use alloy::primitives::{Address, U256};
-use alloy::providers::{Provider, WalletProvider};
+#![cfg(feature = "e2e")]
+
+use alloy::primitives::U256;
+use alloy::providers::WalletProvider;
 use alloy::sol;
 use alloy::sol_types::SolConstructor;
 use eyre::Result;
 
-use crate::context::{build_context, Context};
-use crate::deploy::deploy;
+use e2e_tests::context::build_context;
+use e2e_tests::deploy::deploy;
 
 sol!(
     #[sol(rpc)]

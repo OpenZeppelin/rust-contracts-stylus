@@ -1471,11 +1471,16 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 name = "erc20-example"
 version = "0.0.0"
 dependencies = [
+ "alloy",
  "alloy-primitives 0.3.3",
+ "async-trait",
  "contracts",
+ "e2e-tests",
+ "eyre",
  "mini-alloc",
  "stylus-proc",
  "stylus-sdk",
+ "tokio",
 ]
 
 [[package]]
