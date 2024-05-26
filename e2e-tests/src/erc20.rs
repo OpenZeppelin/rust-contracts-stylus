@@ -1,35 +1,56 @@
-use ethers::prelude::*;
+use alloy::primitives::{Address, U256};
+use alloy::providers::WalletProvider;
+use alloy::sol;
 use eyre::Result;
 
-use crate::context::{erc20::*, *};
+use crate::context::{build_context, Context};
+
+sol!(
+    #[sol(rpc)]
+    contract Erc20 {
+        function name() external view returns (string);
+        function symbol() external view returns (string);
+        function decimals() external view returns (uint8);
+        function totalSupply() external view returns (uint256 totalSupply);
+        function balanceOf(address account) external view returns (uint256 balance);
+        function transfer(address recipient, uint256 amount) external returns (bool);
+        function allowance(address owner, address spender) external view returns (uint256);
+        function approve(address spender, uint256 amount) external returns (bool);
+        function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+        function mint(address account, uint256 amount) external;
+        function burn(uint256 amount) external;
+
+        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
+        error ERC20InvalidSender(address sender);
+        error ERC20InvalidReceiver(address receiver);
+        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+        error ERC20InvalidSpender(address spender);
+    }
+);
 
 #[tokio::test]
 async fn mint() -> Result<()> {
-    let E2EContext { alice, bob } = E2EContext::<Erc20>::new().await?;
-    // TODO: have a nicer support for custom constructors
-    let _ = alice
-        .constructor(
-            "MyErc20".to_string(),
-            "MRC".to_string(),
-            U256::from(10),
-            false,
-        )
-        .ctx_send()
-        .await?;
+    let ctx = build_context();
+    let alice = &ctx.signers()[0];
+    let alice_addr = alice.default_signer_address();
+    let contract = Erc20::new(Address::random(), &alice);
+
+    let Erc20::balanceOfReturn { balance: initial_balance } =
+        contract.balanceOf(alice_addr).call().await.unwrap();
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract.totalSupply().call().await.unwrap();
+
     let one = U256::from(1);
+    let _ = contract.mint(alice_addr, one).send().await.unwrap();
 
-    let initial_balance =
-        alice.balance_of(alice.wallet.address()).ctx_call().await?;
-    let initial_supply = alice.total_supply().ctx_call().await?;
+    let Erc20::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr).call().await.unwrap();
+    let Erc20::totalSupplyReturn { totalSupply } =
+        contract.totalSupply().call().await.unwrap();
 
-    let _ = alice.mint(alice.wallet.address(), one).ctx_send().await?;
-
-    let new_balance =
-        alice.balance_of(alice.wallet.address()).ctx_call().await?;
-    let new_supply = alice.total_supply().ctx_call().await?;
-
-    assert_eq!(initial_balance + one, new_balance);
-    assert_eq!(initial_supply + one, new_supply);
+    assert_eq!(initial_balance + one, balance);
+    assert_eq!(initial_supply + one, totalSupply);
     Ok(())
 }
 
