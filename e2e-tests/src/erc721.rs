@@ -16,19 +16,23 @@
 //     contract Erc721 {
 //         function name() external view returns (string memory);
 //         function symbol() external view returns (string memory);
-//         function tokenURI(uint256 token_id) external view returns (string memory);
+//         function tokenURI(uint256 token_id) external view returns (string
+// memory);
 //
-//         function supportsInterface(bytes4 interface_id) external pure returns (bool);
+//         function supportsInterface(bytes4 interface_id) external pure returns
+// (bool);
 //
-//         function balanceOf(address owner) external view returns (uint256 balance);
-//         function ownerOf(uint256 token_id) external view returns (address owner);
-//         function safeTransferFrom(address from, address to, uint256 token_id) external;
-//         function safeTransferFrom(address from, address to, uint256 token_id, bytes calldata data) external;
-//         function transferFrom(address from, address to, uint256 token_id) external;
+//         function balanceOf(address owner) external view returns (uint256
+// balance);         function ownerOf(uint256 token_id) external view returns
+// (address owner);         function safeTransferFrom(address from, address to,
+// uint256 token_id) external;         function safeTransferFrom(address from,
+// address to, uint256 token_id, bytes calldata data) external;         function
+// transferFrom(address from, address to, uint256 token_id) external;
 //         function approve(address to, uint256 token_id) external;
 //         function setApprovalForAll(address operator, bool approved) external;
-//         function getApproved(uint256 token_id) external view returns (address);
-//         function isApprovedForAll(address owner, address operator) external view returns (bool);
+//         function getApproved(uint256 token_id) external view returns
+// (address);         function isApprovedForAll(address owner, address operator)
+// external view returns (bool);
 //
 //         function burn(uint256 token_id) external;
 //         function mint(address to, uint256 token_id) external;
@@ -39,8 +43,8 @@
 //
 //         error ERC721InvalidOwner(address owner);
 //         error ERC721NonexistentToken(uint256 tokenId);
-//         error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
-//         error ERC721InvalidSender(address sender);
+//         error ERC721IncorrectOwner(address sender, uint256 tokenId, address
+// owner);         error ERC721InvalidSender(address sender);
 //         error ERC721InvalidReceiver(address receiver);
 //         error ERC721InsufficientApproval(address operator, uint256 tokenId);
 //         error ERC721InvalidApprover(address approver);

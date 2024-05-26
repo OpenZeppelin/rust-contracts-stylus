@@ -9,18 +9,20 @@ pub fn deploy(
     private_key: &str,
     args: Option<String>,
 ) -> eyre::Result<Address> {
-    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let manifest_dir = env!("CARGO_MANIFEST_DIR")
+        .parse::<PathBuf>()
+        .wrap_err("failed to parse manifest dir path")?;
     // Fine to unwrap here, otherwise a bug in `cargo`.
-    let mut sol_path: PathBuf =
-        manifest_dir.parse().wrap_err("failed to parse manifest dir path")?;
-    sol_path.push("src/constructor.sol");
+    let sol_path: PathBuf = manifest_dir.join("src/constructor.sol");
 
     let name = env!("CARGO_PKG_NAME");
-    let target_dir = std::env::var("CARGO_TARGET_DIR")?;
+    // This is super flaky because it assumes we are in a workspace. This is
+    // fine for now since we only use this function in our tests, but if we
+    // publish this as a crate, we need to account for the other cases.
+    let target_dir = manifest_dir.join("../target");
     // Fine to unwrap here, otherwise a bug in `cargo`.
-    let mut wasm_path: PathBuf =
-        target_dir.parse().wrap_err("failed to parse target dir path")?;
-    wasm_path.push(format!("wasm32-unknown-unknown/release/{name}.wasm"));
+    let wasm_path: PathBuf =
+        target_dir.join(format!("wasm32-unknown-unknown/release/{name}.wasm"));
 
     let config = Deploy {
         generate_config: koba::config::Generate {
