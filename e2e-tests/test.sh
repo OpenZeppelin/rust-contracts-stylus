@@ -61,12 +61,6 @@ NIGHTLY_TOOLCHAIN=${NIGHTLY_TOOLCHAIN:-nightly}
 
 cargo +stable build --release --target wasm32-unknown-unknown
 
-echo "cargo stylus deploy --wasm-file-path ./target/wasm32-unknown-unknown/release/erc20_example.wasm -e "$RPC_URL" --private-key "$PRIVATE_KEY""
-
-cargo stylus deploy --wasm-file-path ./target/wasm32-unknown-unknown/release/erc20_example.wasm -e http://localhost:8547 --private-key 5744b91fe94e38f7cde31b0cc83e7fa1f45e31c053d015b9fb8c9ab3298f8a2d
-
-echo "cargo stylus deploy worked fine"
-
 # # TODO: deploy contracts asynchronously
 # for CRATE_NAME in $(get_example_crate_names)
 # do

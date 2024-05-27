@@ -77,10 +77,13 @@ fn activate(
     private_key: &str,
     address: Address,
 ) -> eyre::Result<()> {
-    let status = Command::new("cargo stylus deploy")
+    let status = Command::new("cargo")
+        .arg("stylus")
+        .arg("deploy")
         .args(&["-e", rpc_url])
         .args(&["--private-key", private_key])
-        .args(&["--program--address", &address.to_string()])
+        .args(&["--activate-program--address", &address.to_string()])
+        .args(&["--mode", "activate-only"])
         .status()?;
 
     if !status.success() {
