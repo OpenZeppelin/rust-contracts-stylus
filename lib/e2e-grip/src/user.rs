@@ -25,20 +25,31 @@ fn load_env_var(var_name: &str) -> Result<String, Report> {
         .with_context(|| format!("failed to load {} env var", var_name))
 }
 
+/// Type that corresponds to a test user.
 pub struct User {
     wallet: LocalWallet,
     provider: Provider<Http>,
     private_key: String,
 }
 
+/// Singleton user factory.
+/// Since after wallet generation user get funded inside nitro test node from a
+/// single "god" wallet. We should have synchronized user creation (otherwise
+/// nonce will be too low)
 static SYNC_USER_FACTORY: Lazy<Mutex<UserFactory>> =
     Lazy::new(|| Mutex::new(UserFactory));
 
 impl User {
+    /// Create new instance of user.
     pub async fn new() -> Result<Self> {
         SYNC_USER_FACTORY.lock().await.create().await
     }
 
+    /// Accept deployed [`Self::deploys`] contract as an argument.
+    /// Simulates user making call to a specific contract function.
+    ///
+    /// # Arguments
+    /// * `contract_ctx` - Context of the contract deployed
     pub fn uses<T: Contract>(&self, contract_ctx: &E2EContext<T>) -> T {
         let signer = Arc::new(SignerMiddleware::new(
             self.provider.clone(),
@@ -47,6 +58,13 @@ impl User {
         T::new(contract_ctx.address(), signer)
     }
 
+    /// Allows to user deploy specific contract.
+    /// [`T`] is an abi association with crate.
+    ///
+    /// # Examples
+    /// ```rust, ignore
+    /// let erc20 = &alice.deploys::<Erc20>().await?;
+    /// ```
     pub async fn deploys<T: Contract>(&self) -> Result<E2EContext<T>> {
         let rpc_url = load_env_var(RPC_URL)?;
         let wasm_bin_name = T::CRATE_NAME.replace('-', "_") + ".wasm";
@@ -84,6 +102,7 @@ impl User {
         Ok(E2EContext::new(address))
     }
 
+    /// Retrieve wallet address of the user.
     pub fn address(&self) -> Address {
         self.wallet.address()
     }
@@ -105,6 +124,7 @@ fn extract_deployment_address(output: &[u8]) -> Result<Address> {
 struct UserFactory;
 
 impl UserFactory {
+    /// Create new user and fund his wallet via test nitro node access.
     async fn create(&self) -> Result<User> {
         let rpc_url = load_env_var(RPC_URL)?;
         let test_nitro_node_path = load_env_var(TEST_NITRO_NODE_PATH)?;

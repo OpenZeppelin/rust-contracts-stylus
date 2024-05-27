@@ -22,7 +22,7 @@ pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let sig = &item_fn.sig;
     let fn_name = &sig.ident;
     let fn_return_type = &sig.output;
-    let fn_block = &item_fn.block;
+    let fn_stmts = &item_fn.block.stmts;
     let fn_args = &sig.inputs;
 
     let user_declarations = fn_args.into_iter().map(|arg| {
@@ -40,7 +40,7 @@ pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
         #[tokio::test]
         async fn #fn_name() #fn_return_type {
             #( #user_declarations )*
-            #fn_block
+            #( #fn_stmts )*
         }
     }
     .into()

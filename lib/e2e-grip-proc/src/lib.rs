@@ -2,8 +2,8 @@ use proc_macro::TokenStream;
 
 mod test;
 
-/// Defines end-to-end stylus contract test that provides user injection from
-/// arguments.
+/// Defines an end-to-end stylus contract test that provides test user's
+/// injection from arguments.
 ///
 /// # Examples
 ///

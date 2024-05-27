@@ -16,6 +16,7 @@ impl<T: Contract> E2EContext<T> {
         Self { address, phantom_data: PhantomData }
     }
 
+    /// Retrieve address of the contract deployed
     pub fn address(&self) -> Address {
         self.address
     }
