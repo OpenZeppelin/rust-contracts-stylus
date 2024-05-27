@@ -32,10 +32,6 @@ pub async fn deploy(
     println!("pkg_name {:?}", pkg_name);
     println!("pkg_dir {:?}", pkg_dir);
     // Fine to unwrap here, otherwise a bug in `cargo`.
-    let manifest_dir = get_workspace_root()?
-        .parse::<PathBuf>()
-        .wrap_err("failed to parse manifest dir path")?;
-    println!("manifest_dir {:?}", manifest_dir);
     // Fine to unwrap here, otherwise a bug in `cargo`.
     let pkg_dir = pkg_dir
         .parse::<PathBuf>()
@@ -46,10 +42,13 @@ pub async fn deploy(
     // This is super flaky because it assumes we are in a workspace. This is
     // fine for now since we only use this function in our tests, but if we
     // publish this as a crate, we need to account for the other cases.
-    let target_dir = manifest_dir.join("../target");
+    let manifest_dir = get_workspace_root()?
+        .parse::<PathBuf>()
+        .wrap_err("failed to parse manifest dir path")?;
+    println!("manifest_dir {:?}", manifest_dir);
     // Fine to unwrap here, otherwise a bug in `cargo`.
-    let wasm_path: PathBuf = target_dir
-        .join(format!("wasm32-unknown-unknown/release/{pkg_name}.wasm"));
+    let wasm_path: PathBuf = manifest_dir
+        .join(format!("target/wasm32-unknown-unknown/release/{pkg_name}.wasm"));
 
     let config = Deploy {
         generate_config: koba::config::Generate {
