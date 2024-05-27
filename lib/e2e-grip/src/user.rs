@@ -20,7 +20,7 @@ use crate::{context::E2EContext, Contract};
 const RPC_URL: &str = "RPC_URL";
 const TEST_NITRO_NODE_PATH: &str = "TEST_NITRO_NODE_PATH";
 
-fn load_env_var(var_name: &str) -> Result<String, Report> {
+fn load_env_var(var_name: &str) -> eyre::Result<String> {
     std::env::var(var_name)
         .with_context(|| format!("failed to load {} env var", var_name))
 }
