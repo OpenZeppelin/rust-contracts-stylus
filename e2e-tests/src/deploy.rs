@@ -39,6 +39,7 @@ pub async fn deploy(
         endpoint: rpc_url.to_owned(),
     };
 
+    println!("{:?}", config);
     let address = koba::deploy(&config).await?;
     Ok(address)
 }
