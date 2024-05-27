@@ -1,4 +1,7 @@
-use std::{path::PathBuf, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use alloy::primitives::Address;
 use eyre::{bail, Context};
@@ -51,7 +54,7 @@ pub async fn deploy(
 
     let config = Deploy {
         generate_config: koba::config::Generate {
-            wasm: wasm_path,
+            wasm: wasm_path.clone(),
             sol: sol_path,
             args,
         },
@@ -67,12 +70,13 @@ pub async fn deploy(
 
     println!("{:?}", config);
     let address = koba::deploy(&config).await?;
-    activate(rpc_url, private_key, address)?;
+    activate(&wasm_path, rpc_url, private_key, address)?;
 
     Ok(address)
 }
 
 fn activate(
+    wasm_path: &Path,
     rpc_url: &str,
     private_key: &str,
     address: Address,
@@ -81,6 +85,7 @@ fn activate(
         .arg("stylus")
         .arg("deploy")
         .args(&["-e", rpc_url])
+        .args(&["--wasm-file-path", &wasm_path.to_string_lossy()])
         .args(&["--private-key", private_key])
         .args(&["--activate-program-address", &address.to_string()])
         .args(&["--mode", "activate-only"])
