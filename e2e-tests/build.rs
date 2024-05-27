@@ -25,14 +25,6 @@ fn get_target_dir() -> String {
     // should be smth like
     // ./rust-contracts-stylus/target/debug/build/e2e-tests-b008947425bb8267/out
     let out_dir = load_env_var("OUT_DIR");
-    let target_dir = Path::new(&out_dir)
-        .parent()
-        .expect("get target dir")
-        .parent()
-        .expect("get target dir")
-        .parent()
-        .expect("get target dir")
-        .parent()
-        .expect("get target dir");
+    let target_dir = Path::new(&out_dir).join("../../../../");
     target_dir.to_str().expect("target dir").to_string()
 }
