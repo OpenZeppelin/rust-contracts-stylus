@@ -68,4 +68,4 @@ cargo +stable build --release --target wasm32-unknown-unknown
 # done
 
 # TODO: run tests in parallel when concurrency scope will be per test/contract
-RUST_TEST_THREADS=1 cargo +stable test --features std,e2e
+RUST_TEST_THREADS=1 cargo +stable test --features std,e2e -- --nocapture
