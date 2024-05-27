@@ -39,7 +39,7 @@ async fn mint() -> Result<()> {
     let alice_pk = &ctx.private_keys()[0];
     let alice_addr = alice.default_signer_address();
 
-    let name = env!("CARGO_CRATE_NAME");
+    let name = env!("CARGO_PKG_NAME").replace('-', "_");
     let pkg_dir = env!("CARGO_MANIFEST_DIR");
     let args = Erc20::constructorCall {
         name: "Test Token".to_owned(),
@@ -47,9 +47,14 @@ async fn mint() -> Result<()> {
         cap: U256::from(1),
     };
     let args = alloy::hex::encode(args.abi_encode());
-    let contract_addr =
-        deploy(name, pkg_dir, &ctx.rpc_url().to_string(), alice_pk, Some(args))
-            .await?;
+    let contract_addr = deploy(
+        &name,
+        pkg_dir,
+        &ctx.rpc_url().to_string(),
+        alice_pk,
+        Some(args),
+    )
+    .await?;
 
     let contract = Erc20::new(contract_addr, &alice);
 
