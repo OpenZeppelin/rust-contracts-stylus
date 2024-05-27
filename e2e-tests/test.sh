@@ -59,7 +59,7 @@ export BOB_PRIV_KEY=${BOB_PRIV_KEY:-0xa038232e463efa8ad57de6f88cd3c68ed64d1981da
 export RPC_URL=${RPC_URL:-http://localhost:8547}
 NIGHTLY_TOOLCHAIN=${NIGHTLY_TOOLCHAIN:-nightly}
 
-cargo +stable build --release --target wasm32-unknown-unknown --all-features
+cargo +stable build --release --target wasm32-unknown-unknown
 
 # # TODO: deploy contracts asynchronously
 # for CRATE_NAME in $(get_example_crate_names)

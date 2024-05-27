@@ -32,7 +32,6 @@ pub async fn deploy(
     println!("pkg_name {:?}", pkg_name);
     println!("pkg_dir {:?}", pkg_dir);
     // Fine to unwrap here, otherwise a bug in `cargo`.
-    // Fine to unwrap here, otherwise a bug in `cargo`.
     let pkg_dir = pkg_dir
         .parse::<PathBuf>()
         .wrap_err("failed to parse manifest dir path")?;

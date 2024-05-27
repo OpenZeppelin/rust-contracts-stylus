@@ -1,26 +1,26 @@
 [workspace]
 members = [
-    "contracts",
-    "lib/crypto",
-    "lib/grip",
-    "lib/grip-proc",
-    "examples/erc20",
-    "examples/erc721",
-    "examples/merkle-proofs",
-    "examples/ownable",
-    "examples/access-control",
-    "e2e-tests",
+  "contracts",
+  "lib/crypto",
+  "lib/grip",
+  "lib/grip-proc",
+  "examples/erc20",
+  "examples/erc721",
+  "examples/merkle-proofs",
+  "examples/ownable",
+  "examples/access-control",
+  "e2e-tests",
 ]
 default-members = [
-    "contracts",
-    "lib/crypto",
-    "lib/grip",
-    "lib/grip-proc",
-    "examples/erc20",
-    "examples/erc721",
-    "examples/merkle-proofs",
-    "examples/ownable",
-    "examples/access-control",
+  "contracts",
+  "lib/crypto",
+  "lib/grip",
+  "lib/grip-proc",
+  "examples/erc20",
+  "examples/erc721",
+  "examples/merkle-proofs",
+  "examples/ownable",
+  "examples/access-control",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
@@ -39,8 +39,8 @@ repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 alloy-primitives = { version = "0.3.1", default-features = false }
 alloy-sol-types = { version = "0.3.1", default-features = false }
 # TODO: lift stylus-sdk and stylus-proc versions once nitro test node will be compatible
-stylus-sdk = { version = "0.4.3", default-features = false }
-stylus-proc = { version = "0.4.3", default-features = false }
+stylus-sdk = { version = "0.5.0", default-features = false }
+stylus-proc = { version = "0.5.0", default-features = false }
 mini-alloc = "0.4.2"
 
 [profile.release]
