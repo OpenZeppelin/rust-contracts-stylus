@@ -45,12 +45,7 @@ async fn mint() -> Result<()> {
         symbol: "TTK".to_owned(),
         cap: U256::from(1),
     };
-    let args: Vec<u8> = args.abi_encode().into_iter().skip(4).collect();
-    let args = alloy::hex::encode(args);
-    println!("{name}");
-    println!("{}", &ctx.rpc_url().to_string());
-    println!("{}", &alice_pk);
-    println!("{}", &args);
+    let args = alloy::hex::encode(args.abi_encode());
     let contract_addr =
         deploy(&name, &ctx.rpc_url().to_string(), alice_pk, Some(args)).await?;
 
