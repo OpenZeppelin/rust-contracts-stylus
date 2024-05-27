@@ -53,7 +53,7 @@ jobs:
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
 
       - name: setup nitro node
-        run: ./e2e-tests/nitro-testnode -d -i
+        run: ./e2e-tests/nitro-testnode.sh -d -i
 
       - name: run integration tests
         run: |
