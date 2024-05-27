@@ -71,7 +71,8 @@ jobs:
         run: |
           sudo add-apt-repository ppa:ethereum/ethereum
           sudo apt-get update
-          sudo apt-get install solc=0.8.21
+          apt-cache policy solc
+          sudo apt-get install solc=1:0.8.21-0ubuntu1~kinetic
       - name: run integration tests
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
