@@ -1,7 +1,7 @@
 use std::{path::PathBuf, process::Command};
 
 use alloy::primitives::Address;
-use eyre::Context;
+use eyre::{bail, Context};
 use koba::config::Deploy;
 
 fn get_workspace_root() -> eyre::Result<String> {
@@ -62,9 +62,30 @@ pub async fn deploy(
             keystore_password_path: None,
         },
         endpoint: rpc_url.to_owned(),
+        only_deploy: false,
     };
 
     println!("{:?}", config);
     let address = koba::deploy(&config).await?;
+    activate(rpc_url, private_key, address)?;
+
     Ok(address)
+}
+
+fn activate(
+    rpc_url: &str,
+    private_key: &str,
+    address: Address,
+) -> eyre::Result<()> {
+    let status = Command::new("cargo stylus deploy")
+        .args(&["-e", rpc_url])
+        .args(&["--private-key", private_key])
+        .args(&["--program--address", &address.to_string()])
+        .status()?;
+
+    if !status.success() {
+        bail!("failed to activate the contract at address {address}");
+    }
+
+    Ok(())
 }
