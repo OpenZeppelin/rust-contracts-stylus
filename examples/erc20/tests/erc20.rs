@@ -46,6 +46,10 @@ async fn mint() -> Result<()> {
         cap: U256::from(1),
     };
     let args = alloy::hex::encode(args.abi_encode());
+    println!("{name}");
+    println!("{}", &ctx.rpc_url().to_string());
+    println!("{}", &alice_pk);
+    println!("{}", &args);
     let contract_addr =
         deploy(&name, &ctx.rpc_url().to_string(), alice_pk, Some(args)).await?;
 
