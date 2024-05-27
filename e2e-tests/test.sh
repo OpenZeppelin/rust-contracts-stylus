@@ -59,13 +59,13 @@ export BOB_PRIV_KEY=${BOB_PRIV_KEY:-0xa038232e463efa8ad57de6f88cd3c68ed64d1981da
 export RPC_URL=${RPC_URL:-http://localhost:8547}
 NIGHTLY_TOOLCHAIN=${NIGHTLY_TOOLCHAIN:-nightly}
 
-cargo +"$NIGHTLY_TOOLCHAIN" build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+cargo +stable build --release --target wasm32-unknown-unknown --all-features
 
-# TODO: deploy contracts asynchronously
-for CRATE_NAME in $(get_example_crate_names)
-do
-  deploy_contract "$CRATE_NAME"
-done
+# # TODO: deploy contracts asynchronously
+# for CRATE_NAME in $(get_example_crate_names)
+# do
+#   deploy_contract "$CRATE_NAME"
+# done
 
 # TODO: run tests in parallel when concurrency scope will be per test/contract
 RUST_TEST_THREADS=1 cargo +stable test --features std,e2e
