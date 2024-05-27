@@ -62,7 +62,7 @@ pub async fn deploy(
             keystore_password_path: None,
         },
         endpoint: rpc_url.to_owned(),
-        only_deploy: false,
+        only_deploy: true,
     };
 
     println!("{:?}", config);
