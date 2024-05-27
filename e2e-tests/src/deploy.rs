@@ -19,7 +19,7 @@ fn get_workspace_root() -> eyre::Result<String> {
         .output()
         .wrap_err("should run `dirname`")?;
 
-    Ok(String::from_utf8_lossy(&manifest_dir.stdout).to_string())
+    Ok(String::from_utf8_lossy(&manifest_dir.stdout).trim().to_string())
 }
 
 pub async fn deploy(
