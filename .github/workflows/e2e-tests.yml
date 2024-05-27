@@ -69,10 +69,8 @@ jobs:
           ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
       - name: install solc
         run: |
-          sudo add-apt-repository ppa:ethereum/ethereum
-          sudo apt-get update
-          apt-cache policy solc
-          sudo apt-get install solc=1:0.8.21-0ubuntu1~kinetic
+          curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
+          sudo cp solc-static-linux /usr/bin/
       - name: run integration tests
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
