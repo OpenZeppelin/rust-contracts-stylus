@@ -11,7 +11,7 @@ repository.workspace = true
 tokio = { version = "1.12.0", features = ["full"] }
 eyre = "0.6.8"
 async-trait = "0.1.80"
-koba = { git = "https://github.com/alexfertel/koba", rev = "2f2f701" }
+koba = { git = "https://github.com/alexfertel/koba", rev = "324128b" }
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "c6c91cc", features = [
   "contract",
   "network",
