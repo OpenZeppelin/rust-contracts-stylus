@@ -64,9 +64,9 @@ jobs:
           
           # TODO: remove hard coded wallets when user creation will be per test case
           # fund Alice's wallet
-          ./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10000
+          ./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 100000000000000
           # fund Bob's wallet
-          ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
+          ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 100000000000000
 
       - name: run integration tests
         run: |
