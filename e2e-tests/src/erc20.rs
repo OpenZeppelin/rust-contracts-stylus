@@ -2,8 +2,8 @@ use e2e_grip::prelude::*;
 
 use crate::abi::erc20::*;
 
-pub(crate) async fn mint() -> Result<()> {
-    let alice = User::new().await?;
+#[e2e_grip::test]
+async fn mint(alice: User) -> Result<()> {
     let erc20 = &alice.deploys::<Erc20>().await?;
     // TODO: have a nicer support for custom constructors
     let _ = alice
