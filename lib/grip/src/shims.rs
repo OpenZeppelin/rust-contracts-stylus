@@ -133,12 +133,20 @@ pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
 ///
 /// [`SSTORE`]: https://www.evm.codes/#55
 #[no_mangle]
-pub unsafe extern "C" fn storage_store_bytes32(
+pub unsafe extern "C" fn storage_cache_bytes32(
     key: *const u8,
     value: *const u8,
 ) {
     let (key, value) = unsafe { (read_bytes32(key), read_bytes32(value)) };
     STORAGE.lock().unwrap().insert(key, value);
+}
+/// Persists any dirty values in the storage cache to the EVM state trie,
+/// dropping the cache entirely if requested. Analogous to repeated invocations
+/// of [`SSTORE`].
+///
+/// [`SSTORE`]: https://www.evm.codes/#55
+pub fn storage_flush_cache(_: bool) {
+    // No-op: we don't use the cache in our unit-tests.
 }
 
 /// Dummy msg sender set for tests.
