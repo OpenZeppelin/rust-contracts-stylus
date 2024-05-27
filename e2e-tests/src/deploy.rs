@@ -82,7 +82,7 @@ fn activate(
         .arg("deploy")
         .args(&["-e", rpc_url])
         .args(&["--private-key", private_key])
-        .args(&["--activate-program--address", &address.to_string()])
+        .args(&["--activate-program-address", &address.to_string()])
         .args(&["--mode", "activate-only"])
         .status()?;
 
