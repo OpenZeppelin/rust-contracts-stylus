@@ -56,8 +56,13 @@ pub fn build_context() -> Context {
         .expect("failed to parse RPC_URL string into a URL");
 
     let private_keys = vec![ALICE_PRIV_KEY.to_owned(), BOB_PRIV_KEY.to_owned()];
+    let private_keys = private_keys
+        .iter()
+        .map(|s| load_var(&s))
+        .collect::<eyre::Result<Vec<String>>>()
+        .expect("failed to load private keys");
+
     let signers: Vec<Signer> = private_keys
-        .clone()
         .iter()
         .map(|pk| {
             get_signer_from_env(pk, &rpc_url)
@@ -68,10 +73,12 @@ pub fn build_context() -> Context {
     Context { rpc_url, private_keys, signers }
 }
 
+fn load_var(name: &str) -> eyre::Result<String> {
+    std::env::var(name).wrap_err(format!("failed to load {name}"))
+}
+
 fn get_signer_from_env(var: &str, rpc_url: &Url) -> eyre::Result<Signer> {
-    let signer = std::env::var(var)
-        .wrap_err(format!("failed to load {var}"))?
-        .parse::<LocalWallet>()?;
+    let signer = var.parse::<LocalWallet>()?;
     let signer = ProviderBuilder::new()
         .with_recommended_fillers()
         .signer(EthereumSigner::from(signer))
