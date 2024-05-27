@@ -2109,7 +2109,7 @@ checksum = "57d8d8ce877200136358e0bbff3a77965875db3af755a11e1fa6b1b3e2df13ea"
 [[package]]
 name = "koba"
 version = "0.1.0"
-source = "git+https://github.com/alexfertel/koba?rev=1c5f9a2#1c5f9a26e476eb49e56c7e55013572e6b909c73f"
+source = "git+https://github.com/alexfertel/koba?branch=test-branch#b613d5325b6b19a977185658b4544d40b9373ff6"
 dependencies = [
  "alloy",
  "brotli2",
