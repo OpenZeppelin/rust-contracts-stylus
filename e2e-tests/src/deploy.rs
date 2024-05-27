@@ -5,6 +5,7 @@ use eyre::Context;
 use koba::config::Deploy;
 
 pub async fn deploy(
+    pkg_name: &str,
     rpc_url: &str,
     private_key: &str,
     args: Option<String>,
@@ -15,14 +16,13 @@ pub async fn deploy(
     // Fine to unwrap here, otherwise a bug in `cargo`.
     let sol_path: PathBuf = manifest_dir.join("src/constructor.sol");
 
-    let name = env!("CARGO_PKG_NAME");
     // This is super flaky because it assumes we are in a workspace. This is
     // fine for now since we only use this function in our tests, but if we
     // publish this as a crate, we need to account for the other cases.
     let target_dir = manifest_dir.join("../target");
     // Fine to unwrap here, otherwise a bug in `cargo`.
-    let wasm_path: PathBuf =
-        target_dir.join(format!("wasm32-unknown-unknown/release/{name}.wasm"));
+    let wasm_path: PathBuf = target_dir
+        .join(format!("wasm32-unknown-unknown/release/{pkg_name}.wasm"));
 
     let config = Deploy {
         generate_config: koba::config::Generate {
