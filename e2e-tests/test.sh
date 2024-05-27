@@ -60,6 +60,9 @@ export RPC_URL=${RPC_URL:-http://localhost:8547}
 NIGHTLY_TOOLCHAIN=${NIGHTLY_TOOLCHAIN:-nightly}
 
 cargo +stable build --release --target wasm32-unknown-unknown
+cargo stylus check --wasm-file-path ./target/wasm32-unknown-unknown/release/erc20_example.wasm -e "$RPC_URL" --private-key "$PRIVATE_KEY"
+
+echo "cargo stylus check worked fine"
 
 # # TODO: deploy contracts asynchronously
 # for CRATE_NAME in $(get_example_crate_names)
