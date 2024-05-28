@@ -1,0 +1,56 @@
+name: check-wasm
+# This workflow checks that the compiled wasm binary of every example contract
+# can be deployed to Arbitrum Stylus.
+# 
+# NOTE: This is using version `0.2.1` of `cargo-stylus`, which we will need
+# to update once `nitro-testnode` gets updated.
+permissions:
+  contents: read
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  check-wasm:
+    name: check WASM binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+
+      - name: cache cargo-stylus
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/.crates.toml
+          key: ${{ runner.os }}-cargo-bin-cargo-stylus@0.2.1
+          save-always: true
+
+      - name: set up rust
+        uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          target: wasm32-unknown-unknown
+          components: rust-src
+          toolchain: nightly-2024-01-01
+
+      - name: install cargo-stylus
+        run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
+
+      - name: run wasm check
+        run: |
+          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
+          ./.github/scripts/check-wasm.sh
