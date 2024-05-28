@@ -10,6 +10,7 @@ repository.workspace = true
 [dependencies]
 tokio = { version = "1.12.0", features = ["full"] }
 eyre = "0.6.8"
+# TODO: Check if needed.
 async-trait = "0.1.80"
 koba = { git = "https://github.com/alexfertel/koba" }
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "c6c91cc", features = [
@@ -23,6 +24,7 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "c6c91cc", features =
   "signer-wallet",
   "getrandom",
 ] }
+e2e = { path = "../lib/e2e" }
 
 [lib]
 doctest = false
