@@ -130,7 +130,7 @@ impl IERC721Enumerable for ERC721Enumerable {
 }
 
 impl ERC721Enumerable {
-    fn _add_token_to_owner_enumeration(
+    pub fn _add_token_to_owner_enumeration(
         &mut self,
         _to: Address,
         _token_id: U256,
@@ -139,12 +139,12 @@ impl ERC721Enumerable {
         unimplemented!()
     }
 
-    fn _add_token_to_all_tokens_enumeration(&mut self, _token_id: U256) {
+    pub fn _add_token_to_all_tokens_enumeration(&mut self, _token_id: U256) {
         // TODO
         unimplemented!()
     }
 
-    fn _remove_token_from_owner_enumeration(
+    pub fn _remove_token_from_owner_enumeration(
         &mut self,
         _from: Address,
         _token_id: U256,
@@ -153,12 +153,15 @@ impl ERC721Enumerable {
         unimplemented!()
     }
 
-    fn _remove_token_from_all_tokens_enumeration(&mut self, _token_id: U256) {
+    pub fn _remove_token_from_all_tokens_enumeration(
+        &mut self,
+        _token_id: U256,
+    ) {
         // TODO
         unimplemented!()
     }
 
-    fn _increase_balance(&mut self, _account: Address, _amount: u128) {
+    pub fn _increase_balance(&mut self, _account: Address, _amount: u128) {
         // TODO
         unimplemented!()
     }
