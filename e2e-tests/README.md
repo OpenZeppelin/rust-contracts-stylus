@@ -24,7 +24,7 @@ this [guide](https://github.com/OffchainLabs/nitro-testnode/blob/release/README.
 Run integration testing command:
 
 ```terminal
-    ./e2e-tests/test.sh
+    ./e2e-tests/run.sh
 ```
 
 ### Against stylus dev net
@@ -37,7 +37,7 @@ Run this command:
     ALICE_PRIV_KEY=0x... \
     BOB_PRIV_KEY=0x... \
     RPC_URL=https://stylus-testnet.arbitrum.io/rpc \
-        ./e2e-tests//test.sh
+        ./e2e-tests/run.sh
 ```
 
 ## Add test for the new contract
