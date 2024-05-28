@@ -7,8 +7,61 @@ use alloy::primitives::Address;
 use eyre::{bail, Context};
 use koba::config::Deploy;
 
+/// Deploy and activate the contract `contract_name`, which lives in `pkg_dir`,
+/// using `rpc_url`, `private_key` and the ABI-encoded constructor `args`.
+pub async fn deploy(
+    contract_name: &str,
+    pkg_dir: &str,
+    rpc_url: &str,
+    private_key: &str,
+    args: Option<String>,
+) -> eyre::Result<Address> {
+    // Fine to unwrap here, otherwise a bug in `cargo`.
+    let pkg_dir = pkg_dir
+        .parse::<PathBuf>()
+        .wrap_err("failed to parse manifest dir path")?;
+    let sol_path: PathBuf = pkg_dir.join("src/constructor.sol");
+
+    // This is super flaky because it assumes we are in a workspace. This is
+    // fine for now since we only use this function in our tests, but if we
+    // publish this as a crate, we need to account for the other cases.
+    let manifest_dir = get_workspace_root()?
+        .parse::<PathBuf>()
+        .wrap_err("failed to parse manifest dir path")?;
+    // Fine to unwrap here, otherwise a bug in `cargo`.
+    let wasm_path: PathBuf = manifest_dir.join(format!(
+        "target/wasm32-unknown-unknown/release/{contract_name}.wasm"
+    ));
+
+    let config = Deploy {
+        generate_config: koba::config::Generate {
+            wasm: wasm_path.clone(),
+            sol: sol_path,
+            args,
+            legacy: true,
+        },
+        auth: koba::config::PrivateKey {
+            private_key_path: None,
+            private_key: Some(private_key.to_owned()),
+            keystore_path: None,
+            keystore_password_path: None,
+        },
+        endpoint: rpc_url.to_owned(),
+        deploy_only: true,
+    };
+
+    let address = koba::deploy(&config).await?;
+    activate(&wasm_path, rpc_url, private_key, address)?;
+
+    Ok(address)
+}
+
+/// Runs the following command to get the worskpace root.
+///
+/// ```bash
+/// dirname "$(cargo locate-project --workspace --message-format plain)"
+/// ```
 fn get_workspace_root() -> eyre::Result<String> {
-    // dirname "$(cargo locate-project --workspace --message-format plain)"
     let output = Command::new("cargo")
         .arg("locate-project")
         .arg("--workspace")
@@ -25,56 +78,7 @@ fn get_workspace_root() -> eyre::Result<String> {
     Ok(String::from_utf8_lossy(&manifest_dir.stdout).trim().to_string())
 }
 
-pub async fn deploy(
-    pkg_name: &str,
-    pkg_dir: &str,
-    rpc_url: &str,
-    private_key: &str,
-    args: Option<String>,
-) -> eyre::Result<Address> {
-    println!("pkg_name {:?}", pkg_name);
-    println!("pkg_dir {:?}", pkg_dir);
-    // Fine to unwrap here, otherwise a bug in `cargo`.
-    let pkg_dir = pkg_dir
-        .parse::<PathBuf>()
-        .wrap_err("failed to parse manifest dir path")?;
-    let sol_path: PathBuf = pkg_dir.join("src/constructor.sol");
-    println!("sol_path {:?}", sol_path);
-
-    // This is super flaky because it assumes we are in a workspace. This is
-    // fine for now since we only use this function in our tests, but if we
-    // publish this as a crate, we need to account for the other cases.
-    let manifest_dir = get_workspace_root()?
-        .parse::<PathBuf>()
-        .wrap_err("failed to parse manifest dir path")?;
-    println!("manifest_dir {:?}", manifest_dir);
-    // Fine to unwrap here, otherwise a bug in `cargo`.
-    let wasm_path: PathBuf = manifest_dir
-        .join(format!("target/wasm32-unknown-unknown/release/{pkg_name}.wasm"));
-
-    let config = Deploy {
-        generate_config: koba::config::Generate {
-            wasm: wasm_path.clone(),
-            sol: sol_path,
-            args,
-        },
-        auth: koba::config::PrivateKey {
-            private_key_path: None,
-            private_key: Some(private_key.to_owned()),
-            keystore_path: None,
-            keystore_password_path: None,
-        },
-        endpoint: rpc_url.to_owned(),
-        only_deploy: true,
-    };
-
-    println!("{:?}", config);
-    let address = koba::deploy(&config).await?;
-    activate(&wasm_path, rpc_url, private_key, address)?;
-
-    Ok(address)
-}
-
+/// Uses `cargo-stylus` to activate a Stylus contract.
 fn activate(
     wasm_path: &Path,
     rpc_url: &str,
