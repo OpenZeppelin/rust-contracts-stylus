@@ -1,6 +1,4 @@
-use ethers::prelude::*;
-
-use crate::context::*;
+use e2e::prelude::*;
 
 abigen!(
     Erc721Token,

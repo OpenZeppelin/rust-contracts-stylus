@@ -3,9 +3,8 @@ name: e2e-tests
 #
 # It roughly follows these steps:
 # - A local `nitro-testnode` gets spun up.
-# - Contracts get deployed to the local node.
-# - A few addresses get funded.
-# - The test suite runs.
+# - The test suite runs
+# Test contract deployments and test user funding happen per test.
 permissions:
   contents: read
 on:
@@ -53,20 +52,7 @@ jobs:
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
 
       - name: setup nitro node
-        run: |
-          # clone nitro test node repo
-          git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git && cd nitro-testnode
-          git checkout 1886f4b89f5c20fd5b0c2cf3d08a009ee73e45ca
-          
-          # setup nitro test node
-          ./test-node.bash --no-run --init --no-tokenbridge
-          ./test-node.bash --detach
-          
-          # TODO: remove hard coded wallets when user creation will be per test case
-          # fund Alice's wallet
-          ./test-node.bash script send-l2 --to address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10000
-          # fund Bob's wallet
-          ./test-node.bash script send-l2 --to address_0xF4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526 --ethamount 10000
+        run: ./e2e-tests/nitro-testnode.sh -d -i
 
       - name: run integration tests
         run: |
