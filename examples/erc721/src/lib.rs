@@ -13,7 +13,7 @@ use contracts::{
             ERC721Enumerable as Enumerable, ERC721Metadata as Metadata,
             ERC721UriStorage as UriStorage, IERC721Burnable,
         },
-        ERC721,
+        ERC721, IERC721,
     },
     utils::Pausable,
 };
@@ -96,9 +96,16 @@ impl Token {
         self.erc721.safe_transfer_from(from, to, token_id)?;
 
         // Apply updates to Enumerable extension.
-        self.enumerable
-            ._remove_token_from_owner_enumeration(previous_owner, token_id);
-        self.enumerable._add_token_to_owner_enumeration(to, token_id);
+        self.enumerable._remove_token_from_owner_enumeration(
+            previous_owner,
+            token_id,
+            &self.erc721,
+        );
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        );
 
         Ok(())
     }
@@ -121,9 +128,16 @@ impl Token {
         self.erc721.safe_transfer_from_with_data(from, to, token_id, data)?;
 
         // Apply updates to Enumerable extension.
-        self.enumerable
-            ._remove_token_from_owner_enumeration(previous_owner, token_id);
-        self.enumerable._add_token_to_owner_enumeration(to, token_id);
+        self.enumerable._remove_token_from_owner_enumeration(
+            previous_owner,
+            token_id,
+            &self.erc721,
+        );
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        );
 
         Ok(())
     }
@@ -144,9 +158,16 @@ impl Token {
         self.erc721.transfer_from(from, to, token_id)?;
 
         // Apply updates to Enumerable extension.
-        self.enumerable
-            ._remove_token_from_owner_enumeration(previous_owner, token_id);
-        self.enumerable._add_token_to_owner_enumeration(to, token_id);
+        self.enumerable._remove_token_from_owner_enumeration(
+            previous_owner,
+            token_id,
+            &self.erc721,
+        );
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        );
 
         Ok(())
     }
