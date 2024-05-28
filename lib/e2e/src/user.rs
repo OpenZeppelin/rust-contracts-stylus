@@ -15,7 +15,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use tokio::sync::Mutex;
 
-use crate::{context::E2EContext, Contract};
+use crate::{context::E2EContext, contract::Contract};
 
 const RPC_URL: &str = "RPC_URL";
 const TEST_NITRO_NODE_PATH: &str = "TEST_NITRO_NODE_PATH";

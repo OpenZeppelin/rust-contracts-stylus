@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use ethers::addressbook::Address;
 
-use crate::Contract;
+use crate::contract::Contract;
 
 /// End-to-end testing context that allows to act on behalf of any user that
 /// [`crate::user::User::uses`] it.
