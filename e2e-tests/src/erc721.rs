@@ -1,8 +1,8 @@
-use e2e_grip::prelude::*;
+use e2e::prelude::*;
 
 use crate::abi::erc721::*;
 
-#[e2e_grip::test]
+#[e2e::test]
 async fn mint(alice: User) -> Result<()> {
     let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
@@ -17,7 +17,7 @@ async fn mint(alice: User) -> Result<()> {
     Ok(())
 }
 
-#[e2e_grip::test]
+#[e2e::test]
 async fn error_when_reusing_token_id(alice: User) -> Result<()> {
     let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
@@ -32,7 +32,7 @@ async fn error_when_reusing_token_id(alice: User) -> Result<()> {
     err.assert(ERC721InvalidSender { sender: Address::zero() })
 }
 
-#[e2e_grip::test]
+#[e2e::test]
 async fn transfer(alice: User, bob: User) -> Result<()> {
     let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
@@ -48,7 +48,7 @@ async fn transfer(alice: User, bob: User) -> Result<()> {
     Ok(())
 }
 
-#[e2e_grip::test]
+#[e2e::test]
 async fn error_when_transfer_nonexistent_token(
     alice: User,
     bob: User,
@@ -64,7 +64,7 @@ async fn error_when_transfer_nonexistent_token(
     err.assert(ERC721NonexistentToken { token_id })
 }
 
-#[e2e_grip::test]
+#[e2e::test]
 async fn approve_token_transfer(alice: User, bob: User) -> Result<()> {
     let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();
@@ -82,7 +82,7 @@ async fn approve_token_transfer(alice: User, bob: User) -> Result<()> {
     Ok(())
 }
 
-#[e2e_grip::test]
+#[e2e::test]
 async fn error_when_transfer_unapproved_token(
     alice: User,
     bob: User,

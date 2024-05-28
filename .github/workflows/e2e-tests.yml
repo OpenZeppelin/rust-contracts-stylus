@@ -3,9 +3,8 @@ name: e2e-tests
 #
 # It roughly follows these steps:
 # - A local `nitro-testnode` gets spun up.
-# - Contracts get deployed to the local node.
-# - A few addresses get funded.
-# - The test suite runs.
+# - The test suite runs
+# Test contract deployments and test user funding happen per test.
 permissions:
   contents: read
 on:

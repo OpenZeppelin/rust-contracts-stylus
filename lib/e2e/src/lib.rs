@@ -14,7 +14,7 @@ use crate::prelude::U64;
 pub mod context;
 pub mod prelude;
 pub mod user;
-pub use e2e_grip_proc::test;
+pub use e2e_proc::test;
 
 /// Abstraction for the deployed contract.
 pub trait Contract {
@@ -34,7 +34,7 @@ pub trait Contract {
 ///
 /// # Example
 /// ```
-/// use e2e_grip::prelude::*;
+/// use e2e::prelude::*;
 ///
 /// abigen!(
 ///     Erc20Token,

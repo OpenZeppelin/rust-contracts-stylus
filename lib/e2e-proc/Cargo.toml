@@ -1,6 +1,6 @@
 [package]
-name = "e2e-grip-proc"
-description = "E2E Grip Procedural Macros"
+name = "e2e-proc"
+description = "E2E Testing Procedural Macros"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true

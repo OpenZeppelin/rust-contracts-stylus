@@ -1,4 +1,4 @@
-use e2e_grip::prelude::*;
+use e2e::prelude::*;
 
 abigen!(
     Erc721Token,

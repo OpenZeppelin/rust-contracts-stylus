@@ -11,7 +11,7 @@ repository.workspace = true
 tokio = { version = "1.12.0", features = ["full"] }
 ethers = "2.0"
 eyre = "0.6.8"
-e2e-grip = { path = "../lib/e2e-grip" }
+e2e = { path = "../lib/e2e" }
 
 [lib]
 doctest = false

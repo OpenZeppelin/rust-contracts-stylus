@@ -1,4 +1,4 @@
-# E2E Grip - End-to-end Testing for Stylus
+# End-to-end Testing for Stylus
 
 This end-to-end testing crate allows to create users, deploy contracts and
 test all necessary scenarios you will probably need. This crate coupled with
@@ -8,8 +8,9 @@ by Offchain Labs and requires it to be installed to perform integration testing.
 ## Usage
 
 Abi declaration:
+
 ```rust
-use e2e_grip::prelude::*;
+use e2e::prelude::*;
 
 abigen!(
     Erc721Token,
@@ -29,8 +30,9 @@ link_to_crate!(Erc721, "erc721-example");
 ```
 
 Test case example:
+
 ```rust
-#[e2e_grip::test]
+#[e2e::test]
 async fn transfer(alice: User, bob: User) -> Result<()> {
     let erc721 = &alice.deploys::<Erc721>().await?;
     let token_id = random_token_id();

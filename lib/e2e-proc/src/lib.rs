@@ -8,7 +8,7 @@ mod test;
 /// # Examples
 ///
 /// ```rust,ignore
-/// #[e2e_grip::test]
+/// #[e2e::test]
 /// async fn mint(alice: User) -> Result<()> {
 ///     let erc721 = &alice.deploys::<Erc721>().await?;
 ///     let token_id = random_token_id();
