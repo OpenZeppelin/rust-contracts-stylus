@@ -52,7 +52,7 @@ ethers::contract::abigen!(
     r#"[
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)
         function mint(address account, uint256 amount) external
-        
+
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)
     ]"#
 );

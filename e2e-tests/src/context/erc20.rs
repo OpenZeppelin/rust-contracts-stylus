@@ -16,10 +16,10 @@ abigen!(
         function allowance(address owner, address spender) external view returns (uint256)
         function approve(address spender, uint256 amount) external returns (bool)
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)
-        
+
         function mint(address account, uint256 amount) external
         function burn(uint256 amount) external
-        
+
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)
         error ERC20InvalidSender(address sender)
         error ERC20InvalidReceiver(address receiver)
