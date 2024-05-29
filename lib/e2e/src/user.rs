@@ -68,7 +68,7 @@ impl UserFactory {
             .arg("script")
             .arg("send-l2")
             .arg("--to")
-            .arg(format!("address_0x{}", addr))
+            .arg(format!("address_{}", addr))
             .arg("--ethamount")
             .arg("10")
             .output()?;
