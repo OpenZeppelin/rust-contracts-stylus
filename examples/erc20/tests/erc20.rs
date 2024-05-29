@@ -56,17 +56,17 @@ async fn mint(alice: User) -> Result<()> {
     let contract = Erc20::new(contract_addr, &alice.signer);
 
     let Erc20::balanceOfReturn { balance: initial_balance } =
-        contract.balanceOf(alice.address()).call().await.unwrap();
+        contract.balanceOf(alice.address()).call().await?;
     let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
-        contract.totalSupply().call().await.unwrap();
+        contract.totalSupply().call().await?;
 
     let one = U256::from(1);
-    let _ = contract.mint(alice.address(), one).send().await.unwrap();
+    let _ = contract.mint(alice.address(), one).send().await?;
 
     let Erc20::balanceOfReturn { balance } =
-        contract.balanceOf(alice.address()).call().await.unwrap();
+        contract.balanceOf(alice.address()).call().await?;
     let Erc20::totalSupplyReturn { totalSupply } =
-        contract.totalSupply().call().await.unwrap();
+        contract.totalSupply().call().await?;
 
     assert_eq!(initial_balance + one, balance);
     assert_eq!(initial_supply + one, totalSupply);
