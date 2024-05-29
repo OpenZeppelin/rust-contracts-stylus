@@ -63,7 +63,7 @@ fn activate(
     private_key: &str,
     address: Address,
 ) -> eyre::Result<()> {
-    let status = Command::new("cargo")
+    let output = Command::new("cargo")
         .arg("stylus")
         .arg("deploy")
         .args(&["-e", rpc_url])
@@ -71,10 +71,14 @@ fn activate(
         .args(&["--private-key", private_key])
         .args(&["--activate-program-address", &address.to_string()])
         .args(&["--mode", "activate-only"])
-        .status()?;
+        .output()?;
 
-    if !status.success() {
-        bail!("failed to activate the contract at address {address}");
+    if !output.status.success() {
+        // Only activate once.
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if !stderr.contains("ProgramUpToDate") {
+            bail!("failed to activate the contract at address {address}");
+        }
     }
 
     Ok(())
