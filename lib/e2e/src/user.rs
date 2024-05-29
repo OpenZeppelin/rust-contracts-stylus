@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use alloy::{
     network::EthereumSigner,
     primitives::Address,
@@ -10,10 +8,9 @@ use eyre::{bail, Result};
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
-use crate::system::{env, Signer};
+use crate::system::{get_node_path, Signer};
 
 const RPC_URL: &str = "RPC_URL";
-const NITRO_TEST_NODE_PATH: &str = "NITRO_TEST_NODE_PATH";
 
 /// Type that corresponds to a test user.
 #[derive(Clone, Debug)]
@@ -66,8 +63,7 @@ impl UserFactory {
 
         // ./test-node.bash script send-l2 --to
         // address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10
-        let node_path = env(NITRO_TEST_NODE_PATH)?;
-        let node_script = PathBuf::from(&node_path).join("test-node.bash");
+        let node_script = get_node_path()?.join("test-node.bash");
         let output = std::process::Command::new(node_script)
             .arg("script")
             .arg("send-l2")

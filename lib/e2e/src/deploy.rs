@@ -7,6 +7,8 @@ use alloy::primitives::Address;
 use eyre::{bail, Context};
 use koba::config::Deploy;
 
+use crate::system::get_workspace_root;
+
 /// Deploy and activate the contract `contract_name`, which lives in `pkg_dir`,
 /// using `rpc_url`, `private_key` and the ABI-encoded constructor `args`.
 pub async fn deploy(
@@ -25,9 +27,7 @@ pub async fn deploy(
     // This is super flaky because it assumes we are in a workspace. This is
     // fine for now since we only use this function in our tests, but if we
     // publish this as a crate, we need to account for the other cases.
-    let manifest_dir = get_workspace_root()?
-        .parse::<PathBuf>()
-        .wrap_err("failed to parse manifest dir path")?;
+    let manifest_dir = get_workspace_root()?;
     // Fine to unwrap here, otherwise a bug in `cargo`.
     let wasm_path: PathBuf = manifest_dir.join(format!(
         "target/wasm32-unknown-unknown/release/{contract_name}.wasm"
@@ -54,28 +54,6 @@ pub async fn deploy(
     activate(&wasm_path, rpc_url, private_key, address)?;
 
     Ok(address)
-}
-
-/// Runs the following command to get the worskpace root.
-///
-/// ```bash
-/// dirname "$(cargo locate-project --workspace --message-format plain)"
-/// ```
-fn get_workspace_root() -> eyre::Result<String> {
-    let output = Command::new("cargo")
-        .arg("locate-project")
-        .arg("--workspace")
-        .arg("--message-format")
-        .arg("plain")
-        .output()
-        .wrap_err("should run `cargo locate-project`")?;
-    let manifest_path = String::from_utf8_lossy(&output.stdout);
-    let manifest_dir = Command::new("dirname")
-        .arg(&*manifest_path)
-        .output()
-        .wrap_err("should run `dirname`")?;
-
-    Ok(String::from_utf8_lossy(&manifest_dir.stdout).trim().to_string())
 }
 
 /// Uses `cargo-stylus` to activate a Stylus contract.
