@@ -1,10 +1,9 @@
-name: e2e-tests
-# This workflow runs our end-to-end tests suite.
-#
-# It roughly follows these steps:
-# - A local `nitro-testnode` gets spun up.
-# - The test suite runs
-# Test contract deployments and test user funding happen per test.
+name: check-wasm
+# This workflow checks that the compiled wasm binary of every example contract
+# can be deployed to Arbitrum Stylus.
+# 
+# NOTE: This is using version `0.2.1` of `cargo-stylus`, which we will need
+# to update once `nitro-testnode` gets updated.
 permissions:
   contents: read
 on:
@@ -17,8 +16,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  e2e-tests:
-    name: integration tests suite
+  check-wasm:
+    name: check WASM binary
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,10 +50,7 @@ jobs:
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
 
-      - name: setup nitro node
-        run: ./e2e-tests/nitro-testnode.sh -d -i
-
-      - name: run integration tests
+      - name: run wasm check
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./e2e-tests/test.sh
+          ./.github/scripts/check-wasm.sh
