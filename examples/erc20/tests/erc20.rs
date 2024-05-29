@@ -61,7 +61,7 @@ async fn mint(alice: User) -> Result<()> {
         contract.totalSupply().call().await?;
 
     let one = U256::from(1);
-    let _ = contract.mint(alice.address(), one).send().await?;
+    let _ = contract.mint(alice.address(), one).send().await?.watch().await?;
 
     let Erc20::balanceOfReturn { balance } =
         contract.balanceOf(alice.address()).call().await?;
@@ -72,5 +72,3 @@ async fn mint(alice: User) -> Result<()> {
     assert_eq!(initial_supply + one, totalSupply);
     Ok(())
 }
-
-// TODO: add rest of the tests for erc20 base implementation

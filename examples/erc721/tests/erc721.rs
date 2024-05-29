@@ -69,13 +69,19 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     Ok(contract_addr)
 }
 
+macro_rules! send {
+    ($e: expr) => {
+        $e.send().await?.watch().await
+    };
+}
+
 #[e2e::test]
 async fn mint(alice: User) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.signer);
 
     let token_id = random_token_id();
-    let _ = contract.mint(alice.address(), token_id).send().await?;
+    let _ = send!(contract.mint(alice.address(), token_id))?;
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
     assert_eq!(ownerOf, alice.address());
@@ -92,11 +98,8 @@ async fn error_when_reusing_token_id(alice: User) -> eyre::Result<()> {
     let contract = Erc721::new(contract_addr, &alice.signer);
 
     let token_id = random_token_id();
-    let _ = contract.mint(alice.address(), token_id).send().await?;
-    let err = contract
-        .mint(alice.address(), token_id)
-        .send()
-        .await
+    let _ = send!(contract.mint(alice.address(), token_id))?;
+    let err = send!(contract.mint(alice.address(), token_id))
         .expect_err("should not mint a token id twice");
     err.assert(Erc721::ERC721InvalidSender { sender: Address::ZERO });
     Ok(())
@@ -108,11 +111,9 @@ async fn transfer(alice: User, bob: User) -> eyre::Result<()> {
     let contract = Erc721::new(contract_addr, &alice.signer);
 
     let token_id = random_token_id();
-    let _ = contract.mint(alice.address(), token_id).send().await?;
-    let _ = contract
-        .transferFrom(alice.address(), bob.address(), token_id)
-        .send()
-        .await?;
+    let _ = send!(contract.mint(alice.address(), token_id))?;
+    let _ =
+        send!(contract.transferFrom(alice.address(), bob.address(), token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.signer);
     let Erc721::ownerOfReturn { ownerOf } =
@@ -130,11 +131,8 @@ async fn error_when_transfer_nonexistent_token(
     let contract = Erc721::new(contract_addr, &alice.signer);
 
     let token_id = random_token_id();
-    let err = contract
-        .transferFrom(alice.address(), bob.address(), token_id)
-        .send()
-        .await
-        .expect_err("should not transfer a non existent token");
+    let tx = contract.transferFrom(alice.address(), bob.address(), token_id);
+    let err = send!(tx).expect_err("should not transfer a non existent token");
     err.assert(Erc721::ERC721NonexistentToken { tokenId: token_id });
     Ok(())
 }
@@ -145,16 +143,15 @@ async fn approve_token_transfer(alice: User, bob: User) -> eyre::Result<()> {
     let contract = Erc721::new(contract_addr, &alice.signer);
 
     let token_id = random_token_id();
-    let _ = contract.mint(alice.address(), token_id).send().await?;
-    let _ = contract.approve(bob.address(), token_id).send().await?;
+    let _ = send!(contract.mint(alice.address(), token_id))?;
+    let _ = send!(contract.approve(bob.address(), token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.signer);
-    let _ = contract
-        .transferFrom(alice.address(), bob.address(), token_id)
-        .send()
-        .await?;
+    let _ =
+        send!(contract.transferFrom(alice.address(), bob.address(), token_id))?;
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
+    assert_ne!(ownerOf, alice.address());
     assert_eq!(ownerOf, bob.address());
     Ok(())
 }
@@ -168,19 +165,15 @@ async fn error_when_transfer_unapproved_token(
     let contract = Erc721::new(contract_addr, &alice.signer);
 
     let token_id = random_token_id();
-    let _ = contract.mint(alice.address(), token_id).send().await?;
+    let _ = send!(contract.mint(alice.address(), token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.signer);
-    let err = contract
-        .transferFrom(alice.address(), bob.address(), token_id)
-        .send()
-        .await
-        .expect_err("should not transfer unapproved token");
+    let err =
+        send!(contract.transferFrom(alice.address(), bob.address(), token_id))
+            .expect_err("should not transfer unapproved token");
     err.assert(Erc721::ERC721InsufficientApproval {
         operator: bob.address(),
         tokenId: token_id,
     });
     Ok(())
 }
-
-// TODO: add more tests for erc721

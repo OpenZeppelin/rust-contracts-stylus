@@ -66,11 +66,11 @@ fn activate(
     let output = Command::new("cargo")
         .arg("stylus")
         .arg("deploy")
-        .args(&["-e", rpc_url])
-        .args(&["--wasm-file-path", &wasm_path.to_string_lossy()])
-        .args(&["--private-key", private_key])
-        .args(&["--activate-program-address", &address.to_string()])
-        .args(&["--mode", "activate-only"])
+        .args(["-e", rpc_url])
+        .args(["--wasm-file-path", &wasm_path.to_string_lossy()])
+        .args(["--private-key", private_key])
+        .args(["--activate-program-address", &address.to_string()])
+        .args(["--mode", "activate-only"])
         .output()?;
 
     if !output.status.success() {
