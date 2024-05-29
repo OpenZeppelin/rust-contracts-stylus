@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 contract AccessControlExample {
     mapping(address => uint256) _balances;
     mapping(address => mapping(address => uint256)) _allowances;
-    uint256 _total_supply;
+    uint256 _totalSupply;
 
     struct RoleData {
         mapping(address account => bool) hasRole;

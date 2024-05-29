@@ -19,10 +19,9 @@ stylus-proc.workspace = true
 mini-alloc.workspace = true
 
 [dev-dependencies]
-e2e-tests = { path = "../../e2e-tests" }
+e2e = { path = "../../lib/e2e" }
 tokio = { version = "1.12.0", features = ["full"] }
 eyre = "0.6.8"
-async-trait = "0.1.80"
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "c6c91cc", features = [
   "contract",
   "network",
@@ -37,7 +36,6 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "c6c91cc", features =
 
 [features]
 default = []
-
 e2e = []
 
 [lib]

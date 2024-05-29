@@ -1083,7 +1083,7 @@ mod tests {
 
     pub(crate) fn random_token_id() -> U256 {
         let num: u32 = rand::random();
-        num.try_into().expect("conversion to U256")
+        U256::from(num)
     }
 
     #[grip::test]

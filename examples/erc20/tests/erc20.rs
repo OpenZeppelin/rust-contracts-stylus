@@ -2,18 +2,17 @@
 
 use alloy::{
     primitives::{Address, U256},
-    providers::WalletProvider,
     sol,
     sol_types::SolConstructor,
 };
-use e2e_tests::context::build_context;
+use e2e::user::User;
 use eyre::Result;
+
+sol!("src/constructor.sol");
 
 sol!(
     #[sol(rpc)]
     contract Erc20 {
-        constructor(string memory name, string memory symbol, uint256 cap)
-
         function name() external view returns (string);
         function symbol() external view returns (string);
         function decimals() external view returns (uint8);
@@ -38,44 +37,34 @@ sol!(
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     let name = env!("CARGO_PKG_NAME").replace('-', "_");
     let pkg_dir = env!("CARGO_MANIFEST_DIR");
-    let args = Erc20::constructorCall {
-        name: "Test Token".to_owned(),
-        symbol: "TTK".to_owned(),
-        cap: U256::from(1),
+    let args = Erc20Example::constructorCall {
+        name_: "Test Token".to_owned(),
+        symbol_: "TTK".to_owned(),
+        cap_: U256::from(1),
     };
     let args = alloy::hex::encode(args.abi_encode());
-    let contract_addr = e2e_tests::deploy::deploy(
-        &name,
-        pkg_dir,
-        rpc_url,
-        private_key,
-        Some(args),
-    )
-    .await?;
+    let contract_addr =
+        e2e::deploy::deploy(&name, pkg_dir, rpc_url, private_key, Some(args))
+            .await?;
 
     Ok(contract_addr)
 }
 
-#[tokio::test]
-async fn mint() -> Result<()> {
-    let ctx = build_context();
-    let alice = &ctx.signers()[0];
+#[e2e::test]
+async fn mint(alice: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc20::new(contract_addr, &alice.signer);
 
-    let alice_pk = &ctx.private_keys()[0];
-    let contract_addr = deploy(&ctx.rpc_url().to_string(), alice_pk).await?;
-    let contract = Erc20::new(contract_addr, &alice);
-
-    let alice_addr = alice.default_signer_address();
     let Erc20::balanceOfReturn { balance: initial_balance } =
-        contract.balanceOf(alice_addr).call().await.unwrap();
+        contract.balanceOf(alice.address()).call().await.unwrap();
     let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
         contract.totalSupply().call().await.unwrap();
 
     let one = U256::from(1);
-    let _ = contract.mint(alice_addr, one).send().await.unwrap();
+    let _ = contract.mint(alice.address(), one).send().await.unwrap();
 
     let Erc20::balanceOfReturn { balance } =
-        contract.balanceOf(alice_addr).call().await.unwrap();
+        contract.balanceOf(alice.address()).call().await.unwrap();
     let Erc20::totalSupplyReturn { totalSupply } =
         contract.totalSupply().call().await.unwrap();
 

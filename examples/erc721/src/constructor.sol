@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-contract ERC721Example {
+contract Erc721Example {
     mapping(uint256 tokenId => address) private _owners;
     mapping(address owner => uint256) private _balances;
     mapping(uint256 tokenId => address) private _tokenApprovals;
@@ -11,7 +11,7 @@ contract ERC721Example {
     string private _name;
     string private _symbol;
 
-    mapping(uint256 => string) _token_uris;
+    mapping(uint256 => string) _tokenUris;
 
     bool _paused;
 

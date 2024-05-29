@@ -1,21 +1,15 @@
-use eyre::{bail, Report};
+use alloy::{hex, sol_types::SolError};
 
-use crate::prelude::abi::AbiEncode;
-
-pub trait Assert<E: AbiEncode> {
-    /// Asserts that current error result corresponds to the typed abi encoded
-    /// error `expected_err`.
-    fn assert(&self, expected_err: E) -> eyre::Result<()>;
+pub trait Assert<E: SolError> {
+    /// Asserts that current error result corresponds to the typed abi-encoded
+    /// error `expected`.
+    fn assert(&self, expected: E);
 }
 
-impl<E: AbiEncode> Assert<E> for Report {
-    fn assert(&self, expected_err: E) -> eyre::Result<()> {
-        let received_err = format!("{:#}", self);
-        let expected_err = expected_err.encode_hex();
-        if received_err.contains(&expected_err) {
-            Ok(())
-        } else {
-            bail!("Different error expected: Expected error is {expected_err}: Received error is {received_err}")
-        }
+impl<E: SolError> Assert<E> for alloy::contract::Error {
+    fn assert(&self, expected: E) {
+        let received = format!("{:#}", self);
+        let expected = hex::encode(expected.abi_encode());
+        assert!(received.contains(&expected));
     }
 }
