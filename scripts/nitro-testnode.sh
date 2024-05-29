@@ -31,7 +31,7 @@ do
   esac
 done
 
-TEST_NODE_DIR="$MYDIR/nitro-testnode"
+TEST_NODE_DIR="$MYDIR/../nitro-testnode"
 if [ ! -d "$TEST_NODE_DIR" ]; then
   HAS_INIT=true
 fi
