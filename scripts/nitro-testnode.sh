@@ -2,7 +2,6 @@
 
 MYDIR=$(realpath "$(dirname "$0")")
 cd "$MYDIR" || exit
-cd ..
 
 HAS_INIT=false
 HAS_DETACH=false
@@ -40,6 +39,7 @@ fi
 if $HAS_INIT
 then
   cd "$MYDIR" || exit
+  cd ..
   # clone nitro test node repo
   git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
   cd ./nitro-testnode || exit
