@@ -2,6 +2,7 @@
 
 MYDIR=$(realpath "$(dirname "$0")")
 cd "$MYDIR" || exit
+cd ..
 
 HAS_INIT=false
 HAS_DETACH=false
