@@ -306,9 +306,7 @@ impl ERC721Enumerable {
     }
 }
 
-#[cfg(all(test,
-        // feature = "std"
-))]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
     use once_cell::sync::Lazy;
