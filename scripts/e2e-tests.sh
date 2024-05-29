@@ -11,4 +11,4 @@ cargo +"$NIGHTLY_TOOLCHAIN" build --release --target wasm32-unknown-unknown -Z b
 export RPC_URL=http://localhost:8547
 # We should use stable here once nitro-testnode is updated and the contracts fit
 # the size limit.
-cargo +"$NIGHTLY_TOOLCHAIN" test --features std,e2e -- --nocapture
+cargo +"$NIGHTLY_TOOLCHAIN" test --features std,e2e --test "*"
