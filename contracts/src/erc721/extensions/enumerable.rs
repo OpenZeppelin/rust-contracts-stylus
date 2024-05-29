@@ -306,7 +306,9 @@ impl ERC721Enumerable {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(all(test,
+        // feature = "std"
+))]
 mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::{
@@ -371,14 +373,65 @@ mod tests {
 
         assert_eq!(U256::from(tokens_len), contract.total_supply());
 
-        for idx in 0..tokens_len {
+        tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
                 .token_by_index(U256::from(idx))
                 .expect("Should return token id for");
-            assert_eq!(tokens_ids[idx], token_id);
-        }
+            assert_eq!(*expected_token_id, token_id);
+        });
 
         let err = contract.token_by_index(U256::from(tokens_len)).unwrap_err();
+
+        assert!(matches!(err, Error::OutOfBoundsIndex(_)));
+    }
+
+    #[grip::test]
+    fn remove_token_from_all_tokens_enumeration_works(
+        contract: ERC721Enumerable,
+    ) {
+        assert_eq!(U256::ZERO, contract.total_supply());
+
+        let initial_tokens_len = 10;
+
+        let mut tokens_ids = Vec::new();
+        for _ in 0..initial_tokens_len {
+            let token_id = random_token_id();
+
+            // store ids for test
+            tokens_ids.push(token_id);
+
+            contract._add_token_to_all_tokens_enumeration(token_id);
+        }
+        assert_eq!(U256::from(initial_tokens_len), contract.total_supply());
+
+        // Remove last token
+        let last_token_id = tokens_ids.swap_remove(initial_tokens_len - 1);
+        contract._remove_token_from_all_tokens_enumeration(last_token_id);
+        assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
+
+        // Remove second (`idx = 1`) element
+        // to check that swap_remove operation works as expected.
+        let token_to_remove = tokens_ids.swap_remove(1);
+        contract._remove_token_from_all_tokens_enumeration(token_to_remove);
+        assert_eq!(U256::from(initial_tokens_len - 2), contract.total_supply());
+
+        // Add a new token
+        let token_id = random_token_id();
+        tokens_ids.push(token_id);
+        contract._add_token_to_all_tokens_enumeration(token_id);
+        assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
+
+        // check proper indices of tokens
+        tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
+            let token_id = contract
+                .token_by_index(U256::from(idx))
+                .expect("Should return token id for");
+            assert_eq!(*expected_token_id, token_id);
+        });
+
+        let err = contract
+            .token_by_index(U256::from(initial_tokens_len - 1))
+            .unwrap_err();
 
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
