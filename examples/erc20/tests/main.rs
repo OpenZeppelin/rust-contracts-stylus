@@ -8,31 +8,11 @@ use alloy::{
 use e2e::user::User;
 use eyre::Result;
 
+use crate::abi::Erc20;
+
+mod abi;
+
 sol!("src/constructor.sol");
-
-sol!(
-    #[sol(rpc)]
-    contract Erc20 {
-        function name() external view returns (string);
-        function symbol() external view returns (string);
-        function decimals() external view returns (uint8);
-        function totalSupply() external view returns (uint256 totalSupply);
-        function balanceOf(address account) external view returns (uint256 balance);
-        function transfer(address recipient, uint256 amount) external returns (bool);
-        function allowance(address owner, address spender) external view returns (uint256);
-        function approve(address spender, uint256 amount) external returns (bool);
-        function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-
-        function mint(address account, uint256 amount) external;
-        function burn(uint256 amount) external;
-
-        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
-        error ERC20InvalidSender(address sender);
-        error ERC20InvalidReceiver(address receiver);
-        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-        error ERC20InvalidSpender(address spender);
-    }
-);
 
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     let name = env!("CARGO_PKG_NAME").replace('-', "_");
