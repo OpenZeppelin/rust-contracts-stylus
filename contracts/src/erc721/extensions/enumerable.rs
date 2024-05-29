@@ -310,14 +310,21 @@ impl ERC721Enumerable {
         // feature = "std"
 ))]
 mod tests {
-    use alloy_primitives::U256;
+    use alloy_primitives::{address, Address, U256};
+    use once_cell::sync::Lazy;
     use stylus_sdk::{
+        msg,
         prelude::StorageType,
         storage::{StorageMap, StorageVec},
     };
 
     use super::{ERC721Enumerable, Error, IERC721Enumerable};
-    use crate::erc721::tests::random_token_id;
+    use crate::erc721::{tests::random_token_id, ERC721, IERC721};
+
+    // NOTE: Alice is always the sender of the message
+    static ALICE: Lazy<Address> = Lazy::new(msg::sender);
+
+    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     impl Default for ERC721Enumerable {
         fn default() -> Self {
@@ -421,11 +428,11 @@ mod tests {
         contract._add_token_to_all_tokens_enumeration(token_id);
         assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
 
-        // check proper indices of tokens
+        // Check proper indices of tokens
         tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
                 .token_by_index(U256::from(idx))
-                .expect("Should return token id for");
+                .expect("Should return token id");
             assert_eq!(*expected_token_id, token_id);
         });
 
@@ -433,6 +440,118 @@ mod tests {
             .token_by_index(U256::from(initial_tokens_len - 1))
             .unwrap_err();
 
+        assert!(matches!(err, Error::OutOfBoundsIndex(_)));
+    }
+
+    #[grip::test]
+    fn check_increase_balance() {
+        assert!(ERC721Enumerable::_check_increase_balance(0).is_ok());
+        let err = ERC721Enumerable::_check_increase_balance(1).unwrap_err();
+        assert!(matches!(err, Error::EnumerableForbiddenBatchMint(_)));
+    }
+
+    #[grip::test]
+    fn token_of_owner_by_index_works(contract: ERC721Enumerable) {
+        let mut erc721 = ERC721::default();
+        assert_eq!(
+            U256::ZERO,
+            erc721.balance_of(*ALICE).expect("Should return balance of ALICE")
+        );
+
+        let token_id = random_token_id();
+        erc721._mint(*ALICE, token_id).expect("Should mint a token for ALICE");
+        let owner = erc721
+            .owner_of(token_id)
+            .expect("Should return the owner of the token");
+        assert_eq!(owner, *ALICE);
+
+        contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+
+        let test_token_id = contract
+            .token_of_owner_by_index(*ALICE, U256::ZERO)
+            .expect("Should return `token_id`");
+
+        assert_eq!(token_id, test_token_id);
+    }
+
+    #[grip::test]
+    fn token_of_owner_errors_index_out_of_bound(contract: ERC721Enumerable) {
+        let mut erc721 = ERC721::default();
+        assert_eq!(
+            U256::ZERO,
+            erc721.balance_of(*ALICE).expect("Should return balance of ALICE")
+        );
+
+        let token_id = random_token_id();
+        erc721._mint(*ALICE, token_id).expect("Should mint a token for ALICE");
+        let owner = erc721
+            .owner_of(token_id)
+            .expect("Should return the owner of the token");
+        assert_eq!(owner, *ALICE);
+
+        contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+
+        let err = contract
+            .token_of_owner_by_index(*ALICE, U256::from(1))
+            .unwrap_err();
+        assert!(matches!(err, Error::OutOfBoundsIndex(_)));
+    }
+
+    #[grip::test]
+    fn token_of_owner_errors_owner_does_not_own_any_token(
+        contract: ERC721Enumerable,
+    ) {
+        let erc721 = ERC721::default();
+        assert_eq!(
+            U256::ZERO,
+            erc721.balance_of(BOB).expect("Should return balance of BOB")
+        );
+
+        let err =
+            contract.token_of_owner_by_index(BOB, U256::ZERO).unwrap_err();
+        assert!(matches!(err, Error::OutOfBoundsIndex(_)));
+    }
+
+    #[grip::test]
+    fn token_of_owner_by_index_after_transfer_works(
+        contract: ERC721Enumerable,
+    ) {
+        let mut erc721 = ERC721::default();
+        assert_eq!(
+            U256::ZERO,
+            erc721.balance_of(*ALICE).expect("Should return balance of ALICE")
+        );
+
+        let token_id = random_token_id();
+        erc721._mint(*ALICE, token_id).expect("Should mint a token for ALICE");
+        let owner = erc721
+            .owner_of(token_id)
+            .expect("Should return the owner of the token");
+        assert_eq!(owner, *ALICE);
+
+        contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+
+        // Transfer the token from ALICE to BOB
+        erc721
+            .transfer_from(*ALICE, BOB, token_id)
+            .expect("Should transfer the token from ALICE to BOB");
+        let owner = erc721
+            .owner_of(token_id)
+            .expect("Should return the owner of the token");
+        assert_eq!(owner, BOB);
+
+        contract
+            ._remove_token_from_owner_enumeration(*ALICE, token_id, &erc721);
+        contract._add_token_to_owner_enumeration(BOB, token_id, &erc721);
+
+        let test_token_id = contract
+            .token_of_owner_by_index(BOB, U256::ZERO)
+            .expect("Should return `token_id`");
+
+        assert_eq!(token_id, test_token_id);
+
+        let err =
+            contract.token_of_owner_by_index(*ALICE, U256::ZERO).unwrap_err();
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 }
