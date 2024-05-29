@@ -35,7 +35,7 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
 
 macro_rules! send {
     ($e:expr) => {
-        $e.send().await?.watch().await
+        $e.send().await?.get_receipt().await
     };
 }
 
