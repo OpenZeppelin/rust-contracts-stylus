@@ -50,9 +50,9 @@ impl UserFactory {
     async fn get() -> MutexGuard<'static, Self> {
         /// Singleton User Factory.
         ///
-        /// Since after wallet generation users get funded in the nitro test node from a
-        /// single "god" wallet, we must synchronize user creation (otherwise the nonce
-        /// will be too low).
+        /// Since after wallet generation users get funded in the nitro test
+        /// node from a single "god" wallet, we must synchronize user
+        /// creation (otherwise the nonce will be too low).
         static SYNC_USER_FACTORY: Lazy<Mutex<UserFactory>> =
             Lazy::new(|| Mutex::new(UserFactory));
 
