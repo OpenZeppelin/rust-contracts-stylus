@@ -14,13 +14,17 @@ mod abi;
 
 sol!("src/constructor.sol");
 
+const TOKEN_NAME: &str = "Test Token";
+const TOKEN_SYMBOL: &str = "TTK";
+const CAP: usize = 1;
+
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     let name = env!("CARGO_PKG_NAME").replace('-', "_");
     let pkg_dir = env!("CARGO_MANIFEST_DIR");
     let args = Erc20Example::constructorCall {
-        name_: "Test Token".to_owned(),
-        symbol_: "TTK".to_owned(),
-        cap_: U256::from(1),
+        name_: TOKEN_NAME.to_owned(),
+        symbol_: TOKEN_SYMBOL.to_owned(),
+        cap_: U256::from(CAP),
     };
     let args = alloy::hex::encode(args.abi_encode());
     let contract_addr =
@@ -28,6 +32,21 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
             .await?;
 
     Ok(contract_addr)
+}
+
+#[e2e::test]
+async fn constructs(alice: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc20::new(contract_addr, &alice.signer);
+
+    let Erc20::nameReturn { name } = contract.name().call().await?;
+    let Erc20::symbolReturn { symbol } = contract.symbol().call().await?;
+    let Erc20::capReturn { cap } = contract.cap().call().await?;
+
+    assert_eq!(name, TOKEN_NAME.to_owned());
+    assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
+    assert_eq!(cap, U256::from(CAP));
+    Ok(())
 }
 
 #[e2e::test]

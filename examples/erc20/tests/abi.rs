@@ -3,8 +3,8 @@ use alloy::sol;
 sol!(
     #[sol(rpc)]
     contract Erc20 {
-        function name() external view returns (string);
-        function symbol() external view returns (string);
+        function name() external view returns (string name);
+        function symbol() external view returns (string symbol);
         function decimals() external view returns (uint8);
         function totalSupply() external view returns (uint256 totalSupply);
         function balanceOf(address account) external view returns (uint256 balance);
@@ -12,6 +12,8 @@ sol!(
         function allowance(address owner, address spender) external view returns (uint256);
         function approve(address spender, uint256 amount) external returns (bool);
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+        function cap() public view virtual returns (uint256 cap);
 
         function mint(address account, uint256 amount) external;
         function burn(uint256 amount) external;
