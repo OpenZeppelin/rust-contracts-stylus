@@ -108,6 +108,7 @@ async fn transfers(alice: User, bob: User) -> eyre::Result<()> {
 
     // TODO: Implement a helper that abstracts away this boilerplate code.
     // Something like `emits(Erc721::Transfer {from, to, tokenId});`.
+    // Work tracked [here](https://github.com/OpenZeppelin/rust-contracts-stylus/issues/88).
     let block = alice.signer.get_block_number().await?;
     let filter = Filter::new().address(contract_addr).from_block(block);
     let logs = alice.signer.get_logs(&filter).await?;
