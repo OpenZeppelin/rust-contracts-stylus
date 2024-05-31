@@ -55,26 +55,22 @@ impl Token {
     }
 
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
-        // Check `Unpaused` state.
         self.pausable.when_not_paused()?;
 
-        // Perform [`ERC721`] action.
         self.erc721.burn(token_id)?;
 
-        // Apply updates to Enumerable extension.
+        // Update the extension's state.
         self.enumerable._remove_token_from_all_tokens_enumeration(token_id);
 
         Ok(())
     }
 
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
-        // Check `Unpaused` state.
         self.pausable.when_not_paused()?;
 
-        // Perform [`ERC721`] action.
         self.erc721._mint(to, token_id)?;
 
-        // Apply updates to Enumerable extension.
+        // Update the extension's state.
         self.enumerable._add_token_to_all_tokens_enumeration(token_id);
 
         Ok(())
@@ -86,16 +82,14 @@ impl Token {
         to: Address,
         token_id: U256,
     ) -> Result<(), Vec<u8>> {
-        // Check `Unpaused` state.
         self.pausable.when_not_paused()?;
 
-        // Remember previous owner for Enumerable extension.
+        // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
-        // Perform [`ERC721`] action.
         self.erc721.safe_transfer_from(from, to, token_id)?;
 
-        // Apply updates to Enumerable extension.
+        // Update the extension's state.
         self.enumerable._remove_token_from_owner_enumeration(
             previous_owner,
             token_id,
@@ -118,16 +112,14 @@ impl Token {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
-        // Check `Unpaused` state.
         self.pausable.when_not_paused()?;
 
-        // Remember previous owner for Enumerable extension.
+        // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
-        // Perform [`ERC721`] action.
         self.erc721.safe_transfer_from_with_data(from, to, token_id, data)?;
 
-        // Apply updates to Enumerable extension.
+        // Update the extension's state.
         self.enumerable._remove_token_from_owner_enumeration(
             previous_owner,
             token_id,
@@ -148,16 +140,14 @@ impl Token {
         to: Address,
         token_id: U256,
     ) -> Result<(), Vec<u8>> {
-        // Check `Unpaused` state.
         self.pausable.when_not_paused()?;
 
-        // Remember previous owner for Enumerable extension.
+        // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
-        // Perform [`ERC721`] action.
         self.erc721.transfer_from(from, to, token_id)?;
 
-        // Apply updates to Enumerable extension.
+        // Update the extension's state.
         self.enumerable._remove_token_from_owner_enumeration(
             previous_owner,
             token_id,
@@ -183,15 +173,12 @@ impl Token {
             return token_uri;
         }
 
-        let mut uri = base;
-        // If both are set, concatenate the baseURI and tokenURI (via
-        // string.concat).
+        // If both are set,
+        // concatenate the base URI and token URI.
         if !token_uri.is_empty() {
-            uri.push_str(&token_uri);
+            base + &token_uri
         } else {
-            uri.push_str(&token_id.to_string());
+            base + &token_id.to_string()
         }
-
-        uri
     }
 }
