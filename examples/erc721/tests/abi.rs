@@ -3,8 +3,8 @@ use alloy::sol;
 sol!(
     #[sol(rpc)]
    contract Erc721 {
-        function name() external view returns (string memory);
-        function symbol() external view returns (string memory);
+        function name() external view returns (string memory name);
+        function symbol() external view returns (string memory symbol);
         function tokenURI(uint256 tokenId) external view returns (string memory);
 
         function supportsInterface(bytes4 interfaceIf) external pure returns (bool);

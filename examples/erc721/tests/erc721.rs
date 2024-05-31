@@ -13,6 +13,9 @@ mod abi;
 
 sol!("src/constructor.sol");
 
+const TOKEN_NAME: &str = "Test Token";
+const TOKEN_SYMBOL: &str = "NFT";
+
 fn random_token_id() -> U256 {
     let num: u32 = rand::random();
     U256::from(num)
@@ -22,8 +25,8 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     let name = env!("CARGO_PKG_NAME").replace('-', "_");
     let pkg_dir = env!("CARGO_MANIFEST_DIR");
     let args = Erc721Example::constructorCall {
-        name_: "Test Token".to_owned(),
-        symbol_: "NFT".to_owned(),
+        name_: TOKEN_NAME.to_owned(),
+        symbol_: TOKEN_SYMBOL.to_owned(),
     };
     let args = alloy::hex::encode(args.abi_encode());
     let contract_addr =
@@ -37,6 +40,19 @@ macro_rules! send {
     ($e:expr) => {
         $e.send().await?.get_receipt().await
     };
+}
+
+#[e2e::test]
+async fn constructs(alice: User) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.signer);
+
+    let Erc721::nameReturn { name } = contract.name().call().await?;
+    let Erc721::symbolReturn { symbol } = contract.symbol().call().await?;
+
+    assert_eq!(name, TOKEN_NAME.to_owned());
+    assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
+    Ok(())
 }
 
 #[e2e::test]
