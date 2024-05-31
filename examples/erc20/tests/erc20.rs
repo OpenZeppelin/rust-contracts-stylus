@@ -50,7 +50,7 @@ async fn constructs(alice: User) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mint(alice: User) -> Result<()> {
+async fn mints(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc20::new(contract_addr, &alice.signer);
 

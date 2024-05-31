@@ -38,10 +38,12 @@ pub type Provider = FillProvider<
     Ethereum,
 >;
 
+/// Load the `name` environment variable.
 pub fn env(name: &str) -> eyre::Result<String> {
     std::env::var(name).wrap_err(format!("failed to load {name}"))
 }
 
+/// Returns an alloy provider connected to the `RPC_URL` rpc endpoint.
 pub fn provider() -> Provider {
     let rpc_url = std::env::var(RPC_URL)
         .expect("failed to load RPC_URL var from env")
@@ -51,7 +53,7 @@ pub fn provider() -> Provider {
     p
 }
 
-/// Runs the following command to get the worskpace root.
+/// Runs the following command to get the worskpace root:
 ///
 /// ```bash
 /// dirname "$(cargo locate-project --workspace --message-format plain)"
