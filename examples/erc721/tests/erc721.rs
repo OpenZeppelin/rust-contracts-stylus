@@ -137,7 +137,7 @@ async fn errors_when_transfer_nonexistent_token(
     let tx = contract
         .transferFrom(alice_addr, bob.address(), token_id)
         .from(alice_addr);
-    let err = send!(tx).expect_err("should not transfer a non existent token");
+    let err = send!(tx).expect_err("should not transfer a non-existent token");
     err.assert(Erc721::ERC721NonexistentToken { tokenId: token_id });
     Ok(())
 }

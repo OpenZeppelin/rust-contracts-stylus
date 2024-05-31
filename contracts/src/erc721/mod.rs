@@ -1130,7 +1130,7 @@ mod tests {
         let token_id = random_token_id();
         let err = contract
             .transfer_from(*ALICE, BOB, token_id)
-            .expect_err("should not transfer a non existent token");
+            .expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
