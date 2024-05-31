@@ -31,7 +31,7 @@ do
   esac
 done
 
-TEST_NODE_DIR="$MYDIR/../nitro-testnode"
+TEST_NODE_DIR="$MYDIR/nitro-testnode"
 if [ ! -d "$TEST_NODE_DIR" ]; then
   HAS_INIT=true
 fi
@@ -39,7 +39,6 @@ fi
 if $HAS_INIT
 then
   cd "$MYDIR" || exit
-  cd ..
   # clone nitro test node repo
   git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
   cd ./nitro-testnode || exit

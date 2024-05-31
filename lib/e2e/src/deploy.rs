@@ -28,7 +28,6 @@ pub async fn deploy(
     // fine for now since we only use this function in our tests, but if we
     // publish this as a crate, we need to account for the other cases.
     let manifest_dir = get_workspace_root()?;
-    // Fine to unwrap here, otherwise a bug in `cargo`.
     let wasm_path: PathBuf = manifest_dir.join(format!(
         "target/wasm32-unknown-unknown/release/{contract_name}.wasm"
     ));
