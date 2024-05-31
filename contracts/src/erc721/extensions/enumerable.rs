@@ -59,7 +59,7 @@ sol_storage! {
 
 }
 
-/// This is an interface of the optional `Enumerable` extension
+/// This is the interface of the optional `Enumerable` extension
 /// of the [`ERC721`] standard.
 #[allow(clippy::module_name_repetitions)]
 pub trait IERC721Enumerable {
@@ -130,13 +130,9 @@ impl IERC721Enumerable for ERC721Enumerable {
     }
 
     fn token_by_index(&self, index: U256) -> Result<U256, Error> {
-        match self._all_tokens.get(index) {
-            Some(token_id) => Ok(token_id),
-            None => {
-                Err(ERC721OutOfBoundsIndex { owner: Address::ZERO, index }
-                    .into())
-            }
-        }
+        self._all_tokens.get(index).ok_or(
+            ERC721OutOfBoundsIndex { owner: Address::ZERO, index }.into(),
+        )
     }
 }
 
@@ -152,20 +148,21 @@ impl ERC721Enumerable {
     ///   given address.
     /// * `erc721` - Read access to a contract providing [`IERC721`] interface.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// * The function should not panic in a regular way.
+    /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is
+    ///   returned.
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,
         token_id: U256,
         erc721: &impl IERC721,
-    ) {
-        let length =
-            erc721.balance_of(to).expect("`from` cannot be `Address::ZERO`")
-                - U256::from(1);
+    ) -> Result<(), crate::erc721::Error> {
+        let length = erc721.balance_of(to)? - U256::from(1);
         self._owned_tokens.setter(to).setter(length).set(token_id);
         self._owned_tokens_index.setter(token_id).set(length);
+
+        Ok(())
     }
 
     /// Function to add a token to this extension's token
@@ -202,38 +199,41 @@ impl ERC721Enumerable {
     ///   given address.
     /// * `erc721` - Read access to a contract providing [`IERC721`] interface.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// * The function should not panic in a regular way.
+    /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is
+    ///   returned.
+
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
         from: Address,
         token_id: U256,
         erc721: &impl IERC721,
-    ) {
+    ) -> Result<(), crate::erc721::Error> {
         // To prevent a gap in from's tokens array,
         // we store the last token in the index of the token to delete,
         // and then delete the last slot (swap and pop).
-        let last_token_index =
-            erc721.balance_of(from).expect("`from` cannot be `Address::ZERO`");
+        let last_token_index = erc721.balance_of(from)?;
         let token_index = self._owned_tokens_index.get(token_id);
 
         let mut owned_tokens_by_owner = self._owned_tokens.setter(from);
 
         // When the token to delete is the last token,
-        // the swap operation is unnecessary
+        // the swap operation is unnecessary.
         if token_index != last_token_index {
             let last_token_id = owned_tokens_by_owner.get(last_token_index);
 
-            // Move the last token to the slot of the to-delete token
+            // Move the last token to the slot of the to-delete token.
             owned_tokens_by_owner.setter(token_index).set(last_token_id);
-            // Update the moved token's index
+            // Update the moved token's index.
             self._owned_tokens_index.setter(last_token_id).set(token_index);
         }
 
-        // This also deletes the contents at the last position of the array
+        // This also deletes the contents at the last position of the array.
         self._owned_tokens_index.delete(token_id);
         owned_tokens_by_owner.delete(last_token_index);
+
+        Ok(())
     }
 
     /// Function to remove a token from this extension's
@@ -266,22 +266,22 @@ impl ERC721Enumerable {
         // rarely (when the last minted token is burnt)
         // that we still do the swap here
         // to avoid the gas cost of adding an 'if' statement
-        // (like in `self._remove_token_from_owner_enumeration`)
+        // (like in `self._remove_token_from_owner_enumeration`).
         let last_token_id = self
             ._all_tokens
             .get(last_token_index)
-            .expect("Token at given index must exist");
+            .expect("token at given index must exist");
 
-        // Move the last token to the slot of the to-delete token
+        // Move the last token to the slot of the to-delete token.
         self._all_tokens
             .setter(token_index)
-            .expect("Slot at given `token_index` must exist")
+            .expect("slot at given `token_index` must exist")
             .set(last_token_id);
 
-        // Update the moved token's index
+        // Update the moved token's index.
         self._all_tokens_index.setter(last_token_id).set(token_index);
 
-        // This also deletes the contents at the last position of the array
+        // This also deletes the contents at the last position of the array.
         self._all_tokens_index.delete(token_id);
         self._all_tokens.pop();
     }
@@ -295,8 +295,8 @@ impl ERC721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If an `amount` is greater than `0`,
-    /// then the error [`Error::EnumerableForbiddenBatchMint`] is returned.
+    /// * If an `amount` is greater than `0`, then the error
+    /// [`Error::EnumerableForbiddenBatchMint`] is returned.
     pub fn _check_increase_balance(amount: u128) -> Result<(), Error> {
         if amount > 0 {
             Err(ERC721EnumerableForbiddenBatchMint {}.into())
@@ -319,7 +319,7 @@ mod tests {
     use super::{ERC721Enumerable, Error, IERC721Enumerable};
     use crate::erc721::{tests::random_token_id, ERC721, IERC721};
 
-    // NOTE: Alice is always the sender of the message
+    // NOTE: Alice is always the sender of the message.
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
@@ -370,7 +370,7 @@ mod tests {
         for _ in 0..tokens_len {
             let token_id = random_token_id();
 
-            // store ids for test
+            // Store ids for test.
             tokens_ids.push(token_id);
 
             contract._add_token_to_all_tokens_enumeration(token_id);
@@ -381,7 +381,7 @@ mod tests {
         tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
                 .token_by_index(U256::from(idx))
-                .expect("Should return token id for");
+                .expect("should return token id for");
             assert_eq!(*expected_token_id, token_id);
         });
 
@@ -402,35 +402,35 @@ mod tests {
         for _ in 0..initial_tokens_len {
             let token_id = random_token_id();
 
-            // store ids for test
+            // Store ids for test.
             tokens_ids.push(token_id);
 
             contract._add_token_to_all_tokens_enumeration(token_id);
         }
         assert_eq!(U256::from(initial_tokens_len), contract.total_supply());
 
-        // Remove last token
+        // Remove the last token.
         let last_token_id = tokens_ids.swap_remove(initial_tokens_len - 1);
         contract._remove_token_from_all_tokens_enumeration(last_token_id);
         assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
 
-        // Remove second (`idx = 1`) element
+        // Remove the second (`idx = 1`) element
         // to check that swap_remove operation works as expected.
         let token_to_remove = tokens_ids.swap_remove(1);
         contract._remove_token_from_all_tokens_enumeration(token_to_remove);
         assert_eq!(U256::from(initial_tokens_len - 2), contract.total_supply());
 
-        // Add a new token
+        // Add a new token.
         let token_id = random_token_id();
         tokens_ids.push(token_id);
         contract._add_token_to_all_tokens_enumeration(token_id);
         assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
 
-        // Check proper indices of tokens
+        // Check proper indices of tokens.
         tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
                 .token_by_index(U256::from(idx))
-                .expect("Should return token id");
+                .expect("should return token id");
             assert_eq!(*expected_token_id, token_id);
         });
 
@@ -453,21 +453,23 @@ mod tests {
         let mut erc721 = ERC721::default();
         assert_eq!(
             U256::ZERO,
-            erc721.balance_of(*ALICE).expect("Should return balance of ALICE")
+            erc721.balance_of(*ALICE).expect("should return balance of ALICE")
         );
 
         let token_id = random_token_id();
-        erc721._mint(*ALICE, token_id).expect("Should mint a token for ALICE");
+        erc721._mint(*ALICE, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
-            .expect("Should return the owner of the token");
+            .expect("should return the owner of the token");
         assert_eq!(owner, *ALICE);
 
-        contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+        let res =
+            contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+        assert!(res.is_ok());
 
         let test_token_id = contract
             .token_of_owner_by_index(*ALICE, U256::ZERO)
-            .expect("Should return `token_id`");
+            .expect("should return `token_id`");
 
         assert_eq!(token_id, test_token_id);
     }
@@ -477,17 +479,19 @@ mod tests {
         let mut erc721 = ERC721::default();
         assert_eq!(
             U256::ZERO,
-            erc721.balance_of(*ALICE).expect("Should return balance of ALICE")
+            erc721.balance_of(*ALICE).expect("should return balance of ALICE")
         );
 
         let token_id = random_token_id();
-        erc721._mint(*ALICE, token_id).expect("Should mint a token for ALICE");
+        erc721._mint(*ALICE, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
-            .expect("Should return the owner of the token");
+            .expect("should return the owner of the token");
         assert_eq!(owner, *ALICE);
 
-        contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+        let res =
+            contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+        assert!(res.is_ok());
 
         let err = contract
             .token_of_owner_by_index(*ALICE, U256::from(1))
@@ -502,7 +506,7 @@ mod tests {
         let erc721 = ERC721::default();
         assert_eq!(
             U256::ZERO,
-            erc721.balance_of(BOB).expect("Should return balance of BOB")
+            erc721.balance_of(BOB).expect("should return balance of BOB")
         );
 
         let err =
@@ -517,34 +521,40 @@ mod tests {
         let mut erc721 = ERC721::default();
         assert_eq!(
             U256::ZERO,
-            erc721.balance_of(*ALICE).expect("Should return balance of ALICE")
+            erc721.balance_of(*ALICE).expect("should return balance of ALICE")
         );
 
         let token_id = random_token_id();
-        erc721._mint(*ALICE, token_id).expect("Should mint a token for ALICE");
+        erc721._mint(*ALICE, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
-            .expect("Should return the owner of the token");
+            .expect("should return the owner of the token");
         assert_eq!(owner, *ALICE);
 
-        contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+        let res =
+            contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+        assert!(res.is_ok());
 
-        // Transfer the token from ALICE to BOB
+        // Transfer the token from ALICE to BOB.
         erc721
             .transfer_from(*ALICE, BOB, token_id)
-            .expect("Should transfer the token from ALICE to BOB");
+            .expect("should transfer the token from ALICE to BOB");
         let owner = erc721
             .owner_of(token_id)
-            .expect("Should return the owner of the token");
+            .expect("should return the owner of the token");
         assert_eq!(owner, BOB);
 
-        contract
+        let res = contract
             ._remove_token_from_owner_enumeration(*ALICE, token_id, &erc721);
-        contract._add_token_to_owner_enumeration(BOB, token_id, &erc721);
+        assert!(res.is_ok());
+
+        let res =
+            contract._add_token_to_owner_enumeration(BOB, token_id, &erc721);
+        assert!(res.is_ok());
 
         let test_token_id = contract
             .token_of_owner_by_index(BOB, U256::ZERO)
-            .expect("Should return `token_id`");
+            .expect("should return `token_id`");
 
         assert_eq!(token_id, test_token_id);
 

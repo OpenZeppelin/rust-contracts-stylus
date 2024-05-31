@@ -94,12 +94,12 @@ impl Token {
             previous_owner,
             token_id,
             &self.erc721,
-        );
+        )?;
         self.enumerable._add_token_to_owner_enumeration(
             to,
             token_id,
             &self.erc721,
-        );
+        )?;
 
         Ok(())
     }
@@ -124,12 +124,12 @@ impl Token {
             previous_owner,
             token_id,
             &self.erc721,
-        );
+        )?;
         self.enumerable._add_token_to_owner_enumeration(
             to,
             token_id,
             &self.erc721,
-        );
+        )?;
 
         Ok(())
     }
@@ -152,12 +152,12 @@ impl Token {
             previous_owner,
             token_id,
             &self.erc721,
-        );
+        )?;
         self.enumerable._add_token_to_owner_enumeration(
             to,
             token_id,
             &self.erc721,
-        );
+        )?;
 
         Ok(())
     }
