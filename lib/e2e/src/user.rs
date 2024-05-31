@@ -8,9 +8,7 @@ use eyre::{bail, Result};
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
-use crate::system::{get_node_path, Signer};
-
-const RPC_URL: &str = "RPC_URL";
+use crate::system::{get_node_path, Signer, RPC_URL_ENV_VAR_NAME};
 
 /// Type that corresponds to a test user.
 #[derive(Clone, Debug)]
@@ -73,7 +71,7 @@ impl UserFactory {
             .arg("10")
             .output()?;
 
-        let rpc_url = std::env::var(RPC_URL)
+        let rpc_url = std::env::var(RPC_URL_ENV_VAR_NAME)
             .expect("failed to load RPC_URL var from env")
             .parse()
             .expect("failed to parse RPC_URL string into a URL");

@@ -13,7 +13,7 @@ use alloy::{
 };
 use eyre::Context as Ctx;
 
-const RPC_URL: &str = "RPC_URL";
+pub const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
 
 pub type Signer = FillProvider<
     JoinFill<
@@ -45,7 +45,7 @@ pub fn env(name: &str) -> eyre::Result<String> {
 
 /// Returns an alloy provider connected to the `RPC_URL` rpc endpoint.
 pub fn provider() -> Provider {
-    let rpc_url = std::env::var(RPC_URL)
+    let rpc_url = std::env::var(RPC_URL_ENV_VAR_NAME)
         .expect("failed to load RPC_URL var from env")
         .parse()
         .expect("failed to parse RPC_URL string into a URL");
