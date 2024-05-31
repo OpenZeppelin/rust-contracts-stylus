@@ -33,6 +33,7 @@ impl User {
         self.wallet.address()
     }
 
+    /// The rpc endpoint this user's provider is connect to.
     pub fn url(&self) -> &str {
         self.signer.client().transport().url()
     }

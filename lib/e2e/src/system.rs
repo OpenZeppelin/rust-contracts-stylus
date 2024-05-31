@@ -49,8 +49,7 @@ pub fn provider() -> Provider {
         .expect("failed to load RPC_URL var from env")
         .parse()
         .expect("failed to parse RPC_URL string into a URL");
-    let p = ProviderBuilder::new().with_recommended_fillers().on_http(rpc_url);
-    p
+    ProviderBuilder::new().with_recommended_fillers().on_http(rpc_url)
 }
 
 /// Runs the following command to get the worskpace root:
@@ -66,6 +65,7 @@ pub(crate) fn get_workspace_root() -> eyre::Result<PathBuf> {
         .arg("plain")
         .output()
         .wrap_err("should run `cargo locate-project`")?;
+
     let manifest_path = String::from_utf8_lossy(&output.stdout);
     let manifest_dir = Command::new("dirname")
         .arg(&*manifest_path)
