@@ -1,8 +1,9 @@
-use std::env;
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::Path;
-use std::path::PathBuf;
+use std::{
+    env,
+    fs::File,
+    io::{BufReader, Read},
+    path::{Path, PathBuf},
+};
 
 use toml::Table;
 
@@ -46,7 +47,8 @@ fn read_pkg_name<P: AsRef<Path>>(path: P) -> eyre::Result<String> {
 /// Note that this function works for both workspaces and standalone crates.
 fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
     let name = name.replace('-', "_");
-    // Looks like "rust-contracts-stylus/target/debug/deps/erc721-15764c2c9a33bee7".
+    // Looks like
+    // "rust-contracts-stylus/target/debug/deps/erc721-15764c2c9a33bee7".
     let executable = env::current_exe()?;
     let out_dir = executable
         .parent()
