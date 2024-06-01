@@ -1,58 +1,125 @@
-# End-to-end Testing for Stylus
+# End-to-end Testing for Stylus Contracts
 
-This end-to-end testing crate allows to create users, deploy contracts and
-test all necessary scenarios you will probably need. This crate coupled with
-[nitro test node](https://github.com/OffchainLabs/nitro-testnode) developed
-by Offchain Labs and requires it to be installed to perform integration testing.
+This end-to-end testing crate provides affordances to test your contracts in a
+blockchain environment.
+
+This crate is currently coupled to [`nitro-testnode`] and [`koba`].
+
+[`nitro-testnode`]: https://github.com/OffchainLabs/nitro-testnode
+[`koba`]: https://github.com/OpenZeppelin/koba
 
 ## Usage
 
-Abi declaration:
+Refer to our end-to-end tests [GitHub workflow] for a working example of a full
+tests suite using the `e2e` crate.
 
-```rust
-use e2e::prelude::*;
+[GitHub workflow]: ../../.github/workflows/e2e-tests.yml
 
-abigen!(
-    Erc721Token,
-    r#"[
-        function ownerOf(uint256 token_id) external view returns (address)
-        function transferFrom(address from, address to, uint256 token_id) external
-        function mint(address to, uint256 token_id) external
+### Users
 
-        error ERC721InvalidOwner(address owner)
-        error ERC721NonexistentToken(uint256 tokenId)
-        error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner)
-    ]"#
-);
-
-pub type Erc721 = Erc721Token<HttpMiddleware>;
-link_to_crate!(Erc721, "erc721-example");
-```
-
-Test case example:
+Decorate your tests with the `test` procedural macro: a thin wrapper over
+`tokio::test` that sets up `User`s for your test.
 
 ```rust
 #[e2e::test]
-async fn transfer(alice: User, bob: User) -> Result<()> {
-    let erc721 = &alice.deploys::<Erc721>().await?;
-    let token_id = random_token_id();
-    let _ =
-        alice.uses(erc721).mint(alice.address(), token_id).ctx_send().await?;
-    let _ = alice
-        .uses(erc721)
-        .transfer_from(alice.address(), bob.address(), token_id)
-        .ctx_send()
-        .await?;
-    let owner = bob.uses(erc721).owner_of(token_id).ctx_call().await?;
-    assert_eq!(owner, bob.address());
+async fn users_are_funded(alice: User) -> eyre::Result<()> {
+    let balance = alice.signer.get_balance(alice.address()).await?;
+    let expected = parse_ether("10")?;
+    assert_eq!(expected, balance);
     Ok(())
 }
 ```
 
-### Notice
+A `User` is a thin wrapper over a [`LocalWallet`] and an `alloy` provider with a
+[`SignerFiller`]. Both of them are connected to the RPC endpoint defined by the
+`RPC_URL` environment variable. This means that a `User` is the main proxy
+between the RPC and the test code.
+
+All users start with 10 ETH as balance. You can have multiple users as
+parameters of your test function, or you can create new users separately:
+
+```rust
+#[e2e::test]
+async fn foo(alice: User, bob: User) -> eyre::Result<()> {
+    let charlie = User::new().await?;
+    // ...
+}
+```
+
+[`LocalWallet`]: https://github.com/alloy-rs/alloy/blob/4ecb7d86882ece8a9a7a5a892b71a3c198030731/crates/signer-wallet/src/lib.rs#L37
+[`SignerFiller`]: https://github.com/alloy-rs/alloy/blob/4ecb7d86882ece8a9a7a5a892b71a3c198030731/crates/provider/src/fillers/signer.rs#L30
+
+### Contracts
+
+We use `koba` to deploy contracts to the blockchain. This is not required, a
+separate mechanism for deployment can be used. `e2e` exposes a `deploy`
+function that abstracts away the mechanism used in our workflow.
+
+Given a Solidity contract with a constructor at path `src/constructor.sol` like
+this:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.21;
+
+contract Example {
+    mapping(address account => uint256) private _balances;
+    mapping(address account => mapping(address spender => uint256))
+        private _allowances;
+    uint256 private _totalSupply;
+    string private _name;
+    string private _symbol;
+
+    constructor(string memory name_, string memory symbol_) {
+        _name = name_;
+        _symbol = symbol_;
+    }
+}
+```
+
+`e2e::deploy` will deploy the contract marked with the `#[entrypoint]` macro.
+Note the `sol!` invocation with the path to the constructor -- this will
+generate the abi-encodable `Example::constructorCall` struct.
+
+```rust
+sol!("src/constructor.sol");
+
+async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
+    let args = Example::constructorCall {
+        name_: "Token".to_owned(),
+        symbol_: "TKN".to_owned(),
+    };
+    let args = alloy::hex::encode(args.abi_encode());
+    e2e::deploy(rpc_url, private_key, Some(args)).await?
+}
+```
+
+You can then make calls to your contract:
+
+```rust
+#[e2e::test]
+async fn constructs(alice: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc20::new(contract_addr, &alice.signer);
+
+    let Erc20::nameReturn { name } = contract.name().call().await?;
+    let Erc20::symbolReturn { symbol } = contract.symbol().call().await?;
+
+    assert_eq!(name, TOKEN_NAME.to_owned());
+    assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
+    Ok(())
+}
+```
+
+## Notice
+
+We maintain this crate on a best-effort basis. We use it extensively on our own
+tests, so we will continue to add more affordances as we need them.
+
+That being said, please do open an issue to start a discussion, keeping in mind
+our [code of conduct] and [contribution guidelines].
 
 [code of conduct]: ../../CODE_OF_CONDUCT.md
-
 [contribution guidelines]: ../../CONTRIBUTING.md
 
 ## Security
