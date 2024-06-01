@@ -26,3 +26,4 @@ alloy = { git = "https://github.com/alloy-rs/alloy", rev = "2bff1dd", features =
   "getrandom",
 ] }
 e2e-proc = { path = "../e2e-proc" }
+toml = "0.8.13"
