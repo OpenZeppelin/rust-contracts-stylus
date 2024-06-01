@@ -1,21 +1,29 @@
-use eyre::{bail, Report};
+use alloy::{sol_types::SolError, transports::RpcError};
 
-use crate::prelude::abi::AbiEncode;
-
-pub trait Assert<E: AbiEncode> {
-    /// Asserts that current error result corresponds to the typed abi encoded
-    /// error `expected_err`.
-    fn assert(&self, expected_err: E) -> eyre::Result<()>;
+pub trait Assert<E> {
+    /// Asserts that current error result corresponds to the typed abi-encoded
+    /// error `expected`.
+    fn assert(&self, expected: E);
 }
 
-impl<E: AbiEncode> Assert<E> for Report {
-    fn assert(&self, expected_err: E) -> eyre::Result<()> {
-        let received_err = format!("{:#}", self);
-        let expected_err = expected_err.encode_hex();
-        if received_err.contains(&expected_err) {
-            Ok(())
-        } else {
-            bail!("Different error expected: Expected error is {expected_err}: Received error is {received_err}")
+impl<R: SolError, E> Assert<R> for RpcError<E> {
+    fn assert(&self, _: R) {
+        let raw_value = self
+            .as_error_resp()
+            .map(|payload| payload.data.clone())
+            .flatten()
+            .expect("should extract the error");
+        let raw_error = raw_value.get().trim_matches('"');
+        let selector = alloy::hex::encode(R::SELECTOR);
+
+        assert!(raw_error.contains(&selector));
+    }
+}
+
+impl<R: SolError> Assert<R> for alloy::contract::Error {
+    fn assert(&self, expected: R) {
+        if let Self::TransportError(e) = self {
+            e.assert(expected);
         }
     }
 }

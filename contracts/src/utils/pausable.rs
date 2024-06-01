@@ -55,36 +55,11 @@ sol_storage! {
     pub struct Pausable {
         /// Indicates whether the contract is `Paused`.
         bool _paused;
-        /// Initialization marker. If true this means that the constructor was
-        /// called.
-        ///
-        /// This field should be unnecessary once constructors are supported in
-        /// the SDK.
-        bool _initialized;
     }
 }
 
 #[external]
 impl Pausable {
-    /// Initializes a [`Pausable`] contract with the passed `paused`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `paused` - Indicates if contract is paused.
-    ///
-    /// # Panics
-    ///
-    /// * If the contract is already initialized, then this function panics.
-    /// This ensures the contract is constructed only once.
-    pub fn constructor(&mut self, paused: bool) {
-        let is_initialized = self._initialized.get();
-        assert!(!is_initialized, "Pausable has already been initialized");
-
-        self._paused.set(paused);
-        self._initialized.set(true);
-    }
-
     /// Returns true if the contract is paused, and false otherwise.
     ///
     /// # Arguments
@@ -176,32 +151,8 @@ mod tests {
     impl Default for Pausable {
         fn default() -> Self {
             let root = U256::ZERO;
-            Pausable {
-                _paused: unsafe { StorageBool::new(root, 0) },
-                _initialized: unsafe {
-                    StorageBool::new(root + U256::from(32), 0)
-                },
-            }
+            Pausable { _paused: unsafe { StorageBool::new(root, 0) } }
         }
-    }
-
-    #[grip::test]
-    fn constructs(pausable: Pausable) {
-        assert_eq!(false, pausable._initialized.get());
-
-        let paused = false;
-        pausable.constructor(paused);
-
-        assert_eq!(paused, pausable._paused.get());
-        assert_eq!(true, pausable._initialized.get());
-    }
-
-    #[grip::test]
-    #[should_panic = "Pausable has already been initialized"]
-    fn constructs_only_once(pausable: Pausable) {
-        let paused = false;
-        pausable.constructor(paused);
-        pausable.constructor(paused);
     }
 
     #[grip::test]

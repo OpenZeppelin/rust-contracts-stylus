@@ -24,26 +24,6 @@ sol_storage! {
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[external]
 impl ERC20Metadata {
-    /// Initializes a [`Metadata`] instance with the passed `name` and
-    /// `symbol`. It also sets `decimals` to [`DEFAULT_DECIMALS`].
-    ///
-    /// Note that there are no setters for these fields. This makes them
-    /// immutable: they can only be set once at construction.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `name` - The name of the token.
-    /// * `symbol` - The symbol of the token.
-    ///
-    /// # Panics
-    ///
-    /// * If the contract is already initialized, then this function panics.
-    /// This ensures the contract is constructed only once.
-    pub fn constructor(&mut self, name: String, symbol: String) {
-        self._metadata.constructor(name, symbol);
-    }
-
     /// Returns the name of the token.
     ///
     /// # Arguments
@@ -83,53 +63,5 @@ impl ERC20Metadata {
         // TODO: Use `U8` an avoid the conversion once https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
         // gets resolved.
         DEFAULT_DECIMALS
-    }
-}
-
-#[cfg(all(test, feature = "std"))]
-mod tests {
-
-    use super::{ERC20Metadata, DEFAULT_DECIMALS};
-    use crate::utils::Metadata;
-
-    impl Default for ERC20Metadata {
-        fn default() -> Self {
-            Self { _metadata: Metadata::default() }
-        }
-    }
-
-    #[grip::test]
-    fn constructs(meta: ERC20Metadata) {
-        let name = meta.name();
-        let symbol = meta.symbol();
-        let decimals = meta.decimals();
-        let initialized = meta._metadata._initialized.get();
-        assert_eq!(name, "");
-        assert_eq!(symbol, "");
-        assert_eq!(decimals, DEFAULT_DECIMALS);
-        assert_eq!(initialized, false);
-
-        const NAME: &str = "Meta";
-        const SYMBOL: &str = "Symbol";
-        meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
-
-        let name = meta.name();
-        let symbol = meta.symbol();
-        let decimals = meta.decimals();
-        let initialized = meta._metadata._initialized.get();
-        assert_eq!(name, NAME);
-        assert_eq!(symbol, SYMBOL);
-        assert_eq!(decimals, DEFAULT_DECIMALS);
-        assert_eq!(initialized, true);
-    }
-
-    #[grip::test]
-    #[should_panic = "Metadata has already been initialized"]
-    fn constructs_only_once(meta: ERC20Metadata) {
-        const NAME: &str = "Meta";
-        const SYMBOL: &str = "Symbol";
-        meta.constructor(NAME.to_owned(), SYMBOL.to_owned());
-
-        meta.constructor("Invalid".to_owned(), "Invalid".to_owned());
     }
 }

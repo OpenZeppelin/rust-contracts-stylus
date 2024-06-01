@@ -3,8 +3,9 @@ name: e2e-tests
 #
 # It roughly follows these steps:
 # - A local `nitro-testnode` gets spun up.
-# - The test suite runs
-# Test contract deployments and test user funding happen per test.
+# - The test suite runs.
+#
+# Contract deployments and account funding happen on a per-test basis.
 permissions:
   contents: read
 on:
@@ -52,9 +53,13 @@ jobs:
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
 
       - name: setup nitro node
-        run: ./e2e-tests/nitro-testnode.sh -d -i
-
+        run: ./scripts/nitro-testnode.sh -d -i
+      - name: install solc
+        run: |
+          curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
+          sudo mv solc-static-linux /usr/bin/solc
+          sudo chmod a+x /usr/bin/solc
       - name: run integration tests
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./e2e-tests/test.sh
+          ./scripts/e2e-tests.sh

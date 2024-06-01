@@ -140,8 +140,6 @@ sol_interface! {
         /// It must return its function selector to confirm the token transfer. If
         /// any other value is returned or the interface is not implemented by the recipient, the transfer will be
         /// reverted.
-
-        #[allow(missing_docs)]
         function onERC721Received(
             address operator,
             address from,
@@ -1085,7 +1083,7 @@ mod tests {
 
     pub(crate) fn random_token_id() -> U256 {
         let num: u32 = rand::random();
-        num.try_into().expect("conversion to U256")
+        U256::from(num)
     }
 
     #[grip::test]
@@ -1132,7 +1130,7 @@ mod tests {
         let token_id = random_token_id();
         let err = contract
             .transfer_from(*ALICE, BOB, token_id)
-            .expect_err("should not transfer a non existent token");
+            .expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
