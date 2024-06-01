@@ -8,16 +8,37 @@ version = "0.0.0"
 
 [dependencies]
 contracts = { path = "../../contracts", features = [
-    "erc721_burnable",
-    "erc721_enumerable",
-    "erc721_metadata",
-    "erc721_pausable",
-    "erc721_uri_storage"
+  "erc721_burnable",
+  "erc721_enumerable",
+  "erc721_metadata",
+  "erc721_pausable",
+  "erc721_uri_storage",
 ] }
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
+
+[dev-dependencies]
+e2e = { path = "../../lib/e2e" }
+tokio = { version = "1.12.0", features = ["full"] }
+eyre = "0.6.8"
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "2bff1dd", features = [
+  "contract",
+  "network",
+  "providers",
+  "provider-http",
+  "rpc-client",
+  "rpc-types-eth",
+  "signers",
+  "signer-wallet",
+  "getrandom",
+] }
+rand = "0.8.5"
+
+[features]
+default = []
+e2e = []
 
 [lib]
 crate-type = ["lib", "cdylib"]

@@ -24,7 +24,7 @@ use stylus_sdk::{
 
 sol_storage! {
     #[entrypoint]
-    struct Token {
+    struct ERC721Example {
         #[borrow]
         ERC721 erc721;
         #[borrow]
@@ -40,20 +40,7 @@ sol_storage! {
 
 #[external]
 #[inherit(ERC721, Enumerable, Metadata, Pausable, UriStorage)]
-impl Token {
-    // We need to properly initialize all of Token's attributes.
-    // For that, we need to call each attribute's constructor if it exists.
-    //
-    // NOTE: This is a temporary solution for state initialization.
-    pub fn constructor(
-        &mut self,
-        name: String,
-        symbol: String,
-        base_uri: String,
-    ) {
-        self.metadata.constructor(name, symbol, base_uri);
-    }
-
+impl ERC721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
 

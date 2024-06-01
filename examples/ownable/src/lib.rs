@@ -5,14 +5,11 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use contracts::{access::ownable::Ownable, erc20::ERC20};
-use stylus_sdk::{
-    msg,
-    prelude::{entrypoint, external, sol_storage},
-};
+use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 sol_storage! {
     #[entrypoint]
-    struct Token {
+    struct OwnableExample {
         #[borrow]
         ERC20 erc20;
         #[borrow]
@@ -22,12 +19,7 @@ sol_storage! {
 
 #[external]
 #[inherit(ERC20, Ownable)]
-impl Token {
-    pub fn constructor(&mut self) -> Result<(), Vec<u8>> {
-        self.ownable.constructor(msg::sender())?;
-        Ok(())
-    }
-
+impl OwnableExample {
     pub fn transfer(
         &mut self,
         to: Address,
