@@ -8,7 +8,7 @@ use crate::utils::Metadata;
 
 sol_storage! {
     /// Metadata of the ERC-721 token.
-    pub struct ERC721Metadata {
+    pub struct Erc721Metadata {
         /// Common Metadata.
         Metadata _metadata;
         /// Base URI for tokens
@@ -20,7 +20,7 @@ sol_storage! {
 // With the current version of SDK it is not possible.
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[external]
-impl ERC721Metadata {
+impl Erc721Metadata {
     /// Returns the token collection name.
     ///
     /// # Arguments

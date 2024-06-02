@@ -10,10 +10,10 @@ pub const DEFAULT_DECIMALS: u8 = 18;
 use crate::utils::Metadata;
 
 sol_storage! {
-    /// Metadata of the ERC20 token.
+    /// Metadata of the Erc20 token.
     ///
     /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
-    pub struct ERC20Metadata {
+    pub struct Erc20Metadata {
         /// Common Metadata.
         Metadata _metadata
     }
@@ -23,7 +23,7 @@ sol_storage! {
 // With the current version of SDK it is not possible.
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[external]
-impl ERC20Metadata {
+impl Erc20Metadata {
     /// Returns the name of the token.
     ///
     /// # Arguments
@@ -58,7 +58,7 @@ impl ERC20Metadata {
     ///
     /// NOTE: This information is only used for *display* purposes: in
     /// no way it affects any of the arithmetic of the contract, including
-    /// [`ERC20::balance_of`] and [`ERC20::transfer`].
+    /// [`Erc20::balance_of`] and [`Erc20::transfer`].
     pub fn decimals(&self) -> u8 {
         // TODO: Use `U8` an avoid the conversion once https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
         // gets resolved.

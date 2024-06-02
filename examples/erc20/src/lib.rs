@@ -6,8 +6,8 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, U256};
 use contracts::{
     erc20::{
-        extensions::{capped, Capped, ERC20Metadata, IERC20Burnable},
-        ERC20,
+        extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
+        Erc20,
     },
     utils::Pausable,
 };
@@ -17,11 +17,11 @@ const DECIMALS: u8 = 10;
 
 sol_storage! {
     #[entrypoint]
-    struct ERC20Example {
+    struct Erc20Example {
         #[borrow]
-        ERC20 erc20;
+        Erc20 erc20;
         #[borrow]
-        ERC20Metadata metadata;
+        Erc20Metadata metadata;
         #[borrow]
         Capped capped;
         #[borrow]
@@ -30,8 +30,8 @@ sol_storage! {
 }
 
 #[external]
-#[inherit(ERC20, ERC20Metadata, Capped, Pausable)]
-impl ERC20Example {
+#[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
+impl Erc20Example {
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.
     //
     // If you don't provide this method in the `entrypoint` contract, it will
@@ -57,7 +57,7 @@ impl ERC20Example {
     // Add token minting feature.
     //
     // Make sure to handle `Capped` properly. You should not call
-    // [`ERC20::_update`] to mint tokens -- it will the break `Capped`
+    // [`Erc20::_update`] to mint tokens -- it will the break `Capped`
     // mechanism.
     pub fn mint(
         &mut self,

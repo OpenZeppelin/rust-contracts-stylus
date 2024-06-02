@@ -1,4 +1,4 @@
-//! Implementation of the [`ERC721`] token standard.
+//! Implementation of the [`Erc721`] token standard.
 use alloc::vec;
 
 use alloy_primitives::{
@@ -40,7 +40,7 @@ sol! {
 
 sol! {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`ERC721`]. Used in balance queries.
+    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`]. Used in balance queries.
     ///
     /// * `owner` - The address deemed to be an invalid owner.
     #[derive(Debug)]
@@ -100,13 +100,13 @@ sol! {
     error ERC721InvalidOperator(address operator);
 }
 
-/// An [`ERC721`] error defined as described in [ERC-6093].
+/// An [`Erc721`] error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
 #[derive(SolidityError, Debug, From)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`ERC721`].
+    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -129,14 +129,13 @@ pub enum Error {
 }
 
 sol_interface! {
-    /// [`ERC721`] token receiver interface.
+    /// [`Erc721`] token receiver interface.
     ///
     /// Interface for any contract that wants to support `safeTransfers`
-    /// from [`ERC721`] asset contracts.
+    /// from [`Erc721`] asset contracts.
     interface IERC721Receiver {
-        /// Whenever an [`ERC721`] `token_id` token is transferred
-        /// to this contract via [`ERC721::safe_transfer_from`]
-        /// by `operator` from `from`, this function is called.
+        /// Whenever an [`Erc721`] `token_id` token is transferred
+        /// to this contract via [`Erc721::safe_transfer_from`].
         ///
         /// It must return its function selector to confirm the token transfer.
         /// If any other value is returned or the interface is not implemented
@@ -152,8 +151,8 @@ sol_interface! {
 }
 
 sol_storage! {
-    /// State of an [`ERC721`] token.
-    pub struct ERC721 {
+    /// State of an [`Erc721`] token.
+    pub struct Erc721 {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
         /// Maps users to balances.
@@ -168,10 +167,10 @@ sol_storage! {
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for ERC721 {}
+unsafe impl TopLevelStorage for Erc721 {}
 
-/// Required interface of an [`ERC721`] compliant contract.
-pub trait IERC721 {
+/// Required interface of an [`Erc721`] compliant contract.
+pub trait IErc721 {
     /// Returns the number of tokens in `owner`'s account.
     ///
     /// # Arguments
@@ -203,7 +202,7 @@ pub trait IERC721 {
     fn owner_of(&self, token_id: U256) -> Result<Address, Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first
-    /// that contract recipients are aware of the [`ERC721`] protocol to
+    /// that contract recipients are aware of the [`Erc721`] protocol to
     /// prevent tokens from being forever locked.
     ///
     /// # Arguments
@@ -298,7 +297,7 @@ pub trait IERC721 {
     /// Transfers `token_id` token from `from` to `to`.
     ///
     /// WARNING: Note that the caller is responsible to confirm that the
-    /// recipient is capable of receiving [`ERC721`] or else they may be
+    /// recipient is capable of receiving [`Erc721`] or else they may be
     /// permanently lost. Usage of [`Self::safe_transfer_from`] prevents loss,
     /// though the caller must understand this adds an external call which
     /// potentially creates a reentrancy vulnerability, unless it is disabled.
@@ -428,7 +427,7 @@ pub trait IERC721 {
 }
 
 #[external]
-impl IERC721 for ERC721 {
+impl IErc721 for Erc721 {
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
@@ -512,12 +511,12 @@ impl IERC721 for ERC721 {
     }
 }
 
-impl ERC721 {
+impl Erc721 {
     /// Returns the owner of the `token_id`. Does NOT revert if the token
     /// doesn't exist.
     ///
     /// IMPORTANT: Any overrides to this function that add ownership of tokens
-    /// not tracked by the core [`ERC721`] logic MUST be matched with the use
+    /// not tracked by the core [`Erc721`] logic MUST be matched with the use
     /// of [`Self::_increase_balance`] to keep balances consistent with
     /// ownership. The invariant to preserve is that for any address `a` the
     /// value returned by `balance_of(a)` must be equal to the number of
@@ -865,7 +864,7 @@ impl ERC721 {
     }
 
     /// Safely transfers `token_id` token from `from` to `to`, checking that
-    /// contract recipients are aware of the [`ERC721`] standard to prevent
+    /// contract recipients are aware of the [`Erc721`] standard to prevent
     /// tokens from being forever locked.
     ///
     /// `data` is additional data, it has
@@ -1093,7 +1092,7 @@ mod tests {
 
     use super::{
         ERC721InsufficientApproval, ERC721InvalidSender,
-        ERC721NonexistentToken, Error, ERC721, IERC721,
+        ERC721NonexistentToken, Erc721, Error, IErc721,
     };
 
     // NOTE: Alice is always the sender of the message
@@ -1101,11 +1100,11 @@ mod tests {
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
-    impl Default for ERC721 {
+    impl Default for Erc721 {
         fn default() -> Self {
             let root = U256::ZERO;
 
-            ERC721 {
+            Erc721 {
                 _owners: unsafe { StorageMap::new(root, 0) },
                 _balances: unsafe { StorageMap::new(root + U256::from(32), 0) },
                 _token_approvals: unsafe {
@@ -1124,7 +1123,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn mint(contract: ERC721) {
+    fn mint(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("mint a token for Alice");
         let owner =
@@ -1138,7 +1137,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn error_when_reusing_token_id(contract: ERC721) {
+    fn error_when_reusing_token_id(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("mint the token a first time");
         let err = contract
@@ -1151,7 +1150,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer(contract: ERC721) {
+    fn transfer(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("mint a token to Alice");
         contract
@@ -1163,7 +1162,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn error_when_transfer_nonexistent_token(contract: ERC721) {
+    fn error_when_transfer_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let err = contract
             .transfer_from(*ALICE, BOB, token_id)
@@ -1177,7 +1176,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn approve_token_transfer(contract: ERC721) {
+    fn approve_token_transfer(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("mint token");
         contract
@@ -1187,7 +1186,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer_approved_token(contract: ERC721) {
+    fn transfer_approved_token(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("mint token to Bob");
         contract._token_approvals.setter(token_id).set(*ALICE);
@@ -1200,7 +1199,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn error_when_transfer_unapproved_token(contract: ERC721) {
+    fn error_when_transfer_unapproved_token(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("mint token to Bob");
         let err = contract
@@ -1216,7 +1215,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn approval_for_all(contract: ERC721) {
+    fn approval_for_all(contract: Erc721) {
         contract._operator_approvals.setter(*ALICE).setter(BOB).set(false);
 
         contract
@@ -1231,7 +1230,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn test_transfer_token_approved_for_all(contract: ERC721) {
+    fn test_transfer_token_approved_for_all(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("mint token to Bob");
 
