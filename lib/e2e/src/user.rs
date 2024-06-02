@@ -8,7 +8,10 @@ use eyre::{bail, Result};
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
-use crate::system::{get_node_path, Signer, RPC_URL_ENV_VAR_NAME};
+use crate::{
+    environment::get_node_path,
+    system::{Signer, RPC_URL_ENV_VAR_NAME},
+};
 
 /// Type that corresponds to a test user.
 #[derive(Clone, Debug)]

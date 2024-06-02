@@ -7,7 +7,7 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{prelude::Assert, user::User};
+use e2e::{Assert, User};
 
 use crate::abi::Erc721;
 
@@ -24,18 +24,12 @@ fn random_token_id() -> U256 {
 }
 
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
-    let name = env!("CARGO_PKG_NAME").replace('-', "_");
-    let pkg_dir = env!("CARGO_MANIFEST_DIR");
     let args = Erc721Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),
     };
     let args = alloy::hex::encode(args.abi_encode());
-    let contract_addr =
-        e2e::deploy::deploy(&name, pkg_dir, rpc_url, private_key, Some(args))
-            .await?;
-
-    Ok(contract_addr)
+    e2e::deploy(rpc_url, private_key, Some(args)).await
 }
 
 macro_rules! send {

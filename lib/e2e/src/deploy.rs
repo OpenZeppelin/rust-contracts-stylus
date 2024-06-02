@@ -4,33 +4,21 @@ use std::{
 };
 
 use alloy::primitives::Address;
-use eyre::{bail, Context};
+use eyre::bail;
 use koba::config::Deploy;
 
-use crate::system::get_workspace_root;
+use crate::project::Crate;
 
 /// Deploy and activate the contract `contract_name`, which lives in `pkg_dir`,
 /// using `rpc_url`, `private_key` and the ABI-encoded constructor `args`.
 pub async fn deploy(
-    contract_name: &str,
-    pkg_dir: &str,
     rpc_url: &str,
     private_key: &str,
     args: Option<String>,
 ) -> eyre::Result<Address> {
-    // Fine to unwrap here, otherwise a bug in `cargo`.
-    let pkg_dir = pkg_dir
-        .parse::<PathBuf>()
-        .wrap_err("failed to parse manifest dir path")?;
-    let sol_path: PathBuf = pkg_dir.join("src/constructor.sol");
-
-    // This is super flaky because it assumes we are in a workspace. This is
-    // fine for now since we only use this function in our tests, but if we
-    // publish this as a crate, we need to account for the other cases.
-    let manifest_dir = get_workspace_root()?;
-    let wasm_path: PathBuf = manifest_dir.join(format!(
-        "target/wasm32-unknown-unknown/release/{contract_name}.wasm"
-    ));
+    let pkg = Crate::new()?;
+    let sol_path: PathBuf = pkg.manifest_dir.join("src/constructor.sol");
+    let wasm_path = pkg.wasm;
 
     let config = Deploy {
         generate_config: koba::config::Generate {
@@ -73,7 +61,8 @@ fn activate(
         .output()?;
 
     if !output.status.success() {
-        // Only activate once.
+        // If the program is up-to-date, that means that it was activated
+        // already, so we can just ignore this error and carry on.
         let stderr = String::from_utf8_lossy(&output.stderr);
         if !stderr.contains("ProgramUpToDate") {
             bail!("failed to activate the contract at address {address}");
