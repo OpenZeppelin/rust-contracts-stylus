@@ -1,4 +1,4 @@
-# E2E Procedural Macros
+# End-to-end Procedural Macros
 
 This crate contains procedural macros used in [e2e].
 

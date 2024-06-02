@@ -9,8 +9,9 @@ use koba::config::Deploy;
 
 use crate::project::Crate;
 
-/// Deploy and activate the contract `contract_name`, which lives in `pkg_dir`,
-/// using `rpc_url`, `private_key` and the ABI-encoded constructor `args`.
+/// Deploy and activate the contract implemented as `#[entrypoint]` in the
+/// current crate using `rpc_url`, `private_key` and the ABI-encoded constructor
+/// `args`.
 pub async fn deploy(
     rpc_url: &str,
     private_key: &str,
@@ -44,6 +45,9 @@ pub async fn deploy(
 }
 
 /// Uses `cargo-stylus` to activate a Stylus contract.
+///
+/// This is a patch until `nitro-testnode` gets updated, since `koba deploy`
+/// handles everything for us when used agains the Stylus testnet.
 fn activate(
     wasm_path: &Path,
     rpc_url: &str,
