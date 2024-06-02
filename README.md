@@ -21,9 +21,9 @@
 
 ## Usage
 
-Currently, the library has not been yet published to `crates.io` and this will
-be the case until we reach a more stable. However, one can [specify a git
-dependency] in a `Cargo.toml`, like so:
+The library has not been published yet to `crates.io`, and this will be the case
+until we reach a stable version. However, one can [specify a git dependency] in
+a `Cargo.toml`, like so:
 
 ```toml
 [dependencies]
@@ -31,9 +31,10 @@ openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-st
 ```
 
 We recommend pinning to a specific version -- expect rapid iteration. Also note
-that the library's crate name has yet to be decided.
+that the library's name has yet to be decided.
 
-You can then use one of our pre-defined implementations by importing them:
+Once defined as a dependency, use one of our pre-defined implementations by
+importing them:
 
 ```rust,ignore
 use contracts::erc20::ERC20;
@@ -51,10 +52,11 @@ sol_storage! {
 impl ERC20Example { }
 ```
 
-For a more complex display of the capabilities of this library, refer to our
+For a more complex display of what this library offers, refer to our
 [examples](./examples).
 
-For more information on what this library will include, see our [roadmap].
+For more information on what this library will include in the future, see our
+[roadmap].
 
 [specify a git dependency]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories
 [roadmap]: https://github.com/OpenZeppelin/rust-contracts-stylus/milestone/1
