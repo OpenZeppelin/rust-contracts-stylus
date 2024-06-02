@@ -47,7 +47,7 @@ pub async fn deploy(
 /// Uses `cargo-stylus` to activate a Stylus contract.
 ///
 /// This is a patch until `nitro-testnode` gets updated, since `koba deploy`
-/// handles everything for us when used agains the Stylus testnet.
+/// handles everything for us when used against the Stylus testnet.
 fn activate(
     wasm_path: &Path,
     rpc_url: &str,
