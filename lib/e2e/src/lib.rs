@@ -1,7 +1,7 @@
 mod assert;
 mod deploy;
 mod environment;
-mod package;
+mod project;
 mod system;
 mod user;
 

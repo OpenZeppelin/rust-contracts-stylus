@@ -7,7 +7,7 @@ use alloy::primitives::Address;
 use eyre::bail;
 use koba::config::Deploy;
 
-use crate::package::Crate;
+use crate::project::Crate;
 
 /// Deploy and activate the contract `contract_name`, which lives in `pkg_dir`,
 /// using `rpc_url`, `private_key` and the ABI-encoded constructor `args`.

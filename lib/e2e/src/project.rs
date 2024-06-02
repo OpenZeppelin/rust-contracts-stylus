@@ -38,7 +38,7 @@ fn read_pkg_name<P: AsRef<Path>>(path: P) -> eyre::Result<String> {
 
     match name {
         Some(x) => Ok(x.to_owned()),
-        None => Err(eyre::eyre!("Unable to find package name in toml")),
+        None => Err(eyre::eyre!("unable to find package name in toml")),
     }
 }
 
