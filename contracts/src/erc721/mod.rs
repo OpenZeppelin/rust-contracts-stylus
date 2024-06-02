@@ -566,10 +566,10 @@ impl ERC721 {
                 || self._get_approved_inner(token_id) == spender)
     }
 
-    /// Checks if `spender` can operate on `token_id`, assuming the provided
-    /// `owner` is the actual owner. Reverts if `spender` does not have
-    /// approval from the provided `owner` for the given token or for all its
-    /// assets the `spender` for the specific `token_id`.
+    /// Checks if `operator` can operate on `token_id`, assuming the provided
+    /// `owner` is the actual owner. Reverts if:
+    /// - `operator` does not have approval from `owner` for `token_id`.
+    /// - `operator` does not have approval to manage all of `owner`'s assets.
     ///
     /// WARNING: This function assumes that `owner` is the actual owner of
     /// `token_id` and does not verify this assumption.
@@ -578,7 +578,7 @@ impl ERC721 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account of the token's owner.
-    /// * `spender` - Account that will spend token.
+    /// * `operator` - Account that will spend token.
     /// * `token_id` - Token id as a number.
     ///
     /// # Errors
@@ -590,18 +590,18 @@ impl ERC721 {
     pub fn _check_authorized(
         &self,
         owner: Address,
-        spender: Address,
+        operator: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        if !self._is_authorized(owner, spender, token_id) {
-            return if owner.is_zero() {
-                Err(ERC721NonexistentToken { token_id }.into())
-            } else {
-                Err(ERC721InsufficientApproval { operator: spender, token_id }
-                    .into())
-            };
+        if self._is_authorized(owner, operator, token_id) {
+            return Ok(());
         }
-        Ok(())
+
+        if owner.is_zero() {
+            Err(ERC721NonexistentToken { token_id }.into())
+        } else {
+            Err(ERC721InsufficientApproval { operator, token_id }.into())
+        }
     }
 
     /// Unsafe write access to the balances, used by extensions that "mint"
@@ -672,7 +672,7 @@ impl ERC721 {
 
         // Execute the update.
         if !from.is_zero() {
-            // Clear approval. No need to re-authorize or emit the Approval
+            // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
             self._balances.setter(from).sub_assign_unchecked(U256::from(1));
@@ -683,9 +683,7 @@ impl ERC721 {
         }
 
         self._owners.setter(token_id).set(to);
-
         evm::log(Transfer { from, to, token_id });
-
         Ok(from)
     }
 
@@ -805,10 +803,9 @@ impl ERC721 {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
-            Err(ERC721NonexistentToken { token_id }.into())
-        } else {
-            Ok(())
+            return Err(ERC721NonexistentToken { token_id }.into());
         }
+        Ok(())
     }
 
     /// Transfers `token_id` from `from` to `to`.
@@ -854,17 +851,17 @@ impl ERC721 {
 
         let previous_owner = self._update(to, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
-            Err(ERC721NonexistentToken { token_id }.into())
+            return Err(ERC721NonexistentToken { token_id }.into());
         } else if previous_owner != from {
-            Err(ERC721IncorrectOwner {
+            return Err(ERC721IncorrectOwner {
                 sender: from,
                 token_id,
                 owner: previous_owner,
             }
-            .into())
-        } else {
-            Ok(())
+            .into());
         }
+
+        Ok(())
     }
 
     /// Safely transfers `token_id` token from `from` to `to`, checking that
@@ -1000,6 +997,7 @@ impl ERC721 {
         if operator.is_zero() {
             return Err(ERC721InvalidOperator { operator }.into());
         }
+
         self._operator_approvals.setter(owner).setter(operator).set(approved);
         evm::log(ApprovalForAll { owner, operator, approved });
         Ok(())
@@ -1063,6 +1061,7 @@ impl ERC721 {
         const IERC721RECEIVER_INTERFACE_ID: FixedBytes<4> =
             fixed_bytes!("150b7a02");
 
+        // FIXME: Cleanup this code once it's covered in the test suite.
         if to.has_code() {
             let call = Call::new_in(self);
             return match IERC721Receiver::new(to).on_erc_721_received(
