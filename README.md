@@ -35,7 +35,7 @@ that the library's crate name has yet to be decided.
 
 You can then use one of our pre-defined implementations by importing them:
 
-```rust
+```rust,no-run
 use contracts::erc20::ERC20;
 
 sol_storage! {
