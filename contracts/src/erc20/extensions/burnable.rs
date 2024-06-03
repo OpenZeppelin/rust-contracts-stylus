@@ -8,7 +8,6 @@ use crate::erc20::{Erc20, Error};
 /// Extension of [`Erc20`] that allows token holders to destroy both
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
-#[allow(clippy::module_name_repetitions)]
 pub trait IErc20Burnable {
     /// Destroys a `value` amount of tokens from the caller.
     /// lowering the total supply.

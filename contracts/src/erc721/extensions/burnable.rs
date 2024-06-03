@@ -6,7 +6,6 @@ use stylus_sdk::msg;
 use crate::erc721::{Erc721, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
-#[allow(clippy::module_name_repetitions)]
 pub trait IErc721Burnable {
     /// Burns `token_id`.
     /// The approval is cleared when the token is burned.

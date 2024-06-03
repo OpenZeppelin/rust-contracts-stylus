@@ -60,7 +60,6 @@ sol_storage! {
 
 /// This is the interface of the optional `Enumerable` extension
 /// of the [`Erc721`] standard.
-#[allow(clippy::module_name_repetitions)]
 pub trait IErc721Enumerable {
     // TODO: fn supports_interface (#33)
 
