@@ -75,7 +75,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::IErc20Burnable;
-    use crate::erc20::{Erc20, Error};
+    use crate::erc20::{Erc20, Error, IErc20};
 
     #[grip::test]
     fn burns(contract: Erc20) {

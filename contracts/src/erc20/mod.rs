@@ -103,16 +103,14 @@ sol_storage! {
     }
 }
 
-#[external]
-impl Erc20 {
+/// Required interface of an [`ERC20`] compliant contract.
+pub trait IErc20 {
     /// Returns the number of tokens in existence.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn total_supply(&self) -> U256 {
-        self._total_supply.get()
-    }
+    fn total_supply(&self) -> U256;
 
     /// Returns the number of tokens owned by `account`.
     ///
@@ -120,9 +118,7 @@ impl Erc20 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `account` - Account to get balance from.
-    pub fn balance_of(&self, account: Address) -> U256 {
-        self._balances.get(account)
-    }
+    fn balance_of(&self, account: Address) -> U256;
 
     /// Moves a `value` amount of tokens from the caller's account to `to`.
     ///
@@ -144,15 +140,7 @@ impl Erc20 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Error> {
-        let from = msg::sender();
-        self._transfer(from, to, value)?;
-        Ok(true)
-    }
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error>;
 
     /// Returns the remaining number of tokens that `spender` will be allowed
     /// to spend on behalf of `owner` through `transfer_from`. This is zero by
@@ -165,9 +153,7 @@ impl Erc20 {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
-    pub fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        self._allowances.get(owner).get(spender)
-    }
+    fn allowance(&self, owner: Address, spender: Address) -> U256;
 
     /// Sets a `value` number of tokens as the allowance of `spender` over the
     /// caller's tokens.
@@ -195,22 +181,8 @@ impl Erc20 {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    pub fn approve(
-        &mut self,
-        spender: Address,
-        value: U256,
-    ) -> Result<bool, Error> {
-        let owner = msg::sender();
-        if spender.is_zero() {
-            return Err(Error::InvalidSpender(ERC20InvalidSpender {
-                spender: Address::ZERO,
-            }));
-        }
-
-        self._allowances.setter(owner).insert(spender, value);
-        evm::log(Approval { owner, spender, value });
-        Ok(true)
-    }
+    fn approve(&mut self, spender: Address, value: U256)
+        -> Result<bool, Error>;
 
     /// Moves a `value` number of tokens from `from` to `to` using the
     /// allowance mechanism. `value` is then deducted from the caller's
@@ -241,7 +213,52 @@ impl Erc20 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn transfer_from(
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Error>;
+}
+
+#[external]
+impl IErc20 for Erc20 {
+    fn total_supply(&self) -> U256 {
+        self._total_supply.get()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self._balances.get(account)
+    }
+
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
+        let from = msg::sender();
+        self._transfer(from, to, value)?;
+        Ok(true)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self._allowances.get(owner).get(spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Error> {
+        let owner = msg::sender();
+        if spender.is_zero() {
+            return Err(Error::InvalidSpender(ERC20InvalidSpender {
+                spender: Address::ZERO,
+            }));
+        }
+
+        self._allowances.setter(owner).insert(spender, value);
+        evm::log(Approval { owner, spender, value });
+        Ok(true)
+    }
+
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -484,7 +501,7 @@ mod tests {
         storage::{StorageMap, StorageType, StorageU256},
     };
 
-    use crate::erc20::{Erc20, Error};
+    use crate::erc20::{Erc20, Error, IErc20};
 
     impl Default for Erc20 {
         fn default() -> Self {
