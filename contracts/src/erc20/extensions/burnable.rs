@@ -1,4 +1,4 @@
-//! Optional Burnable extension of the [`Erc20`] standard.
+//! Optional Burnable extension of the ERC-20 standard.
 
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
@@ -42,7 +42,7 @@ pub trait IErc20Burnable {
     ///
     /// If not enough allowance is available, then the error
     /// [`Error::InsufficientAllowance`] is returned.
-    /// * If the `from` address is `Address::ZERO`, then the error
+    /// If the `from` address is `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.

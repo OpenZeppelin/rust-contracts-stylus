@@ -1,4 +1,4 @@
-//! Optional Metadata of the [`Erc20`] standard.
+//! Optional Metadata of the ERC-20 standard.
 
 use alloc::string::String;
 

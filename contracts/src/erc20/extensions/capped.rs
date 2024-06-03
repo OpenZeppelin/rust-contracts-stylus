@@ -1,6 +1,6 @@
 //! Capped Contract.
 //!
-//! Extension of [`Erc20`] that adds a cap to the supply of tokens.
+//! Extension of ERC-20 standard that adds a cap to the supply of tokens.
 //!
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
