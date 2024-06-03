@@ -144,7 +144,7 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// * If [`msg::sender`] has not been granted `role`, then
+    /// If [`msg::sender`] has not been granted `role`, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
     pub fn only_role(&self, role: B256) -> Result<(), Error> {
         self._check_role(role, msg::sender())
@@ -181,7 +181,7 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// * If [`msg::sender`] has not been granted `role`, then
+    /// If [`msg::sender`] has not been granted `role`, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
     ///
     /// # Events
@@ -214,7 +214,7 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// * If [`msg::sender`] has not been granted `role`, then
+    /// If [`msg::sender`] has not been granted `role`, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
     ///
     /// # Events
@@ -250,7 +250,7 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// * If [`msg::sender`] is not the `confirmation` address, then
+    /// If [`msg::sender`] is not the `confirmation` address, then the error
     /// [`Error::BadConfirmation`] is returned.
     ///
     /// # Events
@@ -305,7 +305,7 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// * If [`msg::sender`] has not been granted `role`, then
+    /// If [`msg::sender`] has not been granted `role`, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
     pub fn _check_role(
         &self,

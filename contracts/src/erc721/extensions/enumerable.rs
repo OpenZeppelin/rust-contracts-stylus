@@ -1,4 +1,4 @@
-//! Optional `Enumerable` extension of the [`Erc721`] standard.
+//! Optional `Enumerable` extension of the ERC-721 standard.
 //!
 //! This implements an optional extension of [`Erc721`] defined in the EIP
 //! that adds enumerability of all the token ids in the contract
@@ -59,7 +59,7 @@ sol_storage! {
 }
 
 /// This is the interface of the optional `Enumerable` extension
-/// of the [`Erc721`] standard.
+/// of the ERC-721 standard.
 pub trait IErc721Enumerable {
     // TODO: fn supports_interface (#33)
 
@@ -148,8 +148,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is
-    ///   returned.
+    /// If owner address is `Address::ZERO`, then the error
+    /// [`Error::InvalidOwner`] is returned.
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,
@@ -199,9 +199,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is
-    ///   returned.
-
+    /// If owner address is `Address::ZERO`, then the error
+    /// [`Error::InvalidOwner`] is returned.
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
         from: Address,

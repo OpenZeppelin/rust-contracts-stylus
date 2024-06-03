@@ -42,7 +42,7 @@ pub trait IErc20Burnable {
     ///
     /// If not enough allowance is available, then the error
     /// [`Error::InsufficientAllowance`] is returned.
-    /// * If the `from` address is `Address::ZERO`, then the error
+    /// If the `from` address is `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
     /// If the `from` address doesn't have enough tokens, then the error
     /// [`Error::InsufficientBalance`] is returned.
@@ -69,13 +69,13 @@ impl IErc20Burnable for Erc20 {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::msg;
 
     use super::IErc20Burnable;
-    use crate::erc20::{Erc20, Error};
+    use crate::erc20::{Erc20, Error, IErc20};
 
     #[motsu::test]
     fn burns(contract: Erc20) {
