@@ -1,4 +1,4 @@
-//! Optional Metadata of the ERC-20 standard.
+//! Optional Metadata of the [`Erc20`] standard.
 
 use alloc::string::String;
 
@@ -10,7 +10,7 @@ pub const DEFAULT_DECIMALS: u8 = 18;
 use crate::utils::Metadata;
 
 sol_storage! {
-    /// Metadata of the Erc20 token.
+    /// Metadata of the [`Erc20`] token.
     ///
     /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
     pub struct Erc20Metadata {
@@ -69,7 +69,8 @@ impl IErc20Metadata for Erc20Metadata {
     }
 
     fn decimals(&self) -> u8 {
-        // TODO: Use `U8` an avoid the conversion once https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
+        // TODO: Use `U8` an avoid the conversion once
+        // https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
         // gets resolved.
         DEFAULT_DECIMALS
     }

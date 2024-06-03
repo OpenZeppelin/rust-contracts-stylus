@@ -1,4 +1,4 @@
-//! Common extensions to the ERC-20 standard.
+//! Common extensions to the [`Erc20`] standard.
 
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc20_metadata"))] {

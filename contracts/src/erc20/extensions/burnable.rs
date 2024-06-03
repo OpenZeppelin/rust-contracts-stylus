@@ -1,4 +1,4 @@
-//! Optional Burnable extension of the ERC-20 standard.
+//! Optional Burnable extension of the [`Erc20`] standard.
 
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
