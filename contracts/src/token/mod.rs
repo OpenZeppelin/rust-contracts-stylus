@@ -1,3 +1,4 @@
+//! Token standards.
 #[cfg(any(feature = "std", feature = "erc20"))]
 pub mod erc20;
 
