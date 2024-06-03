@@ -15,22 +15,23 @@ sol! {
     #[allow(missing_docs)]
     event MetadataUpdate(uint256 token_id);
 
-    /// This event gets emitted when the metadata of a range of tokens is changed.
+    /// This event gets emitted when the metadata of a range of tokens
+    /// is changed.
     ///
-    /// Event comes from IERC4096.
+    /// The event comes from IERC4096.
     #[allow(missing_docs)]
     event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
 }
 
 sol_storage! {
     /// Uri Storage.
-    pub struct ERC721UriStorage {
+    pub struct Erc721UriStorage {
         /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;
     }
 }
 
-impl ERC721UriStorage {
+impl Erc721UriStorage {
     /// Sets `token_uri` as the tokenURI of `token_id`.
     ///
     /// # Arguments
@@ -48,7 +49,7 @@ impl ERC721UriStorage {
 }
 
 #[external]
-impl ERC721UriStorage {
+impl Erc721UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
     /// # Arguments
@@ -66,13 +67,13 @@ mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::{prelude::StorageType, storage::StorageMap};
 
-    use super::ERC721UriStorage;
+    use super::Erc721UriStorage;
 
-    impl Default for ERC721UriStorage {
+    impl Default for Erc721UriStorage {
         fn default() -> Self {
             let root = U256::ZERO;
 
-            ERC721UriStorage {
+            Erc721UriStorage {
                 _token_uris: unsafe { StorageMap::new(root, 0) },
             }
         }
@@ -83,21 +84,21 @@ mod tests {
         U256::from(num)
     }
 
-    #[grip::test]
-    fn get_token_uri_works(contract: ERC721UriStorage) {
+    #[motsu::test]
+    fn get_token_uri_works(contract: Erc721UriStorage) {
         let token_id = random_token_id();
 
-        let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#ERC721URIStorage");
+        let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract._token_uris.setter(token_id).set_str(token_uri.clone());
 
         assert_eq!(token_uri, contract.token_uri(token_id));
     }
 
-    #[grip::test]
-    fn set_token_uri_works(contract: ERC721UriStorage) {
+    #[motsu::test]
+    fn set_token_uri_works(contract: Erc721UriStorage) {
         let token_id = random_token_id();
 
-        let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#ERC721URIStorage");
+        let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract._token_uris.setter(token_id).set_str(initial_token_uri);
 
         let token_uri = String::from("Updated Token URI");

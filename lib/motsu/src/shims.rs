@@ -22,16 +22,16 @@
 //!
 //! ## Usage
 //!
-//! Import these shims in your test modules as `grip::prelude::*` to populate
+//! Import these shims in your test modules as `motsu::prelude::*` to populate
 //! the namespace with the appropriate symbols.
 //!
 //! ```rust,ignore
 //! #[cfg(test)]
 //! mod tests {
-//!     use contracts::erc20::ERC20;
+//!     use contracts::token::erc20::Erc20;
 //!
-//!     #[grip::test]
-//!     fn reads_balance(contract: ERC20) {
+//!     #[motsu::test]
+//!     fn reads_balance(contract: Erc20) {
 //!         let balance = contract.balance_of(Address::ZERO); // Access storage.
 //!         assert_eq!(balance, U256::ZERO);
 //!     }
@@ -46,7 +46,7 @@
 //! ```rust,no_run
 //! use std::sync::{Mutex, MutexGuard};
 //!
-//! use grip::prelude::reset_storage;
+//! use motsu::prelude::reset_storage;
 //!
 //! pub static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
 //!
@@ -61,12 +61,10 @@
 //!     reset_storage();
 //! }
 //!
-//! #[test]
+//! #[motsu::test]
 //! fn reads_balance() {
-//!     grid::context::with_context::<ERC20>(|token| {
-//!         let balance = token.balance_of(Address::ZERO);
-//!         assert_eq!(balance, U256::ZERO);
-//!     })
+//!     let balance = token.balance_of(Address::ZERO);
+//!     assert_eq!(balance, U256::ZERO);
 //! }
 //! ```
 #![allow(clippy::missing_safety_doc)]

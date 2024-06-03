@@ -1,13 +1,12 @@
-//! Optional Burnable extension of the [`ERC-721`] standard.
+//! Optional Burnable extension of the ERC-721 standard.
 
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::erc721::{Error, ERC721};
+use crate::token::erc721::{Erc721, Error};
 
-/// [`ERC-721`] Token that can be burned (destroyed).
-#[allow(clippy::module_name_repetitions)]
-pub trait IERC721Burnable {
+/// An [`Erc721`] token that can be burned (destroyed).
+pub trait IErc721Burnable {
     /// Burns `token_id`.
     /// The approval is cleared when the token is burned.
     /// Relies on the `_burn` mechanism.
@@ -18,14 +17,15 @@ pub trait IERC721Burnable {
     ///
     /// # Errors
     ///
-    /// * If token does not exist then [`Error::NonexistentToken`] is returned.
-    /// * If the caller does not have the right to approve then
-    ///   [`Error::InsufficientApproval`] is returned.
+    /// If token does not exist, then the error
+    /// [`Error::NonexistentToken`] is returned.
+    /// If the caller does not have the right to approve, then the error
+    /// [`Error::InsufficientApproval`] is returned.
     ///
     /// # Requirements:
     ///
     /// * `token_id` must exist.
-    /// * The caller must own tokenId or be an approved operator.
+    /// * The caller must own `token_id` or be an approved operator.
     ///
     /// # Events
     ///
@@ -33,9 +33,9 @@ pub trait IERC721Burnable {
     fn burn(&mut self, token_id: U256) -> Result<(), Error>;
 }
 
-impl IERC721Burnable for ERC721 {
+impl IErc721Burnable for Erc721 {
     fn burn(&mut self, token_id: U256) -> Result<(), Error> {
-        // Setting an "auth" arguments enables the [`ERC721::_is_authorized`]
+        // Setting an "auth" arguments enables the [`Erc721::_is_authorized`]
         // check which verifies that the token exists (from != `Address::ZERO`).
         //
         // Therefore, it is not needed to verify
@@ -45,33 +45,39 @@ impl IERC721Burnable for ERC721 {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
     use once_cell::sync::Lazy;
     use stylus_sdk::msg;
 
-    use super::IERC721Burnable;
-    use crate::erc721::{tests::random_token_id, Error, ERC721};
+    use super::IErc721Burnable;
+    use crate::token::erc721::{
+        tests::random_token_id, Erc721, Error, IErc721,
+    };
 
-    // NOTE: Alice is always the sender of the message
+    // NOTE: Alice is always the sender of the message.
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
-    #[grip::test]
-    fn burns(contract: ERC721) {
+    #[motsu::test]
+    fn burns(contract: Erc721) {
         let one = U256::from(1);
         let token_id = random_token_id();
 
-        contract._mint(*ALICE, token_id).expect("Mint a token for Alice");
+        contract
+            ._mint(*ALICE, token_id)
+            .expect("should mint a token for Alice");
 
-        let initial_balance =
-            contract.balance_of(*ALICE).expect("Get the balance of Alice");
+        let initial_balance = contract
+            .balance_of(*ALICE)
+            .expect("should return the balance of Alice");
 
         let result = contract.burn(token_id);
-        let balance =
-            contract.balance_of(*ALICE).expect("Get the balance of Alice");
+        let balance = contract
+            .balance_of(*ALICE)
+            .expect("should return the balance of Alice");
 
         let err = contract.owner_of(token_id).unwrap_err();
 
@@ -82,36 +88,42 @@ mod tests {
         assert_eq!(initial_balance - one, balance);
     }
 
-    #[grip::test]
-    fn get_approved_errors_when_previous_approval_burned(contract: ERC721) {
+    #[motsu::test]
+    fn get_approved_errors_when_previous_approval_burned(contract: Erc721) {
         let token_id = random_token_id();
 
-        contract._mint(*ALICE, token_id).expect("Mint a token for Alice");
-        contract.approve(BOB, token_id).expect("Approve a token for Bob");
+        contract
+            ._mint(*ALICE, token_id)
+            .expect("should mint a token for Alice");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve a token for Bob");
 
-        contract.burn(token_id).expect("Burn previously minted token");
+        contract.burn(token_id).expect("should burn previously minted token");
 
         let err = contract.get_approved(token_id).unwrap_err();
 
         assert!(matches!(err, Error::NonexistentToken(_)));
     }
 
-    #[grip::test]
-    fn burn_errors_when_no_previous_approval(contract: ERC721) {
+    #[motsu::test]
+    fn burn_errors_when_no_previous_approval(contract: Erc721) {
         let token_id = random_token_id();
 
-        contract._mint(BOB, token_id).expect("Mint a token for Bob");
+        contract._mint(BOB, token_id).expect("should mint a token for Bob");
 
         let err = contract.burn(token_id).unwrap_err();
 
         assert!(matches!(err, Error::InsufficientApproval(_)));
     }
 
-    #[grip::test]
-    fn burn_errors_when_unknown_token(contract: ERC721) {
+    #[motsu::test]
+    fn burn_errors_when_unknown_token(contract: Erc721) {
         let token_id = random_token_id();
 
-        contract._mint(*ALICE, token_id).expect("Mint a token for Alice");
+        contract
+            ._mint(*ALICE, token_id)
+            .expect("should mint a token for Alice");
 
         let err = contract.burn(token_id + U256::from(1)).unwrap_err();
 

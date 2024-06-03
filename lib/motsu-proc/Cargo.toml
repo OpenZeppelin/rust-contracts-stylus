@@ -1,6 +1,6 @@
 [package]
-name = "grip-proc"
-description = "Grip Procedural Macros"
+name = "motsu-proc"
+description = "Mostu's Procedural Macros"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true

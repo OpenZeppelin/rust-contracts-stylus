@@ -10,37 +10,30 @@ pub const DEFAULT_DECIMALS: u8 = 18;
 use crate::utils::Metadata;
 
 sol_storage! {
-    /// Metadata of the ERC20 token.
+    /// Metadata of the [`Erc20`] token.
     ///
     /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
-    pub struct ERC20Metadata {
+    pub struct Erc20Metadata {
         /// Common Metadata.
         Metadata _metadata
     }
 }
 
-// FIXME: Apply multi-level inheritance to export Metadata's functions.
-// With the current version of SDK it is not possible.
-// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
-#[external]
-impl ERC20Metadata {
+/// Interface for the optional metadata functions from the ERC-20 standard.
+pub trait IErc20Metadata {
     /// Returns the name of the token.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn name(&self) -> String {
-        self._metadata.name()
-    }
+    fn name(&self) -> String;
 
     /// Returns the symbol of the token, usually a shorter version of the name.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn symbol(&self) -> String {
-        self._metadata.symbol()
-    }
+    fn symbol(&self) -> String;
 
     /// Returns the number of decimals used to get a user-friendly
     /// representation of values of this token.
@@ -58,9 +51,26 @@ impl ERC20Metadata {
     ///
     /// NOTE: This information is only used for *display* purposes: in
     /// no way it affects any of the arithmetic of the contract, including
-    /// [`ERC20::balance_of`] and [`ERC20::transfer`].
-    pub fn decimals(&self) -> u8 {
-        // TODO: Use `U8` an avoid the conversion once https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
+    /// [`Erc20::balance_of`] and [`Erc20::transfer`].
+    fn decimals(&self) -> u8;
+}
+
+// FIXME: Apply multi-level inheritance to export Metadata's functions.
+// With the current version of SDK it is not possible.
+// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
+#[external]
+impl IErc20Metadata for Erc20Metadata {
+    fn name(&self) -> String {
+        self._metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self._metadata.symbol()
+    }
+
+    fn decimals(&self) -> u8 {
+        // TODO: Use `U8` an avoid the conversion once
+        // https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
         // gets resolved.
         DEFAULT_DECIMALS
     }

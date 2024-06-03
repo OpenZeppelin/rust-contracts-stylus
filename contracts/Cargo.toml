@@ -18,7 +18,7 @@ mini-alloc.workspace = true
 cfg-if = "1.0"
 
 [dev-dependencies]
-grip = { path = "../lib/grip" }
+motsu = { path = "../lib/motsu" }
 rand = "0.8.5"
 once_cell = "1.19.0"
 
@@ -35,6 +35,7 @@ erc20_pausable = ["erc20"]
 # ERC-721
 erc721 = []
 erc721_burnable = ["erc721"]
+erc721_enumerable = ["erc721"]
 erc721_metadata = ["erc721"]
 erc721_pausable = ["erc721"]
 erc721_uri_storage = ["erc721"]

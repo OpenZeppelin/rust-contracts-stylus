@@ -8,12 +8,18 @@ contract Erc721Example {
     mapping(address owner => mapping(address operator => bool))
         private _operatorApprovals;
 
+    mapping(address owner => mapping(uint256 index => uint256))
+        private _ownedTokens;
+    mapping(uint256 tokenId => uint256) private _ownedTokensIndex;
+    uint256[] private _allTokens;
+    mapping(uint256 tokenId => uint256) private _allTokensIndex;
+
     string private _name;
     string private _symbol;
 
-    mapping(uint256 => string) _tokenUris;
-
     bool _paused;
+
+    mapping(uint256 => string) _tokenUris;
 
     constructor(string memory name_, string memory symbol_) {
         _name = name_;

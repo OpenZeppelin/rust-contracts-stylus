@@ -1,6 +1,6 @@
 //! Capped Contract.
 //!
-//! Extension of [`ERC20`] that adds a cap to the supply of tokens.
+//! Extension of ERC-20 standard that adds a cap to the supply of tokens.
 //!
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
@@ -51,7 +51,7 @@ impl Capped {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageType, StorageU256};
@@ -65,7 +65,7 @@ mod tests {
         }
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn cap_works(contract: Capped) {
         let value = U256::from(2024);
         contract._cap.set(value);

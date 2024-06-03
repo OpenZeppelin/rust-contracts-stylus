@@ -4,21 +4,24 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use contracts::{access::control::AccessControl, erc20::ERC20};
+use contracts::{
+    access::control::AccessControl,
+    token::erc20::{Erc20, IErc20},
+};
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 sol_storage! {
     #[entrypoint]
     struct AccessControlExample {
         #[borrow]
-        ERC20 erc20;
+        Erc20 erc20;
         #[borrow]
         AccessControl access;
     }
 }
 
 #[external]
-#[inherit(ERC20, AccessControl)]
+#[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
     // `keccak256("TRANSFER_ROLE")`
     pub const TRANSFER_ROLE: [u8; 32] = [

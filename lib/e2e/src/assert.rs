@@ -10,8 +10,7 @@ impl<R: SolError, E> Assert<R> for RpcError<E> {
     fn assert(&self, _: R) {
         let raw_value = self
             .as_error_resp()
-            .map(|payload| payload.data.clone())
-            .flatten()
+            .and_then(|payload| payload.data.clone())
             .expect("should extract the error");
         let raw_error = raw_value.get().trim_matches('"');
         let selector = alloy::hex::encode(R::SELECTOR);

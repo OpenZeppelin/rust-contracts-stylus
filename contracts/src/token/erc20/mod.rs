@@ -1,9 +1,9 @@
-//! Implementation of the ERC-20 token standard.
+//! Implementation of the [`Erc20`] token standard.
 //!
-//! We have followed general OpenZeppelin Contracts guidelines: functions
+//! We have followed general ``OpenZeppelin`` Contracts guidelines: functions
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
-//! ERC-20 applications.
+//! [`Erc20`] applications.
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
@@ -71,7 +71,7 @@ sol! {
 
 }
 
-/// An ERC-20 error defined as described in [ERC-6093].
+/// An [`Erc20`] error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
 #[derive(SolidityError, Debug)]
@@ -92,8 +92,8 @@ pub enum Error {
 }
 
 sol_storage! {
-    /// State of an ERC20 token.
-    pub struct ERC20 {
+    /// State of an `Erc20` token.
+    pub struct Erc20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;
         /// Maps users to a mapping of each spender's allowance.
@@ -103,16 +103,14 @@ sol_storage! {
     }
 }
 
-#[external]
-impl ERC20 {
+/// Required interface of an [`Erc20`] compliant contract.
+pub trait IErc20 {
     /// Returns the number of tokens in existence.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn total_supply(&self) -> U256 {
-        self._total_supply.get()
-    }
+    fn total_supply(&self) -> U256;
 
     /// Returns the number of tokens owned by `account`.
     ///
@@ -120,9 +118,7 @@ impl ERC20 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `account` - Account to get balance from.
-    pub fn balance_of(&self, account: Address) -> U256 {
-        self._balances.get(account)
-    }
+    fn balance_of(&self, account: Address) -> U256;
 
     /// Moves a `value` amount of tokens from the caller's account to `to`.
     ///
@@ -144,15 +140,7 @@ impl ERC20 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Error> {
-        let from = msg::sender();
-        self._transfer(from, to, value)?;
-        Ok(true)
-    }
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error>;
 
     /// Returns the remaining number of tokens that `spender` will be allowed
     /// to spend on behalf of `owner` through `transfer_from`. This is zero by
@@ -165,9 +153,7 @@ impl ERC20 {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
-    pub fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        self._allowances.get(owner).get(spender)
-    }
+    fn allowance(&self, owner: Address, spender: Address) -> U256;
 
     /// Sets a `value` number of tokens as the allowance of `spender` over the
     /// caller's tokens.
@@ -177,13 +163,13 @@ impl ERC20 {
     /// WARNING: Beware that changing an allowance with this method brings the
     /// risk that someone may use both the old and the new allowance by
     /// unfortunate transaction ordering. One possible solution to mitigate
-    /// this race condition is to first reduce the spender's allowance to 0 and
-    /// set the desired value afterwards:
+    /// this race condition is to first reduce the `spender`'s allowance to 0
+    /// and set the desired value afterwards:
     /// <https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729>
     ///
     /// # Arguments
     ///
-    /// * `&mutself` - Write access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
     ///
@@ -195,22 +181,8 @@ impl ERC20 {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    pub fn approve(
-        &mut self,
-        spender: Address,
-        value: U256,
-    ) -> Result<bool, Error> {
-        let owner = msg::sender();
-        if spender.is_zero() {
-            return Err(Error::InvalidSpender(ERC20InvalidSpender {
-                spender: Address::ZERO,
-            }));
-        }
-
-        self._allowances.setter(owner).insert(spender, value);
-        evm::log(Approval { owner, spender, value });
-        Ok(true)
-    }
+    fn approve(&mut self, spender: Address, value: U256)
+        -> Result<bool, Error>;
 
     /// Moves a `value` number of tokens from `from` to `to` using the
     /// allowance mechanism. `value` is then deducted from the caller's
@@ -218,9 +190,9 @@ impl ERC20 {
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
-    /// NOTE: If `value` is the maximum `uint256`, the allowance is not updated
-    /// on `transferFrom`. This is semantically equivalent to an infinite
-    /// approval.
+    /// NOTE: If `value` is the maximum `U256::MAX`, the allowance is not
+    /// updated on `transfer_from`. This is semantically equivalent to
+    /// an infinite approval.
     ///
     /// # Arguments
     ///
@@ -241,7 +213,52 @@ impl ERC20 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn transfer_from(
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Error>;
+}
+
+#[external]
+impl IErc20 for Erc20 {
+    fn total_supply(&self) -> U256 {
+        self._total_supply.get()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self._balances.get(account)
+    }
+
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
+        let from = msg::sender();
+        self._transfer(from, to, value)?;
+        Ok(true)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self._allowances.get(owner).get(spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Error> {
+        let owner = msg::sender();
+        if spender.is_zero() {
+            return Err(Error::InvalidSpender(ERC20InvalidSpender {
+                spender: Address::ZERO,
+            }));
+        }
+
+        self._allowances.setter(owner).insert(spender, value);
+        evm::log(Approval { owner, spender, value });
+        Ok(true)
+    }
+
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -254,7 +271,7 @@ impl ERC20 {
     }
 }
 
-impl ERC20 {
+impl Erc20 {
     /// Internal implementation of transferring tokens between two accounts.
     ///
     /// # Arguments
@@ -366,7 +383,7 @@ impl ERC20 {
             let total_supply = self
                 .total_supply()
                 .checked_add(value)
-                .expect("Should not exceed `U256::MAX` for `_total_supply`");
+                .expect("should not exceed `U256::MAX` for `_total_supply`");
             self._total_supply.set(total_supply);
         } else {
             let from_balance = self._balances.get(from);
@@ -380,19 +397,21 @@ impl ERC20 {
                 ));
             }
             // Overflow not possible:
-            // value <= from_balance <= _total_supply.
+            // `value` <= `from_balance` <= `_total_supply`.
             self._balances.setter(from).set(from_balance - value);
         }
 
         if to.is_zero() {
             let total_supply = self.total_supply();
             // Overflow not possible:
-            // value <= _total_supply or value <= from_balance <= _total_supply.
+            // `value` <= `_total_supply` or
+            // `value` <= `from_balance` <= `_total_supply`.
             self._total_supply.set(total_supply - value);
         } else {
             let balance_to = self._balances.get(to);
             // Overflow not possible:
-            // balance + value is at most total_supply, which fits into a U256.
+            // `balance_to` + `value` is at most `total_supply`,
+            // which fits into a `U256`.
             self._balances.setter(to).set(balance_to + value);
         }
 
@@ -484,12 +503,12 @@ mod tests {
         storage::{StorageMap, StorageType, StorageU256},
     };
 
-    use crate::erc20::{Error, ERC20};
+    use super::{Erc20, Error, IErc20};
 
-    impl Default for ERC20 {
+    impl Default for Erc20 {
         fn default() -> Self {
             let root = U256::ZERO;
-            ERC20 {
+            Erc20 {
                 _balances: unsafe { StorageMap::new(root, 0) },
                 _allowances: unsafe {
                     StorageMap::new(root + U256::from(32), 0)
@@ -501,8 +520,8 @@ mod tests {
         }
     }
 
-    #[grip::test]
-    fn reads_balance(contract: ERC20) {
+    #[motsu::test]
+    fn reads_balance(contract: Erc20) {
         let balance = contract.balance_of(Address::ZERO);
         assert_eq!(U256::ZERO, balance);
 
@@ -513,202 +532,203 @@ mod tests {
         assert_eq!(one, balance);
     }
 
-    #[grip::test]
-    fn update_mint(contract: ERC20) {
+    #[motsu::test]
+    fn update_mint(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
 
-        // Store initial balance & supply
+        // Store initial balance & supply.
         let initial_balance = contract.balance_of(alice);
         let initial_supply = contract.total_supply();
 
-        // Mint action should work
+        // Mint action should work.
         let result = contract._update(Address::ZERO, alice, one);
         assert!(result.is_ok());
 
-        // Check updated balance & supply
+        // Check updated balance & supply.
         assert_eq!(initial_balance + one, contract.balance_of(alice));
         assert_eq!(initial_supply + one, contract.total_supply());
     }
 
-    #[grip::test]
-    #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
-    fn update_mint_errors_arithmetic_overflow(contract: ERC20) {
+    #[motsu::test]
+    #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
+    fn update_mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
         assert_eq!(U256::ZERO, contract.total_supply());
 
-        // Initialize state for the test case -- Alice's balance as U256::MAX
+        // Initialize state for the test case:
+        // Alice's balance as `U256::MAX`.
         contract
             ._update(Address::ZERO, alice, U256::MAX)
-            .expect("ERC20::_update should work");
-        // Mint action should NOT work -- overflow on `_total_supply`.
+            .expect("should mint tokens");
+        // Mint action should NOT work:
+        // overflow on `_total_supply`.
         let _result = contract._update(Address::ZERO, alice, one);
     }
 
-    #[grip::test]
-    fn mint_works(contract: ERC20) {
+    #[motsu::test]
+    fn mint_works(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
 
-        // Store initial balance & supply
+        // Store initial balance & supply.
         let initial_balance = contract.balance_of(alice);
         let initial_supply = contract.total_supply();
 
-        // Mint action should work
+        // Mint action should work.
         let result = contract._mint(alice, one);
         assert!(result.is_ok());
 
-        // Check updated balance & supply
+        // Check updated balance & supply.
         assert_eq!(initial_balance + one, contract.balance_of(alice));
         assert_eq!(initial_supply + one, contract.total_supply());
     }
 
-    #[grip::test]
-    fn mint_errors_invalid_receiver(contract: ERC20) {
+    #[motsu::test]
+    fn mint_errors_invalid_receiver(contract: Erc20) {
         let receiver = Address::ZERO;
         let one = U256::from(1);
 
-        // Store initial balance & supply
+        // Store initial balance & supply.
         let initial_balance = contract.balance_of(receiver);
         let initial_supply = contract.total_supply();
 
-        // Mint action should work
+        // Mint action should work.
         let result = contract._mint(receiver, one);
         assert!(matches!(result, Err(Error::InvalidReceiver(_))));
 
-        // Check updated balance & supply
+        // Check updated balance & supply.
         assert_eq!(initial_balance, contract.balance_of(receiver));
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
-    #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
-    fn mint_errors_arithmetic_overflow(contract: ERC20) {
+    #[motsu::test]
+    #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
+    fn mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
         assert_eq!(U256::ZERO, contract.total_supply());
 
-        // Initialize state for the test case -- Alice's balance as U256::MAX
+        // Initialize state for the test case:
+        // Alice's balance as `U256::MAX`.
         contract
             ._update(Address::ZERO, alice, U256::MAX)
-            .expect("ERC20::_update should work");
+            .expect("should mint tokens");
         // Mint action should NOT work -- overflow on `_total_supply`.
         let _result = contract._mint(alice, one);
     }
 
-    #[grip::test]
-    fn update_burn(contract: ERC20) {
+    #[motsu::test]
+    fn update_burn(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         let two = U256::from(2);
 
-        // Initialize state for the test case -- Alice's balance as `two`
+        // Initialize state for the test case:
+        // Alice's balance as `two`.
         contract
             ._update(Address::ZERO, alice, two)
-            .expect("ERC20::_update should work");
+            .expect("should mint tokens");
 
-        // Store initial balance & supply
+        // Store initial balance & supply.
         let initial_balance = contract.balance_of(alice);
         let initial_supply = contract.total_supply();
 
-        // Burn action should work
+        // Burn action should work.
         let result = contract._update(alice, Address::ZERO, one);
         assert!(result.is_ok());
 
-        // Check updated balance & supply
+        // Check updated balance & supply.
         assert_eq!(initial_balance - one, contract.balance_of(alice));
         assert_eq!(initial_supply - one, contract.total_supply());
     }
 
-    #[grip::test]
-    fn update_burn_errors_insufficient_balance(contract: ERC20) {
+    #[motsu::test]
+    fn update_burn_errors_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         let two = U256::from(2);
 
-        // Initialize state for the test case -- Alice's balance as `one`
+        // Initialize state for the test case:
+        // Alice's balance as `one`.
         contract
             ._update(Address::ZERO, alice, one)
-            .expect("ERC20::_update should work");
+            .expect("should mint tokens");
 
-        // Store initial balance & supply
+        // Store initial balance & supply.
         let initial_balance = contract.balance_of(alice);
         let initial_supply = contract.total_supply();
 
-        // Burn action should NOT work -- `InsufficientBalance`
+        // Burn action should NOT work - `InsufficientBalance`.
         let result = contract._update(alice, Address::ZERO, two);
         assert!(matches!(result, Err(Error::InsufficientBalance(_))));
 
-        // Check proper state (before revert)
+        // Check proper state (before revert).
         assert_eq!(initial_balance, contract.balance_of(alice));
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
-    fn update_transfer(contract: ERC20) {
+    #[motsu::test]
+    fn update_transfer(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let one = U256::from(1);
 
-        // Initialize state for the test case -- Alice's & Bob's balance as
-        // `one`
+        // Initialize state for the test case:
+        //  Alice's & Bob's balance as `one`.
         contract
             ._update(Address::ZERO, alice, one)
-            .expect("ERC20::_update should work");
-        contract
-            ._update(Address::ZERO, bob, one)
-            .expect("ERC20::_update should work");
+            .expect("should mint tokens");
+        contract._update(Address::ZERO, bob, one).expect("should mint tokens");
 
-        // Store initial balance & supply
+        // Store initial balance & supply.
         let initial_alice_balance = contract.balance_of(alice);
         let initial_bob_balance = contract.balance_of(bob);
         let initial_supply = contract.total_supply();
 
-        // Transfer action should work
+        // Transfer action should work.
         let result = contract._update(alice, bob, one);
         assert!(result.is_ok());
 
-        // Check updated balance & supply
+        // Check updated balance & supply.
         assert_eq!(initial_alice_balance - one, contract.balance_of(alice));
         assert_eq!(initial_bob_balance + one, contract.balance_of(bob));
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
-    fn update_transfer_errors_insufficient_balance(contract: ERC20) {
+    #[motsu::test]
+    fn update_transfer_errors_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let one = U256::from(1);
 
-        // Initialize state for the test case -- Alice's & Bob's balance as
-        // `one`
+        // Initialize state for the test case:
+        // Alice's & Bob's balance as `one`.
         contract
             ._update(Address::ZERO, alice, one)
-            .expect("ERC20::_update should work");
-        contract
-            ._update(Address::ZERO, bob, one)
-            .expect("ERC20::_update should work");
+            .expect("should mint tokens");
+        contract._update(Address::ZERO, bob, one).expect("should mint tokens");
 
-        // Store initial balance & supply
+        // Store initial balance & supply.
         let initial_alice_balance = contract.balance_of(alice);
         let initial_bob_balance = contract.balance_of(bob);
         let initial_supply = contract.total_supply();
 
-        // Transfer action should NOT work -- `InsufficientBalance`
+        // Transfer action should NOT work - `InsufficientBalance`.
         let result = contract._update(alice, bob, one + one);
         assert!(matches!(result, Err(Error::InsufficientBalance(_))));
 
-        // Check proper state (before revert)
+        // Check proper state (before revert).
         assert_eq!(initial_alice_balance, contract.balance_of(alice));
         assert_eq!(initial_bob_balance, contract.balance_of(bob));
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
-    fn transfers(contract: ERC20) {
+    #[motsu::test]
+    fn transfers(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -727,8 +747,8 @@ mod tests {
         assert_eq!(one, contract.balance_of(bob));
     }
 
-    #[grip::test]
-    fn transfers_from(contract: ERC20) {
+    #[motsu::test]
+    fn transfers_from(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let sender = msg::sender();
@@ -749,8 +769,8 @@ mod tests {
         assert_eq!(U256::ZERO, contract.allowance(alice, sender));
     }
 
-    #[grip::test]
-    fn transfer_from_errors_when_insufficient_balance(contract: ERC20) {
+    #[motsu::test]
+    fn transfer_from_errors_when_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -764,8 +784,8 @@ mod tests {
         assert!(matches!(result, Err(Error::InsufficientBalance(_))));
     }
 
-    #[grip::test]
-    fn transfer_from_errors_when_invalid_sender(contract: ERC20) {
+    #[motsu::test]
+    fn transfer_from_errors_when_invalid_sender(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         contract
@@ -777,8 +797,8 @@ mod tests {
         assert!(matches!(result, Err(Error::InvalidSender(_))));
     }
 
-    #[grip::test]
-    fn transfer_from_errors_when_invalid_receiver(contract: ERC20) {
+    #[motsu::test]
+    fn transfer_from_errors_when_invalid_receiver(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         contract._allowances.setter(alice).setter(msg::sender()).set(one);
@@ -786,8 +806,8 @@ mod tests {
         assert!(matches!(result, Err(Error::InvalidReceiver(_))));
     }
 
-    #[grip::test]
-    fn transfer_from_errors_when_insufficient_allowance(contract: ERC20) {
+    #[motsu::test]
+    fn transfer_from_errors_when_insufficient_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -800,8 +820,8 @@ mod tests {
         assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
     }
 
-    #[grip::test]
-    fn reads_allowance(contract: ERC20) {
+    #[motsu::test]
+    fn reads_allowance(contract: Erc20) {
         let owner = msg::sender();
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
@@ -814,8 +834,8 @@ mod tests {
         assert_eq!(one, allowance);
     }
 
-    #[grip::test]
-    fn approves(contract: ERC20) {
+    #[motsu::test]
+    fn approves(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // `msg::sender` approves Alice.
@@ -824,8 +844,8 @@ mod tests {
         assert_eq!(one, contract._allowances.get(msg::sender()).get(alice));
     }
 
-    #[grip::test]
-    fn approve_errors_when_invalid_spender(contract: ERC20) {
+    #[motsu::test]
+    fn approve_errors_when_invalid_spender(contract: Erc20) {
         // `msg::sender` approves `Address::ZERO`.
         let one = U256::from(1);
         let result = contract.approve(Address::ZERO, one);
