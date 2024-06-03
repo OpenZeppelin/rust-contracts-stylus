@@ -7,7 +7,7 @@ use alloy_primitives::{Address, U256};
 use contracts::{
     erc20::{
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
-        Erc20,
+        Erc20, IErc20,
     },
     utils::Pausable,
 };

@@ -3,7 +3,7 @@
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc20_metadata"))] {
         pub mod metadata;
-        pub use metadata::Erc20Metadata;
+        pub use metadata::{IErc20Metadata, Erc20Metadata};
     }
 }
 cfg_if::cfg_if! {

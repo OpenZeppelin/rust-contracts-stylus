@@ -77,9 +77,8 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// * If the contract is in `Paused` state, then the error
+    /// If the contract is in `Paused` state, then the error
     /// [`Error::EnforcedPause`] is returned.
-
     pub fn pause(&mut self) -> Result<(), Error> {
         self.when_not_paused()?;
         self._paused.set(true);
@@ -95,7 +94,7 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// * If the contract is in `Unpaused` state, then the error
+    /// If the contract is in `Unpaused` state, then the error
     /// [`Error::ExpectedPause`] is returned.
     pub fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
@@ -113,7 +112,7 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// * If the contract is in `Paused` state, then the error
+    /// If the contract is in `Paused` state, then the error
     /// [`Error::EnforcedPause`] is returned.
     pub fn when_not_paused(&self) -> Result<(), Error> {
         if self._paused.get() {
@@ -131,7 +130,7 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// * If the contract is in `Unpaused` state, then the error
+    /// If the contract is in `Unpaused` state, then the error
     /// [`Error::ExpectedPause`] is returned.
     pub fn when_paused(&self) -> Result<(), Error> {
         if !self._paused.get() {
@@ -141,7 +140,7 @@ impl Pausable {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageBool, StorageType};
@@ -157,17 +156,14 @@ mod tests {
 
     #[grip::test]
     fn paused_works(contract: Pausable) {
-        // Check for unpaused
         contract._paused.set(false);
         assert_eq!(contract.paused(), false);
-        // Check for paused
         contract._paused.set(true);
         assert_eq!(contract.paused(), true);
     }
 
     #[grip::test]
     fn when_not_paused_works(contract: Pausable) {
-        // Check for unpaused
         contract._paused.set(false);
         assert_eq!(contract.paused(), false);
 
@@ -177,7 +173,6 @@ mod tests {
 
     #[grip::test]
     fn when_not_paused_errors_when_paused(contract: Pausable) {
-        // Check for paused
         contract._paused.set(true);
         assert_eq!(contract.paused(), true);
 
@@ -187,7 +182,6 @@ mod tests {
 
     #[grip::test]
     fn when_paused_works(contract: Pausable) {
-        // Check for unpaused
         contract._paused.set(true);
         assert_eq!(contract.paused(), true);
 
@@ -197,7 +191,6 @@ mod tests {
 
     #[grip::test]
     fn when_paused_errors_when_not_paused(contract: Pausable) {
-        // Check for paused
         contract._paused.set(false);
         assert_eq!(contract.paused(), false);
 
@@ -207,22 +200,20 @@ mod tests {
 
     #[grip::test]
     fn pause_works(contract: Pausable) {
-        // Check for unpaused
         contract._paused.set(false);
         assert_eq!(contract.paused(), false);
 
         // Pause the contract
-        contract.pause().expect("Pause action must work in unpaused state");
+        let res = contract.pause();
+        assert!(res.is_ok());
         assert_eq!(contract.paused(), true);
     }
 
     #[grip::test]
     fn pause_errors_when_already_paused(contract: Pausable) {
-        // Check for paused
         contract._paused.set(true);
         assert_eq!(contract.paused(), true);
 
-        // Pause the paused contract
         let result = contract.pause();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
         assert_eq!(contract.paused(), true);
@@ -230,18 +221,17 @@ mod tests {
 
     #[grip::test]
     fn unpause_works(contract: Pausable) {
-        // Check for paused
         contract._paused.set(true);
         assert_eq!(contract.paused(), true);
 
         // Unpause the paused contract
-        contract.unpause().expect("Unpause action must work in paused state");
+        let res = contract.unpause();
+        assert!(res.is_ok());
         assert_eq!(contract.paused(), false);
     }
 
     #[grip::test]
     fn unpause_errors_when_already_unpaused(contract: Pausable) {
-        // Check for unpaused
         contract._paused.set(false);
         assert_eq!(contract.paused(), false);
 
