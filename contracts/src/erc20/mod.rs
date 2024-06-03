@@ -92,8 +92,8 @@ pub enum Error {
 }
 
 sol_storage! {
-    /// State of an ERC20 token.
-    pub struct ERC20 {
+    /// State of an `Erc20` token.
+    pub struct Erc20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;
         /// Maps users to a mapping of each spender's allowance.
@@ -104,7 +104,7 @@ sol_storage! {
 }
 
 #[external]
-impl ERC20 {
+impl Erc20 {
     /// Returns the number of tokens in existence.
     ///
     /// # Arguments
@@ -254,7 +254,7 @@ impl ERC20 {
     }
 }
 
-impl ERC20 {
+impl Erc20 {
     /// Internal implementation of transferring tokens between two accounts.
     ///
     /// # Arguments
@@ -484,12 +484,12 @@ mod tests {
         storage::{StorageMap, StorageType, StorageU256},
     };
 
-    use crate::erc20::{Error, ERC20};
+    use crate::erc20::{Erc20, Error};
 
-    impl Default for ERC20 {
+    impl Default for Erc20 {
         fn default() -> Self {
             let root = U256::ZERO;
-            ERC20 {
+            Erc20 {
                 _balances: unsafe { StorageMap::new(root, 0) },
                 _allowances: unsafe {
                     StorageMap::new(root + U256::from(32), 0)
@@ -502,7 +502,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn reads_balance(contract: ERC20) {
+    fn reads_balance(contract: Erc20) {
         let balance = contract.balance_of(Address::ZERO);
         assert_eq!(U256::ZERO, balance);
 
@@ -514,7 +514,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn update_mint(contract: ERC20) {
+    fn update_mint(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
 
@@ -533,7 +533,7 @@ mod tests {
 
     #[grip::test]
     #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
-    fn update_mint_errors_arithmetic_overflow(contract: ERC20) {
+    fn update_mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
@@ -542,13 +542,13 @@ mod tests {
         // Initialize state for the test case -- Alice's balance as U256::MAX
         contract
             ._update(Address::ZERO, alice, U256::MAX)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
         // Mint action should NOT work -- overflow on `_total_supply`.
         let _result = contract._update(Address::ZERO, alice, one);
     }
 
     #[grip::test]
-    fn mint_works(contract: ERC20) {
+    fn mint_works(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
 
@@ -566,7 +566,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn mint_errors_invalid_receiver(contract: ERC20) {
+    fn mint_errors_invalid_receiver(contract: Erc20) {
         let receiver = Address::ZERO;
         let one = U256::from(1);
 
@@ -585,7 +585,7 @@ mod tests {
 
     #[grip::test]
     #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
-    fn mint_errors_arithmetic_overflow(contract: ERC20) {
+    fn mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
@@ -594,13 +594,13 @@ mod tests {
         // Initialize state for the test case -- Alice's balance as U256::MAX
         contract
             ._update(Address::ZERO, alice, U256::MAX)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
         // Mint action should NOT work -- overflow on `_total_supply`.
         let _result = contract._mint(alice, one);
     }
 
     #[grip::test]
-    fn update_burn(contract: ERC20) {
+    fn update_burn(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         let two = U256::from(2);
@@ -608,7 +608,7 @@ mod tests {
         // Initialize state for the test case -- Alice's balance as `two`
         contract
             ._update(Address::ZERO, alice, two)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
 
         // Store initial balance & supply
         let initial_balance = contract.balance_of(alice);
@@ -624,7 +624,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn update_burn_errors_insufficient_balance(contract: ERC20) {
+    fn update_burn_errors_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         let two = U256::from(2);
@@ -632,7 +632,7 @@ mod tests {
         // Initialize state for the test case -- Alice's balance as `one`
         contract
             ._update(Address::ZERO, alice, one)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
 
         // Store initial balance & supply
         let initial_balance = contract.balance_of(alice);
@@ -648,7 +648,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn update_transfer(contract: ERC20) {
+    fn update_transfer(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let one = U256::from(1);
@@ -657,10 +657,10 @@ mod tests {
         // `one`
         contract
             ._update(Address::ZERO, alice, one)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
         contract
             ._update(Address::ZERO, bob, one)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
 
         // Store initial balance & supply
         let initial_alice_balance = contract.balance_of(alice);
@@ -678,7 +678,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn update_transfer_errors_insufficient_balance(contract: ERC20) {
+    fn update_transfer_errors_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let one = U256::from(1);
@@ -687,10 +687,10 @@ mod tests {
         // `one`
         contract
             ._update(Address::ZERO, alice, one)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
         contract
             ._update(Address::ZERO, bob, one)
-            .expect("ERC20::_update should work");
+            .expect("Erc20::_update should work");
 
         // Store initial balance & supply
         let initial_alice_balance = contract.balance_of(alice);
@@ -708,7 +708,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfers(contract: ERC20) {
+    fn transfers(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -728,7 +728,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfers_from(contract: ERC20) {
+    fn transfers_from(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let sender = msg::sender();
@@ -750,7 +750,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer_from_errors_when_insufficient_balance(contract: ERC20) {
+    fn transfer_from_errors_when_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -765,7 +765,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer_from_errors_when_invalid_sender(contract: ERC20) {
+    fn transfer_from_errors_when_invalid_sender(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         contract
@@ -778,7 +778,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer_from_errors_when_invalid_receiver(contract: ERC20) {
+    fn transfer_from_errors_when_invalid_receiver(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
         contract._allowances.setter(alice).setter(msg::sender()).set(one);
@@ -787,7 +787,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn transfer_from_errors_when_insufficient_allowance(contract: ERC20) {
+    fn transfer_from_errors_when_insufficient_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -801,7 +801,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn reads_allowance(contract: ERC20) {
+    fn reads_allowance(contract: Erc20) {
         let owner = msg::sender();
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
@@ -815,7 +815,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn approves(contract: ERC20) {
+    fn approves(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // `msg::sender` approves Alice.
@@ -825,7 +825,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn approve_errors_when_invalid_spender(contract: ERC20) {
+    fn approve_errors_when_invalid_spender(contract: Erc20) {
         // `msg::sender` approves `Address::ZERO`.
         let one = U256::from(1);
         let result = contract.approve(Address::ZERO, one);

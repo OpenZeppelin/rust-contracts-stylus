@@ -1,18 +1,17 @@
-//! Optional `Enumerable` extension of the [`ERC-721`] standard.
+//! Optional `Enumerable` extension of the [`Erc721`] standard.
 //!
-//! This implements an optional extension of [`ERC-721`] defined in the EIP
+//! This implements an optional extension of [`Erc721`] defined in the EIP
 //! that adds enumerability of all the token ids in the contract
 //! as well as all token ids owned by each account.
 //!
-//! CAUTION: [`ERC721`] extensions that implement
-//! custom [`ERC721::balance_of`] logic, such as [`ERC721Consecutive`],
-//! interfere with enumerability and should not be used together
-//! with [`ERC721Enumerable`].
+//! CAUTION: [`Erc721`] extensions that implement custom
+//! [`Erc721::balance_of`] logic, such as [`Erc721Consecutive`], interfere with
+//! enumerability and should not be used together with [`Erc721Enumerable`].
 use alloy_primitives::{private::derive_more::From, Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 
-use crate::erc721::IERC721;
+use crate::erc721::IErc721;
 
 sol! {
     /// Indicates an error when an `owner`'s token query
@@ -30,7 +29,7 @@ sol! {
     error ERC721EnumerableForbiddenBatchMint();
 }
 
-/// An [`ERC721Enumerable`] extension error.
+/// An [`Erc721Enumerable`] extension error.
 #[derive(SolidityError, Debug, From)]
 pub enum Error {
     /// Indicates an error when an `owner`'s token query
@@ -46,7 +45,7 @@ pub enum Error {
 
 sol_storage! {
     /// State of an Enumerable extension.
-    pub struct ERC721Enumerable {
+    pub struct Erc721Enumerable {
         /// Maps owners to a mapping of indices to tokens ids.
         mapping(address => mapping(uint256 => uint256)) _owned_tokens;
         /// Maps tokens ids to indices in `_owned_tokens`.
@@ -60,15 +59,14 @@ sol_storage! {
 }
 
 /// This is the interface of the optional `Enumerable` extension
-/// of the [`ERC721`] standard.
-#[allow(clippy::module_name_repetitions)]
-pub trait IERC721Enumerable {
+/// of the [`Erc721`] standard.
+pub trait IErc721Enumerable {
     // TODO: fn supports_interface (#33)
 
     /// Returns a token ID owned by `owner`
     /// at a given `index` of its token list.
     ///
-    /// Use along with [`ERC721::balance_of`]
+    /// Use along with [`Erc721::balance_of`]
     /// to enumerate all of `owner`'s tokens.
     ///
     /// # Arguments
@@ -95,7 +93,7 @@ pub trait IERC721Enumerable {
     /// Returns a token ID at a given `index` of all the tokens
     /// stored by the contract.
     ///
-    /// Use along with [`ERC721::total_supply`] to enumerate all tokens.
+    /// Use along with [`Erc721::total_supply`] to enumerate all tokens.
     ///
     /// # Arguments
     ///
@@ -109,7 +107,7 @@ pub trait IERC721Enumerable {
 }
 
 #[external]
-impl IERC721Enumerable for ERC721Enumerable {
+impl IErc721Enumerable for Erc721Enumerable {
     fn token_of_owner_by_index(
         &self,
         owner: Address,
@@ -136,7 +134,7 @@ impl IERC721Enumerable for ERC721Enumerable {
     }
 }
 
-impl ERC721Enumerable {
+impl Erc721Enumerable {
     /// Function to add a token to this extension's
     /// ownership-tracking data structures.
     ///
@@ -146,7 +144,7 @@ impl ERC721Enumerable {
     /// * `to` - Address representing the new owner of the given `token_id`.
     /// * `token_id` - ID of the token to be added to the tokens list of the
     ///   given address.
-    /// * `erc721` - Read access to a contract providing [`IERC721`] interface.
+    /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
     ///
     /// # Errors
     ///
@@ -156,7 +154,7 @@ impl ERC721Enumerable {
         &mut self,
         to: Address,
         token_id: U256,
-        erc721: &impl IERC721,
+        erc721: &impl IErc721,
     ) -> Result<(), crate::erc721::Error> {
         let length = erc721.balance_of(to)? - U256::from(1);
         self._owned_tokens.setter(to).setter(length).set(token_id);
@@ -197,7 +195,7 @@ impl ERC721Enumerable {
     ///   `token_id`.
     /// * `token_id` - ID of the token to be removed from the tokens list of the
     ///   given address.
-    /// * `erc721` - Read access to a contract providing [`IERC721`] interface.
+    /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
     ///
     /// # Errors
     ///
@@ -208,7 +206,7 @@ impl ERC721Enumerable {
         &mut self,
         from: Address,
         token_id: U256,
-        erc721: &impl IERC721,
+        erc721: &impl IErc721,
     ) -> Result<(), crate::erc721::Error> {
         // To prevent a gap in from's tokens array,
         // we store the last token in the index of the token to delete,
@@ -286,7 +284,7 @@ impl ERC721Enumerable {
         self._all_tokens.pop();
     }
 
-    /// See [`ERC721::_increase_balance`].
+    /// See [`Erc721::_increase_balance`].
     /// Check if tokens can be minted in batch.
     ///
     /// Mechanism to be consistent with [Solidity version](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.0/contracts/token/ERC721/extensions/ERC721Enumerable.sol#L163-L171)
@@ -318,19 +316,19 @@ mod tests {
         storage::{StorageMap, StorageVec},
     };
 
-    use super::{ERC721Enumerable, Error, IERC721Enumerable};
-    use crate::erc721::{tests::random_token_id, ERC721, IERC721};
+    use super::{Erc721Enumerable, Error, IErc721Enumerable};
+    use crate::erc721::{tests::random_token_id, Erc721, IErc721};
 
     // NOTE: Alice is always the sender of the message.
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
-    impl Default for ERC721Enumerable {
+    impl Default for Erc721Enumerable {
         fn default() -> Self {
             let root = U256::ZERO;
 
-            ERC721Enumerable {
+            Erc721Enumerable {
                 _owned_tokens: unsafe { StorageMap::new(root, 0) },
                 _owned_tokens_index: unsafe {
                     StorageMap::new(root + U256::from(32), 0)
@@ -346,13 +344,13 @@ mod tests {
     }
 
     #[grip::test]
-    fn total_supply_no_tokens(contract: ERC721Enumerable) {
+    fn total_supply_no_tokens(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
     }
 
     #[grip::test]
     fn token_by_index_errors_when_index_out_of_bound(
-        contract: ERC721Enumerable,
+        contract: Erc721Enumerable,
     ) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
@@ -363,7 +361,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn add_token_to_all_tokens_enumeration_works(contract: ERC721Enumerable) {
+    fn add_token_to_all_tokens_enumeration_works(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
         let tokens_len = 10;
@@ -394,7 +392,7 @@ mod tests {
 
     #[grip::test]
     fn remove_token_from_all_tokens_enumeration_works(
-        contract: ERC721Enumerable,
+        contract: Erc721Enumerable,
     ) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
@@ -445,14 +443,14 @@ mod tests {
 
     #[grip::test]
     fn check_increase_balance() {
-        assert!(ERC721Enumerable::_check_increase_balance(0).is_ok());
-        let err = ERC721Enumerable::_check_increase_balance(1).unwrap_err();
+        assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
+        let err = Erc721Enumerable::_check_increase_balance(1).unwrap_err();
         assert!(matches!(err, Error::EnumerableForbiddenBatchMint(_)));
     }
 
     #[grip::test]
-    fn token_of_owner_by_index_works(contract: ERC721Enumerable) {
-        let mut erc721 = ERC721::default();
+    fn token_of_owner_by_index_works(contract: Erc721Enumerable) {
+        let mut erc721 = Erc721::default();
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(*ALICE).expect("should return balance of ALICE")
@@ -477,8 +475,8 @@ mod tests {
     }
 
     #[grip::test]
-    fn token_of_owner_errors_index_out_of_bound(contract: ERC721Enumerable) {
-        let mut erc721 = ERC721::default();
+    fn token_of_owner_errors_index_out_of_bound(contract: Erc721Enumerable) {
+        let mut erc721 = Erc721::default();
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(*ALICE).expect("should return balance of ALICE")
@@ -503,9 +501,9 @@ mod tests {
 
     #[grip::test]
     fn token_of_owner_errors_owner_does_not_own_any_token(
-        contract: ERC721Enumerable,
+        contract: Erc721Enumerable,
     ) {
-        let erc721 = ERC721::default();
+        let erc721 = Erc721::default();
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(BOB).expect("should return balance of BOB")
@@ -518,9 +516,9 @@ mod tests {
 
     #[grip::test]
     fn token_of_owner_by_index_after_transfer_works(
-        contract: ERC721Enumerable,
+        contract: Erc721Enumerable,
     ) {
-        let mut erc721 = ERC721::default();
+        let mut erc721 = Erc721::default();
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(*ALICE).expect("should return balance of ALICE")

@@ -10,10 +10,10 @@ use alloy_primitives::{Address, U256};
 use contracts::{
     erc721::{
         extensions::{
-            ERC721Enumerable as Enumerable, ERC721Metadata as Metadata,
-            ERC721UriStorage as UriStorage, IERC721Burnable,
+            Erc721Enumerable as Enumerable, Erc721Metadata as Metadata,
+            Erc721UriStorage as UriStorage, IErc721Burnable,
         },
-        ERC721, IERC721,
+        Erc721, IErc721,
     },
     utils::Pausable,
 };
@@ -24,9 +24,9 @@ use stylus_sdk::{
 
 sol_storage! {
     #[entrypoint]
-    struct ERC721Example {
+    struct Erc721Example {
         #[borrow]
-        ERC721 erc721;
+        Erc721 erc721;
         #[borrow]
         Enumerable enumerable;
         #[borrow]
@@ -39,8 +39,8 @@ sol_storage! {
 }
 
 #[external]
-#[inherit(ERC721, Enumerable, Metadata, Pausable, UriStorage)]
-impl ERC721Example {
+#[inherit(Erc721, Enumerable, Metadata, Pausable, UriStorage)]
+impl Erc721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
 
@@ -149,7 +149,7 @@ impl ERC721Example {
         Ok(())
     }
 
-    // Overrides [`ERC721UriStorage::token_uri`].
+    // Overrides [`Erc721UriStorage::token_uri`].
     // Returns the Uniform Resource Identifier (URI) for tokenId token.
     pub fn token_uri(&self, token_id: U256) -> String {
         let base = self.metadata.base_uri();

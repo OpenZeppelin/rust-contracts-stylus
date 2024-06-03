@@ -3,11 +3,10 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::erc721::{Error, ERC721};
+use crate::erc721::{Erc721, Error};
 
-/// [`ERC-721`] Token that can be burned (destroyed).
-#[allow(clippy::module_name_repetitions)]
-pub trait IERC721Burnable {
+/// An [`Erc721`] token that can be burned (destroyed).
+pub trait IErc721Burnable {
     /// Burns `token_id`.
     /// The approval is cleared when the token is burned.
     /// Relies on the `_burn` mechanism.
@@ -33,9 +32,9 @@ pub trait IERC721Burnable {
     fn burn(&mut self, token_id: U256) -> Result<(), Error>;
 }
 
-impl IERC721Burnable for ERC721 {
+impl IErc721Burnable for Erc721 {
     fn burn(&mut self, token_id: U256) -> Result<(), Error> {
-        // Setting an "auth" arguments enables the [`ERC721::_is_authorized`]
+        // Setting an "auth" arguments enables the [`Erc721::_is_authorized`]
         // check which verifies that the token exists (from != `Address::ZERO`).
         //
         // Therefore, it is not needed to verify
@@ -51,8 +50,8 @@ mod tests {
     use once_cell::sync::Lazy;
     use stylus_sdk::msg;
 
-    use super::IERC721Burnable;
-    use crate::erc721::{tests::random_token_id, Error, ERC721, IERC721};
+    use super::IErc721Burnable;
+    use crate::erc721::{tests::random_token_id, Erc721, Error, IErc721};
 
     // NOTE: Alice is always the sender of the message
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);
@@ -60,7 +59,7 @@ mod tests {
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     #[grip::test]
-    fn burns(contract: ERC721) {
+    fn burns(contract: Erc721) {
         let one = U256::from(1);
         let token_id = random_token_id();
 
@@ -83,7 +82,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn get_approved_errors_when_previous_approval_burned(contract: ERC721) {
+    fn get_approved_errors_when_previous_approval_burned(contract: Erc721) {
         let token_id = random_token_id();
 
         contract._mint(*ALICE, token_id).expect("Mint a token for Alice");
@@ -97,7 +96,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burn_errors_when_no_previous_approval(contract: ERC721) {
+    fn burn_errors_when_no_previous_approval(contract: Erc721) {
         let token_id = random_token_id();
 
         contract._mint(BOB, token_id).expect("Mint a token for Bob");
@@ -108,7 +107,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burn_errors_when_unknown_token(contract: ERC721) {
+    fn burn_errors_when_unknown_token(contract: Erc721) {
         let token_id = random_token_id();
 
         contract._mint(*ALICE, token_id).expect("Mint a token for Alice");

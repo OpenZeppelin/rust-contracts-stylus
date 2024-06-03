@@ -3,13 +3,13 @@
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc20_metadata"))] {
         pub mod metadata;
-        pub use metadata::ERC20Metadata;
+        pub use metadata::Erc20Metadata;
     }
 }
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc20_burnable"))] {
         pub mod burnable;
-        pub use burnable::IERC20Burnable;
+        pub use burnable::IErc20Burnable;
     }
 }
 

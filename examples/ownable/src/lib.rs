@@ -4,21 +4,21 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use contracts::{access::ownable::Ownable, erc20::ERC20};
+use contracts::{access::ownable::Ownable, erc20::Erc20};
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 sol_storage! {
     #[entrypoint]
     struct OwnableExample {
         #[borrow]
-        ERC20 erc20;
+        Erc20 erc20;
         #[borrow]
         Ownable ownable;
     }
 }
 
 #[external]
-#[inherit(ERC20, Ownable)]
+#[inherit(Erc20, Ownable)]
 impl OwnableExample {
     pub fn transfer(
         &mut self,

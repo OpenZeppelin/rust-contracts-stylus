@@ -3,13 +3,12 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::erc20::{Error, ERC20};
+use crate::erc20::{Erc20, Error};
 
-/// Extension of [`ERC20`] that allows token holders to destroy both
+/// Extension of [`Erc20`] that allows token holders to destroy both
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
-#[allow(clippy::module_name_repetitions)]
-pub trait IERC20Burnable {
+pub trait IErc20Burnable {
     /// Destroys a `value` amount of tokens from the caller.
     /// lowering the total supply.
     ///
@@ -55,7 +54,7 @@ pub trait IERC20Burnable {
         -> Result<(), Error>;
 }
 
-impl IERC20Burnable for ERC20 {
+impl IErc20Burnable for Erc20 {
     fn burn(&mut self, value: U256) -> Result<(), Error> {
         self._burn(msg::sender(), value)
     }
@@ -75,11 +74,11 @@ mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::msg;
 
-    use super::IERC20Burnable;
-    use crate::erc20::{Error, ERC20};
+    use super::IErc20Burnable;
+    use crate::erc20::{Erc20, Error};
 
     #[grip::test]
-    fn burns(contract: ERC20) {
+    fn burns(contract: Erc20) {
         let zero = U256::ZERO;
         let one = U256::from(1);
 
@@ -100,7 +99,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_errors_when_insufficient_balance(contract: ERC20) {
+    fn burns_errors_when_insufficient_balance(contract: Erc20) {
         let zero = U256::ZERO;
         let one = U256::from(1);
         let sender = msg::sender();
@@ -112,7 +111,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burn_from(contract: ERC20) {
+    fn burn_from(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let sender = msg::sender();
 
@@ -134,7 +133,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_from_errors_when_insufficient_balance(contract: ERC20) {
+    fn burns_from_errors_when_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // Alice approves `msg::sender`.
@@ -151,7 +150,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_from_errors_when_invalid_sender(contract: ERC20) {
+    fn burns_from_errors_when_invalid_sender(contract: Erc20) {
         let one = U256::from(1);
 
         contract
@@ -165,7 +164,7 @@ mod tests {
     }
 
     #[grip::test]
-    fn burns_from_errors_when_insufficient_allowance(contract: ERC20) {
+    fn burns_from_errors_when_insufficient_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // Mint some tokens for Alice.
