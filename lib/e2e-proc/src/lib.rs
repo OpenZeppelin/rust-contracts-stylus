@@ -2,25 +2,16 @@ use proc_macro::TokenStream;
 
 mod test;
 
-/// Defines an end-to-end stylus contract test that provides test user's
-/// injection from arguments.
+/// Defines an end-to-end Stylus contract test that sets up `e2e::User`s based
+/// on the function's parameters.
 ///
 /// # Examples
 ///
 /// ```rust,ignore
 /// #[e2e::test]
-/// async fn mint(alice: User) -> Result<()> {
-///     let erc721 = &alice.deploys::<Erc721>().await?;
-///     let token_id = random_token_id();
-///     let _ =
-///         alice.uses(erc721).mint(alice.address(), token_id).ctx_send().await?;
-///     let owner = alice.uses(erc721).owner_of(token_id).ctx_call().await?;
-///     assert_eq!(owner, alice.address());
-///
-///     let balance =
-///         alice.uses(erc721).balance_of(alice.address()).ctx_call().await?;
-///     assert!(balance >= U256::one());
-///     Ok(())
+/// async fn foo(alice: User, bob: User) -> eyre::Result<()> {
+///     let charlie = User::new().await?;
+///     // ...
 /// }
 /// ```
 #[proc_macro_attribute]

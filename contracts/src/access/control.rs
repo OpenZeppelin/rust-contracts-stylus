@@ -19,7 +19,7 @@
 //! Roles can be used to represent a set of permissions. To restrict access to a
 //! function call, use [`AccessControl::has_role`]:
 //!
-//! ```ignore
+//! ```rust,ignore
 //! pub fn foo() {
 //!   assert!(self.has_role(MY_ROLE.into(), msg::sender());
 //!   ...
