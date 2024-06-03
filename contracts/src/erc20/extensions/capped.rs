@@ -65,7 +65,7 @@ mod tests {
         }
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn cap_works(contract: Capped) {
         let value = U256::from(2024);
         contract._cap.set(value);

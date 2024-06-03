@@ -158,20 +158,20 @@ mod tests {
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
-    #[grip::test]
+    #[motsu::test]
     fn rejects_zero_address_initial_owner(contract: Ownable) {
         // FIXME: Once constructors are supported this check should fail.
         assert_eq!(contract._owner.get(), Address::ZERO);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn reads_owner(contract: Ownable) {
         contract._owner.set(msg::sender());
         let owner = contract.owner();
         assert_eq!(owner, msg::sender());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfers_ownership(contract: Ownable) {
         contract._owner.set(msg::sender());
 
@@ -182,7 +182,7 @@ mod tests {
         assert_eq!(owner, ALICE);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn prevents_non_onwers_from_transferring(contract: Ownable) {
         // Alice must be set as owner, because we can't set the msg::sender yet.
         contract._owner.set(ALICE);
@@ -192,7 +192,7 @@ mod tests {
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn prevents_reaching_stuck_state(contract: Ownable) {
         contract._owner.set(msg::sender());
 
@@ -200,7 +200,7 @@ mod tests {
         assert!(matches!(err, Error::InvalidOwner(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn loses_ownership_after_renouncing(contract: Ownable) {
         contract._owner.set(msg::sender());
 
@@ -209,7 +209,7 @@ mod tests {
         assert_eq!(owner, Address::ZERO);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn prevents_non_owners_from_renouncing(contract: Ownable) {
         // Alice must be set as owner, because we can't set the msg::sender yet.
         contract._owner.set(ALICE);
@@ -218,7 +218,7 @@ mod tests {
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn recovers_access_using_internal_transfer(contract: Ownable) {
         contract._owner.set(ALICE);
 

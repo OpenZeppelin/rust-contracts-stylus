@@ -427,26 +427,26 @@ mod tests {
             .insert(msg::sender(), true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn default_role_is_default_admin(contract: AccessControl) {
         let role_admin = contract.get_role_admin(ROLE.into());
         assert_eq!(role_admin, AccessControl::DEFAULT_ADMIN_ROLE);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn default_admin_roles_admin_is_itself(contract: AccessControl) {
         const DEFAULT_ADMIN_ROLE: [u8; 32] = AccessControl::DEFAULT_ADMIN_ROLE;
         let role_admin = contract.get_role_admin(DEFAULT_ADMIN_ROLE.into());
         assert_eq!(role_admin, DEFAULT_ADMIN_ROLE);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn non_admin_cannot_grant_role_to_others(contract: AccessControl) {
         let err = contract.grant_role(ROLE.into(), ALICE).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn accounts_can_be_granted_roles_multiple_times(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
 
@@ -456,7 +456,7 @@ mod tests {
         assert_eq!(has_role, true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn not_granted_roles_can_be_revoked(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
 
@@ -467,7 +467,7 @@ mod tests {
         assert_eq!(has_role, false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn admin_can_revoke_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
@@ -479,7 +479,7 @@ mod tests {
         assert_eq!(has_role, false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn non_admin_cannot_revoke_role(contract: AccessControl) {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
 
@@ -489,7 +489,7 @@ mod tests {
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn roles_can_be_revoked_multiple_times(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
 
@@ -499,7 +499,7 @@ mod tests {
         assert_eq!(has_role, false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn not_granted_roles_can_be_renounced(contract: AccessControl) {
         // FIXME: We can't test this case because we can't check for events. We
         // need to assert that a RoleRevoked event doesn't get emitted for this
@@ -507,7 +507,7 @@ mod tests {
         contract.renounce_role(ROLE.into(), msg::sender()).unwrap();
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn bearer_can_renounce_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
 
@@ -518,14 +518,14 @@ mod tests {
         assert_eq!(has_role, false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn only_sender_can_renounce(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
         let err = contract.renounce_role(ROLE.into(), ALICE).unwrap_err();
         assert!(matches!(err, Error::BadConfirmation(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn roles_can_be_renounced_multiple_times(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
 
@@ -536,7 +536,7 @@ mod tests {
         assert_eq!(has_role, false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn a_roles_admin_role_can_change(contract: AccessControl) {
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
         _grant_role_to_msg_sender(contract, OTHER_ROLE);
@@ -545,7 +545,7 @@ mod tests {
         assert_eq!(admin_role, OTHER_ROLE);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn the_new_admin_can_grant_roles(contract: AccessControl) {
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
         _grant_role_to_msg_sender(contract, OTHER_ROLE);
@@ -555,7 +555,7 @@ mod tests {
         assert_eq!(has_role, true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn the_new_admin_can_revoke_roles(contract: AccessControl) {
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
         _grant_role_to_msg_sender(contract, OTHER_ROLE);
@@ -566,7 +566,7 @@ mod tests {
         assert_eq!(has_role, false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn previous_admins_no_longer_grant_roles(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
@@ -575,7 +575,7 @@ mod tests {
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn previous_admins_no_longer_revoke_roles(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
@@ -584,13 +584,13 @@ mod tests {
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn does_not_revert_if_sender_has_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
         contract._check_role(ROLE.into(), msg::sender()).unwrap();
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn reverts_if_sender_doesnt_have_role(contract: AccessControl) {
         let err = contract._check_role(ROLE.into(), msg::sender()).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
@@ -599,27 +599,27 @@ mod tests {
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn internal_grant_role_true_if_no_role(contract: AccessControl) {
         let role_granted = contract._grant_role(ROLE.into(), ALICE);
         assert_eq!(role_granted, true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn internal_grant_role_false_if_role(contract: AccessControl) {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_granted = contract._grant_role(ROLE.into(), ALICE);
         assert_eq!(role_granted, false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn internal_revoke_role_true_if_role(contract: AccessControl) {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
         assert_eq!(role_revoked, true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn internal_revoke_role_false_if_no_role(contract: AccessControl) {
         let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
         assert_eq!(role_revoked, false);

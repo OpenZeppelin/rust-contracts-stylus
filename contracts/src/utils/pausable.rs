@@ -155,7 +155,7 @@ mod tests {
         }
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn paused_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);
@@ -165,7 +165,7 @@ mod tests {
         assert_eq!(contract.paused(), true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn when_not_paused_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);
@@ -175,7 +175,7 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn when_not_paused_errors_when_paused(contract: Pausable) {
         // Check for paused
         contract._paused.set(true);
@@ -185,7 +185,7 @@ mod tests {
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn when_paused_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(true);
@@ -195,7 +195,7 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn when_paused_errors_when_not_paused(contract: Pausable) {
         // Check for paused
         contract._paused.set(false);
@@ -205,7 +205,7 @@ mod tests {
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn pause_works(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);
@@ -216,7 +216,7 @@ mod tests {
         assert_eq!(contract.paused(), true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn pause_errors_when_already_paused(contract: Pausable) {
         // Check for paused
         contract._paused.set(true);
@@ -228,7 +228,7 @@ mod tests {
         assert_eq!(contract.paused(), true);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn unpause_works(contract: Pausable) {
         // Check for paused
         contract._paused.set(true);
@@ -239,7 +239,7 @@ mod tests {
         assert_eq!(contract.paused(), false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn unpause_errors_when_already_unpaused(contract: Pausable) {
         // Check for unpaused
         contract._paused.set(false);

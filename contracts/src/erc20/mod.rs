@@ -501,7 +501,7 @@ mod tests {
         }
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn reads_balance(contract: Erc20) {
         let balance = contract.balance_of(Address::ZERO);
         assert_eq!(U256::ZERO, balance);
@@ -513,7 +513,7 @@ mod tests {
         assert_eq!(one, balance);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn update_mint(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -531,7 +531,7 @@ mod tests {
         assert_eq!(initial_supply + one, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
     fn update_mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
@@ -547,7 +547,7 @@ mod tests {
         let _result = contract._update(Address::ZERO, alice, one);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn mint_works(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -565,7 +565,7 @@ mod tests {
         assert_eq!(initial_supply + one, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn mint_errors_invalid_receiver(contract: Erc20) {
         let receiver = Address::ZERO;
         let one = U256::from(1);
@@ -583,7 +583,7 @@ mod tests {
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     #[should_panic = "Should not exceed `U256::MAX` for `_total_supply`"]
     fn mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
@@ -599,7 +599,7 @@ mod tests {
         let _result = contract._mint(alice, one);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn update_burn(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -623,7 +623,7 @@ mod tests {
         assert_eq!(initial_supply - one, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn update_burn_errors_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -647,7 +647,7 @@ mod tests {
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn update_transfer(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -677,7 +677,7 @@ mod tests {
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn update_transfer_errors_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -707,7 +707,7 @@ mod tests {
         assert_eq!(initial_supply, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfers(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -727,7 +727,7 @@ mod tests {
         assert_eq!(one, contract.balance_of(bob));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfers_from(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -749,7 +749,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.allowance(alice, sender));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfer_from_errors_when_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -764,7 +764,7 @@ mod tests {
         assert!(matches!(result, Err(Error::InsufficientBalance(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfer_from_errors_when_invalid_sender(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -777,7 +777,7 @@ mod tests {
         assert!(matches!(result, Err(Error::InvalidSender(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfer_from_errors_when_invalid_receiver(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = U256::from(1);
@@ -786,7 +786,7 @@ mod tests {
         assert!(matches!(result, Err(Error::InvalidReceiver(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfer_from_errors_when_insufficient_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -800,7 +800,7 @@ mod tests {
         assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn reads_allowance(contract: Erc20) {
         let owner = msg::sender();
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
@@ -814,7 +814,7 @@ mod tests {
         assert_eq!(one, allowance);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn approves(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
@@ -824,7 +824,7 @@ mod tests {
         assert_eq!(one, contract._allowances.get(msg::sender()).get(alice));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn approve_errors_when_invalid_spender(contract: Erc20) {
         // `msg::sender` approves `Address::ZERO`.
         let one = U256::from(1);

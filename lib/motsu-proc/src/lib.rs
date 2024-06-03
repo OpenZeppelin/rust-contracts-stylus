@@ -1,4 +1,4 @@
-//! Procedural macro definitions used in `grip`.
+//! Procedural macro definitions used in `motsu`.
 use proc_macro::TokenStream;
 
 mod test;
@@ -8,14 +8,14 @@ mod test;
 /// Internally, this is a thin wrapper over `#[test]` that gives access to
 /// affordances like contract storage and `msg::sender`. If you don't need
 /// them, you can pass no arguments to the test function or simply use
-/// `#[test]` instead of `#[grip::test]`.
+/// `#[test]` instead of `#[motsu::test]`.
 ///
 /// # Examples
 ///
 /// ```rust,ignore
 /// #[cfg(test)]
 /// mod tests {
-///     #[grip::test]
+///     #[motsu::test]
 ///     fn reads_balance(contract: ERC20) {
 ///        let balance = contract.balance_of(Address::ZERO);
 ///        assert_eq!(U256::ZERO, balance);
@@ -32,7 +32,7 @@ mod test;
 /// ```rust,ignore
 /// #[cfg(test)]
 /// mod tests {
-///     #[grip::test]
+///     #[motsu::test]
 ///     fn t() { // If no params, it expands to a `#[test]`.
 ///         ...
 ///     }

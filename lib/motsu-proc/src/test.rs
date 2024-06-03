@@ -1,4 +1,4 @@
-//! Defines the `#[grip::test]` procedural macro.
+//! Defines the `#[motsu::test]` procedural macro.
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, FnArg};
@@ -50,7 +50,7 @@ pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
         #( #attrs )*
         #[test]
         fn #fn_name() #fn_return_type {
-            ::grip::prelude::with_context::<#contract_ty>(| #contract_arg_binding |
+            ::motsu::prelude::with_context::<#contract_ty>(| #contract_arg_binding |
                 #fn_block
             )
         }
