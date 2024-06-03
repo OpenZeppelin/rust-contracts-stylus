@@ -84,7 +84,7 @@ mod tests {
         U256::from(num)
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn get_token_uri_works(contract: Erc721UriStorage) {
         let token_id = random_token_id();
 
@@ -94,7 +94,7 @@ mod tests {
         assert_eq!(token_uri, contract.token_uri(token_id));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn set_token_uri_works(contract: Erc721UriStorage) {
         let token_id = random_token_id();
 

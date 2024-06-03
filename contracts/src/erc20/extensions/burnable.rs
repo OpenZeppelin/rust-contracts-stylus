@@ -77,7 +77,7 @@ mod tests {
     use super::IErc20Burnable;
     use crate::erc20::{Erc20, Error, IErc20};
 
-    #[grip::test]
+    #[motsu::test]
     fn burns(contract: Erc20) {
         let zero = U256::ZERO;
         let one = U256::from(1);
@@ -98,7 +98,7 @@ mod tests {
         assert_eq!(one, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn burns_errors_when_insufficient_balance(contract: Erc20) {
         let zero = U256::ZERO;
         let one = U256::from(1);
@@ -110,7 +110,7 @@ mod tests {
         assert!(matches!(result, Err(Error::InsufficientBalance(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn burn_from(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let sender = msg::sender();
@@ -132,7 +132,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.allowance(alice, sender));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn burns_from_errors_when_insufficient_balance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
@@ -149,7 +149,7 @@ mod tests {
         assert!(matches!(result, Err(Error::InsufficientBalance(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn burns_from_errors_when_invalid_sender(contract: Erc20) {
         let one = U256::from(1);
 
@@ -163,7 +163,7 @@ mod tests {
         assert!(matches!(result, Err(Error::InvalidSender(_))));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn burns_from_errors_when_insufficient_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 

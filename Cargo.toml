@@ -2,8 +2,8 @@
 members = [
   "contracts",
   "lib/crypto",
-  "lib/grip",
-  "lib/grip-proc",
+  "lib/motsu",
+  "lib/motsu-proc",
   "examples/erc20",
   "examples/erc721",
   "examples/merkle-proofs",
@@ -15,8 +15,8 @@ members = [
 default-members = [
   "contracts",
   "lib/crypto",
-  "lib/grip",
-  "lib/grip-proc",
+  "lib/motsu",
+  "lib/motsu-proc",
   "examples/erc20",
   "examples/erc721",
   "examples/merkle-proofs",

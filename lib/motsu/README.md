@@ -1,15 +1,15 @@
-# Grip - Unit Testing for Stylus
+# Motsu (持つ) - Unit Testing for Stylus
 
 This crate enables unit-testing for Stylus contracts. It abstracts away the
-machinery necessary for writing tests behind a `#[grip::test]` procedural
+machinery necessary for writing tests behind a `#[motsu::test]` procedural
 macro.
 
-The name `grip` is an analogy to the place where you put your fingers to hold a
-stylus pen.
+`motsu` means ["to hold"](https://jisho.org/word/%E6%8C%81%E3%81%A4) in
+Japanese -- we hold a stylus in our hand.
 
 ## Usage
 
-Annotate tests with `#[grip::test]` instead of `#[test]` to get access to VM
+Annotate tests with `#[motsu::test]` instead of `#[test]` to get access to VM
 affordances.
 
 Note that we require contracts to implement `core::default::Default`. This
@@ -36,7 +36,7 @@ mod tests {
         }
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn reads_balance(contract: ERC20) {
         let balance = contract.balance_of(Address::ZERO); // Access storage.
         assert_eq!(balance, U256::ZERO);
@@ -44,20 +44,20 @@ mod tests {
 }
 ```
 
-Annotating a test function that accepts no parameters will make `#[grip::test]`
+Annotating a test function that accepts no parameters will make `#[motsu::test]`
 behave the same as `#[test]`.
 
 ```rust,ignore
 #[cfg(test)]
 mod tests {
-    #[grip::test]
+    #[motsu::test]
      fn t() { // If no params, it expands to a `#[test]`.
         // ...
     }
 }
 ```
 
-Note that currently, test suites using `grip::test` will run serially because
+Note that currently, test suites using `motsu::test` will run serially because
 of global access to storage.
 
 ### Notice

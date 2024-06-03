@@ -22,7 +22,7 @@
 //!
 //! ## Usage
 //!
-//! Import these shims in your test modules as `grip::prelude::*` to populate
+//! Import these shims in your test modules as `motsu::prelude::*` to populate
 //! the namespace with the appropriate symbols.
 //!
 //! ```rust,ignore
@@ -30,7 +30,7 @@
 //! mod tests {
 //!     use contracts::erc20::ERC20;
 //!
-//!     #[grip::test]
+//!     #[motsu::test]
 //!     fn reads_balance(contract: ERC20) {
 //!         let balance = contract.balance_of(Address::ZERO); // Access storage.
 //!         assert_eq!(balance, U256::ZERO);
@@ -46,7 +46,7 @@
 //! ```rust,no_run
 //! use std::sync::{Mutex, MutexGuard};
 //!
-//! use grip::prelude::reset_storage;
+//! use motsu::prelude::reset_storage;
 //!
 //! pub static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
 //!

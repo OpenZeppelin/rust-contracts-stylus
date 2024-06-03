@@ -342,12 +342,12 @@ mod tests {
         }
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn total_supply_no_tokens(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn token_by_index_errors_when_index_out_of_bound(
         contract: Erc721Enumerable,
     ) {
@@ -359,7 +359,7 @@ mod tests {
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn add_token_to_all_tokens_enumeration_works(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
@@ -389,7 +389,7 @@ mod tests {
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn remove_token_from_all_tokens_enumeration_works(
         contract: Erc721Enumerable,
     ) {
@@ -440,14 +440,14 @@ mod tests {
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn check_increase_balance() {
         assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
         let err = Erc721Enumerable::_check_increase_balance(1).unwrap_err();
         assert!(matches!(err, Error::EnumerableForbiddenBatchMint(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn token_of_owner_by_index_works(contract: Erc721Enumerable) {
         let mut erc721 = Erc721::default();
         assert_eq!(
@@ -473,7 +473,7 @@ mod tests {
         assert_eq!(token_id, test_token_id);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn token_of_owner_errors_index_out_of_bound(contract: Erc721Enumerable) {
         let mut erc721 = Erc721::default();
         assert_eq!(
@@ -498,7 +498,7 @@ mod tests {
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn token_of_owner_errors_owner_does_not_own_any_token(
         contract: Erc721Enumerable,
     ) {
@@ -513,7 +513,7 @@ mod tests {
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn token_of_owner_by_index_after_transfer_works(
         contract: Erc721Enumerable,
     ) {

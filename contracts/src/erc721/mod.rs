@@ -1147,7 +1147,7 @@ mod tests {
         U256::from(num)
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn mint(contract: Erc721) {
         let token_id = random_token_id();
         contract
@@ -1165,7 +1165,7 @@ mod tests {
         assert!(balance >= one);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn error_when_reusing_token_id(contract: Erc721) {
         let token_id = random_token_id();
         contract
@@ -1180,7 +1180,7 @@ mod tests {
         ));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfer(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("should mint a token to Alice");
@@ -1193,7 +1193,7 @@ mod tests {
         assert_eq!(owner, BOB);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn error_when_transfer_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let err = contract
@@ -1207,7 +1207,7 @@ mod tests {
         ));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn approve_token_transfer(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(*ALICE, token_id).expect("should mint a token");
@@ -1217,7 +1217,7 @@ mod tests {
         assert_eq!(contract._token_approvals.get(token_id), BOB);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn transfer_approved_token(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1231,7 +1231,7 @@ mod tests {
         assert_eq!(owner, *ALICE);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn error_when_transfer_unapproved_token(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1247,7 +1247,7 @@ mod tests {
         ));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn approval_for_all(contract: Erc721) {
         contract._operator_approvals.setter(*ALICE).setter(BOB).set(false);
 
@@ -1262,7 +1262,7 @@ mod tests {
         assert_eq!(contract.is_approved_for_all(*ALICE, BOB), false);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn test_transfer_token_approved_for_all(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");

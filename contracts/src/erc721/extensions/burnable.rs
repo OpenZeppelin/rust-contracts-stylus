@@ -59,7 +59,7 @@ mod tests {
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
-    #[grip::test]
+    #[motsu::test]
     fn burns(contract: Erc721) {
         let one = U256::from(1);
         let token_id = random_token_id();
@@ -86,7 +86,7 @@ mod tests {
         assert_eq!(initial_balance - one, balance);
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn get_approved_errors_when_previous_approval_burned(contract: Erc721) {
         let token_id = random_token_id();
 
@@ -104,7 +104,7 @@ mod tests {
         assert!(matches!(err, Error::NonexistentToken(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn burn_errors_when_no_previous_approval(contract: Erc721) {
         let token_id = random_token_id();
 
@@ -115,7 +115,7 @@ mod tests {
         assert!(matches!(err, Error::InsufficientApproval(_)));
     }
 
-    #[grip::test]
+    #[motsu::test]
     fn burn_errors_when_unknown_token(contract: Erc721) {
         let token_id = random_token_id();
 

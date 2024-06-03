@@ -1316,8 +1316,8 @@ dependencies = [
  "alloy-primitives 0.3.3",
  "alloy-sol-types 0.3.1",
  "cfg-if 1.0.0",
- "grip",
  "mini-alloc",
+ "motsu",
  "once_cell",
  "rand",
  "stylus-proc",
@@ -2053,25 +2053,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
-name = "grip"
-version = "0.1.0"
-dependencies = [
- "const-hex",
- "grip-proc",
- "once_cell",
- "tiny-keccak",
-]
-
-[[package]]
-name = "grip-proc"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.66",
-]
-
-[[package]]
 name = "group"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2567,6 +2548,25 @@ name = "more-asserts"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
+
+[[package]]
+name = "motsu"
+version = "0.1.0"
+dependencies = [
+ "const-hex",
+ "motsu-proc",
+ "once_cell",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "motsu-proc"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.66",
+]
 
 [[package]]
 name = "native-tls"
