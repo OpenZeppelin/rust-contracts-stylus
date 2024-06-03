@@ -8,4 +8,4 @@ docs/build/
 
 **/.DS_Store
 
-/e2e-tests/nitro-testnode
+**/nitro-testnode

@@ -52,7 +52,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::IERC721Burnable;
-    use crate::erc721::{tests::random_token_id, Error, ERC721};
+    use crate::erc721::{tests::random_token_id, Error, ERC721, IERC721};
 
     // NOTE: Alice is always the sender of the message
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);

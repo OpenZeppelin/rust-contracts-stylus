@@ -1,4 +1,4 @@
-//! Implementation of the ERC-721 token standard.
+//! Implementation of the [`ERC721`] token standard.
 use alloc::vec;
 
 use alloy_primitives::{
@@ -40,7 +40,7 @@ sol! {
 
 sol! {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in ERC-721. Used in balance queries.
+    /// For example, `Address::ZERO` is a forbidden owner in [`ERC721`]. Used in balance queries.
     ///
     /// * `owner` - The address deemed to be an invalid owner.
     #[derive(Debug)]
@@ -100,14 +100,14 @@ sol! {
     error ERC721InvalidOperator(address operator);
 }
 
-/// An ERC-721 error defined as described in [ERC-6093].
+/// An [`ERC721`] error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
 #[derive(SolidityError, Debug, From)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in ERC-721. Used in
-    /// balance queries.
+    /// For example, `Address::ZERO` is a forbidden owner in [`ERC721`].
+    /// Used in balance queries.
     InvalidOwner(ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
     NonexistentToken(ERC721NonexistentToken),
@@ -129,17 +129,19 @@ pub enum Error {
 }
 
 sol_interface! {
-    /// ERC-721 token receiver interface.
+    /// [`ERC721`] token receiver interface.
     ///
     /// Interface for any contract that wants to support `safeTransfers`
-    /// from ERC-721 asset contracts.
+    /// from [`ERC721`] asset contracts.
     interface IERC721Receiver {
-        /// Whenever an [`ERC721`] `token_id` token is transferred to this contract via [`ERC721::safe_transfer_from`]
+        /// Whenever an [`ERC721`] `token_id` token is transferred
+        /// to this contract via [`ERC721::safe_transfer_from`]
         /// by `operator` from `from`, this function is called.
         ///
-        /// It must return its function selector to confirm the token transfer. If
-        /// any other value is returned or the interface is not implemented by the recipient, the transfer will be
-        /// reverted.
+        /// It must return its function selector to confirm the token transfer.
+        /// If any other value is returned or the interface is not implemented
+        /// by the recipient, the transfer will be reverted.
+        #[allow(missing_docs)]
         function onERC721Received(
             address operator,
             address from,
@@ -150,7 +152,7 @@ sol_interface! {
 }
 
 sol_storage! {
-    /// State of an ERC-721 token.
+    /// State of an [`ERC721`] token.
     pub struct ERC721 {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
@@ -168,8 +170,8 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for ERC721 {}
 
-#[external]
-impl ERC721 {
+/// Required interface of an [`ERC721`] compliant contract.
+pub trait IERC721 {
     /// Returns the number of tokens in `owner`'s account.
     ///
     /// # Arguments
@@ -181,12 +183,7 @@ impl ERC721 {
     ///
     /// * If owner address is `Address::ZERO`, then [`Error::InvalidOwner`] is
     ///   returned.
-    pub fn balance_of(&self, owner: Address) -> Result<U256, Error> {
-        if owner.is_zero() {
-            return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
-        }
-        Ok(self._balances.get(owner))
-    }
+    fn balance_of(&self, owner: Address) -> Result<U256, Error>;
 
     /// Returns the owner of the `token_id` token.
     ///
@@ -203,12 +200,10 @@ impl ERC721 {
     /// # Requirements
     ///
     /// * `token_id` must exist.
-    pub fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
-        self._require_owned(token_id)
-    }
+    fn owner_of(&self, token_id: U256) -> Result<Address, Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first
-    /// that contract recipients are aware of the ERC-721 protocol to
+    /// that contract recipients are aware of the [`ERC721`] protocol to
     /// prevent tokens from being forever locked.
     ///
     /// # Arguments
@@ -246,16 +241,12 @@ impl ERC721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn safe_transfer_from(
+    fn safe_transfer_from(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
-        // TODO: Once the SDK supports the conversion,
-        // use alloy_primitives::bytes!("") here
-        self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
-    }
+    ) -> Result<(), Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`.
     ///
@@ -296,22 +287,18 @@ impl ERC721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    #[selector(name = "safeTransferFrom")]
-    pub fn safe_transfer_from_with_data(
+    fn safe_transfer_from_with_data(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
-        self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
-    }
+    ) -> Result<(), Error>;
 
     /// Transfers `token_id` token from `from` to `to`.
     ///
     /// WARNING: Note that the caller is responsible to confirm that the
-    /// recipient is capable of receiving ERC-721 or else they may be
+    /// recipient is capable of receiving [`ERC721`] or else they may be
     /// permanently lost. Usage of [`Self::safe_transfer_from`] prevents loss,
     /// though the caller must understand this adds an external call which
     /// potentially creates a reentrancy vulnerability, unless it is disabled.
@@ -345,32 +332,12 @@ impl ERC721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn transfer_from(
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
-        if to.is_zero() {
-            return Err(
-                ERC721InvalidReceiver { receiver: Address::ZERO }.into()
-            );
-        }
-
-        // Setting an "auth" argument enables the `_is_authorized` check which
-        // verifies that the token exists (`from != 0`). Therefore, it is
-        // not needed to verify that the return value is not 0 here.
-        let previous_owner = self._update(to, token_id, msg::sender())?;
-        if previous_owner != from {
-            return Err(ERC721IncorrectOwner {
-                sender: from,
-                token_id,
-                owner: previous_owner,
-            }
-            .into());
-        }
-        Ok(())
-    }
+    ) -> Result<(), Error>;
 
     /// Gives permission to `to` to transfer `token_id` token to another
     /// account. The approval is cleared when the token is transferred.
@@ -399,13 +366,7 @@ impl ERC721 {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    pub fn approve(
-        &mut self,
-        to: Address,
-        token_id: U256,
-    ) -> Result<(), Error> {
-        self._approve(to, token_id, msg::sender(), true)
-    }
+    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error>;
 
     /// Approve or remove `operator` as an operator for the caller.
     ///
@@ -432,13 +393,11 @@ impl ERC721 {
     /// # Events
     ///
     /// Emits an [`ApprovalForAll`] event.
-    pub fn set_approval_for_all(
+    fn set_approval_for_all(
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Error> {
-        self._set_approval_for_all(msg::sender(), operator, approved)
-    }
+    ) -> Result<(), Error>;
 
     /// Returns the account approved for `token_id` token.
     ///
@@ -455,10 +414,7 @@ impl ERC721 {
     /// # Requirements:
     ///
     /// * `token_id` must exist.
-    pub fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
-        self._require_owned(token_id)?;
-        Ok(self._get_approved_inner(token_id))
-    }
+    fn get_approved(&self, token_id: U256) -> Result<Address, Error>;
 
     /// Returns whether the `operator` is allowed to manage all the assets of
     /// `owner`.
@@ -468,11 +424,90 @@ impl ERC721 {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account of the token's owner.
     /// * `operator` - Account to be checked.
-    pub fn is_approved_for_all(
-        &self,
-        owner: Address,
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool;
+}
+
+#[external]
+impl IERC721 for ERC721 {
+    fn balance_of(&self, owner: Address) -> Result<U256, Error> {
+        if owner.is_zero() {
+            return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
+        }
+        Ok(self._balances.get(owner))
+    }
+
+    fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
+        self._require_owned(token_id)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error> {
+        // TODO: Once the SDK supports the conversion,
+        // use alloy_primitives::bytes!("") here
+        self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
+    }
+
+    #[selector(name = "safeTransferFrom")]
+    fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Error> {
+        self.transfer_from(from, to, token_id)?;
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error> {
+        if to.is_zero() {
+            return Err(
+                ERC721InvalidReceiver { receiver: Address::ZERO }.into()
+            );
+        }
+
+        // Setting an "auth" argument enables the `_is_authorized` check which
+        // verifies that the token exists (`from != 0`). Therefore, it is
+        // not needed to verify that the return value is not 0 here.
+        let previous_owner = self._update(to, token_id, msg::sender())?;
+        if previous_owner != from {
+            return Err(ERC721IncorrectOwner {
+                sender: from,
+                token_id,
+                owner: previous_owner,
+            }
+            .into());
+        }
+        Ok(())
+    }
+
+    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+        self._approve(to, token_id, msg::sender(), true)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
         operator: Address,
-    ) -> bool {
+        approved: bool,
+    ) -> Result<(), Error> {
+        self._set_approval_for_all(msg::sender(), operator, approved)
+    }
+
+    fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
+        self._require_owned(token_id)?;
+        Ok(self._get_approved_inner(token_id))
+    }
+
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
         self._operator_approvals.get(owner).get(operator)
     }
 }
@@ -482,7 +517,7 @@ impl ERC721 {
     /// doesn't exist.
     ///
     /// IMPORTANT: Any overrides to this function that add ownership of tokens
-    /// not tracked by the core ERC-721 logic MUST be matched with the use
+    /// not tracked by the core [`ERC721`] logic MUST be matched with the use
     /// of [`Self::_increase_balance`] to keep balances consistent with
     /// ownership. The invariant to preserve is that for any address `a` the
     /// value returned by `balance_of(a)` must be equal to the number of
@@ -833,7 +868,7 @@ impl ERC721 {
     }
 
     /// Safely transfers `token_id` token from `from` to `to`, checking that
-    /// contract recipients are aware of the ERC-721 standard to prevent
+    /// contract recipients are aware of the [`ERC721`] standard to prevent
     /// tokens from being forever locked.
     ///
     /// `data` is additional data, it has
@@ -1053,11 +1088,14 @@ impl ERC721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::address;
+    use alloy_primitives::{address, Address, U256};
     use once_cell::sync::Lazy;
-    use stylus_sdk::storage::StorageMap;
+    use stylus_sdk::{msg, prelude::StorageType, storage::StorageMap};
 
-    use crate::erc721::*;
+    use super::{
+        ERC721InsufficientApproval, ERC721InvalidSender,
+        ERC721NonexistentToken, Error, ERC721, IERC721,
+    };
 
     // NOTE: Alice is always the sender of the message
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);
