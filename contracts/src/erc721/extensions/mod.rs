@@ -10,14 +10,14 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc721_enumerable"))] {
         pub mod enumerable;
-        pub use enumerable::Erc721Enumerable;
+        pub use enumerable::{IErc721Enumerable, Erc721Enumerable};
     }
 }
 
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc721_metadata"))] {
         pub mod metadata;
-        pub use metadata::Erc721Metadata;
+        pub use metadata::{IErc721Metadata, Erc721Metadata};
     }
 }
 

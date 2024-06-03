@@ -19,7 +19,7 @@ sol_storage! {
     }
 }
 
-/// Interface for the optional metadata functions from the [`Erc20`] standard.
+/// Interface for the optional metadata functions from the ERC-20 standard.
 pub trait IErc20Metadata {
     /// Returns the name of the token.
     ///
