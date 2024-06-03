@@ -7,7 +7,7 @@ use stylus_proc::{external, sol_storage};
 use crate::utils::Metadata;
 
 sol_storage! {
-    /// Metadata of the ERC-721 token.
+    /// Metadata of the `Erc721` token.
     pub struct Erc721Metadata {
         /// Common Metadata.
         Metadata _metadata;

@@ -92,7 +92,7 @@ pub enum Error {
 }
 
 sol_storage! {
-    /// State of an ERC-20 token.
+    /// State of an `Erc20` token.
     pub struct Erc20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;
