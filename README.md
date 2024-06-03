@@ -37,7 +37,7 @@ Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
 ```rust,ignore
-use contracts::erc20::ERC20;
+use openzeppelin_stylus::erc20::ERC20;
 
 sol_storage! {
     #[entrypoint]

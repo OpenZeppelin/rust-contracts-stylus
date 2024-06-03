@@ -48,6 +48,7 @@ pub async fn deploy(
 ///
 /// This is a patch until `nitro-testnode` gets updated, since `koba deploy`
 /// handles everything for us when used against the Stylus testnet.
+/// Work tracked in https://github.com/OpenZeppelin/rust-contracts-stylus/issues/87
 fn activate(
     wasm_path: &Path,
     rpc_url: &str,
