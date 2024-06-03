@@ -503,7 +503,7 @@ mod tests {
         storage::{StorageMap, StorageType, StorageU256},
     };
 
-    use crate::erc20::{Erc20, Error, IErc20};
+    use super::{Erc20, Error, IErc20};
 
     impl Default for Erc20 {
         fn default() -> Self {

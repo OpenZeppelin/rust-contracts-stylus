@@ -8,7 +8,7 @@ use alloc::{
 
 use alloy_primitives::{Address, U256};
 use contracts::{
-    erc721::{
+    token::erc721::{
         extensions::{
             Erc721Enumerable as Enumerable, Erc721Metadata as Metadata,
             Erc721UriStorage as UriStorage, IErc721Burnable, IErc721Metadata,

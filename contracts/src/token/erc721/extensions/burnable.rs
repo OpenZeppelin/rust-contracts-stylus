@@ -3,7 +3,7 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::erc721::{Erc721, Error};
+use crate::token::erc721::{Erc721, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {
@@ -52,7 +52,9 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::IErc721Burnable;
-    use crate::erc721::{tests::random_token_id, Erc721, Error, IErc721};
+    use crate::token::erc721::{
+        tests::random_token_id, Erc721, Error, IErc721,
+    };
 
     // NOTE: Alice is always the sender of the message.
     static ALICE: Lazy<Address> = Lazy::new(msg::sender);
