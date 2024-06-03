@@ -19,28 +19,21 @@ sol_storage! {
     }
 }
 
-// FIXME: Apply multi-level inheritance to export Metadata's functions.
-// With the current version of SDK it is not possible.
-// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
-#[external]
-impl Erc20Metadata {
+/// Interface for the optional metadata functions from the [`Erc20`] standard.
+pub trait IErc20Metadata {
     /// Returns the name of the token.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn name(&self) -> String {
-        self._metadata.name()
-    }
+    fn name(&self) -> String;
 
     /// Returns the symbol of the token, usually a shorter version of the name.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn symbol(&self) -> String {
-        self._metadata.symbol()
-    }
+    fn symbol(&self) -> String;
 
     /// Returns the number of decimals used to get a user-friendly
     /// representation of values of this token.
@@ -59,7 +52,23 @@ impl Erc20Metadata {
     /// NOTE: This information is only used for *display* purposes: in
     /// no way it affects any of the arithmetic of the contract, including
     /// [`Erc20::balance_of`] and [`Erc20::transfer`].
-    pub fn decimals(&self) -> u8 {
+    fn decimals(&self) -> u8;
+}
+
+// FIXME: Apply multi-level inheritance to export Metadata's functions.
+// With the current version of SDK it is not possible.
+// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
+#[external]
+impl IErc20Metadata for Erc20Metadata {
+    fn name(&self) -> String {
+        self._metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self._metadata.symbol()
+    }
+
+    fn decimals(&self) -> u8 {
         // TODO: Use `U8` an avoid the conversion once https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
         // gets resolved.
         DEFAULT_DECIMALS
