@@ -28,10 +28,10 @@
 //! ```rust,ignore
 //! #[cfg(test)]
 //! mod tests {
-//!     use contracts::erc20::ERC20;
+//!     use contracts::token::erc20::Erc20;
 //!
 //!     #[motsu::test]
-//!     fn reads_balance(contract: ERC20) {
+//!     fn reads_balance(contract: Erc20) {
 //!         let balance = contract.balance_of(Address::ZERO); // Access storage.
 //!         assert_eq!(balance, U256::ZERO);
 //!     }
@@ -61,12 +61,10 @@
 //!     reset_storage();
 //! }
 //!
-//! #[test]
+//! #[motsu::test]
 //! fn reads_balance() {
-//!     grid::context::with_context::<ERC20>(|token| {
-//!         let balance = token.balance_of(Address::ZERO);
-//!         assert_eq!(balance, U256::ZERO);
-//!     })
+//!     let balance = token.balance_of(Address::ZERO);
+//!     assert_eq!(balance, U256::ZERO);
 //! }
 //! ```
 #![allow(clippy::missing_safety_doc)]
