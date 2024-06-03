@@ -47,13 +47,13 @@ pub enum Error {
 sol_storage! {
     /// State of an Enumerable extension.
     pub struct ERC721Enumerable {
-        /// TODO
+        /// Maps owners to a mapping of indices to tokens ids.
         mapping(address => mapping(uint256 => uint256)) _owned_tokens;
-        /// TODO
+        /// Maps tokens ids to indices in `_owned_tokens`.
         mapping(uint256 => uint256) _owned_tokens_index;
-        /// TODO
+        /// Stores all tokens ids.
         uint256[] _all_tokens;
-        /// TODO
+        /// Maps indices at `_all_tokens` to tokens ids.
         mapping(uint256 => uint256) _all_tokens_index;
     }
 
