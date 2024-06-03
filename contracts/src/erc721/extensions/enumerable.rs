@@ -289,6 +289,8 @@ impl ERC721Enumerable {
     /// See [`ERC721::_increase_balance`].
     /// Check if tokens can be minted in batch.
     ///
+    /// Mechanism to be consistent with [Solidity version](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.0/contracts/token/ERC721/extensions/ERC721Enumerable.sol#L163-L171)
+    ///
     /// # Arguments
     ///
     /// * `amount` - The number of tokens to increase balance.
