@@ -20,12 +20,12 @@
 //! ```rust
 //! #[cfg(test)]
 //! mod tests {
-//!     use contracts::erc20::ERC20;
+//!     use contracts::token::erc20::Erc20;
 //!
-//!     impl Default for ERC20 {
+//!     impl Default for Erc20 {
 //!         fn default() -> Self {
 //!             let root = U256::ZERO;
-//!             ERC20 {
+//!             Erc20 {
 //!                 _balances: unsafe { StorageMap::new(root, 0) },
 //!                 _allowances: unsafe {
 //!                     StorageMap::new(root + U256::from(32), 0)
@@ -38,7 +38,7 @@
 //!     }
 //!
 //!     #[motsu::test]
-//!     fn reads_balance(contract: ERC20) {
+//!     fn reads_balance(contract: Erc20) {
 //!         let balance = contract.balance_of(Address::ZERO); // Access storage.
 //!         assert_eq!(balance, U256::ZERO);
 //!     }

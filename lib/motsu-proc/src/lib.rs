@@ -16,7 +16,7 @@ mod test;
 /// #[cfg(test)]
 /// mod tests {
 ///     #[motsu::test]
-///     fn reads_balance(contract: ERC20) {
+///     fn reads_balance(contract: Erc20) {
 ///        let balance = contract.balance_of(Address::ZERO);
 ///        assert_eq!(U256::ZERO, balance);
 ///

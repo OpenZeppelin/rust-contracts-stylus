@@ -37,19 +37,19 @@ Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
 ```rust,ignore
-use openzeppelin_stylus::erc20::ERC20;
+use openzeppelin_stylus::token::erc20::Erc20;
 
 sol_storage! {
     #[entrypoint]
-    struct ERC20Example {
+    struct Erc20Example {
         #[borrow]
-        ERC20 erc20;
+        Erc20 erc20;
     }
 }
 
 #[external]
-#[inherit(ERC20)]
-impl ERC20Example { }
+#[inherit(Erc20)]
+impl Erc20Example { }
 ```
 
 For a more complex display of what this library offers, refer to our
