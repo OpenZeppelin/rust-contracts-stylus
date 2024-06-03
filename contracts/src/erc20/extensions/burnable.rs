@@ -69,7 +69,7 @@ impl IErc20Burnable for Erc20 {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::msg;

@@ -51,7 +51,7 @@ impl Capped {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
     use stylus_sdk::storage::{StorageType, StorageU256};
