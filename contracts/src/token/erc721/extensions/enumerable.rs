@@ -308,7 +308,6 @@ impl Erc721Enumerable {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
-    use once_cell::sync::Lazy;
     use stylus_sdk::{
         msg,
         prelude::StorageType,
@@ -317,9 +316,6 @@ mod tests {
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
     use crate::token::erc721::{tests::random_token_id, Erc721, IErc721};
-
-    // NOTE: Alice is always the sender of the message.
-    static ALICE: Lazy<Address> = Lazy::new(msg::sender);
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
@@ -449,25 +445,26 @@ mod tests {
 
     #[motsu::test]
     fn token_of_owner_by_index_works(contract: Erc721Enumerable) {
+        let alice = msg::sender();
         let mut erc721 = Erc721::default();
         assert_eq!(
             U256::ZERO,
-            erc721.balance_of(*ALICE).expect("should return balance of ALICE")
+            erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
         let token_id = random_token_id();
-        erc721._mint(*ALICE, token_id).expect("should mint a token for ALICE");
+        erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
             .expect("should return the owner of the token");
-        assert_eq!(owner, *ALICE);
+        assert_eq!(owner, alice);
 
         let res =
-            contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+            contract._add_token_to_owner_enumeration(alice, token_id, &erc721);
         assert!(res.is_ok());
 
         let test_token_id = contract
-            .token_of_owner_by_index(*ALICE, U256::ZERO)
+            .token_of_owner_by_index(alice, U256::ZERO)
             .expect("should return `token_id`");
 
         assert_eq!(token_id, test_token_id);
@@ -475,26 +472,26 @@ mod tests {
 
     #[motsu::test]
     fn token_of_owner_errors_index_out_of_bound(contract: Erc721Enumerable) {
+        let alice = msg::sender();
         let mut erc721 = Erc721::default();
         assert_eq!(
             U256::ZERO,
-            erc721.balance_of(*ALICE).expect("should return balance of ALICE")
+            erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
         let token_id = random_token_id();
-        erc721._mint(*ALICE, token_id).expect("should mint a token for ALICE");
+        erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
             .expect("should return the owner of the token");
-        assert_eq!(owner, *ALICE);
+        assert_eq!(owner, alice);
 
         let res =
-            contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+            contract._add_token_to_owner_enumeration(alice, token_id, &erc721);
         assert!(res.is_ok());
 
-        let err = contract
-            .token_of_owner_by_index(*ALICE, U256::from(1))
-            .unwrap_err();
+        let err =
+            contract.token_of_owner_by_index(alice, U256::from(1)).unwrap_err();
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
@@ -517,26 +514,27 @@ mod tests {
     fn token_of_owner_by_index_after_transfer_works(
         contract: Erc721Enumerable,
     ) {
+        let alice = msg::sender();
         let mut erc721 = Erc721::default();
         assert_eq!(
             U256::ZERO,
-            erc721.balance_of(*ALICE).expect("should return balance of ALICE")
+            erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
         let token_id = random_token_id();
-        erc721._mint(*ALICE, token_id).expect("should mint a token for ALICE");
+        erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
             .expect("should return the owner of the token");
-        assert_eq!(owner, *ALICE);
+        assert_eq!(owner, alice);
 
         let res =
-            contract._add_token_to_owner_enumeration(*ALICE, token_id, &erc721);
+            contract._add_token_to_owner_enumeration(alice, token_id, &erc721);
         assert!(res.is_ok());
 
         // Transfer the token from ALICE to BOB.
         erc721
-            .transfer_from(*ALICE, BOB, token_id)
+            .transfer_from(alice, BOB, token_id)
             .expect("should transfer the token from ALICE to BOB");
         let owner = erc721
             .owner_of(token_id)
@@ -544,7 +542,7 @@ mod tests {
         assert_eq!(owner, BOB);
 
         let res = contract
-            ._remove_token_from_owner_enumeration(*ALICE, token_id, &erc721);
+            ._remove_token_from_owner_enumeration(alice, token_id, &erc721);
         assert!(res.is_ok());
 
         let res =
@@ -558,7 +556,7 @@ mod tests {
         assert_eq!(token_id, test_token_id);
 
         let err =
-            contract.token_of_owner_by_index(*ALICE, U256::ZERO).unwrap_err();
+            contract.token_of_owner_by_index(alice, U256::ZERO).unwrap_err();
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 }

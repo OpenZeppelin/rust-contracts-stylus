@@ -48,7 +48,6 @@ impl IErc721Burnable for Erc721 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
-    use once_cell::sync::Lazy;
     use stylus_sdk::msg;
 
     use super::IErc721Burnable;
@@ -56,27 +55,23 @@ mod tests {
         tests::random_token_id, Erc721, Error, IErc721,
     };
 
-    // NOTE: Alice is always the sender of the message.
-    static ALICE: Lazy<Address> = Lazy::new(msg::sender);
-
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     #[motsu::test]
     fn burns(contract: Erc721) {
+        let alice = msg::sender();
         let one = U256::from(1);
         let token_id = random_token_id();
 
-        contract
-            ._mint(*ALICE, token_id)
-            .expect("should mint a token for Alice");
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
 
         let initial_balance = contract
-            .balance_of(*ALICE)
+            .balance_of(alice)
             .expect("should return the balance of Alice");
 
         let result = contract.burn(token_id);
         let balance = contract
-            .balance_of(*ALICE)
+            .balance_of(alice)
             .expect("should return the balance of Alice");
 
         let err = contract.owner_of(token_id).unwrap_err();
@@ -90,11 +85,10 @@ mod tests {
 
     #[motsu::test]
     fn get_approved_errors_when_previous_approval_burned(contract: Erc721) {
+        let alice = msg::sender();
         let token_id = random_token_id();
 
-        contract
-            ._mint(*ALICE, token_id)
-            .expect("should mint a token for Alice");
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
         contract
             .approve(BOB, token_id)
             .expect("should approve a token for Bob");
@@ -119,11 +113,10 @@ mod tests {
 
     #[motsu::test]
     fn burn_errors_when_unknown_token(contract: Erc721) {
+        let alice = msg::sender();
         let token_id = random_token_id();
 
-        contract
-            ._mint(*ALICE, token_id)
-            .expect("should mint a token for Alice");
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
 
         let err = contract.burn(token_id + U256::from(1)).unwrap_err();
 
