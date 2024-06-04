@@ -7,8 +7,8 @@ name = "access-control-example"
 version = "0.0.0"
 dependencies = [
  "alloy-primitives 0.3.3",
- "contracts",
  "mini-alloc",
+ "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
 ]
@@ -1310,20 +1310,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
-name = "contracts"
-version = "0.1.0"
-dependencies = [
- "alloy-primitives 0.3.3",
- "alloy-sol-types 0.3.1",
- "cfg-if 1.0.0",
- "mini-alloc",
- "motsu",
- "rand",
- "stylus-proc",
- "stylus-sdk",
-]
-
-[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1754,10 +1740,10 @@ version = "0.0.0"
 dependencies = [
  "alloy 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=2bff1dd)",
  "alloy-primitives 0.3.3",
- "contracts",
  "e2e",
  "eyre",
  "mini-alloc",
+ "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
  "tokio",
@@ -1769,10 +1755,10 @@ version = "0.0.0"
 dependencies = [
  "alloy 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=2bff1dd)",
  "alloy-primitives 0.3.3",
- "contracts",
  "e2e",
  "eyre",
  "mini-alloc",
+ "openzeppelin-stylus",
  "rand",
  "stylus-proc",
  "stylus-sdk",
@@ -2703,12 +2689,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "openzeppelin-stylus"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives 0.3.3",
+ "alloy-sol-types 0.3.1",
+ "cfg-if 1.0.0",
+ "mini-alloc",
+ "motsu",
+ "rand",
+ "stylus-proc",
+ "stylus-sdk",
+]
+
+[[package]]
 name = "ownable-example"
 version = "0.0.0"
 dependencies = [
  "alloy-primitives 0.3.3",
- "contracts",
  "mini-alloc",
+ "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
 ]
