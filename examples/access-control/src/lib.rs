@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use contracts::{
+use openzeppelin_stylus::{
     access::control::AccessControl,
     token::erc20::{Erc20, IErc20},
 };

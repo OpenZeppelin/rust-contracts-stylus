@@ -1,6 +1,5 @@
 [package]
-# TODO: Figure out public name before v0.1.0 release.
-name = "contracts"
+name = "openzeppelin-stylus"
 categories = ["no-std", "wasm"]
 description = "Contracts for Stylus"
 edition.workspace = true

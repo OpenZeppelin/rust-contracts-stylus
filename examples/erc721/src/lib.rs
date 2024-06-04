@@ -7,7 +7,7 @@ use alloc::{
 };
 
 use alloy_primitives::{Address, U256};
-use contracts::{
+use openzeppelin_stylus::{
     token::erc721::{
         extensions::{
             Erc721Enumerable as Enumerable, Erc721Metadata as Metadata,
