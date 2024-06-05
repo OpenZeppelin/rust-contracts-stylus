@@ -1,6 +1,8 @@
 //! Procedural macro definitions used in `motsu`.
 use proc_macro::TokenStream;
+use syn::{parse_macro_input, DeriveInput};
 
+mod stylus_default;
 mod test;
 
 /// Defines a unit test that provides access to Stylus' execution context.
@@ -41,4 +43,10 @@ mod test;
 #[proc_macro_attribute]
 pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
     test::test(attr, input)
+}
+
+#[proc_macro_derive(StylusDefault)]
+pub fn derive_stylus_default(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    stylus_default::impl_stylus_default(&input)
 }

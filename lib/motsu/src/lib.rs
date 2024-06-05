@@ -75,3 +75,4 @@ mod shims;
 mod storage;
 
 pub use motsu_proc::test;
+pub use motsu_proc::StylusDefault;
