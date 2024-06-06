@@ -22,8 +22,8 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
                     Type::Path(type_path) => type_path,
                     _ => panic!("Unsupported field type: {:?}. Only path types are supported.", field_type),
                 };
-                let type_ident =
-                    &type_path.path.segments.first().unwrap().ident;
+
+                let type_ident = &type_path.path;
 
                 let field_init = quote! {
                     {
@@ -61,4 +61,32 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
         _ => panic!("StylusDefault can only be derived for structs."),
     };
     gen.into()
+}
+
+pub fn view_type_macro(ast: &DeriveInput) -> TokenStream {
+    let name = &ast.ident;
+
+    // Assume we want to view the type of the first field
+    let type_ident = match &ast.data {
+        syn::Data::Struct(data) => {
+            if let Some(field) = data.fields.iter().next() {
+                match &field.ty {
+                    Type::Path(type_path) => {
+                        let ident = &type_path.path;
+                        quote! { #ident }
+                    }
+                    _ => quote! { UnsupportedType },
+                }
+            } else {
+                quote! { NoField }
+            }
+        }
+        _ => quote! { NotAStruct },
+    };
+
+    let output = quote! {
+        compile_error!(concat!("Type ident is: ", stringify!(#type_ident)));
+    };
+
+    output.into()
 }
