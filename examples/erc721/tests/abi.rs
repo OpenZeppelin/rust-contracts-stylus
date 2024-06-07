@@ -38,8 +38,13 @@ sol!(
         error EnforcedPause();
         error ExpectedPause();
 
+        #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+
+        #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+
+        #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
     }
 );

@@ -2,12 +2,10 @@
 
 use alloy::{
     primitives::{Address, U256},
-    providers::Provider,
-    rpc::types::eth::Filter,
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{Assert, User};
+use e2e::{receipt, send, watch, Assert, Emits, User};
 
 use crate::abi::Erc721;
 
@@ -30,18 +28,6 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
-}
-
-macro_rules! send {
-    ($e:expr) => {
-        $e.send().await
-    };
-}
-
-macro_rules! watch {
-    ($e:expr) => {
-        $e.send().await?.watch().await
-    };
 }
 
 #[e2e::test]
@@ -96,19 +82,14 @@ async fn transfers(alice: User, bob: User) -> eyre::Result<()> {
     let bob_addr = bob.address();
     let token_id = random_token_id();
     let _ = watch!(contract.mint(alice_addr, token_id))?;
-    let _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_id))?;
+    let receipt =
+        receipt!(contract.transferFrom(alice_addr, bob_addr, token_id))?;
 
-    // TODO: Implement a helper that abstracts away this boilerplate code.
-    // Something like `emits(Erc721::Transfer {from, to, tokenId});`.
-    // Work tracked [here](https://github.com/OpenZeppelin/rust-contracts-stylus/issues/88).
-    let block = alice.signer.get_block_number().await?;
-    let filter = Filter::new().address(contract_addr).from_block(block);
-    let logs = alice.signer.get_logs(&filter).await?;
-    let transfer: Erc721::Transfer =
-        logs[logs.len() - 1].log_decode()?.inner.data;
-    assert_eq!(transfer.from, alice_addr);
-    assert_eq!(transfer.to, bob_addr);
-    assert_eq!(transfer.tokenId, token_id);
+    receipt.emits(Erc721::Transfer {
+        from: alice_addr,
+        to: bob_addr,
+        tokenId: token_id,
+    });
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
