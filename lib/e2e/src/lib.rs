@@ -1,13 +1,15 @@
-mod assertions;
 mod deploy;
 mod environment;
+mod error;
+mod event;
 mod project;
 mod system;
 mod user;
 
-pub use assertions::{Emits, ErrorExt};
 pub use deploy::deploy;
 pub use e2e_proc::test;
+pub use error::ErrorExt;
+pub use event::EventExt;
 pub use system::{provider, Provider, Signer};
 pub use user::User;
 
