@@ -1,28 +1,23 @@
-use alloy::{sol_types::SolError, transports::RpcError};
+use alloy::sol_types::SolError;
 
-pub trait Assert<E> {
+pub trait ErrorExt<E> {
     /// Asserts that current error result corresponds to the typed abi-encoded
     /// error `expected`.
-    fn assert(&self, expected: E);
+    fn is(&self, expected: E) -> bool;
 }
 
-impl<R: SolError, E> Assert<R> for RpcError<E> {
-    fn assert(&self, _: R) {
-        let raw_value = self
+impl<E: SolError> ErrorExt<E> for alloy::contract::Error {
+    fn is(&self, expected: E) -> bool {
+        let Self::TransportError(e) = self else {
+            return false;
+        };
+
+        let raw_value = e
             .as_error_resp()
             .and_then(|payload| payload.data.clone())
             .expect("should extract the error");
-        let raw_error = raw_value.get().trim_matches('"');
-        let selector = alloy::hex::encode(R::SELECTOR);
-
-        assert!(raw_error.contains(&selector));
-    }
-}
-
-impl<R: SolError> Assert<R> for alloy::contract::Error {
-    fn assert(&self, expected: R) {
-        if let Self::TransportError(e) = self {
-            e.assert(expected);
-        }
+        let actual = &raw_value.get().trim_matches('"')[2..];
+        let expected = alloy::hex::encode(expected.abi_encode());
+        return expected == actual;
     }
 }
