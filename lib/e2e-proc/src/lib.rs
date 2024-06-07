@@ -9,7 +9,17 @@ mod test;
 ///
 /// ```rust,ignore
 /// #[e2e::test]
-/// async fn foo(alice: User, bob: User) -> eyre::Result<()> {
+/// async fn foo(alice: User) -> eyre::Result<()> {
+///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+///     let contract = Erc721::new(contract_addr, &alice.signer);
+///
+///     let alice_addr = alice.address();
+///     let token_id = random_token_id();
+///     let _ = send!(contract.mint(alice_addr, token_id));
+///     // ...
+/// }
+
+/// #[e2e::test]
 ///     let charlie = User::new().await?;
 ///     // ...
 /// }

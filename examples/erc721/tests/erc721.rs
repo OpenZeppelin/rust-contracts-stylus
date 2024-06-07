@@ -2,12 +2,11 @@
 
 use alloy::{
     primitives::{Address, U256},
-    providers::Provider,
-    rpc::types::eth::{Filter, TransactionReceipt},
+    rpc::types::eth::TransactionReceipt,
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{Assert, Emits, User};
+use e2e::{receipt, send, watch, Assert, Emits, User};
 
 use crate::abi::Erc721;
 
@@ -30,24 +29,6 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
-}
-
-macro_rules! send {
-    ($e:expr) => {
-        $e.send().await
-    };
-}
-
-macro_rules! watch {
-    ($e:expr) => {
-        send!($e)?.watch().await
-    };
-}
-
-macro_rules! receipt {
-    ($e:expr) => {
-        send!($e)?.get_receipt().await
-    };
 }
 
 #[e2e::test]
