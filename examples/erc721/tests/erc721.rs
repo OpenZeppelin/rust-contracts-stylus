@@ -64,7 +64,7 @@ async fn mints(alice: User) -> eyre::Result<()> {
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id).from(alice_addr))?;
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
     let owner_of = contract.ownerOf(token_id).call().await?.ownerOf;
     assert_eq!(owner_of, alice_addr);
 
@@ -95,10 +95,8 @@ async fn transfers(alice: User, bob: User) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id).from(alice_addr))?;
-    let _ = watch!(contract
-        .transferFrom(alice_addr, bob_addr, token_id)
-        .from(alice_addr))?;
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    let _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_id))?;
 
     // TODO: Implement a helper that abstracts away this boilerplate code.
     // Something like `emits(Erc721::Transfer {from, to, tokenId});`.
@@ -128,9 +126,7 @@ async fn errors_when_transfer_nonexistent_token(
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
-    let tx = contract
-        .transferFrom(alice_addr, bob.address(), token_id)
-        .from(alice_addr);
+    let tx = contract.transferFrom(alice_addr, bob.address(), token_id);
     let err = send!(tx).expect_err("should not transfer a non-existent token");
     err.assert(Erc721::ERC721NonexistentToken { tokenId: token_id });
     Ok(())
@@ -144,13 +140,11 @@ async fn approves_token_transfer(alice: User, bob: User) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id).from(alice_addr))?;
-    let _ = watch!(contract.approve(bob_addr, token_id).from(alice_addr))?;
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    let _ = watch!(contract.approve(bob_addr, token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.signer);
-    let _ = watch!(contract
-        .transferFrom(alice_addr, bob_addr, token_id)
-        .from(bob_addr))?;
+    let _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_id))?;
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
     assert_ne!(ownerOf, alice_addr);
@@ -169,11 +163,10 @@ async fn errors_when_transfer_unapproved_token(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id).from(alice_addr))?;
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.signer);
-    let tx =
-        contract.transferFrom(alice_addr, bob_addr, token_id).from(bob_addr);
+    let tx = contract.transferFrom(alice_addr, bob_addr, token_id);
     let err = send!(tx).expect_err("should not transfer unapproved token");
     err.assert(Erc721::ERC721InsufficientApproval {
         operator: bob_addr,
