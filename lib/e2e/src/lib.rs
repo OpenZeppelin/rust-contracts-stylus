@@ -11,7 +11,7 @@ pub use e2e_proc::test;
 pub use system::{provider, Provider, Signer};
 pub use user::User;
 
-/// This macro provides an easy way for broadcasting the transaction
+/// This macro provides a shorthand for broadcasting the transaction
 /// to the network.
 ///
 /// See: https://alloy-rs.github.io/alloy/alloy_contract/struct.CallBuilder.html
@@ -36,8 +36,8 @@ macro_rules! send {
     };
 }
 
-/// This macro provides an easy way for broadcasting the transaction
-/// to the network and then waiting for the given number of confirmations.
+/// This macro provides a shorthand for broadcasting the transaction
+/// to the network, and then waiting for the given number of confirmations.
 ///
 /// See: https://alloy-rs.github.io/alloy/alloy_provider/heart/struct.PendingTransactionBuilder.html
 ///
@@ -61,7 +61,7 @@ macro_rules! watch {
     };
 }
 
-/// This macro provides an easy way for broadcasting the transaction
+/// This macro provides a shorthand for broadcasting the transaction
 /// to the network, waiting for the given number of confirmations, and then
 /// fetching the transaction receipt.
 ///
