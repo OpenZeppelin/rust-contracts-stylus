@@ -45,6 +45,18 @@ stylus-sdk = { version = "0.4.3", default-features = false }
 stylus-proc = { version = "0.4.3", default-features = false }
 mini-alloc = "0.4.2"
 
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "0928b92", features = [
+  "contract",
+  "network",
+  "providers",
+  "provider-http",
+  "rpc-client",
+  "rpc-types-eth",
+  "signers",
+  "signer-wallet",
+  "getrandom",
+] }
+
 [profile.release]
 codegen-units = 1
 panic = "abort"
