@@ -5,7 +5,7 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
-use e2e::User;
+use e2e::{send, watch, User};
 use eyre::Result;
 
 use crate::abi::Erc20;
@@ -54,7 +54,7 @@ async fn mints(alice: User) -> Result<()> {
         contract.totalSupply().call().await?;
 
     let one = U256::from(1);
-    let _ = contract.mint(alice.address(), one).send().await?.watch().await?;
+    let _ = watch!(contract.mint(alice.address(), one))?;
 
     let Erc20::balanceOfReturn { balance } =
         contract.balanceOf(alice.address()).call().await?;
