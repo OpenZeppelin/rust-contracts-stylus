@@ -1,4 +1,8 @@
-use alloy::{sol_types::SolError, transports::RpcError};
+use alloy::{
+    rpc::types::eth::TransactionReceipt,
+    sol_types::{SolError, SolEvent},
+    transports::RpcError,
+};
 
 pub trait Assert<E> {
     /// Asserts that current error result corresponds to the typed abi-encoded
@@ -24,5 +28,30 @@ impl<R: SolError> Assert<R> for alloy::contract::Error {
         if let Self::TransportError(e) = self {
             e.assert(expected);
         }
+    }
+}
+
+pub trait Emits<E> {
+    /// Asserts the transaction emitted the `expected` event.
+    fn emits(&self, expected: E);
+}
+
+impl<E> Emits<E> for TransactionReceipt
+where
+    E: SolEvent,
+    E: PartialEq,
+    E: std::fmt::Debug,
+{
+    fn emits(&self, expected: E) {
+        // Extract all events that are the expected type.
+        let emitted = self
+            .inner
+            .logs()
+            .iter()
+            .filter_map(|log| log.log_decode().ok())
+            .map(|log| log.inner.data)
+            .any(|event| expected == event);
+
+        assert!(emitted, "Event {:?} not emitted", expected);
     }
 }
