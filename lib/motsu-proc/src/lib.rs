@@ -45,6 +45,45 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
     test::test(attr, input)
 }
 
+/// Automatically implements the `Default` trait for a struct that uses `sol_storage!`.
+///
+/// This macro initializes the struct fields based on how they are laid out in the EVM state trie.
+/// It is intended to be a helper for tests to avoid having to implement `Default` for each contract.
+///
+/// # Usage
+///
+/// To use this macro, simply add `#[cfg_attr(test, derive(motsu::StylusDefault))]`
+/// to your `sol_storage!` struct.  
+/// Make sure all the fields in your struct are compatible with Stylus' storage,
+/// that means they implement the StorageType trait.
+///
+/// # Examples
+///
+/// ```rust,ignore
+///
+/// sol_storage! {
+///    #[cfg_attr(test, derive(motsu::StylusDefault))]
+///    pub struct Erc20 {
+///        /// Maps users to balances.
+///        mapping(address => uint256) _balances;
+///        /// Maps users to a mapping of each spender's allowance.
+///        mapping(address => mapping(address => uint256)) _allowances;
+///        /// The total supply of the token.
+///        uint256 _total_supply;
+/// }
+/// ```
+///
+/// ## Notice
+///
+/// For now this macro only works with structs that use the
+/// `sol_storage!` macro that allows you to use the solidity syntax.
+/// If you want to write your contracts using `#[solidity_storage]`
+/// and the Rust syntax, you will have to implement `Default` youself.
+///
+/// ## See Also
+///
+/// - [Layout of State Variables in Storage](https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html)
+
 #[proc_macro_derive(StylusDefault)]
 pub fn derive_stylus_default(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

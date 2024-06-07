@@ -169,6 +169,7 @@ sol_interface! {
 
 sol_storage! {
     /// State of an [`Erc721`] token.
+    #[cfg_attr(test, derive(motsu::StylusDefault))]
     pub struct Erc721 {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
@@ -1120,23 +1121,6 @@ mod tests {
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-
-    impl Default for Erc721 {
-        fn default() -> Self {
-            let root = U256::ZERO;
-
-            Erc721 {
-                _owners: unsafe { StorageMap::new(root, 0) },
-                _balances: unsafe { StorageMap::new(root + U256::from(32), 0) },
-                _token_approvals: unsafe {
-                    StorageMap::new(root + U256::from(64), 0)
-                },
-                _operator_approvals: unsafe {
-                    StorageMap::new(root + U256::from(96), 0)
-                },
-            }
-        }
-    }
 
     pub(crate) fn random_token_id() -> U256 {
         let num: u32 = rand::random();

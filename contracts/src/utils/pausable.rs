@@ -52,6 +52,7 @@ pub enum Error {
 sol_storage! {
     /// State of a Pausable Contract.
     #[allow(missing_docs)]
+    #[cfg_attr(test, derive(motsu::StylusDefault))]
     pub struct Pausable {
         /// Indicates whether the contract is `Paused`.
         bool _paused;
@@ -146,13 +147,6 @@ mod tests {
     use stylus_sdk::storage::{StorageBool, StorageType};
 
     use crate::utils::pausable::{Error, Pausable};
-
-    impl Default for Pausable {
-        fn default() -> Self {
-            let root = U256::ZERO;
-            Pausable { _paused: unsafe { StorageBool::new(root, 0) } }
-        }
-    }
 
     #[motsu::test]
     fn paused_works(contract: Pausable) {
