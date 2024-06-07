@@ -44,7 +44,7 @@ macro_rules! watch {
     };
 }
 
-macro_rules! wait_for_receipt {
+macro_rules! receipt {
     ($e:expr) => {
         send!($e)?.get_receipt().await
     };
@@ -103,7 +103,7 @@ async fn transfers(alice: User, bob: User) -> eyre::Result<()> {
     let token_id = random_token_id();
     let _ = watch!(contract.mint(alice_addr, token_id).from(alice_addr))?;
 
-    let receipt: TransactionReceipt = wait_for_receipt!(contract
+    let receipt: TransactionReceipt = receipt!(contract
         .transferFrom(alice_addr, bob_addr, token_id)
         .from(alice_addr))?;
 

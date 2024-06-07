@@ -32,7 +32,7 @@ impl<R: SolError> Assert<R> for alloy::contract::Error {
 }
 
 pub trait Emits<E> {
-    /// Asserts that transaction emitted an `expected` event.
+    /// Asserts the transaction emitted the `expected` event.
     fn emits(&self, expected: E);
 }
 
@@ -43,7 +43,7 @@ where
     E: std::fmt::Debug,
 {
     fn emits(&self, expected: E) {
-        // Extract all events the are the expected type;
+        // Extract all events that are the expected type.
         let emitted = self
             .inner
             .logs()
@@ -52,6 +52,6 @@ where
             .map(|log| log.inner.data)
             .any(|event| expected == event);
 
-        assert_eq!(emitted, true, "Event {:?} not emitted", expected);
+        assert!(emitted, "Event {:?} not emitted", expected);
     }
 }
