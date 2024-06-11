@@ -17,8 +17,8 @@ jobs:
   tests:
     name: tests 
     runs-on: ubuntu-latest
+    uses: ./.github/workflows/e2e-setup.yml
     steps:
-      - uses: ./.github/workflows/e2e-setup.yml
       - name: run integration tests
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
@@ -27,8 +27,8 @@ jobs:
   coverage:
     name: coverage
     runs-on: ubuntu-latest
+    uses: ./.github/workflows/e2e-setup.yml
     steps:
-      - uses: ./.github/workflows/e2e-setup.yml
       - name: compile contracts
         run: cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
       - name: cargo install cargo-llvm-cov
