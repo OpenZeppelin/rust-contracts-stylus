@@ -52,6 +52,7 @@ fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
     // Looks like
     // "rust-contracts-stylus/target/debug/deps/erc721-15764c2c9a33bee7".
     let mut target_dir = env::current_exe()?;
+
     // Recursively find a `target` directory.
     loop {
         let Some(parent) = target_dir.parent() else {
@@ -59,18 +60,17 @@ fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
             bail!("output directory is not 'target'");
         };
 
-        let Some(leaf) = parent.file_name() else {
-            // We've found the root, because we are traversing a canonicalized
-            // path, which means there are no `..` segments, and since we
-            // started at the executable.
+        target_dir = parent.to_path_buf();
+        let Some(leaf) = target_dir.file_name() else {
+            // We've found the root because we are traversing a canonicalized
+            // path, which means there are no `..` segments, and we started at
+            // the executable.
             bail!("output directory is not 'target'");
         };
 
         if leaf == OsStr::new("target") {
             break;
         }
-
-        target_dir = parent.to_path_buf();
     }
 
     let wasm: PathBuf = target_dir
