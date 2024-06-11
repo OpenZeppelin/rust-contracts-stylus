@@ -7,16 +7,16 @@
 # - Spin up `nitro-testnode`
 #
 # Contract deployments and account funding happen on a per-test basis.
-name: e2e
-permissions:
-  contents: read
+name: e2e-setup
 on:
   workflow_call:
+permissions:
+  contents: read
 env:
   CARGO_TERM_COLOR: always
 jobs:
   setup:
-    name: ubuntu / setup 
+    name: ubuntu 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
