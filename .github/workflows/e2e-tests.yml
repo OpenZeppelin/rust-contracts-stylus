@@ -1,11 +1,7 @@
+# This workflow runs our end-to-end tests suite and collects coverage. It
+# reuses the `e2e-setup` workflow for both. Contract deployments and account
+# funding happen on a per-test basis.
 name: e2e
-# This workflow runs our end-to-end tests suite and collects coverage.
-#
-# It roughly follows these steps:
-# - A local `nitro-testnode` gets spun up.
-# - The test suite runs.
-#
-# Contract deployments and account funding happen on a per-test basis.
 permissions:
   contents: read
 on:
@@ -18,93 +14,21 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  required:
-    name: ubuntu / tests
+  tests:
+    name: tests 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-
-      - name: cache cargo-stylus
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/.crates.toml
-          key: ${{ runner.os }}-cargo-bin-cargo-stylus@0.2.1
-          save-always: true
-
-      - name: set up rust
-        uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          target: wasm32-unknown-unknown
-          components: rust-src, llvm-tools-preview
-          toolchain: nightly-2024-01-01
-
-      - name: install cargo-stylus
-        run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
-
-      - name: setup nitro node
-        run: ./scripts/nitro-testnode.sh -d -i
-      - name: install solc
-        run: |
-          curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
-          sudo mv solc-static-linux /usr/bin/solc
-          sudo chmod a+x /usr/bin/solc
+      - uses: ./.github/workflows/e2e-setup.yml
       - name: run integration tests
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
           ./scripts/e2e-tests.sh
 
   coverage:
-    name: ubuntu / tests
+    name: coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-
-      - name: cache cargo-stylus
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/.crates.toml
-          key: ${{ runner.os }}-cargo-bin-cargo-stylus@0.2.1
-          save-always: true
-
-      - name: set up rust
-        uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          target: wasm32-unknown-unknown
-          components: rust-src, llvm-tools-preview
-          toolchain: nightly-2024-01-01
-
-      - name: install cargo-stylus
-        run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
-
-      - name: setup nitro node
-        run: ./scripts/nitro-testnode.sh -d -i
-      - name: install solc
-        run: |
-          curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
-          sudo mv solc-static-linux /usr/bin/solc
-          sudo chmod a+x /usr/bin/solc
+      - uses: ./.github/workflows/e2e-setup.yml
       - name: compile contracts
         run: cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
       - name: cargo install cargo-llvm-cov
