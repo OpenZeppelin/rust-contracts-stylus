@@ -70,7 +70,9 @@ jobs:
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
       - name: cargo llvm-cov
-        run: cargo llvm-cov --locked --features std,e2e --test '*' --lcov --output-path lcov.info
+        run: |
+          export RPC_URL=http://localhost:8547
+          cargo llvm-cov --locked --features std,e2e --test '*' --lcov --output-path lcov.info
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
       - name: Upload to codecov.io
