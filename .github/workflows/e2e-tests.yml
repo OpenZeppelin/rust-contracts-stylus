@@ -63,3 +63,30 @@ jobs:
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
           ./scripts/e2e-tests.sh
+  coverage:
+    runs-on: ubuntu-latest
+    name: ubuntu / e2e / coverage
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install nightly
+        uses: dtolnay/rust-toolchain@master
+        with:
+          components: llvm-tools-preview
+          toolchain: nightly-2024-01-01
+      - name: cargo install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+      - name: cargo llvm-cov
+        run: cargo llvm-cov --locked --features std,e2e --test '*' --lcov --output-path lcov.info
+      - name: Record Rust version
+        run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          env_vars: OS,RUST
