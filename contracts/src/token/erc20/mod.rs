@@ -93,7 +93,7 @@ pub enum Error {
 
 sol_storage! {
     /// State of an `Erc20` token.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::StylusDefault))]
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;

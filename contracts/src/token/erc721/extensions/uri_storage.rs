@@ -25,7 +25,7 @@ sol! {
 
 sol_storage! {
     /// Uri Storage.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::StylusDefault))]
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721UriStorage {
         /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;

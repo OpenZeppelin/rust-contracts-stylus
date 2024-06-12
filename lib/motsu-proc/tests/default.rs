@@ -2,7 +2,7 @@ use alloy_primitives::U256;
 use stylus_sdk::stylus_proc::sol_storage;
 
 sol_storage! {
-    #[derive(motsu_proc::StylusDefault)]
+    #[derive(motsu_proc::DefaultStorageLayout)]
     pub struct Erc20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;

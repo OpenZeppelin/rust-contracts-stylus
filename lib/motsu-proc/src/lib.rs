@@ -15,7 +15,7 @@ macro_rules! error {
     }};
 }
 
-mod stylus_default;
+mod default_storage_layout;
 mod test;
 
 /// Defines a unit test that provides access to Stylus' execution context.
@@ -67,7 +67,7 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// # Usage
 ///
-/// To use this macro, simply add `#[derive(motsu::StylusDefault)]` to your
+/// To use this macro, simply add `#[derive(motsu::DefaultStorageLayout)]` to your
 /// `sol_storage!` struct. Make sure all the fields in your struct are
 /// compatible with Stylus' storage, that means they implement the `StorageType`
 /// trait.
@@ -76,7 +76,7 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// sol_storage! {
-///    #[derive(motsu::StylusDefault)]
+///    #[derive(motsu::DefaultStorageLayout)]
 ///    pub struct Erc20 {
 ///        /// Maps users to balances.
 ///        mapping(address => uint256) _balances;
@@ -99,8 +99,8 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// - [Layout of State Variables in Storage](https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html)
 
-#[proc_macro_derive(StylusDefault)]
+#[proc_macro_derive(DefaultStorageLayout)]
 pub fn derive_stylus_default(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    stylus_default::impl_stylus_default(&input)
+    default_storage_layout::impl_stylus_default(&input)
 }

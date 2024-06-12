@@ -1,4 +1,4 @@
-//! Defines the `#[derive(motsu::StylusDefault)]` procedural macro.
+//! Defines the `#[derive(motsu::DefaultStorageLayout)]` procedural macro.
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{Data, DeriveInput, PathArguments, Type};
@@ -7,7 +7,7 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
     let Data::Struct(ref data_struct) = ast.data else {
-        error!(ast, "StylusDefault can only be derived for structs");
+        error!(ast, "DefaultStorageLayout can only be derived for structs");
     };
 
     let fields = match &data_struct.fields {
