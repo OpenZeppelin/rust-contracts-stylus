@@ -112,7 +112,7 @@ sol_storage! {
     }
 
     /// State of an `AccessControl` contract.
-    #[cfg_attr(test, derive(motsu::StylusDefault))]
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::StylusDefault))]
     pub struct AccessControl {
         /// Role identifier -> Role information.
         mapping(bytes32 => RoleData) _roles;

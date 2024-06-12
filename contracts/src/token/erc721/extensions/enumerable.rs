@@ -45,7 +45,7 @@ pub enum Error {
 
 sol_storage! {
     /// State of an Enumerable extension.
-    #[cfg_attr(test, derive(motsu::StylusDefault))]
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::StylusDefault))]
     pub struct Erc721Enumerable {
         /// Maps owners to a mapping of indices to tokens ids.
         mapping(address => mapping(uint256 => uint256)) _owned_tokens;
