@@ -18,9 +18,15 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
             for field in fields {
                 let field_name = &field.ident;
                 let field_type = &field.ty;
-                let type_path = match field_type {
+                let type_path: &syn::TypePath = match field_type {
                     Type::Path(type_path) => type_path,
-                    _ => panic!("Unsupported field type: {:?}. Only path types are supported.", field_type),
+                    _ => {
+                        let field_type_str =
+                            field_type.to_token_stream().to_string();
+                        return TokenStream::from(quote! {
+                            compile_error!(concat!("Unsupported field type: ", #field_type_str, ". Only path types are supported."));
+                        });
+                    }
                 };
 
                 // Types when using `sol_storage!` look like this: `stylus_sdk::storage::type<generic arguments>`
@@ -30,7 +36,10 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
                 let main_type = if segments.len() >= 3 {
                     &segments[2].ident
                 } else {
-                    panic!("Unexpected type path: {:?}", type_path);
+                    let type_path_str = type_path.to_token_stream().to_string();
+                    return TokenStream::from(quote! {
+                        compile_error!(concat!("Unexpected type path: ", #type_path_str));
+                    });
                 };
 
                 // If the type has generic arguments form the token stream that
@@ -84,7 +93,11 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
                 }
             }
         }
-        _ => panic!("StylusDefault can only be derived for structs."),
+        _ => {
+            return TokenStream::from(quote! {
+                compile_error!("StylusDefault can only be derived for structs.");
+            })
+        }
     };
     gen.into()
 }
