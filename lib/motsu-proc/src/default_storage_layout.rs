@@ -32,22 +32,20 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
         // Types when using `sol_storage!` look like this:
         // `stylus_sdk::storage::type<generic arguments>`
         // (e.g. uint256 is stylus_sdk::storage::StorageUint<256,4>).
-        // So we must first get the third argument, which is the main
+        // So we must first get the last argument, which is the main
         // type.
         let segments = &type_path.path.segments;
-        let main_type = if segments.len() >= 3 {
-            &segments[2].ident
+        let last_segment = if segments.len() >= 3 {
+            segments.last().unwrap()
         } else {
             error!(type_path, "unexpected type path");
         };
+        let main_type = &last_segment.ident;
 
         // If the type has generic arguments form the token stream that
         // we latter append to access `new` and `SLOT_BYTES`
-        let generic_args = match &segments[2].arguments {
-            PathArguments::AngleBracketed(args) => {
-                let args_tokens = args.to_token_stream();
-                quote! { ::#args_tokens }
-            }
+        let generic_args = match &last_segment.arguments {
+            PathArguments::AngleBracketed(args) => quote! { ::#args },
             _ => quote! {},
         };
 
@@ -57,9 +55,6 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
 
         let field_init = quote! {
             {
-                // Usually we would include an import of `alloy_primitives::U256`, but this causes conflicts
-                // if it is already imported in the file that is using this macro. Instead we use the full
-                // here to avoid this issue.
                 let instance = unsafe { #type_ident::new(alloy_primitives::U256::from(next_slot), offset) };
                 offset += #type_ident::SLOT_BYTES as u8;
                 if offset >= 32 {
@@ -75,10 +70,6 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
         });
     }
 
-    let combined_initializations = quote! {
-        #(#field_initializations),*
-    };
-
     quote! {
         use stylus_sdk::prelude::StorageType;
         impl Default for #name {
@@ -86,7 +77,7 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
                 let mut next_slot: i32 = 0;
                 let mut offset: u8 = 0;
                 #name {
-                    #combined_initializations
+                    #(#field_initializations),*
                 }
             }
         }
