@@ -48,7 +48,6 @@ jobs:
           target: wasm32-unknown-unknown
           components: rust-src
           toolchain: nightly-2024-01-01
-          save-always: true
 
       - name: install cargo-stylus
         run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
