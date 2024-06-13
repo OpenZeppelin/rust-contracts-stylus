@@ -1,9 +1,9 @@
 //! Defines the `#[derive(motsu::DefaultStorageLayout)]` procedural macro.
 use proc_macro::TokenStream;
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::{Data, DeriveInput, PathArguments, Type};
 
-pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
+pub fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
     let Data::Struct(ref data_struct) = ast.data else {
@@ -55,12 +55,12 @@ pub fn impl_stylus_default(ast: &DeriveInput) -> TokenStream {
 
         let field_init = quote! {
             {
-                let instance = unsafe { #type_ident::new(alloy_primitives::U256::from(next_slot), offset) };
-                offset += #type_ident::SLOT_BYTES as u8;
-                if offset >= 32 {
+                if offset + #type_ident::SLOT_BYTES as u8 > 32 {
                     next_slot += 32;
                     offset = 0;
                 }
+                let instance = unsafe { #type_ident::new(alloy_primitives::U256::from(next_slot), offset) };
+                offset += #type_ident::SLOT_BYTES as u8;
                 instance
             }
         };

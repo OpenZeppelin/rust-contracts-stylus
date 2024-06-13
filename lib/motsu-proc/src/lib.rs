@@ -102,5 +102,5 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_derive(DefaultStorageLayout)]
 pub fn derive_stylus_default(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    default_storage_layout::impl_stylus_default(&input)
+    default_storage_layout::impl_default_storage_layout(&input)
 }
