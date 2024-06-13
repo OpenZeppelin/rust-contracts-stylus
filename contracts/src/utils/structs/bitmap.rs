@@ -1,7 +1,7 @@
 //! Contract module for managing uint256 to bool mapping in a compact and
-//! efficient way, provided the keys are sequential. Largely inspired by Uniswap's https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol[merkle-distributor].
+//! efficient way, provided the keys are sequential. Largely inspired by Uniswap's <https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol>[merkle-distributor].
 //!
-//! BitMaps pack 256 booleans across each bit of a single 256-bit slot of
+//! `BitMap` packs 256 booleans across each bit of a single 256-bit slot of
 //! `uint256` type. Hence, booleans corresponding to 256 _sequential_ indices
 //! would only consume a single slot, unlike the regular `bool` which would
 //! consume an entire slot for a single value.
@@ -16,6 +16,7 @@ use stylus_proc::sol_storage;
 sol_storage! {
     /// State of bit map.
     pub struct BitMap {
+        /// Inner laying mapping.
         mapping(uint256 => uint256) _data;
     }
 }
