@@ -67,8 +67,8 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// # Usage
 ///
-/// To use this macro, simply add `#[derive(motsu::DefaultStorageLayout)]` to your
-/// `sol_storage!` struct. Make sure all the fields in your struct are
+/// To use this macro, simply add `#[derive(motsu::DefaultStorageLayout)]` to
+/// your `sol_storage!` struct. Make sure all the fields in your struct are
 /// compatible with Stylus' storage, that means they implement the `StorageType`
 /// trait.
 ///
