@@ -27,7 +27,7 @@ impl BitMap {
     /// # Arguments
     ///
     /// * `index` - index of boolean value at the bit map.
-    fn get(&self, index: U256) -> bool {
+    pub fn get(&self, index: U256) -> bool {
         let bucket = index >> 8;
         let mask = U256::from(1) << (index & U256::from(0xff));
         let value = self._data.get(bucket);
@@ -40,7 +40,7 @@ impl BitMap {
     ///
     /// * `index` - index of boolean value at the bit map.
     /// * `value` - boolean value to set into the bit map.
-    fn set_to(&mut self, index: U256, value: bool) {
+    pub fn set_to(&mut self, index: U256, value: bool) {
         if value {
             self.set(index);
         } else {
@@ -53,7 +53,7 @@ impl BitMap {
     /// # Arguments
     ///
     /// * `index` - index of boolean value that should be set `true`.
-    fn set(&mut self, index: U256) {
+    pub fn set(&mut self, index: U256) {
         let bucket = index >> 8;
         let mask = U256::from(1) << (index & U256::from(0xff));
         let mut value = self._data.setter(bucket);
@@ -66,7 +66,7 @@ impl BitMap {
     /// # Arguments
     ///
     /// * `index` - index of boolean value that should be set `false`.
-    fn unset(&mut self, index: U256) {
+    pub fn unset(&mut self, index: U256) {
         let bucket = index >> 8;
         let mask = U256::from(1) << (index & U256::from(0xff));
         let mut value = self._data.setter(bucket);
