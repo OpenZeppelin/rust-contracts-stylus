@@ -66,7 +66,14 @@ impl Erc20Example {
     ) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
         let max_supply = self.capped.cap();
-        let supply = self.erc20.total_supply() + value;
+
+        // Overflow check required.
+        let supply = self
+            .erc20
+            .total_supply()
+            .checked_add(value)
+            .expect("new supply should not exceed `U256::MAX`");
+
         if supply > max_supply {
             return Err(capped::Error::ExceededCap(
                 capped::ERC20ExceededCap {

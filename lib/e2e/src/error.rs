@@ -18,6 +18,6 @@ impl<E: SolError> ErrorExt<E> for Error {
             .expect("should extract the error");
         let actual = &raw_value.get().trim_matches('"')[2..];
         let expected = alloy::hex::encode(expected.abi_encode());
-        return expected == actual;
+        expected == actual
     }
 }
