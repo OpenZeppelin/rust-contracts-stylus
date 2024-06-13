@@ -27,6 +27,7 @@ impl BitMap {
     /// # Arguments
     ///
     /// * `index` - index of boolean value at the bit map.
+    #[must_use]
     pub fn get(&self, index: U256) -> bool {
         let bucket = index >> 8;
         let mask = U256::from(1) << (index & U256::from(0xff));
