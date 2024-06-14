@@ -6,6 +6,8 @@
 //!
 //! [hash]: https://en.wikipedia.org/wiki/Hash_function
 
+pub mod keccak;
+
 /// A hashable type.
 ///
 /// Types implementing `Hash` are able to be [`Hash::hash`]ed with an instance

@@ -5,8 +5,11 @@
 extern crate alloc;
 
 pub mod hash;
+pub use hash::keccak::KeccakBuilder;
+
+#[cfg(any(feature = "std", feature = "ec"))]
+#[path = "elliptic-curve/mod.rs"]
+pub mod elliptic_curve;
+
 #[cfg(any(feature = "std", feature = "merkle"))]
 pub mod merkle;
-
-pub mod keccak;
-pub use keccak::KeccakBuilder;
