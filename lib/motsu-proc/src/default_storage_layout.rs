@@ -1,7 +1,7 @@
 //! Defines the `#[derive(motsu::DefaultStorageLayout)]` procedural macro.
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, PathArguments, Type};
+use syn::{Data, DeriveInput};
 
 pub fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
