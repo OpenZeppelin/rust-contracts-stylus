@@ -38,7 +38,7 @@ async fn deploy(
 }
 
 // ============================================================================
-// Integration Tests: ERC20
+// Integration Tests: ERC-20 Token + Metadata Extension
 // ============================================================================
 
 #[e2e::test]
@@ -49,12 +49,14 @@ async fn constructs(alice: User) -> Result<()> {
     let Erc20::nameReturn { name } = contract.name().call().await?;
     let Erc20::symbolReturn { symbol } = contract.symbol().call().await?;
     let Erc20::capReturn { cap } = contract.cap().call().await?;
+    let Erc20::decimalsReturn { decimals } = contract.decimals().call().await?;
     let Erc20::totalSupplyReturn { totalSupply: total_supply } =
         contract.totalSupply().call().await?;
 
     assert_eq!(name, TOKEN_NAME.to_owned());
     assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
     assert_eq!(cap, U256::from(CAP));
+    assert_eq!(decimals, 10);
     assert_eq!(total_supply, U256::ZERO);
     Ok(())
 }
@@ -597,7 +599,7 @@ async fn transfer_from_rejects_invalid_receiver(
 }
 
 // ============================================================================
-// Integration Tests: ERC20Burnable
+// Integration Tests: ERC-20 Burnable Extension
 // ============================================================================
 
 #[e2e::test]
@@ -830,3 +832,76 @@ async fn burn_from_rejects_insufficient_allowance(
 
     Ok(())
 }
+
+// ============================================================================
+// Integration Tests: ERC-20 Capped Extension
+// ============================================================================
+
+#[e2e::test]
+async fn mint_rejects_exceeding_cap(alice: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let alice_addr = alice.address();
+
+    let one = U256::from(1);
+    let two = U256::from(2);
+    let cap = U256::from(CAP);
+    let balance = cap - one;
+
+    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let err = send!(contract_alice.mint(alice_addr, two))
+        .expect_err("should not mint when exceeding the cap");
+    assert!(err
+        .is(Erc20::ERC20ExceededCap { increased_supply: balance + two, cap }));
+
+    let Erc20::balanceOfReturn { balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+
+    assert_eq!(initial_balance, balance);
+    assert_eq!(initial_supply, supply);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint_rejects_when_cap_reached(alice: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let alice_addr = alice.address();
+
+    let one = U256::from(1);
+    let cap = U256::from(CAP);
+    let balance = cap;
+
+    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let err = send!(contract_alice.mint(alice_addr, one))
+        .expect_err("should not mint when the cap is reached");
+    assert!(err
+        .is(Erc20::ERC20ExceededCap { increased_supply: balance + one, cap }));
+
+    let Erc20::balanceOfReturn { balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+
+    assert_eq!(initial_balance, balance);
+    assert_eq!(initial_supply, supply);
+
+    Ok(())
+}
+
+// TODO: deploy with invalid cap (`ERC20InvalidCap`)

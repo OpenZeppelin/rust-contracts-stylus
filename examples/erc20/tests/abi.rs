@@ -6,7 +6,7 @@ sol!(
     contract Erc20 {
         function name() external view returns (string name);
         function symbol() external view returns (string symbol);
-        function decimals() external view returns (uint8);
+        function decimals() external view returns (uint8 decimals);
         function totalSupply() external view returns (uint256 totalSupply);
         function balanceOf(address account) external view returns (uint256 balance);
         function transfer(address recipient, uint256 amount) external returns (bool);
@@ -19,6 +19,9 @@ sol!(
         function mint(address account, uint256 amount) external;
         function burn(uint256 amount) external;
         function burnFrom(address account, uint256 amount) external;
+
+        error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
+        error ERC20InvalidCap(uint256 cap);
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
