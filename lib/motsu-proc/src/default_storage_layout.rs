@@ -3,6 +3,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput};
 
+const STORAGE_WORD_BYTES: u8 = 32;
+
 pub fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
@@ -24,8 +26,8 @@ pub fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
         let ty = quote! { <#field_type as stylus_sdk::storage::StorageType> };
         let field_init = quote! {
             {
-                if offset + #ty::SLOT_BYTES as u8 > 32 {
-                    next_slot += 32;
+                if offset + #ty::SLOT_BYTES as u8 > #STORAGE_WORD_BYTES {
+                    next_slot += 1;
                     offset = 0;
                 }
                 let instance = unsafe { #ty::new(alloy_primitives::U256::from(next_slot), offset) };
