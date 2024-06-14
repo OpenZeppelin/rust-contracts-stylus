@@ -70,7 +70,7 @@ async fn errors_when_reusing_token_id(alice: User) -> eyre::Result<()> {
 
     let err = send!(contract.mint(alice_addr, token_id))
         .expect_err("should not mint a token id twice");
-    assert!(err.is(Erc721::ERC721InvalidSender { sender: Address::ZERO }));
+    assert!(err.is_err(Erc721::ERC721InvalidSender { sender: Address::ZERO }));
     Ok(())
 }
 
@@ -111,7 +111,7 @@ async fn errors_when_transfer_nonexistent_token(
     let tx = contract.transferFrom(alice_addr, bob.address(), token_id);
 
     let err = send!(tx).expect_err("should not transfer a non-existent token");
-    assert!(err.is(Erc721::ERC721NonexistentToken { tokenId: token_id }));
+    assert!(err.is_err(Erc721::ERC721NonexistentToken { tokenId: token_id }));
     Ok(())
 }
 
@@ -152,7 +152,7 @@ async fn errors_when_transfer_unapproved_token(
     let tx = contract.transferFrom(alice_addr, bob_addr, token_id);
 
     let err = send!(tx).expect_err("should not transfer unapproved token");
-    assert!(err.is(Erc721::ERC721InsufficientApproval {
+    assert!(err.is_err(Erc721::ERC721InsufficientApproval {
         operator: bob_addr,
         tokenId: token_id,
     }));
