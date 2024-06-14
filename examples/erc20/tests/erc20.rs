@@ -5,7 +5,7 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{receipt, send, watch, ErrorExt, EventExt, User};
+use e2e::{receipt, send, watch, ErrorExt, EventExt, RevertExt, User};
 use eyre::Result;
 
 use crate::abi::Erc20;
@@ -121,30 +121,31 @@ async fn mints_rejects_invalid_receiver(alice: User) -> Result<()> {
     Ok(())
 }
 
-// FIXME: test fails
 #[e2e::test]
 async fn mints_rejects_overflow(alice: User) -> Result<()> {
-    let contract_addr =
-        deploy(alice.url(), &alice.pk(), Some(U256::MAX)).await?;
+    let max_cap = U256::MAX;
+
+    let contract_addr = deploy(alice.url(), &alice.pk(), Some(max_cap)).await?;
     let contract = Erc20::new(contract_addr, &alice.signer);
     let alice_addr = alice.address();
 
-    let max = U256::from(CAP);
     let one = U256::from(1);
 
-    let _ = watch!(contract.mint(alice_addr, max))?;
+    let _ = watch!(contract.mint(alice_addr, max_cap))?;
 
     let Erc20::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(alice_addr).call().await?;
     let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
         contract.totalSupply().call().await?;
 
-    assert_eq!(initial_supply, max);
-    assert_eq!(initial_balance, max);
+    assert_eq!(initial_supply, max_cap);
+    assert_eq!(initial_balance, max_cap);
 
-    // TODO: check revert
-    let _error = send!(contract.mint(alice_addr, one))
+    let err = send!(contract.mint(alice_addr, one))
         .expect_err("should not exceed U256::MAX");
+
+    // TODO: find better way for checking arithmetic overflow.
+    assert!(err.reverts(-32000));
 
     let Erc20::balanceOfReturn { balance } =
         contract.balanceOf(alice_addr).call().await?;
