@@ -1,13 +1,13 @@
 use alloy::sol_types::SolError;
 
 pub trait ErrorExt<E> {
-    /// checks that `self` corresponds to the typed abi-encoded error
+    /// Checks that `Self` corresponds to the typed abi-encoded error
     /// `expected`.
     fn is_err(&self, expected: E) -> bool;
 }
 
 pub trait RevertExt {
-    /// checks that `self` corresponds to expected revert `code`.
+    /// Checks that `Self` corresponds to expected revert `code`.
     /// E.g. for arithmetic overflow.
     fn reverts(&self, code: i64) -> bool;
 }
@@ -39,8 +39,7 @@ impl<E: SolError> ErrorExt<E> for alloy::contract::Error {
         let raw_value = e
             .as_error_resp()
             .and_then(|payload| payload.data.clone())
-            .unwrap_or_else(|| panic!("{:#?}", e));
-        // .expect("should extract the error");
+            .expect("should extract the error");
         let actual = &raw_value.get().trim_matches('"')[2..];
         let expected = alloy::hex::encode(expected.abi_encode());
         expected == actual
