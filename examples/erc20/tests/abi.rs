@@ -18,6 +18,7 @@ sol!(
 
         function mint(address account, uint256 amount) external;
         function burn(uint256 amount) external;
+        function burnFrom(address account, uint256 amount) external;
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);

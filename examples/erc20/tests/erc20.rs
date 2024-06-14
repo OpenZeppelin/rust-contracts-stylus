@@ -37,6 +37,10 @@ async fn deploy(
     e2e::deploy(rpc_url, private_key, Some(args)).await
 }
 
+// ============================================================================
+// Integration Tests: ERC20
+// ============================================================================
+
 #[e2e::test]
 async fn constructs(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
@@ -586,6 +590,241 @@ async fn transfer_from_rejects_invalid_receiver(
 
     assert_eq!(initial_alice_balance, alice_balance);
     assert_eq!(initial_receiver_balance, receiver_balance);
+    assert_eq!(initial_supply, supply);
+    assert_eq!(initial_allowance, allowance);
+
+    Ok(())
+}
+
+// ============================================================================
+// Integration Tests: ERC20Burnable
+// ============================================================================
+
+#[e2e::test]
+async fn burns(alice: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let alice_addr = alice.address();
+
+    let balance = U256::from(10);
+    let value = U256::from(1);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let receipt = receipt!(contract_alice.burn(value))?;
+
+    let Erc20::balanceOfReturn { balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+
+    receipt.emits(Erc20::Transfer {
+        from: alice_addr,
+        to: Address::ZERO,
+        value,
+    });
+
+    assert_eq!(initial_balance - value, balance);
+    assert_eq!(initial_supply - value, supply);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burn_rejects_insufficient_balance(alice: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let alice_addr = alice.address();
+
+    let balance = U256::from(10);
+    let value = U256::from(11);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let err = send!(contract_alice.burn(value))
+        .expect_err("should not burn when insufficient balance");
+    assert!(err.is(Erc20::ERC20InsufficientBalance {
+        sender: alice_addr,
+        balance,
+        needed: value
+    }));
+
+    let Erc20::balanceOfReturn { balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+
+    assert_eq!(initial_balance, balance);
+    assert_eq!(initial_supply, supply);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_from(alice: User, bob: User) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = U256::from(10);
+    let value = U256::from(1);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: initial_bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let _ = watch!(contract_alice.approve(bob_addr, balance))?;
+
+    let Erc20::allowanceReturn { allowance: initial_allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    let receipt = receipt!(contract_bob.burnFrom(alice_addr, value))?;
+
+    let Erc20::balanceOfReturn { balance: alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+    let Erc20::allowanceReturn { allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    receipt.emits(Erc20::Transfer {
+        from: alice_addr,
+        to: Address::ZERO,
+        value,
+    });
+
+    assert_eq!(initial_alice_balance - value, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+    assert_eq!(initial_supply - value, supply);
+    assert_eq!(initial_allowance - value, allowance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burn_from_reverts_insufficient_balance(
+    alice: User,
+    bob: User,
+) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = U256::from(1);
+    let value = U256::from(10);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: initial_bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let _ = watch!(contract_alice.approve(bob_addr, value))?;
+
+    let Erc20::allowanceReturn { allowance: initial_allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    let err = send!(contract_bob.burnFrom(alice_addr, value))
+        .expect_err("should not burn when insufficient balance");
+
+    assert!(err.is(Erc20::ERC20InsufficientBalance {
+        sender: alice_addr,
+        balance,
+        needed: value
+    }));
+
+    let Erc20::balanceOfReturn { balance: alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+    let Erc20::allowanceReturn { allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+    assert_eq!(initial_supply, supply);
+    assert_eq!(initial_allowance, allowance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burn_from_rejects_insufficient_allowance(
+    alice: User,
+    bob: User,
+) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = U256::from(10);
+    let value = U256::from(1);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: initial_bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let Erc20::allowanceReturn { allowance: initial_allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    assert_eq!(initial_allowance, U256::ZERO);
+
+    let err = send!(contract_bob.burnFrom(alice_addr, value))
+        .expect_err("should not burn when insufficient allowance");
+
+    assert!(err.is(Erc20::ERC20InsufficientAllowance {
+        spender: bob_addr,
+        allowance: U256::ZERO,
+        needed: value
+    }));
+
+    let Erc20::balanceOfReturn { balance: alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+    let Erc20::allowanceReturn { allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
     assert_eq!(initial_supply, supply);
     assert_eq!(initial_allowance, allowance);
 
