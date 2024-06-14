@@ -17,50 +17,19 @@ pub fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     };
 
     let mut field_initializations = Vec::new();
-
     for field in fields {
         let field_name = &field.ident;
-        let field_ty = &field.ty;
+        let field_type = &field.ty;
 
-        let Type::Path(type_path) = field_ty else {
-            error!(
-                field_ty,
-                "unsupported field type. Only path types are supported"
-            );
-        };
-
-        // Types when using `sol_storage!` look like this:
-        // `stylus_sdk::storage::type<generic arguments>`
-        // (e.g. uint256 is stylus_sdk::storage::StorageUint<256,4>).
-        // So we must first get the last argument, which is the main
-        // type.
-        let segments = &type_path.path.segments;
-        let last_segment = if segments.len() >= 3 {
-            segments.last().unwrap()
-        } else {
-            error!(type_path, "unexpected type path");
-        };
-        let main_type = &last_segment.ident;
-
-        // If the type has generic arguments form the token stream that
-        // we latter append to access `new` and `SLOT_BYTES`
-        let generic_args = match &last_segment.arguments {
-            PathArguments::AngleBracketed(args) => quote! { ::#args },
-            _ => quote! {},
-        };
-
-        // Reconstruct the type with the correct formatting
-        let type_ident =
-            quote! { stylus_sdk::storage:: #main_type #generic_args };
-
+        let ty = quote! { <#field_type as stylus_sdk::storage::StorageType> };
         let field_init = quote! {
             {
-                if offset + #type_ident::SLOT_BYTES as u8 > 32 {
+                if offset + #ty::SLOT_BYTES as u8 > 32 {
                     next_slot += 32;
                     offset = 0;
                 }
-                let instance = unsafe { #type_ident::new(alloy_primitives::U256::from(next_slot), offset) };
-                offset += #type_ident::SLOT_BYTES as u8;
+                let instance = unsafe { #ty::new(alloy_primitives::U256::from(next_slot), offset) };
+                offset += #ty::SLOT_BYTES as u8;
                 instance
             }
         };
@@ -71,7 +40,6 @@ pub fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     }
 
     quote! {
-        use stylus_sdk::prelude::StorageType;
         impl Default for #name {
             fn default() -> Self {
                 let mut next_slot: i32 = 0;
