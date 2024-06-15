@@ -1480,9 +1480,10 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 name = "crypto"
 version = "0.1.0"
 dependencies = [
- "crypto-bigint",
+ "crypto-bigint 0.6.0-pre.12",
  "hex-literal",
  "mini-alloc",
+ "proptest",
  "rand",
  "tiny-keccak",
 ]
@@ -1497,6 +1498,16 @@ dependencies = [
  "rand_core",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "crypto-bigint"
+version = "0.6.0-pre.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1943d7beadd9ce2b25f3bae73b9e9336fccc1edf38bdec1ed58d3aa183989e11"
+dependencies = [
+ "num-traits",
+ "subtle",
 ]
 
 [[package]]
@@ -1676,7 +1687,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6043086bf7973472e0c7dff2142ea0b680d30e18d9cc40f267efbf222bd47"
 dependencies = [
  "base16ct",
- "crypto-bigint",
+ "crypto-bigint 0.5.5",
  "digest 0.10.7",
  "ff",
  "generic-array",

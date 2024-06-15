@@ -1,22 +1,16 @@
 //! Affine curve points.
-use core::marker::PhantomData;
-
-use bn::U256;
-
 use super::curve::PrimeCurveParams;
 
 /// Point on a Weierstrass curve in affine coordinates.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct AffinePoint<C: PrimeCurveParams> {
     /// x-coordinate.
-    pub x: U256,
+    pub x: C::FieldElement,
     /// y-coordinate.
-    pub y: U256,
-
-    marker: PhantomData<C>,
+    pub y: C::FieldElement,
 }
 
 impl<C: PrimeCurveParams> AffinePoint<C> {
-    pub const GENERATOR: Self =
-        Self { x: C::GENERATOR.0, y: C::GENERATOR.1, marker: PhantomData };
+    /// The base point of curve `C`.
+    pub const GENERATOR: Self = Self { x: C::GENERATOR.0, y: C::GENERATOR.1 };
 }

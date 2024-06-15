@@ -9,13 +9,14 @@ repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
-bn = { version = "0.5.5", default-features = false, package = "crypto-bigint" }
+bigint = { version = "0.6.0-pre.12", default-features = false, package = "crypto-bigint" }
 mini-alloc.workspace = true
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 
 [dev-dependencies]
 hex-literal = "0.4.1"
 rand = "0.8.5"
+proptest = "1"
 
 [features]
 std = []
