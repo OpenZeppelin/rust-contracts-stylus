@@ -1,9 +1,7 @@
 //! Implementation of the [`Erc721`] token standard.
 use alloc::vec;
 
-use alloy_primitives::{
-    fixed_bytes, private::derive_more::From, Address, FixedBytes, U128, U256,
-};
+use alloy_primitives::{fixed_bytes, Address, FixedBytes, U128, U256};
 use stylus_sdk::{
     abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
 };
@@ -120,7 +118,7 @@ sol! {
 /// An [`Erc721`] error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
-#[derive(SolidityError, Debug, From)]
+#[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
     /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
