@@ -26,7 +26,7 @@ pub async fn deploy(
             wasm: wasm_path.clone(),
             sol: sol_path,
             args,
-            legacy: true,
+            legacy: false,
         },
         auth: koba::config::PrivateKey {
             private_key_path: None,
