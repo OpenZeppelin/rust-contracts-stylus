@@ -7,7 +7,8 @@ extern crate alloc;
 pub mod hash;
 pub use hash::keccak::KeccakBuilder;
 
-#[cfg(any(feature = "std", feature = "ec"))]
+// TODO: This module shouldn't depend on a concrete curve.
+#[cfg(any(feature = "std", all(feature = "ec", feature = "p256")))]
 #[path = "elliptic-curve/mod.rs"]
 pub mod elliptic_curve;
 
