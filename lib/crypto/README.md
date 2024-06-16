@@ -18,6 +18,21 @@ Common cryptographic procedures for a blockchain environment.
 
 [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 
+## Nist's P-256 elliptic curve (secp256r1)
+
+Common cryptographic operations over elliptic curves are provided in the
+[`elliptic-curve`] module. Currently we only support the [`P-256`] curve.
+
+[`elliptic-curve`]: ./src/elliptic-curve/mod.rs
+[`P-256`]: ./src/elliptic-curve/p256.rs
+
+### ECDSA
+
+We support the signing and verifying operations defined by the [`ECDSA`]
+cryptographic algorithm.
+
+[`ECDSA`]: ./src/ecdsa.rs
+
 ## Feature Flags
 
 This crate exposes its modules behind feature gates to ensure the bare minimum
