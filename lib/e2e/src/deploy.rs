@@ -1,10 +1,6 @@
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::path::PathBuf;
 
 use alloy::primitives::Address;
-use eyre::bail;
 use koba::config::Deploy;
 
 use crate::project::Crate;
@@ -35,44 +31,9 @@ pub async fn deploy(
             keystore_password_path: None,
         },
         endpoint: rpc_url.to_owned(),
-        deploy_only: true,
+        deploy_only: false,
     };
 
     let address = koba::deploy(&config).await?;
-    activate(&wasm_path, rpc_url, private_key, address)?;
-
     Ok(address)
-}
-
-/// Uses `cargo-stylus` to activate a Stylus contract.
-///
-/// This is a patch until `nitro-testnode` gets updated, since `koba deploy`
-/// handles everything for us when used against the Stylus testnet.
-/// Work tracked in https://github.com/OpenZeppelin/rust-contracts-stylus/issues/87
-fn activate(
-    wasm_path: &Path,
-    rpc_url: &str,
-    private_key: &str,
-    address: Address,
-) -> eyre::Result<()> {
-    let output = Command::new("cargo")
-        .arg("stylus")
-        .arg("deploy")
-        .args(["-e", rpc_url])
-        .args(["--wasm-file-path", &wasm_path.to_string_lossy()])
-        .args(["--private-key", private_key])
-        .args(["--activate-program-address", &address.to_string()])
-        .args(["--mode", "activate-only"])
-        .output()?;
-
-    if !output.status.success() {
-        // If the program is up-to-date, that means that it was activated
-        // already, so we can just ignore this error and carry on.
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        if !stderr.contains("ProgramUpToDate") {
-            bail!("failed to activate the contract at address {address}");
-        }
-    }
-
-    Ok(())
 }

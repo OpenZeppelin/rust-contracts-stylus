@@ -40,7 +40,7 @@ jobs:
           path: |
             ~/.cargo/bin/
             ~/.cargo/.crates.toml
-          key: ${{ runner.os }}-cargo-bin-cargo-stylus@0.2.1
+          key: ${{ runner.os }}-cargo-bin-cargo-stylus
           save-always: true
 
       - name: set up rust
@@ -52,7 +52,7 @@ jobs:
           toolchain: nightly-2024-01-01
 
       - name: install cargo-stylus
-        run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
+        run: cargo install --force cargo-stylus cargo-stylus-check
 
       - name: install solc
         run: |
