@@ -1,11 +1,14 @@
 //! Signature conversion from and to bytes.
 
-use crate::elliptic_curve::curve::PrimeCurve;
-
-use bigint::Encoding;
 use core::mem;
 
-use super::{error::Error, error::Result, Signature};
+use bigint::Encoding;
+
+use super::{
+    error::{Error, Result},
+    Signature,
+};
+use crate::elliptic_curve::curve::PrimeCurve;
 
 impl<C: PrimeCurve> Signature<C> {
     /// Parse a signature from fixed-width bytes, i.e. 2 * the size of field
@@ -37,7 +40,8 @@ impl<C: PrimeCurve> Signature<C> {
             .and_then(Self::from_bytes)
     }
 
-    /// Split the signature into its `r` and `s` components, represented as bytes.
+    /// Split the signature into its `r` and `s` components, represented as
+    /// bytes.
     pub fn split_bytes(&self) -> ([u8; 32], [u8; 32]) {
         (self.r.to_be_bytes(), self.s.to_be_bytes())
     }
