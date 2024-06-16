@@ -8,7 +8,7 @@ pub mod hash;
 pub use hash::keccak::KeccakBuilder;
 
 // TODO: This module shouldn't depend on a concrete curve.
-#[cfg(any(feature = "std", all(feature = "ec", feature = "p256")))]
+#[cfg(any(feature = "std", any(feature = "ec", feature = "p256")))]
 #[path = "elliptic-curve/mod.rs"]
 pub mod elliptic_curve;
 
