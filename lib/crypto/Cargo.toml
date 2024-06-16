@@ -9,8 +9,9 @@ repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
-bigint = { version = "0.6.0-pre.12", default-features = false, package = "crypto-bigint" }
-mini-alloc.workspace = true
+bigint = { version = "0.6.0-pre.12", default-features = false, package = "crypto-bigint", features = [
+  "hybrid-array",
+] }
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 
 [dev-dependencies]
@@ -26,3 +27,4 @@ multi-proof = ["merkle"]
 
 ec = []
 p256 = ["ec"]
+ecdsa = ["ec"]

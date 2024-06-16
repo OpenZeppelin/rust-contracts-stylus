@@ -6,7 +6,7 @@
 //! Algorithms from [Renes-Costello-Batina 2015]: https://eprint.iacr.org/2015/1060
 
 use super::{
-    affine::AffinePoint, curve::PrimeCurveParams, field::Field, p256::P256,
+    affine::AffinePoint, curve::PrimeCurve, field::Field,
     projective::ProjectivePoint,
 };
 
@@ -14,7 +14,7 @@ use super::{
 ///
 /// Provides implementation of point arithmetic (point addition, point doubling)
 /// which might be optimized for the curve.
-pub trait PointArithmetic<C: PrimeCurveParams> {
+pub trait PointArithmetic<C: PrimeCurve> {
     /// Returns `lhs + rhs`.
     fn add(
         lhs: &ProjectivePoint<C>,
@@ -32,8 +32,10 @@ pub trait PointArithmetic<C: PrimeCurveParams> {
 }
 
 /// The 𝒂-coefficient of the short Weierstrass equation is -3.
-impl<C: PrimeCurveParams> PointArithmetic<C> for P256 {
-    /// Implements complete addition for curves with `a = -3`
+pub struct EquationAIsMinusThree;
+
+impl<C: PrimeCurve> PointArithmetic<C> for EquationAIsMinusThree {
+    /// Implements complete addition for curves with `a = -3`.
     ///
     /// Implements the complete addition formula from [Renes-Costello-Batina
     /// 2015] (Algorithm 4). The comments after each line indicate which
@@ -100,7 +102,7 @@ impl<C: PrimeCurveParams> PointArithmetic<C> for P256 {
         ProjectivePoint { x, y, z }
     }
 
-    /// Implements point doubling for curves with `a = -3`
+    /// Implements point doubling for curves with `a = -3`.
     ///
     /// Implements the exception-free point doubling formula from
     /// [Renes-Costello-Batina 2015] (Algorithm 6). The comments after each

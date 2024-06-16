@@ -1,4 +1,4 @@
-//! Field arithmetic modulo p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1
+//! Field arithmetic for Nist's P-256 curve.
 
 use core::{
     fmt,
@@ -65,8 +65,7 @@ pub trait Field:
     fn invert(&self) -> Option<Self>;
 }
 
-/// An element in the finite field modulo
-/// `p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1`.
+/// An element in the subgroup with base point [`P256::GENERATOR`].
 #[derive(Clone, Copy, Debug)]
 pub struct FieldElement(pub U256);
 

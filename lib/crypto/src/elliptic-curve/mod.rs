@@ -7,6 +7,7 @@ pub mod affine;
 pub mod arithmetic;
 pub mod curve;
 pub mod field;
+pub mod keys;
 pub mod projective;
 
 #[cfg(test)]

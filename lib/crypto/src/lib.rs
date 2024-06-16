@@ -11,5 +11,10 @@ pub use hash::keccak::KeccakBuilder;
 #[path = "elliptic-curve/mod.rs"]
 pub mod elliptic_curve;
 
+#[cfg(any(feature = "std", feature = "ecdsa"))]
+pub mod ecdsa;
+#[cfg(any(feature = "std", feature = "ecdsa"))]
+pub mod signature;
+
 #[cfg(any(feature = "std", feature = "merkle"))]
 pub mod merkle;

@@ -1482,7 +1482,6 @@ version = "0.1.0"
 dependencies = [
  "crypto-bigint 0.6.0-pre.12",
  "hex-literal",
- "mini-alloc",
  "proptest",
  "rand",
  "tiny-keccak",
@@ -1506,6 +1505,7 @@ version = "0.6.0-pre.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1943d7beadd9ce2b25f3bae73b9e9336fccc1edf38bdec1ed58d3aa183989e11"
 dependencies = [
+ "hybrid-array",
  "num-traits",
  "subtle",
 ]
@@ -2160,6 +2160,15 @@ name = "httparse"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d897f394bad6a705d5f4104762e116a75639e470d80901eed05a860a95cb1904"
+
+[[package]]
+name = "hybrid-array"
+version = "0.2.0-rc.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53668f5da5a41d9eaf4bf7064be46d1ebe6a4e1ceed817f387587b18f2b51047"
+dependencies = [
+ "typenum",
+]
 
 [[package]]
 name = "hyper"

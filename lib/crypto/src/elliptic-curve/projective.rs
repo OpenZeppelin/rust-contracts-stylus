@@ -1,9 +1,19 @@
 //! Projective curve points.
-use super::{affine::AffinePoint, curve::PrimeCurveParams, field::Field};
+use core::{
+    iter::Sum,
+    ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
+
+use bigint::Bounded;
+
+use super::{
+    affine::AffinePoint, arithmetic::PointArithmetic, curve::PrimeCurve,
+    field::Field,
+};
 
 /// Point on a Weierstrass curve in projective (homogeneous) coordinates.
 #[derive(Clone, Copy, Debug)]
-pub struct ProjectivePoint<C: PrimeCurveParams> {
+pub struct ProjectivePoint<C: PrimeCurve> {
     /// X-coordinate.
     pub x: C::FieldElement,
     /// Y-coordinate.
@@ -12,7 +22,7 @@ pub struct ProjectivePoint<C: PrimeCurveParams> {
     pub z: C::FieldElement,
 }
 
-impl<C: PrimeCurveParams> ProjectivePoint<C> {
+impl<C: PrimeCurve> ProjectivePoint<C> {
     /// The base point of curve `C`.
     pub const GENERATOR: Self =
         Self { x: C::GENERATOR.0, y: C::GENERATOR.1, z: C::FieldElement::ONE };
@@ -29,11 +39,47 @@ impl<C: PrimeCurveParams> ProjectivePoint<C> {
         <C::FieldElement as Field>::invert(&self.z)
             .map(|zinv| AffinePoint { x: self.x * zinv, y: self.y * zinv })
     }
+
+    /// Returns `-self`.
+    pub fn neg(&self) -> Self {
+        Self { x: self.x, y: -self.y, z: self.z }
+    }
+
+    /// Returns `self + other`.
+    pub fn add(&self, other: &Self) -> Self {
+        C::PointArithmetic::add(self, other)
+    }
+
+    /// Returns `self + other`.
+    fn add_mixed(&self, other: &AffinePoint<C>) -> Self {
+        C::PointArithmetic::add_mixed(self, other)
+    }
+
+    /// Returns `self - other`.
+    pub fn sub(&self, other: &Self) -> Self {
+        self.add(&other.neg())
+    }
+
+    /// Returns `scalar * self`.
+    fn mul(&self, scalar: C::Uint) -> Self {
+        let one = C::Uint::from(1u64);
+        let mut result = ProjectivePoint::IDENTITY;
+        let mut addend = *self;
+        for shift in 0..C::Uint::BITS {
+            let bit = (scalar >> shift) & one;
+            if bit == one {
+                result += addend;
+            }
+            addend = C::PointArithmetic::double(&addend);
+        }
+
+        result
+    }
 }
 
 impl<C> PartialEq for ProjectivePoint<C>
 where
-    C: PrimeCurveParams,
+    C: PrimeCurve,
 {
     fn eq(&self, other: &Self) -> bool {
         // Since projective points are members of equivalence classes, we can't
@@ -48,9 +94,233 @@ where
 
 impl<C> Default for ProjectivePoint<C>
 where
-    C: PrimeCurveParams,
+    C: PrimeCurve,
 {
     fn default() -> Self {
         Self::IDENTITY
+    }
+}
+
+impl<C> Add<ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn add(self, other: ProjectivePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::add(&self, &other)
+    }
+}
+
+impl<C> Add<&ProjectivePoint<C>> for &ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn add(self, other: &ProjectivePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::add(self, other)
+    }
+}
+
+impl<C> Add<&ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn add(self, other: &ProjectivePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::add(&self, other)
+    }
+}
+
+impl<C> AddAssign<ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn add_assign(&mut self, rhs: ProjectivePoint<C>) {
+        *self = ProjectivePoint::add(self, &rhs);
+    }
+}
+
+impl<C> AddAssign<&ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn add_assign(&mut self, rhs: &ProjectivePoint<C>) {
+        *self = ProjectivePoint::add(self, rhs);
+    }
+}
+
+impl<C> Add<AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn add(self, other: AffinePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::add_mixed(&self, &other)
+    }
+}
+
+impl<C> Add<&AffinePoint<C>> for &ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn add(self, other: &AffinePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::add_mixed(self, other)
+    }
+}
+
+impl<C> Add<&AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn add(self, other: &AffinePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::add_mixed(&self, other)
+    }
+}
+
+impl<C> AddAssign<AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn add_assign(&mut self, rhs: AffinePoint<C>) {
+        *self = ProjectivePoint::add_mixed(self, &rhs);
+    }
+}
+
+impl<C> AddAssign<&AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn add_assign(&mut self, rhs: &AffinePoint<C>) {
+        *self = ProjectivePoint::add_mixed(self, rhs);
+    }
+}
+
+impl<C> Sum for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(ProjectivePoint::IDENTITY, |a, b| a + b)
+    }
+}
+
+impl<'a, C> Sum<&'a ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn sum<I: Iterator<Item = &'a ProjectivePoint<C>>>(iter: I) -> Self {
+        iter.cloned().sum()
+    }
+}
+
+impl<C> Sub<ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn sub(self, other: ProjectivePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::sub(&self, &other)
+    }
+}
+
+impl<C> Sub<&ProjectivePoint<C>> for &ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn sub(self, other: &ProjectivePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::sub(self, other)
+    }
+}
+
+impl<C> Sub<&ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn sub(self, other: &ProjectivePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::sub(&self, other)
+    }
+}
+
+impl<C> SubAssign<ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn sub_assign(&mut self, rhs: ProjectivePoint<C>) {
+        *self = ProjectivePoint::sub(self, &rhs);
+    }
+}
+
+impl<C> SubAssign<&ProjectivePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn sub_assign(&mut self, rhs: &ProjectivePoint<C>) {
+        *self = ProjectivePoint::sub(self, rhs);
+    }
+}
+
+impl<C> Mul<C::Uint> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = Self;
+
+    fn mul(self, scalar: C::Uint) -> Self {
+        ProjectivePoint::mul(&self, scalar)
+    }
+}
+
+impl<C> Mul<&C::Uint> for &ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn mul(self, scalar: &C::Uint) -> ProjectivePoint<C> {
+        ProjectivePoint::mul(self, *scalar)
+    }
+}
+
+impl<C> MulAssign<C::Uint> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn mul_assign(&mut self, scalar: C::Uint) {
+        *self = ProjectivePoint::mul(self, scalar);
+    }
+}
+
+impl<C> Neg for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn neg(self) -> ProjectivePoint<C> {
+        ProjectivePoint::neg(&self)
+    }
+}
+
+impl<'a, C> Neg for &'a ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn neg(self) -> ProjectivePoint<C> {
+        ProjectivePoint::neg(self)
     }
 }
