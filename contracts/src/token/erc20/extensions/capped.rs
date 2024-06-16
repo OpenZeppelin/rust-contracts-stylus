@@ -37,6 +37,7 @@ pub enum Error {
 sol_storage! {
     /// State of a Capped Contract.
     #[allow(clippy::pub_underscore_fields)]
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Capped {
         /// A cap to the supply of tokens.
         uint256 _cap;
@@ -57,13 +58,6 @@ mod tests {
     use stylus_sdk::storage::{StorageType, StorageU256};
 
     use super::Capped;
-
-    impl Default for Capped {
-        fn default() -> Self {
-            let root = U256::ZERO;
-            Capped { _cap: unsafe { StorageU256::new(root, 0) } }
-        }
-    }
 
     #[motsu::test]
     fn cap_works(contract: Capped) {
