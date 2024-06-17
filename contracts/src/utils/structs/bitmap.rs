@@ -16,6 +16,9 @@
 use alloy_primitives::U256;
 use stylus_proc::sol_storage;
 
+pub const ONE: U256 = U256::from_limbs([1, 0, 0, 0]);
+pub const HEX_FF: U256 = U256::from_limbs([255, 0, 0, 0]);
+
 sol_storage! {
     /// State of bit map.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
@@ -81,7 +84,7 @@ impl BitMap {
 
     /// Get mask of value in the bucket.
     fn get_mask(index: U256) -> U256 {
-        U256::from(1) << (index & U256::from(0xff))
+        ONE << (index & HEX_FF)
     }
 
     /// Get bucket index.
