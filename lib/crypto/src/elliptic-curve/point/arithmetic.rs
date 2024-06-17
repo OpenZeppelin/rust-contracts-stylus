@@ -5,9 +5,8 @@
 //!
 //! Algorithms from [Renes-Costello-Batina 2015](https://eprint.iacr.org/2015/1060)
 
-use crate::elliptic_curve::{curve::PrimeCurve, field::Field};
-
 use super::{affine::AffinePoint, projective::ProjectivePoint};
+use crate::elliptic_curve::{curve::PrimeCurve, field::Field};
 
 /// Elliptic point arithmetic implementation
 ///
