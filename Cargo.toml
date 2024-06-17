@@ -38,7 +38,7 @@ keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 
 [workspace.dependencies]
-alloy-primitives = { version = "0.3.1", default-features = false, features = ["arbitrary"] }
+alloy-primitives = { version = "0.3.1", default-features = false }
 alloy-sol-types = { version = "0.3.1", default-features = false }
 # TODO: lift stylus-sdk and stylus-proc versions once nitro test node will be compatible
 stylus-sdk = { version = "0.4.3", default-features = false }

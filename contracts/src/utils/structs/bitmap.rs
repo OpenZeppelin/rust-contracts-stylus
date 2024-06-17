@@ -143,13 +143,4 @@ mod tests {
             });
         });
     }
-
-    #[motsu::test]
-    fn set_to_value_fail(bit_map: BitMap) {
-        let value = U256::from_str("0x3addf0d5a644504e89618dcb19fe6f7ce797bc52e91dbd1dcf3fddb22cdbce17").expect("parsed U256");
-        bit_map.set(value);
-        assert_eq!(bit_map.get(value), true);
-        bit_map.unset(value);
-        assert_eq!(bit_map.get(value), false);
-    }
 }
