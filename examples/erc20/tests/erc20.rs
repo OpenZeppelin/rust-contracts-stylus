@@ -3,7 +3,7 @@
 use alloy::{
     primitives::{Address, U256},
     sol,
-    sol_types::SolConstructor,
+    sol_types::{SolConstructor, SolError},
 };
 use e2e::{receipt, send, watch, ErrorExt, EventExt, RevertExt, User};
 use eyre::Result;
@@ -102,9 +102,7 @@ async fn mints_rejects_invalid_receiver(alice: User) -> Result<()> {
     let value = U256::from(10);
     let err = send!(contract.mint(invalid_receiver, value))
         .expect_err("should not mint tokens for Address::ZERO");
-    assert!(
-        err.is_err(Erc20::ERC20InvalidReceiver { receiver: invalid_receiver })
-    );
+    assert!(err.is(Erc20::ERC20InvalidReceiver { receiver: invalid_receiver }));
 
     let Erc20::balanceOfReturn { balance } =
         contract.balanceOf(invalid_receiver).call().await?;
@@ -213,7 +211,7 @@ async fn transfer_rejects_insufficient_balance(
 
     let err = send!(contract_alice.transfer(bob_addr, value))
         .expect_err("should not transfer when insufficient balance");
-    assert!(err.is_err(Erc20::ERC20InsufficientBalance {
+    assert!(err.is(Erc20::ERC20InsufficientBalance {
         sender: alice_addr,
         balance,
         needed: value
@@ -254,9 +252,7 @@ async fn transfer_rejects_invalid_receiver(alice: User) -> Result<()> {
 
     let err = send!(contract_alice.transfer(invalid_receiver, value))
         .expect_err("should not transfer to Address::ZERO");
-    assert!(
-        err.is_err(Erc20::ERC20InvalidReceiver { receiver: invalid_receiver })
-    );
+    assert!(err.is(Erc20::ERC20InvalidReceiver { receiver: invalid_receiver }));
 
     let Erc20::balanceOfReturn { balance: alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -365,7 +361,7 @@ async fn approve_rejects_invalid_spender(alice: User) -> Result<()> {
     let err = send!(contract.approve(invalid_spender, ten))
         .expect_err("should not approve for Address::ZERO");
 
-    assert!(err.is_err(Erc20::ERC20InvalidSpender { spender: invalid_spender }));
+    assert!(err.is(Erc20::ERC20InvalidSpender { spender: invalid_spender }));
 
     let Erc20::allowanceReturn { allowance: alice_spender_allowance } =
         contract.allowance(alice_addr, invalid_spender).call().await?;
@@ -467,7 +463,7 @@ async fn transfer_from_reverts_insufficient_balance(
     let err = send!(contract_bob.transferFrom(alice_addr, bob_addr, value))
         .expect_err("should not transfer when insufficient balance");
 
-    assert!(err.is_err(Erc20::ERC20InsufficientBalance {
+    assert!(err.is(Erc20::ERC20InsufficientBalance {
         sender: alice_addr,
         balance,
         needed: value
@@ -522,7 +518,7 @@ async fn transfer_from_rejects_insufficient_allowance(
     let err = send!(contract_bob.transferFrom(alice_addr, bob_addr, value))
         .expect_err("should not transfer when insufficient allowance");
 
-    assert!(err.is_err(Erc20::ERC20InsufficientAllowance {
+    assert!(err.is(Erc20::ERC20InsufficientAllowance {
         spender: bob_addr,
         allowance: U256::ZERO,
         needed: value
@@ -579,9 +575,7 @@ async fn transfer_from_rejects_invalid_receiver(
         send!(contract_bob.transferFrom(alice_addr, invalid_receiver, value))
             .expect_err("should not transfer to Address::ZERO");
 
-    assert!(
-        err.is_err(Erc20::ERC20InvalidReceiver { receiver: invalid_receiver })
-    );
+    assert!(err.is(Erc20::ERC20InvalidReceiver { receiver: invalid_receiver }));
 
     let Erc20::balanceOfReturn { balance: alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -657,7 +651,7 @@ async fn burn_rejects_insufficient_balance(alice: User) -> Result<()> {
 
     let err = send!(contract_alice.burn(value))
         .expect_err("should not burn when insufficient balance");
-    assert!(err.is_err(Erc20::ERC20InsufficientBalance {
+    assert!(err.is(Erc20::ERC20InsufficientBalance {
         sender: alice_addr,
         balance,
         needed: value
@@ -757,7 +751,7 @@ async fn burn_from_reverts_insufficient_balance(
     let err = send!(contract_bob.burnFrom(alice_addr, value))
         .expect_err("should not burn when insufficient balance");
 
-    assert!(err.is_err(Erc20::ERC20InsufficientBalance {
+    assert!(err.is(Erc20::ERC20InsufficientBalance {
         sender: alice_addr,
         balance,
         needed: value
@@ -812,7 +806,7 @@ async fn burn_from_rejects_insufficient_allowance(
     let err = send!(contract_bob.burnFrom(alice_addr, value))
         .expect_err("should not burn when insufficient allowance");
 
-    assert!(err.is_err(Erc20::ERC20InsufficientAllowance {
+    assert!(err.is(Erc20::ERC20InsufficientAllowance {
         spender: bob_addr,
         allowance: U256::ZERO,
         needed: value
@@ -859,10 +853,8 @@ async fn mint_rejects_exceeding_cap(alice: User) -> Result<()> {
 
     let err = send!(contract_alice.mint(alice_addr, two))
         .expect_err("should not mint when exceeding the cap");
-    assert!(err.is_err(Erc20::ERC20ExceededCap {
-        increased_supply: balance + two,
-        cap
-    }));
+    assert!(err
+        .is(Erc20::ERC20ExceededCap { increased_supply: balance + two, cap }));
 
     let Erc20::balanceOfReturn { balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -894,10 +886,8 @@ async fn mint_rejects_when_cap_reached(alice: User) -> Result<()> {
 
     let err = send!(contract_alice.mint(alice_addr, one))
         .expect_err("should not mint when the cap is reached");
-    assert!(err.is_err(Erc20::ERC20ExceededCap {
-        increased_supply: balance + one,
-        cap
-    }));
+    assert!(err
+        .is(Erc20::ERC20ExceededCap { increased_supply: balance + one, cap }));
 
     let Erc20::balanceOfReturn { balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -917,6 +907,23 @@ async fn should_not_deploy_capped_with_invalid_cap(alice: User) -> Result<()> {
         .await
         .expect_err("should not deploy due to `ERC20InvalidCap`");
 
-    assert!(err.is_err(Erc20::ERC20InvalidCap { cap: invalid_cap }));
+    // TODO: improve error check
+    // Requires strange casting
+    //  ErrorResp(
+    //      ErrorPayload {
+    //          code: 3,
+    //          message: \"execution reverted\",
+    //          data: Some(
+    //              RawValue(
+    //                  \"0x...\",
+    //              ),
+    //          ),
+    //      },
+    //  )
+    let err_string = format!("{:#?}", err);
+    let expected = Erc20::ERC20InvalidCap { cap: invalid_cap };
+    let expected = alloy::hex::encode(expected.abi_encode());
+
+    assert!(err_string.contains(&expected));
     Ok(())
 }
