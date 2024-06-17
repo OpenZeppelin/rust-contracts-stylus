@@ -60,6 +60,12 @@ impl<C: PrimeCurve> ProjectivePoint<C> {
 
     /// Returns `self - other`.
     #[must_use]
+    fn sub_mixed(&self, other: &AffinePoint<C>) -> Self {
+        self.add_mixed(&other.neg())
+    }
+
+    /// Returns `self - other`.
+    #[must_use]
     pub fn sub(&self, other: &Self) -> Self {
         self.add(&other.neg())
     }
@@ -102,6 +108,15 @@ where
 {
     fn default() -> Self {
         Self::IDENTITY
+    }
+}
+
+impl<C> From<AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn from(value: AffinePoint<C>) -> Self {
+        ProjectivePoint { x: value.x, y: value.y, z: C::FieldElement::ONE }
     }
 }
 
@@ -276,6 +291,57 @@ where
     }
 }
 
+impl<C> Sub<AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn sub(self, other: AffinePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::sub_mixed(&self, &other)
+    }
+}
+
+impl<C> Sub<&AffinePoint<C>> for &ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn sub(self, other: &AffinePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::sub_mixed(self, other)
+    }
+}
+
+impl<C> Sub<&AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    type Output = ProjectivePoint<C>;
+
+    fn sub(self, other: &AffinePoint<C>) -> ProjectivePoint<C> {
+        ProjectivePoint::sub_mixed(&self, other)
+    }
+}
+
+impl<C> SubAssign<AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn sub_assign(&mut self, rhs: AffinePoint<C>) {
+        *self = ProjectivePoint::sub_mixed(self, &rhs);
+    }
+}
+
+impl<C> SubAssign<&AffinePoint<C>> for ProjectivePoint<C>
+where
+    C: PrimeCurve,
+{
+    fn sub_assign(&mut self, rhs: &AffinePoint<C>) {
+        *self = ProjectivePoint::sub_mixed(self, rhs);
+    }
+}
+
 impl<C> Mul<C::Uint> for ProjectivePoint<C>
 where
     C: PrimeCurve,
@@ -326,5 +392,162 @@ where
 
     fn neg(self) -> ProjectivePoint<C> {
         ProjectivePoint::neg(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::elliptic_curve::{
+        curve::PrimeCurve,
+        field::FieldElement,
+        p256::P256,
+        point::{
+            affine::AffinePoint, arithmetic::PointArithmetic,
+            projective::ProjectivePoint,
+        },
+        test_vectors::group::{ADD_TEST_VECTORS, MUL_TEST_VECTORS},
+    };
+
+    #[test]
+    fn affine_to_projective() {
+        let basepoint_affine = AffinePoint::<P256>::GENERATOR;
+        let basepoint_projective = ProjectivePoint::<P256>::GENERATOR;
+
+        assert_eq!(
+            ProjectivePoint::<P256>::from(basepoint_affine),
+            basepoint_projective,
+        );
+
+        let affine = basepoint_projective.to_affine();
+        assert_ne!(affine, None);
+        assert_eq!(affine.unwrap(), basepoint_affine);
+        assert_eq!(ProjectivePoint::<P256>::IDENTITY.to_affine(), None);
+    }
+
+    #[test]
+    fn projective_identity_addition() {
+        let identity = ProjectivePoint::<P256>::IDENTITY;
+        let generator = ProjectivePoint::<P256>::GENERATOR;
+
+        assert_eq!(identity + &generator, generator);
+        assert_eq!(generator + &identity, generator);
+    }
+
+    #[test]
+    fn projective_mixed_addition() {
+        let identity = ProjectivePoint::<P256>::IDENTITY;
+        let basepoint_affine = AffinePoint::<P256>::GENERATOR;
+        let basepoint_projective = ProjectivePoint::<P256>::GENERATOR;
+
+        assert_eq!(identity + &basepoint_affine, basepoint_projective);
+        assert_eq!(
+            basepoint_projective + &basepoint_affine,
+            basepoint_projective + &basepoint_projective
+        );
+    }
+
+    #[test]
+    fn test_vector_repeated_add() {
+        let generator = ProjectivePoint::<P256>::GENERATOR;
+        let mut p = generator;
+
+        for i in 0..ADD_TEST_VECTORS.len() {
+            let (x, y) = ADD_TEST_VECTORS[i];
+            let x = FieldElement::from_hex(x);
+            let y = FieldElement::from_hex(y);
+            let a = AffinePoint { x, y };
+            assert_eq!(p.to_affine().unwrap(), a);
+
+            p += &generator;
+        }
+    }
+
+    #[test]
+    fn test_vector_repeated_add_mixed() {
+        let generator = AffinePoint::<P256>::GENERATOR;
+        let mut p = ProjectivePoint::<P256>::GENERATOR;
+
+        for i in 0..ADD_TEST_VECTORS.len() {
+            let (x, y) = ADD_TEST_VECTORS[i];
+            let x = FieldElement::from_hex(x);
+            let y = FieldElement::from_hex(y);
+            let a = AffinePoint { x, y };
+            assert_eq!(p.to_affine().unwrap(), a);
+
+            p += &generator;
+        }
+    }
+
+    #[test]
+    fn test_vector_double_generator() {
+        let generator = ProjectivePoint::<P256>::GENERATOR;
+        let mut p = generator;
+
+        for i in 0..2 {
+            let (x, y) = ADD_TEST_VECTORS[i];
+            let x = FieldElement::from_hex(x);
+            let y = FieldElement::from_hex(y);
+            let a = AffinePoint { x, y };
+            assert_eq!(p.to_affine().unwrap(), a);
+
+            p = <P256 as PrimeCurve>::PointArithmetic::double(&p);
+        }
+    }
+
+    #[test]
+    fn projective_add_vs_double() {
+        let generator = ProjectivePoint::<P256>::GENERATOR;
+        let double = <P256 as PrimeCurve>::PointArithmetic::double(&generator);
+        assert_eq!(generator + &generator, double);
+    }
+
+    #[test]
+    fn projective_add_and_sub() {
+        let basepoint_affine = AffinePoint::<P256>::GENERATOR;
+        let basepoint_projective = ProjectivePoint::<P256>::GENERATOR;
+
+        assert_eq!(
+            (basepoint_projective + &basepoint_projective)
+                - &basepoint_projective,
+            basepoint_projective
+        );
+        assert_eq!(
+            (basepoint_projective + &basepoint_affine) - &basepoint_affine,
+            basepoint_projective
+        );
+    }
+
+    #[test]
+    fn projective_double_and_sub() {
+        let generator = ProjectivePoint::<P256>::GENERATOR;
+        let double = <P256 as PrimeCurve>::PointArithmetic::double(&generator);
+        assert_eq!(double - &generator, generator);
+    }
+
+    // FIXME: This test is quite slow compared to the original implementation.
+    // The offending line is `let p = generator * *k;`, which means our scalar
+    // multiplication implementation is slow.
+    #[test]
+    fn test_vector_scalar_mult() {
+        let generator = ProjectivePoint::<P256>::GENERATOR;
+
+        for (k, coords) in ADD_TEST_VECTORS
+            .iter()
+            .enumerate()
+            .map(|(k, coords)| (FieldElement::from(k as u64 + 1), *coords))
+            .chain(
+                MUL_TEST_VECTORS
+                    .iter()
+                    .cloned()
+                    .map(|(k, x, y)| (FieldElement::from_hex(&k), (x, y))),
+            )
+        {
+            let p = generator * *k;
+            let (x, y) = coords;
+            let x = FieldElement::from_hex(x);
+            let y = FieldElement::from_hex(y);
+            let a = AffinePoint { x, y };
+            assert_eq!(p.to_affine().unwrap(), a);
+        }
     }
 }

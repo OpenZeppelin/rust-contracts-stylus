@@ -15,11 +15,11 @@ pub trait Curve:
 {
     /// Integer type used to represent field elements of this elliptic curve.
     type Uint: bigint::AddMod<Output = Self::Uint>
-        + bigint::Encoding<Repr = [u8; 32]>
         + bigint::FixedInteger
         + bigint::NegMod<Output = Self::Uint>
         + bigint::SubMod<Output = Self::Uint>
         + bigint::Bounded
+        + bigint::Encoding<Repr = [u8; 32]>
         + ShrAssign<usize>;
 
     /// Order of this elliptic curve, i.e. number of elements in the finite
