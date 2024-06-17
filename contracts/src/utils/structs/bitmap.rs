@@ -88,8 +88,6 @@ impl BitMap {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use core::str::FromStr;
-
     use alloy_primitives::{
         private::proptest::{
             prelude::{Arbitrary, ProptestConfig},
@@ -97,7 +95,6 @@ mod tests {
         },
         U256,
     };
-    use motsu::prelude::with_context;
     use stylus_sdk::{prelude::*, storage::StorageMap};
 
     use crate::utils::structs::bitmap::BitMap;
@@ -112,35 +109,32 @@ mod tests {
     #[motsu::test]
     fn set_value() {
         proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
-            with_context::<BitMap>(|bit_map|{
-                assert_eq!(bit_map.get(value), false);
-                bit_map.set(value);
-                assert_eq!(bit_map.get(value), true);
-            });
+            let mut bit_map = BitMap::default();
+            assert_eq!(bit_map.get(value), false);
+            bit_map.set(value);
+            assert_eq!(bit_map.get(value), true);
         });
     }
 
     #[motsu::test]
     fn unset_value() {
         proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
-            with_context::<BitMap>(|bit_map|{
-                bit_map.set(value);
-                assert_eq!(bit_map.get(value), true);
-                bit_map.unset(value);
-                assert_eq!(bit_map.get(value), false);
-            });
+            let mut bit_map = BitMap::default();
+            bit_map.set(value);
+            assert_eq!(bit_map.get(value), true);
+            bit_map.unset(value);
+            assert_eq!(bit_map.get(value), false);
         });
     }
 
     #[motsu::test]
     fn set_to_value() {
         proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
-            with_context::<BitMap>(|bit_map|{
-                bit_map.set_to(value, true);
-                assert_eq!(bit_map.get(value), true);
-                bit_map.set_to(value, false);
-                assert_eq!(bit_map.get(value), false);
-            });
+            let mut bit_map = BitMap::default();
+            bit_map.set_to(value, true);
+            assert_eq!(bit_map.get(value), true);
+            bit_map.set_to(value, false);
+            assert_eq!(bit_map.get(value), false);
         });
     }
 }

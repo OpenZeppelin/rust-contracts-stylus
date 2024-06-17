@@ -29,11 +29,15 @@ pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
     // If the test function has no params, then it doesn't need access to the
     // contract, so it is just a regular test.
     if fn_args.is_empty() {
-        let vis = &item_fn.vis;
         return quote! {
             #( #attrs )*
             #[test]
-            #vis #sig #fn_block
+            fn #fn_name() #fn_return_type {
+                let _lock = ::motsu::prelude::acquire_storage();
+                let res = #fn_block;
+                ::motsu::prelude::reset_storage();
+                res
+            }
         }
         .into();
     }
