@@ -6,10 +6,11 @@ use core::{
 
 use bigint::Bounded;
 
-use super::{
-    affine::AffinePoint, arithmetic::PointArithmetic, curve::PrimeCurve,
-    field::Field,
+use crate::elliptic_curve::{
+    curve::PrimeCurve, field::Field, point::arithmetic::PointArithmetic,
 };
+
+use super::affine::AffinePoint;
 
 /// Point on a Weierstrass curve in projective (homogeneous) coordinates.
 #[derive(Clone, Copy, Debug)]

@@ -1,7 +1,8 @@
 //! Key-handling related logic.
 
 use super::{
-    affine::AffinePoint, curve::PrimeCurve, projective::ProjectivePoint,
+    curve::PrimeCurve,
+    point::{affine::AffinePoint, projective::ProjectivePoint},
 };
 
 /// Elliptic curve public keys.

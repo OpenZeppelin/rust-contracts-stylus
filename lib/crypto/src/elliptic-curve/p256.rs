@@ -22,10 +22,10 @@
 use bigint::U256;
 
 use super::{
-    arithmetic::EquationAIsMinusThree,
     curve::{Curve, PrimeCurve},
     field::FieldElement,
     keys::PublicKey,
+    point::arithmetic::EquationAIsMinusThree,
 };
 
 /// The prime `p` that specifies the size of the finite field `𝔽p`.

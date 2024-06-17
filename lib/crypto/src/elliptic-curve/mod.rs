@@ -3,11 +3,9 @@
 pub mod field;
 pub mod p256;
 
-pub mod affine;
-pub mod arithmetic;
 pub mod curve;
 pub mod keys;
-pub mod projective;
+pub mod point;
 
 #[cfg(test)]
 pub(crate) mod test_vectors;

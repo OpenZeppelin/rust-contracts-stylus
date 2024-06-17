@@ -1,7 +1,7 @@
 //! Curve traits.
 use core::{fmt::Debug, ops::ShrAssign};
 
-use super::{arithmetic::PointArithmetic, field::Field};
+use super::{field::Field, point::arithmetic::PointArithmetic};
 
 /// Elliptic curve.
 ///

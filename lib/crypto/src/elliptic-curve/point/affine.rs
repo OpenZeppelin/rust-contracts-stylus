@@ -1,5 +1,5 @@
 //! Affine curve points.
-use super::curve::PrimeCurve;
+use crate::elliptic_curve::curve::PrimeCurve;
 
 /// Point on a Weierstrass curve in affine coordinates.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
