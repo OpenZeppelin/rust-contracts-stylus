@@ -1,5 +1,6 @@
 //! Contract module for managing `U256` to boolean mapping in a compact and
-//! efficient way, provided the keys are sequential. Largely inspired by Uniswap's <https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol>[merkle-distributor].
+//! efficient way, provided the keys are sequential. Largely inspired by Uniswap's 
+//! [merkle-distributor].
 //!
 //! `BitMap` packs 256 booleans across each bit of a single 256-bit slot of
 //! `U256` type. Hence, booleans corresponding to 256 _sequential_ indices
@@ -10,6 +11,8 @@
 //!
 //! - Setting a zero value to non-zero only once every 256 times
 //! - Accessing the same warm slot for every 256 _sequential_ indices
+//!
+//! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
 use alloy_primitives::U256;
 use stylus_proc::sol_storage;
 
