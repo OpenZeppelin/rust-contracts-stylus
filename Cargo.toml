@@ -38,24 +38,26 @@ keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 
 [workspace.dependencies]
-alloy-primitives = { version = "0.3.1", default-features = false }
-alloy-sol-types = { version = "0.3.1", default-features = false }
 # TODO: lift stylus-sdk and stylus-proc versions once nitro test node will be compatible
 stylus-sdk = { version = "0.4.3", default-features = false }
 stylus-proc = { version = "0.4.3", default-features = false }
 mini-alloc = "0.4.2"
 
-alloy = { git = "https://github.com/alloy-rs/alloy", rev = "0928b92", features = [
+alloy = { version = "0.1.1", features = [
   "contract",
   "network",
   "providers",
   "provider-http",
   "rpc-client",
   "rpc-types-eth",
-  "signers",
-  "signer-wallet",
+  "signer-local",
   "getrandom",
 ] }
+# Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
+# to keep both versions for compatibility with the SDK. Once they start using
+# `alloy` we can remove these.
+alloy-primitives = { version = "0.3.1", default-features = false }
+alloy-sol-types = { version = "0.3.1", default-features = false }
 
 [profile.release]
 codegen-units = 1
