@@ -2,8 +2,6 @@
 
 use core::fmt::{self, Debug, Display};
 
-// TODO: Once we update `alloy` to a crates.io version, use the `signature`
-// crate directly for better composability with the ecosystem.
 /// Result type.
 ///
 /// A result with the `signature` crate's [`Error`] type.

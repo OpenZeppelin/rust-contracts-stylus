@@ -3,7 +3,7 @@
 use core::{
     fmt,
     iter::Sum,
-    ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Deref, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 use bigint::{Integer, U256};
@@ -43,15 +43,21 @@ pub trait Field:
     const ONE: Self;
 
     /// Returns true iff this element is zero.
-    fn is_zero(&self) -> bool;
+    fn is_zero(&self) -> bool {
+        *self == Self::ZERO
+    }
 
     /// Doubles this element.
     #[must_use]
-    fn double(&self) -> Self;
+    fn double(&self) -> Self {
+        *self + self
+    }
 
     /// Squares this element.
     #[must_use]
-    fn square(&self) -> Self;
+    fn square(&self) -> Self {
+        *self * self
+    }
 
     /// Cubes this element.
     #[must_use]
@@ -67,29 +73,13 @@ pub trait Field:
 
 /// An element in the subgroup with base point [`P256::GENERATOR`].
 #[derive(Clone, Copy, Debug)]
-pub struct FieldElement(pub U256);
+pub struct FieldElement(U256);
 
 impl FieldElement {
     /// Multiplicative identity.
     pub const ONE: Self = FieldElement(U256::ONE);
     /// Zero element.
     pub const ZERO: Self = FieldElement(U256::ZERO);
-
-    /// Convert a `u64` into a [`FieldElement`].
-    #[must_use]
-    pub const fn from_u64(w: u64) -> Self {
-        Self(U256::from_u64(w))
-    }
-
-    /// Parse a [`FieldElement`] from big endian hex-encoded bytes.
-    ///
-    /// Does *not* perform a check that the field element does not overflow the
-    /// order.
-    ///
-    /// This method is primarily intended for defining internal constants.
-    pub(crate) const fn from_hex(hex: &str) -> Self {
-        Self(U256::from_be_hex(hex))
-    }
 
     /// Determine if this `FieldElement` is odd in the SEC1 sense:
     /// `self mod 2 == 1`.
@@ -100,30 +90,24 @@ impl FieldElement {
 
     /// Returns `self + rhs mod p`.
     #[must_use]
-    pub const fn add(&self, rhs: &Self) -> Self {
-        Self(self.0.add_mod(&rhs.0, &P256::ORDER))
+    pub const fn add(&self, rhs: &FieldElement) -> FieldElement {
+        FieldElement(self.0.add_mod(&rhs.0, &P256::ORDER))
     }
 
     /// Returns `self - rhs mod p`.
     #[must_use]
-    pub const fn sub(&self, rhs: &Self) -> Self {
-        Self(self.0.sub_mod(&rhs.0, &P256::ORDER))
+    pub const fn sub(&self, rhs: &FieldElement) -> FieldElement {
+        FieldElement(self.0.sub_mod(&rhs.0, &P256::ORDER))
     }
 
     /// Negate element.
     #[must_use]
-    pub const fn neg(&self) -> Self {
-        Self::sub(&Self::ZERO, self)
-    }
-
-    /// Returns `self * self mod p`
-    #[must_use]
-    pub fn square(&self) -> Self {
-        self.mul(self)
+    pub const fn neg(&self) -> FieldElement {
+        FieldElement::sub(&FieldElement::ZERO, self)
     }
 
     /// Returns `self^(2^n) mod p`.
-    fn sqn(&self, n: usize) -> Self {
+    fn sqn(&self, n: usize) -> FieldElement {
         let mut x = *self;
         let mut i = 0;
         while i < n {
@@ -135,14 +119,14 @@ impl FieldElement {
 
     /// Returns the multiplicative inverse of `self`, if `self` is non-zero.
     #[must_use]
-    pub fn invert(&self) -> Option<Self> {
+    pub fn invert(&self) -> Option<FieldElement> {
         (!self.is_zero()).then(|| self.invert_unchecked())
     }
 
     /// Returns the multiplicative inverse of `self`.
     ///
     /// Does not check that `self` is non-zero.
-    fn invert_unchecked(&self) -> Self {
+    fn invert_unchecked(&self) -> FieldElement {
         let t111 = self.mul(&self.mul(&self.square()).square());
         let t111111 = t111.mul(&t111.sqn(3));
         let x15 = t111111.sqn(6).mul(&t111111).sqn(3).mul(&t111);
@@ -153,26 +137,32 @@ impl FieldElement {
             .sqn(2)
             .mul(self)
     }
+
+    /// Parse a [`FieldElement`] from big endian hex-encoded bytes.
+    ///
+    /// Does *not* perform a check that the field element does not overflow the
+    /// order.
+    ///
+    /// This method is primarily intended for defining internal constants.
+    pub(crate) const fn from_hex(hex: &str) -> FieldElement {
+        FieldElement(U256::from_be_hex(hex))
+    }
 }
 
 impl Field for FieldElement {
-    const ONE: Self = Self::ONE;
-    const ZERO: Self = Self::ZERO;
+    const ONE: FieldElement = FieldElement::ONE;
+    const ZERO: FieldElement = FieldElement::ZERO;
 
-    fn is_zero(&self) -> bool {
-        self.0 == FieldElement::ZERO.0
-    }
-
-    fn double(&self) -> Self {
-        self.add(self)
-    }
-
-    fn square(&self) -> Self {
-        self.square()
-    }
-
-    fn invert(&self) -> Option<Self> {
+    fn invert(&self) -> Option<FieldElement> {
         self.invert()
+    }
+}
+
+impl Deref for FieldElement {
+    type Target = U256;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
