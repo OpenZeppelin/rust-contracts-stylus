@@ -10,7 +10,7 @@
 //!
 //! - Setting a zero value to non-zero only once every 256 times
 //! - Accessing the same warm slot for every 256 _sequential_ indices
-use alloy_primitives::U256;
+use alloy_primitives::{U256, Uint};
 use stylus_proc::sol_storage;
 
 sol_storage! {
@@ -55,8 +55,8 @@ impl BitMap {
     ///
     /// * `index` - index of boolean value that should be set `true`.
     pub fn set(&mut self, index: U256) {
-        let bucket = index >> 8;
-        let mask = U256::from(1) << (index & U256::from(0xff));
+        let bucket = Self::get_bucket(index);
+        let mask = Self::get_mask(index);
         let mut value = self._data.setter(bucket);
         let prev = value.get();
         value.set(prev | mask);
@@ -68,11 +68,21 @@ impl BitMap {
     ///
     /// * `index` - index of boolean value that should be set `false`.
     pub fn unset(&mut self, index: U256) {
-        let bucket = index >> 8;
-        let mask = U256::from(1) << (index & U256::from(0xff));
+        let bucket = Self::get_bucket(index);
+        let mask = Self::get_mask(index);
         let mut value = self._data.setter(bucket);
         let prev = value.get();
         value.set(prev & !mask);
+    }
+
+    /// Get mask of value in the bucket.
+    fn get_mask(index: U256) -> U256 {
+        U256::from(1) << (index & U256::from(0xff))
+    }
+
+    /// Get bucket index.
+    fn get_bucket(index: U256) -> U256 {
+        index >> 8
     }
 }
 
