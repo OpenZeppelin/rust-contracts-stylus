@@ -10,7 +10,7 @@
 //!
 //! - Setting a zero value to non-zero only once every 256 times
 //! - Accessing the same warm slot for every 256 _sequential_ indices
-use alloy_primitives::{U256, Uint};
+use alloy_primitives::{Uint, U256};
 use stylus_proc::sol_storage;
 
 sol_storage! {
@@ -88,7 +88,15 @@ impl BitMap {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
+    use core::str::FromStr;
+
+    use alloy_primitives::{
+        private::proptest::{
+            prelude::{Arbitrary, ProptestConfig},
+            proptest,
+        },
+        U256,
+    };
     use stylus_sdk::{prelude::*, storage::StorageMap};
 
     use crate::utils::structs::bitmap::BitMap;
@@ -100,30 +108,44 @@ mod tests {
         }
     }
 
-    // TODO#q: add proptest or smth
     #[motsu::test]
-    fn set_value(bit_map: BitMap) {
-        let value = U256::from(42);
-        assert_eq!(bit_map.get(value), false);
-        bit_map.set(value);
-        assert_eq!(bit_map.get(value), true);
+    fn set_value() {
+        proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
+            let mut bit_map = BitMap::default();
+            assert_eq!(bit_map.get(value), false);
+            bit_map.set(value);
+            assert_eq!(bit_map.get(value), true);
+        });
     }
 
     #[motsu::test]
-    fn unset_value(bit_map: BitMap) {
-        let value = U256::from(42);
+    fn unset_value() {
+        proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
+            let mut bit_map = BitMap::default();
+            bit_map.set(value);
+            assert_eq!(bit_map.get(value), true);
+            bit_map.unset(value);
+            assert_eq!(bit_map.get(value), false);
+        });
+    }
+
+    #[motsu::test]
+    fn set_to_value() {
+        proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
+            let mut bit_map = BitMap::default();
+            bit_map.set_to(value, true);
+            assert_eq!(bit_map.get(value), true);
+            bit_map.set_to(value, false);
+            assert_eq!(bit_map.get(value), false);
+        });
+    }
+
+    #[motsu::test]
+    fn set_to_value_fail(bit_map: BitMap) {
+        let value = U256::from_str("0x3addf0d5a644504e89618dcb19fe6f7ce797bc52e91dbd1dcf3fddb22cdbce17").expect("parsed U256");
         bit_map.set(value);
         assert_eq!(bit_map.get(value), true);
         bit_map.unset(value);
-        assert_eq!(bit_map.get(value), false);
-    }
-
-    #[motsu::test]
-    fn set_to_value(bit_map: BitMap) {
-        let value = U256::from(42);
-        bit_map.set_to(value, true);
-        assert_eq!(bit_map.get(value), true);
-        bit_map.set_to(value, false);
         assert_eq!(bit_map.get(value), false);
     }
 }

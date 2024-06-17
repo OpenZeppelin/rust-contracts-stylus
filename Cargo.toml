@@ -1,28 +1,28 @@
 [workspace]
 members = [
-  "contracts",
-  "lib/crypto",
-  "lib/motsu",
-  "lib/motsu-proc",
-  "examples/erc20",
-  "examples/erc721",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/access-control",
-  "lib/e2e",
-  "lib/e2e-proc",
+    "contracts",
+    "lib/crypto",
+    "lib/motsu",
+    "lib/motsu-proc",
+    "examples/erc20",
+    "examples/erc721",
+    "examples/merkle-proofs",
+    "examples/ownable",
+    "examples/access-control",
+    "lib/e2e",
+    "lib/e2e-proc",
 ]
 default-members = [
-  "contracts",
-  "lib/crypto",
-  "lib/motsu",
-  "lib/motsu-proc",
-  "examples/erc20",
-  "examples/erc721",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/access-control",
-  "lib/e2e-proc",
+    "contracts",
+    "lib/crypto",
+    "lib/motsu",
+    "lib/motsu-proc",
+    "examples/erc20",
+    "examples/erc721",
+    "examples/merkle-proofs",
+    "examples/ownable",
+    "examples/access-control",
+    "lib/e2e-proc",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
@@ -38,7 +38,7 @@ keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 
 [workspace.dependencies]
-alloy-primitives = { version = "0.3.1", default-features = false }
+alloy-primitives = { version = "0.3.1", default-features = false, features = ["arbitrary"] }
 alloy-sol-types = { version = "0.3.1", default-features = false }
 # TODO: lift stylus-sdk and stylus-proc versions once nitro test node will be compatible
 stylus-sdk = { version = "0.4.3", default-features = false }
@@ -46,15 +46,15 @@ stylus-proc = { version = "0.4.3", default-features = false }
 mini-alloc = "0.4.2"
 
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "0928b92", features = [
-  "contract",
-  "network",
-  "providers",
-  "provider-http",
-  "rpc-client",
-  "rpc-types-eth",
-  "signers",
-  "signer-wallet",
-  "getrandom",
+    "contract",
+    "network",
+    "providers",
+    "provider-http",
+    "rpc-client",
+    "rpc-types-eth",
+    "signers",
+    "signer-wallet",
+    "getrandom",
 ] }
 
 [profile.release]
