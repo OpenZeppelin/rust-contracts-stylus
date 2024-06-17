@@ -15,6 +15,7 @@ use stylus_proc::sol_storage;
 
 sol_storage! {
     /// State of bit map.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct BitMap {
         /// Inner laying mapping.
         mapping(uint256 => uint256) _data;
@@ -29,8 +30,8 @@ impl BitMap {
     /// * `index` - index of boolean value at the bit map.
     #[must_use]
     pub fn get(&self, index: U256) -> bool {
-        let bucket = index >> 8;
-        let mask = U256::from(1) << (index & U256::from(0xff));
+        let bucket = Self::get_bucket(index);
+        let mask = Self::get_mask(index);
         let value = self._data.get(bucket);
         (value & mask) != U256::ZERO
     }
@@ -98,13 +99,6 @@ mod tests {
     use stylus_sdk::{prelude::*, storage::StorageMap};
 
     use crate::utils::structs::bitmap::BitMap;
-
-    impl Default for BitMap {
-        fn default() -> Self {
-            let root = U256::ZERO;
-            BitMap { _data: unsafe { StorageMap::new(root, 0) } }
-        }
-    }
 
     #[motsu::test]
     fn set_value() {
