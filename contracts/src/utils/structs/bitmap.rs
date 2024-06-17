@@ -43,8 +43,8 @@ impl BitMap {
     ///
     /// # Arguments
     ///
-    /// * `index` - index of boolean value at the bit map.
-    /// * `value` - boolean value to set into the bit map.
+    /// * `index` - index of boolean value in the bit map.
+    /// * `value` - boolean value to set in the bit map.
     pub fn set_to(&mut self, index: U256, value: bool) {
         if value {
             self.set(index);
