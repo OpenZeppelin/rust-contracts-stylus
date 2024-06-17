@@ -33,7 +33,7 @@ impl BitMap {
     ///
     /// # Arguments
     ///
-    /// * `index` - index of boolean value at the bit map.
+    /// * `index` - index of the boolean value in the bit map.
     #[must_use]
     pub fn get(&self, index: U256) -> bool {
         let bucket = Self::get_bucket(index);
