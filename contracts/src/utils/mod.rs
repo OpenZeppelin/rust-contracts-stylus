@@ -1,5 +1,7 @@
 //! Common Smart Contracts utilities.
 
+pub mod structs;
+
 cfg_if::cfg_if! {
     if #[cfg(any(test, feature = "erc20_metadata", feature = "erc721_metadata"))] {
         pub mod metadata;
