@@ -29,9 +29,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            ./target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}-${{ github.event.number }}
 
       - name: cache cargo-stylus
         uses: actions/cache@v4
