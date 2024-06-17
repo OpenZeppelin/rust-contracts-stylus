@@ -3,17 +3,6 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, FnArg};
 
-/// Shorthand to print nice errors.
-macro_rules! error {
-    ($tokens:expr, $($msg:expr),+ $(,)?) => {{
-        let error = syn::Error::new(syn::spanned::Spanned::span(&$tokens), format!($($msg),+));
-        return error.to_compile_error().into();
-    }};
-    (@ $tokens:expr, $($msg:expr),+ $(,)?) => {{
-        return Err(syn::Error::new(syn::spanned::Spanned::span(&$tokens), format!($($msg),+)))
-    }};
-}
-
 /// Defines a unit test that provides access to Stylus' execution context.
 ///
 /// For more information see [`crate::test`].
