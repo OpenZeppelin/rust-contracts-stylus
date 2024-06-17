@@ -25,6 +25,7 @@ sol! {
 
 sol_storage! {
     /// Uri Storage.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721UriStorage {
         /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;
@@ -68,16 +69,6 @@ mod tests {
     use stylus_sdk::{prelude::StorageType, storage::StorageMap};
 
     use super::Erc721UriStorage;
-
-    impl Default for Erc721UriStorage {
-        fn default() -> Self {
-            let root = U256::ZERO;
-
-            Erc721UriStorage {
-                _token_uris: unsafe { StorageMap::new(root, 0) },
-            }
-        }
-    }
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();

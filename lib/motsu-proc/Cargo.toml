@@ -12,5 +12,12 @@ proc-macro2 = "1.0.79"
 quote = "1.0.35"
 syn = { version = "2.0.58", features = ["full"] }
 
+[dev-dependencies]
+motsu = { path = "../motsu" }
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+
 [lib]
 proc-macro = true
