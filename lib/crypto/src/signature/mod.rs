@@ -30,7 +30,7 @@ impl<C: PrimeCurve> fmt::Debug for Signature<C> {
         write!(f, "ecdsa::Signature<{:?}>(", C::default())?;
 
         for byte in self.to_bytes() {
-            write!(f, "{:02X}", byte)?;
+            write!(f, "{byte:02X}")?;
         }
 
         write!(f, ")")
@@ -39,14 +39,14 @@ impl<C: PrimeCurve> fmt::Debug for Signature<C> {
 
 impl<C: PrimeCurve> fmt::Display for Signature<C> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:X}", self)
+        write!(f, "{self:X}")
     }
 }
 
 impl<C: PrimeCurve> fmt::LowerHex for Signature<C> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for byte in self.to_bytes() {
-            write!(f, "{:02x}", byte)?;
+            write!(f, "{byte:02x}")?;
         }
         Ok(())
     }
@@ -55,7 +55,7 @@ impl<C: PrimeCurve> fmt::LowerHex for Signature<C> {
 impl<C: PrimeCurve> fmt::UpperHex for Signature<C> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for byte in self.to_bytes() {
-            write!(f, "{:02X}", byte)?;
+            write!(f, "{byte:02X}")?;
         }
         Ok(())
     }

@@ -20,6 +20,7 @@ pub struct Error {}
 
 impl Error {
     /// Create a new error with no associated source.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

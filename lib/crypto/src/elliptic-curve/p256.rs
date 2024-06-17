@@ -115,6 +115,7 @@ impl P256 {
     ///
     /// Note that it may return `None` if the multiplication results in the
     /// identity.
+    #[must_use]
     pub fn get_public_key(&self, secret: U256) -> Option<PublicKey<P256>> {
         PublicKey::from_secret_scalar(&secret)
     }

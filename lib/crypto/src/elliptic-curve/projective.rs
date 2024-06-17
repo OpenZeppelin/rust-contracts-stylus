@@ -41,21 +41,25 @@ impl<C: PrimeCurve> ProjectivePoint<C> {
     }
 
     /// Returns `-self`.
+    #[must_use]
     pub fn neg(&self) -> Self {
         Self { x: self.x, y: -self.y, z: self.z }
     }
 
     /// Returns `self + other`.
+    #[must_use]
     pub fn add(&self, other: &Self) -> Self {
         C::PointArithmetic::add(self, other)
     }
 
     /// Returns `self + other`.
+    #[must_use]
     fn add_mixed(&self, other: &AffinePoint<C>) -> Self {
         C::PointArithmetic::add_mixed(self, other)
     }
 
     /// Returns `self - other`.
+    #[must_use]
     pub fn sub(&self, other: &Self) -> Self {
         self.add(&other.neg())
     }
@@ -217,7 +221,7 @@ where
     C: PrimeCurve,
 {
     fn sum<I: Iterator<Item = &'a ProjectivePoint<C>>>(iter: I) -> Self {
-        iter.cloned().sum()
+        iter.copied().sum()
     }
 }
 

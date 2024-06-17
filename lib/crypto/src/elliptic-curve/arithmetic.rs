@@ -3,7 +3,7 @@
 //! Support for formulas specialized to the short Weierstrass equation's
 //! 𝒂-coefficient.
 //!
-//! Algorithms from [Renes-Costello-Batina 2015]: https://eprint.iacr.org/2015/1060
+//! Algorithms from [Renes-Costello-Batina 2015](https://eprint.iacr.org/2015/1060)
 
 use super::{
     affine::AffinePoint, curve::PrimeCurve, field::Field,
