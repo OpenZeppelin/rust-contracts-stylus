@@ -41,9 +41,8 @@ where
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use crate::elliptic_curve::p256::P256;
-
     use super::AffinePoint;
+    use crate::elliptic_curve::p256::P256;
 
     #[test]
     fn affine_negation() {
