@@ -16,8 +16,8 @@
 use alloy_primitives::U256;
 use stylus_proc::sol_storage;
 
-pub const ONE: U256 = U256::from_limbs([1, 0, 0, 0]);
-pub const HEX_FF: U256 = U256::from_limbs([255, 0, 0, 0]);
+const ONE: U256 = U256::from_limbs([1, 0, 0, 0]);
+const HEX_FF: U256 = U256::from_limbs([255, 0, 0, 0]);
 
 sol_storage! {
     /// State of bit map.
