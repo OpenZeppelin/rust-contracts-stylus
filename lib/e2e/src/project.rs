@@ -1,10 +1,12 @@
 use std::{
     env,
+    ffi::OsStr,
     fs::File,
     io::{BufReader, Read},
     path::{Path, PathBuf},
 };
 
+use eyre::bail;
 use toml::Table;
 
 /// Information about the crate subject of an integration test.
@@ -49,13 +51,32 @@ fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
     let name = name.replace('-', "_");
     // Looks like
     // "rust-contracts-stylus/target/debug/deps/erc721-15764c2c9a33bee7".
-    let executable = env::current_exe()?;
-    let out_dir = executable
-        .parent()
-        .expect("executable path should have a final component")
-        .join("../../");
-    let wasm: PathBuf =
-        out_dir.join(format!("wasm32-unknown-unknown/release/{name}.wasm"));
+    let mut target_dir = env::current_exe()?;
+
+    // Recursively find a `target` directory.
+    loop {
+        let Some(parent) = target_dir.parent() else {
+            // We've found `/`.
+            bail!("output directory is not 'target'");
+        };
+
+        target_dir = parent.to_path_buf();
+        let Some(leaf) = target_dir.file_name() else {
+            // We've found the root because we are traversing a canonicalized
+            // path, which means there are no `..` segments, and we started at
+            // the executable.
+            bail!("output directory is not 'target'");
+        };
+
+        if leaf == OsStr::new("target") {
+            break;
+        }
+    }
+
+    let wasm: PathBuf = target_dir
+        .join("wasm32-unknown-unknown")
+        .join("release")
+        .join(format!("{name}.wasm"));
 
     Ok(wasm)
 }
