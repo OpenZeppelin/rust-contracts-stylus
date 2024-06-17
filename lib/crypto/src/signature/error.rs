@@ -15,17 +15,13 @@ pub type Result<T> = core::result::Result<T, Error>;
 /// could potentially be used recover signing private keys or forge signatures
 /// (e.g. [BB'06]).
 ///
-/// When the `std` feature is enabled, it impls [`std::error::Error`] and
-/// supports an optional [`std::error::Error::source`], which can be used by
-/// things like remote signers (e.g. HSM, KMS) to report I/O or auth errors.
-///
 /// [BB'06]: https://en.wikipedia.org/wiki/Daniel_Bleichenbacher
 #[derive(Default)]
 #[non_exhaustive]
 pub struct Error {}
 
 impl Error {
-    /// Create a new error with no associated source
+    /// Create a new error with no associated source.
     pub fn new() -> Self {
         Self::default()
     }
