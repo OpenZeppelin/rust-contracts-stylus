@@ -10,7 +10,7 @@
 //!
 //! - Setting a zero value to non-zero only once every 256 times
 //! - Accessing the same warm slot for every 256 _sequential_ indices
-use alloy_primitives::{Uint, U256};
+use alloy_primitives::U256;
 use stylus_proc::sol_storage;
 
 sol_storage! {
