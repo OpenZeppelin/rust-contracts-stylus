@@ -9,5 +9,3 @@ docs/build/
 **/.DS_Store
 
 **/nitro-testnode
-
-**/proptest-regressions
