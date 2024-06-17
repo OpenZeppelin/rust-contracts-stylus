@@ -66,4 +66,3 @@ jobs:
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
           ./scripts/e2e-tests.sh
-

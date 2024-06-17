@@ -23,15 +23,10 @@ async fn deploy(
     private_key: &str,
     cap: Option<U256>,
 ) -> eyre::Result<Address> {
-    let cap = match cap {
-        Some(cap) => cap,
-        None => U256::from(CAP),
-    };
-
     let args = Erc20Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: cap,
+        cap_: cap.unwrap_or(U256::from(CAP)),
     };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
