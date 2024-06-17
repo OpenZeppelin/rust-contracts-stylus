@@ -1,6 +1,6 @@
 //! Contract module for managing `U256` to boolean mapping in a compact and
-//! efficient way, provided the keys are sequential. Largely inspired by Uniswap's 
-//! [merkle-distributor].
+//! efficient way, provided the keys are sequential. Largely inspired by
+//! Uniswap's [merkle-distributor].
 //!
 //! `BitMap` packs 256 booleans across each bit of a single 256-bit slot of
 //! `U256` type. Hence, booleans corresponding to 256 _sequential_ indices
