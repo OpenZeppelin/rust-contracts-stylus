@@ -108,7 +108,7 @@ mod tests {
 
     #[motsu::test]
     fn set_value() {
-        proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
+        proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             assert_eq!(bit_map.get(value), false);
             bit_map.set(value);
@@ -118,7 +118,7 @@ mod tests {
 
     #[motsu::test]
     fn unset_value() {
-        proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
+        proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set(value);
             assert_eq!(bit_map.get(value), true);
@@ -129,7 +129,7 @@ mod tests {
 
     #[motsu::test]
     fn set_to_value() {
-        proptest!(ProptestConfig::with_cases(1000), |(value: U256)| {
+        proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set_to(value, true);
             assert_eq!(bit_map.get(value), true);
