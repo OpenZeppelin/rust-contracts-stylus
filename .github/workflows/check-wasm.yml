@@ -21,23 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-
-      - name: cache cargo-stylus
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/.crates.toml
-          key: ${{ runner.os }}-cargo-bin-cargo-stylus
-          save-always: true
 
       - name: set up rust
         uses: dtolnay/rust-toolchain@stable
@@ -45,6 +28,10 @@ jobs:
         with:
           target: wasm32-unknown-unknown
           components: rust-src
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
 
       - name: install cargo-stylus
         run: cargo install --force cargo-stylus cargo-stylus-check
