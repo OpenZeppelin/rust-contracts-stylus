@@ -40,12 +40,12 @@ if $HAS_INIT
 then
   cd "$MYDIR" || exit
   cd ..
-  # clone nitro test node repo
-  git clone -b stylus --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
-  cd ./nitro-testnode || exit
-  git checkout 1886f4b89f5c20fd5b0c2cf3d08a009ee73e45ca || exit
 
-  # setup nitro test node
+  git clone --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
+  cd ./nitro-testnode || exit
+  # `release` branch.
+  git checkout 7e490fdf8175da1edddd1855ea123499a6afec76 || exit
+
   ./test-node.bash --no-run --init --no-tokenbridge || exit
 fi
 

@@ -7,7 +7,7 @@
 //! CAUTION: [`Erc721`] extensions that implement custom
 //! [`Erc721::balance_of`] logic, such as [`Erc721Consecutive`], interfere with
 //! enumerability and should not be used together with [`Erc721Enumerable`].
-use alloy_primitives::{private::derive_more::From, Address, U256};
+use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 
@@ -30,7 +30,7 @@ sol! {
 }
 
 /// An [`Erc721Enumerable`] extension error.
-#[derive(SolidityError, Debug, From)]
+#[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error when an `owner`'s token query
     /// was out of bounds for `index`.

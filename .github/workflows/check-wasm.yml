@@ -17,7 +17,7 @@ env:
   CARGO_TERM_COLOR: always
 jobs:
   check-wasm:
-    name: check WASM binary
+    name: Check WASM binary
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
           cache-on-failure: true
 
       - name: install cargo-stylus
-        run: RUSTFLAGS="-C link-args=-rdynamic" cargo install cargo-stylus@0.2.1
+        run: cargo install --force cargo-stylus cargo-stylus-check
 
       - name: run wasm check
         run: |
