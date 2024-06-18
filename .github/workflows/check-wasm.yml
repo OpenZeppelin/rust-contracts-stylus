@@ -17,7 +17,7 @@ env:
   CARGO_TERM_COLOR: always
 jobs:
   check-wasm:
-    name: check WASM binary
+    name: Check WASM binary
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,12 +40,11 @@ jobs:
           save-always: true
 
       - name: set up rust
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         id: toolchain
         with:
           target: wasm32-unknown-unknown
           components: rust-src
-          toolchain: nightly-2024-01-01
 
       - name: install cargo-stylus
         run: cargo install --force cargo-stylus cargo-stylus-check
