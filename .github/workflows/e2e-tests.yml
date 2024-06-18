@@ -64,7 +64,5 @@ jobs:
       - name: setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
       - name: run integration tests
-        run: |
-          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./scripts/e2e-tests.sh
+        run: ./scripts/e2e-tests.sh
 
