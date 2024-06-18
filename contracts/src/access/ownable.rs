@@ -48,6 +48,7 @@ pub enum Error {
 
 sol_storage! {
     /// State of an `Ownable` contract.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Ownable {
         /// The current owner of this contract.
         address _owner;
@@ -148,13 +149,6 @@ mod tests {
     };
 
     use super::{Error, Ownable};
-
-    impl Default for Ownable {
-        fn default() -> Self {
-            let root = U256::ZERO;
-            Ownable { _owner: unsafe { StorageAddress::new(root, 0) } }
-        }
-    }
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 

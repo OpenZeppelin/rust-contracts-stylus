@@ -1,9 +1,9 @@
 use alloy::{
-    network::{Ethereum, EthereumSigner},
+    network::{Ethereum, EthereumWallet},
     providers::{
         fillers::{
             ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
-            SignerFiller,
+            WalletFiller,
         },
         Identity, ProviderBuilder, RootProvider,
     },
@@ -20,7 +20,7 @@ pub type Signer = FillProvider<
             JoinFill<JoinFill<Identity, GasFiller>, NonceFiller>,
             ChainIdFiller,
         >,
-        SignerFiller<EthereumSigner>,
+        WalletFiller<EthereumWallet>,
     >,
     RootProvider<Http<Client>>,
     Http<Client>,

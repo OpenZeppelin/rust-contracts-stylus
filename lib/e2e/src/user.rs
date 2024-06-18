@@ -1,8 +1,8 @@
 use alloy::{
-    network::EthereumSigner,
+    network::EthereumWallet,
     primitives::Address,
     providers::{Provider, ProviderBuilder},
-    signers::wallet::LocalWallet,
+    signers::local::PrivateKeySigner,
 };
 use eyre::{bail, Result};
 use once_cell::sync::Lazy;
@@ -16,7 +16,7 @@ use crate::{
 /// Type that corresponds to a test user.
 #[derive(Clone, Debug)]
 pub struct User {
-    pub wallet: LocalWallet,
+    pub wallet: PrivateKeySigner,
     pub signer: Signer,
 }
 
@@ -60,7 +60,7 @@ impl UserFactory {
 
     /// Create new account and fund it via nitro test node access.
     fn create(&self) -> eyre::Result<User> {
-        let wallet = LocalWallet::random();
+        let wallet = PrivateKeySigner::random();
         let addr = wallet.address();
 
         // ./test-node.bash script send-l2 --to
@@ -81,7 +81,7 @@ impl UserFactory {
             .expect("failed to parse RPC_URL string into a URL");
         let signer = ProviderBuilder::new()
             .with_recommended_fillers()
-            .signer(EthereumSigner::from(wallet.clone()))
+            .wallet(EthereumWallet::from(wallet.clone()))
             .on_http(rpc_url);
 
         match output.status.success() {

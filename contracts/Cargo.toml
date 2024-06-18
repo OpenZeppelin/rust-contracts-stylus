@@ -17,6 +17,7 @@ mini-alloc.workspace = true
 cfg-if = "1.0"
 
 [dev-dependencies]
+alloy-primitives = { version = "0.3.1", features = ["arbitrary"] }
 motsu = { path = "../lib/motsu" }
 rand = "0.8.5"
 
