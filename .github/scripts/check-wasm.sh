@@ -22,9 +22,7 @@ get_example_crate_names () {
   find ./examples -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
 }
 
-NIGHTLY_TOOLCHAIN=${NIGHTLY_TOOLCHAIN:-nightly}
-
-cargo +"$NIGHTLY_TOOLCHAIN" build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+cargo build --release --target wasm32-unknown-unknown 
 
 for CRATE_NAME in $(get_example_crate_names)
 do

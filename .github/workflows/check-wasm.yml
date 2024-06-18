@@ -37,6 +37,4 @@ jobs:
         run: cargo install --force cargo-stylus cargo-stylus-check
 
       - name: run wasm check
-        run: |
-          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./.github/scripts/check-wasm.sh
+        run: ./.github/scripts/check-wasm.sh
