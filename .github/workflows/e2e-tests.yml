@@ -27,11 +27,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: set up rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           target: wasm32-unknown-unknown
-          components: rust-src, llvm-tools-preview
+          components: rust-src
+          toolchain: nightly-2024-01-01
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -49,5 +50,7 @@ jobs:
       - name: setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
       - name: run integration tests
-        run: ./scripts/e2e-tests.sh
+        run: |
+          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
+          ./scripts/e2e-tests.sh
 

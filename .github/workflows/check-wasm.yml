@@ -23,11 +23,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: set up rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           target: wasm32-unknown-unknown
           components: rust-src
+          toolchain: nightly-2024-01-01
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -37,4 +38,6 @@ jobs:
         run: cargo install --force cargo-stylus cargo-stylus-check
 
       - name: run wasm check
-        run: ./.github/scripts/check-wasm.sh
+        run: |
+          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
+          ./.github/scripts/check-wasm.sh
