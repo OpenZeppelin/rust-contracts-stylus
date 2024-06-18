@@ -8,7 +8,7 @@ mod user;
 
 pub use deploy::deploy;
 pub use e2e_proc::test;
-pub use error::ErrorExt;
+pub use error::{Panic, PanicCode, Revert};
 pub use event::EventExt;
 pub use system::{provider, Provider, Signer};
 pub use user::User;
