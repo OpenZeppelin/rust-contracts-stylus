@@ -32,12 +32,12 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          cache-on-failure: true
-          cache-all-crates: true
-          cache-directories: "/home/runner/.cargo/bin"
+          cache-on-failure: "true"
 
       - name: install cargo-stylus
-        run: cargo install cargo-stylus cargo-stylus-check
+        run: |
+          ls ~/.cargo/bin
+          cargo install cargo-stylus cargo-stylus-check
 
       - name: run wasm check
         run: |
