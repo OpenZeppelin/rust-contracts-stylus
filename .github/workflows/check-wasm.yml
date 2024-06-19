@@ -37,7 +37,7 @@ jobs:
           cache-directories: "/home/runner/.cargo/bin"
 
       - name: install cargo-stylus
-        run: cargo install --force cargo-stylus cargo-stylus-check
+        run: cargo install cargo-stylus cargo-stylus-check
 
       - name: run wasm check
         run: |
