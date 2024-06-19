@@ -102,7 +102,6 @@ mod tests {
         },
         U256,
     };
-    use stylus_sdk::{prelude::*, storage::StorageMap};
 
     use crate::utils::structs::bitmap::BitMap;
 

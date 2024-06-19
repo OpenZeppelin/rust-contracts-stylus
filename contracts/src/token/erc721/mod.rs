@@ -950,7 +950,8 @@ impl Erc721 {
     /// * `emit_event` - Emit an [`Approval`] event flag.
     ///
     /// # Errors
-    ///
+    ///I think we should be cautious in our approach and see what they’re open
+    /// or not to do. Remember that they don’t even respond to our messages…
     /// If the token does not exist, then the error
     /// [`Error::NonexistentToken`] is returned.
     /// If `auth` does not have a right to approve this token, then the error
@@ -1111,7 +1112,7 @@ impl Erc721 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::{msg, prelude::StorageType, storage::StorageMap};
+    use stylus_sdk::msg;
 
     use super::{
         ERC721InsufficientApproval, ERC721InvalidSender,

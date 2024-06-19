@@ -499,10 +499,7 @@ impl Erc20 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::{
-        msg,
-        storage::{StorageMap, StorageType, StorageU256},
-    };
+    use stylus_sdk::msg;
 
     use super::{Erc20, Error, IErc20};
 

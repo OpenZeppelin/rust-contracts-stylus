@@ -309,11 +309,7 @@ impl Erc721Enumerable {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::{
-        msg,
-        prelude::StorageType,
-        storage::{StorageMap, StorageVec},
-    };
+    use stylus_sdk::msg;
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
     use crate::token::erc721::{tests::random_token_id, Erc721, IErc721};

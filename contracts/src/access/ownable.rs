@@ -142,11 +142,8 @@ impl Ownable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::{
-        msg,
-        storage::{StorageAddress, StorageType},
-    };
+    use alloy_primitives::{address, Address};
+    use stylus_sdk::msg;
 
     use super::{Error, Ownable};
 
