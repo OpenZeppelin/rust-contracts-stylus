@@ -1109,13 +1109,15 @@ impl Erc721 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(all(test,
+        // feature = "std"
+        ))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::msg;
 
     use super::{
-        ERC721InsufficientApproval, ERC721InvalidSender,
+        ERC721InsufficientApproval, ERC721InvalidOwner, ERC721InvalidSender,
         ERC721NonexistentToken, Erc721, Error, IErc721,
     };
 
@@ -1127,9 +1129,34 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint(contract: Erc721) {
+    fn balance_of_errors_invalid_owner(contract: Erc721) {
+        let invalid_owner = Address::ZERO;
+        let err = contract
+            .balance_of(invalid_owner)
+            .expect_err("should return `Error::InvalidOwner`");
+        assert!(matches!(
+            err,
+            Error::InvalidOwner(ERC721InvalidOwner { owner: Address::ZERO })
+        ));
+    }
+
+    #[motsu::test]
+    fn balance_of_zero_balance(contract: Erc721) {
+        let owner = msg::sender();
+        let balance =
+            contract.balance_of(owner).expect("should return `U256::ZERO`");
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    #[motsu::test]
+    fn mints(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
+
+        let initial_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
         contract._mint(alice, token_id).expect("should mint a token for Alice");
         let owner = contract
             .owner_of(token_id)
@@ -1139,8 +1166,8 @@ mod tests {
         let balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
-        let one = U256::from(1);
-        assert!(balance >= one);
+
+        assert_eq!(initial_balance + U256::from(1), balance);
     }
 
     #[motsu::test]
