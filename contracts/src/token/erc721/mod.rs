@@ -1149,6 +1149,19 @@ mod tests {
     }
 
     #[motsu::test]
+    fn owner_of_error_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+
+        let err = contract
+            .owner_of(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken { .. })
+        ));
+    }
+    #[motsu::test]
     fn mints(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1171,7 +1184,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_reusing_token_id(contract: Erc721) {
+    fn mint_error_when_reusing_token_id(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract
@@ -1187,7 +1200,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer(contract: Erc721) {
+    fn transfers_from(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1201,7 +1214,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_nonexistent_token(contract: Erc721) {
+    fn transfer_from_error_when_transfer_nonexistent_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
@@ -1216,7 +1229,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_token_transfer(contract: Erc721) {
+    fn approves(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1227,7 +1240,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_approved_token(contract: Erc721) {
+    fn transfers_from_approved_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1242,7 +1255,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_unapproved_token(contract: Erc721) {
+    fn transfer_from_error_when_transfer_unapproved_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1275,7 +1288,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_transfer_token_approved_for_all(contract: Erc721) {
+    fn transfers_from_approved_for_all(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
