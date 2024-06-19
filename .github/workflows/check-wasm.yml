@@ -35,9 +35,7 @@ jobs:
           cache-on-failure: "true"
 
       - name: install cargo-stylus
-        run: |
-          ls ~/.cargo/bin
-          cargo install cargo-stylus cargo-stylus-check
+        run: cargo install cargo-stylus cargo-stylus-check
 
       - name: run wasm check
         run: |

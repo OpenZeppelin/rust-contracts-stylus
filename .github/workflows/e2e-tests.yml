@@ -37,8 +37,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          cache-all-crates: true
-          cache-directories: "~/.cargo/bin"
 
       - name: install cargo-stylus
         run: cargo install cargo-stylus cargo-stylus-check
