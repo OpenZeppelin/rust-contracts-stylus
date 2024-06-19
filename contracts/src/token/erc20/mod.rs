@@ -93,6 +93,7 @@ pub enum Error {
 
 sol_storage! {
     /// State of an `Erc20` token.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;
@@ -504,21 +505,6 @@ mod tests {
     };
 
     use super::{Erc20, Error, IErc20};
-
-    impl Default for Erc20 {
-        fn default() -> Self {
-            let root = U256::ZERO;
-            Erc20 {
-                _balances: unsafe { StorageMap::new(root, 0) },
-                _allowances: unsafe {
-                    StorageMap::new(root + U256::from(32), 0)
-                },
-                _total_supply: unsafe {
-                    StorageU256::new(root + U256::from(64), 0)
-                },
-            }
-        }
-    }
 
     #[motsu::test]
     fn reads_balance(contract: Erc20) {

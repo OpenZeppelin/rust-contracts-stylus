@@ -112,6 +112,7 @@ sol_storage! {
     }
 
     /// State of an `AccessControl` contract.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct AccessControl {
         /// Role identifier -> Role information.
         mapping(bytes32 => RoleData) _roles;
@@ -390,12 +391,6 @@ mod tests {
     };
 
     use super::{AccessControl, Error};
-
-    impl Default for AccessControl {
-        fn default() -> Self {
-            AccessControl { _roles: unsafe { StorageMap::new(U256::ZERO, 0) } }
-        }
-    }
 
     /// Shorthand for declaring variables converted from a hex literla to a
     /// fixed 32-byte slice;

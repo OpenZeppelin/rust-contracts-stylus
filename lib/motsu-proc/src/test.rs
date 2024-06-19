@@ -3,17 +3,6 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, FnArg};
 
-/// Shorthand to print nice errors.
-macro_rules! error {
-    ($tokens:expr, $($msg:expr),+ $(,)?) => {{
-        let error = syn::Error::new(syn::spanned::Spanned::span(&$tokens), format!($($msg),+));
-        return error.to_compile_error().into();
-    }};
-    (@ $tokens:expr, $($msg:expr),+ $(,)?) => {{
-        return Err(syn::Error::new(syn::spanned::Spanned::span(&$tokens), format!($($msg),+)))
-    }};
-}
-
 /// Defines a unit test that provides access to Stylus' execution context.
 ///
 /// For more information see [`crate::test`].
@@ -29,11 +18,15 @@ pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
     // If the test function has no params, then it doesn't need access to the
     // contract, so it is just a regular test.
     if fn_args.is_empty() {
-        let vis = &item_fn.vis;
         return quote! {
             #( #attrs )*
             #[test]
-            #vis #sig #fn_block
+            fn #fn_name() #fn_return_type {
+                let _lock = ::motsu::prelude::acquire_storage();
+                let res = #fn_block;
+                ::motsu::prelude::reset_storage();
+                res
+            }
         }
         .into();
     }

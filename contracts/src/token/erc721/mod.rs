@@ -1,9 +1,7 @@
 //! Implementation of the [`Erc721`] token standard.
 use alloc::vec;
 
-use alloy_primitives::{
-    fixed_bytes, private::derive_more::From, Address, FixedBytes, U128, U256,
-};
+use alloy_primitives::{fixed_bytes, Address, FixedBytes, U128, U256};
 use stylus_sdk::{
     abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
 };
@@ -120,7 +118,7 @@ sol! {
 /// An [`Erc721`] error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
-#[derive(SolidityError, Debug, From)]
+#[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
     /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
@@ -169,6 +167,7 @@ sol_interface! {
 
 sol_storage! {
     /// State of an [`Erc721`] token.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721 {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
@@ -1120,23 +1119,6 @@ mod tests {
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-
-    impl Default for Erc721 {
-        fn default() -> Self {
-            let root = U256::ZERO;
-
-            Erc721 {
-                _owners: unsafe { StorageMap::new(root, 0) },
-                _balances: unsafe { StorageMap::new(root + U256::from(32), 0) },
-                _token_approvals: unsafe {
-                    StorageMap::new(root + U256::from(64), 0)
-                },
-                _operator_approvals: unsafe {
-                    StorageMap::new(root + U256::from(96), 0)
-                },
-            }
-        }
-    }
 
     pub(crate) fn random_token_id() -> U256 {
         let num: u32 = rand::random();

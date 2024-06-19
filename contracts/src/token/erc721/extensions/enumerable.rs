@@ -7,7 +7,7 @@
 //! CAUTION: [`Erc721`] extensions that implement custom
 //! [`Erc721::balance_of`] logic, such as [`Erc721Consecutive`], interfere with
 //! enumerability and should not be used together with [`Erc721Enumerable`].
-use alloy_primitives::{private::derive_more::From, Address, U256};
+use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 
@@ -30,7 +30,7 @@ sol! {
 }
 
 /// An [`Erc721Enumerable`] extension error.
-#[derive(SolidityError, Debug, From)]
+#[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error when an `owner`'s token query
     /// was out of bounds for `index`.
@@ -45,6 +45,7 @@ pub enum Error {
 
 sol_storage! {
     /// State of an Enumerable extension.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Enumerable {
         /// Maps owners to a mapping of indices to tokens ids.
         mapping(address => mapping(uint256 => uint256)) _owned_tokens;
@@ -318,25 +319,6 @@ mod tests {
     use crate::token::erc721::{tests::random_token_id, Erc721, IErc721};
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-
-    impl Default for Erc721Enumerable {
-        fn default() -> Self {
-            let root = U256::ZERO;
-
-            Erc721Enumerable {
-                _owned_tokens: unsafe { StorageMap::new(root, 0) },
-                _owned_tokens_index: unsafe {
-                    StorageMap::new(root + U256::from(32), 0)
-                },
-                _all_tokens: unsafe {
-                    StorageVec::new(root + U256::from(64), 0)
-                },
-                _all_tokens_index: unsafe {
-                    StorageMap::new(root + U256::from(96), 0)
-                },
-            }
-        }
-    }
 
     #[motsu::test]
     fn total_supply_no_tokens(contract: Erc721Enumerable) {
