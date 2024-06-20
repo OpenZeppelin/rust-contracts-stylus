@@ -16,7 +16,7 @@ macro_rules! error {
 /// Defines an end-to-end test that injects test users through parameters.
 ///
 /// For more information see [`crate::test`].
-pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
+pub(crate) fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let item_fn = parse_macro_input!(input as syn::ItemFn);
     let attrs = &item_fn.attrs;
     let sig = &item_fn.sig;

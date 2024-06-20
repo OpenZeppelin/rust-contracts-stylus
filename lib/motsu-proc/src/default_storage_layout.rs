@@ -5,7 +5,7 @@ use syn::{Data, DeriveInput};
 
 const STORAGE_WORD_BYTES: u8 = 32;
 
-pub fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
+pub(crate) fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
 
     let Data::Struct(ref data_struct) = ast.data else {

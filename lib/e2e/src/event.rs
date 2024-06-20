@@ -1,5 +1,6 @@
 use alloy::{rpc::types::eth::TransactionReceipt, sol_types::SolEvent};
 
+/// Extension trait for asserting an event gets emitted.
 pub trait EventExt<E> {
     /// Asserts the contract emitted the `expected` event.
     fn emits(&self, expected: E);
@@ -21,6 +22,6 @@ where
             .map(|log| log.inner.data)
             .any(|event| expected == event);
 
-        assert!(emitted, "Event {:?} not emitted", expected);
+        assert!(emitted, "Event {expected:?} not emitted");
     }
 }

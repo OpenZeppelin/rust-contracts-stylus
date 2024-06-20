@@ -44,6 +44,11 @@ fn env(name: &str) -> eyre::Result<String> {
 }
 
 /// Returns an alloy provider connected to the `RPC_URL` rpc endpoint.
+///
+/// # Panics
+///
+/// May panic if unable to load the `RPC_URL` environment variable.
+#[must_use]
 pub fn provider() -> Provider {
     let rpc_url = env(RPC_URL_ENV_VAR_NAME)
         .expect("failed to load RPC_URL var from env")
