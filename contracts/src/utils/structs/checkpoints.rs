@@ -3,10 +3,12 @@
 //! block number. See {Votes} as an example. To create a history of checkpoints
 //! define a variable type `Checkpoints.Trace*` in your contract, and store a
 //! new checkpoint for the current transaction block using the {push} function.
-use alloy_primitives::{Uint, U256, U32};
+use alloy_primitives::{uint, Uint, U256, U32};
 use alloy_sol_types::sol;
 use stylus_proc::sol_storage;
 use stylus_sdk::prelude::StorageType;
+
+use crate::utils::math::sqrt;
 
 type U96 = Uint<96, 2>;
 type U160 = Uint<160, 3>;
@@ -78,11 +80,13 @@ impl Trace160 {
      */
     pub fn upper_lookup_recent(&mut self, key: U96) -> U160 {
         let len = self.length();
+        // TODO#q: use uint!(1_U256);
 
         let mut low = U256::ZERO;
         let mut high = len;
         if len > U256::from(5) {
-            let mid = len - len.root(2);
+            // NOTE#q: square root from `ruint` crate works just with std
+            let mid = len - sqrt(len);
             if key < self._unsafe_access_key(mid) {
                 high = mid;
             } else {
