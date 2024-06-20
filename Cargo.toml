@@ -38,16 +38,15 @@ keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 
 
-[workspace.lints]
-rust.rust_2021_compatibility = "warn"
-rust.missing_docs = "warn"
-rust.unreachable_pub = "warn"
-rustdoc.all = "warn"
-rust.unused_must_use = "deny"
-clippy.pedantic = "warn"
-clippy.all = "warn"
-clippy.pub_underscore_fields = "warn"
-clippy.module_name_repetitions = "warn"
+[workspace.lints.rust]
+rust_2021_compatibility = "warn"
+missing_docs = "warn"
+unreachable_pub = "warn"
+
+
+[workspace.lints.clippy]
+pedantic = "warn"
+all = "warn"
 
 
 
