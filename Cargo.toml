@@ -39,7 +39,7 @@ repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 
 
 [workspace.lints.rust]
-rust_2021_compatibility = "warn"
+rust_2021_compatibility = { level = "warn", priority = -1 }
 missing_docs = "warn"
 unreachable_pub = "warn"
 
