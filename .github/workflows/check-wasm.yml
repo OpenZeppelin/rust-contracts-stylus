@@ -1,9 +1,6 @@
 name: check-wasm
 # This workflow checks that the compiled wasm binary of every example contract
 # can be deployed to Arbitrum Stylus.
-#
-# NOTE: This is using version `0.2.1` of `cargo-stylus`, which we will need
-# to update once `nitro-testnode` gets updated.
 permissions:
   contents: read
 on:
@@ -32,12 +29,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          cache-on-failure: true
-          cache-all-crates: true
-          cache-directories: "~/.cargo/bin/\n~/.cargo/.crates.toml"
+          cache-on-failure: "true"
 
       - name: install cargo-stylus
-        run: cargo install --force cargo-stylus cargo-stylus-check
+        run: cargo install cargo-stylus cargo-stylus-check
 
       - name: run wasm check
         run: |
