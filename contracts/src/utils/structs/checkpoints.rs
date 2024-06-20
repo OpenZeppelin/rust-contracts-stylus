@@ -36,15 +36,13 @@ sol_storage! {
 }
 
 impl Trace160 {
-    /**
-     * @dev Pushes a (`key`, `value`) pair into a Trace160 so that it is
-     * stored as the checkpoint.
-     *
-     * Returns previous value and new value.
-     *
-     * IMPORTANT: Never accept `key` as a user input, since an arbitrary
-     * `type(uint96).max` key set will disable the library.
-     */
+    /// Pushes a (`key`, `value`) pair into a Trace160 so that it is
+    /// stored as the checkpoint.
+    ///
+    /// Returns previous value and new value.
+    ///
+    /// IMPORTANT: Never accept `key` as a user input, since an arbitrary
+    /// `type(uint96).max` key set will disable the library.
     pub fn push(
         &mut self,
         key: U96,
@@ -53,10 +51,8 @@ impl Trace160 {
         self._insert(key, value)
     }
 
-    /**
-     * @dev Returns the value in the first (oldest) checkpoint with key
-     * greater or equal than the search key, or zero if there is none.
-     */
+    /// Returns the value in the first (oldest) checkpoint with key
+    /// greater or equal than the search key, or zero if there is none.
     pub fn lower_lookup(&mut self, key: U96) -> U160 {
         let len = self.length();
         let pos = self._lower_binary_lookup(key, U256::ZERO, len);
@@ -67,10 +63,8 @@ impl Trace160 {
         }
     }
 
-    /**
-     * @dev Returns the value in the last (most recent) checkpoint with key
-     * lower or equal than the search key, or zero if there is none.
-     */
+    /// Returns the value in the last (most recent) checkpoint with key
+    /// lower or equal than the search key, or zero if there is none.
     pub fn upper_lookup(&mut self, key: U96) -> U160 {
         let len = self.length();
         let pos = self._lower_binary_lookup(key, U256::ZERO, len);
@@ -81,13 +75,11 @@ impl Trace160 {
         }
     }
 
-    /**
-     * @dev Returns the value in the last (most recent) checkpoint with key
-     * lower or equal than the search key, or zero if there is none.
-     *
-     * NOTE: This is a variant of {upperLookup} that is optimised to find
-     * "recent" checkpoint (checkpoints with high keys).
-     */
+    /// Returns the value in the last (most recent) checkpoint with key
+    /// lower or equal than the search key, or zero if there is none.
+    ///
+    /// NOTE: This is a variant of {upperLookup} that is optimised to find
+    /// "recent" checkpoint (checkpoints with high keys).
     pub fn upper_lookup_recent(&mut self, key: U96) -> U160 {
         let len = self.length();
         // TODO#q: use uint!(1_U256);
@@ -113,10 +105,8 @@ impl Trace160 {
         }
     }
 
-    /**
-     * @dev Returns the value in the most recent checkpoint, or zero if
-     * there are no checkpoints.
-     */
+    /// Returns the value in the most recent checkpoint, or zero if
+    /// there are no checkpoints.
     pub fn latest(&mut self) -> U160 {
         let pos = self.length();
         if pos == U256::ZERO {
@@ -126,11 +116,9 @@ impl Trace160 {
         }
     }
 
-    /**
-     * @dev Returns whether there is a checkpoint in the structure (i.e. it
-     * is not empty), and if so the key and value in the most recent
-     * checkpoint.
-     */
+    /// Returns whether there is a checkpoint in the structure (i.e. it
+    /// is not empty), and if so the key and value in the most recent
+    /// checkpoint.
     pub fn latest_checkpoint(&self) -> (bool, U96, U160) {
         let pos = self.length();
         if pos == U256::ZERO {
@@ -141,26 +129,20 @@ impl Trace160 {
         }
     }
 
-    /**
-     * @dev Returns the number of checkpoint.
-     */
+    /// Returns the number of checkpoint.
     pub fn length(&self) -> U256 {
         // TODO#q: think how to retrieve U256 without conversion
         U256::from(self._checkpoints.len())
     }
 
-    /**
-     * @dev Returns checkpoint at given position.
-     */
+    /// Returns checkpoint at given position.
     pub fn at(&self, pos: U32) -> Checkpoint160 {
         unsafe { self._checkpoints.getter(pos).unwrap().into_raw() }
     }
 
-    /**
-     * @dev Pushes a (`key`, `value`) pair into an ordered list of
-     * checkpoints, either by inserting a new checkpoint, or by updating
-     * the last one.
-     */
+    /// Pushes a (`key`, `value`) pair into an ordered list of
+    /// checkpoints, either by inserting a new checkpoint, or by updating
+    /// the last one.
     fn _insert(
         &mut self,
         key: U96,
@@ -194,14 +176,12 @@ impl Trace160 {
         }
     }
 
-    /**
-     * @dev Return the index of the last (most recent) checkpoint with key
-     * lower or equal than the search key, or `high` if there is none.
-     * `low` and `high` define a section where to do the search, with
-     * inclusive `low` and exclusive `high`.
-     *
-     * WARNING: `high` should not be greater than the array's length.
-     */
+    /// Return the index of the last (most recent) checkpoint with key
+    /// lower or equal than the search key, or `high` if there is none.
+    /// `low` and `high` define a section where to do the search, with
+    /// inclusive `low` and exclusive `high`.
+    ///
+    /// WARNING: `high` should not be greater than the array's length.
     fn _upper_binary_lookup(
         &self,
         key: U96,
@@ -219,14 +199,12 @@ impl Trace160 {
         high
     }
 
-    /**
-     * @dev Return the index of the first (oldest) checkpoint with key is
-     * greater or equal than the search key, or `high` if there is none.
-     * `low` and `high` define a section where to do the search, with
-     * inclusive `low` and exclusive `high`.
-     *
-     * WARNING: `high` should not be greater than the array's length.
-     */
+    /// Return the index of the first (oldest) checkpoint with key is
+    /// greater or equal than the search key, or `high` if there is none.
+    /// `low` and `high` define a section where to do the search, with
+    /// inclusive `low` and exclusive `high`.
+    ///
+    /// WARNING: `high` should not be greater than the array's length.
     fn _lower_binary_lookup(
         &self,
         key: U96,
@@ -244,10 +222,8 @@ impl Trace160 {
         high
     }
 
-    /**
-     * @dev Access an element of the array without performing bounds check.
-     * The position is assumed to be within bounds.
-     */
+    /// Access an element of the array without performing bounds check.
+    /// The position is assumed to be within bounds.
     fn _unsafe_access(&self, pos: U256) -> Checkpoint160 {
         // TODO#q: think how access it without bounds check
         unsafe { self._checkpoints.getter(pos).unwrap().into_raw() }

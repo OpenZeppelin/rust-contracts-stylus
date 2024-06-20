@@ -2,13 +2,10 @@ use alloy_primitives::{uint, U256};
 
 // TODO#q: use more smart way
 
-/**
- * @dev Returns the square root of a number. If the number is not a perfect
- * square, the value is rounded towards zero.
- *
- * This method is based on Newton's method for computing square roots; the
- * algorithm is restricted to only using integer operations.
- */
+/// Returns the square root of a number. If the number is not a perfect
+/// square, the value is rounded towards zero.
+/// This method is based on Newton's method for computing square roots; the
+/// algorithm is restricted to only using integer operations.
 pub fn sqrt(a: U256) -> U256 {
     // TODO#q: refactor this
     let one = uint!(1_U256);
@@ -59,10 +56,7 @@ pub fn sqrt(a: U256) -> U256 {
     xn - U256::from(xn > a / xn)
 }
 
-/**
- * @dev Returns the average of two numbers. The result is rounded towards
- * zero.
- */
+/// Returns the average of two numbers. The result is rounded towards zero.
 pub fn average(a: U256, b: U256) -> U256 {
     (a & b) + (a ^ b) / uint!(2_U256)
 }
