@@ -149,6 +149,10 @@ pub fn storage_flush_cache(_: bool) {
 /// Dummy msg sender set for tests.
 pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
+/// Account code hash for tests (only EOAs).
+pub const ACCOUNT_CODEHASH: &[u8; 66] =
+    b"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+
 /// Gets the address of the account that called the program. For normal
 /// L2-to-L2 transactions the semantics are equivalent to that of the EVM's
 /// [`CALLER`] opcode, including in cases arising from [`DELEGATE_CALL`].
@@ -180,4 +184,19 @@ pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
 #[no_mangle]
 pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
     // No-op: we don't check for events in our unit-tests.
+}
+
+/// Gets the code hash of the account at the given address.
+/// The semantics are equivalent to that of the EVM's [`EXT_CODEHASH`] opcode.
+/// Note that the code hash of an account without code will be the empty hash
+/// `keccak("") =
+/// c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
+///
+/// [`EXT_CODEHASH`]: https://www.evm.codes/#3F
+#[no_mangle]
+pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
+    let account_codehash =
+        const_hex::const_decode_to_array::<32>(ACCOUNT_CODEHASH).unwrap();
+
+    std::ptr::copy(account_codehash.as_ptr(), dest, 32);
 }
