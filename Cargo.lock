@@ -2630,6 +2630,7 @@ dependencies = [
  "alloy",
  "alloy-primitives 0.3.3",
  "e2e",
+ "eyre",
  "mini-alloc",
  "openzeppelin-stylus",
  "stylus-proc",
