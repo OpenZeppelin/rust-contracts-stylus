@@ -22,6 +22,6 @@ stylus-proc.workspace = true
 [lib]
 proc-macro = true
 
-
 [lints]
 workspace = true
+

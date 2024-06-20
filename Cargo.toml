@@ -37,26 +37,19 @@ license = "MIT"
 keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 
-
 [workspace.lints.rust]
-rust_2021_compatibility = { level = "warn", priority = -1 }
 missing_docs = "warn"
 unreachable_pub = "warn"
-
+rust_2021_compatibility = { level = "warn", priority = -1 }
 
 [workspace.lints.clippy]
 pedantic = "warn"
 all = "warn"
 
-
-
-
-
 [workspace.dependencies]
 stylus-sdk = { version = "0.5.0", default-features = false }
 stylus-proc = { version = "0.5.0", default-features = false }
 mini-alloc = "0.4.2"
-
 
 alloy = { version = "0.1.1", features = [
   "contract",

@@ -13,6 +13,6 @@ once_cell = { version = "1.19.0" }
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 motsu-proc = { path = "../motsu-proc" }
 
-
 [lints]
 workspace = true
+
