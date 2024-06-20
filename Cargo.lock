@@ -2627,11 +2627,14 @@ dependencies = [
 name = "ownable-example"
 version = "0.0.0"
 dependencies = [
+ "alloy",
  "alloy-primitives 0.3.3",
+ "e2e",
  "mini-alloc",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
+ "tokio",
 ]
 
 [[package]]
