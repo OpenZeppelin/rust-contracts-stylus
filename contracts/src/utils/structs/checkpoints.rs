@@ -5,17 +5,23 @@
 //! new checkpoint for the current transaction block using the {push} function.
 use alloy_primitives::{uint, Uint, U256, U32};
 use alloy_sol_types::sol;
-use stylus_proc::sol_storage;
+use stylus_proc::{sol_storage, SolidityError};
 use stylus_sdk::prelude::StorageType;
 
-use crate::utils::math::sqrt;
+use crate::utils::math::{average, sqrt};
 
 type U96 = Uint<96, 2>;
 type U160 = Uint<160, 3>;
 
 sol! {
     /// A value was attempted to be inserted on a past checkpoint.
+    #[derive(Debug)]
     error CheckpointUnorderedInsertion();
+}
+
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    CheckpointUnorderedInsertion(CheckpointUnorderedInsertion),
 }
 
 sol_storage! {
@@ -39,7 +45,11 @@ impl Trace160 {
      * IMPORTANT: Never accept `key` as a user input, since an arbitrary
      * `type(uint96).max` key set will disable the library.
      */
-    pub fn push(&mut self, key: U96, value: U160) -> (U160, U160) {
+    pub fn push(
+        &mut self,
+        key: U96,
+        value: U160,
+    ) -> Result<(U160, U160), Error> {
         self._insert(key, value)
     }
 
@@ -151,8 +161,37 @@ impl Trace160 {
      * checkpoints, either by inserting a new checkpoint, or by updating
      * the last one.
      */
-    fn _insert(&mut self, key: U96, value: U160) -> (U160, U160) {
-        todo!()
+    fn _insert(
+        &mut self,
+        key: U96,
+        value: U160,
+    ) -> Result<(U160, U160), Error> {
+        let pos = self.length();
+        if pos > U256::ZERO {
+            let last = self._unsafe_access(pos - uint!(1_U256));
+            let last_key = last._key.get();
+            let last_value = last._value.get();
+
+            // Checkpoint keys must be non-decreasing.
+            if last_key > key {
+                return Err(CheckpointUnorderedInsertion {}.into());
+            }
+
+            // Update or push new checkpoint
+            if last_key > key {
+                self._checkpoints
+                    .setter(pos - uint!(1_U256))
+                    .unwrap()
+                    ._value
+                    .set(value);
+            } else {
+                self.push(key, value)?;
+            }
+            Ok((last_value, value))
+        } else {
+            self.push(key, value)?;
+            Ok((U160::ZERO, value))
+        }
     }
 
     /**
@@ -163,8 +202,21 @@ impl Trace160 {
      *
      * WARNING: `high` should not be greater than the array's length.
      */
-    fn _upper_binary_lookup(&self, key: U96, low: U256, hight: U256) -> U256 {
-        todo!()
+    fn _upper_binary_lookup(
+        &self,
+        key: U96,
+        mut low: U256,
+        mut high: U256,
+    ) -> U256 {
+        while low < high {
+            let mid = average(low, high);
+            if self._unsafe_access_key(mid) > key {
+                high = mid;
+            } else {
+                low = mid + uint!(1_U256);
+            }
+        }
+        high
     }
 
     /**
@@ -175,8 +227,21 @@ impl Trace160 {
      *
      * WARNING: `high` should not be greater than the array's length.
      */
-    fn _lower_binary_lookup(&self, key: U96, low: U256, high: U256) -> U256 {
-        todo!()
+    fn _lower_binary_lookup(
+        &self,
+        key: U96,
+        mut low: U256,
+        mut high: U256,
+    ) -> U256 {
+        while low < high {
+            let mid = average(low, high);
+            if self._unsafe_access_key(mid) < key {
+                low = mid + uint!(1_U256);
+            } else {
+                high = mid;
+            }
+        }
+        high
     }
 
     /**

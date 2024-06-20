@@ -59,6 +59,14 @@ pub fn sqrt(a: U256) -> U256 {
     xn - U256::from(xn > a / xn)
 }
 
+/**
+ * @dev Returns the average of two numbers. The result is rounded towards
+ * zero.
+ */
+pub fn average(a: U256, b: U256) -> U256 {
+    (a & b) + (a ^ b) / uint!(2_U256)
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
