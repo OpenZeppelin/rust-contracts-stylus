@@ -918,7 +918,7 @@ async fn should_not_deploy_capped_with_invalid_cap(alice: User) -> Result<()> {
         .await
         .expect_err("should not deploy due to `ERC20InvalidCap`");
 
-    // TODO: improve error check for contract deployment
+    // TODO: Improve error check for contract deployments.
     // Issue: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/128
     // Requires strange casting
     //  ErrorResp(

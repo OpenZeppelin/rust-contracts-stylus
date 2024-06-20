@@ -69,6 +69,8 @@ async fn rejects_zero_address_initial_owner(alice: User) -> Result<()> {
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
+    // TODO: Improve error check for contract deployments.
+    // Issue: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/128
     let err_string = format!("{:#?}", err);
     let expected = Ownable::OwnableInvalidOwner { owner: Address::ZERO };
     let expected = alloy::hex::encode(expected.abi_encode());
@@ -127,6 +129,9 @@ async fn guards_against_stuck_state(alice: User) -> Result<()> {
     let err = send!(contract.transferOwnership(Address::ZERO))
         .expect_err("should not transfer to Address::ZERO");
     err.reverted_with(Ownable::OwnableInvalidOwner { owner: Address::ZERO });
+
+    let Ownable::ownerReturn { owner } = contract.owner().call().await?;
+    assert_eq!(owner, alice_addr);
 
     Ok(())
 }
