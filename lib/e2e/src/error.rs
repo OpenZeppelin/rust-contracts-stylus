@@ -14,9 +14,9 @@ pub enum PanicCode {
     ZeroInitializedVariable = 0x51,
 }
 
-impl ToString for PanicCode {
-    fn to_string(&self) -> String {
-        match self {
+impl core::fmt::Display for PanicCode {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let msg = match self {
             PanicCode::AssertionError =>
                 "Assertion error",
             PanicCode::ArithmeticOverflow =>
@@ -35,7 +35,9 @@ impl ToString for PanicCode {
                 "Too much memory was allocated, or an array was created that is too large",
             PanicCode::ZeroInitializedVariable =>
                 "Called a zero-initialized variable of internal function type"
-        }.into()
+        };
+
+        write!(f, "{}", msg)
     }
 }
 
