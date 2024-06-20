@@ -1,9 +1,6 @@
 name: check-wasm
 # This workflow checks that the compiled wasm binary of every example contract
 # can be deployed to Arbitrum Stylus.
-#
-# NOTE: This is using version `0.2.1` of `cargo-stylus`, which we will need
-# to update once `nitro-testnode` gets updated.
 permissions:
   contents: read
 on:
