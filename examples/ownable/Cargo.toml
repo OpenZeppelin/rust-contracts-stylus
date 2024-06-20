@@ -28,3 +28,6 @@ crate-type = ["lib", "cdylib"]
 [features]
 default = []
 e2e = []
+
+[lints]
+workspace = true
