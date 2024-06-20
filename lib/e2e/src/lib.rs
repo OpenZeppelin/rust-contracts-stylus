@@ -1,3 +1,4 @@
+#![doc = include_str!("../README.md")]
 mod deploy;
 mod environment;
 mod error;
@@ -10,11 +11,11 @@ pub use deploy::deploy;
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::EventExt;
-pub use system::{provider, Provider, Signer};
+pub use system::{provider, Provider, Wallet};
 pub use user::User;
 
-/// This macro provides a shorthand for broadcasting the transaction
-/// to the network.
+/// This macro provides a shorthand for broadcasting the transaction to the
+/// network.
 ///
 /// See: https://alloy-rs.github.io/alloy/alloy_contract/struct.CallBuilder.html
 ///
@@ -24,7 +25,7 @@ pub use user::User;
 /// #[e2e::test]
 /// async fn foo(alice: User) -> eyre::Result<()> {
 ///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-///     let contract = Erc721::new(contract_addr, &alice.signer);
+///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
 ///     let token_id = random_token_id();
@@ -49,7 +50,7 @@ macro_rules! send {
 /// #[e2e::test]
 /// async fn foo(alice: User) -> eyre::Result<()> {
 ///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-///     let contract = Erc721::new(contract_addr, &alice.signer);
+///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
 ///     let token_id = random_token_id();
@@ -75,7 +76,7 @@ macro_rules! watch {
 /// #[e2e::test]
 /// async fn foo(alice: User) -> eyre::Result<()> {
 ///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-///     let contract = Erc721::new(contract_addr, &alice.signer);
+///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
 ///     let token_id = random_token_id();

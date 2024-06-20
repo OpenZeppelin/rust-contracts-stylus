@@ -33,7 +33,7 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
 #[e2e::test]
 async fn constructs(alice: User) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.signer);
+    let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let name = contract.name().call().await?.name;
     let symbol = contract.symbol().call().await?.symbol;
@@ -46,7 +46,7 @@ async fn constructs(alice: User) -> eyre::Result<()> {
 #[e2e::test]
 async fn mints(alice: User) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.signer);
+    let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
@@ -62,7 +62,7 @@ async fn mints(alice: User) -> eyre::Result<()> {
 #[e2e::test]
 async fn errors_when_reusing_token_id(alice: User) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.signer);
+    let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
@@ -78,7 +78,7 @@ async fn errors_when_reusing_token_id(alice: User) -> eyre::Result<()> {
 #[e2e::test]
 async fn transfers(alice: User, bob: User) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.signer);
+    let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -105,7 +105,7 @@ async fn errors_when_transfer_nonexistent_token(
     bob: User,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.signer);
+    let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
@@ -121,7 +121,7 @@ async fn errors_when_transfer_nonexistent_token(
 #[e2e::test]
 async fn approves_token_transfer(alice: User, bob: User) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.signer);
+    let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -129,7 +129,7 @@ async fn approves_token_transfer(alice: User, bob: User) -> eyre::Result<()> {
     let _ = watch!(contract.mint(alice_addr, token_id))?;
     let _ = watch!(contract.approve(bob_addr, token_id))?;
 
-    let contract = Erc721::new(contract_addr, &bob.signer);
+    let contract = Erc721::new(contract_addr, &bob.wallet);
     let _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_id))?;
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
@@ -144,14 +144,14 @@ async fn errors_when_transfer_unapproved_token(
     bob: User,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.signer);
+    let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
     let _ = watch!(contract.mint(alice_addr, token_id))?;
 
-    let contract = Erc721::new(contract_addr, &bob.signer);
+    let contract = Erc721::new(contract_addr, &bob.wallet);
     let tx = contract.transferFrom(alice_addr, bob_addr, token_id);
 
     let err = send!(tx).expect_err("should not transfer unapproved token");

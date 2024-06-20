@@ -11,10 +11,10 @@ use alloy::{
 };
 use eyre::Context;
 
-pub const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
+pub(crate) const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
 
-/// Convenience type alias that represents an Ethereum signer.
-pub type Signer = FillProvider<
+/// Convenience type alias that represents an Ethereum wallet.
+pub type Wallet = FillProvider<
     JoinFill<
         JoinFill<
             JoinFill<JoinFill<Identity, GasFiller>, NonceFiller>,

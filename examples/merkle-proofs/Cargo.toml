@@ -25,5 +25,3 @@ std = []
 [lib]
 crate-type = ["lib", "cdylib"]
 
-[lints]
-workspace = true

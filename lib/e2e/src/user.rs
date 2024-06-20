@@ -10,14 +10,16 @@ use tokio::sync::{Mutex, MutexGuard};
 
 use crate::{
     environment::get_node_path,
-    system::{Signer, RPC_URL_ENV_VAR_NAME},
+    system::{Wallet, RPC_URL_ENV_VAR_NAME},
 };
 
 /// Type that corresponds to a test user.
 #[derive(Clone, Debug)]
 pub struct User {
-    pub wallet: PrivateKeySigner,
-    pub signer: Signer,
+    /// The account's local private key wrapper.
+    pub signer: PrivateKeySigner,
+    /// The account's wallet -- an `alloy` provider with a `WalletFiller`.
+    pub wallet: Wallet,
 }
 
 impl User {
@@ -28,17 +30,17 @@ impl User {
 
     /// Get a hex-encoded String representing this user's private key.
     pub fn pk(&self) -> String {
-        alloy::hex::encode(self.wallet.to_bytes())
+        alloy::hex::encode(self.signer.to_bytes())
     }
 
     /// Retrieve this account's address.
     pub fn address(&self) -> Address {
-        self.wallet.address()
+        self.signer.address()
     }
 
     /// The rpc endpoint this user's provider is connect to.
     pub fn url(&self) -> &str {
-        self.signer.client().transport().url()
+        self.wallet.client().transport().url()
     }
 }
 
@@ -60,8 +62,8 @@ impl UserFactory {
 
     /// Create new account and fund it via nitro test node access.
     fn create(&self) -> eyre::Result<User> {
-        let wallet = PrivateKeySigner::random();
-        let addr = wallet.address();
+        let signer = PrivateKeySigner::random();
+        let addr = signer.address();
 
         // ./test-node.bash script send-l2 --to
         // address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10
@@ -79,9 +81,9 @@ impl UserFactory {
             .expect("failed to load RPC_URL var from env")
             .parse()
             .expect("failed to parse RPC_URL string into a URL");
-        let signer = ProviderBuilder::new()
+        let wallet = ProviderBuilder::new()
             .with_recommended_fillers()
-            .wallet(EthereumWallet::from(wallet.clone()))
+            .wallet(EthereumWallet::from(signer.clone()))
             .on_http(rpc_url);
 
         match output.status.success() {
