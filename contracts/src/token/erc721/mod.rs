@@ -1740,6 +1740,21 @@ mod tests {
         ));
     }
 
+    #[motsu::test]
+    fn get_approved_error_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            .get_approved(token_id)
+            .expect_err("should not return approved for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
     // TODO: add mock test for on_erc721_received.
     // Should be done in integration tests.
 }
