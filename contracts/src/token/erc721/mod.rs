@@ -1166,6 +1166,7 @@ mod tests {
             }) if t_id == token_id
         ));
     }
+
     #[motsu::test]
     fn mints(contract: Erc721) {
         let alice = msg::sender();
@@ -1202,6 +1203,67 @@ mod tests {
         assert!(matches!(
             err,
             Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_mints(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        let initial_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        contract
+            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            .expect("should mint a token for Alice");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+
+        let balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        assert_eq!(initial_balance + U256::from(1), balance);
+    }
+
+    #[motsu::test]
+    fn safe_mint_error_when_reusing_token_id(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract
+            ._mint(alice, token_id)
+            .expect("should mint the token a first time");
+
+        let err = contract
+            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not mint a token with `token_id` twice");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_mint_error_when_invalid_receiver(contract: Erc721) {
+        let invalid_receiver = Address::ZERO;
+
+        let token_id = random_token_id();
+
+        let err = contract
+            ._safe_mint(invalid_receiver, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not mint a token for invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
         ));
     }
 
@@ -1941,6 +2003,8 @@ mod tests {
         let result = contract._check_authorized(alice, BOB, token_id);
         assert!(result.is_ok());
     }
+
+    // TODO: _update tests
 
     // TODO: add mock test for on_erc721_received.
     // Should be done in integration tests.
