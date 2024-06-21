@@ -220,7 +220,7 @@ impl Trace160 {
         high
     }
 
-    /// Access an element of the array without performing bounds check.
+    /// Access on an element of the array without performing bounds check.
     /// The position is assumed to be within bounds.
     fn _unsafe_access(&self, pos: U256) -> Checkpoint160 {
         // TODO#q: think how access it without bounds check
