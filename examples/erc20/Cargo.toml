@@ -30,3 +30,6 @@ e2e = []
 
 [lib]
 crate-type = ["lib", "cdylib"]
+
+[lints]
+workspace = true
