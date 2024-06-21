@@ -1816,6 +1816,60 @@ mod tests {
         assert_eq!(Address::ZERO, approved);
     }
 
+    #[motsu::test]
+    fn is_authorized_nonexistent_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(false, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_token_owner(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let authorized = contract._is_authorized(alice, alice, token_id);
+        assert_eq!(true, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_without_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(false, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_with_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve Bob for operations on token");
+
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(true, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_with_approval_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .set_approval_for_all(BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(true, authorized);
+    }
+
     // TODO: add mock test for on_erc721_received.
     // Should be done in integration tests.
 }
