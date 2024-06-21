@@ -2,9 +2,9 @@
 //!
 //! Most of the documentation is taken from the [Stylus source].
 //!
-//! [Stylus source]: https://github.com/OffchainLabs/stylus/blob/484efac4f56fb70f96d4890748b8ec2543d88acd/arbitrator/wasm-libraries/user-host-trait/src/lib.rs
-//!
 //! We allow unsafe here because safety is guaranteed by the Stylus team.
+//!
+//! [Stylus source]: https://github.com/OffchainLabs/stylus/blob/484efac4f56fb70f96d4890748b8ec2543d88acd/arbitrator/wasm-libraries/user-host-trait/src/lib.rs
 //!
 //! ## Motivation
 //!
@@ -104,6 +104,10 @@ pub unsafe extern "C" fn native_keccak256(
 /// equivalent to that of the EVM's [`SLOAD`] opcode.
 ///
 /// [`SLOAD`]: https://www.evm.codes/#54
+///
+/// # Panics
+///
+/// May panic if unable to lock `STORAGE`.
 #[no_mangle]
 pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
     let key = unsafe { read_bytes32(key) };
@@ -128,6 +132,10 @@ pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
 /// persist it.
 ///
 /// [`SSTORE`]: https://www.evm.codes/#55
+///
+/// # Panics
+///
+/// May panic if unable to lock `STORAGE`.
 #[no_mangle]
 pub unsafe extern "C" fn storage_cache_bytes32(
     key: *const u8,
@@ -164,6 +172,10 @@ pub const ACCOUNT_CODEHASH: &[u8; 66] =
 /// [`CALLER`]: https://www.evm.codes/#33
 /// [`DELEGATE_CALL`]: https://www.evm.codes/#f4
 /// [aliasing]: https://developer.arbitrum.io/arbos/l1-to-l2-messaging#address-aliasing
+///
+/// # Panics
+///
+/// May panic if fails to parse `MSG_SENDER` as an address.
 #[no_mangle]
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
     let addr = const_hex::const_decode_to_array::<20>(MSG_SENDER).unwrap();

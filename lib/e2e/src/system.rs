@@ -11,10 +11,10 @@ use alloy::{
 };
 use eyre::Context;
 
-pub const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
+pub(crate) const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
 
-/// Convenience type alias that represents an Ethereum signer.
-pub type Signer = FillProvider<
+/// Convenience type alias that represents an Ethereum wallet.
+pub type Wallet = FillProvider<
     JoinFill<
         JoinFill<
             JoinFill<JoinFill<Identity, GasFiller>, NonceFiller>,
@@ -44,6 +44,11 @@ fn env(name: &str) -> eyre::Result<String> {
 }
 
 /// Returns an alloy provider connected to the `RPC_URL` rpc endpoint.
+///
+/// # Panics
+///
+/// May panic if unable to load the `RPC_URL` environment variable.
+#[must_use]
 pub fn provider() -> Provider {
     let rpc_url = env(RPC_URL_ENV_VAR_NAME)
         .expect("failed to load RPC_URL var from env")

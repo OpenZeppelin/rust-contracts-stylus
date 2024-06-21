@@ -39,7 +39,7 @@ async fn deploy(
 #[e2e::test]
 async fn constructs(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract = Erc20::new(contract_addr, &alice.signer);
+    let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let Erc20::nameReturn { name } = contract.name().call().await?;
     let Erc20::symbolReturn { symbol } = contract.symbol().call().await?;
@@ -59,7 +59,7 @@ async fn constructs(alice: User) -> Result<()> {
 #[e2e::test]
 async fn mints(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract = Erc20::new(contract_addr, &alice.signer);
+    let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
     let Erc20::balanceOfReturn { balance: initial_balance } =
@@ -91,7 +91,7 @@ async fn mints(alice: User) -> Result<()> {
 #[e2e::test]
 async fn mints_rejects_invalid_receiver(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract = Erc20::new(contract_addr, &alice.signer);
+    let contract = Erc20::new(contract_addr, &alice.wallet);
     let invalid_receiver = Address::ZERO;
 
     let Erc20::balanceOfReturn { balance: initial_balance } =
@@ -121,7 +121,7 @@ async fn mints_rejects_overflow(alice: User) -> Result<()> {
     let max_cap = U256::MAX;
 
     let contract_addr = deploy(alice.url(), &alice.pk(), Some(max_cap)).await?;
-    let contract = Erc20::new(contract_addr, &alice.signer);
+    let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
     let one = U256::from(1);
@@ -154,7 +154,7 @@ async fn mints_rejects_overflow(alice: User) -> Result<()> {
 #[e2e::test]
 async fn transfers(alice: User, bob: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -194,7 +194,7 @@ async fn transfer_rejects_insufficient_balance(
     bob: User,
 ) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -235,7 +235,7 @@ async fn transfer_rejects_insufficient_balance(
 #[e2e::test]
 async fn transfer_rejects_invalid_receiver(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_receiver = Address::ZERO;
 
@@ -274,7 +274,7 @@ async fn transfer_rejects_invalid_receiver(alice: User) -> Result<()> {
 #[e2e::test]
 async fn approves(alice: User, bob: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract = Erc20::new(contract_addr, &alice.signer);
+    let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -341,7 +341,7 @@ async fn approves(alice: User, bob: User) -> Result<()> {
 #[e2e::test]
 async fn approve_rejects_invalid_spender(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract = Erc20::new(contract_addr, &alice.signer);
+    let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_spender = Address::ZERO;
 
@@ -391,8 +391,8 @@ async fn approve_rejects_invalid_spender(alice: User) -> Result<()> {
 #[e2e::test]
 async fn transfers_from(alice: User, bob: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
-    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -442,8 +442,8 @@ async fn transfer_from_reverts_insufficient_balance(
     bob: User,
 ) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
-    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -497,8 +497,8 @@ async fn transfer_from_rejects_insufficient_allowance(
     bob: User,
 ) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
-    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -552,8 +552,8 @@ async fn transfer_from_rejects_invalid_receiver(
     bob: User,
 ) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
-    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -608,7 +608,7 @@ async fn transfer_from_rejects_invalid_receiver(
 #[e2e::test]
 async fn burns(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
     let balance = U256::from(10);
@@ -643,7 +643,7 @@ async fn burns(alice: User) -> Result<()> {
 #[e2e::test]
 async fn burn_rejects_insufficient_balance(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
     let balance = U256::from(10);
@@ -678,8 +678,8 @@ async fn burn_rejects_insufficient_balance(alice: User) -> Result<()> {
 #[e2e::test]
 async fn burns_from(alice: User, bob: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
-    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -732,8 +732,8 @@ async fn burn_from_reverts_insufficient_balance(
     bob: User,
 ) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
-    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -787,8 +787,8 @@ async fn burn_from_rejects_insufficient_allowance(
     bob: User,
 ) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
-    let contract_bob = Erc20::new(contract_addr, &bob.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -843,7 +843,7 @@ async fn burn_from_rejects_insufficient_allowance(
 #[e2e::test]
 async fn mint_rejects_exceeding_cap(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
     let one = U256::from(1);
@@ -879,7 +879,7 @@ async fn mint_rejects_exceeding_cap(alice: User) -> Result<()> {
 #[e2e::test]
 async fn mint_rejects_when_cap_reached(alice: User) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
-    let contract_alice = Erc20::new(contract_addr, &alice.signer);
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
     let one = U256::from(1);

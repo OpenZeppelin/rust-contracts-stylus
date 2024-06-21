@@ -7,7 +7,10 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts", features = ["ownable", "erc20"] }
+openzeppelin-stylus = { path = "../../contracts", features = [
+  "ownable",
+  "erc20",
+] }
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
@@ -15,6 +18,3 @@ mini-alloc.workspace = true
 
 [lib]
 crate-type = ["lib", "cdylib"]
-
-[lints]
-workspace = true
