@@ -8,7 +8,7 @@ use alloy_sol_types::sol;
 use stylus_proc::{sol_storage, SolidityError};
 use stylus_sdk::prelude::StorageType;
 
-use crate::utils::math::{Math};
+use crate::utils::math::Math;
 
 type U96 = Uint<96, 2>;
 type U160 = Uint<160, 3>;

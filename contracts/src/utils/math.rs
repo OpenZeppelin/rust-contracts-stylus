@@ -1,14 +1,24 @@
 use alloy_primitives::{uint, U256};
 
-pub trait Math{
+/// Standard math utilities missing in `alloy_primitives`.
+pub trait Math {
     /// Returns the square root of a number. If the number is not a perfect
     /// square, the value is rounded towards zero.
     /// This method is based on Newton's method for computing square roots; the
     /// algorithm is restricted to only using integer operations.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - value to perform square root operation onto.
     #[must_use]
     fn sqrt(self) -> Self;
 
     /// Returns the average of two numbers. The result is rounded towards zero.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - first value to compute average.
+    /// * `rhs` - second value to compute average.
     #[must_use]
     fn average(self, rhs: Self) -> Self;
 }
@@ -21,20 +31,21 @@ impl Math for U256 {
             return a;
         }
 
-        // In this function, we use Newton's method to get a root of `f(x) := x² -
-        // a`. It involves building a sequence x_n that converges toward
-        // sqrt(a). For each iteration x_n, we also define the error between the
-        // current value as `ε_n = | x_n - sqrt(a) |`.
+        // In this function, we use Newton's method to get a root of `f(x) := x²
+        // - a`. It involves building a sequence x_n that converges
+        // toward sqrt(a). For each iteration x_n, we also define the
+        // error between the current value as `ε_n = | x_n - sqrt(a) |`.
         //
-        // For our first estimation, we consider `e` the smallest power of 2 which
-        // is bigger than the square root of the target. (i.e. `2**(e-1) ≤
-        // sqrt(a) < 2**e`). We know that `e ≤ 128` because `(2¹²⁸)² = 2²⁵⁶` is
-        // bigger than any uint256.
+        // For our first estimation, we consider `e` the smallest power of 2
+        // which is bigger than the square root of the target. (i.e.
+        // `2**(e-1) ≤ sqrt(a) < 2**e`). We know that `e ≤ 128` because
+        // `(2¹²⁸)² = 2²⁵⁶` is bigger than any uint256.
         //
         // By noticing that
-        // `2**(e-1) ≤ sqrt(a) < 2**e → (2**(e-1))² ≤ a < (2**e)² → 2**(2*e-2) ≤ a <
-        // 2**(2*e)` we can deduce that `e - 1` is `log2(a) / 2`. We can thus
-        // compute `x_n = 2**(e-1)` using a method similar to the msb function.
+        // `2**(e-1) ≤ sqrt(a) < 2**e → (2**(e-1))² ≤ a < (2**e)² → 2**(2*e-2) ≤
+        // a < 2**(2*e)` we can deduce that `e - 1` is `log2(a) / 2`. We
+        // can thus compute `x_n = 2**(e-1)` using a method similar to
+        // the msb function.
         let mut aa = a;
         let mut xn = one;
 
@@ -66,13 +77,13 @@ impl Math for U256 {
             xn <<= 1;
         }
 
-        // We now have x_n such that `x_n = 2**(e-1) ≤ sqrt(a) < 2**e = 2 * x_n`.
-        // This implies ε_n ≤ 2**(e-1).
+        // We now have x_n such that `x_n = 2**(e-1) ≤ sqrt(a) < 2**e = 2 *
+        // x_n`. This implies ε_n ≤ 2**(e-1).
         //
-        // We can refine our estimation by noticing that the middle of that interval
-        // minimizes the error. If we move x_n to equal 2**(e-1) + 2**(e-2),
-        // then we reduce the error to ε_n ≤ 2**(e-2). This is going to be our
-        // x_0 (and ε_0)
+        // We can refine our estimation by noticing that the middle of that
+        // interval minimizes the error. If we move x_n to equal
+        // 2**(e-1) + 2**(e-2), then we reduce the error to ε_n ≤
+        // 2**(e-2). This is going to be our x_0 (and ε_0)
         xn = (uint!(3_U256) * xn) >> 1; // ε_0 := | x_0 - sqrt(a) | ≤ 2**(e-2)
 
         // From here, Newton's method give us:
@@ -105,8 +116,8 @@ impl Math for U256 {
         //     ≤ 2**(e-3-log2(3))
         //     ≤ 2**(e-4.5)
         //
-        // For the following iterations, we use the fact that, 2**(e-1) ≤ sqrt(a) ≤
-        // x_n: ε_{n+1} = ε_n² / | (2 * x_n) |
+        // For the following iterations, we use the fact that, 2**(e-1) ≤
+        // sqrt(a) ≤ x_n: ε_{n+1} = ε_n² / | (2 * x_n) |
         //         ≤ (2**(e-k))² / (2 * 2**(e-1))
         //         ≤ 2**(2*e-2*k) / 2**e
         //         ≤ 2**(e-2*k)
@@ -117,10 +128,10 @@ impl Math for U256 {
         xn = (xn + a / xn) >> 1; // ε_5 := | x_5 - sqrt(a) | ≤ 2**(e-72)   -- general case with k = 36
         xn = (xn + a / xn) >> 1; // ε_6 := | x_6 - sqrt(a) | ≤ 2**(e-144)  -- general case with k = 72
 
-        // Because e ≤ 128 (as discussed during the first estimation phase), we know
-        // have reached a precision ε_6 ≤ 2**(e-144) < 1. Given we're operating
-        // on integers, then we can ensure that xn is now either sqrt(a) or
-        // sqrt(a) + 1.
+        // Because e ≤ 128 (as discussed during the first estimation phase), we
+        // know have reached a precision ε_6 ≤ 2**(e-144) < 1. Given
+        // we're operating on integers, then we can ensure that xn is
+        // now either sqrt(a) or sqrt(a) + 1.
         xn - U256::from(xn > a / xn)
     }
 
@@ -139,7 +150,7 @@ mod tests {
     #[test]
     fn check_sqrt() {
         proptest!(|(value: U256)| {
-            // NOTE: U256::root(..) method requires std. Can be used just inside test.
+            // U256::root(..) method requires std. Can be used just inside test.
             assert_eq!(value.sqrt(), value.root(2));
         });
     }
@@ -147,6 +158,7 @@ mod tests {
     #[test]
     fn check_average() {
         proptest!(|(left: U256, right: U256)| {
+            // compute average in straight forward way with overflow and downcast.
             let expected = (U512::from(left) + U512::from(right)) / uint!(2_U512);
             assert_eq!(left.average(right), U256::from(expected));
         });
