@@ -1771,6 +1771,51 @@ mod tests {
         assert_eq!(Address::ZERO, owner);
     }
 
+    #[motsu::test]
+    fn get_approved_inner_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(Address::ZERO, approved);
+    }
+
+    #[motsu::test]
+    fn get_approved_inner_token_without_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token");
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(Address::ZERO, approved);
+    }
+
+    #[motsu::test]
+    fn get_approved_inner_token_with_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve Bob for operations on token");
+
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(BOB, approved);
+    }
+
+    #[motsu::test]
+    fn get_approved_inner_token_with_approval_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .set_approval_for_all(BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(Address::ZERO, approved);
+    }
+
     // TODO: add mock test for on_erc721_received.
     // Should be done in integration tests.
 }
