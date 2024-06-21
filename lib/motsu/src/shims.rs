@@ -190,9 +190,14 @@ pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
 /// The semantics are equivalent to that of the EVM's [`EXT_CODEHASH`] opcode.
 /// Note that the code hash of an account without code will be the empty hash
 /// `keccak("") =
-/// c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
+///     c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
 ///
 /// [`EXT_CODEHASH`]: https://www.evm.codes/#3F
+///
+///
+/// # Panics
+///
+/// May panic if fails to parse `ACCOUNT_CODEHASH` as a keccack hash.
 #[no_mangle]
 pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
     let account_codehash =

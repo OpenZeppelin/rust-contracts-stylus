@@ -1117,9 +1117,9 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::{
-        ERC721IncorrectOwner, ERC721InsufficientApproval, ERC721InvalidOwner,
-        ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, Error, IErc721,
+        ERC721IncorrectOwner, ERC721InsufficientApproval,
+        ERC721InvalidApprover, ERC721InvalidOwner, ERC721InvalidReceiver,
+        ERC721InvalidSender, ERC721NonexistentToken, Erc721, Error, IErc721,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
@@ -1160,7 +1160,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::NonexistentToken(ERC721NonexistentToken { .. })
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if t_id == token_id
         ));
     }
     #[motsu::test]
@@ -1195,6 +1197,7 @@ mod tests {
         let err = contract
             ._mint(alice, token_id)
             .expect_err("should not mint a token with `token_id` twice");
+
         assert!(matches!(
             err,
             Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
@@ -1266,7 +1269,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC721InvalidReceiver { .. })
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
         ));
 
         let owner = contract
@@ -1289,7 +1294,11 @@ mod tests {
             .expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
-            Error::IncorrectOwner(ERC721IncorrectOwner { .. })
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                sender,
+                token_id: t_id,
+                owner
+            }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
         // FIXME: this check should pass
@@ -1402,7 +1411,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC721InvalidReceiver { .. })
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
         ));
 
         let owner = contract
@@ -1560,7 +1571,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC721InvalidReceiver { .. })
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
         ));
 
         let owner = contract
@@ -1588,7 +1601,12 @@ mod tests {
             .expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
-            Error::IncorrectOwner(ERC721IncorrectOwner { .. })
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                sender,
+                token_id: t_id,
+                owner
+            }) if sender == DAVE && t_id == token_id && owner == alice
+
         ));
 
         // FIXME: this check should pass
@@ -1654,6 +1672,38 @@ mod tests {
             .approve(BOB, token_id)
             .expect("should approve Bob for operations on token");
         assert_eq!(contract._token_approvals.get(token_id), BOB);
+    }
+
+    #[motsu::test]
+    fn approve_error_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            .approve(BOB, token_id)
+            .expect_err("should not approve for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
+    #[motsu::test]
+    fn approve_error_invalid_approver(contract: Erc721) {
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
+
+        let err = contract
+            .approve(DAVE, token_id)
+            .expect_err("should not approve when invalid approver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidApprover(ERC721InvalidApprover {
+                approver
+            }) if approver == msg::sender()
+        ));
     }
 
     #[motsu::test]
