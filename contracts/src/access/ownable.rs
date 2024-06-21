@@ -150,12 +150,6 @@ mod tests {
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
     #[motsu::test]
-    fn rejects_zero_address_initial_owner(contract: Ownable) {
-        // FIXME: Once constructors are supported this check should fail.
-        assert_eq!(contract._owner.get(), Address::ZERO);
-    }
-
-    #[motsu::test]
     fn reads_owner(contract: Ownable) {
         contract._owner.set(msg::sender());
         let owner = contract.owner();

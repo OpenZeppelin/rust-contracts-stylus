@@ -54,17 +54,17 @@ impl Capped {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
+    use alloy_primitives::uint;
 
     use super::Capped;
 
     #[motsu::test]
     fn cap_works(contract: Capped) {
-        let value = U256::from(2024);
+        let value = uint!(2024_U256);
         contract._cap.set(value);
         assert_eq!(contract.cap(), value);
 
-        let value = U256::from(1);
+        let value = uint!(1_U256);
         contract._cap.set(value);
         assert_eq!(contract.cap(), value);
     }
