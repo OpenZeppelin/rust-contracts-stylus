@@ -8,6 +8,13 @@ use crate::project::Crate;
 /// Deploy and activate the contract implemented as `#[entrypoint]` in the
 /// current crate using `rpc_url`, `private_key` and the ABI-encoded constructor
 /// `args`.
+///
+/// # Errors
+///
+/// May error if:
+///
+/// - Unable to collect information about the crate required for deployment.
+/// - `koba::deploy` errors.
 pub async fn deploy(
     rpc_url: &str,
     private_key: &str,

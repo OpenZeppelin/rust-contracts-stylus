@@ -6,7 +6,7 @@ use syn::{parse_macro_input, FnArg};
 /// Defines a unit test that provides access to Stylus' execution context.
 ///
 /// For more information see [`crate::test`].
-pub fn test(_attr: TokenStream, input: TokenStream) -> TokenStream {
+pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
     let item_fn = parse_macro_input!(input as syn::ItemFn);
     let attrs = &item_fn.attrs;
     let sig = &item_fn.sig;
