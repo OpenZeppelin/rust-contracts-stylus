@@ -25,11 +25,11 @@ pub enum Error {
 }
 
 sol_storage! {
-    struct Trace160 {
+    pub struct Trace160 {
         Checkpoint160[] _checkpoints;
     }
 
-    struct Checkpoint160 {
+    pub struct Checkpoint160 {
         uint96 _key;
         uint160 _value;
     }
@@ -85,12 +85,12 @@ impl Trace160 {
 
         let mut low = U256::ZERO;
         let mut high = len;
-        if len > U256::from(5) {
+        if len > uint!(5_U256) {
             let mid = len - len.sqrt();
             if key < self._unsafe_access_key(mid) {
                 high = mid;
             } else {
-                low = mid + U256::from(1);
+                low = mid + uint!(1_U256);
             }
         }
 
@@ -99,7 +99,7 @@ impl Trace160 {
         if pos == U256::ZERO {
             U160::ZERO
         } else {
-            self._unsafe_access_value(pos - U256::from(1))
+            self._unsafe_access_value(pos - uint!(1_U256))
         }
     }
 
@@ -110,7 +110,7 @@ impl Trace160 {
         if pos == U256::ZERO {
             U160::ZERO
         } else {
-            self._unsafe_access_value(pos - U256::from(1))
+            self._unsafe_access_value(pos - uint!(1_U256))
         }
     }
 
@@ -122,7 +122,7 @@ impl Trace160 {
         if pos == U256::ZERO {
             (false, U96::ZERO, U160::ZERO)
         } else {
-            let checkpoint = self._unsafe_access(pos - U256::from(1));
+            let checkpoint = self._unsafe_access(pos - uint!(1_U256));
             (true, checkpoint._key.load(), checkpoint._value.load())
         }
     }
