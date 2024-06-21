@@ -1755,6 +1755,22 @@ mod tests {
         ));
     }
 
+    #[motsu::test]
+    fn owner_of_inner_works(contract: Erc721) {
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
+
+        let owner = contract._owner_of_inner(token_id);
+        assert_eq!(BOB, owner);
+    }
+
+    #[motsu::test]
+    fn owner_of_inner_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let owner = contract._owner_of_inner(token_id);
+        assert_eq!(Address::ZERO, owner);
+    }
+
     // TODO: add mock test for on_erc721_received.
     // Should be done in integration tests.
 }
