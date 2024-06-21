@@ -1,4 +1,4 @@
-use alloy_primitives::{address, Address, U128, U16, U256, U32, U64, U8};
+use alloy_primitives::{address, uint, Address, U128, U16, U256, U32, U64, U8};
 use stylus_sdk::stylus_proc::sol_storage;
 
 sol_storage! {
@@ -13,7 +13,7 @@ sol_storage! {
 #[motsu::test]
 fn mapping_initializes_and_updates(contract: Erc20) {
     let key = address!("a935CEC3c5Ef99D7F1016674DEFd455Ef06776C5");
-    let value = U256::from(100);
+    let value = uint!(100_U256);
     contract._balances.insert(key, value);
     let balance = contract._balances.get(key);
     assert_eq!(balance, value);
@@ -45,21 +45,21 @@ fn uint_sorted_initializes(contract: UintSorted) {
 
 #[motsu::test]
 fn uint_sorted_updates(contract: UintSorted) {
-    contract.a.set(U256::from(1));
-    contract.b.set(U128::from(2));
-    contract.c.set(U64::from(3));
-    contract.d.set(U32::from(4));
-    contract.e.set(U16::from(5));
-    contract.f.set(U8::from(6));
-    contract.g.set(U8::from(7));
+    contract.a.set(uint!(1_U256));
+    contract.b.set(uint!(2_U128));
+    contract.c.set(uint!(3_U64));
+    contract.d.set(uint!(4_U32));
+    contract.e.set(uint!(5_U16));
+    contract.f.set(uint!(6_U8));
+    contract.g.set(uint!(7_U8));
 
-    assert_eq!(contract.a.get(), U256::from(1));
-    assert_eq!(contract.b.get(), U128::from(2));
-    assert_eq!(contract.c.get(), U64::from(3));
-    assert_eq!(contract.d.get(), U32::from(4));
-    assert_eq!(contract.e.get(), U16::from(5));
-    assert_eq!(contract.f.get(), U8::from(6));
-    assert_eq!(contract.g.get(), U8::from(7));
+    assert_eq!(contract.a.get(), uint!(1_U256));
+    assert_eq!(contract.b.get(), uint!(2_U128));
+    assert_eq!(contract.c.get(), uint!(3_U64));
+    assert_eq!(contract.d.get(), uint!(4_U32));
+    assert_eq!(contract.e.get(), uint!(5_U16));
+    assert_eq!(contract.f.get(), uint!(6_U8));
+    assert_eq!(contract.g.get(), uint!(7_U8));
 }
 
 sol_storage! {
@@ -88,21 +88,21 @@ fn uint_unsorted_initializes(contract: UintUnsorted) {
 
 #[motsu::test]
 fn uint_unsorted_updates(contract: UintUnsorted) {
-    contract.a.set(U256::from(1));
-    contract.b.set(U16::from(5));
-    contract.c.set(U64::from(3));
-    contract.d.set(U8::from(6));
-    contract.e.set(U32::from(4));
-    contract.f.set(U128::from(2));
-    contract.g.set(U8::from(7));
+    contract.a.set(uint!(1_U256));
+    contract.b.set(uint!(5_U16));
+    contract.c.set(uint!(3_U64));
+    contract.d.set(uint!(6_U8));
+    contract.e.set(uint!(4_U32));
+    contract.f.set(uint!(2_U128));
+    contract.g.set(uint!(7_U8));
 
-    assert_eq!(contract.a.get(), U256::from(1));
-    assert_eq!(contract.b.get(), U16::from(5));
-    assert_eq!(contract.c.get(), U64::from(3));
-    assert_eq!(contract.d.get(), U8::from(6));
-    assert_eq!(contract.e.get(), U32::from(4));
-    assert_eq!(contract.f.get(), U128::from(2));
-    assert_eq!(contract.g.get(), U8::from(7));
+    assert_eq!(contract.a.get(), uint!(1_U256));
+    assert_eq!(contract.b.get(), uint!(5_U16));
+    assert_eq!(contract.c.get(), uint!(3_U64));
+    assert_eq!(contract.d.get(), uint!(6_U8));
+    assert_eq!(contract.e.get(), uint!(4_U32));
+    assert_eq!(contract.f.get(), uint!(2_U128));
+    assert_eq!(contract.g.get(), uint!(7_U8));
 }
 
 sol_storage! {

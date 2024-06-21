@@ -1,7 +1,7 @@
 //! Implementation of the [`Erc721`] token standard.
 use alloc::vec;
 
-use alloy_primitives::{fixed_bytes, Address, FixedBytes, U128, U256};
+use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use stylus_sdk::{
     abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
 };
@@ -695,11 +695,11 @@ impl Erc721 {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self._balances.setter(from).sub_assign_unchecked(U256::from(1));
+            self._balances.setter(from).sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self._balances.setter(to).add_assign_unchecked(U256::from(1));
+            self._balances.setter(to).add_assign_unchecked(uint!(1_U256));
         }
 
         self._owners.setter(token_id).set(to);
@@ -1110,7 +1110,7 @@ impl Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
+    use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::{msg, prelude::StorageType, storage::StorageMap};
 
     use super::{
@@ -1138,7 +1138,7 @@ mod tests {
         let balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
-        let one = U256::from(1);
+        let one = uint!(1_U256);
         assert!(balance >= one);
     }
 

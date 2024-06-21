@@ -47,7 +47,7 @@ impl IErc721Burnable for Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
+    use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
     use super::IErc721Burnable;
@@ -60,7 +60,7 @@ mod tests {
     #[motsu::test]
     fn burns(contract: Erc721) {
         let alice = msg::sender();
-        let one = U256::from(1);
+        let one = uint!(1_U256);
         let token_id = random_token_id();
 
         contract._mint(alice, token_id).expect("should mint a token for Alice");
@@ -118,7 +118,7 @@ mod tests {
 
         contract._mint(alice, token_id).expect("should mint a token for Alice");
 
-        let err = contract.burn(token_id + U256::from(1)).unwrap_err();
+        let err = contract.burn(token_id + uint!(1_U256)).unwrap_err();
 
         assert!(matches!(err, Error::NonexistentToken(_)));
     }

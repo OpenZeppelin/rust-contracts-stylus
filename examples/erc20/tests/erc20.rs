@@ -5,6 +5,7 @@ use alloy::{
     sol,
     sol_types::{SolConstructor, SolError},
 };
+use alloy_primitives::uint;
 use e2e::{receipt, send, watch, EventExt, Panic, PanicCode, Revert, User};
 use eyre::Result;
 
@@ -16,7 +17,7 @@ sol!("src/constructor.sol");
 
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
-const CAP: usize = 1_000_000;
+const CAP: U256 = uint!(1_000_000_U256);
 
 async fn deploy(
     rpc_url: &str,
@@ -26,7 +27,7 @@ async fn deploy(
     let args = Erc20Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: cap.unwrap_or(U256::from(CAP)),
+        cap_: cap.unwrap_or(CAP),
     };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
@@ -50,7 +51,7 @@ async fn constructs(alice: User) -> Result<()> {
 
     assert_eq!(name, TOKEN_NAME.to_owned());
     assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
-    assert_eq!(cap, U256::from(CAP));
+    assert_eq!(cap, CAP);
     assert_eq!(decimals, 10);
     assert_eq!(total_supply, U256::ZERO);
     Ok(())
@@ -70,7 +71,7 @@ async fn mints(alice: User) -> Result<()> {
     assert_eq!(U256::ZERO, initial_balance);
     assert_eq!(U256::ZERO, initial_supply);
 
-    let one = U256::from(1);
+    let one = uint!(1_U256);
     let receipt = receipt!(contract.mint(alice_addr, one))?;
     receipt.emits(Erc20::Transfer {
         from: Address::ZERO,
@@ -99,7 +100,7 @@ async fn mints_rejects_invalid_receiver(alice: User) -> Result<()> {
     let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
         contract.totalSupply().call().await?;
 
-    let value = U256::from(10);
+    let value = uint!(10_U256);
     let err = send!(contract.mint(invalid_receiver, value))
         .expect_err("should not mint tokens for Address::ZERO");
     assert!(err.reverted_with(Erc20::ERC20InvalidReceiver {
@@ -124,7 +125,7 @@ async fn mints_rejects_overflow(alice: User) -> Result<()> {
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let one = U256::from(1);
+    let one = uint!(1_U256);
 
     let _ = watch!(contract.mint(alice_addr, max_cap))?;
 
@@ -158,8 +159,8 @@ async fn transfers(alice: User, bob: User) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -198,8 +199,8 @@ async fn transfer_rejects_insufficient_balance(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(11);
+    let balance = uint!(10_U256);
+    let value = uint!(11_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -239,8 +240,8 @@ async fn transfer_rejects_invalid_receiver(alice: User) -> Result<()> {
     let alice_addr = alice.address();
     let invalid_receiver = Address::ZERO;
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -278,8 +279,8 @@ async fn approves(alice: User, bob: User) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let one = U256::from(1);
-    let ten = U256::from(10);
+    let one = uint!(1_U256);
+    let ten = uint!(10_U256);
 
     let Erc20::allowanceReturn { allowance: initial_alice_bob_allowance } =
         contract.allowance(alice_addr, bob_addr).call().await?;
@@ -345,7 +346,7 @@ async fn approve_rejects_invalid_spender(alice: User) -> Result<()> {
     let alice_addr = alice.address();
     let invalid_spender = Address::ZERO;
 
-    let ten = U256::from(10);
+    let ten = uint!(10_U256);
 
     let Erc20::allowanceReturn { allowance: initial_alice_spender_allowance } =
         contract.allowance(alice_addr, invalid_spender).call().await?;
@@ -397,8 +398,8 @@ async fn transfers_from(alice: User, bob: User) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -448,8 +449,8 @@ async fn transfer_from_reverts_insufficient_balance(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(1);
-    let value = U256::from(10);
+    let balance = uint!(1_U256);
+    let value = uint!(10_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -503,8 +504,8 @@ async fn transfer_from_rejects_insufficient_allowance(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -559,8 +560,8 @@ async fn transfer_from_rejects_invalid_receiver(
     let bob_addr = bob.address();
     let invalid_receiver = Address::ZERO;
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -611,8 +612,8 @@ async fn burns(alice: User) -> Result<()> {
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -646,8 +647,8 @@ async fn burn_rejects_insufficient_balance(alice: User) -> Result<()> {
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(11);
+    let balance = uint!(10_U256);
+    let value = uint!(11_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -684,8 +685,8 @@ async fn burns_from(alice: User, bob: User) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -738,8 +739,8 @@ async fn burn_from_reverts_insufficient_balance(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(1);
-    let value = U256::from(10);
+    let balance = uint!(1_U256);
+    let value = uint!(10_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -793,8 +794,8 @@ async fn burn_from_rejects_insufficient_allowance(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = U256::from(10);
-    let value = U256::from(1);
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -846,9 +847,9 @@ async fn mint_rejects_exceeding_cap(alice: User) -> Result<()> {
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let one = U256::from(1);
-    let two = U256::from(2);
-    let cap = U256::from(CAP);
+    let one = uint!(1_U256);
+    let two = uint!(2_U256);
+    let cap = CAP;
     let balance = cap - one;
 
     let _ = watch!(contract_alice.mint(alice_addr, balance))?;
@@ -882,8 +883,8 @@ async fn mint_rejects_when_cap_reached(alice: User) -> Result<()> {
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let one = U256::from(1);
-    let cap = U256::from(CAP);
+    let one = uint!(1_U256);
+    let cap = CAP;
     let balance = cap;
 
     let _ = watch!(contract_alice.mint(alice_addr, balance))?;
