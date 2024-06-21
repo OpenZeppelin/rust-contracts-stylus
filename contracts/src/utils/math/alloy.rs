@@ -137,8 +137,13 @@ impl Math for U256 {
     }
 
     fn average(self, rhs: Self) -> Self {
-        // (self + rhs) / 2 can overflow.
-        (self & rhs) + (self ^ rhs) / uint!(2_U256)
+        // `(a + b) / 2` can overflow, so instead we compute
+        // `(2 * (a & b) + (a ^ b)) / 2`.
+        //
+        // `a ^ b` computes the sum without carries while `2 * (a & b)` singles
+        // out the carries, so `2 * (a & b) + (a ^ b) == a + b`. Sum with no
+        // carries + carries.
+        (self & rhs) + (self ^ rhs) >> uint!(1_U256)
     }
 }
 
