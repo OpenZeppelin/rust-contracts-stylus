@@ -2004,6 +2004,79 @@ mod tests {
         assert!(result.is_ok());
     }
 
+    #[motsu::test]
+    fn burns(contract: Erc721) {
+        let alice = msg::sender();
+        let one = U256::from(1);
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
+
+        let initial_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        let result = contract._burn(token_id);
+        let balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        let err = contract
+            .owner_of(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+                err,
+                Error::NonexistentToken (ERC721NonexistentToken{
+                    token_id: t_id
+                }) if t_id == token_id
+        ));
+
+        assert!(result.is_ok());
+
+        assert_eq!(initial_balance - one, balance);
+    }
+
+    #[motsu::test]
+    fn get_approved_errors_when_previous_approval_burned(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve a token for Bob");
+
+        contract._burn(token_id).expect("should burn previously minted token");
+
+        let err = contract
+            .get_approved(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken (ERC721NonexistentToken{
+                token_id: t_id
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn burn_errors_when_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+
+        let err = contract
+            ._burn(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken (ERC721NonexistentToken{
+                token_id: t_id
+            }) if t_id == token_id
+        ));
+    }
+
     // TODO: _update tests
 
     // TODO: add mock test for on_erc721_received.
