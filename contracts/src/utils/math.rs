@@ -130,15 +130,16 @@ mod tests {
     #[test]
     fn check_sqrt() {
         proptest!(|(value: U256)| {
+            // NOTE: U256::root(..) method requires std. Can be used just in test
             assert_eq!(sqrt(value), value.root(2));
         });
     }
 
     #[test]
     fn check_average() {
-        proptest!(|(a: U256, b: U256)| {
-            let expected = (U512::from(a) + U512::from(b)) / uint!(2_U512);
-            assert_eq!(average(a, b), U256::from(expected));
+        proptest!(|(left: U256, right: U256)| {
+            let expected = (U512::from(left) + U512::from(right)) / uint!(2_U512);
+            assert_eq!(average(left, right), U256::from(expected));
         });
     }
 }
