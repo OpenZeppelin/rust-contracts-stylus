@@ -6,7 +6,7 @@ use stylus_sdk::{
     abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
 };
 
-use crate::arithmetic::{AddAssignUnchecked, SubAssignUnchecked};
+use crate::utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked};
 
 pub mod extensions;
 

@@ -145,7 +145,7 @@ impl Math for U256 {
 mod tests {
     use alloy_primitives::{private::proptest::proptest, uint, U256, U512};
 
-    use crate::utils::math::Math;
+    use crate::utils::math::alloy::Math;
 
     #[test]
     fn check_sqrt() {
