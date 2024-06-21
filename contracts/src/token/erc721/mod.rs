@@ -1118,8 +1118,9 @@ mod tests {
 
     use super::{
         ERC721IncorrectOwner, ERC721InsufficientApproval,
-        ERC721InvalidApprover, ERC721InvalidOwner, ERC721InvalidReceiver,
-        ERC721InvalidSender, ERC721NonexistentToken, Erc721, Error, IErc721,
+        ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
+        ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
+        Erc721, Error, IErc721,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
@@ -1614,6 +1615,7 @@ mod tests {
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
+        //
         // assert_eq!(alice, owner);
     }
 
@@ -1720,6 +1722,22 @@ mod tests {
             "should disapprove Bob for operations on all Alice's tokens",
         );
         assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+    }
+
+    #[motsu::test]
+    fn approval_for_all_error_invalid_operator(contract: Erc721) {
+        let invalid_operator = Address::ZERO;
+
+        let err = contract
+            .set_approval_for_all(invalid_operator, true)
+            .expect_err("should not approve for all for invalid operator");
+
+        assert!(matches!(
+            err,
+            Error::InvalidOperator(ERC721InvalidOperator {
+                operator
+            }) if operator == invalid_operator
+        ));
     }
 
     // TODO: add mock test for on_erc721_received.
