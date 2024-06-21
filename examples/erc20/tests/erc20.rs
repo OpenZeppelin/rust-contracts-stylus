@@ -848,7 +848,7 @@ async fn mint_rejects_exceeding_cap(alice: User) -> Result<()> {
     let alice_addr = alice.address();
 
     let one = uint!(1_U256);
-    let two = U256::from(2);
+    let two = uint!(2_U256);
     let cap = CAP;
     let balance = cap - one;
 
