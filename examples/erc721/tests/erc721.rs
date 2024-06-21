@@ -5,6 +5,7 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
+use alloy_primitives::uint;
 use e2e::{receipt, send, watch, EventExt, Revert, User};
 
 use crate::abi::Erc721;
@@ -55,7 +56,7 @@ async fn mints(alice: User) -> eyre::Result<()> {
     assert_eq!(owner_of, alice_addr);
 
     let balance = contract.balanceOf(alice_addr).call().await?.balance;
-    assert!(balance >= U256::from(1));
+    assert!(balance >= uint!(1_U256));
     Ok(())
 }
 
