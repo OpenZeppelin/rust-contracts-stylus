@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn check_sqrt() {
         proptest!(|(value: U256)| {
-            // U256::root(..) method requires std. Can be used just inside test.
+            // U256::root(..) method requires std. Can only be used in tests.
             assert_eq!(value.sqrt(), value.root(2));
         });
     }
