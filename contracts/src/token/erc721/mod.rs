@@ -1870,6 +1870,78 @@ mod tests {
         assert_eq!(true, authorized);
     }
 
+    #[motsu::test]
+    fn check_authorized_nonexistent_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            ._check_authorized(Address::ZERO, alice, token_id)
+            .expect_err("should not pass for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn check_authorized_token_owner(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let result = contract._check_authorized(alice, alice, token_id);
+
+        assert!(result.is_ok());
+    }
+
+    #[motsu::test]
+    fn check_authorized_without_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let err = contract
+            ._check_authorized(alice, BOB, token_id)
+            .expect_err("should not pass without approval");
+
+        assert!(matches!(
+            err,
+            Error::InsufficientApproval(ERC721InsufficientApproval {
+                operator,
+                token_id: t_id
+            }) if operator == BOB && t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn check_authorized_with_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve Bob for operations on token");
+
+        let result = contract._check_authorized(alice, BOB, token_id);
+        assert!(result.is_ok());
+    }
+
+    #[motsu::test]
+    fn check_authorized_with_approval_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .set_approval_for_all(BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+
+        let result = contract._check_authorized(alice, BOB, token_id);
+        assert!(result.is_ok());
+    }
+
     // TODO: add mock test for on_erc721_received.
     // Should be done in integration tests.
 }
