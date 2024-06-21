@@ -1,7 +1,10 @@
 use alloy::sol_types::SolError;
 
-// Copied from https://github.com/NomicFoundation/hardhat/blob/main/packages/hardhat-chai-matchers/src/internal/reverted/panic.ts
+/// Possible panic codes for a revert.
+///
+/// Taken from <https://github.com/NomicFoundation/hardhat/blob/main/packages/hardhat-chai-matchers/src/internal/reverted/panic.ts>
 #[derive(Debug)]
+#[allow(missing_docs)] // Pretty straightforward variant names.
 pub enum PanicCode {
     AssertionError = 0x1,
     ArithmeticOverflow = 0x11,

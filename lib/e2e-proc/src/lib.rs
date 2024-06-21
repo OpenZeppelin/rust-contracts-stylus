@@ -1,3 +1,4 @@
+#![doc = include_str!("../README.md")]
 use proc_macro::TokenStream;
 
 mod test;
@@ -16,5 +17,5 @@ mod test;
 /// ```
 #[proc_macro_attribute]
 pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
-    test::test(attr, input)
+    test::test(&attr, input)
 }
