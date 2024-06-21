@@ -950,8 +950,6 @@ impl Erc721 {
     /// * `emit_event` - Emit an [`Approval`] event flag.
     ///
     /// # Errors
-    ///I think we should be cautious in our approach and see what they’re open
-    /// or not to do. Remember that they don’t even respond to our messages…
     /// If the token does not exist, then the error
     /// [`Error::NonexistentToken`] is returned.
     /// If `auth` does not have a right to approve this token, then the error
@@ -2374,6 +2372,38 @@ mod tests {
             Error::InvalidApprover(ERC721InvalidApprover {
                 approver
             }) if approver == alice
+        ));
+    }
+
+    #[motsu::test]
+    fn approval_for_all_internal(contract: Erc721) {
+        let alice = msg::sender();
+        contract._operator_approvals.setter(alice).setter(BOB).set(false);
+
+        contract
+            ._set_approval_for_all(alice, BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+
+        contract._set_approval_for_all(alice, BOB, false).expect(
+            "should disapprove Bob for operations on all Alice's tokens",
+        );
+        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+    }
+
+    #[motsu::test]
+    fn approval_for_all_internal_error_invalid_operator(contract: Erc721) {
+        let invalid_operator = Address::ZERO;
+
+        let err = contract
+            ._set_approval_for_all(msg::sender(), invalid_operator, true)
+            .expect_err("should not approve for all for invalid operator");
+
+        assert!(matches!(
+            err,
+            Error::InvalidOperator(ERC721InvalidOperator {
+                operator
+            }) if operator == invalid_operator
         ));
     }
 
