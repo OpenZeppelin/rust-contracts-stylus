@@ -95,13 +95,7 @@ impl BitMap {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{
-        private::proptest::{
-            prelude::{Arbitrary, ProptestConfig},
-            proptest,
-        },
-        U256,
-    };
+    use alloy_primitives::{private::proptest::proptest, U256};
 
     use crate::utils::structs::bitmap::BitMap;
 

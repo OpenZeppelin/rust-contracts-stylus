@@ -1107,9 +1107,7 @@ impl Erc721 {
     }
 }
 
-#[cfg(all(test,
-        // feature = "std"
-        ))]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256};
     use stylus_sdk::msg;
@@ -2407,8 +2405,38 @@ mod tests {
         ));
     }
 
-    // TODO: _update tests
+    #[motsu::test]
+    fn require_owned_works(contract: Erc721) {
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
 
-    // TODO: add mock test for on_erc721_received.
+        let owner = contract
+            ._require_owned(token_id)
+            .expect("should return the owner of the token");
+
+        assert_eq!(BOB, owner);
+    }
+
+    #[motsu::test]
+    fn require_owned_error_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            ._require_owned(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
+    // TODO: think about [`Erc721::_update`] tests.
+
+    // TODO: think about [`Erc721::_increase_balance`] tests
+    // when it will be used.applicable.
+
+    // TODO: add mock test for [`Erc721::_on_erc721_received`].
     // Should be done in integration tests.
 }
