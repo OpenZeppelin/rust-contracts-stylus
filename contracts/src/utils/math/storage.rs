@@ -1,3 +1,4 @@
+//! Simple math operations missing in `stylus_sdk::storage`.
 use alloy_primitives::Uint;
 use stylus_sdk::storage::{StorageGuardMut, StorageUint};
 

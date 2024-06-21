@@ -82,12 +82,10 @@ impl Trace160 {
     /// "recent" checkpoint (checkpoints with high keys).
     pub fn upper_lookup_recent(&mut self, key: U96) -> U160 {
         let len = self.length();
-        // TODO#q: use uint!(1_U256);
 
         let mut low = U256::ZERO;
         let mut high = len;
         if len > U256::from(5) {
-            // NOTE#q: square root from `ruint` crate works just with std
             let mid = len - len.sqrt();
             if key < self._unsafe_access_key(mid) {
                 high = mid;
