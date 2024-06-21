@@ -2333,6 +2333,50 @@ mod tests {
         ));
     }
 
+    #[motsu::test]
+    fn approves_internal(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            ._approve(BOB, token_id, alice, false)
+            .expect("should approve Bob for operations on token");
+        assert_eq!(contract._token_approvals.get(token_id), BOB);
+    }
+
+    #[motsu::test]
+    fn approve_internal_error_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            ._approve(BOB, token_id, msg::sender(), false)
+            .expect_err("should not approve for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
+    #[motsu::test]
+    fn approve_internal_error_invalid_approver(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
+
+        let err = contract
+            ._approve(DAVE, token_id, alice, false)
+            .expect_err("should not approve when invalid approver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidApprover(ERC721InvalidApprover {
+                approver
+            }) if approver == alice
+        ));
+    }
+
     // TODO: _update tests
 
     // TODO: add mock test for on_erc721_received.
