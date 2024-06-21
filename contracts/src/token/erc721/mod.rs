@@ -950,6 +950,7 @@ impl Erc721 {
     /// * `emit_event` - Emit an [`Approval`] event flag.
     ///
     /// # Errors
+    ///
     /// If the token does not exist, then the error
     /// [`Error::NonexistentToken`] is returned.
     /// If `auth` does not have a right to approve this token, then the error
