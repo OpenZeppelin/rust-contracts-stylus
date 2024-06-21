@@ -1328,7 +1328,7 @@ mod tests {
 
         let err = contract
             .transfer_from(alice, invalid_receiver, token_id)
-            .expect_err("should not transfer a non-existent token");
+            .expect_err("should not transfer the token to invalid receiver");
 
         assert!(matches!(
             err,
@@ -1354,7 +1354,7 @@ mod tests {
 
         let err = contract
             .transfer_from(DAVE, BOB, token_id)
-            .expect_err("should not transfer a non-existent token");
+            .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -1470,7 +1470,7 @@ mod tests {
 
         let err = contract
             .safe_transfer_from(alice, invalid_receiver, token_id)
-            .expect_err("should not transfer a non-existent token");
+            .expect_err("should not transfer the token to invalid receiver");
 
         assert!(matches!(
             err,
@@ -1496,10 +1496,14 @@ mod tests {
 
         let err = contract
             .safe_transfer_from(DAVE, BOB, token_id)
-            .expect_err("should not transfer a non-existent token");
+            .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
-            Error::IncorrectOwner(ERC721IncorrectOwner { .. })
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                owner,
+                sender,
+                token_id: t_id
+            }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
         // FIXME: this check should pass
@@ -1630,7 +1634,7 @@ mod tests {
                 token_id,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer a non-existent token");
+            .expect_err("should not transfer the token to invalid receiver");
 
         assert!(matches!(
             err,
@@ -1661,7 +1665,7 @@ mod tests {
                 token_id,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer a non-existent token");
+            .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -2188,6 +2192,139 @@ mod tests {
         let err = contract
             ._transfer(alice, BOB, token_id)
             .expect_err("should not transfer a non-existent token");
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id,
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfers_internal(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        contract
+            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            .expect("should transfer a token from Alice to Bob");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+
+        assert_eq!(owner, BOB);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_internal_approved_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            ._safe_transfer(BOB, alice, token_id, vec![0, 1, 2, 3].into())
+            .expect("should transfer Bob's token to Alice");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_internal_approved_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+
+        // As we cannot change `msg::sender()`, we need to use this workaround.
+        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+
+        let approved_for_all = contract.is_approved_for_all(BOB, alice);
+        assert_eq!(approved_for_all, true);
+
+        contract
+            ._safe_transfer(BOB, alice, token_id, vec![0, 1, 2, 3].into())
+            .expect("should transfer Bob's token to Alice");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn safe_transfer_internal_error_when_transfer_to_invalid_receiver(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let invalid_receiver = Address::ZERO;
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            ._safe_transfer(
+                alice,
+                invalid_receiver,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect_err("should not transfer the token to invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn safe_transfer_internal_error_when_transfer_from_incorrect_owner(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            ._safe_transfer(DAVE, BOB, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not transfer the token from incorrect owner");
+        assert!(matches!(
+            err,
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                sender,
+                token_id: t_id,
+                owner
+            }) if sender == DAVE && t_id == token_id && owner == alice
+        ));
+
+        // FIXME: this check should pass
+        // TODO: confirm in E2E tests that owner is not changed: #93
+        // let owner = contract
+        // .owner_of(token_id)
+        // .expect("should return the owner of the token");
+        // assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn safe_transfer_internal_error_when_transfer_nonexistent_token(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not transfer a non-existent token");
+
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
