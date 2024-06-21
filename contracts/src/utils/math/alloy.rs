@@ -143,7 +143,7 @@ impl Math for U256 {
         // `a ^ b` computes the sum without carries while `2 * (a & b)` singles
         // out the carries, so `2 * (a & b) + (a ^ b) == a + b`. Sum with no
         // carries + carries.
-        (self & rhs) + ((self ^ rhs) >> uint!(1_U256))
+        (self & rhs) + ((self ^ rhs) >> 1)
     }
 }
 
