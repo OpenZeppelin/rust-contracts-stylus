@@ -8,7 +8,7 @@ use alloy_sol_types::sol;
 use stylus_proc::{sol_storage, SolidityError};
 use stylus_sdk::prelude::StorageType;
 
-use crate::utils::math::{average, sqrt};
+use crate::utils::math::{Math};
 
 type U96 = Uint<96, 2>;
 type U160 = Uint<160, 3>;
@@ -88,7 +88,7 @@ impl Trace160 {
         let mut high = len;
         if len > U256::from(5) {
             // NOTE#q: square root from `ruint` crate works just with std
-            let mid = len - sqrt(len);
+            let mid = len - len.sqrt();
             if key < self._unsafe_access_key(mid) {
                 high = mid;
             } else {
@@ -189,7 +189,7 @@ impl Trace160 {
         mut high: U256,
     ) -> U256 {
         while low < high {
-            let mid = average(low, high);
+            let mid = low.average(high);
             if self._unsafe_access_key(mid) > key {
                 high = mid;
             } else {
@@ -212,7 +212,7 @@ impl Trace160 {
         mut high: U256,
     ) -> U256 {
         while low < high {
-            let mid = average(low, high);
+            let mid = low.average(high);
             if self._unsafe_access_key(mid) < key {
                 low = mid + uint!(1_U256);
             } else {
