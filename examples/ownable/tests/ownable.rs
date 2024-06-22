@@ -8,7 +8,7 @@ use alloy::{
     sol,
     sol_types::{SolConstructor, SolError, SolEvent},
 };
-use e2e::{receipt, send, EventExt, Revert, User};
+use e2e::{receipt, send, EventExt, Revert, Account};
 use eyre::Result;
 
 use crate::abi::Ownable;
@@ -17,10 +17,10 @@ mod abi;
 
 sol!("src/constructor.sol");
 
-async fn deploy(user: &User, owner: Address) -> eyre::Result<Address> {
+async fn deploy(account: &Account, owner: Address) -> eyre::Result<Address> {
     let args = OwnableExample::constructorCall { initialOwner: owner };
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(user.url(), &user.pk(), Some(args)).await
+    e2e::deploy(account.url(), &account.pk(), Some(args)).await
 }
 
 // ============================================================================
@@ -28,7 +28,7 @@ async fn deploy(user: &User, owner: Address) -> eyre::Result<Address> {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: User) -> Result<()> {
+async fn constructs(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = deploy(&alice, alice_addr).await?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
@@ -41,7 +41,7 @@ async fn constructs(alice: User) -> Result<()> {
 
 #[e2e::test]
 async fn emits_ownership_transfer_during_construction(
-    alice: User,
+    alice: Account,
 ) -> Result<()> {
     let alice_addr = alice.address();
 
@@ -64,7 +64,7 @@ async fn emits_ownership_transfer_during_construction(
 }
 
 #[e2e::test]
-async fn rejects_zero_address_initial_owner(alice: User) -> Result<()> {
+async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
     let err = deploy(&alice, Address::ZERO)
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
@@ -81,7 +81,7 @@ async fn rejects_zero_address_initial_owner(alice: User) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfers_ownership(alice: User, bob: User) -> Result<()> {
+async fn transfers_ownership(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -102,8 +102,8 @@ async fn transfers_ownership(alice: User, bob: User) -> Result<()> {
 
 #[e2e::test]
 async fn prevents_non_owners_from_transferring(
-    alice: User,
-    bob: User,
+    alice: Account,
+    bob: Account,
 ) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -121,7 +121,7 @@ async fn prevents_non_owners_from_transferring(
 }
 
 #[e2e::test]
-async fn guards_against_stuck_state(alice: User) -> Result<()> {
+async fn guards_against_stuck_state(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = deploy(&alice, alice_addr).await?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
@@ -137,7 +137,7 @@ async fn guards_against_stuck_state(alice: User) -> Result<()> {
 }
 
 #[e2e::test]
-async fn loses_ownership_after_renouncement(alice: User) -> Result<()> {
+async fn loses_ownership_after_renouncement(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = deploy(&alice, alice_addr).await?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
@@ -156,8 +156,8 @@ async fn loses_ownership_after_renouncement(alice: User) -> Result<()> {
 
 #[e2e::test]
 async fn prevents_non_owners_from_renouncement(
-    alice: User,
-    bob: User,
+    alice: Account,
+    bob: Account,
 ) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();

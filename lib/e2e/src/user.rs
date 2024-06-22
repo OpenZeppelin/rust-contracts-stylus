@@ -13,17 +13,17 @@ use crate::{
     system::{Wallet, RPC_URL_ENV_VAR_NAME},
 };
 
-/// Type that corresponds to a test user.
+/// Type that corresponds to a test account.
 #[derive(Clone, Debug)]
-pub struct User {
+pub struct Account {
     /// The account's local private key wrapper.
     pub signer: PrivateKeySigner,
     /// The account's wallet -- an `alloy` provider with a `WalletFiller`.
     pub wallet: Wallet,
 }
 
-impl User {
-    /// Create a new user.
+impl Account {
+    /// Create a new account.
     ///
     /// # Errors
     ///
@@ -32,7 +32,7 @@ impl User {
         UserFactory::create().await
     }
 
-    /// Get a hex-encoded String representing this user's private key.
+    /// Get a hex-encoded String representing this account's private key.
     #[must_use]
     pub fn pk(&self) -> String {
         alloy::hex::encode(self.signer.to_bytes())
@@ -72,7 +72,7 @@ impl UserFactory {
     ///
     /// May fail if unable to find the path to the node or if funding the newly
     /// created account fails.
-    async fn create() -> eyre::Result<User> {
+    async fn create() -> eyre::Result<Account> {
         let _lock = UserFactory::lock().await;
 
         let signer = PrivateKeySigner::random();
@@ -100,7 +100,7 @@ impl UserFactory {
             .on_http(rpc_url);
 
         if output.status.success() {
-            Ok(User { signer, wallet })
+            Ok(Account { signer, wallet })
         } else {
             let err = String::from_utf8_lossy(&output.stderr);
             bail!("user's wallet wasn't funded - address is {addr}:\n{err}")
