@@ -8,9 +8,9 @@ repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
-const-hex = { workspace = "true", default-features = false }
+const-hex.workspace = true
 once_cell.workspace = true
-tiny-keccak = { workspace = "true", features = ["keccak"] }
+tiny-keccak.workspace = true
 motsu-proc = { path = "../motsu-proc" }
 
 [lints]

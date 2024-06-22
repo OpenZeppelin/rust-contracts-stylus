@@ -10,7 +10,7 @@ repository.workspace = true
 
 [dependencies]
 alloy.workspace = true
-tokio = { workspace = "true", features = ["full", "process"] }
+tokio.workspace = true
 eyre.workspace = true
 regex.workspace = true
 once_cell.workspace = true
