@@ -21,7 +21,7 @@ pub async fn deploy(
     args: Option<String>,
 ) -> eyre::Result<Address> {
     let pkg = Crate::new()?;
-    let sol_path: PathBuf = pkg.manifest_dir.join("src/constructor.sol");
+    let sol_path = pkg.manifest_dir.join("src/constructor.sol");
     let wasm_path = pkg.wasm;
 
     let config = Deploy {

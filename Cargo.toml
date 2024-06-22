@@ -4,13 +4,15 @@ members = [
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
+  "lib/e2e",
+  "lib/e2e-proc",
   "examples/erc20",
   "examples/erc721",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
-  "lib/e2e",
-  "lib/e2e-proc",
+  "examples/basic-token/token",
+  "examples/basic-token/script",
 ]
 default-members = [
   "contracts",

@@ -8,13 +8,12 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 #[cfg(any(feature = "std", feature = "access"))]
 pub mod access;
-mod arithmetic;
-
 pub mod token;
-
 pub mod utils;
 
-#[cfg(not(any(feature = "std", target_arch = "wasm32-unknown-unknown")))]
+mod arithmetic;
+
+#[cfg(target_arch = "wasm32")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

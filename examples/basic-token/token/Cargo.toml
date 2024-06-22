@@ -1,0 +1,22 @@
+[package]
+name = "basic-token-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version = "0.0.0"
+
+[dependencies]
+openzeppelin-stylus = { path = "../../../contracts", features = [
+  "erc20_metadata",
+] }
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+mini-alloc.workspace = true
+
+[features]
+std = []
+
+[lib]
+crate-type = ["lib", "cdylib"]
