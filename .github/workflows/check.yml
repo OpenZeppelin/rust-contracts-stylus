@@ -93,6 +93,8 @@ jobs:
           submodules: true
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          target: wasm32-unknown-unknown
       - name: cargo install cargo-hack
         uses: taiki-e/install-action@cargo-hack
         # Intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
