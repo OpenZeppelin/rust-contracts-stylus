@@ -95,10 +95,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: cargo install cargo-hack
         uses: taiki-e/install-action@cargo-hack
-      # Intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
-      # `--feature-powerset` runs for every combination of features.
+        # Intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
+        # `--feature-powerset` runs for every combination of features. Note that
+        # target in this context means one of `--lib`, `--bin`, etc, and not the
+        # target triple.
       - name: cargo hack
-        run: cargo hack --feature-powerset check --depth 2 --release
+        run: cargo hack --feature-powerset check --depth 2 --release --target wasm32-unknown-unknown
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
