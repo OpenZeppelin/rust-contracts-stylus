@@ -1,5 +1,6 @@
 //! Common Smart Contracts utilities.
 
+pub mod math;
 pub mod structs;
 
 cfg_if::cfg_if! {

@@ -11,8 +11,6 @@ pub mod access;
 pub mod token;
 pub mod utils;
 
-mod arithmetic;
-
 #[cfg(target_arch = "wasm32")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
