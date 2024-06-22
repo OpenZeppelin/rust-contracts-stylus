@@ -43,6 +43,20 @@ access = []
 ownable = ["access"]
 control = ["access"]
 
+full = [
+  "erc20_burnable",
+  "erc20_capped",
+  "erc20_metadata",
+  "erc20_pausable",
+  "erc721_burnable",
+  "erc721_enumerable",
+  "erc721_metadata",
+  "erc721_pausable",
+  "erc721_uri_storage",
+  "control",
+  "ownable",
+]
+
 # Enables using the standard library. This is not included in the default
 # features, because this crate is meant to be used in a `no_std` environment.
 # Currently, the std feature is only used for testing purposes.
@@ -53,4 +67,3 @@ crate-type = ["lib", "cdylib"]
 
 [lints]
 workspace = true
-
