@@ -14,5 +14,11 @@ stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
 
+[features]
+# Enables using the standard library. This is not included in the default
+# features, because this crate is meant to be used in a `no_std` environment.
+# Currently, the std feature is only used for testing purposes.
+std = []
+
 [lib]
 crate-type = ["lib", "cdylib"]
