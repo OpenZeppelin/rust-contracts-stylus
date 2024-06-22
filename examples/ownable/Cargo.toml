@@ -19,8 +19,8 @@ mini-alloc.workspace = true
 [dev-dependencies]
 alloy.workspace = true
 e2e = { path = "../../lib/e2e" }
-tokio = { version = "1.12.0", features = ["full"] }
-eyre = "0.6.8"
+tokio = { workspace = "true", features = ["full"] }
+eyre.workspace = true
 
 [lib]
 crate-type = ["lib", "cdylib"]

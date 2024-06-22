@@ -14,12 +14,12 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
-cfg-if = "1.0"
+cfg-if.workspace = true
 
 [dev-dependencies]
-alloy-primitives = { version = "0.3.1", features = ["arbitrary"] }
+alloy-primitives = { workspace = true, features = ["arbitrary"] }
 motsu = { path = "../lib/motsu" }
-rand = "0.8.5"
+rand.workspace = true
 
 [features]
 default = []
