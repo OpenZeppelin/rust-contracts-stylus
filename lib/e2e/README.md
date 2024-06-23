@@ -15,14 +15,14 @@ tests suite using the `e2e` crate.
 
 [GitHub workflow]: ../../.github/workflows/e2e-tests.yml
 
-### Users
+### Accounts
 
 Decorate your tests with the `test` procedural macro: a thin wrapper over
 `tokio::test` that sets up `Account`s for your test.
 
 ```rust,ignore
 #[e2e::test]
-async fn users_are_funded(alice: Account) -> eyre::Result<()> {
+async fn accounts_are_funded(alice: Account) -> eyre::Result<()> {
     let balance = alice.wallet.get_balance(alice.address()).await?;
     let expected = parse_ether("10")?;
     assert_eq!(expected, balance);
@@ -35,8 +35,8 @@ A `Account` is a thin wrapper over a [`PrivateKeySigner`] and an `alloy` provide
 `RPC_URL` environment variable. This means that a `Account` is the main proxy
 between the RPC and the test code.
 
-All users start with 10 ETH as balance. You can have multiple users as
-parameters of your test function, or you can create new users separately:
+All accounts start with 10 ETH as balance. You can have multiple accounts as
+parameters of your test function, or you can create new accounts separately:
 
 ```rust,ignore
 #[e2e::test]
