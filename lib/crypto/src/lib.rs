@@ -3,7 +3,6 @@
 extern crate alloc;
 
 pub mod hash;
-#[cfg(any(feature = "std", feature = "merkle"))]
 pub mod merkle;
 
 pub mod keccak;

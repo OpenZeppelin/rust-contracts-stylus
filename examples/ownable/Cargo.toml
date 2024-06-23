@@ -23,5 +23,4 @@ eyre = "0.6.8"
 crate-type = ["lib", "cdylib"]
 
 [features]
-default = []
 e2e = []

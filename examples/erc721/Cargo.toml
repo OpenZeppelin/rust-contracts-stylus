@@ -21,7 +21,6 @@ eyre = "0.6.8"
 rand = "0.8.5"
 
 [features]
-default = []
 e2e = []
 
 [lib]

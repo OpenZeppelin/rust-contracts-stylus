@@ -20,7 +20,6 @@ tokio = { version = "1.12.0", features = ["full"] }
 eyre = "0.6.8"
 
 [features]
-default = []
 e2e = []
 
 [lib]

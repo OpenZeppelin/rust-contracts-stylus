@@ -14,7 +14,6 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
-cfg-if = "1.0"
 
 [dev-dependencies]
 alloy-primitives = { version = "0.3.1", features = ["arbitrary"] }
@@ -22,8 +21,6 @@ motsu = { path = "../lib/motsu" }
 rand = "0.8.5"
 
 [features]
-default = []
-
 # Enables using the standard library. This is not included in the default
 # features, because this crate is meant to be used in a `no_std` environment.
 # Currently, the std feature is only used for testing purposes.
