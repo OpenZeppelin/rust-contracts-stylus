@@ -1,4 +1,4 @@
-# Basic Token
+# Basic Token Example
 
 This example showcases an end-to-end user journey of how to write, deploy and
 query a smart contract written using our library.
@@ -23,7 +23,7 @@ cargo build --release --target wasm32-unknown-unknown
 You should now be able to run your contract with:
 
 ```bash
-$ cargo run -p basic-token-example-script
+$ cargo run -p basic-example-script
 wasm data fee: Ξ0.000097
 init code size: 17.0 KB
 deploying to RPC: https://sepolia-rollup.arbitrum.io/rpc

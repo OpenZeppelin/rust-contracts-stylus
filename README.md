@@ -56,14 +56,14 @@ impl Erc20Example { }
 
 For a more complex display of what this library offers, refer to our
 [examples](./examples). For a full example that includes deploying and querying
-a contract, see the [basic-token] example.
+a contract, see the [basic] example.
 
 For more information on what this library will include in the future, see our
 [roadmap].
 
 [specify a git dependency]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories
 [examples]: ./examples
-[basic-token]: ./examples/basic-token
+[basic]: ./examples/basic
 [roadmap]: https://github.com/OpenZeppelin/rust-contracts-stylus/milestone/1
 
 ## Contribute

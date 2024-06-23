@@ -11,8 +11,8 @@ members = [
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
-  "examples/basic-token/token",
-  "examples/basic-token/script",
+  "examples/basic/token",
+  "examples/basic/script",
 ]
 default-members = [
   "contracts",

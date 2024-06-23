@@ -1,5 +1,5 @@
 [package]
-name = "basic-token-example-script"
+name = "basic-example-script"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -7,7 +7,7 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-basic-token-example = { path = "../token" }
+basic-example = { path = "../token" }
 alloy-primitives.workspace = true
 alloy.workspace = true
 koba = "0.1.0"
