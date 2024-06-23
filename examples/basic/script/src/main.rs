@@ -99,6 +99,5 @@ async fn deploy() -> Address {
         deploy_only: false,
     };
 
-    let address = koba::deploy(&config).await.expect("should deploy contract");
-    address
+    koba::deploy(&config).await.expect("should deploy contract")
 }
