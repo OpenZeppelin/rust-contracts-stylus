@@ -6,7 +6,7 @@ use alloy::{
     sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
-use e2e::{receipt, send, watch, EventExt, Revert, Account};
+use e2e::{receipt, send, watch, Account, EventExt, Revert};
 
 use crate::abi::Erc721;
 
@@ -120,7 +120,10 @@ async fn errors_when_transfer_nonexistent_token(
 }
 
 #[e2e::test]
-async fn approves_token_transfer(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn approves_token_transfer(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 

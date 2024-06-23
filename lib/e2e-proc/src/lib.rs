@@ -3,8 +3,8 @@ use proc_macro::TokenStream;
 
 mod test;
 
-/// Defines an end-to-end Stylus contract test that sets up `e2e::Account`s based
-/// on the function's parameters.
+/// Defines an end-to-end Stylus contract test that sets up `e2e::Account`s
+/// based on the function's parameters.
 ///
 /// # Examples
 ///

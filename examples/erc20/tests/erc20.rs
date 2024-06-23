@@ -6,7 +6,7 @@ use alloy::{
     sol_types::{SolConstructor, SolError},
 };
 use alloy_primitives::uint;
-use e2e::{receipt, send, watch, EventExt, Panic, PanicCode, Revert, Account};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
 
 use crate::abi::Erc20;
@@ -913,7 +913,9 @@ async fn mint_rejects_when_cap_reached(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn should_not_deploy_capped_with_invalid_cap(alice: Account) -> Result<()> {
+async fn should_not_deploy_capped_with_invalid_cap(
+    alice: Account,
+) -> Result<()> {
     let invalid_cap = U256::ZERO;
     let err = deploy(alice.url(), &alice.pk(), Some(invalid_cap))
         .await

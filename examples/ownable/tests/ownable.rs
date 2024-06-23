@@ -8,7 +8,7 @@ use alloy::{
     sol,
     sol_types::{SolConstructor, SolError, SolEvent},
 };
-use e2e::{receipt, send, EventExt, Revert, Account};
+use e2e::{receipt, send, Account, EventExt, Revert};
 use eyre::Result;
 
 use crate::abi::Ownable;
