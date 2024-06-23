@@ -10,7 +10,7 @@ repository.workspace = true
 
 [dependencies]
 alloy.workspace = true
-tokio = { version = "1.12.0", features = ["full", "process"] }
+tokio = { workspace = true, features = ["process"] }
 eyre.workspace = true
 regex.workspace = true
 once_cell.workspace = true
@@ -20,3 +20,4 @@ toml = "0.8.13"
 
 [lints]
 workspace = true
+
