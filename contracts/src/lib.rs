@@ -8,7 +8,6 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 #[cfg(any(feature = "std", feature = "access"))]
 pub mod access;
-mod arithmetic;
 
 pub mod token;
 
