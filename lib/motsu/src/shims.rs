@@ -217,3 +217,115 @@ pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
 
     std::ptr::copy(account_codehash.as_ptr(), dest, 32);
 }
+
+/// Returns the length of the last EVM call or deployment return result, or `0`
+/// if neither have happened during the program's execution. The semantics are
+/// equivalent to that of the EVM's [`RETURN_DATA_SIZE`] opcode.
+///
+/// [`RETURN_DATA_SIZE`]: https://www.evm.codes/#3d
+#[no_mangle]
+pub unsafe extern "C" fn return_data_size() -> usize {
+    // Default value, we do not use this function in our unit-tests.
+    Default::default()
+}
+
+/// Copies the bytes of the last EVM call or deployment return result. Does not
+/// revert if out of bounds, but rather copies the overlapping portion. The
+/// semantics are otherwise equivalent to that of the EVM's [`RETURN_DATA_COPY`]
+/// opcode.
+///
+/// Returns the number of bytes written.
+///
+/// [`RETURN_DATA_COPY`]: https://www.evm.codes/#3e
+#[no_mangle]
+pub unsafe extern "C" fn read_return_data(
+    _dest: *mut u8,
+    _offset: usize,
+    _size: usize,
+) -> usize {
+    // No-op: returns default value, we do not use this function in our
+    // unit-tests.
+    Default::default()
+}
+
+/// Calls the contract at the given address with options for passing value and
+/// to limit the amount of gas supplied. The return status indicates whether the
+/// call succeeded, and is nonzero on failure.
+///
+/// In both cases `return_data_len` will store the length of the result, the
+/// bytes of which can be read via the `read_return_data` hostio. The bytes are
+/// not returned directly so that the programmer can potentially save gas by
+/// choosing which subset of the return result they'd like to copy.
+///
+/// The semantics are equivalent to that of the EVM's [`CALL`] opcode, including
+/// callvalue stipends and the 63/64 gas rule. This means that supplying the
+/// `u64::MAX` gas can be used to send as much as possible.
+///
+/// [`CALL`]: https://www.evm.codes/#f1
+#[no_mangle]
+pub unsafe extern "C" fn call_contract(
+    _contract: *const u8,
+    _calldata: *const u8,
+    _calldata_len: usize,
+    _value: *const u8,
+    _gas: u64,
+    _return_data_len: *mut usize,
+) -> u8 {
+    // No-op: returns default value, we do not use this function in our
+    // unit-tests.
+    Default::default()
+}
+
+/// Static calls the contract at the given address, with the option to limit the
+/// amount of gas supplied. The return status indicates whether the call
+/// succeeded, and is nonzero on failure.
+///
+/// In both cases `return_data_len` will store the length of the result, the
+/// bytes of which can be read via the `read_return_data` hostio. The bytes are
+/// not returned directly so that the programmer can potentially save gas by
+/// choosing which subset of the return result they'd like to copy.
+///
+/// The semantics are equivalent to that of the EVM's [`STATIC_CALL`] opcode,
+/// including the 63/64 gas rule. This means that supplying `u64::MAX` gas can
+/// be used to send as much as possible.
+///
+/// [`STATIC_CALL`]: https://www.evm.codes/#FA
+#[no_mangle]
+pub unsafe extern "C" fn static_call_contract(
+    _contract: *const u8,
+    _calldata: *const u8,
+    _calldata_len: usize,
+    _gas: u64,
+    _return_data_len: *mut usize,
+) -> u8 {
+    // No-op: returns default value, we do not use this function in our
+    // unit-tests.
+    Default::default()
+}
+
+/// Delegate calls the contract at the given address, with the option to limit
+/// the amount of gas supplied. The return status indicates whether the call
+/// succeeded, and is nonzero on failure.
+///
+/// In both cases `return_data_len` will store the length of the result, the
+/// bytes of which can be read via the `read_return_data` hostio. The bytes are
+/// not returned directly so that the programmer can potentially save gas by
+/// choosing which subset of the return result they'd like to copy.
+///
+/// The semantics are equivalent to that of the EVM's [`DELEGATE_CALL`] opcode,
+/// including the 63/64 gas rule. This means that supplying `u64::MAX` gas can
+/// be used to send as much as possible.
+///
+/// [`DELEGATE_CALL`]: https://www.evm.codes/#F4
+#[no_mangle]
+pub unsafe extern "C" fn delegate_call_contract(
+    _contract: *const u8,
+    _calldata: *const u8,
+    _calldata_len: usize,
+    _gas: u64,
+    _return_data_len: *mut usize,
+) -> u8 {
+    // No-op: returns default value, we do not use this function in our
+    // unit-tests.
+    Default::default()
+}
