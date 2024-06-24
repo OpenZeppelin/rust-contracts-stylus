@@ -66,7 +66,7 @@ pub async fn bench() -> eyre::Result<()> {
     let gas =
         contract.mint(alice.address(), uint!(100_U256)).estimate_gas().await?;
     println!("mint(account, amount): {gas}");
-    let gas = contract.burn(uint!(100_U256)).estimate_gas().await?;
+    let gas = contract.burn(uint!(10_U256)).estimate_gas().await?;
     println!("burn(amount): {gas}");
     let gas = contract.balanceOf(alice.address()).estimate_gas().await?;
     println!("balanceOf(account): {gas}");
