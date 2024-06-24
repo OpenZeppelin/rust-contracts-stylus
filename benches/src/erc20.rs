@@ -1,7 +1,4 @@
-use alloy::{
-    primitives::Address, providers::WalletProvider, sol,
-    sol_types::SolConstructor, uint,
-};
+use alloy::{primitives::Address, sol, sol_types::SolConstructor, uint};
 use alloy_primitives::U256;
 use e2e::Account;
 use koba::config::Deploy;
