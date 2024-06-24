@@ -1110,7 +1110,7 @@ impl Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256, uint};
+    use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
     use super::{
