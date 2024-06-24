@@ -11,6 +11,7 @@ members = [
   "examples/access-control",
   "lib/e2e",
   "lib/e2e-proc",
+  "benches",
 ]
 default-members = [
   "contracts",

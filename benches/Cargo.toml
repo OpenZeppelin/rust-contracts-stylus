@@ -1,0 +1,14 @@
+[package]
+name = "benches"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version = "0.0.0"
+
+[dependencies]
+alloy-primitives.workspace = true
+alloy.workspace = true
+tokio.workspace = true
+eyre.workspace = true
+e2e = { path = "../lib/e2e" }
