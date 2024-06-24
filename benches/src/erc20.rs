@@ -49,6 +49,7 @@ const CAP: U256 = uint!(1_000_000_U256);
 
 pub async fn bench() -> eyre::Result<()> {
     let alice = Account::new().await?;
+    let bob = Account::new().await?;
     let contract_addr = deploy(&alice).await;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
@@ -62,6 +63,16 @@ pub async fn bench() -> eyre::Result<()> {
     println!("decimals(): {gas}");
     let gas = contract.totalSupply().estimate_gas().await?;
     println!("totalSupply(): {gas}");
+    let gas =
+        contract.mint(alice.address(), uint!(100_U256)).estimate_gas().await?;
+    println!("mint(account, amount): {gas}");
+    let gas = contract.burn(uint!(100_U256)).estimate_gas().await?;
+    println!("burn(amount): {gas}");
+    let gas = contract.balanceOf(alice.address()).estimate_gas().await?;
+    println!("balanceOf(account): {gas}");
+    let gas =
+        contract.transfer(bob.address(), uint!(1_U256)).estimate_gas().await?;
+    println!("transfer(account, amount): {gas}");
 
     Ok(())
 }
