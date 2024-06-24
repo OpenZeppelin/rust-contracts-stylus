@@ -25,6 +25,7 @@ default-members = [
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
+  "examples/basic/token",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages

@@ -6,7 +6,7 @@ query a smart contract written using our library.
 ## Running the example
 
 There are two crates in the example: a library crate for our contract
-implementation, which is a simple `ERC-20` token extended with metadata, and
+implementation, which is a simple `ERC-20` token extended with `Metadata`, and
 a binary crate, which holds the deployment script.
 
 The deployment script uses [`koba`] to deploy the token with name `Test Token`
