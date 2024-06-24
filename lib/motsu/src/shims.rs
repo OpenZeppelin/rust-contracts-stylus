@@ -157,8 +157,8 @@ pub fn storage_flush_cache(_: bool) {
 /// Dummy msg sender set for tests.
 pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
-/// Account code hash for tests (only EOAs).
-pub const ACCOUNT_CODEHASH: &[u8; 66] =
+/// Externally Owned Account (EOA) code hash.
+pub const EOA_CODEHASH: &[u8; 66] =
     b"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
 
 /// Gets the address of the account that called the program. For normal
@@ -206,14 +206,13 @@ pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
 ///
 /// [`EXT_CODEHASH`]: https://www.evm.codes/#3F
 ///
-///
 /// # Panics
 ///
 /// May panic if fails to parse `ACCOUNT_CODEHASH` as a keccack hash.
 #[no_mangle]
 pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
     let account_codehash =
-        const_hex::const_decode_to_array::<32>(ACCOUNT_CODEHASH).unwrap();
+        const_hex::const_decode_to_array::<32>(EOA_CODEHASH).unwrap();
 
     std::ptr::copy(account_codehash.as_ptr(), dest, 32);
 }
@@ -225,8 +224,10 @@ pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
 /// [`RETURN_DATA_SIZE`]: https://www.evm.codes/#3d
 #[no_mangle]
 pub unsafe extern "C" fn return_data_size() -> usize {
-    // Default value, we do not use this function in our unit-tests.
-    Default::default()
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
 }
 
 /// Copies the bytes of the last EVM call or deployment return result. Does not
@@ -243,9 +244,10 @@ pub unsafe extern "C" fn read_return_data(
     _offset: usize,
     _size: usize,
 ) -> usize {
-    // No-op: returns default value, we do not use this function in our
-    // unit-tests.
-    Default::default()
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
 }
 
 /// Calls the contract at the given address with options for passing value and
@@ -271,9 +273,10 @@ pub unsafe extern "C" fn call_contract(
     _gas: u64,
     _return_data_len: *mut usize,
 ) -> u8 {
-    // No-op: returns default value, we do not use this function in our
-    // unit-tests.
-    Default::default()
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
 }
 
 /// Static calls the contract at the given address, with the option to limit the
@@ -298,9 +301,10 @@ pub unsafe extern "C" fn static_call_contract(
     _gas: u64,
     _return_data_len: *mut usize,
 ) -> u8 {
-    // No-op: returns default value, we do not use this function in our
-    // unit-tests.
-    Default::default()
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
 }
 
 /// Delegate calls the contract at the given address, with the option to limit
@@ -325,7 +329,8 @@ pub unsafe extern "C" fn delegate_call_contract(
     _gas: u64,
     _return_data_len: *mut usize,
 ) -> u8 {
-    // No-op: returns default value, we do not use this function in our
-    // unit-tests.
-    Default::default()
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
 }
