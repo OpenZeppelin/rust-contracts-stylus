@@ -50,7 +50,7 @@ async fn emits_ownership_transfer_during_construction(
     let block = alice.wallet.get_block_number().await?;
     let filter = Filter::new()
         .event_signature(OwnershipTransferred::SIGNATURE_HASH)
-        .from_block(BlockNumberOrTag::Number(block - 1));
+        .from_block(BlockNumberOrTag::Number(block - 5));
 
     let logs = alice.wallet.get_logs(&filter).await?;
     let emitted = logs[0].log_decode::<OwnershipTransferred>()?.inner.data;
