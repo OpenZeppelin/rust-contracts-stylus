@@ -120,7 +120,7 @@ mod tests {
         let balance =
             contract.balance_of(BOB).expect("should return the balance of Bob");
 
-        assert_eq!(initial_balance - U256::from(1), balance);
+        assert_eq!(initial_balance - uint!(1_U256), balance);
     }
 
     #[motsu::test]
@@ -154,7 +154,7 @@ mod tests {
         let balance =
             contract.balance_of(BOB).expect("should return the balance of Bob");
 
-        assert_eq!(initial_balance - U256::from(1), balance);
+        assert_eq!(initial_balance - uint!(1_U256), balance);
     }
 
     #[motsu::test]

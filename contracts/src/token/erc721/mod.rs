@@ -1110,7 +1110,7 @@ impl Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
+    use alloy_primitives::{address, Address, U256, uint};
     use stylus_sdk::msg;
 
     use super::{
@@ -1183,7 +1183,7 @@ mod tests {
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + U256::from(1), balance);
+        assert_eq!(initial_balance + uint!(1_U256), balance);
     }
 
     #[motsu::test]
@@ -1225,7 +1225,7 @@ mod tests {
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + U256::from(1), balance);
+        assert_eq!(initial_balance + uint!(1_U256), balance);
     }
 
     #[motsu::test]
@@ -2014,7 +2014,7 @@ mod tests {
     #[motsu::test]
     fn burns(contract: Erc721) {
         let alice = msg::sender();
-        let one = U256::from(1);
+        let one = uint!(1_U256);
         let token_id = random_token_id();
 
         contract._mint(alice, token_id).expect("should mint a token for Alice");
