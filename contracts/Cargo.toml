@@ -16,9 +16,9 @@ stylus-proc.workspace = true
 mini-alloc.workspace = true
 
 [dev-dependencies]
-alloy-primitives = { version = "0.3.1", features = ["arbitrary"] }
+alloy-primitives = { workspace = true, features = ["arbitrary"] }
 motsu = { path = "../lib/motsu" }
-rand = "0.8.5"
+rand.workspace = true
 
 [features]
 # Enables using the standard library. This is not included in the default
