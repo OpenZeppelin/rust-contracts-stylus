@@ -81,7 +81,7 @@ async fn deploy(account: &Account) -> Address {
         .join("target")
         .join("wasm32-unknown-unknown")
         .join("release")
-        .join("basic_example.wasm");
+        .join("erc20_example.wasm");
     let sol_path = manifest_dir
         .join("examples")
         .join("erc20")
