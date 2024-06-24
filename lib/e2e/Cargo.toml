@@ -20,4 +20,3 @@ toml = "0.8.13"
 
 [lints]
 workspace = true
-

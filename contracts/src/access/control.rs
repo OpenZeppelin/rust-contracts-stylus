@@ -384,11 +384,8 @@ impl AccessControl {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::{
-        msg,
-        storage::{StorageMap, StorageType},
-    };
+    use alloy_primitives::{address, Address};
+    use stylus_sdk::msg;
 
     use super::{AccessControl, Error};
 
