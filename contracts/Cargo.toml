@@ -14,7 +14,6 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
-cfg-if.workspace = true
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
@@ -22,27 +21,6 @@ motsu = { path = "../lib/motsu" }
 rand.workspace = true
 
 [features]
-default = []
-
-# ERC-20
-erc20 = []
-erc20_burnable = ["erc20"]
-erc20_capped = ["erc20"]
-erc20_metadata = ["erc20"]
-erc20_pausable = ["erc20"]
-
-# ERC-721
-erc721 = []
-erc721_burnable = ["erc721"]
-erc721_enumerable = ["erc721"]
-erc721_metadata = ["erc721"]
-erc721_pausable = ["erc721"]
-erc721_uri_storage = ["erc721"]
-
-access = []
-ownable = ["access"]
-control = ["access"]
-
 # Enables using the standard library. This is not included in the default
 # features, because this crate is meant to be used in a `no_std` environment.
 # Currently, the std feature is only used for testing purposes.
@@ -53,4 +31,3 @@ crate-type = ["lib", "cdylib"]
 
 [lints]
 workspace = true
-

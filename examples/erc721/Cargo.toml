@@ -7,13 +7,7 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts", features = [
-  "erc721_burnable",
-  "erc721_enumerable",
-  "erc721_metadata",
-  "erc721_pausable",
-  "erc721_uri_storage",
-] }
+openzeppelin-stylus = { path = "../../contracts" }
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
@@ -27,9 +21,7 @@ eyre.workspace = true
 rand.workspace = true
 
 [features]
-default = []
 e2e = []
 
 [lib]
 crate-type = ["lib", "cdylib"]
-

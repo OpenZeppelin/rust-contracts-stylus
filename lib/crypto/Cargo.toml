@@ -19,8 +19,6 @@ rand.workspace = true
 [features]
 std = []
 
-merkle = []
-multi-proof = ["merkle"]
-
 [lints]
 workspace = true
+
