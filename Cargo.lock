@@ -842,6 +842,7 @@ dependencies = [
  "alloy-primitives 0.3.3",
  "e2e",
  "eyre",
+ "koba",
  "tokio",
 ]
 

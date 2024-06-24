@@ -1,6 +1,9 @@
 use alloy::{primitives::Address, sol, sol_types::SolConstructor, uint};
 use alloy_primitives::U256;
 use e2e::Account;
+use koba::config::Deploy;
+
+const RPC_URL: &str = "http://localhost:8547";
 
 sol!(
     #[sol(rpc)]
@@ -44,23 +47,9 @@ const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-async fn deploy(
-    rpc_url: &str,
-    private_key: &str,
-    cap: Option<U256>,
-) -> eyre::Result<Address> {
-    let args = Erc20Example::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: cap.unwrap_or(CAP),
-    };
-    let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(rpc_url, private_key, Some(args)).await
-}
-
 pub async fn bench() -> eyre::Result<()> {
     let alice = Account::new().await?;
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice).await;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let gas = contract.name().estimate_gas().await?;
@@ -75,4 +64,47 @@ pub async fn bench() -> eyre::Result<()> {
     println!("totalSupply(): {gas}");
 
     Ok(())
+}
+
+async fn deploy(account: &Account) -> Address {
+    let args = Erc20Example::constructorCall {
+        name_: TOKEN_NAME.to_owned(),
+        symbol_: TOKEN_SYMBOL.to_owned(),
+        cap_: CAP,
+    };
+    let args = alloy::hex::encode(args.abi_encode());
+
+    let manifest_dir =
+        std::env::current_dir().expect("should get current dir from env");
+
+    let wasm_path = manifest_dir
+        .join("target")
+        .join("wasm32-unknown-unknown")
+        .join("release")
+        .join("basic_example.wasm");
+    let sol_path = manifest_dir
+        .join("examples")
+        .join("erc20")
+        .join("src")
+        .join("constructor.sol");
+
+    let pk = account.pk();
+    let config = Deploy {
+        generate_config: koba::config::Generate {
+            wasm: wasm_path.clone(),
+            sol: sol_path,
+            args: Some(args),
+            legacy: false,
+        },
+        auth: koba::config::PrivateKey {
+            private_key_path: None,
+            private_key: Some(pk),
+            keystore_path: None,
+            keystore_password_path: None,
+        },
+        endpoint: RPC_URL.to_owned(),
+        deploy_only: false,
+    };
+
+    koba::deploy(&config).await.expect("should deploy contract")
 }

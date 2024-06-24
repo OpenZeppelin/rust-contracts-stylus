@@ -11,4 +11,5 @@ alloy-primitives.workspace = true
 alloy.workspace = true
 tokio.workspace = true
 eyre.workspace = true
+koba.workspace = true
 e2e = { path = "../lib/e2e" }
