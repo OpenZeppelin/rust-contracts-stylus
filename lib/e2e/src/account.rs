@@ -13,26 +13,26 @@ use crate::{
     system::{Wallet, RPC_URL_ENV_VAR_NAME},
 };
 
-/// Type that corresponds to a test user.
+/// Type that corresponds to a test account.
 #[derive(Clone, Debug)]
-pub struct User {
+pub struct Account {
     /// The account's local private key wrapper.
     pub signer: PrivateKeySigner,
     /// The account's wallet -- an `alloy` provider with a `WalletFiller`.
     pub wallet: Wallet,
 }
 
-impl User {
-    /// Create a new user.
+impl Account {
+    /// Create a new account.
     ///
     /// # Errors
     ///
     /// May fail if funding the newly created account fails.
     pub async fn new() -> Result<Self> {
-        UserFactory::create().await
+        AccountFactory::create().await
     }
 
-    /// Get a hex-encoded String representing this user's private key.
+    /// Get a hex-encoded String representing this account's private key.
     #[must_use]
     pub fn pk(&self) -> String {
         alloy::hex::encode(self.signer.to_bytes())
@@ -44,26 +44,27 @@ impl User {
         self.signer.address()
     }
 
-    /// The rpc endpoint this user's provider is connect to.
+    /// The rpc endpoint this account's provider is connect to.
     #[must_use]
     pub fn url(&self) -> &str {
         self.wallet.client().transport().url()
     }
 }
 
-/// A unit struct used as a synchronization mechanism in [`SYNC_USER_FACTORY`].
-struct UserFactory;
+/// A unit struct used as a synchronization mechanism in
+/// [`SYNC_ACCOUNT_FACTORY`].
+struct AccountFactory;
 
-impl UserFactory {
+impl AccountFactory {
     /// Get access to the factory in a synchronized manner.
     async fn lock() -> MutexGuard<'static, Self> {
-        /// Since after wallet generation users get funded in the nitro test
-        /// node from a single "god" wallet, we must synchronize user
+        /// Since after wallet generation accounts get funded in the nitro test
+        /// node from a single "god" wallet, we must synchronize account
         /// creation (otherwise the nonce will be too low).
-        static SYNC_USER_FACTORY: Lazy<Mutex<UserFactory>> =
-            Lazy::new(|| Mutex::new(UserFactory));
+        static SYNC_ACCOUNT_FACTORY: Lazy<Mutex<AccountFactory>> =
+            Lazy::new(|| Mutex::new(AccountFactory));
 
-        SYNC_USER_FACTORY.lock().await
+        SYNC_ACCOUNT_FACTORY.lock().await
     }
 
     /// Create new account and fund it via nitro test node access.
@@ -72,8 +73,8 @@ impl UserFactory {
     ///
     /// May fail if unable to find the path to the node or if funding the newly
     /// created account fails.
-    async fn create() -> eyre::Result<User> {
-        let _lock = UserFactory::lock().await;
+    async fn create() -> eyre::Result<Account> {
+        let _lock = AccountFactory::lock().await;
 
         let signer = PrivateKeySigner::random();
         let addr = signer.address();
@@ -100,10 +101,10 @@ impl UserFactory {
             .on_http(rpc_url);
 
         if output.status.success() {
-            Ok(User { signer, wallet })
+            Ok(Account { signer, wallet })
         } else {
             let err = String::from_utf8_lossy(&output.stderr);
-            bail!("user's wallet wasn't funded - address is {addr}:\n{err}")
+            bail!("account's wallet wasn't funded - address is {addr}:\n{err}")
         }
     }
 }

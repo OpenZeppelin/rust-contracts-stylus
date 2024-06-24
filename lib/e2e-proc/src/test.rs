@@ -13,7 +13,7 @@ macro_rules! error {
     }};
 }
 
-/// Defines an end-to-end test that injects test users through parameters.
+/// Defines an end-to-end test that injects test accounts through parameters.
 ///
 /// For more information see [`crate::test`].
 pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
@@ -25,21 +25,21 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
     let fn_stmts = &item_fn.block.stmts;
     let fn_args = &sig.inputs;
 
-    let user_declarations = fn_args.into_iter().map(|arg| {
+    let account_declarations = fn_args.into_iter().map(|arg| {
         let FnArg::Typed(arg) = arg else {
             error!(arg, "unexpected receiver argument in test signature");
         };
-        let user_arg_binding = &arg.pat;
-        let user_ty = &arg.ty;
+        let account_arg_binding = &arg.pat;
+        let account_ty = &arg.ty;
         quote! {
-            let #user_arg_binding = #user_ty::new().await?;
+            let #account_arg_binding = #account_ty::new().await?;
         }
     });
     quote! {
         #( #attrs )*
         #[tokio::test]
         async fn #fn_name() #fn_return_type {
-            #( #user_declarations )*
+            #( #account_declarations )*
             #( #fn_stmts )*
         }
     }
