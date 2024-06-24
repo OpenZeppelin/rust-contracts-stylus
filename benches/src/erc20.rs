@@ -1,4 +1,7 @@
-use alloy::{primitives::Address, sol, sol_types::SolConstructor, uint};
+use alloy::{
+    primitives::Address, providers::WalletProvider, sol,
+    sol_types::SolConstructor, uint,
+};
 use alloy_primitives::U256;
 use e2e::Account;
 use koba::config::Deploy;
@@ -69,18 +72,24 @@ pub async fn bench() -> eyre::Result<()> {
     let gas =
         contract.mint(alice.address(), uint!(100_U256)).estimate_gas().await?;
     println!("mint(account, amount): {gas}");
-    let receipt = contract
+
+    let _ = contract
         .mint(alice.address(), uint!(100_U256))
         .send()
         .await?
-        .get_receipt()
+        .watch()
         .await?;
-    println!("mint(account, amount): receipt {receipt:?}");
-
-    let gas = contract.burn(uint!(100_U256)).estimate_gas().await?;
+    let gas = contract
+        .burn(uint!(100_U256))
+        .from(alice.address())
+        .estimate_gas()
+        .await?;
     println!("burn(amount): {gas}");
-    let gas =
-        contract.transfer(bob.address(), uint!(1_U256)).estimate_gas().await?;
+    let gas = contract
+        .transfer(bob.address(), uint!(1_U256))
+        .from(alice.address())
+        .estimate_gas()
+        .await?;
     println!("transfer(account, amount): {gas}");
 
     Ok(())
