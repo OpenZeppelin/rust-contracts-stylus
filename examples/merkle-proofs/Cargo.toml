@@ -7,7 +7,7 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-crypto = { path = "../../lib/crypto", features = ["merkle", "multi-proof"] }
+crypto = { path = "../../lib/crypto" }
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true

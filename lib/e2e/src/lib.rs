@@ -1,18 +1,18 @@
 #![doc = include_str!("../README.md")]
+mod account;
 mod deploy;
 mod environment;
 mod error;
 mod event;
 mod project;
 mod system;
-mod user;
 
+pub use account::Account;
 pub use deploy::deploy;
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::EventExt;
 pub use system::{provider, Provider, Wallet};
-pub use user::User;
 
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.
@@ -23,7 +23,7 @@ pub use user::User;
 ///
 /// ```rust,ignore
 /// #[e2e::test]
-/// async fn foo(alice: User) -> eyre::Result<()> {
+/// async fn foo(alice: Account) -> eyre::Result<()> {
 ///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
@@ -48,7 +48,7 @@ macro_rules! send {
 ///
 /// ```rust,ignore
 /// #[e2e::test]
-/// async fn foo(alice: User) -> eyre::Result<()> {
+/// async fn foo(alice: Account) -> eyre::Result<()> {
 ///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
@@ -74,7 +74,7 @@ macro_rules! watch {
 ///
 /// ```rust,ignore
 /// #[e2e::test]
-/// async fn foo(alice: User) -> eyre::Result<()> {
+/// async fn foo(alice: Account) -> eyre::Result<()> {
 ///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
