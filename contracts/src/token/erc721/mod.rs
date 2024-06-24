@@ -1129,7 +1129,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_errors_invalid_owner(contract: Erc721) {
+    fn error_when_checking_balance_of_invalid_owner(contract: Erc721) {
         let invalid_owner = Address::ZERO;
         let err = contract
             .balance_of(invalid_owner)
@@ -1149,7 +1149,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn owner_of_error_nonexistent_token(contract: Erc721) {
+    fn error_when_checking_owner_of_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
 
         let err = contract
@@ -1187,7 +1187,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_error_when_reusing_token_id(contract: Erc721) {
+    fn error_when_minting_token_id_twice(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract
@@ -1229,7 +1229,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mint_error_when_reusing_token_id(contract: Erc721) {
+    fn error_when_safe_mint_token_id_twice(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract
@@ -1247,7 +1247,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mint_error_when_invalid_receiver(contract: Erc721) {
+    fn error_when_safe_mint_invalid_receiver(contract: Erc721) {
         let invalid_receiver = Address::ZERO;
 
         let token_id = random_token_id();
@@ -1316,7 +1316,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_error_when_transfer_to_invalid_receiver(contract: Erc721) {
+    fn error_when_transfer_from_transfers_to_invalid_receiver(
+        contract: Erc721,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
@@ -1341,7 +1343,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_error_when_transfer_from_incorrect_owner(
+    fn error_when_transfer_from_transfers_from_incorrect_owner(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1370,7 +1372,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_error_when_insufficient_approval(contract: Erc721) {
+    fn error_when_transfer_from_transfers_with_insufficient_approval(
+        contract: Erc721,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1387,7 +1391,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_error_when_transfer_nonexistent_token(contract: Erc721) {
+    fn error_when_transfer_from_transfers_nonexistent_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
@@ -1456,7 +1460,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_error_when_transfer_to_invalid_receiver(
+    fn error_when_safe_transfer_from_transfers_to_invalid_receiver(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1483,7 +1487,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_error_when_transfer_from_incorrect_owner(
+    fn error_when_safe_transfer_from_transfers_from_incorrect_owner(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1512,7 +1516,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_error_when_insufficient_approval(contract: Erc721) {
+    fn error_when_safe_transfer_from_transfers_with_insufficient_approval(
+        contract: Erc721,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1529,7 +1535,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_error_when_transfer_nonexistent_token(
+    fn error_when_safe_transfer_from_transfers_nonexistent_token(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1615,7 +1621,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_with_data_error_when_transfer_to_invalid_receiver(
+    fn error_when_safe_transfer_from_with_data_transfers_to_invalid_receiver(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1647,7 +1653,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_with_data_error_when_transfer_from_incorrect_owner(
+    fn error_when_safe_transfer_from_with_data_transfers_from_incorrect_owner(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1683,7 +1689,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_with_data_error_when_insufficient_approval(
+    fn error_when_safe_transfer_from_with_data_transfers_with_insufficient_approval(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1707,7 +1713,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_with_data_error_when_transfer_nonexistent_token(
+    fn error_when_safe_transfer_from_with_data_transfers_nonexistent_token(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -1740,7 +1746,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_error_nonexistent_token(contract: Erc721) {
+    fn error_when_approve_for_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let err = contract
             .approve(BOB, token_id)
@@ -1755,7 +1761,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_error_invalid_approver(contract: Erc721) {
+    fn error_when_approve_by_invalid_approver(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
 
@@ -1788,7 +1794,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approval_for_all_error_invalid_operator(contract: Erc721) {
+    fn error_when_approval_for_all_for_invalid_operator(contract: Erc721) {
         let invalid_operator = Address::ZERO;
 
         let err = contract
@@ -1804,7 +1810,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_error_nonexistent_token(contract: Erc721) {
+    fn error_when_get_approved_of_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let err = contract
             .get_approved(token_id)
@@ -2039,7 +2045,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_errors_when_previous_approval_burned(contract: Erc721) {
+    fn error_when_get_approved_of_previous_approval_burned(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -2063,7 +2069,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_errors_when_nonexistent_token(contract: Erc721) {
+    fn error_when_burn_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
 
         let err = contract
@@ -2130,7 +2136,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_error_when_transfer_to_invalid_receiver(contract: Erc721) {
+    fn error_when_transfer_transfers_to_invalid_receiver(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
@@ -2155,7 +2161,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_error_when_transfer_from_incorrect_owner(contract: Erc721) {
+    fn error_when_transfer_transfers_from_incorrect_owner(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -2183,7 +2189,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_error_when_transfer_nonexistent_token(contract: Erc721) {
+    fn error_when_transfer_transfers_nonexistent_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
@@ -2252,7 +2258,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_internal_error_when_transfer_to_invalid_receiver(
+    fn error_when_safe_transfer_internal_ransfers_to_invalid_receiver(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -2284,7 +2290,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_internal_error_when_transfer_from_incorrect_owner(
+    fn error_when_safe_transfer_internal_transfers_from_incorrect_owner(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -2313,7 +2319,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_internal_error_when_transfer_nonexistent_token(
+    fn error_when_safe_transfer_internal_transfers_nonexistent_token(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -2342,7 +2348,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_internal_error_nonexistent_token(contract: Erc721) {
+    fn error_when_approve_internal_for_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let err = contract
             ._approve(BOB, token_id, msg::sender(), false)
@@ -2357,7 +2363,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_internal_error_invalid_approver(contract: Erc721) {
+    fn error_when_approve_internal_by_invalid_approver(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
@@ -2391,7 +2397,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approval_for_all_internal_error_invalid_operator(contract: Erc721) {
+    fn error_when_approval_for_all_internal_for_invalid_operator(
+        contract: Erc721,
+    ) {
         let invalid_operator = Address::ZERO;
 
         let err = contract
@@ -2419,7 +2427,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn require_owned_error_nonexistent_token(contract: Erc721) {
+    fn error_when_require_owned_for_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let err = contract
             ._require_owned(token_id)

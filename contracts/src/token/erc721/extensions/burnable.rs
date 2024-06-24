@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_errors_when_previous_approval_burned(contract: Erc721) {
+    fn error_when_get_approved_of_previous_approval_burned(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_errors_when_no_previous_approval(contract: Erc721) {
+    fn error_when_burn_without_approval(contract: Erc721) {
         let token_id = random_token_id();
 
         contract._mint(BOB, token_id).expect("should mint a token for Bob");
@@ -201,7 +201,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_errors_when_nonexistent_token(contract: Erc721) {
+    fn error_when_burn_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
 
         let err = contract
