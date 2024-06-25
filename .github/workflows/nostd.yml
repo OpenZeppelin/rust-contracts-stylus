@@ -1,7 +1,7 @@
-name: no-std
 # This workflow checks whether the library is able to run without the std
 # library. See `check.yml` for information about how the concurrency
 # cancellation and workflow triggering works.
+name: no-std
 permissions:
   contents: read
 on:
@@ -29,4 +29,4 @@ jobs:
       - name: rustup target add ${{ matrix.target }}
         run: rustup target add ${{ matrix.target }}
       - name: cargo check
-        run: cargo check --release --target ${{ matrix.target }} --no-default-features --all-features
+        run: cargo check --release --target ${{ matrix.target }} --no-default-features

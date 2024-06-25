@@ -4,25 +4,28 @@ members = [
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
+  "lib/e2e",
+  "lib/e2e-proc",
   "examples/erc20",
   "examples/erc721",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
-  "lib/e2e",
-  "lib/e2e-proc",
+  "examples/basic/token",
+  "examples/basic/script",
 ]
 default-members = [
   "contracts",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
+  "lib/e2e-proc",
   "examples/erc20",
   "examples/erc721",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
-  "lib/e2e-proc",
+  "examples/basic/token",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
