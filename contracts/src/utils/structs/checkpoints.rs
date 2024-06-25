@@ -4,14 +4,14 @@
 //! define a variable type `Checkpoints.Trace*` in your contract, and store a
 //! new checkpoint for the current transaction block using the {push} function.
 use alloy_primitives::{uint, Uint, U256, U32};
-use alloy_sol_types::sol;
-use stylus_proc::{sol_storage, SolidityError};
+use alloy_sol_types::{sol};
+use stylus_proc::{sol_storage, solidity_storage, SolidityError};
 use stylus_sdk::prelude::StorageType;
 
 use crate::utils::math::alloy::Math;
 
-type U96 = Uint<96, 2>;
-type U160 = Uint<160, 3>;
+// type U96 = Uint<96, 2>;
+// type U160= Uint<160, 3>;
 
 sol! {
     /// A value was attempted to be inserted on a past checkpoint.
@@ -24,18 +24,71 @@ pub enum Error {
     CheckpointUnorderedInsertion(CheckpointUnorderedInsertion),
 }
 
-sol_storage! {
-    pub struct Trace160 {
-        Checkpoint160[] _checkpoints;
+#[solidity_storage]
+pub struct Trace<T: Size> {
+    _checkpoints: stylus_sdk::storage::StorageVec<Checkpoint<T>>,
+}
+
+#[solidity_storage]
+pub struct Checkpoint<T: Size> {
+    _key: T::KeyStorage,
+    _value: T::ValueStorage,
+}
+
+pub trait Size {
+    type KeyStorage: for<'a> StorageType<Wraps<'a> = Self::Key>
+        + Accessor<Wrap=Self::Key>;
+    type ValueStorage: for<'a> StorageType<Wraps<'a> = Self::Value>
+        + Accessor<Wrap=Self::Value>;
+    type Key: Num;
+    type Value: Num;
+}
+
+pub type Size160 = SpecificSize<96, 2, 160, 3>;
+
+struct SpecificSize<
+    const KEY_BITS: usize,
+    const KEY_LIMBS: usize,
+    const VALUE_BITS: usize,
+    const VALUE_LIMBS: usize,
+>;
+impl<const KB: usize, const KL: usize, const VB: usize, const VL: usize> Size
+    for SpecificSize<KB, KL, VB, VL>
+{
+    type KeyStorage = stylus_sdk::storage::StorageUint<KB, KL>;
+    type ValueStorage = stylus_sdk::storage::StorageUint<VB, VL>;
+    type Key = Uint<KB, KL>;
+    type Value = Uint<VB, VL>;
+}
+
+pub(crate) trait Num: num_traits::NumOps + Ord + Sized + Copy{
+    const ZERO: Self;
+}
+
+impl<const B: usize, const L: usize> Num for Uint<B, L> {
+    const ZERO: Self = Self::ZERO;
+}
+
+trait Accessor {
+    type Wrap: Num;
+    fn get(&self) -> Self::Wrap;
+    fn set(&mut self, value: Self::Wrap);
+}
+
+impl<const B: usize, const L: usize> Accessor for stylus_sdk::storage::StorageUint<B, L> {
+    type Wrap = Uint<B, L>;
+
+    fn get(&self) -> Self::Wrap {
+        self.get()
     }
 
-    pub struct Checkpoint160 {
-        uint96 _key;
-        uint160 _value;
+    fn set(&mut self, value: Self::Wrap) {
+        self.set(value);
     }
 }
 
-impl Trace160 {
+
+impl<T: Size> Trace<T> {
     /// Pushes a (`key`, `value`) pair into a Trace160 so that it is
     /// stored as the checkpoint.
     ///
@@ -45,19 +98,19 @@ impl Trace160 {
     /// `type(uint96).max` key set will disable the library.
     pub fn push(
         &mut self,
-        key: U96,
-        value: U160,
-    ) -> Result<(U160, U160), Error> {
+        key: T::Key,
+        value: T::Value,
+    ) -> Result<(T::Value, T::Value), Error> {
         self._insert(key, value)
     }
 
     /// Returns the value in the first (oldest) checkpoint with key
     /// greater or equal than the search key, or zero if there is none.
-    pub fn lower_lookup(&mut self, key: U96) -> U160 {
+    pub fn lower_lookup(&mut self, key: T::Key) -> T::Value {
         let len = self.length();
         let pos = self._lower_binary_lookup(key, U256::ZERO, len);
         if pos == len {
-            U160::ZERO
+            T::Value::ZERO
         } else {
             self._unsafe_access_value(pos)
         }
@@ -65,11 +118,11 @@ impl Trace160 {
 
     /// Returns the value in the last (most recent) checkpoint with key
     /// lower or equal than the search key, or zero if there is none.
-    pub fn upper_lookup(&mut self, key: U96) -> U160 {
+    pub fn upper_lookup(&mut self, key: T::Key) -> T::Value {
         let len = self.length();
         let pos = self._lower_binary_lookup(key, U256::ZERO, len);
         if pos == len {
-            U160::ZERO
+            T::Value::ZERO
         } else {
             self._unsafe_access_value(pos)
         }
@@ -80,7 +133,7 @@ impl Trace160 {
     ///
     /// NOTE: This is a variant of {upperLookup} that is optimised to find
     /// "recent" checkpoint (checkpoints with high keys).
-    pub fn upper_lookup_recent(&mut self, key: U96) -> U160 {
+    pub fn upper_lookup_recent(&mut self, key: T::Key) -> T::Value {
         let len = self.length();
 
         let mut low = U256::ZERO;
@@ -97,7 +150,7 @@ impl Trace160 {
         let pos = self._upper_binary_lookup(key, low, high);
 
         if pos == U256::ZERO {
-            U160::ZERO
+            T::Value::ZERO
         } else {
             self._unsafe_access_value(pos - uint!(1_U256))
         }
@@ -105,10 +158,10 @@ impl Trace160 {
 
     /// Returns the value in the most recent checkpoint, or zero if
     /// there are no checkpoints.
-    pub fn latest(&mut self) -> U160 {
+    pub fn latest(&mut self) -> T::Value {
         let pos = self.length();
         if pos == U256::ZERO {
-            U160::ZERO
+            T::Value::ZERO
         } else {
             self._unsafe_access_value(pos - uint!(1_U256))
         }
@@ -117,10 +170,10 @@ impl Trace160 {
     /// Returns whether there is a checkpoint in the structure (i.e. it
     /// is not empty), and if so the key and value in the most recent
     /// checkpoint.
-    pub fn latest_checkpoint(&self) -> (bool, U96, U160) {
+    pub fn latest_checkpoint(&self) -> (bool, T::Key, T::Value) {
         let pos = self.length();
         if pos == U256::ZERO {
-            (false, U96::ZERO, U160::ZERO)
+            (false, T::Key::ZERO, T::Value::ZERO)
         } else {
             let checkpoint = self._unsafe_access(pos - uint!(1_U256));
             (true, checkpoint._key.load(), checkpoint._value.load())
@@ -134,7 +187,7 @@ impl Trace160 {
     }
 
     /// Returns checkpoint at given position.
-    pub fn at(&self, pos: U32) -> Checkpoint160 {
+    pub fn at(&self, pos: U32) -> Checkpoint<T> {
         unsafe { self._checkpoints.getter(pos).unwrap().into_raw() }
     }
 
@@ -143,9 +196,9 @@ impl Trace160 {
     /// the last one.
     fn _insert(
         &mut self,
-        key: U96,
-        value: U160,
-    ) -> Result<(U160, U160), Error> {
+        key: T::Key,
+        value: T::Value,
+    ) -> Result<(T::Value, T::Value), Error> {
         let pos = self.length();
         if pos > U256::ZERO {
             let last = self._unsafe_access(pos - uint!(1_U256));
@@ -170,7 +223,7 @@ impl Trace160 {
             Ok((last_value, value))
         } else {
             self.push(key, value)?;
-            Ok((U160::ZERO, value))
+            Ok((T::Value::ZERO, value))
         }
     }
 
@@ -182,7 +235,7 @@ impl Trace160 {
     /// WARNING: `high` should not be greater than the array's length.
     fn _upper_binary_lookup(
         &self,
-        key: U96,
+        key: T::Key,
         mut low: U256,
         mut high: U256,
     ) -> U256 {
@@ -205,7 +258,7 @@ impl Trace160 {
     /// WARNING: `high` should not be greater than the array's length.
     fn _lower_binary_lookup(
         &self,
-        key: U96,
+        key: T::Key,
         mut low: U256,
         mut high: U256,
     ) -> U256 {
@@ -222,13 +275,13 @@ impl Trace160 {
 
     /// Access on an element of the array without performing bounds check.
     /// The position is assumed to be within bounds.
-    fn _unsafe_access(&self, pos: U256) -> Checkpoint160 {
+    fn _unsafe_access(&self, pos: U256) -> Checkpoint<T> {
         // TODO#q: think how access it without bounds check
         unsafe { self._checkpoints.getter(pos).unwrap().into_raw() }
     }
 
     /// Access on a key
-    fn _unsafe_access_key(&self, pos: U256) -> U96 {
+    fn _unsafe_access_key(&self, pos: U256) -> T::Key {
         // TODO#q: think how access it without bounds check
         let check_point =
             self._checkpoints.get(pos).expect("get checkpoint by index");
@@ -236,7 +289,7 @@ impl Trace160 {
     }
 
     /// Access on a value
-    fn _unsafe_access_value(&self, pos: U256) -> U160 {
+    fn _unsafe_access_value(&self, pos: U256) -> T::Value {
         // TODO#q: think how access it without bounds check
         let check_point =
             self._checkpoints.get(pos).expect("get checkpoint by index");

@@ -14,6 +14,9 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
+ruint = { version = "1.12.3", default-features = false, features = ["num-traits"] }
+num-traits = "0.2.19"
+
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
