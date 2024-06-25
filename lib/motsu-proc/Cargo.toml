@@ -8,9 +8,9 @@ repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
-proc-macro2 = "1.0.79"
-quote = "1.0.35"
-syn = { version = "2.0.58", features = ["full"] }
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
 
 [dev-dependencies]
 motsu = { path = "../motsu" }
@@ -21,3 +21,6 @@ stylus-proc.workspace = true
 
 [lib]
 proc-macro = true
+
+[lints]
+workspace = true

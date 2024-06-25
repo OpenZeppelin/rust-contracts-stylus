@@ -79,9 +79,9 @@ checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
 
 [[package]]
 name = "alloy"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bcb4400a1939e5633939a58500c67123ef5f2e8920e5009d6949552f191be7f"
+checksum = "9134b68e24175eff6c3c4d2bffeefb0a1b7435462130862c88d1524ca376e7e5"
 dependencies = [
  "alloy-consensus",
  "alloy-contract",
@@ -833,6 +833,28 @@ name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
+
+[[package]]
+name = "basic-example"
+version = "0.0.0"
+dependencies = [
+ "alloy-primitives 0.3.3",
+ "mini-alloc",
+ "openzeppelin-stylus",
+ "stylus-proc",
+ "stylus-sdk",
+]
+
+[[package]]
+name = "basic-example-script"
+version = "0.0.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives 0.3.3",
+ "basic-example",
+ "koba",
+ "tokio",
+]
 
 [[package]]
 name = "bit-set"
@@ -2615,7 +2637,6 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives 0.3.3",
  "alloy-sol-types 0.3.1",
- "cfg-if 1.0.0",
  "mini-alloc",
  "motsu",
  "rand",
@@ -2627,11 +2648,15 @@ dependencies = [
 name = "ownable-example"
 version = "0.0.0"
 dependencies = [
+ "alloy",
  "alloy-primitives 0.3.3",
+ "e2e",
+ "eyre",
  "mini-alloc",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
+ "tokio",
 ]
 
 [[package]]

@@ -7,12 +7,7 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts", features = [
-  "erc20_burnable",
-  "erc20_capped",
-  "erc20_metadata",
-  "erc20_pausable",
-] }
+openzeppelin-stylus = { path = "../../contracts" }
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
@@ -21,11 +16,10 @@ mini-alloc.workspace = true
 [dev-dependencies]
 alloy.workspace = true
 e2e = { path = "../../lib/e2e" }
-tokio = { version = "1.12.0", features = ["full"] }
-eyre = "0.6.8"
+tokio.workspace = true
+eyre.workspace = true
 
 [features]
-default = []
 e2e = []
 
 [lib]

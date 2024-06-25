@@ -2,9 +2,9 @@
 //!
 //! Most of the documentation is taken from the [Stylus source].
 //!
-//! [Stylus source]: https://github.com/OffchainLabs/stylus/blob/484efac4f56fb70f96d4890748b8ec2543d88acd/arbitrator/wasm-libraries/user-host-trait/src/lib.rs
-//!
 //! We allow unsafe here because safety is guaranteed by the Stylus team.
+//!
+//! [Stylus source]: https://github.com/OffchainLabs/stylus/blob/484efac4f56fb70f96d4890748b8ec2543d88acd/arbitrator/wasm-libraries/user-host-trait/src/lib.rs
 //!
 //! ## Motivation
 //!
@@ -104,6 +104,10 @@ pub unsafe extern "C" fn native_keccak256(
 /// equivalent to that of the EVM's [`SLOAD`] opcode.
 ///
 /// [`SLOAD`]: https://www.evm.codes/#54
+///
+/// # Panics
+///
+/// May panic if unable to lock `STORAGE`.
 #[no_mangle]
 pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
     let key = unsafe { read_bytes32(key) };
@@ -128,6 +132,10 @@ pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
 /// persist it.
 ///
 /// [`SSTORE`]: https://www.evm.codes/#55
+///
+/// # Panics
+///
+/// May panic if unable to lock `STORAGE`.
 #[no_mangle]
 pub unsafe extern "C" fn storage_cache_bytes32(
     key: *const u8,
@@ -149,6 +157,10 @@ pub fn storage_flush_cache(_: bool) {
 /// Dummy msg sender set for tests.
 pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
+/// Externally Owned Account (EOA) code hash.
+pub const EOA_CODEHASH: &[u8; 66] =
+    b"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+
 /// Gets the address of the account that called the program. For normal
 /// L2-to-L2 transactions the semantics are equivalent to that of the EVM's
 /// [`CALLER`] opcode, including in cases arising from [`DELEGATE_CALL`].
@@ -160,6 +172,10 @@ pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 /// [`CALLER`]: https://www.evm.codes/#33
 /// [`DELEGATE_CALL`]: https://www.evm.codes/#f4
 /// [aliasing]: https://developer.arbitrum.io/arbos/l1-to-l2-messaging#address-aliasing
+///
+/// # Panics
+///
+/// May panic if fails to parse `MSG_SENDER` as an address.
 #[no_mangle]
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
     let addr = const_hex::const_decode_to_array::<20>(MSG_SENDER).unwrap();
@@ -180,4 +196,141 @@ pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
 #[no_mangle]
 pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
     // No-op: we don't check for events in our unit-tests.
+}
+
+/// Gets the code hash of the account at the given address.
+/// The semantics are equivalent to that of the EVM's [`EXT_CODEHASH`] opcode.
+/// Note that the code hash of an account without code will be the empty hash
+/// `keccak("") =
+///     c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
+///
+/// [`EXT_CODEHASH`]: https://www.evm.codes/#3F
+///
+/// # Panics
+///
+/// May panic if fails to parse `ACCOUNT_CODEHASH` as a keccack hash.
+#[no_mangle]
+pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
+    let account_codehash =
+        const_hex::const_decode_to_array::<32>(EOA_CODEHASH).unwrap();
+
+    std::ptr::copy(account_codehash.as_ptr(), dest, 32);
+}
+
+/// Returns the length of the last EVM call or deployment return result, or `0`
+/// if neither have happened during the program's execution. The semantics are
+/// equivalent to that of the EVM's [`RETURN_DATA_SIZE`] opcode.
+///
+/// [`RETURN_DATA_SIZE`]: https://www.evm.codes/#3d
+#[no_mangle]
+pub unsafe extern "C" fn return_data_size() -> usize {
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
+}
+
+/// Copies the bytes of the last EVM call or deployment return result. Does not
+/// revert if out of bounds, but rather copies the overlapping portion. The
+/// semantics are otherwise equivalent to that of the EVM's [`RETURN_DATA_COPY`]
+/// opcode.
+///
+/// Returns the number of bytes written.
+///
+/// [`RETURN_DATA_COPY`]: https://www.evm.codes/#3e
+#[no_mangle]
+pub unsafe extern "C" fn read_return_data(
+    _dest: *mut u8,
+    _offset: usize,
+    _size: usize,
+) -> usize {
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
+}
+
+/// Calls the contract at the given address with options for passing value and
+/// to limit the amount of gas supplied. The return status indicates whether the
+/// call succeeded, and is nonzero on failure.
+///
+/// In both cases `return_data_len` will store the length of the result, the
+/// bytes of which can be read via the `read_return_data` hostio. The bytes are
+/// not returned directly so that the programmer can potentially save gas by
+/// choosing which subset of the return result they'd like to copy.
+///
+/// The semantics are equivalent to that of the EVM's [`CALL`] opcode, including
+/// callvalue stipends and the 63/64 gas rule. This means that supplying the
+/// `u64::MAX` gas can be used to send as much as possible.
+///
+/// [`CALL`]: https://www.evm.codes/#f1
+#[no_mangle]
+pub unsafe extern "C" fn call_contract(
+    _contract: *const u8,
+    _calldata: *const u8,
+    _calldata_len: usize,
+    _value: *const u8,
+    _gas: u64,
+    _return_data_len: *mut usize,
+) -> u8 {
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
+}
+
+/// Static calls the contract at the given address, with the option to limit the
+/// amount of gas supplied. The return status indicates whether the call
+/// succeeded, and is nonzero on failure.
+///
+/// In both cases `return_data_len` will store the length of the result, the
+/// bytes of which can be read via the `read_return_data` hostio. The bytes are
+/// not returned directly so that the programmer can potentially save gas by
+/// choosing which subset of the return result they'd like to copy.
+///
+/// The semantics are equivalent to that of the EVM's [`STATIC_CALL`] opcode,
+/// including the 63/64 gas rule. This means that supplying `u64::MAX` gas can
+/// be used to send as much as possible.
+///
+/// [`STATIC_CALL`]: https://www.evm.codes/#FA
+#[no_mangle]
+pub unsafe extern "C" fn static_call_contract(
+    _contract: *const u8,
+    _calldata: *const u8,
+    _calldata_len: usize,
+    _gas: u64,
+    _return_data_len: *mut usize,
+) -> u8 {
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
+}
+
+/// Delegate calls the contract at the given address, with the option to limit
+/// the amount of gas supplied. The return status indicates whether the call
+/// succeeded, and is nonzero on failure.
+///
+/// In both cases `return_data_len` will store the length of the result, the
+/// bytes of which can be read via the `read_return_data` hostio. The bytes are
+/// not returned directly so that the programmer can potentially save gas by
+/// choosing which subset of the return result they'd like to copy.
+///
+/// The semantics are equivalent to that of the EVM's [`DELEGATE_CALL`] opcode,
+/// including the 63/64 gas rule. This means that supplying `u64::MAX` gas can
+/// be used to send as much as possible.
+///
+/// [`DELEGATE_CALL`]: https://www.evm.codes/#F4
+#[no_mangle]
+pub unsafe extern "C" fn delegate_call_contract(
+    _contract: *const u8,
+    _calldata: *const u8,
+    _calldata_len: usize,
+    _gas: u64,
+    _return_data_len: *mut usize,
+) -> u8 {
+    // TODO: #156
+    // No-op: we do not use this function in our unit-tests,
+    // but the binary does include it.
+    0
 }

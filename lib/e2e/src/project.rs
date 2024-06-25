@@ -12,12 +12,21 @@ use toml::Table;
 /// Information about the crate subject of an integration test.
 pub(crate) struct Crate {
     /// Path to the directory where the crate's manifest lives.
-    pub manifest_dir: PathBuf,
+    pub(crate) manifest_dir: PathBuf,
     /// Path to the compiled wasm binary.
-    pub wasm: PathBuf,
+    pub(crate) wasm: PathBuf,
 }
 
 impl Crate {
+    /// Collects crate information from the environment.
+    ///
+    /// # Errors
+    ///
+    /// May error if:
+    ///
+    /// - The current working directory is invalid.
+    /// - Could not read the package name from the manifest file.
+    /// - Could not read the path to the compiled wasm binary.
     pub(crate) fn new() -> eyre::Result<Self> {
         let manifest_dir = env::current_dir()?;
         let name = read_pkg_name(&manifest_dir)?;
@@ -28,6 +37,13 @@ impl Crate {
 }
 
 /// Reads and parses the package name from a manifest in `path`.
+///
+/// # Errors
+///
+/// May error if:
+///
+/// - Unable to parse the `Cargo.toml` at `path`.
+/// - Unable to read the package name from the parsed toml file.
 fn read_pkg_name<P: AsRef<Path>>(path: P) -> eyre::Result<String> {
     let cargo_toml = path.as_ref().join("Cargo.toml");
 
@@ -47,6 +63,13 @@ fn read_pkg_name<P: AsRef<Path>>(path: P) -> eyre::Result<String> {
 /// Returns the path to the compiled wasm binary with name `name`.
 ///
 /// Note that this function works for both workspaces and standalone crates.
+///
+/// # Errors
+///
+/// May error if:
+///
+/// - Unable to read the current executable's path.
+/// - The output directory is not `target`.
 fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
     let name = name.replace('-', "_");
     // Looks like
@@ -73,7 +96,7 @@ fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
         }
     }
 
-    let wasm: PathBuf = target_dir
+    let wasm = target_dir
         .join("wasm32-unknown-unknown")
         .join("release")
         .join(format!("{name}.wasm"));

@@ -127,7 +127,6 @@ impl Verifier<KeccakBuilder> {
     ///     Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
     /// assert!(verification.unwrap());
     /// ```
-    #[cfg(feature = "multi-proof")]
     pub fn verify_multi_proof(
         proof: &[Bytes32],
         proof_flags: &[bool],
@@ -258,7 +257,6 @@ where
     ///     Verifier::verify_multi_proof_with_builder(&proof, &proof_flags, root, &leaves, &KeccakBuilder);
     /// assert!(verification.unwrap());
     /// ```
-    #[cfg(feature = "multi-proof")]
     pub fn verify_multi_proof_with_builder(
         proof: &[Bytes32],
         proof_flags: &[bool],

@@ -10,14 +10,14 @@ version = "0.1.0"
 
 [dependencies]
 mini-alloc.workspace = true
-tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+tiny-keccak.workspace = true
 
 [dev-dependencies]
 hex-literal = "0.4.1"
-rand = "0.8.5"
+rand.workspace = true
 
 [features]
 std = []
 
-merkle = []
-multi-proof = ["merkle"]
+[lints]
+workspace = true

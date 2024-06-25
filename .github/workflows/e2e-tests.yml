@@ -37,11 +37,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          cache-all-crates: true
-          cache-directories: "~/.cargo/bin/\n~/.cargo/.crates.toml"
 
       - name: install cargo-stylus
-        run: cargo install --force cargo-stylus cargo-stylus-check
+        run: cargo install cargo-stylus cargo-stylus-check
 
       - name: install solc
         run: |

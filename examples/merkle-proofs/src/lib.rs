@@ -17,11 +17,7 @@ use stylus_sdk::{
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
-#[cfg(not(any(
-    test,
-    feature = "std",
-    target_arch = "wasm32-unknown-unknown"
-)))]
+#[cfg(target_arch = "wasm32")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

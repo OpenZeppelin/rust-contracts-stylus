@@ -1,7 +1,10 @@
 use alloy::sol_types::SolError;
 
-// Copied from https://github.com/NomicFoundation/hardhat/blob/main/packages/hardhat-chai-matchers/src/internal/reverted/panic.ts
+/// Possible panic codes for a revert.
+///
+/// Taken from <https://github.com/NomicFoundation/hardhat/blob/main/packages/hardhat-chai-matchers/src/internal/reverted/panic.ts>
 #[derive(Debug)]
+#[allow(missing_docs)] // Pretty straightforward variant names.
 pub enum PanicCode {
     AssertionError = 0x1,
     ArithmeticOverflow = 0x11,
@@ -14,9 +17,9 @@ pub enum PanicCode {
     ZeroInitializedVariable = 0x51,
 }
 
-impl ToString for PanicCode {
-    fn to_string(&self) -> String {
-        match self {
+impl core::fmt::Display for PanicCode {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let msg = match self {
             PanicCode::AssertionError =>
                 "Assertion error",
             PanicCode::ArithmeticOverflow =>
@@ -35,7 +38,9 @@ impl ToString for PanicCode {
                 "Too much memory was allocated, or an array was created that is too large",
             PanicCode::ZeroInitializedVariable =>
                 "Called a zero-initialized variable of internal function type"
-        }.into()
+        };
+
+        write!(f, "{}", msg)
     }
 }
 

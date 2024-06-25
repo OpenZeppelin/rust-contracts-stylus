@@ -142,21 +142,12 @@ impl Ownable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::{
-        msg,
-        storage::{StorageAddress, StorageType},
-    };
+    use alloy_primitives::{address, Address};
+    use stylus_sdk::msg;
 
     use super::{Error, Ownable};
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-
-    #[motsu::test]
-    fn rejects_zero_address_initial_owner(contract: Ownable) {
-        // FIXME: Once constructors are supported this check should fail.
-        assert_eq!(contract._owner.get(), Address::ZERO);
-    }
 
     #[motsu::test]
     fn reads_owner(contract: Ownable) {

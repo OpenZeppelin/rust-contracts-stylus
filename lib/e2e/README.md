@@ -15,39 +15,39 @@ tests suite using the `e2e` crate.
 
 [GitHub workflow]: ../../.github/workflows/e2e-tests.yml
 
-### Users
+### Accounts
 
 Decorate your tests with the `test` procedural macro: a thin wrapper over
-`tokio::test` that sets up `User`s for your test.
+`tokio::test` that sets up `Account`s for your test.
 
-```rust
+```rust,ignore
 #[e2e::test]
-async fn users_are_funded(alice: User) -> eyre::Result<()> {
-    let balance = alice.signer.get_balance(alice.address()).await?;
+async fn accounts_are_funded(alice: Account) -> eyre::Result<()> {
+    let balance = alice.wallet.get_balance(alice.address()).await?;
     let expected = parse_ether("10")?;
     assert_eq!(expected, balance);
     Ok(())
 }
 ```
 
-A `User` is a thin wrapper over a [`LocalWallet`] and an `alloy` provider with a
-[`SignerFiller`]. Both of them are connected to the RPC endpoint defined by the
-`RPC_URL` environment variable. This means that a `User` is the main proxy
+A `Account` is a thin wrapper over a [`PrivateKeySigner`] and an `alloy` provider with a
+[`WalletFiller`]. Both of them are connected to the RPC endpoint defined by the
+`RPC_URL` environment variable. This means that a `Account` is the main proxy
 between the RPC and the test code.
 
-All users start with 10 ETH as balance. You can have multiple users as
-parameters of your test function, or you can create new users separately:
+All accounts start with 10 ETH as balance. You can have multiple accounts as
+parameters of your test function, or you can create new accounts separately:
 
-```rust
+```rust,ignore
 #[e2e::test]
-async fn foo(alice: User, bob: User) -> eyre::Result<()> {
-    let charlie = User::new().await?;
+async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
+    let charlie = Account::new().await?;
     // ...
 }
 ```
 
-[`LocalWallet`]: https://github.com/alloy-rs/alloy/blob/4ecb7d86882ece8a9a7a5a892b71a3c198030731/crates/signer-wallet/src/lib.rs#L37
-[`SignerFiller`]: https://github.com/alloy-rs/alloy/blob/4ecb7d86882ece8a9a7a5a892b71a3c198030731/crates/provider/src/fillers/signer.rs#L30
+[`LocalWallet`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/signer-local/src/lib.rs#L37
+[`WalletFiller`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/provider/src/fillers/wallet.rs#L30
 
 ### Contracts
 
@@ -81,7 +81,7 @@ contract Example {
 Note the `sol!` invocation with the path to the constructor -- this will
 generate the abi-encodable `Example::constructorCall` struct.
 
-```rust
+```rust,ignore
 sol!("src/constructor.sol");
 
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
@@ -96,11 +96,11 @@ async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
 
 You can then make calls to your contract:
 
-```rust
+```rust,ignore
 #[e2e::test]
-async fn constructs(alice: User) -> Result<()> {
+async fn constructs(alice: Account) -> Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc20::new(contract_addr, &alice.signer);
+    let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let Erc20::nameReturn { name } = contract.name().call().await?;
     let Erc20::symbolReturn { symbol } = contract.symbol().call().await?;

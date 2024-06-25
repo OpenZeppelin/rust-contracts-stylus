@@ -66,7 +66,6 @@ impl Erc721UriStorage {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
-    use stylus_sdk::{prelude::StorageType, storage::StorageMap};
 
     use super::Erc721UriStorage;
 

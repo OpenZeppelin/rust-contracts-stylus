@@ -14,10 +14,12 @@
   library.
 - First-class `no_std` support.
 - Solidity constructors powered by [`koba`].
-- Unit and integration test affordances, used in our own tests.
+- [Unit] and [integration] test affordances, used in our own tests.
 
 [`openzeppelin-contracts`]: https://github.com/OpenZeppelin/openzeppelin-contracts
 [`koba`]: https://github.com/OpenZeppelin/koba
+[Unit]: ./lib/motsu/README.md
+[integration]: ./lib/e2e/README.md
 
 ## Usage
 
@@ -55,10 +57,15 @@ impl Erc20Example { }
 For a more complex display of what this library offers, refer to our
 [examples](./examples).
 
+For a full example that includes deploying and querying a contract, see the
+[basic] example.
+
 For more information on what this library will include in the future, see our
 [roadmap].
 
 [specify a git dependency]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories
+[examples]: ./examples
+[basic]: ./examples/basic
 [roadmap]: https://github.com/OpenZeppelin/rust-contracts-stylus/milestone/1
 
 ## Contribute
