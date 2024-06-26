@@ -62,7 +62,7 @@ async fn error_when_balance_of_invalid_owner(
         .balanceOf(invalid_owner)
         .call()
         .await
-        .expect_err("should return ERC721InvalidOwner");
+        .expect_err("should return `ERC721InvalidOwner`");
     assert!(
         err.reverted_with(Erc721::ERC721InvalidOwner { owner: invalid_owner })
     );
@@ -78,6 +78,27 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
     let Erc721::balanceOfReturn { balance } =
         contract.balanceOf(alice.address()).call().await?;
     assert_eq!(uint!(0_U256), balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_owner_of_nonexistent_token(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let token_id = random_token_id();
+
+    let err = contract
+        .ownerOf(token_id)
+        .call()
+        .await
+        .expect_err("should return `ERC721NonexistentToken`");
+
+    assert!(
+        err.reverted_with(Erc721::ERC721NonexistentToken { tokenId: token_id })
+    );
 
     Ok(())
 }

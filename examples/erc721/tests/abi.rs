@@ -5,27 +5,41 @@ sol!(
     #[sol(rpc)]
    contract Erc721 {
         function name() external view returns (string memory name);
+
         function symbol() external view returns (string memory symbol);
+
         function tokenURI(uint256 tokenId) external view returns (string memory);
 
         function supportsInterface(bytes4 interfaceIf) external pure returns (bool);
 
         #[derive(Debug)]
         function balanceOf(address owner) external view returns (uint256 balance);
+
+        #[derive(Debug)]
         function ownerOf(uint256 tokenId) external view returns (address ownerOf);
+
         function safeTransferFrom(address from, address to, uint256 tokenId) external;
+
         function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) external;
+
         function transferFrom(address from, address to, uint256 tokenId) external;
+
         function approve(address to, uint256 tokenId) external;
+
         function setApprovalForAll(address operator, bool approved) external;
+
         function getApproved(uint256 tokenId) external view returns (address);
+
         function isApprovedForAll(address owner, address operator) external view returns (bool);
 
         function burn(uint256 tokenId) external;
+
         function mint(address to, uint256 tokenId) external;
 
         function paused() external view returns (bool);
+
         function pause() external;
+
         function unpause() external;
 
         error ERC721InvalidOwner(address owner);
