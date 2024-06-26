@@ -1204,6 +1204,24 @@ mod tests {
     }
 
     #[motsu::test]
+    fn error_when_minting_token_invalid_receiver(contract: Erc721) {
+        let invalid_receiver = Address::ZERO;
+
+        let token_id = random_token_id();
+
+        let err = contract
+            ._mint(invalid_receiver, token_id)
+            .expect_err("should not mint a token for invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+    }
+
+    #[motsu::test]
     fn safe_mints(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();

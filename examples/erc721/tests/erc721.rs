@@ -124,7 +124,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn errors_when_reusing_token_id(alice: Account) -> eyre::Result<()> {
+async fn error_when_minting_token_id_twice(alice: Account) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -136,6 +136,25 @@ async fn errors_when_reusing_token_id(alice: Account) -> eyre::Result<()> {
         .expect_err("should not mint a token id twice");
     assert!(err
         .reverted_with(Erc721::ERC721InvalidSender { sender: Address::ZERO }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_minting_token_invalid_receiver(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let token_id = random_token_id();
+    let invalid_receiver = Address::ZERO;
+
+    let err = send!(contract.mint(invalid_receiver, token_id))
+        .expect_err("should not mint a token for invalid receiver");
+    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+        receiver: invalid_receiver
+    }));
 
     Ok(())
 }
