@@ -1,16 +1,17 @@
 #![cfg(feature = "e2e")]
 
 use alloy::{
-    primitives::{Address, U256},
+    primitives::{fixed_bytes, Address, U256},
     sol,
     sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Revert};
 
-use crate::abi::Erc721;
+use crate::{abi::Erc721, mock_receiver::ERC721ReceiverMock};
 
 mod abi;
+mod mock_receiver;
 
 sol!("src/constructor.sol");
 
@@ -120,6 +121,47 @@ async fn errors_when_transfer_nonexistent_token(
 }
 
 #[e2e::test]
+async fn safe_transfers_to_receiver_contract(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address = mock_receiver::deploy(
+        &alice.wallet,
+        ERC721ReceiverMock::RevertType::None,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    let receipt = receipt!(contract.safeTransferFrom_0(
+        alice_addr,
+        receiver_address,
+        token_id
+    ))?;
+
+    receipt.emits(Erc721::Transfer {
+        from: alice_addr,
+        to: receiver_address,
+        tokenId: token_id,
+    });
+
+    receipt.emits(ERC721ReceiverMock::Received {
+        operator: alice_addr,
+        from: alice_addr,
+        tokenId: token_id,
+        data: fixed_bytes!("").into(),
+    });
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(ownerOf, receiver_address);
+    Ok(())
+}
+
+#[e2e::test]
 async fn approves_token_transfer(
     alice: Account,
     bob: Account,
@@ -159,9 +201,11 @@ async fn errors_when_transfer_unapproved_token(
     let tx = contract.transferFrom(alice_addr, bob_addr, token_id);
 
     let err = send!(tx).expect_err("should not transfer unapproved token");
+
     assert!(err.reverted_with(Erc721::ERC721InsufficientApproval {
         operator: bob_addr,
         tokenId: token_id,
     }));
+
     Ok(())
 }
