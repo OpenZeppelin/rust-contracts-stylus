@@ -10,6 +10,7 @@ sol!(
 
         function supportsInterface(bytes4 interfaceIf) external pure returns (bool);
 
+        #[derive(Debug)]
         function balanceOf(address owner) external view returns (uint256 balance);
         function ownerOf(uint256 tokenId) external view returns (address ownerOf);
         function safeTransferFrom(address from, address to, uint256 tokenId) external;
