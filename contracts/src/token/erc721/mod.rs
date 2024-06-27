@@ -1129,7 +1129,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_checking_balance_of_invalid_owner(contract: Erc721) {
+    fn error_when_balance_of_invalid_owner(contract: Erc721) {
         let invalid_owner = Address::ZERO;
         let err = contract
             .balance_of(invalid_owner)
@@ -1141,21 +1141,18 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_zero_balance(contract: Erc721) {
+    fn error_when_contract_balance_is_zero_balance(contract: Erc721) {
         let owner = msg::sender();
-        let balance =
-            contract.balance_of(owner).expect("should return `U256::ZERO`");
+        let balance = contract.balance_of(owner).expect("should return `U256::ZERO`");
         assert_eq!(U256::ZERO, balance);
     }
 
     #[motsu::test]
-    fn error_when_checking_owner_of_nonexistent_token(contract: Erc721) {
+    fn error_when_owner_of_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
-
         let err = contract
             .owner_of(token_id)
             .expect_err("should return Error::NonexistentToken");
-
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -1165,14 +1162,13 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mints(contract: Erc721) {
+    fn when_minting_token_balance_and_owner_are_correct(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
         let initial_balance = contract
             .balance_of(alice)
-            .expect("should return the balance of Alice");
-
+            .expect("should return the balance of Alice");    
         contract._mint(alice, token_id).expect("should mint a token for Alice");
         let owner = contract
             .owner_of(token_id)
@@ -1182,17 +1178,17 @@ mod tests {
         let balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
-
+    
         assert_eq!(initial_balance + uint!(1_U256), balance);
-    }
+    }    
 
     #[motsu::test]
-    fn error_when_minting_token_id_twice(contract: Erc721) {
+    fn error_when_minting_same_token_id_twice(contract: Erc721) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = random_token_id();   
         contract
             ._mint(alice, token_id)
-            .expect("should mint the token a first time");
+            .expect("should mint the token the first time");
         let err = contract
             ._mint(alice, token_id)
             .expect_err("should not mint a token with `token_id` twice");
@@ -1201,7 +1197,7 @@ mod tests {
             err,
             Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
         ));
-    }
+    }    
 
     #[motsu::test]
     fn safe_mints(contract: Erc721) {
