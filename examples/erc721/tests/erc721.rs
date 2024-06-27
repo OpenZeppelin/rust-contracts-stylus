@@ -990,3 +990,24 @@ async fn error_when_approve_by_invalid_approver(
 
     Ok(())
 }
+
+#[e2e::test]
+async fn error_when_get_approved_of_nonexistent_token(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let token_id = random_token_id();
+
+    let err = contract
+        .getApproved(token_id)
+        .call()
+        .await
+        .expect_err("should return `ERC721NonexistentToken`");
+
+    assert!(
+        err.reverted_with(Erc721::ERC721NonexistentToken { tokenId: token_id })
+    );
+    Ok(())
+}
