@@ -36,7 +36,7 @@ sol_storage! {
     /// State of checkpoint library contract.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Trace160 {
-        /// Stores checkpoints in dynamic array sorted by key.
+        /// Stores checkpoints in a dynamic array sorted by key.
         Checkpoint160[] _checkpoints;
     }
 
@@ -160,7 +160,7 @@ impl Trace160 {
         }
     }
 
-    /// Returns whether there is a checkpoint in the structure (i.e. it
+    /// Returns whether there is a checkpoint in the structure (i.g. it
     /// is not empty), and if so, the key and value in the most recent
     /// checkpoint.
     ///
