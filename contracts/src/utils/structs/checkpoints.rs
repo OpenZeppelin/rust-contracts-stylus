@@ -65,9 +65,9 @@ impl Trace160 {
     ///
     /// # Errors
     ///
-    /// To maintain sorted order if the `key` is lower than
-    /// previously inserted error [`Error::CheckpointUnorderedInsertion`] is
-    /// returned.
+    /// If the `key` is lower than previously pushed checkpoint's key error
+    /// [`Error::CheckpointUnorderedInsertion`] is returned (necessary to
+    /// maintain sorted order).
     pub fn push(
         &mut self,
         key: U96,
