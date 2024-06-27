@@ -1011,3 +1011,83 @@ async fn error_when_get_approved_of_nonexistent_token(
     );
     Ok(())
 }
+
+#[e2e::test]
+async fn sets_approval_for_all(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let approved_value = true;
+    let receipt =
+        receipt!(contract.setApprovalForAll(bob_addr, approved_value))?;
+
+    receipt.emits(Erc721::ApprovalForAll {
+        owner: alice_addr,
+        operator: bob_addr,
+        approved: approved_value,
+    });
+
+    let Erc721::isApprovedForAllReturn { approved } =
+        contract.isApprovedForAll(alice_addr, bob_addr).call().await?;
+    assert_eq!(approved_value, approved);
+
+    let approved_value = false;
+    let receipt =
+        receipt!(contract.setApprovalForAll(bob_addr, approved_value))?;
+
+    receipt.emits(Erc721::ApprovalForAll {
+        owner: alice_addr,
+        operator: bob_addr,
+        approved: approved_value,
+    });
+
+    let Erc721::isApprovedForAllReturn { approved } =
+        contract.isApprovedForAll(alice_addr, bob_addr).call().await?;
+    assert_eq!(approved_value, approved);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_set_approval_for_all_invalid_operator(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let invalid_operator = Address::ZERO;
+
+    let err = send!(contract.setApprovalForAll(invalid_operator, true))
+        .expect_err("should return ERC721InvalidOperator");
+
+    assert!(err.reverted_with(Erc721::ERC721InvalidOperator {
+        operator: invalid_operator
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn is_approved_for_all_invalid_operator(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let invalid_operator = Address::ZERO;
+
+    let Erc721::isApprovedForAllReturn { approved } = contract
+        .isApprovedForAll(alice.address(), invalid_operator)
+        .call()
+        .await?;
+
+    assert_eq!(false, approved);
+
+    Ok(())
+}

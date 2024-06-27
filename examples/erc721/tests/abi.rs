@@ -31,7 +31,8 @@ sol!(
         #[derive(Debug)]
         function getApproved(uint256 tokenId) external view returns (address approved);
 
-        function isApprovedForAll(address owner, address operator) external view returns (bool);
+        #[derive(Debug)]
+        function isApprovedForAll(address owner, address operator) external view returns (bool approved);
 
         function burn(uint256 tokenId) external;
 
