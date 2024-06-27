@@ -1562,6 +1562,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc721-consecutive-example"
+version = "0.0.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives 0.3.3",
+ "e2e",
+ "eyre",
+ "mini-alloc",
+ "openzeppelin-stylus",
+ "rand",
+ "stylus-proc",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc721-example"
 version = "0.0.0"
 dependencies = [
