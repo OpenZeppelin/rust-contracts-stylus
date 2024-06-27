@@ -2,7 +2,6 @@
 //! change at different points in time.
 //! Lets to look up past values by
 //! block number.
-//! See {Votes} as an example.
 //! To create a history of checkpoints,
 //! define a variable type [`Trace160`] in your contract, and store a
 //! new checkpoint for the current transaction block using the
@@ -14,8 +13,8 @@ use stylus_sdk::storage::{StorageGuard, StorageGuardMut};
 
 use crate::utils::math::alloy::Math;
 
-// TODO#q: add generics for other pairs (uint32, uint224) and (uint48, uint208).
-// Logic should be same.
+// TODO: add generics for other pairs (uint32, uint224) and (uint48, uint208).
+// Logic should be the same.
 type U96 = Uint<96, 2>;
 type U160 = Uint<160, 3>;
 
