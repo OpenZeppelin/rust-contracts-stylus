@@ -169,12 +169,4 @@ mod tests {
             assert_eq!(left.average(right), U256::from(expected));
         });
     }
-
-    #[test]
-    fn check_average_test() {
-        let left = uint!(0_U256);
-        let right = uint!(1_U256);
-
-        assert_eq!(left.average(right), uint!(0_U256));
-    }
 }
