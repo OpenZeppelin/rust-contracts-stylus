@@ -162,17 +162,18 @@ impl Trace160 {
     /// Returns whether there is a checkpoint in the structure (i.g. it
     /// is not empty), and if so, the key and value in the most recent
     /// checkpoint.
+    /// Otherwise, [`None`] will be returned.
     ///
     /// # Arguments
     ///
     /// * `&self` - read access to the checkpoint's state.
-    pub fn latest_checkpoint(&self) -> (bool, U96, U160) {
+    pub fn latest_checkpoint(&self) -> Option<(U96, U160)> {
         let pos = self.length();
         if pos == U256::ZERO {
-            (false, U96::ZERO, U160::ZERO)
+            None
         } else {
             let checkpoint = self._access(pos - uint!(1_U256));
-            (true, checkpoint._key.get(), checkpoint._value.get())
+            Some((checkpoint._key.get(), checkpoint._value.get()))
         }
     }
 
@@ -198,6 +199,7 @@ impl Trace160 {
     /// Pushes a (`key`, `value`) pair into an ordered list of
     /// checkpoints, either by inserting a new checkpoint, or by updating
     /// the last one.
+    /// Returns previous value and new value.
     ///
     /// # Arguments
     ///
@@ -434,13 +436,13 @@ mod tests {
 
     #[motsu::test]
     fn latest_checkpoint(checkpoint: Trace160) {
-        assert_eq!(checkpoint.latest_checkpoint().0, false);
+        assert_eq!(checkpoint.latest_checkpoint(), None);
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
         assert_eq!(
             checkpoint.latest_checkpoint(),
-            (true, uint!(5_U96), uint!(55_U160))
+            Some((uint!(5_U96), uint!(55_U160)))
         );
     }
 
