@@ -183,7 +183,6 @@ impl Trace160 {
     ///
     /// * `&self` - read access to the checkpoint's state.
     pub fn length(&self) -> U256 {
-        // TODO#q: think how to retrieve U256 without conversion
         U256::from(self._checkpoints.len())
     }
 
