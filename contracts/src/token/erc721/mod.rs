@@ -1382,7 +1382,6 @@ mod tests {
         ));
 
         // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1526,7 +1525,6 @@ mod tests {
         ));
 
         // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
