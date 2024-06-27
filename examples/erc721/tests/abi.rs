@@ -28,7 +28,7 @@ sol!(
 
         function setApprovalForAll(address operator, bool approved) external;
 
-        function getApproved(uint256 tokenId) external view returns (address);
+        function getApproved(uint256 tokenId) external view returns (address approved);
 
         function isApprovedForAll(address owner, address operator) external view returns (bool);
 

@@ -912,10 +912,7 @@ async fn error_when_safe_transfer_with_data_nonexistent_token(
 // `Erc721::safeTransferFrom_1`.
 
 #[e2e::test]
-async fn approves_token_transfer(
-    alice: Account,
-    bob: Account,
-) -> eyre::Result<()> {
+async fn approves(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -924,16 +921,72 @@ async fn approves_token_transfer(
     let token_id = random_token_id();
 
     let _ = watch!(contract.mint(alice_addr, token_id))?;
-    let _ = watch!(contract.approve(bob_addr, token_id))?;
 
-    let contract = Erc721::new(contract_addr, &bob.wallet);
+    let Erc721::getApprovedReturn { approved } =
+        contract.getApproved(token_id).call().await?;
+    assert_eq!(Address::ZERO, approved);
 
-    let _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_id))?;
+    let receipt = receipt!(contract.approve(bob_addr, token_id))?;
 
-    let Erc721::ownerOfReturn { ownerOf } =
-        contract.ownerOf(token_id).call().await?;
+    receipt.emits(Erc721::Approval {
+        owner: alice_addr,
+        approved: bob_addr,
+        tokenId: token_id,
+    });
 
-    assert_eq!(bob_addr, ownerOf);
+    let Erc721::getApprovedReturn { approved } =
+        contract.getApproved(token_id).call().await?;
+    assert_eq!(bob_addr, approved);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_approve_for_nonexistent_token(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let bob_addr = bob.address();
+    let token_id = random_token_id();
+
+    let err = send!(contract.approve(bob_addr, token_id))
+        .expect_err("should not approve for a non-existent token");
+
+    assert!(
+        err.reverted_with(Erc721::ERC721NonexistentToken { tokenId: token_id })
+    );
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_approve_by_invalid_approver(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_alice = Erc721::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc721::new(contract_addr, &bob.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_id = random_token_id();
+
+    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+
+    let err = send!(contract_bob.approve(bob_addr, token_id))
+        .expect_err("should not approve when invalid approver");
+
+    assert!(
+        err.reverted_with(Erc721::ERC721InvalidApprover { approver: bob_addr })
+    );
+
+    let Erc721::getApprovedReturn { approved } =
+        contract_bob.getApproved(token_id).call().await?;
+    assert_eq!(Address::ZERO, approved);
 
     Ok(())
 }
