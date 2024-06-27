@@ -328,7 +328,7 @@ impl Trace160 {
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
     }
 
-    /// Append checkpoint not checking if sorted order pertains after.
+    /// Append checkpoint without checking if sorted order pertains after.
     ///
     /// # Arguments
     ///
