@@ -1,5 +1,6 @@
 //! Optional Burnable extension of the ERC-721 standard.
 use std::marker::PhantomData;
+
 use alloy_primitives::{Address, U256};
 use stylus_proc::{external, sol_storage};
 use stylus_sdk::msg;
