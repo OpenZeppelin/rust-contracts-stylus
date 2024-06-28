@@ -21,7 +21,7 @@ use crate::{
 
 pub mod base;
 pub mod extensions;
-mod r#trait;
+mod traits;
 
 /// An [`Erc721`] error defined as described in [ERC-6093].
 ///
