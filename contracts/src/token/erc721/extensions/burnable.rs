@@ -1,12 +1,20 @@
 //! Optional Burnable extension of the ERC-721 standard.
-
+use std::marker::PhantomData;
 use alloy_primitives::{Address, U256};
+use stylus_proc::{external, sol_storage};
 use stylus_sdk::msg;
 
 use crate::token::erc721::{Erc721, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
-pub trait IErc721Burnable {
+sol_storage! {
+    pub struct Erc721Burnable<V: Erc721Virtual> {
+        PhantomData<V> _phantom_data;
+    }
+}
+
+#[external]
+impl<V: Erc721Virtual> Erc721Burnable<V> {
     /// Burns `token_id`.
     /// The approval is cleared when the token is burned.
     /// Relies on the `_burn` mechanism.
@@ -30,19 +38,19 @@ pub trait IErc721Burnable {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn burn(&mut self, token_id: U256) -> Result<(), Error>;
-}
-
-impl IErc721Burnable for Erc721 {
-    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
-        // Setting an "auth" arguments enables the [`Erc721::_is_authorized`]
-        // check which verifies that the token exists (from != `Address::ZERO`).
-        //
-        // Therefore, it is not needed to verify
-        // that the return value is not 0 here.
-        self._update(Address::ZERO, token_id, msg::sender())?;
+    fn burn(
+        storage: &mut impl TopLevelStorage,
+        token_id: U256,
+    ) -> Result<(), Error> {
+        V::update::<V>(storage, Address::ZERO, token_id, msg::sender())?;
         Ok(())
     }
+}
+
+pub struct ERC721BurnableOverride<B: Erc721Virtual>(B);
+
+impl<B: Erc721Virtual> Erc721Virtual for ERC721BurnableOverride<B> {
+    type Base = B;
 }
 
 #[cfg(all(test, feature = "std"))]
@@ -50,7 +58,7 @@ mod tests {
     use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
-    use super::IErc721Burnable;
+    use super::Erc721Burnable;
     use crate::token::erc721::{
         tests::random_token_id, ERC721InsufficientApproval,
         ERC721NonexistentToken, Erc721, Error, IErc721,

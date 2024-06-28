@@ -1,0 +1,16 @@
+[package]
+name = "openzeppelin-stylus-proc"
+description = "Macros for contracts"
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+version = "0.1.0"
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "2.0", features = ["full"] }
+
+[lib]
+proc-macro = true

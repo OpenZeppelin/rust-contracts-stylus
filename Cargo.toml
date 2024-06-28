@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "contracts",
+  "contracts-proc",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
