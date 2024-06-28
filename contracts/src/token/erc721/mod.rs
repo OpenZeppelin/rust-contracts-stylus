@@ -53,14 +53,14 @@ sol! {
     /// Used in balance queries.
     ///
     /// * `owner` - The address deemed to be an invalid owner.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721InvalidOwner(address owner);
 
     /// Indicates a `token_id` whose `owner` is the zero address.
     ///
     /// * `token_id` - Token id as a number.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721NonexistentToken(uint256 token_id);
 
@@ -70,21 +70,21 @@ sol! {
     /// * `sender` - Address whose tokens are being transferred.
     /// * `token_id` - Token id as a number.
     /// * `owner` - Address of the owner of the token.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721IncorrectOwner(address sender, uint256 token_id, address owner);
 
     /// Indicates a failure with the token `sender`. Used in transfers.
     ///
     /// * `sender` - An address whose token is being transferred.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721InvalidSender(address sender);
 
     /// Indicates a failure with the token `receiver`. Used in transfers.
     ///
     /// * `receiver` - Address that receives the token.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721InvalidReceiver(address receiver);
 
@@ -93,7 +93,7 @@ sol! {
     /// * `operator` - Address that may be allowed to operate on tokens
     ///   without being their owner.
     /// * `token_id` - Token id as a number.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721InsufficientApproval(address operator, uint256 token_id);
 
@@ -101,7 +101,7 @@ sol! {
     /// Used in approvals.
     ///
     /// * `approver` - Address initiating an approval operation.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721InvalidApprover(address approver);
 
@@ -110,7 +110,7 @@ sol! {
     ///
     /// * `operator` - Address that may be allowed to operate on tokens
     ///   without being their owner.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721InvalidOperator(address operator);
 }
@@ -118,7 +118,8 @@ sol! {
 /// An [`Erc721`] error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
-#[derive(SolidityError, Debug)]
+#[cfg_attr(all(test, feature = "std"), derive(Debug))]
+#[derive(SolidityError)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
     /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].

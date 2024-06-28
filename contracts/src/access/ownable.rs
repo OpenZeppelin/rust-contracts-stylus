@@ -26,19 +26,20 @@ sol! {
     /// The caller account is not authorized to perform an operation.
     ///
     /// * `account` - Account that was found to not be authorized.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error OwnableUnauthorizedAccount(address account);
     /// The owner is not a valid owner account. (eg. `Address::ZERO`)
     ///
     /// * `owner` - Account that's not allowed to become the owner.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error OwnableInvalidOwner(address owner);
 }
 
 /// An error that occurred in the implementation of an [`Ownable`] contract.
-#[derive(SolidityError, Debug)]
+#[cfg_attr(all(test, feature = "std"), derive(Debug))]
+#[derive(SolidityError)]
 pub enum Error {
     /// The caller account is not authorized to perform an operation.
     UnauthorizedAccount(OwnableUnauthorizedAccount),

@@ -81,20 +81,21 @@ sol! {
     ///
     /// * `account` - Account that was found to not be authorized.
     /// * `needed_role` - The missing role.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error AccessControlUnauthorizedAccount(address account, bytes32 needed_role);
     /// The caller of a function is not the expected one.
     ///
     /// NOTE: Don't confuse with [`AccessControlUnauthorizedAccount`].
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error AccessControlBadConfirmation();
 }
 
 /// An error that occurred in the implementation of an [`AccessControl`]
 /// contract.
-#[derive(SolidityError, Debug)]
+#[cfg_attr(all(test, feature = "std"), derive(Debug))]
+#[derive(SolidityError)]
 pub enum Error {
     /// The caller account is missing a role.
     UnauthorizedAccount(AccessControlUnauthorizedAccount),
