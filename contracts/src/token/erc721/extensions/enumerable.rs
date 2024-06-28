@@ -19,18 +19,19 @@ sol! {
     ///
     /// NOTE: The owner being `Address::ZERO`
     /// indicates a global out of bounds index.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721OutOfBoundsIndex(address owner, uint256 index);
 
     /// Indicates an error related to batch minting not allowed.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC721EnumerableForbiddenBatchMint();
 }
 
 /// An [`Erc721Enumerable`] extension error.
-#[derive(SolidityError, Debug)]
+#[cfg_attr(all(test, feature = "std"), derive(Debug))]
+#[derive(SolidityError)]
 pub enum Error {
     /// Indicates an error when an `owner`'s token query
     /// was out of bounds for `index`.

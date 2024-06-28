@@ -12,19 +12,20 @@ use stylus_proc::{external, sol_storage, SolidityError};
 sol! {
     /// Indicates an error related to the operation that failed
     /// because `total_supply` exceeded the `_cap`.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
 
     /// Indicates an error related to the operation that failed
     /// because the supplied `cap` is not a valid cap value.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC20InvalidCap(uint256 cap);
 }
 
 /// A Capped error.
-#[derive(SolidityError, Debug)]
+#[cfg_attr(all(test, feature = "std"), derive(Debug))]
+#[derive(SolidityError)]
 pub enum Error {
     /// Indicates an error related to the operation that failed
     /// because `total_supply` exceeded the `_cap`.

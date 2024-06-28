@@ -34,19 +34,19 @@ sol! {
     /// * `sender` - Address whose tokens are being transferred.
     /// * `balance` - Current balance for the interacting account.
     /// * `needed` - Minimum amount required to perform a transfer.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
     /// Indicates a failure with the token `sender`. Used in transfers.
     ///
     /// * `sender` - Address whose tokens are being transferred.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC20InvalidSender(address sender);
     /// Indicates a failure with the token `receiver`. Used in transfers.
     ///
     /// * `receiver` - Address to which the tokens are being transferred.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC20InvalidReceiver(address receiver);
     /// Indicates a failure with the `spender`’s `allowance`. Used in
@@ -57,7 +57,7 @@ sol! {
     /// * `allowance` - Amount of tokens a `spender` is allowed to operate
     /// with.
     /// * `needed` - Minimum amount required to perform a transfer.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
     /// Indicates a failure with the `spender` to be approved. Used in
@@ -65,7 +65,7 @@ sol! {
     ///
     /// * `spender` - Address that may be allowed to operate on tokens without
     /// being their owner.
-    #[derive(Debug)]
+    #[cfg_attr(all(test, feature = "std"), derive(Debug))]
     #[allow(missing_docs)]
     error ERC20InvalidSpender(address spender);
 
@@ -74,7 +74,8 @@ sol! {
 /// An [`Erc20`] error defined as described in [ERC-6093].
 ///
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
-#[derive(SolidityError, Debug)]
+#[cfg_attr(all(test, feature = "std"), derive(Debug))]
+#[derive(SolidityError)]
 pub enum Error {
     /// Indicates an error related to the current balance of `sender`. Used in
     /// transfers.
