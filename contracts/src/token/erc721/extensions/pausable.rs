@@ -9,6 +9,7 @@ use crate::{
 };
 
 sol_storage! {
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Pausable<V: IErc721Virtual> {
         Pausable pausable;
         PhantomData<V> _phantom_data;
@@ -44,26 +45,12 @@ pub(crate) mod tests {
     use super::*;
     use crate::token::erc721::{
         base::{Erc721, Erc721Override},
-        tests::random_token_id,
+        tests::{random_token_id, Override, Token},
         traits::IErc721,
     };
 
-    pub type Override = inherit!(ERC721PausableOverride, Erc721Override);
-
-    sol_storage! {
-        pub struct ERC721 {
-            Erc721<Override> erc721;
-            Erc721Pausable<Override> pausable;
-        }
-    }
-
-    #[external]
-    #[inherit(Erc721Pausable<Override>)]
-    #[inherit(Erc721<Override>)]
-    impl crate::token::erc721::tests::ERC721 {}
-
     #[motsu::test]
-    fn error_transfer_while_paused(storage: Erc721<Override>) {
+    fn error_transfer_while_paused(storage: Token) {
         let alice = msg::sender();
         let bob = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
         let token_id = random_token_id();

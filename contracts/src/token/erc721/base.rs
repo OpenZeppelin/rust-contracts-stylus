@@ -221,7 +221,7 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
         // verifies that the token exists (`from != 0`). Therefore, it is
         // not needed to verify that the return value is not 0 here.
         let previous_owner =
-            V::Update::update::<V>(storage, to, token_id, msg::sender())?;
+            V::update::<V>(storage, to, token_id, msg::sender())?;
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
@@ -238,7 +238,7 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        V::Approve::approve::<V>(storage, to, token_id, msg::sender(), true)
+        V::approve::<V>(storage, to, token_id, msg::sender(), true)
     }
 
     fn set_approval_for_all(

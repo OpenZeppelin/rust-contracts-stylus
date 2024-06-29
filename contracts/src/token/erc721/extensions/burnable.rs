@@ -60,7 +60,8 @@ mod tests {
     use stylus_sdk::msg;
 
     use crate::token::erc721::{
-        tests::{random_token_id, Override},
+        extensions::burnable::Erc721Burnable,
+        tests::{random_token_id, Override, Token},
         traits::IErc721,
         ERC721InsufficientApproval, ERC721NonexistentToken, Erc721, Error,
     };
@@ -68,27 +69,31 @@ mod tests {
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     #[motsu::test]
-    fn burns(contract: Erc721<Override>) {
+    fn burns(contract: Token) {
         let alice = msg::sender();
         let one = uint!(1_U256);
         let token_id = random_token_id();
 
-        contract._mint(alice, token_id).expect("should mint a token for Alice");
+        Erc721::<Override>::_mint(contract, alice, token_id)
+            .expect("should mint a token for Alice");
 
         let initial_balance = contract
+            .erc721
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
-        let result = contract.burn(token_id);
+        let result = Erc721Burnable::<Override>::burn(contract, token_id);
         assert!(result.is_ok());
 
         let balance = contract
+            .erc721
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
         assert_eq!(initial_balance - one, balance);
 
         let err = contract
+            .erc721
             .owner_of(token_id)
             .expect_err("should return Error::NonexistentToken");
 
@@ -101,21 +106,25 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval(contract: Erc721<Override>) {
+    fn burns_with_approval(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        contract._mint(BOB, token_id).expect("should mint a token for Bob");
+        Erc721::<Override>::_mint(contract, BOB, token_id)
+            .expect("should mint a token for Bob");
 
-        let initial_balance =
-            contract.balance_of(BOB).expect("should return the balance of Bob");
+        let initial_balance = contract
+            .erc721
+            .balance_of(BOB)
+            .expect("should return the balance of Bob");
 
-        contract._token_approvals.setter(token_id).set(alice);
+        contract.erc721._token_approvals.setter(token_id).set(alice);
 
-        let result = contract.burn(token_id);
+        let result = Erc721Burnable::<Override>::burn(contract, token_id);
         assert!(result.is_ok());
 
         let err = contract
+            .erc721
             .owner_of(token_id)
             .expect_err("should return Error::NonexistentToken");
 
@@ -126,30 +135,36 @@ mod tests {
             }) if t_id == token_id
         ));
 
-        let balance =
-            contract.balance_of(BOB).expect("should return the balance of Bob");
+        let balance = contract
+            .erc721
+            .balance_of(BOB)
+            .expect("should return the balance of Bob");
 
         assert_eq!(initial_balance - uint!(1_U256), balance);
     }
 
     #[motsu::test]
-    fn burns_with_approval_for_all(contract: Erc721<Override>) {
+    fn burns_with_approval_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        contract._mint(BOB, token_id).expect("should mint a token for Bob");
+        Erc721::<Override>::_mint(contract, BOB, token_id)
+            .expect("should mint a token for Bob");
 
-        let initial_balance =
-            contract.balance_of(BOB).expect("should return the balance of Bob");
+        let initial_balance = contract
+            .erc721
+            .balance_of(BOB)
+            .expect("should return the balance of Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.erc721._operator_approvals.setter(BOB).setter(alice).set(true);
 
-        let result = contract.burn(token_id);
+        let result = Erc721Burnable::<Override>::burn(contract, token_id);
 
         assert!(result.is_ok());
 
         let err = contract
+            .erc721
             .owner_of(token_id)
             .expect_err("should return Error::NonexistentToken");
 
@@ -160,27 +175,29 @@ mod tests {
             }) if t_id == token_id
         ));
 
-        let balance =
-            contract.balance_of(BOB).expect("should return the balance of Bob");
+        let balance = contract
+            .erc721
+            .balance_of(BOB)
+            .expect("should return the balance of Bob");
 
         assert_eq!(initial_balance - uint!(1_U256), balance);
     }
 
     #[motsu::test]
-    fn error_when_get_approved_of_previous_approval_burned(
-        contract: Erc721<Override>,
-    ) {
+    fn error_when_get_approved_of_previous_approval_burned(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        contract._mint(alice, token_id).expect("should mint a token for Alice");
-        contract
-            .approve(BOB, token_id)
+        Erc721::<Override>::_mint(contract, alice, token_id)
+            .expect("should mint a token for Alice");
+        Erc721::<Override>::approve(contract, BOB, token_id)
             .expect("should approve a token for Bob");
 
-        contract.burn(token_id).expect("should burn previously minted token");
+        Erc721Burnable::<Override>::burn(contract, token_id)
+            .expect("should burn previously minted token");
 
         let err = contract
+            .erc721
             .get_approved(token_id)
             .expect_err("should return Error::NonexistentToken");
 
@@ -193,13 +210,13 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_without_approval(contract: Erc721<Override>) {
+    fn error_when_burn_without_approval(contract: Token) {
         let token_id = random_token_id();
 
-        contract._mint(BOB, token_id).expect("should mint a token for Bob");
+        Erc721::<Override>::_mint(contract, BOB, token_id)
+            .expect("should mint a token for Bob");
 
-        let err = contract
-            .burn(token_id)
+        let err = Erc721Burnable::<Override>::burn(contract, token_id)
             .expect_err("should not burn unapproved token");
 
         assert!(matches!(
@@ -212,11 +229,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_nonexistent_token(contract: Erc721<Override>) {
+    fn error_when_burn_nonexistent_token(contract: Token) {
         let token_id = random_token_id();
 
-        let err = contract
-            .burn(token_id)
+        let err = Erc721Burnable::<Override>::burn(contract, token_id)
             .expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(

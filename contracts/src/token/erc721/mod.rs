@@ -18,7 +18,7 @@ use crate::{
 
 pub mod base;
 pub mod extensions;
-mod traits;
+pub mod traits;
 
 /// An [`Erc721`] error defined as described in [ERC-6093].
 ///
@@ -81,8 +81,8 @@ pub(crate) mod tests {
     use core::marker::PhantomData;
 
     use alloy_primitives::U256;
+    use openzeppelin_stylus_proc::inherit;
     use stylus_sdk::storage::{StorageBool, StorageMap};
-    use contracts_proc::inherit;
 
     use super::*;
     use crate::{
@@ -103,7 +103,7 @@ pub(crate) mod tests {
     );
 
     sol_storage! {
-        pub struct ERC721 {
+        pub struct Token {
             Erc721<Override> erc721;
             Erc721Burnable<Override> burnable;
             Erc721Pausable<Override> pausable;
@@ -114,13 +114,15 @@ pub(crate) mod tests {
     #[inherit(Erc721Burnable<Override>)]
     #[inherit(Erc721Pausable<Override>)]
     #[inherit(Erc721<Override>)]
-    impl ERC721 {}
+    impl Token {}
 
-    impl Default for ERC721 {
+    unsafe impl TopLevelStorage for Token {}
+
+    impl Default for Token {
         fn default() -> Self {
             let root = U256::ZERO;
 
-            ERC721 {
+            Token {
                 erc721: Erc721 {
                     _owners: unsafe { StorageMap::new(root, 0) },
                     _balances: unsafe {
@@ -138,7 +140,6 @@ pub(crate) mod tests {
                 pausable: Erc721Pausable {
                     pausable: Pausable {
                         _paused: unsafe {
-                            // TODO: what should be size of bool with alignment?
                             StorageBool::new(root + U256::from(128), 0)
                         },
                     },
