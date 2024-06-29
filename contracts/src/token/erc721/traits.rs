@@ -1,11 +1,8 @@
 use alloy_primitives::{Address, U256};
 use stylus_proc::external;
-use stylus_sdk::{abi::Bytes, msg};
+use stylus_sdk::{abi::Bytes, msg, prelude::TopLevelStorage};
 
-use crate::token::erc721::{
-    base::*,
-    Error,
-};
+use crate::token::erc721::{base::*, Error};
 
 /// Required interface of an [`Erc721`] compliant contract.
 pub trait IErc721 {
@@ -79,7 +76,7 @@ pub trait IErc721 {
     ///
     /// Emits a [`Transfer`] event.
     fn safe_transfer_from(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
@@ -125,7 +122,7 @@ pub trait IErc721 {
     ///
     /// Emits a [`Transfer`] event.
     fn safe_transfer_from_with_data(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
@@ -170,7 +167,7 @@ pub trait IErc721 {
     ///
     /// Emits a [`Transfer`] event.
     fn transfer_from(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
@@ -204,7 +201,11 @@ pub trait IErc721 {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error>;
+    fn approve(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error>;
 
     /// Approve or remove `operator` as an operator for the caller.
     ///
@@ -265,11 +266,11 @@ pub trait IErc721 {
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool;
 }
 
-pub trait ERC721Virtual: 'static {
-    type Base: ERC721Virtual;
+pub trait IErc721Virtual: 'static {
+    type Base: IErc721Virtual;
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the zero address.
+    /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
     /// Returns the owner of the `token_id` before the update.
     ///
     /// The `auth` argument is optional. If the value passed is non-zero, then
@@ -281,23 +282,23 @@ pub trait ERC721Virtual: 'static {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `storage` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `auth` - Account used for authorization of the update.
     ///
     /// # Errors
     ///
-    /// * If token does not exist and `auth` is not `Address::ZERO` then
-    /// [`Error::NonexistentToken`] is returned.
-    /// * If `auth` is not `Address::ZERO` and `auth` does not have a right to
-    ///   approve this token
-    /// then [`Error::InsufficientApproval`] is returned.
+    /// If token does not exist and `auth` is not `Address::ZERO`, then the
+    /// error [`Error::NonexistentToken`] is returned.
+    /// If `auth` is not `Address::ZERO` and `auth` does not have a right to
+    /// approve this token, then the error
+    /// [`Error::InsufficientApproval`] is returned.
     ///
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn update<V: ERC721Virtual>(
+    fn update<V: IErc721Virtual>(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -306,8 +307,8 @@ pub trait ERC721Virtual: 'static {
         Self::Base::update::<V>(storage, to, token_id, auth)
     }
 
-    /// Safely transfers `tokenId` token from `from` to `to`, checking that
-    /// contract recipients are aware of the ERC-721 standard to prevent
+    /// Safely transfers `token_id` token from `from` to `to`, checking that
+    /// contract recipients are aware of the [`Erc721`] standard to prevent
     /// tokens from being forever locked.
     ///
     /// `data` is additional data, it has
@@ -319,7 +320,7 @@ pub trait ERC721Virtual: 'static {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `storage` - Write access to the contract's state.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
@@ -328,26 +329,26 @@ pub trait ERC721Virtual: 'static {
     ///
     /// # Errors
     ///
-    /// * If `to` is `Address::ZERO` then [`Error::InvalidReceiver`] is
-    ///   returned.
-    /// * If `token_id` does not exist then [`Error::ERC721NonexistentToken`] is
-    ///   returned.
-    /// * If the previous owner is not `from` then [`Error::IncorrectOwner`] is
-    ///   returned.
+    /// If `to` is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If `token_id` does not exist, then the error
+    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// If the previous owner is not `from`, then the error
+    /// [`Error::IncorrectOwner`] is returned.
     ///
     /// # Requirements:
     ///
-    /// * The `tokenId` token must exist and be owned by `from`.
+    /// * The `token_id` token must exist and be owned by `from`.
     /// * `to` cannot be the zero address.
     /// * `from` cannot be the zero address.
     /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a safe
-    ///   transfer.
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
+    ///   `safe_transfer`.
     ///
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn safe_transfer<V: ERC721Virtual>(
+    fn safe_transfer<V: IErc721Virtual>(
         storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
@@ -363,7 +364,7 @@ pub trait ERC721Virtual: 'static {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `storage` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `auth` - Account used for authorization of the update.
@@ -371,15 +372,15 @@ pub trait ERC721Virtual: 'static {
     ///
     /// # Errors
     ///
-    /// * If the token does not exist then [`Error::NonexistentToken`] is
-    ///   returned.
-    /// * If `auth` does not have a right to approve this token then
-    ///   [`Error::InvalidApprover`] is returned.
+    /// If the token does not exist, then the error
+    /// [`Error::NonexistentToken`] is returned.
+    /// If `auth` does not have a right to approve this token, then the error
+    /// [`Error::InvalidApprover`] is returned.
     ///
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    fn approve<V: ERC721Virtual>(
+    fn approve<V: IErc721Virtual>(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,

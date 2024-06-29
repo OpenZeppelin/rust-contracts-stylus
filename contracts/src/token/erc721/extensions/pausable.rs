@@ -4,12 +4,12 @@ use alloy_primitives::Address;
 use stylus_sdk::{alloy_primitives::U256, msg, prelude::*};
 
 use crate::{
-    erc721::{base::ERC721Virtual, Error, TopLevelStorage},
-    utils::pausable::Pausable,
+    token::erc721::{traits::IErc721Virtual, Error, TopLevelStorage},
+    utils::Pausable,
 };
 
 sol_storage! {
-    pub struct ERC721Pausable<V: ERC721Virtual> {
+    pub struct Erc721Pausable<V: IErc721Virtual> {
         Pausable pausable;
         PhantomData<V> _phantom_data;
     }
@@ -17,14 +17,14 @@ sol_storage! {
 
 #[external]
 #[inherit(Pausable)]
-impl<V: ERC721Virtual> ERC721Pausable<V> {}
+impl<V: IErc721Virtual> Erc721Pausable<V> {}
 
-pub struct ERC721PausableOverride<B: ERC721Virtual>(B);
+pub struct ERC721PausableOverride<B: IErc721Virtual>(B);
 
-impl<B: ERC721Virtual> ERC721Virtual for ERC721PausableOverride<B> {
+impl<B: IErc721Virtual> IErc721Virtual for ERC721PausableOverride<B> {
     type Base = B;
 
-    fn update<V: ERC721Virtual>(
+    fn update<V: IErc721Virtual>(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -39,23 +39,35 @@ impl<B: ERC721Virtual> ERC721Virtual for ERC721PausableOverride<B> {
 #[cfg(all(test, feature = "std"))]
 pub(crate) mod tests {
     use alloy_primitives::address;
-    use once_cell::sync::Lazy;
+    use openzeppelin_stylus_proc::inherit;
 
     use super::*;
-    use crate::erc721::{
-        base::ERC721Base,
-        tests::{random_token_id, ERC721Override, ERC721},
-        TopLevelStorage,
+    use crate::token::erc721::{
+        base::{Erc721, Erc721Override},
+        tests::random_token_id,
+        traits::IErc721,
     };
 
-    static ALICE: Lazy<Address> = Lazy::new(msg::sender);
+    pub type Override = inherit!(ERC721PausableOverride, Erc721Override);
 
-    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
+    sol_storage! {
+        pub struct ERC721 {
+            Erc721<Override> erc721;
+            Erc721Pausable<Override> pausable;
+        }
+    }
 
-    #[grip::test]
-    fn error_transfer_while_paused(storage: ERC721) {
+    #[external]
+    #[inherit(Erc721Pausable<Override>)]
+    #[inherit(Erc721<Override>)]
+    impl crate::token::erc721::tests::ERC721 {}
+
+    #[motsu::test]
+    fn error_transfer_while_paused(storage: Erc721<Override>) {
+        let alice = msg::sender();
+        let bob = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
         let token_id = random_token_id();
-        ERC721Base::<ERC721Override>::_mint(storage, *ALICE, token_id)
+        Erc721::<Override>::_mint(storage, alice, token_id)
             .expect("mint a token to Alice");
 
         let pausable: &mut Pausable = storage.inner_mut();
@@ -63,10 +75,9 @@ pub(crate) mod tests {
         let paused = pausable.paused();
         assert!(paused);
 
-        let err = ERC721Base::<ERC721Override>::transfer_from(
-            storage, *ALICE, BOB, token_id,
-        )
-        .expect_err("should not transfer from paused contract");
+        let err =
+            Erc721::<Override>::transfer_from(storage, alice, bob, token_id)
+                .expect_err("should not transfer from paused contract");
 
         assert!(matches!(err, Error::EnforcedPause(_)));
     }

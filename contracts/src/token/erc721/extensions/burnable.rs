@@ -3,19 +3,19 @@ use std::marker::PhantomData;
 
 use alloy_primitives::{Address, U256};
 use stylus_proc::{external, sol_storage};
-use stylus_sdk::msg;
+use stylus_sdk::{msg, prelude::*};
 
-use crate::token::erc721::{Erc721, Error};
+use crate::token::erc721::{traits::IErc721Virtual, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 sol_storage! {
-    pub struct Erc721Burnable<V: Erc721Virtual> {
+    pub struct Erc721Burnable<V: IErc721Virtual> {
         PhantomData<V> _phantom_data;
     }
 }
 
 #[external]
-impl<V: Erc721Virtual> Erc721Burnable<V> {
+impl<V: IErc721Virtual> Erc721Burnable<V> {
     /// Burns `token_id`.
     /// The approval is cleared when the token is burned.
     /// Relies on the `_burn` mechanism.
@@ -48,27 +48,27 @@ impl<V: Erc721Virtual> Erc721Burnable<V> {
     }
 }
 
-pub struct ERC721BurnableOverride<B: Erc721Virtual>(B);
+pub struct ERC721BurnableOverride<B: IErc721Virtual>(B);
 
-impl<B: Erc721Virtual> Erc721Virtual for ERC721BurnableOverride<B> {
+impl<B: IErc721Virtual> IErc721Virtual for ERC721BurnableOverride<B> {
     type Base = B;
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use alloy_primitives::{address, uint, Address};
     use stylus_sdk::msg;
 
-    use super::Erc721Burnable;
     use crate::token::erc721::{
-        tests::random_token_id, ERC721InsufficientApproval,
-        ERC721NonexistentToken, Erc721, Error, IErc721,
+        tests::{random_token_id, Override},
+        traits::IErc721,
+        ERC721InsufficientApproval, ERC721NonexistentToken, Erc721, Error,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     #[motsu::test]
-    fn burns(contract: Erc721) {
+    fn burns(contract: Erc721<Override>) {
         let alice = msg::sender();
         let one = uint!(1_U256);
         let token_id = random_token_id();
@@ -101,7 +101,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval(contract: Erc721) {
+    fn burns_with_approval(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval_for_all(contract: Erc721) {
+    fn burns_with_approval_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -167,7 +167,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_get_approved_of_previous_approval_burned(contract: Erc721) {
+    fn error_when_get_approved_of_previous_approval_burned(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -191,7 +193,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_without_approval(contract: Erc721) {
+    fn error_when_burn_without_approval(contract: Erc721<Override>) {
         let token_id = random_token_id();
 
         contract._mint(BOB, token_id).expect("should mint a token for Bob");
@@ -210,7 +212,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_nonexistent_token(contract: Erc721) {
+    fn error_when_burn_nonexistent_token(contract: Erc721<Override>) {
         let token_id = random_token_id();
 
         let err = contract

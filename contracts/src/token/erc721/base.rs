@@ -7,10 +7,12 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::erc721::{traits::IErc721, Error},
+    token::erc721::{
+        traits::{IErc721, IErc721Virtual},
+        Error,
+    },
     utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
-use crate::token::erc721::traits::ERC721Virtual;
 
 sol! {
     /// Emitted when the `token_id` token is transferred from `from` to `to`.
@@ -142,7 +144,7 @@ sol_interface! {
 sol_storage! {
     /// State of an [`crate::token::erc721::Erc721`] token.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
-    pub struct Erc721<V: ERC721Virtual> {
+    pub struct Erc721<V: IErc721Virtual> {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
         /// Maps users to balances.
@@ -156,7 +158,7 @@ sol_storage! {
 }
 
 #[external]
-impl<V: ERC721Virtual> IErc721 for Erc721<V> {
+impl<V: IErc721Virtual> IErc721 for Erc721<V> {
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
@@ -169,30 +171,42 @@ impl<V: ERC721Virtual> IErc721 for Erc721<V> {
     }
 
     fn safe_transfer_from(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        // TODO: Once the SDK supports the conversion,
-        // use alloy_primitives::bytes!("") here.
-        self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
+        // TODO: use bytes! macro later
+        Self::safe_transfer_from_with_data(
+            storage,
+            from,
+            to,
+            token_id,
+            alloc::vec![].into(),
+        )
     }
 
     #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        Self::transfer_from(storage, from, to, token_id)?;
+        Self::_check_on_erc721_received(
+            storage,
+            msg::sender(),
+            from,
+            to,
+            token_id,
+            data,
+        )
     }
 
     fn transfer_from(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
@@ -206,20 +220,25 @@ impl<V: ERC721Virtual> IErc721 for Erc721<V> {
         // Setting an "auth" argument enables the `_is_authorized` check which
         // verifies that the token exists (`from != 0`). Therefore, it is
         // not needed to verify that the return value is not 0 here.
-        let previous_owner = self._update(to, token_id, msg::sender())?;
+        let previous_owner =
+            V::Update::update::<V>(storage, to, token_id, msg::sender())?;
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
                 token_id,
                 owner: previous_owner,
             }
-                .into());
+            .into());
         }
         Ok(())
     }
 
-    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
-        self._approve(to, token_id, msg::sender(), true)
+    fn approve(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error> {
+        V::Approve::approve::<V>(storage, to, token_id, msg::sender(), true)
     }
 
     fn set_approval_for_all(
@@ -240,7 +259,108 @@ impl<V: ERC721Virtual> IErc721 for Erc721<V> {
     }
 }
 
-impl Erc721 {
+pub struct Erc721Override;
+
+impl IErc721Virtual for Erc721Override {
+    type Base = Self;
+
+    fn update<V: IErc721Virtual>(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+        auth: Address,
+    ) -> Result<Address, Error> {
+        let base: &Erc721<V> = storage.inner();
+        let from = base._owner_of_inner(token_id);
+
+        // Perform (optional) operator check.
+        if !auth.is_zero() {
+            base._check_authorized(from, auth, token_id)?;
+        }
+
+        // Execute the update.
+        if !from.is_zero() {
+            // Clear approval. No need to re-authorize or emit the Approval
+            // event.
+            V::approve::<V>(
+                storage,
+                Address::ZERO,
+                token_id,
+                Address::ZERO,
+                false,
+            )?;
+            storage
+                .inner_mut::<Erc721<V>>()
+                ._balances
+                .setter(from)
+                .sub_assign_unchecked(U256::from(1));
+        }
+
+        if !to.is_zero() {
+            storage
+                .inner_mut::<Erc721<V>>()
+                ._balances
+                .setter(to)
+                .add_assign_unchecked(U256::from(1));
+        }
+
+        storage.inner_mut::<Erc721<V>>()._owners.setter(token_id).set(to);
+
+        evm::log(Transfer { from, to, token_id });
+
+        Ok(from)
+    }
+
+    fn safe_transfer<V: IErc721Virtual>(
+        storage: &mut impl TopLevelStorage,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Error> {
+        Erc721::<V>::_transfer(storage, from, to, token_id)?;
+        Erc721::<V>::_check_on_erc721_received(
+            storage,
+            msg::sender(),
+            from,
+            to,
+            token_id,
+            data,
+        )
+    }
+
+    fn approve<V: IErc721Virtual>(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+        auth: Address,
+        emit_event: bool,
+    ) -> Result<(), Error> {
+        let storage: &mut Erc721<V> = storage.inner_mut();
+        // Avoid reading the owner unless necessary.
+        if emit_event || !auth.is_zero() {
+            let owner = storage._require_owned(token_id)?;
+
+            // We do not use [`Self::_is_authorized`] because single-token
+            // approvals should not be able to call `approve`.
+            if !auth.is_zero()
+                && owner != auth
+                && !storage.is_approved_for_all(owner, auth)
+            {
+                return Err(ERC721InvalidApprover { approver: auth }.into());
+            }
+
+            if emit_event {
+                evm::log(Approval { owner, approved: to, token_id });
+            }
+        }
+
+        storage._token_approvals.setter(token_id).set(to);
+        Ok(())
+    }
+}
+
+impl<V: IErc721Virtual> Erc721<V> {
     /// Returns the owner of the `token_id`. Does NOT revert if the token
     /// doesn't exist.
     ///
@@ -360,65 +480,6 @@ impl Erc721 {
         self._balances.setter(account).add_assign_unchecked(U256::from(value));
     }
 
-    /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
-    /// Returns the owner of the `token_id` before the update.
-    ///
-    /// The `auth` argument is optional. If the value passed is non-zero, then
-    /// this function will check that `auth` is either the owner of the
-    /// token, or approved to operate on the token (by the owner).
-    ///
-    /// NOTE: If overriding this function in a way that tracks balances, see
-    /// also [`Self::_increase_balance`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `to` - Account of the recipient.
-    /// * `token_id` - Token id as a number.
-    /// * `auth` - Account used for authorization of the update.
-    ///
-    /// # Errors
-    ///
-    /// If token does not exist and `auth` is not `Address::ZERO`, then the
-    /// error [`Error::NonexistentToken`] is returned.
-    /// If `auth` is not `Address::ZERO` and `auth` does not have a right to
-    /// approve this token, then the error
-    /// [`Error::InsufficientApproval`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    pub fn _update(
-        &mut self,
-        to: Address,
-        token_id: U256,
-        auth: Address,
-    ) -> Result<Address, Error> {
-        let from = self._owner_of_inner(token_id);
-
-        // Perform (optional) operator check.
-        if !auth.is_zero() {
-            self._check_authorized(from, auth, token_id)?;
-        }
-
-        // Execute the update.
-        if !from.is_zero() {
-            // Clear approval. No need to re-authorize or emit the `Approval`
-            // event.
-            self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self._balances.setter(from).sub_assign_unchecked(uint!(1_U256));
-        }
-
-        if !to.is_zero() {
-            self._balances.setter(to).add_assign_unchecked(uint!(1_U256));
-        }
-
-        self._owners.setter(token_id).set(to);
-        evm::log(Transfer { from, to, token_id });
-        Ok(from)
-    }
-
     /// Mints `token_id` and transfers it to `to`.
     ///
     /// WARNING: Usage of this method is discouraged, use [`Self::_safe_mint`]
@@ -445,14 +506,19 @@ impl Erc721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    pub fn _mint(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error> {
         if to.is_zero() {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
             );
         }
 
-        let previous_owner = self._update(to, token_id, Address::ZERO)?;
+        let previous_owner =
+            V::update::<V>(storage, to, token_id, Address::ZERO)?;
         if !previous_owner.is_zero() {
             return Err(ERC721InvalidSender { sender: Address::ZERO }.into());
         }
@@ -494,18 +560,19 @@ impl Erc721 {
     ///
     /// Emits a [`Transfer`] event.
     pub fn _safe_mint(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        self._mint(to, token_id)?;
-        self._check_on_erc721_received(
+        Self::_mint(storage, to, token_id)?;
+        Self::_check_on_erc721_received(
+            storage,
             msg::sender(),
             Address::ZERO,
             to,
             token_id,
-            &data,
+            data,
         )
     }
 
@@ -532,9 +599,12 @@ impl Erc721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
+    pub fn _burn(
+        storage: &mut impl TopLevelStorage,
+        token_id: U256,
+    ) -> Result<(), Error> {
         let previous_owner =
-            self._update(Address::ZERO, token_id, Address::ZERO)?;
+            V::update::<V>(storage, Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
             return Err(ERC721NonexistentToken { token_id }.into());
         }
@@ -571,7 +641,7 @@ impl Erc721 {
     ///
     /// Emits a [`Transfer`] event.
     pub fn _transfer(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
@@ -582,7 +652,8 @@ impl Erc721 {
             );
         }
 
-        let previous_owner = self._update(to, token_id, Address::ZERO)?;
+        let previous_owner =
+            V::update::<V>(storage, to, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
             return Err(ERC721NonexistentToken { token_id }.into());
         } else if previous_owner != from {
@@ -594,109 +665,6 @@ impl Erc721 {
             .into());
         }
 
-        Ok(())
-    }
-
-    /// Safely transfers `token_id` token from `from` to `to`, checking that
-    /// contract recipients are aware of the [`Erc721`] standard to prevent
-    /// tokens from being forever locked.
-    ///
-    /// `data` is additional data, it has
-    /// no specified format and it is sent in call to `to`. This internal
-    /// function is like [`Self::safe_transfer_from`] in the sense that it
-    /// invokes [`IERC721Receiver::on_erc_721_received`] on the receiver,
-    /// and can be used to e.g. implement alternative mechanisms to perform
-    /// token transfer, such as signature-based.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account of the sender.
-    /// * `to` - Account of the recipient.
-    /// * `token_id` - Token id as a number.
-    /// * `data` - Additional data with no specified format, sent in the call to
-    ///   [`Self::_check_on_erc721_received`].
-    ///
-    /// # Errors
-    ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// If `token_id` does not exist, then the error
-    /// [`Error::ERC721NonexistentToken`] is returned.
-    /// If the previous owner is not `from`, then the error
-    /// [`Error::IncorrectOwner`] is returned.
-    ///
-    /// # Requirements:
-    ///
-    /// * The `token_id` token must exist and be owned by `from`.
-    /// * `to` cannot be the zero address.
-    /// * `from` cannot be the zero address.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
-    ///   `safe_transfer`.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    pub fn _safe_transfer(
-        &mut self,
-        from: Address,
-        to: Address,
-        token_id: U256,
-        data: Bytes,
-    ) -> Result<(), Error> {
-        self._transfer(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
-    }
-
-    /// Variant of `approve_inner` with an optional flag to enable or disable
-    /// the [`Approval`] event. The event is not emitted in the context of
-    /// transfers.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `to` - Account of the recipient.
-    /// * `token_id` - Token id as a number.
-    /// * `auth` - Account used for authorization of the update.
-    /// * `emit_event` - Emit an [`Approval`] event flag.
-    ///
-    /// # Errors
-    ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
-    /// If `auth` does not have a right to approve this token, then the error
-    /// [`Error::InvalidApprover`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits an [`Approval`] event.
-    pub fn _approve(
-        &mut self,
-        to: Address,
-        token_id: U256,
-        auth: Address,
-        emit_event: bool,
-    ) -> Result<(), Error> {
-        // Avoid reading the owner unless necessary.
-        if emit_event || !auth.is_zero() {
-            let owner = self._require_owned(token_id)?;
-
-            // We do not use [`Self::_is_authorized`] because single-token
-            // approvals should not be able to call `approve`.
-            if !auth.is_zero()
-                && owner != auth
-                && !self.is_approved_for_all(owner, auth)
-            {
-                return Err(ERC721InvalidApprover { approver: auth }.into());
-            }
-
-            if emit_event {
-                evm::log(Approval { owner, approved: to, token_id });
-            }
-        }
-
-        self._token_approvals.setter(token_id).set(to);
         Ok(())
     }
 
@@ -786,19 +754,19 @@ impl Erc721 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     pub fn _check_on_erc721_received(
-        &mut self,
+        storage: &mut impl TopLevelStorage,
         operator: Address,
         from: Address,
         to: Address,
         token_id: U256,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
         const IERC721RECEIVER_INTERFACE_ID: FixedBytes<4> =
             fixed_bytes!("150b7a02");
 
         // FIXME: Cleanup this code once it's covered in the test suite.
         if to.has_code() {
-            let call = Call::new_in(self);
+            let call = Call::new_in(storage);
             return match IERC721Receiver::new(to).on_erc_721_received(
                 call,
                 operator,
@@ -823,13 +791,15 @@ impl Erc721 {
 #[cfg(all(test, feature = "std"))]
 pub mod tests {
     use alloy_primitives::{address, uint, Address, U256};
-    use openzeppelin_stylus::token::erc721::{
+    use stylus_sdk::msg;
+
+    use crate::token::erc721::{
+        base::Erc721Override as Override, traits::IErc721,
         ERC721IncorrectOwner, ERC721InsufficientApproval,
         ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, Error, IErc721,
+        Erc721, Error,
     };
-    use stylus_sdk::msg;
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
     const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
@@ -840,7 +810,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_checking_balance_of_invalid_owner(contract: Erc721) {
+    fn error_when_checking_balance_of_invalid_owner(
+        contract: Erc721<Override>,
+    ) {
         let invalid_owner = Address::ZERO;
         let err = contract
             .balance_of(invalid_owner)
@@ -852,7 +824,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_zero_balance(contract: Erc721) {
+    fn balance_of_zero_balance(contract: Erc721<Override>) {
         let owner = msg::sender();
         let balance =
             contract.balance_of(owner).expect("should return `U256::ZERO`");
@@ -860,7 +832,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_checking_owner_of_nonexistent_token(contract: Erc721) {
+    fn error_when_checking_owner_of_nonexistent_token(
+        contract: Erc721<Override>,
+    ) {
         let token_id = random_token_id();
 
         let err = contract
@@ -876,7 +850,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn mints(contract: Erc721) {
+    fn mints(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -898,7 +872,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_minting_token_id_twice(contract: Erc721) {
+    fn error_when_minting_token_id_twice(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract
@@ -915,7 +889,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_mints(contract: Erc721) {
+    fn safe_mints(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -940,7 +914,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_mint_token_id_twice(contract: Erc721) {
+    fn error_when_safe_mint_token_id_twice(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract
@@ -958,7 +932,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_mint_invalid_receiver(contract: Erc721) {
+    fn error_when_safe_mint_invalid_receiver(contract: Erc721<Override>) {
         let invalid_receiver = Address::ZERO;
 
         let token_id = random_token_id();
@@ -976,7 +950,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn transfers_from(contract: Erc721) {
+    fn transfers_from(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -990,7 +964,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn transfers_from_approved_token(contract: Erc721) {
+    fn transfers_from_approved_token(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1005,7 +979,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn transfers_from_approved_for_all(contract: Erc721) {
+    fn transfers_from_approved_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1028,7 +1002,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_transfer_from_transfers_to_invalid_receiver(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1055,7 +1029,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_transfer_from_transfers_from_incorrect_owner(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1084,7 +1058,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_transfer_from_transfers_with_insufficient_approval(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1102,7 +1076,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_from_transfers_nonexistent_token(contract: Erc721) {
+    fn error_when_transfer_from_transfers_nonexistent_token(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
@@ -1117,7 +1093,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from(contract: Erc721) {
+    fn safe_transfers_from(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1134,7 +1110,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_approved_token(contract: Erc721) {
+    fn safe_transfers_from_approved_token(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1149,7 +1125,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_approved_for_all(contract: Erc721) {
+    fn safe_transfers_from_approved_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1172,7 +1148,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_transfers_to_invalid_receiver(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1199,7 +1175,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_transfers_from_incorrect_owner(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1228,7 +1204,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_transfers_with_insufficient_approval(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1247,7 +1223,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_transfers_nonexistent_token(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1263,7 +1239,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_with_data(contract: Erc721) {
+    fn safe_transfers_from_with_data(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1285,7 +1261,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_with_data_approved_token(contract: Erc721) {
+    fn safe_transfers_from_with_data_approved_token(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1305,7 +1283,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_with_data_approved_for_all(contract: Erc721) {
+    fn safe_transfers_from_with_data_approved_for_all(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1333,7 +1313,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_with_data_transfers_to_invalid_receiver(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1365,7 +1345,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_with_data_transfers_from_incorrect_owner(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1401,7 +1381,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_with_data_transfers_with_insufficient_approval(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1425,7 +1405,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_with_data_transfers_nonexistent_token(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1446,7 +1426,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn approves(contract: Erc721) {
+    fn approves(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1457,7 +1437,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_for_nonexistent_token(contract: Erc721) {
+    fn error_when_approve_for_nonexistent_token(contract: Erc721<Override>) {
         let token_id = random_token_id();
         let err = contract
             .approve(BOB, token_id)
@@ -1472,7 +1452,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_by_invalid_approver(contract: Erc721) {
+    fn error_when_approve_by_invalid_approver(contract: Erc721<Override>) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
 
@@ -1489,7 +1469,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn approval_for_all(contract: Erc721) {
+    fn approval_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         contract._operator_approvals.setter(alice).setter(BOB).set(false);
 
@@ -1505,7 +1485,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approval_for_all_for_invalid_operator(contract: Erc721) {
+    fn error_when_approval_for_all_for_invalid_operator(
+        contract: Erc721<Override>,
+    ) {
         let invalid_operator = Address::ZERO;
 
         let err = contract
@@ -1521,7 +1503,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_get_approved_of_nonexistent_token(contract: Erc721) {
+    fn error_when_get_approved_of_nonexistent_token(
+        contract: Erc721<Override>,
+    ) {
         let token_id = random_token_id();
         let err = contract
             .get_approved(token_id)
@@ -1536,7 +1520,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn owner_of_inner_works(contract: Erc721) {
+    fn owner_of_inner_works(contract: Erc721<Override>) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
 
@@ -1545,21 +1529,21 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn owner_of_inner_nonexistent_token(contract: Erc721) {
+    fn owner_of_inner_nonexistent_token(contract: Erc721<Override>) {
         let token_id = random_token_id();
         let owner = contract._owner_of_inner(token_id);
         assert_eq!(Address::ZERO, owner);
     }
 
     #[motsu::test]
-    fn get_approved_inner_nonexistent_token(contract: Erc721) {
+    fn get_approved_inner_nonexistent_token(contract: Erc721<Override>) {
         let token_id = random_token_id();
         let approved = contract._get_approved_inner(token_id);
         assert_eq!(Address::ZERO, approved);
     }
 
     #[motsu::test]
-    fn get_approved_inner_token_without_approval(contract: Erc721) {
+    fn get_approved_inner_token_without_approval(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1569,7 +1553,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_inner_token_with_approval(contract: Erc721) {
+    fn get_approved_inner_token_with_approval(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1583,7 +1567,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_inner_token_with_approval_for_all(contract: Erc721) {
+    fn get_approved_inner_token_with_approval_for_all(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1597,7 +1583,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn is_authorized_nonexistent_token(contract: Erc721) {
+    fn is_authorized_nonexistent_token(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let authorized = contract._is_authorized(alice, BOB, token_id);
@@ -1605,7 +1591,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn is_authorized_token_owner(contract: Erc721) {
+    fn is_authorized_token_owner(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1615,7 +1601,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn is_authorized_without_approval(contract: Erc721) {
+    fn is_authorized_without_approval(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1625,7 +1611,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn is_authorized_with_approval(contract: Erc721) {
+    fn is_authorized_with_approval(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1638,7 +1624,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn is_authorized_with_approval_for_all(contract: Erc721) {
+    fn is_authorized_with_approval_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1651,7 +1637,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn check_authorized_nonexistent_token(contract: Erc721) {
+    fn check_authorized_nonexistent_token(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
@@ -1667,7 +1653,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn check_authorized_token_owner(contract: Erc721) {
+    fn check_authorized_token_owner(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1678,7 +1664,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn check_authorized_without_approval(contract: Erc721) {
+    fn check_authorized_without_approval(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1697,7 +1683,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn check_authorized_with_approval(contract: Erc721) {
+    fn check_authorized_with_approval(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1710,7 +1696,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn check_authorized_with_approval_for_all(contract: Erc721) {
+    fn check_authorized_with_approval_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -1723,7 +1709,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Erc721) {
+    fn burns(contract: Erc721<Override>) {
         let alice = msg::sender();
         let one = uint!(1_U256);
         let token_id = random_token_id();
@@ -1756,7 +1742,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_get_approved_of_previous_approval_burned(contract: Erc721) {
+    fn error_when_get_approved_of_previous_approval_burned(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1780,7 +1768,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_nonexistent_token(contract: Erc721) {
+    fn error_when_burn_nonexistent_token(contract: Erc721<Override>) {
         let token_id = random_token_id();
 
         let err = contract
@@ -1796,7 +1784,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn transfers(contract: Erc721) {
+    fn transfers(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1810,7 +1798,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn transfers_approved_token(contract: Erc721) {
+    fn transfers_approved_token(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1825,7 +1813,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn transfers_approved_for_all(contract: Erc721) {
+    fn transfers_approved_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1847,7 +1835,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_transfers_to_invalid_receiver(contract: Erc721) {
+    fn error_when_transfer_transfers_to_invalid_receiver(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
@@ -1872,7 +1862,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_transfers_from_incorrect_owner(contract: Erc721) {
+    fn error_when_transfer_transfers_from_incorrect_owner(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1900,7 +1892,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_transfers_nonexistent_token(contract: Erc721) {
+    fn error_when_transfer_transfers_nonexistent_token(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
@@ -1915,7 +1909,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_internal(contract: Erc721) {
+    fn safe_transfers_internal(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1932,7 +1926,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_internal_approved_token(contract: Erc721) {
+    fn safe_transfers_internal_approved_token(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1947,7 +1941,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_internal_approved_for_all(contract: Erc721) {
+    fn safe_transfers_internal_approved_for_all(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1970,7 +1964,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_internal_ransfers_to_invalid_receiver(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -2002,7 +1996,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_internal_transfers_from_incorrect_owner(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -2031,7 +2025,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_internal_transfers_nonexistent_token(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -2048,7 +2042,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn approves_internal(contract: Erc721) {
+    fn approves_internal(contract: Erc721<Override>) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token");
@@ -2059,7 +2053,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_internal_for_nonexistent_token(contract: Erc721) {
+    fn error_when_approve_internal_for_nonexistent_token(
+        contract: Erc721<Override>,
+    ) {
         let token_id = random_token_id();
         let err = contract
             ._approve(BOB, token_id, msg::sender(), false)
@@ -2074,7 +2070,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_internal_by_invalid_approver(contract: Erc721) {
+    fn error_when_approve_internal_by_invalid_approver(
+        contract: Erc721<Override>,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
@@ -2092,7 +2090,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn approval_for_all_internal(contract: Erc721) {
+    fn approval_for_all_internal(contract: Erc721<Override>) {
         let alice = msg::sender();
         contract._operator_approvals.setter(alice).setter(BOB).set(false);
 
@@ -2109,7 +2107,7 @@ pub mod tests {
 
     #[motsu::test]
     fn error_when_approval_for_all_internal_for_invalid_operator(
-        contract: Erc721,
+        contract: Erc721<Override>,
     ) {
         let invalid_operator = Address::ZERO;
 
@@ -2126,7 +2124,7 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn require_owned_works(contract: Erc721) {
+    fn require_owned_works(contract: Erc721<Override>) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
 
@@ -2138,7 +2136,9 @@ pub mod tests {
     }
 
     #[motsu::test]
-    fn error_when_require_owned_for_nonexistent_token(contract: Erc721) {
+    fn error_when_require_owned_for_nonexistent_token(
+        contract: Erc721<Override>,
+    ) {
         let token_id = random_token_id();
         let err = contract
             ._require_owned(token_id)

@@ -65,7 +65,7 @@ impl Pausable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn paused(&self) -> bool {
+    pub fn paused(&self) -> bool {
         self._paused.get()
     }
 
