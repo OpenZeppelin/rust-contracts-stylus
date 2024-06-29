@@ -32,7 +32,7 @@ impl<B: IErc721Virtual> IErc721Virtual for ERC721PausableOverride<B> {
         auth: Address,
     ) -> Result<Address, Error> {
         let pausable: &mut Pausable = storage.inner_mut();
-        pausable.require_not_paused()?;
+        pausable.when_not_paused()?;
         Self::Base::update::<V>(storage, to, token_id, auth)
     }
 }
