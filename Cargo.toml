@@ -99,3 +99,17 @@ incremental = false
 
 [profile.dev]
 panic = "abort"
+
+[patch.crates-io.stylus-sdk]
+git = "https://github.com/qalisander/stylus-sdk-rs"
+branch = "toplevelstorage-dependency-injection"
+
+[patch.crates-io.stylus-proc]
+git = "https://github.com/qalisander/stylus-sdk-rs"
+branch = "toplevelstorage-dependency-injection"
+
+#[patch.crates-io.stylus-sdk]
+#path = "../stylus-sdk-rs/stylus-sdk"
+#
+#[patch.crates-io.stylus-proc]
+#path = "../stylus-sdk-rs/stylus-proc"

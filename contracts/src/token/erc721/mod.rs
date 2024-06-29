@@ -81,8 +81,8 @@ pub(crate) mod tests {
     use core::marker::PhantomData;
 
     use alloy_primitives::U256;
-    use openzeppelin_stylus_proc::inherit;
     use stylus_sdk::storage::{StorageBool, StorageMap};
+    use contracts_proc::inherit;
 
     use super::*;
     use crate::{
