@@ -50,20 +50,20 @@ pub(crate) mod tests {
     };
 
     #[motsu::test]
-    fn error_transfer_while_paused(storage: Token) {
+    fn error_transfer_while_paused(contract: Token) {
         let alice = msg::sender();
         let bob = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(storage, alice, token_id)
+        Erc721::<Override>::_mint(contract, alice, token_id)
             .expect("mint a token to Alice");
 
-        let pausable: &mut Pausable = storage.inner_mut();
+        let pausable: &mut Pausable = contract.inner_mut();
         pausable.pause();
         let paused = pausable.paused();
         assert!(paused);
 
         let err =
-            Erc721::<Override>::transfer_from(storage, alice, bob, token_id)
+            Erc721::<Override>::transfer_from(contract, alice, bob, token_id)
                 .expect_err("should not transfer from paused contract");
 
         assert!(matches!(err, Error::EnforcedPause(_)));
