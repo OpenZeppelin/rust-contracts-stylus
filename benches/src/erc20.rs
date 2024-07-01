@@ -1,15 +1,13 @@
 use alloy::{
     network::{AnyNetwork, EthereumWallet},
     primitives::Address,
-    providers::{fillers::ChainIdFiller, ProviderBuilder},
-    rpc::types::TransactionReceipt,
-    signers::local::PrivateKeySigner,
+    providers::ProviderBuilder,
     sol,
     sol_types::SolConstructor,
     uint,
 };
 use alloy_primitives::U256;
-use e2e::{fund_account, receipt, Account};
+use e2e::{receipt, Account};
 use koba::config::Deploy;
 
 use crate::ArbOtherFields;
@@ -24,10 +22,7 @@ sol!(
         function decimals() external view returns (uint8 decimals);
         function totalSupply() external view returns (uint256 totalSupply);
         function balanceOf(address account) external view returns (uint256 balance);
-        function transfer(address recipient, uint256 amount) external returns (bool);
         function allowance(address owner, address spender) external view returns (uint256 allowance);
-        function approve(address spender, uint256 amount) external returns (bool);
-        function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
         function cap() public view virtual returns (uint256 cap);
 
@@ -35,20 +30,9 @@ sol!(
         function burn(uint256 amount) external;
         function burnFrom(address account, uint256 amount) external;
 
-        error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
-        error ERC20InvalidCap(uint256 cap);
-
-        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
-        error ERC20InvalidSender(address sender);
-        error ERC20InvalidReceiver(address receiver);
-        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-        error ERC20InvalidSpender(address spender);
-
-        #[derive(Debug, PartialEq)]
-        event Transfer(address indexed from, address indexed to, uint256 value);
-
-        #[derive(Debug, PartialEq)]
-        event Approval(address indexed owner, address indexed spender, uint256 value);
+        function transfer(address recipient, uint256 amount) external returns (bool);
+        function approve(address spender, uint256 amount) external returns (bool);
+        function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     }
 );
 
@@ -69,37 +53,54 @@ pub async fn bench() -> eyre::Result<()> {
 
     let bob = Account::new().await?;
     let bob_addr = bob.address();
+    let bob_wallet = ProviderBuilder::new()
+        .network::<AnyNetwork>()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(bob.signer.clone()))
+        .on_http(bob.url().parse()?);
 
     let contract_addr = deploy(&alice).await;
     let contract = Erc20::new(contract_addr, &alice_wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob_wallet);
 
     println!("Running benches...");
     let receipts = vec![
         ("name()", receipt!(contract.name())?),
         ("symbol()", receipt!(contract.symbol())?),
-        ("cap()", receipt!(contract.cap())?),
         ("decimals()", receipt!(contract.decimals())?),
         ("totalSupply()", receipt!(contract.totalSupply())?),
-        ("balanceOf(account)", receipt!(contract.balanceOf(alice_addr))?),
+        ("balanceOf(alice)", receipt!(contract.balanceOf(alice_addr))?),
         (
-            "mint(account, amount)",
+            "allowance(alice, bob)",
+            receipt!(contract.allowance(alice_addr, bob_addr))?,
+        ),
+        ("cap()", receipt!(contract.cap())?),
+        (
+            "mint(alice, 10)",
             receipt!(contract.mint(alice_addr, uint!(10_U256)))?,
         ),
+        ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
         (
-            "burn(amount)",
-            receipt!(contract.burn(uint!(1_U256)).from(alice_addr))?,
+            "burnFrom(alice, 1)",
+            receipt!(contract.burnFrom(alice_addr, uint!(1_U256)))?,
         ),
         (
-            "transfer(account, amount)",
-            receipt!(contract
-                .transfer(bob_addr, uint!(1_U256))
-                .from(alice_addr))?,
+            "transfer(bob, 1)",
+            receipt!(contract.transfer(bob_addr, uint!(1_U256)))?,
+        ),
+        (
+            "approve(bob, 5)",
+            receipt!(contract.approve(bob_addr, uint!(5_U256)))?,
+        ),
+        (
+            "transferFrom(alice, bob, 5)",
+            receipt!(contract_bob.transferFrom(
+                alice_addr,
+                bob_addr,
+                uint!(5_U256)
+            ))?,
         ),
     ];
-
-    println!("+------------------------------------------------------+");
-    println!("| Function Name      | L2 Gas | L1 Gas | Effective Gas |");
-    println!("|--------------------|--------|--------|---------------|");
 
     // Calculate the width of the longest function name.
     let max_name_width = receipts
@@ -116,13 +117,13 @@ pub async fn bench() -> eyre::Result<()> {
     // Print the table header.
     println!("+{}+", "-".repeat(total_width - 2));
     println!(
-        "| {:<width$} | L2 Gas | L1 Gas | Effective Gas        |",
-        "Function Name",
+        "| {:<width$} | L2 Gas | L1 Gas |        Effective Gas |",
+        "Function",
         width = name_width
     );
     println!(
         "|{}+--------+--------+----------------------|",
-        "-".repeat(name_width + 1)
+        "-".repeat(name_width + 2)
     );
 
     // Print each row.
