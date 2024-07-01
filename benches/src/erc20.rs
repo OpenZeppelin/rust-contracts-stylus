@@ -73,10 +73,7 @@ pub async fn bench() -> eyre::Result<()> {
     let contract_addr = deploy(&alice).await;
     let contract = Erc20::new(contract_addr, &alice_wallet);
 
-    println!("+------------------------------------------------------+");
-    println!("| Function Name      | L2 Gas | L1 Gas | Effective Gas |");
-    println!("|--------------------|--------|--------|---------------|");
-
+    println!("Running benches...");
     let receipts = vec![
         ("name()", receipt!(contract.name())?),
         ("symbol()", receipt!(contract.symbol())?),
@@ -86,11 +83,11 @@ pub async fn bench() -> eyre::Result<()> {
         ("balanceOf(account)", receipt!(contract.balanceOf(alice_addr))?),
         (
             "mint(account, amount)",
-            receipt!(contract.mint(alice_addr, uint!(100_U256)))?,
+            receipt!(contract.mint(alice_addr, uint!(10_U256)))?,
         ),
         (
             "burn(amount)",
-            receipt!(contract.burn(uint!(100_U256)).from(alice_addr))?,
+            receipt!(contract.burn(uint!(1_U256)).from(alice_addr))?,
         ),
         (
             "transfer(account, amount)",
@@ -99,6 +96,10 @@ pub async fn bench() -> eyre::Result<()> {
                 .from(alice_addr))?,
         ),
     ];
+
+    println!("+------------------------------------------------------+");
+    println!("| Function Name      | L2 Gas | L1 Gas | Effective Gas |");
+    println!("|--------------------|--------|--------|---------------|");
 
     for (func_name, receipt) in receipts {
         let l2_gas = receipt.gas_used;
