@@ -1,7 +1,13 @@
-use alloy::{primitives::Address, sol, sol_types::SolConstructor, uint};
+use alloy::{
+    network::AnyNetwork, primitives::Address, providers::ProviderBuilder,
+    rpc::types::TransactionReceipt, signers::local::PrivateKeySigner, sol,
+    sol_types::SolConstructor, uint,
+};
 use alloy_primitives::U256;
-use e2e::Account;
+use e2e::{fund_account, receipt, Account};
 use koba::config::Deploy;
+
+use crate::ArbOtherFields;
 
 const RPC_URL: &str = "http://localhost:8547";
 
@@ -49,42 +55,50 @@ const CAP: U256 = uint!(1_000_000_U256);
 
 pub async fn bench() -> eyre::Result<()> {
     let alice = Account::new().await?;
-    let bob = Account::new().await?;
+    let alice_addr = alice.address();
+    let alice_wallet = ProviderBuilder::new()
+        .network::<AnyNetwork>()
+        .with_recommended_fillers()
+        .on_http(alice.url().parse()?);
+
     let contract_addr = deploy(&alice).await;
-    let contract = Erc20::new(contract_addr, &alice.wallet);
+    let contract = Erc20::new(contract_addr, &alice_wallet);
 
-    let gas = contract.name().estimate_gas().await?;
+    let receipt = receipt!(contract.name())?;
+    let l2_gas = receipt.gas_used;
+    let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
+    let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
+    let gas = l2_gas - l1_gas;
     println!("name(): {gas}");
-    let gas = contract.symbol().estimate_gas().await?;
-    println!("symbol(): {gas}");
-    let gas = contract.cap().estimate_gas().await?;
-    println!("cap(): {gas}");
-    let gas = contract.decimals().estimate_gas().await?;
-    println!("decimals(): {gas}");
-    let gas = contract.totalSupply().estimate_gas().await?;
-    println!("totalSupply(): {gas}");
-    let gas = contract.balanceOf(alice.address()).estimate_gas().await?;
-    println!("balanceOf(account): {gas}");
+    // let receipt = receipt!(contract.symbol())?;
+    // println!("symbol(): {gas}");
+    // let receipt = receipt!(contract.cap())?;
+    // println!("cap(): {gas}");
+    // let receipt = receipt!(contract.decimals())?;
+    // println!("decimals(): {gas}");
+    // let receipt = receipt!(contract.totalSupply())?;
+    // println!("totalSupply(): {gas}");
+    // let receipt = receipt!(contract.balanceOf(alice_addr))?;
+    // println!("balanceOf(account): {gas}");
 
-    let gas =
-        contract.mint(alice.address(), uint!(100_U256)).estimate_gas().await?;
+    let gas = contract.mint(alice_addr, uint!(100_U256)).estimate_gas().await?;
     println!("mint(account, amount): {gas}");
 
     let _ = contract
-        .mint(alice.address(), uint!(100_U256))
+        .mint(alice_addr, uint!(100_U256))
         .send()
         .await?
         .watch()
         .await?;
-    let gas = contract
-        .burn(uint!(100_U256))
-        .from(alice.address())
-        .estimate_gas()
-        .await?;
+    let gas =
+        contract.burn(uint!(100_U256)).from(alice_addr).estimate_gas().await?;
     println!("burn(amount): {gas}");
+
+    let bob = Account::new().await?;
+    let bob_addr = bob.address();
     let gas = contract
-        .transfer(bob.address(), uint!(1_U256))
-        .from(alice.address())
+        .transfer(bob_addr, uint!(1_U256))
+        .from(alice_addr)
         .estimate_gas()
         .await?;
     println!("transfer(account, amount): {gas}");

@@ -843,6 +843,7 @@ dependencies = [
  "e2e",
  "eyre",
  "koba",
+ "serde",
  "tokio",
 ]
 
