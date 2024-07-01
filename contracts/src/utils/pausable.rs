@@ -103,8 +103,8 @@ impl Pausable {
         Ok(())
     }
 
-    /// Modifier to make a function callable
-    /// only when the contract is NOT paused.
+    /// Modifier to make a function callable only when the contract is NOT
+    /// paused.
     ///
     /// # Arguments
     ///
@@ -112,7 +112,7 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// If the contract is in `Paused` state, then the error
+    /// If the contract is in the `Paused` state, then the error
     /// [`Error::EnforcedPause`] is returned.
     pub fn when_not_paused(&self) -> Result<(), Error> {
         if self._paused.get() {

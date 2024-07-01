@@ -47,7 +47,7 @@ impl IErc721Burnable for Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use alloy_primitives::{address, uint, Address};
     use stylus_sdk::msg;
 
     use super::IErc721Burnable;

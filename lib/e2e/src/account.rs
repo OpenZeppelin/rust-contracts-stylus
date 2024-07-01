@@ -4,14 +4,11 @@ use alloy::{
     providers::{Provider, ProviderBuilder},
     signers::local::PrivateKeySigner,
 };
-use eyre::{bail, Result};
+use eyre::Result;
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
-use crate::{
-    environment::get_node_path,
-    system::{Wallet, RPC_URL_ENV_VAR_NAME},
-};
+use crate::system::{fund_account, Wallet, RPC_URL_ENV_VAR_NAME};
 
 /// Type that corresponds to a test account.
 #[derive(Clone, Debug)]
@@ -78,18 +75,7 @@ impl AccountFactory {
 
         let signer = PrivateKeySigner::random();
         let addr = signer.address();
-
-        // ./test-node.bash script send-l2 --to
-        // address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10
-        let node_script = get_node_path()?.join("test-node.bash");
-        let output = std::process::Command::new(node_script)
-            .arg("script")
-            .arg("send-l2")
-            .arg("--to")
-            .arg(format!("address_{addr}"))
-            .arg("--ethamount")
-            .arg("10")
-            .output()?;
+        fund_account(addr, "10")?;
 
         let rpc_url = std::env::var(RPC_URL_ENV_VAR_NAME)
             .expect("failed to load RPC_URL var from env")
@@ -100,11 +86,6 @@ impl AccountFactory {
             .wallet(EthereumWallet::from(signer.clone()))
             .on_http(rpc_url);
 
-        if output.status.success() {
-            Ok(Account { signer, wallet })
-        } else {
-            let err = String::from_utf8_lossy(&output.stderr);
-            bail!("account's wallet wasn't funded - address is {addr}:\n{err}")
-        }
+        Ok(Account { signer, wallet })
     }
 }

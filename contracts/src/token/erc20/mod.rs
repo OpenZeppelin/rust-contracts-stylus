@@ -346,12 +346,11 @@ impl Erc20 {
         self._update(Address::ZERO, account, value)
     }
 
-    /// Transfers a `value` amount of tokens from `from` to `to`,
-    /// or alternatively mints (or burns)
-    /// if `from` (or `to`) is the zero address.
+    /// Transfers a `value` amount of tokens from `from` to `to`, or
+    /// alternatively mints (or burns) if `from` (or `to`) is the zero address.
     ///
-    /// All customizations to transfers, mints, and burns
-    /// should be done by using this function.
+    /// All customizations to transfers, mints, and burns should be done by
+    /// using this function.
     ///
     /// # Arguments
     ///
@@ -361,8 +360,8 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// If `_total_supply` exceeds `U256::MAX`.
-    /// It may happen during `mint` operation.
+    /// If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    /// operation.
     ///
     /// # Errors
     ///
