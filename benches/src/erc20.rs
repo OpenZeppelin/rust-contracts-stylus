@@ -70,12 +70,36 @@ pub async fn bench() -> eyre::Result<()> {
     let contract_addr = deploy(&alice).await;
     let contract = Erc20::new(contract_addr, &alice_wallet);
 
-    let receipt = receipt!(contract.name())?;
-    let l2_gas = receipt.gas_used;
-    let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
-    let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
-    let gas = l2_gas - l1_gas;
-    println!("name(): {gas}");
+    // let receipt = receipt!(contract.name())?;
+    // let l2_gas = receipt.gas_used;
+    // let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
+    // let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
+    // let gas = l2_gas - l1_gas;
+    println!("| Function Name      | L2 Gas | L1 Gas | Effective Gas |");
+    println!("|-------------------|--------|--------|---------------|");
+
+    let receipts = vec![
+        ("name()", receipt!(contract.name())?),
+        ("symbol()", receipt!(contract.symbol())?),
+        ("cap()", receipt!(contract.cap())?),
+        ("decimals()", receipt!(contract.decimals())?),
+        ("totalSupply()", receipt!(contract.totalSupply())?),
+        ("balanceOf(account)", receipt!(contract.balanceOf(alice_addr))?),
+    ];
+
+    for (func_name, receipt) in receipts {
+        let l2_gas = receipt.gas_used;
+        let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
+        let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
+        let effective_gas = l2_gas - l1_gas;
+
+        println!(
+            "| {:<18} | {:>6} | {:>6} | {:>13} |",
+            func_name, l2_gas, l1_gas, effective_gas
+        );
+    }
+
+    // println!("name(): {gas}");
     // let receipt = receipt!(contract.symbol())?;
     // println!("symbol(): {gas}");
     // let receipt = receipt!(contract.cap())?;
@@ -87,27 +111,27 @@ pub async fn bench() -> eyre::Result<()> {
     // let receipt = receipt!(contract.balanceOf(alice_addr))?;
     // println!("balanceOf(account): {gas}");
 
-    let gas = contract.mint(alice_addr, uint!(100_U256)).estimate_gas().await?;
-    println!("mint(account, amount): {gas}");
-
-    let _ = contract
-        .mint(alice_addr, uint!(100_U256))
-        .send()
-        .await?
-        .watch()
-        .await?;
-    let gas =
-        contract.burn(uint!(100_U256)).from(alice_addr).estimate_gas().await?;
-    println!("burn(amount): {gas}");
-
-    let bob = Account::new().await?;
-    let bob_addr = bob.address();
-    let gas = contract
-        .transfer(bob_addr, uint!(1_U256))
-        .from(alice_addr)
-        .estimate_gas()
-        .await?;
-    println!("transfer(account, amount): {gas}");
+    // let gas = contract.mint(alice_addr, uint!(100_U256)).estimate_gas().await?;
+    // println!("mint(account, amount): {gas}");
+    //
+    // let _ = contract
+    //     .mint(alice_addr, uint!(100_U256))
+    //     .send()
+    //     .await?
+    //     .watch()
+    //     .await?;
+    // let gas =
+    //     contract.burn(uint!(100_U256)).from(alice_addr).estimate_gas().await?;
+    // println!("burn(amount): {gas}");
+    //
+    // let bob = Account::new().await?;
+    // let bob_addr = bob.address();
+    // let gas = contract
+    //     .transfer(bob_addr, uint!(1_U256))
+    //     .from(alice_addr)
+    //     .estimate_gas()
+    //     .await?;
+    // println!("transfer(account, amount): {gas}");
 
     Ok(())
 }
