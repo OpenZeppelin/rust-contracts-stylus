@@ -98,7 +98,7 @@ pub async fn bench() -> eyre::Result<()> {
             receipt!(contract_bob.transferFrom(
                 alice_addr,
                 bob_addr,
-                uint!(5_U256)
+                uint!(4_U256)
             ))?,
         ),
     ];
