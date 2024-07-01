@@ -49,7 +49,7 @@ sol_storage! {
 }
 
 impl Trace160 {
-    /// Pushes a (`key`, `value`) pair into a Trace160 so that it is
+    /// Pushes a (`key`, `value`) pair into a `Trace160` so that it is
     /// stored as the checkpoint.
     ///
     /// Returns previous value and new value.
@@ -77,7 +77,7 @@ impl Trace160 {
     }
 
     /// Returns the value in the first (oldest) checkpoint with key
-    /// greater or equal than the search key, or zero if there is none.
+    /// greater or equal than the search key, or `U160::ZERO` if there is none.
     ///
     /// # Arguments
     ///
@@ -89,7 +89,7 @@ impl Trace160 {
         if pos == len {
             U160::ZERO
         } else {
-            self._access(pos)._value.get()
+            self._index(pos)._value.get()
         }
     }
 
@@ -106,7 +106,7 @@ impl Trace160 {
         if pos == U256::ZERO {
             U160::ZERO
         } else {
-            self._access(pos - uint!(1_U256))._value.get()
+            self._index(pos - uint!(1_U256))._value.get()
         }
     }
 
@@ -128,7 +128,7 @@ impl Trace160 {
 
         if len > uint!(5_U256) {
             let mid = len - len.sqrt();
-            if key < self._access(mid)._key.get() {
+            if key < self._index(mid)._key.get() {
                 high = mid;
             } else {
                 low = mid + uint!(1_U256);
@@ -140,7 +140,7 @@ impl Trace160 {
         if pos == U256::ZERO {
             U160::ZERO
         } else {
-            self._access(pos - uint!(1_U256))._value.get()
+            self._index(pos - uint!(1_U256))._value.get()
         }
     }
 
@@ -155,7 +155,7 @@ impl Trace160 {
         if pos == U256::ZERO {
             U160::ZERO
         } else {
-            self._access(pos - uint!(1_U256))._value.get()
+            self._index(pos - uint!(1_U256))._value.get()
         }
     }
 
@@ -172,7 +172,7 @@ impl Trace160 {
         if pos == U256::ZERO {
             None
         } else {
-            let checkpoint = self._access(pos - uint!(1_U256));
+            let checkpoint = self._index(pos - uint!(1_U256));
             Some((checkpoint._key.get(), checkpoint._value.get()))
         }
     }
@@ -219,7 +219,7 @@ impl Trace160 {
     ) -> Result<(U160, U160), Error> {
         let pos = self.length();
         if pos > U256::ZERO {
-            let last = self._access(pos - uint!(1_U256));
+            let last = self._index(pos - uint!(1_U256));
             let last_key = last._key.get();
             let last_value = last._value.get();
 
@@ -230,7 +230,7 @@ impl Trace160 {
 
             // Update or push new checkpoint
             if last_key == key {
-                self._access_mut(pos - uint!(1_U256))._value.set(value);
+                self._index_mut(pos - uint!(1_U256))._value.set(value);
             } else {
                 self._unchecked_push(key, value);
             }
@@ -262,7 +262,7 @@ impl Trace160 {
     ) -> U256 {
         while low < high {
             let mid = low.average(high);
-            if self._access(mid)._key.get() > key {
+            if self._index(mid)._key.get() > key {
                 high = mid;
             } else {
                 low = mid + uint!(1_U256);
@@ -292,7 +292,7 @@ impl Trace160 {
     ) -> U256 {
         while low < high {
             let mid = low.average(high);
-            if self._access(mid)._key.get() < key {
+            if self._index(mid)._key.get() < key {
                 low = mid + uint!(1_U256);
             } else {
                 high = mid;
@@ -303,13 +303,16 @@ impl Trace160 {
 
     /// Immutable access on an element of the checkpoint's array.
     /// The position is assumed to be within bounds.
-    /// Panic when out of bounds.
+    ///
+    /// # Panics
+    /// 
+    /// If `pos` exceeds `U256::max`.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - index of the checkpoint.
-    fn _access(&self, pos: U256) -> StorageGuard<Checkpoint160> {
+    fn _index(&self, pos: U256) -> StorageGuard<Checkpoint160> {
         self._checkpoints
             .get(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
@@ -317,13 +320,16 @@ impl Trace160 {
 
     /// Mutable access on an element of the checkpoint's array.
     /// The position is assumed to be within bounds.
-    /// Panic when out of bounds.
+    ///
+    /// # Panics
+    ///
+    /// If `pos` exceeds `U256::max`.
     ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the checkpoint's state.
     /// * `pos` - index of the checkpoint.
-    fn _access_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint160> {
+    fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint160> {
         self._checkpoints
             .setter(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
