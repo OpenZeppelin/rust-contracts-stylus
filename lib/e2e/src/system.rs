@@ -56,7 +56,8 @@ pub fn provider() -> Provider {
     ProviderBuilder::new().with_recommended_fillers().on_http(rpc_url)
 }
 
-pub fn fund_account(addr: Address, amount: &str) -> eyre::Result<()> {
+/// Send `amount` eth to `address` in the nitro-tesnode.
+pub fn fund_account(address: Address, amount: &str) -> eyre::Result<()> {
     // ./test-node.bash script send-l2 --to
     // address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10
     let node_script = get_node_path()?.join("test-node.bash");
@@ -64,14 +65,14 @@ pub fn fund_account(addr: Address, amount: &str) -> eyre::Result<()> {
         .arg("script")
         .arg("send-l2")
         .arg("--to")
-        .arg(format!("address_{addr}"))
+        .arg(format!("address_{address}"))
         .arg("--ethamount")
         .arg(amount)
         .output()?;
 
     if !output.status.success() {
         let err = String::from_utf8_lossy(&output.stderr);
-        bail!("account's wallet wasn't funded - address is {addr}:\n{err}")
+        bail!("account's wallet wasn't funded - address is {address}:\n{err}")
     }
 
     Ok(())
