@@ -1111,14 +1111,17 @@ impl Erc721 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::{msg, prelude::StorageType, storage::StorageMap};
+    use stylus_sdk::msg;
 
     use super::{
-        ERC721InsufficientApproval, ERC721InvalidSender,
-        ERC721NonexistentToken, Erc721, Error, IErc721,
+        ERC721IncorrectOwner, ERC721InsufficientApproval,
+        ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
+        ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
+        Erc721, Error, IErc721,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
+    const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
 
     pub(crate) fn random_token_id() -> U256 {
         let num: u32 = rand::random();
@@ -1126,9 +1129,50 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint(contract: Erc721) {
+    fn error_when_checking_balance_of_invalid_owner(contract: Erc721) {
+        let invalid_owner = Address::ZERO;
+        let err = contract
+            .balance_of(invalid_owner)
+            .expect_err("should return `Error::InvalidOwner`");
+        assert!(matches!(
+            err,
+            Error::InvalidOwner(ERC721InvalidOwner { owner: Address::ZERO })
+        ));
+    }
+
+    #[motsu::test]
+    fn balance_of_zero_balance(contract: Erc721) {
+        let owner = msg::sender();
+        let balance =
+            contract.balance_of(owner).expect("should return `U256::ZERO`");
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    #[motsu::test]
+    fn error_when_checking_owner_of_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+
+        let err = contract
+            .owner_of(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn mints(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
+
+        let initial_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
         contract._mint(alice, token_id).expect("should mint a token for Alice");
         let owner = contract
             .owner_of(token_id)
@@ -1138,12 +1182,12 @@ mod tests {
         let balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
-        let one = uint!(1_U256);
-        assert!(balance >= one);
+
+        assert_eq!(initial_balance + uint!(1_U256), balance);
     }
 
     #[motsu::test]
-    fn error_when_reusing_token_id(contract: Erc721) {
+    fn error_when_minting_token_id_twice(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract
@@ -1152,6 +1196,7 @@ mod tests {
         let err = contract
             ._mint(alice, token_id)
             .expect_err("should not mint a token with `token_id` twice");
+
         assert!(matches!(
             err,
             Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
@@ -1159,7 +1204,68 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer(contract: Erc721) {
+    fn safe_mints(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        let initial_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        contract
+            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            .expect("should mint a token for Alice");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+
+        let balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        assert_eq!(initial_balance + uint!(1_U256), balance);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_mint_token_id_twice(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract
+            ._mint(alice, token_id)
+            .expect("should mint the token a first time");
+
+        let err = contract
+            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not mint a token with `token_id` twice");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_safe_mint_invalid_receiver(contract: Erc721) {
+        let invalid_receiver = Address::ZERO;
+
+        let token_id = random_token_id();
+
+        let err = contract
+            ._safe_mint(invalid_receiver, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not mint a token for invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+    }
+
+    #[motsu::test]
+    fn transfers_from(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1173,33 +1279,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_nonexistent_token(contract: Erc721) {
-        let alice = msg::sender();
-        let token_id = random_token_id();
-        let err = contract
-            .transfer_from(alice, BOB, token_id)
-            .expect_err("should not transfer a non-existent token");
-        assert!(matches!(
-            err,
-            Error::NonexistentToken(ERC721NonexistentToken {
-                    token_id: t_id,
-            }) if t_id == token_id
-        ));
-    }
-
-    #[motsu::test]
-    fn approve_token_transfer(contract: Erc721) {
-        let alice = msg::sender();
-        let token_id = random_token_id();
-        contract._mint(alice, token_id).expect("should mint a token");
-        contract
-            .approve(BOB, token_id)
-            .expect("should approve Bob for operations on token");
-        assert_eq!(contract._token_approvals.get(token_id), BOB);
-    }
-
-    #[motsu::test]
-    fn transfer_approved_token(contract: Erc721) {
+    fn transfers_from_approved_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1214,7 +1294,87 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_unapproved_token(contract: Erc721) {
+    fn transfers_from_approved_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+
+        // As we cannot change `msg::sender`, we need to use this workaround.
+        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+
+        let approved_for_all = contract.is_approved_for_all(BOB, alice);
+        assert_eq!(approved_for_all, true);
+
+        contract
+            .transfer_from(BOB, alice, token_id)
+            .expect("should transfer Bob's token to Alice");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn error_when_transfer_from_transfers_to_invalid_receiver(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let invalid_receiver = Address::ZERO;
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            .transfer_from(alice, invalid_receiver, token_id)
+            .expect_err("should not transfer the token to invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_transfer_from_transfers_from_incorrect_owner(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            .transfer_from(DAVE, BOB, token_id)
+            .expect_err("should not transfer the token from incorrect owner");
+        assert!(matches!(
+            err,
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                sender,
+                token_id: t_id,
+                owner
+            }) if sender == DAVE && t_id == token_id && owner == alice
+        ));
+
+        // FIXME: this check should pass
+        // TODO: confirm in E2E tests that owner is not changed: #93
+        // let owner = contract
+        // .owner_of(token_id)
+        // .expect("should return the owner of the token");
+        // assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_transfer_from_transfers_with_insufficient_approval(
+        contract: Erc721,
+    ) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1227,6 +1387,393 @@ mod tests {
                     operator,
                     token_id: t_id,
             }) if operator == alice && t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_transfer_from_transfers_nonexistent_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            .transfer_from(alice, BOB, token_id)
+            .expect_err("should not transfer a non-existent token");
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                    token_id: t_id,
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfers_from(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        contract
+            .safe_transfer_from(alice, BOB, token_id)
+            .expect("should transfer a token from Alice to Bob");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+
+        assert_eq!(owner, BOB);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_from_approved_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            .safe_transfer_from(BOB, alice, token_id)
+            .expect("should transfer Bob's token to Alice");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_from_approved_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+
+        // As we cannot change `msg::sender()`, we need to use this workaround.
+        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+
+        let approved_for_all = contract.is_approved_for_all(BOB, alice);
+        assert_eq!(approved_for_all, true);
+
+        contract
+            .safe_transfer_from(BOB, alice, token_id)
+            .expect("should transfer Bob's token to Alice");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_transfers_to_invalid_receiver(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let invalid_receiver = Address::ZERO;
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            .safe_transfer_from(alice, invalid_receiver, token_id)
+            .expect_err("should not transfer the token to invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_transfers_from_incorrect_owner(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            .safe_transfer_from(DAVE, BOB, token_id)
+            .expect_err("should not transfer the token from incorrect owner");
+        assert!(matches!(
+            err,
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                owner,
+                sender,
+                token_id: t_id
+            }) if sender == DAVE && t_id == token_id && owner == alice
+        ));
+
+        // FIXME: this check should pass
+        // TODO: confirm in E2E tests that owner is not changed: #93
+        // let owner = contract
+        // .owner_of(token_id)
+        // .expect("should return the owner of the token");
+        // assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_transfers_with_insufficient_approval(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+        let err = contract
+            .safe_transfer_from(BOB, alice, token_id)
+            .expect_err("should not transfer unapproved token");
+        assert!(matches!(
+            err,
+            Error::InsufficientApproval(ERC721InsufficientApproval {
+                operator,
+                token_id: t_id
+            }) if operator == alice && t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_transfers_nonexistent_token(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            .safe_transfer_from(alice, BOB, token_id)
+            .expect_err("should not transfer a non-existent token");
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id,
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfers_from_with_data(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        contract
+            .safe_transfer_from_with_data(
+                alice,
+                BOB,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect("should transfer a token from Alice to Bob");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+
+        assert_eq!(owner, BOB);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_from_with_data_approved_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            .safe_transfer_from_with_data(
+                BOB,
+                alice,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect("should transfer Bob's token to Alice");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_from_with_data_approved_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+
+        // As we cannot change `msg::sender()`, we need to use this workaround.
+        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+
+        let approved_for_all = contract.is_approved_for_all(BOB, alice);
+        assert_eq!(approved_for_all, true);
+
+        contract
+            .safe_transfer_from_with_data(
+                BOB,
+                alice,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect("should transfer Bob's token to Alice");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_with_data_transfers_to_invalid_receiver(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let invalid_receiver = Address::ZERO;
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            .safe_transfer_from_with_data(
+                alice,
+                invalid_receiver,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect_err("should not transfer the token to invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_with_data_transfers_from_incorrect_owner(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            .safe_transfer_from_with_data(
+                DAVE,
+                BOB,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect_err("should not transfer the token from incorrect owner");
+        assert!(matches!(
+            err,
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                sender,
+                token_id: t_id,
+                owner
+            }) if sender == DAVE && t_id == token_id && owner == alice
+
+        ));
+
+        // FIXME: this check should pass
+        // TODO: confirm in E2E tests that owner is not changed: #93
+        // let owner = contract
+        // .owner_of(token_id)
+        // .expect("should return the owner of the token");
+        //
+        // assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_with_data_transfers_with_insufficient_approval(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+        let err = contract
+            .safe_transfer_from_with_data(
+                BOB,
+                alice,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect_err("should not transfer unapproved token");
+        assert!(matches!(
+            err,
+            Error::InsufficientApproval(ERC721InsufficientApproval {
+                operator,
+                token_id: t_id,
+            }) if operator == alice && t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_from_with_data_transfers_nonexistent_token(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            .safe_transfer_from_with_data(
+                alice,
+                BOB,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect_err("should not transfer a non-existent token");
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id,
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn approves(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve Bob for operations on token");
+        assert_eq!(contract._token_approvals.get(token_id), BOB);
+    }
+
+    #[motsu::test]
+    fn error_when_approve_for_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            .approve(BOB, token_id)
+            .expect_err("should not approve for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_approve_by_invalid_approver(contract: Erc721) {
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
+
+        let err = contract
+            .approve(DAVE, token_id)
+            .expect_err("should not approve when invalid approver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidApprover(ERC721InvalidApprover {
+                approver
+            }) if approver == msg::sender()
         ));
     }
 
@@ -1247,7 +1794,327 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_transfer_token_approved_for_all(contract: Erc721) {
+    fn error_when_approval_for_all_for_invalid_operator(contract: Erc721) {
+        let invalid_operator = Address::ZERO;
+
+        let err = contract
+            .set_approval_for_all(invalid_operator, true)
+            .expect_err("should not approve for all for invalid operator");
+
+        assert!(matches!(
+            err,
+            Error::InvalidOperator(ERC721InvalidOperator {
+                operator
+            }) if operator == invalid_operator
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_get_approved_of_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            .get_approved(token_id)
+            .expect_err("should not return approved for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
+    #[motsu::test]
+    fn owner_of_inner_works(contract: Erc721) {
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
+
+        let owner = contract._owner_of_inner(token_id);
+        assert_eq!(BOB, owner);
+    }
+
+    #[motsu::test]
+    fn owner_of_inner_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let owner = contract._owner_of_inner(token_id);
+        assert_eq!(Address::ZERO, owner);
+    }
+
+    #[motsu::test]
+    fn get_approved_inner_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(Address::ZERO, approved);
+    }
+
+    #[motsu::test]
+    fn get_approved_inner_token_without_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token");
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(Address::ZERO, approved);
+    }
+
+    #[motsu::test]
+    fn get_approved_inner_token_with_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve Bob for operations on token");
+
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(BOB, approved);
+    }
+
+    #[motsu::test]
+    fn get_approved_inner_token_with_approval_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .set_approval_for_all(BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+
+        let approved = contract._get_approved_inner(token_id);
+        assert_eq!(Address::ZERO, approved);
+    }
+
+    #[motsu::test]
+    fn is_authorized_nonexistent_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(false, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_token_owner(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let authorized = contract._is_authorized(alice, alice, token_id);
+        assert_eq!(true, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_without_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(false, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_with_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve Bob for operations on token");
+
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(true, authorized);
+    }
+
+    #[motsu::test]
+    fn is_authorized_with_approval_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .set_approval_for_all(BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+
+        let authorized = contract._is_authorized(alice, BOB, token_id);
+        assert_eq!(true, authorized);
+    }
+
+    #[motsu::test]
+    fn check_authorized_nonexistent_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            ._check_authorized(Address::ZERO, alice, token_id)
+            .expect_err("should not pass for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn check_authorized_token_owner(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let result = contract._check_authorized(alice, alice, token_id);
+
+        assert!(result.is_ok());
+    }
+
+    #[motsu::test]
+    fn check_authorized_without_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+
+        let err = contract
+            ._check_authorized(alice, BOB, token_id)
+            .expect_err("should not pass without approval");
+
+        assert!(matches!(
+            err,
+            Error::InsufficientApproval(ERC721InsufficientApproval {
+                operator,
+                token_id: t_id
+            }) if operator == BOB && t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn check_authorized_with_approval(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve Bob for operations on token");
+
+        let result = contract._check_authorized(alice, BOB, token_id);
+        assert!(result.is_ok());
+    }
+
+    #[motsu::test]
+    fn check_authorized_with_approval_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            .set_approval_for_all(BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+
+        let result = contract._check_authorized(alice, BOB, token_id);
+        assert!(result.is_ok());
+    }
+
+    #[motsu::test]
+    fn burns(contract: Erc721) {
+        let alice = msg::sender();
+        let one = uint!(1_U256);
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
+
+        let initial_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        let result = contract._burn(token_id);
+        let balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        let err = contract
+            .owner_of(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+                err,
+                Error::NonexistentToken (ERC721NonexistentToken{
+                    token_id: t_id
+                }) if t_id == token_id
+        ));
+
+        assert!(result.is_ok());
+
+        assert_eq!(initial_balance - one, balance);
+    }
+
+    #[motsu::test]
+    fn error_when_get_approved_of_previous_approval_burned(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
+        contract
+            .approve(BOB, token_id)
+            .expect("should approve a token for Bob");
+
+        contract._burn(token_id).expect("should burn previously minted token");
+
+        let err = contract
+            .get_approved(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken (ERC721NonexistentToken{
+                token_id: t_id
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_burn_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+
+        let err = contract
+            ._burn(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken (ERC721NonexistentToken{
+                token_id: t_id
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn transfers(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            ._transfer(alice, BOB, token_id)
+            .expect("should transfer a token from Alice to Bob");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, BOB);
+    }
+
+    #[motsu::test]
+    fn transfers_approved_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            ._transfer(BOB, alice, token_id)
+            .expect("should transfer Bob's token to Alice");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn transfers_approved_for_all(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint token to Bob");
@@ -1259,7 +2126,7 @@ mod tests {
         assert_eq!(approved_for_all, true);
 
         contract
-            .transfer_from(BOB, alice, token_id)
+            ._transfer(BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
 
         let owner = contract
@@ -1267,6 +2134,318 @@ mod tests {
             .expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
-    // TODO: add mock test for on_erc721_received.
+
+    #[motsu::test]
+    fn error_when_transfer_transfers_to_invalid_receiver(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let invalid_receiver = Address::ZERO;
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            ._transfer(alice, invalid_receiver, token_id)
+            .expect_err("should not transfer to invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_transfer_transfers_from_incorrect_owner(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            ._transfer(DAVE, BOB, token_id)
+            .expect_err("should not transfer from incorrect owner");
+
+        assert!(matches!(
+            err,
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                sender,
+                token_id: t_id,
+                owner
+            }) if sender == DAVE && t_id == token_id && owner == alice
+        ));
+
+        // FIXME: this check should pass
+        // TODO: confirm in E2E tests that owner is not changed: #93
+        // let owner = contract
+        // .owner_of(token_id)
+        // .expect("should return the owner of the token");
+        // assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_transfer_transfers_nonexistent_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            ._transfer(alice, BOB, token_id)
+            .expect_err("should not transfer a non-existent token");
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id,
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfers_internal(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        contract
+            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            .expect("should transfer a token from Alice to Bob");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+
+        assert_eq!(owner, BOB);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_internal_approved_token(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            ._safe_transfer(BOB, alice, token_id, vec![0, 1, 2, 3].into())
+            .expect("should transfer Bob's token to Alice");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn safe_transfers_internal_approved_for_all(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint token to Bob");
+
+        // As we cannot change `msg::sender()`, we need to use this workaround.
+        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+
+        let approved_for_all = contract.is_approved_for_all(BOB, alice);
+        assert_eq!(approved_for_all, true);
+
+        contract
+            ._safe_transfer(BOB, alice, token_id, vec![0, 1, 2, 3].into())
+            .expect("should transfer Bob's token to Alice");
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_internal_ransfers_to_invalid_receiver(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let invalid_receiver = Address::ZERO;
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            ._safe_transfer(
+                alice,
+                invalid_receiver,
+                token_id,
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect_err("should not transfer the token to invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_internal_transfers_from_incorrect_owner(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+
+        let err = contract
+            ._safe_transfer(DAVE, BOB, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not transfer the token from incorrect owner");
+        assert!(matches!(
+            err,
+            Error::IncorrectOwner(ERC721IncorrectOwner {
+                sender,
+                token_id: t_id,
+                owner
+            }) if sender == DAVE && t_id == token_id && owner == alice
+        ));
+
+        // FIXME: this check should pass
+        // TODO: confirm in E2E tests that owner is not changed: #93
+        // let owner = contract
+        // .owner_of(token_id)
+        // .expect("should return the owner of the token");
+        // assert_eq!(alice, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_safe_transfer_internal_transfers_nonexistent_token(
+        contract: Erc721,
+    ) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        let err = contract
+            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            .expect_err("should not transfer a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id,
+            }) if t_id == token_id
+        ));
+    }
+
+    #[motsu::test]
+    fn approves_internal(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token");
+        contract
+            ._approve(BOB, token_id, alice, false)
+            .expect("should approve Bob for operations on token");
+        assert_eq!(contract._token_approvals.get(token_id), BOB);
+    }
+
+    #[motsu::test]
+    fn error_when_approve_internal_for_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            ._approve(BOB, token_id, msg::sender(), false)
+            .expect_err("should not approve for a non-existent token");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_approve_internal_by_invalid_approver(contract: Erc721) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
+
+        let err = contract
+            ._approve(DAVE, token_id, alice, false)
+            .expect_err("should not approve when invalid approver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidApprover(ERC721InvalidApprover {
+                approver
+            }) if approver == alice
+        ));
+    }
+
+    #[motsu::test]
+    fn approval_for_all_internal(contract: Erc721) {
+        let alice = msg::sender();
+        contract._operator_approvals.setter(alice).setter(BOB).set(false);
+
+        contract
+            ._set_approval_for_all(alice, BOB, true)
+            .expect("should approve Bob for operations on all Alice's tokens");
+        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+
+        contract._set_approval_for_all(alice, BOB, false).expect(
+            "should disapprove Bob for operations on all Alice's tokens",
+        );
+        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+    }
+
+    #[motsu::test]
+    fn error_when_approval_for_all_internal_for_invalid_operator(
+        contract: Erc721,
+    ) {
+        let invalid_operator = Address::ZERO;
+
+        let err = contract
+            ._set_approval_for_all(msg::sender(), invalid_operator, true)
+            .expect_err("should not approve for all for invalid operator");
+
+        assert!(matches!(
+            err,
+            Error::InvalidOperator(ERC721InvalidOperator {
+                operator
+            }) if operator == invalid_operator
+        ));
+    }
+
+    #[motsu::test]
+    fn require_owned_works(contract: Erc721) {
+        let token_id = random_token_id();
+        contract._mint(BOB, token_id).expect("should mint a token");
+
+        let owner = contract
+            ._require_owned(token_id)
+            .expect("should return the owner of the token");
+
+        assert_eq!(BOB, owner);
+    }
+
+    #[motsu::test]
+    fn error_when_require_owned_for_nonexistent_token(contract: Erc721) {
+        let token_id = random_token_id();
+        let err = contract
+            ._require_owned(token_id)
+            .expect_err("should return Error::NonexistentToken");
+
+        assert!(matches!(
+            err,
+            Error::NonexistentToken(ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
+
+    // TODO: think about [`Erc721::_update`] tests.
+
+    // TODO: think about [`Erc721::_increase_balance`] tests
+    // when it will be used.applicable.
+
+    // TODO: add mock test for [`Erc721::_on_erc721_received`].
     // Should be done in integration tests.
 }

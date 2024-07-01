@@ -21,4 +21,3 @@ std = []
 
 [lints]
 workspace = true
-

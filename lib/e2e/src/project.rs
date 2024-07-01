@@ -96,7 +96,7 @@ fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
         }
     }
 
-    let wasm: PathBuf = target_dir
+    let wasm = target_dir
         .join("wasm32-unknown-unknown")
         .join("release")
         .join(format!("{name}.wasm"));

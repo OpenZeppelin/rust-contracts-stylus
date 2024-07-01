@@ -7,6 +7,8 @@ const STORAGE_WORD_BYTES: u8 = 32;
 
 pub(crate) fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
+    let (impl_generics, ty_generics, where_clause) =
+        ast.generics.split_for_impl();
 
     let Data::Struct(ref data_struct) = ast.data else {
         error!(ast, "DefaultStorageLayout can only be derived for structs");
@@ -42,7 +44,7 @@ pub(crate) fn impl_default_storage_layout(ast: &DeriveInput) -> TokenStream {
     }
 
     quote! {
-        impl Default for #name {
+        impl #impl_generics Default for #name #ty_generics #where_clause{
             fn default() -> Self {
                 let mut next_slot: i32 = 0;
                 let mut offset: u8 = 0;

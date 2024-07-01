@@ -15,4 +15,3 @@ motsu-proc = { path = "../motsu-proc" }
 
 [lints]
 workspace = true
-

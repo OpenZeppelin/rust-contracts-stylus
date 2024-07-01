@@ -54,8 +54,7 @@ impl Capped {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, U256};
-    use stylus_sdk::storage::{StorageType, StorageU256};
+    use alloy_primitives::uint;
 
     use super::Capped;
 

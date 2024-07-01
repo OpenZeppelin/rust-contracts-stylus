@@ -7,12 +7,10 @@ extern crate alloc;
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 pub mod access;
-
 pub mod token;
-
 pub mod utils;
 
-#[cfg(not(any(feature = "std", target_arch = "wasm32-unknown-unknown")))]
+#[cfg(target_arch = "wasm32")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

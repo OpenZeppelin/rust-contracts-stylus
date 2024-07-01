@@ -309,11 +309,7 @@ impl Erc721Enumerable {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::{
-        msg,
-        prelude::StorageType,
-        storage::{StorageMap, StorageVec},
-    };
+    use stylus_sdk::msg;
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
     use crate::token::erc721::{tests::random_token_id, Erc721, IErc721};
@@ -326,9 +322,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_by_index_errors_when_index_out_of_bound(
-        contract: Erc721Enumerable,
-    ) {
+    fn error_when_token_by_index_is_out_of_bound(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
         let token_idx = uint!(2024_U256);
@@ -453,7 +447,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_of_owner_errors_index_out_of_bound(contract: Erc721Enumerable) {
+    fn error_when_token_of_owner_for_index_out_of_bound(
+        contract: Erc721Enumerable,
+    ) {
         let alice = msg::sender();
         let mut erc721 = Erc721::default();
         assert_eq!(
@@ -478,7 +474,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_of_owner_errors_owner_does_not_own_any_token(
+    fn error_when_token_of_owner_does_not_own_any_token(
         contract: Erc721Enumerable,
     ) {
         let erc721 = Erc721::default();
