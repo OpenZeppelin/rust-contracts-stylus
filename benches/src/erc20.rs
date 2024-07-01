@@ -101,6 +101,31 @@ pub async fn bench() -> eyre::Result<()> {
     println!("| Function Name      | L2 Gas | L1 Gas | Effective Gas |");
     println!("|--------------------|--------|--------|---------------|");
 
+    // Calculate the width of the longest function name.
+    let max_name_width = receipts
+        .iter()
+        .max_by_key(|x| x.0.len())
+        .expect("should at least bench one function")
+        .0
+        .len();
+    let name_width = max_name_width.max("Function".len());
+
+    // Calculate the total width of the table.
+    let total_width = name_width + 3 + 6 + 3 + 6 + 3 + 20 + 4; // 3 for padding, 4 for outer borders
+
+    // Print the table header.
+    println!("+{}+", "-".repeat(total_width - 2));
+    println!(
+        "| {:<width$} | L2 Gas | L1 Gas | Effective Gas        |",
+        "Function Name",
+        width = name_width
+    );
+    println!(
+        "|{}+--------+--------+----------------------|",
+        "-".repeat(name_width + 1)
+    );
+
+    // Print each row.
     for (func_name, receipt) in receipts {
         let l2_gas = receipt.gas_used;
         let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
@@ -108,11 +133,17 @@ pub async fn bench() -> eyre::Result<()> {
         let effective_gas = l2_gas - l1_gas;
 
         println!(
-            "| {:<18} | {:>6} | {:>6} | {:>13} |",
-            func_name, l2_gas, l1_gas, effective_gas
+            "| {:<width$} | {:>6} | {:>6} | {:>20} |",
+            func_name,
+            l2_gas,
+            l1_gas,
+            effective_gas,
+            width = name_width
         );
     }
-    println!("+------------------------------------------------------+");
+
+    // Print the table footer.
+    println!("+{}+", "-".repeat(total_width - 2));
 
     Ok(())
 }
