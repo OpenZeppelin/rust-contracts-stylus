@@ -1,7 +1,12 @@
 use alloy::{
-    network::AnyNetwork, primitives::Address, providers::ProviderBuilder,
-    rpc::types::TransactionReceipt, signers::local::PrivateKeySigner, sol,
-    sol_types::SolConstructor, uint,
+    network::AnyNetwork,
+    primitives::Address,
+    providers::{fillers::ChainIdFiller, ProviderBuilder},
+    rpc::types::TransactionReceipt,
+    signers::local::PrivateKeySigner,
+    sol,
+    sol_types::SolConstructor,
+    uint,
 };
 use alloy_primitives::U256;
 use e2e::{fund_account, receipt, Account};
@@ -58,7 +63,7 @@ pub async fn bench() -> eyre::Result<()> {
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
-        .with_recommended_fillers()
+        .filler(ChainIdFiller::default())
         .on_http(alice.url().parse()?);
 
     let contract_addr = deploy(&alice).await;
