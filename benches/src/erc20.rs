@@ -67,16 +67,15 @@ pub async fn bench() -> eyre::Result<()> {
         .wallet(EthereumWallet::from(alice.signer.clone()))
         .on_http(alice.url().parse()?);
 
+    let bob = Account::new().await?;
+    let bob_addr = bob.address();
+
     let contract_addr = deploy(&alice).await;
     let contract = Erc20::new(contract_addr, &alice_wallet);
 
-    // let receipt = receipt!(contract.name())?;
-    // let l2_gas = receipt.gas_used;
-    // let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
-    // let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
-    // let gas = l2_gas - l1_gas;
+    println!("+------------------------------------------------------+");
     println!("| Function Name      | L2 Gas | L1 Gas | Effective Gas |");
-    println!("|-------------------|--------|--------|---------------|");
+    println!("|--------------------|--------|--------|---------------|");
 
     let receipts = vec![
         ("name()", receipt!(contract.name())?),
@@ -85,6 +84,20 @@ pub async fn bench() -> eyre::Result<()> {
         ("decimals()", receipt!(contract.decimals())?),
         ("totalSupply()", receipt!(contract.totalSupply())?),
         ("balanceOf(account)", receipt!(contract.balanceOf(alice_addr))?),
+        (
+            "mint(account, amount)",
+            receipt!(contract.mint(alice_addr, uint!(100_U256)))?,
+        ),
+        (
+            "burn(amount)",
+            receipt!(contract.burn(uint!(100_U256)).from(alice_addr))?,
+        ),
+        (
+            "transfer(account, amount)",
+            receipt!(contract
+                .transfer(bob_addr, uint!(1_U256))
+                .from(alice_addr))?,
+        ),
     ];
 
     for (func_name, receipt) in receipts {
@@ -98,40 +111,7 @@ pub async fn bench() -> eyre::Result<()> {
             func_name, l2_gas, l1_gas, effective_gas
         );
     }
-
-    // println!("name(): {gas}");
-    // let receipt = receipt!(contract.symbol())?;
-    // println!("symbol(): {gas}");
-    // let receipt = receipt!(contract.cap())?;
-    // println!("cap(): {gas}");
-    // let receipt = receipt!(contract.decimals())?;
-    // println!("decimals(): {gas}");
-    // let receipt = receipt!(contract.totalSupply())?;
-    // println!("totalSupply(): {gas}");
-    // let receipt = receipt!(contract.balanceOf(alice_addr))?;
-    // println!("balanceOf(account): {gas}");
-
-    // let gas = contract.mint(alice_addr, uint!(100_U256)).estimate_gas().await?;
-    // println!("mint(account, amount): {gas}");
-    //
-    // let _ = contract
-    //     .mint(alice_addr, uint!(100_U256))
-    //     .send()
-    //     .await?
-    //     .watch()
-    //     .await?;
-    // let gas =
-    //     contract.burn(uint!(100_U256)).from(alice_addr).estimate_gas().await?;
-    // println!("burn(amount): {gas}");
-    //
-    // let bob = Account::new().await?;
-    // let bob_addr = bob.address();
-    // let gas = contract
-    //     .transfer(bob_addr, uint!(1_U256))
-    //     .from(alice_addr)
-    //     .estimate_gas()
-    //     .await?;
-    // println!("transfer(account, amount): {gas}");
+    println!("+------------------------------------------------------+");
 
     Ok(())
 }
