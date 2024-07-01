@@ -1,5 +1,5 @@
 use alloy::{
-    network::AnyNetwork,
+    network::{AnyNetwork, EthereumWallet},
     primitives::Address,
     providers::{fillers::ChainIdFiller, ProviderBuilder},
     rpc::types::TransactionReceipt,
@@ -63,7 +63,8 @@ pub async fn bench() -> eyre::Result<()> {
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
-        .filler(ChainIdFiller::default())
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(alice.signer.clone()))
         .on_http(alice.url().parse()?);
 
     let contract_addr = deploy(&alice).await;
