@@ -64,6 +64,7 @@ pub async fn bench() -> eyre::Result<()> {
     let contract_bob = Erc20::new(contract_addr, &bob_wallet);
 
     println!("Running benches...");
+    // IMPORTANT: Order matters!
     let receipts = vec![
         ("name()", receipt!(contract.name())?),
         ("symbol()", receipt!(contract.symbol())?),
@@ -81,16 +82,16 @@ pub async fn bench() -> eyre::Result<()> {
         ),
         ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
         (
-            "burnFrom(alice, 1)",
-            receipt!(contract.burnFrom(alice_addr, uint!(1_U256)))?,
-        ),
-        (
             "transfer(bob, 1)",
             receipt!(contract.transfer(bob_addr, uint!(1_U256)))?,
         ),
         (
             "approve(bob, 5)",
             receipt!(contract.approve(bob_addr, uint!(5_U256)))?,
+        ),
+        (
+            "burnFrom(alice, 1)",
+            receipt!(contract.burnFrom(alice_addr, uint!(1_U256)))?,
         ),
         (
             "transferFrom(alice, bob, 5)",
