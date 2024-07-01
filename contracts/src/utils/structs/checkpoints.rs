@@ -15,8 +15,8 @@ use crate::utils::math::alloy::Math;
 
 // TODO: add generics for other pairs (uint32, uint224) and (uint48, uint208).
 // Logic should be the same.
-type U96 = Uint<96, 2>;
-type U160 = Uint<160, 3>;
+pub type U96 = Uint<96, 2>;
+pub type U160 = Uint<160, 3>;
 
 sol! {
     /// A value was attempted to be inserted on a past checkpoint.

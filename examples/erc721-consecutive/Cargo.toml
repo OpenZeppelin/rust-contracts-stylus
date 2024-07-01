@@ -9,6 +9,7 @@ version = "0.0.0"
 [dependencies]
 openzeppelin-stylus = { path = "../../contracts" }
 alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
