@@ -40,7 +40,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn other_roles_admin_is_the_default_adming_role(
+async fn other_roles_admin_is_the_default_admin_role(
     alice: Account,
 ) -> Result<()> {
     let contract_addr = deploy(&alice).await?;
@@ -70,7 +70,7 @@ async fn default_role_is_default_admin(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn non_admin_cannot_grant_role_to_others(
+async fn non_admin_cannot_grant_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -263,7 +263,7 @@ async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
 
     let _ = watch!(contract.renounceRole(ROLE.into(), alice_addr))?;
     let receipt = receipt!(contract.renounceRole(ROLE.into(), alice_addr))?;
-    assert!(receipt.emits(RoleRevoked {
+    assert!(!receipt.emits(RoleRevoked {
         role: ROLE.into(),
         account: alice_addr,
         sender: alice_addr
