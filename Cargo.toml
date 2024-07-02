@@ -13,6 +13,7 @@ members = [
   "examples/access-control",
   "examples/basic/token",
   "examples/basic/script",
+  "benches",
 ]
 default-members = [
   "contracts",

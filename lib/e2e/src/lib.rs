@@ -12,7 +12,7 @@ pub use deploy::deploy;
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::EventExt;
-pub use system::{provider, Provider, Wallet};
+pub use system::{fund_account, provider, Provider, Wallet};
 
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.
@@ -60,7 +60,7 @@ macro_rules! send {
 #[macro_export]
 macro_rules! watch {
     ($e:expr) => {
-        send!($e)?.watch().await
+        $crate::send!($e)?.watch().await
     };
 }
 
@@ -86,6 +86,6 @@ macro_rules! watch {
 #[macro_export]
 macro_rules! receipt {
     ($e:expr) => {
-        send!($e)?.get_receipt().await
+        $crate::send!($e)?.get_receipt().await
     };
 }

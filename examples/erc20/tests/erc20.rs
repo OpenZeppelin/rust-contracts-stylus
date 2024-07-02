@@ -73,11 +73,11 @@ async fn mints(alice: Account) -> Result<()> {
 
     let one = uint!(1_U256);
     let receipt = receipt!(contract.mint(alice_addr, one))?;
-    receipt.emits(Erc20::Transfer {
+    assert!(receipt.emits(Erc20::Transfer {
         from: Address::ZERO,
         to: alice_addr,
         value: one,
-    });
+    }));
 
     let Erc20::balanceOfReturn { balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -180,7 +180,11 @@ async fn transfers(alice: Account, bob: Account) -> Result<()> {
     let Erc20::totalSupplyReturn { totalSupply: supply } =
         contract_alice.totalSupply().call().await?;
 
-    receipt.emits(Erc20::Transfer { from: alice_addr, to: bob_addr, value });
+    assert!(receipt.emits(Erc20::Transfer {
+        from: alice_addr,
+        to: bob_addr,
+        value
+    }));
 
     assert_eq!(initial_alice_balance - value, alice_balance);
     assert_eq!(initial_bob_balance + value, bob_balance);
@@ -297,11 +301,11 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(U256::ZERO, initial_bob_alice_allowance);
 
     let receipt = receipt!(contract.approve(bob_addr, one))?;
-    receipt.emits(Erc20::Approval {
+    assert!(receipt.emits(Erc20::Approval {
         owner: alice_addr,
         spender: bob_addr,
         value: one,
-    });
+    }));
 
     let Erc20::allowanceReturn { allowance: alice_bob_allowance } =
         contract.allowance(alice_addr, bob_addr).call().await?;
@@ -312,11 +316,11 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(initial_bob_alice_allowance, bob_alice_allowance);
 
     let receipt = receipt!(contract.approve(bob_addr, ten))?;
-    receipt.emits(Erc20::Approval {
+    assert!(receipt.emits(Erc20::Approval {
         owner: alice_addr,
         spender: bob_addr,
         value: ten,
-    });
+    }));
 
     let Erc20::allowanceReturn { allowance: alice_bob_allowance } =
         contract.allowance(alice_addr, bob_addr).call().await?;
@@ -427,7 +431,11 @@ async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
     let Erc20::allowanceReturn { allowance } =
         contract_alice.allowance(alice_addr, bob_addr).call().await?;
 
-    receipt.emits(Erc20::Transfer { from: alice_addr, to: bob_addr, value });
+    assert!(receipt.emits(Erc20::Transfer {
+        from: alice_addr,
+        to: bob_addr,
+        value
+    }));
 
     assert_eq!(initial_alice_balance - value, alice_balance);
     assert_eq!(initial_bob_balance + value, bob_balance);
@@ -629,11 +637,11 @@ async fn burns(alice: Account) -> Result<()> {
     let Erc20::totalSupplyReturn { totalSupply: supply } =
         contract_alice.totalSupply().call().await?;
 
-    receipt.emits(Erc20::Transfer {
+    assert!(receipt.emits(Erc20::Transfer {
         from: alice_addr,
         to: Address::ZERO,
         value,
-    });
+    }));
 
     assert_eq!(initial_balance - value, balance);
     assert_eq!(initial_supply - value, supply);
@@ -713,11 +721,11 @@ async fn burns_from(alice: Account, bob: Account) -> Result<()> {
     let Erc20::allowanceReturn { allowance } =
         contract_alice.allowance(alice_addr, bob_addr).call().await?;
 
-    receipt.emits(Erc20::Transfer {
+    assert!(receipt.emits(Erc20::Transfer {
         from: alice_addr,
         to: Address::ZERO,
         value,
-    });
+    }));
 
     assert_eq!(initial_alice_balance - value, alice_balance);
     assert_eq!(initial_bob_balance, bob_balance);
