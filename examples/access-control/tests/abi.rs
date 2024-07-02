@@ -7,7 +7,7 @@ sol!(
         constructor();
 
         function hasRole(bytes32 role, address account) public view virtual returns (bool hasRole);
-        function getRoleAdmin(bytes32 role) public view virtual returns (bytes32);
+        function getRoleAdmin(bytes32 role) public view virtual returns (bytes32 role);
         function grantRole(bytes32 role, address account) public virtual;
         function revokeRole(bytes32 role, address account) public virtual;
         function renounceRole(bytes32 role, address callerConfirmation) public virtual;
