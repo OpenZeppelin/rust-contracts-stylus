@@ -28,7 +28,7 @@ async fn deploy(
     private_key: &str,
     base_uri: Option<String>,
 ) -> eyre::Result<Address> {
-    let base_uri: String = base_uri.unwrap_or(String::new());
+    let base_uri: String = base_uri.unwrap_or_default();
 
     let args = Erc721Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
@@ -135,7 +135,13 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    let receipt = receipt!(contract.mint(alice_addr, token_id))?;
+
+    assert!(receipt.emits(Erc721::Transfer {
+        from: Address::ZERO,
+        to: alice_addr,
+        tokenId: token_id
+    }));
 
     let Erc721::ownerOfReturn { ownerOf: owner_of } =
         contract.ownerOf(token_id).call().await?;
@@ -203,11 +209,11 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let receipt =
         receipt!(contract.transferFrom(alice_addr, bob_addr, token_id))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
@@ -251,11 +257,11 @@ async fn transfers_from_approved_token(
     let receipt =
         receipt!(contract_bob.transferFrom(alice_addr, bob_addr, token_id))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract_alice.ownerOf(token_id).call().await?;
@@ -299,11 +305,11 @@ async fn transfers_from_approved_for_all(
     let receipt =
         receipt!(contract_bob.transferFrom(alice_addr, bob_addr, token_id))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract_alice.ownerOf(token_id).call().await?;
@@ -460,11 +466,11 @@ async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let receipt =
         receipt!(contract.safeTransferFrom_0(alice_addr, bob_addr, token_id))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
@@ -513,18 +519,18 @@ async fn safe_transfers_to_receiver_contract(
         token_id
     ))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: receiver_address,
         tokenId: token_id,
-    });
+    }));
 
-    receipt.emits(ERC721ReceiverMock::Received {
+    assert!(receipt.emits(ERC721ReceiverMock::Received {
         operator: alice_addr,
         from: alice_addr,
         tokenId: token_id,
         data: fixed_bytes!("").into(),
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
@@ -569,11 +575,11 @@ async fn safe_transfers_from_approved_token(
         contract_bob.safeTransferFrom_0(alice_addr, bob_addr, token_id)
     )?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract_alice.ownerOf(token_id).call().await?;
@@ -618,11 +624,11 @@ async fn safe_transfers_from_approved_for_all(
         contract_bob.safeTransferFrom_0(alice_addr, bob_addr, token_id)
     )?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract_alice.ownerOf(token_id).call().await?;
@@ -795,11 +801,11 @@ async fn safe_transfers_from_with_data(
         fixed_bytes!("deadbeef").into()
     ))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
@@ -850,18 +856,18 @@ async fn safe_transfers_with_data_to_receiver_contract(
         data.clone()
     ))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: receiver_address,
         tokenId: token_id,
-    });
+    }));
 
-    receipt.emits(ERC721ReceiverMock::Received {
+    assert!(receipt.emits(ERC721ReceiverMock::Received {
         operator: alice_addr,
         from: alice_addr,
         tokenId: token_id,
         data,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
@@ -909,11 +915,11 @@ async fn safe_transfers_from_with_data_approved_token(
         fixed_bytes!("deadbeef").into()
     ))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract_alice.ownerOf(token_id).call().await?;
@@ -961,11 +967,11 @@ async fn safe_transfers_from_with_data_approved_for_all(
         fixed_bytes!("deadbeef").into()
     ))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::ownerOfReturn { ownerOf } =
         contract_alice.ownerOf(token_id).call().await?;
@@ -1143,11 +1149,11 @@ async fn approves(alice: Account, bob: Account) -> eyre::Result<()> {
 
     let receipt = receipt!(contract.approve(bob_addr, token_id))?;
 
-    receipt.emits(Erc721::Approval {
+    assert!(receipt.emits(Erc721::Approval {
         owner: alice_addr,
         approved: bob_addr,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::getApprovedReturn { approved } =
         contract.getApproved(token_id).call().await?;
@@ -1242,11 +1248,11 @@ async fn sets_approval_for_all(
     let receipt =
         receipt!(contract.setApprovalForAll(bob_addr, approved_value))?;
 
-    receipt.emits(Erc721::ApprovalForAll {
+    assert!(receipt.emits(Erc721::ApprovalForAll {
         owner: alice_addr,
         operator: bob_addr,
         approved: approved_value,
-    });
+    }));
 
     let Erc721::isApprovedForAllReturn { approved } =
         contract.isApprovedForAll(alice_addr, bob_addr).call().await?;
@@ -1256,11 +1262,11 @@ async fn sets_approval_for_all(
     let receipt =
         receipt!(contract.setApprovalForAll(bob_addr, approved_value))?;
 
-    receipt.emits(Erc721::ApprovalForAll {
+    assert!(receipt.emits(Erc721::ApprovalForAll {
         owner: alice_addr,
         operator: bob_addr,
         approved: approved_value,
-    });
+    }));
 
     let Erc721::isApprovedForAllReturn { approved } =
         contract.isApprovedForAll(alice_addr, bob_addr).call().await?;
@@ -1308,6 +1314,259 @@ async fn is_approved_for_all_invalid_operator(
 }
 
 // ============================================================================
+// Integration Tests: ERC-721 Pausable Extension
+// ============================================================================
+
+#[e2e::test]
+async fn pauses(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receipt = receipt!(contract.pause())?;
+
+    assert!(receipt.emits(Erc721::Paused { account: alice.address() }));
+
+    let Erc721::pausedReturn { paused } = contract.paused().call().await?;
+
+    assert!(paused);
+
+    let result = contract.whenPaused().call().await;
+
+    assert!(result.is_ok());
+
+    let err = contract
+        .whenNotPaused()
+        .call()
+        .await
+        .expect_err("should return `EnforcedPause`");
+
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn unpauses(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(contract.pause())?;
+
+    let receipt = receipt!(contract.unpause())?;
+
+    assert!(receipt.emits(Erc721::Unpaused { account: alice.address() }));
+
+    let Erc721::pausedReturn { paused } = contract.paused().call().await?;
+
+    assert_eq!(false, paused);
+
+    let result = contract.whenNotPaused().call().await;
+
+    assert!(result.is_ok());
+
+    let err = contract
+        .whenPaused()
+        .call()
+        .await
+        .expect_err("should return `ExpectedPause`");
+
+    assert!(err.reverted_with(Erc721::ExpectedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_burn_in_paused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+
+    let Erc721::balanceOfReturn { balance: initial_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let _ = watch!(contract.pause());
+
+    let err = send!(contract.burn(token_id))
+        .expect_err("should return EnforcedPause");
+
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    let Erc721::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    assert_eq!(initial_balance, balance);
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+
+    assert_eq!(alice_addr, ownerOf);
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_mint_in_paused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let _ = watch!(contract.pause());
+
+    let err = send!(contract.mint(alice_addr, token_id))
+        .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    let err = contract
+        .ownerOf(token_id)
+        .call()
+        .await
+        .expect_err("should return ERC721NonexistentToken");
+
+    assert!(
+        err.reverted_with(Erc721::ERC721NonexistentToken { tokenId: token_id })
+    );
+
+    let Erc721::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr).call().await?;
+    assert_eq!(uint!(0_U256), balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_transfer_from_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_id = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+
+    let Erc721::balanceOfReturn { balance: initial_alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let Erc721::balanceOfReturn { balance: initial_bob_balance } =
+        contract.balanceOf(bob_addr).call().await?;
+
+    let _ = watch!(contract.pause());
+
+    let err = send!(contract.transferFrom(alice_addr, bob_addr, token_id))
+        .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(alice_addr, ownerOf);
+
+    let Erc721::balanceOfReturn { balance: alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let Erc721::balanceOfReturn { balance: bob_balance } =
+        contract.balanceOf(bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_safe_transfer_from_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_id = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+
+    let Erc721::balanceOfReturn { balance: initial_alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let Erc721::balanceOfReturn { balance: initial_bob_balance } =
+        contract.balanceOf(bob_addr).call().await?;
+
+    let _ = watch!(contract.pause());
+
+    let err =
+        send!(contract.safeTransferFrom_0(alice_addr, bob_addr, token_id))
+            .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(alice_addr, ownerOf);
+
+    let Erc721::balanceOfReturn { balance: alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let Erc721::balanceOfReturn { balance: bob_balance } =
+        contract.balanceOf(bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_safe_transfer_from_with_data_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_id = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+
+    let Erc721::balanceOfReturn { balance: initial_alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let Erc721::balanceOfReturn { balance: initial_bob_balance } =
+        contract.balanceOf(bob_addr).call().await?;
+
+    let _ = watch!(contract.pause());
+
+    let err = send!(contract.safeTransferFrom_1(
+        alice_addr,
+        bob_addr,
+        token_id,
+        fixed_bytes!("deadbeef").into()
+    ))
+    .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(alice_addr, ownerOf);
+
+    let Erc721::balanceOfReturn { balance: alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let Erc721::balanceOfReturn { balance: bob_balance } =
+        contract.balanceOf(bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+
+    Ok(())
+}
+
+// ============================================================================
 // Integration Tests: ERC-721 Burnable Extension
 // ============================================================================
 
@@ -1325,11 +1584,11 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 
     let receipt = receipt!(contract.burn(token_id))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: Address::ZERO,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::balanceOfReturn { balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -1370,11 +1629,11 @@ async fn burns_approved_token(
 
     let receipt = receipt!(contract_bob.burn(token_id))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: Address::ZERO,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::balanceOfReturn { balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -1415,11 +1674,11 @@ async fn burns_approved_for_all(
 
     let receipt = receipt!(contract_bob.burn(token_id))?;
 
-    receipt.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: alice_addr,
         to: Address::ZERO,
         tokenId: token_id,
-    });
+    }));
 
     let Erc721::balanceOfReturn { balance } =
         contract_alice.balanceOf(alice_addr).call().await?;

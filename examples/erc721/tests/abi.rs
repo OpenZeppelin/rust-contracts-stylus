@@ -40,11 +40,18 @@ sol!(
 
         function mint(address to, uint256 tokenId) external;
 
-        function paused() external view returns (bool);
+        function paused() external view returns (bool paused);
 
         function pause() external;
 
         function unpause() external;
+
+        #[derive(Debug)]
+        function whenPaused() external view;
+
+        #[derive(Debug)]
+        function whenNotPaused() external view;
+
 
         error ERC721InvalidOwner(address owner);
         error ERC721NonexistentToken(uint256 tokenId);
@@ -66,5 +73,11 @@ sol!(
 
         #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
-    }
+
+        #[derive(Debug, PartialEq)]
+        event Paused(address account);
+
+        #[derive(Debug, PartialEq)]
+        event Unpaused(address account);
+   }
 );
