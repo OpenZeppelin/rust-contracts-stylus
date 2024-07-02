@@ -89,10 +89,10 @@ async fn transfers_ownership(alice: Account, bob: Account) -> Result<()> {
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.transferOwnership(bob_addr))?;
-    receipt.emits(OwnershipTransferred {
+    assert!(receipt.emits(OwnershipTransferred {
         previousOwner: alice_addr,
         newOwner: bob_addr,
-    });
+    }));
 
     let Ownable::ownerReturn { owner } = contract.owner().call().await?;
     assert_eq!(owner, bob_addr);
@@ -143,10 +143,10 @@ async fn loses_ownership_after_renouncement(alice: Account) -> Result<()> {
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.renounceOwnership())?;
-    receipt.emits(OwnershipTransferred {
+    assert!(receipt.emits(OwnershipTransferred {
         previousOwner: alice_addr,
         newOwner: Address::ZERO,
-    });
+    }));
 
     let Ownable::ownerReturn { owner } = contract.owner().call().await?;
     assert_eq!(owner, Address::ZERO);
