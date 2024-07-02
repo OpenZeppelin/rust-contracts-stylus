@@ -437,8 +437,10 @@ mod tests {
 
     #[motsu::test]
     fn upper_lookup_recent_low_values(checkpoint: Trace160) {
-        // upper_lookup_recent has different optimisation for low (<=5) and high
-        // (>5) values. Validate the first approach for low values.
+        // upper_lookup_recent has different optimizations for "short" (<=5) and
+        // "long" (>5) checkpoint arrays.
+        //
+        // Validate the first approach for a short checkpoint array.
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
@@ -455,6 +457,25 @@ mod tests {
             checkpoint.upper_lookup_recent(uint!(4_U96)),
             uint!(33_U160)
         );
+
+        // Validate the second approach for a long checkpoint array.
+        checkpoint.push(uint!(7_U96), uint!(77_U160)).expect("push fourth");
+        checkpoint.push(uint!(9_U96), uint!(99_U160)).expect("push fifth");
+        checkpoint.push(uint!(11_U96), uint!(111_U160)).expect("push sixth");
+
+        assert_eq!(
+            checkpoint.upper_lookup_recent(uint!(7_U96)),
+            uint!(77_U160)
+        );
+        assert_eq!(
+            checkpoint.upper_lookup_recent(uint!(9_U96)),
+            uint!(99_U160)
+        );
+        assert_eq!(
+            checkpoint.upper_lookup_recent(uint!(11_U96)),
+            uint!(111_U160)
+        );
+
         assert_eq!(checkpoint.upper_lookup_recent(uint!(0_U96)), uint!(0_U160));
     }
 
