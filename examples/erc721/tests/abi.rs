@@ -8,7 +8,9 @@ sol!(
 
         function symbol() external view returns (string memory symbol);
 
-        function tokenURI(uint256 tokenId) external view returns (string memory);
+        function baseUri() external view returns (string memory baseUri);
+
+        function tokenURI(uint256 tokenId) external view returns (string memory tokenURI);
 
         function supportsInterface(bytes4 interfaceIf) external pure returns (bool);
 

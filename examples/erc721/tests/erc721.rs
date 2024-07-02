@@ -23,29 +23,54 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
+async fn deploy(
+    rpc_url: &str,
+    private_key: &str,
+    base_uri: Option<String>,
+) -> eyre::Result<Address> {
+    let base_uri: String = base_uri.unwrap_or(String::new());
+
     let args = Erc721Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),
+        baseUri_: base_uri,
     };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
 }
 
 // ============================================================================
-// Integration Tests: ERC-721 Token
+// Integration Tests: ERC-721 Token + Metadata Extension
 // ============================================================================
 
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let Erc721::nameReturn { name } = contract.name().call().await?;
     let Erc721::symbolReturn { symbol } = contract.symbol().call().await?;
+    let Erc721::baseUriReturn { baseUri } = contract.baseUri().call().await?;
 
     assert_eq!(TOKEN_NAME.to_owned(), name);
     assert_eq!(TOKEN_SYMBOL.to_owned(), symbol);
+    assert_eq!(String::new(), baseUri);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn constructs_with_base_uri(alice: Account) -> eyre::Result<()> {
+    let base_uri =
+        String::from("https://github.com/OpenZeppelin/rust-contracts-stylus");
+
+    let contract_addr =
+        deploy(alice.url(), &alice.pk(), Some(base_uri.clone())).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let Erc721::baseUriReturn { baseUri } = contract.baseUri().call().await?;
+
+    assert_eq!(base_uri, baseUri);
 
     Ok(())
 }
@@ -54,7 +79,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 async fn error_when_balance_of_invalid_owner(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
     let invalid_owner = Address::ZERO;
 
@@ -72,7 +97,7 @@ async fn error_when_balance_of_invalid_owner(
 
 #[e2e::test]
 async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let Erc721::balanceOfReturn { balance } =
@@ -86,7 +111,7 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
 async fn error_when_owner_of_nonexistent_token(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
     let token_id = random_token_id();
 
@@ -105,7 +130,7 @@ async fn error_when_owner_of_nonexistent_token(
 
 #[e2e::test]
 async fn mints(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -125,7 +150,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn error_when_minting_token_id_twice(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -144,7 +169,7 @@ async fn error_when_minting_token_id_twice(alice: Account) -> eyre::Result<()> {
 async fn error_when_minting_token_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let token_id = random_token_id();
@@ -161,7 +186,7 @@ async fn error_when_minting_token_invalid_receiver(
 
 #[e2e::test]
 async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -206,7 +231,7 @@ async fn transfers_from_approved_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -254,7 +279,7 @@ async fn transfers_from_approved_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -301,7 +326,7 @@ async fn transfers_from_approved_for_all(
 async fn error_when_transfer_from_transfers_to_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -330,7 +355,7 @@ async fn error_when_transfer_from_transfers_from_incorrect_owner(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -362,7 +387,7 @@ async fn error_when_transfer_from_transfers_with_insufficient_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -391,7 +416,7 @@ async fn error_when_transfer_nonexistent_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -418,7 +443,7 @@ async fn error_when_transfer_nonexistent_token(
 
 #[e2e::test]
 async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -462,7 +487,7 @@ async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 async fn safe_transfers_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let receiver_address = mock_receiver::deploy(
@@ -523,7 +548,7 @@ async fn safe_transfers_from_approved_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -572,7 +597,7 @@ async fn safe_transfers_from_approved_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -620,7 +645,7 @@ async fn safe_transfers_from_approved_for_all(
 async fn error_when_safe_transfer_from_transfers_to_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -652,7 +677,7 @@ async fn error_when_safe_transfer_from_transfers_from_incorrect_owner(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -684,7 +709,7 @@ async fn error_when_safe_transfer_from_transfers_with_insufficient_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -715,7 +740,7 @@ async fn error_when_safe_transfer_nonexistent_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -749,7 +774,7 @@ async fn safe_transfers_from_with_data(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -797,7 +822,7 @@ async fn safe_transfers_from_with_data(
 async fn safe_transfers_with_data_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let receiver_address = mock_receiver::deploy(
@@ -860,7 +885,7 @@ async fn safe_transfers_from_with_data_approved_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -912,7 +937,7 @@ async fn safe_transfers_from_with_data_approved_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -963,7 +988,7 @@ async fn safe_transfers_from_with_data_approved_for_all(
 async fn error_when_safe_transfer_from_with_data_transfers_to_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -996,7 +1021,7 @@ async fn error_when_safe_transfer_from_with_data_transfers_from_incorrect_owner(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1033,7 +1058,7 @@ async fn error_when_safe_transfer_from_with_data_transfers_with_insufficient_app
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1068,7 +1093,7 @@ async fn error_when_safe_transfer_with_data_nonexistent_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1103,7 +1128,7 @@ async fn error_when_safe_transfer_with_data_nonexistent_token(
 
 #[e2e::test]
 async fn approves(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1136,7 +1161,7 @@ async fn error_when_approve_for_nonexistent_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let bob_addr = bob.address();
@@ -1157,7 +1182,7 @@ async fn error_when_approve_by_invalid_approver(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -1185,7 +1210,7 @@ async fn error_when_approve_by_invalid_approver(
 async fn error_when_get_approved_of_nonexistent_token(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let token_id = random_token_id();
@@ -1207,7 +1232,7 @@ async fn sets_approval_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1248,7 +1273,7 @@ async fn sets_approval_for_all(
 async fn error_when_set_approval_for_all_invalid_operator(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let invalid_operator = Address::ZERO;
@@ -1267,7 +1292,7 @@ async fn error_when_set_approval_for_all_invalid_operator(
 async fn is_approved_for_all_invalid_operator(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let invalid_operator = Address::ZERO;
@@ -1288,7 +1313,7 @@ async fn is_approved_for_all_invalid_operator(
 
 #[e2e::test]
 async fn burns(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1329,7 +1354,7 @@ async fn burns_approved_token(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -1374,7 +1399,7 @@ async fn burns_approved_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract_alice = Erc721::new(contract_addr, &alice.wallet);
     let contract_bob = Erc721::new(contract_addr, &bob.wallet);
 
@@ -1419,7 +1444,7 @@ async fn error_when_burn_with_insufficient_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1449,7 +1474,7 @@ async fn error_when_burn_with_insufficient_approval(
 
 #[e2e::test]
 async fn error_when_burn_nonexistent_token(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let token_id = random_token_id();

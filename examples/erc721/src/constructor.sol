@@ -16,14 +16,17 @@ contract Erc721Example {
 
     string private _name;
     string private _symbol;
+    string private _baseUri;
 
     bool _paused;
 
     mapping(uint256 => string) _tokenUris;
 
-    constructor(string memory name_, string memory symbol_) {
+    constructor(string memory name_, string memory symbol_, string memory baseUri_) {
         _name = name_;
         _symbol = symbol_;
+        _baseUri = baseUri_;
         _paused = false;
+
     }
 }
