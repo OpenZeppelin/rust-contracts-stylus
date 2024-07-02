@@ -188,12 +188,19 @@ impl Trace160 {
 
     /// Returns checkpoint at given position.
     ///
+    /// # Panics
+    ///
+    /// If `pos` exceeds [`Self::length`].
+    ///
     /// # Arguments
     ///
     /// * `&self` - read access to the checkpoint's state.
     /// * `pos` - index of the checkpoint.
-    pub fn at(&self, pos: U32) -> Checkpoint160 {
-        unsafe { self._checkpoints.get(pos).unwrap().into_raw() }
+    pub fn at(&self, pos: U32) -> (U96, U160) {
+        let guard = self._checkpoints.get(pos).unwrap_or_else(|| {
+            panic!("should get checkpoint at index `{pos}`")
+        });
+        (guard._key.get(), guard._value.get())
     }
 
     /// Pushes a (`key`, `value`) pair into an ordered list of
@@ -305,8 +312,8 @@ impl Trace160 {
     /// The position is assumed to be within bounds.
     ///
     /// # Panics
-    /// 
-    /// If `pos` exceeds `U256::max`.
+    ///
+    /// If `pos` exceeds [`Self::length`].
     ///
     /// # Arguments
     ///
@@ -323,7 +330,7 @@ impl Trace160 {
     ///
     /// # Panics
     ///
-    /// If `pos` exceeds `U256::max`.
+    /// If `pos` exceeds [`Self::length`].
     ///
     /// # Arguments
     ///
@@ -374,14 +381,34 @@ mod tests {
 
         assert_eq!(checkpoint.length(), uint!(3_U256));
 
-        assert_eq!(checkpoint.at(uint!(0_U32))._key.get(), first_key);
-        assert_eq!(checkpoint.at(uint!(0_U32))._value.get(), first_value);
+        assert_eq!(checkpoint.at(uint!(0_U32)), (first_key, first_value));
+        assert_eq!(checkpoint.at(uint!(1_U32)), (second_key, second_value));
+        assert_eq!(checkpoint.at(uint!(2_U32)), (third_key, third_value));
+    }
 
-        assert_eq!(checkpoint.at(uint!(1_U32))._key.get(), second_key);
-        assert_eq!(checkpoint.at(uint!(1_U32))._value.get(), second_value);
+    #[motsu::test]
+    fn push_same_value(checkpoint: Trace160) {
+        let first_key = uint!(1_U96);
+        let first_value = uint!(11_U160);
 
-        assert_eq!(checkpoint.at(uint!(2_U32))._key.get(), third_key);
-        assert_eq!(checkpoint.at(uint!(2_U32))._value.get(), third_value);
+        let second_key = uint!(2_U96);
+        let second_value = uint!(22_U160);
+
+        let third_key = uint!(2_U96);
+        let third_value = uint!(222_U160);
+
+        checkpoint.push(first_key, first_value).expect("push first");
+        checkpoint.push(second_key, second_value).expect("push second");
+        checkpoint.push(third_key, third_value).expect("push third");
+
+        assert_eq!(
+            checkpoint.length(),
+            uint!(2_U256),
+            "two checkpoints should be stored since third_value overrides second_value"
+        );
+
+        assert_eq!(checkpoint.at(uint!(0_U32)), (first_key, first_value));
+        assert_eq!(checkpoint.at(uint!(1_U32)), (third_key, third_value));
     }
 
     #[motsu::test]
@@ -409,9 +436,32 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upper_lookup_recent(checkpoint: Trace160) {
-        // Since `upper_lookup_recent` optimized for higher keys (>5) compare to
-        // `upper_lookup`. All test key values will be higher then 5.
+    fn upper_lookup_recent_low_values(checkpoint: Trace160) {
+        // upper_lookup_recent has different optimisation for low (<=5) and high
+        // (>5) values. Validate the first approach for low values.
+        checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
+        checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
+        checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
+
+        assert_eq!(
+            checkpoint.upper_lookup_recent(uint!(2_U96)),
+            uint!(11_U160)
+        );
+        assert_eq!(
+            checkpoint.upper_lookup_recent(uint!(1_U96)),
+            uint!(11_U160)
+        );
+        assert_eq!(
+            checkpoint.upper_lookup_recent(uint!(4_U96)),
+            uint!(33_U160)
+        );
+        assert_eq!(checkpoint.upper_lookup_recent(uint!(0_U96)), uint!(0_U160));
+    }
+
+    #[motsu::test]
+    fn upper_lookup_recent_high_values(checkpoint: Trace160) {
+        // upper_lookup_recent has different optimisation for low (<=5) and high
+        // (>5) values. Validate the second approach for high values.
         checkpoint.push(uint!(11_U96), uint!(111_U160)).expect("push first");
         checkpoint.push(uint!(33_U96), uint!(333_U160)).expect("push second");
         checkpoint.push(uint!(55_U96), uint!(555_U160)).expect("push third");
