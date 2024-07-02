@@ -3,7 +3,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus::{
     access::control::AccessControl,
     token::erc20::{Erc20, IErc20},
@@ -47,5 +47,11 @@ impl AccessControlExample {
         self.access.only_role(AccessControlExample::TRANSFER_ROLE.into())?;
         let transfer_result = self.erc20.transfer_from(from, to, value)?;
         Ok(transfer_result)
+    }
+
+    // WARNING: This should not be part of the public API, it's here for testing
+    // purposes only.
+    pub fn set_role_admin(&mut self, role: B256, new_admin_role: B256) {
+        self.access._set_role_admin(role, new_admin_role)
     }
 }

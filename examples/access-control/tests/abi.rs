@@ -12,6 +12,8 @@ sol!(
         function revokeRole(bytes32 role, address account) public virtual;
         function renounceRole(bytes32 role, address callerConfirmation) public virtual;
 
+        function setRoleAdmin(bytes32 role, bytes32 adminRole) public virtual;
+
         error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);
         error AccessControlBadConfirmation();
 
