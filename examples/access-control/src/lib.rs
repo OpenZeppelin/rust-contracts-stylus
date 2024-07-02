@@ -20,15 +20,16 @@ sol_storage! {
     }
 }
 
+pub const TRANSFER_ROLE: [u8; 32] = [
+    133, 2, 35, 48, 150, 217, 9, 190, 251, 218, 9, 153, 187, 142, 162, 243,
+    166, 190, 60, 19, 139, 159, 191, 0, 55, 82, 164, 200, 188, 232, 111, 108,
+];
+
 #[external]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
     // `keccak256("TRANSFER_ROLE")`
-    pub const TRANSFER_ROLE: [u8; 32] = [
-        133, 2, 35, 48, 150, 217, 9, 190, 251, 218, 9, 153, 187, 142, 162, 243,
-        166, 190, 60, 19, 139, 159, 191, 0, 55, 82, 164, 200, 188, 232, 111,
-        108,
-    ];
+    pub const TRANSFER_ROLE: [u8; 32] = TRANSFER_ROLE;
 
     pub fn make_admin(&mut self, account: Address) -> Result<(), Vec<u8>> {
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
