@@ -84,7 +84,7 @@ impl Trace160 {
     /// * `&self` - read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to lookup.
     pub fn lower_lookup(&self, key: U96) -> U160 {
-        let len = self.length();
+        let len = self.len();
         let pos = self._lower_binary_lookup(key, U256::ZERO, len);
         if pos == len {
             U160::ZERO
@@ -101,7 +101,7 @@ impl Trace160 {
     /// * `&self` - read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to lookup.
     pub fn upper_lookup(&self, key: U96) -> U160 {
-        let len = self.length();
+        let len = self.len();
         let pos = self._upper_binary_lookup(key, U256::ZERO, len);
         if pos == U256::ZERO {
             U160::ZERO
@@ -121,7 +121,7 @@ impl Trace160 {
     /// * `&self` - read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to query.
     pub fn upper_lookup_recent(&self, key: U96) -> U160 {
-        let len = self.length();
+        let len = self.len();
 
         let mut low = U256::ZERO;
         let mut high = len;
@@ -151,7 +151,7 @@ impl Trace160 {
     ///
     /// * `&self` - read access to the checkpoint's state.
     pub fn latest(&self) -> U160 {
-        let pos = self.length();
+        let pos = self.len();
         if pos == U256::ZERO {
             U160::ZERO
         } else {
@@ -168,7 +168,7 @@ impl Trace160 {
     ///
     /// * `&self` - read access to the checkpoint's state.
     pub fn latest_checkpoint(&self) -> Option<(U96, U160)> {
-        let pos = self.length();
+        let pos = self.len();
         if pos == U256::ZERO {
             None
         } else {
@@ -182,7 +182,7 @@ impl Trace160 {
     /// # Arguments
     ///
     /// * `&self` - read access to the checkpoint's state.
-    pub fn length(&self) -> U256 {
+    pub fn len(&self) -> U256 {
         U256::from(self._checkpoints.len())
     }
 
@@ -190,7 +190,7 @@ impl Trace160 {
     ///
     /// # Panics
     ///
-    /// If `pos` exceeds [`Self::length`].
+    /// If `pos` exceeds [`Self::len`].
     ///
     /// # Arguments
     ///
@@ -224,7 +224,7 @@ impl Trace160 {
         key: U96,
         value: U160,
     ) -> Result<(U160, U160), Error> {
-        let pos = self.length();
+        let pos = self.len();
         if pos > U256::ZERO {
             let last = self._index(pos - uint!(1_U256));
             let last_key = last._key.get();
@@ -313,7 +313,7 @@ impl Trace160 {
     ///
     /// # Panics
     ///
-    /// If `pos` exceeds [`Self::length`].
+    /// If `pos` exceeds [`Self::len`].
     ///
     /// # Arguments
     ///
@@ -330,7 +330,7 @@ impl Trace160 {
     ///
     /// # Panics
     ///
-    /// If `pos` exceeds [`Self::length`].
+    /// If `pos` exceeds [`Self::len`].
     ///
     /// # Arguments
     ///
@@ -379,7 +379,7 @@ mod tests {
         checkpoint.push(second_key, second_value).expect("push second");
         checkpoint.push(third_key, third_value).expect("push third");
 
-        assert_eq!(checkpoint.length(), uint!(3_U256));
+        assert_eq!(checkpoint.len(), uint!(3_U256));
 
         assert_eq!(checkpoint.at(uint!(0_U32)), (first_key, first_value));
         assert_eq!(checkpoint.at(uint!(1_U32)), (second_key, second_value));
@@ -402,7 +402,7 @@ mod tests {
         checkpoint.push(third_key, third_value).expect("push third");
 
         assert_eq!(
-            checkpoint.length(),
+            checkpoint.len(),
             uint!(2_U256),
             "two checkpoints should be stored since third_value overrides second_value"
         );
@@ -506,7 +506,7 @@ mod tests {
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         let err = checkpoint
             .push(uint!(2_U96), uint!(22_U160))
-            .expect_err("should not push value lower then last one");
+            .expect_err("should not push value lower then the last one");
         assert!(matches!(
             err,
             Error::CheckpointUnorderedInsertion(
