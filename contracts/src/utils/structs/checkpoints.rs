@@ -94,7 +94,7 @@ impl Trace160 {
     }
 
     /// Returns the value in the last (most recent) checkpoint with key
-    /// lower or equal than the search key, or zero if there is none.
+    /// lower or equal than the search key, or `U160::ZERO` if there is none.
     ///
     /// # Arguments
     ///
@@ -111,7 +111,7 @@ impl Trace160 {
     }
 
     /// Returns the value in the last (most recent) checkpoint with key
-    /// lower or equal than the search key, or zero if there is none.
+    /// lower or equal than the search key, or `U160::ZERO` if there is none.
     ///
     /// This is a variant of [`Self::upper_lookup`] that is optimized to find
     /// "recent" checkpoint (checkpoints with high keys).
@@ -144,7 +144,7 @@ impl Trace160 {
         }
     }
 
-    /// Returns the value in the most recent checkpoint, or zero if
+    /// Returns the value in the most recent checkpoint, or `U160::ZERO` if
     /// there are no checkpoints.
     ///
     /// # Arguments
