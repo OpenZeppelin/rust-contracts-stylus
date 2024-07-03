@@ -10,6 +10,7 @@ sol!(
 
         function baseUri() external view returns (string memory baseURI);
 
+        #[derive(Debug)]
         function tokenURI(uint256 tokenId) external view returns (string memory tokenURI);
 
         function setTokenURI(uint256 tokenId, string memory tokenURI) external;
@@ -39,6 +40,8 @@ sol!(
         function isApprovedForAll(address owner, address operator) external view returns (bool approved);
 
         function mint(address to, uint256 tokenId) external;
+
+        function burn(uint256 tokenId) external;
 
         error ERC721InvalidOwner(address owner);
         error ERC721NonexistentToken(uint256 tokenId);
