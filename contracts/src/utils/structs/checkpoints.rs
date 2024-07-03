@@ -253,7 +253,7 @@ impl Trace160 {
     /// Indexes `low` and `high` define a section where to do the search, with
     /// inclusive `low` and exclusive `high`.
     ///
-    /// WARNING: `high` should not be greater than the array's length.
+    /// WARNING: `high` should not be greater than [`Self::len`].
     ///
     /// # Arguments
     ///
@@ -283,7 +283,7 @@ impl Trace160 {
     /// Indexes `low` and `high` define a section where to do the search, with
     /// inclusive `low` and exclusive `high`.
     ///
-    /// WARNING: `high` should not be greater than the array's length.
+    /// WARNING: `high` should not be greater than [`Self::len`].
     ///
     /// # Arguments
     ///
