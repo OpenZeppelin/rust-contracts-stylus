@@ -34,9 +34,17 @@ impl Erc721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
 
+        // Retrieve the owner.
+        let owner = self.erc721.owner_of(token_id)?;
+
         self.erc721.burn(token_id)?;
 
         // Update the extension's state.
+        self.enumerable._remove_token_from_owner_enumeration(
+            owner,
+            token_id,
+            &self.erc721,
+        )?;
         self.enumerable._remove_token_from_all_tokens_enumeration(token_id);
 
         Ok(())
@@ -49,6 +57,11 @@ impl Erc721Example {
 
         // Update the extension's state.
         self.enumerable._add_token_to_all_tokens_enumeration(token_id);
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        )?;
 
         Ok(())
     }

@@ -42,6 +42,13 @@ sol!(
         #[derive(Debug)]
         function whenNotPaused() external view;
 
+        function totalSupply() external view returns (uint256 totalSupply);
+
+        #[derive(Debug)]
+        function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256 tokenId);
+
+        #[derive(Debug)]
+        function tokenByIndex(uint256 index) external view returns (uint256 tokenId);
 
         error ERC721InvalidOwner(address owner);
         error ERC721NonexistentToken(uint256 tokenId);
@@ -51,6 +58,8 @@ sol!(
         error ERC721InsufficientApproval(address operator, uint256 tokenId);
         error ERC721InvalidApprover(address approver);
         error ERC721InvalidOperator(address operator);
+        error ERC721OutOfBoundsIndex(address owner, uint256 index);
+        error ERC721EnumerableForbiddenBatchMint();
 
         error EnforcedPause();
         error ExpectedPause();
