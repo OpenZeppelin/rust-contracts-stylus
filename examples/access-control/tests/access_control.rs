@@ -70,7 +70,7 @@ async fn default_role_is_default_admin(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn non_admin_cannot_grant_role(
+async fn error_when_non_admin_grants_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -157,7 +157,7 @@ async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn non_admin_cannot_revoke_role(
+async fn error_when_non_admin_revokes_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -238,7 +238,10 @@ async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn only_sender_can_renounce(alice: Account, bob: Account) -> Result<()> {
+async fn error_when_the_one_renouncing_is_not_the_sender(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = deploy(&alice).await?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -358,7 +361,7 @@ async fn the_new_admin_can_revoke_roles(
 }
 
 #[e2e::test]
-async fn previous_admins_no_longer_grant_roles(
+async fn error_when_previous_admin_grants_roles(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -387,7 +390,7 @@ async fn previous_admins_no_longer_grant_roles(
 }
 
 #[e2e::test]
-async fn previous_admins_no_longer_revoke_roles(
+async fn error_when_previous_admin_revokes_roles(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
