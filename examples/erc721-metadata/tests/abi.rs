@@ -4,6 +4,18 @@ use alloy::sol;
 sol!(
     #[sol(rpc)]
    contract Erc721 {
+        function name() external view returns (string memory name);
+
+        function symbol() external view returns (string memory symbol);
+
+        function baseUri() external view returns (string memory baseURI);
+
+        function tokenURI(uint256 tokenId) external view returns (string memory tokenURI);
+
+        function setTokenURI(uint256 tokenId, string memory tokenURI) external;
+
+        function supportsInterface(bytes4 interfaceIf) external pure returns (bool);
+
         #[derive(Debug)]
         function balanceOf(address owner) external view returns (uint256 balance);
 
@@ -26,22 +38,7 @@ sol!(
         #[derive(Debug)]
         function isApprovedForAll(address owner, address operator) external view returns (bool approved);
 
-        function burn(uint256 tokenId) external;
-
         function mint(address to, uint256 tokenId) external;
-
-        function paused() external view returns (bool paused);
-
-        function pause() external;
-
-        function unpause() external;
-
-        #[derive(Debug)]
-        function whenPaused() external view;
-
-        #[derive(Debug)]
-        function whenNotPaused() external view;
-
 
         error ERC721InvalidOwner(address owner);
         error ERC721NonexistentToken(uint256 tokenId);
@@ -51,9 +48,6 @@ sol!(
         error ERC721InsufficientApproval(address operator, uint256 tokenId);
         error ERC721InvalidApprover(address approver);
         error ERC721InvalidOperator(address operator);
-
-        error EnforcedPause();
-        error ExpectedPause();
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
@@ -65,9 +59,6 @@ sol!(
         event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
         #[derive(Debug, PartialEq)]
-        event Paused(address account);
-
-        #[derive(Debug, PartialEq)]
-        event Unpaused(address account);
+        event MetadataUpdate(uint256 tokenId);
    }
 );

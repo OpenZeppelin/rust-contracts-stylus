@@ -26,13 +26,13 @@ sol! {
 sol_storage! {
     /// Uri Storage.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
-    pub struct Erc721UriStorage {
+    pub struct Erc721URIStorage {
         /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;
     }
 }
 
-impl Erc721UriStorage {
+impl Erc721URIStorage {
     /// Sets `token_uri` as the tokenURI of `token_id`.
     ///
     /// # Arguments
@@ -43,14 +43,14 @@ impl Erc721UriStorage {
     ///
     /// # Events
     /// Emits a [`MetadataUpdate`] event.
-    pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+    pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
 }
 
 #[external]
-impl Erc721UriStorage {
+impl Erc721URIStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
     /// # Arguments
@@ -59,7 +59,7 @@ impl Erc721UriStorage {
     /// * `token_id` - Id of a token.
     #[must_use]
     pub fn token_uri(&self, token_id: U256) -> String {
-        self._token_uris.get(token_id).get_string()
+        self._token_uris.getter(token_id).get_string()
     }
 }
 
@@ -67,7 +67,7 @@ impl Erc721UriStorage {
 mod tests {
     use alloy_primitives::U256;
 
-    use super::Erc721UriStorage;
+    use super::Erc721URIStorage;
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();
@@ -75,7 +75,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_token_uri_works(contract: Erc721UriStorage) {
+    fn get_token_uri_works(contract: Erc721URIStorage) {
         let token_id = random_token_id();
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
@@ -85,14 +85,14 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_token_uri_works(contract: Erc721UriStorage) {
+    fn set_token_uri_works(contract: Erc721URIStorage) {
         let token_id = random_token_id();
 
         let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract._token_uris.setter(token_id).set_str(initial_token_uri);
 
         let token_uri = String::from("Updated Token URI");
-        contract.set_token_uri(token_id, token_uri.clone());
+        contract._set_token_uri(token_id, token_uri.clone());
 
         assert_eq!(token_uri, contract.token_uri(token_id));
     }

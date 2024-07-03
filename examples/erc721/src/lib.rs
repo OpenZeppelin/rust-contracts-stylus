@@ -1,18 +1,12 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloc::{
-    string::{String, ToString},
-    vec::Vec,
-};
+use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
     token::erc721::{
-        extensions::{
-            Erc721Enumerable as Enumerable, Erc721Metadata as Metadata,
-            Erc721UriStorage as UriStorage, IErc721Burnable, IErc721Metadata,
-        },
+        extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
         Erc721, IErc721,
     },
     utils::Pausable,
@@ -30,16 +24,12 @@ sol_storage! {
         #[borrow]
         Enumerable enumerable;
         #[borrow]
-        Metadata metadata;
-        #[borrow]
         Pausable pausable;
-        #[borrow]
-        UriStorage uri_storage;
     }
 }
 
 #[external]
-#[inherit(Erc721, Enumerable, Metadata, Pausable, UriStorage)]
+#[inherit(Erc721, Enumerable, Pausable)]
 impl Erc721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
@@ -147,25 +137,5 @@ impl Erc721Example {
         )?;
 
         Ok(())
-    }
-
-    // Overrides [`Erc721UriStorage::token_uri`].
-    // Returns the Uniform Resource Identifier (URI) for tokenId token.
-    pub fn token_uri(&self, token_id: U256) -> String {
-        let base = self.metadata.base_uri();
-        let token_uri = self.uri_storage.token_uri(token_id);
-
-        // If there is no base URI, return the token URI.
-        if base.is_empty() {
-            return token_uri;
-        }
-
-        // If both are set,
-        // concatenate the base URI and token URI.
-        if !token_uri.is_empty() {
-            base + &token_uri
-        } else {
-            base + &token_id.to_string()
-        }
     }
 }
