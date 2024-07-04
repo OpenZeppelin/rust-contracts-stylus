@@ -16,7 +16,6 @@ sol! {
     /// * `from` - Address from which the token will be transferred.
     /// * `to` - Address where the token will be transferred to.
     /// * `token_id` - Token id as a number.
-    #[allow(missing_docs)]
     event Transfer(
         address indexed from,
         address indexed to,
@@ -28,7 +27,6 @@ sol! {
     /// * `owner` - Address of the owner of the token.
     /// * `approved` - Address of the approver.
     /// * `token_id` - Token id as a number.
-    #[allow(missing_docs)]
     event Approval(
         address indexed owner,
         address indexed approved,
@@ -43,7 +41,6 @@ sol! {
     ///   will manage operations on the token.
     /// * `approved` - Whether or not permission has been granted. If true,
     ///   this means `operator` will be allowed to manage `owner`'s assets.
-    #[allow(missing_docs)]
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 }
 
@@ -155,7 +152,6 @@ sol_interface! {
         /// It must return its function selector to confirm the token transfer.
         /// If any other value is returned or the interface is not implemented
         /// by the recipient, the transfer will be reverted.
-        #[allow(missing_docs)]
         function onERC721Received(
             address operator,
             address from,
@@ -1092,7 +1088,7 @@ impl Erc721 {
                 operator,
                 from,
                 token_id,
-                data.to_vec(),
+                data.to_vec().into(),
             ) {
                 Ok(result) => {
                     if result == IERC721RECEIVER_INTERFACE_ID {
