@@ -1778,7 +1778,7 @@ async fn error_when_token_of_owner_by_index_address_does_not_have_any_tokens(
     let index = uint!(0_U256);
 
     let err = contract
-        .tokenOfOwnerByIndex(alice_addr, uint!(0_U256))
+        .tokenOfOwnerByIndex(alice_addr, index)
         .call()
         .await
         .expect_err("should return `ERC721OutOfBoundsIndex`");
@@ -1863,6 +1863,163 @@ async fn token_of_owner_by_index_after_transfer_to_another_account(
         owner: alice_addr,
         index
     }));
+
+    let Erc721::totalSupplyReturn { totalSupply } =
+        contract.totalSupply().call().await?;
+
+    assert_eq!(uint!(2_U256), totalSupply);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_token_by_index_no_tokens(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let index = uint!(0_U256);
+
+    let err = contract
+        .tokenByIndex(index)
+        .call()
+        .await
+        .expect_err("should return `ERC721OutOfBoundsIndex`");
+
+    assert!(err.reverted_with(Erc721::ERC721OutOfBoundsIndex {
+        owner: Address::ZERO,
+        index
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_token_by_index_out_of_bound(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+
+    let _ = watch!(contract.mint(alice_addr, random_token_id()))?;
+    let _ = watch!(contract.mint(alice_addr, random_token_id()))?;
+
+    let index_out_of_bound = uint!(2_U256);
+
+    let err = contract
+        .tokenByIndex(index_out_of_bound)
+        .call()
+        .await
+        .expect_err("should return `ERC721OutOfBoundsIndex`");
+
+    assert!(err.reverted_with(Erc721::ERC721OutOfBoundsIndex {
+        owner: Address::ZERO,
+        index: index_out_of_bound
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn token_by_index_works(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+
+    let token_0 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_0))?;
+
+    let token_1 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_1))?;
+
+    let Erc721::tokenByIndexReturn { tokenId } =
+        contract.tokenByIndex(uint!(0_U256)).call().await?;
+    assert_eq!(token_0, tokenId);
+
+    let Erc721::tokenByIndexReturn { tokenId } =
+        contract.tokenByIndex(uint!(1_U256)).call().await?;
+    assert_eq!(token_1, tokenId);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn token_by_index_after_burn(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+
+    let token_0 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_0))?;
+
+    let token_1 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_1))?;
+
+    let _ = watch!(contract.burn(token_1))?;
+
+    let Erc721::tokenByIndexReturn { tokenId } =
+        contract.tokenByIndex(uint!(0_U256)).call().await?;
+    assert_eq!(token_0, tokenId);
+
+    let index_of_burnt_token = uint!(1_U256);
+    let err = contract
+        .tokenByIndex(index_of_burnt_token)
+        .call()
+        .await
+        .expect_err("should return `ERC721OutOfBoundsIndex`");
+
+    assert!(err.reverted_with(Erc721::ERC721OutOfBoundsIndex {
+        owner: Address::ZERO,
+        index: index_of_burnt_token
+    }));
+
+    let Erc721::totalSupplyReturn { totalSupply } =
+        contract.totalSupply().call().await?;
+
+    assert_eq!(uint!(1_U256), totalSupply);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn token_by_index_after_burn_and_some_mints(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+
+    let token_0 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_0))?;
+
+    let token_1 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_1))?;
+
+    let _ = watch!(contract.burn(token_1))?;
+
+    let token_2 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_2))?;
+
+    let token_3 = random_token_id();
+    let _ = watch!(contract.mint(alice_addr, token_3))?;
+
+    let Erc721::tokenByIndexReturn { tokenId } =
+        contract.tokenByIndex(uint!(0_U256)).call().await?;
+    assert_eq!(token_0, tokenId);
+
+    let Erc721::tokenByIndexReturn { tokenId } =
+        contract.tokenByIndex(uint!(1_U256)).call().await?;
+    assert_eq!(token_2, tokenId);
+
+    let Erc721::tokenByIndexReturn { tokenId } =
+        contract.tokenByIndex(uint!(2_U256)).call().await?;
+    assert_eq!(token_3, tokenId);
 
     Ok(())
 }
