@@ -8,11 +8,8 @@ use alloy::{
 };
 use alloy_primitives::U256;
 use e2e::{receipt, Account};
-use koba::config::Deploy;
 
 use crate::ArbOtherFields;
-
-const RPC_URL: &str = "http://localhost:8547";
 
 sol!(
     #[sol(rpc)]
@@ -157,38 +154,5 @@ async fn deploy(account: &Account) -> Address {
         cap_: CAP,
     };
     let args = alloy::hex::encode(args.abi_encode());
-
-    let manifest_dir =
-        std::env::current_dir().expect("should get current dir from env");
-
-    let wasm_path = manifest_dir
-        .join("target")
-        .join("wasm32-unknown-unknown")
-        .join("release")
-        .join("erc20_example.wasm");
-    let sol_path = manifest_dir
-        .join("examples")
-        .join("erc20")
-        .join("src")
-        .join("constructor.sol");
-
-    let pk = account.pk();
-    let config = Deploy {
-        generate_config: koba::config::Generate {
-            wasm: wasm_path.clone(),
-            sol: sol_path,
-            args: Some(args),
-            legacy: false,
-        },
-        auth: koba::config::PrivateKey {
-            private_key_path: None,
-            private_key: Some(pk),
-            keystore_path: None,
-            keystore_password_path: None,
-        },
-        endpoint: RPC_URL.to_owned(),
-        deploy_only: false,
-    };
-
-    koba::deploy(&config).await.expect("should deploy contract")
+    crate::deploy(account, "erc20", &args).await
 }
