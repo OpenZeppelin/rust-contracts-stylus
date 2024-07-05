@@ -26,7 +26,8 @@ sol!(
 
 const DEFAULT_ADMIN_ROLE: [u8; 32] =
     openzeppelin_stylus::access::control::AccessControl::DEFAULT_ADMIN_ROLE;
-// There's no way to query constants of a Stylus contract, so this one is hard-coded :(
+// There's no way to query constants of a Stylus contract, so this one is
+// hard-coded :(
 const ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"TRANSFER_ROLE").finalize();
 const NEW_ADMIN_ROLE: [u8; 32] =
