@@ -137,7 +137,7 @@ impl Erc721Consecutive {
     }
 
     /// Override version that restricts normal minting to after construction.
-    /// 
+    ///
     /// WARNING: Using [`Erc721Consecutive`] prevents minting during
     /// construction in favor of [`Erc721Consecutive::mint_consecutive`].
     /// After construction,[`Erc721Consecutive::mint_consecutive`] is no
