@@ -53,7 +53,6 @@ pub async fn bench() -> eyre::Result<()> {
     let contract = AccessControl::new(contract_addr, &alice_wallet);
     let contract_bob = AccessControl::new(contract_addr, &bob_wallet);
 
-    println!("Running benches...");
     // IMPORTANT: Order matters!
     let receipts = vec![
         (
@@ -86,7 +85,7 @@ pub async fn bench() -> eyre::Result<()> {
         .expect("should at least bench one function")
         .0
         .len();
-    let name_width = max_name_width.max("Function".len());
+    let name_width = max_name_width.max("AccessControl".len());
 
     // Calculate the total width of the table.
     let total_width = name_width + 3 + 6 + 3 + 6 + 3 + 20 + 4; // 3 for padding, 4 for outer borders
@@ -95,7 +94,7 @@ pub async fn bench() -> eyre::Result<()> {
     println!("+{}+", "-".repeat(total_width - 2));
     println!(
         "| {:<width$} | L2 Gas | L1 Gas |        Effective Gas |",
-        "Function",
+        "AccessControl",
         width = name_width
     );
     println!(
