@@ -26,7 +26,7 @@ async fn deploy(account: &Account, contract_name: &str, args: &str) -> Address {
         .join("target")
         .join("wasm32-unknown-unknown")
         .join("release")
-        .join(format!("{}_example.wasm", contract_name));
+        .join(format!("{}_example.wasm", contract_name.replace('-', "_")));
     let sol_path = manifest_dir
         .join("examples")
         .join(format!("{}", contract_name))

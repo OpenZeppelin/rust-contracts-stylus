@@ -129,5 +129,5 @@ pub async fn bench() -> eyre::Result<()> {
 async fn deploy(account: &Account) -> Address {
     let args = AccessControl::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "access_control", &args).await
+    crate::deploy(account, "access-control", &args).await
 }
