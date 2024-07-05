@@ -1,19 +1,12 @@
-use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
+use alloy_primitives::{uint, Address, U256};
 use stylus_proc::{external, sol_storage};
-use stylus_sdk::{
-    abi::Bytes,
-    call::Call,
-    evm, msg,
-    prelude::{AddressVM, TopLevelStorage},
-};
+use stylus_sdk::{abi::Bytes, evm, msg, prelude::TopLevelStorage};
 
 use crate::{
     token::erc721::{
-        Approval, ApprovalForAll, ERC721IncorrectOwner,
-        ERC721InsufficientApproval, ERC721InvalidApprover,
-        ERC721InvalidOperator, ERC721InvalidOwner, ERC721InvalidReceiver,
-        ERC721InvalidSender, ERC721NonexistentToken, Error, IERC721Receiver,
-        IErc721, Transfer,
+        Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
+        ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
+        Erc721, Error, IERC721Receiver, IErc721, Transfer,
     },
     utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
@@ -22,14 +15,7 @@ sol_storage! {
     /// State of an [`Erc721`] token.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Consecutive {
-        /// Maps tokens to owners.
-        mapping(uint256 => address) _owners;
-        /// Maps users to balances.
-        mapping(address => uint256) _balances;
-        /// Maps tokens to approvals.
-        mapping(uint256 => address) _token_approvals;
-        /// Maps owners to a mapping of operator approvals.
-        mapping(address => mapping(address => bool)) _operator_approvals;
+        Erc721 erc721;
     }
 }
 
@@ -38,10 +24,7 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 #[external]
 impl IErc721 for Erc721Consecutive {
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
-        if owner.is_zero() {
-            return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
-        }
-        Ok(self._balances.get(owner))
+        self.erc721.balance_of(owner)
     }
 
     fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
@@ -68,7 +51,13 @@ impl IErc721 for Erc721Consecutive {
         data: Bytes,
     ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        self.erc721._check_on_erc721_received(
+            msg::sender(),
+            from,
+            to,
+            token_id,
+            &data,
+        )
     }
 
     fn transfer_from(
@@ -107,16 +96,16 @@ impl IErc721 for Erc721Consecutive {
         operator: Address,
         approved: bool,
     ) -> Result<(), Error> {
-        self._set_approval_for_all(msg::sender(), operator, approved)
+        self.erc721.set_approval_for_all(operator, approved)
     }
 
     fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
         self._require_owned(token_id)?;
-        Ok(self._get_approved_inner(token_id))
+        Ok(self.erc721._get_approved_inner(token_id))
     }
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
-        self._operator_approvals.get(owner).get(operator)
+        self.erc721.is_approved_for_all(owner, operator)
     }
 }
 
@@ -137,107 +126,7 @@ impl Erc721Consecutive {
     /// * `token_id` - Token id as a number.
     #[must_use]
     pub fn _owner_of_inner(&self, token_id: U256) -> Address {
-        self._owners.get(token_id)
-    }
-
-    /// Returns the approved address for `token_id`.
-    /// Returns 0 if `token_id` is not minted.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - Token id as a number.
-    #[must_use]
-    pub fn _get_approved_inner(&self, token_id: U256) -> Address {
-        self._token_approvals.get(token_id)
-    }
-
-    /// Returns whether `spender` is allowed to manage `owner`'s tokens, or
-    /// `token_id` in particular (ignoring whether it is owned by `owner`).
-    ///
-    /// WARNING: This function assumes that `owner` is the actual owner of
-    /// `token_id` and does not verify this assumption.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `owner` - Account of the token's owner.
-    /// * `spender` - Account that will spend token.
-    /// * `token_id` - Token id as a number.
-    #[must_use]
-    pub fn _is_authorized(
-        &self,
-        owner: Address,
-        spender: Address,
-        token_id: U256,
-    ) -> bool {
-        !spender.is_zero()
-            && (owner == spender
-                || self.is_approved_for_all(owner, spender)
-                || self._get_approved_inner(token_id) == spender)
-    }
-
-    /// Checks if `operator` can operate on `token_id`, assuming the provided
-    /// `owner` is the actual owner. Reverts if:
-    /// - `operator` does not have approval from `owner` for `token_id`.
-    /// - `operator` does not have approval to manage all of `owner`'s assets.
-    ///
-    /// WARNING: This function assumes that `owner` is the actual owner of
-    /// `token_id` and does not verify this assumption.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `owner` - Account of the token's owner.
-    /// * `operator` - Account that will spend token.
-    /// * `token_id` - Token id as a number.
-    ///
-    /// # Errors
-    ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
-    /// If `spender` does not have the right to approve, then the error
-    /// [`Error::InsufficientApproval`] is returned.
-    pub fn _check_authorized(
-        &self,
-        owner: Address,
-        operator: Address,
-        token_id: U256,
-    ) -> Result<(), Error> {
-        if self._is_authorized(owner, operator, token_id) {
-            return Ok(());
-        }
-
-        if owner.is_zero() {
-            Err(ERC721NonexistentToken { token_id }.into())
-        } else {
-            Err(ERC721InsufficientApproval { operator, token_id }.into())
-        }
-    }
-
-    /// Unsafe write access to the balances, used by extensions that "mint"
-    /// tokens using an [`Self::owner_of`] override.
-    ///
-    /// NOTE: the value is limited to type(uint128).max. This protects against
-    /// _balance overflow. It is unrealistic that a `U256` would ever
-    /// overflow from increments when these increments are bounded to `u128`
-    /// values.
-    ///
-    /// WARNING: Increasing an account's balance using this function tends to
-    /// be paired with an override of the [`Self::_owner_of_inner`] function to
-    /// resolve the ownership of the corresponding tokens so that balances and
-    /// ownership remain consistent with one another.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `account` - Account to increase balance.
-    /// * `value` - The number of tokens to increase balance.
-    // TODO: Right now this function is pointless since it is not used.
-    // But once we will be able to override internal functions,
-    // it will make a difference.
-    pub fn _increase_balance(&mut self, account: Address, value: U128) {
-        self._balances.setter(account).add_assign_unchecked(U256::from(value));
+        self.erc721._owners.get(token_id)
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
@@ -279,7 +168,7 @@ impl Erc721Consecutive {
 
         // Perform (optional) operator check.
         if !auth.is_zero() {
-            self._check_authorized(from, auth, token_id)?;
+            self.erc721._check_authorized(from, auth, token_id)?;
         }
 
         // Execute the update.
@@ -287,14 +176,20 @@ impl Erc721Consecutive {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self._balances.setter(from).sub_assign_unchecked(uint!(1_U256));
+            self.erc721
+                ._balances
+                .setter(from)
+                .sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self._balances.setter(to).add_assign_unchecked(uint!(1_U256));
+            self.erc721
+                ._balances
+                .setter(to)
+                .add_assign_unchecked(uint!(1_U256));
         }
 
-        self._owners.setter(token_id).set(to);
+        self.erc721._owners.setter(token_id).set(to);
         evm::log(Transfer { from, to, token_id });
         Ok(from)
     }
@@ -380,7 +275,7 @@ impl Erc721Consecutive {
         data: Bytes,
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
-        self._check_on_erc721_received(
+        self.erc721._check_on_erc721_received(
             msg::sender(),
             Address::ZERO,
             to,
@@ -526,7 +421,13 @@ impl Erc721Consecutive {
         data: Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        self.erc721._check_on_erc721_received(
+            msg::sender(),
+            from,
+            to,
+            token_id,
+            &data,
+        )
     }
 
     /// Variant of `approve_inner` with an optional flag to enable or disable
@@ -576,43 +477,7 @@ impl Erc721Consecutive {
             }
         }
 
-        self._token_approvals.setter(token_id).set(to);
-        Ok(())
-    }
-
-    /// Approve `operator` to operate on all of `owner`'s tokens.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account the token's owner.
-    /// * `operator` - Account to add to the set of authorized operators.
-    /// * `approved` - Whether permission will be granted. If true, this means.
-    ///
-    /// # Errors
-    ///
-    /// If `operator` is `Address::ZERO`, then the error
-    /// [`Error::InvalidOperator`] is returned.
-    ///
-    /// # Requirements:
-    ///
-    /// * `operator` can't be the address zero.
-    ///
-    /// # Events
-    ///
-    /// Emits an [`ApprovalForAll`] event.
-    pub fn _set_approval_for_all(
-        &mut self,
-        owner: Address,
-        operator: Address,
-        approved: bool,
-    ) -> Result<(), Error> {
-        if operator.is_zero() {
-            return Err(ERC721InvalidOperator { operator }.into());
-        }
-
-        self._operator_approvals.setter(owner).setter(operator).set(approved);
-        evm::log(ApprovalForAll { owner, operator, approved });
+        self.erc721._token_approvals.setter(token_id).set(to);
         Ok(())
     }
 
@@ -637,65 +502,5 @@ impl Erc721Consecutive {
             return Err(ERC721NonexistentToken { token_id }.into());
         }
         Ok(owner)
-    }
-
-    /// Performs an acceptance check for the provided `operator` by calling
-    /// [`IERC721Receiver::on_erc_721_received`] on the `to` address. The
-    /// `operator` is generally the address that initiated the token transfer
-    /// (i.e. `msg::sender()`).
-    ///
-    /// The acceptance call is not executed and treated as a no-op
-    /// if the target address doesn't contain code (i.e. an EOA).
-    /// Otherwise, the recipient must implement
-    /// [`IERC721Receiver::on_erc_721_received`] and return the
-    /// acceptance magic value to accept the transfer.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `operator` - Account to add to the set of authorized operators.
-    /// * `from` - Account of the sender.
-    /// * `to` - Account of the recipient.
-    /// * `token_id` - Token id as a number.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    /// interface id or returned with error, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    pub fn _check_on_erc721_received(
-        &mut self,
-        operator: Address,
-        from: Address,
-        to: Address,
-        token_id: U256,
-        data: &Bytes,
-    ) -> Result<(), Error> {
-        const IERC721RECEIVER_INTERFACE_ID: FixedBytes<4> =
-            fixed_bytes!("150b7a02");
-
-        // FIXME: Cleanup this code once it's covered in the test suite.
-        if to.has_code() {
-            let call = Call::new_in(self);
-            return match IERC721Receiver::new(to).on_erc_721_received(
-                call,
-                operator,
-                from,
-                token_id,
-                data.to_vec(),
-            ) {
-                Ok(result) => {
-                    if result == IERC721RECEIVER_INTERFACE_ID {
-                        Ok(())
-                    } else {
-                        Err(ERC721InvalidReceiver { receiver: to }.into())
-                    }
-                }
-                Err(_) => Err(ERC721InvalidReceiver { receiver: to }.into()),
-            };
-        }
-        Ok(())
     }
 }
