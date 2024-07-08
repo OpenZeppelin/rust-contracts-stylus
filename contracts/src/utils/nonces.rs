@@ -93,7 +93,7 @@ mod tests {
     use alloy_primitives::{address, Address, U256};
     use alloy_sol_types::sol;
 
-    use crate::utils::nonces::{Nonces, Error};
+    use crate::utils::nonces::{Error, Nonces};
 
     #[motsu::test]
     fn test_initiate_nonce(contract: Nonces) {
@@ -101,34 +101,39 @@ mod tests {
 
         assert_eq!(contract.nonce(owner), U256::from(0u32));
     }
-    
+
     #[motsu::test]
     fn test_use_nonce(contract: Nonces) {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
-        
+
         let use_nonce = contract.use_nonce(owner).unwrap();
         assert_eq!(use_nonce, U256::from(0u32));
-        
+
         let nonce = contract.nonce(owner);
         assert_eq!(nonce, U256::from(1u32));
     }
-    
+
     #[motsu::test]
     fn test_use_checked_nonce(contract: Nonces) {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
-        
-        let use_checked_nonce = contract.use_checked_nonce(owner, U256::from(0u32));
+
+        let use_checked_nonce =
+            contract.use_checked_nonce(owner, U256::from(0u32));
         assert!(use_checked_nonce.is_ok());
-        
+
         let nonce = contract.nonce(owner);
         assert_eq!(nonce, U256::from(1u32));
     }
-    
+
     #[motsu::test]
     fn test_use_checked_nonce_invalid_nonce(contract: Nonces) {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
-        
-        let use_checked_nonce = contract.use_checked_nonce(owner, U256::from(1u32));
-        assert!(matches!(use_checked_nonce, Err(Error::InvalidAccountNonce(_))));
+
+        let use_checked_nonce =
+            contract.use_checked_nonce(owner, U256::from(1u32));
+        assert!(matches!(
+            use_checked_nonce,
+            Err(Error::InvalidAccountNonce(_))
+        ));
     }
 }
