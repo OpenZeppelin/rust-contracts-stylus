@@ -8,10 +8,9 @@ use alloy::{
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
+use utils::abi::Erc20;
 
-use crate::abi::Erc20;
-
-mod abi;
+mod utils;
 
 sol!("src/constructor.sol");
 

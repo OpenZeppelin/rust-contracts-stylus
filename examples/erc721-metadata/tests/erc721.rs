@@ -6,10 +6,9 @@ use alloy::{
     sol_types::SolConstructor,
 };
 use e2e::{receipt, watch, Account, EventExt, Revert};
+use utils::abi::Erc721;
 
-use crate::abi::Erc721;
-
-mod abi;
+mod utils;
 
 sol!("src/constructor.sol");
 

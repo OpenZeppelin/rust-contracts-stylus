@@ -1,14 +1,14 @@
 #![cfg(feature = "e2e")]
 
-use abi::AccessControl::{
-    self, AccessControlBadConfirmation, AccessControlUnauthorizedAccount,
-    RoleAdminChanged, RoleGranted, RoleRevoked,
-};
 use alloy::{hex, primitives::Address, sol_types::SolConstructor};
 use e2e::{receipt, send, watch, Account, EventExt, Revert};
 use eyre::Result;
+use utils::abi::AccessControl::{
+    self, AccessControlBadConfirmation, AccessControlUnauthorizedAccount,
+    RoleAdminChanged, RoleGranted, RoleRevoked,
+};
 
-mod abi;
+mod utils;
 
 const DEFAULT_ADMIN_ROLE: [u8; 32] =
     openzeppelin_stylus::access::control::AccessControl::DEFAULT_ADMIN_ROLE;

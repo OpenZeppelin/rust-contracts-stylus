@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 #![cfg(feature = "e2e")]
 use alloy::{
     primitives::{fixed_bytes, Address},

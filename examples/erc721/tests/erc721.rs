@@ -7,11 +7,9 @@ use alloy::{
 };
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Revert};
+use utils::{abi::Erc721, mock_receiver, mock_receiver::ERC721ReceiverMock};
 
-use crate::{abi::Erc721, mock_receiver::ERC721ReceiverMock};
-
-mod abi;
-mod mock_receiver;
+mod utils;
 
 sol!("src/constructor.sol");
 
