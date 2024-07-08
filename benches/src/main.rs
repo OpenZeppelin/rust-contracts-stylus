@@ -1,8 +1,8 @@
-use benches::erc20;
+use benches::{access_control, erc20};
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
-    erc20::bench().await?;
+    let _ = tokio::join!(erc20::bench(), access_control::bench());
 
     Ok(())
 }
