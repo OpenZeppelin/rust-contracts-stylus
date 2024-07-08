@@ -867,7 +867,9 @@ dependencies = [
  "alloy-primitives 0.3.3",
  "e2e",
  "eyre",
+ "keccak-const",
  "koba",
+ "openzeppelin-stylus",
  "serde",
  "tokio",
 ]
