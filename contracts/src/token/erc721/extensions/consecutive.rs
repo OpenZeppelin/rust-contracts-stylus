@@ -1,20 +1,24 @@
 use alloy_primitives::{uint, Address, U128, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage};
+use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{
     abi::Bytes, call::MethodError, evm, msg, prelude::TopLevelStorage,
 };
 
 use crate::{
-    token::erc721::{
-        Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
-        ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, Error, IERC721Receiver, IErc721, Transfer,
+    token::{
+        erc721,
+        erc721::{
+            Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
+            ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
+            Erc721, Error as Erc721Error, IERC721Receiver, IErc721, Transfer,
+        },
     },
     utils::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
+            checkpoints,
             checkpoints::{Trace160, U160, U96},
         },
     },
@@ -25,8 +29,8 @@ sol_storage! {
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Consecutive {
         Erc721 erc721;
-        Trace160 sequential_ownership;
-        BitMap sequentian_burn;
+        Trace160 _sequential_ownership;
+        BitMap _sequentian_burn;
     }
 }
 
@@ -42,7 +46,7 @@ sol! {
 
 sol! {
     /// Batch mint is restricted to the constructor.
-    /// Any batch mint not emitting the {IERC721-Transfer} event outside of the constructor
+    /// Any batch mint not emitting the [`IERC721::Transfer`] event outside of the constructor
     /// is non ERC-721 compliant.
     #[derive(Debug)]
     #[allow(missing_docs)]
@@ -64,6 +68,34 @@ sol! {
     error ERC721ForbiddenBatchBurn();
 }
 
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    Erc721(erc721::Error),
+    Checkpoints(checkpoints::Error),
+    /// Batch mint is restricted to the constructor.
+    /// Any batch mint not emitting the [`IERC721::Transfer`] event outside of
+    /// the constructor is non ERC-721 compliant.
+    Erc721ForbiddenBatchMint(ERC721ForbiddenBatchMint),
+    /// Exceeds the max amount of mints per batch.
+    Erc721ExceededMaxBatchMint(ERC721ExceededMaxBatchMint),
+    /// Individual minting is not allowed.
+    Erc721ForbiddenMint(ERC721ForbiddenMint),
+    /// Batch burn is not supported.
+    Erc721ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
+}
+
+impl MethodError for erc721::Error {
+    fn encode(self) -> Vec<u8> {
+        self.into()
+    }
+}
+
+impl MethodError for checkpoints::Error {
+    fn encode(self) -> Vec<u8> {
+        self.into()
+    }
+}
+
 // Maximum size of a batch of consecutive tokens. This is designed to limit
 // stress on off-chain indexing services that have to record one entry per
 // token, and have protections against "unreasonably large" batches of tokens.
@@ -77,7 +109,24 @@ impl Erc721Consecutive {
     /// Override that checks the sequential ownership structure for tokens that
     /// have been minted as part of a batch, and not yet transferred.
     pub fn _owner_of_inner(&self, token_id: U256) -> Address {
-        self.__owner_of_inner(token_id)
+        let owner = self.__owner_of_inner(token_id);
+        // If token is owned by the core, or beyond consecutive range, return
+        // base value
+        if owner != Address::ZERO
+            || token_id > U256::from(U96::MAX)
+            || token_id < U256::from(FIRST_CONSECUTIVE_ID)
+        {
+            return owner;
+        }
+
+        // Otherwise, check the token was not burned, and fetch ownership from
+        // the anchors.
+        // NOTE: no need for safe cast,
+        if self._sequentian_burn.get(token_id) {
+            Address::ZERO
+        } else {
+            self._sequential_ownership.lower_lookup(U96::from(token_id)).into()
+        }
     }
 
     // Mint a batch of tokens of length `batchSize` for `to`. Returns the token
@@ -100,16 +149,19 @@ impl Erc721Consecutive {
     pub fn mint_consecutive(
         &mut self,
         to: Address,
-        batch_size: u128, // TODO: how to use U96 type
-    ) -> Result<u128, Vec<u8>> {
+        batch_size: u128,
+    ) -> Result<u128, Error> {
         let batch_size = U96::from(batch_size);
         let next = self.next_consecutive_id();
 
         if batch_size > U96::ZERO {
+            //TODO#q: check address of this and revert with ERC721ForbiddenBatchMint
+            
             if to.is_zero() {
-                return Err(
-                    ERC721InvalidReceiver { receiver: Address::ZERO }.encode()
-                );
+                return Err(Erc721Error::InvalidReceiver(
+                    ERC721InvalidReceiver { receiver: Address::ZERO },
+                )
+                .into());
             }
 
             if batch_size > MAX_BATCH_SIZE.to() {
@@ -117,13 +169,12 @@ impl Erc721Consecutive {
                     batchSize: U256::from(batch_size),
                     maxBatch: U256::from(MAX_BATCH_SIZE),
                 }
-                .encode());
+                .into());
             }
 
             let last = next + batch_size - uint!(1_U96);
-            self.sequential_ownership
-                .push(last, U160::from_be_bytes(to.into_array()))
-                .map_err(Vec::<u8>::from)?;
+            self._sequential_ownership
+                .push(last, U160::from_be_bytes(to.into_array()))?;
 
             self.erc721._increase_balance(to, U128::from(batch_size));
             evm::log(ConsecutiveTransfer {
@@ -149,14 +200,32 @@ impl Erc721Consecutive {
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        self.__update(to, token_id, auth)
+        let previous_owner = self.__update(to, token_id, auth)?;
+
+        // only mint after construction
+        if previous_owner == Address::ZERO
+        /* TODO#q: and address code is zero */
+        {
+            return Err(ERC721ForbiddenMint {}.into()); //
+        }
+
+        // record burn
+        if to == Address::ZERO // if we burn
+            && token_id < U256::from(self.next_consecutive_id()) // and the tokenId was minted in a batch
+            && !self._sequentian_burn.get(token_id)
+        // and the token was never marked as burnt
+        {
+            self._sequentian_burn.set(token_id);
+        }
+
+        Ok(previous_owner)
     }
 
     /// Returns the next tokenId to mint using {_mintConsecutive}. It will
     /// return [`FIRST_CONSECUTIVE_ID`] if no consecutive tokenId has been
     /// minted before.
     fn next_consecutive_id(&self) -> U96 {
-        match self.sequential_ownership.latest_checkpoint() {
+        match self._sequential_ownership.latest_checkpoint() {
             None => FIRST_CONSECUTIVE_ID,
             Some((latest_id, _)) => latest_id + uint!(1_U96),
         }
@@ -167,8 +236,10 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 #[external]
 impl IErc721 for Erc721Consecutive {
+    type Error = Error;
+
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
-        self.erc721.balance_of(owner)
+        self.erc721.balance_of(owner).map_err(|e| e.into())
     }
 
     fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
@@ -195,13 +266,13 @@ impl IErc721 for Erc721Consecutive {
         data: Bytes,
     ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
-        self.erc721._check_on_erc721_received(
+        Ok(self.erc721._check_on_erc721_received(
             msg::sender(),
             from,
             to,
             token_id,
             &data,
-        )
+        )?)
     }
 
     fn transfer_from(
@@ -211,9 +282,10 @@ impl IErc721 for Erc721Consecutive {
         token_id: U256,
     ) -> Result<(), Error> {
         if to.is_zero() {
-            return Err(
-                ERC721InvalidReceiver { receiver: Address::ZERO }.into()
-            );
+            return Err(Erc721Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver: Address::ZERO,
+            })
+            .into());
         }
 
         // Setting an "auth" argument enables the `_is_authorized` check which
@@ -221,11 +293,11 @@ impl IErc721 for Erc721Consecutive {
         // not needed to verify that the return value is not 0 here.
         let previous_owner = self._update(to, token_id, msg::sender())?;
         if previous_owner != from {
-            return Err(ERC721IncorrectOwner {
+            return Err(Erc721Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender: from,
                 token_id,
                 owner: previous_owner,
-            }
+            })
             .into());
         }
         Ok(())
@@ -240,7 +312,7 @@ impl IErc721 for Erc721Consecutive {
         operator: Address,
         approved: bool,
     ) -> Result<(), Error> {
-        self.erc721.set_approval_for_all(operator, approved)
+        Ok(self.erc721.set_approval_for_all(operator, approved)?)
     }
 
     fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
@@ -367,14 +439,18 @@ impl Erc721Consecutive {
     /// Emits a [`Transfer`] event.
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to.is_zero() {
-            return Err(
-                ERC721InvalidReceiver { receiver: Address::ZERO }.into()
-            );
+            return Err(Erc721Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver: Address::ZERO,
+            })
+            .into());
         }
 
         let previous_owner = self._update(to, token_id, Address::ZERO)?;
         if !previous_owner.is_zero() {
-            return Err(ERC721InvalidSender { sender: Address::ZERO }.into());
+            return Err(Erc721Error::InvalidSender(ERC721InvalidSender {
+                sender: Address::ZERO,
+            })
+            .into());
         }
         Ok(())
     }
@@ -420,13 +496,13 @@ impl Erc721Consecutive {
         data: Bytes,
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
-        self.erc721._check_on_erc721_received(
+        Ok(self.erc721._check_on_erc721_received(
             msg::sender(),
             Address::ZERO,
             to,
             token_id,
             &data,
-        )
+        )?)
     }
 
     /// Destroys `token_id`.
@@ -456,7 +532,10 @@ impl Erc721Consecutive {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
-            return Err(ERC721NonexistentToken { token_id }.into());
+            return Err(Erc721Error::NonexistentToken(
+                ERC721NonexistentToken { token_id },
+            )
+            .into());
         }
         Ok(())
     }
@@ -497,20 +576,24 @@ impl Erc721Consecutive {
         token_id: U256,
     ) -> Result<(), Error> {
         if to.is_zero() {
-            return Err(
-                ERC721InvalidReceiver { receiver: Address::ZERO }.into()
-            );
+            return Err(Erc721Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver: Address::ZERO,
+            })
+            .into());
         }
 
         let previous_owner = self._update(to, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
-            return Err(ERC721NonexistentToken { token_id }.into());
+            return Err(Erc721Error::NonexistentToken(
+                ERC721NonexistentToken { token_id },
+            )
+            .into());
         } else if previous_owner != from {
-            return Err(ERC721IncorrectOwner {
+            return Err(Erc721Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender: from,
                 token_id,
                 owner: previous_owner,
-            }
+            })
             .into());
         }
 
@@ -566,13 +649,13 @@ impl Erc721Consecutive {
         data: Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
-        self.erc721._check_on_erc721_received(
+        Ok(self.erc721._check_on_erc721_received(
             msg::sender(),
             from,
             to,
             token_id,
             &data,
-        )
+        )?)
     }
 
     /// Variant of `approve_inner` with an optional flag to enable or disable
@@ -614,7 +697,10 @@ impl Erc721Consecutive {
                 && owner != auth
                 && !self.is_approved_for_all(owner, auth)
             {
-                return Err(ERC721InvalidApprover { approver: auth }.into());
+                return Err(Erc721Error::InvalidApprover(
+                    ERC721InvalidApprover { approver: auth },
+                )
+                .into());
             }
 
             if emit_event {
@@ -644,7 +730,10 @@ impl Erc721Consecutive {
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self._owner_of_inner(token_id);
         if owner.is_zero() {
-            return Err(ERC721NonexistentToken { token_id }.into());
+            return Err(Erc721Error::NonexistentToken(
+                ERC721NonexistentToken { token_id },
+            )
+            .into());
         }
         Ok(owner)
     }
