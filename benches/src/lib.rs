@@ -6,6 +6,7 @@ use serde::Deserialize;
 
 pub mod access_control;
 pub mod erc20;
+pub mod merkle_proofs;
 
 const RPC_URL: &str = "http://localhost:8547";
 
@@ -18,7 +19,11 @@ struct ArbOtherFields {
     l1_block_number: String,
 }
 
-async fn deploy(account: &Account, contract_name: &str, args: &str) -> Address {
+async fn deploy(
+    account: &Account,
+    contract_name: &str,
+    args: Option<String>,
+) -> Address {
     let manifest_dir =
         std::env::current_dir().expect("should get current dir from env");
 
@@ -38,7 +43,7 @@ async fn deploy(account: &Account, contract_name: &str, args: &str) -> Address {
         generate_config: Generate {
             wasm: wasm_path.clone(),
             sol: sol_path,
-            args: Some(args.to_owned()),
+            args,
             legacy: false,
         },
         auth: PrivateKey {
