@@ -52,13 +52,13 @@ impl Nonces {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address for which to consume the nonce.
-    fn use_nonce(&mut self, owner: Address) -> Result<U256, Error> {
+    fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
         self._nonces
             .setter(owner)
             .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
 
-        Ok(nonce)
+        nonce
     }
 
     /// Same as `use_nonce` but checking that the `nonce` is the next valid for
@@ -109,7 +109,7 @@ mod tests {
     fn test_use_nonce(contract: Nonces) {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
 
-        let use_nonce = contract.use_nonce(owner).unwrap();
+        let use_nonce = contract.use_nonce(owner);
         assert_eq!(use_nonce, U256::from(0u32));
 
         let nonce = contract.nonce(owner);
