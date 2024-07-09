@@ -32,15 +32,11 @@ sol_storage! {
 #[inherit(Erc721, Metadata, URIStorage)]
 impl Erc721MetadataExample {
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
-        self.erc721._mint(to, token_id)?;
-
-        Ok(())
+        Ok(self.erc721._mint(to, token_id)?)
     }
 
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
-        self.erc721.burn(token_id)?;
-
-        Ok(())
+        Ok(self.erc721.burn(token_id)?)
     }
 
     // Overrides [`Erc721UriStorage::token_uri`].
