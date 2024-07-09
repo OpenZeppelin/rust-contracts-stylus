@@ -5,9 +5,15 @@
 //!
 //! Note: Nonce will only increment.
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, uint};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
+
+
+const ONE: U256 = uint!(
+    0x1U256
+);
+
 
 sol! {
     /// The nonce used for an `account` is not the expected current nonce.
@@ -39,7 +45,7 @@ impl Nonces {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    /// - `owner` - The address for which to return the nonce.
+    /// * `owner` - The address for which to return the nonce.
     fn nonce(&self, owner: Address) -> U256 {
         self._nonces.get(owner)
     }
@@ -49,13 +55,10 @@ impl Nonces {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// - `owner` - The address for which to consume the nonce.
-    ///
-    /// * Returns the current nonce for the given `account` and increments the
-    ///   nonce.
+    /// * `owner` - The address for which to consume the nonce.
     fn use_nonce(&mut self, owner: Address) -> Result<U256, Error> {
         let nonce = self._nonces.get(owner);
-        self._nonces.setter(owner).set(nonce + U256::from(1u32));
+        self._nonces.setter(owner).set(unsafe {nonce.checked_add(ONE).unwrap_unchecked()});
 
         Ok(nonce)
     }
@@ -66,8 +69,8 @@ impl Nonces {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// - `owner` - The address for which to consume the nonce.
-    /// - `nonce` - The nonce to consume.
+    /// * `owner` - The address for which to consume the nonce.
+    /// * `nonce` - The nonce to consume.
     fn use_checked_nonce(
         &mut self,
         owner: Address,
@@ -82,7 +85,7 @@ impl Nonces {
             }));
         }
 
-        self._nonces.setter(owner).set(nonce + U256::from(1u32));
+        self._nonces.setter(owner).set(unsafe {nonce.checked_add(ONE).unwrap_unchecked()});
 
         Ok(())
     }
