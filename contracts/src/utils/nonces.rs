@@ -5,15 +5,11 @@
 //!
 //! Note: Nonce will only increment.
 
-use alloy_primitives::{Address, U256, uint};
+use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 
-
-const ONE: U256 = uint!(
-    0x1U256
-);
-
+const ONE: U256 = uint!(0x1U256);
 
 sol! {
     /// The nonce used for an `account` is not the expected current nonce.
@@ -58,7 +54,9 @@ impl Nonces {
     /// * `owner` - The address for which to consume the nonce.
     fn use_nonce(&mut self, owner: Address) -> Result<U256, Error> {
         let nonce = self._nonces.get(owner);
-        self._nonces.setter(owner).set(unsafe {nonce.checked_add(ONE).unwrap_unchecked()});
+        self._nonces
+            .setter(owner)
+            .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
 
         Ok(nonce)
     }
@@ -85,7 +83,9 @@ impl Nonces {
             }));
         }
 
-        self._nonces.setter(owner).set(unsafe {nonce.checked_add(ONE).unwrap_unchecked()});
+        self._nonces
+            .setter(owner)
+            .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
 
         Ok(())
     }
