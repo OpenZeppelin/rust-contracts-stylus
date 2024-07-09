@@ -26,13 +26,13 @@ sol! {
 sol_storage! {
     /// Uri Storage.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
-    pub struct Erc721URIStorage {
+    pub struct Erc721UriStorage {
         /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;
     }
 }
 
-impl Erc721URIStorage {
+impl Erc721UriStorage {
     /// Sets `token_uri` as the tokenURI of `token_id`.
     ///
     /// # Arguments
@@ -50,7 +50,7 @@ impl Erc721URIStorage {
 }
 
 #[external]
-impl Erc721URIStorage {
+impl Erc721UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
     /// # Arguments
@@ -67,7 +67,7 @@ impl Erc721URIStorage {
 mod tests {
     use alloy_primitives::U256;
 
-    use super::Erc721URIStorage;
+    use super::Erc721UriStorage;
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();
@@ -75,7 +75,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_token_uri_works(contract: Erc721URIStorage) {
+    fn get_token_uri_works(contract: Erc721UriStorage) {
         let token_id = random_token_id();
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
@@ -85,7 +85,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_token_uri_works(contract: Erc721URIStorage) {
+    fn set_token_uri_works(contract: Erc721UriStorage) {
         let token_id = random_token_id();
 
         let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");

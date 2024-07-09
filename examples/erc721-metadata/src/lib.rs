@@ -9,7 +9,7 @@ use alloc::{
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{
     extensions::{
-        Erc721Metadata as Metadata, Erc721URIStorage as URIStorage,
+        Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
         IErc721Burnable, IErc721Metadata,
     },
     Erc721, IErc721,
@@ -24,12 +24,12 @@ sol_storage! {
         #[borrow]
         Metadata metadata;
         #[borrow]
-        URIStorage uri_storage;
+        UriStorage uri_storage;
     }
 }
 
 #[external]
-#[inherit(Erc721, Metadata, URIStorage)]
+#[inherit(Erc721, Metadata, UriStorage)]
 impl Erc721MetadataExample {
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
         Ok(self.erc721._mint(to, token_id)?)
