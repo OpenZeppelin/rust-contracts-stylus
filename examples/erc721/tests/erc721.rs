@@ -1,5 +1,6 @@
 #![cfg(feature = "e2e")]
 
+use abi::Erc721;
 use alloy::{
     primitives::{fixed_bytes, Address, Bytes, U256},
     sol,
@@ -7,9 +8,10 @@ use alloy::{
 };
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Revert};
-use utils::{abi::Erc721, mock_receiver, mock_receiver::ERC721ReceiverMock};
+use mock::{receiver, receiver::ERC721ReceiverMock};
 
-mod utils;
+mod abi;
+mod mock;
 
 sol!("src/constructor.sol");
 
@@ -461,11 +463,9 @@ async fn safe_transfers_to_receiver_contract(
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let receiver_address = mock_receiver::deploy(
-        &alice.wallet,
-        ERC721ReceiverMock::RevertType::None,
-    )
-    .await?;
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
+            .await?;
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
@@ -796,11 +796,9 @@ async fn safe_transfers_with_data_to_receiver_contract(
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let receiver_address = mock_receiver::deploy(
-        &alice.wallet,
-        ERC721ReceiverMock::RevertType::None,
-    )
-    .await?;
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
+            .await?;
 
     let alice_addr = alice.address();
     let token_id = random_token_id();

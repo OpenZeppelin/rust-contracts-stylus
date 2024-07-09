@@ -1,5 +1,6 @@
 #![cfg(feature = "e2e")]
 
+use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::{
     primitives::Address,
     providers::Provider,
@@ -9,9 +10,8 @@ use alloy::{
 };
 use e2e::{receipt, send, Account, EventExt, Revert};
 use eyre::Result;
-use utils::abi::{Ownable, Ownable::OwnershipTransferred};
 
-mod utils;
+mod abi;
 
 sol!("src/constructor.sol");
 

@@ -1,14 +1,14 @@
 #![cfg(feature = "e2e")]
 
+use abi::Erc721;
 use alloy::{
     primitives::{Address, U256},
     sol,
     sol_types::SolConstructor,
 };
 use e2e::{receipt, watch, Account, EventExt, Revert};
-use utils::abi::Erc721;
 
-mod utils;
+mod abi;
 
 sol!("src/constructor.sol");
 
