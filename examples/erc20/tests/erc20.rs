@@ -966,7 +966,7 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 
     let Erc20::pausedReturn { paused } = contract.paused().call().await?;
 
-    assert!(paused);
+    assert_eq!(true, paused);
 
     let result = contract.whenPaused().call().await;
 

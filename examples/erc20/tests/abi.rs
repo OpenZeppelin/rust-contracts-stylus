@@ -21,14 +21,10 @@ sol!(
         function burnFrom(address account, uint256 amount) external;
 
         function paused() external view returns (bool paused);
-
         function pause() external;
-
         function unpause() external;
-
         #[derive(Debug)]
         function whenPaused() external view;
-
         #[derive(Debug)]
         function whenNotPaused() external view;
 
@@ -46,14 +42,11 @@ sol!(
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
-
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
 
-
         #[derive(Debug, PartialEq)]
         event Paused(address account);
-
         #[derive(Debug, PartialEq)]
         event Unpaused(address account);
     }
