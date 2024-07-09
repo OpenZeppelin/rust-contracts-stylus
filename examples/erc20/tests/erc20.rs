@@ -949,3 +949,270 @@ async fn should_not_deploy_capped_with_invalid_cap(
     assert!(err_string.contains(&expected));
     Ok(())
 }
+
+// ============================================================================
+// Integration Tests: ERC-20 Pausable Extension
+// ============================================================================
+
+#[e2e::test]
+async fn pauses(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc20::new(contract_addr, &alice.wallet);
+
+    let receipt = receipt!(contract.pause())?;
+
+    assert!(receipt.emits(Erc20::Paused { account: alice.address() }));
+
+    let Erc20::pausedReturn { paused } = contract.paused().call().await?;
+
+    assert_eq!(true, paused);
+
+    let result = contract.whenPaused().call().await;
+
+    assert!(result.is_ok());
+
+    let err = contract
+        .whenNotPaused()
+        .call()
+        .await
+        .expect_err("should return `EnforcedPause`");
+
+    assert!(err.reverted_with(Erc20::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn unpauses(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc20::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(contract.pause())?;
+
+    let receipt = receipt!(contract.unpause())?;
+
+    assert!(receipt.emits(Erc20::Unpaused { account: alice.address() }));
+
+    let Erc20::pausedReturn { paused } = contract.paused().call().await?;
+
+    assert_eq!(false, paused);
+
+    let result = contract.whenNotPaused().call().await;
+
+    assert!(result.is_ok());
+
+    let err = contract
+        .whenPaused()
+        .call()
+        .await
+        .expect_err("should return `ExpectedPause`");
+
+    assert!(err.reverted_with(Erc20::ExpectedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
+
+    let _ = watch!(contract.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract.totalSupply().call().await?;
+
+    let _ = watch!(contract.pause())?;
+
+    let err =
+        send!(contract.burn(value)).expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc20::EnforcedPause {}));
+
+    let Erc20::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract.totalSupply().call().await?;
+
+    assert_eq!(initial_balance, balance);
+    assert_eq!(initial_supply, supply);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_burn_from_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: initial_bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let _ = watch!(contract_alice.approve(bob_addr, balance))?;
+
+    let Erc20::allowanceReturn { allowance: initial_allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    let _ = watch!(contract_alice.pause())?;
+
+    let err = send!(contract_bob.burnFrom(alice_addr, value))
+        .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc20::EnforcedPause {}));
+
+    let Erc20::balanceOfReturn { balance: alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+    let Erc20::allowanceReturn { allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+    assert_eq!(initial_supply, supply);
+    assert_eq!(initial_allowance, allowance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract = Erc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+
+    let Erc20::balanceOfReturn { balance: initial_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract.totalSupply().call().await?;
+
+    assert_eq!(U256::ZERO, initial_balance);
+    assert_eq!(U256::ZERO, initial_supply);
+
+    let _ = watch!(contract.pause())?;
+
+    let err = send!(contract.mint(alice_addr, uint!(1_U256)))
+        .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc20::EnforcedPause {}));
+
+    let Erc20::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: total_supply } =
+        contract.totalSupply().call().await?;
+
+    assert_eq!(initial_balance, balance);
+    assert_eq!(initial_supply, total_supply);
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_transfer_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: initial_bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let _ = watch!(contract_alice.pause())?;
+
+    let err = send!(contract_alice.transfer(bob_addr, uint!(1_U256)))
+        .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc20::EnforcedPause {}));
+
+    let Erc20::balanceOfReturn { balance: alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+    assert_eq!(initial_supply, supply);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc20::new(contract_addr, &bob.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+
+    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+
+    let Erc20::balanceOfReturn { balance: initial_alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: initial_bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
+        contract_alice.totalSupply().call().await?;
+
+    let _ = watch!(contract_alice.approve(bob_addr, balance))?;
+
+    let Erc20::allowanceReturn { allowance: initial_allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    let _ = watch!(contract_alice.pause())?;
+
+    let err =
+        send!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(1_U256)))
+            .expect_err("should return EnforcedPause");
+    assert!(err.reverted_with(Erc20::EnforcedPause {}));
+
+    let Erc20::balanceOfReturn { balance: alice_balance } =
+        contract_alice.balanceOf(alice_addr).call().await?;
+    let Erc20::balanceOfReturn { balance: bob_balance } =
+        contract_alice.balanceOf(bob_addr).call().await?;
+    let Erc20::totalSupplyReturn { totalSupply: supply } =
+        contract_alice.totalSupply().call().await?;
+    let Erc20::allowanceReturn { allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+    assert_eq!(initial_bob_balance, bob_balance);
+    assert_eq!(initial_supply, supply);
+    assert_eq!(initial_allowance, allowance);
+
+    Ok(())
+}
