@@ -1,5 +1,6 @@
 #![cfg(feature = "e2e")]
 
+use abi::Erc20;
 use alloy::{
     primitives::{Address, U256},
     sol,
@@ -8,8 +9,6 @@ use alloy::{
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
-
-use crate::abi::Erc20;
 
 mod abi;
 

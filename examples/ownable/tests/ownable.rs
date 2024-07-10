@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use abi::Ownable::OwnershipTransferred;
+use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::{
     primitives::Address,
     providers::Provider,
@@ -10,8 +10,6 @@ use alloy::{
 };
 use e2e::{receipt, send, Account, EventExt, Revert};
 use eyre::Result;
-
-use crate::abi::Ownable;
 
 mod abi;
 
