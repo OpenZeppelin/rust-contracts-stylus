@@ -1,9 +1,12 @@
 //! Contract for checkpointing values as they change at different points in
-//! time, and later looking up and later looking up past values by block number.
+//! time, to looking up past values by block number later.
 //!
 //! To create a history of checkpoints, define a variable type [`trace::Trace`]
-//! in your contract, and store a new checkpoint for the current transaction
-//! block using the [`Trace160::push`] function.
+//! in your contract.
+//! Types [`S160`], [`S160`] and [`S160`] can be used to
+//! define sizes for key and value.
+//! Then store a new checkpoint for the current
+//! transaction block using the [`Trace::push`] function.
 pub mod trace;
 
 use core::ops::{Add, Div, Mul, Sub};
