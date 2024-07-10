@@ -9,7 +9,7 @@ use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 
-const ONE: U256 = uint!(0x1U256);
+const ONE: U256 = uint!(1_U256);
 
 sol! {
     /// The nonce used for an `account` is not the expected current nonce.
@@ -36,7 +36,7 @@ sol_storage! {
 
 #[external]
 impl Nonces {
-    /// Returns the unuse nonce for the given `account`.
+    /// Returns the unused nonce for the given `account`.
     ///
     /// # Arguments
     ///
@@ -93,8 +93,8 @@ impl Nonces {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
-    use alloy_sol_types::sol;
+    use super::ONE;
+    use alloy_primitives::{address, uint, U256};
 
     use crate::utils::nonces::{Error, Nonces};
 
@@ -102,7 +102,7 @@ mod tests {
     fn test_initiate_nonce(contract: Nonces) {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
 
-        assert_eq!(contract.nonce(owner), U256::from(0u32));
+        assert_eq!(contract.nonce(owner), U256::ZERO);
     }
 
     #[motsu::test]
@@ -110,30 +110,28 @@ mod tests {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
 
         let use_nonce = contract.use_nonce(owner);
-        assert_eq!(use_nonce, U256::from(0u32));
+        assert_eq!(use_nonce, U256::ZERO);
 
         let nonce = contract.nonce(owner);
-        assert_eq!(nonce, U256::from(1u32));
+        assert_eq!(nonce, ONE);
     }
 
     #[motsu::test]
     fn test_use_checked_nonce(contract: Nonces) {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
 
-        let use_checked_nonce =
-            contract.use_checked_nonce(owner, U256::from(0u32));
+        let use_checked_nonce = contract.use_checked_nonce(owner, U256::ZERO);
         assert!(use_checked_nonce.is_ok());
 
         let nonce = contract.nonce(owner);
-        assert_eq!(nonce, U256::from(1u32));
+        assert_eq!(nonce, ONE);
     }
 
     #[motsu::test]
     fn test_use_checked_nonce_invalid_nonce(contract: Nonces) {
         let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
 
-        let use_checked_nonce =
-            contract.use_checked_nonce(owner, U256::from(1u32));
+        let use_checked_nonce = contract.use_checked_nonce(owner, ONE);
         assert!(matches!(
             use_checked_nonce,
             Err(Error::InvalidAccountNonce(_))
