@@ -43,7 +43,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_balance_of_invalid_owner(
+async fn error_when_checking_balance_of_invalid_owner(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -75,7 +75,7 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_owner_of_nonexistent_token(
+async fn error_when_checking_owner_of_nonexistent_token(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -139,7 +139,7 @@ async fn error_when_minting_token_id_twice(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_minting_token_invalid_receiver(
+async fn error_when_minting_token_to_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -296,7 +296,7 @@ async fn transfers_from_approved_for_all(
 }
 
 #[e2e::test]
-async fn error_when_transfer_from_transfers_to_invalid_receiver(
+async fn error_when_transfer_to_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -323,7 +323,7 @@ async fn error_when_transfer_from_transfers_to_invalid_receiver(
 }
 
 #[e2e::test]
-async fn error_when_transfer_from_transfers_from_incorrect_owner(
+async fn error_when_transfer_from_incorrect_owner(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -356,7 +356,7 @@ async fn error_when_transfer_from_transfers_from_incorrect_owner(
 }
 
 #[e2e::test]
-async fn error_when_transfer_from_transfers_with_insufficient_approval(
+async fn error_when_transfer_with_insufficient_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -613,7 +613,7 @@ async fn safe_transfers_from_approved_for_all(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_transfers_to_invalid_receiver(
+async fn error_when_safe_transfer_to_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -643,7 +643,7 @@ async fn error_when_safe_transfer_from_transfers_to_invalid_receiver(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_transfers_from_incorrect_owner(
+async fn error_when_safe_transfer_from_incorrect_owner(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -676,7 +676,7 @@ async fn error_when_safe_transfer_from_transfers_from_incorrect_owner(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_transfers_with_insufficient_approval(
+async fn error_when_safe_transfer_with_insufficient_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -954,7 +954,7 @@ async fn safe_transfers_from_with_data_approved_for_all(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_with_data_transfers_to_invalid_receiver(
+async fn error_when_safe_transfer_with_data_to_invalid_receiver(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -985,7 +985,7 @@ async fn error_when_safe_transfer_from_with_data_transfers_to_invalid_receiver(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_with_data_transfers_from_incorrect_owner(
+async fn error_when_safe_transfer_with_data_from_incorrect_owner(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -1023,7 +1023,7 @@ async fn error_when_safe_transfer_from_with_data_transfers_from_incorrect_owner(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_with_data_transfers_with_insufficient_approval(
+async fn error_when_safe_transfer_with_data_with_insufficient_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -1176,7 +1176,7 @@ async fn error_when_approve_by_invalid_approver(
 }
 
 #[e2e::test]
-async fn error_when_get_approved_of_nonexistent_token(
+async fn error_when_checking_approved_of_nonexistent_token(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -1239,7 +1239,7 @@ async fn sets_approval_for_all(
 }
 
 #[e2e::test]
-async fn error_when_set_approval_for_all_invalid_operator(
+async fn error_when_set_approval_for_all_by_invalid_operator(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -1401,7 +1401,7 @@ async fn error_when_mint_in_paused_state(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_transfer_from_in_paused_state(
+async fn error_when_transfer_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -1442,7 +1442,7 @@ async fn error_when_transfer_from_in_paused_state(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_in_paused_state(
+async fn error_when_safe_transfer_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -1484,7 +1484,7 @@ async fn error_when_safe_transfer_from_in_paused_state(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_with_data_in_paused_state(
+async fn error_when_safe_transfer_with_data_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -1735,7 +1735,7 @@ async fn totally_supply_works(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_token_of_owner_by_index_out_of_bound(
+async fn error_when_checking_token_of_owner_by_index_out_of_bound(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -1763,7 +1763,7 @@ async fn error_when_token_of_owner_by_index_out_of_bound(
 }
 
 #[e2e::test]
-async fn error_when_token_of_owner_by_index_address_does_not_have_any_tokens(
+async fn error_when_checking_token_of_owner_by_index_account_has_no_tokens(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -1869,7 +1869,7 @@ async fn token_of_owner_by_index_after_transfer_to_another_account(
 }
 
 #[e2e::test]
-async fn error_when_token_by_index_no_tokens(
+async fn error_when_checking_token_by_index_account_has_no_tokens(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
@@ -1892,7 +1892,7 @@ async fn error_when_token_by_index_no_tokens(
 }
 
 #[e2e::test]
-async fn error_when_token_by_index_out_of_bound(
+async fn error_when_checking_token_by_index_out_of_bound(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;

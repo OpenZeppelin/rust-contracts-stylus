@@ -75,7 +75,7 @@ async fn constructs_with_base_uri(alice: Account) -> eyre::Result<()> {
 // ============================================================================
 
 #[e2e::test]
-async fn error_when_token_uri_for_non_existent_token(
+async fn error_when_checking_token_uri_for_nonexistent_token(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk(), "").await?;
