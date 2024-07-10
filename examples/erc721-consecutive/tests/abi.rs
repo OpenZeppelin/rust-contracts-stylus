@@ -15,7 +15,7 @@ sol!(
         function isApprovedForAll(address owner, address operator) external view returns (bool);
 
         function burn(uint256 tokenId) external;
-        function mintConsecutive(address to, uint128 batchSize) external;
+        function init(address[] memory receivers, uint256[] memory amounts) external;
 
         error ERC721InvalidOwner(address owner);
         error ERC721NonexistentToken(uint256 tokenId);

@@ -1,3 +1,4 @@
+use alloc::vec;
 use alloy_primitives::{uint, Address, U128, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
@@ -85,13 +86,13 @@ pub enum Error {
 }
 
 impl MethodError for erc721::Error {
-    fn encode(self) -> Vec<u8> {
+    fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
 
 impl MethodError for checkpoints::Error {
-    fn encode(self) -> Vec<u8> {
+    fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
@@ -149,9 +150,8 @@ impl Erc721Consecutive {
     pub fn mint_consecutive(
         &mut self,
         to: Address,
-        batch_size: u128,
+        batch_size: U96,
     ) -> Result<u128, Error> {
-        let batch_size = U96::from(batch_size);
         let next = self.next_consecutive_id();
 
         if batch_size > U96::ZERO {
