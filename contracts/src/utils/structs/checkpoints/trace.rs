@@ -1,19 +1,14 @@
 //! Contract for checkpointing values as they change at different points in
-//! time, and later looking up and later looking up past values by block number.
-//!
-//! To create a history of checkpoints, define a variable type [`Trace160`]
-//! in your contract, and store a new checkpoint for the current transaction
-//! block using the [`Trace160::push`] function.
-use alloy_primitives::{uint, Uint, U256, U32};
+//! time, to looking up past values by block number later.
+
+use alloy_primitives::{U256, U32, uint};
 use alloy_sol_types::sol;
-use stylus_proc::{sol_storage, solidity_storage, SolidityError};
+use stylus_proc::{solidity_storage, SolidityError};
 use stylus_sdk::storage::{StorageGuard, StorageGuardMut};
-use stylus_sdk::prelude::*;
 
 use crate::utils::math::alloy::Math;
 
-// type U96 = Uint<96, 2>;
-// type U160= Uint<160, 3>;
+use super::{Accessor, Num, Size};
 
 sol! {
     /// A value was attempted to be inserted into a past checkpoint.
@@ -21,7 +16,7 @@ sol! {
     error CheckpointUnorderedInsertion();
 }
 
-/// An error that occurred while calling the [`Trace160`] checkpoint contract.
+/// An error that occurred while calling the [`Trace`] checkpoint contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// A value was attempted to be inserted into a past checkpoint.
@@ -30,11 +25,11 @@ pub enum Error {
 
 /// State of the checkpoint library contract.
 #[solidity_storage]
+#[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
 pub struct Trace<T: Size> {
     /// Stores checkpoints in a dynamic array sorted by key.
     _checkpoints: stylus_sdk::storage::StorageVec<Checkpoint<T>>,
 }
-
 
 // State of a single checkpoint.
 #[solidity_storage]
@@ -45,60 +40,8 @@ pub struct Checkpoint<T: Size> {
     _value: T::ValueStorage,
 }
 
-pub trait Size {
-    type KeyStorage: for<'a> StorageType<Wraps<'a> = Self::Key>
-        + Accessor<Wrap=Self::Key>;
-    type ValueStorage: for<'a> StorageType<Wraps<'a> = Self::Value>
-        + Accessor<Wrap=Self::Value>;
-    type Key: Num;
-    type Value: Num;
-}
-
-pub type Size160 = SpecificSize<96, 2, 160, 3>;
-
-struct SpecificSize<
-    const KEY_BITS: usize,
-    const KEY_LIMBS: usize,
-    const VALUE_BITS: usize,
-    const VALUE_LIMBS: usize,
->;
-impl<const KB: usize, const KL: usize, const VB: usize, const VL: usize> Size
-for SpecificSize<KB, KL, VB, VL>
-{
-    type KeyStorage = stylus_sdk::storage::StorageUint<KB, KL>;
-    type ValueStorage = stylus_sdk::storage::StorageUint<VB, VL>;
-    type Key = Uint<KB, KL>;
-    type Value = Uint<VB, VL>;
-}
-
-pub(crate) trait Num: num_traits::NumOps + Ord + Sized + Copy{
-    const ZERO: Self;
-}
-
-impl<const B: usize, const L: usize> Num for Uint<B, L> {
-    const ZERO: Self = Self::ZERO;
-}
-
-trait Accessor {
-    type Wrap: Num;
-    fn get(&self) -> Self::Wrap;
-    fn set(&mut self, value: Self::Wrap);
-}
-
-impl<const B: usize, const L: usize> Accessor for stylus_sdk::storage::StorageUint<B, L> {
-    type Wrap = Uint<B, L>;
-
-    fn get(&self) -> Self::Wrap {
-        self.get()
-    }
-
-    fn set(&mut self, value: Self::Wrap) {
-        self.set(value);
-    }
-}
-
 impl<T: Size> Trace<T> {
-    /// Pushes a (`key`, `value`) pair into a `Trace160` so that it is
+    /// Pushes a (`key`, `value`) pair into a `Trace` so that it is
     /// stored as the checkpoint.
     ///
     /// Returns the previous value and the new value as an ordered pair.
@@ -126,7 +69,7 @@ impl<T: Size> Trace<T> {
     }
 
     /// Returns the value in the first (oldest) checkpoint with key greater or
-    /// equal than the search key, or `U160::ZERO` if there is none.
+    /// equal than the search key, or `T::Value::ZERO` if there is none.
     ///
     /// # Arguments
     ///
@@ -143,7 +86,7 @@ impl<T: Size> Trace<T> {
     }
 
     /// Returns the value in the last (most recent) checkpoint with key
-    /// lower or equal than the search key, or `U160::ZERO` if there is none.
+    /// lower or equal than the search key, or `T::Value::ZERO` if there is none.
     ///
     /// # Arguments
     ///
@@ -160,7 +103,7 @@ impl<T: Size> Trace<T> {
     }
 
     /// Returns the value in the last (most recent) checkpoint with key lower or
-    /// equal than the search key, or `U160::ZERO` if there is none.
+    /// equal than the search key, or `T::Value::ZERO` if there is none.
     ///
     /// This is a variant of [`Self::upper_lookup`] that is optimized to find
     /// "recent" checkpoints (checkpoints with high keys).
@@ -193,7 +136,7 @@ impl<T: Size> Trace<T> {
         }
     }
 
-    /// Returns the value in the most recent checkpoint, or `U160::ZERO` if
+    /// Returns the value in the most recent checkpoint, or `T::Value::ZERO` if
     /// there are no checkpoints.
     ///
     /// # Arguments
@@ -368,7 +311,7 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
-    fn _index(&self, pos: U256) -> StorageGuard<Checkpoint160> {
+    fn _index(&self, pos: U256) -> StorageGuard<Checkpoint<T>> {
         self._checkpoints
             .get(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
@@ -385,7 +328,7 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&mut self` - Write access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
-    fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint160> {
+    fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint<T>> {
         self._checkpoints
             .setter(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
@@ -409,12 +352,12 @@ impl<T: Size> Trace<T> {
 mod tests {
     use alloy_primitives::uint;
 
-    use crate::utils::structs::checkpoints::{
-        CheckpointUnorderedInsertion, Error, Trace,
-    };
+    use crate::utils::structs::checkpoints::S160;
+
+    use super::{CheckpointUnorderedInsertion, Error, Trace};
 
     #[motsu::test]
-    fn push(checkpoint: Trace160) {
+    fn push(checkpoint: Trace<S160>) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -436,7 +379,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn push_same_value(checkpoint: Trace160) {
+    fn push_same_value(checkpoint: Trace<S160>) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -461,7 +404,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn lower_lookup(checkpoint: Trace160) {
+    fn lower_lookup(checkpoint: Trace<S160>) {
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
@@ -473,7 +416,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upper_lookup(checkpoint: Trace160) {
+    fn upper_lookup(checkpoint: Trace<S160>) {
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
@@ -485,7 +428,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upper_lookup_recent(checkpoint: Trace160) {
+    fn upper_lookup_recent(checkpoint: Trace<S160>) {
         // `upper_lookup_recent` has different optimizations for "short" (<=5)
         // and "long" (>5) checkpoint arrays.
         //
@@ -529,7 +472,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn latest(checkpoint: Trace160) {
+    fn latest(checkpoint: Trace<S160>) {
         assert_eq!(checkpoint.latest(), uint!(0_U160));
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
@@ -538,7 +481,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn latest_checkpoint(checkpoint: Trace160) {
+    fn latest_checkpoint(checkpoint: Trace<S160>) {
         assert_eq!(checkpoint.latest_checkpoint(), None);
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
@@ -550,7 +493,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_unordered_insertion(checkpoint: Trace160) {
+    fn error_when_unordered_insertion(checkpoint: Trace<S160>) {
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         let err = checkpoint
