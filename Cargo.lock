@@ -2520,9 +2520,7 @@ dependencies = [
  "alloy-sol-types 0.3.1",
  "mini-alloc",
  "motsu",
- "num-traits",
  "rand",
- "ruint",
  "stylus-proc",
  "stylus-sdk",
 ]

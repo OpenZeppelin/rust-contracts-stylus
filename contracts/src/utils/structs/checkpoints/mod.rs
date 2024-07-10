@@ -6,6 +6,8 @@
 //! block using the [`Trace160::push`] function.
 pub mod trace;
 
+use core::ops::{Add, Div, Mul, Sub};
+
 use alloy_primitives::Uint;
 use stylus_sdk::prelude::*;
 
@@ -49,7 +51,9 @@ impl<const KB: usize, const KL: usize, const VB: usize, const VL: usize> Size
 }
 
 // Abstracts number inside the checkpoint contract.
-pub(crate) trait Num: num_traits::NumOps + Ord + Sized + Copy {
+pub(crate) trait Num:
+    Add + Sub + Mul + Div + Ord + Sized + Copy
+{
     const ZERO: Self;
 }
 

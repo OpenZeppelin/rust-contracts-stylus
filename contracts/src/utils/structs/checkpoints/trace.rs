@@ -1,14 +1,13 @@
 //! Contract for checkpointing values as they change at different points in
 //! time, to looking up past values by block number later.
 
-use alloy_primitives::{U256, U32, uint};
+use alloy_primitives::{uint, U256, U32};
 use alloy_sol_types::sol;
 use stylus_proc::{solidity_storage, SolidityError};
 use stylus_sdk::storage::{StorageGuard, StorageGuardMut};
 
-use crate::utils::math::alloy::Math;
-
 use super::{Accessor, Num, Size};
+use crate::utils::math::alloy::Math;
 
 sol! {
     /// A value was attempted to be inserted into a past checkpoint.
@@ -86,7 +85,8 @@ impl<T: Size> Trace<T> {
     }
 
     /// Returns the value in the last (most recent) checkpoint with key
-    /// lower or equal than the search key, or `T::Value::ZERO` if there is none.
+    /// lower or equal than the search key, or `T::Value::ZERO` if there is
+    /// none.
     ///
     /// # Arguments
     ///
@@ -352,9 +352,8 @@ impl<T: Size> Trace<T> {
 mod tests {
     use alloy_primitives::uint;
 
-    use crate::utils::structs::checkpoints::S160;
-
     use super::{CheckpointUnorderedInsertion, Error, Trace};
+    use crate::utils::structs::checkpoints::S160;
 
     #[motsu::test]
     fn push(checkpoint: Trace<S160>) {
