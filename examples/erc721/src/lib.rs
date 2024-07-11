@@ -1,27 +1,24 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloy::core::sol;
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{
-    base::Erc721Override,
+    base::{Erc721, Erc721Override},
     extensions::{
         burnable::{ERC721BurnableOverride, Erc721Burnable},
         pausable::{ERC721PausableOverride, Erc721Pausable},
     },
     traits::IErc721Virtual,
-    Erc721, Error,
+    Error,
 };
 use openzeppelin_stylus_proc::inherit;
-use stylus_sdk::{evm, prelude::*};
+use stylus_sdk::{alloy_sol_types::sol, evm, prelude::*};
 
 sol! {
     /// Emitted when life is not doomed and there is a way.
     #[allow(missing_docs)]
     event ThereIsWay();
-}
 
-sol! {
     /// The operation failed because there is no way. Like end of the world.
     #[derive(Debug)]
     error NoWay();

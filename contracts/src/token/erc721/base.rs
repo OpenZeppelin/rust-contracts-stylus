@@ -1,5 +1,5 @@
 use alloc::vec;
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use stylus_sdk::{

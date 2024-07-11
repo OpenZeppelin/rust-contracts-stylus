@@ -1554,6 +1554,7 @@ version = "0.0.0"
 dependencies = [
  "alloy",
  "alloy-primitives 0.3.3",
+ "alloy-sol-types 0.3.1",
  "e2e",
  "eyre",
  "mini-alloc",
