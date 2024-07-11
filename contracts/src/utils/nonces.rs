@@ -52,6 +52,12 @@ impl Nonces {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address for which to consume the nonce.
+    ///
+    /// /// # Panics
+    ///
+    /// This function will panic if the nonce for the given `owner` has reached
+    /// the maximum value representable by `U256`, causing the `checked_add`
+    /// method to return `None`.
     fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
         self._nonces
@@ -69,6 +75,17 @@ impl Nonces {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address for which to consume the nonce.
     /// * `nonce` - The nonce to consume.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the nonce for the given `owner` has reached
+    /// the maximum value representable by `U256`, causing the `checked_add`
+    /// method to return `None`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `nonce` is not the next valid nonce for the
+    /// owner.
     fn use_checked_nonce(
         &mut self,
         owner: Address,
