@@ -1,6 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use alloy::primitives::{Address, U256};
+use alloy_primitives::uint;
 use e2e::{Account, EventExt, Revert};
 
 use crate::abi::Erc721;
@@ -22,8 +23,10 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
-    let res = contract.mi(alice_addr, 10_u128).call().await?;
-
-    todo!();
+    let receivers = vec![alice_addr];
+    let amounts = vec![uint!(10_U256)];
+    let res = contract.init(receivers, amounts).call().await?;
     Ok(())
 }
+
+// TODO#q: construct batches
