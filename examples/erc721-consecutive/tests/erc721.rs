@@ -22,7 +22,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
-    let res = contract.mintConsecutive(alice_addr, 10_u128).call().await?;
+    let res = contract.mi(alice_addr, 10_u128).call().await?;
 
     todo!();
     Ok(())
