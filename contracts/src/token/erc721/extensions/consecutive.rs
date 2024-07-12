@@ -38,7 +38,7 @@ use crate::{
         erc721::{
             Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
             ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-            Erc721, Error as Erc721Error, IERC721Receiver, IErc721, Transfer,
+            Erc721, IERC721Receiver, IErc721, Transfer,
         },
     },
     utils::{
@@ -137,10 +137,10 @@ impl MethodError for checkpoints::Error {
 // Maximum size of a batch of consecutive tokens. This is designed to limit
 // stress on off-chain indexing services that have to record one entry per
 // token, and have protections against "unreasonably large" batches of tokens.
-const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
+pub const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
 
 // Used to offset the first token id in {_nextConsecutiveId}
-const FIRST_CONSECUTIVE_ID: U96 = uint!(0_U96);
+pub const FIRST_CONSECUTIVE_ID: U96 = uint!(0_U96);
 
 /// Consecutive extension related implementation:
 impl Erc721Consecutive {
@@ -192,7 +192,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If to is [`Address::ZERO`] error [`Erc721Error::InvalidReceiver`] is
+    /// If to is [`Address::ZERO`] error [`rc721::Error::InvalidReceiver`] is
     /// returned.
     /// If batch size exceeds [`MAX_BATCH_SIZE`] error
     /// [`Error::ERC721ExceededMaxBatchMint`] is returned.
@@ -213,7 +213,7 @@ impl Erc721Consecutive {
             }
 
             if to.is_zero() {
-                return Err(Erc721Error::InvalidReceiver(
+                return Err(erc721::Error::InvalidReceiver(
                     ERC721InvalidReceiver { receiver: Address::ZERO },
                 )
                 .into());
@@ -351,9 +351,9 @@ impl IErc721 for Erc721Consecutive {
         token_id: U256,
     ) -> Result<(), Error> {
         if to.is_zero() {
-            return Err(Erc721Error::InvalidReceiver(ERC721InvalidReceiver {
-                receiver: Address::ZERO,
-            })
+            return Err(erc721::Error::InvalidReceiver(
+                ERC721InvalidReceiver { receiver: Address::ZERO },
+            )
             .into());
         }
 
@@ -362,7 +362,7 @@ impl IErc721 for Erc721Consecutive {
         // not needed to verify that the return value is not 0 here.
         let previous_owner = self._update(to, token_id, msg::sender())?;
         if previous_owner != from {
-            return Err(Erc721Error::IncorrectOwner(ERC721IncorrectOwner {
+            return Err(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender: from,
                 token_id,
                 owner: previous_owner,
@@ -508,15 +508,15 @@ impl Erc721Consecutive {
     /// Emits a [`Transfer`] event.
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to.is_zero() {
-            return Err(Erc721Error::InvalidReceiver(ERC721InvalidReceiver {
-                receiver: Address::ZERO,
-            })
+            return Err(erc721::Error::InvalidReceiver(
+                ERC721InvalidReceiver { receiver: Address::ZERO },
+            )
             .into());
         }
 
         let previous_owner = self._update(to, token_id, Address::ZERO)?;
         if !previous_owner.is_zero() {
-            return Err(Erc721Error::InvalidSender(ERC721InvalidSender {
+            return Err(erc721::Error::InvalidSender(ERC721InvalidSender {
                 sender: Address::ZERO,
             })
             .into());
@@ -601,7 +601,7 @@ impl Erc721Consecutive {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
-            return Err(Erc721Error::NonexistentToken(
+            return Err(erc721::Error::NonexistentToken(
                 ERC721NonexistentToken { token_id },
             )
             .into());
@@ -645,20 +645,20 @@ impl Erc721Consecutive {
         token_id: U256,
     ) -> Result<(), Error> {
         if to.is_zero() {
-            return Err(Erc721Error::InvalidReceiver(ERC721InvalidReceiver {
-                receiver: Address::ZERO,
-            })
+            return Err(erc721::Error::InvalidReceiver(
+                ERC721InvalidReceiver { receiver: Address::ZERO },
+            )
             .into());
         }
 
         let previous_owner = self._update(to, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
-            return Err(Erc721Error::NonexistentToken(
+            return Err(erc721::Error::NonexistentToken(
                 ERC721NonexistentToken { token_id },
             )
             .into());
         } else if previous_owner != from {
-            return Err(Erc721Error::IncorrectOwner(ERC721IncorrectOwner {
+            return Err(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender: from,
                 token_id,
                 owner: previous_owner,
@@ -766,7 +766,7 @@ impl Erc721Consecutive {
                 && owner != auth
                 && !self.is_approved_for_all(owner, auth)
             {
-                return Err(Erc721Error::InvalidApprover(
+                return Err(erc721::Error::InvalidApprover(
                     ERC721InvalidApprover { approver: auth },
                 )
                 .into());
@@ -799,7 +799,7 @@ impl Erc721Consecutive {
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self._owner_of_inner(token_id);
         if owner.is_zero() {
-            return Err(Erc721Error::NonexistentToken(
+            return Err(erc721::Error::NonexistentToken(
                 ERC721NonexistentToken { token_id },
             )
             .into());
@@ -814,9 +814,16 @@ mod test {
     use stylus_sdk::{msg, prelude::StorageType};
 
     use crate::{
-        token::erc721::{
-            extensions::consecutive::Erc721Consecutive, tests::random_token_id,
-            Erc721, IErc721,
+        token::{
+            erc721,
+            erc721::{
+                extensions::consecutive::{
+                    ERC721ExceededMaxBatchMint, ERC721ForbiddenBatchMint,
+                    Erc721Consecutive, Error, MAX_BATCH_SIZE,
+                },
+                tests::random_token_id,
+                ERC721InvalidReceiver, Erc721, IErc721,
+            },
         },
         utils::structs::{
             bitmap::BitMap,
@@ -907,9 +914,51 @@ mod test {
         assert_eq!(balance2, balance1 + uint!(1_U256));
     }
 
-    // TODO#q: error_when_not_minted_consecutive ERC721ForbiddenBatchMint
-    // TODO#q: error_when_to_is_zero InvalidReceiver
-    // TODO#q: error_when_exceed_batch_size ERC721ExceededMaxBatchMint
+    #[motsu::test]
+    fn error_when_not_minted_consecutive(contract: Erc721Consecutive) {
+        let alice = msg::sender();
+
+        init(contract, vec![alice], vec![uint!(10_U96)]);
+
+        let err = contract._mint_consecutive(BOB, uint!(11_U96)).expect_err(
+            "should not mint consecutive when consecutive mint is finalised",
+        );
+        assert!(matches!(
+            err,
+            Error::ForbiddenBatchMint(ERC721ForbiddenBatchMint {})
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_to_is_zero(contract: Erc721Consecutive) {
+        let err = contract
+            ._mint_consecutive(Address::ZERO, uint!(11_U96))
+            .expect_err(
+            "should not mint consecutive when consecutive mint is finalised",
+        );
+        assert!(matches!(
+            err,
+            Error::Erc721(erc721::Error::InvalidReceiver(
+                ERC721InvalidReceiver { receiver: Address::ZERO }
+            ))
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_exceed_batch_size(contract: Erc721Consecutive) {
+        let alice = msg::sender();
+        let batch_size = MAX_BATCH_SIZE + uint!(1_U96);
+        let err = contract._mint_consecutive(alice, batch_size).expect_err(
+            "should not mint consecutive when consecutive mint is finalised",
+        );
+        assert!(matches!(
+            err,
+            Error::ExceededMaxBatchMint(ERC721ExceededMaxBatchMint {
+                batchSize,
+                maxBatch
+            }) if batchSize == U256::from(batch_size) && maxBatch == U256::from(MAX_BATCH_SIZE)
+        ));
+    }
 
     #[motsu::test]
     fn transfers_from(contract: Erc721Consecutive) {
