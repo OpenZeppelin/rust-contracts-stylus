@@ -25,6 +25,11 @@ pub fn r#override(attr: TokenStream, input: TokenStream) -> TokenStream {
     r#virtual::r#override(attr, input)
 }
 
+#[proc_macro_attribute]
+pub fn r#virtual(attr: TokenStream, input: TokenStream) -> TokenStream {
+    r#virtual::r#virtual(attr, input)
+}
+
 #[proc_macro]
 pub fn inherit(input: TokenStream) -> TokenStream {
     let override_types = parse_macro_input!(input as OverrideTypes);

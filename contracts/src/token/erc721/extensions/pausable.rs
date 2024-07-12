@@ -5,7 +5,7 @@ use openzeppelin_stylus_proc::r#override;
 use stylus_sdk::{alloy_primitives::U256, evm, msg, prelude::*};
 
 use crate::{
-    token::erc721::{traits::IErc721Virtual, Error, TopLevelStorage},
+    token::erc721::{base::IErc721Virtual, Error, TopLevelStorage},
     utils::Pausable,
 };
 

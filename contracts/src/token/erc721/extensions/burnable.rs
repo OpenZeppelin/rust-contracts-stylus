@@ -6,7 +6,7 @@ use openzeppelin_stylus_proc::r#override;
 use stylus_proc::{external, sol_storage};
 use stylus_sdk::{msg, prelude::*};
 
-use crate::token::erc721::{traits::IErc721Virtual, Error};
+use crate::token::erc721::{base::IErc721Virtual, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 sol_storage! {

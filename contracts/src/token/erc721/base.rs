@@ -2,15 +2,13 @@ use alloc::vec;
 use core::marker::PhantomData;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
+use openzeppelin_stylus_proc::r#virtual;
 use stylus_sdk::{
     abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
 };
 
 use crate::{
-    token::erc721::{
-        traits::{IErc721, IErc721Virtual},
-        Error,
-    },
+    token::erc721::{traits::IErc721, Error},
     utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
 
@@ -259,10 +257,37 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
     }
 }
 
-pub struct Erc721Override;
+#[r#virtual]
 impl IErc721Virtual for Erc721Override {
-    type Base = Self;
-
+    /// Transfers `token_id` from its current owner to `to`, or alternatively
+    /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
+    /// Returns the owner of the `token_id` before the update.
+    ///
+    /// The `auth` argument is optional. If the value passed is non-zero, then
+    /// this function will check that `auth` is either the owner of the
+    /// token, or approved to operate on the token (by the owner).
+    ///
+    /// NOTE: If overriding this function in a way that tracks balances, see
+    /// also [`Self::_increase_balance`].
+    ///
+    /// # Arguments
+    ///
+    /// * `storage` - Write access to the contract's state.
+    /// * `to` - Account of the recipient.
+    /// * `token_id` - Token id as a number.
+    /// * `auth` - Account used for authorization of the update.
+    ///
+    /// # Errors
+    ///
+    /// If token does not exist and `auth` is not `Address::ZERO`, then the
+    /// error [`Error::NonexistentToken`] is returned.
+    /// If `auth` is not `Address::ZERO` and `auth` does not have a right to
+    /// approve this token, then the error
+    /// [`Error::InsufficientApproval`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     fn update<V: IErc721Virtual>(
         storage: &mut impl TopLevelStorage,
         to: Address,
@@ -310,6 +335,47 @@ impl IErc721Virtual for Erc721Override {
         Ok(from)
     }
 
+    /// Safely transfers `token_id` token from `from` to `to`, checking that
+    /// contract recipients are aware of the [`Erc721`] standard to prevent
+    /// tokens from being forever locked.
+    ///
+    /// `data` is additional data, it has
+    /// no specified format and it is sent in call to `to`. This internal
+    /// function is like [`Self::safe_transfer_from`] in the sense that it
+    /// invokes [`IERC721Receiver::on_erc_721_received`] on the receiver,
+    /// and can be used to e.g. implement alternative mechanisms to perform
+    /// token transfer, such as signature-based.
+    ///
+    /// # Arguments
+    ///
+    /// * `storage` - Write access to the contract's state.
+    /// * `from` - Account of the sender.
+    /// * `to` - Account of the recipient.
+    /// * `token_id` - Token id as a number.
+    /// * `data` - Additional data with no specified format, sent in the call to
+    ///   [`Self::_check_on_erc721_received`].
+    ///
+    /// # Errors
+    ///
+    /// If `to` is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If `token_id` does not exist, then the error
+    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// If the previous owner is not `from`, then the error
+    /// [`Error::IncorrectOwner`] is returned.
+    ///
+    /// # Requirements:
+    ///
+    /// * The `token_id` token must exist and be owned by `from`.
+    /// * `to` cannot be the zero address.
+    /// * `from` cannot be the zero address.
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
+    ///   `safe_transfer`.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     fn safe_transfer<V: IErc721Virtual>(
         storage: &mut impl TopLevelStorage,
         from: Address,
@@ -328,6 +394,28 @@ impl IErc721Virtual for Erc721Override {
         )
     }
 
+    /// Variant of `approve_inner` with an optional flag to enable or disable
+    /// the [`Approval`] event. The event is not emitted in the context of
+    /// transfers.
+    ///
+    /// # Arguments
+    ///
+    /// * `storage` - Write access to the contract's state.
+    /// * `to` - Account of the recipient.
+    /// * `token_id` - Token id as a number.
+    /// * `auth` - Account used for authorization of the update.
+    /// * `emit_event` - Emit an [`Approval`] event flag.
+    ///
+    /// # Errors
+    ///
+    /// If the token does not exist, then the error
+    /// [`Error::NonexistentToken`] is returned.
+    /// If `auth` does not have a right to approve this token, then the error
+    /// [`Error::InvalidApprover`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`Approval`] event.
     fn approve<V: IErc721Virtual>(
         storage: &mut impl TopLevelStorage,
         to: Address,
@@ -803,8 +891,8 @@ pub mod tests {
     use stylus_sdk::{msg, storage::TopLevelStorage};
 
     use crate::token::erc721::{
-        base::Erc721Override as Override,
-        traits::{IErc721, IErc721Virtual},
+        base::{Erc721Override as Override, IErc721Virtual},
+        traits::IErc721,
         ERC721IncorrectOwner, ERC721InsufficientApproval,
         ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
