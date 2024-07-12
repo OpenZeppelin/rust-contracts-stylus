@@ -5,8 +5,8 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{
     base::{Erc721, Erc721Override},
     extensions::{
-        burnable::{ERC721BurnableOverride, Erc721Burnable},
-        pausable::{ERC721PausableOverride, Erc721Pausable},
+        burnable::{Erc721Burnable, Erc721BurnableOverride},
+        pausable::{Erc721Pausable, Erc721PausableOverride},
     },
     traits::IErc721Virtual,
     Error,
@@ -55,9 +55,9 @@ impl NoWayNft {
 
 type Override = inherit!(
     NoWayOverride,
-    ERC721BurnableOverride,
-    ERC721PausableOverride,
-    Erc721Override
+    Erc721BurnableOverride,
+    Erc721PausableOverride,
+    Erc721Override,
 );
 pub struct NoWayOverride<Base: IErc721Virtual>(Base);
 

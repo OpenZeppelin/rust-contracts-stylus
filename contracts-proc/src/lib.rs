@@ -51,7 +51,7 @@ struct OverrideTypes(Vec<syn::Type>);
 impl Parse for OverrideTypes {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let args: Punctuated<syn::Type, syn::Token![,]> =
-            Punctuated::parse_separated_nonempty(input)?;
+            Punctuated::parse_terminated(input)?;
         Ok(OverrideTypes(args.into_iter().collect()))
     }
 }

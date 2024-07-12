@@ -48,9 +48,9 @@ impl<V: IErc721Virtual> Erc721Burnable<V> {
     }
 }
 
-pub struct ERC721BurnableOverride<B: IErc721Virtual>(B);
+pub struct Erc721BurnableOverride<B: IErc721Virtual>(B);
 
-impl<B: IErc721Virtual> IErc721Virtual for ERC721BurnableOverride<B> {
+impl<B: IErc721Virtual> IErc721Virtual for Erc721BurnableOverride<B> {
     type Base = B;
 }
 

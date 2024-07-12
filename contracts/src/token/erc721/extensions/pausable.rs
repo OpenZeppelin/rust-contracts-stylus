@@ -20,9 +20,9 @@ sol_storage! {
 #[inherit(Pausable)]
 impl<V: IErc721Virtual> Erc721Pausable<V> {}
 
-pub struct ERC721PausableOverride<B: IErc721Virtual>(B);
+pub struct Erc721PausableOverride<B: IErc721Virtual>(B);
 
-impl<B: IErc721Virtual> IErc721Virtual for ERC721PausableOverride<B> {
+impl<B: IErc721Virtual> IErc721Virtual for Erc721PausableOverride<B> {
     type Base = B;
 
     fn update<V: IErc721Virtual>(

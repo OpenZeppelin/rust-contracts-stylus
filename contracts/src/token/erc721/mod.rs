@@ -89,16 +89,16 @@ pub(crate) mod tests {
         token::erc721::{
             base::{Erc721, Erc721Override},
             extensions::{
-                burnable::{ERC721BurnableOverride, Erc721Burnable},
-                pausable::{ERC721PausableOverride, Erc721Pausable},
+                burnable::{Erc721BurnableOverride, Erc721Burnable},
+                pausable::{Erc721PausableOverride, Erc721Pausable},
             },
         },
         utils::Pausable,
     };
 
     pub(crate) type Override = inherit!(
-        ERC721BurnableOverride,
-        ERC721PausableOverride,
+        Erc721BurnableOverride,
+        Erc721PausableOverride,
         Erc721Override
     );
 
