@@ -35,7 +35,7 @@ sol! {
     #[allow(missing_docs)]
     event Approval(
         address indexed owner,
-        address indexed approved, 
+        address indexed approved,
         uint256 indexed token_id
     );
 
@@ -221,7 +221,7 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
         // verifies that the token exists (`from != 0`). Therefore, it is
         // not needed to verify that the return value is not 0 here.
         let previous_owner =
-            V::update::<V>(storage, to, token_id, msg::sender())?;
+            Self::update(storage, to, token_id, msg::sender())?;
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
@@ -270,7 +270,7 @@ impl IErc721Virtual for Erc721Override {
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let base: &Erc721<V> = storage.inner();
+        let base = storage.inner::<Erc721<V>>();
         let from = base._owner_of_inner(token_id);
 
         // Perform (optional) operator check.
@@ -785,6 +785,16 @@ impl<V: IErc721Virtual> Erc721<V> {
             };
         }
         Ok(())
+    }
+
+    // TODO#q: develop this feature to autoimpl
+    fn update(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+        auth: Address,
+    ) -> Result<Address, Error> {
+        V::update::<V>(storage, to, token_id, auth)
     }
 }
 

@@ -1,6 +1,7 @@
 extern crate proc_macro;
 
 mod derive_virtual;
+mod r#virtual;
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -17,6 +18,11 @@ const ERC721_CALL_TRAITS: &[(&str, &str)] = &[
 #[proc_macro_derive(ERC721Virtual, attributes(set))]
 pub fn erc721_derive_virtual(input: TokenStream) -> TokenStream {
     derive_virtual(input, ERC721_CALL_TRAITS)
+}
+
+#[proc_macro_attribute]
+pub fn r#virtual(attr: TokenStream, input: TokenStream) -> TokenStream {
+    r#virtual::r#virtual(attr, input)
 }
 
 #[proc_macro]

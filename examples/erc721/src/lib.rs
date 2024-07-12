@@ -11,7 +11,7 @@ use openzeppelin_stylus::token::erc721::{
     traits::IErc721Virtual,
     Error,
 };
-use openzeppelin_stylus_proc::inherit;
+use openzeppelin_stylus_proc::{inherit, r#virtual};
 use stylus_sdk::{alloy_sol_types::sol, evm, prelude::*};
 
 sol! {
@@ -23,13 +23,6 @@ sol! {
     #[derive(Debug)]
     error NoWay();
 }
-
-type Override = inherit!(
-    NoWayOverride,
-    ERC721BurnableOverride,
-    ERC721PausableOverride,
-    Erc721Override
-);
 
 sol_storage! {
     #[entrypoint]
@@ -60,6 +53,12 @@ impl NoWayNft {
     }
 }
 
+type Override = inherit!(
+    NoWayOverride,
+    ERC721BurnableOverride,
+    ERC721PausableOverride,
+    Erc721Override
+);
 pub struct NoWayOverride<Base: IErc721Virtual>(Base);
 
 impl<B: IErc721Virtual> IErc721Virtual for NoWayOverride<B> {
@@ -80,3 +79,24 @@ impl<B: IErc721Virtual> IErc721Virtual for NoWayOverride<B> {
         }
     }
 }
+
+// #[r#virtual]
+// #[inherit(Erc721BurnableOverride)]
+// #[inherit(Erc721PausableOverride)]
+// #[inherit(Erc721Override)]
+// impl IErc721Virtual for NoWayOverride {
+//     fn update<V: IErc721Virtual>(
+//         storage: &mut impl TopLevelStorage,
+//         to: Address,
+//         token_id: U256,
+//         auth: Address,
+//     ) -> Result<Address, Error> {
+//         let storage: &mut NoWayNft = storage.inner_mut();
+//         if storage.is_there_a_way() {
+//             evm::log(ThereIsWay {});
+//             Self::Base::update::<V>(storage, to, token_id, auth)
+//         } else {
+//             Err(Error::Custom(NoWay {}.into()))
+//         }
+//     }
+// }
