@@ -11,11 +11,35 @@ use crate::create_complex_type_rec;
 
 pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemImpl);
-    let (_, trait_path, _) =
-        input.trait_.clone().expect("should contain trait implementation");
+    let trait_path = trait_path(&input);
     let self_ty = input.self_ty.clone();
     let mut output = quote! {};
 
+    let trait_declr_items = trait_declr_items(&mut input);
+    output.extend(quote! {
+        pub trait #trait_path: 'static {
+            type Base: #trait_path;
+
+            #trait_declr_items
+        }
+    });
+
+    let trait_impl_items = trait_impl_items(&mut input);
+    output.extend(quote! {
+        impl #trait_path for #self_ty {
+            type Base = Self;
+
+            #trait_impl_items
+        }
+
+        pub struct #self_ty;
+    });
+
+    output.into()
+}
+
+fn trait_declr_items(input: &mut ItemImpl) -> proc_macro2::TokenStream {
+    let trait_path = trait_path(input);
     let mut trait_declr_items = Vec::new();
     for item in input.items.iter_mut() {
         let ImplItem::Fn(func) = item else {
@@ -61,39 +85,20 @@ pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
             });
         }
     }
-
-    output.extend(quote! {
-        pub trait #trait_path: 'static {
-            type Base: #trait_path;
-
-            #(#trait_declr_items)*
-        }
-    });
-
-    let trait_impl_items = trait_impl_items(&mut input, &trait_path);
-
-    output.extend(quote! {
-        impl #trait_path for #self_ty {
-            type Base = Self;
-
-            #trait_impl_items
-        }
-
-        pub struct #self_ty;
-    });
-
-    output.into()
+    
+    quote! {
+        #(#trait_declr_items)*
+    }
 }
 
 pub fn r#override(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemImpl);
-    let (_, trait_path, _) =
-        input.trait_.clone().expect("should contain trait implementation");
+    let trait_path = trait_path(&input);
     let self_ty = input.self_ty.clone();
     let mut output = quote! {};
     let override_alias = override_alias(&mut input);
 
-    let trait_impl_items = trait_impl_items(&mut input, &trait_path);
+    let trait_impl_items = trait_impl_items(&mut input);
 
     output.extend(quote! {
         impl<Super: #trait_path> #trait_path for #self_ty<Super> {
@@ -111,8 +116,8 @@ pub fn r#override(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
 fn trait_impl_items(
     input: &mut ItemImpl,
-    trait_path: &Path,
 ) -> proc_macro2::TokenStream {
+    let trait_path = trait_path(input);
     let mut items = Vec::new();
     for item in input.items.iter_mut() {
         let ImplItem::Fn(func) = item else {
@@ -121,10 +126,12 @@ fn trait_impl_items(
             });
             continue;
         };
-        let generics = func.sig.generics.params.clone();
-        if !generics.is_empty() {
+        if !func.sig.generics.params.is_empty() {
+            let sig = func.sig.clone();
+            let block = func.block.clone();
             items.push(quote! {
-                #func
+                #sig
+                #block
             });
             continue;
         }
@@ -137,6 +144,7 @@ fn trait_impl_items(
             #block
         });
     }
+    
     quote! {
         #(#items)*
     }
@@ -165,6 +173,12 @@ fn override_alias(input: &mut ItemImpl) -> proc_macro2::TokenStream {
             type Override = #override_ty;
         }
     }
+}
+
+fn trait_path(input: &ItemImpl) -> Path {
+    let (_, trait_path, _) =
+        input.trait_.clone().expect("should contain trait implementation");
+    trait_path
 }
 
 struct InheritsAttr {
