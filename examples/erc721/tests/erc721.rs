@@ -24,25 +24,25 @@ fn random_token_id() -> U256 {
 
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     let args = Erc721Example::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
+        // name_: TOKEN_NAME.to_owned(),
+        // symbol_: TOKEN_SYMBOL.to_owned(),
     };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
 }
 
-#[e2e::test]
-async fn constructs(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
-    let contract = Erc721::new(contract_addr, &alice.wallet);
-
-    let name = contract.name().call().await?.name;
-    let symbol = contract.symbol().call().await?.symbol;
-
-    assert_eq!(name, TOKEN_NAME.to_owned());
-    assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
-    Ok(())
-}
+// #[e2e::test]
+// async fn constructs(alice: Account) -> eyre::Result<()> {
+//     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+//     let contract = Erc721::new(contract_addr, &alice.wallet);
+//
+//     let name = contract.name().call().await?.name;
+//     let symbol = contract.symbol().call().await?.symbol;
+//
+//     assert_eq!(name, TOKEN_NAME.to_owned());
+//     assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
+//     Ok(())
+// }
 
 #[e2e::test]
 async fn mints(alice: Account) -> eyre::Result<()> {

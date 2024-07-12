@@ -51,6 +51,14 @@ impl NoWayNft {
     fn there_is_a_way(&mut self) {
         self._is_there_a_way.set(true);
     }
+
+    fn mint(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error> {
+        Erc721::<Override>::_mint(storage, to, token_id)
+    }
 }
 
 #[r#virtual]
