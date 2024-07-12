@@ -1,3 +1,28 @@
+//! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
+//! in https://eips.ethereum.org/EIPS/eip-2309[ERC-2309].
+//!
+//! This extension allows the minting of large batches of tokens, during
+//! contract construction only. For upgradeable contracts this implies that
+//! batch minting is only available during proxy deployment, and not in
+//! subsequent upgrades. These batches are limited to 5000 tokens at a time by
+//! default to accommodate off-chain indexers.
+//!
+//! Using this extension removes the ability to mint single tokens during
+//! contract construction. This ability is regained after construction. During
+//! construction, only batch minting is allowed.
+//!
+//! IMPORTANT: This extension does not call the {_update} function for tokens
+//! minted in batch. Any logic added to this function through overrides will not
+//! be triggered when token are minted in batch. You may want to also override
+//! [`Erc721Consecutive::_increaseBalance`] or
+//! [`Erc721Consecutive::_mintConsecutive`] to account for these mints.
+//!
+//! IMPORTANT: When overriding [`Erc721Consecutive::_mintConsecutive`], be
+//! careful about call ordering. [`Erc721Consecutive::owner_of`] may return
+//! invalid values during the [`Erc721Consecutive::_mintConsecutive`]
+//! execution if the super call is not called first. To be safe, execute the
+//! super call before your custom logic.
+
 use alloc::vec;
 
 use alloy_primitives::{uint, Address, U128, U256};
@@ -107,7 +132,7 @@ impl MethodError for checkpoints::Error {
     }
 }
 
-// TODO#q: have these constants generic
+// TODO: add option to override these constants
 
 // Maximum size of a batch of consecutive tokens. This is designed to limit
 // stress on off-chain indexing services that have to record one entry per
@@ -881,9 +906,14 @@ mod test {
 
         assert_eq!(balance2, balance1 + uint!(1_U256));
     }
-    
+
+    // TODO#q: error_when_not_minted_consecutive ERC721ForbiddenBatchMint
+    // TODO#q: error_when_to_is_zero InvalidReceiver
+    // TODO#q: error_when_exceed_batch_size ERC721ExceededMaxBatchMint
+
     #[motsu::test]
     fn transfers_from(contract: Erc721Consecutive) {
+        // TODO#q: consecutive transfers_from
         contract._stop_mint_consecutive();
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -896,4 +926,6 @@ mod test {
             .expect("should return the owner of the token");
         assert_eq!(owner, BOB);
     }
+
+    // TODO#q: burns (consecutive and erc721 default implementation)
 }
