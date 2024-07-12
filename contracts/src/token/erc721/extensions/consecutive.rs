@@ -33,6 +33,9 @@ sol_storage! {
         Erc721 erc721;
         Trace160 _sequential_ownership;
         BitMap _sequentian_burn;
+        /// Initialization marker. If true this means that the constructor was
+        /// called.
+        bool _initialized
     }
 }
 
@@ -84,13 +87,13 @@ pub enum Error {
     /// Batch mint is restricted to the constructor.
     /// Any batch mint not emitting the [`IERC721::Transfer`] event outside of
     /// the constructor is non ERC-721 compliant.
-    Erc721ForbiddenBatchMint(ERC721ForbiddenBatchMint),
+    ForbiddenBatchMint(ERC721ForbiddenBatchMint),
     /// Exceeds the max amount of mints per batch.
-    Erc721ExceededMaxBatchMint(ERC721ExceededMaxBatchMint),
+    ExceededMaxBatchMint(ERC721ExceededMaxBatchMint),
     /// Individual minting is not allowed.
-    Erc721ForbiddenMint(ERC721ForbiddenMint),
+    ForbiddenMint(ERC721ForbiddenMint),
     /// Batch burn is not supported.
-    Erc721ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
+    ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
 
 impl MethodError for erc721::Error {
@@ -181,8 +184,9 @@ impl Erc721Consecutive {
         let next = self._next_consecutive_id();
 
         if batch_size > U96::ZERO {
-            //TODO#q: check address of this and revert with
-            // ERC721ForbiddenBatchMint
+            if self._initialized.get() {
+                return Err(ERC721ForbiddenBatchMint {}.into());
+            }
 
             if to.is_zero() {
                 return Err(Erc721Error::InvalidReceiver(
@@ -214,6 +218,17 @@ impl Erc721Consecutive {
         Ok(next)
     }
 
+    /// Should be called to restrict consecutive mint after.
+    /// After this function being called, every call to
+    /// [`Self::_mint_consecutive`] will fail.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Write access to the contract's state.
+    pub fn _stop_mint_consecutive(&mut self) {
+        self._initialized.set(true);
+    }
+
     /// Override of [`Erc721::_update`] that restricts normal minting to after
     /// construction.
     ///
@@ -231,10 +246,8 @@ impl Erc721Consecutive {
         let previous_owner = self.__update(to, token_id, auth)?;
 
         // only mint after construction
-        if previous_owner == Address::ZERO
-        /* TODO#q: and address code is zero */
-        {
-            return Err(ERC721ForbiddenMint {}.into()); //
+        if previous_owner == Address::ZERO && !self._initialized.get() {
+            return Err(ERC721ForbiddenMint {}.into());
         }
 
         // record burn

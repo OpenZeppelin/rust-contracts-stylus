@@ -4,12 +4,8 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::SolError;
 use openzeppelin_stylus::{
-    token::erc721::extensions::{
-        consecutive::{Erc721Consecutive, Error},
-        IErc721Burnable,
-    },
+    token::erc721::extensions::consecutive::{Erc721Consecutive, Error},
     utils::structs::checkpoints::U96,
 };
 use stylus_sdk::prelude::*;
@@ -28,8 +24,7 @@ impl Erc721ConsecutiveExample {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         self.erc721_consecutive._burn(token_id)
     }
-    
-    // TODO#q: we should be able to call it just once
+
     pub fn init(
         &mut self,
         receivers: Vec<Address>,
@@ -43,6 +38,7 @@ impl Erc721ConsecutiveExample {
                 .erc721_consecutive
                 ._mint_consecutive(receiver, U96::from(batch))?;
         }
+        self.erc721_consecutive._stop_mint_consecutive();
         Ok(())
     }
 }
