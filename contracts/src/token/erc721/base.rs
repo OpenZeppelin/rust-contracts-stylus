@@ -317,7 +317,7 @@ impl IErc721Virtual for Erc721Override {
                 .inner_mut::<Erc721<This>>()
                 ._balances
                 .setter(from)
-                .sub_assign_unchecked(U256::from(1));
+                .sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
@@ -325,7 +325,7 @@ impl IErc721Virtual for Erc721Override {
                 .inner_mut::<Erc721<This>>()
                 ._balances
                 .setter(to)
-                .add_assign_unchecked(U256::from(1));
+                .add_assign_unchecked(uint!(1_U256));
         }
 
         storage.inner_mut::<Erc721<This>>()._owners.setter(token_id).set(to);

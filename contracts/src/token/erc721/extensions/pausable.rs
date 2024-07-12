@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use alloy_primitives::Address;
 use openzeppelin_stylus_proc::r#override;
-use stylus_sdk::{alloy_primitives::U256, evm, msg, prelude::*};
+use stylus_sdk::{alloy_primitives::U256, msg, prelude::*};
 
 use crate::{
     token::erc721::{base::IErc721Virtual, Error, TopLevelStorage},
@@ -29,7 +29,7 @@ impl IErc721Virtual for Erc721PausableOverride {
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let pausable: &mut Pausable = storage.inner_mut();
+        let pausable = storage.inner_mut::<Pausable>();
         pausable.when_not_paused()?;
         Super::update::<This>(storage, to, token_id, auth)
     }
@@ -38,11 +38,10 @@ impl IErc721Virtual for Erc721PausableOverride {
 #[cfg(all(test, feature = "std"))]
 pub(crate) mod tests {
     use alloy_primitives::address;
-    use openzeppelin_stylus_proc::inherit;
 
     use super::*;
     use crate::token::erc721::{
-        base::{Erc721, Erc721Override},
+        base::Erc721,
         tests::{random_token_id, Override, Token},
         traits::IErc721,
     };
