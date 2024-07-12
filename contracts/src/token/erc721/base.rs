@@ -288,13 +288,13 @@ impl IErc721Virtual for Erc721Override {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn update<V: IErc721Virtual>(
+    fn update(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let base = storage.inner::<Erc721<V>>();
+        let base = storage.inner::<Erc721<This>>();
         let from = base._owner_of_inner(token_id);
 
         // Perform (optional) operator check.
@@ -306,7 +306,7 @@ impl IErc721Virtual for Erc721Override {
         if !from.is_zero() {
             // Clear approval. No need to re-authorize or emit the Approval
             // event.
-            V::approve::<V>(
+            This::approve::<This>(
                 storage,
                 Address::ZERO,
                 token_id,
@@ -314,7 +314,7 @@ impl IErc721Virtual for Erc721Override {
                 false,
             )?;
             storage
-                .inner_mut::<Erc721<V>>()
+                .inner_mut::<Erc721<This>>()
                 ._balances
                 .setter(from)
                 .sub_assign_unchecked(U256::from(1));
@@ -322,13 +322,13 @@ impl IErc721Virtual for Erc721Override {
 
         if !to.is_zero() {
             storage
-                .inner_mut::<Erc721<V>>()
+                .inner_mut::<Erc721<This>>()
                 ._balances
                 .setter(to)
                 .add_assign_unchecked(U256::from(1));
         }
 
-        storage.inner_mut::<Erc721<V>>()._owners.setter(token_id).set(to);
+        storage.inner_mut::<Erc721<This>>()._owners.setter(token_id).set(to);
 
         evm::log(Transfer { from, to, token_id });
 
@@ -376,15 +376,15 @@ impl IErc721Virtual for Erc721Override {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn safe_transfer<V: IErc721Virtual>(
+    fn safe_transfer(
         storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        Erc721::<V>::_transfer(storage, from, to, token_id)?;
-        Erc721::<V>::_check_on_erc721_received(
+        Erc721::<This>::_transfer(storage, from, to, token_id)?;
+        Erc721::<This>::_check_on_erc721_received(
             storage,
             msg::sender(),
             from,
@@ -416,14 +416,14 @@ impl IErc721Virtual for Erc721Override {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    fn approve<V: IErc721Virtual>(
+    fn approve(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
         auth: Address,
         emit_event: bool,
     ) -> Result<(), Error> {
-        let storage: &mut Erc721<V> = storage.inner_mut();
+        let storage = storage.inner_mut::<Erc721<This>>();
         // Avoid reading the owner unless necessary.
         if emit_event || !auth.is_zero() {
             let owner = storage._require_owned(token_id)?;
