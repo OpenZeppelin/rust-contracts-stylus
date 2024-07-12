@@ -23,7 +23,7 @@ impl<V: IErc721Virtual> Erc721Pausable<V> {}
 
 #[r#override]
 impl IErc721Virtual for Erc721PausableOverride {
-    fn update(
+    fn _update(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -31,7 +31,7 @@ impl IErc721Virtual for Erc721PausableOverride {
     ) -> Result<Address, Error> {
         let pausable = storage.inner_mut::<Pausable>();
         pausable.when_not_paused()?;
-        Super::update::<This>(storage, to, token_id, auth)
+        Super::_update::<This>(storage, to, token_id, auth)
     }
 }
 

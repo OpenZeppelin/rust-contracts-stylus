@@ -219,7 +219,7 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
         // verifies that the token exists (`from != 0`). Therefore, it is
         // not needed to verify that the return value is not 0 here.
         let previous_owner =
-            Self::update(storage, to, token_id, msg::sender())?;
+            Self::_update(storage, to, token_id, msg::sender())?;
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
@@ -236,7 +236,7 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        V::approve::<V>(storage, to, token_id, msg::sender(), true)
+        Self::_approve(storage, to, token_id, msg::sender(), true)
     }
 
     fn set_approval_for_all(
@@ -257,7 +257,7 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
     }
 }
 
-#[r#virtual]
+#[r#virtual(Erc721)]
 impl IErc721Virtual for Erc721Override {
     /// Transfers `token_id` from its current owner to `to`, or alternatively
     /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
@@ -288,7 +288,7 @@ impl IErc721Virtual for Erc721Override {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn update(
+    fn _update(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -306,7 +306,7 @@ impl IErc721Virtual for Erc721Override {
         if !from.is_zero() {
             // Clear approval. No need to re-authorize or emit the Approval
             // event.
-            This::approve::<This>(
+            This::_approve::<This>(
                 storage,
                 Address::ZERO,
                 token_id,
@@ -376,7 +376,7 @@ impl IErc721Virtual for Erc721Override {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn safe_transfer(
+    fn _safe_transfer(
         storage: &mut impl TopLevelStorage,
         from: Address,
         to: Address,
@@ -416,7 +416,7 @@ impl IErc721Virtual for Erc721Override {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    fn approve(
+    fn _approve(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -605,7 +605,7 @@ impl<V: IErc721Virtual> Erc721<V> {
         }
 
         let previous_owner =
-            V::update::<V>(storage, to, token_id, Address::ZERO)?;
+            Self::_update(storage, to, token_id, Address::ZERO)?;
         if !previous_owner.is_zero() {
             return Err(ERC721InvalidSender { sender: Address::ZERO }.into());
         }
@@ -691,7 +691,7 @@ impl<V: IErc721Virtual> Erc721<V> {
         token_id: U256,
     ) -> Result<(), Error> {
         let previous_owner =
-            V::update::<V>(storage, Address::ZERO, token_id, Address::ZERO)?;
+            Self::_update(storage, Address::ZERO, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
             return Err(ERC721NonexistentToken { token_id }.into());
         }
@@ -740,7 +740,7 @@ impl<V: IErc721Virtual> Erc721<V> {
         }
 
         let previous_owner =
-            V::update::<V>(storage, to, token_id, Address::ZERO)?;
+            Self::_update(storage, to, token_id, Address::ZERO)?;
         if previous_owner.is_zero() {
             return Err(ERC721NonexistentToken { token_id }.into());
         } else if previous_owner != from {
@@ -872,16 +872,6 @@ impl<V: IErc721Virtual> Erc721<V> {
             };
         }
         Ok(())
-    }
-
-    // TODO#q: develop this feature to autoimpl
-    fn update(
-        storage: &mut impl TopLevelStorage,
-        to: Address,
-        token_id: U256,
-        auth: Address,
-    ) -> Result<Address, Error> {
-        V::update::<V>(storage, to, token_id, auth)
     }
 }
 
@@ -2063,7 +2053,7 @@ pub mod tests {
         Erc721::<Override>::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        Override::safe_transfer::<Override>(
+        Erc721::<Override>::_safe_transfer(
             contract,
             alice,
             BOB,
@@ -2086,7 +2076,7 @@ pub mod tests {
         Erc721::<Override>::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
         contract._token_approvals.setter(token_id).set(alice);
-        Override::safe_transfer::<Override>(
+        Erc721::<Override>::_safe_transfer(
             contract,
             BOB,
             alice,
@@ -2113,7 +2103,7 @@ pub mod tests {
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert_eq!(approved_for_all, true);
 
-        Override::safe_transfer::<Override>(
+        Erc721::<Override>::_safe_transfer(
             contract,
             BOB,
             alice,
@@ -2139,7 +2129,7 @@ pub mod tests {
         Erc721::<Override>::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Override::safe_transfer::<Override>(
+        let err = Erc721::<Override>::_safe_transfer(
             contract,
             alice,
             invalid_receiver,
@@ -2171,7 +2161,7 @@ pub mod tests {
         Erc721::<Override>::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Override::safe_transfer::<Override>(
+        let err = Erc721::<Override>::_safe_transfer(
             contract,
             DAVE,
             BOB,
@@ -2202,7 +2192,7 @@ pub mod tests {
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        let err = Override::safe_transfer::<Override>(
+        let err = Erc721::<Override>::_safe_transfer(
             contract,
             alice,
             BOB,
@@ -2225,7 +2215,7 @@ pub mod tests {
         let token_id = random_token_id();
         Erc721::<Override>::_mint(contract, alice, token_id)
             .expect("should mint a token");
-        Override::approve::<Override>(contract, BOB, token_id, alice, false)
+        Erc721::<Override>::_approve(contract, BOB, token_id, alice, false)
             .expect("should approve Bob for operations on token");
         assert_eq!(contract._token_approvals.get(token_id), BOB);
     }
@@ -2235,7 +2225,7 @@ pub mod tests {
         contract: Erc721<Override>,
     ) {
         let token_id = random_token_id();
-        let err = Override::approve::<Override>(
+        let err = Erc721::<Override>::_approve(
             contract,
             BOB,
             token_id,
@@ -2261,7 +2251,7 @@ pub mod tests {
         Erc721::<Override>::_mint(contract, BOB, token_id)
             .expect("should mint a token");
 
-        let err = Override::approve::<Override>(
+        let err = Erc721::<Override>::_approve(
             contract, DAVE, token_id, alice, false,
         )
         .expect_err("should not approve when invalid approver");

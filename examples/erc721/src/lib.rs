@@ -65,7 +65,7 @@ impl NoWayNft {
 #[inherit(Erc721PausableOverride)]
 #[inherit(Erc721Override)]
 impl IErc721Virtual for NoWayNftOverride {
-    fn update(
+    fn _update(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -74,7 +74,7 @@ impl IErc721Virtual for NoWayNftOverride {
         let storage = storage.inner_mut::<NoWayNft>();
         if storage.is_there_a_way() {
             evm::log(ThereIsWay {});
-            Super::update::<This>(storage, to, token_id, auth)
+            Super::_update::<This>(storage, to, token_id, auth)
         } else {
             Err(Error::Custom(NoWay {}.into()))
         }

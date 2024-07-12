@@ -44,7 +44,7 @@ impl<V: IErc721Virtual> Erc721Burnable<V> {
         storage: &mut impl TopLevelStorage,
         token_id: U256,
     ) -> Result<(), Error> {
-        V::update::<V>(storage, Address::ZERO, token_id, msg::sender())?;
+        V::_update::<V>(storage, Address::ZERO, token_id, msg::sender())?;
         Ok(())
     }
 }

@@ -3,8 +3,8 @@ use std::{mem, str::FromStr};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    parse::Parse, parse_macro_input, punctuated::Punctuated, FnArg,
-    GenericParam, ImplItem, ItemImpl, Path, Token, Type,
+    parse::Parse, parse_macro_input, punctuated::Punctuated, token::Comma,
+    FnArg, GenericParam, ImplItem, ItemImpl, Path, Token, Type,
 };
 
 use crate::create_complex_type_rec;
@@ -35,7 +35,42 @@ pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
         pub struct #self_ty;
     });
 
+    if !_attr.is_empty() {
+        let name_ty = parse_macro_input!(_attr as Type);
+        let impl_items = impl_items(&mut input);
+        output.extend(quote! {
+            impl<This: #trait_path> #name_ty<This> {
+                #impl_items
+            }
+        })
+    };
+
     output.into()
+}
+
+fn impl_items(input: &mut ItemImpl) -> proc_macro2::TokenStream {
+    let mut impl_items = Vec::new();
+    for item in input.items.iter_mut() {
+        let ImplItem::Fn(func) = item else {
+            continue;
+        };
+        let name = func.sig.ident.clone();
+        let return_ty = func.sig.output.clone();
+        let args = func.sig.inputs.clone();
+        let input_args = input_args(&args);
+        let attrs = func.attrs.clone();
+        impl_items.push(quote! {
+            #(#attrs)*
+            fn #name ( #args ) #return_ty
+            {
+                <This>::#name::<This> ( #input_args )
+            }
+        });
+    }
+
+    quote! {
+        #(#impl_items)*
+    }
 }
 
 fn trait_declr_items(input: &mut ItemImpl) -> proc_macro2::TokenStream {
@@ -51,13 +86,8 @@ fn trait_declr_items(input: &mut ItemImpl) -> proc_macro2::TokenStream {
         let name = func.sig.ident.clone();
         let return_ty = func.sig.output.clone();
         let args = func.sig.inputs.clone();
+        let input_args = input_args(&args);
         let attrs = func.attrs.clone();
-        let input_args = args.iter().map(|arg| match arg {
-            FnArg::Receiver(_) => {
-                panic!("functions should not contain `&self` or `&mut self`")
-            }
-            FnArg::Typed(arg) => arg.pat.clone(),
-        });
         let generics = func.sig.generics.clone();
 
         if generics.params.is_empty() {
@@ -65,7 +95,7 @@ fn trait_declr_items(input: &mut ItemImpl) -> proc_macro2::TokenStream {
                 #(#attrs)*
                 fn #name <This: #trait_path> ( #args ) #return_ty
                 {
-                    Self::Base::#name::<This>(#(#input_args,)*)
+                    Self::Base::#name::<This> ( #input_args )
                 }
             });
         } else {
@@ -80,14 +110,26 @@ fn trait_declr_items(input: &mut ItemImpl) -> proc_macro2::TokenStream {
                 #(#attrs)*
                 fn #name #generics ( #args ) #return_ty
                 {
-                    Self::Base::#name::<#(#generic_idents)*>(#(#input_args,)*)
+                    Self::Base::#name::<#(#generic_idents)*> ( #input_args )
                 }
             });
         }
     }
-    
+
     quote! {
         #(#trait_declr_items)*
+    }
+}
+
+fn input_args(args: &Punctuated<FnArg, Comma>) -> proc_macro2::TokenStream {
+    let input_args = args.iter().map(|arg| match arg {
+        FnArg::Receiver(_) => {
+            panic!("functions should not contain `&self` or `&mut self`")
+        }
+        FnArg::Typed(arg) => arg.pat.clone(),
+    });
+    quote! {
+        #(#input_args,)*
     }
 }
 
@@ -114,9 +156,7 @@ pub fn r#override(_attr: TokenStream, input: TokenStream) -> TokenStream {
     output.into()
 }
 
-fn trait_impl_items(
-    input: &mut ItemImpl,
-) -> proc_macro2::TokenStream {
+fn trait_impl_items(input: &mut ItemImpl) -> proc_macro2::TokenStream {
     let trait_path = trait_path(input);
     let mut items = Vec::new();
     for item in input.items.iter_mut() {
@@ -144,7 +184,7 @@ fn trait_impl_items(
             #block
         });
     }
-    
+
     quote! {
         #(#items)*
     }
