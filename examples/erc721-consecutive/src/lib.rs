@@ -28,7 +28,8 @@ impl Erc721ConsecutiveExample {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         self.erc721_consecutive._burn(token_id)
     }
-
+    
+    // TODO#q: we should be able to call it just once
     pub fn init(
         &mut self,
         receivers: Vec<Address>,
@@ -40,7 +41,7 @@ impl Erc721ConsecutiveExample {
             let batch = batches[i];
             let token_id = self
                 .erc721_consecutive
-                .mint_consecutive(receiver, U96::from(batch))?;
+                ._mint_consecutive(receiver, U96::from(batch))?;
         }
         Ok(())
     }

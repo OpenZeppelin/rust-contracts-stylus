@@ -1,12 +1,18 @@
 #![cfg(feature = "e2e")]
 
-use alloy::primitives::{Address, U256};
+use alloy::{
+    primitives::{Address, U256},
+    sol,
+    sol_types::SolConstructor,
+};
 use alloy_primitives::uint;
-use e2e::{Account, EventExt, Revert};
+use e2e::{watch, Account, EventExt, Revert};
 
 use crate::abi::Erc721;
 
 mod abi;
+
+sol!("src/constructor.sol");
 
 fn random_token_id() -> U256 {
     let num: u32 = rand::random();
@@ -14,7 +20,9 @@ fn random_token_id() -> U256 {
 }
 
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
-    e2e::deploy(rpc_url, private_key, None).await
+    let args = Erc721Example::constructorCall {};
+    let args = alloy::hex::encode(args.abi_encode());
+    e2e::deploy(rpc_url, private_key, Some(args)).await
 }
 
 #[e2e::test]
@@ -25,8 +33,10 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let receivers = vec![alice_addr];
     let amounts = vec![uint!(10_U256)];
-    let res = contract.init(receivers, amounts).call().await?;
+    let _ = watch!(contract.init(receivers, amounts))?;
+    let balance = contract.balanceOf(alice_addr).call().await?.balance;
+    assert_eq!(balance, uint!(10_U256));
     Ok(())
 }
 
-// TODO#q: construct batches
+// TODO#q: add erc721 implementation related tests
