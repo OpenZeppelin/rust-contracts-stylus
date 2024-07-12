@@ -2,17 +2,18 @@
 extern crate alloc;
 
 use alloy_primitives::{Address, U256};
+use stylus_sdk::{alloy_sol_types::sol, evm, prelude::*};
+
 use openzeppelin_stylus::token::erc721::{
     base::{Erc721, Erc721Override},
+    Error,
     extensions::{
         burnable::{Erc721Burnable, Erc721BurnableOverride},
         pausable::{Erc721Pausable, Erc721PausableOverride},
     },
     traits::IErc721Virtual,
-    Error,
 };
-use openzeppelin_stylus_proc::{inherit, r#virtual};
-use stylus_sdk::{alloy_sol_types::sol, evm, prelude::*};
+use openzeppelin_stylus_proc::r#virtual;
 
 sol! {
     /// Emitted when life is not doomed and there is a way.
@@ -57,8 +58,8 @@ impl NoWayNft {
 #[inherit(Erc721BurnableOverride)]
 #[inherit(Erc721PausableOverride)]
 #[inherit(Erc721Override)]
-impl IErc721Virtual for NoWayOverride {
-    fn update<V: IErc721Virtual>(
+impl IErc721Virtual for NoWayNftOverride {
+    fn update(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -67,7 +68,7 @@ impl IErc721Virtual for NoWayOverride {
         let storage = storage.inner_mut::<NoWayNft>();
         if storage.is_there_a_way() {
             evm::log(ThereIsWay {});
-            Self::Base::update::<V>(storage, to, token_id, auth)
+            Super::update::<This>(storage, to, token_id, auth)
         } else {
             Err(Error::Custom(NoWay {}.into()))
         }
