@@ -2,6 +2,7 @@
 use core::marker::PhantomData;
 
 use alloy_primitives::{Address, U256};
+use openzeppelin_stylus_proc::r#virtual;
 use stylus_proc::{external, sol_storage};
 use stylus_sdk::{msg, prelude::*};
 
@@ -48,11 +49,8 @@ impl<V: IErc721Virtual> Erc721Burnable<V> {
     }
 }
 
-pub struct Erc721BurnableOverride<B: IErc721Virtual>(B);
-
-impl<B: IErc721Virtual> IErc721Virtual for Erc721BurnableOverride<B> {
-    type Base = B;
-}
+#[r#virtual]
+impl IErc721Virtual for Erc721BurnableOverride {}
 
 #[cfg(all(test, feature = "std"))]
 mod tests {

@@ -1,7 +1,8 @@
 use core::marker::PhantomData;
 
 use alloy_primitives::Address;
-use stylus_sdk::{alloy_primitives::U256, msg, prelude::*};
+use openzeppelin_stylus_proc::r#virtual;
+use stylus_sdk::{alloy_primitives::U256, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{traits::IErc721Virtual, Error, TopLevelStorage},
@@ -20,12 +21,9 @@ sol_storage! {
 #[inherit(Pausable)]
 impl<V: IErc721Virtual> Erc721Pausable<V> {}
 
-pub struct Erc721PausableOverride<B: IErc721Virtual>(B);
-
-impl<B: IErc721Virtual> IErc721Virtual for Erc721PausableOverride<B> {
-    type Base = B;
-
-    fn update<V: IErc721Virtual>(
+#[r#virtual]
+impl IErc721Virtual for Erc721PausableOverride {
+    fn update(
         storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
@@ -33,7 +31,7 @@ impl<B: IErc721Virtual> IErc721Virtual for Erc721PausableOverride<B> {
     ) -> Result<Address, Error> {
         let pausable: &mut Pausable = storage.inner_mut();
         pausable.when_not_paused()?;
-        Self::Base::update::<V>(storage, to, token_id, auth)
+        Super::update::<This>(storage, to, token_id, auth)
     }
 }
 
