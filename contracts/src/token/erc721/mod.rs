@@ -89,8 +89,8 @@ pub(crate) mod tests {
         token::erc721::{
             base::{Erc721, Erc721Override},
             extensions::{
-                burnable::{Erc721BurnableOverride, Erc721Burnable},
-                pausable::{Erc721PausableOverride, Erc721Pausable},
+                burnable::{Erc721Burnable, Erc721BurnableOverride},
+                pausable::{Erc721Pausable, Erc721PausableOverride},
             },
         },
         utils::Pausable,

@@ -53,38 +53,17 @@ impl NoWayNft {
     }
 }
 
-type Override = inherit!(
-    NoWayOverride,
-    Erc721BurnableOverride,
-    Erc721PausableOverride,
-    Erc721Override,
-);
-pub struct NoWayOverride<Base: IErc721Virtual>(Base);
-
-impl<B: IErc721Virtual> IErc721Virtual for NoWayOverride<B> {
-    type Base = B;
-
-    fn update<V: IErc721Virtual>(
-        storage: &mut impl TopLevelStorage,
-        to: Address,
-        token_id: U256,
-        auth: Address,
-    ) -> Result<Address, Error> {
-        let storage: &mut NoWayNft = storage.inner_mut();
-        if storage.is_there_a_way() {
-            evm::log(ThereIsWay {});
-            Self::Base::update::<V>(storage, to, token_id, auth)
-        } else {
-            Err(Error::Custom(NoWay {}.into()))
-        }
-    }
-}
-
-// #[r#virtual]
-// #[inherit(Erc721BurnableOverride)]
-// #[inherit(Erc721PausableOverride)]
-// #[inherit(Erc721Override)]
-// impl IErc721Virtual for NoWayOverride {
+// type Override = inherit!(
+//     NoWayOverride,
+//     Erc721BurnableOverride,
+//     Erc721PausableOverride,
+//     Erc721Override,
+// );
+// pub struct NoWayOverride<Base: IErc721Virtual>(Base);
+//
+// impl<B: IErc721Virtual> IErc721Virtual for NoWayOverride<B> {
+//     type Base = B;
+//
 //     fn update<V: IErc721Virtual>(
 //         storage: &mut impl TopLevelStorage,
 //         to: Address,
@@ -100,3 +79,24 @@ impl<B: IErc721Virtual> IErc721Virtual for NoWayOverride<B> {
 //         }
 //     }
 // }
+
+#[r#virtual]
+#[inherit(Erc721BurnableOverride)]
+#[inherit(Erc721PausableOverride)]
+#[inherit(Erc721Override)]
+impl IErc721Virtual for NoWayOverride {
+    fn update<V: IErc721Virtual>(
+        storage: &mut impl TopLevelStorage,
+        to: Address,
+        token_id: U256,
+        auth: Address,
+    ) -> Result<Address, Error> {
+        let storage: &mut NoWayNft = storage.inner_mut();
+        if storage.is_there_a_way() {
+            evm::log(ThereIsWay {});
+            Self::Base::update::<V>(storage, to, token_id, auth)
+        } else {
+            Err(Error::Custom(NoWay {}.into()))
+        }
+    }
+}

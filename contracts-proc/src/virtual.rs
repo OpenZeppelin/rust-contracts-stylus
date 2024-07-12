@@ -12,10 +12,14 @@ use syn::{
     FnArg, ImplItem, Index, ItemImpl, Lit, LitStr, Pat, PatType, Result,
     ReturnType, Token, Type,
 };
+
 use crate::create_complex_type_rec;
 
 pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemImpl);
+    let trait_path = input.trait_.unwrap().1;
+    let self_ty = input.self_ty.clone();
+    let items = input.items;
     let mut output = quote! {};
 
     let mut inherits = vec![];
@@ -34,10 +38,24 @@ pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
     }
     let override_ty = create_complex_type_rec(&inherits);
 
+    // let mut funcs = Vec::new();
+    // for item in input.items.iter_mut() {
+    //     let ImplItem::Fn(func) = item else {
+    //         continue;
+    //     };
+    //     funcs.push(func);
+    // }
+
     output.extend(quote! {
-        #input
+        impl<B: #trait_path> #trait_path for #self_ty<B> {
+            type Base = B;
+
+            #(#items)*
+        }
 
         type Override = #override_ty;
+        
+        pub struct #self_ty<Base: #trait_path>(Base);
     });
     output.into()
 }
