@@ -38,14 +38,6 @@ pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
     }
     let override_ty = create_complex_type_rec(&inherits);
 
-    // let mut funcs = Vec::new();
-    // for item in input.items.iter_mut() {
-    //     let ImplItem::Fn(func) = item else {
-    //         continue;
-    //     };
-    //     funcs.push(func);
-    // }
-
     output.extend(quote! {
         impl<B: #trait_path> #trait_path for #self_ty<B> {
             type Base = B;
@@ -54,7 +46,7 @@ pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
         }
 
         type Override = #override_ty;
-        
+
         pub struct #self_ty<Base: #trait_path>(Base);
     });
     output.into()
