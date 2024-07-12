@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use alloy_primitives::Address;
-use openzeppelin_stylus_proc::r#virtual;
+use openzeppelin_stylus_proc::r#override;
 use stylus_sdk::{alloy_primitives::U256, evm, msg, prelude::*};
 
 use crate::{
@@ -21,7 +21,7 @@ sol_storage! {
 #[inherit(Pausable)]
 impl<V: IErc721Virtual> Erc721Pausable<V> {}
 
-#[r#virtual]
+#[r#override]
 impl IErc721Virtual for Erc721PausableOverride {
     fn update(
         storage: &mut impl TopLevelStorage,

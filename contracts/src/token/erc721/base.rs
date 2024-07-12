@@ -260,7 +260,6 @@ impl<V: IErc721Virtual> IErc721 for Erc721<V> {
 }
 
 pub struct Erc721Override;
-
 impl IErc721Virtual for Erc721Override {
     type Base = Self;
 

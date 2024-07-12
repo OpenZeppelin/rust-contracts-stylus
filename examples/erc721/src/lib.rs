@@ -11,7 +11,7 @@ use openzeppelin_stylus::token::erc721::{
     traits::IErc721Virtual,
     Error,
 };
-use openzeppelin_stylus_proc::r#virtual;
+use openzeppelin_stylus_proc::r#override;
 use stylus_sdk::{alloy_sol_types::sol, evm, prelude::*};
 
 sol! {
@@ -61,7 +61,7 @@ impl NoWayNft {
     }
 }
 
-#[r#virtual]
+#[r#override]
 #[inherit(Erc721BurnableOverride)]
 #[inherit(Erc721PausableOverride)]
 #[inherit(Erc721Override)]

@@ -21,8 +21,8 @@ pub fn erc721_derive_virtual(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn r#virtual(attr: TokenStream, input: TokenStream) -> TokenStream {
-    r#virtual::r#virtual(attr, input)
+pub fn r#override(attr: TokenStream, input: TokenStream) -> TokenStream {
+    r#virtual::r#override(attr, input)
 }
 
 #[proc_macro]

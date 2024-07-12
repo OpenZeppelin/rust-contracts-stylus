@@ -15,7 +15,7 @@ use syn::{
 
 use crate::create_complex_type_rec;
 
-pub fn r#virtual(_attr: TokenStream, input: TokenStream) -> TokenStream {
+pub fn r#override(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemImpl);
     let (_, trait_path, _) =
         input.trait_.clone().expect("should contain trait implementation");
