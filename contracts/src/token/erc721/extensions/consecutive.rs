@@ -28,7 +28,6 @@ use crate::{
 
 sol_storage! {
     /// State of an [`Erc72Erc721Consecutive`] token.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Consecutive {
         Erc721 erc721;
         Trace160 _sequential_ownership;
@@ -781,5 +780,120 @@ impl Erc721Consecutive {
             .into());
         }
         Ok(owner)
+    }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod test {
+    use alloy_primitives::{address, uint, Address, U256};
+    use stylus_sdk::{msg, prelude::StorageType};
+
+    use crate::{
+        token::erc721::{
+            extensions::consecutive::Erc721Consecutive, tests::random_token_id,
+            Erc721, IErc721,
+        },
+        utils::structs::{
+            bitmap::BitMap,
+            checkpoints::{Trace160, U96},
+        },
+    };
+
+    // TODO#q: add support for complex contracts creation for motsu
+    impl Default for Erc721Consecutive {
+        fn default() -> Self {
+            #[derive(Default)]
+            struct StorageTypeFactory {
+                root: U256,
+            }
+            impl StorageTypeFactory {
+                fn create<T: StorageType>(&mut self) -> T {
+                    let instance = unsafe { T::new(self.root, 0) };
+                    self.root += U256::from(T::SLOT_BYTES);
+                    instance
+                }
+            }
+
+            let mut factory = StorageTypeFactory::default();
+            Erc721Consecutive {
+                erc721: Erc721 {
+                    _owners: factory.create(),
+                    _balances: factory.create(),
+                    _token_approvals: factory.create(),
+                    _operator_approvals: factory.create(),
+                },
+                _sequential_ownership: Trace160 {
+                    _checkpoints: factory.create(),
+                },
+                _sequentian_burn: BitMap { _data: factory.create() },
+                _initialized: factory.create(),
+            }
+        }
+    }
+
+    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
+    const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
+
+    fn init(
+        contract: &mut Erc721Consecutive,
+        receivers: Vec<Address>,
+        batches: Vec<U96>,
+    ) -> Vec<U96> {
+        let token_ids = receivers
+            .into_iter()
+            .zip(batches)
+            .map(|(to, batch_size)| {
+                contract
+                    ._mint_consecutive(to, batch_size)
+                    .expect("should mint consecutively")
+            })
+            .collect();
+        contract._stop_mint_consecutive();
+        token_ids
+    }
+
+    #[motsu::test]
+    fn mints(contract: Erc721Consecutive) {
+        let alice = msg::sender();
+        let token_id = random_token_id();
+
+        let initial_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        let init_tokens_count = uint!(10_U96);
+        init(contract, vec![alice], vec![init_tokens_count]);
+
+        let balance1 = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+        assert_eq!(balance1, initial_balance + U256::from(init_tokens_count));
+
+        contract._mint(alice, token_id).expect("should mint a token for Alice");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, alice);
+
+        let balance2 = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+
+        assert_eq!(balance2, balance1 + uint!(1_U256));
+    }
+    
+    #[motsu::test]
+    fn transfers_from(contract: Erc721Consecutive) {
+        contract._stop_mint_consecutive();
+        let alice = msg::sender();
+        let token_id = random_token_id();
+        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .transfer_from(alice, BOB, token_id)
+            .expect("should transfer a token from Alice to Bob");
+        let owner = contract
+            .owner_of(token_id)
+            .expect("should return the owner of the token");
+        assert_eq!(owner, BOB);
     }
 }
