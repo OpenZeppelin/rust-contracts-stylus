@@ -3,12 +3,11 @@ extern crate alloc;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{
-    base::{Erc721, Erc721Override, IErc721Virtual},
     extensions::{
         burnable::{Erc721Burnable, Erc721BurnableOverride},
         pausable::{Erc721Pausable, Erc721PausableOverride},
     },
-    Error,
+    Erc721, Erc721Override, Error, IErc721Virtual,
 };
 use openzeppelin_stylus_proc::r#override;
 use stylus_sdk::{alloy_sol_types::sol, evm, prelude::*};

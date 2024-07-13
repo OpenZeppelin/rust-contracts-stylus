@@ -6,7 +6,7 @@ use openzeppelin_stylus_proc::r#override;
 use stylus_proc::{external, sol_storage};
 use stylus_sdk::{msg, prelude::*};
 
-use crate::token::erc721::{base::IErc721Virtual, Error};
+use crate::token::erc721::{Error, IErc721Virtual};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 sol_storage! {
@@ -54,15 +54,60 @@ impl IErc721Virtual for Erc721BurnableOverride {}
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address};
-    use stylus_sdk::msg;
+    use std::marker::PhantomData;
+
+    use alloy_primitives::{address, uint, Address, U256};
+    use openzeppelin_stylus_proc::r#override;
+    use stylus_proc::sol_storage;
+    use stylus_sdk::{
+        msg,
+        prelude::{StorageType, TopLevelStorage},
+        storage::StorageMap,
+    };
 
     use crate::token::erc721::{
-        extensions::burnable::Erc721Burnable,
-        tests::{random_token_id, Override, Token},
-        traits::IErc721,
-        ERC721InsufficientApproval, ERC721NonexistentToken, Erc721, Error,
+        extensions::burnable::{Erc721Burnable, Erc721BurnableOverride},
+        tests::random_token_id,
+        ERC721InsufficientApproval, ERC721NonexistentToken, Erc721,
+        Erc721Override, Error, IErc721, IErc721Virtual,
     };
+
+    sol_storage! {
+        pub struct Token {
+            Erc721<Override> erc721;
+            Erc721Burnable<Override> burnable;
+        }
+    }
+
+    #[r#override]
+    #[inherit(Erc721BurnableOverride)]
+    #[inherit(Erc721Override)]
+    impl IErc721Virtual for TokenOverride {}
+
+    unsafe impl TopLevelStorage for Token {}
+
+    impl Default for Token {
+        fn default() -> Self {
+            let root = U256::ZERO;
+
+            Token {
+                erc721: Erc721 {
+                    _owners: unsafe { StorageMap::new(root, 0) },
+                    _balances: unsafe {
+                        StorageMap::new(root + U256::from(32), 0)
+                    },
+                    _token_approvals: unsafe {
+                        StorageMap::new(root + U256::from(64), 0)
+                    },
+                    _operator_approvals: unsafe {
+                        StorageMap::new(root + U256::from(96), 0)
+                    },
+                    _phantom_data: PhantomData,
+                },
+                burnable: Erc721Burnable { _phantom_data: PhantomData },
+            }
+        }
+    }
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
