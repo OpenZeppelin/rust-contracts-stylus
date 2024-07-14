@@ -6,11 +6,15 @@ version = 3
 name = "access-control-example"
 version = "0.0.0"
 dependencies = [
+ "alloy",
  "alloy-primitives 0.3.3",
+ "e2e",
+ "eyre",
  "mini-alloc",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
+ "tokio",
 ]
 
 [[package]]
@@ -856,6 +860,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "benches"
+version = "0.0.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives 0.3.3",
+ "e2e",
+ "eyre",
+ "keccak-const",
+ "koba",
+ "openzeppelin-stylus",
+ "serde",
+ "tokio",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1560,6 +1579,22 @@ dependencies = [
  "mini-alloc",
  "openzeppelin-stylus",
  "openzeppelin-stylus-proc",
+ "rand",
+ "stylus-proc",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "erc721-metadata-example"
+version = "0.0.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives 0.3.3",
+ "e2e",
+ "eyre",
+ "mini-alloc",
+ "openzeppelin-stylus",
  "rand",
  "stylus-proc",
  "stylus-sdk",

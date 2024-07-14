@@ -5,6 +5,7 @@ use syn::{Data, DataStruct, DeriveInput, Fields, parse_macro_input};
 use syn::parse::Parse;
 use syn::punctuated::Punctuated;
 
+// TODO#q: remove this macro
 pub fn derive_virtual(input: TokenStream, call_traits: &[(&str, &str)]) -> TokenStream{
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;

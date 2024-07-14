@@ -14,12 +14,16 @@ use stylus_sdk::{
 };
 
 use crate::{
+    token::erc721::extensions::enumerable::{
+        ERC721EnumerableForbiddenBatchMint, ERC721OutOfBoundsIndex,
+    },
     utils,
     utils::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         pausable::{EnforcedPause, ExpectedPause},
     },
 };
+use crate::token::erc721::extensions::enumerable;
 
 pub mod extensions;
 
@@ -137,25 +141,49 @@ pub enum Error {
     /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(ERC721InvalidOwner),
+
     /// Indicates a `token_id` whose `owner` is the zero address.
     NonexistentToken(ERC721NonexistentToken),
+
     /// Indicates an error related to the ownership over a particular token.
     /// Used in transfers.
     IncorrectOwner(ERC721IncorrectOwner),
+
     /// Indicates a failure with the token `sender`. Used in transfers.
     InvalidSender(ERC721InvalidSender),
+
     /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC721InvalidReceiver),
+
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
+
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals.
     InvalidApprover(ERC721InvalidApprover),
+
     /// Indicates a failure with the `operator` to be approved. Used in
     /// approvals.
     InvalidOperator(ERC721InvalidOperator),
+
+    /// Indicates an error related to the operation that failed
+    /// because the contract had been in `Paused` state.
     EnforcedPause(EnforcedPause),
+
+    /// Indicates an error related to the operation that failed
+    /// because the contract is not paused.
     ExpectedPause(ExpectedPause),
+
+    /// Indicates an error when an `owner`'s token query
+    /// was out of bounds for `index`.
+    ///
+    /// NOTE: The owner being `Address::ZERO`
+    /// indicates a global out of bounds index.
+    OutOfBoundsIndex(ERC721OutOfBoundsIndex),
+
+    /// Indicates an error related to batch minting not allowed.
+    EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
+
     /// Let to return custom user error from overridden function
     Custom(ERC721CustomError),
 }
