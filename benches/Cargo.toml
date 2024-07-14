@@ -1,0 +1,18 @@
+[package]
+name = "benches"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version = "0.0.0"
+
+[dependencies]
+openzeppelin-stylus = { path = "../contracts" }
+alloy-primitives.workspace = true
+alloy.workspace = true
+tokio.workspace = true
+eyre.workspace = true
+koba.workspace = true
+e2e = { path = "../lib/e2e" }
+serde = "1.0.203"
+keccak-const = "0.2.0"

@@ -1,5 +1,5 @@
 [package]
-name = "access-control-example"
+name = "erc721-metadata-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -18,9 +18,10 @@ alloy.workspace = true
 e2e = { path = "../../lib/e2e" }
 tokio.workspace = true
 eyre.workspace = true
-
-[lib]
-crate-type = ["lib", "cdylib"]
+rand.workspace = true
 
 [features]
 e2e = []
+
+[lib]
+crate-type = ["lib", "cdylib"]

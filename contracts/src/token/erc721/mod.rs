@@ -62,7 +62,7 @@ sol! {
 
 sol! {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`crate::token::erc721::Erc721`].
+    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     ///
     /// * `owner` - The address deemed to be an invalid owner.
@@ -185,13 +185,13 @@ impl From<utils::pausable::Error> for Error {
 }
 
 sol_interface! {
-    /// [`crate::token::erc721::Erc721`] token receiver interface.
+    /// [`Erc721`] token receiver interface.
     ///
     /// Interface for any contract that wants to support `safe_transfers`
-    /// from [`crate::token::erc721::Erc721`] asset contracts.
+    /// from [`Erc721`] asset contracts.
     interface IERC721Receiver {
-        /// Whenever an [`crate::token::erc721::Erc721`] `token_id` token is transferred
-        /// to this contract via [`crate::token::erc721::Erc721::safe_transfer_from`].
+        /// Whenever an [`Erc721`] `token_id` token is transferred
+        /// to this contract via [`Erc721::safe_transfer_from`].
         ///
         /// It must return its function selector to confirm the token transfer.
         /// If any other value is returned or the interface is not implemented
@@ -207,7 +207,7 @@ sol_interface! {
 }
 
 sol_storage! {
-    /// State of an [`crate::token::erc721::Erc721`] token.
+    /// State of an [`Erc721`] token.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721<V: IErc721Virtual> {
         /// Maps tokens to owners.
@@ -1205,7 +1205,7 @@ impl<V: IErc721Virtual> Erc721<V> {
 }
 
 #[cfg(all(test, feature = "std"))]
-pub mod tests {
+pub(crate) mod tests {
     use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::{msg, storage::TopLevelStorage};
 
@@ -1300,6 +1300,24 @@ pub mod tests {
         assert!(matches!(
             err,
             Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_minting_token_invalid_receiver(contract: Token) {
+        let invalid_receiver = Address::ZERO;
+
+        let token_id = random_token_id();
+
+        let err =
+            Erc721::<Override>::_mint(contract, invalid_receiver, token_id)
+                .expect_err("should not mint a token for invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
         ));
     }
 

@@ -79,9 +79,9 @@ impl Verifier<KeccakBuilder> {
     /// CAUTION: Not all Merkle trees admit multiproofs. To use multiproofs,
     /// it is sufficient to ensure that:
     /// - The tree is complete (but not necessarily perfect).
-    /// - The leaves to be proven are in the opposite order they appear in
-    /// the tree (i.e., as seen from right to left starting at the deepest
-    /// layer and continuing at the next layer).
+    /// - The leaves to be proven are in the opposite order they appear in the
+    ///   tree (i.e., as seen from right to left starting at the deepest layer
+    ///   and continuing at the next layer).
     ///
     /// NOTE: This implementation is *not* equivalent to it's Solidity
     /// counterpart. In Rust, access to uninitialized memory panics, which
@@ -93,11 +93,10 @@ impl Verifier<KeccakBuilder> {
     ///
     /// * `proof` - A slice of hashes that constitute the merkle proof.
     /// * `proof_flags` - A slice of booleans that determine whether to hash
-    ///   leaves
-    /// or the proof.
+    ///   leaves or the proof.
     /// * `root` - The root of the merkle tree, in bytes.
     /// * `leaves` - A slice of hashes that constitute the leaves of the merkle
-    /// tree to be proven, each leaf in bytes.
+    ///   tree to be proven, each leaf in bytes.
     ///
     /// # Errors
     ///
@@ -214,9 +213,9 @@ where
     /// CAUTION: Not all Merkle trees admit multiproofs. To use multiproofs,
     /// it is sufficient to ensure that:
     /// - The tree is complete (but not necessarily perfect).
-    /// - The leaves to be proven are in the opposite order they appear in
-    /// the tree (i.e., as seen from right to left starting at the deepest
-    /// layer and continuing at the next layer).
+    /// - The leaves to be proven are in the opposite order they appear in the
+    ///   tree (i.e., as seen from right to left starting at the deepest layer
+    ///   and continuing at the next layer).
     ///
     /// NOTE: This implementation is *not* equivalent to it's Solidity
     /// counterpart. In Rust, access to uninitialized memory panics, which
@@ -228,11 +227,10 @@ where
     ///
     /// * `proof` - A slice of hashes that constitute the merkle proof.
     /// * `proof_flags` - A slice of booleans that determine whether to hash
-    ///   leaves
-    /// or the proof.
+    ///   leaves or the proof.
     /// * `root` - The root of the merkle tree, in bytes.
     /// * `leaves` - A slice of hashes that constitute the leaves of the merkle
-    /// tree to be proven, each leaf in bytes.
+    ///   tree to be proven, each leaf in bytes.
     /// * `builder` - A [`BuildHasher`] that represents a hashing algorithm.
     ///
     /// # Errors

@@ -102,7 +102,7 @@ jobs:
         # target in this context means one of `--lib`, `--bin`, etc, and not the
         # target triple.
       - name: cargo hack
-        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --skip std --workspace --exclude e2e --exclude basic-example-script
+        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --skip std --workspace --exclude e2e --exclude basic-example-script --exclude benches
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
@@ -110,4 +110,4 @@ jobs:
       - name: Checkout Actions Repository
         uses: actions/checkout@v4
       - name: Check spelling of files in the workspace
-        uses: crate-ci/typos@v1.22.9
+        uses: crate-ci/typos@v1.23.2
