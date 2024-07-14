@@ -1,24 +1,8 @@
 extern crate proc_macro;
-
-mod derive_virtual;
 mod r#virtual;
-
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, ItemFn};
-
-use crate::derive_virtual::derive_virtual;
-
-const ERC721_CALL_TRAITS: &[(&str, &str)] = &[
-    ("Update", "ERC721UpdateVirtual"),
-    ("SafeTransfer", "ERC721SafeTransferVirtual"),
-    ("Approve", "ERC721ApproveVirtual"),
-];
-
-#[proc_macro_derive(ERC721Virtual, attributes(set))]
-pub fn erc721_derive_virtual(input: TokenStream) -> TokenStream {
-    derive_virtual(input, ERC721_CALL_TRAITS)
-}
 
 #[proc_macro_attribute]
 pub fn r#override(attr: TokenStream, input: TokenStream) -> TokenStream {
