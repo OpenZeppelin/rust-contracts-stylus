@@ -5,6 +5,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{
     extensions::{
         burnable::{Erc721Burnable, Erc721BurnableOverride},
+        enumerable::{Erc721Enumerable, Erc721EnumerableOverride},
         pausable::{Erc721Pausable, Erc721PausableOverride},
     },
     Erc721, Erc721Override, Error, IErc721Virtual,
@@ -30,10 +31,12 @@ sol_storage! {
         Erc721<Override> erc721;
         Erc721Burnable<Override> burnable;
         Erc721Pausable<Override> pausable;
+        Erc721Enumerable<Override> enumerable;
     }
 }
 
 #[external]
+#[inherit(Erc721Enumerable<Override>)]
 #[inherit(Erc721Burnable<Override>)]
 #[inherit(Erc721Pausable<Override>)]
 #[inherit(Erc721<Override>)]
@@ -60,6 +63,7 @@ impl NoWayNft {
 }
 
 #[r#override]
+#[inherit(Erc721EnumerableOverride)]
 #[inherit(Erc721BurnableOverride)]
 #[inherit(Erc721PausableOverride)]
 #[inherit(Erc721Override)]

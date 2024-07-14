@@ -1681,7 +1681,6 @@ async fn error_when_burn_with_insufficient_approval(
     let err = send!(contract.burn(token_id))
         .expect_err("should not burn unapproved token");
 
-    let err = send!(tx).expect_err("should not transfer unapproved token");
     assert!(err.reverted_with(Erc721::ERC721InsufficientApproval {
         operator: bob_addr,
         tokenId: token_id,
