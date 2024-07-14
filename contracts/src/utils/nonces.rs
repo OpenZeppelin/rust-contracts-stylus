@@ -1,6 +1,6 @@
 //! Implementation of nonce tracking for addresses.
 //!
-//! Note: Nonce will only increment.
+//! Nonces will only increment.
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
