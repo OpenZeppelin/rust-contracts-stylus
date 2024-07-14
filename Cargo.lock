@@ -1595,6 +1595,7 @@ dependencies = [
  "eyre",
  "mini-alloc",
  "openzeppelin-stylus",
+ "openzeppelin-stylus-proc",
  "rand",
  "stylus-proc",
  "stylus-sdk",

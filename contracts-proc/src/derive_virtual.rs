@@ -1,12 +1,17 @@
-use proc_macro::TokenStream;
 use std::mem;
+
+use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput, Fields, parse_macro_input};
-use syn::parse::Parse;
-use syn::punctuated::Punctuated;
+use syn::{
+    parse::Parse, parse_macro_input, punctuated::Punctuated, Data, DataStruct,
+    DeriveInput, Fields,
+};
 
 // TODO#q: remove this macro
-pub fn derive_virtual(input: TokenStream, call_traits: &[(&str, &str)]) -> TokenStream{
+pub fn derive_virtual(
+    input: TokenStream,
+    call_traits: &[(&str, &str)],
+) -> TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
     if input.generics.params.len() > 1 {
@@ -15,9 +20,13 @@ pub fn derive_virtual(input: TokenStream, call_traits: &[(&str, &str)]) -> Token
     let is_base = input.generics.params.is_empty();
     let (impl_generics, ty_generics, where_clause) =
         input.generics.split_for_impl();
-    let Data::Struct(DataStruct { fields: Fields::Unnamed(_) | Fields::Unit, .. }) = input.data else {
+    let Data::Struct(DataStruct {
+        fields: Fields::Unnamed(_) | Fields::Unit,
+        ..
+    }) = input.data
+    else {
         panic!("override type should be a tuple struct")
-    };    
+    };
 
     let mut set_attrs = vec![];
     for attr in mem::take(&mut input.attrs) {
@@ -77,7 +86,8 @@ pub fn derive_virtual(input: TokenStream, call_traits: &[(&str, &str)]) -> Token
                     pub struct #override_path;
                 }
             } else {
-                let trait_name: proc_macro2::TokenStream = trait_name.parse().unwrap();
+                let trait_name: proc_macro2::TokenStream =
+                    trait_name.parse().unwrap();
                 quote! {
                     pub struct #override_path<Base: #trait_name>(Base);
                 }

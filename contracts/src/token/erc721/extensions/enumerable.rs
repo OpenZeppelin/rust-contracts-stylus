@@ -10,12 +10,11 @@
 
 use core::marker::PhantomData;
 
-use alloy_primitives::{Address, U256, uint};
+use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
+use openzeppelin_stylus_proc::r#override;
 use stylus_proc::{external, sol_storage};
 use stylus_sdk::prelude::TopLevelStorage;
-
-use openzeppelin_stylus_proc::r#override;
 
 use crate::token::erc721::{Erc721, Error, IErc721, IErc721Virtual};
 
@@ -340,7 +339,8 @@ impl<V: IErc721Virtual> Erc721Enumerable<V> {
 mod tests {
     use std::marker::PhantomData;
 
-    use alloy_primitives::{address, Address, U256, uint};
+    use alloy_primitives::{address, uint, Address, U256};
+    use openzeppelin_stylus_proc::r#override;
     use stylus_proc::sol_storage;
     use stylus_sdk::{
         msg,
@@ -348,15 +348,11 @@ mod tests {
         storage::{StorageMap, StorageVec},
     };
 
-    use openzeppelin_stylus_proc::r#override;
-
-    use crate::token::erc721::{
-        Erc721,
-        Erc721Override, IErc721, IErc721Virtual, tests::random_token_id,
-    };
-
     use super::{
         Erc721Enumerable, Erc721EnumerableOverride, Error, IErc721Enumerable,
+    };
+    use crate::token::erc721::{
+        tests::random_token_id, Erc721, Erc721Override, IErc721, IErc721Virtual,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
