@@ -1,7 +1,4 @@
-//! Nonces Contract
-//!
-//! Contract module which provides functionalities for tracking nonces for
-//! addresses.
+//! Implementation of nonce tracking for addresses.
 //!
 //! Note: Nonce will only increment.
 
@@ -110,21 +107,20 @@ impl Nonces {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, U256};
+    use alloy_primitives::U256;
+    use stylus_sdk::msg;
 
     use super::ONE;
     use crate::utils::nonces::{Error, Nonces};
 
     #[motsu::test]
-    fn test_initiate_nonce(contract: Nonces) {
-        let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
-
-        assert_eq!(contract.nonce(owner), U256::ZERO);
+    fn initiate_nonce(contract: Nonces) {
+        assert_eq!(contract.nonce(msg::sender()), U256::ZERO);
     }
 
     #[motsu::test]
-    fn test_use_nonce(contract: Nonces) {
-        let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
+    fn use_nonce(contract: Nonces) {
+        let owner = msg::sender();
 
         let use_nonce = contract.use_nonce(owner);
         assert_eq!(use_nonce, U256::ZERO);
@@ -134,8 +130,8 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_use_checked_nonce(contract: Nonces) {
-        let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
+    fn use_checked_nonce(contract: Nonces) {
+        let owner = msg::sender();
 
         let use_checked_nonce = contract.use_checked_nonce(owner, U256::ZERO);
         assert!(use_checked_nonce.is_ok());
@@ -145,8 +141,8 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_use_checked_nonce_invalid_nonce(contract: Nonces) {
-        let owner = address!("d8da6bf26964af9d7eed9e03e53415d37aa96045");
+    fn use_checked_nonce_invalid_nonce(contract: Nonces) {
+        let owner = msg::sender();
 
         let use_checked_nonce = contract.use_checked_nonce(owner, ONE);
         assert!(matches!(
