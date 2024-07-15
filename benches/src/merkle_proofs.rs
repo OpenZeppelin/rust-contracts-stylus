@@ -1,7 +1,7 @@
 use alloy::{
     hex,
     network::{AnyNetwork, EthereumWallet},
-    primitives::{address, Address},
+    primitives::Address,
     providers::ProviderBuilder,
     sol,
 };
@@ -41,8 +41,7 @@ pub async fn bench() -> eyre::Result<()> {
         .wallet(EthereumWallet::from(alice.signer.clone()))
         .on_http(alice.url().parse()?);
 
-    // let contract_addr = deploy(&alice).await;
-    let contract_addr = address!("bd952a917e48b5362800d3446bdfdf639446b679");
+    let contract_addr = deploy(&alice).await;
     let contract = Verifier::new(contract_addr, &alice_wallet);
 
     let root = hex!(
