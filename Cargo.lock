@@ -2178,9 +2178,9 @@ checksum = "57d8d8ce877200136358e0bbff3a77965875db3af755a11e1fa6b1b3e2df13ea"
 
 [[package]]
 name = "koba"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58170c26effd42f7f6a66c53f0174e3add07f15e0a0b9f7bae9495687049a847"
+checksum = "f31de3702e0ac9b1f6927d12a8157af9c5796bc1caa9e89e43bda20b98af6685"
 dependencies = [
  "alloy",
  "brotli2",
