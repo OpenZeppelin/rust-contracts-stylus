@@ -32,20 +32,13 @@ async fn deploy(
         .join("wasm32-unknown-unknown")
         .join("release")
         .join(format!("{}_example.wasm", contract_name.replace('-', "_")));
-    let sol_path = if args.is_some() {
+    let sol_path = args.map(|_| {
         manifest_dir
             .join("examples")
             .join(format!("{}", contract_name))
             .join("src")
             .join("constructor.sol")
-    } else {
-        // Use the ERC-20 constructor as a dummy when we don't need one.
-        manifest_dir
-            .join("examples")
-            .join("erc20")
-            .join("src")
-            .join("constructor.sol")
-    };
+    });
 
     let pk = account.pk();
     let config = Deploy {
