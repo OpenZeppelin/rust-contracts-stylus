@@ -57,6 +57,7 @@ async fn deploy(
         endpoint: RPC_URL.to_owned(),
         deploy_only: false,
     };
+    println!("{:?}", config);
 
     koba::deploy(&config).await.expect("should deploy contract")
 }
