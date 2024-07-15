@@ -25,7 +25,7 @@ pub async fn deploy(
     let config = Deploy {
         generate_config: koba::config::Generate {
             wasm: wasm_path.clone(),
-            sol: sol_path,
+            sol: Some(sol_path),
             args,
             legacy: false,
         },
