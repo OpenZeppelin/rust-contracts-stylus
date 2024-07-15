@@ -20,6 +20,17 @@ sol!(
         function burn(uint256 amount) external;
         function burnFrom(address account, uint256 amount) external;
 
+        function paused() external view returns (bool paused);
+        function pause() external;
+        function unpause() external;
+        #[derive(Debug)]
+        function whenPaused() external view;
+        #[derive(Debug)]
+        function whenNotPaused() external view;
+
+        error EnforcedPause();
+        error ExpectedPause();
+
         error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
         error ERC20InvalidCap(uint256 cap);
 
@@ -31,8 +42,12 @@ sol!(
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
-
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
+
+        #[derive(Debug, PartialEq)]
+        event Paused(address account);
+        #[derive(Debug, PartialEq)]
+        event Unpaused(address account);
     }
 );

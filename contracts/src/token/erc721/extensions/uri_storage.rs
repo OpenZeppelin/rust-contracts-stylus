@@ -43,7 +43,7 @@ impl Erc721UriStorage {
     ///
     /// # Events
     /// Emits a [`MetadataUpdate`] event.
-    pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+    pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
@@ -59,7 +59,7 @@ impl Erc721UriStorage {
     /// * `token_id` - Id of a token.
     #[must_use]
     pub fn token_uri(&self, token_id: U256) -> String {
-        self._token_uris.get(token_id).get_string()
+        self._token_uris.getter(token_id).get_string()
     }
 }
 
@@ -92,7 +92,7 @@ mod tests {
         contract._token_uris.setter(token_id).set_str(initial_token_uri);
 
         let token_uri = String::from("Updated Token URI");
-        contract.set_token_uri(token_id, token_uri.clone());
+        contract._set_token_uri(token_id, token_uri.clone());
 
         assert_eq!(token_uri, contract.token_uri(token_id));
     }
