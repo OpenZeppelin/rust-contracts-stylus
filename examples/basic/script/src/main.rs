@@ -88,6 +88,7 @@ async fn deploy() -> Address {
         },
         endpoint: RPC_URL.to_owned(),
         deploy_only: false,
+        quiet: false,
     };
 
     koba::deploy(&config).await.expect("should deploy contract")
