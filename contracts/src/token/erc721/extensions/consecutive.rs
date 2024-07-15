@@ -415,6 +415,7 @@ impl Erc721Consecutive {
         self.erc721._owners.get(token_id)
     }
 
+    // TODO#q: move arguments and errors documentation to the public function
     /// Transfers `token_id` from its current owner to `to`, or alternatively
     /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
     /// Returns the owner of the `token_id` before the update.
@@ -822,7 +823,7 @@ mod test {
                     Erc721Consecutive, Error, MAX_BATCH_SIZE,
                 },
                 tests::random_token_id,
-                ERC721InvalidReceiver, Erc721, IErc721,
+                ERC721InvalidReceiver, ERC721NonexistentToken, Erc721, IErc721,
             },
         },
         utils::structs::{
@@ -956,25 +957,116 @@ mod test {
             Error::ExceededMaxBatchMint(ERC721ExceededMaxBatchMint {
                 batchSize,
                 maxBatch
-            }) if batchSize == U256::from(batch_size) && maxBatch == U256::from(MAX_BATCH_SIZE)
+            })
+            if batchSize == U256::from(batch_size) && maxBatch == U256::from(MAX_BATCH_SIZE)
         ));
     }
 
     #[motsu::test]
     fn transfers_from(contract: Erc721Consecutive) {
-        // TODO#q: consecutive transfers_from
-        contract._stop_mint_consecutive();
         let alice = msg::sender();
+        let bob = BOB;
+
+        // Mint batches of 1000 tokens to Alice and Bob
+        let [first_consecutive_token_id, _] = init(
+            contract,
+            vec![alice, bob],
+            vec![uint!(1000_U96), uint!(1000_U96)],
+        )
+        .try_into()
+        .expect("should have two elements in return vec");
+
+        // Transfer first consecutive token from Alice to Bob
+        contract
+            .transfer_from(alice, bob, U256::from(first_consecutive_token_id))
+            .expect("should transfer a token from Alice to Bob");
+
+        let owner = contract
+            .owner_of(U256::from(first_consecutive_token_id))
+            .expect("token should be owned");
+        assert_eq!(owner, bob);
+
+        // Check that balances changed
+        let alice_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+        let bob_balance =
+            contract.balance_of(bob).expect("should return the balance of Bob");
+        assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
+
+        // Test non-consecutive mint
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
+        let alice_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+        assert_eq!(alice_balance, uint!(1000_U256));
+
+        // Test transfer of the token that wasn't minted consecutive
         contract
             .transfer_from(alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
-        let owner = contract
-            .owner_of(token_id)
-            .expect("should return the owner of the token");
-        assert_eq!(owner, BOB);
+        let alice_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
     }
 
-    // TODO#q: burns (consecutive and erc721 default implementation)
+    #[motsu::test]
+    fn burns(contract: Erc721Consecutive) {
+        let alice = msg::sender();
+
+        // Mint batch of 1000 tokens to Alice
+        let [first_consecutive_token_id] =
+            init(contract, vec![alice], vec![uint!(1000_U96)])
+                .try_into()
+                .expect("should have two elements in return vec");
+
+        // Check consecutive token burn
+        contract
+            ._burn(U256::from(first_consecutive_token_id))
+            .expect("should burn token");
+
+        let alice_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+
+        let err = contract
+            .owner_of(U256::from(first_consecutive_token_id))
+            .expect_err("token should not exist");
+
+        assert!(matches!(
+            err,
+            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken { token_id }))
+            if token_id == U256::from(first_consecutive_token_id)
+        ));
+
+        // Check non-consecutive token burn
+        let non_consecutive_token_id = random_token_id();
+        contract
+            ._mint(alice, non_consecutive_token_id)
+            .expect("should mint a token to Alice");
+        let owner = contract
+            .owner_of(non_consecutive_token_id)
+            .expect("should return the balance of Alice");
+        assert_eq!(owner, alice);
+        let alice_balance = contract
+            .balance_of(alice)
+            .expect("should return the balance of Alice");
+        assert_eq!(alice_balance, uint!(1000_U256));
+
+        contract._burn(non_consecutive_token_id).expect("should burn token");
+
+        let err = contract
+            .owner_of(U256::from(non_consecutive_token_id))
+            .expect_err("token should not exist");
+
+        assert!(matches!(
+            err,
+            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken { token_id }))
+            if token_id == U256::from(non_consecutive_token_id)
+        ));
+    }
 }
