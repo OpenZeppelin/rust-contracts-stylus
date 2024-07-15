@@ -76,7 +76,7 @@ async fn deploy() -> Address {
     let config = Deploy {
         generate_config: koba::config::Generate {
             wasm: wasm_path.clone(),
-            sol: sol_path,
+            sol: Some(sol_path),
             args: Some(args),
             legacy: false,
         },
@@ -88,6 +88,7 @@ async fn deploy() -> Address {
         },
         endpoint: RPC_URL.to_owned(),
         deploy_only: false,
+        quiet: false,
     };
 
     koba::deploy(&config).await.expect("should deploy contract")

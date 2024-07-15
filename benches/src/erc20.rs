@@ -153,5 +153,5 @@ async fn deploy(account: &Account) -> Address {
         cap_: CAP,
     };
     let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc20", &args).await
+    crate::deploy(account, "erc20", Some(args)).await
 }
