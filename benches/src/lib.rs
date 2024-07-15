@@ -22,7 +22,7 @@ struct ArbOtherFields {
 async fn deploy(
     account: &Account,
     contract_name: &str,
-    args: Option<String>,
+    mut args: Option<String>,
 ) -> Address {
     let manifest_dir =
         std::env::current_dir().expect("should get current dir from env");
@@ -32,7 +32,7 @@ async fn deploy(
         .join("wasm32-unknown-unknown")
         .join("release")
         .join(format!("{}_example.wasm", contract_name.replace('-', "_")));
-    let sol_path = args.map(|_| {
+    let sol_path = args.take().map(|_| {
         manifest_dir
             .join("examples")
             .join(format!("{}", contract_name))
