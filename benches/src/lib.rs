@@ -6,6 +6,7 @@ use serde::Deserialize;
 
 pub mod access_control;
 pub mod erc20;
+pub mod merkle_proofs;
 
 const RPC_URL: &str = "http://localhost:8547";
 
@@ -18,7 +19,11 @@ struct ArbOtherFields {
     l1_block_number: String,
 }
 
-async fn deploy(account: &Account, contract_name: &str, args: &str) -> Address {
+async fn deploy(
+    account: &Account,
+    contract_name: &str,
+    args: Option<String>,
+) -> Address {
     let manifest_dir =
         std::env::current_dir().expect("should get current dir from env");
 
@@ -27,18 +32,20 @@ async fn deploy(account: &Account, contract_name: &str, args: &str) -> Address {
         .join("wasm32-unknown-unknown")
         .join("release")
         .join(format!("{}_example.wasm", contract_name.replace('-', "_")));
-    let sol_path = manifest_dir
-        .join("examples")
-        .join(format!("{}", contract_name))
-        .join("src")
-        .join("constructor.sol");
+    let sol_path = args.as_ref().map(|_| {
+        manifest_dir
+            .join("examples")
+            .join(format!("{}", contract_name))
+            .join("src")
+            .join("constructor.sol")
+    });
 
     let pk = account.pk();
     let config = Deploy {
         generate_config: Generate {
             wasm: wasm_path.clone(),
             sol: sol_path,
-            args: Some(args.to_owned()),
+            args,
             legacy: false,
         },
         auth: PrivateKey {
@@ -49,6 +56,7 @@ async fn deploy(account: &Account, contract_name: &str, args: &str) -> Address {
         },
         endpoint: RPC_URL.to_owned(),
         deploy_only: false,
+        quiet: true,
     };
 
     koba::deploy(&config).await.expect("should deploy contract")
