@@ -22,7 +22,7 @@ struct ArbOtherFields {
 async fn deploy(
     account: &Account,
     contract_name: &str,
-    mut args: Option<String>,
+    args: Option<String>,
 ) -> Address {
     let manifest_dir =
         std::env::current_dir().expect("should get current dir from env");
@@ -32,7 +32,7 @@ async fn deploy(
         .join("wasm32-unknown-unknown")
         .join("release")
         .join(format!("{}_example.wasm", contract_name.replace('-', "_")));
-    let sol_path = args.take().map(|_| {
+    let sol_path = args.as_ref().map(|_| {
         manifest_dir
             .join("examples")
             .join(format!("{}", contract_name))
@@ -57,7 +57,6 @@ async fn deploy(
         endpoint: RPC_URL.to_owned(),
         deploy_only: false,
     };
-    println!("{:?}", config);
 
     koba::deploy(&config).await.expect("should deploy contract")
 }
