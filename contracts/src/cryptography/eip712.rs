@@ -87,13 +87,15 @@ impl EIP712 {
 impl EIP712 {
     /// Returns the domain separator for the current chain [not using cache].
     pub fn build_domain_separator(&self) -> B256 {
-        let s
-        let data = (
+        // let s
+        // let data = (
             
-            ).abi_encode();
-        keccak256(
-            data
-        )
+        //     ).abi_encode();
+        // keccak256(
+        //     data
+        // )
+        
+        todo!()
     }
 
     /// Returns the domain separator for the current chain.
