@@ -41,4 +41,8 @@ impl Erc721ConsecutiveExample {
         self.erc721_consecutive._stop_mint_consecutive();
         Ok(())
     }
+
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+        self.erc721_consecutive._mint(to, token_id)
+    }
 }

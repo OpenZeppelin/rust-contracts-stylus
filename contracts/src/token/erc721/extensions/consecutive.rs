@@ -57,8 +57,7 @@ sol_storage! {
         Erc721 erc721;
         Trace160 _sequential_ownership;
         BitMap _sequentian_burn;
-        /// Initialization marker. If true this means that the constructor was
-        /// called.
+        /// Initialization marker. If true this means that consecutive mint was already triggered.
         bool _initialized
     }
 }
@@ -134,12 +133,13 @@ impl MethodError for checkpoints::Error {
 
 // TODO: add option to override these constants
 
-// Maximum size of a batch of consecutive tokens. This is designed to limit
-// stress on off-chain indexing services that have to record one entry per
-// token, and have protections against "unreasonably large" batches of tokens.
+/// Maximum size of a batch of consecutive tokens. This is designed to limit
+/// stress on off-chain indexing services that have to record one entry per
+/// token, and have protections against "unreasonably large" batches of tokens.
 pub const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
 
-// Used to offset the first token id in {_nextConsecutiveId}
+/// Used to offset the first token id in
+/// [`Erc721Consecutive::_next_consecutive_id`]
 pub const FIRST_CONSECUTIVE_ID: U96 = uint!(0_U96);
 
 /// Consecutive extension related implementation:
@@ -308,7 +308,7 @@ impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
-        self.erc721.balance_of(owner).map_err(|e| e.into())
+        Ok(self.erc721.balance_of(owner)?)
     }
 
     fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
@@ -888,7 +888,6 @@ mod test {
     #[motsu::test]
     fn mints(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let token_id = random_token_id();
 
         let initial_balance = contract
             .balance_of(alice)
@@ -902,6 +901,8 @@ mod test {
             .expect("should return the balance of Alice");
         assert_eq!(balance1, initial_balance + U256::from(init_tokens_count));
 
+        // Check non-consecutive mint
+        let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token for Alice");
         let owner = contract
             .owner_of(token_id)
@@ -921,9 +922,9 @@ mod test {
 
         init(contract, vec![alice], vec![uint!(10_U96)]);
 
-        let err = contract._mint_consecutive(BOB, uint!(11_U96)).expect_err(
-            "should not mint consecutive when consecutive mint is finalised",
-        );
+        let err = contract
+            ._mint_consecutive(BOB, uint!(11_U96))
+            .expect_err("should not mint consecutive");
         assert!(matches!(
             err,
             Error::ForbiddenBatchMint(ERC721ForbiddenBatchMint {})
@@ -934,9 +935,7 @@ mod test {
     fn error_when_to_is_zero(contract: Erc721Consecutive) {
         let err = contract
             ._mint_consecutive(Address::ZERO, uint!(11_U96))
-            .expect_err(
-            "should not mint consecutive when consecutive mint is finalised",
-        );
+            .expect_err("should not mint consecutive");
         assert!(matches!(
             err,
             Error::Erc721(erc721::Error::InvalidReceiver(
@@ -949,9 +948,9 @@ mod test {
     fn error_when_exceed_batch_size(contract: Erc721Consecutive) {
         let alice = msg::sender();
         let batch_size = MAX_BATCH_SIZE + uint!(1_U96);
-        let err = contract._mint_consecutive(alice, batch_size).expect_err(
-            "should not mint consecutive when consecutive mint is finalised",
-        );
+        let err = contract
+            ._mint_consecutive(alice, batch_size)
+            .expect_err("should not mint consecutive");
         assert!(matches!(
             err,
             Error::ExceededMaxBatchMint(ERC721ExceededMaxBatchMint {
@@ -995,7 +994,7 @@ mod test {
             contract.balance_of(bob).expect("should return the balance of Bob");
         assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
 
-        // Test non-consecutive mint
+        // Check non-consecutive mint
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
         let alice_balance = contract
@@ -1003,7 +1002,7 @@ mod test {
             .expect("should return the balance of Alice");
         assert_eq!(alice_balance, uint!(1000_U256));
 
-        // Test transfer of the token that wasn't minted consecutive
+        // Check transfer of the token that wasn't minted consecutive
         contract
             .transfer_from(alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
@@ -1050,7 +1049,7 @@ mod test {
             .expect("should mint a token to Alice");
         let owner = contract
             .owner_of(non_consecutive_token_id)
-            .expect("should return the balance of Alice");
+            .expect("should return owner of the token");
         assert_eq!(owner, alice);
         let alice_balance = contract
             .balance_of(alice)

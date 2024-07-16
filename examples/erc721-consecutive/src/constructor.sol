@@ -7,13 +7,17 @@ contract Erc721Example {
     mapping(uint256 tokenId => address) private _tokenApprovals;
     mapping(address owner => mapping(address operator => bool))
     private _operatorApprovals;
+    
+    mapping(uint256 => uint256) private _data;
+    Checkpoint160[] private _checkpoints;
+    bool _initialized;
 
-    mapping(address owner => mapping(uint256 index => uint256))
-    private _ownedTokens;
-    mapping(uint256 tokenId => uint256) private _ownedTokensIndex;
-    uint256[] private _allTokens;
-    mapping(uint256 tokenId => uint256) private _allTokensIndex;
+    struct Checkpoint160 {
+        uint96 _key;
+        uint160 _value;
+    }
 
     constructor() {
+        _initialized = false;
     }
 }
