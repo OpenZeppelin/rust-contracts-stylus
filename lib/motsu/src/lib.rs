@@ -74,4 +74,4 @@ pub mod prelude;
 mod shims;
 mod storage;
 
-pub use motsu_proc::{test, DefaultStorageLayout};
+pub use motsu_proc::test;

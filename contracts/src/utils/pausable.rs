@@ -51,7 +51,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of a Pausable Contract.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Pausable {
         /// Indicates whether the contract is `Paused`.
         bool _paused;
