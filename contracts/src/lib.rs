@@ -7,9 +7,9 @@ extern crate alloc;
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 pub mod access;
+pub mod cryptography;
 pub mod token;
 pub mod utils;
-pub mod cryptography;
 
 #[cfg(target_arch = "wasm32")]
 #[panic_handler]
