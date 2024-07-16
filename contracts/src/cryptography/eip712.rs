@@ -31,7 +31,7 @@
 
 use alloc::{string::String, vec::Vec};
 
-use alloy_primitives::{b256, fixed_bytes, Address, FixedBytes, B256, U256};
+use alloy_primitives::{b256, fixed_bytes, keccak256, Address, FixedBytes, B256, U256};
 use stylus_sdk::{
     block, contract, evm, msg,
     stylus_proc::{external, sol_storage},
@@ -87,7 +87,13 @@ impl EIP712 {
 impl EIP712 {
     /// Returns the domain separator for the current chain [not using cache].
     pub fn build_domain_separator(&self) -> B256 {
-        todo!()
+        let s
+        let data = (
+            
+            ).abi_encode();
+        keccak256(
+            data
+        )
     }
 
     /// Returns the domain separator for the current chain.
