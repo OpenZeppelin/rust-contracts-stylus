@@ -31,7 +31,7 @@
 
 use alloc::{string::String, vec::Vec};
 
-use alloy_primitives::{b256, bytes, Address, Bytes, B256, U256};
+use alloy_primitives::{b256, fixed_bytes, Address, FixedBytes, B256, U256};
 use stylus_sdk::{
     block, contract, evm, msg,
     stylus_proc::{external, sol_storage},
@@ -41,7 +41,7 @@ use stylus_sdk::{
 /// verifyingContract)");
 const TYPE_HASH: B256 =
     b256!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
-const FEILDS: Bytes = bytes!("15");
+const FEILDS: FixedBytes<1> = fixed_bytes!("15");
 const SALT: B256 = B256::ZERO;
 
 sol_storage! {
@@ -71,7 +71,7 @@ impl EIP712 {
     /// this contract for EIP-712 signature.
     pub fn eip712_domain(
         &self,
-    ) -> (Bytes, String, String, u64, Address, B256, Vec<U256>) {
+    ) -> (FixedBytes<1>, String, String, u64, Address, B256, Vec<U256>) {
         (
             FEILDS,
             self.eip712_name(),
@@ -86,7 +86,7 @@ impl EIP712 {
 
 impl EIP712 {
     /// Returns the domain separator for the current chain [not using cache].
-    pub fn build_domian_separator(&self) -> B256 {
+    pub fn build_domain_separator(&self) -> B256 {
         todo!()
     }
 
@@ -101,7 +101,7 @@ impl EIP712 {
         if this == cached_this && chain_id == cached_chain_id {
             self._cached_domain_separator.get()
         } else {
-            self.build_domian_separator()
+            self.build_domain_separator()
         }
     }
 
