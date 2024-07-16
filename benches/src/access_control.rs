@@ -55,28 +55,14 @@ pub async fn bench() -> eyre::Result<()> {
     let contract_bob = AccessControl::new(contract_addr, &bob_wallet);
 
     // IMPORTANT: Order matters!
+    #[rustfmt::skip]
     let receipts = vec![
-        (
-            "hasRole(DEFAULT_ADMIN_ROLE, alice)",
-            receipt!(contract.hasRole(DEFAULT_ADMIN_ROLE.into(), alice_addr))?,
-        ),
+        ("hasRole(DEFAULT_ADMIN_ROLE, alice)", receipt!(contract.hasRole(DEFAULT_ADMIN_ROLE.into(), alice_addr))?),
         ("getRoleAdmin(ROLE)", receipt!(contract.getRoleAdmin(ROLE.into()))?),
-        (
-            "revokeRole(ROLE, alice)",
-            receipt!(contract.revokeRole(ROLE.into(), alice_addr))?,
-        ),
-        (
-            "grantRole(ROLE, bob)",
-            receipt!(contract.grantRole(ROLE.into(), bob_addr))?,
-        ),
-        (
-            "renounceRole(ROLE, bob)",
-            receipt!(contract_bob.renounceRole(ROLE.into(), bob_addr))?,
-        ),
-        (
-            "setRoleAdmin(ROLE, NEW_ADMIN_ROLE)",
-            receipt!(contract.setRoleAdmin(ROLE.into(), NEW_ADMIN_ROLE.into()))?,
-        ),
+        ("revokeRole(ROLE, alice)", receipt!(contract.revokeRole(ROLE.into(), alice_addr))?),
+        ("grantRole(ROLE, bob)", receipt!(contract.grantRole(ROLE.into(), bob_addr))?),
+        ("renounceRole(ROLE, bob)", receipt!(contract_bob.renounceRole(ROLE.into(), bob_addr))?),
+        ("setRoleAdmin(ROLE, NEW_ADMIN_ROLE)", receipt!(contract.setRoleAdmin(ROLE.into(), NEW_ADMIN_ROLE.into()))?),
     ];
 
     // Calculate the width of the longest function name.
