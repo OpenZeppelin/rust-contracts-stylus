@@ -50,18 +50,40 @@ pub async fn bench() -> eyre::Result<()> {
 
     // IMPORTANT: Order matters!
     let receipts = vec![
-        ("balanceOf(address owner) external view returns (uint256 balance)", receipt!(contract.balanceOf(alice_addr))?),
-        ("approve(address to, uint256 tokenId)", receipt!(contract.approve(bob_addr, uint!(2_U256)))?),
-        ("getApproved(uint256 tokenId) external view returns (address approved)", receipt!(contract.getApproved(uint!(2_U256)))?),
-        ("isApprovedForAll(address owner, address operator) external view returns (bool approved)", receipt!(contract.isApprovedForAll(alice_addr, bob_addr))?),
-        ("ownerOf(uint256 tokenId) external view returns (address ownerOf)", receipt!(contract.ownerOf(uint!(2_U256)))?),
-        ("safeTransferFrom(address from, address to, uint256 tokenId)", receipt!(contract.safeTransferFrom(alice_addr, bob_addr, uint!(3_U256)))?),
-        ("setApprovalForAll(address operator, bool approved)", receipt!(contract.setApprovalForAll(bob_addr, true))?),
-        ("totalSupply() external view returns (uint256 totalSupply)", receipt!(contract.totalSupply())?),
-        ("transferFrom(address from, address to, uint256 tokenId)", receipt!(contract.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
-        ("mint(address to, uint256 tokenId)", receipt!(contract.mint(alice_addr, uint!(1_U256)))?),
-        ("burn(uint256 tokenId)", receipt!(contract.burn(uint!(1_U256)))?),
-
+        ("balanceOf(alice)", receipt!(contract.balanceOf(alice_addr))?),
+        (
+            "approve(bob, 2)",
+            receipt!(contract.approve(bob_addr, uint!(2_U256)))?,
+        ),
+        ("getApproved(2)", receipt!(contract.getApproved(uint!(2_U256)))?),
+        (
+            "isApprovedForAll(alice, bob)",
+            receipt!(contract.isApprovedForAll(alice_addr, bob_addr))?,
+        ),
+        ("ownerOf(2)", receipt!(contract.ownerOf(uint!(2_U256)))?),
+        (
+            "safeTransferFrom(alice, bob, 3)",
+            receipt!(contract.safeTransferFrom(
+                alice_addr,
+                bob_addr,
+                uint!(3_U256)
+            ))?,
+        ),
+        (
+            "setApprovalForAll(bob, true)",
+            receipt!(contract.setApprovalForAll(bob_addr, true))?,
+        ),
+        ("totalSupply()", receipt!(contract.totalSupply())?),
+        (
+            "transferFrom(alice, bob, 4)",
+            receipt!(contract.transferFrom(
+                alice_addr,
+                bob_addr,
+                uint!(4_U256)
+            ))?,
+        ),
+        ("mint(alice, 1)", receipt!(contract.mint(alice_addr, uint!(1_U256)))?),
+        ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
     ];
 
     // Calculate the width of the longest function name.
@@ -71,7 +93,7 @@ pub async fn bench() -> eyre::Result<()> {
         .expect("should at least bench one function")
         .0
         .len();
-    let name_width = max_name_width.max("ERC-20".len());
+    let name_width = max_name_width.max("ERC-721".len());
 
     // Calculate the total width of the table.
     let total_width = name_width + 3 + 6 + 3 + 6 + 3 + 20 + 4; // 3 for padding, 4 for outer borders
