@@ -34,7 +34,7 @@ impl Erc721ConsecutiveExample {
         for i in 0..len {
             let receiver = receivers[i];
             let batch = batches[i];
-            let token_id = self
+            let _ = self
                 .erc721_consecutive
                 ._mint_consecutive(receiver, U96::from(batch))?;
         }

@@ -1,8 +1,8 @@
 //! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
 //! in https://eips.ethereum.org/EIPS/eip-2309[ERC-2309].
 //!
-//! This extension allows the minting of large batches of tokens, during
-//! contract construction only. For upgradeable contracts this implies that
+//! This extension allows the minting large batches of tokens, during
+//! contract construction only. For upgradeable contracts, this implies that
 //! batch minting is only available during proxy deployment, and not in
 //! subsequent upgrades. These batches are limited to 5000 tokens at a time by
 //! default to accommodate off-chain indexers.
@@ -11,10 +11,16 @@
 //! contract construction. This ability is regained after construction. During
 //! construction, only batch minting is allowed.
 //!
-//! IMPORTANT: This extension does not call the {_update} function for tokens
-//! minted in batch. Any logic added to this function through overrides will not
-//! be triggered when token are minted in batch. You may want to also override
-//! [`Erc721Consecutive::_increaseBalance`] or
+//! IMPORTANT: Function [`Erc721Consecutive::_mint_consecutive`] is not suitable
+//! to be called from constructor. Because of stylus sdk limitation. Function
+//! [`Erc721Consecutive::_stop_mint_consecutive`] should be called to end
+//! consecutive mint of tokens. After that, minting a token
+//! with [`Erc721Consecutive::_mint`] will be possible.
+//!
+//! IMPORTANT: This extension does not call the [`Erc721::_update`] function for
+//! tokens minted in batch. Any logic added to this function through overrides
+//! will not be triggered when token are minted in batch. You may want to also
+//! override [`Erc721Consecutive::_increaseBalance`] or
 //! [`Erc721Consecutive::_mintConsecutive`] to account for these mints.
 //!
 //! IMPORTANT: When overriding [`Erc721Consecutive::_mintConsecutive`], be
@@ -131,7 +137,7 @@ impl MethodError for checkpoints::Error {
     }
 }
 
-// TODO: add option to override these constants
+// TODO: add an option to override these constants
 
 /// Maximum size of a batch of consecutive tokens. This is designed to limit
 /// stress on off-chain indexing services that have to record one entry per
@@ -147,6 +153,11 @@ impl Erc721Consecutive {
     /// Override of [`Erc721::_owner_of_inner`] that checks the sequential
     /// ownership structure for tokens that have been minted as part of a
     /// batch, and not yet transferred.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Token id as a number.
     pub fn _owner_of_inner(&self, token_id: U256) -> Address {
         let owner = self.__owner_of_inner(token_id);
         // If token is owned by the core, or beyond consecutive range, return
@@ -261,6 +272,28 @@ impl Erc721Consecutive {
     /// After construction,[`Erc721Consecutive::_mint_consecutive`] is no
     /// longer available and minting through [`Erc721Consecutive::_update`]
     /// becomes possible.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `to` - Account of the recipient.
+    /// * `token_id` - Token id as a number.
+    /// * `auth` - Account used for authorization of the update.
+    ///
+    /// # Errors
+    ///
+    /// If token does not exist and `auth` is not `Address::ZERO`, then the
+    /// error [`erc721::Error::NonexistentToken`] is returned.
+    /// If `auth` is not `Address::ZERO` and `auth` does not have a right to
+    /// approve this token, then the error
+    /// [`erc721::Error::InsufficientApproval`] is returned.
+    /// If consecutive mint wasn't finished yet (function
+    /// [`Self::_stop_mint_consecutive`] wasn't called) error
+    /// [`Error::ERC721ForbiddenMint`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     pub fn _update(
         &mut self,
         to: Address,
@@ -405,17 +438,11 @@ impl Erc721Consecutive {
     /// ownership. The invariant to preserve is that for any address `a` the
     /// value returned by `balance_of(a)` must be equal to the number of
     /// tokens such that `owner_of_inner(token_id)` is `a`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - Token id as a number.
     #[must_use]
     fn __owner_of_inner(&self, token_id: U256) -> Address {
         self.erc721._owners.get(token_id)
     }
 
-    // TODO#q: move arguments and errors documentation to the public function
     /// Transfers `token_id` from its current owner to `to`, or alternatively
     /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
     /// Returns the owner of the `token_id` before the update.
@@ -426,25 +453,6 @@ impl Erc721Consecutive {
     ///
     /// NOTE: If overriding this function in a way that tracks balances, see
     /// also [`Self::_increase_balance`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `to` - Account of the recipient.
-    /// * `token_id` - Token id as a number.
-    /// * `auth` - Account used for authorization of the update.
-    ///
-    /// # Errors
-    ///
-    /// If token does not exist and `auth` is not `Address::ZERO`, then the
-    /// error [`Error::NonexistentToken`] is returned.
-    /// If `auth` is not `Address::ZERO` and `auth` does not have a right to
-    /// approve this token, then the error
-    /// [`Error::InsufficientApproval`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
     fn __update(
         &mut self,
         to: Address,
