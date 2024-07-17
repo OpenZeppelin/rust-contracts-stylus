@@ -30,8 +30,12 @@ impl Display for Reports {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut max_width = 0;
         for report in &self.0 {
-            let width =
-                report.fns.iter().map(|(sig, _)| sig.len()).max().unwrap_or(0);
+            let width = report
+                .fns
+                .iter()
+                .map(|(sig, _)| report.contract.len() + sig.len())
+                .max()
+                .unwrap_or(0);
             max_width = max_width.max(width);
         }
 
@@ -40,7 +44,7 @@ impl Display for Reports {
 
             for (sig, gas) in &report.fns {
                 let signature = format!("{prefix}{sig}");
-                writeln!(f, "{signature:<max_width$}{gas}")?;
+                writeln!(f, "{signature:<max_width$}{gas:>}")?;
             }
         }
 
