@@ -61,42 +61,21 @@ pub async fn bench() -> eyre::Result<()> {
     let contract_bob = Erc20::new(contract_addr, &bob_wallet);
 
     // IMPORTANT: Order matters!
+    #[rustfmt::skip]
     let receipts = vec![
         ("name()", receipt!(contract.name())?),
         ("symbol()", receipt!(contract.symbol())?),
         ("decimals()", receipt!(contract.decimals())?),
         ("totalSupply()", receipt!(contract.totalSupply())?),
         ("balanceOf(alice)", receipt!(contract.balanceOf(alice_addr))?),
-        (
-            "allowance(alice, bob)",
-            receipt!(contract.allowance(alice_addr, bob_addr))?,
-        ),
+        ("allowance(alice, bob)", receipt!(contract.allowance(alice_addr, bob_addr))?),
         ("cap()", receipt!(contract.cap())?),
-        (
-            "mint(alice, 10)",
-            receipt!(contract.mint(alice_addr, uint!(10_U256)))?,
-        ),
+        ("mint(alice, 10)", receipt!(contract.mint(alice_addr, uint!(10_U256)))?),
         ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
-        (
-            "transfer(bob, 1)",
-            receipt!(contract.transfer(bob_addr, uint!(1_U256)))?,
-        ),
-        (
-            "approve(bob, 5)",
-            receipt!(contract.approve(bob_addr, uint!(5_U256)))?,
-        ),
-        (
-            "burnFrom(alice, 1)",
-            receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?,
-        ),
-        (
-            "transferFrom(alice, bob, 5)",
-            receipt!(contract_bob.transferFrom(
-                alice_addr,
-                bob_addr,
-                uint!(4_U256)
-            ))?,
-        ),
+        ("transfer(bob, 1)", receipt!(contract.transfer(bob_addr, uint!(1_U256)))?),
+        ("approve(bob, 5)", receipt!(contract.approve(bob_addr, uint!(5_U256)))?),
+        ("burnFrom(alice, 1)", receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?),
+        ("transferFrom(alice, bob, 5)", receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
     ];
 
     // Calculate the width of the longest function name.
