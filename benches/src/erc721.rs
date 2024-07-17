@@ -44,24 +44,29 @@ pub async fn bench() -> eyre::Result<()> {
     let contract_addr = deploy(&alice).await;
     let contract = Erc721::new(contract_addr, &alice_wallet);
 
-    let _ = receipt!(contract.mint(alice_addr, uint!(2_U256)))?;
-    let _ = receipt!(contract.mint(alice_addr, uint!(3_U256)))?;
-    let _ = receipt!(contract.mint(alice_addr, uint!(4_U256)))?;
+    let token_1 = uint!(1_U256);
+    let token_2 = uint!(2_U256);
+    let token_3 = uint!(3_U256);
+    let token_4 = uint!(4_U256);
+
+    let _ = receipt!(contract.mint(alice_addr, token_2))?;
+    let _ = receipt!(contract.mint(alice_addr, token_3))?;
+    let _ = receipt!(contract.mint(alice_addr, token_4))?;
 
     // IMPORTANT: Order matters!
     #[rustfmt::skip]
     let receipts = vec![
         ("balanceOf(alice)", receipt!(contract.balanceOf(alice_addr))?),
-        ("approve(bob, 2)", receipt!(contract.approve(bob_addr, uint!(2_U256)))?),
-        ("getApproved(2)", receipt!(contract.getApproved(uint!(2_U256)))?),
+        ("approve(bob, 2)", receipt!(contract.approve(bob_addr, token_2))?),
+        ("getApproved(2)", receipt!(contract.getApproved(token_2))?),
         ("isApprovedForAll(alice, bob)", receipt!(contract.isApprovedForAll(alice_addr, bob_addr))?),
-        ("ownerOf(2)", receipt!(contract.ownerOf(uint!(2_U256)))?),
-        ("safeTransferFrom(alice, bob, 3)", receipt!(contract.safeTransferFrom(alice_addr, bob_addr, uint!(3_U256)))?),
+        ("ownerOf(2)", receipt!(contract.ownerOf(token_2))?),
+        ("safeTransferFrom(alice, bob, 3)", receipt!(contract.safeTransferFrom(alice_addr, bob_addr, token_3))?),
         ("setApprovalForAll(bob, true)", receipt!(contract.setApprovalForAll(bob_addr, true))?),
         ("totalSupply()", receipt!(contract.totalSupply())?),
-        ("transferFrom(alice, bob, 4)", receipt!(contract.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
-        ("mint(alice, 1)", receipt!(contract.mint(alice_addr, uint!(1_U256)))?),
-        ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
+        ("transferFrom(alice, bob, 4)", receipt!(contract.transferFrom(alice_addr, bob_addr, token_4))?),
+        ("mint(alice, 1)", receipt!(contract.mint(alice_addr, token_1))?),
+        ("burn(1)", receipt!(contract.burn(token_1))?),
     ];
 
     // Calculate the width of the longest function name.
