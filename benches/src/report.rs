@@ -46,7 +46,7 @@ impl Display for Reports {
 
             for (sig, gas) in &report.fns {
                 let signature = format!("{prefix}{sig}");
-                writeln!(f, "{signature:<max_width$} {gas:>}")?;
+                writeln!(f, "{signature:<max_width$} {gas:>10}")?;
             }
         }
 
