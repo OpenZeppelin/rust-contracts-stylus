@@ -44,7 +44,7 @@ use crate::{
         erc721::{
             Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
             ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-            Erc721, IERC721Receiver, IErc721, Transfer,
+            Erc721, IErc721, Transfer,
         },
     },
     utils::{
