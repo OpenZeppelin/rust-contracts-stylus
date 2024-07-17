@@ -110,7 +110,7 @@ impl Nonces {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, U256};
+    use alloy_primitives::{address, U256};
 
     use super::ONE;
     use crate::utils::nonces::{Error, Nonces};
