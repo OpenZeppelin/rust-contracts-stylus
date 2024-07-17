@@ -31,9 +31,12 @@
 
 use alloc::{string::String, vec::Vec};
 
-use alloy_primitives::{b256, fixed_bytes, keccak256, Address, FixedBytes, B256, U256};
+use alloy_primitives::{
+    b256, fixed_bytes, keccak256, Address, FixedBytes, B256, U256,
+};
+use alloy_sol_types::{sol, SolType};
 use stylus_sdk::{
-    block, contract, evm, msg,
+    block, contract,
     stylus_proc::{external, sol_storage},
 };
 
@@ -41,8 +44,12 @@ use stylus_sdk::{
 /// verifyingContract)");
 const TYPE_HASH: B256 =
     b256!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
-const FEILDS: FixedBytes<1> = fixed_bytes!("15");
+const FIELDS: FixedBytes<1> = fixed_bytes!("15");
 const SALT: B256 = B256::ZERO;
+
+type DomainSeparatorTuple = sol! {
+    tuple(bytes32, bytes32, bytes32, uint256, address)
+};
 
 sol_storage! {
     /// State of an `EIP712` contract.
@@ -54,10 +61,10 @@ sol_storage! {
         uint256 _cached_chain_id;
         /// The cached contract address. [address(this)]
         address _cached_this;
-        /// The Hash name
-        bytes32 _hash_name;
-        /// The Hash version
-        bytes32 _hash_version;
+        /// The hashed name
+        bytes32 _hashed_name;
+        /// The hashed version
+        bytes32 _hashed_version;
         /// The name
         string _name;
         /// The version
@@ -73,7 +80,7 @@ impl EIP712 {
         &self,
     ) -> (FixedBytes<1>, String, String, u64, Address, B256, Vec<U256>) {
         (
-            FEILDS,
+            FIELDS,
             self.eip712_name(),
             self.eip712_version(),
             block::chainid(),
@@ -87,15 +94,23 @@ impl EIP712 {
 impl EIP712 {
     /// Returns the domain separator for the current chain [not using cache].
     pub fn build_domain_separator(&self) -> B256 {
-        // let s
-        // let data = (
-            
-        //     ).abi_encode();
         // keccak256(
-        //     data
-        // )
-        
-        todo!()
+        //   abi.encode(
+        //      TYPE_HASH,
+        //      _hashedName,
+        //      _hashedVersion,
+        //      block.chainid,
+        //      address(this)
+        //   )
+        // );
+        let encoded = DomainSeparatorTuple::encode_params(&(
+            *TYPE_HASH,
+            **self._hashed_name,
+            **self._hashed_version,
+            U256::from(block::chainid()),
+            contract::address(),
+        ));
+        keccak256(encoded)
     }
 
     /// Returns the domain separator for the current chain.
@@ -129,8 +144,8 @@ impl EIP712 {
     /// )));
     /// let signer = ECDSA::recover(digest, signature);
     /// ```
-    pub fn hash_typed_data_v4(&self, hash_struct: B256) -> B256 {
-        let domain_separator = self.domain_separator_v4();
+    pub fn hash_typed_data_v4(&self, _hash_struct: B256) -> B256 {
+        let _domain_separator = self.domain_separator_v4();
         todo!()
     }
 
