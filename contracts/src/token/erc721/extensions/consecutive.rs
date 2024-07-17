@@ -71,8 +71,8 @@ sol_storage! {
 sol! {
     /// Emitted when the tokens from `fromTokenId` to `toTokenId` are transferred from `fromAddress` to `toAddress`.
     ///
-    /// * `fromTokenId` - First token being transfered.
-    /// * `toTokenId` - Last token being transfered.
+    /// * `fromTokenId` - First token being transferred.
+    /// * `toTokenId` - Last token being transferred.
     /// * `fromAddress` - Address from which tokens will be transferred.
     /// * `toAddress` - Address where the tokens will be transferred to.
     event ConsecutiveTransfer(
