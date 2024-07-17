@@ -28,23 +28,25 @@ impl Reports {
 
 impl Display for Reports {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let separator = "::";
         let mut max_width = 0;
         for report in &self.0 {
+            let prefix_len = report.contract.len() + separator.len();
             let width = report
                 .fns
                 .iter()
-                .map(|(sig, _)| report.contract.len() + sig.len())
+                .map(|(sig, _)| prefix_len + sig.len())
                 .max()
                 .unwrap_or(0);
             max_width = max_width.max(width);
         }
 
         for report in &self.0 {
-            let prefix = format!("{}::", report.contract);
+            let prefix = format!("{}{separator}", report.contract);
 
             for (sig, gas) in &report.fns {
                 let signature = format!("{prefix}{sig}");
-                writeln!(f, "{signature:<max_width$}{gas:>}")?;
+                writeln!(f, "{signature:<max_width$} {gas:>}")?;
             }
         }
 
