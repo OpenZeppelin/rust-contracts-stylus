@@ -7,7 +7,7 @@ use alloy::{
 };
 use e2e::{receipt, Account};
 
-use crate::ArbOtherFields;
+use crate::{report::Report, ArbOtherFields};
 
 sol!(
     #[sol(rpc)]
@@ -33,7 +33,7 @@ macro_rules! bytes_array {
     };
 }
 
-pub async fn bench() -> eyre::Result<()> {
+pub async fn bench() -> eyre::Result<Report> {
     let alice = Account::new().await?;
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
@@ -76,51 +76,17 @@ pub async fn bench() -> eyre::Result<()> {
         receipt!(contract.verify(proof, root.into(), leaf.into()))?,
     )];
 
-    // Calculate the width of the longest function name.
-    let max_name_width = receipts
-        .iter()
-        .max_by_key(|x| x.0.len())
-        .expect("should at least bench one function")
-        .0
-        .len();
-    let name_width = max_name_width.max("Merkle Proofs".len());
-
-    // Calculate the total width of the table.
-    let total_width = name_width + 3 + 6 + 3 + 6 + 3 + 20 + 4; // 3 for padding, 4 for outer borders
-
-    // Print the table header.
-    println!("+{}+", "-".repeat(total_width - 2));
-    println!(
-        "| {:<width$} | L2 Gas | L1 Gas |        Effective Gas |",
-        "Merkle Proofs",
-        width = name_width
-    );
-    println!(
-        "|{}+--------+--------+----------------------|",
-        "-".repeat(name_width + 2)
-    );
-
-    // Print each row.
-    for (func_name, receipt) in receipts {
+    let mut report = Report::new("Verifier");
+    for (signature, receipt) in receipts {
         let l2_gas = receipt.gas_used;
         let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
         let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
         let effective_gas = l2_gas - l1_gas;
 
-        println!(
-            "| {:<width$} | {:>6} | {:>6} | {:>20} |",
-            func_name,
-            l2_gas,
-            l1_gas,
-            effective_gas,
-            width = name_width
-        );
+        report.add(signature, effective_gas);
     }
 
-    // Print the table footer.
-    println!("+{}+", "-".repeat(total_width - 2));
-
-    Ok(())
+    Ok(report)
 }
 
 async fn deploy(account: &Account) -> Address {
