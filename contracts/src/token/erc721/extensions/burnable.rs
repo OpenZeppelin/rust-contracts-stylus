@@ -10,13 +10,13 @@ use crate::token::erc721::{Error, IErc721Virtual};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 sol_storage! {
-    pub struct Erc721Burnable<V: IErc721Virtual> {
-        PhantomData<V> _phantom_data;
+    pub struct Erc721Burnable<This: IErc721Virtual> {
+        PhantomData<This> _phantom_data;
     }
 }
 
 #[external]
-impl<V: IErc721Virtual> Erc721Burnable<V> {
+impl<This: IErc721Virtual> Erc721Burnable<This> {
     /// Burns `token_id`.
     /// The approval is cleared when the token is burned.
     /// Relies on the `_burn` mechanism.
@@ -44,7 +44,7 @@ impl<V: IErc721Virtual> Erc721Burnable<V> {
         storage: &mut impl TopLevelStorage,
         token_id: U256,
     ) -> Result<(), Error> {
-        V::_update::<V>(storage, Address::ZERO, token_id, msg::sender())?;
+        This::_update::<This>(storage, Address::ZERO, token_id, msg::sender())?;
         Ok(())
     }
 }

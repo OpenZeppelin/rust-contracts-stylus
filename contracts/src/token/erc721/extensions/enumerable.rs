@@ -37,7 +37,7 @@ sol! {
 sol_storage! {
     /// State of an Enumerable extension.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
-    pub struct Erc721Enumerable<V: IErc721Virtual> {
+    pub struct Erc721Enumerable<This: IErc721Virtual> {
         /// Maps owners to a mapping of indices to tokens ids.
         mapping(address => mapping(uint256 => uint256)) _owned_tokens;
         /// Maps tokens ids to indices in `_owned_tokens`.
@@ -46,7 +46,7 @@ sol_storage! {
         uint256[] _all_tokens;
         /// Maps indices at `_all_tokens` to tokens ids.
         mapping(uint256 => uint256) _all_tokens_index;
-        PhantomData<V> _phantom_data;
+        PhantomData<This> _phantom_data;
     }
 }
 
@@ -99,7 +99,7 @@ pub trait IErc721Enumerable {
 }
 
 #[external]
-impl<V: IErc721Virtual> IErc721Enumerable for Erc721Enumerable<V> {
+impl<This: IErc721Virtual> IErc721Enumerable for Erc721Enumerable<This> {
     fn token_of_owner_by_index(
         &self,
         owner: Address,
@@ -162,7 +162,7 @@ impl IErc721Virtual for Erc721EnumerableOverride {
     }
 }
 
-impl<V: IErc721Virtual> Erc721Enumerable<V> {
+impl<This: IErc721Virtual> Erc721Enumerable<This> {
     /// Function to add a token to this extension's
     /// ownership-tracking data structures.
     ///
@@ -182,9 +182,9 @@ impl<V: IErc721Virtual> Erc721Enumerable<V> {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        let balance_of_to = storage.inner::<Erc721<V>>().balance_of(to)?;
+        let balance_of_to = storage.inner::<Erc721<This>>().balance_of(to)?;
         let length = balance_of_to - uint!(1_U256);
-        let enumerable = storage.inner_mut::<Erc721Enumerable<V>>();
+        let enumerable = storage.inner_mut::<Erc721Enumerable<This>>();
         enumerable._owned_tokens.setter(to).setter(length).set(token_id);
         enumerable._owned_tokens_index.setter(token_id).set(length);
         Ok(())
@@ -235,8 +235,9 @@ impl<V: IErc721Virtual> Erc721Enumerable<V> {
         // To prevent a gap in from's tokens array,
         // we store the last token in the index of the token to delete,
         // and then delete the last slot (swap and pop).
-        let last_token_index = storage.inner::<Erc721<V>>().balance_of(from)?;
-        let enumerable = storage.inner_mut::<Erc721Enumerable<V>>();
+        let last_token_index =
+            storage.inner::<Erc721<This>>().balance_of(from)?;
+        let enumerable = storage.inner_mut::<Erc721Enumerable<This>>();
         let token_index = enumerable._owned_tokens_index.get(token_id);
 
         let mut owned_tokens_by_owner = enumerable._owned_tokens.setter(from);

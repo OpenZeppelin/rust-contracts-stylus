@@ -33,14 +33,14 @@ sol! {
 sol_storage! {
     /// Uri Storage.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
-    pub struct Erc721UriStorage<V: IErc721Virtual> {
+    pub struct Erc721UriStorage<This: IErc721Virtual> {
         /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;
-        PhantomData<V> _phantom_data;
+        PhantomData<This> _phantom_data;
     }
 }
 
-impl<V: IErc721Virtual> Erc721UriStorage<V> {
+impl<This: IErc721Virtual> Erc721UriStorage<This> {
     /// Sets `token_uri` as the tokenURI of `token_id`.
     ///
     /// # Arguments
@@ -58,7 +58,7 @@ impl<V: IErc721Virtual> Erc721UriStorage<V> {
 }
 
 #[external]
-impl<V: IErc721Virtual> Erc721UriStorage<V> {
+impl<This: IErc721Virtual> Erc721UriStorage<This> {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
     /// # Arguments
@@ -70,7 +70,7 @@ impl<V: IErc721Virtual> Erc721UriStorage<V> {
         storage: &mut impl TopLevelStorage,
         token_id: U256,
     ) -> Result<String, Error> {
-        let _owner = storage.inner::<Erc721<V>>().owner_of(token_id)?;
+        let _owner = storage.inner::<Erc721<This>>().owner_of(token_id)?;
 
         let base = storage.inner::<Erc721Metadata>().base_uri();
         let token_uri = storage.inner::<Self>()._token_uri(token_id);
@@ -100,7 +100,7 @@ impl<V: IErc721Virtual> Erc721UriStorage<V> {
 #[r#override]
 impl IErc721Virtual for Erc721UriStorageOverride {}
 
-impl<V: IErc721Virtual> Erc721UriStorage<V> {
+impl<This: IErc721Virtual> Erc721UriStorage<This> {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
     /// # Arguments

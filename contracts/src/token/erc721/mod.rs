@@ -239,7 +239,7 @@ sol_interface! {
 sol_storage! {
     /// State of an [`Erc721`] token.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
-    pub struct Erc721<V: IErc721Virtual> {
+    pub struct Erc721<This: IErc721Virtual> {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
         /// Maps users to balances.
@@ -248,7 +248,7 @@ sol_storage! {
         mapping(uint256 => address) _token_approvals;
         /// Maps owners to a mapping of operator approvals.
         mapping(address => mapping(address => bool)) _operator_approvals;
-        PhantomData<V> _phantom_data;
+        PhantomData<This> _phantom_data;
     }
 }
 
@@ -515,7 +515,7 @@ pub trait IErc721 {
 }
 
 #[external]
-impl<V: IErc721Virtual> IErc721 for Erc721<V> {
+impl<This: IErc721Virtual> IErc721 for Erc721<This> {
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
@@ -806,7 +806,7 @@ impl IErc721Virtual for Erc721Override {
     }
 }
 
-impl<V: IErc721Virtual> Erc721<V> {
+impl<This: IErc721Virtual> Erc721<This> {
     /// Returns the owner of the `token_id`. Does NOT revert if the token
     /// doesn't exist.
     ///

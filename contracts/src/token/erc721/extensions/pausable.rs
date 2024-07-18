@@ -11,15 +11,15 @@ use crate::{
 
 sol_storage! {
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
-    pub struct Erc721Pausable<V: IErc721Virtual> {
+    pub struct Erc721Pausable<This: IErc721Virtual> {
         Pausable pausable;
-        PhantomData<V> _phantom_data;
+        PhantomData<This> _phantom_data;
     }
 }
 
 #[external]
 #[inherit(Pausable)]
-impl<V: IErc721Virtual> Erc721Pausable<V> {}
+impl<This: IErc721Virtual> Erc721Pausable<This> {}
 
 #[r#override]
 impl IErc721Virtual for Erc721PausableOverride {
