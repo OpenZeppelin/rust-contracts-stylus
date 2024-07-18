@@ -3,13 +3,13 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::SolConstructor,
+    sol_types::{SolCall, SolConstructor},
     uint,
 };
 use alloy_primitives::U256;
 use e2e::{receipt, Account};
 
-use crate::ArbOtherFields;
+use crate::report::Report;
 
 sol!(
     #[sol(rpc)]
@@ -39,7 +39,7 @@ const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-pub async fn bench() -> eyre::Result<()> {
+pub async fn bench() -> eyre::Result<Report> {
     let alice = Account::new().await?;
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
@@ -61,68 +61,27 @@ pub async fn bench() -> eyre::Result<()> {
     let contract_bob = Erc20::new(contract_addr, &bob_wallet);
 
     // IMPORTANT: Order matters!
+    use Erc20::*;
     #[rustfmt::skip]
     let receipts = vec![
-        ("name()", receipt!(contract.name())?),
-        ("symbol()", receipt!(contract.symbol())?),
-        ("decimals()", receipt!(contract.decimals())?),
-        ("totalSupply()", receipt!(contract.totalSupply())?),
-        ("balanceOf(alice)", receipt!(contract.balanceOf(alice_addr))?),
-        ("allowance(alice, bob)", receipt!(contract.allowance(alice_addr, bob_addr))?),
-        ("cap()", receipt!(contract.cap())?),
-        ("mint(alice, 10)", receipt!(contract.mint(alice_addr, uint!(10_U256)))?),
-        ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
-        ("transfer(bob, 1)", receipt!(contract.transfer(bob_addr, uint!(1_U256)))?),
-        ("approve(bob, 5)", receipt!(contract.approve(bob_addr, uint!(5_U256)))?),
-        ("burnFrom(alice, 1)", receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?),
-        ("transferFrom(alice, bob, 5)", receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
+        (nameCall::SIGNATURE, receipt!(contract.name())?),
+        (symbolCall::SIGNATURE, receipt!(contract.symbol())?),
+        (decimalsCall::SIGNATURE, receipt!(contract.decimals())?),
+        (totalSupplyCall::SIGNATURE, receipt!(contract.totalSupply())?),
+        (balanceOfCall::SIGNATURE, receipt!(contract.balanceOf(alice_addr))?),
+        (allowanceCall::SIGNATURE, receipt!(contract.allowance(alice_addr, bob_addr))?),
+        (capCall::SIGNATURE, receipt!(contract.cap())?),
+        (mintCall::SIGNATURE, receipt!(contract.mint(alice_addr, uint!(10_U256)))?),
+        (burnCall::SIGNATURE, receipt!(contract.burn(uint!(1_U256)))?),
+        (transferCall::SIGNATURE, receipt!(contract.transfer(bob_addr, uint!(1_U256)))?),
+        (approveCall::SIGNATURE, receipt!(contract.approve(bob_addr, uint!(5_U256)))?),
+        (burnFromCall::SIGNATURE, receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?),
+        (transferFromCall::SIGNATURE, receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
     ];
 
-    // Calculate the width of the longest function name.
-    let max_name_width = receipts
-        .iter()
-        .max_by_key(|x| x.0.len())
-        .expect("should at least bench one function")
-        .0
-        .len();
-    let name_width = max_name_width.max("ERC-20".len());
-
-    // Calculate the total width of the table.
-    let total_width = name_width + 3 + 6 + 3 + 6 + 3 + 20 + 4; // 3 for padding, 4 for outer borders
-
-    // Print the table header.
-    println!("+{}+", "-".repeat(total_width - 2));
-    println!(
-        "| {:<width$} | L2 Gas | L1 Gas |        Effective Gas |",
-        "ERC-20",
-        width = name_width
-    );
-    println!(
-        "|{}+--------+--------+----------------------|",
-        "-".repeat(name_width + 2)
-    );
-
-    // Print each row.
-    for (func_name, receipt) in receipts {
-        let l2_gas = receipt.gas_used;
-        let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
-        let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
-        let effective_gas = l2_gas - l1_gas;
-
-        println!(
-            "| {:<width$} | {:>6} | {:>6} | {:>20} |",
-            func_name,
-            l2_gas,
-            l1_gas,
-            effective_gas,
-            width = name_width
-        );
-    }
-
-    // Print the table footer.
-    println!("+{}+", "-".repeat(total_width - 2));
-
-    Ok(())
+    let report =
+        receipts.into_iter().try_fold(Report::new("Erc20"), Report::add)?;
+    Ok(report)
 }
 
 async fn deploy(account: &Account) -> Address {
