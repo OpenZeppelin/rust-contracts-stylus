@@ -40,6 +40,8 @@ use stylus_sdk::{
     stylus_proc::{external, sol_storage},
 };
 
+use super::message_hash_utils::to_typed_data_hash;
+
 /// keccak256("EIP712Domain(string name,string version,uint256 chainId,address
 /// verifyingContract)");
 const TYPE_HASH: B256 =
@@ -94,15 +96,6 @@ impl EIP712 {
 impl EIP712 {
     /// Returns the domain separator for the current chain [not using cache].
     pub fn build_domain_separator(&self) -> B256 {
-        // keccak256(
-        //   abi.encode(
-        //      TYPE_HASH,
-        //      _hashedName,
-        //      _hashedVersion,
-        //      block.chainid,
-        //      address(this)
-        //   )
-        // );
         let encoded = DomainSeparatorTuple::encode_params(&(
             *TYPE_HASH,
             **self._hashed_name,
@@ -131,22 +124,9 @@ impl EIP712 {
     /// Given an already [hashed struct](https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct),
     /// this function returns the hash of the fully encoded EIP712 message for
     /// this domain.
-    ///
-    /// This hash can be used together with `ECDSA::recover` to obtain the
-    /// signer of a message. For example:
-    ///
-    /// TODO: Edit this doc when you figure out how to abi.encode with alloy.rs
-    /// ```rust
-    /// let digest = hash_typed_data_v4(keccak256(abi.encode(
-    ///     keccak256("Mail(address to,string contents)"),
-    ///     mailTo,
-    ///     keccak256(bytes(mailContents))
-    /// )));
-    /// let signer = ECDSA::recover(digest, signature);
-    /// ```
     pub fn hash_typed_data_v4(&self, _hash_struct: B256) -> B256 {
         let _domain_separator = self.domain_separator_v4();
-        todo!()
+        to_typed_data_hash(_domain_separator, _hash_struct)
     }
 
     /// The name parameter for the EIP712 domain
