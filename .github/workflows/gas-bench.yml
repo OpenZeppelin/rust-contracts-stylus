@@ -39,7 +39,7 @@ jobs:
 
       - name: setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
-      - name: run integration tests
+      - name: run benches
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
           ./scripts/bench.sh
