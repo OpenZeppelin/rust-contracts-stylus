@@ -1304,7 +1304,7 @@ pub(crate) mod tests {
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token for Alice");
         let owner = contract
             .owner_of(token_id)
@@ -1322,9 +1322,9 @@ pub(crate) mod tests {
     fn error_when_minting_token_id_twice(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint the token a first time");
-        let err = Erc721::<Override>::_mint(contract, alice, token_id)
+        let err = Token::_mint(contract, alice, token_id)
             .expect_err("should not mint a token with `token_id` twice");
 
         assert!(matches!(
@@ -1339,9 +1339,8 @@ pub(crate) mod tests {
 
         let token_id = random_token_id();
 
-        let err =
-            Erc721::<Override>::_mint(contract, invalid_receiver, token_id)
-                .expect_err("should not mint a token for invalid receiver");
+        let err = Token::_mint(contract, invalid_receiver, token_id)
+            .expect_err("should not mint a token for invalid receiver");
 
         assert!(matches!(
             err,
@@ -1360,13 +1359,8 @@ pub(crate) mod tests {
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
-        Erc721::<Override>::_safe_mint(
-            contract,
-            alice,
-            token_id,
-            vec![0, 1, 2, 3].into(),
-        )
-        .expect("should mint a token for Alice");
+        Token::_safe_mint(contract, alice, token_id, vec![0, 1, 2, 3].into())
+            .expect("should mint a token for Alice");
 
         let owner = contract
             .owner_of(token_id)
@@ -1384,10 +1378,10 @@ pub(crate) mod tests {
     fn error_when_safe_mint_token_id_twice(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint the token a first time");
 
-        let err = Erc721::<Override>::_safe_mint(
+        let err = Token::_safe_mint(
             contract,
             alice,
             token_id,
@@ -1407,7 +1401,7 @@ pub(crate) mod tests {
 
         let token_id = random_token_id();
 
-        let err = Erc721::<Override>::_safe_mint(
+        let err = Token::_safe_mint(
             contract,
             invalid_receiver,
             token_id,
@@ -1427,9 +1421,9 @@ pub(crate) mod tests {
     fn transfers_from(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
-        Erc721::<Override>::transfer_from(contract, alice, BOB, token_id)
+        Token::transfer_from(contract, alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
         let owner = contract
             .owner_of(token_id)
@@ -1441,10 +1435,10 @@ pub(crate) mod tests {
     fn transfers_from_approved_token(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
         contract._token_approvals.setter(token_id).set(alice);
-        Erc721::<Override>::transfer_from(contract, BOB, alice, token_id)
+        Token::transfer_from(contract, BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
         let owner = contract
             .owner_of(token_id)
@@ -1456,7 +1450,7 @@ pub(crate) mod tests {
     fn transfers_from_approved_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
 
         // As we cannot change `msg::sender`, we need to use this workaround.
@@ -1465,7 +1459,7 @@ pub(crate) mod tests {
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert_eq!(approved_for_all, true);
 
-        Erc721::<Override>::transfer_from(contract, BOB, alice, token_id)
+        Token::transfer_from(contract, BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
 
         let owner = contract
@@ -1480,16 +1474,14 @@ pub(crate) mod tests {
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::transfer_from(
-            contract,
-            alice,
-            invalid_receiver,
-            token_id,
-        )
-        .expect_err("should not transfer the token to invalid receiver");
+        let err =
+            Token::transfer_from(contract, alice, invalid_receiver, token_id)
+                .expect_err(
+                    "should not transfer the token to invalid receiver",
+                );
 
         assert!(matches!(
             err,
@@ -1511,14 +1503,11 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err =
-            Erc721::<Override>::transfer_from(contract, DAVE, BOB, token_id)
-                .expect_err(
-                    "should not transfer the token from incorrect owner",
-                );
+        let err = Token::transfer_from(contract, DAVE, BOB, token_id)
+            .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -1542,11 +1531,10 @@ pub(crate) mod tests {
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
-        let err =
-            Erc721::<Override>::transfer_from(contract, BOB, alice, token_id)
-                .expect_err("should not transfer unapproved token");
+        let err = Token::transfer_from(contract, BOB, alice, token_id)
+            .expect_err("should not transfer unapproved token");
         assert!(matches!(
             err,
             Error::InsufficientApproval(ERC721InsufficientApproval {
@@ -1560,9 +1548,8 @@ pub(crate) mod tests {
     fn error_when_transfer_from_transfers_nonexistent_token(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        let err =
-            Erc721::<Override>::transfer_from(contract, alice, BOB, token_id)
-                .expect_err("should not transfer a non-existent token");
+        let err = Token::transfer_from(contract, alice, BOB, token_id)
+            .expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -1575,10 +1562,10 @@ pub(crate) mod tests {
     fn safe_transfers_from(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        Erc721::<Override>::safe_transfer_from(contract, alice, BOB, token_id)
+        Token::safe_transfer_from(contract, alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
 
         let owner = contract
@@ -1592,10 +1579,10 @@ pub(crate) mod tests {
     fn safe_transfers_from_approved_token(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
         contract._token_approvals.setter(token_id).set(alice);
-        Erc721::<Override>::safe_transfer_from(contract, BOB, alice, token_id)
+        Token::safe_transfer_from(contract, BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
         let owner = contract
             .owner_of(token_id)
@@ -1607,7 +1594,7 @@ pub(crate) mod tests {
     fn safe_transfers_from_approved_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
@@ -1616,7 +1603,7 @@ pub(crate) mod tests {
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert_eq!(approved_for_all, true);
 
-        Erc721::<Override>::safe_transfer_from(contract, BOB, alice, token_id)
+        Token::safe_transfer_from(contract, BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
 
         let owner = contract
@@ -1633,10 +1620,10 @@ pub(crate) mod tests {
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::safe_transfer_from(
+        let err = Token::safe_transfer_from(
             contract,
             alice,
             invalid_receiver,
@@ -1664,13 +1651,11 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::safe_transfer_from(
-            contract, DAVE, BOB, token_id,
-        )
-        .expect_err("should not transfer the token from incorrect owner");
+        let err = Token::safe_transfer_from(contract, DAVE, BOB, token_id)
+            .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -1694,12 +1679,10 @@ pub(crate) mod tests {
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
-        let err = Erc721::<Override>::safe_transfer_from(
-            contract, BOB, alice, token_id,
-        )
-        .expect_err("should not transfer unapproved token");
+        let err = Token::safe_transfer_from(contract, BOB, alice, token_id)
+            .expect_err("should not transfer unapproved token");
         assert!(matches!(
             err,
             Error::InsufficientApproval(ERC721InsufficientApproval {
@@ -1715,10 +1698,8 @@ pub(crate) mod tests {
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        let err = Erc721::<Override>::safe_transfer_from(
-            contract, alice, BOB, token_id,
-        )
-        .expect_err("should not transfer a non-existent token");
+        let err = Token::safe_transfer_from(contract, alice, BOB, token_id)
+            .expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -1731,10 +1712,10 @@ pub(crate) mod tests {
     fn safe_transfers_from_with_data(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        Erc721::<Override>::safe_transfer_from_with_data(
+        Token::safe_transfer_from_with_data(
             contract,
             alice,
             BOB,
@@ -1754,10 +1735,10 @@ pub(crate) mod tests {
     fn safe_transfers_from_with_data_approved_token(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
         contract._token_approvals.setter(token_id).set(alice);
-        Erc721::<Override>::safe_transfer_from_with_data(
+        Token::safe_transfer_from_with_data(
             contract,
             BOB,
             alice,
@@ -1775,7 +1756,7 @@ pub(crate) mod tests {
     fn safe_transfers_from_with_data_approved_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
@@ -1784,7 +1765,7 @@ pub(crate) mod tests {
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert_eq!(approved_for_all, true);
 
-        Erc721::<Override>::safe_transfer_from_with_data(
+        Token::safe_transfer_from_with_data(
             contract,
             BOB,
             alice,
@@ -1807,10 +1788,10 @@ pub(crate) mod tests {
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::safe_transfer_from_with_data(
+        let err = Token::safe_transfer_from_with_data(
             contract,
             alice,
             invalid_receiver,
@@ -1839,10 +1820,10 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::safe_transfer_from_with_data(
+        let err = Token::safe_transfer_from_with_data(
             contract,
             DAVE,
             BOB,
@@ -1875,9 +1856,9 @@ pub(crate) mod tests {
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
-        let err = Erc721::<Override>::safe_transfer_from_with_data(
+        let err = Token::safe_transfer_from_with_data(
             contract,
             BOB,
             alice,
@@ -1900,7 +1881,7 @@ pub(crate) mod tests {
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        let err = Erc721::<Override>::safe_transfer_from_with_data(
+        let err = Token::safe_transfer_from_with_data(
             contract,
             alice,
             BOB,
@@ -1920,9 +1901,8 @@ pub(crate) mod tests {
     fn approves(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
-        Erc721::<Override>::approve(contract, BOB, token_id)
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
+        Token::approve(contract, BOB, token_id)
             .expect("should approve Bob for operations on token");
         assert_eq!(contract._token_approvals.get(token_id), BOB);
     }
@@ -1930,7 +1910,7 @@ pub(crate) mod tests {
     #[motsu::test]
     fn error_when_approve_for_nonexistent_token(contract: Token) {
         let token_id = random_token_id();
-        let err = Erc721::<Override>::approve(contract, BOB, token_id)
+        let err = Token::approve(contract, BOB, token_id)
             .expect_err("should not approve for a non-existent token");
 
         assert!(matches!(
@@ -1944,10 +1924,9 @@ pub(crate) mod tests {
     #[motsu::test]
     fn error_when_approve_by_invalid_approver(contract: Token) {
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, BOB, token_id).expect("should mint a token");
 
-        let err = Erc721::<Override>::approve(contract, DAVE, token_id)
+        let err = Token::approve(contract, DAVE, token_id)
             .expect_err("should not approve when invalid approver");
 
         assert!(matches!(
@@ -2008,8 +1987,7 @@ pub(crate) mod tests {
     #[motsu::test]
     fn owner_of_inner_works(contract: Token) {
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, BOB, token_id).expect("should mint a token");
 
         let owner = contract._owner_of_inner(token_id);
         assert_eq!(BOB, owner);
@@ -2034,8 +2012,7 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
         let approved = contract._get_approved_inner(token_id);
         assert_eq!(Address::ZERO, approved);
     }
@@ -2045,9 +2022,8 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
-        Erc721::<Override>::approve(contract, BOB, token_id)
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
+        Token::approve(contract, BOB, token_id)
             .expect("should approve Bob for operations on token");
 
         let approved = contract._get_approved_inner(token_id);
@@ -2059,8 +2035,7 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
@@ -2081,8 +2056,7 @@ pub(crate) mod tests {
     fn is_authorized_token_owner(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
 
         let authorized = contract._is_authorized(alice, alice, token_id);
         assert_eq!(true, authorized);
@@ -2092,8 +2066,7 @@ pub(crate) mod tests {
     fn is_authorized_without_approval(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
         assert_eq!(false, authorized);
@@ -2103,9 +2076,8 @@ pub(crate) mod tests {
     fn is_authorized_with_approval(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
-        Erc721::<Override>::approve(contract, BOB, token_id)
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
+        Token::approve(contract, BOB, token_id)
             .expect("should approve Bob for operations on token");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
@@ -2116,8 +2088,7 @@ pub(crate) mod tests {
     fn is_authorized_with_approval_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
@@ -2146,8 +2117,7 @@ pub(crate) mod tests {
     fn check_authorized_token_owner(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
 
         let result = contract._check_authorized(alice, alice, token_id);
 
@@ -2158,8 +2128,7 @@ pub(crate) mod tests {
     fn check_authorized_without_approval(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
 
         let err = contract
             ._check_authorized(alice, BOB, token_id)
@@ -2178,9 +2147,8 @@ pub(crate) mod tests {
     fn check_authorized_with_approval(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
-        Erc721::<Override>::approve(contract, BOB, token_id)
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
+        Token::approve(contract, BOB, token_id)
             .expect("should approve Bob for operations on token");
 
         let result = contract._check_authorized(alice, BOB, token_id);
@@ -2191,8 +2159,7 @@ pub(crate) mod tests {
     fn check_authorized_with_approval_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
@@ -2207,14 +2174,14 @@ pub(crate) mod tests {
         let one = uint!(1_U256);
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token for Alice");
 
         let initial_balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
-        let result = Erc721::<Override>::_burn(contract, token_id);
+        let result = Token::_burn(contract, token_id);
         let balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
@@ -2240,12 +2207,12 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token for Alice");
-        Erc721::<Override>::approve(contract, BOB, token_id)
+        Token::approve(contract, BOB, token_id)
             .expect("should approve a token for Bob");
 
-        Erc721::<Override>::_burn(contract, token_id)
+        Token::_burn(contract, token_id)
             .expect("should burn previously minted token");
 
         let err = contract
@@ -2264,7 +2231,7 @@ pub(crate) mod tests {
     fn error_when_burn_nonexistent_token(contract: Token) {
         let token_id = random_token_id();
 
-        let err = Erc721::<Override>::_burn(contract, token_id)
+        let err = Token::_burn(contract, token_id)
             .expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
@@ -2279,9 +2246,9 @@ pub(crate) mod tests {
     fn transfers(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
-        Erc721::<Override>::_transfer(contract, alice, BOB, token_id)
+        Token::_transfer(contract, alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
         let owner = contract
             .owner_of(token_id)
@@ -2293,10 +2260,10 @@ pub(crate) mod tests {
     fn transfers_approved_token(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
         contract._token_approvals.setter(token_id).set(alice);
-        Erc721::<Override>::_transfer(contract, BOB, alice, token_id)
+        Token::_transfer(contract, BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
         let owner = contract
             .owner_of(token_id)
@@ -2308,7 +2275,7 @@ pub(crate) mod tests {
     fn transfers_approved_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
 
         // As we cannot change `msg::sender`, we need to use this workaround.
@@ -2317,7 +2284,7 @@ pub(crate) mod tests {
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert_eq!(approved_for_all, true);
 
-        Erc721::<Override>::_transfer(contract, BOB, alice, token_id)
+        Token::_transfer(contract, BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
 
         let owner = contract
@@ -2332,16 +2299,11 @@ pub(crate) mod tests {
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::_transfer(
-            contract,
-            alice,
-            invalid_receiver,
-            token_id,
-        )
-        .expect_err("should not transfer to invalid receiver");
+        let err = Token::_transfer(contract, alice, invalid_receiver, token_id)
+            .expect_err("should not transfer to invalid receiver");
 
         assert!(matches!(
             err,
@@ -2361,10 +2323,10 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::_transfer(contract, DAVE, BOB, token_id)
+        let err = Token::_transfer(contract, DAVE, BOB, token_id)
             .expect_err("should not transfer from incorrect owner");
 
         assert!(matches!(
@@ -2388,7 +2350,7 @@ pub(crate) mod tests {
     fn error_when_transfer_transfers_nonexistent_token(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        let err = Erc721::<Override>::_transfer(contract, alice, BOB, token_id)
+        let err = Token::_transfer(contract, alice, BOB, token_id)
             .expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
@@ -2402,10 +2364,10 @@ pub(crate) mod tests {
     fn safe_transfers_internal(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        Erc721::<Override>::_safe_transfer(
+        Token::_safe_transfer(
             contract,
             alice,
             BOB,
@@ -2425,10 +2387,10 @@ pub(crate) mod tests {
     fn safe_transfers_internal_approved_token(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
         contract._token_approvals.setter(token_id).set(alice);
-        Erc721::<Override>::_safe_transfer(
+        Token::_safe_transfer(
             contract,
             BOB,
             alice,
@@ -2446,7 +2408,7 @@ pub(crate) mod tests {
     fn safe_transfers_internal_approved_for_all(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
+        Token::_mint(contract, BOB, token_id)
             .expect("should mint token to Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
@@ -2455,7 +2417,7 @@ pub(crate) mod tests {
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert_eq!(approved_for_all, true);
 
-        Erc721::<Override>::_safe_transfer(
+        Token::_safe_transfer(
             contract,
             BOB,
             alice,
@@ -2478,10 +2440,10 @@ pub(crate) mod tests {
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::_safe_transfer(
+        let err = Token::_safe_transfer(
             contract,
             alice,
             invalid_receiver,
@@ -2510,10 +2472,10 @@ pub(crate) mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
 
-        Erc721::<Override>::_mint(contract, alice, token_id)
+        Token::_mint(contract, alice, token_id)
             .expect("should mint a token to Alice");
 
-        let err = Erc721::<Override>::_safe_transfer(
+        let err = Token::_safe_transfer(
             contract,
             DAVE,
             BOB,
@@ -2544,7 +2506,7 @@ pub(crate) mod tests {
     ) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        let err = Erc721::<Override>::_safe_transfer(
+        let err = Token::_safe_transfer(
             contract,
             alice,
             BOB,
@@ -2565,9 +2527,8 @@ pub(crate) mod tests {
     fn approves_internal(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, alice, token_id)
-            .expect("should mint a token");
-        Erc721::<Override>::_approve(contract, BOB, token_id, alice, false)
+        Token::_mint(contract, alice, token_id).expect("should mint a token");
+        Token::_approve(contract, BOB, token_id, alice, false)
             .expect("should approve Bob for operations on token");
         assert_eq!(contract._token_approvals.get(token_id), BOB);
     }
@@ -2575,14 +2536,9 @@ pub(crate) mod tests {
     #[motsu::test]
     fn error_when_approve_internal_for_nonexistent_token(contract: Token) {
         let token_id = random_token_id();
-        let err = Erc721::<Override>::_approve(
-            contract,
-            BOB,
-            token_id,
-            msg::sender(),
-            false,
-        )
-        .expect_err("should not approve for a non-existent token");
+        let err =
+            Token::_approve(contract, BOB, token_id, msg::sender(), false)
+                .expect_err("should not approve for a non-existent token");
 
         assert!(matches!(
             err,
@@ -2596,13 +2552,10 @@ pub(crate) mod tests {
     fn error_when_approve_internal_by_invalid_approver(contract: Token) {
         let alice = msg::sender();
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, BOB, token_id).expect("should mint a token");
 
-        let err = Erc721::<Override>::_approve(
-            contract, DAVE, token_id, alice, false,
-        )
-        .expect_err("should not approve when invalid approver");
+        let err = Token::_approve(contract, DAVE, token_id, alice, false)
+            .expect_err("should not approve when invalid approver");
 
         assert!(matches!(
             err,
@@ -2649,8 +2602,7 @@ pub(crate) mod tests {
     #[motsu::test]
     fn require_owned_works(contract: Token) {
         let token_id = random_token_id();
-        Erc721::<Override>::_mint(contract, BOB, token_id)
-            .expect("should mint a token");
+        Token::_mint(contract, BOB, token_id).expect("should mint a token");
 
         let owner = contract
             ._require_owned(token_id)
