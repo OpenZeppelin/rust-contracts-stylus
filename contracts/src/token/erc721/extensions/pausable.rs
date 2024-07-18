@@ -38,6 +38,7 @@ impl IErc721Virtual for Erc721PausableOverride {
 #[cfg(all(test, feature = "std"))]
 pub(crate) mod tests {
     use alloy_primitives::address;
+    use stylus_sdk::msg;
     use stylus_sdk::storage::{StorageBool, StorageMap};
 
     use super::*;
