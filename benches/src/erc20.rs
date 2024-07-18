@@ -3,13 +3,13 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::SolConstructor,
+    sol_types::{SolCall, SolConstructor},
     uint,
 };
 use alloy_primitives::U256;
 use e2e::{receipt, Account};
 
-use crate::{report::Report, ArbOtherFields};
+use crate::report::Report;
 
 sol!(
     #[sol(rpc)]
@@ -61,33 +61,26 @@ pub async fn bench() -> eyre::Result<Report> {
     let contract_bob = Erc20::new(contract_addr, &bob_wallet);
 
     // IMPORTANT: Order matters!
+    use Erc20::*;
     #[rustfmt::skip]
     let receipts = vec![
-        ("name()", receipt!(contract.name())?),
-        ("symbol()", receipt!(contract.symbol())?),
-        ("decimals()", receipt!(contract.decimals())?),
-        ("totalSupply()", receipt!(contract.totalSupply())?),
-        ("balanceOf(alice)", receipt!(contract.balanceOf(alice_addr))?),
-        ("allowance(alice, bob)", receipt!(contract.allowance(alice_addr, bob_addr))?),
-        ("cap()", receipt!(contract.cap())?),
-        ("mint(alice, 10)", receipt!(contract.mint(alice_addr, uint!(10_U256)))?),
-        ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
-        ("transfer(bob, 1)", receipt!(contract.transfer(bob_addr, uint!(1_U256)))?),
-        ("approve(bob, 5)", receipt!(contract.approve(bob_addr, uint!(5_U256)))?),
-        ("burnFrom(alice, 1)", receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?),
-        ("transferFrom(alice, bob, 5)", receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
+        (nameCall::SIGNATURE, receipt!(contract.name())?),
+        (symbolCall::SIGNATURE, receipt!(contract.symbol())?),
+        (decimalsCall::SIGNATURE, receipt!(contract.decimals())?),
+        (totalSupplyCall::SIGNATURE, receipt!(contract.totalSupply())?),
+        (balanceOfCall::SIGNATURE, receipt!(contract.balanceOf(alice_addr))?),
+        (allowanceCall::SIGNATURE, receipt!(contract.allowance(alice_addr, bob_addr))?),
+        (capCall::SIGNATURE, receipt!(contract.cap())?),
+        (mintCall::SIGNATURE, receipt!(contract.mint(alice_addr, uint!(10_U256)))?),
+        (burnCall::SIGNATURE, receipt!(contract.burn(uint!(1_U256)))?),
+        (transferCall::SIGNATURE, receipt!(contract.transfer(bob_addr, uint!(1_U256)))?),
+        (approveCall::SIGNATURE, receipt!(contract.approve(bob_addr, uint!(5_U256)))?),
+        (burnFromCall::SIGNATURE, receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?),
+        (transferFromCall::SIGNATURE, receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
     ];
 
-    let mut report = Report::new("Erc20");
-    for (signature, receipt) in receipts {
-        let l2_gas = receipt.gas_used;
-        let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
-        let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
-        let effective_gas = l2_gas - l1_gas;
-
-        report.add(signature, effective_gas);
-    }
-
+    let report =
+        receipts.into_iter().try_fold(Report::new("Erc20"), Report::add)?;
     Ok(report)
 }
 

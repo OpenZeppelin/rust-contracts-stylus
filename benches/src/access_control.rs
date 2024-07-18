@@ -4,11 +4,11 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::SolConstructor,
+    sol_types::{SolCall, SolConstructor},
 };
 use e2e::{receipt, Account};
 
-use crate::{report::Report, ArbOtherFields};
+use crate::report::Report;
 
 sol!(
     #[sol(rpc)]
@@ -55,26 +55,20 @@ pub async fn bench() -> eyre::Result<Report> {
     let contract_bob = AccessControl::new(contract_addr, &bob_wallet);
 
     // IMPORTANT: Order matters!
+    use AccessControl::*;
     #[rustfmt::skip]
     let receipts = vec![
-        ("hasRole(DEFAULT_ADMIN_ROLE, alice)", receipt!(contract.hasRole(DEFAULT_ADMIN_ROLE.into(), alice_addr))?),
-        ("getRoleAdmin(ROLE)", receipt!(contract.getRoleAdmin(ROLE.into()))?),
-        ("revokeRole(ROLE, alice)", receipt!(contract.revokeRole(ROLE.into(), alice_addr))?),
-        ("grantRole(ROLE, bob)", receipt!(contract.grantRole(ROLE.into(), bob_addr))?),
-        ("renounceRole(ROLE, bob)", receipt!(contract_bob.renounceRole(ROLE.into(), bob_addr))?),
-        ("setRoleAdmin(ROLE, NEW_ADMIN_ROLE)", receipt!(contract.setRoleAdmin(ROLE.into(), NEW_ADMIN_ROLE.into()))?),
+        (hasRoleCall::SIGNATURE, receipt!(contract.hasRole(DEFAULT_ADMIN_ROLE.into(), alice_addr))?),
+        (getRoleAdminCall::SIGNATURE, receipt!(contract.getRoleAdmin(ROLE.into()))?),
+        (revokeRoleCall::SIGNATURE, receipt!(contract.revokeRole(ROLE.into(), alice_addr))?),
+        (grantRoleCall::SIGNATURE, receipt!(contract.grantRole(ROLE.into(), bob_addr))?),
+        (renounceRoleCall::SIGNATURE, receipt!(contract_bob.renounceRole(ROLE.into(), bob_addr))?),
+        (setRoleAdminCall::SIGNATURE, receipt!(contract.setRoleAdmin(ROLE.into(), NEW_ADMIN_ROLE.into()))?),
     ];
 
-    let mut report = Report::new("AccessControl");
-    for (signature, receipt) in receipts {
-        let l2_gas = receipt.gas_used;
-        let arb_fields: ArbOtherFields = receipt.other.deserialize_into()?;
-        let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
-        let effective_gas = l2_gas - l1_gas;
-
-        report.add(signature, effective_gas);
-    }
-
+    let report = receipts
+        .into_iter()
+        .try_fold(Report::new("AccessControl"), Report::add)?;
     Ok(report)
 }
 
