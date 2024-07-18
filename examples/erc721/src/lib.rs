@@ -1,154 +1,85 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloc::vec::Vec;
-
 use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::{
-    token::erc721::{
-        extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
-        Erc721, IErc721,
+use openzeppelin_stylus::token::erc721::{
+    extensions::{
+        burnable::{Erc721Burnable, Erc721BurnableOverride},
+        enumerable::{Erc721Enumerable, Erc721EnumerableOverride},
+        pausable::{Erc721Pausable, Erc721PausableOverride},
     },
-    utils::Pausable,
+    Erc721, Erc721Override, Error, IErc721Virtual,
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, external, sol_storage},
-};
+use openzeppelin_stylus_proc::r#override;
+use stylus_sdk::{alloy_sol_types::sol, evm, prelude::*};
+
+sol! {
+    /// Emitted when life is not doomed and there is a way.
+    #[allow(missing_docs)]
+    event ThereIsWay();
+
+    /// The operation failed because there is no way. Like end of the world.
+    #[derive(Debug)]
+    error NoWay();
+}
 
 sol_storage! {
     #[entrypoint]
-    struct Erc721Example {
-        #[borrow]
-        Erc721 erc721;
-        #[borrow]
-        Enumerable enumerable;
-        #[borrow]
-        Pausable pausable;
+    struct NoWayNft {
+        bool _is_there_a_way;
+
+        Erc721<Override> erc721;
+        Erc721Burnable<Override> burnable;
+        Erc721Pausable<Override> pausable;
+        Erc721Enumerable<Override> enumerable;
     }
 }
 
 #[external]
-#[inherit(Erc721, Enumerable, Pausable)]
-impl Erc721Example {
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
-        // Retrieve the owner.
-        let owner = self.erc721.owner_of(token_id)?;
-
-        self.erc721.burn(token_id)?;
-
-        // Update the extension's state.
-        self.enumerable._remove_token_from_owner_enumeration(
-            owner,
-            token_id,
-            &self.erc721,
-        )?;
-        self.enumerable._remove_token_from_all_tokens_enumeration(token_id);
-
-        Ok(())
+#[inherit(Erc721Enumerable<Override>)]
+#[inherit(Erc721Burnable<Override>)]
+#[inherit(Erc721Pausable<Override>)]
+#[inherit(Erc721<Override>)]
+impl NoWayNft {
+    fn is_there_a_way(&self) -> bool {
+        *self._is_there_a_way
     }
 
-    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
-        self.erc721._mint(to, token_id)?;
-
-        // Update the extension's state.
-        self.enumerable._add_token_to_all_tokens_enumeration(token_id);
-        self.enumerable._add_token_to_owner_enumeration(
-            to,
-            token_id,
-            &self.erc721,
-        )?;
-
-        Ok(())
+    fn no_way(&mut self) {
+        self._is_there_a_way.set(false);
     }
 
-    pub fn safe_transfer_from(
-        &mut self,
-        from: Address,
+    fn there_is_a_way(&mut self) {
+        self._is_there_a_way.set(true);
+    }
+
+    fn mint(
+        storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
-        // Retrieve the previous owner.
-        let previous_owner = self.erc721.owner_of(token_id)?;
-
-        self.erc721.safe_transfer_from(from, to, token_id)?;
-
-        // Update the extension's state.
-        self.enumerable._remove_token_from_owner_enumeration(
-            previous_owner,
-            token_id,
-            &self.erc721,
-        )?;
-        self.enumerable._add_token_to_owner_enumeration(
-            to,
-            token_id,
-            &self.erc721,
-        )?;
-
-        Ok(())
+    ) -> Result<(), Error> {
+        Erc721::<Override>::_mint(storage, to, token_id)
     }
+}
 
-    #[selector(name = "safeTransferFrom")]
-    pub fn safe_transfer_from_with_data(
-        &mut self,
-        from: Address,
+#[r#override]
+#[inherit(Erc721EnumerableOverride)]
+#[inherit(Erc721BurnableOverride)]
+#[inherit(Erc721PausableOverride)]
+#[inherit(Erc721Override)]
+impl IErc721Virtual for NoWayNftOverride {
+    fn _update(
+        storage: &mut impl TopLevelStorage,
         to: Address,
         token_id: U256,
-        data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
-        // Retrieve the previous owner.
-        let previous_owner = self.erc721.owner_of(token_id)?;
-
-        self.erc721.safe_transfer_from_with_data(from, to, token_id, data)?;
-
-        // Update the extension's state.
-        self.enumerable._remove_token_from_owner_enumeration(
-            previous_owner,
-            token_id,
-            &self.erc721,
-        )?;
-        self.enumerable._add_token_to_owner_enumeration(
-            to,
-            token_id,
-            &self.erc721,
-        )?;
-
-        Ok(())
-    }
-
-    pub fn transfer_from(
-        &mut self,
-        from: Address,
-        to: Address,
-        token_id: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
-        // Retrieve the previous owner.
-        let previous_owner = self.erc721.owner_of(token_id)?;
-
-        self.erc721.transfer_from(from, to, token_id)?;
-
-        // Update the extension's state.
-        self.enumerable._remove_token_from_owner_enumeration(
-            previous_owner,
-            token_id,
-            &self.erc721,
-        )?;
-        self.enumerable._add_token_to_owner_enumeration(
-            to,
-            token_id,
-            &self.erc721,
-        )?;
-
-        Ok(())
+        auth: Address,
+    ) -> Result<Address, Error> {
+        let storage = storage.inner_mut::<NoWayNft>();
+        if storage.is_there_a_way() {
+            evm::log(ThereIsWay {});
+            Super::_update::<This>(storage, to, token_id, auth)
+        } else {
+            Err(Error::Custom(NoWay {}.into()))
+        }
     }
 }
