@@ -14,11 +14,8 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::erc721::extensions::{
-        enumerable,
-        enumerable::{
-            ERC721EnumerableForbiddenBatchMint, ERC721OutOfBoundsIndex,
-        },
+    token::erc721::extensions::enumerable::{
+        ERC721EnumerableForbiddenBatchMint, ERC721OutOfBoundsIndex,
     },
     utils,
     utils::{

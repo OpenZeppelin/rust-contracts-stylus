@@ -1,4 +1,4 @@
-use std::{mem, str::FromStr};
+use std::mem;
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -199,7 +199,7 @@ fn override_alias(input: &mut ItemImpl) -> proc_macro2::TokenStream {
         }
         let contents: InheritsAttr = match attr.parse_args() {
             Ok(contents) => contents,
-            Err(err) => return err.to_compile_error().into(),
+            Err(err) => return err.to_compile_error(),
         };
         for ty in contents.types {
             inherits.push(ty);

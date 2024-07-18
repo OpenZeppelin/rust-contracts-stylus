@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use alloy_primitives::Address;
 use openzeppelin_stylus_proc::r#override;
-use stylus_sdk::{alloy_primitives::U256, msg, prelude::*};
+use stylus_sdk::{alloy_primitives::U256, prelude::*};
 
 use crate::{
     token::erc721::{Error, IErc721Virtual, TopLevelStorage},

@@ -1,9 +1,9 @@
 extern crate proc_macro;
-mod r#virtual;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated, ItemFn};
+use syn::{parse::Parse, parse_macro_input, punctuated::Punctuated};
 
+mod r#virtual;
 #[proc_macro_attribute]
 pub fn r#override(attr: TokenStream, input: TokenStream) -> TokenStream {
     r#virtual::r#override(attr, input)
