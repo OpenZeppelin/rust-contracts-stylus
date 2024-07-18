@@ -1544,7 +1544,7 @@ name = "erc721-metadata-example"
 version = "0.0.0"
 dependencies = [
  "alloy",
- "alloy-primitives 0.3.3",
+ "alloy-primitives",
  "e2e",
  "eyre",
  "mini-alloc",
@@ -3469,9 +3469,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-proc"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8a4d5f8deb863602ac0a2f2e38de55844ab51608a1df66d093c52c68d90bccf"
+checksum = "20dbf5e4af9b0c0f25877ff19da60ecfd721a0e8fd0a17336892a0d0521648ff"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3488,9 +3488,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-sdk"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d056f9b4125d93c7b85e6b3e1176542132d1334dac38885a70735b86293af62"
+checksum = "5426b95831da7fde45a91785cafd2121ad8e720b503f0fc7c709667cff5336cf"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
