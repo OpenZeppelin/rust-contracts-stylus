@@ -1,6 +1,6 @@
-//! Implementation of the [`Erc20`] token standard.
+//! Implementation of the ERC-20 token standard.
 //!
-//! We have followed general ``OpenZeppelin`` Contracts guidelines: functions
+//! We have followed general `OpenZeppelin` Contracts guidelines: functions
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.

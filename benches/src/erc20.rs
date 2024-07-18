@@ -8,11 +8,8 @@ use alloy::{
 };
 use alloy_primitives::U256;
 use e2e::{receipt, Account};
-use koba::config::Deploy;
 
 use crate::ArbOtherFields;
-
-const RPC_URL: &str = "http://localhost:8547";
 
 sol!(
     #[sol(rpc)]
@@ -63,44 +60,22 @@ pub async fn bench() -> eyre::Result<()> {
     let contract = Erc20::new(contract_addr, &alice_wallet);
     let contract_bob = Erc20::new(contract_addr, &bob_wallet);
 
-    println!("Running benches...");
     // IMPORTANT: Order matters!
+    #[rustfmt::skip]
     let receipts = vec![
         ("name()", receipt!(contract.name())?),
         ("symbol()", receipt!(contract.symbol())?),
         ("decimals()", receipt!(contract.decimals())?),
         ("totalSupply()", receipt!(contract.totalSupply())?),
         ("balanceOf(alice)", receipt!(contract.balanceOf(alice_addr))?),
-        (
-            "allowance(alice, bob)",
-            receipt!(contract.allowance(alice_addr, bob_addr))?,
-        ),
+        ("allowance(alice, bob)", receipt!(contract.allowance(alice_addr, bob_addr))?),
         ("cap()", receipt!(contract.cap())?),
-        (
-            "mint(alice, 10)",
-            receipt!(contract.mint(alice_addr, uint!(10_U256)))?,
-        ),
+        ("mint(alice, 10)", receipt!(contract.mint(alice_addr, uint!(10_U256)))?),
         ("burn(1)", receipt!(contract.burn(uint!(1_U256)))?),
-        (
-            "transfer(bob, 1)",
-            receipt!(contract.transfer(bob_addr, uint!(1_U256)))?,
-        ),
-        (
-            "approve(bob, 5)",
-            receipt!(contract.approve(bob_addr, uint!(5_U256)))?,
-        ),
-        (
-            "burnFrom(alice, 1)",
-            receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?,
-        ),
-        (
-            "transferFrom(alice, bob, 5)",
-            receipt!(contract_bob.transferFrom(
-                alice_addr,
-                bob_addr,
-                uint!(4_U256)
-            ))?,
-        ),
+        ("transfer(bob, 1)", receipt!(contract.transfer(bob_addr, uint!(1_U256)))?),
+        ("approve(bob, 5)", receipt!(contract.approve(bob_addr, uint!(5_U256)))?),
+        ("burnFrom(alice, 1)", receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?),
+        ("transferFrom(alice, bob, 5)", receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
     ];
 
     // Calculate the width of the longest function name.
@@ -110,7 +85,7 @@ pub async fn bench() -> eyre::Result<()> {
         .expect("should at least bench one function")
         .0
         .len();
-    let name_width = max_name_width.max("Function".len());
+    let name_width = max_name_width.max("ERC-20".len());
 
     // Calculate the total width of the table.
     let total_width = name_width + 3 + 6 + 3 + 6 + 3 + 20 + 4; // 3 for padding, 4 for outer borders
@@ -119,7 +94,7 @@ pub async fn bench() -> eyre::Result<()> {
     println!("+{}+", "-".repeat(total_width - 2));
     println!(
         "| {:<width$} | L2 Gas | L1 Gas |        Effective Gas |",
-        "Function",
+        "ERC-20",
         width = name_width
     );
     println!(
@@ -157,38 +132,5 @@ async fn deploy(account: &Account) -> Address {
         cap_: CAP,
     };
     let args = alloy::hex::encode(args.abi_encode());
-
-    let manifest_dir =
-        std::env::current_dir().expect("should get current dir from env");
-
-    let wasm_path = manifest_dir
-        .join("target")
-        .join("wasm32-unknown-unknown")
-        .join("release")
-        .join("erc20_example.wasm");
-    let sol_path = manifest_dir
-        .join("examples")
-        .join("erc20")
-        .join("src")
-        .join("constructor.sol");
-
-    let pk = account.pk();
-    let config = Deploy {
-        generate_config: koba::config::Generate {
-            wasm: wasm_path.clone(),
-            sol: sol_path,
-            args: Some(args),
-            legacy: false,
-        },
-        auth: koba::config::PrivateKey {
-            private_key_path: None,
-            private_key: Some(pk),
-            keystore_path: None,
-            keystore_password_path: None,
-        },
-        endpoint: RPC_URL.to_owned(),
-        deploy_only: false,
-    };
-
-    koba::deploy(&config).await.expect("should deploy contract")
+    crate::deploy(account, "erc20", Some(args)).await
 }

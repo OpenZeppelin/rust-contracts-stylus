@@ -1200,6 +1200,24 @@ mod tests {
     }
 
     #[motsu::test]
+    fn error_when_minting_token_invalid_receiver(contract: Erc721) {
+        let invalid_receiver = Address::ZERO;
+
+        let token_id = random_token_id();
+
+        let err = contract
+            ._mint(invalid_receiver, token_id)
+            .expect_err("should not mint a token for invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+    }
+
+    #[motsu::test]
     fn safe_mints(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
@@ -1360,7 +1378,6 @@ mod tests {
         ));
 
         // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1504,7 +1521,6 @@ mod tests {
         ));
 
         // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1676,7 +1692,6 @@ mod tests {
         ));
 
         // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");

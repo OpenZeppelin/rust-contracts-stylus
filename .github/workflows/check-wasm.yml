@@ -37,4 +37,4 @@ jobs:
       - name: run wasm check
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./.github/scripts/check-wasm.sh
+          ./scripts/check-wasm.sh

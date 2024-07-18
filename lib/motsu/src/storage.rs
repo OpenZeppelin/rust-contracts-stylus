@@ -26,6 +26,7 @@ pub(crate) unsafe fn write_bytes32(key: *mut u8, val: Bytes32) {
 /// # Panics
 ///
 /// May panic if the storage lock is already held by the current thread.
+#[allow(clippy::module_name_repetitions)]
 pub fn reset_storage() {
     STORAGE.lock().unwrap().clear();
 }

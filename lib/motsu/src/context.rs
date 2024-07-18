@@ -21,6 +21,7 @@ pub fn acquire_storage() -> MutexGuard<'static, ()> {
 }
 
 /// Decorates a closure by running it with exclusive access to storage.
+#[allow(clippy::module_name_repetitions)]
 pub fn with_context<C: Default>(closure: impl FnOnce(&mut C)) {
     let _lock = acquire_storage();
     let mut contract = C::default();
