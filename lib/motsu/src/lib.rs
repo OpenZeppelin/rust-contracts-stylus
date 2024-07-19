@@ -12,8 +12,9 @@
 //! Annotate tests with [`#[motsu::test]`][test_attribute] instead of `#[test]`
 //! to get access to VM affordances.
 //!
-//! Note that we require contracts to implement `stylus_sdk::prelude::StorageType`.
-//! This trait is typically implemented by default with `stylus_proc::sol_storage` macro.
+//! Note that we require contracts to implement
+//! `stylus_sdk::prelude::StorageType`. This trait is typically implemented by
+//! default with `stylus_proc::sol_storage` macro.
 //!
 //! ```rust
 //! #[cfg(test)]

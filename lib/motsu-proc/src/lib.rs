@@ -1,6 +1,5 @@
 //! Procedural macro definitions used in `motsu`.
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput};
 
 /// Shorthand to print nice errors.
 ///
