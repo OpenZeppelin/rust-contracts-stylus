@@ -61,8 +61,11 @@ sol_storage! {
     /// State of an [`Erc72Erc721Consecutive`] token.
     #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Consecutive {
+        /// Erc721 contract storage.
         Erc721 erc721;
+        /// Checkpoint library contract for sequential ownership.
         Trace160 _sequential_ownership;
+        /// BitMap library contract for sequential burn of tokens.
         BitMap _sequential_burn;
         /// Initialization marker. If true this means that consecutive mint was already triggered.
         bool _initialized
