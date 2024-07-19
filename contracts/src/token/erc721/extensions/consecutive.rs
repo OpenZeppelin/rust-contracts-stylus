@@ -167,8 +167,8 @@ impl Erc721Consecutive {
         // If token is owned by the core, or beyond consecutive range, return
         // base value
         if owner != Address::ZERO
-            || token_id > U256::from(U96::MAX)
             || token_id < U256::from(FIRST_CONSECUTIVE_ID)
+            || token_id > U256::from(U96::MAX)
         {
             return owner;
         }
