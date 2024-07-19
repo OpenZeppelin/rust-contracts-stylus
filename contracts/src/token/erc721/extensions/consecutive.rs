@@ -52,7 +52,7 @@ use crate::{
         structs::{
             bitmap::BitMap,
             checkpoints,
-            checkpoints::{Trace160, U160, U96},
+            checkpoints::{Trace160, U96},
         },
     },
 };
