@@ -8,7 +8,7 @@ use alloy_primitives::{
     address, fixed_bytes, uint, Address, Bytes, FixedBytes, U256,
 };
 use alloy_sol_types::{sol, SolType};
-use stylus_proc::SolidityError;
+use stylus_proc::{sol_interface, SolidityError};
 use stylus_sdk::{
     call::{self, Call},
     storage::TopLevelStorage,
@@ -57,6 +57,21 @@ pub enum Error {
     InvalidSignatureLength(ECDSAInvalidSignatureLength),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),
+}
+
+sol_interface! {
+    /// EVM Precompiles interface.
+    ///
+    /// Interface for any contract that wants to call `ecrecover` precompile .
+    interface EVMPrecompile {
+        #[allow(missing_docs)]
+        function ecrecover(
+            bytes32 hash,
+            uint8 v,
+            bytes32 r,
+            bytes32 s
+        ) returns (address);
+    }
 }
 
 sol! {
@@ -213,7 +228,7 @@ pub fn recover(
     }
 
     // If the signature is valid (and not malleable), return the signer address.
-    let recovered = ecrecover(storage, hash, v, r, s)?;
+    let recovered = evm_recover(storage, hash, v, r, s)?;
 
     Ok(recovered)
 }
@@ -241,24 +256,20 @@ pub fn recover(
 /// # Panics
 ///
 /// * If `ecrecover` precompile fail to execute.
-fn ecrecover(
+fn evm_recover(
     storage: &mut impl TopLevelStorage,
     hash: FixedBytes<32>,
     v: u8,
     r: FixedBytes<32>,
     s: FixedBytes<32>,
 ) -> Result<Address, Error> {
-    let data = EcrecoverData { hash: *hash, v, r: *r, s: *s };
-    let data = EcrecoverData::encode(&data);
-    let recovered =
-        call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &data)
-            .expect("should call `ecrecover` precompile");
-
-    let recovered = Address::from_slice(recovered.as_slice());
+    let call = Call::new_in(storage);
+    let recovered = EVMPrecompile::new(ECRECOVER_ADDR)
+        .ecrecover(call, hash, v, r, s)
+        .expect("should call `ecrecover` precompile");
 
     if recovered.is_zero() {
         return Err(ECDSAInvalidSignature {}.into());
     }
-
     Ok(recovered)
 }
