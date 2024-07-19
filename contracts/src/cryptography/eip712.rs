@@ -30,6 +30,7 @@
 //! * `oz-upgrades-unsafe-allow state-variable-immutable`
 
 use alloc::{string::String, vec::Vec};
+
 use alloy_primitives::{
     b256, fixed_bytes, keccak256, Address, FixedBytes, B256, U256,
 };
@@ -38,10 +39,11 @@ use stylus_sdk::{
     block, contract,
     stylus_proc::{external, sol_storage},
 };
+
 use super::message_hash_utils::to_typed_data_hash;
 
-
-/// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+/// keccak256("EIP712Domain(string name,string version,uint256 chainId,address
+/// verifyingContract)");
 pub const TYPE_HASH: B256 =
     b256!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
 pub const FIELDS: FixedBytes<1> = fixed_bytes!("15");
@@ -138,10 +140,6 @@ impl EIP712 {
     }
 }
 
-
-
-
-
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
@@ -150,25 +148,25 @@ mod tests {
     fn test_eip712_name(contract: EIP712) {
         let name = "EIP712";
         contract._name.set_str(name);
-        
+
         assert_eq!(contract.eip712_name(), name);
     }
-    
+
     #[motsu::test]
     fn test_eip712_version(contract: EIP712) {
         let version = "1";
         contract._version.set_str(version);
-        
+
         assert_eq!(contract.eip712_version(), version);
     }
-    
+
     #[motsu::test]
     fn test_eip712_domain(contract: EIP712) {
         let name = "EIP712";
         let version = "1";
         contract._name.set_str(name);
         contract._version.set_str(version);
-        
+
         let chain_id = block::chainid();
         let verifying_contract = contract::address();
         let expected_domain_encoded = DomainSeparatorTuple::encode_params(&(
@@ -178,18 +176,30 @@ mod tests {
             U256::from(chain_id),
             verifying_contract,
         ));
-        let domain_separator_expected_cached = keccak256(expected_domain_encoded);
-        
-        assert_eq!(contract.eip712_domain(), (FIELDS, name.to_string(), version.to_string(), chain_id, verifying_contract, SALT, Vec::new()));
+        let domain_separator_expected_cached =
+            keccak256(expected_domain_encoded);
+
+        assert_eq!(
+            contract.eip712_domain(),
+            (
+                FIELDS,
+                name.to_string(),
+                version.to_string(),
+                chain_id,
+                verifying_contract,
+                SALT,
+                Vec::new()
+            )
+        );
     }
-    
+
     #[motsu::test]
     fn test_build_domain_separator(contract: EIP712) {
         let name = "EIP712";
         let version = "1";
         contract._name.set_str(name);
         contract._version.set_str(version);
-        
+
         let chain_id = block::chainid();
         let verifying_contract = contract::address();
         let expected_domain_encoded = DomainSeparatorTuple::encode_params(&(
@@ -200,17 +210,20 @@ mod tests {
             verifying_contract,
         ));
         let domain_separator_expected = keccak256(expected_domain_encoded);
-        
-        assert_eq!(contract.build_domain_separator(), domain_separator_expected);
+
+        assert_eq!(
+            contract.build_domain_separator(),
+            domain_separator_expected
+        );
     }
-    
+
     #[motsu::test]
     fn test_domain_separator_v4(contract: EIP712) {
         let name = "EIP712";
         let version = "1";
         contract._name.set_str(name);
         contract._version.set_str(version);
-        
+
         let chain_id = block::chainid();
         let verifying_contract = contract::address();
         let expected_domain_encoded = DomainSeparatorTuple::encode_params(&(
@@ -221,17 +234,17 @@ mod tests {
             verifying_contract,
         ));
         let domain_separator_expected = keccak256(expected_domain_encoded);
-        
+
         assert_eq!(contract.domain_separator_v4(), domain_separator_expected);
     }
-    
+
     #[motsu::test]
     fn test_hash_typed_data_v4(contract: EIP712) {
         let name = "EIP712";
         let version = "1";
         contract._name.set_str(name);
         contract._version.set_str(version);
-        
+
         let chain_id = block::chainid();
         let verifying_contract = contract::address();
         let expected_domain_encoded = DomainSeparatorTuple::encode_params(&(
@@ -242,10 +255,11 @@ mod tests {
             verifying_contract,
         ));
         let domain_separator_expected = keccak256(expected_domain_encoded);
-        
+
         let hash_struct = keccak256("test".as_bytes());
-        let expected_hash = to_typed_data_hash(domain_separator_expected, hash_struct);
-        
+        let expected_hash =
+            to_typed_data_hash(domain_separator_expected, hash_struct);
+
         assert_eq!(contract.hash_typed_data_v4(hash_struct), expected_hash);
     }
 }
