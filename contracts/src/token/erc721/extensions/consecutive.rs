@@ -173,10 +173,10 @@ impl Erc721Consecutive {
 
         // Otherwise, check the token was not burned, and fetch ownership from
         // the anchors.
-        // NOTE: no need for safe cast,
         if self._sequential_burn.get(token_id) {
             Address::ZERO
         } else {
+            // NOTE: Bounds already checked. No need for safe cast of token_id
             self._sequential_ownership.lower_lookup(U96::from(token_id)).into()
         }
     }
