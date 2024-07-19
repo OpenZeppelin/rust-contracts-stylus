@@ -59,10 +59,11 @@ use crate::{
 
 sol_storage! {
     /// State of an [`Erc72Erc721Consecutive`] token.
+    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Consecutive {
         Erc721 erc721;
         Trace160 _sequential_ownership;
-        BitMap _sequentian_burn;
+        BitMap _sequential_burn;
         /// Initialization marker. If true this means that consecutive mint was already triggered.
         bool _initialized
     }
@@ -173,7 +174,7 @@ impl Erc721Consecutive {
         // Otherwise, check the token was not burned, and fetch ownership from
         // the anchors.
         // NOTE: no need for safe cast,
-        if self._sequentian_burn.get(token_id) {
+        if self._sequential_burn.get(token_id) {
             Address::ZERO
         } else {
             self._sequential_ownership.lower_lookup(U96::from(token_id)).into()
@@ -230,7 +231,7 @@ impl Erc721Consecutive {
                 .into());
             }
 
-            if batch_size > MAX_BATCH_SIZE.to() {
+            if batch_size > MAX_BATCH_SIZE {
                 return Err(ERC721ExceededMaxBatchMint {
                     batchSize: U256::from(batch_size),
                     maxBatch: U256::from(MAX_BATCH_SIZE),
@@ -239,8 +240,7 @@ impl Erc721Consecutive {
             }
 
             let last = next + batch_size - uint!(1_U96);
-            self._sequential_ownership
-                .push(last, U160::from_be_bytes(to.into_array()))?;
+            self._sequential_ownership.push(last, to.into())?;
 
             self.erc721._increase_balance(to, U128::from(batch_size));
             evm::log(ConsecutiveTransfer {
@@ -310,10 +310,10 @@ impl Erc721Consecutive {
         // record burn
         if to == Address::ZERO // if we burn
             && token_id < U256::from(self._next_consecutive_id()) // and the tokenId was minted in a batch
-            && !self._sequentian_burn.get(token_id)
+            && !self._sequential_burn.get(token_id)
         // and the token was never marked as burnt
         {
-            self._sequentian_burn.set(token_id);
+            self._sequential_burn.set(token_id);
         }
 
         Ok(previous_owner)
@@ -840,40 +840,7 @@ mod test {
         },
     };
 
-    // TODO#q: add support for complex contracts creation for motsu
-    impl Default for Erc721Consecutive {
-        fn default() -> Self {
-            #[derive(Default)]
-            struct StorageTypeFactory {
-                root: U256,
-            }
-            impl StorageTypeFactory {
-                fn create<T: StorageType>(&mut self) -> T {
-                    let instance = unsafe { T::new(self.root, 0) };
-                    self.root += U256::from(T::SLOT_BYTES);
-                    instance
-                }
-            }
-
-            let mut factory = StorageTypeFactory::default();
-            Erc721Consecutive {
-                erc721: Erc721 {
-                    _owners: factory.create(),
-                    _balances: factory.create(),
-                    _token_approvals: factory.create(),
-                    _operator_approvals: factory.create(),
-                },
-                _sequential_ownership: Trace160 {
-                    _checkpoints: factory.create(),
-                },
-                _sequentian_burn: BitMap { _data: factory.create() },
-                _initialized: factory.create(),
-            }
-        }
-    }
-
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-    const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
 
     fn init(
         contract: &mut Erc721Consecutive,
