@@ -219,6 +219,7 @@ impl Erc721Consecutive {
     ) -> Result<U96, Error> {
         let next = self._next_consecutive_id();
 
+        // Minting a batch of size 0 is a no-op.
         if batch_size > U96::ZERO {
             if self._initialized.get() {
                 return Err(ERC721ForbiddenBatchMint {}.into());
@@ -239,10 +240,15 @@ impl Erc721Consecutive {
                 .into());
             }
 
+            // Push an ownership checkpoint & emit event.
             let last = next + batch_size - uint!(1_U96);
             self._sequential_ownership.push(last, to.into())?;
 
+            // The invariant required by this function is preserved because the
+            // new sequentialOwnership checkpoint is attributing
+            // ownership of `batchSize` new tokens to account `to`.
             self.erc721._increase_balance(to, U128::from(batch_size));
+
             evm::log(ConsecutiveTransfer {
                 fromTokenId: next.to::<U256>(),
                 toTokenId: last.to::<U256>(),
