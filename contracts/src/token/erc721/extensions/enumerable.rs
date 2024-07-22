@@ -45,7 +45,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of an Enumerable extension.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Enumerable {
         /// Maps owners to a mapping of indices to tokens ids.
         mapping(address => mapping(uint256 => uint256)) _owned_tokens;
@@ -309,6 +308,7 @@ impl Erc721Enumerable {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
+    use motsu::prelude::*;
     use stylus_sdk::msg;
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};

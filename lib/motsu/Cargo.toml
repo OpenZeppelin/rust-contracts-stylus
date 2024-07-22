@@ -11,6 +11,7 @@ version = "0.1.0"
 const-hex.workspace = true
 once_cell.workspace = true
 tiny-keccak.workspace = true
+stylus-sdk.workspace = true
 motsu-proc = { path = "../motsu-proc" }
 
 [lints]
