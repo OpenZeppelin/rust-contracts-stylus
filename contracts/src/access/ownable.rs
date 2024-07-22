@@ -89,7 +89,7 @@ impl Ownable {
     /// # Errors
     ///
     /// If `new_owner` is the zero address, then the error
-    /// [`Error::OwnableInvalidOwner`] is returned.
+    /// [`OwnableInvalidOwner`] is returned.
     pub fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -108,7 +108,7 @@ impl Ownable {
     }
 
     /// Leaves the contract without owner. It will not be possible to call
-    /// [`only_owner`] functions. Can only be called by the current owner.
+    /// [`Self::only_owner`] functions. Can only be called by the current owner.
     ///
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby disabling any functionality that is only available to the owner.
