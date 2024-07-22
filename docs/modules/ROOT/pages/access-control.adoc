@@ -46,7 +46,7 @@ Ownable also lets you:
 * https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.transfer_ownership[`transfer_ownership`] from the owner account to a new one, and
 * https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.renounce_ownership[`renounce_ownership`] for the owner to relinquish this administrative privilege, a common pattern after an initial stage with centralized administration is over.
 
-WARNING: Removing the owner altogether will mean that administrative tasks that are protected by `onlyOwner` will no longer be callable!
+WARNING: Removing the owner altogether will mean that administrative tasks that are protected by `only_owner` will no longer be callable!
 
 Note that *a contract can also be the owner of another one*! This opens the door to using, for example, a https://gnosis-safe.io[Gnosis Safe], an https://aragon.org[Aragon DAO], or a totally custom contract that _you_ create.
 
