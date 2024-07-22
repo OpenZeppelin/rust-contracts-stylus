@@ -157,6 +157,10 @@ pub fn storage_flush_cache(_: bool) {
 /// Dummy msg sender set for tests.
 pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
+/// Dummy contract address set for tests.
+pub const CONTRACT_ADDRESS: &[u8; 42] =
+    b"0xdCE82b5f92C98F27F116F70491a487EFFDb6a2a9";
+
 /// Arbitrum's CHAID ID.
 pub const CHAIN_ID: u64 = 42161;
 
@@ -183,6 +187,20 @@ pub const EOA_CODEHASH: &[u8; 66] =
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
     let addr = const_hex::const_decode_to_array::<20>(MSG_SENDER).unwrap();
     std::ptr::copy(addr.as_ptr(), sender, 20);
+}
+
+/// Gets the address of the current program. The semantics are equivalent to
+/// that of the EVM's [`ADDRESS`] opcode.
+///
+/// [`ADDRESS`]: https://www.evm.codes/#30
+/// # Panics
+///
+/// May panic if fails to parse `CONTRACT_ADDRESS` as an address.
+#[no_mangle]
+pub unsafe extern "C" fn contract_address(address: *mut u8) {
+    let addr =
+        const_hex::const_decode_to_array::<20>(CONTRACT_ADDRESS).unwrap();
+    std::ptr::copy(addr.as_ptr(), address, 20);
 }
 
 /// Gets the chain ID of the current chain. The semantics are equivalent to
