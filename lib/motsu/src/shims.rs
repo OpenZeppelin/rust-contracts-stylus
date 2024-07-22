@@ -158,7 +158,7 @@ pub fn storage_flush_cache(_: bool) {
 pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
 /// Arbitrum's CHAID ID.
-pub const CHAIN_ID: &[u8; 6] = b"0xA4B1";
+pub const CHAIN_ID: u64 = 42161;
 
 /// Externally Owned Account (EOA) code hash.
 pub const EOA_CODEHASH: &[u8; 66] =
@@ -189,14 +189,9 @@ pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
 /// that of the EVM's [`CHAINID`] opcode.
 ///
 /// [`CHAINID`]: https://www.evm.codes/#46
-///
-/// # Panics
-/// Not Enough Gas
-/// Stack Overflow
 #[no_mangle]
-pub unsafe extern "C" fn chain_id(sender: *mut u8) {
-    let addr = const_hex::const_decode_to_array::<6>(CHAIN_ID).unwrap();
-    std::ptr::copy(addr.as_ptr(), sender, 6);
+pub unsafe extern "C" fn chainid() -> u64 {
+    CHAIN_ID
 }
 
 /// Emits an EVM log with the given number of topics and data, the first bytes
