@@ -48,7 +48,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of an `Ownable` contract.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Ownable {
         /// The current owner of this contract.
         address _owner;
