@@ -17,12 +17,6 @@
 //! consecutive mint of tokens. After that, minting a token
 //! with [`Erc721Consecutive::_mint`] will be possible.
 //!
-//! IMPORTANT: This extension does not call the [`Erc721::_update`] function for
-//! tokens minted in batch. Any logic added to this function through overrides
-//! will not be triggered when token are minted in batch. You may want to also
-//! override [`Erc721Consecutive::_increase_balance`] or
-//! [`Erc721Consecutive::_mint_consecutive`] to account for these mints.
-//!
 //! IMPORTANT: When overriding [`Erc721Consecutive::_mint_consecutive`], be
 //! careful about call ordering. [`Erc721Consecutive::owner_of`] may return
 //! invalid values during the [`Erc721Consecutive::_mint_consecutive`]
