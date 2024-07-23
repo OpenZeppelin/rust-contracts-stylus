@@ -10,7 +10,7 @@ pub const DEFAULT_DECIMALS: u8 = 18;
 use crate::utils::Metadata;
 
 sol_storage! {
-    /// Metadata of the [`Erc20`] token.
+    /// Metadata of the [`super::super::Erc20`] token.
     ///
     /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
     pub struct Erc20Metadata {
@@ -51,7 +51,8 @@ pub trait IErc20Metadata {
     ///
     /// NOTE: This information is only used for *display* purposes: in
     /// no way it affects any of the arithmetic of the contract, including
-    /// [`Erc20::balance_of`] and [`Erc20::transfer`].
+    /// [`super::super::IErc20::balance_of`] and
+    /// [`super::super::IErc20::transfer`].
     fn decimals(&self) -> u8;
 }
 

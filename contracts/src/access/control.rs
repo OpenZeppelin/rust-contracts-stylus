@@ -21,8 +21,8 @@
 //!
 //! ```rust,ignore
 //! pub fn foo() {
-//!   assert!(self.has_role(MY_ROLE.into(), msg::sender());
-//!   ...
+//!   assert!(self.has_role(MY_ROLE.into(), msg::sender()));
+//!   // ...
 //! }
 //! ```
 //!
@@ -42,7 +42,7 @@
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
 //!
-//! [enumerable ext]: TBD
+//! [enumerable ext]: ./TODO
 use alloy_primitives::{Address, B256};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
@@ -153,7 +153,7 @@ impl AccessControl {
     /// Returns the admin role that controls `role`. See [`Self::grant_role`]
     /// and [`Self::revoke_role`].
     ///
-    /// To change a role's admin, use [`Self::set_role_admin`].
+    /// To change a role's admin, use [`Self::_set_role_admin`].
     ///
     /// # Arguments
     ///

@@ -1,8 +1,8 @@
 //! This module deals with verification of Merkle Tree proofs.
 //!
-//! The tree and the proofs can be generated using `OpenZeppelin`'s [merkle
-//! tree library][https://github.com/OpenZeppelin/merkle-tree]. You will find a
-//! quickstart guide in its README.
+//! The tree and the proofs can be generated using `OpenZeppelin`'s
+//! [merkle tree library](https://github.com/OpenZeppelin/merkle-tree). You will
+//! find a quickstart guide in its README.
 //!
 //! WARNING: You should avoid using leaf values that are 64 bytes long
 //! prior to hashing, or use a hash function other than keccak256 for
