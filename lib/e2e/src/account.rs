@@ -56,6 +56,16 @@ impl Account {
     pub async fn sign_hash(&self, hash: &B256) -> Signature {
         self.signer.sign_hash(hash).await.expect("should sign a hash")
     }
+
+    /// Sign the given message.
+    ///
+    /// # Panics
+    ///
+    /// May fail when the method is not implemented for `Signer`. Should not
+    /// happen.
+    pub async fn sign_message(&self, message: &[u8]) -> Signature {
+        self.signer.sign_message(message).await.expect("should sign a message")
+    }
 }
 
 /// A unit struct used as a synchronization mechanism in

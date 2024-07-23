@@ -2,11 +2,11 @@
 
 use abi::Crypto;
 use alloy::{
-    primitives::{fixed_bytes, keccak256, Address, FixedBytes},
+    primitives::{eip191_hash_message, fixed_bytes, Address, FixedBytes, B256},
     sol,
     sol_types::SolConstructor,
 };
-use e2e::Account;
+use e2e::{Account, Revert};
 use eyre::Result;
 
 mod abi;
@@ -19,6 +19,10 @@ async fn deploy(account: &Account) -> eyre::Result<Address> {
     e2e::deploy(account.url(), &account.pk(), Some(args)).await
 }
 
+fn hash(message: &[u8]) -> B256 {
+    eip191_hash_message(message)
+}
+
 // ============================================================================
 // Integration Tests: ECDSA
 // ============================================================================
@@ -26,22 +30,46 @@ async fn deploy(account: &Account) -> eyre::Result<Address> {
 const MESSAGE: FixedBytes<4> = fixed_bytes!("deadbeef");
 
 #[e2e::test]
-async fn recovers(alice: Account) -> Result<()> {
+async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
     let contract_addr = deploy(&alice).await?;
     let contract = Crypto::new(contract_addr, &alice.wallet);
 
-    let hash = keccak256(*MESSAGE);
+    let hash = hash(&*MESSAGE);
     let signature = alice.sign_hash(&hash).await;
+
+    let recovered =
+        signature.recover_address_from_msg(MESSAGE).expect("should recover");
+    assert_eq!(recovered, alice.address());
 
     let Crypto::recover_2Return { recovered } = contract
         .recover_2(
             hash,
-            signature.v().y_parity_byte(),
+            signature.v().to_u64() as u8,
             signature.r().into(),
             signature.s().into(),
         )
         .call()
         .await?;
+
+    assert_eq!(alice.address(), recovered);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn recovers_from_signature(alice: Account) -> Result<()> {
+    let contract_addr = deploy(&alice).await?;
+    let contract = Crypto::new(contract_addr, &alice.wallet);
+
+    let hash = hash(&*MESSAGE);
+    let signature = alice.sign_hash(&hash).await;
+
+    let recovered =
+        signature.recover_address_from_msg(MESSAGE).expect("should recover");
+    assert_eq!(recovered, alice.address());
+
+    let Crypto::recover_0Return { recovered } =
+        contract.recover_0(hash, signature.as_bytes().into()).call().await?;
 
     assert_eq!(alice.address(), recovered);
 

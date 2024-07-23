@@ -7,12 +7,9 @@ use alloc::vec::Vec;
 use alloy_primitives::{
     address, fixed_bytes, uint, Address, Bytes, FixedBytes, U256,
 };
-use alloy_sol_types::{sol, SolType};
+use alloy_sol_types::sol;
 use stylus_proc::{sol_interface, SolidityError};
-use stylus_sdk::{
-    call::{self, Call},
-    storage::TopLevelStorage,
-};
+use stylus_sdk::{call::Call, storage::TopLevelStorage};
 
 const SIGNATURE_LENGTH: usize = 65;
 
