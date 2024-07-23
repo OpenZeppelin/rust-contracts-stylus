@@ -409,12 +409,14 @@ impl Erc721Consecutive {
             return Err(ERC721ForbiddenMint {}.into());
         }
 
-        // record burn.
-        if to == Address::ZERO // if we burn.
-            && token_id < U256::from(self._next_consecutive_id()) // and the tokenId was minted in a batch.
+        // if we burn.
+        if to == Address::ZERO
+            // and the tokenId was minted in a batch.
+            && token_id < U256::from(self._next_consecutive_id())
+            // and the token was never marked as burnt.
             && !self._sequential_burn.get(token_id)
-        // and the token was never marked as burnt.
         {
+            // record burn.
             self._sequential_burn.set(token_id);
         }
 
