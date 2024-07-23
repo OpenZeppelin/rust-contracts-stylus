@@ -163,7 +163,7 @@ impl Erc721Consecutive {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     pub fn _owner_of_inner(&self, token_id: U256) -> Address {
-        let owner = self.__owner_of_inner(token_id);
+        let owner = self.erc721._owner_of_inner(token_id);
         // If token is owned by the core, or beyond consecutive range, return
         // base value.
         if owner != Address::ZERO
@@ -437,20 +437,6 @@ impl IErc721 for Erc721Consecutive {
 
 // ERC-721 related implementation:
 impl Erc721Consecutive {
-    /// Returns the owner of the `token_id`. Does NOT revert if the token
-    /// doesn't exist.
-    ///
-    /// IMPORTANT: Any overrides to this function that add ownership of tokens
-    /// not tracked by the core [`Erc721`] logic MUST be matched with the use
-    /// of [`Self::_increase_balance`] to keep balances consistent with
-    /// ownership. The invariant to preserve is that for any address `a` the
-    /// value returned by `balance_of(a)` must be equal to the number of
-    /// tokens such that `owner_of_inner(token_id)` is `a`.
-    #[must_use]
-    fn __owner_of_inner(&self, token_id: U256) -> Address {
-        self.erc721._owners.get(token_id)
-    }
-
     /// Transfers `token_id` from its current owner to `to`, or alternatively
     /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
     /// Returns the owner of the `token_id` before the update.
