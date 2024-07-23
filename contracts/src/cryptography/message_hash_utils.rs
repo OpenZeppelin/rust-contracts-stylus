@@ -1,9 +1,11 @@
 //! Signature message hash utilities for producing digests to be consumed by
-//! {ECDSA} recovery or signing.
+//! `ECDSA` recovery or signing.
 //!
 //! The library provides methods for generating a hash of a message that
-//! conforms to the https://eips.ethereum.org/EIPS/eip-191[ERC-191] and https://eips.ethereum.org/EIPS/eip-712[EIP 712]
-//! specifications.
+//! conforms to the [ERC-191] and [EIP 712] specifications.
+//!
+//! [ERC-191]: https://eips.ethereum.org/EIPS/eip-191
+//! [EIP-712]: https://eips.ethereum.org/EIPS/eip-712
 
 use alloc::string::String;
 
@@ -18,16 +20,18 @@ type TypeHashCoder = sol! {
     tuple(string, bytes32, bytes32)
 };
 
-/// Returns the keccak256 digest of an ERC-191 signed data with version
-/// `0x45` (`personal_sign` messages).
+/// Returns the keccak256 digest of an ERC-191 signed data with version `0x45`
+/// (`personal_sign` messages).
 ///
 /// The digest is calculated by prefixing a bytes32 `message_hash` with
 /// `"\x19Ethereum Signed Message:\n32"` and hashing the result. It corresponds
-/// with the hash signed when using the [eth_sign](https://eth.wiki/json-rpc/API#eth_sign) JSON-RPC method.
+/// with the hash signed when using the [eth_sign] JSON-RPC method.
 ///
 /// NOTE: The `message_hash` parameter is intended to be the result of hashing a
 /// raw message with keccak256, although any bytes32 value can be safely used
 /// because the final digest will be re-hashed.
+///
+/// [eth_sign]: https://eth.wiki/json-rpc/API#eth_sign
 pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
     // "\x19Ethereum Signed Message:\n32" in bytes
     let prefix =
@@ -42,7 +46,9 @@ pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
 ///
 /// The digest is calculated from a `domain_separator` and a `struct_hash`, by
 /// prefixing them with `\x19\x01` and hashing the result. It corresponds to the
-/// hash signed by the [eth_signTypedData](https://eips.ethereum.org/EIPS/eip-712) JSON-RPC method as part of EIP-712.
+/// hash signed by the [eth_signTypedData] JSON-RPC method as part of EIP-712.
+///
+/// [eth_signTypedData]: https://eips.ethereum.org/EIPS/eip-712
 pub fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
     let encoded = TypeHashCoder::encode_packed(&(
         String::from("\x19\x01"),
@@ -60,7 +66,7 @@ mod tests {
 
     #[test]
     fn test_to_eth_signed_message_hash() {
-        // bytes32("stylus"");
+        // bytes32("stylus");
         let message_hash = b256!(
             "7379746c75730000000000000000000000000000000000000000000000000000"
         );
