@@ -144,6 +144,7 @@ impl MethodError for checkpoints::Error {
 }
 
 // ************** ERC-721 External **************
+
 #[external]
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
@@ -247,6 +248,7 @@ pub const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
 pub const FIRST_CONSECUTIVE_ID: U96 = uint!(0_U96);
 
 // ************** Consecutive **************
+
 impl Erc721Consecutive {
     /// Override of [`Erc721::_owner_of_inner`] that checks the sequential
     /// ownership structure for tokens that have been minted as part of a
@@ -439,6 +441,7 @@ impl Erc721Consecutive {
 }
 
 // ************** ERC-721 Internal **************
+
 impl Erc721Consecutive {
     /// Transfers `token_id` from its current owner to `to`, or alternatively
     /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
