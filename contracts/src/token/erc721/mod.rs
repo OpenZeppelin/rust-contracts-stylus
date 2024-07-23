@@ -167,7 +167,6 @@ sol_interface! {
 
 sol_storage! {
     /// State of an [`Erc721`] token.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721 {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;

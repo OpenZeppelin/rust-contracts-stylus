@@ -2393,6 +2393,7 @@ dependencies = [
  "const-hex",
  "motsu-proc",
  "once_cell",
+ "stylus-sdk",
  "tiny-keccak",
 ]
 

@@ -24,7 +24,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of a Nonces Contract.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Nonces {
         /// Mapping from address to its nonce.
         mapping(address => uint256) _nonces;

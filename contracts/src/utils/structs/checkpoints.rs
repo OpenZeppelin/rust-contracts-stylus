@@ -31,7 +31,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of the checkpoint library contract.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Trace160 {
         /// Stores checkpoints in a dynamic array sorted by key.
         Checkpoint160[] _checkpoints;
