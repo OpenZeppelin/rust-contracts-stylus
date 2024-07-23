@@ -21,11 +21,12 @@ pub async fn deploy(
     let pkg = Crate::new()?;
     let sol_path = pkg.manifest_dir.join("src/constructor.sol");
     let wasm_path = pkg.wasm;
+    let has_constructor = args.is_some();
 
     let config = Deploy {
         generate_config: koba::config::Generate {
             wasm: wasm_path.clone(),
-            sol: Some(sol_path),
+            sol: if has_constructor { Some(sol_path) } else { None },
             args,
             legacy: false,
         },
