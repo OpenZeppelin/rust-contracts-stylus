@@ -58,8 +58,7 @@ use crate::{
 };
 
 sol_storage! {
-    /// State of an [`Erc72Erc721Consecutive`] token.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
+    /// State of an [`Erc721Consecutive`] token.
     pub struct Erc721Consecutive {
         /// Erc721 contract storage.
         Erc721 erc721;
@@ -73,17 +72,17 @@ sol_storage! {
 }
 
 sol! {
-    /// Emitted when the tokens from `fromTokenId` to `toTokenId` are transferred from `fromAddress` to `toAddress`.
+    /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
     ///
-    /// * `fromTokenId` - First token being transferred.
-    /// * `toTokenId` - Last token being transferred.
-    /// * `fromAddress` - Address from which tokens will be transferred.
-    /// * `toAddress` - Address where the tokens will be transferred to.
+    /// * `from_token_id` - First token being transferred.
+    /// * `to_token_id` - Last token being transferred.
+    /// * `from_address` - Address from which tokens will be transferred.
+    /// * `to_address` - Address where the tokens will be transferred to.
     event ConsecutiveTransfer(
-        uint256 indexed fromTokenId,
-        uint256 toTokenId,
-        address indexed fromAddress,
-        address indexed toAddress
+        uint256 indexed from_token_id,
+        uint256 to_token_id,
+        address indexed from_address,
+        address indexed to_address
     );
 }
 
@@ -111,11 +110,12 @@ sol! {
     error ERC721ForbiddenBatchBurn();
 }
 
+/// An [`Erc721Consecutive`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from erc721 contract [`erc721::Error`]
+    /// Error type from [`Erc721`] contract [`erc721::Error`].
     Erc721(erc721::Error),
-    /// Error type from checkpoint contract [`checkpoints::Error`]
+    /// Error type from checkpoint contract [`checkpoints::Error`].
     Checkpoints(checkpoints::Error),
     /// Batch mint is restricted to the constructor.
     /// Any batch mint not emitting the [`IERC721::Transfer`] event outside of
@@ -149,7 +149,7 @@ impl MethodError for checkpoints::Error {
 pub const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
 
 /// Used to offset the first token id in
-/// [`Erc721Consecutive::_next_consecutive_id`]
+/// [`Erc721Consecutive::_next_consecutive_id`].
 pub const FIRST_CONSECUTIVE_ID: U96 = uint!(0_U96);
 
 /// Consecutive extension related implementation:
@@ -165,7 +165,7 @@ impl Erc721Consecutive {
     pub fn _owner_of_inner(&self, token_id: U256) -> Address {
         let owner = self.__owner_of_inner(token_id);
         // If token is owned by the core, or beyond consecutive range, return
-        // base value
+        // base value.
         if owner != Address::ZERO
             || token_id < U256::from(FIRST_CONSECUTIVE_ID)
             || token_id > U256::from(U96::MAX)
@@ -206,9 +206,9 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If to is [`Address::ZERO`] error [`rc721::Error::InvalidReceiver`] is
-    /// returned.
-    /// If batch size exceeds [`MAX_BATCH_SIZE`] error
+    /// If `to` is [`Address::ZERO`], then the error
+    /// [`rc721::Error::InvalidReceiver`] is returned.
+    /// If `batch_size` exceeds [`MAX_BATCH_SIZE`], then the error
     /// [`Error::ERC721ExceededMaxBatchMint`] is returned.
     ///
     /// # Events
@@ -248,14 +248,14 @@ impl Erc721Consecutive {
 
             // The invariant required by this function is preserved because the
             // new sequentialOwnership checkpoint is attributing
-            // ownership of `batchSize` new tokens to account `to`.
+            // ownership of `batch_size` new tokens to account `to`.
             self.erc721._increase_balance(to, U128::from(batch_size));
 
             evm::log(ConsecutiveTransfer {
-                fromTokenId: next.to::<U256>(),
-                toTokenId: last.to::<U256>(),
-                fromAddress: Address::ZERO,
-                toAddress: to,
+                from_token_id: next.to::<U256>(),
+                to_token_id: last.to::<U256>(),
+                from_address: Address::ZERO,
+                to_address: to,
             });
         };
         Ok(next)
@@ -310,16 +310,16 @@ impl Erc721Consecutive {
     ) -> Result<Address, Error> {
         let previous_owner = self.__update(to, token_id, auth)?;
 
-        // only mint after construction
+        // only mint after construction.
         if previous_owner == Address::ZERO && !self._initialized.get() {
             return Err(ERC721ForbiddenMint {}.into());
         }
 
-        // record burn
-        if to == Address::ZERO // if we burn
-            && token_id < U256::from(self._next_consecutive_id()) // and the tokenId was minted in a batch
+        // record burn.
+        if to == Address::ZERO // if we burn.
+            && token_id < U256::from(self._next_consecutive_id()) // and the tokenId was minted in a batch.
             && !self._sequential_burn.get(token_id)
-        // and the token was never marked as burnt
+        // and the token was never marked as burnt.
         {
             self._sequential_burn.set(token_id);
         }
@@ -435,7 +435,7 @@ impl IErc721 for Erc721Consecutive {
     }
 }
 
-// erc721 related implementation:
+// ERC-721 related implementation:
 impl Erc721Consecutive {
     /// Returns the owner of the `token_id`. Does NOT revert if the token
     /// doesn't exist.
@@ -826,7 +826,7 @@ impl Erc721Consecutive {
 }
 
 #[cfg(all(test, feature = "std"))]
-mod test {
+mod tests {
     use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::{msg, prelude::StorageType};
 
@@ -884,7 +884,7 @@ mod test {
             .expect("should return the balance of Alice");
         assert_eq!(balance1, initial_balance + U256::from(init_tokens_count));
 
-        // Check non-consecutive mint
+        // Check non-consecutive mint.
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token for Alice");
         let owner = contract
@@ -949,7 +949,7 @@ mod test {
         let alice = msg::sender();
         let bob = BOB;
 
-        // Mint batches of 1000 tokens to Alice and Bob
+        // Mint batches of 1000 tokens to Alice and Bob.
         let [first_consecutive_token_id, _] = init(
             contract,
             vec![alice, bob],
@@ -958,7 +958,7 @@ mod test {
         .try_into()
         .expect("should have two elements in return vec");
 
-        // Transfer first consecutive token from Alice to Bob
+        // Transfer first consecutive token from Alice to Bob.
         contract
             .transfer_from(alice, bob, U256::from(first_consecutive_token_id))
             .expect("should transfer a token from Alice to Bob");
@@ -968,7 +968,7 @@ mod test {
             .expect("token should be owned");
         assert_eq!(owner, bob);
 
-        // Check that balances changed
+        // Check that balances changed.
         let alice_balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
@@ -985,7 +985,7 @@ mod test {
             .expect("should return the balance of Alice");
         assert_eq!(alice_balance, uint!(1000_U256));
 
-        // Check transfer of the token that wasn't minted consecutive
+        // Check transfer of the token that wasn't minted consecutive.
         contract
             .transfer_from(alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
@@ -999,13 +999,13 @@ mod test {
     fn burns(contract: Erc721Consecutive) {
         let alice = msg::sender();
 
-        // Mint batch of 1000 tokens to Alice
+        // Mint batch of 1000 tokens to Alice.
         let [first_consecutive_token_id] =
             init(contract, vec![alice], vec![uint!(1000_U96)])
                 .try_into()
                 .expect("should have two elements in return vec");
 
-        // Check consecutive token burn
+        // Check consecutive token burn.
         contract
             ._burn(U256::from(first_consecutive_token_id))
             .expect("should burn token");
@@ -1025,7 +1025,7 @@ mod test {
             if token_id == U256::from(first_consecutive_token_id)
         ));
 
-        // Check non-consecutive token burn
+        // Check non-consecutive token burn.
         let non_consecutive_token_id = random_token_id();
         contract
             ._mint(alice, non_consecutive_token_id)
