@@ -852,7 +852,7 @@ impl Erc721 {
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// [`Error::NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then  the error
     /// [`Error::IncorrectOwner`] is returned.
     ///
@@ -916,7 +916,7 @@ impl Erc721 {
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// [`Error::NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then the error
     /// [`Error::IncorrectOwner`] is returned.
     ///
