@@ -219,6 +219,31 @@ pub trait IErc20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Error>;
+
+    /// Sets a `value` number of tokens as the allowance of `spender` over the
+    /// caller's tokens.
+    ///
+    /// Returns a boolean value indicating whether the operation succeeded.
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `owner` - Account that owns the tokens.
+    /// * `spender` - Account that will spend the tokens.
+    ///
+    /// # Errors
+    ///
+    /// If the `spender` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSpender`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`Approval`] event.
+    fn _approve(
+        &mut self,
+        owner: Address,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Error>;
 }
 
 #[external]
@@ -247,15 +272,7 @@ impl IErc20 for Erc20 {
         value: U256,
     ) -> Result<bool, Error> {
         let owner = msg::sender();
-        if spender.is_zero() {
-            return Err(Error::InvalidSpender(ERC20InvalidSpender {
-                spender: Address::ZERO,
-            }));
-        }
-
-        self._allowances.setter(owner).insert(spender, value);
-        evm::log(Approval { owner, spender, value });
-        Ok(true)
+        self._approve(owner, spender, value)
     }
 
     fn transfer_from(
@@ -267,6 +284,23 @@ impl IErc20 for Erc20 {
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
+        Ok(true)
+    }
+
+    fn _approve(
+        &mut self,
+        owner: Address,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Error> {
+        if spender.is_zero() {
+            return Err(Error::InvalidSpender(ERC20InvalidSpender {
+                spender: Address::ZERO,
+            }));
+        }
+
+        self._allowances.setter(owner).insert(spender, value);
+        evm::log(Approval { owner, spender, value });
         Ok(true)
     }
 }

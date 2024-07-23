@@ -2,6 +2,7 @@
 pub mod burnable;
 pub mod capped;
 pub mod metadata;
+pub mod permit;
 
 pub use burnable::IErc20Burnable;
 pub use capped::Capped;
