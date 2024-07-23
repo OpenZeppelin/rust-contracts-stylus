@@ -20,12 +20,12 @@
 //! IMPORTANT: This extension does not call the [`Erc721::_update`] function for
 //! tokens minted in batch. Any logic added to this function through overrides
 //! will not be triggered when token are minted in batch. You may want to also
-//! override [`Erc721Consecutive::_increaseBalance`] or
-//! [`Erc721Consecutive::_mintConsecutive`] to account for these mints.
+//! override [`Erc721Consecutive::_increase_balance`] or
+//! [`Erc721Consecutive::_mint_consecutive`] to account for these mints.
 //!
-//! IMPORTANT: When overriding [`Erc721Consecutive::_mintConsecutive`], be
+//! IMPORTANT: When overriding [`Erc721Consecutive::_mint_consecutive`], be
 //! careful about call ordering. [`Erc721Consecutive::owner_of`] may return
-//! invalid values during the [`Erc721Consecutive::_mintConsecutive`]
+//! invalid values during the [`Erc721Consecutive::_mint_consecutive`]
 //! execution if the super call is not called first. To be safe, execute the
 //! super call before your custom logic.
 
@@ -88,7 +88,7 @@ sol! {
 
 sol! {
     /// Batch mint is restricted to the constructor.
-    /// Any batch mint not emitting the [`IERC721::Transfer`] event outside of the constructor
+    /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
     /// is non ERC-721 compliant.
     #[derive(Debug)]
     #[allow(missing_docs)]
@@ -118,7 +118,7 @@ pub enum Error {
     /// Error type from checkpoint contract [`checkpoints::Error`].
     Checkpoints(checkpoints::Error),
     /// Batch mint is restricted to the constructor.
-    /// Any batch mint not emitting the [`IERC721::Transfer`] event outside of
+    /// Any batch mint not emitting the [`Transfer`] event outside of
     /// the constructor is non ERC-721 compliant.
     ForbiddenBatchMint(ERC721ForbiddenBatchMint),
     /// Exceeds the max amount of mints per batch.
