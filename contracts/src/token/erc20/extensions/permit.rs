@@ -75,6 +75,7 @@ impl Permit {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[selector(name = "DOMAIN_SEPARATOR")]
     #[must_use]
     pub fn domain_separator(&self) -> B256 {
         unimplemented!()
