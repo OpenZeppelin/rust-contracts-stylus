@@ -58,6 +58,10 @@ sol_storage! {
 impl Eip712 {
     /// Returns the fields and values that describe the domain separator used by
     /// this contract for EIP-712 signature.
+    /// 
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn eip712_domain(
         &self,
     ) -> (FixedBytes<1>, String, String, u64, Address, B256, Vec<U256>) {
@@ -75,6 +79,10 @@ impl Eip712 {
 
 impl Eip712 {
     /// Returns the domain separator for the current chain [not using cache].
+    /// 
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn build_domain_separator(&self) -> B256 {
         let encoded = DomainSeparatorTuple::encode_params(&(
             *TYPE_HASH,
@@ -88,6 +96,10 @@ impl Eip712 {
 
     /// Returns the domain separator for the current chain.
     /// This function employs a cache to avoid recomputing the domain separator.
+    /// 
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn domain_separator_v4(&self) -> B256 {
         let this = contract::address();
         let cached_this = self._cached_this.get();
@@ -105,17 +117,29 @@ impl Eip712 {
     /// fully encoded EIP-721 message for this domain.
     ///
     /// [hashed struct]: https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct
+    /// 
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn hash_typed_data_v4(&self, _hash_struct: B256) -> B256 {
         let _domain_separator = self.domain_separator_v4();
         to_typed_data_hash(_domain_separator, _hash_struct)
     }
 
     /// The name parameter for the EIP-721 domain.
+    /// 
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn eip712_name(&self) -> String {
         self._name.get_string()
     }
 
     /// The version parameter for the EIP-721 domain.
+    /// 
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn eip712_version(&self) -> String {
         self._version.get_string()
     }
