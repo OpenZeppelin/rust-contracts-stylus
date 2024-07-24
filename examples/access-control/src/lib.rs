@@ -22,14 +22,13 @@ sol_storage! {
 
 // `keccak256("TRANSFER_ROLE")`
 pub const TRANSFER_ROLE: [u8; 32] = [
-    133, 2, 35, 48, 150, 217, 9, 190, 251, 218, 9, 153, 187, 142, 162, 243,
-    166, 190, 60, 19, 139, 159, 191, 0, 55, 82, 164, 200, 188, 232, 111, 108,
+    60, 17, 209, 108, 186, 255, 208, 29, 246, 156, 225, 196, 4, 246, 52, 14,
+    224, 87, 73, 143, 95, 0, 36, 97, 144, 234, 84, 34, 5, 118, 168, 72,
 ];
 
 #[external]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
-    // `keccak256("TRANSFER_ROLE")`
     pub const TRANSFER_ROLE: [u8; 32] = TRANSFER_ROLE;
 
     pub fn make_admin(&mut self, account: Address) -> Result<(), Vec<u8>> {
