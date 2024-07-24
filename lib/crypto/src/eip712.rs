@@ -25,10 +25,10 @@ use super::message_hash_utils::to_typed_data_hash;
 
 /// `keccak256("EIP712Domain(string name,string version,uint256 chainId,address
 /// verifyingContract)");`
-pub const TYPE_HASH: B256 =
-    b256!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
-pub const FIELDS: FixedBytes<1> = fixed_bytes!("15");
-pub const SALT: B256 = B256::ZERO;
+pub const TYPE_HASH: [u8; 32] =
+    hex!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
+pub const FIELDS: [u8; 1] = hex!("0f");
+pub const SALT: [u8; 32] = [0u8; 32];
 
 pub type DomainSeparatorTuple = sol! {
     tuple(bytes32, bytes32, bytes32, uint256, address)
@@ -149,28 +149,27 @@ impl Eip712 {
 mod tests {
     use super::*;
 
+    const NAME: &str = "EIP712";
+    const VERSION: &str = "1";
+
     #[motsu::test]
     fn test_eip712_name(contract: Eip712) {
-        let name = "EIP712";
-        contract._name.set_str(name);
+        contract._name.set_str(NAME);
 
-        assert_eq!(contract.eip712_name(), name);
+        assert_eq!(contract.eip712_name(), NAME);
     }
 
     #[motsu::test]
     fn test_eip712_version(contract: Eip712) {
-        let version = "1";
-        contract._version.set_str(version);
+        contract._version.set_str(VERSION);
 
-        assert_eq!(contract.eip712_version(), version);
+        assert_eq!(contract.eip712_version(), VERSION);
     }
 
     #[motsu::test]
     fn test_eip712_domain(contract: Eip712) {
-        let name = "EIP712";
-        let version = "1";
-        contract._name.set_str(name);
-        contract._version.set_str(version);
+        contract._name.set_str(NAME);
+        contract._version.set_str(VERSION);
 
         let chain_id = block::chainid();
         let verifying_contract = contract::address();
@@ -188,8 +187,8 @@ mod tests {
             contract.eip712_domain(),
             (
                 FIELDS,
-                name.to_string(),
-                version.to_string(),
+                NAME.to_string(),
+                VERSION.to_string(),
                 chain_id,
                 verifying_contract,
                 SALT,
@@ -200,10 +199,8 @@ mod tests {
 
     #[motsu::test]
     fn test_build_domain_separator(contract: Eip712) {
-        let name = "EIP712";
-        let version = "1";
-        contract._name.set_str(name);
-        contract._version.set_str(version);
+        contract._name.set_str(NAME);
+        contract._version.set_str(VERSION);
 
         let chain_id = block::chainid();
         let verifying_contract = contract::address();
@@ -224,10 +221,8 @@ mod tests {
 
     #[motsu::test]
     fn test_domain_separator_v4(contract: Eip712) {
-        let name = "EIP712";
-        let version = "1";
-        contract._name.set_str(name);
-        contract._version.set_str(version);
+        contract._name.set_str(NAME);
+        contract._version.set_str(VERSION);
 
         let chain_id = block::chainid();
         let verifying_contract = contract::address();
@@ -245,10 +240,8 @@ mod tests {
 
     #[motsu::test]
     fn test_hash_typed_data_v4(contract: Eip712) {
-        let name = "EIP712";
-        let version = "1";
-        contract._name.set_str(name);
-        contract._version.set_str(version);
+        contract._name.set_str(NAME);
+        contract._version.set_str(VERSION);
 
         let chain_id = block::chainid();
         let verifying_contract = contract::address();

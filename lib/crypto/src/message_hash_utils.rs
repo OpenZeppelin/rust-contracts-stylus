@@ -8,17 +8,13 @@
 //! [EIP-712]: https://eips.ethereum.org/EIPS/eip-712
 
 use alloc::string::String;
-
-use alloy_primitives::{bytes, keccak256, B256};
+use alloy_primitives::{keccak256, B256};
 use alloy_sol_types::{sol, SolType};
+use hex_literal::hex;
 
-type EthMessageCoder = sol! {
-    tuple(bytes, bytes32)
-};
-
-type TypeHashCoder = sol! {
-    tuple(string, bytes32, bytes32)
-};
+/// "\x19Ethereum Signed Message:\n32" in bytes
+const ETH_MESSAGE_PREFIX: [u8; 28] =
+    hex!("19457468657265756d205369676e6564204d6573736167653a0a3332");
 
 /// Returns the keccak256 digest of an ERC-191 signed data with version `0x45`
 /// (`personal_sign` messages).
@@ -33,11 +29,14 @@ type TypeHashCoder = sol! {
 ///
 /// [eth_sign]: https://eth.wiki/json-rpc/API#eth_sign
 pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
-    // "\x19Ethereum Signed Message:\n32" in bytes
-    let prefix =
-        bytes!("19457468657265756d205369676e6564204d6573736167653a0a3332");
-    let encoded =
-        EthMessageCoder::encode_packed(&(prefix.to_vec(), *message_hash));
+    type EthMessageCoder = sol! {
+        tuple(bytes, bytes32)
+    };
+
+    let encoded = EthMessageCoder::encode_packed(&(
+        ETH_MESSAGE_PREFIX.to_vec(),
+        *message_hash,
+    ));
     keccak256(encoded)
 }
 
@@ -50,6 +49,10 @@ pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
 ///
 /// [eth_signTypedData]: https://eips.ethereum.org/EIPS/eip-712
 pub fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
+    type TypeHashCoder = sol! {
+        tuple(string, bytes32, bytes32)
+    };
+
     let encoded = TypeHashCoder::encode_packed(&(
         String::from("\x19\x01"),
         *domain_separator,

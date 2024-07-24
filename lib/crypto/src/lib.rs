@@ -4,6 +4,7 @@ extern crate alloc;
 
 pub mod hash;
 pub mod merkle;
+pub mod message_hash_utils;
 
 pub mod keccak;
 pub use keccak::KeccakBuilder;
