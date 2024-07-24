@@ -78,9 +78,11 @@ mod tests {
 
     #[test]
     fn test_to_typed_data_hash() {
+        // TYPE_HASH
         let domain_separator = b256!(
             "8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f"
         );
+        // bytes32("stylus");
         let struct_hash = b256!(
             "7379746c75730000000000000000000000000000000000000000000000000000"
         );

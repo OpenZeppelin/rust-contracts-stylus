@@ -58,7 +58,7 @@ sol_storage! {
 impl Eip712 {
     /// Returns the fields and values that describe the domain separator used by
     /// this contract for EIP-712 signature.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -79,7 +79,7 @@ impl Eip712 {
 
 impl Eip712 {
     /// Returns the domain separator for the current chain [not using cache].
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -96,7 +96,7 @@ impl Eip712 {
 
     /// Returns the domain separator for the current chain.
     /// This function employs a cache to avoid recomputing the domain separator.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -117,7 +117,7 @@ impl Eip712 {
     /// fully encoded EIP-721 message for this domain.
     ///
     /// [hashed struct]: https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -127,7 +127,7 @@ impl Eip712 {
     }
 
     /// The name parameter for the EIP-721 domain.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -136,7 +136,7 @@ impl Eip712 {
     }
 
     /// The version parameter for the EIP-721 domain.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
