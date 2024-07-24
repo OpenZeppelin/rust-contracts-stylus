@@ -285,7 +285,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     ///
     /// Requirements:
     ///
-    /// - `batchSize` must not be greater than [`Params::MAX_BATCH_SIZE`].
+    /// - `batchSize` must not be greater than [`Erc721ConsecutiveParams::MAX_BATCH_SIZE`].
     /// - The function is called in the constructor of the contract (directly or
     ///   indirectly).
     ///
@@ -304,7 +304,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     ///
     /// If `to` is [`Address::ZERO`], then the error
     /// [`erc721::Error::InvalidReceiver`] is returned.
-    /// If `batch_size` exceeds [`Params::MAX_BATCH_SIZE`], then the error
+    /// If `batch_size` exceeds [`Erc721ConsecutiveParams::MAX_BATCH_SIZE`], then the error
     /// [`Error::ExceededMaxBatchMint`] is returned.
     ///
     /// # Events
@@ -426,7 +426,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     }
 
     /// Returns the next tokenId to mint using [`Self::_mint_consecutive`]. It
-    /// will return [`Params::FIRST_CONSECUTIVE_ID`] if no consecutive tokenId
+    /// will return [`Erc721ConsecutiveParams::FIRST_CONSECUTIVE_ID`] if no consecutive tokenId
     /// has been minted before.
     ///
     /// # Arguments
