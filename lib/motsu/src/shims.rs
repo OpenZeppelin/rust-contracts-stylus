@@ -193,6 +193,7 @@ pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
 /// that of the EVM's [`ADDRESS`] opcode.
 ///
 /// [`ADDRESS`]: https://www.evm.codes/#30
+///
 /// # Panics
 ///
 /// May panic if fails to parse `CONTRACT_ADDRESS` as an address.
