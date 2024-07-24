@@ -3,9 +3,8 @@
 use alloy::primitives::{Address, U256};
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Revert};
-use openzeppelin_stylus::token::erc721::extensions::consecutive::{
-    FIRST_CONSECUTIVE_ID, MAX_BATCH_SIZE,
-};
+use erc721_consecutive_example::Params;
+use openzeppelin_stylus::token::erc721::extensions::consecutive::Erc721ConsecutiveParams;
 
 use crate::abi::Erc721;
 
@@ -45,7 +44,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     let batch_size = uint!(10_U256);
     let receipt =
         receipt!(contract.init(vec![alice.address()], vec![batch_size]))?;
-    let from_token_id = U256::from(FIRST_CONSECUTIVE_ID);
+    let from_token_id = U256::from(Params::FIRST_CONSECUTIVE_ID);
     let to_token_id = from_token_id + batch_size - uint!(1_U256);
     assert!(receipt.emits(Erc721::ConsecutiveTransfer {
         fromTokenId: from_token_id,
@@ -101,13 +100,13 @@ async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let batch_size = U256::from(MAX_BATCH_SIZE + uint!(1_U96));
+    let batch_size = U256::from(Params::MAX_BATCH_SIZE + uint!(1_U96));
     let err = send!(contract.init(vec![alice.address()], vec![batch_size]))
         .expect_err("should not mint consecutive");
 
     assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
         batchSize: U256::from(batch_size),
-        maxBatch: U256::from(MAX_BATCH_SIZE),
+        maxBatch: U256::from(Params::MAX_BATCH_SIZE),
     }));
     Ok(())
 }
@@ -122,7 +121,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
         vec![alice.address(), bob.address()],
         vec![uint!(1000_U256), uint!(1000_U256)]
     ))?;
-    let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
+    let first_consecutive_token_id = U256::from(Params::FIRST_CONSECUTIVE_ID);
 
     // Transfer first consecutive token from Alice to Bob
     let _ = watch!(contract.transferFrom(
@@ -170,7 +169,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     // Mint batch of 1000 tokens to Alice
     let _ =
         watch!(contract.init(vec![alice.address()], vec![uint!(1000_U256)]))?;
-    let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
+    let first_consecutive_token_id = U256::from(Params::FIRST_CONSECUTIVE_ID);
 
     // Check consecutive token burn
     let receipt = receipt!(contract.burn(first_consecutive_token_id))?;

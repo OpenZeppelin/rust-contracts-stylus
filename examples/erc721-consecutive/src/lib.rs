@@ -3,23 +3,32 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{uint, Address, U256};
 use openzeppelin_stylus::{
-    token::erc721::extensions::consecutive::{Erc721Consecutive, Error},
+    token::erc721::extensions::consecutive::{
+        Erc721Consecutive, Erc721ConsecutiveParams, Error,
+    },
     utils::structs::checkpoints::U96,
 };
 use stylus_sdk::prelude::*;
+
+pub struct Params;
+
+impl Erc721ConsecutiveParams for Params {
+    const FIRST_CONSECUTIVE_ID: U96 = uint!(0_U96);
+    const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
+}
 
 sol_storage! {
     #[entrypoint]
     struct Erc721ConsecutiveExample {
         #[borrow]
-        Erc721Consecutive erc721_consecutive;
+        Erc721Consecutive<Params> erc721_consecutive;
     }
 }
 
 #[external]
-#[inherit(Erc721Consecutive)]
+#[inherit(Erc721Consecutive<Params>)]
 impl Erc721ConsecutiveExample {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         self.erc721_consecutive._burn(token_id)
