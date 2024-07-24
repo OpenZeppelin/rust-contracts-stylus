@@ -334,3 +334,14 @@ pub unsafe extern "C" fn delegate_call_contract(
     // but the binary does include it.
     0
 }
+
+/// Gets a bounded estimate of the Unix timestamp at which the Sequencer
+/// sequenced the transaction. See [`Block Numbers and Time`] for more
+/// information on how this value is determined.
+///
+/// [`Block Numbers and Time`]: https://developer.arbitrum.io/time
+#[no_mangle]
+pub unsafe extern "C" fn block_timestamp() -> u64 {
+    // Epoch timestamp: 1st January 2025 00::00::00
+    1_735_689_600
+}

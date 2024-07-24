@@ -41,9 +41,10 @@ sol! {
 /// A Permit error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// .
+    /// Indicates an error related to the fact that
+    /// permit deadline has expired.
     ExpiredSignature(ERC2612ExpiredSignature),
-    /// .
+    /// Indicates an error related to the issue about mismatched signature.
     InvalidSigner(ERC2612InvalidSigner),
 }
 
