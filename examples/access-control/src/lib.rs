@@ -29,7 +29,6 @@ pub const TRANSFER_ROLE: [u8; 32] = [
 #[external]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
-    // `keccak256("TRANSFER_ROLE")`
     pub const TRANSFER_ROLE: [u8; 32] = TRANSFER_ROLE;
 
     pub fn make_admin(&mut self, account: Address) -> Result<(), Vec<u8>> {
