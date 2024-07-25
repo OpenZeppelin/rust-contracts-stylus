@@ -18,7 +18,7 @@ sol!(
         function mint(address to, uint256 tokenId) external;
 
         function burn(uint256 tokenId) external;
-        function init(address[] memory receivers, uint256[] memory amounts) external;
+        // function init(address[] memory receivers, uint256[] memory amounts) external;
 
         error ERC721InvalidOwner(address owner);
         error ERC721NonexistentToken(uint256 tokenId);

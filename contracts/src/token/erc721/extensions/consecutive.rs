@@ -73,8 +73,6 @@ sol_storage! {
         Trace160 _sequential_ownership;
         /// BitMap library contract for sequential burn of tokens.
         BitMap _sequential_burn;
-        /// Initialization marker. If true this means that consecutive mint was already triggered.
-        bool _initialized;
         PhantomData<Params> phantom;
     }
 }
@@ -311,7 +309,8 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     /// # Events
     ///
     /// Emits a [`ConsecutiveTransfer`] event.
-    pub fn _mint_consecutive(
+    #[cfg(all(test, feature = "std"))]
+    fn _mint_consecutive(
         &mut self,
         to: Address,
         batch_size: U96,
@@ -320,10 +319,6 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
 
         // Minting a batch of size 0 is a no-op.
         if batch_size > U96::ZERO {
-            if self._initialized.get() {
-                return Err(ERC721ForbiddenBatchMint {}.into());
-            }
-
             if to.is_zero() {
                 return Err(erc721::Error::InvalidReceiver(
                     ERC721InvalidReceiver { receiver: Address::ZERO },
@@ -356,17 +351,6 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
             });
         };
         Ok(next)
-    }
-
-    /// Should be called to restrict consecutive mint after.
-    /// After this function being called, every call to
-    /// [`Self::_mint_consecutive`] will fail.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Write access to the contract's state.
-    pub fn _stop_mint_consecutive(&mut self) {
-        self._initialized.set(true);
     }
 
     /// Override of [`Erc721::_update`] that restricts normal minting to after
@@ -405,12 +389,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let previous_owner = self.__update(to, token_id, auth)?;
-
-        // only mint after construction.
-        if previous_owner == Address::ZERO && !self._initialized.get() {
-            return Err(ERC721ForbiddenMint {}.into());
-        }
+        let previous_owner = self._update_base(to, token_id, auth)?;
 
         // if we burn.
         if to == Address::ZERO
@@ -454,7 +433,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     ///
     /// NOTE: If overriding this function in a way that tracks balances, see
     /// also [`Erc721::_increase_balance`].
-    fn __update(
+    fn _update_base(
         &mut self,
         to: Address,
         token_id: U256,
@@ -852,7 +831,7 @@ mod tests {
         receivers: Vec<Address>,
         batches: Vec<U96>,
     ) -> Vec<U96> {
-        let token_ids = receivers
+        receivers
             .into_iter()
             .zip(batches)
             .map(|(to, batch_size)| {
@@ -860,9 +839,7 @@ mod tests {
                     ._mint_consecutive(to, batch_size)
                     .expect("should mint consecutively")
             })
-            .collect();
-        contract._stop_mint_consecutive();
-        token_ids
+            .collect()
     }
 
     #[motsu::test]
@@ -894,21 +871,6 @@ mod tests {
             .expect("should return the balance of Alice");
 
         assert_eq!(balance2, balance1 + uint!(1_U256));
-    }
-
-    #[motsu::test]
-    fn error_when_not_minted_consecutive(contract: Erc721Consecutive<Params>) {
-        let alice = msg::sender();
-
-        init(contract, vec![alice], vec![uint!(10_U96)]);
-
-        let err = contract
-            ._mint_consecutive(BOB, uint!(11_U96))
-            .expect_err("should not mint consecutive");
-        assert!(matches!(
-            err,
-            Error::ForbiddenBatchMint(ERC721ForbiddenBatchMint {})
-        ));
     }
 
     #[motsu::test]
