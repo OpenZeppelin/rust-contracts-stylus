@@ -10,14 +10,16 @@
 //!
 //! [`eth_signTypedDataV4`]: https://docs.metamask.io/guide/signing-data.html
 
-use crate::message_hash_utils::to_typed_data_hash;
-use alloc::borrow::ToOwned;
-use alloc::{string::String, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
+
 use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use hex_literal::hex;
 
-/// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+use crate::message_hash_utils::to_typed_data_hash;
+
+/// keccak256("EIP712Domain(string name,string version,uint256 chainId,address
+/// verifyingContract)")
 pub const TYPE_HASH: [u8; 32] =
     hex!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
 /// Field for the domain separator. `hex"0f"`

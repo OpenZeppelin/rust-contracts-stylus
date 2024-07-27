@@ -8,6 +8,7 @@
 //! [EIP-712]: https://eips.ethereum.org/EIPS/eip-712
 
 use alloc::string::String;
+
 use alloy_primitives::{keccak256, B256};
 use alloy_sol_types::{sol, SolType};
 use hex_literal::hex;
@@ -63,8 +64,9 @@ pub fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use super::*;
     use alloy_primitives::b256;
+
+    use super::*;
 
     #[test]
     fn test_to_eth_signed_message_hash() {
@@ -93,6 +95,7 @@ mod tests {
             "cefc47137f8165d8270433dd62e395f5672966b83a113a7bb7b2805730a2197e"
         );
 
-        // assert_eq!(to_typed_data_hash(domain_separator, struct_hash), expected);
+        // assert_eq!(to_typed_data_hash(domain_separator, struct_hash),
+        // expected);
     }
 }
