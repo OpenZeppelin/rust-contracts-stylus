@@ -271,7 +271,7 @@ pub trait IErc721 {
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   [`Self::_check_on_erc721_received`].
+    ///   [`Erc721::_check_on_erc721_received`].
     ///
     /// # Errors
     ///
@@ -293,7 +293,7 @@ pub trait IErc721 {
     /// * `to` cannot be the zero address.
     /// * The `token_id` token must exist and be owned by `from`.
     /// * If the caller is not `from`, it must be approved to move this token by
-    ///   either [`Self::_approve`] or [`Self::set_approval_for_all`].
+    ///   either [`Erc721::_approve`] or [`Erc721::set_approval_for_all`].
     /// * If `to` refers to a smart contract, it must implement
     ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
     ///   `safe_transfer`.
@@ -369,7 +369,7 @@ pub trait IErc721 {
     ///
     /// If the token does not exist, then the error
     /// [`Error::NonexistentToken`] is returned.
-    /// If `auth` (param of [`Self::_approve`]) does not have a right to
+    /// If `auth` (param of [`Erc721::_approve`]) does not have a right to
     /// approve this token, then the error
     /// [`Error::InvalidApprover`] is returned.
     ///
@@ -845,7 +845,7 @@ impl Erc721 {
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// [`ERC721NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then  the error
     /// [`Error::IncorrectOwner`] is returned.
     ///
@@ -909,7 +909,7 @@ impl Erc721 {
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// [`ERC721NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then the error
     /// [`Error::IncorrectOwner`] is returned.
     ///

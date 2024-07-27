@@ -32,13 +32,12 @@ a `Cargo.toml`, like so:
 openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus" }
 ```
 
-We recommend pinning to a specific version -- expect rapid iteration. Also note
-that the library's name has yet to be decided.
+We recommend pinning to a specific version -- expect rapid iteration.
 
 Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
-```rust,ignore
+```rust
 use openzeppelin_stylus::token::erc20::Erc20;
 
 sol_storage! {
@@ -85,4 +84,4 @@ Refer to our [Security Policy](SECURITY.md) for more details.
 
 ## License
 
-OpenZeppelin Contracts for Stylus is released under the [MIT License](LICENSE).
+OpenZeppelin Contracts for Stylus is released under the [MIT License](./LICENSE).
