@@ -21,6 +21,7 @@ Common cryptographic procedures for a blockchain environment.
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 extern crate alloc;
 
+pub mod eip712;
 pub mod hash;
 pub mod merkle;
 pub mod message_hash_utils;
