@@ -10,11 +10,11 @@
 //!
 //! [`eth_signTypedDataV4`]: https://docs.metamask.io/guide/signing-data.html
 
+use crate::message_hash_utils::to_typed_data_hash;
 use alloc::borrow::ToOwned;
 use alloc::{string::String, vec::Vec};
-use alloy_primitives::{
-    b256, fixed_bytes, keccak256, Address, FixedBytes, B256, U256,
-};
+use alloy_primitives::{keccak256, Address, B256, U256};
+use alloy_sol_types::{sol, SolType};
 use hex_literal::hex;
 
 /// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
@@ -24,6 +24,10 @@ pub const TYPE_HASH: [u8; 32] =
 pub const FIELDS: [u8; 1] = hex!("0f");
 /// Salt for the domain separator. `bytes32(0)`
 pub const SALT: [u8; 32] = [0u8; 32];
+/// Tuple for the domain separator.
+pub type DomainSeparatorTuple = sol! {
+    tuple(bytes32, bytes32, bytes32, uint256, address)
+};
 
 /// EIP712 contract trait.
 pub trait EIP712 {
@@ -54,5 +58,39 @@ pub trait EIP712 {
             SALT,
             Vec::new(),
         )
+    }
+
+    /// Returns the domain separator for the current chain.
+    /// This function employs a cache to avoid recomputing the domain separator.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    fn domain_separator_v4(&self) -> B256 {
+        let hashed_name = keccak256(Self::NAME.as_bytes());
+        let hashed_version = keccak256(Self::VERSION.as_bytes());
+
+        let encoded = DomainSeparatorTuple::encode_params(&(
+            TYPE_HASH,
+            *hashed_name,
+            *hashed_version,
+            U256::from(Self::CHAIN_ID),
+            Self::CONTRACT_ADDRESS,
+        ));
+
+        keccak256(encoded)
+    }
+
+    /// Given an already [hashed struct], this function returns the hash of the
+    /// fully encoded EIP-721 message for this domain.
+    ///
+    /// [hashed struct]: https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    fn hash_typed_data_v4(&self, _hash_struct: B256) -> B256 {
+        let _domain_separator = self.domain_separator_v4();
+        to_typed_data_hash(_domain_separator, _hash_struct)
     }
 }
