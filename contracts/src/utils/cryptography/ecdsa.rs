@@ -5,18 +5,21 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{
-    address, fixed_bytes, uint, Address, Bytes, FixedBytes, U256,
+    address, fixed_bytes, uint, Address, Bytes, B256, U256,
 };
-use alloy_sol_types::sol;
-use stylus_proc::{sol_interface, SolidityError};
-use stylus_sdk::{call::Call, storage::TopLevelStorage};
+use alloy_sol_types::{sol, SolType};
+use stylus_proc::SolidityError;
+use stylus_sdk::{
+    call::{self, Call},
+    storage::TopLevelStorage,
+};
 
 const SIGNATURE_LENGTH: usize = 65;
 
 const ECRECOVER_ADDR: Address =
     address!("0000000000000000000000000000000000000001");
 
-const VS_MASK: FixedBytes<32> = fixed_bytes!(
+const VS_MASK: B256 = fixed_bytes!(
     "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
 
@@ -56,25 +59,11 @@ pub enum Error {
     InvalidSignatureS(ECDSAInvalidSignatureS),
 }
 
-sol_interface! {
-    /// EVM Precompiles interface.
-    ///
-    /// Interface for any contract that wants to call `ecrecover` precompile .
-    interface EVMPrecompile {
-        #[allow(missing_docs)]
-        function ecrecover(
-            bytes32 hash,
-            uint8 v,
-            bytes32 r,
-            bytes32 s
-        ) returns (address);
-    }
-}
-
 sol! {
     /// Struct with callable data to the `ecrecover` precompile.
     #[allow(missing_docs)]
-    struct EcrecoverData {
+    struct ECRecoverData {
+        /// EIP-191 Hash of the message.
         bytes32 hash;
         /// `v` value from the signature.
         uint8 v;
@@ -110,7 +99,7 @@ sol! {
 #[allow(clippy::needless_pass_by_value)]
 pub fn recover_from_signature(
     storage: &mut impl TopLevelStorage,
-    hash: FixedBytes<32>,
+    hash: B256,
     signature: Bytes,
 ) -> Result<Address, Error> {
     let signature_len = signature.len();
@@ -122,11 +111,11 @@ pub fn recover_from_signature(
     }
 
     // extract `r`, `s`, and `v` from the signature
-    let r: FixedBytes<32> = signature[0..32]
+    let r: B256 = signature[0..32]
         .try_into()
         .expect("signature should contain `r` value");
 
-    let s: FixedBytes<32> = signature[32..64]
+    let s: B256 = signature[32..64]
         .try_into()
         .expect("signature should contain `s` value");
 
@@ -159,11 +148,11 @@ pub fn recover_from_signature(
 /// * If `ecrecover` precompile fail to execute.
 pub fn recover_from_r_vs(
     storage: &mut impl TopLevelStorage,
-    hash: FixedBytes<32>,
-    r: FixedBytes<32>,
-    vs: FixedBytes<32>,
+    hash: B256,
+    r: B256,
+    vs: B256,
 ) -> Result<Address, Error> {
-    let s: FixedBytes<32> = vs & VS_MASK;
+    let s: B256 = vs & VS_MASK;
     let v: u8 = (vs[31] >> 7) + 27u8;
 
     let recovered = recover(storage, hash, v, r, s)?;
@@ -196,10 +185,10 @@ pub fn recover_from_r_vs(
 /// * If `ecrecover` precompile fail to execute.
 pub fn recover(
     storage: &mut impl TopLevelStorage,
-    hash: FixedBytes<32>,
+    hash: B256,
     v: u8,
-    r: FixedBytes<32>,
-    s: FixedBytes<32>,
+    r: B256,
+    s: B256,
 ) -> Result<Address, Error> {
     // EIP-2 still allows signature malleability for ecrecover().
     //
@@ -255,18 +244,50 @@ pub fn recover(
 /// * If `ecrecover` precompile fail to execute.
 fn evm_recover(
     storage: &mut impl TopLevelStorage,
-    hash: FixedBytes<32>,
+    hash: B256,
     v: u8,
-    r: FixedBytes<32>,
-    s: FixedBytes<32>,
+    r: B256,
+    s: B256,
 ) -> Result<Address, Error> {
-    let call = Call::new_in(storage);
-    let recovered = EVMPrecompile::new(ECRECOVER_ADDR)
-        .ecrecover(call, hash, v, r, s)
-        .expect("should call `ecrecover` precompile");
+    let calldata = prepare_calldata(hash, v, r, s);
+
+    let recovered =
+        call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &calldata)
+            .expect("should call `ecrecover` precompile");
+
+    let recovered = B256::from_slice(&recovered);
+    let recovered = Address::from_word(recovered);
 
     if recovered.is_zero() {
         return Err(ECDSAInvalidSignature {}.into());
     }
     Ok(recovered)
+}
+
+fn prepare_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
+    let calldata = ECRecoverData { hash: *hash, v, r: *r, s: *s };
+    ECRecoverData::encode(&calldata)
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{b256, B256};
+
+    const MSG_HASH: B256 = b256!(
+        "a1de988600a42c4b4ab089b619297c17d53cffae5d5120d82d8a92d0bb3b78f2"
+    );
+    const V: u8 = 28;
+    const R: B256 = b256!(
+        "65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee82"
+    );
+    const S: B256 = b256!(
+        "3eb5a6982b540f185703492dab77b863a88ce01f27e21ade8b2879c10fc9e653"
+    );
+
+    #[test]
+    fn prepare_calldata() {
+        let expected = alloy_primitives::bytes!("a1de988600a42c4b4ab089b619297c17d53cffae5d5120d82d8a92d0bb3b78f2000000000000000000000000000000000000000000000000000000000000001c65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee823eb5a6982b540f185703492dab77b863a88ce01f27e21ade8b2879c10fc9e653");
+        let calldata = super::prepare_calldata(MSG_HASH, V, R, S);
+        assert_eq!(expected, calldata);
+    }
 }
