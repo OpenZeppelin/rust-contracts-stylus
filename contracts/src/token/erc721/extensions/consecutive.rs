@@ -11,17 +11,11 @@
 //! contract construction. This ability is regained after construction. During
 //! construction, only batch minting is allowed.
 //!
-//! IMPORTANT: Function [`Erc721Consecutive::_mint_consecutive`] is not suitable
-//! to be called from constructor. Because of stylus sdk limitation. Function
-//! [`Erc721Consecutive::_stop_mint_consecutive`] should be called to end
-//! consecutive mint of tokens. After that, minting a token
-//! with [`Erc721Consecutive::_mint`] will be possible.
-//!
-//! IMPORTANT: When overriding [`Erc721Consecutive::_mint_consecutive`], be
-//! careful about call ordering. [`Erc721Consecutive::owner_of`] may return
-//! invalid values during the [`Erc721Consecutive::_mint_consecutive`]
-//! execution if the super call is not called first. To be safe, execute the
-//! super call before your custom logic.
+//! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
+//! inside solidity constructor with koba.
+//! Compared to solidity implementation of consecutive contract, there is no
+//! restriction for [`Erc721Consecutive::_update`] function call. Since it won't
+//! be possible to call a rust function from solidity constructor.
 
 use alloc::vec;
 use core::marker::PhantomData;
@@ -356,12 +350,6 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     /// Override of [`Erc721::_update`] that restricts normal minting to after
     /// construction.
     ///
-    /// WARNING: Using [`Erc721Consecutive`] prevents minting during
-    /// construction in favor of [`Erc721Consecutive::_mint_consecutive`].
-    /// After construction,[`Erc721Consecutive::_mint_consecutive`] is no
-    /// longer available and minting through [`Erc721Consecutive::_update`]
-    /// becomes possible.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -376,9 +364,6 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     /// If `auth` is not `Address::ZERO` and `auth` does not have a right to
     /// approve this token, then the error
     /// [`erc721::Error::InsufficientApproval`] is returned.
-    /// If consecutive mint wasn't finished yet (function
-    /// [`Self::_stop_mint_consecutive`] wasn't called) error
-    /// [`Error::ForbiddenMint`] is returned.
     ///
     /// # Events
     ///
@@ -807,8 +792,8 @@ mod tests {
             erc721,
             erc721::{
                 extensions::consecutive::{
-                    ERC721ExceededMaxBatchMint, ERC721ForbiddenBatchMint,
-                    Erc721Consecutive, Erc721ConsecutiveParams, Error,
+                    ERC721ExceededMaxBatchMint, Erc721Consecutive,
+                    Erc721ConsecutiveParams, Error,
                 },
                 tests::random_token_id,
                 ERC721InvalidReceiver, ERC721NonexistentToken, IErc721,
