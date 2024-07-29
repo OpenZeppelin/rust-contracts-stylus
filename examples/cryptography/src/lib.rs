@@ -3,7 +3,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes};
+use alloy_primitives::{Address, B256};
 use openzeppelin_stylus::utils::cryptography::ecdsa;
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
@@ -14,24 +14,13 @@ sol_storage! {
 
 #[external]
 impl CryptoExample {
-    // #[selector(name = "recover")]
-    pub fn recover_from_signature(
-        &mut self,
-        hash: FixedBytes<32>,
-        signature: Vec<u8>,
-    ) -> Result<Address, Vec<u8>> {
-        let signer =
-            ecdsa::recover_from_signature(self, hash, signature.into())?;
-        Ok(signer)
-    }
-
-    // #[selector(name = "recover")]
+    #[selector(name = "recover")]
     pub fn recover(
         &mut self,
-        hash: FixedBytes<32>,
+        hash: B256,
         v: u8,
-        r: FixedBytes<32>,
-        s: FixedBytes<32>,
+        r: B256,
+        s: B256,
     ) -> Result<Address, Vec<u8>> {
         let signer = ecdsa::recover(self, hash, v, r, s)?;
         Ok(signer)

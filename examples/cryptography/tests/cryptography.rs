@@ -64,8 +64,8 @@ async fn ecrecover_works(alice: Account) -> Result<()> {
     let s = b256!(
         "3eb5a6982b540f185703492dab77b863a88ce01f27e21ade8b2879c10fc9e653"
     );
-    let Crypto::recover_1Return { recovered } =
-        contract.recover_1(EXAMPLE_HASH, v, r, s).call().await?;
+    let Crypto::recoverReturn { recovered } =
+        contract.recover(EXAMPLE_HASH, v, r, s).call().await?;
 
     assert_eq!(EXAMPLE_ADDRESS, recovered);
 
@@ -80,8 +80,8 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
     let hash = hash(&TEST_MESSAGE);
     let signature = alice.sign_hash(&hash).await;
 
-    let Crypto::recover_1Return { recovered } = contract
-        .recover_1(
+    let Crypto::recoverReturn { recovered } = contract
+        .recover(
             hash,
             signature
                 .v()
@@ -97,46 +97,3 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
 
     Ok(())
 }
-
-// #[e2e::test]
-// async fn error_when_recovers_from_invalid_signature(
-// alice: Account,
-// ) -> Result<()> {
-// let contract_addr = deploy(&alice).await?;
-// let contract = Crypto::new(contract_addr, &alice.wallet);
-//
-// let hash = hash(&TEST_MESSAGE);
-//
-// let invalid_signature = bytes!("1234");
-// assert_eq!(invalid_signature.len(), 2);
-// let err = contract
-// .recover_0(hash, invalid_signature.clone())
-// .call()
-// .await
-// .expect_err("should return `ECDSAInvalidSignatureLength`");
-//
-// assert!(err.reverted_with(Crypto::ECDSAInvalidSignatureLength {
-// length: U256::from(invalid_signature.len())
-// }));
-//
-// Ok(())
-// }
-//
-// #[e2e::test]
-// async fn recovers_from_signature(alice: Account) -> Result<()> {
-// let contract_addr = deploy(&alice).await?;
-// let contract = Crypto::new(contract_addr, &alice.wallet);
-//
-// let signature =
-// bytes!("65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee823eb5a6982b540f185703492dab77b863a88ce01f27e21ade8b2879c10fc9e6531c"
-// );
-//
-// let Crypto::recover_0Return { recovered } = contract
-// .recover_0(EXAMPLE_HASH, signature)
-// .call()
-// .await?;
-//
-// assert_eq!(EXAMPLE_ADDRESS, recovered);
-//
-// Ok(())
-// }
