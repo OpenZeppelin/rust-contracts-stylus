@@ -11,6 +11,7 @@ use alloy_sol_types::{sol, SolType};
 use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::{self, Call},
+    console,
     storage::TopLevelStorage,
 };
 
@@ -102,13 +103,7 @@ pub fn recover_from_signature(
     hash: B256,
     signature: Bytes,
 ) -> Result<Address, Error> {
-    let signature_len = signature.len();
-    if signature_len != SIGNATURE_LENGTH {
-        return Err(ECDSAInvalidSignatureLength {
-            length: U256::from(signature_len),
-        }
-        .into());
-    }
+    validate_signature_length(&signature)?;
 
     // extract `r`, `s`, and `v` from the signature
     let r: B256 = signature[0..32]
@@ -177,7 +172,8 @@ pub fn recover_from_r_vs(
 ///
 /// * If the `s` value is grater than `EIP2_VALUE`, then the error
 /// [`Error::ECDSAInvalidSignatureS`] is returned.
-/// * If the recovered address is `Address::ZERO`, then the error
+/// * If the recovered address is `Address::ZERO`, then
+///   tECDSAInvalidSignatureLengthhe error
 /// [`Error::InvalidSignature`] is returned.
 ///
 /// # Panics
@@ -200,7 +196,7 @@ pub fn recover(
     // and for v in (302): v ∈ {27, 28}.
     //
     // Most signatures from current libraries generate a unique signature
-    // with an s-value in the lower half order.
+    // with an s-value in the lower half order.ECDSAInvalidSignatureLength
     //
     // If your library generates malleable signatures,
     // such as s-values in the upper range, calculate a new s-value
@@ -269,9 +265,23 @@ fn prepare_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
     ECRecoverData::encode(&calldata)
 }
 
+fn validate_signature_length(signature: &Bytes) -> Result<(), Error> {
+    let signature_len = signature.len();
+    console!(signature_len);
+    if signature_len != SIGNATURE_LENGTH {
+        return Err(ECDSAInvalidSignatureLength {
+            length: U256::from(signature_len),
+        }
+        .into());
+    }
+    Ok(())
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{b256, B256};
+    use alloy_primitives::{b256, bytes, B256, U256};
+
+    use super::*;
 
     const MSG_HASH: B256 = b256!(
         "a1de988600a42c4b4ab089b619297c17d53cffae5d5120d82d8a92d0bb3b78f2"
@@ -285,9 +295,39 @@ mod tests {
     );
 
     #[test]
-    fn prepare_calldata() {
+    fn prepares_calldata() {
         let expected = alloy_primitives::bytes!("a1de988600a42c4b4ab089b619297c17d53cffae5d5120d82d8a92d0bb3b78f2000000000000000000000000000000000000000000000000000000000000001c65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee823eb5a6982b540f185703492dab77b863a88ce01f27e21ade8b2879c10fc9e653");
-        let calldata = super::prepare_calldata(MSG_HASH, V, R, S);
+        let calldata = prepare_calldata(MSG_HASH, V, R, S);
         assert_eq!(expected, calldata);
+    }
+
+    #[test]
+    fn rejects_invalid_signature_length() {
+        let invalid_signature = bytes!("1234");
+        let err = validate_signature_length(&invalid_signature)
+            .expect_err("should return `ECDSAInvalidSignatureLength`");
+
+        assert!(matches!(err,
+                Error::InvalidSignatureLength(ECDSAInvalidSignatureLength {
+                    length
+                }) if length == U256::from(invalid_signature.len())
+        ));
+
+        let invalid_signature = bytes!("01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789");
+        let err = validate_signature_length(&invalid_signature)
+            .expect_err("should return `ECDSAInvalidSignatureLength`");
+
+        assert!(matches!(err,
+                Error::InvalidSignatureLength(ECDSAInvalidSignatureLength {
+                    length
+                }) if length == U256::from(invalid_signature.len())
+        ));
+    }
+
+    #[test]
+    fn accepts_proper_signature_length() {
+        let signature = bytes!("1234");
+        let result = validate_signature_length(&signature);
+        assert!(result.is_ok());
     }
 }
