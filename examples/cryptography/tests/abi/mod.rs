@@ -11,8 +11,6 @@ sol!(
         #[derive(Debug)]
         function recover(bytes32 hash, bytes memory signature) internal pure returns (address recovered);
         #[derive(Debug)]
-        function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address recovered);
-        #[derive(Debug)]
         function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address recovered);
     }
 );

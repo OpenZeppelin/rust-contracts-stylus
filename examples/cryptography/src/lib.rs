@@ -26,17 +26,6 @@ impl CryptoExample {
     }
 
     // #[selector(name = "recover")]
-    pub fn recover_from_r_vs(
-        &mut self,
-        hash: FixedBytes<32>,
-        r: FixedBytes<32>,
-        vs: FixedBytes<32>,
-    ) -> Result<Address, Vec<u8>> {
-        let signer = ecdsa::recover_from_r_vs(self, hash, r, vs)?;
-        Ok(signer)
-    }
-
-    // #[selector(name = "recover")]
     pub fn recover(
         &mut self,
         hash: FixedBytes<32>,
