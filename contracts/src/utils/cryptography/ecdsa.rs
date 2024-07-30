@@ -40,7 +40,7 @@ sol! {
     error ECDSAInvalidSignatureS(bytes32 s);
 }
 
-/// An error that occurred in the implementation of an [`ECDSA`] library.
+/// An error that occurred in the implementation of an `ECDSA` library.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// The signature derives the `Address::ZERO`.
@@ -68,9 +68,6 @@ sol! {
 
 /// Returns the address that signed a hashed message (`hash`).
 ///
-/// [`ECDSA::recover`] that receives the `v`,`r` and `s`
-/// signature fields separately.
-///
 /// # Arguments
 ///
 /// * `storage` - Write access to storage.
@@ -82,7 +79,7 @@ sol! {
 /// # Errors
 ///
 /// * If the `s` value is grater than `EIP2_VALUE`, then the error
-/// [`Error::ECDSAInvalidSignatureS`] is returned.
+/// [`Error::InvalidSignatureS`] is returned.
 /// * If the recovered address is `Address::ZERO`, then the error
 /// [`Error::InvalidSignature`] is returned.
 ///
