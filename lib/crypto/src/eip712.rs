@@ -6,7 +6,7 @@
 //! replay attacks on an eventual fork of the chain.
 //!
 //! NOTE: This contract implements the version of the encoding known as "v4", as
-//! implemented by the JSON RPC method [`eth_signTypedDataV4`] in MetaMask.
+//! implemented by the JSON RPC method [`eth_signTypedDataV4`] in `MetaMask`.
 //!
 //! [`eth_signTypedDataV4`]: https://docs.metamask.io/guide/signing-data.html
 
@@ -31,16 +31,16 @@ pub type DomainSeparatorTuple = sol! {
     tuple(bytes32, bytes32, bytes32, uint256, address)
 };
 
-/// EIP712 contract trait.
+/// EIP-712 Contract interface.
 pub trait EIP712 {
     /// Immutable name of EIP-712 instance.
     const NAME: &'static str;
     /// Immutable version of EIP-712 instance.
     const VERSION: &'static str;
-    /// This is Abritrum's chain id. Provided by the consuming contract.
-    const CHAIN_ID: u64;
-    /// This is the contract address of the consuming contract.
-    const CONTRACT_ADDRESS: Address;
+    /// Returns chain id.
+    fn chain_id() -> u64;
+    /// Returns the contract's address.
+    fn contract_address() -> Address;
 
     /// Returns the fields and values that describe the domain separator used by
     /// this contract for EIP-712 signature.
@@ -55,8 +55,8 @@ pub trait EIP712 {
             FIELDS,
             Self::NAME.to_owned(),
             Self::VERSION.to_owned(),
-            Self::CHAIN_ID,
-            Self::CONTRACT_ADDRESS,
+            Self::chain_id(),
+            Self::contract_address(),
             SALT,
             Vec::new(),
         )
@@ -76,8 +76,8 @@ pub trait EIP712 {
             TYPE_HASH,
             *hashed_name,
             *hashed_version,
-            U256::from(Self::CHAIN_ID),
-            Self::CONTRACT_ADDRESS,
+            U256::from(Self::chain_id()),
+            Self::contract_address(),
         ));
 
         keccak256(encoded)
@@ -91,8 +91,8 @@ pub trait EIP712 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn hash_typed_data_v4(&self, _hash_struct: B256) -> B256 {
-        let _domain_separator = self.domain_separator_v4();
-        to_typed_data_hash(_domain_separator, _hash_struct)
+    fn hash_typed_data_v4(&self, hash_struct: B256) -> B256 {
+        let domain_separator = self.domain_separator_v4();
+        to_typed_data_hash(domain_separator, hash_struct)
     }
 }
