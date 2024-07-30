@@ -133,6 +133,14 @@ fn evm_recover(
 ) -> Result<Address, Error> {
     let calldata = prepare_calldata(hash, v, r, s);
 
+    if v == 0 || v == 1 {
+        // `ecrecover` panics for this values
+        // but following the Solidity tests
+        // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/test/utils/cryptography/ECDSA.test.js
+        // it should return `ECDSAInvalidSignature` error.
+        return Err(ECDSAInvalidSignature {}.into());
+    }
+
     let recovered =
         call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &calldata)
             .expect("should call `ecrecover` precompile");

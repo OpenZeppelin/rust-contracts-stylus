@@ -14,7 +14,6 @@ sol_storage! {
 
 #[external]
 impl CryptoExample {
-    #[selector(name = "recover")]
     pub fn recover(
         &mut self,
         hash: B256,
