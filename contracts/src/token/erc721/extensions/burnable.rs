@@ -8,8 +8,9 @@ use crate::token::erc721::{Erc721, Error};
 /// An [`Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {
     /// Burns `token_id`.
-    /// The approval is cleared when the token is burned.
-    /// Relies on the `_burn` mechanism.
+    ///
+    /// The approval is cleared when the token is burned. Relies on the `_burn`
+    /// mechanism.
     ///
     /// # Arguments
     ///
@@ -17,8 +18,8 @@ pub trait IErc721Burnable {
     ///
     /// # Errors
     ///
-    /// If token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
+    /// If token does not exist, then the error [`Error::NonexistentToken`] is
+    /// returned.
     /// If the caller does not have the right to approve, then the error
     /// [`Error::InsufficientApproval`] is returned.
     ///
@@ -29,17 +30,18 @@ pub trait IErc721Burnable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`super::super::Transfer`] event.
     fn burn(&mut self, token_id: U256) -> Result<(), Error>;
 }
 
 impl IErc721Burnable for Erc721 {
     fn burn(&mut self, token_id: U256) -> Result<(), Error> {
-        // Setting an "auth" arguments enables the [`Erc721::_is_authorized`]
-        // check which verifies that the token exists (from != `Address::ZERO`).
+        // Setting an "auth" arguments enables the
+        // [`super::super::Erc721::_is_authorized`] check which verifies that
+        // the token exists (from != `Address::ZERO`).
         //
-        // Therefore, it is not needed to verify
-        // that the return value is not 0 here.
+        // Therefore, it is not needed to verify that the return value is not 0
+        // here.
         self._update(Address::ZERO, token_id, msg::sender())?;
         Ok(())
     }

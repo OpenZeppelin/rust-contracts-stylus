@@ -1,12 +1,15 @@
 //! Optional `Enumerable` extension of the ERC-721 standard.
 //!
-//! This implements an optional extension of [`Erc721`] defined in the EIP
-//! that adds enumerability of all the token ids in the contract
-//! as well as all token ids owned by each account.
+//! This implements an optional extension of [`super::super::Erc721`] defined in
+//! the EIP that adds enumerability of all the token ids in the contract as well
+//! as all token ids owned by each account.
 //!
-//! CAUTION: [`Erc721`] extensions that implement custom
-//! [`Erc721::balance_of`] logic, such as [`Erc721Consecutive`], interfere with
-//! enumerability and should not be used together with [`Erc721Enumerable`].
+//! CAUTION: [`super::super::Erc721`] extensions that implement custom
+//! [`super::super::Erc721::balance_of`] logic, such as `Erc721Consecutive`,
+//! interfere with enumerability and should not be used together with
+//! [`Erc721Enumerable`].
+// TODO: Add link for `Erc721Consecutive` to module docs.
+
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
@@ -45,7 +48,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of an Enumerable extension.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721Enumerable {
         /// Maps owners to a mapping of indices to tokens ids.
         mapping(address => mapping(uint256 => uint256)) _owned_tokens;
@@ -64,11 +66,11 @@ sol_storage! {
 pub trait IErc721Enumerable {
     // TODO: fn supports_interface (#33)
 
-    /// Returns a token ID owned by `owner`
-    /// at a given `index` of its token list.
+    /// Returns a token ID owned by `owner` at a given `index` of its token
+    /// list.
     ///
-    /// Use along with [`Erc721::balance_of`]
-    /// to enumerate all of `owner`'s tokens.
+    /// Use along with [`super::super::Erc721::balance_of`] to enumerate all of
+    /// `owner`'s tokens.
     ///
     /// # Arguments
     ///
@@ -76,8 +78,8 @@ pub trait IErc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If an `owner`'s token query is out of bounds for `index`,
-    /// then the error [`Error::OutOfBoundsIndex`] is returned.
+    /// * If an `owner`'s token query is out of bounds for `index`, then the
+    /// error [`Error::OutOfBoundsIndex`] is returned.
     fn token_of_owner_by_index(
         &self,
         owner: Address,
@@ -94,7 +96,8 @@ pub trait IErc721Enumerable {
     /// Returns a token ID at a given `index` of all the tokens
     /// stored by the contract.
     ///
-    /// Use along with [`Erc721::total_supply`] to enumerate all tokens.
+    /// Use along with [`Self::total_supply`] to
+    /// enumerate all tokens.
     ///
     /// # Arguments
     ///
@@ -150,7 +153,7 @@ impl Erc721Enumerable {
     /// # Errors
     ///
     /// If owner address is `Address::ZERO`, then the error
-    /// [`Error::InvalidOwner`] is returned.
+    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,
@@ -201,7 +204,7 @@ impl Erc721Enumerable {
     /// # Errors
     ///
     /// If owner address is `Address::ZERO`, then the error
-    /// [`Error::InvalidOwner`] is returned.
+    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
         from: Address,
@@ -284,7 +287,7 @@ impl Erc721Enumerable {
         self._all_tokens.pop();
     }
 
-    /// See [`Erc721::_increase_balance`].
+    /// See [`crate::token::erc721::Erc721::_increase_balance`].
     /// Check if tokens can be minted in batch.
     ///
     /// Mechanism to be consistent with [Solidity version](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.0/contracts/token/ERC721/extensions/ERC721Enumerable.sol#L163-L171)
@@ -309,6 +312,7 @@ impl Erc721Enumerable {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
+    use motsu::prelude::*;
     use stylus_sdk::msg;
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};

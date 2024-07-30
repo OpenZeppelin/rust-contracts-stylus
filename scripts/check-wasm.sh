@@ -3,7 +3,7 @@ set -e
 
 mydir=$(dirname "$0")
 cd "$mydir" || exit
-cd ../..
+cd ..
 
 # Check contract wasm binary by crate name
 check_wasm () {

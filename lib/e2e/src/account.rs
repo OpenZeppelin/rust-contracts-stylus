@@ -95,7 +95,7 @@ impl AccountFactory {
 
         let signer = PrivateKeySigner::random();
         let addr = signer.address();
-        fund_account(addr, "10")?;
+        fund_account(addr, "100")?;
 
         let rpc_url = std::env::var(RPC_URL_ENV_VAR_NAME)
             .expect("failed to load RPC_URL var from env")

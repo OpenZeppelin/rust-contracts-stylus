@@ -21,7 +21,6 @@ const HEX_FF: U256 = uint!(0xff_U256);
 
 sol_storage! {
     /// State of bit map.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct BitMap {
         /// Inner laying mapping.
         mapping(uint256 => uint256) _data;
@@ -96,6 +95,7 @@ impl BitMap {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{private::proptest::proptest, U256};
+    use motsu::prelude::*;
 
     use crate::utils::structs::bitmap::BitMap;
 

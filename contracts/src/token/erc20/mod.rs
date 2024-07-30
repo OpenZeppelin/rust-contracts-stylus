@@ -1,6 +1,6 @@
-//! Implementation of the [`Erc20`] token standard.
+//! Implementation of the ERC-20 token standard.
 //!
-//! We have followed general ``OpenZeppelin`` Contracts guidelines: functions
+//! We have followed general `OpenZeppelin` Contracts guidelines: functions
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
@@ -93,7 +93,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of an `Erc20` token.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc20 {
         /// Maps users to balances.
         mapping(address => uint256) _balances;

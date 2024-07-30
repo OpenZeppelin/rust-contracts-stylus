@@ -2209,9 +2209,9 @@ checksum = "57d8d8ce877200136358e0bbff3a77965875db3af755a11e1fa6b1b3e2df13ea"
 
 [[package]]
 name = "koba"
-version = "0.1.0"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb251e0817a500aa5ef72e7e4e25c063a33b7e849d14ad1d7221ebe48893d7a7"
+checksum = "f31de3702e0ac9b1f6927d12a8157af9c5796bc1caa9e89e43bda20b98af6685"
 dependencies = [
  "alloy",
  "brotli2",
@@ -2391,6 +2391,7 @@ dependencies = [
  "const-hex",
  "motsu-proc",
  "once_cell",
+ "stylus-sdk",
  "tiny-keccak",
 ]
 
