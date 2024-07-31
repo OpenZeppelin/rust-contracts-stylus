@@ -145,8 +145,7 @@ fn _recover(
         call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &calldata)
             .expect("should call `ecrecover` precompile");
 
-    let recovered = B256::from_slice(&recovered);
-    let recovered = Address::from_word(recovered);
+    let recovered = Address::from_slice(&recovered[12..]);
 
     if recovered.is_zero() {
         return Err(ECDSAInvalidSignature {}.into());
