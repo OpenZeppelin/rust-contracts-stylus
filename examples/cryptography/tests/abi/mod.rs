@@ -3,5 +3,5 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-   contract Crypto {}
+    contract Crypto { }
 );

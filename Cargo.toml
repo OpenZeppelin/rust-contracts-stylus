@@ -14,6 +14,7 @@ members = [
   "examples/access-control",
   "examples/basic/token",
   "examples/basic/script",
+  "examples/cryptography",
   "benches",
 ]
 default-members = [
@@ -29,6 +30,7 @@ default-members = [
   "examples/ownable",
   "examples/access-control",
   "examples/basic/token",
+  "examples/cryptography",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages

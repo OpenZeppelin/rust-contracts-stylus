@@ -38,7 +38,7 @@ pub trait IEIP712 {
     /// Immutable version of EIP-712 instance.
     const VERSION: &'static str;
     /// Returns chain id.
-    fn chain_id() -> u64;
+    fn chain_id() -> U256;
     /// Returns the contract's address.
     fn contract_address() -> Address;
 
@@ -50,7 +50,7 @@ pub trait IEIP712 {
     /// * `&self` - Read access to the contract's state.
     fn eip712_domain(
         &self,
-    ) -> ([u8; 1], String, String, u64, Address, [u8; 32], Vec<U256>) {
+    ) -> ([u8; 1], String, String, U256, Address, [u8; 32], Vec<U256>) {
         (
             FIELDS,
             Self::NAME.to_owned(),
@@ -76,7 +76,7 @@ pub trait IEIP712 {
             TYPE_HASH,
             *hashed_name,
             *hashed_version,
-            U256::from(Self::chain_id()),
+            Self::chain_id(),
             Self::contract_address(),
         ));
 

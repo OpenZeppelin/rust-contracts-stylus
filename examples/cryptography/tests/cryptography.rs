@@ -1,9 +1,12 @@
 #![cfg(feature = "e2e")]
 
 use abi::Crypto;
-use alloy::{sol, sol_types::SolConstructor};
+use alloy::{
+    primitives::{address, b256, uint, Address, B256},
+    sol,
+    sol_types::SolConstructor,
+};
 use e2e::{Account, Revert};
-use eyre::Result;
 
 mod abi;
 
