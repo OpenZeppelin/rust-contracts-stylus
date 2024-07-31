@@ -8,6 +8,7 @@ use alloy::{
 };
 use e2e::{Account, Revert};
 use eyre::Result;
+use openzeppelin_stylus::utils::cryptography::ecdsa::SIGNATURE_S_UPPER_BOUND;
 
 mod abi;
 
@@ -177,9 +178,7 @@ async fn error_when_higher_s(alice: Account) -> Result<()> {
     let contract_addr = deploy(&alice).await?;
     let contract = Crypto::new(contract_addr, &alice.wallet);
 
-    let higher_s = uint!(
-        0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_U256
-    ) + uint!(1_U256);
+    let higher_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);
 
     let higher_s = B256::from_slice(&higher_s.to_be_bytes_vec());
 

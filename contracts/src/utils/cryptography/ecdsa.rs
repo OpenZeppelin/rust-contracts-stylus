@@ -12,10 +12,13 @@ use stylus_sdk::{
     storage::TopLevelStorage,
 };
 
-const ECRECOVER_ADDR: Address =
+/// Address of the `ecrecover` EVM precompile.
+pub const ECRECOVER_ADDR: Address =
     address!("0000000000000000000000000000000000000001");
 
-const EIP2_VALUE: U256 = uint!(
+/// Upper range for `s` value from the signature.
+/// See [`check_if_malleable`].
+pub const SIGNATURE_S_UPPER_BOUND: U256 = uint!(
     0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_U256
 );
 
@@ -93,7 +96,7 @@ pub fn recover(
     r: B256,
     s: B256,
 ) -> Result<Address, Error> {
-    validate_s_value(&s)?;
+    check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
     _recover(storage, hash, v, r, s)
 }
@@ -120,7 +123,7 @@ pub fn recover(
 ///
 /// # Panics
 ///
-/// * If `ecrecover` precompile fail to execute.
+/// * If the `ecrecover` precompile fails to execute.
 fn _recover(
     storage: &mut impl TopLevelStorage,
     hash: B256,
@@ -194,8 +197,8 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 ///
 /// * If the `s` value is grater than `EIP2_VALUE`, then the error
 /// [`Error::ECDSAInvalidSignatureS`] is returned.
-fn validate_s_value(s: &B256) -> Result<(), Error> {
-    if U256::from_be_slice(s.as_slice()) > EIP2_VALUE {
+fn check_if_malleable(s: &B256) -> Result<(), Error> {
+    if U256::from_be_slice(s.as_slice()) > SIGNATURE_S_UPPER_BOUND {
         return Err(ECDSAInvalidSignatureS { s: **s }.into());
     }
     Ok(())
@@ -227,9 +230,9 @@ mod tests {
 
     #[test]
     fn rejects_invalid_s() {
-        let invalid_s = EIP2_VALUE + uint!(1_U256);
+        let invalid_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);
         let invalid_s = B256::from_slice(&invalid_s.to_be_bytes_vec());
-        let err = validate_s_value(&invalid_s)
+        let err = check_if_malleable(&invalid_s)
             .expect_err("should return ECDSAInvalidSignatureS");
 
         assert!(matches!(err,
@@ -241,9 +244,9 @@ mod tests {
 
     #[test]
     fn validates_s() {
-        let valid_s = EIP2_VALUE - uint!(1_U256);
+        let valid_s = SIGNATURE_S_UPPER_BOUND - uint!(1_U256);
         let invalid_s = B256::from_slice(&valid_s.to_be_bytes_vec());
-        let result = validate_s_value(&invalid_s);
+        let result = check_if_malleable(&invalid_s);
         assert!(result.is_ok());
     }
 }
