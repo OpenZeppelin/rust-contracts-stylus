@@ -197,7 +197,8 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 /// * If the `s` value is grater than `EIP2_VALUE`, then the error
 /// [`Error::ECDSAInvalidSignatureS`] is returned.
 fn check_if_malleable(s: &B256) -> Result<(), Error> {
-    if U256::from_be_slice(s.as_slice()) > SIGNATURE_S_UPPER_BOUND {
+    let s_u256 = U256::from_be_slice(s.as_slice());
+    if s_u256 > SIGNATURE_S_UPPER_BOUND {
         return Err(ECDSAInvalidSignatureS { s: **s }.into());
     }
     Ok(())
