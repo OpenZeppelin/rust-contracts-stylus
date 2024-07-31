@@ -54,7 +54,7 @@ pub enum Error {
 sol! {
     /// Struct with callable data to the `ecrecover` precompile.
     #[allow(missing_docs)]
-    struct ECRecoverData {
+    struct EcRecoverData {
         /// EIP-191 Hash of the message.
         bytes32 hash;
         /// `v` value from the signature.
@@ -85,7 +85,7 @@ sol! {
 ///
 /// # Panics
 ///
-/// * If `ecrecover` precompile fail to execute.
+/// * If the `ecrecover` precompile fails to execute.
 pub fn recover(
     storage: &mut impl TopLevelStorage,
     hash: B256,
@@ -95,7 +95,7 @@ pub fn recover(
 ) -> Result<Address, Error> {
     validate_s_value(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    evm_recover(storage, hash, v, r, s)
+    _recover(storage, hash, v, r, s)
 }
 
 /// Calls `ecrecover` EVM precompile.
@@ -121,17 +121,17 @@ pub fn recover(
 /// # Panics
 ///
 /// * If `ecrecover` precompile fail to execute.
-fn evm_recover(
+fn _recover(
     storage: &mut impl TopLevelStorage,
     hash: B256,
     v: u8,
     r: B256,
     s: B256,
 ) -> Result<Address, Error> {
-    let calldata = prepare_calldata(hash, v, r, s);
+    let calldata = encode_calldata(hash, v, r, s);
 
     if v == 0 || v == 1 {
-        // `ecrecover` panics for this values
+        // `ecrecover` panics for these values
         // but following the Solidity tests
         // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/test/utils/cryptography/ECDSA.test.js
         // it should return `ECDSAInvalidSignature` error.
@@ -151,7 +151,7 @@ fn evm_recover(
     Ok(recovered)
 }
 
-/// Prepares call data for `ecrecover` EVM precompile.
+/// Encodes call data for `ecrecover` EVM precompile.
 ///
 /// # Arguments
 ///
@@ -159,12 +159,12 @@ fn evm_recover(
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
 /// * `s` - `s` value from the signature.
-fn prepare_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
-    let calldata = ECRecoverData { hash: *hash, v, r: *r, s: *s };
-    ECRecoverData::encode(&calldata)
+fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
+    let calldata = EcRecoverData { hash: *hash, v, r: *r, s: *s };
+    EcRecoverData::encode(&calldata)
 }
 
-/// Validates `S` value.
+/// Validates the `s` value of a signature.
 ///
 /// EIP-2 still allows signature malleability for `ecrecover` precompile.
 ///
@@ -200,6 +200,7 @@ fn validate_s_value(s: &B256) -> Result<(), Error> {
     }
     Ok(())
 }
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{b256, B256};
@@ -220,7 +221,7 @@ mod tests {
     #[test]
     fn prepares_calldata() {
         let expected = alloy_primitives::bytes!("a1de988600a42c4b4ab089b619297c17d53cffae5d5120d82d8a92d0bb3b78f2000000000000000000000000000000000000000000000000000000000000001c65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee823eb5a6982b540f185703492dab77b863a88ce01f27e21ade8b2879c10fc9e653");
-        let calldata = prepare_calldata(MSG_HASH, V, R, S);
+        let calldata = encode_calldata(MSG_HASH, V, R, S);
         assert_eq!(expected, calldata);
     }
 
