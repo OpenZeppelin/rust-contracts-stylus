@@ -96,3 +96,25 @@ pub trait IEIP712 {
         to_typed_data_hash(domain_separator, hash_struct)
     }
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{address, uint, Address, U256};
+
+    use super::IEIP712;
+
+    struct TestEIP712 {}
+
+    impl IEIP712 for TestEIP712 {
+        const NAME: &'static str = "A Name";
+        const VERSION: &'static str = "1";
+
+        fn chain_id() -> U256 {
+            uint!(42161_U256)
+        }
+
+        fn contract_address() -> Address {
+            address!("dCE82b5f92C98F27F116F70491a487EFFDb6a2a9")
+        }
+    }
+}
