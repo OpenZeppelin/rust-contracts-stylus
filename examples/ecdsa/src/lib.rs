@@ -9,11 +9,11 @@ use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 sol_storage! {
     #[entrypoint]
-    struct CryptoExample {}
+    struct ECDSAExample {}
 }
 
 #[external]
-impl CryptoExample {
+impl ECDSAExample {
     pub fn recover(
         &mut self,
         hash: B256,

@@ -3,7 +3,7 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-   contract Crypto {
+   contract ECDSA {
         error ECDSAInvalidSignature();
         error ECDSAInvalidSignatureS(bytes32 s);
 
