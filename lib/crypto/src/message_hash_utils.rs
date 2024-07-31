@@ -29,6 +29,7 @@ const ETH_MESSAGE_PREFIX: [u8; 28] =
 /// because the final digest will be re-hashed.
 ///
 /// [eth_sign]: https://eth.wiki/json-rpc/API#eth_sign
+#[must_use]
 pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
     type EthMessageCoder = sol! {
         tuple(bytes, bytes32)
@@ -49,6 +50,7 @@ pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
 /// hash signed by the [eth_signTypedData] JSON-RPC method as part of EIP-712.
 ///
 /// [eth_signTypedData]: https://eips.ethereum.org/EIPS/eip-712
+#[must_use]
 pub fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
     type TypeHashCoder = sol! {
         tuple(string, bytes32, bytes32)

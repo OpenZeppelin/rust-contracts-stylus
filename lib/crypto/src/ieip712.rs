@@ -32,7 +32,7 @@ pub type DomainSeparatorTuple = sol! {
 };
 
 /// EIP-712 Contract interface.
-pub trait EIP712 {
+pub trait IEIP712 {
     /// Immutable name of EIP-712 instance.
     const NAME: &'static str;
     /// Immutable version of EIP-712 instance.
