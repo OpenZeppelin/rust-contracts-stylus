@@ -1,8 +1,8 @@
 use alloy::{
     network::EthereumWallet,
-    primitives::Address,
+    primitives::{Address, B256},
     providers::{Provider, ProviderBuilder},
-    signers::local::PrivateKeySigner,
+    signers::{local::PrivateKeySigner, Signature, Signer},
 };
 use eyre::Result;
 use once_cell::sync::Lazy;
@@ -45,6 +45,26 @@ impl Account {
     #[must_use]
     pub fn url(&self) -> &str {
         self.wallet.client().transport().url()
+    }
+
+    /// Sign the given hash.
+    ///
+    /// # Panics
+    ///
+    /// May fail when the method is not implemented for `Signer`. Should not
+    /// happen.
+    pub async fn sign_hash(&self, hash: &B256) -> Signature {
+        self.signer.sign_hash(hash).await.expect("should sign a hash")
+    }
+
+    /// Sign the given message.
+    ///
+    /// # Panics
+    ///
+    /// May fail when the method is not implemented for `Signer`. Should not
+    /// happen.
+    pub async fn sign_message(&self, message: &[u8]) -> Signature {
+        self.signer.sign_message(message).await.expect("should sign a message")
     }
 }
 
