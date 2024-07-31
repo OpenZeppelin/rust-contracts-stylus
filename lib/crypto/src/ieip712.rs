@@ -101,8 +101,13 @@ pub trait IEIP712 {
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
 
-    use super::IEIP712;
+    use super::{FIELDS, IEIP712, SALT};
 
+    const CHAIN_ID: U256 = uint!(42161_U256);
+    const CONTRACT_ADDRESS: Address =
+        address!("dCE82b5f92C98F27F116F70491a487EFFDb6a2a9");
+
+    #[derive(Default)]
     struct TestEIP712 {}
 
     impl IEIP712 for TestEIP712 {
@@ -110,11 +115,24 @@ mod tests {
         const VERSION: &'static str = "1";
 
         fn chain_id() -> U256 {
-            uint!(42161_U256)
+            CHAIN_ID
         }
 
         fn contract_address() -> Address {
-            address!("dCE82b5f92C98F27F116F70491a487EFFDb6a2a9")
+            CONTRACT_ADDRESS
         }
+    }
+
+    #[test]
+    fn domain_test() {
+        let contract = TestEIP712::default();
+        let domain = contract.eip712_domain();
+        assert_eq!(FIELDS, domain.0);
+        assert_eq!(TestEIP712::NAME, domain.1);
+        assert_eq!(TestEIP712::VERSION, domain.2);
+        assert_eq!(CHAIN_ID, domain.3);
+        assert_eq!(CONTRACT_ADDRESS, domain.4);
+        assert_eq!(SALT, domain.5);
+        assert_eq!(Vec::<U256>::new(), domain.6);
     }
 }
