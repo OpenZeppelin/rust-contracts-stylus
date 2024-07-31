@@ -13,9 +13,12 @@
 use alloy_primitives::{fixed_bytes, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_proc::{external, sol_storage, SolidityError};
-use stylus_sdk::block;
+use stylus_sdk::{block, storage::TopLevelStorage};
 
-use crate::{token::erc20::IErc20Internal, utils::nonces::Nonces};
+use crate::{
+    token::erc20::IErc20Internal,
+    utils::{cryptography::ecdsa, nonces::Nonces},
+};
 
 const PERMIT_TYPEHASH: B256 = fixed_bytes!(
     "6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9"
@@ -56,6 +59,11 @@ sol_storage! {
         Nonces nonces;
     }
 }
+
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Permit {}
 
 #[external]
 impl Permit {
@@ -146,10 +154,10 @@ impl Permit {
         )));
 
         // Blocked by #184.
-        let _hash: B256 = todo!("_hashTypedDataV4(structHash)");
+        let hash: B256 = todo!("_hashTypedDataV4(structHash)");
 
-        // Blocked by #17.
-        let signer: Address = todo!("ECDSA.recover(hash, v, r, s)");
+        // TODO: error handling
+        let signer: Address = ecdsa::recover(self, hash, v, r, s).unwrap();
 
         if signer != owner {
             return Err(ERC2612InvalidSigner { signer, owner }.into());
