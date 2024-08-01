@@ -737,9 +737,6 @@ async fn error_when_safe_transfer_nonexistent_token(
     Ok(())
 }
 
-// TODO: Test reverts & panics on ERC721ReceiverMock for
-// `Erc721::safeTransferFrom_0`.
-
 #[e2e::test]
 async fn safe_transfers_from_with_data(
     alice: Account,
@@ -1092,8 +1089,102 @@ async fn error_when_safe_transfer_with_data_nonexistent_token(
     Ok(())
 }
 
-// TODO: Test reverts & panics on ERC721ReceiverMock for
-// `Erc721::safeTransferFrom_1`.
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_reverts_with_reason(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC721ReceiverMock::RevertType::RevertWithMessage,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+
+    let _err = send!(contract.safeTransferFrom_0(
+        alice_addr,
+        receiver_address,
+        token_id
+    ))
+    .expect_err("should not transfer when receiver errors with reason");
+
+    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
+    //     b"ERC721ReceiverMock: reverting".to_vec()
+    // )));
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_without_reason(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC721ReceiverMock::RevertType::RevertWithoutMessage,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+
+    let err = send!(contract.safeTransferFrom_0(
+        alice_addr,
+        receiver_address,
+        token_id
+    ))
+    .expect_err("should not transfer when receiver reverts");
+
+    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::Panic)
+            .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let _ = watch!(contract.mint(alice_addr, token_id))?;
+
+    let err = send!(contract.safeTransferFrom_0(
+        alice_addr,
+        receiver_address,
+        token_id
+    ))
+    .expect_err("should not transfer when receiver panics");
+
+    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
 
 #[e2e::test]
 async fn approves(alice: Account, bob: Account) -> eyre::Result<()> {
