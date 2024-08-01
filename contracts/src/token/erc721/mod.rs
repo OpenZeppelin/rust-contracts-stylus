@@ -137,8 +137,8 @@ pub enum Error {
     InvalidSender(ERC721InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC721InvalidReceiver),
-    /// Indicates a failure with the token `receiver`, with the reason specified
-    /// by it.
+    /// Indicates a failure with the token `receiver`, with the reason
+    /// specified by it.
     InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
