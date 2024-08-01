@@ -1155,7 +1155,10 @@ async fn errors_when_receiver_reverts_without_reason(
     Ok(())
 }
 
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
+#[ignore]
 async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
