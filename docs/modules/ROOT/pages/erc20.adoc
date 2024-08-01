@@ -32,10 +32,6 @@ impl GLDToken {}
 
 Our contracts are often used via stylus-sdk https://docs.arbitrum.io/stylus/reference/rust-sdk-guide#inheritance-inherit-and-borrow[inheritance], and here we're reusing https://docs.rs/openzeppelin_stylus/token/erc20/struct.Erc20.html[`ERC20`] for both the basic standard implementation and with optional extensions.
 
-// TODO: Add a section on how to deploy and call this contract
-
-// TODO: Add a section that describes our approach with constructors
-
 [[a-note-on-decimals]]
 == A Note on `decimals`
 
