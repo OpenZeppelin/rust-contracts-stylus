@@ -1,3 +1,0 @@
-= ERC-721
-
-TODO: add erc721 token description

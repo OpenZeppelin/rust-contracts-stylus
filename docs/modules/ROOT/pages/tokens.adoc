@@ -27,4 +27,3 @@ Even though the concept of a token is simple, they have a variety of complexitie
 You've probably heard of the ERC-20 or ERC-721 token standards, and that's why you're here. Head to our specialized guides to learn more about these:
 
  * xref:erc20.adoc[ERC-20]: the most widespread token standard for fungible assets, albeit somewhat limited by its simplicity.
- * xref:erc721.adoc[ERC-721]: the de-facto solution for non-fungible tokens, often used for collectibles and games.
