@@ -3,7 +3,11 @@ use alloc::vec;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use stylus_sdk::{
-    abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
+    abi::Bytes,
+    alloy_sol_types::sol,
+    call::{self, Call},
+    evm, msg,
+    prelude::*,
 };
 
 use crate::utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked};
@@ -133,6 +137,9 @@ pub enum Error {
     InvalidSender(ERC721InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC721InvalidReceiver),
+    /// Indicates a failure with the token `receiver`, with the reason specified
+    /// by it.
+    InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used
@@ -1051,11 +1058,10 @@ impl Erc721 {
     /// `operator` is generally the address that initiated the token transfer
     /// (i.e. `msg::sender()`).
     ///
-    /// The acceptance call is not executed and treated as a no-op
-    /// if the target address doesn't contain code (i.e. an EOA).
-    /// Otherwise, the recipient must implement
-    /// [`IERC721Receiver::on_erc_721_received`] and return the
-    /// acceptance magic value to accept the transfer.
+    /// The acceptance call is not executed and treated as a no-op if the
+    /// target address doesn't contain code (i.e. an EOA). Otherwise, the
+    /// recipient must implement [`IERC721Receiver::on_erc_721_received`] and
+    /// return the acceptance magic value to accept the transfer.
     ///
     /// # Arguments
     ///
@@ -1080,29 +1086,37 @@ impl Erc721 {
         token_id: U256,
         data: &Bytes,
     ) -> Result<(), Error> {
-        const IERC721RECEIVER_INTERFACE_ID: FixedBytes<4> =
-            fixed_bytes!("150b7a02");
+        const RECEIVER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("150b7a02");
 
-        // FIXME: Cleanup this code once it's covered in the test suite.
-        if to.has_code() {
-            let call = Call::new_in(self);
-            return match IERC721Receiver::new(to).on_erc_721_received(
-                call,
-                operator,
-                from,
-                token_id,
-                data.to_vec(),
-            ) {
-                Ok(result) => {
-                    if result == IERC721RECEIVER_INTERFACE_ID {
-                        Ok(())
-                    } else {
-                        Err(ERC721InvalidReceiver { receiver: to }.into())
+        if !to.has_code() {
+            return Ok(());
+        }
+
+        let receiver = IERC721Receiver::new(to);
+        let call = Call::new_in(self);
+        let data = data.to_vec();
+        let result =
+            receiver.on_erc_721_received(call, operator, from, token_id, data);
+
+        let id = match result {
+            Ok(id) => id,
+            Err(e) => {
+                if let call::Error::Revert(ref reason) = e {
+                    if reason.len() > 0 {
+                        // Non-IERC721Receiver implementer.
+                        return Err(Error::InvalidReceiverWithReason(e));
                     }
                 }
-                Err(_) => Err(ERC721InvalidReceiver { receiver: to }.into()),
-            };
+
+                return Err(ERC721InvalidReceiver { receiver: to }.into());
+            }
+        };
+
+        // Token rejected.
+        if id != RECEIVER_FN_SELECTOR {
+            return Err(ERC721InvalidReceiver { receiver: to }.into());
         }
+
         Ok(())
     }
 }
