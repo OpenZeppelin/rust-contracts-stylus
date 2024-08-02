@@ -12,7 +12,7 @@
 
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
-use alloy_primitives::{hex, Address, B256, U256};
+use alloy_primitives::{Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 
 use crate::{
@@ -23,12 +23,18 @@ use crate::{
 
 /// keccak256("EIP712Domain(string name,string version,uint256 chainId,address
 /// verifyingContract)")
-pub const TYPE_HASH: [u8; 32] =
-    hex!("8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
-/// Field for the domain separator. `hex"0f"`
-pub const FIELDS: [u8; 1] = hex!("0f");
-/// Salt for the domain separator. `bytes32(0)`
+pub const TYPE_HASH: [u8; 32] = [
+    0x8b, 0x73, 0xc3, 0xc6, 0x9b, 0xb8, 0xfe, 0x3d, 0x51, 0x2e, 0xcc, 0x4c,
+    0xf7, 0x59, 0xcc, 0x79, 0x23, 0x9f, 0x7b, 0x17, 0x9b, 0x0f, 0xfa, 0xca,
+    0xa9, 0xa7, 0x5d, 0x52, 0x2b, 0x39, 0x40, 0x0f,
+];
+
+/// Field for the domain separator.
+pub const FIELDS: [u8; 1] = [0x0f];
+
+/// Salt for the domain separator.
 pub const SALT: [u8; 32] = [0u8; 32];
+
 /// Tuple for the domain separator.
 pub type DomainSeparatorTuple = sol! {
     tuple(bytes32, bytes32, bytes32, uint256, address)
