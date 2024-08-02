@@ -12,11 +12,14 @@
 
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
-use alloy_primitives::{keccak256, Address, B256, U256};
+use alloy_primitives::{hex, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
-use hex_literal::hex;
 
-use crate::message_hash_utils::to_typed_data_hash;
+use crate::{
+    hash::{BuildHasher, Hasher},
+    message_hash_utils::to_typed_data_hash,
+    KeccakBuilder,
+};
 
 /// keccak256("EIP712Domain(string name,string version,uint256 chainId,address
 /// verifyingContract)")
@@ -63,23 +66,32 @@ pub trait IEIP712 {
     }
 
     /// Returns the domain separator for the current chain.
+    /// This function employs a cache to avoid recomputing the domain separator.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     fn domain_separator_v4(&self) -> B256 {
-        let hashed_name = keccak256(Self::NAME.as_bytes());
-        let hashed_version = keccak256(Self::VERSION.as_bytes());
+        let b = KeccakBuilder;
+        let mut name_hasher = b.build_hasher();
+        name_hasher.update(Self::NAME.as_bytes());
+        let hashed_name = name_hasher.finalize();
+
+        let mut version_hasher = b.build_hasher();
+        version_hasher.update(Self::VERSION.as_bytes());
+        let hashed_version = version_hasher.finalize();
 
         let encoded = DomainSeparatorTuple::encode_params(&(
             TYPE_HASH,
-            *hashed_name,
-            *hashed_version,
+            hashed_name,
+            hashed_version,
             Self::chain_id(),
             Self::contract_address(),
         ));
 
-        keccak256(encoded)
+        let mut domain_separator_hasher = b.build_hasher();
+        domain_separator_hasher.update(encoded);
+        domain_separator_hasher.finalize().into()
     }
 
     /// Given an already [hashed struct], this function returns the hash of the
@@ -92,7 +104,7 @@ pub trait IEIP712 {
     /// * `&self` - Read access to the contract's state.
     fn hash_typed_data_v4(&self, hash_struct: B256) -> B256 {
         let domain_separator = self.domain_separator_v4();
-        to_typed_data_hash(domain_separator, hash_struct)
+        to_typed_data_hash(&domain_separator, &hash_struct).into()
     }
 }
 

@@ -7,13 +7,14 @@
 //! [ERC-191]: https://eips.ethereum.org/EIPS/eip-191
 //! [EIP-712]: https://eips.ethereum.org/EIPS/eip-712
 
-use alloc::{
-    string::{String, ToString},
-    vec::Vec,
-};
+use alloc::string::ToString;
 
-use alloy_primitives::{keccak256, B256};
-use hex_literal::hex;
+use alloy_primitives::hex;
+
+use crate::{
+    hash::{BuildHasher, Hasher},
+    KeccakBuilder,
+};
 
 /// Prefix for EIP-191 Signed Data Standard.
 pub const EIP191_PREFIX: &str = "\x19Ethereum Signed Message:\n";
@@ -35,9 +36,8 @@ pub const TYPED_DATA_PREFIX: [u8; 2] = hex!("1901");
 ///
 /// [eth_sign]: https://eth.wiki/json-rpc/API#eth_sign
 #[must_use]
-pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
-    let message = eip_191_message(message_hash.as_slice());
-    keccak256(message)
+pub fn to_eth_signed_message_hash(message_hash: &[u8; 32]) -> [u8; 32] {
+    eip_191_hash(message_hash)
 }
 
 /// Returns the keccak256 digest of an EIP-712 typed data (ERC-191 version
@@ -50,30 +50,33 @@ pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
 ///
 /// [eth_signTypedData]: https://eips.ethereum.org/EIPS/eip-712
 #[must_use]
-pub fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
-    let mut typed_data = Vec::with_capacity(66); // 2 bytes for prefix + 2*B256
-    typed_data.extend_from_slice(&TYPED_DATA_PREFIX);
-    typed_data.extend_from_slice(domain_separator.as_slice());
-    typed_data.extend_from_slice(struct_hash.as_slice());
-    keccak256(typed_data)
+pub fn to_typed_data_hash(
+    domain_separator: &[u8; 32],
+    struct_hash: &[u8; 32],
+) -> [u8; 32] {
+    let b = KeccakBuilder;
+    let mut hasher = b.build_hasher();
+    hasher.update(TYPED_DATA_PREFIX);
+    hasher.update(domain_separator);
+    hasher.update(struct_hash);
+    hasher.finalize()
 }
 
-/// Constructs a message according to [EIP-191] (version `0x01`).
+/// Calculates a `keccak256` hash of the `message`
+/// according to [EIP-191] (version `0x01`).
 ///
 /// The final message is a UTF-8 string, encoded as follows:
 /// `"\x19Ethereum Signed Message:\n" + message.length + message`
 ///
 /// [EIP-191]: https://eips.ethereum.org/EIPS/eip-191
 #[must_use]
-pub fn eip_191_message(message: &[u8]) -> Vec<u8> {
-    let len = message.len();
-    let msg_length: String = len.to_string();
-    let mut eip_191 =
-        Vec::with_capacity(EIP191_PREFIX.len() + msg_length.len() + len);
-    eip_191.extend_from_slice(EIP191_PREFIX.as_bytes());
-    eip_191.extend_from_slice(msg_length.as_bytes());
-    eip_191.extend_from_slice(message);
-    eip_191
+pub fn eip_191_hash(message: &[u8]) -> [u8; 32] {
+    let b = KeccakBuilder;
+    let mut hasher = b.build_hasher();
+    hasher.update(EIP191_PREFIX.as_bytes());
+    hasher.update(message.len().to_string().as_bytes());
+    hasher.update(message);
+    hasher.finalize()
 }
 
 #[cfg(all(test, feature = "std"))]
