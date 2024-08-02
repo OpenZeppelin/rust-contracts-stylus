@@ -77,17 +77,6 @@ contract Erc721ConsecutiveExample {
         }
     }
 
-// NOTE#q: koba doesn't support this syntax for unsafe access without bound checks.
-//  Possible to use unoptimised access `_checkpoints[..]`.
-//    function _unsafeAccess(
-//        uint256 pos
-//    ) private view returns (Checkpoint160 storage result) {
-//        assembly {
-//            mstore(0, _checkpoints.slot)
-//            result.slot := add(keccak256(0, 0x20), pos)
-//        }
-//    }
-
     function _mintConsecutive(address to, uint96 batchSize) internal virtual returns (uint96) {
         uint96 next = _nextConsecutiveId();
 
