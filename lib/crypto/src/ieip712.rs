@@ -63,7 +63,6 @@ pub trait IEIP712 {
     }
 
     /// Returns the domain separator for the current chain.
-    /// This function employs a cache to avoid recomputing the domain separator.
     ///
     /// # Arguments
     ///
@@ -84,7 +83,7 @@ pub trait IEIP712 {
     }
 
     /// Given an already [hashed struct], this function returns the hash of the
-    /// fully encoded EIP-721 message for this domain.
+    /// fully encoded EIP-712 message for this domain.
     ///
     /// [hashed struct]: https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct
     ///

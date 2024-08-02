@@ -7,61 +7,73 @@
 //! [ERC-191]: https://eips.ethereum.org/EIPS/eip-191
 //! [EIP-712]: https://eips.ethereum.org/EIPS/eip-712
 
-use alloc::string::String;
+use alloc::{
+    string::{String, ToString},
+    vec::Vec,
+};
 
 use alloy_primitives::{keccak256, B256};
-use alloy_sol_types::{sol, SolType};
 use hex_literal::hex;
 
-/// "\x19Ethereum Signed Message:\n32" in bytes
-const ETH_MESSAGE_PREFIX: [u8; 28] =
-    hex!("19457468657265756d205369676e6564204d6573736167653a0a3332");
+/// Prefix for EIP-191 Signed Data Standard.
+pub const EIP191_PREFIX: &str = "\x19Ethereum Signed Message:\n";
+
+/// Prefix for ERC-191 version with `0x01`.
+pub const TYPED_DATA_PREFIX: [u8; 2] = hex!("1901");
 
 /// Returns the keccak256 digest of an ERC-191 signed data with version `0x45`
 /// (`personal_sign` messages).
 ///
 /// The digest is calculated by prefixing a bytes32 `message_hash` with
-/// `"\x19Ethereum Signed Message:\n32"` and hashing the result. It corresponds
-/// with the hash signed when using the [eth_sign] JSON-RPC method.
+/// [`EIP191_PREFIX`] and length of the `message_hash`, and hashing the result.
+/// It corresponds with the hash signed when using the [eth_sign]
+/// JSON-RPC method.
 ///
 /// NOTE: The `message_hash` parameter is intended to be the result of hashing a
-/// raw message with keccak256, although any bytes32 value can be safely used
+/// raw message with `keccak256`, although any B256 value can be safely used
 /// because the final digest will be re-hashed.
 ///
 /// [eth_sign]: https://eth.wiki/json-rpc/API#eth_sign
 #[must_use]
 pub fn to_eth_signed_message_hash(message_hash: B256) -> B256 {
-    type EthMessageCoder = sol! {
-        tuple(bytes, bytes32)
-    };
-
-    let encoded = EthMessageCoder::encode_packed(&(
-        ETH_MESSAGE_PREFIX.to_vec(),
-        *message_hash,
-    ));
-    keccak256(encoded)
+    let message = eip_191_message(message_hash.as_slice());
+    keccak256(message)
 }
 
 /// Returns the keccak256 digest of an EIP-712 typed data (ERC-191 version
 /// `0x01`).
 ///
 /// The digest is calculated from a `domain_separator` and a `struct_hash`, by
-/// prefixing them with `\x19\x01` and hashing the result. It corresponds to the
-/// hash signed by the [eth_signTypedData] JSON-RPC method as part of EIP-712.
+/// prefixing them with `[TYPED_DATA_PREFIX]` and hashing the result. It
+/// corresponds to the hash signed by the [eth_signTypedData] JSON-RPC method as
+/// part of EIP-712.
 ///
 /// [eth_signTypedData]: https://eips.ethereum.org/EIPS/eip-712
 #[must_use]
 pub fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
-    type TypeHashCoder = sol! {
-        tuple(string, bytes32, bytes32)
-    };
+    let mut typed_data = Vec::with_capacity(66); // 2 bytes for prefix + 2*B256
+    typed_data.extend_from_slice(&TYPED_DATA_PREFIX);
+    typed_data.extend_from_slice(domain_separator.as_slice());
+    typed_data.extend_from_slice(struct_hash.as_slice());
+    keccak256(typed_data)
+}
 
-    let encoded = TypeHashCoder::encode_packed(&(
-        String::from("\x19\x01"),
-        *domain_separator,
-        *struct_hash,
-    ));
-    keccak256(encoded)
+/// Constructs a message according to [EIP-191] (version `0x01`).
+///
+/// The final message is a UTF-8 string, encoded as follows:
+/// `"\x19Ethereum Signed Message:\n" + message.length + message`
+///
+/// [EIP-191]: https://eips.ethereum.org/EIPS/eip-191
+#[must_use]
+pub fn eip_191_message(message: &[u8]) -> Vec<u8> {
+    let len = message.len();
+    let msg_length: String = len.to_string();
+    let mut eip_191 =
+        Vec::with_capacity(EIP191_PREFIX.len() + msg_length.len() + len);
+    eip_191.extend_from_slice(EIP191_PREFIX.as_bytes());
+    eip_191.extend_from_slice(msg_length.as_bytes());
+    eip_191.extend_from_slice(message);
+    eip_191
 }
 
 #[cfg(all(test, feature = "std"))]
