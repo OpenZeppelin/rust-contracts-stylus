@@ -2,11 +2,12 @@
 
 use alloy::{
     primitives::{fixed_bytes, Address, Bytes, U256},
+    rpc::types::TransactionReceipt,
     sol,
     sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
-use e2e::{receipt, send, watch, Account, EventExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use erc721_consecutive_example::Params;
 use openzeppelin_stylus::token::erc721::extensions::consecutive::Erc721ConsecutiveParams;
 
@@ -26,7 +27,7 @@ async fn deploy(
     private_key: &str,
     receivers: Vec<Address>,
     amounts: Vec<u128>,
-) -> eyre::Result<Address> {
+) -> eyre::Result<TransactionReceipt> {
     let args = Erc721ConsecutiveExample::constructorCall { receivers, amounts };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
@@ -37,9 +38,8 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let receivers = vec![alice_addr];
     let amounts = vec![10_u128];
-    let contract_addr =
-        deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
-    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let receipt = deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
+    let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
     let balance = contract.balanceOf(alice_addr).call().await?.balance;
     assert_eq!(balance, uint!(10_U256));
@@ -51,17 +51,15 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     let batch_size = 10_u128;
     let receivers = vec![alice.address()];
     let amounts = vec![batch_size];
-    let contract_addr =
-        deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
-    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let receipt = deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
+    let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
-    // TODO#q: check for ConsecutiveTransfer transfer event after deploy.
-    // assert!(receipt.emits(Erc721::ConsecutiveTransfer {
-    //     fromTokenId: from_token_id,
-    //     toTokenId: to_token_id,
-    //     fromAddress: Address::ZERO,
-    //     toAddress: alice.address(),
-    // }));
+    assert!(receipt.emits(Erc721::ConsecutiveTransfer {
+        fromTokenId: uint!(0_U256),
+        toTokenId: uint!(9_U256),
+        fromAddress: Address::ZERO,
+        toAddress: alice.address(),
+    }));
 
     let Erc721::balanceOfReturn { balance: balance1 } =
         contract.balanceOf(alice.address()).call().await?;
@@ -117,9 +115,8 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address(), bob.address()];
     let amounts = vec![1000_u128, 1000_u128];
     // Deploy and mint batches of 1000 tokens to Alice and Bob
-    let contract_addr =
-        deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
-    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let receipt = deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
+    let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
     let first_consecutive_token_id = U256::from(Params::FIRST_CONSECUTIVE_ID);
 
@@ -166,9 +163,8 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
     let amounts = vec![1000_u128];
     // Mint batch of 1000 tokens to Alice
-    let contract_addr =
-        deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
-    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let receipt = deploy(alice.url(), &alice.pk(), receivers, amounts).await?;
+    let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
     let first_consecutive_token_id = U256::from(Params::FIRST_CONSECUTIVE_ID);
 

@@ -1,4 +1,4 @@
-use alloy::primitives::Address;
+use alloy::{primitives::Address, rpc::types::TransactionReceipt};
 use koba::config::Deploy;
 
 use crate::project::Crate;
@@ -17,7 +17,7 @@ pub async fn deploy(
     rpc_url: &str,
     private_key: &str,
     args: Option<String>,
-) -> eyre::Result<Address> {
+) -> eyre::Result<TransactionReceipt> {
     let pkg = Crate::new()?;
     let sol_path = pkg.manifest_dir.join("src/constructor.sol");
     let wasm_path = pkg.wasm;
@@ -41,6 +41,6 @@ pub async fn deploy(
         quiet: false,
     };
 
-    let address = koba::deploy(&config).await?;
-    Ok(address)
+    let receipt = koba::deploy(&config).await?;
+    Ok(receipt)
 }

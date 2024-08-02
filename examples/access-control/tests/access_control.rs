@@ -4,9 +4,12 @@ use abi::AccessControl::{
     self, AccessControlBadConfirmation, AccessControlUnauthorizedAccount,
     RoleAdminChanged, RoleGranted, RoleRevoked,
 };
-use alloy::{hex, primitives::Address, sol_types::SolConstructor};
-use e2e::{receipt, send, watch, Account, EventExt, Revert};
-use eyre::Result;
+use alloy::{
+    hex, network::ReceiptResponse, primitives::Address,
+    sol_types::SolConstructor,
+};
+use e2e::{receipt, send, watch, Account, EventExt, Revert, ReceiptExt};
+use eyre::{ContextCompat, Result};
 
 mod abi;
 
@@ -19,7 +22,9 @@ const NEW_ADMIN_ROLE: [u8; 32] =
 async fn deploy(account: &Account) -> eyre::Result<Address> {
     let args = AccessControl::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args)).await
+    e2e::deploy(account.url(), &account.pk(), Some(args))
+        .await?
+        .address()
 }
 
 // ============================================================================
