@@ -9,18 +9,16 @@
 
 use alloc::string::ToString;
 
-use alloy_primitives::hex;
-
 use crate::{
     hash::{BuildHasher, Hasher},
-    KeccakBuilder,
+    Bytes32, KeccakBuilder,
 };
 
 /// Prefix for EIP-191 Signed Data Standard.
 pub const EIP191_PREFIX: &str = "\x19Ethereum Signed Message:\n";
 
 /// Prefix for ERC-191 version with `0x01`.
-pub const TYPED_DATA_PREFIX: [u8; 2] = hex!("1901");
+pub const TYPED_DATA_PREFIX: [u8; 2] = [0x19, 0x01];
 
 /// Returns the keccak256 digest of an ERC-191 signed data with version `0x45`
 /// (`personal_sign` messages).
@@ -36,7 +34,7 @@ pub const TYPED_DATA_PREFIX: [u8; 2] = hex!("1901");
 ///
 /// [eth_sign]: https://eth.wiki/json-rpc/API#eth_sign
 #[must_use]
-pub fn to_eth_signed_message_hash(message_hash: &[u8; 32]) -> [u8; 32] {
+pub fn to_eth_signed_message_hash(message_hash: &Bytes32) -> Bytes32 {
     eip_191_hash(message_hash)
 }
 
@@ -51,9 +49,9 @@ pub fn to_eth_signed_message_hash(message_hash: &[u8; 32]) -> [u8; 32] {
 /// [eth_signTypedData]: https://eips.ethereum.org/EIPS/eip-712
 #[must_use]
 pub fn to_typed_data_hash(
-    domain_separator: &[u8; 32],
-    struct_hash: &[u8; 32],
-) -> [u8; 32] {
+    domain_separator: &Bytes32,
+    struct_hash: &Bytes32,
+) -> Bytes32 {
     let b = KeccakBuilder;
     let mut hasher = b.build_hasher();
     hasher.update(TYPED_DATA_PREFIX);
@@ -70,7 +68,7 @@ pub fn to_typed_data_hash(
 ///
 /// [EIP-191]: https://eips.ethereum.org/EIPS/eip-191
 #[must_use]
-pub fn eip_191_hash(message: &[u8]) -> [u8; 32] {
+pub fn eip_191_hash(message: &[u8]) -> Bytes32 {
     let b = KeccakBuilder;
     let mut hasher = b.build_hasher();
     hasher.update(EIP191_PREFIX.as_bytes());

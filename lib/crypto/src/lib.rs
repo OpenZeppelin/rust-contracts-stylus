@@ -29,3 +29,12 @@ pub mod message_hash_utils;
 pub mod keccak;
 pub use ieip712::IEIP712;
 pub use keccak::KeccakBuilder;
+
+/// Type representing Solidity `bytes32`.
+pub type Bytes1 = [u8; 1];
+
+/// Type representing Solidity `bytes32`.
+pub type Bytes32 = [u8; 32];
+
+/// Type representing Solidity `Address`.
+pub type Address = [u8; 20];

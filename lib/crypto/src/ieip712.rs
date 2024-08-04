@@ -12,28 +12,30 @@
 
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
-use alloy_primitives::{Address, B256, U256};
+// TODO: Find a way for removing `alloy_primitives` crate from lib/crypto.
+// Here we need a workaround for `U256`.
+use alloy_primitives::U256;
 use alloy_sol_types::{sol, SolType};
 
 use crate::{
     hash::{BuildHasher, Hasher},
     message_hash_utils::to_typed_data_hash,
-    KeccakBuilder,
+    Address, Bytes1, Bytes32, KeccakBuilder,
 };
 
 /// keccak256("EIP712Domain(string name,string version,uint256 chainId,address
 /// verifyingContract)")
-pub const TYPE_HASH: [u8; 32] = [
+pub const TYPE_HASH: Bytes32 = [
     0x8b, 0x73, 0xc3, 0xc6, 0x9b, 0xb8, 0xfe, 0x3d, 0x51, 0x2e, 0xcc, 0x4c,
     0xf7, 0x59, 0xcc, 0x79, 0x23, 0x9f, 0x7b, 0x17, 0x9b, 0x0f, 0xfa, 0xca,
     0xa9, 0xa7, 0x5d, 0x52, 0x2b, 0x39, 0x40, 0x0f,
 ];
 
 /// Field for the domain separator.
-pub const FIELDS: [u8; 1] = [0x0f];
+pub const FIELDS: Bytes1 = [0x0f];
 
 /// Salt for the domain separator.
-pub const SALT: [u8; 32] = [0u8; 32];
+pub const SALT: Bytes32 = [0u8; 32];
 
 /// Tuple for the domain separator.
 pub type DomainSeparatorTuple = sol! {
@@ -59,7 +61,7 @@ pub trait IEIP712 {
     /// * `&self` - Read access to the contract's state.
     fn eip712_domain(
         &self,
-    ) -> ([u8; 1], String, String, U256, Address, [u8; 32], Vec<U256>) {
+    ) -> (Bytes1, String, String, U256, Address, Bytes32, Vec<U256>) {
         (
             FIELDS,
             Self::NAME.to_owned(),
@@ -72,12 +74,11 @@ pub trait IEIP712 {
     }
 
     /// Returns the domain separator for the current chain.
-    /// This function employs a cache to avoid recomputing the domain separator.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn domain_separator_v4(&self) -> B256 {
+    fn domain_separator_v4(&self) -> Bytes32 {
         let b = KeccakBuilder;
         let mut name_hasher = b.build_hasher();
         name_hasher.update(Self::NAME.as_bytes());
@@ -92,12 +93,12 @@ pub trait IEIP712 {
             hashed_name,
             hashed_version,
             Self::chain_id(),
-            Self::contract_address(),
+            Self::contract_address().into(),
         ));
 
         let mut domain_separator_hasher = b.build_hasher();
         domain_separator_hasher.update(encoded);
-        domain_separator_hasher.finalize().into()
+        domain_separator_hasher.finalize()
     }
 
     /// Given an already [hashed struct], this function returns the hash of the
@@ -108,21 +109,25 @@ pub trait IEIP712 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn hash_typed_data_v4(&self, hash_struct: B256) -> B256 {
+    fn hash_typed_data_v4(&self, hash_struct: Bytes32) -> Bytes32 {
         let domain_separator = self.domain_separator_v4();
-        to_typed_data_hash(&domain_separator, &hash_struct).into()
+        to_typed_data_hash(&domain_separator, &hash_struct)
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use alloy_primitives::{uint, U256};
 
     use super::{FIELDS, IEIP712, SALT};
+    use crate::Address;
 
     const CHAIN_ID: U256 = uint!(42161_U256);
-    const CONTRACT_ADDRESS: Address =
-        address!("dCE82b5f92C98F27F116F70491a487EFFDb6a2a9");
+
+    const CONTRACT_ADDRESS: Address = [
+        0xdC, 0xE8, 0x2b, 0x5f, 0x92, 0xC9, 0x8F, 0x27, 0xF1, 0x16, 0xF7, 0x04,
+        0x91, 0xa4, 0x87, 0xEF, 0xFD, 0xb6, 0xa2, 0xa9,
+    ];
 
     #[derive(Default)]
     struct TestEIP712 {}
