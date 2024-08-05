@@ -137,7 +137,7 @@ pub trait IEIP712 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use alloy_primitives::{address, b256, uint, Address, U256};
 
     use super::{to_typed_data_hash, FIELDS, IEIP712, SALT};
 
