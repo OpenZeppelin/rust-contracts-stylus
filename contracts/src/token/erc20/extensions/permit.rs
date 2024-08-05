@@ -9,7 +9,7 @@
 //! By not relying on [`crate::token::erc20::IErc20::approve`],
 //! the token holder account doesn’t need to send a transaction,
 //! and thus is not required to hold Ether at all.
-use alloy_primitives::{fixed_bytes, keccak256, Address, B256, U256};
+use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
@@ -22,9 +22,8 @@ use crate::{
     },
 };
 
-const PERMIT_TYPEHASH: B256 = fixed_bytes!(
-    "6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9"
-);
+const PERMIT_TYPEHASH: B256 =
+    b256!("6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9");
 
 type StructHashTuple = sol! {
     tuple(bytes32, address, address, uint256, uint256, uint256)
@@ -55,7 +54,6 @@ pub enum Error {
 
 sol_storage! {
     /// State of a Permit Contract.
-    #[allow(clippy::pub_underscore_fields)]
     pub struct Permit<T: IEIP712 + StorageType>{
         /// Nonces contract.
         Nonces nonces;
