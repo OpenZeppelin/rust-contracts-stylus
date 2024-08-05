@@ -69,5 +69,5 @@ The following command will deploy your contract:
 
 [source,bash]
 ----
-$ koba deploy --sol <path-to-constructor> --wasm <path-to-wasm> --args <constructor-arguments> -e https://stylusv2.arbitrum.io/rpc --private-key <private-key>
+$ koba deploy --sol <path-to-constructor> --wasm <path-to-wasm> --args <constructor-arguments> -e <rpc-url> --private-key <private-key>
 ----
