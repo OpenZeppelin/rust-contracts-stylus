@@ -2546,10 +2546,11 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "alloy-primitives 0.3.3",
  "alloy-sol-types 0.3.1",
+ "keccak-const",
  "mini-alloc",
  "motsu",
  "rand",
