@@ -14,6 +14,7 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
+keccak-const.workspace = true
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
