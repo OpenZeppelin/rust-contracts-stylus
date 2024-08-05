@@ -15,7 +15,7 @@ use crate::{
 };
 
 /// Prefix for EIP-191 Signed Data Standard.
-pub const EIP191_PREFIX: &str = "\x19Ethereum Signed Message:\n";
+pub const EIP191_PREFIX: &[u8; 26] = b"\x19Ethereum Signed Message:\n";
 
 /// Prefix for ERC-191 version with `0x01`.
 pub const TYPED_DATA_PREFIX: [u8; 2] = [0x19, 0x01];
@@ -71,7 +71,7 @@ pub fn to_typed_data_hash(
 pub fn eip_191_hash(message: &[u8]) -> Bytes32 {
     let b = KeccakBuilder;
     let mut hasher = b.build_hasher();
-    hasher.update(EIP191_PREFIX.as_bytes());
+    hasher.update(EIP191_PREFIX);
     hasher.update(message.len().to_string().as_bytes());
     hasher.update(message);
     hasher.finalize()
