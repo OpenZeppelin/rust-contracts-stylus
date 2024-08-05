@@ -14,6 +14,7 @@ use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
 use alloy_primitives::{keccak256, Address, FixedBytes, U256};
 use alloy_sol_types::{sol, SolType};
+use stylus_sdk::{block, contract};
 
 use crate::utils::cryptography::message_hash_utils::to_typed_data_hash;
 
@@ -52,9 +53,14 @@ pub trait IEIP712 {
         .finalize();
 
     /// Returns chain id.
-    fn chain_id() -> U256;
+    fn chain_id() -> U256 {
+        U256::from(block::chainid())
+    }
+
     /// Returns the contract's address.
-    fn contract_address() -> Address;
+    fn contract_address() -> Address {
+        contract::address()
+    }
 
     /// Returns the fields and values that describe the domain separator used by
     /// this contract for EIP-712 signature.

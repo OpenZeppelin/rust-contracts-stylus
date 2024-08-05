@@ -9,7 +9,7 @@ use openzeppelin_stylus::{
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable, Permit},
         Erc20, IErc20, IErc20Internal,
     },
-    utils::Pausable,
+    utils::{cryptography::eip712::IEIP712, Pausable},
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
@@ -27,12 +27,19 @@ sol_storage! {
         #[borrow]
         Pausable pausable;
         #[borrow]
-        Permit permit;
+        Permit<Eip712> permit;
     }
+
+    struct Eip712 {}
+}
+
+impl IEIP712 for Eip712 {
+    const NAME: &'static str = "ERC-20 Permit Example";
+    const VERSION: &'static str = "1";
 }
 
 #[external]
-#[inherit(Erc20, Erc20Metadata, Capped, Pausable, Permit)]
+#[inherit(Erc20, Erc20Metadata, Capped, Pausable, Permit<Eip712>)]
 impl Erc20Example {
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.
     //

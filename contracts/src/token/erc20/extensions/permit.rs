@@ -9,15 +9,17 @@
 //! By not relying on [`crate::token::erc20::IErc20::approve`],
 //! the token holder account doesn’t need to send a transaction,
 //! and thus is not required to hold Ether at all.
-
 use alloy_primitives::{fixed_bytes, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_proc::{external, sol_storage, SolidityError};
-use stylus_sdk::{block, storage::TopLevelStorage};
+use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
 
 use crate::{
     token::erc20::IErc20Internal,
-    utils::{cryptography::ecdsa, nonces::Nonces},
+    utils::{
+        cryptography::{ecdsa, eip712::IEIP712},
+        nonces::Nonces,
+    },
 };
 
 const PERMIT_TYPEHASH: B256 = fixed_bytes!(
@@ -54,19 +56,21 @@ pub enum Error {
 sol_storage! {
     /// State of a Permit Contract.
     #[allow(clippy::pub_underscore_fields)]
-    pub struct Permit {
+    pub struct Permit<T: IEIP712 + StorageType>{
         /// Nonces contract.
         Nonces nonces;
+        /// EIP-712 contract. Must implement [`IEIP712`] trait.
+        T eip712;
     }
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Permit {}
+unsafe impl<T: IEIP712 + StorageType> TopLevelStorage for Permit<T> {}
 
 #[external]
-impl Permit {
+impl<T: IEIP712 + StorageType> Permit<T> {
     /// Returns the current nonce for `owner`.
     ///
     /// # Arguments
@@ -87,12 +91,11 @@ impl Permit {
     #[selector(name = "DOMAIN_SEPARATOR")]
     #[must_use]
     pub fn domain_separator(&self) -> B256 {
-        unimplemented!()
-        // Blocked by #184
+        self.eip712.domain_separator_v4()
     }
 }
 
-impl Permit {
+impl<T: IEIP712 + StorageType> Permit<T> {
     /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
     /// given `owner`'s signed approval.
     ///
@@ -144,7 +147,7 @@ impl Permit {
             return Err(ERC2612ExpiredSignature { deadline }.into());
         }
 
-        let _struct_hash = keccak256(StructHashTuple::encode_params(&(
+        let struct_hash = keccak256(StructHashTuple::encode_params(&(
             *PERMIT_TYPEHASH,
             owner,
             spender,
@@ -153,10 +156,8 @@ impl Permit {
             deadline,
         )));
 
-        // Blocked by #184.
-        let hash: B256 = todo!("_hashTypedDataV4(structHash)");
+        let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 
-        // TODO: error handling
         let signer: Address = ecdsa::recover(self, hash, v, r, s).unwrap();
 
         if signer != owner {
