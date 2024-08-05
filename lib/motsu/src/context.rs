@@ -1,6 +1,8 @@
 //! Unit-testing context for Stylus contracts.
 use std::sync::{Mutex, MutexGuard};
 
+use stylus_sdk::{alloy_primitives::uint, prelude::StorageType};
+
 use crate::storage::reset_storage;
 
 /// A global static mutex.
@@ -22,9 +24,22 @@ pub fn acquire_storage() -> MutexGuard<'static, ()> {
 
 /// Decorates a closure by running it with exclusive access to storage.
 #[allow(clippy::module_name_repetitions)]
-pub fn with_context<C: Default>(closure: impl FnOnce(&mut C)) {
+pub fn with_context<C: StorageType>(closure: impl FnOnce(&mut C)) {
     let _lock = acquire_storage();
     let mut contract = C::default();
     closure(&mut contract);
     reset_storage();
 }
+
+/// Initializes fields of contract storage and child contract storages with
+/// default values.
+pub trait DefaultStorage: StorageType {
+    /// Initializes fields of contract storage and child contract storages with
+    /// default values.
+    #[must_use]
+    fn default() -> Self {
+        unsafe { Self::new(uint!(0_U256), 0) }
+    }
+}
+
+impl<ST: StorageType> DefaultStorage for ST {}

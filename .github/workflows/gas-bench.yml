@@ -1,4 +1,4 @@
-name: check-wasm
+name: gas-bench
 # This workflow checks that the compiled wasm binary of every example contract
 # can be deployed to Arbitrum Stylus.
 permissions:
@@ -13,8 +13,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  check-wasm:
-    name: Check WASM binary
+  required:
+    name: gas usage report
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,12 +29,17 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          cache-on-failure: "true"
+          cache-on-failure: true
 
-      - name: install cargo-stylus
-        run: cargo install cargo-stylus@0.4.1 cargo-stylus-check@0.4.1
+      - name: install solc
+        run: |
+          curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
+          sudo mv solc-static-linux /usr/bin/solc
+          sudo chmod a+x /usr/bin/solc
 
-      - name: run wasm check
+      - name: setup nitro node
+        run: ./scripts/nitro-testnode.sh -d -i
+      - name: run benches
         run: |
           export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./scripts/check-wasm.sh
+          ./scripts/bench.sh

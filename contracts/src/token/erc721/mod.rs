@@ -3,7 +3,11 @@ use alloc::vec;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use stylus_sdk::{
-    abi::Bytes, alloy_sol_types::sol, call::Call, evm, msg, prelude::*,
+    abi::Bytes,
+    alloy_sol_types::sol,
+    call::{self, Call},
+    evm, msg,
+    prelude::*,
 };
 
 use crate::utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked};
@@ -130,6 +134,9 @@ pub enum Error {
     InvalidSender(ERC721InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC721InvalidReceiver),
+    /// Indicates a failure with the token `receiver`, with the reason
+    /// specified by it.
+    InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used
@@ -163,7 +170,6 @@ sol_interface! {
 
 sol_storage! {
     /// State of an [`Erc721`] token.
-    #[cfg_attr(all(test, feature = "std"), derive(motsu::DefaultStorageLayout))]
     pub struct Erc721 {
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
@@ -268,7 +274,7 @@ pub trait IErc721 {
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   [`Self::_check_on_erc721_received`].
+    ///   [`Erc721::_check_on_erc721_received`].
     ///
     /// # Errors
     ///
@@ -290,7 +296,7 @@ pub trait IErc721 {
     /// * `to` cannot be the zero address.
     /// * The `token_id` token must exist and be owned by `from`.
     /// * If the caller is not `from`, it must be approved to move this token by
-    ///   either [`Self::_approve`] or [`Self::set_approval_for_all`].
+    ///   either [`Erc721::_approve`] or [`Erc721::set_approval_for_all`].
     /// * If `to` refers to a smart contract, it must implement
     ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
     ///   `safe_transfer`.
@@ -366,7 +372,7 @@ pub trait IErc721 {
     ///
     /// If the token does not exist, then the error
     /// [`Error::NonexistentToken`] is returned.
-    /// If `auth` (param of [`Self::_approve`]) does not have a right to
+    /// If `auth` (param of [`Erc721::_approve`]) does not have a right to
     /// approve this token, then the error
     /// [`Error::InvalidApprover`] is returned.
     ///
@@ -472,7 +478,7 @@ impl IErc721 for Erc721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
     }
 
     fn transfer_from(
@@ -789,7 +795,7 @@ impl Erc721 {
             Address::ZERO,
             to,
             token_id,
-            &data,
+            data,
         )
     }
 
@@ -842,7 +848,7 @@ impl Erc721 {
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// [`ERC721NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then  the error
     /// [`Error::IncorrectOwner`] is returned.
     ///
@@ -906,7 +912,7 @@ impl Erc721 {
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`Error::ERC721NonexistentToken`] is returned.
+    /// [`ERC721NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then the error
     /// [`Error::IncorrectOwner`] is returned.
     ///
@@ -930,7 +936,7 @@ impl Erc721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
     }
 
     /// Variant of `approve_inner` with an optional flag to enable or disable
@@ -1048,11 +1054,10 @@ impl Erc721 {
     /// `operator` is generally the address that initiated the token transfer
     /// (i.e. `msg::sender()`).
     ///
-    /// The acceptance call is not executed and treated as a no-op
-    /// if the target address doesn't contain code (i.e. an EOA).
-    /// Otherwise, the recipient must implement
-    /// [`IERC721Receiver::on_erc_721_received`] and return the
-    /// acceptance magic value to accept the transfer.
+    /// The acceptance call is not executed and treated as a no-op if the
+    /// target address doesn't contain code (i.e. an EOA). Otherwise, the
+    /// recipient must implement [`IERC721Receiver::on_erc_721_received`] and
+    /// return the acceptance magic value to accept the transfer.
     ///
     /// # Arguments
     ///
@@ -1075,31 +1080,44 @@ impl Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
-        const IERC721RECEIVER_INTERFACE_ID: FixedBytes<4> =
-            fixed_bytes!("150b7a02");
+        const RECEIVER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("150b7a02");
 
-        // FIXME: Cleanup this code once it's covered in the test suite.
-        if to.has_code() {
-            let call = Call::new_in(self);
-            return match IERC721Receiver::new(to).on_erc_721_received(
-                call,
-                operator,
-                from,
-                token_id,
-                data.to_vec().into(),
-            ) {
-                Ok(result) => {
-                    if result == IERC721RECEIVER_INTERFACE_ID {
-                        Ok(())
-                    } else {
-                        Err(ERC721InvalidReceiver { receiver: to }.into())
+        if !to.has_code() {
+            return Ok(());
+        }
+
+        let receiver = IERC721Receiver::new(to);
+        let call = Call::new_in(self);
+        let data = data.to_vec();
+        let result = receiver.on_erc_721_received(
+            call,
+            operator,
+            from,
+            token_id,
+            data.into(),
+        );
+
+        let id = match result {
+            Ok(id) => id,
+            Err(e) => {
+                if let call::Error::Revert(ref reason) = e {
+                    if reason.len() > 0 {
+                        // Non-IERC721Receiver implementer.
+                        return Err(Error::InvalidReceiverWithReason(e));
                     }
                 }
-                Err(_) => Err(ERC721InvalidReceiver { receiver: to }.into()),
-            };
+
+                return Err(ERC721InvalidReceiver { receiver: to }.into());
+            }
+        };
+
+        // Token rejected.
+        if id != RECEIVER_FN_SELECTOR {
+            return Err(ERC721InvalidReceiver { receiver: to }.into());
         }
+
         Ok(())
     }
 }

@@ -7,11 +7,11 @@ use stylus_proc::{external, sol_storage};
 use crate::utils::Metadata;
 
 sol_storage! {
-    /// Metadata of the [`Erc721`] token.
+    /// Metadata of an [`crate::token::erc721::Erc721`] token.
     pub struct Erc721Metadata {
         /// Common Metadata.
         Metadata _metadata;
-        /// Base URI for tokens
+        /// Base URI for tokens.
         string _base_uri;
     }
 }

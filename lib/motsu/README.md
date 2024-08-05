@@ -12,29 +12,13 @@ Japanese -- we hold a stylus in our hand.
 Annotate tests with `#[motsu::test]` instead of `#[test]` to get access to VM
 affordances.
 
-Note that we require contracts to implement `core::default::Default`. This
-implementation should match the way solidity would lay out the contract's state
-in storage, so that the tests are as close as possible to the real environment.
+Note that we require contracts to implement `stylus_sdk::prelude::StorageType`.
+This trait is typically implemented by default with `stylus_proc::sol_storage` macro.
 
 ```rust
 #[cfg(test)]
 mod tests {
     use contracts::token::erc20::Erc20;
-
-    impl Default for Erc20 {
-        fn default() -> Self {
-            let root = U256::ZERO;
-            Erc20 {
-                _balances: unsafe { StorageMap::new(root, 0) },
-                _allowances: unsafe {
-                    StorageMap::new(root + U256::from(32), 0)
-                },
-                _total_supply: unsafe {
-                    StorageU256::new(root + U256::from(64), 0)
-                },
-            }
-        }
-    }
 
     #[motsu::test]
     fn reads_balance(contract: Erc20) {
@@ -70,6 +54,7 @@ That being said, please do open an issue to start a discussion, keeping in mind
 our [code of conduct] and [contribution guidelines].
 
 [code of conduct]: ../../CODE_OF_CONDUCT.md
+
 [contribution guidelines]: ../../CONTRIBUTING.md
 
 ## Security

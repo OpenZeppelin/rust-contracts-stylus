@@ -9,8 +9,8 @@ use crate::token::erc20::{Erc20, Error};
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
 pub trait IErc20Burnable {
-    /// Destroys a `value` amount of tokens from the caller.
-    /// lowering the total supply.
+    /// Destroys a `value` amount of tokens from the caller. lowering the total
+    /// supply.
     ///
     /// Relies on the `update` mechanism.
     ///
@@ -25,11 +25,11 @@ pub trait IErc20Burnable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`super::super::Transfer`] event.
     fn burn(&mut self, value: U256) -> Result<(), Error>;
 
-    /// Destroys a `value` amount of tokens from `account`,
-    /// lowering the total supply.
+    /// Destroys a `value` amount of tokens from `account`, lowering the total
+    /// supply.
     ///
     /// Relies on the `update` mechanism.
     ///
@@ -49,7 +49,7 @@ pub trait IErc20Burnable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`super::super::Transfer`] event.
     fn burn_from(&mut self, account: Address, value: U256)
         -> Result<(), Error>;
 }
