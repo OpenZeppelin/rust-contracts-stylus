@@ -77,8 +77,8 @@ alloy-primitives = { version = "0.3.1", default-features = false }
 alloy-sol-types = { version = "0.3.1", default-features = false }
 
 const-hex = { version = "1.11.1", default-features = false }
-keccak-const = "0.2.0"
 eyre = "0.6.8"
+keccak-const = "0.2.0"
 koba = "0.1.2"
 once_cell = "1.19.0"
 rand = "0.8.5"
