@@ -9,7 +9,8 @@ contract Erc721ConsecutiveExample {
 
     Checkpoint160[] private _checkpoints; // _sequentialOwnership
     mapping(uint256 bucket => uint256) private _data; // _sequentialBurn
-    bool private _initialized;
+    uint96 private _firstConsecutiveId;
+    uint96 private _maxBatchSize;
 
     error ERC721InvalidReceiver(address receiver);
     error ERC721ForbiddenBatchMint();
@@ -30,11 +31,17 @@ contract Erc721ConsecutiveExample {
         uint160 _value;
     }
 
-    constructor(address[] memory receivers, uint96[] memory amounts) {
+    constructor(
+        address[] memory receivers,
+        uint96[] memory amounts,
+        uint96 firstConsecutiveId,
+        uint96 maxBatchSize)
+    {
+        _firstConsecutiveId = firstConsecutiveId;
+        _maxBatchSize = maxBatchSize;
         for (uint256 i = 0; i < receivers.length; ++i) {
             _mintConsecutive(receivers[i], amounts[i]);
         }
-        _initialized = true;
     }
 
     function latestCheckpoint() internal view returns (bool exists, uint96 _key, uint160 _value) {
@@ -89,7 +96,7 @@ contract Erc721ConsecutiveExample {
                 revert ERC721InvalidReceiver(address(0));
             }
 
-            uint256 maxBatchSize = _maxBatchSize();
+            uint256 maxBatchSize = _maxBatchSize;
             if (batchSize > maxBatchSize) {
                 revert ERC721ExceededMaxBatchMint(batchSize, maxBatchSize);
             }
@@ -110,18 +117,7 @@ contract Erc721ConsecutiveExample {
 
     function _nextConsecutiveId() private view returns (uint96) {
         (bool exists, uint96 latestId,) = latestCheckpoint();
-        return exists ? latestId + 1 : _firstConsecutiveId();
-    }
-
-    // TODO#q: _firstConsecutiveId and _maxBatchSize are duplicated in here
-    //  and inside generic params for the contract.
-    //  Make sense to assign these values inside solidity constructor.
-    function _firstConsecutiveId() internal view virtual returns (uint96) {
-        return 0;
-    }
-
-    function _maxBatchSize() internal view virtual returns (uint96) {
-        return 5000;
+        return exists ? latestId + 1 : _firstConsecutiveId;
     }
 
     function _increaseBalance(address account, uint128 value) internal virtual {

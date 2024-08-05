@@ -1,17 +1,14 @@
 #![cfg(feature = "e2e")]
 
 use alloy::{
-    primitives::{fixed_bytes, Address, Bytes, U256},
+    primitives::{Address, U256},
     rpc::types::TransactionReceipt,
     sol,
     sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
-use erc721_consecutive_example::Params;
-use openzeppelin_stylus::{
-    token::erc721::extensions::consecutive::Erc721ConsecutiveParams,
-};
+
+use e2e::{Account, EventExt, receipt, ReceiptExt, Revert, watch};
 
 use crate::{abi::Erc721, Erc721ConsecutiveExample::constructorCall};
 
@@ -35,13 +32,21 @@ async fn deploy<C: SolConstructor>(
     e2e::deploy(account.url(), &account.pk(), Some(args)).await
 }
 
+fn constructor(receivers: Vec<Address>, amounts: Vec<u128>) -> constructorCall {
+    constructorCall {
+        receivers,
+        amounts,
+        firstConsecutiveId: FIRST_CONSECUTIVE_ID,
+        maxBatchSize: MAX_BATCH_SIZE,
+    }
+}
+
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let receivers = vec![alice_addr];
     let amounts = vec![10_u128];
-    let receipt =
-        deploy(&alice, constructorCall { receivers, amounts }).await?;
+    let receipt = deploy(&alice, constructor(receivers, amounts)).await?;
     let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
     let balance = contract.balanceOf(alice_addr).call().await?.balance;
@@ -54,8 +59,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     let batch_size = 10_u128;
     let receivers = vec![alice.address()];
     let amounts = vec![batch_size];
-    let receipt =
-        deploy(&alice, constructorCall { receivers, amounts }).await?;
+    let receipt = deploy(&alice, constructor(receivers, amounts)).await?;
     let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
     assert!(receipt.emits(Erc721::ConsecutiveTransfer {
@@ -83,7 +87,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
     let receivers = vec![Address::ZERO];
     let amounts = vec![10_u128];
-    let err = deploy(&alice, constructorCall { receivers, amounts })
+    let err = deploy(&alice, constructor(receivers, amounts))
         .await
         .expect_err("should not mint consecutive");
 
@@ -97,7 +101,7 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
 async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
     let amounts = vec![MAX_BATCH_SIZE + 1];
-    let err = deploy(&alice, constructorCall { receivers, amounts })
+    let err = deploy(&alice, constructor(receivers, amounts))
         .await
         .expect_err("should not mint consecutive");
 
@@ -113,11 +117,10 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address(), bob.address()];
     let amounts = vec![1000_u128, 1000_u128];
     // Deploy and mint batches of 1000 tokens to Alice and Bob
-    let receipt =
-        deploy(&alice, constructorCall { receivers, amounts }).await?;
+    let receipt = deploy(&alice, constructor(receivers, amounts)).await?;
     let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
-    let first_consecutive_token_id = U256::from(Params::FIRST_CONSECUTIVE_ID);
+    let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 
     // Transfer first consecutive token from Alice to Bob
     let _ = watch!(contract.transferFrom(
@@ -162,11 +165,10 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
     let amounts = vec![1000_u128];
     // Mint batch of 1000 tokens to Alice
-    let receipt =
-        deploy(&alice, constructorCall { receivers, amounts }).await?;
+    let receipt = deploy(&alice, constructor(receivers, amounts)).await?;
     let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
-    let first_consecutive_token_id = U256::from(Params::FIRST_CONSECUTIVE_ID);
+    let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 
     // Check consecutive token burn
     let receipt = receipt!(contract.burn(first_consecutive_token_id))?;

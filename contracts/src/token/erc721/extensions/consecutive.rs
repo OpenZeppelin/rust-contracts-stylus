@@ -18,7 +18,6 @@
 //! be possible to call a rust function from solidity constructor.
 
 use alloc::vec;
-use core::marker::PhantomData;
 
 use alloy_primitives::{uint, Address, U128, U256};
 use alloy_sol_types::sol;
@@ -46,28 +45,23 @@ use crate::{
     },
 };
 
-pub trait Erc721ConsecutiveParams {
-    /// Maximum size of a batch of consecutive tokens. This is designed to limit
-    /// stress on off-chain indexing services that have to record one entry per
-    /// token, and have protections against "unreasonably large" batches of
-    /// tokens.
-    const MAX_BATCH_SIZE: U96;
-
-    /// Used to offset the first token id in
-    /// [`Erc721Consecutive::_next_consecutive_id`].
-    const FIRST_CONSECUTIVE_ID: U96;
-}
-
 sol_storage! {
     /// State of an [`Erc721Consecutive`] token.
-    pub struct Erc721Consecutive<Params> {
+    pub struct Erc721Consecutive {
         /// Erc721 contract storage.
         Erc721 erc721;
         /// Checkpoint library contract for sequential ownership.
         Trace160 _sequential_ownership;
         /// BitMap library contract for sequential burn of tokens.
         BitMap _sequential_burn;
-        PhantomData<Params> phantom;
+        /// Used to offset the first token id in
+        /// [`Erc721Consecutive::_next_consecutive_id`].
+        uint96 _first_consecutive_id;
+        /// Maximum size of a batch of consecutive tokens. This is designed to limit
+        /// stress on off-chain indexing services that have to record one entry per
+        /// token, and have protections against "unreasonably large" batches of
+        /// tokens.
+        uint96 _max_batch_size;
     }
 }
 
@@ -129,10 +123,7 @@ pub enum Error {
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
 
-unsafe impl<P: Erc721ConsecutiveParams> TopLevelStorage
-    for Erc721Consecutive<P>
-{
-}
+unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 impl MethodError for erc721::Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
@@ -149,7 +140,7 @@ impl MethodError for checkpoints::Error {
 // ************** ERC-721 External **************
 
 #[external]
-impl<Params: Erc721ConsecutiveParams> IErc721 for Erc721Consecutive<Params> {
+impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
@@ -241,7 +232,7 @@ impl<Params: Erc721ConsecutiveParams> IErc721 for Erc721Consecutive<Params> {
 
 // ************** Consecutive **************
 
-impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
+impl Erc721Consecutive {
     /// Override of [`Erc721::_owner_of_inner`] that checks the sequential
     /// ownership structure for tokens that have been minted as part of a
     /// batch, and not yet transferred.
@@ -255,7 +246,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
         // If token is owned by the core, or beyond consecutive range, return
         // base value.
         if owner != Address::ZERO
-            || token_id < U256::from(Params::FIRST_CONSECUTIVE_ID)
+            || token_id < U256::from(self._first_consecutive_id())
             || token_id > U256::from(U96::MAX)
         {
             return owner;
@@ -278,7 +269,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     /// Requirements:
     ///
     /// - `batchSize` must not be greater than
-    ///   [`Erc721ConsecutiveParams::MAX_BATCH_SIZE`].
+    ///   [`Erc721Consecutive::_max_batch_size`].
     /// - The function is called in the constructor of the contract (directly or
     ///   indirectly).
     ///
@@ -297,7 +288,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     ///
     /// If `to` is [`Address::ZERO`], then the error
     /// [`erc721::Error::InvalidReceiver`] is returned.
-    /// If `batch_size` exceeds [`Erc721ConsecutiveParams::MAX_BATCH_SIZE`],
+    /// If `batch_size` exceeds [`Erc721Consecutive::_max_batch_size`],
     /// then the error [`Error::ExceededMaxBatchMint`] is returned.
     ///
     /// # Events
@@ -320,10 +311,10 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
                 .into());
             }
 
-            if batch_size > Params::MAX_BATCH_SIZE {
+            if batch_size > self._max_batch_size() {
                 return Err(ERC721ExceededMaxBatchMint {
                     batchSize: U256::from(batch_size),
-                    maxBatch: U256::from(Params::MAX_BATCH_SIZE),
+                    maxBatch: U256::from(self._max_batch_size()),
                 }
                 .into());
             }
@@ -391,7 +382,7 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     }
 
     /// Returns the next tokenId to mint using [`Self::_mint_consecutive`]. It
-    /// will return [`Erc721ConsecutiveParams::FIRST_CONSECUTIVE_ID`] if no
+    /// will return [`Erc721Consecutive::_first_consecutive_id`] if no
     /// consecutive tokenId has been minted before.
     ///
     /// # Arguments
@@ -399,15 +390,29 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
     /// * `&self` - Read access to the contract's state.
     fn _next_consecutive_id(&self) -> U96 {
         match self._sequential_ownership.latest_checkpoint() {
-            None => Params::FIRST_CONSECUTIVE_ID,
+            None => self._first_consecutive_id(),
             Some((latest_id, _)) => latest_id + uint!(1_U96),
         }
+    }
+
+    /// Used to offset the first token id in
+    /// [`Erc721Consecutive::_next_consecutive_id`].
+    fn _first_consecutive_id(&self) -> U96 {
+        self._first_consecutive_id.get()
+    }
+
+    /// Maximum size of a batch of consecutive tokens. This is designed to limit
+    /// stress on off-chain indexing services that have to record one entry per
+    /// token, and have protections against "unreasonably large" batches of
+    /// tokens.
+    fn _max_batch_size(&self) -> U96 {
+        self._max_batch_size.get()
     }
 }
 
 // ************** ERC-721 Internal **************
 
-impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
+impl Erc721Consecutive {
     /// Transfers `token_id` from its current owner to `to`, or alternatively
     /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
     /// Returns the owner of the `token_id` before the update.
@@ -785,15 +790,14 @@ impl<Params: Erc721ConsecutiveParams> Erc721Consecutive<Params> {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::{msg, prelude::StorageType};
+    use stylus_sdk::{msg};
 
     use crate::{
         token::{
             erc721,
             erc721::{
                 extensions::consecutive::{
-                    ERC721ExceededMaxBatchMint, Erc721Consecutive,
-                    Erc721ConsecutiveParams, Error,
+                    ERC721ExceededMaxBatchMint, Erc721Consecutive, Error,
                 },
                 tests::random_token_id,
                 ERC721InvalidReceiver, ERC721NonexistentToken, IErc721,
@@ -802,20 +806,15 @@ mod tests {
         utils::structs::checkpoints::U96,
     };
 
-    struct Params;
-
-    impl Erc721ConsecutiveParams for Params {
-        const FIRST_CONSECUTIVE_ID: U96 = uint!(0_U96);
-        const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
-    }
-
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     fn init(
-        contract: &mut Erc721Consecutive<Params>,
+        contract: &mut Erc721Consecutive,
         receivers: Vec<Address>,
         batches: Vec<U96>,
     ) -> Vec<U96> {
+        contract._first_consecutive_id.set(uint!(0_U96));
+        contract._max_batch_size.set(uint!(5000_U96));
         receivers
             .into_iter()
             .zip(batches)
@@ -828,7 +827,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mints(contract: Erc721Consecutive<Params>) {
+    fn mints(contract: Erc721Consecutive) {
         let alice = msg::sender();
 
         let initial_balance = contract
@@ -859,7 +858,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_to_is_zero(contract: Erc721Consecutive<Params>) {
+    fn error_when_to_is_zero(contract: Erc721Consecutive) {
         let err = contract
             ._mint_consecutive(Address::ZERO, uint!(11_U96))
             .expect_err("should not mint consecutive");
@@ -872,9 +871,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_exceed_batch_size(contract: Erc721Consecutive<Params>) {
+    fn error_when_exceed_batch_size(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let batch_size = Params::MAX_BATCH_SIZE + uint!(1_U96);
+        let batch_size = contract._max_batch_size() + uint!(1_U96);
         let err = contract
             ._mint_consecutive(alice, batch_size)
             .expect_err("should not mint consecutive");
@@ -884,12 +883,12 @@ mod tests {
                 batchSize,
                 maxBatch
             })
-            if batchSize == U256::from(batch_size) && maxBatch == U256::from(Params::MAX_BATCH_SIZE)
+            if batchSize == U256::from(batch_size) && maxBatch == U256::from(contract._max_batch_size())
         ));
     }
 
     #[motsu::test]
-    fn transfers_from(contract: Erc721Consecutive<Params>) {
+    fn transfers_from(contract: Erc721Consecutive) {
         let alice = msg::sender();
         let bob = BOB;
 
@@ -940,7 +939,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Erc721Consecutive<Params>) {
+    fn burns(contract: Erc721Consecutive) {
         let alice = msg::sender();
 
         // Mint batch of 1000 tokens to Alice.
