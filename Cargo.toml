@@ -69,6 +69,7 @@ alloy = { version = "0.1.1", features = [
   "rpc-types-eth",
   "signer-local",
   "getrandom",
+  "native-keccak",
 ] }
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK.
