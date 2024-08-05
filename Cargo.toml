@@ -56,8 +56,8 @@ all = "warn"
 
 [workspace.dependencies]
 # stylus-related
-stylus-sdk = { version = "0.5.2", default-features = false }
-stylus-proc = { version = "0.5.2", default-features = false }
+stylus-sdk = { version = "0.5.2" }
+stylus-proc = { version = "0.5.2" }
 mini-alloc = "0.4.2"
 
 alloy = { version = "0.1.1", features = [
@@ -72,8 +72,10 @@ alloy = { version = "0.1.1", features = [
 ] }
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK.
-alloy-primitives = { version = "0.7.6", default-features = false }
-alloy-sol-types = { version = "0.7.6", default-features = false }
+alloy-primitives = { version = "=0.7.6", default-features = false, features = [
+  "native-keccak",
+] }
+alloy-sol-types = { version = "=0.7.6", default-features = false }
 
 const-hex = { version = "1.11.1", default-features = false }
 eyre = "0.6.8"
