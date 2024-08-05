@@ -81,7 +81,7 @@ pub fn eip_191_hash(message: &[u8]) -> Bytes32 {
 mod tests {
     use alloy_primitives::b256;
 
-    use super::*;
+    use super::{to_eth_signed_message_hash, to_typed_data_hash};
 
     #[test]
     fn test_to_eth_signed_message_hash() {
@@ -93,7 +93,7 @@ mod tests {
             "a5667772cbc7da54ae0530c5f46433ef97e01537b744a9fbe663e7117824c8a1"
         );
 
-        // assert_eq!(to_eth_signed_message_hash(message_hash), expected);
+        assert_eq!(expected, to_eth_signed_message_hash(&message_hash));
     }
 
     #[test]
@@ -110,7 +110,9 @@ mod tests {
             "cefc47137f8165d8270433dd62e395f5672966b83a113a7bb7b2805730a2197e"
         );
 
-        // assert_eq!(to_typed_data_hash(domain_separator, struct_hash),
-        // expected);
+        assert_eq!(
+            expected,
+            to_typed_data_hash(&domain_separator, &struct_hash),
+        );
     }
 }

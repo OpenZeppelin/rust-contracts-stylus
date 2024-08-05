@@ -46,8 +46,17 @@ pub type DomainSeparatorTuple = sol! {
 pub trait IEIP712 {
     /// Immutable name of EIP-712 instance.
     const NAME: &'static str;
+    /// Hashed name of EIP-712 instance.
+    const HASHED_NAME: Bytes32 =
+        keccak_const::Keccak256::new().update(Self::NAME.as_bytes()).finalize();
+
     /// Immutable version of EIP-712 instance.
     const VERSION: &'static str;
+    /// Hashed version of EIP-712 instance.
+    const HASHED_VERSION: Bytes32 = keccak_const::Keccak256::new()
+        .update(Self::VERSION.as_bytes())
+        .finalize();
+
     /// Returns chain id.
     fn chain_id() -> U256;
     /// Returns the contract's address.
@@ -79,23 +88,15 @@ pub trait IEIP712 {
     ///
     /// * `&self` - Read access to the contract's state.
     fn domain_separator_v4(&self) -> Bytes32 {
-        let b = KeccakBuilder;
-        let mut name_hasher = b.build_hasher();
-        name_hasher.update(Self::NAME.as_bytes());
-        let hashed_name = name_hasher.finalize();
-
-        let mut version_hasher = b.build_hasher();
-        version_hasher.update(Self::VERSION.as_bytes());
-        let hashed_version = version_hasher.finalize();
-
         let encoded = DomainSeparatorTuple::encode_params(&(
             TYPE_HASH,
-            hashed_name,
-            hashed_version,
+            Self::HASHED_NAME,
+            Self::HASHED_VERSION,
             Self::chain_id(),
             Self::contract_address().into(),
         ));
 
+        let b = KeccakBuilder;
         let mut domain_separator_hasher = b.build_hasher();
         domain_separator_hasher.update(encoded);
         domain_separator_hasher.finalize()

@@ -13,6 +13,7 @@ mini-alloc.workspace = true
 tiny-keccak.workspace = true
 alloy-sol-types.workspace = true
 alloy-primitives.workspace = true
+keccak-const.workspace = true
 
 [dev-dependencies]
 hex-literal = "0.4.1"

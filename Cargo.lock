@@ -1290,6 +1290,7 @@ dependencies = [
  "alloy-primitives 0.3.3",
  "alloy-sol-types 0.3.1",
  "hex-literal",
+ "keccak-const",
  "mini-alloc",
  "rand",
  "tiny-keccak",
