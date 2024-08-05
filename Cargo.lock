@@ -1453,6 +1453,7 @@ dependencies = [
  "koba",
  "once_cell",
  "regex",
+ "serde_json",
  "tokio",
  "toml",
 ]

@@ -9,13 +9,18 @@ use alloy::{
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use erc721_consecutive_example::Params;
-use openzeppelin_stylus::token::erc721::extensions::consecutive::Erc721ConsecutiveParams;
+use openzeppelin_stylus::{
+    token::erc721::extensions::consecutive::Erc721ConsecutiveParams,
+};
 
 use crate::{abi::Erc721, Erc721ConsecutiveExample::constructorCall};
 
 mod abi;
 
 sol!("src/constructor.sol");
+
+const FIRST_CONSECUTIVE_ID: u128 = 0;
+const MAX_BATCH_SIZE: u128 = 5000;
 
 fn random_token_id() -> U256 {
     let num: u32 = rand::random();
@@ -54,7 +59,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
     assert!(receipt.emits(Erc721::ConsecutiveTransfer {
-        fromTokenId: uint!(0_U256),
+        fromTokenId: U256::from(FIRST_CONSECUTIVE_ID),
         toTokenId: uint!(9_U256),
         fromAddress: Address::ZERO,
         toAddress: alice.address(),
@@ -74,40 +79,34 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     Ok(())
 }
 
-// TODO#q: try to check for these errors during construction.
-//  Seems koba should be improved and return transaction receipt.
+#[e2e::test]
+async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
+    let receivers = vec![Address::ZERO];
+    let amounts = vec![10_u128];
+    let err = deploy(&alice, constructorCall { receivers, amounts })
+        .await
+        .expect_err("should not mint consecutive");
 
-// #[e2e::test]
-// async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
-//     let contract_addr =
-//         deploy(alice.url(), &alice.pk()).await?;
-//     let contract = Erc721::new(contract_addr, &alice.wallet);
-//
-//     let err = send!(contract.init(vec![Address::ZERO], vec![uint!(10_U256)]))
-//         .expect_err("should not mint consecutive");
-//
-//     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
-//         receiver: Address::ZERO
-//     }));
-//     Ok(())
-// }
+    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+        receiver: Address::ZERO
+    }));
+    Ok(())
+}
 
-// #[e2e::test]
-// async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
-//     let contract_addr =
-//         deploy(alice.url(), &alice.pk()).await?;
-//     let contract = Erc721::new(contract_addr, &alice.wallet);
-//
-//     let batch_size = U256::from(Params::MAX_BATCH_SIZE + uint!(1_U96));
-//     let err = send!(contract.init(vec![alice.address()], vec![batch_size]))
-//         .expect_err("should not mint consecutive");
-//
-//     assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
-//         batchSize: U256::from(batch_size),
-//         maxBatch: U256::from(Params::MAX_BATCH_SIZE),
-//     }));
-//     Ok(())
-// }
+#[e2e::test]
+async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
+    let receivers = vec![alice.address()];
+    let amounts = vec![MAX_BATCH_SIZE + 1];
+    let err = deploy(&alice, constructorCall { receivers, amounts })
+        .await
+        .expect_err("should not mint consecutive");
+
+    assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
+        batchSize: U256::from(MAX_BATCH_SIZE + 1),
+        maxBatch: U256::from(MAX_BATCH_SIZE),
+    }));
+    Ok(())
+}
 
 #[e2e::test]
 async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {

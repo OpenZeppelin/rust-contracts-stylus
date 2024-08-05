@@ -218,6 +218,7 @@ async fn transfer_rejects_insufficient_balance(
     let Erc20::totalSupplyReturn { totalSupply: initial_supply } =
         contract_alice.totalSupply().call().await?;
 
+    // let result = (contract_alice.transfer(bob_addr, value)).send().await;
     let err = send!(contract_alice.transfer(bob_addr, value))
         .expect_err("should not transfer when insufficient balance");
     assert!(err.reverted_with(Erc20::ERC20InsufficientBalance {
