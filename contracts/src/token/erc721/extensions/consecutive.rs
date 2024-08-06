@@ -24,7 +24,7 @@
 
 use alloc::vec;
 
-use alloy_primitives::{uint, Address, U128, U256};
+use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{
