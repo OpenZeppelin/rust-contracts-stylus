@@ -98,9 +98,10 @@ impl<E: SolError> Revert<E> for alloy::contract::Error {
 
 impl<E: SolError> Revert<E> for eyre::Report {
     fn reverted_with(&self, expected: E) -> bool {
-        let Some(received) = self.chain().find_map(|err| {
-            err.downcast_ref::<RpcError<TransportErrorKind>>()
-        }) else {
+        let Some(received) = self
+            .chain()
+            .find_map(|err| err.downcast_ref::<RpcError<TransportErrorKind>>())
+        else {
             return false;
         };
         let RpcError::ErrorResp(received) = received else {

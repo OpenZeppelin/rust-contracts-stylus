@@ -11,6 +11,11 @@
 //! contract construction. This ability is regained after construction. During
 //! construction, only batch minting is allowed.
 //!
+//! Fields `_first_consecutive_id` (used to offset first token id) and
+//! `_max_batch_size` (used to restrict maximum batch size) can be assigned
+//! during construction with `koba` (stylus construction tooling) within
+//! solidity constructor file.
+//!
 //! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
 //! inside solidity constructor with koba.
 //! Compared to solidity implementation of consecutive contract, there is no
@@ -790,7 +795,7 @@ impl Erc721Consecutive {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::{msg};
+    use stylus_sdk::msg;
 
     use crate::{
         token::{

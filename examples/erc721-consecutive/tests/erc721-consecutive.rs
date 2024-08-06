@@ -7,8 +7,7 @@ use alloy::{
     sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
-
-use e2e::{Account, EventExt, receipt, ReceiptExt, Revert, watch};
+use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
 
 use crate::{abi::Erc721, Erc721ConsecutiveExample::constructorCall};
 

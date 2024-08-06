@@ -8,7 +8,7 @@ use alloy::{
     hex, network::ReceiptResponse, primitives::Address,
     sol_types::SolConstructor,
 };
-use e2e::{receipt, send, watch, Account, EventExt, Revert, ReceiptExt};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::{ContextCompat, Result};
 
 mod abi;
@@ -22,9 +22,7 @@ const NEW_ADMIN_ROLE: [u8; 32] =
 async fn deploy(account: &Account) -> eyre::Result<Address> {
     let args = AccessControl::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args))
-        .await?
-        .address()
+    e2e::deploy(account.url(), &account.pk(), Some(args)).await?.address()
 }
 
 // ============================================================================
