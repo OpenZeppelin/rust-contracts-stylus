@@ -17,10 +17,10 @@
 //! solidity constructor file.
 //!
 //! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
-//! inside solidity constructor with koba.
-//! Compared to solidity implementation of consecutive contract, there is no
-//! restriction for [`Erc721Consecutive::_update`] function call. Since it won't
-//! be possible to call a rust function from solidity constructor.
+//! inside the contract's Solidity constructor.
+//! As opposed to the Solidity implementation of Consecutive, there is no
+//! restriction on the [`Erc721Consecutive::_update`] function call since it is not
+//! possible to call a Rust function from the Solidity constructor.
 
 use alloc::vec;
 
