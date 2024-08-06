@@ -6,7 +6,7 @@ use alloy::{
     sol,
     sol_types::{SolConstructor, SolError},
 };
-use alloy_primitives::uint;
+use alloy_primitives::{uint, B256};
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
 
@@ -17,6 +17,23 @@ sol!("src/constructor.sol");
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
+
+// Saturday, 1 January 2000 00:00:00
+const EXPIRED_DEADLINE: U256 = uint!(946_684_800_U256);
+
+// Wednesday, 1 January 3000 00:00:00
+const FAIR_DEADLINE: U256 = uint!(32_503_680_000_U256);
+
+macro_rules! domain_separator {
+    ($contract:expr) => {{
+        let Erc20::DOMAIN_SEPARATORReturn { domainSeparator } = $contract
+            .DOMAIN_SEPARATOR()
+            .call()
+            .await
+            .expect("should return `DOMAIN_SEPARATOR`");
+        B256::from_slice(domainSeparator.as_slice())
+    }};
+}
 
 async fn deploy(
     rpc_url: &str,
@@ -30,6 +47,29 @@ async fn deploy(
     };
     let args = alloy::hex::encode(args.abi_encode());
     e2e::deploy(rpc_url, private_key, Some(args)).await
+}
+
+fn prepare_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
+    openzeppelin_stylus::utils::cryptography::eip712::to_typed_data_hash(
+        &domain_separator,
+        &struct_hash,
+    )
+}
+
+fn prepare_struct_hash(
+    owner: Address,
+    spender: Address,
+    balance: U256,
+    nonce: U256,
+    deadline: U256,
+) -> B256 {
+    openzeppelin_stylus::token::erc20::extensions::permit::prepare_struct_hash(
+        alloy_primitives::Address::from_slice(owner.as_slice()),
+        alloy_primitives::Address::from_slice(spender.as_slice()),
+        balance,
+        nonce,
+        deadline,
+    )
 }
 
 // ============================================================================
@@ -1213,6 +1253,240 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(initial_bob_balance, bob_balance);
     assert_eq!(initial_supply, supply);
     assert_eq!(initial_allowance, allowance);
+
+    Ok(())
+}
+
+// ============================================================================
+// Integration Tests: ERC-20 Permit Extension
+// ============================================================================
+
+#[e2e::test]
+async fn error_when_expired_deadline_for_permit(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+
+    let struct_hash = prepare_struct_hash(
+        alice_addr,
+        bob_addr,
+        balance,
+        U256::ZERO,
+        EXPIRED_DEADLINE,
+    );
+
+    let typed_data_hash =
+        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+    let signature = alice
+        .sign_hash(&alloy::primitives::B256::from_slice(
+            typed_data_hash.as_slice(),
+        ))
+        .await;
+
+    let err = send!(contract_alice.permit(
+        alice_addr,
+        bob_addr,
+        balance,
+        EXPIRED_DEADLINE,
+        signature.v().y_parity_byte_non_eip155().unwrap(),
+        signature.r().into(),
+        signature.s().into()
+    ))
+    .expect_err("should return `ERC2612ExpiredSignature`");
+    assert!(err.reverted_with(Erc20::ERC2612ExpiredSignature {
+        deadline: EXPIRED_DEADLINE
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn permit_works(alice: Account, bob: Account) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+
+    let struct_hash = prepare_struct_hash(
+        alice_addr,
+        bob_addr,
+        balance,
+        U256::ZERO,
+        FAIR_DEADLINE,
+    );
+
+    let typed_data_hash =
+        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+    let signature = alice
+        .sign_hash(&alloy::primitives::B256::from_slice(
+            typed_data_hash.as_slice(),
+        ))
+        .await;
+
+    let Erc20::noncesReturn { nonce: initial_nonce } =
+        contract_alice.nonces(alice_addr).call().await?;
+
+    let Erc20::allowanceReturn { allowance: initial_allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    let receipt = receipt!(contract_alice.permit(
+        alice_addr,
+        bob_addr,
+        balance,
+        FAIR_DEADLINE,
+        signature.v().y_parity_byte_non_eip155().unwrap(),
+        signature.r().into(),
+        signature.s().into()
+    ))?;
+
+    assert!(receipt.emits(Erc20::Approval {
+        owner: alice_addr,
+        spender: bob_addr,
+        value: balance,
+    }));
+
+    let Erc20::allowanceReturn { allowance } =
+        contract_alice.allowance(alice_addr, bob_addr).call().await?;
+
+    assert_eq!(initial_allowance + balance, allowance);
+
+    let Erc20::noncesReturn { nonce } =
+        contract_alice.nonces(alice_addr).call().await?;
+
+    assert_eq!(initial_nonce + uint!(1_U256), nonce);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn permit_rejects_reused_signature(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+
+    let struct_hash = prepare_struct_hash(
+        alice_addr,
+        bob_addr,
+        balance,
+        U256::ZERO,
+        FAIR_DEADLINE,
+    );
+
+    let typed_data_hash =
+        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+    let signature = alice
+        .sign_hash(&alloy::primitives::B256::from_slice(
+            typed_data_hash.as_slice(),
+        ))
+        .await;
+
+    let _ = watch!(contract_alice.permit(
+        alice_addr,
+        bob_addr,
+        balance,
+        FAIR_DEADLINE,
+        signature.v().y_parity_byte_non_eip155().unwrap(),
+        signature.r().into(),
+        signature.s().into()
+    ))?;
+
+    let err = send!(contract_alice.permit(
+        alice_addr,
+        bob_addr,
+        balance,
+        FAIR_DEADLINE,
+        signature.v().y_parity_byte_non_eip155().unwrap(),
+        signature.r().into(),
+        signature.s().into()
+    ))
+    .expect_err("should return `ERC2612InvalidSigner`");
+
+    let struct_hash = prepare_struct_hash(
+        alice_addr,
+        bob_addr,
+        balance,
+        U256::from(1),
+        FAIR_DEADLINE,
+    );
+
+    let typed_data_hash =
+        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+
+    let recovered = signature
+        .recover_address_from_prehash(&alloy::primitives::B256::from_slice(
+            typed_data_hash.as_slice(),
+        ))
+        .expect("should recover");
+
+    assert!(err.reverted_with(Erc20::ERC2612InvalidSigner {
+        signer: recovered,
+        owner: alice_addr
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn permit_rejects_invalid_signature(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_alice = Erc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+
+    let struct_hash = prepare_struct_hash(
+        alice_addr,
+        bob_addr,
+        balance,
+        U256::ZERO,
+        FAIR_DEADLINE,
+    );
+
+    let typed_data_hash =
+        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+    let signature = bob
+        .sign_hash(&alloy::primitives::B256::from_slice(
+            typed_data_hash.as_slice(),
+        ))
+        .await;
+
+    let err = send!(contract_alice.permit(
+        alice_addr,
+        bob_addr,
+        balance,
+        FAIR_DEADLINE,
+        signature.v().y_parity_byte_non_eip155().unwrap(),
+        signature.r().into(),
+        signature.s().into()
+    ))
+    .expect_err("should return `ERC2612InvalidSigner`");
+
+    assert!(err.reverted_with(Erc20::ERC2612InvalidSigner {
+        signer: bob_addr,
+        owner: alice_addr
+    }));
 
     Ok(())
 }
