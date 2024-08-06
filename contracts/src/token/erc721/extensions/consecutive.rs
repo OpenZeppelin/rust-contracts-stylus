@@ -131,13 +131,13 @@ pub enum Error {
 unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 impl MethodError for erc721::Error {
-    fn encode(self) -> Vec<u8> {
+    fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
 
 impl MethodError for checkpoints::Error {
-    fn encode(self) -> Vec<u8> {
+    fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
@@ -227,7 +227,7 @@ impl IErc721 for Erc721Consecutive {
 
     fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
         self._require_owned(token_id)?;
-        Ok(self.erc721._get_approved_inner(token_id))
+        Ok(self.erc721._get_approved(token_id))
     }
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
@@ -238,7 +238,7 @@ impl IErc721 for Erc721Consecutive {
 // ************** Consecutive **************
 
 impl Erc721Consecutive {
-    /// Override of [`Erc721::_owner_of_inner`] that checks the sequential
+    /// Override of [`Erc721::_owner_of`] that checks the sequential
     /// ownership structure for tokens that have been minted as part of a
     /// batch, and not yet transferred.
     ///
@@ -246,8 +246,8 @@ impl Erc721Consecutive {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
-    pub fn _owner_of_inner(&self, token_id: U256) -> Address {
-        let owner = self.erc721._owner_of_inner(token_id);
+    pub fn _owner_of(&self, token_id: U256) -> Address {
+        let owner = self.erc721._owner_of(token_id);
         // If token is owned by the core, or beyond consecutive range, return
         // base value.
         if owner != Address::ZERO
@@ -437,7 +437,7 @@ impl Erc721Consecutive {
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let from = self._owner_of_inner(token_id);
+        let from = self._owner_of(token_id);
 
         // Perform (optional) operator check.
         if !auth.is_zero() {
@@ -714,9 +714,11 @@ impl Erc721Consecutive {
         )?)
     }
 
-    /// Variant of `approve_inner` with an optional flag to enable or disable
-    /// the [`Approval`] event. The event is not emitted in the context of
-    /// transfers.
+    /// Approve `to` to operate on `token_id`.
+    ///
+    /// The `auth` argument is optional. If the value passed is non 0, then this
+    /// function will check that `auth` is either the owner of the token, or
+    /// approved to operate on all tokens held by this owner.
     ///
     /// # Arguments
     ///
@@ -772,7 +774,7 @@ impl Erc721Consecutive {
     /// minted, or it has been burned). Returns the owner.
     ///
     /// Overrides to ownership logic should be done to
-    /// [`Self::_owner_of_inner`].
+    /// [`Self::_owner_of`].
     ///
     /// # Errors
     ///
@@ -784,7 +786,7 @@ impl Erc721Consecutive {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
-        let owner = self._owner_of_inner(token_id);
+        let owner = self._owner_of(token_id);
         if owner.is_zero() {
             return Err(erc721::Error::NonexistentToken(
                 ERC721NonexistentToken { token_id },
