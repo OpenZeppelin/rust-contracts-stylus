@@ -24,7 +24,7 @@
 
 use alloc::vec;
 
-use alloy_primitives::{uint, Address, U256};
+use alloy_primitives::{uint, Address, U128, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{
@@ -289,7 +289,7 @@ impl Erc721Consecutive {
     /// * `&self` - Write access to the contract's state.
     /// * `token_id` - Token id as a number.
     ///
-    /// # Errors
+    /// # Errors`
     ///
     /// If `to` is [`Address::ZERO`], then the error
     /// [`erc721::Error::InvalidReceiver`] is returned.
