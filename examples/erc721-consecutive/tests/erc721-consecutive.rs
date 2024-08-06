@@ -115,7 +115,7 @@ async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
 async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address(), bob.address()];
     let amounts = vec![1000_u128, 1000_u128];
-    // Deploy and mint batches of 1000 tokens to Alice and Bob
+    // Deploy and mint batches of 1000 tokens to Alice and Bob.
     let receipt = deploy(&alice, constructor(receivers, amounts)).await?;
     let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
