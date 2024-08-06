@@ -121,7 +121,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 
     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 
-    // Transfer first consecutive token from Alice to Bob
+    // Transfer first consecutive token from Alice to Bob.
     let _ = watch!(contract.transferFrom(
         alice.address(),
         bob.address(),
@@ -132,7 +132,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
         contract.ownerOf(first_consecutive_token_id).call().await?;
     assert_eq!(ownerOf, bob.address());
 
-    // Check that balances changed
+    // Check that balances changed.
     let Erc721::balanceOfReturn { balance: alice_balance } =
         contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
@@ -140,14 +140,14 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
         contract.balanceOf(bob.address()).call().await?;
     assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
 
-    // Test non-consecutive mint
+    // Test non-consecutive mint.
     let token_id = random_token_id();
     let _ = watch!(contract.mint(alice.address(), token_id))?;
     let Erc721::balanceOfReturn { balance: alice_balance } =
         contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256));
 
-    // Test transfer of the token that wasn't minted consecutive
+    // Test transfer of the token that wasn't minted consecutive.
     let _ = watch!(contract.transferFrom(
         alice.address(),
         bob.address(),
@@ -163,13 +163,13 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 async fn burns(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
     let amounts = vec![1000_u128];
-    // Mint batch of 1000 tokens to Alice
+    // Mint batch of 1000 tokens to Alice.
     let receipt = deploy(&alice, constructor(receivers, amounts)).await?;
     let contract = Erc721::new(receipt.address()?, &alice.wallet);
 
     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 
-    // Check consecutive token burn
+    // Check consecutive token burn.
     let receipt = receipt!(contract.burn(first_consecutive_token_id))?;
 
     assert!(receipt.emits(Erc721::Transfer {
@@ -192,7 +192,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
         tokenId: first_consecutive_token_id
     }));
 
-    // Check non-consecutive token burn
+    // Check non-consecutive token burn.
     let non_consecutive_token_id = random_token_id();
     let _ = watch!(contract.mint(alice.address(), non_consecutive_token_id))?;
     let Erc721::ownerOfReturn { ownerOf } =

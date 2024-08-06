@@ -131,13 +131,13 @@ pub enum Error {
 unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 impl MethodError for erc721::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
+    fn encode(self) -> Vec<u8> {
         self.into()
     }
 }
 
 impl MethodError for checkpoints::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
+    fn encode(self) -> Vec<u8> {
         self.into()
     }
 }
@@ -928,7 +928,7 @@ mod tests {
             contract.balance_of(bob).expect("should return the balance of Bob");
         assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
 
-        // Check non-consecutive mint
+        // Check non-consecutive mint.
         let token_id = random_token_id();
         contract._mint(alice, token_id).expect("should mint a token to Alice");
         let alice_balance = contract
