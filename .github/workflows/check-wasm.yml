@@ -32,7 +32,7 @@ jobs:
           cache-on-failure: "true"
 
       - name: install cargo-stylus
-        run: cargo install cargo-stylus cargo-stylus-check
+        run: cargo install cargo-stylus@0.4.1 cargo-stylus-check@0.4.1
 
       - name: run wasm check
         run: |
