@@ -1,7 +1,5 @@
 = Deploying Contracts
 
-WARNING: This project is still in a very early and experimental phase. It has never been audited nor thoroughly reviewed for security vulnerabilities. Do not use in production.
-
 To deploy a contract written in Rust using the Stylus SDK, the Arbitrum Stylus team created `cargo-stylus`. For now, this CLI tool doesn't support deploying contracts with constructors.
 
 We implemented https://github.com/OpenZeppelin/koba[`koba`], a solution you can use today to write constructors in Solidity for your Rust smart contracts.
