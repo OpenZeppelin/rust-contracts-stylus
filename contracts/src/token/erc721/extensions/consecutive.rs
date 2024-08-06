@@ -19,8 +19,8 @@
 //! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
 //! inside the contract's Solidity constructor.
 //! As opposed to the Solidity implementation of Consecutive, there is no
-//! restriction on the [`Erc721Consecutive::_update`] function call since it is not
-//! possible to call a Rust function from the Solidity constructor.
+//! restriction on the [`Erc721Consecutive::_update`] function call since it is
+//! not possible to call a Rust function from the Solidity constructor.
 
 use alloc::vec;
 
