@@ -24,7 +24,7 @@
 
 use alloc::vec;
 
-use alloy_primitives::{uint, Address, U128, U256};
+use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{
@@ -331,7 +331,10 @@ impl Erc721Consecutive {
             // The invariant required by this function is preserved because the
             // new sequentialOwnership checkpoint is attributing
             // ownership of `batch_size` new tokens to account `to`.
-            self.erc721._increase_balance(to, U128::from(batch_size));
+            self.erc721._increase_balance(
+                to,
+                alloy_primitives::U128::from(batch_size),
+            );
 
             evm::log(ConsecutiveTransfer {
                 from_token_id: next.to::<U256>(),
