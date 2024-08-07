@@ -49,14 +49,14 @@ async fn deploy(
     e2e::deploy(rpc_url, private_key, Some(args)).await
 }
 
-fn prepare_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
+fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
     openzeppelin_stylus::utils::cryptography::eip712::to_typed_data_hash(
         &domain_separator,
         &struct_hash,
     )
 }
 
-fn prepare_struct_hash(
+fn permit_struct_hash(
     owner: Address,
     spender: Address,
     balance: U256,
@@ -1274,7 +1274,7 @@ async fn error_when_expired_deadline_for_permit(
     let balance = uint!(10_U256);
     let _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
-    let struct_hash = prepare_struct_hash(
+    let struct_hash = permit_struct_hash(
         alice_addr,
         bob_addr,
         balance,
@@ -1283,7 +1283,7 @@ async fn error_when_expired_deadline_for_permit(
     );
 
     let typed_data_hash =
-        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+        to_typed_data_hash(domain_separator!(contract_alice), struct_hash);
     let signature = alice
         .sign_hash(&alloy::primitives::B256::from_slice(
             typed_data_hash.as_slice(),
@@ -1317,7 +1317,7 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
     let balance = uint!(10_U256);
     let _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
-    let struct_hash = prepare_struct_hash(
+    let struct_hash = permit_struct_hash(
         alice_addr,
         bob_addr,
         balance,
@@ -1326,7 +1326,7 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
     );
 
     let typed_data_hash =
-        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+        to_typed_data_hash(domain_separator!(contract_alice), struct_hash);
     let signature = alice
         .sign_hash(&alloy::primitives::B256::from_slice(
             typed_data_hash.as_slice(),
@@ -1381,7 +1381,7 @@ async fn permit_rejects_reused_signature(
     let balance = uint!(10_U256);
     let _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
-    let struct_hash = prepare_struct_hash(
+    let struct_hash = permit_struct_hash(
         alice_addr,
         bob_addr,
         balance,
@@ -1390,7 +1390,7 @@ async fn permit_rejects_reused_signature(
     );
 
     let typed_data_hash =
-        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+        to_typed_data_hash(domain_separator!(contract_alice), struct_hash);
     let signature = alice
         .sign_hash(&alloy::primitives::B256::from_slice(
             typed_data_hash.as_slice(),
@@ -1418,7 +1418,7 @@ async fn permit_rejects_reused_signature(
     ))
     .expect_err("should return `ERC2612InvalidSigner`");
 
-    let struct_hash = prepare_struct_hash(
+    let struct_hash = permit_struct_hash(
         alice_addr,
         bob_addr,
         balance,
@@ -1427,7 +1427,7 @@ async fn permit_rejects_reused_signature(
     );
 
     let typed_data_hash =
-        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+        to_typed_data_hash(domain_separator!(contract_alice), struct_hash);
 
     let recovered = signature
         .recover_address_from_prehash(&alloy::primitives::B256::from_slice(
@@ -1456,7 +1456,7 @@ async fn permit_rejects_invalid_signature(
     let balance = uint!(10_U256);
     let _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
-    let struct_hash = prepare_struct_hash(
+    let struct_hash = permit_struct_hash(
         alice_addr,
         bob_addr,
         balance,
@@ -1465,7 +1465,7 @@ async fn permit_rejects_invalid_signature(
     );
 
     let typed_data_hash =
-        prepare_typed_data_hash(domain_separator!(contract_alice), struct_hash);
+        to_typed_data_hash(domain_separator!(contract_alice), struct_hash);
     let signature = bob
         .sign_hash(&alloy::primitives::B256::from_slice(
             typed_data_hash.as_slice(),
