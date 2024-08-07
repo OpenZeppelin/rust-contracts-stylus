@@ -17,7 +17,7 @@ use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
 use crate::{
     token::erc20::IErc20Internal,
     utils::{
-        cryptography::{ecdsa, eip712::IEIP712},
+        cryptography::{ecdsa, eip712::IEip712},
         nonces::Nonces,
     },
 };
@@ -81,10 +81,10 @@ pub enum Error {
 
 sol_storage! {
     /// State of a Permit Contract.
-    pub struct Permit<T: IEIP712 + StorageType>{
+    pub struct Permit<T: IEip712 + StorageType>{
         /// Nonces contract.
         Nonces nonces;
-        /// EIP-712 contract. Must implement [`IEIP712`] trait.
+        /// EIP-712 contract. Must implement [`IEip712`] trait.
         T eip712;
     }
 }
@@ -92,10 +92,10 @@ sol_storage! {
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl<T: IEIP712 + StorageType> TopLevelStorage for Permit<T> {}
+unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Permit<T> {}
 
 #[external]
-impl<T: IEIP712 + StorageType> Permit<T> {
+impl<T: IEip712 + StorageType> Permit<T> {
     /// Returns the current nonce for `owner`.
     ///
     /// # Arguments
@@ -120,7 +120,7 @@ impl<T: IEIP712 + StorageType> Permit<T> {
     }
 }
 
-impl<T: IEIP712 + StorageType> Permit<T> {
+impl<T: IEip712 + StorageType> Permit<T> {
     /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
     /// given `owner`'s signed approval.
     ///

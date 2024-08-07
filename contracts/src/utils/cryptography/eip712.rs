@@ -60,7 +60,7 @@ pub fn to_typed_data_hash(
 }
 
 /// EIP-712 Contract interface.
-pub trait IEIP712 {
+pub trait IEip712 {
     /// Immutable name of EIP-712 instance.
     const NAME: &'static str;
     /// Hashed name of EIP-712 instance.

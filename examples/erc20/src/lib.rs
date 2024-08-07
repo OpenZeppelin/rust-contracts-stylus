@@ -9,7 +9,7 @@ use openzeppelin_stylus::{
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable, Permit},
         Erc20, IErc20, IErc20Internal,
     },
-    utils::{cryptography::eip712::IEIP712, Pausable},
+    utils::{cryptography::eip712::IEip712, Pausable},
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
@@ -33,7 +33,7 @@ sol_storage! {
     struct Eip712 {}
 }
 
-impl IEIP712 for Eip712 {
+impl IEip712 for Eip712 {
     const NAME: &'static str = "ERC-20 Permit Example";
     const VERSION: &'static str = "1";
 }
