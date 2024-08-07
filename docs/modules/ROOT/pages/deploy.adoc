@@ -1,0 +1,71 @@
+= Deploying Contracts
+
+To deploy a contract written in Rust using the Stylus SDK, the Arbitrum Stylus team created `cargo-stylus`. For now, this CLI tool doesn't support deploying contracts with constructors.
+
+We implemented https://github.com/OpenZeppelin/koba[`koba`], a solution you can use today to write constructors in Solidity for your Rust smart contracts.
+
+NOTE: Deploying `oppenzeppelin-stylus` contracts must be done using `koba`. Using `cargo-stylus` directly may initialize storage with unexpected values.
+
+This solution is meant to be temporary. In the near future, we expect support for constructors to be implemented in `cargo-stylus` or the Stylus VM itself.
+
+== Constructors
+
+Deployment transactions in Ethereum are composed of three sections:
+
+* A `prelude` - The bytecode prefix whose execution gets triggered by the deployment transaction.
+* A `runtime` - The bytecode of the smart contract stored on-chain.
+* Constructor arguments - ABI-encoded arguments received by the constructor.
+
+The prelude section is a https://docs.soliditylang.org/en/latest/contracts.html#constructors[smart contract constructor] compiled to bytecode. The runtime is the rest of the smart contract. All three sections combined are called `*binary*`.
+
+Deployment transactions with an input of only compressed wasm are not yet supported in Stylus. That is, only the `runtime` is actual webassembly.
+
+Moreover, the prelude of deployment transactions using `cargo-stylus` is https://github.com/OffchainLabs/cargo-stylus/blob/be9faca7720b534de7ec210fa5a071eae79824ec/check/src/deploy.rs#L102-L114[hard-coded].
+
+`koba` solves this by putting together the Solidity constructor, the compiled webassembly and the abi-encoded constructor arguments. It can be used both as a CLI tool or as a library in Rust projects. For a complete example of using `koba` as a library, see the https://github.com/OpenZeppelin/rust-contracts-stylus/blob/main/examples/basic/README.md[basic token example]. For an example of deploying a contract using the command line see https://github.com/OpenZeppelin/koba#koba-deploy[koba's README].
+
+== Usage
+
+For a contract like this:
+
+[source,rust]
+----
+sol_storage! {
+    #[entrypoint]
+    pub struct Counter {
+        uint256 number;
+    }
+}
+
+#[external]
+impl Counter {
+    pub fn number(&self) -> U256 {
+        self.number.get()
+    }
+
+    pub fn increment(&mut self) {
+        let number = self.number.get();
+        self.set_number(number + U256::from(1));
+    }
+}
+----
+
+and a constructor like this:
+
+[source,solidity]
+----
+contract Counter {
+    uint256 private _number;
+
+    constructor() {
+        _number = 5;
+    }
+}
+----
+
+The following command will deploy your contract:
+
+[source,bash]
+----
+$ koba deploy --sol <path-to-constructor> --wasm <path-to-wasm> --args <constructor-arguments> -e <rpc-url> --private-key <private-key>
+----

@@ -1,12 +1,12 @@
 [package]
 name = "openzeppelin-stylus"
 categories = ["no-std", "wasm"]
-description = "Contracts for Stylus"
+description = "OpenZeppelin Contracts for Stylus"
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 
 [dependencies]
 alloy-primitives.workspace = true
@@ -14,6 +14,7 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
+keccak-const.workspace = true
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
