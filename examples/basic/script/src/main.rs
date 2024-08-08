@@ -1,6 +1,10 @@
 use alloy::{
-    network::EthereumWallet, primitives::Address, providers::ProviderBuilder,
-    signers::local::PrivateKeySigner, sol, sol_types::SolConstructor,
+    network::{EthereumWallet, ReceiptResponse},
+    primitives::Address,
+    providers::ProviderBuilder,
+    signers::local::PrivateKeySigner,
+    sol,
+    sol_types::SolConstructor,
 };
 use koba::config::Deploy;
 
@@ -91,5 +95,9 @@ async fn deploy() -> Address {
         quiet: false,
     };
 
-    koba::deploy(&config).await.expect("should deploy contract")
+    koba::deploy(&config)
+        .await
+        .expect("should deploy contract")
+        .contract_address()
+        .expect("should return contract address")
 }

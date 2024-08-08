@@ -14,7 +14,7 @@ use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
 
-use crate::token::erc721::IErc721;
+use crate::token::{erc721, erc721::IErc721};
 
 sol! {
     /// Indicates an error when an `owner`'s token query
@@ -158,8 +158,8 @@ impl Erc721Enumerable {
         &mut self,
         to: Address,
         token_id: U256,
-        erc721: &impl IErc721,
-    ) -> Result<(), crate::token::erc721::Error> {
+        erc721: &impl IErc721<Error = erc721::Error>,
+    ) -> Result<(), erc721::Error> {
         let length = erc721.balance_of(to)? - uint!(1_U256);
         self._owned_tokens.setter(to).setter(length).set(token_id);
         self._owned_tokens_index.setter(token_id).set(length);
@@ -209,8 +209,8 @@ impl Erc721Enumerable {
         &mut self,
         from: Address,
         token_id: U256,
-        erc721: &impl IErc721,
-    ) -> Result<(), crate::token::erc721::Error> {
+        erc721: &impl IErc721<Error = erc721::Error>,
+    ) -> Result<(), erc721::Error> {
         // To prevent a gap in from's tokens array,
         // we store the last token in the index of the token to delete,
         // and then delete the last slot (swap and pop).

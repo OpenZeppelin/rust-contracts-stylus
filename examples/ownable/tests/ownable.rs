@@ -2,14 +2,15 @@
 
 use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::{
+    network::ReceiptResponse,
     primitives::Address,
     providers::Provider,
     rpc::types::{BlockNumberOrTag, Filter},
     sol,
     sol_types::{SolConstructor, SolError, SolEvent},
 };
-use e2e::{receipt, send, Account, EventExt, Revert};
-use eyre::Result;
+use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert};
+use eyre::{ContextCompat, Result};
 
 mod abi;
 
@@ -18,7 +19,7 @@ sol!("src/constructor.sol");
 async fn deploy(account: &Account, owner: Address) -> eyre::Result<Address> {
     let args = OwnableExample::constructorCall { initialOwner: owner };
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args)).await
+    e2e::deploy(account.url(), &account.pk(), Some(args)).await?.address()
 }
 
 // ============================================================================

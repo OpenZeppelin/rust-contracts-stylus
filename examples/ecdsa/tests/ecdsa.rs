@@ -6,7 +6,7 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{Account, Revert};
+use e2e::{Account, ReceiptExt, Revert};
 use eyre::Result;
 use openzeppelin_stylus::utils::cryptography::ecdsa::SIGNATURE_S_UPPER_BOUND;
 
@@ -17,7 +17,7 @@ sol!("src/constructor.sol");
 async fn deploy(account: &Account) -> eyre::Result<Address> {
     let args = ECDSAExample::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args)).await
+    e2e::deploy(account.url(), &account.pk(), Some(args)).await?.address()
 }
 
 const HASH: B256 =

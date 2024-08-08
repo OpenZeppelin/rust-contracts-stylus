@@ -2,13 +2,17 @@
 
 use abi::Erc20;
 use alloy::{
+    network::ReceiptResponse,
     primitives::{Address, U256},
     sol,
     sol_types::{SolConstructor, SolError},
 };
 use alloy_primitives::uint;
-use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
-use eyre::Result;
+use e2e::{
+    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
+    Revert,
+};
+use eyre::{ContextCompat, Result};
 
 mod abi;
 
@@ -29,7 +33,7 @@ async fn deploy(
         cap_: cap.unwrap_or(CAP),
     };
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(rpc_url, private_key, Some(args)).await
+    e2e::deploy(rpc_url, private_key, Some(args)).await?.address()
 }
 
 // ============================================================================
