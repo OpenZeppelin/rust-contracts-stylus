@@ -2,11 +2,10 @@
 
 use abi::Erc20;
 use alloy::{
-    primitives::{Address, U256},
+    primitives::{uint, Address, U256},
     sol,
     sol_types::{SolConstructor, SolError},
 };
-use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
 

@@ -2,11 +2,10 @@
 
 use abi::Erc721;
 use alloy::{
-    primitives::{fixed_bytes, Address, Bytes, U256},
+    primitives::{fixed_bytes, uint, Address, Bytes, U256},
     sol,
     sol_types::SolConstructor,
 };
-use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Revert};
 use mock::{receiver, receiver::ERC721ReceiverMock};
 

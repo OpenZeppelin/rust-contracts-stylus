@@ -82,12 +82,12 @@ pub trait IEIP712 {
     ///
     /// * `&self` - Read access to the contract's state.
     fn domain_separator_v4(&self) -> FixedBytes<32> {
-        let encoded = DomainSeparatorTuple::encode(&(
+        let encoded = DomainSeparatorTuple::abi_encode(&(
             TYPE_HASH,
             Self::HASHED_NAME,
             Self::HASHED_VERSION,
             Self::chain_id(),
-            Self::contract_address().into(),
+            Self::contract_address(),
         ));
 
         keccak256(encoded)
