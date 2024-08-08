@@ -162,8 +162,8 @@ fn _recover(
 /// * `r` - `r` value from the signature.
 /// * `s` - `s` value from the signature.
 fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
-    let calldata = EcRecoverData { hash: *hash, v, r: *r, s: *s };
-    EcRecoverData::encode(&calldata)
+    let calldata = EcRecoverData { hash, v, r, s };
+    EcRecoverData::abi_encode(&calldata)
 }
 
 /// Validates the `s` value of a signature.
@@ -199,7 +199,7 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 fn check_if_malleable(s: &B256) -> Result<(), Error> {
     let s_u256 = U256::from_be_slice(s.as_slice());
     if s_u256 > SIGNATURE_S_UPPER_BOUND {
-        return Err(ECDSAInvalidSignatureS { s: **s }.into());
+        return Err(ECDSAInvalidSignatureS { s: *s }.into());
     }
     Ok(())
 }
