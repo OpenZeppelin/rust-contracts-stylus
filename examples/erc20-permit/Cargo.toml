@@ -1,5 +1,5 @@
 [package]
-name = "erc20-example"
+name = "erc20-permit-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -8,7 +8,7 @@ version = "0.0.0"
 
 [dependencies]
 openzeppelin-stylus = { path = "../../contracts" }
-alloy-primitives.workspace = true
+alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
