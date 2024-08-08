@@ -15,7 +15,7 @@ use stylus_proc::{external, sol_storage, SolidityError};
 use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
 
 use crate::{
-    token::erc20::IErc20Internal,
+    token::erc20::{Erc20, IErc20},
     utils::{
         cryptography::{ecdsa, eip712::IEip712},
         nonces::Nonces,
@@ -57,8 +57,12 @@ pub enum Error {
 sol_storage! {
     /// State of a Permit Contract.
     pub struct Permit<T: IEip712 + StorageType>{
+        /// ERC-20 contract.
+        Erc20 erc20;
+
         /// Nonces contract.
         Nonces nonces;
+
         /// EIP-712 contract. Must implement [`IEip712`] trait.
         T eip712;
     }
@@ -93,6 +97,141 @@ impl<T: IEip712 + StorageType> Permit<T> {
     pub fn domain_separator(&self) -> B256 {
         self.eip712.domain_separator_v4()
     }
+
+    /// Returns the number of tokens in existence.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    pub fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    /// Returns the number of tokens owned by `account`.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `account` - Account to get balance from.
+    pub fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    /// Moves a `value` amount of tokens from the caller's account to `to`.
+    ///
+    /// Returns a boolean value indicating whether the operation succeeded.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    /// * If the `to` address is `Address::ZERO`, then the error
+    /// [`crate::token::erc20::Error::InvalidReceiver`] is returned.
+    /// * If the caller doesn't have a balance of at least `value`, then the
+    /// error [`crate::token::erc20::Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`crate::token::erc20::Transfer`] event.
+    pub fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, crate::token::erc20::Error> {
+        self.erc20.transfer(to, value)
+    }
+
+    /// Returns the remaining number of tokens that `spender` will be allowed
+    /// to spend on behalf of `owner` through `transfer_from`. This is zero by
+    /// default.
+    ///
+    /// This value changes when `approve` or `transfer_from` are called.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account that owns the tokens.
+    /// * `spender` - Account that will spend the tokens.
+    pub fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    /// Sets a `value` number of tokens as the allowance of `spender` over the
+    /// caller's tokens.
+    ///
+    /// Returns a boolean value indicating whether the operation succeeded.
+    ///
+    /// WARNING: Beware that changing an allowance with this method brings the
+    /// risk that someone may use both the old and the new allowance by
+    /// unfortunate transaction ordering. One possible solution to mitigate
+    /// this race condition is to first reduce the `spender`'s allowance to 0
+    /// and set the desired value afterwards:
+    /// <https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729>
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `owner` - Account that owns the tokens.
+    /// * `spender` - Account that will spend the tokens.
+    /// * `value` - The number of tokens being allowed to transfer by `spender`.
+    ///
+    /// # Errors
+    ///
+    /// If the `spender` address is `Address::ZERO`, then the error
+    /// [`crate::token::erc20::Error::InvalidSpender`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`crate::token::erc20::Approval`] event.
+    pub fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, crate::token::erc20::Error> {
+        self.erc20.approve(spender, value)
+    }
+
+    /// Moves a `value` number of tokens from `from` to `to` using the
+    /// allowance mechanism. `value` is then deducted from the caller's
+    /// allowance.
+    ///
+    /// Returns a boolean value indicating whether the operation succeeded.
+    ///
+    /// NOTE: If `value` is the maximum `U256::MAX`, the allowance is not
+    /// updated on `transfer_from`. This is semantically equivalent to
+    /// an infinite approval.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    /// * If the `from` address is `Address::ZERO`, then the error
+    /// [`crate::token::erc20::Error::InvalidSender`] is returned.
+    /// * If the `to` address is `Address::ZERO`, then the error
+    /// [`crate::token::erc20::Error::InvalidReceiver`] is returned.
+    /// * If not enough allowance is available, then the error
+    /// [`crate::token::erc20::Error::InsufficientAllowance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`crate::token::erc20::Transfer`] event.
+    pub fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, crate::token::erc20::Error> {
+        self.erc20.transfer_from(from, to, value)
+    }
 }
 
 impl<T: IEip712 + StorageType> Permit<T> {
@@ -110,8 +249,6 @@ impl<T: IEip712 + StorageType> Permit<T> {
     /// * `v` - v value from the `owner`'s signature.
     /// * `r` - r value from the `owner`'s signature.
     /// * `s` - s value from the `owner`'s signature.
-    /// * `erc20` - Write access to a contract providing
-    ///   [`crate::token::erc20::IErc20`] interface.
     ///
     /// # Errors
     ///
@@ -141,7 +278,6 @@ impl<T: IEip712 + StorageType> Permit<T> {
         v: u8,
         r: B256,
         s: B256,
-        erc20: &mut impl IErc20Internal,
     ) -> Result<(), Error> {
         if U256::from(block::timestamp()) > deadline {
             return Err(ERC2612ExpiredSignature { deadline }.into());
@@ -165,7 +301,7 @@ impl<T: IEip712 + StorageType> Permit<T> {
             return Err(ERC2612InvalidSigner { signer, owner }.into());
         }
 
-        let _ = erc20._approve(owner, spender, value);
+        let _ = self.erc20._approve(owner, spender, value);
         Ok(())
     }
 }

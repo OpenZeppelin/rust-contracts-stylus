@@ -7,7 +7,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
     token::erc20::{
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
-        Erc20, IErc20, IErc20Internal,
+        Erc20, IErc20,
     },
     utils::Pausable,
 };

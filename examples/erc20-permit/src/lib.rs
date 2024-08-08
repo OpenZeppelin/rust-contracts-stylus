@@ -5,16 +5,13 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus::{
-    token::erc20::{extensions::Permit, Erc20, IErc20Internal},
-    utils::cryptography::eip712::IEip712,
+    token::erc20::extensions::Permit, utils::cryptography::eip712::IEip712,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
 sol_storage! {
     #[entrypoint]
     struct Erc20PermitExample {
-        #[borrow]
-        Erc20 erc20;
         #[borrow]
         Permit<Eip712> permit;
     }
@@ -28,7 +25,7 @@ impl IEip712 for Eip712 {
 }
 
 #[external]
-#[inherit(Erc20, Permit<Eip712>)]
+#[inherit(Permit<Eip712>)]
 impl Erc20PermitExample {
     // Add token minting feature.
     pub fn mint(
@@ -36,7 +33,7 @@ impl Erc20PermitExample {
         account: Address,
         value: U256,
     ) -> Result<(), Vec<u8>> {
-        self.erc20._mint(account, value)?;
+        self.permit.erc20._mint(account, value)?;
         Ok(())
     }
 
@@ -52,7 +49,7 @@ impl Erc20PermitExample {
         s: B256,
     ) -> Result<(), Vec<u8>> {
         self.permit
-            .permit(owner, spender, value, deadline, v, r, s, &mut self.erc20)
+            .permit(owner, spender, value, deadline, v, r, s)
             .map_err(|e| e.into())
     }
 }

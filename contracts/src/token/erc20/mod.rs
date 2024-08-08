@@ -172,7 +172,6 @@ pub trait IErc20 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
-    /// * `value` - The number of tokens being allowed to transfer by `spender`.
     ///
     /// # Errors
     ///
@@ -222,158 +221,6 @@ pub trait IErc20 {
     ) -> Result<bool, Error>;
 }
 
-/// Interface of an [`Erc20`] contract methods that can be used by the
-/// extensions.
-pub trait IErc20Internal {
-    /// Sets a `value` number of tokens as the allowance of `spender` over the
-    /// caller's tokens.
-    ///
-    /// Returns a boolean value indicating whether the operation succeeded.
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account that owns the tokens.
-    /// * `spender` - Account that will spend the tokens.
-    ///
-    /// # Errors
-    ///
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSpender`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits an [`Approval`] event.
-    fn _approve(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-    ) -> Result<bool, Error>;
-
-    /// Internal implementation of transferring tokens between two accounts.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to transfer tokens from.
-    /// * `to` - Account to transfer tokens to.
-    /// * `value` - The number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    fn _transfer(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), Error>;
-
-    /// Creates a `value` amount of tokens and assigns them to `account`,
-    /// by transferring it from `Address::ZERO`.
-    ///
-    /// Relies on the `_update` mechanism.
-    ///
-    /// # Panics
-    ///
-    /// If `_total_supply` exceeds `U256::MAX`.
-    ///
-    /// # Errors
-    ///
-    /// If the `account` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    fn _mint(&mut self, account: Address, value: U256) -> Result<(), Error>;
-
-    /// Transfers a `value` amount of tokens from `from` to `to`, or
-    /// alternatively mints (or burns) if `from` (or `to`) is the zero address.
-    ///
-    /// All customizations to transfers, mints, and burns should be done by
-    /// using this function.
-    ///
-    /// # Arguments
-    ///
-    /// * `from` - Owner's address.
-    /// * `to` - Recipient's address.
-    /// * `value` - Amount to be transferred.
-    ///
-    /// # Panics
-    ///
-    /// If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
-    /// operation.
-    ///
-    /// # Errors
-    ///
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    fn _update(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), Error>;
-
-    /// Destroys a `value` amount of tokens from `account`,
-    /// lowering the total supply.
-    ///
-    /// Relies on the `update` mechanism.
-    ///
-    /// # Arguments
-    ///
-    /// * `account` - Owner's address.
-    /// * `value` - Amount to be burnt.
-    ///
-    /// # Errors
-    ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    fn _burn(&mut self, account: Address, value: U256) -> Result<(), Error>;
-
-    /// Updates `owner`'s allowance for `spender` based on spent `value`.
-    ///
-    /// Does not update the allowance value in the case of infinite allowance.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account to transfer tokens from.
-    /// * `to` - Account to transfer tokens to.
-    /// * `value` - The number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    /// If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
-    fn _spend_allowance(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-    ) -> Result<(), Error>;
-}
-
 #[external]
 impl IErc20 for Erc20 {
     fn total_supply(&self) -> U256 {
@@ -416,7 +263,25 @@ impl IErc20 for Erc20 {
     }
 }
 
-impl IErc20Internal for Erc20 {
+impl Erc20 {
+    /// Sets a `value` number of tokens as the allowance of `spender` over the
+    /// caller's tokens.
+    ///
+    /// Returns a boolean value indicating whether the operation succeeded.
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `owner` - Account that owns the tokens.
+    /// * `spender` - Account that will spend the tokens.
+    ///
+    /// # Errors
+    ///
+    /// If the `spender` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSpender`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`Approval`] event.
     fn _approve(
         &mut self,
         owner: Address,
@@ -434,6 +299,27 @@ impl IErc20Internal for Erc20 {
         Ok(true)
     }
 
+    /// Internal implementation of transferring tokens between two accounts.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - The number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    /// * If the `from` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// * If the `to` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
     fn _transfer(
         &mut self,
         from: Address,
@@ -456,7 +342,28 @@ impl IErc20Internal for Erc20 {
         Ok(())
     }
 
-    fn _mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
+    /// Creates a `value` amount of tokens and assigns them to `account`,
+    /// by transferring it from `Address::ZERO`.
+    ///
+    /// Relies on the `_update` mechanism.
+    ///
+    /// # Panics
+    ///
+    /// If `_total_supply` exceeds `U256::MAX`.
+    ///
+    /// # Errors
+    ///
+    /// If the `account` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
+    pub fn _mint(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Error> {
         if account.is_zero() {
             return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
                 receiver: Address::ZERO,
@@ -465,7 +372,32 @@ impl IErc20Internal for Erc20 {
         self._update(Address::ZERO, account, value)
     }
 
-    fn _update(
+    /// Transfers a `value` amount of tokens from `from` to `to`, or
+    /// alternatively mints (or burns) if `from` (or `to`) is the zero address.
+    ///
+    /// All customizations to transfers, mints, and burns should be done by
+    /// using this function.
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - Owner's address.
+    /// * `to` - Recipient's address.
+    /// * `value` - Amount to be transferred.
+    ///
+    /// # Panics
+    ///
+    /// If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    /// operation.
+    ///
+    /// # Errors
+    ///
+    /// If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
+    pub fn _update(
         &mut self,
         from: Address,
         to: Address,
@@ -514,7 +446,31 @@ impl IErc20Internal for Erc20 {
         Ok(())
     }
 
-    fn _burn(&mut self, account: Address, value: U256) -> Result<(), Error> {
+    /// Destroys a `value` amount of tokens from `account`,
+    /// lowering the total supply.
+    ///
+    /// Relies on the `update` mechanism.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - Owner's address.
+    /// * `value` - Amount to be burnt.
+    ///
+    /// # Errors
+    ///
+    /// * If the `from` address is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`Transfer`] event.
+    pub fn _burn(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Error> {
         if account == Address::ZERO {
             return Err(Error::InvalidSender(ERC20InvalidSender {
                 sender: Address::ZERO,
@@ -523,7 +479,22 @@ impl IErc20Internal for Erc20 {
         self._update(account, Address::ZERO, value)
     }
 
-    fn _spend_allowance(
+    /// Updates `owner`'s allowance for `spender` based on spent `value`.
+    ///
+    /// Does not update the allowance value in the case of infinite allowance.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `owner` - Account to transfer tokens from.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - The number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    /// If not enough allowance is available, then the error
+    /// [`Error::InsufficientAllowance`] is returned.
+    pub fn _spend_allowance(
         &mut self,
         owner: Address,
         spender: Address,
@@ -555,7 +526,7 @@ mod tests {
     use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
-    use super::{Erc20, Error, IErc20, IErc20Internal};
+    use super::{Erc20, Error, IErc20};
 
     #[motsu::test]
     fn reads_balance(contract: Erc20) {
