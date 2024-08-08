@@ -96,7 +96,7 @@ sol! {
     /// Exceeds the max number of mints per batch.
     #[derive(Debug)]
     #[allow(missing_docs)]
-    error ERC721ExceededMaxBatchMint(uint256 batchSize, uint256 maxBatch);
+    error ERC721ExceededMaxBatchMint(uint256 batch_size, uint256 max_batch);
 
     /// Individual minting is not allowed.
     #[derive(Debug)]
@@ -268,14 +268,14 @@ impl Erc721Consecutive {
     }
 
     /// Mint a batch of tokens of length `batch_size` for `to`. Returns the
-    /// token id of the first token minted in the batch; if `batchSize` is
+    /// token id of the first token minted in the batch; if `batch_size` is
     /// 0, returns the number of consecutive ids minted so far.
     ///
     /// Requirements:
     ///
-    /// - `batchSize` must not be greater than
+    /// * `batch_size` must not be greater than
     ///   [`Erc721Consecutive::_max_batch_size`].
-    /// - The function is called in the constructor of the contract (directly or
+    /// * The function is called in the constructor of the contract (directly or
     ///   indirectly).
     ///
     /// CAUTION: Does not emit a `Transfer` event. This is ERC-721 compliant as
@@ -318,8 +318,8 @@ impl Erc721Consecutive {
 
             if batch_size > self._max_batch_size() {
                 return Err(ERC721ExceededMaxBatchMint {
-                    batchSize: U256::from(batch_size),
-                    maxBatch: U256::from(self._max_batch_size()),
+                    batch_size: U256::from(batch_size),
+                    max_batch: U256::from(self._max_batch_size()),
                 }
                 .into());
             }
@@ -890,10 +890,10 @@ mod tests {
         assert!(matches!(
             err,
             Error::ExceededMaxBatchMint(ERC721ExceededMaxBatchMint {
-                batchSize,
-                maxBatch
+                batch_size,
+                max_batch
             })
-            if batchSize == U256::from(batch_size) && maxBatch == U256::from(contract._max_batch_size())
+            if batch_size == U256::from(batch_size) && max_batch == U256::from(contract._max_batch_size())
         ));
     }
 
