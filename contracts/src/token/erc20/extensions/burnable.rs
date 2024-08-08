@@ -75,7 +75,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::IErc20Burnable;
-    use crate::token::erc20::{Erc20, Error, IErc20, IErc20Internal};
+    use crate::token::erc20::{Erc20, Error, IErc20};
 
     #[motsu::test]
     fn burns(contract: Erc20) {
