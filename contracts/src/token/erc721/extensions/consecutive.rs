@@ -377,7 +377,7 @@ impl Erc721Consecutive {
 
         // if we burn
         if to == Address::ZERO
-            // and the tokenId was minted in a batch
+            // and the token_id was minted in a batch
             && token_id < U256::from(self._next_consecutive_id())
             // and the token was never marked as burnt
             && !self._sequential_burn.get(token_id)
@@ -389,9 +389,9 @@ impl Erc721Consecutive {
         Ok(previous_owner)
     }
 
-    /// Returns the next tokenId to mint using [`Self::_mint_consecutive`]. It
+    /// Returns the next token_id to mint using [`Self::_mint_consecutive`]. It
     /// will return [`Erc721Consecutive::_first_consecutive_id`] if no
-    /// consecutive tokenId has been minted before.
+    /// consecutive token_id has been minted before.
     ///
     /// # Arguments
     ///
