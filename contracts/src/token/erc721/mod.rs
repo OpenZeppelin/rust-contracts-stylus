@@ -1862,7 +1862,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn _owner_of_works(contract: Erc721) {
+    fn owner_of_works(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
 
@@ -1871,21 +1871,21 @@ mod tests {
     }
 
     #[motsu::test]
-    fn _owner_of_nonexistent_token(contract: Erc721) {
+    fn owner_of_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let owner = contract._owner_of(token_id);
         assert_eq!(Address::ZERO, owner);
     }
 
     #[motsu::test]
-    fn _get_approved_nonexistent_token(contract: Erc721) {
+    fn get_approved_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
         let approved = contract._get_approved(token_id);
         assert_eq!(Address::ZERO, approved);
     }
 
     #[motsu::test]
-    fn _get_approved_token_without_approval(contract: Erc721) {
+    fn get_approved_token_without_approval(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1895,7 +1895,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn _get_approved_token_with_approval(contract: Erc721) {
+    fn get_approved_token_with_approval(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1909,7 +1909,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn _get_approved_token_with_approval_for_all(contract: Erc721) {
+    fn get_approved_token_with_approval_for_all(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
