@@ -2,11 +2,11 @@
 
 use abi::Erc20;
 use alloy::{
-    primitives::{Address, U256},
+    primitives::{b256, keccak256, Address, B256, U256},
     sol,
-    sol_types::{SolConstructor, SolError},
+    sol_types::{SolConstructor, SolError, SolType},
 };
-use alloy_primitives::{uint, B256};
+use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
 
@@ -23,6 +23,15 @@ const EXPIRED_DEADLINE: U256 = uint!(946_684_800_U256);
 
 // Wednesday, 1 January 3000 00:00:00
 const FAIR_DEADLINE: U256 = uint!(32_503_680_000_U256);
+
+// keccak256("Permit(address owner,address spender,uint256 value,uint256
+// nonce,uint256 deadline)")
+const PERMIT_TYPEHASH: B256 =
+    b256!("6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9");
+
+type PermitStructHashTuple = sol! {
+    tuple(bytes32, address, address, uint256, uint256, uint256)
+};
 
 macro_rules! domain_separator {
     ($contract:expr) => {{
@@ -50,26 +59,30 @@ async fn deploy(
 }
 
 fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
-    openzeppelin_stylus::utils::cryptography::eip712::to_typed_data_hash(
-        &domain_separator,
-        &struct_hash,
-    )
+    let typed_dat_hash =
+        openzeppelin_stylus::utils::cryptography::eip712::to_typed_data_hash(
+            &domain_separator,
+            &struct_hash,
+        );
+
+    B256::from_slice(typed_dat_hash.as_slice())
 }
 
 fn permit_struct_hash(
     owner: Address,
     spender: Address,
-    balance: U256,
+    value: U256,
     nonce: U256,
     deadline: U256,
 ) -> B256 {
-    openzeppelin_stylus::token::erc20::extensions::permit::prepare_struct_hash(
-        alloy_primitives::Address::from_slice(owner.as_slice()),
-        alloy_primitives::Address::from_slice(spender.as_slice()),
-        balance,
+    keccak256(PermitStructHashTuple::abi_encode(&(
+        *PERMIT_TYPEHASH,
+        owner,
+        spender,
+        value,
         nonce,
         deadline,
-    )
+    )))
 }
 
 // ============================================================================

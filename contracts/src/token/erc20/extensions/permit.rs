@@ -31,31 +31,6 @@ type StructHashTuple = sol! {
     tuple(bytes32, address, address, uint256, uint256, uint256)
 };
 
-/// Calculates `keccak256` hash value for a struct used in Permit extension.
-///
-/// # Arguments
-///
-/// * `owner` - Account that owns the tokens.
-/// * `spender` - Account that will spend the tokens.
-/// * `value` - The number of tokens being permitted to transfer by `spender`.
-/// * `deadline` - Deadline for the `permit` action.
-pub fn prepare_struct_hash(
-    owner: Address,
-    spender: Address,
-    value: U256,
-    nonce: U256,
-    deadline: U256,
-) -> B256 {
-    keccak256(StructHashTuple::encode_params(&(
-        *PERMIT_TYPEHASH,
-        owner,
-        spender,
-        value,
-        nonce,
-        deadline,
-    )))
-}
-
 sol! {
     /// Indicates an error related to the fact that
     /// permit deadline has expired.
@@ -172,13 +147,14 @@ impl<T: IEip712 + StorageType> Permit<T> {
             return Err(ERC2612ExpiredSignature { deadline }.into());
         }
 
-        let struct_hash = prepare_struct_hash(
+        let struct_hash = keccak256(StructHashTuple::encode_params(&(
+            *PERMIT_TYPEHASH,
             owner,
             spender,
             value,
             self.nonces.use_nonce(owner),
             deadline,
-        );
+        )));
 
         let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 

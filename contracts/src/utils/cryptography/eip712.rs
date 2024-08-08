@@ -139,7 +139,7 @@ pub trait IEip712 {
 mod tests {
     use alloy_primitives::{address, b256, uint, Address, U256};
 
-    use super::{to_typed_data_hash, FIELDS, IEIP712, SALT};
+    use super::{to_typed_data_hash, IEip712, FIELDS, SALT};
 
     const CHAIN_ID: U256 = uint!(42161_U256);
 
@@ -149,7 +149,7 @@ mod tests {
     #[derive(Default)]
     struct TestEIP712 {}
 
-    impl IEIP712 for TestEIP712 {
+    impl IEip712 for TestEIP712 {
         const NAME: &'static str = "A Name";
         const VERSION: &'static str = "1";
 
