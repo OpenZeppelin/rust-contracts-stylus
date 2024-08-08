@@ -329,7 +329,7 @@ impl Erc721Consecutive {
             self._sequential_ownership.push(last, to.into())?;
 
             // The invariant required by this function is preserved because the
-            // new sequentialOwnership checkpoint is attributing
+            // new sequential_ownership checkpoint is attributing
             // ownership of `batch_size` new tokens to account `to`.
             self.erc721._increase_balance(
                 to,
@@ -375,14 +375,14 @@ impl Erc721Consecutive {
     ) -> Result<Address, Error> {
         let previous_owner = self._update_base(to, token_id, auth)?;
 
-        // if we burn.
+        // if we burn
         if to == Address::ZERO
-            // and the tokenId was minted in a batch.
+            // and the tokenId was minted in a batch
             && token_id < U256::from(self._next_consecutive_id())
-            // and the token was never marked as burnt.
+            // and the token was never marked as burnt
             && !self._sequential_burn.get(token_id)
         {
-            // record burn.
+            // record burn
             self._sequential_burn.set(token_id);
         }
 
