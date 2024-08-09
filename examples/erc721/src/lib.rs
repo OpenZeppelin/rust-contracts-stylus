@@ -4,12 +4,9 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::{
-    token::erc721::{
-        extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
-        Erc721, IErc721,
-    },
-    utils::Pausable,
+use openzeppelin_stylus::token::erc721::{
+    extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
+    Erc721, IErc721,
 };
 use stylus_sdk::{
     abi::Bytes,
@@ -23,17 +20,13 @@ sol_storage! {
         Erc721 erc721;
         #[borrow]
         Enumerable enumerable;
-        #[borrow]
-        Pausable pausable;
     }
 }
 
 #[external]
-#[inherit(Erc721, Enumerable, Pausable)]
+#[inherit(Erc721, Enumerable)]
 impl Erc721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the owner.
         let owner = self.erc721.owner_of(token_id)?;
 
@@ -51,8 +44,6 @@ impl Erc721Example {
     }
 
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
         self.erc721._mint(to, token_id)?;
 
         // Update the extension's state.
@@ -72,8 +63,6 @@ impl Erc721Example {
         to: Address,
         token_id: U256,
     ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -102,8 +91,6 @@ impl Erc721Example {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -130,8 +117,6 @@ impl Erc721Example {
         to: Address,
         token_id: U256,
     ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 

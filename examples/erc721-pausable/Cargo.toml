@@ -1,0 +1,27 @@
+[package]
+name = "erc721-pausable-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version = "0.0.0"
+
+[dependencies]
+openzeppelin-stylus = { path = "../../contracts" }
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+mini-alloc.workspace = true
+
+[dev-dependencies]
+alloy.workspace = true
+e2e = { path = "../../lib/e2e" }
+tokio.workspace = true
+eyre.workspace = true
+rand.workspace = true
+
+[features]
+e2e = []
+
+[lib]
+crate-type = ["lib", "cdylib"]

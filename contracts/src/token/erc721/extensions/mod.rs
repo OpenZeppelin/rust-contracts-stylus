@@ -3,9 +3,11 @@ pub mod burnable;
 pub mod consecutive;
 pub mod enumerable;
 pub mod metadata;
+pub mod pausable;
 pub mod uri_storage;
 
 pub use burnable::IErc721Burnable;
 pub use enumerable::{Erc721Enumerable, IErc721Enumerable};
 pub use metadata::{Erc721Metadata, IErc721Metadata};
+pub use pausable::Erc721Pausable;
 pub use uri_storage::Erc721UriStorage;

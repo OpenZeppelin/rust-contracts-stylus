@@ -21,10 +21,9 @@ sol!(
         function mint(address to, uint256 tokenId) external;
         function burn(uint256 tokenId) external;
 
-        #[derive(Debug)]
-        function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256 tokenId);
-        #[derive(Debug)]
-        function tokenByIndex(uint256 index) external view returns (uint256 tokenId);
+        function paused() external view returns (bool paused);
+        function pause() external;
+        function unpause() external;
 
         error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
         error ERC721InsufficientApproval(address operator, uint256 tokenId);
@@ -34,8 +33,8 @@ sol!(
         error ERC721InvalidReceiver(address receiver);
         error ERC721InvalidSender(address sender);
         error ERC721NonexistentToken(uint256 tokenId);
-        error ERC721OutOfBoundsIndex(address owner, uint256 index);
-        error ERC721EnumerableForbiddenBatchMint();
+        error EnforcedPause();
+        error ExpectedPause();
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
@@ -43,5 +42,9 @@ sol!(
         event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
         #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+        #[derive(Debug, PartialEq)]
+        event Paused(address account);
+        #[derive(Debug, PartialEq)]
+        event Unpaused(address account);
    }
 );

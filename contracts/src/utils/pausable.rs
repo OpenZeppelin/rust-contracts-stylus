@@ -12,7 +12,7 @@
 
 use alloy_sol_types::sol;
 use stylus_proc::{external, sol_storage, SolidityError};
-use stylus_sdk::{evm, msg};
+use stylus_sdk::{call::MethodError, evm, msg};
 
 sol! {
     /// Emitted when pause is triggered by `account`.
@@ -49,6 +49,12 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
 sol_storage! {
     /// State of a Pausable Contract.
     pub struct Pausable {
@@ -64,7 +70,7 @@ impl Pausable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn paused(&self) -> bool {
+    pub fn paused(&self) -> bool {
         self._paused.get()
     }
 
