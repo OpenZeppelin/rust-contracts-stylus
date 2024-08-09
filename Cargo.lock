@@ -2562,6 +2562,7 @@ dependencies = [
  "rand",
  "stylus-proc",
  "stylus-sdk",
+ "tiny-keccak",
 ]
 
 [[package]]

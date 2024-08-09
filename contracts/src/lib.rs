@@ -47,6 +47,10 @@ impl MyContract { }
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
 
+use core::slice;
+
+use tiny_keccak::{Hasher, Keccak};
+
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
@@ -58,4 +62,21 @@ pub mod utils;
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
+}
+
+pub(crate) const WORD_BYTES: usize = 32;
+
+#[no_mangle]
+pub unsafe extern "C" fn native_keccak256(
+    bytes: *const u8,
+    len: usize,
+    output: *mut u8,
+) {
+    let mut hasher = Keccak::v256();
+
+    let data = unsafe { slice::from_raw_parts(bytes, len) };
+    hasher.update(data);
+
+    let output = unsafe { slice::from_raw_parts_mut(output, WORD_BYTES) };
+    hasher.finalize(output);
 }
