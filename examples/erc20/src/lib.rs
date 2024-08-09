@@ -3,13 +3,13 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, B256, U256};
+use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
     token::erc20::{
-        extensions::{capped, Capped, Erc20Metadata, IErc20Burnable, Permit},
-        Erc20, IErc20, IErc20Internal,
+        extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
+        Erc20, IErc20,
     },
-    utils::{cryptography::eip712::IEip712, Pausable},
+    utils::Pausable,
 };
 use stylus_sdk::prelude::{entrypoint, external, sol_storage};
 
@@ -26,20 +26,11 @@ sol_storage! {
         Capped capped;
         #[borrow]
         Pausable pausable;
-        #[borrow]
-        Permit<Eip712> permit;
     }
-
-    struct Eip712 {}
-}
-
-impl IEip712 for Eip712 {
-    const NAME: &'static str = "ERC-20 Permit Example";
-    const VERSION: &'static str = "1";
 }
 
 #[external]
-#[inherit(Erc20, Erc20Metadata, Capped, Pausable, Permit<Eip712>)]
+#[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
 impl Erc20Example {
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.
     //
@@ -113,21 +104,5 @@ impl Erc20Example {
     ) -> Result<bool, Vec<u8>> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn permit(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-        deadline: U256,
-        v: u8,
-        r: B256,
-        s: B256,
-    ) -> Result<(), Vec<u8>> {
-        self.permit
-            .permit(owner, spender, value, deadline, v, r, s, &mut self.erc20)
-            .map_err(|e| e.into())
     }
 }
