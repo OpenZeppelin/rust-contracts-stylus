@@ -32,13 +32,14 @@ sol_storage! {
 
 #[external]
 impl Nonces {
-    /// Returns the unused nonce for the given `account`.
+    /// Returns the unused nonce for the given account.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address for which to return the nonce.
-    fn nonce(&self, owner: Address) -> U256 {
+    #[must_use]
+    pub fn nonces(&self, owner: Address) -> U256 {
         self._nonces.get(owner)
     }
 
@@ -54,7 +55,7 @@ impl Nonces {
     /// This function will panic if the nonce for the given `owner` has reached
     /// the maximum value representable by `U256`, causing the `checked_add`
     /// method to return `None`.
-    fn use_nonce(&mut self, owner: Address) -> U256 {
+    pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
         self._nonces
             .setter(owner)
@@ -114,7 +115,7 @@ mod tests {
 
     #[motsu::test]
     fn initiate_nonce(contract: Nonces) {
-        assert_eq!(contract.nonce(msg::sender()), U256::ZERO);
+        assert_eq!(contract.nonces(msg::sender()), U256::ZERO);
     }
 
     #[motsu::test]
@@ -124,7 +125,7 @@ mod tests {
         let use_nonce = contract.use_nonce(owner);
         assert_eq!(use_nonce, U256::ZERO);
 
-        let nonce = contract.nonce(owner);
+        let nonce = contract.nonces(owner);
         assert_eq!(nonce, ONE);
     }
 
@@ -135,7 +136,7 @@ mod tests {
         let use_checked_nonce = contract.use_checked_nonce(owner, U256::ZERO);
         assert!(use_checked_nonce.is_ok());
 
-        let nonce = contract.nonce(owner);
+        let nonce = contract.nonces(owner);
         assert_eq!(nonce, ONE);
     }
 

@@ -10,6 +10,7 @@ contract Erc20Example {
     string private _symbol;
     uint256 private _cap;
     bool private _paused;
+    mapping(address account => uint256) _nonces;
 
     error ERC20InvalidCap(uint256 cap);
 
