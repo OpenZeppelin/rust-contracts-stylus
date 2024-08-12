@@ -294,7 +294,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If `to` is [`Address::ZERO`], then the error
+    /// If `to` is `Address::ZERO`, then the error
     /// [`erc721::Error::InvalidReceiver`] is returned.
     /// If `batch_size` exceeds [`Erc721Consecutive::_max_batch_size`],
     /// then the error [`Error::ExceededMaxBatchMint`] is returned.
@@ -491,7 +491,7 @@ impl Erc721Consecutive {
     /// # Requirements:
     ///
     /// * `token_id` must not exist.
-    /// * `to` cannot be the zero address.
+    /// * `to` cannot be `Address::ZERO`.
     ///
     /// # Events
     ///
@@ -622,7 +622,7 @@ impl Erc721Consecutive {
     ///
     /// # Requirements:
     ///
-    /// * `to` cannot be the zero address.
+    /// * `to` cannot be `Address::ZERO`.
     /// * The `token_id` token must be owned by `from`.
     ///
     /// # Events
@@ -691,8 +691,8 @@ impl Erc721Consecutive {
     /// # Requirements:
     ///
     /// * The `token_id` token must exist and be owned by `from`.
-    /// * `to` cannot be the zero address.
-    /// * `from` cannot be the zero address.
+    /// * `to` cannot be `Address::ZERO`.
+    /// * `from` cannot be `Address::ZERO`.
     /// * If `to` refers to a smart contract, it must implement
     ///   [`erc721::IERC721Receiver::on_erc_721_received`], which is called upon
     ///   a `safe_transfer`.
@@ -719,9 +719,10 @@ impl Erc721Consecutive {
 
     /// Approve `to` to operate on `token_id`.
     ///
-    /// The `auth` argument is optional. If the value passed is non 0, then this
-    /// function will check that `auth` is either the owner of the token, or
-    /// approved to operate on all tokens held by this owner.
+    /// The `auth` argument is optional. If the value passed is non
+    /// `Address::ZERO`, then this function will check that `auth` is either
+    /// the owner of the token, or approved to operate on all tokens held by
+    /// this owner.
     ///
     /// # Arguments
     ///
