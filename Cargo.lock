@@ -1598,6 +1598,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc721-consecutive-example"
+version = "0.0.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives 0.3.3",
+ "alloy-sol-types 0.3.1",
+ "e2e",
+ "eyre",
+ "mini-alloc",
+ "openzeppelin-stylus",
+ "rand",
+ "stylus-proc",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc721-example"
 version = "0.0.0"
 dependencies = [
@@ -2224,9 +2241,9 @@ checksum = "57d8d8ce877200136358e0bbff3a77965875db3af755a11e1fa6b1b3e2df13ea"
 
 [[package]]
 name = "koba"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f31de3702e0ac9b1f6927d12a8157af9c5796bc1caa9e89e43bda20b98af6685"
+checksum = "80e92e1148d087df999396266311bece9e5311c352821872cccaf5dc67117cfc"
 dependencies = [
  "alloy",
  "brotli2",

@@ -7,7 +7,7 @@ use alloy::{
     sol_types::{SolConstructor, SolType},
 };
 use alloy_primitives::uint;
-use e2e::{receipt, send, watch, Account, EventExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
 
 mod abi;
@@ -43,7 +43,7 @@ macro_rules! domain_separator {
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     let args = Erc20PermitExample::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(rpc_url, private_key, Some(args)).await
+    e2e::deploy(rpc_url, private_key, Some(args)).await?.address()
 }
 
 fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {

@@ -9,6 +9,7 @@ members = [
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc721",
+  "examples/erc721-consecutive",
   "examples/erc721-metadata",
   "examples/merkle-proofs",
   "examples/ownable",
@@ -27,6 +28,7 @@ default-members = [
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc721",
+  "examples/erc721-consecutive",
   "examples/erc721-metadata",
   "examples/merkle-proofs",
   "examples/ownable",
@@ -81,7 +83,7 @@ alloy-sol-types = { version = "0.3.1", default-features = false }
 const-hex = { version = "1.11.1", default-features = false }
 eyre = "0.6.8"
 keccak-const = "0.2.0"
-koba = "0.1.2"
+koba = "0.2.0"
 once_cell = "1.19.0"
 rand = "0.8.5"
 regex = "1.10.4"

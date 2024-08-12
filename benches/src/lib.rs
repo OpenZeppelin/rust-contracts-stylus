@@ -6,7 +6,7 @@ use alloy::{
     },
 };
 use alloy_primitives::U128;
-use e2e::Account;
+use e2e::{Account, ReceiptExt};
 use koba::config::{Deploy, Generate, PrivateKey};
 use serde::Deserialize;
 
@@ -77,5 +77,9 @@ async fn deploy(
         quiet: true,
     };
 
-    koba::deploy(&config).await.expect("should deploy contract")
+    koba::deploy(&config)
+        .await
+        .expect("should deploy contract")
+        .address()
+        .expect("should return contract address")
 }
