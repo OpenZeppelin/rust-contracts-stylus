@@ -68,3 +68,15 @@ So if you want to send `5` tokens using a token contract with `18` decimals, the
 ----
 token.transfer(recipient, 5 * uint!(10_U256).pow(uint!(18_U256)));
 ----
+
+== Extensions
+
+TODO: some sentences about extensions...
+
+ * xref:erc20-burnable.adoc[ERC-20 Burnable]: Extension that allows token holders to destroy both their own tokens and those that they have an allowance for.
+
+ * xref:erc20-capped.adoc[ERC-20 Capped]: Extension that that adds a cap to the supply of tokens.
+
+ * xref:erc20-metadata.adoc[ERC-20 Metadata]: Extension that adds optional metadata functions.
+
+ * xref:erc20-permit.adoc[ERC-20 Permit]: Extension that allows approvals to be made via signatures, as defined in https://eips.ethereum.org/EIPS/eip-2612[`EIP-2612`].
