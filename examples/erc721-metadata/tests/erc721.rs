@@ -2,11 +2,13 @@
 
 use abi::Erc721;
 use alloy::{
+    network::ReceiptResponse,
     primitives::{Address, U256},
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{receipt, watch, Account, EventExt, Revert};
+use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use eyre::ContextCompat;
 
 mod abi;
 
@@ -31,7 +33,7 @@ async fn deploy(
         baseUri_: base_uri.to_owned(),
     };
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(rpc_url, private_key, Some(args)).await
+    e2e::deploy(rpc_url, private_key, Some(args)).await?.address()
 }
 
 // ============================================================================

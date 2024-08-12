@@ -1,4 +1,7 @@
-use alloy::sol_types::SolError;
+use alloy::{
+    sol_types::SolError,
+    transports::{RpcError, TransportErrorKind},
+};
 
 /// Possible panic codes for a revert.
 ///
@@ -90,5 +93,24 @@ impl<E: SolError> Revert<E> for alloy::contract::Error {
         let actual = &raw_value.get().trim_matches('"')[2..];
         let expected = alloy::hex::encode(expected.abi_encode());
         expected == actual
+    }
+}
+
+impl<E: SolError> Revert<E> for eyre::Report {
+    fn reverted_with(&self, expected: E) -> bool {
+        let Some(received) = self
+            .chain()
+            .find_map(|err| err.downcast_ref::<RpcError<TransportErrorKind>>())
+        else {
+            return false;
+        };
+        let RpcError::ErrorResp(received) = received else {
+            return false;
+        };
+        let Some(received) = &received.data else {
+            return false;
+        };
+        let expected = alloy::hex::encode(expected.abi_encode());
+        received.to_string().contains(&expected)
     }
 }

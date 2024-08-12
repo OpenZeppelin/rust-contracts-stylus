@@ -1,5 +1,6 @@
 //! Common extensions to the ERC-721 standard.
 pub mod burnable;
+pub mod consecutive;
 pub mod enumerable;
 pub mod metadata;
 pub mod uri_storage;
