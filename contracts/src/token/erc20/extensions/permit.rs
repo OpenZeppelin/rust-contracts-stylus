@@ -98,6 +98,76 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         self.eip712.domain_separator_v4()
     }
 
+    /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
+    /// given `owner`'s signed approval.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state. given address.
+    /// * `owner` - Account that owns the tokens.
+    /// * `spender` - Account that will spend the tokens.
+    /// * `value` - The number of tokens being permitted to transfer by
+    ///   `spender`.
+    /// * `deadline` - Deadline for the permit action.
+    /// * `v` - v value from the `owner`'s signature.
+    /// * `r` - r value from the `owner`'s signature.
+    /// * `s` - s value from the `owner`'s signature.
+    ///
+    /// # Errors
+    ///
+    /// If the `deadline` param is from the past, than the error
+    /// [`ERC2612ExpiredSignature`] is returned.
+    /// If signer is not an `owner`, than the error
+    /// [`ERC2612InvalidSigner`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`crate::token::erc20::Approval`] event.
+    ///
+    /// # Requirements
+    ///
+    /// * `spender` cannot be the ``Address::ZERO``.
+    /// * `deadline` must be a timestamp in the future.
+    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner`
+    /// over the EIP712-formatted function arguments.
+    /// * the signature must use `owner`'s current nonce.
+    #[allow(clippy::too_many_arguments)]
+    pub fn permit(
+        &mut self,
+        owner: Address,
+        spender: Address,
+        value: U256,
+        deadline: U256,
+        v: u8,
+        r: B256,
+        s: B256,
+    ) -> Result<(), Error> {
+        if U256::from(block::timestamp()) > deadline {
+            return Err(ERC2612ExpiredSignature { deadline }.into());
+        }
+
+        let struct_hash = keccak256(StructHashTuple::encode_params(&(
+            *PERMIT_TYPEHASH,
+            owner,
+            spender,
+            value,
+            self.nonces.use_nonce(owner),
+            deadline,
+        )));
+
+        let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
+
+        let signer: Address = ecdsa::recover(self, hash, v, r, s)
+            .expect("should recover signer's address");
+
+        if signer != owner {
+            return Err(ERC2612InvalidSigner { signer, owner }.into());
+        }
+
+        let _ = self.erc20._approve(owner, spender, value);
+        Ok(())
+    }
+
     /// Returns the number of tokens in existence.
     ///
     /// # Arguments
@@ -231,77 +301,5 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         value: U256,
     ) -> Result<bool, crate::token::erc20::Error> {
         self.erc20.transfer_from(from, to, value)
-    }
-}
-
-impl<T: IEip712 + StorageType> Erc20Permit<T> {
-    /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
-    /// given `owner`'s signed approval.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state. given address.
-    /// * `owner` - Account that owns the tokens.
-    /// * `spender` - Account that will spend the tokens.
-    /// * `value` - The number of tokens being permitted to transfer by
-    ///   `spender`.
-    /// * `deadline` - Deadline for the permit action.
-    /// * `v` - v value from the `owner`'s signature.
-    /// * `r` - r value from the `owner`'s signature.
-    /// * `s` - s value from the `owner`'s signature.
-    ///
-    /// # Errors
-    ///
-    /// If the `deadline` param is from the past, than the error
-    /// [`ERC2612ExpiredSignature`] is returned.
-    /// If signer is not an `owner`, than the error
-    /// [`ERC2612InvalidSigner`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits an [`crate::token::erc20::Approval`] event.
-    ///
-    /// # Requirements
-    ///
-    /// * `spender` cannot be the ``Address::ZERO``.
-    /// * `deadline` must be a timestamp in the future.
-    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner`
-    /// over the EIP712-formatted function arguments.
-    /// * the signature must use `owner`'s current nonce.
-    #[allow(clippy::too_many_arguments)]
-    pub fn permit(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-        deadline: U256,
-        v: u8,
-        r: B256,
-        s: B256,
-    ) -> Result<(), Error> {
-        if U256::from(block::timestamp()) > deadline {
-            return Err(ERC2612ExpiredSignature { deadline }.into());
-        }
-
-        let struct_hash = keccak256(StructHashTuple::encode_params(&(
-            *PERMIT_TYPEHASH,
-            owner,
-            spender,
-            value,
-            self.nonces.use_nonce(owner),
-            deadline,
-        )));
-
-        let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
-
-        let signer: Address = ecdsa::recover(self, hash, v, r, s)
-            .expect("should recover signer's address");
-
-        if signer != owner {
-            return Err(ERC2612InvalidSigner { signer, owner }.into());
-        }
-
-        let _ = self.erc20._approve(owner, spender, value);
-        Ok(())
     }
 }

@@ -42,7 +42,9 @@ impl Nonces {
     pub fn nonces(&self, owner: Address) -> U256 {
         self._nonces.get(owner)
     }
+}
 
+impl Nonces {
     /// Consumes a nonce for the given `account`.
     ///
     /// # Arguments
