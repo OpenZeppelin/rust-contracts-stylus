@@ -7,7 +7,7 @@ Adds the permit method, which can be used to change an account’s ERC20 allowan
 [[usage]]
 == Usage
 
-In order to have https://docs.rs/openzeppelin_stylus/token/erc20/extensions/permit/index.html[`ERC-20 Permit`] token, you need to use only this contract, without xref:erc20.adoc[ERC-20], as follows:
+In order to have https://docs.rs/openzeppelin_stylus/token/erc20/extensions/permit/index.html[`ERC-20 Permit`] token, you need to use only this contract without xref:erc20.adoc[ERC-20] as follows:
 
 [source,rust]
 ----

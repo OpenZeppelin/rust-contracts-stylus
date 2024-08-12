@@ -7,7 +7,7 @@ Useful for scenarios such as preventing trades until the end of an evaluation pe
 [[usage]]
 == Usage
 
-In order to make your ERC20 token `pausable`, you need to use the https://docs.rs/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanism to ERC20 token functions as follows:
+In order to make your ERC20 token `pausable`, you need to use the https://docs.rs/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC20 token functions as follows:
 
 [source,rust]
 ----
@@ -85,6 +85,8 @@ impl Erc20Example {
 
 }
 ----
+
+Additionally, you need to take care of proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
 
 [source,solidity]
 ----
