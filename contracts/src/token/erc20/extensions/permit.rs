@@ -12,10 +12,12 @@
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_proc::{external, sol_storage, SolidityError};
-use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
+use stylus_sdk::{
+    block, call::MethodError, prelude::StorageType, storage::TopLevelStorage,
+};
 
 use crate::{
-    token::erc20::{Erc20, IErc20},
+    token::erc20::{self, Erc20, IErc20},
     utils::{
         cryptography::{ecdsa, eip712::IEip712},
         nonces::Nonces,
@@ -52,6 +54,22 @@ pub enum Error {
     ExpiredSignature(ERC2612ExpiredSignature),
     /// Indicates an error related to the issue about mismatched signature.
     InvalidSigner(ERC2612InvalidSigner),
+    /// Error type from [`Erc20`] contract [`erc20::Error`].
+    Erc20(erc20::Error),
+    /// Error type from [`ecdsa`] contract [`ecdsa::Error`].
+    ECDSA(ecdsa::Error),
+}
+
+impl MethodError for erc20::Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
+impl MethodError for ecdsa::Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 sol_storage! {
@@ -119,6 +137,12 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// [`ERC2612ExpiredSignature`] is returned.
     /// If signer is not an `owner`, than the error
     /// [`ERC2612InvalidSigner`] is returned.
+    /// * If the `s` value is grater than [`ecdsa::SIGNATURE_S_UPPER_BOUND`],
+    /// then the error [`ecdsa::Error::InvalidSignatureS`] is returned.
+    /// * If the recovered address is `Address::ZERO`, then the error
+    /// [`ecdsa::Error::InvalidSignature`] is returned.
+    /// If the `spender` address is `Address::ZERO`, then the error
+    /// [`erc20::Error::InvalidSpender`] is returned.
     ///
     /// # Events
     ///
@@ -157,14 +181,13 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
 
         let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 
-        let signer: Address = ecdsa::recover(self, hash, v, r, s)
-            .expect("should recover signer's address");
+        let signer: Address = ecdsa::recover(self, hash, v, r, s)?;
 
         if signer != owner {
             return Err(ERC2612InvalidSigner { signer, owner }.into());
         }
 
-        let _ = self.erc20._approve(owner, spender, value);
+        let _ = self.erc20._approve(owner, spender, value)?;
         Ok(())
     }
 
