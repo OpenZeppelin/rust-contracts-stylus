@@ -69,6 +69,7 @@ So if you want to send `5` tokens using a token contract with `18` decimals, the
 token.transfer(recipient, 5 * uint!(10_U256).pow(uint!(18_U256)));
 ----
 
+[[erc20-token-extensions]]
 == Extensions
 Additionally there are multiple custom extensions, including:
 
