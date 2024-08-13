@@ -2,24 +2,25 @@
 
 use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::{
-    network::ReceiptResponse,
     primitives::Address,
-    providers::Provider,
-    rpc::types::{BlockNumberOrTag, Filter},
+    rpc::types::TransactionReceipt,
     sol,
-    sol_types::{SolConstructor, SolError, SolEvent},
+    sol_types::{SolConstructor, SolError},
 };
 use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert};
-use eyre::{ContextCompat, Result};
+use eyre::Result;
 
 mod abi;
 
 sol!("src/constructor.sol");
 
-async fn deploy(account: &Account, owner: Address) -> eyre::Result<Address> {
+async fn deploy(
+    account: &Account,
+    owner: Address,
+) -> eyre::Result<TransactionReceipt> {
     let args = OwnableExample::constructorCall { initialOwner: owner };
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args)).await?.address()
+    e2e::deploy(account.url(), &account.pk(), Some(args)).await
 }
 
 // ============================================================================
@@ -29,35 +30,16 @@ async fn deploy(account: &Account, owner: Address) -> eyre::Result<Address> {
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice, alice_addr).await?;
-    let contract = Ownable::new(contract_addr, &alice.wallet);
+    let receipt = deploy(&alice, alice_addr).await?;
+    let contract = Ownable::new(receipt.address()?, &alice.wallet);
+
+    assert!(receipt.emits(OwnershipTransferred {
+        previousOwner: Address::ZERO,
+        newOwner: alice_addr,
+    }));
 
     let Ownable::ownerReturn { owner } = contract.owner().call().await?;
     assert_eq!(owner, alice_addr);
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn emits_ownership_transfer_during_construction(
-    alice: Account,
-) -> Result<()> {
-    let alice_addr = alice.address();
-
-    deploy(&alice, alice_addr).await?;
-
-    let block = alice.wallet.get_block_number().await?;
-    let filter = Filter::new()
-        .event_signature(OwnershipTransferred::SIGNATURE_HASH)
-        .from_block(BlockNumberOrTag::Number(block - 2));
-
-    let logs = alice.wallet.get_logs(&filter).await?;
-    let emitted = logs[0].log_decode::<OwnershipTransferred>()?.inner.data;
-    let expected = OwnershipTransferred {
-        previousOwner: Address::ZERO,
-        newOwner: alice_addr,
-    };
-    assert_eq!(emitted, expected);
 
     Ok(())
 }
@@ -84,7 +66,7 @@ async fn transfers_ownership(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice, alice_addr).await?;
+    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.transferOwnership(bob_addr))?;
@@ -107,7 +89,7 @@ async fn prevents_non_owners_from_transferring(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice, bob_addr).await?;
+    let contract_addr = deploy(&alice, bob_addr).await?.address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let err = send!(contract.transferOwnership(bob_addr))
@@ -122,7 +104,7 @@ async fn prevents_non_owners_from_transferring(
 #[e2e::test]
 async fn guards_against_stuck_state(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice, alice_addr).await?;
+    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let err = send!(contract.transferOwnership(Address::ZERO))
@@ -138,7 +120,7 @@ async fn guards_against_stuck_state(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn loses_ownership_after_renouncement(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice, alice_addr).await?;
+    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.renounceOwnership())?;
@@ -161,7 +143,7 @@ async fn prevents_non_owners_from_renouncement(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice, alice_addr).await?;
+    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
     let contract = Ownable::new(contract_addr, &bob.wallet);
 
     let err = send!(contract.renounceOwnership())

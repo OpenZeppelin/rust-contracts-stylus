@@ -2,7 +2,6 @@
 
 use abi::Erc20;
 use alloy::{
-    network::ReceiptResponse,
     primitives::{Address, U256},
     sol,
     sol_types::{SolConstructor, SolError},
@@ -12,7 +11,7 @@ use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
     Revert,
 };
-use eyre::{ContextCompat, Result};
+use eyre::Result;
 
 mod abi;
 
