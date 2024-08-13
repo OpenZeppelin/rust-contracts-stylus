@@ -2,14 +2,12 @@
 
 use abi::Erc721;
 use alloy::{
-    network::ReceiptResponse,
     primitives::{fixed_bytes, Address, Bytes, U256},
     sol,
     sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
-use eyre::ContextCompat;
 use mock::{receiver, receiver::ERC721ReceiverMock};
 
 mod abi;

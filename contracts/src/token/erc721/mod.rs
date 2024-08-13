@@ -193,6 +193,7 @@ unsafe impl TopLevelStorage for Erc721 {}
 
 /// Required interface of an [`Erc721`] compliant contract.
 pub trait IErc721 {
+    /// The error type associated to this ERC-721 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
     /// Returns the number of tokens in `owner`'s account.
     ///
@@ -1403,7 +1404,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1546,7 +1547,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1717,7 +1718,7 @@ mod tests {
 
         ));
 
-        // FIXME: this check should pass
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -2217,8 +2218,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -2347,8 +2347,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -2477,12 +2476,4 @@ mod tests {
             }) if token_id == t_id
         ));
     }
-
-    // TODO: think about [`Erc721::_update`] tests.
-
-    // TODO: think about [`Erc721::_increase_balance`] tests
-    // when it will be used.applicable.
-
-    // TODO: add mock test for [`Erc721::_on_erc721_received`].
-    // Should be done in integration tests.
 }

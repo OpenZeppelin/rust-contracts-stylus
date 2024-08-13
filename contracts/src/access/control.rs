@@ -491,14 +491,6 @@ mod tests {
     }
 
     #[motsu::test]
-    fn not_granted_roles_can_be_renounced(contract: AccessControl) {
-        // FIXME: We can't test this case because we can't check for events. We
-        // need to assert that a RoleRevoked event doesn't get emitted for this
-        // test to make sense.
-        contract.renounce_role(ROLE.into(), msg::sender()).unwrap();
-    }
-
-    #[motsu::test]
     fn bearer_can_renounce_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
 
