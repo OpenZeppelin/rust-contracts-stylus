@@ -45,23 +45,12 @@ async fn emits_ownership_transfer_during_construction(
 ) -> Result<()> {
     let alice_addr = alice.address();
 
-    deploy(&alice, constructor(alice_addr)).await?.address()?;
-    
-    // TODO#q: check for event
+    let receipt = deploy(&alice, constructor(alice_addr)).await?;
 
-    let block = alice.wallet.get_block_number().await?;
-    let filter = Filter::new()
-        .event_signature(OwnershipTransferred::SIGNATURE_HASH)
-        .from_block(BlockNumberOrTag::Number(block - 2));
-
-    let logs = alice.wallet.get_logs(&filter).await?;
-    let emitted = logs[0].log_decode::<OwnershipTransferred>()?.inner.data;
-    let expected = OwnershipTransferred {
+    assert!(receipt.emits(OwnershipTransferred {
         previousOwner: Address::ZERO,
         newOwner: alice_addr,
-    };
-    assert_eq!(emitted, expected);
-
+    }));
     Ok(())
 }
 
@@ -70,14 +59,8 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
     let err = deploy(&alice, constructor(Address::ZERO))
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
-
-    // TODO#q: Improve error check for contract deployments.
-    // Issue: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/128
-    let err_string = format!("{:#?}", err);
-    let expected = Ownable::OwnableInvalidOwner { owner: Address::ZERO };
-    let expected = alloy::hex::encode(expected.abi_encode());
-
-    assert!(err_string.contains(&expected));
+    assert!(err
+        .reverted_with(Ownable::OwnableInvalidOwner { owner: Address::ZERO }));
 
     Ok(())
 }
