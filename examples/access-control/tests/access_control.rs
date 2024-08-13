@@ -4,12 +4,9 @@ use abi::AccessControl::{
     self, AccessControlBadConfirmation, AccessControlUnauthorizedAccount,
     RoleAdminChanged, RoleGranted, RoleRevoked,
 };
-use alloy::{
-    hex, network::ReceiptResponse, primitives::Address,
-    sol_types::SolConstructor,
-};
+use alloy::{hex, primitives::Address, sol_types::SolConstructor};
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
-use eyre::{ContextCompat, Result};
+use eyre::Result;
 
 mod abi;
 
