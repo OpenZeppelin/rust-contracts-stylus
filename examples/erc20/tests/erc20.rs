@@ -4,15 +4,18 @@ use abi::Erc20;
 use alloy::{
     network::ReceiptResponse,
     primitives::{Address, U256},
+    rpc::types::TransactionReceipt,
     sol,
     sol_types::{SolConstructor, SolError},
 };
 use alloy_primitives::uint;
 use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
+    deploy, receipt, send, watch, Account, EventExt, Panic, PanicCode,
+    ReceiptExt, Revert,
 };
 use eyre::{ContextCompat, Result};
+
+use crate::Erc20Example::constructorCall;
 
 mod abi;
 
@@ -22,18 +25,12 @@ const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-async fn deploy(
-    rpc_url: &str,
-    private_key: &str,
-    cap: Option<U256>,
-) -> eyre::Result<Address> {
-    let args = Erc20Example::constructorCall {
+fn constructor(cap: Option<U256>) -> Option<constructorCall> {
+    Some(Erc20Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),
         cap_: cap.unwrap_or(CAP),
-    };
-    let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(rpc_url, private_key, Some(args)).await?.address()
+    })
 }
 
 // ============================================================================
@@ -42,7 +39,7 @@ async fn deploy(
 
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let Erc20::nameReturn { name } = contract.name().call().await?;
@@ -62,7 +59,7 @@ async fn constructs(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn mints(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -94,7 +91,7 @@ async fn mints(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let invalid_receiver = Address::ZERO;
 
@@ -124,7 +121,8 @@ async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
 async fn mints_rejects_overflow(alice: Account) -> Result<()> {
     let max_cap = U256::MAX;
 
-    let contract_addr = deploy(alice.url(), &alice.pk(), Some(max_cap)).await?;
+    let contract_addr =
+        deploy(&alice, constructor(Some(max_cap))).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -157,7 +155,7 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn transfers(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -201,7 +199,7 @@ async fn transfer_rejects_insufficient_balance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -242,7 +240,7 @@ async fn transfer_rejects_insufficient_balance(
 
 #[e2e::test]
 async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_receiver = Address::ZERO;
@@ -281,7 +279,7 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn approves(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -348,7 +346,7 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
 
 #[e2e::test]
 async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_spender = Address::ZERO;
@@ -398,7 +396,7 @@ async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -453,7 +451,7 @@ async fn transfer_from_reverts_insufficient_balance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -508,7 +506,7 @@ async fn transfer_from_rejects_insufficient_allowance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -563,7 +561,7 @@ async fn transfer_from_rejects_invalid_receiver(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -619,7 +617,7 @@ async fn transfer_from_rejects_invalid_receiver(
 
 #[e2e::test]
 async fn burns(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -654,7 +652,7 @@ async fn burns(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -689,7 +687,7 @@ async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn burns_from(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -743,7 +741,7 @@ async fn burn_from_reverts_insufficient_balance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -798,7 +796,7 @@ async fn burn_from_rejects_insufficient_allowance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -854,7 +852,7 @@ async fn burn_from_rejects_insufficient_allowance(
 
 #[e2e::test]
 async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -890,7 +888,7 @@ async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn mint_rejects_when_cap_reached(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -928,11 +926,11 @@ async fn should_not_deploy_capped_with_invalid_cap(
     alice: Account,
 ) -> Result<()> {
     let invalid_cap = U256::ZERO;
-    let err = deploy(alice.url(), &alice.pk(), Some(invalid_cap))
+    let err = deploy(&alice, constructor(Some(invalid_cap)))
         .await
         .expect_err("should not deploy due to `ERC20InvalidCap`");
 
-    // TODO: Improve error check for contract deployments.
+    // TODO#q: Improve error check for contract deployments.
     // Issue: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/128
     // Requires strange casting
     //  ErrorResp(
@@ -960,7 +958,7 @@ async fn should_not_deploy_capped_with_invalid_cap(
 
 #[e2e::test]
 async fn pauses(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.pause())?;
@@ -988,7 +986,7 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn unpauses(alice: Account) -> eyre::Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let _ = watch!(contract.pause())?;
@@ -1018,7 +1016,7 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -1054,7 +1052,7 @@ async fn error_when_burn_from_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -1103,7 +1101,7 @@ async fn error_when_burn_from_in_paused_state(
 
 #[e2e::test]
 async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -1136,7 +1134,7 @@ async fn error_when_transfer_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1174,7 +1172,7 @@ async fn error_when_transfer_in_paused_state(
 
 #[e2e::test]
 async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk(), None).await?;
+    let contract_addr = deploy(&alice, constructor(None)).await?.address()?;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 

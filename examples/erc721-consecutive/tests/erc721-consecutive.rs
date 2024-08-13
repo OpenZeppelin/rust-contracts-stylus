@@ -7,7 +7,7 @@ use alloy::{
     sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{deploy, receipt, watch, Account, EventExt, ReceiptExt, Revert};
 
 use crate::{abi::Erc721, Erc721ConsecutiveExample::constructorCall};
 
@@ -23,21 +23,16 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-async fn deploy<C: SolConstructor>(
-    account: &Account,
-    constructor: C,
-) -> eyre::Result<TransactionReceipt> {
-    let args = alloy::hex::encode(constructor.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args)).await
-}
-
-fn constructor(receivers: Vec<Address>, amounts: Vec<u128>) -> constructorCall {
-    constructorCall {
+fn constructor(
+    receivers: Vec<Address>,
+    amounts: Vec<u128>,
+) -> Option<constructorCall> {
+    Some(constructorCall {
         receivers,
         amounts,
         firstConsecutiveId: FIRST_CONSECUTIVE_ID,
         maxBatchSize: MAX_BATCH_SIZE,
-    }
+    })
 }
 
 #[e2e::test]

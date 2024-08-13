@@ -1,7 +1,31 @@
-use alloy::{primitives::Address, rpc::types::TransactionReceipt};
+use alloy::{
+    primitives::Address, rpc::types::TransactionReceipt,
+    sol_types::SolConstructor,
+};
 use koba::config::Deploy;
 
-use crate::project::Crate;
+use crate::{project::Crate, Account};
+
+/// Deploy and activate the contract implemented as `#[entrypoint]` in the
+/// current crate using `account` and optional `constructor` parameter.
+///
+/// # Errors
+///
+/// May error if:
+///
+/// - Unable to collect information about the crate required for deployment.
+/// - `koba::deploy` errors.
+pub async fn deploy<C: SolConstructor>(
+    account: &Account,
+    constructor: Option<C>,
+) -> eyre::Result<TransactionReceipt> {
+    deploy_inner(
+        account.url(),
+        &account.pk(),
+        constructor.map(|c| alloy::hex::encode(c.abi_encode())),
+    )
+    .await
+}
 
 /// Deploy and activate the contract implemented as `#[entrypoint]` in the
 /// current crate using `rpc_url`, `private_key` and the ABI-encoded constructor
@@ -13,7 +37,7 @@ use crate::project::Crate;
 ///
 /// - Unable to collect information about the crate required for deployment.
 /// - `koba::deploy` errors.
-pub async fn deploy(
+async fn deploy_inner(
     rpc_url: &str,
     private_key: &str,
     args: Option<String>,
