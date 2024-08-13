@@ -3,7 +3,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, B256, U256};
+use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
     token::erc20::extensions::Erc20Permit, utils::cryptography::eip712::IEip712,
 };
@@ -35,21 +35,5 @@ impl Erc20PermitExample {
     ) -> Result<(), Vec<u8>> {
         self.erc20_permit.erc20._mint(account, value)?;
         Ok(())
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn permit(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-        deadline: U256,
-        v: u8,
-        r: B256,
-        s: B256,
-    ) -> Result<(), Vec<u8>> {
-        self.erc20_permit
-            .permit(owner, spender, value, deadline, v, r, s)
-            .map_err(|e| e.into())
     }
 }
