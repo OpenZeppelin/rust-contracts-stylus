@@ -6,5 +6,4 @@
 
 WARNING: This repo contains highly experimental code. *Use at your own risk.*
 
-// TODO: Update link to project after project creation.
-NOTE: You can track our roadmap in our https://github.com/orgs/OpenZeppelin/projects[Github Project].
+NOTE: You can track our roadmap in our https://github.com/orgs/OpenZeppelin/projects/35[Github Project].
