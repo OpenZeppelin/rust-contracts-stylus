@@ -6,7 +6,7 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{receipt, send, watch, Account, EventExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use mock::{receiver, receiver::ERC721ReceiverMock};
 
 mod abi;
@@ -22,7 +22,7 @@ fn random_token_id() -> U256 {
 async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
     let args = Erc721Example::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(rpc_url, private_key, Some(args)).await
+    e2e::deploy(rpc_url, private_key, Some(args)).await?.address()
 }
 
 // ============================================================================
