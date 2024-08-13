@@ -3,7 +3,6 @@
 use abi::ECDSA;
 use alloy::{
     primitives::{address, b256, uint, Address, B256},
-    rpc::types::TransactionReceipt,
     sol,
     sol_types::SolConstructor,
 };

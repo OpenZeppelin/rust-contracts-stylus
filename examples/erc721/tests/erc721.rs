@@ -3,7 +3,6 @@
 use abi::Erc721;
 use alloy::{
     primitives::{fixed_bytes, Address, Bytes, U256},
-    rpc::types::TransactionReceipt,
     sol,
     sol_types::SolConstructor,
 };

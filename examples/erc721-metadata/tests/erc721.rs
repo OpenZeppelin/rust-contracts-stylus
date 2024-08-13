@@ -4,7 +4,6 @@ use abi::Erc721;
 use alloy::{
     network::ReceiptResponse,
     primitives::{Address, U256},
-    rpc::types::TransactionReceipt,
     sol,
     sol_types::SolConstructor,
 };

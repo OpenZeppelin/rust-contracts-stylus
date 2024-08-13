@@ -4,10 +4,7 @@ use abi::AccessControl::{
     self, AccessControlBadConfirmation, AccessControlUnauthorizedAccount,
     RoleAdminChanged, RoleGranted, RoleRevoked,
 };
-use alloy::{
-    hex, network::ReceiptResponse, primitives::Address,
-    rpc::types::TransactionReceipt, sol_types::SolConstructor,
-};
+use alloy::{hex, network::ReceiptResponse, sol_types::SolConstructor};
 use e2e::{
     deploy, receipt, send, watch, Account, EventExt, ReceiptExt, Revert,
 };

@@ -2,7 +2,6 @@
 
 use alloy::{
     primitives::{Address, U256},
-    rpc::types::TransactionReceipt,
     sol,
     sol_types::SolConstructor,
 };

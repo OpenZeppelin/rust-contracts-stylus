@@ -5,7 +5,6 @@ use alloy::{
     network::ReceiptResponse,
     primitives::Address,
     providers::Provider,
-    rpc::types::{BlockNumberOrTag, Filter, TransactionReceipt},
     sol,
     sol_types::{SolConstructor, SolError, SolEvent},
 };
