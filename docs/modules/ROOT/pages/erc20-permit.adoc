@@ -15,6 +15,15 @@ use openzeppelin_stylus::{
     token::erc20::extensions::Erc20Permit, utils::cryptography::eip712::IEip712,
 };
 
+sol_storage! {
+    #[entrypoint]
+    struct Erc20PermitExample {
+        #[borrow]
+        Erc20Permit<Eip712> erc20_permit;
+    }
+
+    struct Eip712 {}
+}
 
 // Define `NAME` and `VERSION` for your contract.
 impl IEip712 for Eip712 {

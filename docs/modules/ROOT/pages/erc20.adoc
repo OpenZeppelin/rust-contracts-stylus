@@ -72,13 +72,13 @@ token.transfer(recipient, 5 * uint!(10_U256).pow(uint!(18_U256)));
 
 [[erc20-token-extensions]]
 == Extensions
-Additionally there are multiple custom extensions, including:
+Additionally, there are multiple custom extensions, including:
 
  * xref:erc20-burnable.adoc[ERC-20 Burnable]: destruction of own tokens.
 
  * xref:erc20-capped.adoc[ERC-20 Capped]: enforcement of a cap to the total supply when minting tokens.
 
- * xref:erc20-metadata.adoc[ERC-20 Metadata]: the extended ERC20 interface including the name, symbol and decimals functions.
+ * xref:erc20-metadata.adoc[ERC-20 Metadata]: the extended ERC20 interface including the name, symbol, and decimals functions.
 
  * xref:erc20-pausable.adoc[ERC-20 Pausable]: ability to pause token transfers.
 
