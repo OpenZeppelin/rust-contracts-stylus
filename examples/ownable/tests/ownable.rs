@@ -2,10 +2,8 @@
 
 use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::{
-    primitives::Address,
-    rpc::types::TransactionReceipt,
-    sol,
-    sol_types::{SolConstructor, SolError},
+    primitives::Address, rpc::types::TransactionReceipt, sol,
+    sol_types::SolConstructor,
 };
 use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
@@ -50,14 +48,8 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
-    // TODO: Improve error check for contract deployments.
-    // Issue: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/128
-    let err_string = format!("{:#?}", err);
-    let expected = Ownable::OwnableInvalidOwner { owner: Address::ZERO };
-    let expected = alloy::hex::encode(expected.abi_encode());
-
-    assert!(err_string.contains(&expected));
-
+    assert!(err
+        .reverted_with(Ownable::OwnableInvalidOwner { owner: Address::ZERO }));
     Ok(())
 }
 
