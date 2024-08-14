@@ -4,7 +4,7 @@ use abi::Erc721;
 use alloy::{
     primitives::{Address, U256},
     sol,
-    sol_types::SolConstructor,
+    sol_types::{SolConstructor, SolType, SolValue},
 };
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
 
@@ -111,7 +111,13 @@ async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
     let Erc721::tokenURIReturn { tokenURI } =
         contract.tokenURI(token_id).call().await?;
 
-    // assert_eq!("", tokenURI);
+    let expected = String::from("test string");
+    let encoded = expected.abi_encode();
+
+    let decoded: String =
+        SolValue::abi_decode(&encoded, true).expect("should decode");
+    assert_eq!(expected, decoded);
+    assert_eq!("", tokenURI);
 
     Ok(())
 }
