@@ -1,4 +1,4 @@
-use alloy::{primitives::Address, rpc::types::TransactionReceipt};
+use alloy::rpc::types::TransactionReceipt;
 use koba::config::Deploy;
 
 use crate::project::Crate;

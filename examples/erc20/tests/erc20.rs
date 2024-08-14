@@ -2,10 +2,9 @@
 
 use abi::Erc20;
 use alloy::{
-    network::ReceiptResponse,
     primitives::{uint, Address, U256},
     sol,
-    sol_types::{SolConstructor, SolError},
+    sol_types::SolConstructor,
 };
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
@@ -931,25 +930,8 @@ async fn should_not_deploy_capped_with_invalid_cap(
         .await
         .expect_err("should not deploy due to `ERC20InvalidCap`");
 
-    // TODO: Improve error check for contract deployments.
-    // Issue: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/128
-    // Requires strange casting
-    //  ErrorResp(
-    //      ErrorPayload {
-    //          code: 3,
-    //          message: \"execution reverted\",
-    //          data: Some(
-    //              RawValue(
-    //                  \"0x...\",
-    //              ),
-    //          ),
-    //      },
-    //  )
-    let err_string = format!("{:#?}", err);
-    let expected = Erc20::ERC20InvalidCap { cap: invalid_cap };
-    let expected = alloy::hex::encode(expected.abi_encode());
+    assert!(err.reverted_with(Erc20::ERC20InvalidCap { cap: invalid_cap }));
 
-    assert!(err_string.contains(&expected));
     Ok(())
 }
 
