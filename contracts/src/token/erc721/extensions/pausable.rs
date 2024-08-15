@@ -20,7 +20,7 @@ use crate::{
         erc721,
         erc721::{
             ERC721IncorrectOwner, ERC721InvalidReceiver, ERC721InvalidSender,
-            ERC721NonexistentToken, Erc721, IErc721, Transfer,
+            ERC721NonexistentToken, Erc721, IErc721,
         },
     },
     utils::Pausable,
@@ -164,7 +164,7 @@ impl Erc721Pausable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`erc721::Transfer`] event.
     pub fn _update(
         &mut self,
         to: Address,
@@ -205,7 +205,7 @@ impl Erc721Pausable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`erc721::Transfer`] event.
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
@@ -257,7 +257,7 @@ impl Erc721Pausable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`erc721::Transfer`] event.
     pub fn _safe_mint(
         &mut self,
         to: Address,
@@ -296,7 +296,7 @@ impl Erc721Pausable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`erc721::Transfer`] event.
     pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
@@ -337,7 +337,7 @@ impl Erc721Pausable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`erc721::Transfer`] event.
     pub fn _transfer(
         &mut self,
         from: Address,
@@ -409,7 +409,7 @@ impl Erc721Pausable {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// Emits a [`erc721::Transfer`] event.
     pub fn _safe_transfer(
         &mut self,
         from: Address,

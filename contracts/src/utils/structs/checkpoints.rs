@@ -12,7 +12,7 @@ use stylus_sdk::{
     storage::{StorageGuard, StorageGuardMut},
 };
 
-use crate::utils::{math::alloy::Math, structs::checkpoints};
+use crate::utils::math::alloy::Math;
 
 // TODO: add generics for other pairs (uint32, uint224) and (uint48, uint208).
 // Logic should be the same.
