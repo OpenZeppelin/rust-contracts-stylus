@@ -10,10 +10,7 @@ use stylus_sdk::{
     prelude::*,
 };
 
-use crate::{
-    token::erc721,
-    utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked},
-};
+use crate::utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked};
 
 pub mod extensions;
 
