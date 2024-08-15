@@ -9,7 +9,7 @@ mod receipt;
 mod system;
 
 pub use account::Account;
-pub use deploy::deploy;
+pub use deploy::{deploy, ContractDeployer};
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::EventExt;
