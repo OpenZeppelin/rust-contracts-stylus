@@ -4,38 +4,7 @@ use alloy::{rpc::types::TransactionReceipt, sol_types::SolConstructor};
 use async_trait::async_trait;
 use koba::config::Deploy;
 
-use crate::{project::Crate, Account};
-
-/// Deploy and activate the contract implemented as `#[entrypoint]` in the
-/// current crate using `account` and optional `constructor` parameter.
-///
-/// # Errors
-///
-/// May error if:
-///
-/// - Unable to collect information about the crate required for deployment.
-/// - `koba::deploy` errors.
-pub async fn deploy<C: SolConstructor>(
-    account: &Account,
-    constructor: Option<C>,
-) -> eyre::Result<TransactionReceipt> {
-    let has_constructor = constructor.is_some();
-    let pkg = Crate::new()?;
-    let wasm_path = pkg.wasm;
-
-    deploy_inner(
-        account.url().to_owned(),
-        account.pk().clone(),
-        wasm_path,
-        constructor.map(|c| alloy::hex::encode(c.abi_encode())),
-        if has_constructor {
-            Some(pkg.manifest_dir.join("src/constructor.sol"))
-        } else {
-            None
-        },
-    )
-    .await
-}
+use crate::project::Crate;
 
 /// Deploy and activate the contract implemented as `#[entrypoint]` in the
 /// current crate.

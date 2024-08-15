@@ -8,8 +8,7 @@ use alloy::{
     sol_types::SolConstructor,
 };
 use e2e::{
-    deploy, receipt, watch, Account, ContractDeployer, EventExt, ReceiptExt,
-    Revert,
+    receipt, watch, Account, ContractDeployer, EventExt, ReceiptExt, Revert,
 };
 use eyre::ContextCompat;
 
@@ -27,12 +26,12 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn constructor(base_uri: &str) -> Option<constructorCall> {
-    Some(constructorCall {
+fn ctr(base_uri: &str) -> constructorCall {
+    constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),
         baseUri_: base_uri.to_owned(),
-    })
+    }
 }
 
 // ============================================================================
@@ -43,8 +42,12 @@ fn constructor(base_uri: &str) -> Option<constructorCall> {
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let base_uri = "";
 
-    let contract_addr =
-        deploy(&alice, constructor(base_uri)).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(base_uri))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let Erc721::nameReturn { name } = contract.name().call().await?;
@@ -62,8 +65,12 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 async fn constructs_with_base_uri(alice: Account) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 
-    let contract_addr =
-        deploy(&alice, constructor(base_uri)).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(base_uri))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let Erc721::baseUriReturn { baseURI } = contract.baseUri().call().await?;
@@ -81,7 +88,12 @@ async fn constructs_with_base_uri(alice: Account) -> eyre::Result<()> {
 async fn error_when_checking_token_uri_for_nonexistent_token(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(&alice, constructor("")).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(""))
+        .deploy()
+        .await?
+        .address()?;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -103,7 +115,12 @@ async fn error_when_checking_token_uri_for_nonexistent_token(
 async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = deploy(&alice, constructor("")).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(""))
+        .deploy()
+        .await?
+        .address()?;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -125,8 +142,12 @@ async fn return_token_uri_with_base_uri_and_without_token_uri(
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
 
-    let contract_addr =
-        deploy(&alice, constructor(base_uri)).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(base_uri))
+        .deploy()
+        .await?
+        .address()?;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -147,8 +168,12 @@ async fn return_token_uri_with_base_uri_and_token_uri(
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
 
-    let contract_addr =
-        deploy(&alice, constructor(base_uri)).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(base_uri))
+        .deploy()
+        .await?
+        .address()?;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -176,8 +201,12 @@ async fn return_token_uri_with_base_uri_and_token_uri(
 async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
 
-    let contract_addr =
-        deploy(&alice, constructor(base_uri)).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(base_uri))
+        .deploy()
+        .await?
+        .address()?;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -219,8 +248,12 @@ async fn return_token_uri_after_burn_and_remint(
 
     let alice_addr = alice.address();
 
-    let contract_addr =
-        deploy(&alice, constructor(base_uri)).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(base_uri))
+        .deploy()
+        .await?
+        .address()?;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 

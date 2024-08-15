@@ -3,13 +3,13 @@
 use abi::Erc20Permit;
 use alloy::{
     primitives::{b256, keccak256, Address, B256, U256},
-    rpc::types::TransactionReceipt,
     sol,
     sol_types::{SolConstructor, SolType},
 };
 use alloy_primitives::uint;
 use e2e::{
-    deploy, receipt, send, watch, Account, EventExt, ReceiptExt, Revert,
+    receipt, send, watch, Account, ContractDeployer, EventExt, ReceiptExt,
+    Revert,
 };
 use eyre::Result;
 
@@ -45,8 +45,8 @@ macro_rules! domain_separator {
     }};
 }
 
-fn constructor() -> Option<constructorCall> {
-    Some(constructorCall {})
+fn ctr() -> constructorCall {
+    constructorCall {}
 }
 
 fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
@@ -85,7 +85,12 @@ async fn error_when_expired_deadline_for_permit(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -128,7 +133,12 @@ async fn error_when_expired_deadline_for_permit(
 
 #[e2e::test]
 async fn permit_works(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -219,7 +229,12 @@ async fn permit_rejects_reused_signature(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -294,7 +309,12 @@ async fn permit_rejects_invalid_signature(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -343,7 +363,12 @@ async fn permit_rejects_invalid_signature(
 
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
 
     let Erc20Permit::totalSupplyReturn { totalSupply: total_supply } =
@@ -355,7 +380,12 @@ async fn constructs(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn mints(alice: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -387,7 +417,12 @@ async fn mints(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let invalid_receiver = Address::ZERO;
 
@@ -415,7 +450,12 @@ async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn transfers(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -459,7 +499,12 @@ async fn transfer_rejects_insufficient_balance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -500,7 +545,12 @@ async fn transfer_rejects_insufficient_balance(
 
 #[e2e::test]
 async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_receiver = Address::ZERO;
@@ -539,7 +589,12 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn approves(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -606,7 +661,12 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
 
 #[e2e::test]
 async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_spender = Address::ZERO;
@@ -658,7 +718,12 @@ async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);
 
@@ -713,7 +778,12 @@ async fn transfer_from_reverts_insufficient_balance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);
 
@@ -768,7 +838,12 @@ async fn transfer_from_rejects_insufficient_allowance(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);
 
@@ -823,7 +898,12 @@ async fn transfer_from_rejects_invalid_receiver(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice, constructor()).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr())
+        .deploy()
+        .await?
+        .address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);
 
