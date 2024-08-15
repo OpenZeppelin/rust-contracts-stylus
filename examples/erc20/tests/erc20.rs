@@ -930,6 +930,7 @@ async fn should_not_deploy_capped_with_invalid_cap(
         .expect_err("should not deploy due to `ERC20InvalidCap`");
 
     assert!(err.reverted_with(Erc20::ERC20InvalidCap { cap: invalid_cap }));
+
     Ok(())
 }
 

@@ -28,39 +28,28 @@ fn constructor(owner: Address) -> Option<constructorCall> {
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr =
-        deploy(&alice, constructor(alice_addr)).await?.address()?;
-    let contract = Ownable::new(contract_addr, &alice.wallet);
-
-    let Ownable::ownerReturn { owner } = contract.owner().call().await?;
-    assert_eq!(owner, alice_addr);
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn emits_ownership_transfer_during_construction(
-    alice: Account,
-) -> Result<()> {
-    let alice_addr = alice.address();
-
     let receipt = deploy(&alice, constructor(alice_addr)).await?;
+    let contract = Ownable::new(receipt.address()?, &alice.wallet);
 
     assert!(receipt.emits(OwnershipTransferred {
         previousOwner: Address::ZERO,
         newOwner: alice_addr,
     }));
+
+    let Ownable::ownerReturn { owner } = contract.owner().call().await?;
+    assert_eq!(owner, alice_addr);
     Ok(())
 }
+
 
 #[e2e::test]
 async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
     let err = deploy(&alice, constructor(Address::ZERO))
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
+
     assert!(err
         .reverted_with(Ownable::OwnableInvalidOwner { owner: Address::ZERO }));
-
     Ok(())
 }
 
