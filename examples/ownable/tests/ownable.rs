@@ -41,7 +41,6 @@ async fn constructs(alice: Account) -> Result<()> {
     Ok(())
 }
 
-
 #[e2e::test]
 async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
     let err = deploy(&alice, constructor(Address::ZERO))
