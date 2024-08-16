@@ -6,6 +6,7 @@ blockchain environment.
 This crate is currently coupled to [`nitro-testnode`] and [`koba`].
 
 [`nitro-testnode`]: https://github.com/OffchainLabs/nitro-testnode
+
 [`koba`]: https://github.com/OpenZeppelin/koba
 
 ## Usage
@@ -47,13 +48,14 @@ async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
 ```
 
 [`LocalWallet`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/signer-local/src/lib.rs#L37
+
 [`WalletFiller`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/provider/src/fillers/wallet.rs#L30
 
 ### Contracts
 
 We use `koba` to deploy contracts to the blockchain. This is not required, a
-separate mechanism for deployment can be used. `e2e` exposes a `deploy`
-function that abstracts away the mechanism used in our workflow.
+separate mechanism for deployment can be used. `Deployer` type exposes `Deployer::deploy` 
+method that abstracts away the mechanism used in our workflow.
 
 Given a Solidity contract with a constructor at path `src/constructor.sol` like
 this:
@@ -65,7 +67,7 @@ pragma solidity ^0.8.21;
 contract Example {
     mapping(address account => uint256) private _balances;
     mapping(address account => mapping(address spender => uint256))
-        private _allowances;
+    private _allowances;
     uint256 private _totalSupply;
     string private _name;
     string private _symbol;
@@ -77,29 +79,47 @@ contract Example {
 }
 ```
 
-`e2e::deploy` will deploy the contract marked with the `#[entrypoint]` macro.
-Note the `sol!` invocation with the path to the constructor -- this will
-generate the abi-encodable `Example::constructorCall` struct.
+Account type exposes `Account::as_deployer` method that returns `Deployer` type.
+It will facilitate deployment of the contract marked with the `#[entrypoint]` macro.
+Then you can configure deployment with default constructor:
 
 ```rust,ignore
-sol!("src/constructor.sol");
+let contract_addr = alice.as_deployer().deploy().await?.address()?;
+```
 
-async fn deploy(rpc_url: &str, private_key: &str) -> eyre::Result<Address> {
-    let args = Example::constructorCall {
+Or with a custom constructor.
+Note that the abi-encodable `Example::constructorCall` should be generated
+with `sol!("src/constructor.sol")` macro.
+
+```rust,ignore
+let ctr = Example::constructorCall {
+    name_: "Token".to_owned(),
+    symbol_: "TKN".to_owned(),
+};
+let receipt = alice
+    .as_deployer()
+    .with_constructor(ctr)
+    .deploy()
+    .await?;
+```
+
+Then altogether, your first test case can look like this:
+
+```rust,ignore
+sol!("src/constructor.sol")
+
+#[e2e::test]
+async fn constructs(alice: Account) -> Result<()> {
+    let ctr = Example::constructorCall {
         name_: "Token".to_owned(),
         symbol_: "TKN".to_owned(),
     };
-    let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(rpc_url, private_key, Some(args)).await?
-}
-```
-
-You can then make calls to your contract:
-
-```rust,ignore
-#[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
-    let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr)
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let Erc20::nameReturn { name } = contract.name().call().await?;
@@ -120,6 +140,7 @@ That being said, please do open an issue to start a discussion, keeping in mind
 our [code of conduct] and [contribution guidelines].
 
 [code of conduct]: ../../CODE_OF_CONDUCT.md
+
 [contribution guidelines]: ../../CONTRIBUTING.md
 
 ## Security

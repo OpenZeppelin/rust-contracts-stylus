@@ -1,24 +1,18 @@
 #![cfg(feature = "e2e")]
 
 use abi::{Ownable, Ownable::OwnershipTransferred};
-use alloy::{
-    primitives::Address, rpc::types::TransactionReceipt, sol,
-    sol_types::SolConstructor,
-};
+use alloy::{primitives::Address, sol};
 use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
+
+use crate::OwnableExample::constructorCall;
 
 mod abi;
 
 sol!("src/constructor.sol");
 
-async fn deploy(
-    account: &Account,
-    owner: Address,
-) -> eyre::Result<TransactionReceipt> {
-    let args = OwnableExample::constructorCall { initialOwner: owner };
-    let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args)).await
+fn ctr(owner: Address) -> constructorCall {
+    constructorCall { initialOwner: owner }
 }
 
 // ============================================================================
@@ -28,7 +22,8 @@ async fn deploy(
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let receipt = deploy(&alice, alice_addr).await?;
+    let receipt =
+        alice.as_deployer().with_constructor(ctr(alice_addr)).deploy().await?;
     let contract = Ownable::new(receipt.address()?, &alice.wallet);
 
     assert!(receipt.emits(OwnershipTransferred {
@@ -38,13 +33,15 @@ async fn constructs(alice: Account) -> Result<()> {
 
     let Ownable::ownerReturn { owner } = contract.owner().call().await?;
     assert_eq!(owner, alice_addr);
-
     Ok(())
 }
 
 #[e2e::test]
 async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
-    let err = deploy(&alice, Address::ZERO)
+    let err = alice
+        .as_deployer()
+        .with_constructor(ctr(Address::ZERO))
+        .deploy()
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
@@ -58,7 +55,12 @@ async fn transfers_ownership(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.transferOwnership(bob_addr))?;
@@ -81,7 +83,12 @@ async fn prevents_non_owners_from_transferring(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice, bob_addr).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(bob_addr))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let err = send!(contract.transferOwnership(bob_addr))
@@ -96,7 +103,12 @@ async fn prevents_non_owners_from_transferring(
 #[e2e::test]
 async fn guards_against_stuck_state(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let err = send!(contract.transferOwnership(Address::ZERO))
@@ -112,7 +124,12 @@ async fn guards_against_stuck_state(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn loses_ownership_after_renouncement(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Ownable::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.renounceOwnership())?;
@@ -135,7 +152,12 @@ async fn prevents_non_owners_from_renouncement(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice, alice_addr).await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Ownable::new(contract_addr, &bob.wallet);
 
     let err = send!(contract.renounceOwnership())

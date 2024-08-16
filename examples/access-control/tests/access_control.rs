@@ -4,7 +4,7 @@ use abi::AccessControl::{
     self, AccessControlBadConfirmation, AccessControlUnauthorizedAccount,
     RoleAdminChanged, RoleGranted, RoleRevoked,
 };
-use alloy::{hex, rpc::types::TransactionReceipt, sol_types::SolConstructor};
+use alloy::hex;
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
 
@@ -16,12 +16,6 @@ const ROLE: [u8; 32] = access_control_example::TRANSFER_ROLE;
 const NEW_ADMIN_ROLE: [u8; 32] =
     hex!("879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5");
 
-async fn deploy(account: &Account) -> eyre::Result<TransactionReceipt> {
-    let args = AccessControl::constructorCall {};
-    let args = alloy::hex::encode(args.abi_encode());
-    e2e::deploy(account.url(), &account.pk(), Some(args)).await
-}
-
 // ============================================================================
 // Integration Tests: AccessControl
 // ============================================================================
@@ -29,7 +23,7 @@ async fn deploy(account: &Account) -> eyre::Result<TransactionReceipt> {
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let receipt = deploy(&alice).await?;
+    let receipt = alice.as_deployer().deploy().await?;
     let contract = AccessControl::new(receipt.address()?, &alice.wallet);
 
     assert!(receipt.emits(RoleGranted {
@@ -49,7 +43,7 @@ async fn constructs(alice: Account) -> Result<()> {
 async fn other_roles_admin_is_the_default_admin_role(
     alice: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let AccessControl::getRoleAdminReturn { role } =
@@ -61,7 +55,7 @@ async fn other_roles_admin_is_the_default_admin_role(
 
 #[e2e::test]
 async fn default_role_is_default_admin(alice: Account) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let AccessControl::getRoleAdminReturn { role } =
@@ -80,7 +74,7 @@ async fn error_when_non_admin_grants_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &bob.wallet);
 
     let err = send!(contract.grantRole(ROLE.into(), alice.address()))
@@ -100,7 +94,7 @@ async fn accounts_can_be_granted_roles_multiple_times(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -125,7 +119,7 @@ async fn accounts_can_be_granted_roles_multiple_times(
 #[e2e::test]
 async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let AccessControl::hasRoleReturn { hasRole } =
@@ -144,7 +138,7 @@ async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -167,7 +161,7 @@ async fn error_when_non_admin_revokes_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -191,7 +185,7 @@ async fn roles_can_be_revoked_multiple_times(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -211,7 +205,7 @@ async fn roles_can_be_revoked_multiple_times(
 #[e2e::test]
 async fn not_granted_roles_can_be_renounced(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.renounceRole(ROLE.into(), alice_addr))?;
@@ -227,7 +221,7 @@ async fn not_granted_roles_can_be_renounced(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
     let bob_addr = bob.address();
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let _ = watch!(contract.grantRole(ROLE.into(), bob_addr))?;
@@ -248,7 +242,7 @@ async fn error_when_the_one_renouncing_is_not_the_sender(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -267,7 +261,7 @@ async fn error_when_the_one_renouncing_is_not_the_sender(
 #[e2e::test]
 async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let _ = watch!(contract.renounceRole(ROLE.into(), alice_addr))?;
@@ -283,7 +277,7 @@ async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn a_roles_admin_role_can_change(alice: Account) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let receipt =
@@ -306,7 +300,7 @@ async fn the_new_admin_can_grant_roles(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -338,7 +332,7 @@ async fn the_new_admin_can_revoke_roles(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -371,7 +365,7 @@ async fn error_when_previous_admin_grants_roles(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -400,7 +394,7 @@ async fn error_when_previous_admin_revokes_roles(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = deploy(&alice).await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();

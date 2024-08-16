@@ -8,7 +8,10 @@ use eyre::Result;
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
-use crate::system::{fund_account, Wallet, RPC_URL_ENV_VAR_NAME};
+use crate::{
+    deploy::Deployer,
+    system::{fund_account, Wallet, RPC_URL_ENV_VAR_NAME},
+};
 
 /// Type that corresponds to a test account.
 #[derive(Clone, Debug)]
@@ -65,6 +68,11 @@ impl Account {
     /// happen.
     pub async fn sign_message(&self, message: &[u8]) -> Signature {
         self.signer.sign_message(message).await.expect("should sign a message")
+    }
+
+    /// Create a configurable smart contract deployer on behalf of this account.
+    pub fn as_deployer(&self) -> Deployer {
+        Deployer::new(self.url().to_string(), self.pk())
     }
 }
 
