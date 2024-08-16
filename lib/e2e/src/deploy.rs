@@ -1,47 +1,7 @@
-use std::path::PathBuf;
-
 use alloy::{rpc::types::TransactionReceipt, sol_types::SolConstructor};
 use koba::config::Deploy;
 
 use crate::project::Crate;
-
-/// Deploy and activate the contract implemented as `#[entrypoint]` in the
-/// current crate.
-///
-/// # Arguments
-/// * `rpc_url` - The RPC URL of the network to deploy to.
-/// * `private_key` - The private key of the account to deploy from.
-/// * `wasm_path` - The path to the contract's wasm file.
-/// * `ctr_args` - Optional ABI-encoded constructor arguments.
-/// * `sol_path` - Optional path to the contract's solidity constructor.
-async fn deploy(
-    rpc_url: String,
-    private_key: String,
-    wasm_path: PathBuf,
-    ctr_args: Option<String>,
-    sol_path: Option<PathBuf>,
-) -> eyre::Result<TransactionReceipt> {
-    let config = Deploy {
-        generate_config: koba::config::Generate {
-            wasm: wasm_path.clone(),
-            sol: sol_path,
-            args: ctr_args,
-            legacy: false,
-        },
-        auth: koba::config::PrivateKey {
-            private_key_path: None,
-            private_key: Some(private_key),
-            keystore_path: None,
-            keystore_password_path: None,
-        },
-        endpoint: rpc_url,
-        deploy_only: false,
-        quiet: false,
-    };
-
-    let receipt = koba::deploy(&config).await?;
-    Ok(receipt)
-}
 
 /// A basic smart contract deployer.
 pub struct Deployer {
@@ -86,13 +46,23 @@ impl Deployer {
         let wasm_path = pkg.wasm;
         let sol_path = pkg.manifest_dir.join("src/constructor.sol");
 
-        deploy(
-            self.rpc_url,
-            self.private_key,
-            wasm_path,
-            self.ctr_args,
-            Some(sol_path),
-        )
-        .await
+        let config = Deploy {
+            generate_config: koba::config::Generate {
+                wasm: wasm_path.clone(),
+                sol: Some(sol_path),
+                args: self.ctr_args,
+                legacy: false,
+            },
+            auth: koba::config::PrivateKey {
+                private_key_path: None,
+                private_key: Some(self.private_key),
+                keystore_path: None,
+                keystore_password_path: None,
+            },
+            endpoint: self.rpc_url,
+            deploy_only: false,
+            quiet: false,
+        };
+        koba::deploy(&config).await
     }
 }
