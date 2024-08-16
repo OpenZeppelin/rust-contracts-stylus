@@ -1463,7 +1463,6 @@ name = "e2e"
 version = "0.1.0"
 dependencies = [
  "alloy",
- "async-trait",
  "e2e-proc",
  "eyre",
  "koba",
