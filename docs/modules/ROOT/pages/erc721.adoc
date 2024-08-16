@@ -14,7 +14,7 @@ We'll use ERC-721 to track items in our game, which will each have their own uni
 Whenever one is to be awarded to a player, it will be minted and sent to them.
 Players are free to keep their token or trade it with other people as they see fit, as they would any other asset on the blockchain!
 Please note any account can call `awardItem` to mint items.
-To restrict what accounts can mint items we can add xref:access-control.adoc[Access Control].
+To restrict what accounts can be minted per item. We can use an xref:access-control.adoc[Access Control] extension.
 
 Here's what a contract for tokenized items might look like:
 
@@ -27,8 +27,6 @@ sol_storage! {
         Erc721 erc721;
         #[borrow]
         Metadata metadata;
-        #[borrow]
-        UriStorage uri_storage;
         uint256 _next_token_id;
     }
 }
@@ -39,48 +37,23 @@ impl GameItem {
     pub fn award_item(
         &mut self,
         player: Address,
-        token_uri: String,
     ) -> Result<U256, Vec<u8>> {
         let token_id = self._next_token_id.get() + uint!(1_U256);
         self._next_token_id.set(token_id);
 
         self.erc721._mint(player, token_id)?;
-        self.uri_storage._set_token_uri(token_id, token_uri);
 
         Ok(token_id)
-    }
-
-    #[selector(name = "tokenURI")]
-    pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-        let _owner = self.erc721.owner_of(token_id)?;
-
-        let base = self.metadata.base_uri();
-        let token_uri = self.uri_storage.token_uri(token_id);
-
-        // If there is no base URI, return the token URI.
-        if base.is_empty() {
-            return Ok(token_uri);
-        }
-
-        // If both are set,
-        // concatenate the base URI and token URI.
-        let uri = if !token_uri.is_empty() {
-            base + &token_uri
-        } else {
-            base + &token_id.to_string()
-        };
-
-        Ok(uri)
     }
 }
 ----
 
-The https://docs.rs/openzeppelin_stylus/token/erc721/extensions/uri_storage/struct.Erc721UriStorage.html[`Erc721UriStorage`] contract is an extension contract of ERC-721. As well as a mechanism for per-token metadata extension (https://docs.rs/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`]).
-That's where the https://docs.rs/openzeppelin_stylus/token/erc721/extensions/uri_storage/struct.Erc721UriStorage.html#method._set_token_uri[`_set_token_uri`] method comes from: we use it to store an item's metadata.
+The https://docs.rs/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
+It extends the contract itself with the name, symbol and base uri for the token.
 
 Also note that, unlike ERC-20, ERC-721 lacks a `decimals` field, since each token is distinct and cannot be partitioned.
 
-For more information about the `tokenURI` metadata JSON Schema, check out the https://eips.ethereum.org/EIPS/eip-721[ERC-721 specification].
+For more information about erc721 schema, check out the https://eips.ethereum.org/EIPS/eip-721[ERC-721 specification].
 
 NOTE: You'll notice that the item's information is included in the metadata, but that information isn't on-chain!
 So a game developer could change the underlying metadata, changing the rules of the game!
