@@ -1,17 +1,9 @@
 #![cfg(feature = "e2e")]
 
 use abi::{Ownable, Ownable::OwnershipTransferred};
-use alloy::{
-    network::ReceiptResponse,
-    primitives::Address,
-    providers::Provider,
-    sol,
-    sol_types::{SolConstructor, SolError, SolEvent},
-};
-use e2e::{
-    receipt, send, Account, ContractDeployer, EventExt, ReceiptExt, Revert,
-};
-use eyre::{ContextCompat, Result};
+use alloy::{primitives::Address, sol};
+use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert};
+use eyre::Result;
 
 use crate::OwnableExample::constructorCall;
 

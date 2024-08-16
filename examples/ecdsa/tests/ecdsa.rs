@@ -1,24 +1,12 @@
 #![cfg(feature = "e2e")]
 
 use abi::ECDSA;
-use alloy::{
-    primitives::{address, b256, uint, Address, B256},
-    sol,
-    sol_types::SolConstructor,
-};
-use e2e::{Account, ContractDeployer, ReceiptExt, Revert};
+use alloy::primitives::{address, b256, uint, Address, B256};
+use e2e::{Account, ReceiptExt, Revert};
 use eyre::Result;
 use openzeppelin_stylus::utils::cryptography::ecdsa::SIGNATURE_S_UPPER_BOUND;
 
-use crate::ECDSAExample::constructorCall;
-
 mod abi;
-
-sol!("src/constructor.sol");
-
-fn ctr() -> constructorCall {
-    constructorCall {}
-}
 
 const HASH: B256 =
     b256!("a1de988600a42c4b4ab089b619297c17d53cffae5d5120d82d8a92d0bb3b78f2");
@@ -37,12 +25,7 @@ const ADDRESS: Address = address!("f39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
 
 #[e2e::test]
 async fn ecrecover_works(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let ECDSA::recoverReturn { recovered } =
@@ -57,12 +40,7 @@ async fn ecrecover_works(alice: Account) -> Result<()> {
 async fn different_hash_recovers_different_address(
     alice: Account,
 ) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let hash = b256!(
@@ -78,12 +56,7 @@ async fn different_hash_recovers_different_address(
 
 #[e2e::test]
 async fn different_v_recovers_different_address(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let v = 27;
@@ -98,12 +71,7 @@ async fn different_v_recovers_different_address(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn different_r_recovers_different_address(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let r = b256!(
@@ -120,12 +88,7 @@ async fn different_r_recovers_different_address(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn different_s_recovers_different_address(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let s = b256!(
@@ -141,12 +104,7 @@ async fn different_s_recovers_different_address(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let signature = alice.sign_hash(&HASH).await;
@@ -171,12 +129,7 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn rejects_v0_with_invalid_signature_error(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let wrong_v = 0;
@@ -193,12 +146,7 @@ async fn rejects_v0_with_invalid_signature_error(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn rejects_v1_with_invalid_signature_error(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let wrong_v = 0;
@@ -215,12 +163,7 @@ async fn rejects_v1_with_invalid_signature_error(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn error_when_higher_s(alice: Account) -> Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr())
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let higher_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);

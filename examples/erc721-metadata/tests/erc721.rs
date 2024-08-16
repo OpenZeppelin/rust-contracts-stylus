@@ -7,9 +7,7 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
-use e2e::{
-    receipt, watch, Account, ContractDeployer, EventExt, ReceiptExt, Revert,
-};
+use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::ContextCompat;
 
 use crate::Erc721MetadataExample::constructorCall;

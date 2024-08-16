@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use alloy::{rpc::types::TransactionReceipt, sol_types::SolConstructor};
-use async_trait::async_trait;
 use koba::config::Deploy;
 
 use crate::project::Crate;
@@ -44,9 +43,34 @@ async fn deploy_inner(
     Ok(receipt)
 }
 
-/// Abstraction for configured deployer.
-#[async_trait]
-pub trait ContractDeployer {
+/// A basic smart contract deployer.
+pub struct Deployer {
+    rpc_url: String,
+    private_key: String,
+    ctr_args: Option<String>,
+}
+
+impl Deployer {
+    pub fn new(rpc_url: String, private_key: String) -> Self {
+        Self { rpc_url, private_key, ctr_args: None }
+    }
+
+    /// Add solidity constructor to the deployer.
+    pub fn with_constructor<C: SolConstructor + Send>(
+        mut self,
+        constructor: C,
+    ) -> Deployer {
+        self.ctr_args = Some(alloy::hex::encode(constructor.abi_encode()));
+        self
+    }
+
+    /// Add the default constructor to the deployer.
+    pub fn with_default_constructor<C: SolConstructor + Send + Default>(
+        self,
+    ) -> Deployer {
+        self.with_constructor(C::default())
+    }
+
     /// Deploy and activate the contract implemented as `#[entrypoint]` in the
     /// current crate.
     /// Consumes currently configured deployer.
@@ -57,58 +81,20 @@ pub trait ContractDeployer {
     ///
     /// - Unable to collect information about the crate required for deployment.
     /// - [`koba::deploy`] errors.
-    async fn deploy(self) -> eyre::Result<TransactionReceipt>;
-}
-
-/// A basic smart contract deployer.
-pub struct Deployer {
-    rpc_url: String,
-    private_key: String,
-}
-
-impl Deployer {
-    pub fn new(rpc_url: String, private_key: String) -> Self {
-        Self { rpc_url, private_key }
-    }
-
-    /// Add solidity constructor to the deployer.
-    pub fn with_constructor<C: SolConstructor + Send>(
-        self,
-        constructor: C,
-    ) -> DeployerWithConstructor<C> {
-        DeployerWithConstructor { deployer: self, constructor }
-    }
-}
-
-#[async_trait]
-impl ContractDeployer for Deployer {
-    async fn deploy(self) -> eyre::Result<TransactionReceipt> {
+    pub async fn deploy(self) -> eyre::Result<TransactionReceipt> {
         let pkg = Crate::new()?;
         let wasm_path = pkg.wasm;
-        deploy_inner(self.rpc_url, self.private_key, wasm_path, None, None)
-            .await
-    }
-}
-
-/// A smart contract deployer with solidity constructor compiled with `koba`.
-pub struct DeployerWithConstructor<C: SolConstructor + Send> {
-    deployer: Deployer,
-    constructor: C,
-}
-
-#[async_trait]
-impl<C: SolConstructor + Send> ContractDeployer for DeployerWithConstructor<C> {
-    async fn deploy(self) -> eyre::Result<TransactionReceipt> {
-        let pkg = Crate::new()?;
-        let wasm_path = pkg.wasm;
-        let args = alloy::hex::encode(self.constructor.abi_encode());
-        let sol_path = pkg.manifest_dir.join("src/constructor.sol");
+        let sol_path = if self.ctr_args.is_some() {
+            Some(pkg.manifest_dir.join("src/constructor.sol"))
+        } else {
+            None
+        };
         deploy_inner(
-            self.deployer.rpc_url,
-            self.deployer.private_key,
+            self.rpc_url,
+            self.private_key,
             wasm_path,
-            Some(args),
-            Some(sol_path),
+            self.ctr_args,
+            sol_path,
         )
         .await
     }
