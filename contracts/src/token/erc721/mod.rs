@@ -193,6 +193,8 @@ unsafe impl TopLevelStorage for Erc721 {}
 
 /// Required interface of an [`Erc721`] compliant contract.
 pub trait IErc721 {
+    /// The error type associated to this ERC-721 trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
     /// Returns the number of tokens in `owner`'s account.
     ///
     /// # Arguments
@@ -204,7 +206,7 @@ pub trait IErc721 {
     ///
     /// If owner address is `Address::ZERO`, then the error
     /// [`Error::InvalidOwner`] is returned.
-    fn balance_of(&self, owner: Address) -> Result<U256, Error>;
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
 
     /// Returns the owner of the `token_id` token.
     ///
@@ -221,7 +223,7 @@ pub trait IErc721 {
     /// # Requirements
     ///
     /// * `token_id` must exist.
-    fn owner_of(&self, token_id: U256) -> Result<Address, Error>;
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first
     /// that contract recipients are aware of the [`Erc721`] protocol to
@@ -267,7 +269,7 @@ pub trait IErc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`.
     ///
@@ -300,7 +302,7 @@ pub trait IErc721 {
     /// * `to` cannot be the zero address.
     /// * The `token_id` token must exist and be owned by `from`.
     /// * If the caller is not `from`, it must be approved to move this token by
-    ///   either [`Erc721::_approve`] or [`Erc721::set_approval_for_all`].
+    ///   either [`Erc721::_approve`] or [`Self::set_approval_for_all`].
     /// * If `to` refers to a smart contract, it must implement
     ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
     ///   `safe_transfer`.
@@ -314,7 +316,7 @@ pub trait IErc721 {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Transfers `token_id` token from `from` to `to`.
     ///
@@ -358,7 +360,7 @@ pub trait IErc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Gives permission to `to` to transfer `token_id` token to another
     /// account. The approval is cleared when the token is transferred.
@@ -388,7 +390,11 @@ pub trait IErc721 {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error>;
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error>;
 
     /// Approve or remove `operator` as an operator for the caller.
     ///
@@ -419,7 +425,7 @@ pub trait IErc721 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Returns the account approved for `token_id` token.
     ///
@@ -436,7 +442,7 @@ pub trait IErc721 {
     /// # Requirements:
     ///
     /// * `token_id` must exist.
-    fn get_approved(&self, token_id: U256) -> Result<Address, Error>;
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error>;
 
     /// Returns whether the `operator` is allowed to manage all the assets of
     /// `owner`.
@@ -451,6 +457,8 @@ pub trait IErc721 {
 
 #[external]
 impl IErc721 for Erc721 {
+    type Error = Error;
+
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
@@ -526,7 +534,7 @@ impl IErc721 for Erc721 {
 
     fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
         self._require_owned(token_id)?;
-        Ok(self._get_approved_inner(token_id))
+        Ok(self._get_approved(token_id))
     }
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
@@ -542,15 +550,15 @@ impl Erc721 {
     /// not tracked by the core [`Erc721`] logic MUST be matched with the use
     /// of [`Self::_increase_balance`] to keep balances consistent with
     /// ownership. The invariant to preserve is that for any address `a` the
-    /// value returned by `balance_of(a)` must be equal to the number of
-    /// tokens such that `owner_of_inner(token_id)` is `a`.
+    /// value returned by [`Self::balance_of(a)`] must be equal to the number of
+    /// tokens such that [`Self::_owner_of(token_id)`] is `a`.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     #[must_use]
-    pub fn _owner_of_inner(&self, token_id: U256) -> Address {
+    pub fn _owner_of(&self, token_id: U256) -> Address {
         self._owners.get(token_id)
     }
 
@@ -562,7 +570,7 @@ impl Erc721 {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     #[must_use]
-    pub fn _get_approved_inner(&self, token_id: U256) -> Address {
+    pub fn _get_approved(&self, token_id: U256) -> Address {
         self._token_approvals.get(token_id)
     }
 
@@ -588,7 +596,7 @@ impl Erc721 {
         !spender.is_zero()
             && (owner == spender
                 || self.is_approved_for_all(owner, spender)
-                || self._get_approved_inner(token_id) == spender)
+                || self._get_approved(token_id) == spender)
     }
 
     /// Checks if `operator` can operate on `token_id`, assuming the provided
@@ -638,7 +646,7 @@ impl Erc721 {
     /// values.
     ///
     /// WARNING: Increasing an account's balance using this function tends to
-    /// be paired with an override of the [`Self::_owner_of_inner`] function to
+    /// be paired with an override of the [`Self::_owner_of`] function to
     /// resolve the ownership of the corresponding tokens so that balances and
     /// ownership remain consistent with one another.
     ///
@@ -689,7 +697,7 @@ impl Erc721 {
         token_id: U256,
         auth: Address,
     ) -> Result<Address, Error> {
-        let from = self._owner_of_inner(token_id);
+        let from = self._owner_of(token_id);
 
         // Perform (optional) operator check.
         if !auth.is_zero() {
@@ -765,7 +773,7 @@ impl Erc721 {
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   [`Self::_check_on_erc721_received`].
+    ///   [`Erc721::_check_on_erc721_received`].
     ///
     /// # Errors
     ///
@@ -852,7 +860,7 @@ impl Erc721 {
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`ERC721NonexistentToken`] is returned.
+    /// [`Error::NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then  the error
     /// [`Error::IncorrectOwner`] is returned.
     ///
@@ -909,14 +917,14 @@ impl Erc721 {
     /// * `to` - Account of the recipient.
     /// * `token_id` - Token id as a number.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   [`Self::_check_on_erc721_received`].
+    ///   [`Erc721::_check_on_erc721_received`].
     ///
     /// # Errors
     ///
     /// If `to` is `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `token_id` does not exist, then the error
-    /// [`ERC721NonexistentToken`] is returned.
+    /// [`Error::NonexistentToken`] is returned.
     /// If the previous owner is not `from`, then the error
     /// [`Error::IncorrectOwner`] is returned.
     ///
@@ -943,9 +951,11 @@ impl Erc721 {
         self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
     }
 
-    /// Variant of `approve_inner` with an optional flag to enable or disable
-    /// the [`Approval`] event. The event is not emitted in the context of
-    /// transfers.
+    /// Approve `to` to operate on `token_id`.
+    ///
+    /// The `auth` argument is optional. If the value passed is non 0, then this
+    /// function will check that `auth` is either the owner of the token, or
+    /// approved to operate on all tokens held by this owner.
     ///
     /// # Arguments
     ///
@@ -1034,7 +1044,7 @@ impl Erc721 {
     /// minted, or it has been burned). Returns the owner.
     ///
     /// Overrides to ownership logic should be done to
-    /// [`Self::_owner_of_inner`].
+    /// [`Self::_owner_of`].
     ///
     /// # Errors
     ///
@@ -1046,7 +1056,7 @@ impl Erc721 {
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
-        let owner = self._owner_of_inner(token_id);
+        let owner = self._owner_of(token_id);
         if owner.is_zero() {
             return Err(ERC721NonexistentToken { token_id }.into());
         }
@@ -1394,7 +1404,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1537,7 +1547,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1708,7 +1718,7 @@ mod tests {
 
         ));
 
-        // FIXME: this check should pass
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -1853,40 +1863,40 @@ mod tests {
     }
 
     #[motsu::test]
-    fn owner_of_inner_works(contract: Erc721) {
+    fn owner_of_works(contract: Erc721) {
         let token_id = random_token_id();
         contract._mint(BOB, token_id).expect("should mint a token");
 
-        let owner = contract._owner_of_inner(token_id);
+        let owner = contract._owner_of(token_id);
         assert_eq!(BOB, owner);
     }
 
     #[motsu::test]
-    fn owner_of_inner_nonexistent_token(contract: Erc721) {
+    fn owner_of_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
-        let owner = contract._owner_of_inner(token_id);
+        let owner = contract._owner_of(token_id);
         assert_eq!(Address::ZERO, owner);
     }
 
     #[motsu::test]
-    fn get_approved_inner_nonexistent_token(contract: Erc721) {
+    fn get_approved_nonexistent_token(contract: Erc721) {
         let token_id = random_token_id();
-        let approved = contract._get_approved_inner(token_id);
+        let approved = contract._get_approved(token_id);
         assert_eq!(Address::ZERO, approved);
     }
 
     #[motsu::test]
-    fn get_approved_inner_token_without_approval(contract: Erc721) {
+    fn get_approved_token_without_approval(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
         contract._mint(alice, token_id).expect("should mint a token");
-        let approved = contract._get_approved_inner(token_id);
+        let approved = contract._get_approved(token_id);
         assert_eq!(Address::ZERO, approved);
     }
 
     #[motsu::test]
-    fn get_approved_inner_token_with_approval(contract: Erc721) {
+    fn get_approved_token_with_approval(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1895,12 +1905,12 @@ mod tests {
             .approve(BOB, token_id)
             .expect("should approve Bob for operations on token");
 
-        let approved = contract._get_approved_inner(token_id);
+        let approved = contract._get_approved(token_id);
         assert_eq!(BOB, approved);
     }
 
     #[motsu::test]
-    fn get_approved_inner_token_with_approval_for_all(contract: Erc721) {
+    fn get_approved_token_with_approval_for_all(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
 
@@ -1909,7 +1919,7 @@ mod tests {
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
 
-        let approved = contract._get_approved_inner(token_id);
+        let approved = contract._get_approved(token_id);
         assert_eq!(Address::ZERO, approved);
     }
 
@@ -2208,8 +2218,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -2338,8 +2347,7 @@ mod tests {
             }) if sender == DAVE && t_id == token_id && owner == alice
         ));
 
-        // FIXME: this check should pass
-        // TODO: confirm in E2E tests that owner is not changed: #93
+        // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(token_id)
         // .expect("should return the owner of the token");
@@ -2468,12 +2476,4 @@ mod tests {
             }) if token_id == t_id
         ));
     }
-
-    // TODO: think about [`Erc721::_update`] tests.
-
-    // TODO: think about [`Erc721::_increase_balance`] tests
-    // when it will be used.applicable.
-
-    // TODO: add mock test for [`Erc721::_on_erc721_received`].
-    // Should be done in integration tests.
 }

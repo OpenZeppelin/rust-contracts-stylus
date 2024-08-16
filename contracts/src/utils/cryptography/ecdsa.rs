@@ -81,8 +81,8 @@ sol! {
 ///
 /// # Errors
 ///
-/// * If the `s` value is grater than `EIP2_VALUE`, then the error
-/// [`Error::InvalidSignatureS`] is returned.
+/// * If the `s` value is grater than [`SIGNATURE_S_UPPER_BOUND`], then the
+/// error [`Error::InvalidSignatureS`] is returned.
 /// * If the recovered address is `Address::ZERO`, then the error
 /// [`Error::InvalidSignature`] is returned.
 ///
