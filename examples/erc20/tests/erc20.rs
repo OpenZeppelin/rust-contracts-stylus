@@ -24,11 +24,7 @@ const CAP: U256 = uint!(1_000_000_U256);
 
 impl Default for constructorCall {
     fn default() -> Self {
-        constructorCall {
-            name_: TOKEN_NAME.to_owned(),
-            symbol_: TOKEN_SYMBOL.to_owned(),
-            cap_: CAP,
-        }
+        ctr(CAP)
     }
 }
 
