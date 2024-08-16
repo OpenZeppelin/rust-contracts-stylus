@@ -14,7 +14,7 @@ use crate::project::Crate;
 /// * `wasm_path` - The path to the contract's wasm file.
 /// * `ctr_args` - Optional ABI-encoded constructor arguments.
 /// * `sol_path` - Optional path to the contract's solidity constructor.
-async fn deploy_inner(
+async fn deploy(
     rpc_url: String,
     private_key: String,
     wasm_path: PathBuf,
@@ -84,17 +84,14 @@ impl Deployer {
     pub async fn deploy(self) -> eyre::Result<TransactionReceipt> {
         let pkg = Crate::new()?;
         let wasm_path = pkg.wasm;
-        let sol_path = if self.ctr_args.is_some() {
-            Some(pkg.manifest_dir.join("src/constructor.sol"))
-        } else {
-            None
-        };
-        deploy_inner(
+        let sol_path = pkg.manifest_dir.join("src/constructor.sol");
+
+        deploy(
             self.rpc_url,
             self.private_key,
             wasm_path,
             self.ctr_args,
-            sol_path,
+            Some(sol_path),
         )
         .await
     }
