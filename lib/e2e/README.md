@@ -54,7 +54,7 @@ async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
 ### Contracts
 
 We use `koba` to deploy contracts to the blockchain. This is not required, a
-separate mechanism for deployment can be used. `Deployer` type exposes `Deployer::deploy` 
+separate mechanism for deployment can be used. `Deployer` type exposes `Deployer::deploy`
 method that abstracts away the mechanism used in our workflow.
 
 Given a Solidity contract with a constructor at path `src/constructor.sol` like
