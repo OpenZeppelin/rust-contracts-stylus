@@ -13,6 +13,8 @@ use crate::report::Report;
 sol!(
     #[sol(rpc)]
     contract AccessControl {
+        constructor();
+
         function hasRole(bytes32 role, address account) public view virtual returns (bool hasRole);
         function getRoleAdmin(bytes32 role) public view virtual returns (bytes32 role);
         function grantRole(bytes32 role, address account) public virtual;
