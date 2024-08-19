@@ -46,7 +46,7 @@ impl Verifier<KeccakBuilder> {
     /// # Examples
     ///
     /// ```
-    /// use crypto::merkle::Verifier;
+    /// use openzeppelin_crypto_rs::merkle::Verifier;
     /// use hex_literal::hex;
     ///
     /// let root  = hex!("0000000000000000000000000000000000000000000000000000000000000000");
@@ -110,7 +110,7 @@ impl Verifier<KeccakBuilder> {
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::merkle::Verifier;
+    /// use openzeppelin_crypto_rs::merkle::Verifier;
     /// use hex_literal::hex;
     ///
     /// let root   =  hex!("6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8");
@@ -166,7 +166,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use crypto::{merkle::Verifier, KeccakBuilder};
+    /// use openzeppelin_crypto_rs::{merkle::Verifier, KeccakBuilder};
     /// use hex_literal::hex;
     ///
     /// let root  = hex!("0000000000000000000000000000000000000000000000000000000000000000");
@@ -240,7 +240,7 @@ where
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::{merkle::Verifier, KeccakBuilder};
+    /// use openzeppelin_crypto_rs::{merkle::Verifier, KeccakBuilder};
     /// use hex_literal::hex;
     ///
     /// let root   =  hex!("6deb52b5da8fd108f79fab00341f38d2587896634c646ee52e49f845680a70c8");
