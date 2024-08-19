@@ -3,7 +3,6 @@
 use alloy::{
     primitives::{Address, U256},
     sol,
-    sol_types::SolConstructor,
 };
 use alloy_primitives::uint;
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
