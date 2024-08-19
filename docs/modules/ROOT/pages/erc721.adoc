@@ -1,0 +1,59 @@
+= ERC-721
+
+We've discussed how you can make a _fungible_ token using xref:erc20.adoc[ERC-20], but what if not all tokens are alike?
+This comes up in situations like *real estate*, *voting rights*, or *collectibles*, where some items are valued more than others, due to their usefulness, rarity, etc.
+ERC-721 is a standard for representing ownership of xref:tokens.adoc#different-kinds-of-tokens[_non-fungible_ tokens], that is, where each token is unique.
+
+ERC-721 is a more complex standard than ERC-20, with multiple optional extensions, and is split across a number of contracts.
+The OpenZeppelin Contracts provide flexibility regarding how these are combined, along with custom useful extensions.
+Check out the https://docs.rs/openzeppelin_stylus/token/erc721/struct.Erc721.html[`API reference`] to learn more about these.
+
+== Constructing an ERC-721 Token Contract
+
+We'll use ERC-721 to track items in our game, which will each have their own unique attributes.
+Whenever one is to be awarded to a player, it will be minted and sent to them.
+Players are free to keep their token or trade it with other people as they see fit, as they would any other asset on the blockchain!
+Please note any account can call `awardItem` to mint items.
+To restrict what accounts can be minted per item. We can use an xref:access-control.adoc[Access Control] extension.
+
+Here's what a contract for tokenized items might look like:
+
+[source,rust]
+----
+sol_storage! {
+    #[entrypoint]
+    struct GameItem {
+        #[borrow]
+        Erc721 erc721;
+        #[borrow]
+        Metadata metadata;
+        uint256 _next_token_id;
+    }
+}
+
+#[external]
+#[inherit(Erc721, Metadata)]
+impl GameItem {
+    pub fn award_item(
+        &mut self,
+        player: Address,
+    ) -> Result<U256, Vec<u8>> {
+        let token_id = self._next_token_id.get() + uint!(1_U256);
+        self._next_token_id.set(token_id);
+
+        self.erc721._mint(player, token_id)?;
+
+        Ok(token_id)
+    }
+}
+----
+
+The https://docs.rs/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
+It extends the contract itself with the name, symbol and base uri for the token.
+
+Also note that, unlike ERC-20, ERC-721 lacks a `decimals` field, since each token is distinct and cannot be partitioned.
+
+For more information about erc721 schema, check out the https://eips.ethereum.org/EIPS/eip-721[ERC-721 specification].
+
+NOTE: You'll notice that the item's information is included in the metadata, but that information isn't on-chain!
+So a game developer could change the underlying metadata, changing the rules of the game!
