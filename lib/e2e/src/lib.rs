@@ -9,7 +9,6 @@ mod receipt;
 mod system;
 
 pub use account::Account;
-pub use deploy::deploy;
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::EventExt;
@@ -26,7 +25,7 @@ pub use system::{fund_account, provider, Provider, Wallet};
 /// ```rust,ignore
 /// #[e2e::test]
 /// async fn foo(alice: Account) -> eyre::Result<()> {
-///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+///     let contract_addr = alice.as_deployer().deploy().await?.address()?;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
@@ -51,7 +50,7 @@ macro_rules! send {
 /// ```rust,ignore
 /// #[e2e::test]
 /// async fn foo(alice: Account) -> eyre::Result<()> {
-///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+///     let contract_addr = alice.as_deployer().deploy().await?.address()?;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
@@ -77,7 +76,7 @@ macro_rules! watch {
 /// ```rust,ignore
 /// #[e2e::test]
 /// async fn foo(alice: Account) -> eyre::Result<()> {
-///     let contract_addr = deploy(alice.url(), &alice.pk()).await?;
+///     let contract_addr = alice.as_deployer().deploy().await?.address()?;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
