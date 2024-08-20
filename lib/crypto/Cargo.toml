@@ -1,5 +1,5 @@
 [package]
-name = "crypto"
+name = "openzeppelin-crypto"
 categories = ["cryptography", "algorithms", "no-std", "wasm"]
 description = "Cryptography Utilities"
 edition.workspace = true
