@@ -64,6 +64,9 @@ sol_storage! {
 /// This is the interface of the optional `Enumerable` extension
 /// of the ERC-721 standard.
 pub trait IErc721Enumerable {
+    /// The error type associated with ERC-721 enumerable contract.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     // TODO: fn supports_interface (#33)
 
     /// Returns a token ID owned by `owner` at a given `index` of its token
@@ -84,7 +87,7 @@ pub trait IErc721Enumerable {
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the total amount of tokens stored by the contract.
     ///
@@ -107,16 +110,18 @@ pub trait IErc721Enumerable {
     ///
     /// * If an `owner`'s token query is out of bounds for `index`,
     /// then the error [`Error::OutOfBoundsIndex`] is returned.
-    fn token_by_index(&self, index: U256) -> Result<U256, Error>;
+    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
 }
 
 #[external]
 impl IErc721Enumerable for Erc721Enumerable {
+    type Error = Error;
+
     fn token_of_owner_by_index(
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, Error> {
+    ) -> Result<U256, Self::Error> {
         let token = self._owned_tokens.getter(owner).get(index);
 
         if token.is_zero() {
@@ -131,7 +136,7 @@ impl IErc721Enumerable for Erc721Enumerable {
         U256::from(tokens_length)
     }
 
-    fn token_by_index(&self, index: U256) -> Result<U256, Error> {
+    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error> {
         self._all_tokens.get(index).ok_or(
             ERC721OutOfBoundsIndex { owner: Address::ZERO, index }.into(),
         )
