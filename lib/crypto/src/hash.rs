@@ -51,8 +51,8 @@ pub trait Hasher {
 /// # Examples
 ///
 /// ```rust
-/// use crypto::KeccakBuilder;
-/// use crypto::hash::{BuildHasher, Hash, Hasher};
+/// use openzeppelin_crypto::KeccakBuilder;
+/// use openzeppelin_crypto::hash::{BuildHasher, Hash, Hasher};
 ///
 /// let b = KeccakBuilder;
 /// let mut hasher_1 = b.build_hasher();
@@ -78,8 +78,8 @@ pub trait BuildHasher {
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::KeccakBuilder;
-    /// use crypto::hash::BuildHasher;
+    /// use openzeppelin_crypto::KeccakBuilder;
+    /// use openzeppelin_crypto::hash::BuildHasher;
     ///
     /// let b = KeccakBuilder;
     /// let hasher = b.build_hasher();
@@ -100,8 +100,8 @@ pub trait BuildHasher {
     /// # Examples
     ///
     /// ```rust
-    /// use crypto::KeccakBuilder;
-    /// use crypto::hash::{BuildHasher, Hash};
+    /// use openzeppelin_crypto::KeccakBuilder;
+    /// use openzeppelin_crypto::hash::{BuildHasher, Hash};
     ///
     /// let b = KeccakBuilder;
     /// let hash_1 = b.hash_one([0u8; 32]);
