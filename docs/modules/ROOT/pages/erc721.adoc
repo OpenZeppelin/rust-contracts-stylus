@@ -57,3 +57,19 @@ For more information about erc721 schema, check out the https://eips.ethereum.or
 
 NOTE: You'll notice that the item's information is included in the metadata, but that information isn't on-chain!
 So a game developer could change the underlying metadata, changing the rules of the game!
+
+[[erc721-token-extensions]]
+== Extensions
+Additionally, there are multiple custom extensions, including:
+
+* xref:erc721-burnable.adoc[ERC-721 Burnable]: destruction of own tokens.
+
+* xref:erc721-metadata.adoc[ERC-721 Metadata]: the extended ERC721 interface including the name, symbol, and decimals functions.
+
+* xref:erc721-pausable.adoc[ERC-721 Pausable]: ability to pause token transfers.
+
+* xref:erc721-consecutive.adoc[ERC-721 Consecutive]: ability mint tokens consecutively.
+
+* xref:erc721-enumerable.adoc[ERC-721 Enumerable]: ability to iterate over all tokens.
+
+* xref:erc721-uri-storage.adoc[ERC-721 Uri Storage]: URI per token.

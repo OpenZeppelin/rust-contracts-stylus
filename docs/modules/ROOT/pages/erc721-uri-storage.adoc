@@ -1,0 +1,99 @@
+= ERC-721 Uri Storage
+
+The OpenZeppelin xref:erc721.adoc[ERC-721] URI Storage extension is needed to manage and store URIs for individual tokens. This extension allows each token to have its own unique URI,
+which can point to metadata about the token, such as images, descriptions, and other attributes.
+This is particularly useful for non-fungible tokens (NFTs) where each token is unique and may have different metadata.
+
+[[usage]]
+== Usage
+
+In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin_stylus/token/erc721/extensions/uri_storage/index.html[URI Storage] flavour.
+Your token should also use https://docs.rs/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`] extension to provide additional metadata for each token.
+You need to create a specified contract as follows:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc721::{
+    extensions::{
+        Erc721Metadata, Erc721UriStorage,
+        IErc721Burnable, IErc721Metadata,
+    },
+    Erc721, IErc721,
+};
+
+sol_storage! {
+    #[entrypoint]
+    struct Erc721MetadataExample {
+        #[borrow]
+        Erc721 erc721;
+        #[borrow]
+        Erc721Metadata metadata;
+        #[borrow]
+        Erc721UriStorage uri_storage;
+    }
+}
+
+#[external]
+#[inherit(Erc721, Erc721Metadata, Erc721UriStorage)]
+impl Erc721MetadataExample {
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+        Ok(self.erc721._mint(to, token_id)?)
+    }
+
+    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+        Ok(self.erc721.burn(token_id)?)
+    }
+
+    #[selector(name = "tokenURI")]
+    pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
+        let _owner = self.erc721.owner_of(token_id)?;
+
+        let base = self.metadata.base_uri();
+        let token_uri = self.uri_storage.token_uri(token_id);
+
+        // If there is no base URI, return the token URI.
+        if base.is_empty() {
+            return Ok(token_uri);
+        }
+
+        // If both are set,
+        // concatenate the base URI and token URI.
+        let uri = if !token_uri.is_empty() {
+            base + &token_uri
+        } else {
+            base + &token_id.to_string()
+        };
+
+        Ok(uri)
+    }
+
+    #[selector(name = "setTokenURI")]
+    pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+        self.uri_storage._set_token_uri(token_id, token_uri)
+    }
+}
+----
+
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
+Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc721Example {
+    // ...
+
+    string private _name;
+    string private _symbol;
+    string private _baseUri;
+
+    mapping(uint256 => string) _tokenUris;
+
+    constructor(string memory name_, string memory symbol_, string memory baseUri_) {
+        // ...
+        _name = name_;
+        _symbol = symbol_;
+        _baseUri = baseUri_;
+        // ...
+    }
+}
+----
