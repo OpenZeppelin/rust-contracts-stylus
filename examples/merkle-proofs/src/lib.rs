@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::B256;
-use openzeppelin_crypto_rs::{
+use openzeppelin_crypto::{
     merkle::{self, Verifier},
     KeccakBuilder,
 };
