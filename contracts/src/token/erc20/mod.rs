@@ -13,8 +13,6 @@ use stylus_sdk::{
     stylus_proc::{external, sol_storage},
 };
 
-use crate::token::erc20;
-
 pub mod extensions;
 
 sol! {
