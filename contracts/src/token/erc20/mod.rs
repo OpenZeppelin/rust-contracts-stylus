@@ -112,7 +112,7 @@ sol_storage! {
 
 /// Required interface of an [`Erc20`] compliant contract.
 pub trait IErc20 {
-    /// The error type associated with ERC-20 contract.
+    /// The error type associated to this ERC-20 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the number of tokens in existence.

@@ -199,7 +199,7 @@ unsafe impl TopLevelStorage for Erc721 {}
 
 /// Required interface of an [`Erc721`] compliant contract.
 pub trait IErc721 {
-    /// The error type associated with ERC-721 contract.
+    /// The error type associated to this ERC-721 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the number of tokens in `owner`'s account.

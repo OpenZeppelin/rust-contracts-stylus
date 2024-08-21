@@ -7,7 +7,7 @@ use crate::token::erc721::{Erc721, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {
-    /// The error type associated with ERC-721 burnable contract.
+    /// The error type associated to this ERC-721 burnable trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Burns `token_id`.

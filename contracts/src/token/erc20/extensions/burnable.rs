@@ -9,7 +9,7 @@ use crate::token::erc20::{Erc20, Error};
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
 pub trait IErc20Burnable {
-    /// The error type associated with ERC-20 burnable contract.
+    /// The error type associated to this ERC-20 Burnable trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Destroys a `value` amount of tokens from the caller. lowering the total

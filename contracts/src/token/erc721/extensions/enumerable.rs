@@ -64,7 +64,8 @@ sol_storage! {
 /// This is the interface of the optional `Enumerable` extension
 /// of the ERC-721 standard.
 pub trait IErc721Enumerable {
-    /// The error type associated with ERC-721 enumerable contract.
+    /// The error type associated to this ERC-721 enumerable trait
+    /// implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     // TODO: fn supports_interface (#33)
