@@ -7,12 +7,9 @@
 use alloy_primitives::{uint, Uint, U256, U32};
 use alloy_sol_types::sol;
 use stylus_proc::{sol_storage, SolidityError};
-use stylus_sdk::{
-    call::MethodError,
-    storage::{StorageGuard, StorageGuardMut},
-};
+use stylus_sdk::storage::{StorageGuard, StorageGuardMut};
 
-use crate::utils::math::alloy::Math;
+use crate::{impl_method_error, utils::math::alloy::Math};
 
 // TODO: add generics for other pairs (uint32, uint224) and (uint48, uint208).
 // Logic should be the same.
@@ -32,11 +29,7 @@ pub enum Error {
     CheckpointUnorderedInsertion(CheckpointUnorderedInsertion),
 }
 
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
+impl_method_error!(Error);
 
 sol_storage! {
     /// State of the checkpoint library contract.

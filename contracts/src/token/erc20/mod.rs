@@ -8,10 +8,11 @@ use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
 use stylus_sdk::{
-    call::MethodError,
     evm, msg,
     stylus_proc::{external, sol_storage},
 };
+
+use crate::impl_method_error;
 
 pub mod extensions;
 
@@ -92,11 +93,7 @@ pub enum Error {
     InvalidSpender(ERC20InvalidSpender),
 }
 
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
+impl_method_error!(Error);
 
 sol_storage! {
     /// State of an `Erc20` token.
