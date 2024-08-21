@@ -7,7 +7,10 @@
 use alloy_primitives::{uint, Uint, U256, U32};
 use alloy_sol_types::sol;
 use stylus_proc::{sol_storage, SolidityError};
-use stylus_sdk::storage::{StorageGuard, StorageGuardMut};
+use stylus_sdk::{
+    call::MethodError,
+    storage::{StorageGuard, StorageGuardMut},
+};
 
 use crate::utils::math::alloy::Math;
 
@@ -27,6 +30,12 @@ sol! {
 pub enum Error {
     /// A value was attempted to be inserted into a past checkpoint.
     CheckpointUnorderedInsertion(CheckpointUnorderedInsertion),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 sol_storage! {

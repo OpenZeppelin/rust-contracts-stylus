@@ -5,7 +5,7 @@ use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use stylus_sdk::{
     abi::Bytes,
     alloy_sol_types::sol,
-    call::{self, Call},
+    call::{self, Call, MethodError},
     evm, msg,
     prelude::*,
 };
@@ -150,6 +150,12 @@ pub enum Error {
     InvalidOperator(ERC721InvalidOperator),
 }
 
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
 sol_interface! {
     /// [`Erc721`] token receiver interface.
     ///
@@ -195,6 +201,7 @@ unsafe impl TopLevelStorage for Erc721 {}
 pub trait IErc721 {
     /// The error type associated to this ERC-721 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns the number of tokens in `owner`'s account.
     ///
     /// # Arguments
