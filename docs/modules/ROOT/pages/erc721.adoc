@@ -68,7 +68,7 @@ Additionally, there are multiple custom extensions, including:
 
 * xref:erc721-pausable.adoc[ERC-721 Pausable]: ability to pause token transfers.
 
-* xref:erc721-consecutive.adoc[ERC-721 Consecutive]: ability mint tokens consecutively.
+* xref:erc721-consecutive.adoc[ERC-721 Consecutive]: ability to mint tokens consecutively.
 
 * xref:erc721-enumerable.adoc[ERC-721 Enumerable]: ability to iterate over all tokens.
 
