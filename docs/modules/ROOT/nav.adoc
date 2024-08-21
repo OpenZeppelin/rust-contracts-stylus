@@ -5,6 +5,7 @@
 ** xref:erc20.adoc[ERC-20]
 *** xref:erc20.adoc#erc20-token-extensions[Extensions]
 ** xref:erc721.adoc[ERC-721]
+*** xref:erc721.adoc#erc721-token-extensions[Extensions]
 
 * xref:access-control.adoc[Access Control]
 * xref:crypto.adoc[Cryptography]
