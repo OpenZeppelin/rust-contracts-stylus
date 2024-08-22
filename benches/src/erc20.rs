@@ -67,7 +67,7 @@ pub async fn bench() -> eyre::Result<Report> {
     // should have plenty of room to fill the cache (can hold ~4k contracts).
     let status = Command::new("cargo-stylus")
         .arg("cache")
-        .args(&["--e", &std::env::var("RPC_URL")?])
+        .args(&["-e", &std::env::var("RPC_URL")?])
         .args(&["--private-key", &format!("0x{}", alice.pk())])
         .args(&["--address", &format!("{}", contract_addr)])
         .status()
