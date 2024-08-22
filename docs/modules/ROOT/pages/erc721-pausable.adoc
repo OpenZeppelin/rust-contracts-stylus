@@ -2,7 +2,7 @@
 
 ERC721 token with pausable token transfers, minting, and burning.
 
-Useful for scenarios such as preventing trades until the end of an evaluation period, or having an emergency switch for freezing all token transfers, e.g. caused by bug.
+Useful for scenarios such as preventing trades until the end of an evaluation period, or having an emergency switch for freezing all token transfers, e.g. caused by a bug.
 
 [[usage]]
 == Usage

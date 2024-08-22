@@ -1,6 +1,6 @@
 = ERC-721 Burnable
 
-Extension of xref:erc721.adoc[ERC-721] that allows token holders to destroy both their own tokens and those that they have an allowance for, in a way that can be recognized off-chain (via event analysis).
+xref:erc721.adoc[ERC-721] Token that can be burned (destroyed).
 
 [[usage]]
 == Usage
