@@ -1,0 +1,142 @@
+= ERC-721 Enumerable
+
+The OpenZeppelin xref:erc721.adoc[ERC-721] Enumerable extension is used to provide additional functionality to the standard ERC-721 token. Specifically, it allows for enumeration of all the token IDs in the contract as well as all the token IDs owned by each account. This is useful for applications that need to list or iterate over tokens, such as marketplaces or wallets.
+
+[[usage]]
+== Usage
+
+In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin_stylus/token/erc721/extensions/enumerable/index.html[Enumerable] flavour,
+you need to create a specified contract as follows:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc721::{
+    extensions::{Erc721Enumerable, IErc721Burnable},
+    Erc721, IErc721,
+};
+
+sol_storage! {
+    #[entrypoint]
+    struct Erc721Example {
+        #[borrow]
+        Erc721 erc721;
+        #[borrow]
+        Erc721Enumerable enumerable;
+    }
+}
+
+#[external]
+#[inherit(Erc721, Erc721Enumerable)]
+impl Erc721Example {
+    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+        // Retrieve the owner.
+        let owner = self.erc721.owner_of(token_id)?;
+
+        self.erc721.burn(token_id)?;
+
+        // Update the extension's state.
+        self.enumerable._remove_token_from_owner_enumeration(
+            owner,
+            token_id,
+            &self.erc721,
+        )?;
+        self.enumerable._remove_token_from_all_tokens_enumeration(token_id);
+
+        Ok(())
+    }
+
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+        self.erc721._mint(to, token_id)?;
+
+        // Update the extension's state.
+        self.enumerable._add_token_to_all_tokens_enumeration(token_id);
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        )?;
+
+        Ok(())
+    }
+
+    pub fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Vec<u8>> {
+        // Retrieve the previous owner.
+        let previous_owner = self.erc721.owner_of(token_id)?;
+
+        self.erc721.safe_transfer_from(from, to, token_id)?;
+
+        // Update the extension's state.
+        self.enumerable._remove_token_from_owner_enumeration(
+            previous_owner,
+            token_id,
+            &self.erc721,
+        )?;
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        )?;
+
+        Ok(())
+    }
+
+    #[selector(name = "safeTransferFrom")]
+    pub fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
+        // Retrieve the previous owner.
+        let previous_owner = self.erc721.owner_of(token_id)?;
+
+        self.erc721.safe_transfer_from_with_data(from, to, token_id, data)?;
+
+        // Update the extension's state.
+        self.enumerable._remove_token_from_owner_enumeration(
+            previous_owner,
+            token_id,
+            &self.erc721,
+        )?;
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        )?;
+
+        Ok(())
+    }
+
+    pub fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Vec<u8>> {
+        // Retrieve the previous owner.
+        let previous_owner = self.erc721.owner_of(token_id)?;
+
+        self.erc721.transfer_from(from, to, token_id)?;
+
+        // Update the extension's state.
+        self.enumerable._remove_token_from_owner_enumeration(
+            previous_owner,
+            token_id,
+            &self.erc721,
+        )?;
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        )?;
+
+        Ok(())
+    }
+}
+----

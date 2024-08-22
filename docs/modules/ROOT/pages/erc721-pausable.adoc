@@ -1,0 +1,102 @@
+= ERC-721 Pausable
+
+ERC721 token with pausable token transfers, minting, and burning.
+
+Useful for scenarios such as preventing trades until the end of an evaluation period, or having an emergency switch for freezing all token transfers, e.g. caused by a bug.
+
+[[usage]]
+== Usage
+
+In order to make your ERC721 token `pausable`, you need to use the https://docs.rs/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC721 token functions as follows:
+
+[source,rust]
+----
+use openzeppelin_stylus::{
+    token::erc721::Erc721,
+    utils::Pausable,
+};
+
+sol_storage! {
+    #[entrypoint]
+    struct Erc721Example {
+        #[borrow]
+        Erc721 erc721;
+        #[borrow]
+        Pausable pausable;
+    }
+}
+
+#[external]
+#[inherit(Erc721, Pausable)]
+impl Erc721Example {
+    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+        // ...
+        self.pausable.when_not_paused()?;
+        // ...
+        self.erc721.burn(token_id)?;
+        Ok(())
+    }
+
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+        // ...
+        self.pausable.when_not_paused()?;
+        // ...
+        self.erc721._mint(to, token_id)?;
+        Ok(())
+    }
+
+    pub fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Vec<u8>> {
+        // ...
+        self.pausable.when_not_paused()?;
+        // ...
+        self.erc721.safe_transfer_from(from, to, token_id)?;
+        Ok(())
+    }
+
+    #[selector(name = "safeTransferFrom")]
+    pub fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
+        // ...
+        self.pausable.when_not_paused()?;
+        // ...
+        self.erc721.safe_transfer_from_with_data(from, to, token_id, data)?;
+        Ok(())
+    }
+
+    pub fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Vec<u8>> {
+        // ...
+        self.pausable.when_not_paused()?;
+        // ...
+        self.erc721.transfer_from(from, to, token_id)?;
+        Ok(())
+    }
+}
+----
+
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc721Example {
+    bool private _paused;
+
+    constructor() {
+        _paused = false;
+    }
+}
+----

@@ -1,8 +1,7 @@
 //! Contract module that allows children to implement role-based access control
 //! mechanisms. This is a lightweight version that doesn't allow enumerating
 //! role members except through off-chain means by accessing the contract event
-//! logs. Some applications may benefit from on-chain enumerability, for those
-//! cases see [`AccessControlEnumberable`][enumerable ext].
+//! logs.
 //!
 //! Roles are referred to by their `bytes32` identifier. These should be exposed
 //! in the external API and be unique. The best way to achieve this is by using
@@ -41,8 +40,6 @@
 //! accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
-//!
-//! [enumerable ext]: ./TODO
 use alloy_primitives::{Address, B256};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
@@ -377,7 +374,7 @@ mod tests {
 
     use super::{AccessControl, Error};
 
-    /// Shorthand for declaring variables converted from a hex literla to a
+    /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice;
     macro_rules! roles {
         ($($var:ident = $hex:literal);* $(;)?) => {

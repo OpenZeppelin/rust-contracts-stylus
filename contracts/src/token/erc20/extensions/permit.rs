@@ -12,9 +12,7 @@
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_proc::{external, sol_storage, SolidityError};
-use stylus_sdk::{
-    block, call::MethodError, prelude::StorageType, storage::TopLevelStorage,
-};
+use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
 
 use crate::{
     token::erc20::{self, Erc20, IErc20},
@@ -58,18 +56,6 @@ pub enum Error {
     Erc20(erc20::Error),
     /// Error type from [`ecdsa`] contract [`ecdsa::Error`].
     ECDSA(ecdsa::Error),
-}
-
-impl MethodError for erc20::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
-impl MethodError for ecdsa::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 sol_storage! {
