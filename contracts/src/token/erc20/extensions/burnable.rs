@@ -9,6 +9,9 @@ use crate::token::erc20::{Erc20, Error};
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
 pub trait IErc20Burnable {
+    /// The error type associated to this ERC-20 Burnable trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Destroys a `value` amount of tokens from the caller. lowering the total
     /// supply.
     ///
@@ -26,7 +29,7 @@ pub trait IErc20Burnable {
     /// # Events
     ///
     /// Emits a [`super::super::Transfer`] event.
-    fn burn(&mut self, value: U256) -> Result<(), Error>;
+    fn burn(&mut self, value: U256) -> Result<(), Self::Error>;
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
     /// supply.
@@ -50,12 +53,17 @@ pub trait IErc20Burnable {
     /// # Events
     ///
     /// Emits a [`super::super::Transfer`] event.
-    fn burn_from(&mut self, account: Address, value: U256)
-        -> Result<(), Error>;
+    fn burn_from(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Self::Error>;
 }
 
 impl IErc20Burnable for Erc20 {
-    fn burn(&mut self, value: U256) -> Result<(), Error> {
+    type Error = Error;
+
+    fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
         self._burn(msg::sender(), value)
     }
 
@@ -63,7 +71,7 @@ impl IErc20Burnable for Erc20 {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         self._spend_allowance(account, msg::sender(), value)?;
         self._burn(account, value)
     }

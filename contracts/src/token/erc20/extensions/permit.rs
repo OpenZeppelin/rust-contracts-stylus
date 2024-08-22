@@ -60,18 +60,6 @@ pub enum Error {
     ECDSA(ecdsa::Error),
 }
 
-impl MethodError for erc20::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
-impl MethodError for ecdsa::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
 sol_storage! {
     /// State of a Permit Contract.
     pub struct Erc20Permit<T: IEip712 + StorageType>{
