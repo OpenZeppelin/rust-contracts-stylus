@@ -130,18 +130,6 @@ pub enum Error {
 
 unsafe impl TopLevelStorage for Erc721Consecutive {}
 
-impl MethodError for erc721::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
-impl MethodError for checkpoints::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
 // ************** ERC-721 External **************
 
 #[external]

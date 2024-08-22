@@ -8,9 +8,11 @@ use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_proc::SolidityError;
 use stylus_sdk::{
-    call::{self, Call},
+    call::{self, Call, MethodError},
     storage::TopLevelStorage,
 };
+
+use crate::utils::cryptography::ecdsa;
 
 /// Address of the `ecrecover` EVM precompile.
 pub const ECRECOVER_ADDR: Address =
@@ -52,6 +54,12 @@ pub enum Error {
     InvalidSignatureLength(ECDSAInvalidSignatureLength),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),
+}
+
+impl MethodError for ecdsa::Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 sol! {
