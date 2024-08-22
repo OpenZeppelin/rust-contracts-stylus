@@ -1,0 +1,56 @@
+= ERC-721 Metadata
+
+Extension of xref:erc721.adoc[ERC-721] that adds the optional metadata functions from the ERC721 standard.
+
+[[usage]]
+== Usage
+
+In order to make https://docs.rs/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
+
+[source,rust]
+----
+use openzeppelin_stylus::{
+    token::erc721::{
+        extensions::Erc721Metadata,
+        Erc721,
+    },
+};
+
+sol_storage! {
+    #[entrypoint]
+    struct Erc721Example {
+        #[borrow]
+        Erc721 erc721;
+        #[borrow]
+        Erc721Metadata metadata;
+    }
+}
+
+#[external]
+#[inherit(Erc721, Erc721Metadata)]
+impl Erc721Example {
+    // ...
+}
+----
+
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
+Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc721Example {
+    // ...
+
+    string private _name;
+    string private _symbol;
+    string private _baseUri;
+
+    constructor(string memory name_, string memory symbol_, string memory baseUri_) {
+        // ...
+        _name = name_;
+        _symbol = symbol_;
+        _baseUri = baseUri_;
+        // ...
+    }
+}
+----

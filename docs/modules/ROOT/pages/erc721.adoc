@@ -14,7 +14,8 @@ We'll use ERC-721 to track items in our game, which will each have their own uni
 Whenever one is to be awarded to a player, it will be minted and sent to them.
 Players are free to keep their token or trade it with other people as they see fit, as they would any other asset on the blockchain!
 Please note any account can call `awardItem` to mint items.
-To restrict what accounts can be minted per item. We can use an xref:access-control.adoc[Access Control] extension.
+To restrict what accounts can be minted per item.
+We can use an xref:access-control.adoc[Access Control] extension.
 
 Here's what a contract for tokenized items might look like:
 
@@ -57,3 +58,20 @@ For more information about erc721 schema, check out the https://eips.ethereum.or
 
 NOTE: You'll notice that the item's information is included in the metadata, but that information isn't on-chain!
 So a game developer could change the underlying metadata, changing the rules of the game!
+
+[[erc721-token-extensions]]
+== Extensions
+
+Additionally, there are multiple custom extensions, including:
+
+* xref:erc721-burnable.adoc[ERC-721 Burnable]: A way for token holders to burn their own tokens.
+
+* xref:erc721-consecutive.adoc[ERC-721 Consecutive]: An implementation of https://eips.ethereum.org/EIPS/eip-2309[ERC2309] for minting batches of tokens during construction, in accordance with ERC721.
+
+* xref:erc721-enumerable.adoc[ERC-721 Enumerable]: Optional extension that allows enumerating the tokens on chain, often not included since it requires large gas overhead.
+
+* xref:erc721-metadata.adoc[ERC-721 Metadata]: Optional extension that adds name, symbol, and token URI, almost always included.
+
+* xref:erc721-pausable.adoc[ERC-721 Pausable]: A primitive to pause contract operation.
+
+* xref:erc721-uri-storage.adoc[ERC-721 Uri Storage]: A more flexible but more expensive way of storing metadata.
