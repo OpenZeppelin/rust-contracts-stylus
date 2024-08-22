@@ -286,9 +286,9 @@ impl AccessControl {
         let previous_admin_role = self.get_role_admin(role);
         self._roles.setter(role).admin_role.set(new_admin_role);
         evm::log(RoleAdminChanged {
-            role: *role,
-            previous_admin_role: *previous_admin_role,
-            new_admin_role: *new_admin_role,
+            role,
+            previous_admin_role,
+            new_admin_role,
         });
     }
 
@@ -311,10 +311,7 @@ impl AccessControl {
     ) -> Result<(), Error> {
         if !self.has_role(role, account) {
             return Err(Error::UnauthorizedAccount(
-                AccessControlUnauthorizedAccount {
-                    account,
-                    needed_role: *role,
-                },
+                AccessControlUnauthorizedAccount { account, needed_role: role },
             ));
         }
 
@@ -340,11 +337,7 @@ impl AccessControl {
             false
         } else {
             self._roles.setter(role).has_role.insert(account, true);
-            evm::log(RoleGranted {
-                role: *role,
-                account,
-                sender: msg::sender(),
-            });
+            evm::log(RoleGranted { role, account, sender: msg::sender() });
             true
         }
     }
@@ -366,11 +359,7 @@ impl AccessControl {
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             self._roles.setter(role).has_role.insert(account, false);
-            evm::log(RoleRevoked {
-                role: *role,
-                account,
-                sender: msg::sender(),
-            });
+            evm::log(RoleRevoked { role, account, sender: msg::sender() });
             true
         } else {
             false

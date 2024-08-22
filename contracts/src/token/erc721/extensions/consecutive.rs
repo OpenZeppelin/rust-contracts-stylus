@@ -169,7 +169,7 @@ impl IErc721 for Erc721Consecutive {
             from,
             to,
             token_id,
-            &data,
+            data,
         )?)
     }
 
@@ -548,7 +548,7 @@ impl Erc721Consecutive {
             Address::ZERO,
             to,
             token_id,
-            &data,
+            data,
         )?)
     }
 
@@ -701,7 +701,7 @@ impl Erc721Consecutive {
             from,
             to,
             token_id,
-            &data,
+            data,
         )?)
     }
 

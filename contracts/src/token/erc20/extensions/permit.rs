@@ -158,7 +158,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
             return Err(ERC2612ExpiredSignature { deadline }.into());
         }
 
-        let struct_hash = keccak256(StructHashTuple::encode_params(&(
+        let struct_hash = keccak256(StructHashTuple::abi_encode(&(
             *PERMIT_TYPEHASH,
             owner,
             spender,
