@@ -85,8 +85,7 @@ impl Nonces {
     ///
     /// Returns an error if the `nonce` is not the next valid nonce for the
     /// owner.
-    #[allow(dead_code)]
-    fn use_checked_nonce(
+    pub fn use_checked_nonce(
         &mut self,
         owner: Address,
         nonce: U256,
