@@ -172,8 +172,7 @@ sol_interface! {
         function onERC721Received(
             address operator,
             address from,
-            uint256 token_id,
-            bytes calldata data
+            uint256 token_id
         ) external returns (bytes4);
     }
 }
@@ -1111,13 +1110,9 @@ impl Erc721 {
 
         let receiver = IERC721Receiver::new(to);
         let call = Call::new_in(self);
-        let result = receiver.on_erc_721_received(
-            call,
-            operator,
-            from,
-            token_id,
-            data.to_vec().into(),
-        );
+        // let bytes = data.to_vec().into();
+        let result =
+            receiver.on_erc_721_received(call, operator, from, token_id);
 
         let id = match result {
             Ok(id) => id,

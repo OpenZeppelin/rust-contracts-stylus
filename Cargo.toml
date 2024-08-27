@@ -1,40 +1,40 @@
 [workspace]
 members = [
-  "contracts",
-  "lib/crypto",
-  "lib/motsu",
-  "lib/motsu-proc",
-  "lib/e2e",
-  "lib/e2e-proc",
-  "examples/erc20",
-  "examples/erc20-permit",
-  "examples/erc721",
-  "examples/erc721-consecutive",
-  "examples/erc721-metadata",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/access-control",
-  "examples/basic/token",
-  "examples/basic/script",
-  "examples/ecdsa",
-  "benches",
+    "contracts",
+    "lib/crypto",
+    "lib/motsu",
+    "lib/motsu-proc",
+    "lib/e2e",
+    "lib/e2e-proc",
+    "examples/erc20",
+    "examples/erc20-permit",
+    "examples/erc721",
+    "examples/erc721-consecutive",
+    "examples/erc721-metadata",
+    "examples/merkle-proofs",
+    "examples/ownable",
+    "examples/access-control",
+    "examples/basic/token",
+    "examples/basic/script",
+    "examples/ecdsa",
+    "benches",
 ]
 default-members = [
-  "contracts",
-  "lib/crypto",
-  "lib/motsu",
-  "lib/motsu-proc",
-  "lib/e2e-proc",
-  "examples/erc20",
-  "examples/erc20-permit",
-  "examples/erc721",
-  "examples/erc721-consecutive",
-  "examples/erc721-metadata",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/access-control",
-  "examples/basic/token",
-  "examples/ecdsa",
+    "contracts",
+    "lib/crypto",
+    "lib/motsu",
+    "lib/motsu-proc",
+    "lib/e2e-proc",
+    "examples/erc20",
+    "examples/erc20-permit",
+    "examples/erc721",
+    "examples/erc721-consecutive",
+    "examples/erc721-metadata",
+    "examples/merkle-proofs",
+    "examples/ownable",
+    "examples/access-control",
+    "examples/basic/token",
+    "examples/ecdsa",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
@@ -62,17 +62,19 @@ all = "warn"
 # stylus-related
 stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs", branch = "hotfix-0.5.3", default-features = false }
 stylus-proc = { git = "https://github.com/OffchainLabs/stylus-sdk-rs", branch = "hotfix-0.5.3", default-features = false }
+#stylus-sdk = { version = "0.5.2", default-features = false }
+#stylus-proc = { version = "0.5.2", default-features = false }
 mini-alloc = "0.4.2"
 
 alloy = { version = "0.1.4", features = [
-  "contract",
-  "network",
-  "providers",
-  "provider-http",
-  "rpc-client",
-  "rpc-types-eth",
-  "signer-local",
-  "getrandom",
+    "contract",
+    "network",
+    "providers",
+    "provider-http",
+    "rpc-client",
+    "rpc-types-eth",
+    "signer-local",
+    "getrandom",
 ] }
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
@@ -108,3 +110,9 @@ incremental = false
 
 [profile.dev]
 panic = "abort"
+
+#[patch.crates-io.stylus-sdk]
+#path = "../stylus-sdk-rs/stylus-sdk"
+#
+#[patch.crates-io.stylus-proc]
+#path = "../stylus-sdk-rs/stylus-proc"

@@ -481,7 +481,6 @@ async fn safe_transfers_to_receiver_contract(
         operator: alice_addr,
         from: alice_addr,
         tokenId: token_id,
-        data: fixed_bytes!("").into(),
     }));
 
     let Erc721::ownerOfReturn { ownerOf } =
@@ -813,7 +812,6 @@ async fn safe_transfers_with_data_to_receiver_contract(
         operator: alice_addr,
         from: alice_addr,
         tokenId: token_id,
-        data,
     }));
 
     let Erc721::ownerOfReturn { ownerOf } =

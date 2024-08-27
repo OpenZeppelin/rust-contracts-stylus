@@ -2,7 +2,15 @@
 
 pragma solidity ^0.8.21;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.2/contracts/token/ERC721/IERC721Receiver.sol";
+interface IERC721Receiver {
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId
+    ) external returns (bytes4);
+}
+
 
 contract ERC721ReceiverMock is IERC721Receiver {
     enum RevertType {
@@ -16,7 +24,7 @@ contract ERC721ReceiverMock is IERC721Receiver {
     bytes4 private immutable _retval;
     RevertType private immutable _error;
 
-    event Received(address operator, address from, uint256 tokenId, bytes data);
+    event Received(address operator, address from, uint256 tokenId);
 
     error CustomError(bytes4);
 
@@ -28,8 +36,7 @@ contract ERC721ReceiverMock is IERC721Receiver {
     function onERC721Received(
         address operator,
         address from,
-        uint256 tokenId,
-        bytes memory data
+        uint256 tokenId
     ) public returns (bytes4) {
         if (_error == RevertType.RevertWithoutMessage) {
             revert();
@@ -42,7 +49,7 @@ contract ERC721ReceiverMock is IERC721Receiver {
             a;
         }
 
-        emit Received(operator, from, tokenId, data);
+        emit Received(operator, from, tokenId);
         return _retval;
     }
 }
