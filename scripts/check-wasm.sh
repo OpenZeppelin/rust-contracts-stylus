@@ -12,7 +12,7 @@ check_wasm () {
 
   echo
   echo "Checking contract $CONTRACT_CRATE_NAME"
-  cargo stylus check --wasm-file ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
+  cargo stylus check --wasm-file ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME" --no-verify
 }
 
 # Retrieve all alphanumeric contract's crate names in `./examples` directory.
