@@ -32,7 +32,7 @@ jobs:
         with:
           target: wasm32-unknown-unknown
           components: rust-src
-          toolchain: nightly-2024-01-01
+          toolchain: 1.79.0
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -50,6 +50,4 @@ jobs:
       - name: setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
       - name: run integration tests
-        run: |
-          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
-          ./scripts/e2e-tests.sh
+        run: ./scripts/e2e-tests.sh
