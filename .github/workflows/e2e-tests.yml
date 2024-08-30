@@ -39,7 +39,7 @@ jobs:
           key: "e2e-tests"
 
       - name: install cargo-stylus
-        run: cargo install cargo-stylus@0.4.2 cargo-stylus-check@0.4.2
+        run: cargo install cargo-stylus@0.5.0
 
       - name: install solc
         run: |
