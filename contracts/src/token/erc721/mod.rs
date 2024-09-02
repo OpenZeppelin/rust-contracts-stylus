@@ -462,7 +462,7 @@ pub trait IErc721 {
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool;
 }
 
-#[external]
+#[public]
 impl IErc721 for Erc721 {
     type Error = Error;
 
@@ -497,7 +497,7 @@ impl IErc721 for Erc721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
     }
 
     fn transfer_from(
@@ -814,7 +814,7 @@ impl Erc721 {
             Address::ZERO,
             to,
             token_id,
-            &data,
+            data,
         )
     }
 
@@ -955,7 +955,7 @@ impl Erc721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
     }
 
     /// Approve `to` to operate on `token_id`.
@@ -1101,7 +1101,7 @@ impl Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
         const RECEIVER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("150b7a02");
 
@@ -1112,8 +1112,13 @@ impl Erc721 {
         let receiver = IERC721Receiver::new(to);
         let call = Call::new_in(self);
         let data = data.to_vec();
-        let result =
-            receiver.on_erc_721_received(call, operator, from, token_id, data);
+        let result = receiver.on_erc_721_received(
+            call,
+            operator,
+            from,
+            token_id,
+            data.to_vec().into(),
+        );
 
         let id = match result {
             Ok(id) => id,

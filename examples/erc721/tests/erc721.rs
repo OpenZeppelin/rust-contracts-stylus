@@ -1,8 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc721;
-use alloy::primitives::{fixed_bytes, Address, Bytes, U256};
-use alloy_primitives::uint;
+use alloy::primitives::{fixed_bytes, uint, Address, Bytes, U256};
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use mock::{receiver, receiver::ERC721ReceiverMock};
 
