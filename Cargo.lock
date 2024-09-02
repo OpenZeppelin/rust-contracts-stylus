@@ -2574,7 +2574,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.1.0"
+version = "0.1.0-rc"
 dependencies = [
  "hex-literal",
  "mini-alloc",
@@ -2584,7 +2584,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus"
-version = "0.1.0-alpha.1"
+version = "0.1.0-rc"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
