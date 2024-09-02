@@ -75,6 +75,7 @@ sol! {
     /// * `to_token_id` - Last token being transferred.
     /// * `from_address` - Address from which tokens will be transferred.
     /// * `to_address` - Address where the tokens will be transferred to.
+    #[allow(missing_docs)]
     event ConsecutiveTransfer(
         uint256 indexed from_token_id,
         uint256 to_token_id,
