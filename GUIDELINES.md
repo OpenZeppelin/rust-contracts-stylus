@@ -131,7 +131,7 @@ Use 1-word names for function parameters or variables that have larger scopes:
 
 ```rust
 pub fn commit(repo: &Repository, sig: &Signature) -> Result<Commit, Error> {
-...
+    ...
 }
 ```
 
@@ -207,6 +207,47 @@ Make sure all tests are passing with:
 
     $ cargo test --all-features
 
+### Running end-to-end tests
+
+In order to run end-to-end (e2e) tests you need to have a specific nightly toolchain.
+"Nightly" is necessary to use optimization compiler flags and have contract wasm small enough to be eligible for
+deployment.
+
+Run the following commands to install the necessary toolchain:
+
+```shell
+rustup install nightly-2024-01-01
+rustup component add rust-src
+```
+
+Also, you should have the cargo stylus tool:
+
+```shell
+cargo install cargo-stylus
+```
+
+Since most of the e2e tests using koba for deploying contracts, you need to install solidity compiler v0.8.21, like
+this:
+
+```shell
+curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.21/solc-static-linux
+sudo mv solc-static-linux /usr/bin/solc
+sudo chmod a+x /usr/bin/solc
+```
+
+To run e2e tests, you need to have a local nitro test node set up.
+Run the following command and wait till script exit successfully:
+
+```shell
+./scripts/nitro-testnode.sh -i -d
+```
+
+Then you will be able to run e2e tests:
+
+```shell
+./scripts/e2e-tests.sh
+```
+
 ### Checking the docs
 
 If you make documentation changes, you may want to check whether there are any
@@ -279,12 +320,15 @@ conventions that must be followed.
 - Custom errors should be declared following the [EIP-6093] rationale whenever
   reasonable. Also, consider the following:
 
-  - The domain prefix should be picked in the following order:
-    1. Use `ERC<number>` if the error is a violation of an ERC specification.
-    2. Use the name of the underlying component where it belongs (eg.
-       `Governor`, `ECDSA`, or `Timelock`).
+    - The domain prefix should be picked in the following order:
+        1. Use `ERC<number>` if the error is a violation of an ERC specification.
+        2. Use the name of the underlying component where it belongs (eg.
+           `Governor`, `ECDSA`, or `Timelock`).
 
 [The Rust Style Guide]: https://doc.rust-lang.org/nightly/style-guide/
+
 [EIP-6093]: https://eips.ethereum.org/EIPS/eip-6093
+
 [Semantic versioning]: https://semver.org/spec/v2.0.0.html
+
 [Conventional Commits]: https://www.conventionalcommits.org/en/v1.0.0/
