@@ -5,14 +5,14 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256};
 use openzeppelin_stylus::utils::cryptography::ecdsa;
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
     #[entrypoint]
     struct ECDSAExample {}
 }
 
-#[external]
+#[public]
 impl ECDSAExample {
     pub fn recover(
         &mut self,

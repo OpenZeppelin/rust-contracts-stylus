@@ -462,7 +462,7 @@ pub trait IErc721 {
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool;
 }
 
-#[external]
+#[public]
 impl IErc721 for Erc721 {
     type Error = Error;
 

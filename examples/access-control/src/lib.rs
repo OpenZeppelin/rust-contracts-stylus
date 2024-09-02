@@ -8,7 +8,7 @@ use openzeppelin_stylus::{
     access::control::AccessControl,
     token::erc20::{Erc20, IErc20},
 };
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
     #[entrypoint]
@@ -26,7 +26,7 @@ pub const TRANSFER_ROLE: [u8; 32] = [
     166, 190, 60, 19, 139, 159, 191, 0, 55, 82, 164, 200, 188, 232, 111, 108,
 ];
 
-#[external]
+#[public]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
     pub const TRANSFER_ROLE: [u8; 32] = TRANSFER_ROLE;

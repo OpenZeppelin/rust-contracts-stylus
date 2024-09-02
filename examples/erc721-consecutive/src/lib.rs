@@ -5,7 +5,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::extensions::consecutive::{
     Erc721Consecutive, Error,
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
     #[entrypoint]
@@ -15,7 +15,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc721Consecutive)]
 impl Erc721ConsecutiveExample {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {

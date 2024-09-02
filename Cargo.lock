@@ -3518,7 +3518,7 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.5.2"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs?branch=hotfix-0.5.3#ee3ef0536d12311ac0bbc891b648607b43de913c"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs?branch=fix-calls-with-bytes#5e403f93c02a6af75c692550dbd46db341b0b50f"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3536,7 +3536,7 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.5.2"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs?branch=hotfix-0.5.3#ee3ef0536d12311ac0bbc891b648607b43de913c"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs?branch=fix-calls-with-bytes#5e403f93c02a6af75c692550dbd46db341b0b50f"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",

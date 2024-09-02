@@ -13,7 +13,7 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    prelude::{entrypoint, external, sol_storage},
+    prelude::{entrypoint, public, sol_storage},
 };
 
 sol_storage! {
@@ -28,7 +28,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc721, Enumerable, Pausable)]
 impl Erc721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {

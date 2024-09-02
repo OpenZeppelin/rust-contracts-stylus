@@ -13,7 +13,7 @@ use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
 use stylus_sdk::{
     evm, msg,
-    stylus_proc::{external, sol_storage},
+    stylus_proc::{public, sol_storage},
 };
 
 sol! {
@@ -54,7 +54,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 impl Ownable {
     /// Returns the address of the current owner.
     pub fn owner(&self) -> Address {

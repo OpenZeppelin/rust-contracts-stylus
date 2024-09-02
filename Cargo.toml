@@ -60,8 +60,8 @@ all = "warn"
 
 [workspace.dependencies]
 # stylus-related
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs", branch = "hotfix-0.5.3", default-features = false }
-stylus-proc = { git = "https://github.com/OffchainLabs/stylus-sdk-rs", branch = "hotfix-0.5.3", default-features = false }
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs", branch = "fix-calls-with-bytes", default-features = false }
+stylus-proc = { git = "https://github.com/OffchainLabs/stylus-sdk-rs", branch = "fix-calls-with-bytes", default-features = false }
 mini-alloc = "0.4.2"
 
 alloy = { version = "0.1.4", features = [

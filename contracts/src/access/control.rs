@@ -45,7 +45,7 @@ use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
 use stylus_sdk::{
     evm, msg,
-    stylus_proc::{external, sol_storage},
+    stylus_proc::{public, sol_storage},
 };
 
 sol! {
@@ -115,7 +115,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 impl AccessControl {
     /// The default admin role. `[0; 32]` by default.
     pub const DEFAULT_ADMIN_ROLE: [u8; 32] = [0; 32];

@@ -26,7 +26,7 @@ use alloc::vec;
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage, SolidityError};
+use stylus_proc::{public, sol_storage, SolidityError};
 use stylus_sdk::{abi::Bytes, evm, msg, prelude::TopLevelStorage};
 
 use crate::{
@@ -131,7 +131,7 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 
-#[external]
+#[public]
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
