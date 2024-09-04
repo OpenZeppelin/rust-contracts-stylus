@@ -17,7 +17,7 @@ members = [
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
-  "benches",
+  "benches", "examples/erc1155",
 ]
 default-members = [
   "contracts",
