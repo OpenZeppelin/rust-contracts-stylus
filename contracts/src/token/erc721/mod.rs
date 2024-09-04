@@ -1111,7 +1111,6 @@ impl Erc721 {
 
         let receiver = IERC721Receiver::new(to);
         let call = Call::new_in(self);
-        let data = data.to_vec();
         let result = receiver.on_erc_721_received(
             call,
             operator,
