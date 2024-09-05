@@ -11,7 +11,7 @@ use openzeppelin_stylus::{
     },
     utils::Pausable,
 };
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 const DECIMALS: u8 = 10;
 
@@ -29,7 +29,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
 impl Erc20Example {
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.

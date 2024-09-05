@@ -11,7 +11,7 @@ use openzeppelin_crypto::{
 use stylus_proc::SolidityError;
 use stylus_sdk::{
     alloy_sol_types::sol,
-    prelude::{entrypoint, external, sol_storage},
+    prelude::{entrypoint, public, sol_storage},
 };
 
 #[global_allocator]
@@ -61,7 +61,7 @@ sol_storage! {
     struct VerifierContract { }
 }
 
-#[external]
+#[public]
 impl VerifierContract {
     pub fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
         let proof: Vec<[u8; 32]> = proof.into_iter().map(|m| *m).collect();
