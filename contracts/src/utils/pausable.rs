@@ -11,7 +11,7 @@
 //! only once the modifiers are put in place.
 
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage, SolidityError};
+use stylus_proc::{public, sol_storage, SolidityError};
 use stylus_sdk::{evm, msg};
 
 sol! {
@@ -57,7 +57,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 impl Pausable {
     /// Returns true if the contract is paused, and false otherwise.
     ///

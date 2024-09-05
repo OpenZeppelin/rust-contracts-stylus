@@ -14,7 +14,7 @@ use openzeppelin_stylus::token::erc721::{
     },
     Erc721, IErc721,
 };
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
     #[entrypoint]
@@ -28,7 +28,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc721, Metadata, UriStorage)]
 impl Erc721MetadataExample {
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {

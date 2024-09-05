@@ -11,7 +11,7 @@
 //! and thus is not required to hold Ether at all.
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
-use stylus_proc::{external, sol_storage, SolidityError};
+use stylus_proc::{public, sol_storage, SolidityError};
 use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
 
 use crate::{
@@ -77,7 +77,7 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
-#[external]
+#[public]
 impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// Returns the current nonce for `owner`.
     ///
@@ -156,7 +156,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
             return Err(ERC2612ExpiredSignature { deadline }.into());
         }
 
-        let struct_hash = keccak256(StructHashTuple::encode_params(&(
+        let struct_hash = keccak256(StructHashTuple::abi_encode(&(
             *PERMIT_TYPEHASH,
             owner,
             spender,

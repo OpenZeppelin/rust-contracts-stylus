@@ -4,7 +4,7 @@
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage, SolidityError};
+use stylus_proc::{public, sol_storage, SolidityError};
 
 const ONE: U256 = uint!(1_U256);
 
@@ -30,7 +30,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 impl Nonces {
     /// Returns the unused nonce for the given account.
     ///
