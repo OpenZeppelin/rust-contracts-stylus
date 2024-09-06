@@ -1,6 +1,10 @@
 //! Implementation of the [`Erc1155`] token standard.
+use alloc::vec::Vec;
 
-use stylus_sdk::{alloy_sol_types::sol, call::MethodError, prelude::*};
+use alloy_primitives::{Address, U256};
+use stylus_sdk::{
+    abi::Bytes, alloy_sol_types::sol, call::MethodError, prelude::*,
+};
 
 pub mod extensions;
 
@@ -190,4 +194,148 @@ sol_storage! {
         /// Maps owners to a mapping of operator approvals.
         mapping(address => mapping(address => bool)) _operator_approvals;
     }
+}
+
+/// Required interface of an [`Erc1155`] compliant contract.
+pub trait IErc1155 {
+    /// The error type associated to this ERC-721 trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
+    /// Returns the number of tokens in ``owner``'s account.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account of the token's owner.
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
+
+    /// xref:ROOT:erc1155.adoc#batch-operations[Batched] version of {balanceOf}.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `accounts` - All account of the tokens' owner.
+    /// * `ids` - All token identifiers.
+    ///
+    /// Requirements:
+    ///
+    /// * - `accounts` and `ids` must have the same length.
+    fn balance_of_batch(
+        &self,
+        accounts: Vec<Address>,
+        ids: Vec<U256>,
+    ) -> Result<Address, Self::Error>;
+
+    /// Grants or revokes permission to `operator` to transfer the caller's
+    /// tokens, according to `approved`,
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `operator` - Account to add to the set of authorized operators.
+    /// * `approved` - Flag that determines whether or not permission will be
+    ///   granted to `operator`. If true, this means `operator` will be allowed
+    ///   to manage `msg::sender`'s assets.
+    ///
+    /// # Errors
+    ///
+    /// * If `operator` is `Address::ZERO`, then the error
+    /// [`Error::InvalidOperator`] is returned.
+    ///
+    /// # Requirements:
+    ///
+    /// * The `operator` cannot be the `Address::ZERO`.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`ApprovalForAll`] event.
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error>;
+
+    /// Returns true if `operator` is approved to transfer ``account``'s
+    /// tokens.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Account of the token's owner.
+    /// * `operator` - Account to be checked.
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool;
+
+    /// Transfers a `value` amount of tokens of type `id` from `from` to `to`.
+    ///
+    /// WARNING: This function can potentially allow a reentrancy attack when
+    /// transferring tokens to an untrusted contract, when invoking
+    /// [`IERC1155Receiver::on_erc_1155_received`] on the receiver. Ensure to
+    /// follow the checks-effects-interactions pattern and consider
+    /// employing reentrancy guards when interacting with untrusted
+    /// contracts.
+    ///
+    /// Emits a [`TransferSingle`] event.
+    ///
+    /// # Errors
+    ///
+    /// If `to` is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If `from` is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// If the `from` is not sender, then the error
+    /// [`Error::MissingApprovalForAll`] is returned.
+    /// If the caller does not have the right to approve, then the error
+    /// [`Error::MissingApprovalForAll`] is returned.
+    /// If the token does not exist, then the error
+    /// [`Error::NonexistentToken`] is returned.
+    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// interface id or returned with error, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    ///
+    /// # Requirements:
+    /// *
+    /// * - `to` cannot be the zero address.
+    /// * - If the caller is not `from`, it must have been approved to spend
+    ///   ``from``'s tokens via [`Self::set_approval_for_all`].
+    /// * - `from` must have a balance of tokens of type `id` of at least
+    ///   `value` amount.
+    /// * - If `to` refers to a smart contract, it must implement
+    ///   [`IERC1155Receiver::on_erc_1155_received`] and return the
+    /// acceptance magic value.
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error>;
+
+    /// xref:ROOT:erc1155.adoc#batch-operations[Batched] version of
+    /// [`Self::safe_transfer_from`].
+    ///
+    /// WARNING: This function can potentially allow a reentrancy attack when
+    /// transferring tokens to an untrusted contract, when invoking
+    /// [`IERC1155Receiver::on_erc_1155_batch_received`] on the receiver. Ensure
+    /// to follow the checks-effects-interactions pattern and consider
+    /// employing reentrancy guards when interacting with untrusted
+    /// contracts.
+    ///
+    /// Emits either a [`TransferSingle`] or a [`TransferBatch`] event,
+    /// depending on the length of the array arguments.
+    ///
+    /// * Requirements:
+    /// *
+    /// * - `ids` and `values` must have the same length.
+    /// * - If `to` refers to a smart contract, it must implement
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] and return the
+    /// acceptance magic value.
+    fn safe_batch_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), Self::Error>;
 }
