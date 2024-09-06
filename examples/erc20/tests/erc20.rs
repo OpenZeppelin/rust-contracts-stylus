@@ -1341,3 +1341,29 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
 
     Ok(())
 }
+
+#[e2e::test]
+async fn support_interface(alice: Account) -> Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc20::new(contract_addr, &alice.wallet);
+    let invalid_interface_id: u32 = 0x_ffffffff;
+    let Erc20::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
+
+    assert_eq!(supports_interface, false);
+
+    let valid_interface_id: u32 = 0x_36372b07;
+    let Erc20::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(valid_interface_id.into()).call().await?;
+
+    assert_eq!(supports_interface, true);
+
+    Ok(())
+}

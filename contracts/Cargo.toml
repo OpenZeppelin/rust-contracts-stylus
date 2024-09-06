@@ -15,6 +15,7 @@ stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true
 keccak-const.workspace = true
+openzeppelin-stylus-proc = { path = "../contracts-proc"}
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }

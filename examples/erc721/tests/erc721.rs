@@ -2098,3 +2098,24 @@ async fn token_by_index_after_burn_and_some_mints(
 
     Ok(())
 }
+
+#[e2e::test]
+async fn support_interface(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let invalid_interface_id: u32 = 0x_ffffffff;
+    let Erc721::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
+
+    assert_eq!(supports_interface, false);
+
+    let valid_interface_id: u32 = 0x_80ac58cd;
+    let Erc721::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(valid_interface_id.into()).call().await?;
+
+    assert_eq!(supports_interface, true);
+
+    Ok(())
+}

@@ -2,6 +2,7 @@
 use alloc::vec;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
+use openzeppelin_stylus_proc::interface;
 use stylus_sdk::{
     abi::Bytes,
     alloy_sol_types::sol,
@@ -198,6 +199,7 @@ sol_storage! {
 unsafe impl TopLevelStorage for Erc721 {}
 
 /// Required interface of an [`Erc721`] compliant contract.
+#[interface]
 pub trait IErc721 {
     /// The error type associated to this ERC-721 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -317,6 +319,7 @@ pub trait IErc721 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
+    #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
         &mut self,
         from: Address,
@@ -2482,5 +2485,12 @@ mod tests {
                 token_id: t_id
             }) if token_id == t_id
         ));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc721 as IErc721>::INTERFACE_ID;
+        let expected = 0x_80ac58cd;
+        assert_eq!(actual, expected);
     }
 }

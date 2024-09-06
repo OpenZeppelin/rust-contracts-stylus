@@ -6,6 +6,7 @@
 //! [`Erc20`] applications.
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
+use openzeppelin_stylus_proc::interface;
 use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::MethodError,
@@ -111,6 +112,7 @@ sol_storage! {
 }
 
 /// Required interface of an [`Erc20`] compliant contract.
+#[interface]
 pub trait IErc20 {
     /// The error type associated to this ERC-20 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -550,6 +552,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::{Erc20, Error, IErc20};
+    use crate::token::erc721::{Erc721, IErc721};
 
     #[motsu::test]
     fn reads_balance(contract: Erc20) {
@@ -881,5 +884,12 @@ mod tests {
         let one = uint!(1_U256);
         let result = contract.approve(Address::ZERO, one);
         assert!(matches!(result, Err(Error::InvalidSpender(_))));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20 as IErc20>::INTERFACE_ID;
+        let expected = 0x_36372b07;
+        assert_eq!(actual, expected);
     }
 }
