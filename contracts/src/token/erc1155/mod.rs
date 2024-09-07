@@ -1,10 +1,12 @@
 //! Implementation of the [`Erc1155`] token standard.
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, Uint, U256};
 use stylus_sdk::{
-    abi::Bytes, alloy_sol_types::sol, call::MethodError, prelude::*,
+    abi::Bytes, alloy_sol_types::sol, call::MethodError, evm, msg, prelude::*,
 };
+
+use crate::utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked};
 
 pub mod extensions;
 
@@ -338,4 +340,84 @@ pub trait IErc1155 {
         values: Vec<U256>,
         data: Bytes,
     ) -> Result<(), Self::Error>;
+}
+
+impl Erc1155 {
+    /// Transfers a `value` amount of tokens of type `id` from `from` to `to`.
+    /// Will mint (or burn) if `from` (or `to`) is the zero address.
+    ///
+    /// Requirements:
+    ///
+    /// * - If `to` refers to a smart contract, it must implement either
+    ///   [`IERC1155Receiver::on_erc_1155_received`]
+    /// * or [`IERC1155Receiver::on_erc_1155_received`] and return the
+    ///   acceptance magic value.
+    /// * - `ids` and `values` must have the same length.
+    ///
+    /// /// # Errors
+    ///
+    /// If length of `ids` is not equal to length of `values`, then the
+    /// error [`Error::InvalidArrayLength`] is returned.
+    /// If `value` is greater than the balance of the `from` account,
+    /// then the error [`Error::InsufficientBalance`] is returned.
+    ///
+    /// NOTE: The ERC-1155 acceptance check is not performed in this function.
+    /// See [`Self::_updateWithAcceptanceCheck`] instead.
+    ///
+    /// Event
+    ///
+    /// Emits a [`TransferSingle`] event if the arrays contain one element, and
+    /// [`TransferBatch`] otherwise.
+    fn _update(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+    ) -> Result<(), Error> {
+        if ids.len() != values.len() {
+            return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
+                idsLength: Uint::<256, 4>::from(ids.len()),
+                valuesLength: Uint::<256, 4>::from(values.len()),
+            }));
+        }
+
+        let operator = msg::sender();
+        for (i, &id) in ids.iter().enumerate() {
+            let value = values[i];
+            let from_balance = self._balances.get(id).get(from);
+            if from_balance < value {
+                return Err(Error::InsufficientBalance(
+                    ERC1155InsufficientBalance {
+                        sender: from,
+                        balance: from_balance,
+                        needed: value,
+                        tokenId: id,
+                    },
+                ));
+            }
+            self._balances.setter(id).setter(from).sub_assign_unchecked(value);
+
+            if to != Address::ZERO {
+                self._balances
+                    .setter(id)
+                    .setter(to)
+                    .add_assign_unchecked(value);
+            }
+        }
+
+        if ids.len() == 1 {
+            evm::log(TransferSingle {
+                operator,
+                from,
+                to,
+                id: ids[0],
+                value: values[0],
+            });
+        } else {
+            evm::log(TransferBatch { operator, from, to, ids, values });
+        }
+
+        Ok(())
+    }
 }
