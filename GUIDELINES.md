@@ -226,7 +226,7 @@ Also, you should have the cargo stylus tool:
 cargo install cargo-stylus
 ```
 
-Since most of the e2e tests using koba for deploying contracts, you need to install solidity compiler v0.8.21, like
+Since most of the e2e tests use [koba](https://github.com/OpenZeppelin/koba) for deploying contracts, you need to install the solidity compiler (`v0.8.21`). You can do so, following these steps:
 this:
 
 ```shell
