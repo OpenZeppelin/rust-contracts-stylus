@@ -235,7 +235,7 @@ sudo mv solc-static-linux /usr/bin/solc
 sudo chmod a+x /usr/bin/solc
 ```
 
-To run e2e tests, you need to have a local nitro test node set up.
+To run e2e tests, you need to have a local nitro test node up and running.
 Run the following command and wait till script exit successfully:
 
 ```shell
