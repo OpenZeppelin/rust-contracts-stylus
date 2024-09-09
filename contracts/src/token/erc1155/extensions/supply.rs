@@ -10,7 +10,3 @@
 //!
 //! CAUTION: This extension should not be added in an upgrade to an already
 //! deployed contract.
-use alloy_sol_types::sol;
-use stylus_proc::sol_storage;
-
-sol_storage! {}
