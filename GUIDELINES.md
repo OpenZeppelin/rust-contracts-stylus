@@ -227,12 +227,7 @@ cargo install cargo-stylus
 ```
 
 Since most of the e2e tests use [koba](https://github.com/OpenZeppelin/koba) for deploying contracts, you need to
-install the solidity compiler (`v0.8.21`). You can do so, following these steps:
-this:
-
-```shell
-npm install -g solc@0.8.21
-```
+[install](https://docs.soliditylang.org/en/latest/installing-solidity.html#) the solidity compiler (`v0.8.24`).
 
 To run e2e tests, you need to have a local nitro test node up and running.
 Run the following command and wait till script exit successfully:
