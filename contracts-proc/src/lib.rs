@@ -1,3 +1,5 @@
+// TODO#q: add crate documentation.
+
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use syn::parse::Parse;
@@ -15,6 +17,7 @@ macro_rules! error {
 
 mod interface;
 
+/// Computes interface id as an associated constant for the trait.
 #[proc_macro_attribute]
 pub fn interface(attr: TokenStream, input: TokenStream) -> TokenStream {
     interface::interface(attr, input)

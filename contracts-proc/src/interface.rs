@@ -9,8 +9,8 @@ use syn::{
     parse_macro_input, FnArg, ItemTrait, LitStr, Result, Token, TraitItem,
 };
 
-/// TODO#q: description
-pub fn interface(_attr: TokenStream, input: TokenStream) -> TokenStream {
+/// Computes interface id as an associated constant for the trait.
+pub(crate) fn interface(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemTrait);
     let mut output = quote! {};
 
