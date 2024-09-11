@@ -8,7 +8,7 @@ use openzeppelin_stylus::{
     access::ownable::Ownable,
     token::erc20::{Erc20, IErc20},
 };
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
     #[entrypoint]
@@ -20,7 +20,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20, Ownable)]
 impl OwnableExample {
     pub fn transfer(

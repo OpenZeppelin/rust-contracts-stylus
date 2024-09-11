@@ -11,7 +11,7 @@ use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    stylus_proc::{external, sol_storage},
+    stylus_proc::{public, sol_storage},
 };
 
 pub mod extensions;
@@ -240,7 +240,7 @@ pub trait IErc20 {
     ) -> Result<bool, Self::Error>;
 }
 
-#[external]
+#[public]
 impl IErc20 for Erc20 {
     type Error = Error;
 

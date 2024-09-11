@@ -110,7 +110,7 @@ pub trait IEip712 {
     ///
     /// * `&self` - Read access to the contract's state.
     fn domain_separator_v4(&self) -> B256 {
-        let encoded = DomainSeparatorTuple::encode(&(
+        let encoded = DomainSeparatorTuple::abi_encode(&(
             TYPE_HASH,
             Self::HASHED_NAME,
             Self::HASHED_VERSION,

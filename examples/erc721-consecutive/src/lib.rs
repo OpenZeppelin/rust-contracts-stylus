@@ -15,7 +15,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc721Consecutive)]
 impl Erc721ConsecutiveExample {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {

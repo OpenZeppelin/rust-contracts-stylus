@@ -2,7 +2,7 @@
 
 use alloc::string::String;
 
-use stylus_proc::{external, sol_storage};
+use stylus_proc::{public, sol_storage};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
@@ -59,7 +59,7 @@ pub trait IErc20Metadata {
 // FIXME: Apply multi-level inheritance to export Metadata's functions.
 // With the current version of SDK it is not possible.
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
-#[external]
+#[public]
 impl IErc20Metadata for Erc20Metadata {
     fn name(&self) -> String {
         self._metadata.name()

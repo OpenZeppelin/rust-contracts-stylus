@@ -7,7 +7,7 @@
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage, SolidityError};
+use stylus_proc::{public, sol_storage, SolidityError};
 
 sol! {
     /// Indicates an error related to the operation that failed
@@ -43,7 +43,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 impl Capped {
     /// Returns the cap on the token's total supply.
     pub fn cap(&self) -> U256 {
