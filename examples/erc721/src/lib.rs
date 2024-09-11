@@ -5,12 +5,9 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
-    token::{
-        erc20::{Erc20, IErc20},
-        erc721::{
-            extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
-            Erc721, IErc721,
-        },
+    token::erc721::{
+        extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
+        Erc721, IErc721,
     },
     utils::Pausable,
 };

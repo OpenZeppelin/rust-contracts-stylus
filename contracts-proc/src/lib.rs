@@ -2,7 +2,6 @@
 
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use syn::parse::Parse;
 
 /// Shorthand to print nice errors.
 macro_rules! error {

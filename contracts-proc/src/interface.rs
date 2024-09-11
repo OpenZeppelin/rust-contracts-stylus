@@ -3,7 +3,7 @@ use std::mem;
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input, FnArg, ItemTrait, LitStr, Result, Token, TraitItem,
