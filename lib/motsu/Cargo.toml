@@ -12,7 +12,7 @@ const-hex.workspace = true
 once_cell.workspace = true
 tiny-keccak.workspace = true
 stylus-sdk.workspace = true
-motsu-proc = "0.1.0"
+motsu-proc.workspace = true
 
 [lints]
 workspace = true

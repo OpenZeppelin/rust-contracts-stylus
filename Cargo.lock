@@ -2417,7 +2417,7 @@ name = "motsu"
 version = "0.1.0-rc"
 dependencies = [
  "const-hex",
- "motsu-proc 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "motsu-proc",
  "once_cell",
  "stylus-sdk",
  "tiny-keccak",
@@ -2434,17 +2434,6 @@ dependencies = [
  "quote",
  "stylus-proc",
  "stylus-sdk",
- "syn 2.0.68",
-]
-
-[[package]]
-name = "motsu-proc"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0785317ee15f9a1bc5d761da9d0d1dadd92225cd5a88eed0ec37c54a277fac44"
-dependencies = [
- "proc-macro2",
- "quote",
  "syn 2.0.68",
 ]
 

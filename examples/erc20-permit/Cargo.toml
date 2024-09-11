@@ -7,7 +7,7 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts" }
+openzeppelin-stylus.workspace = true
 alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
@@ -17,7 +17,7 @@ mini-alloc.workspace = true
 alloy.workspace = true
 eyre.workspace = true
 tokio.workspace = true
-e2e = { path = "../../lib/e2e" }
+e2e.workspace = true
 
 [features]
 e2e = []

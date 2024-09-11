@@ -7,7 +7,7 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-openzeppelin-crypto = { path = "../../lib/crypto" }
+openzeppelin-crypto.workspace = true
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true

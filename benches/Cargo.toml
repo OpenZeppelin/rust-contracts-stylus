@@ -7,12 +7,12 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-openzeppelin-stylus = { path = "../contracts" }
+openzeppelin-stylus.workspace = true
 alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 alloy.workspace = true
 tokio.workspace = true
 eyre.workspace = true
 koba.workspace = true
-e2e = { path = "../lib/e2e" }
+e2e.workspace = true
 serde = "1.0.203"
 keccak-const = "0.2.0"
