@@ -5,14 +5,14 @@ edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
-version = "0.1.0"
+version = "0.1.0-rc"
 
 [dependencies]
 const-hex.workspace = true
 once_cell.workspace = true
 tiny-keccak.workspace = true
 stylus-sdk.workspace = true
-motsu-proc = { path = "../motsu-proc" }
+motsu-proc = "0.1.0"
 
 [lints]
 workspace = true
