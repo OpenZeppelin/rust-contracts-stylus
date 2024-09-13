@@ -1,6 +1,6 @@
 //! ERC-1155 token with storage based token URI management.
 //!
-//! Inspired by the {ERC721URIStorage} extension
+//! Inspired by the [contracts::token::erc721::extensions::Erc721UriStorage]
 use alloc::string::String;
 
 use alloy_primitives::U256;
@@ -10,13 +10,13 @@ use stylus_sdk::evm;
 
 sol! {
 
-    /// Emitted when the URI for token type `id` changes to `value`, if it is a non-programmatic URI.
+    /// Emitted when the URI for token type `token_id` changes to `value`, if it is a non-programmatic URI.
     ///
-    /// If an {URI} event was emitted for `id`, the standard
+    /// If an [`URI`] event was emitted for `token_id`, the standard
     /// https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions[guarantees] that `value` will equal the value
     /// returned by {IERC1155MetadataURI-uri}.
     #[allow(missing_docs)]
-    event URI(string value, uint256 indexed id);
+    event URI(string value, uint256 indexed token_id);
 }
 
 sol_storage! {
@@ -30,13 +30,13 @@ sol_storage! {
 }
 
 impl Erc1155UriStorage {
-    /// Sets `tokenURI` as the tokenURI of `tokenId`.
+    /// Sets `token_uri` as the `_token_uris` of `token_id`.
     pub fn _set_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
-        evm::log(URI { value: self.uri(token_id), id: token_id });
+        evm::log(URI { value: self.uri(token_id), token_id });
     }
 
-    /// Sets `baseURI` as the `_baseURI` for all tokens
+    /// Sets `base_uri` as the `_base_uri` for all tokens
     pub fn _set_base_uri(&mut self, base_uri: String) {
         self._base_uri.set_str(base_uri);
     }

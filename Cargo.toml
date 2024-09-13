@@ -11,13 +11,14 @@ members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc1155",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
-  "benches", "examples/erc1155",
+  "benches",
 ]
 default-members = [
   "contracts",
@@ -30,6 +31,7 @@ default-members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc1155",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",

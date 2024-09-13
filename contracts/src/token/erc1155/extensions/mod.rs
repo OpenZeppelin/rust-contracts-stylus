@@ -2,3 +2,5 @@
 pub mod burnable;
 pub mod supply;
 pub mod uri_storage;
+
+pub use burnable::IErc1155Burnable;

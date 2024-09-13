@@ -25,7 +25,7 @@ sol! {
         uint256 value
     );
 
-    /// Equivalent to multiple {TransferSingle} events, where `operator`.
+    /// Equivalent to multiple [`TransferSingle`] events, where `operator`.
     /// `from` and `to` are the same for all transfers.
     #[allow(missing_docs)]
     event TransferBatch(
@@ -43,7 +43,7 @@ sol! {
 
     /// Emitted when the URI for token type `token_id` changes to `value`, if it is a non-programmatic URI.
     ///
-    /// If an {URI} event was emitted for `token_id`, the [standard]
+    /// If an [`URI`] event was emitted for `token_id`, the [standard]
     /// (https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions[guarantees]) that `value` will equal the value
     /// returned by [`IERC1155MetadataURI-uri`].
     #[allow(missing_docs)]
@@ -171,7 +171,7 @@ sol_interface! {
         ) external returns (bytes4);
 
         /// Handles the receipt of a multiple ERC-1155 token types. This function
-        /// is called at the end of a `safeBatchTransferFrom` after the balances have
+        /// is called at the end of a [`Erc1155::safe_batch_transfer_from`] after the balances have
         /// been updated.
         ///
         /// NOTE: To accept the transfer(s), this must return
@@ -212,10 +212,10 @@ unsafe impl TopLevelStorage for Erc1155 {}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 pub trait IErc1155 {
-    /// The error type associated to this ERC-721 trait implementation.
+    /// The error type associated to this ERC-1155 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// Returns the number of tokens in ``owner``'s account.
+    /// Returns the value of tokens of token type `token_id` owned by `account`.
     ///
     /// # Arguments
     ///
@@ -227,7 +227,10 @@ pub trait IErc1155 {
         token_id: U256,
     ) -> Result<U256, Self::Error>;
 
-    /// xref:ROOT:erc1155.adoc#batch-operations[Batched] version of {balanceOf}.
+    /// Refer to:
+    /// https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-balanceOfBatch-address---uint256---
+    /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
+    /// version of [`Erc1155::balance_of`].
     ///
     /// # Arguments
     ///
@@ -238,6 +241,11 @@ pub trait IErc1155 {
     /// Requirements:
     ///
     /// * - `accounts` and `token_ids` must have the same length.
+    ///
+    /// # Errors
+    ///
+    /// * If the length of `accounts` is not equal to the length of `token_ids`,
+    ///   then the error [`Error::InvalidArrayLength`] is returned.
     fn balance_of_batch(
         &self,
         accounts: Vec<Address>,
@@ -273,7 +281,7 @@ pub trait IErc1155 {
         approved: bool,
     ) -> Result<(), Self::Error>;
 
-    /// Returns true if `operator` is approved to transfer ``account``'s
+    /// Returns true if `operator` is approved to transfer `account`'s
     /// tokens.
     ///
     /// # Arguments
@@ -305,8 +313,6 @@ pub trait IErc1155 {
     /// [`Error::MissingApprovalForAll`] is returned.
     /// If the caller does not have the right to approve, then the error
     /// [`Error::MissingApprovalForAll`] is returned.
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
     /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
@@ -315,7 +321,7 @@ pub trait IErc1155 {
     /// *
     /// * - `to` cannot be the zero address.
     /// * - If the caller is not `from`, it must have been approved to spend
-    ///   ``from``'s tokens via [`Self::set_approval_for_all`].
+    ///   ``from``'s tokens via [`IErc1155::set_approval_for_all`].
     /// * - `from` must have a balance of tokens of type `token_id` of at least
     ///   `value` amount.
     /// * - If `to` refers to a smart contract, it must implement
@@ -330,8 +336,10 @@ pub trait IErc1155 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// xref:ROOT:erc1155.adoc#batch-operations[Batched] version of
-    /// [`Self::safe_transfer_from`].
+    /// Refer to:
+    /// https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-safeBatchTransferFrom-address-address-uint256---uint256---bytes-
+    /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
+    /// version of [`IErc1155::safe_transfer_from`].
     ///
     /// WARNING: This function can potentially allow a reentrancy attack when
     /// transferring tokens to an untrusted contract, when invoking
@@ -378,17 +386,18 @@ impl IErc1155 for Erc1155 {
     ) -> Result<Vec<U256>, Self::Error> {
         if accounts.len() != token_ids.len() {
             return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
-                ids_length: Uint::<256, 4>::from(token_ids.len()),
-                values_length: Uint::<256, 4>::from(accounts.len()),
+                ids_length: uint!(token_ids.len()),
+                values_length: uint!(accounts.len()),
             }));
         }
 
-        let mut balances = Vec::with_capacity(accounts.len());
-        for (i, &account) in accounts.iter().enumerate() {
-            let token_id = token_ids[i];
-            let balance = self._balances.get(token_id).get(account);
-            balances.push(balance);
-        }
+        let mut balances = accounts
+            .iter()
+            .zip(token_ids.iter())
+            .map(|(&account, &token_id)| {
+                self._balances.get(token_id).get(account)
+            })
+            .collect();
         Ok(balances)
     }
 
@@ -439,7 +448,7 @@ impl Erc1155 {
     ///   acceptance magic value.
     /// * - `token_ids` and `values` must have the same length.
     ///
-    /// /// # Errors
+    /// # Errors
     ///
     /// If length of `token_ids` is not equal to length of `values`, then the
     /// error [`Error::InvalidArrayLength`] is returned.
@@ -462,14 +471,13 @@ impl Erc1155 {
     ) -> Result<(), Error> {
         if token_ids.len() != values.len() {
             return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
-                ids_length: Uint::<256, 4>::from(token_ids.len()),
-                values_length: Uint::<256, 4>::from(values.len()),
+                ids_length: uint!(token_ids.len()),
+                values_length: uint!(values.len()),
             }));
         }
 
         let operator = msg::sender();
-        for (i, &token_id) in token_ids.iter().enumerate() {
-            let value = values[i];
+        token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
             let from_balance = self._balances.get(token_id).get(from);
             if from_balance < value {
                 return Err(Error::InsufficientBalance(
@@ -486,13 +494,14 @@ impl Erc1155 {
                 .setter(from)
                 .sub_assign_unchecked(value);
 
-            if to != Address::ZERO {
+            if !to.is_zero() {
                 self._balances
                     .setter(token_id)
                     .setter(to)
-                    .add_assign_unchecked(value);
+                    .checked_add(value)
+                    .expect("should not exceed `U256::MAX` for `_balances`");
             }
-        }
+        });
 
         if token_ids.len() == 1 {
             evm::log(TransferSingle {
@@ -536,7 +545,7 @@ impl Erc1155 {
         data: Bytes,
     ) -> Result<(), Error> {
         self._update(from, to, token_ids.clone(), values.clone())?;
-        if to != Address::ZERO {
+        if !to.is_zero() {
             let operator = msg::sender();
             if token_ids.len() == 1 {
                 let token_id = token_ids[0];
