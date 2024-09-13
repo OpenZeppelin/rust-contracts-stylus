@@ -12,7 +12,7 @@
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage, SolidityError};
+use stylus_proc::{public, sol_storage, SolidityError};
 
 use crate::token::{erc721, erc721::IErc721};
 
@@ -114,7 +114,7 @@ pub trait IErc721Enumerable {
     fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
 }
 
-#[external]
+#[public]
 impl IErc721Enumerable for Erc721Enumerable {
     type Error = Error;
 

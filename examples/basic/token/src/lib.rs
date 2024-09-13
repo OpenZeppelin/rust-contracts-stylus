@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{extensions::Erc20Metadata, Erc20};
-use stylus_sdk::prelude::{entrypoint, external, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
     #[entrypoint]
@@ -17,7 +17,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc20Example {
     pub fn mint(
