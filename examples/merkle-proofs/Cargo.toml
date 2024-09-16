@@ -4,7 +4,7 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 publish = false
-version = "0.1.0-rc"
+version.workspace = true
 
 [dependencies]
 openzeppelin-crypto.workspace = true
