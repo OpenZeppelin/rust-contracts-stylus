@@ -17,15 +17,15 @@ do
       HAS_DETACH=true
       shift
       ;;
-    -down|--shutdown)
-      docker container stop "$(docker container ls -q --filter name=nitro-testnode)"
+    -q|--quit)
+      docker container stop $(docker container ls -q --filter name=nitro-testnode)
       exit 0
       ;;
     *)
       echo "OPTIONS:"
       echo "-i|--init:         clone repo and init nitro test node"
       echo "-d|--detach:       setup nitro test node in detached mode"
-      echo "-down|--shutdown:  shutdown nitro test node docker containers"
+      echo "-q|--quit:         shutdown nitro test node docker containers"
       exit 0
       ;;
   esac
@@ -46,7 +46,7 @@ then
   # `release` branch.
   git checkout 8cb6b84e31909157d431e7e4af9fb83799443e00 || exit
 
-  ./test-node.bash --no-run --init --no-tokenbridge || exit
+  ./test-node.bash --no-run --init || exit
 fi
 
 
