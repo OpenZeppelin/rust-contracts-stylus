@@ -8,6 +8,7 @@ version = "0.0.0"
 
 [dependencies]
 openzeppelin-stylus = { path = "../../../contracts" }
+motsu = { git = "https://github.com/openZeppelin/rust-contracts-stylus/", branch = "build/motsu-version" }
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true

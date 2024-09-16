@@ -29,3 +29,15 @@ impl Erc20Example {
         Ok(())
     }
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::U256;
+
+    use super::Erc20Example;
+
+    #[motsu::test]
+    fn dummy_test(_contract: Erc20Example) {
+        assert_eq!(U256::ZERO, U256::ZERO)
+    }
+}

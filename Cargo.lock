@@ -798,6 +798,7 @@ version = "0.0.0"
 dependencies = [
  "alloy-primitives",
  "mini-alloc",
+ "motsu 0.1.0-rc2",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
@@ -2414,10 +2415,22 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 
 [[package]]
 name = "motsu"
+version = "0.1.0-rc2"
+source = "git+https://github.com/openZeppelin/rust-contracts-stylus/?branch=build/motsu-version#0581b0a391990e1a5aaac7a70b05e2bd35932442"
+dependencies = [
+ "const-hex",
+ "motsu-proc 0.1.0 (git+https://github.com/openZeppelin/rust-contracts-stylus/?branch=build/motsu-version)",
+ "once_cell",
+ "stylus-sdk",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "motsu"
 version = "0.1.0"
 dependencies = [
  "const-hex",
- "motsu-proc",
+ "motsu-proc 0.1.0",
  "once_cell",
  "stylus-sdk",
  "tiny-keccak",
@@ -2429,11 +2442,21 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "motsu",
+ "motsu 0.1.0",
  "proc-macro2",
  "quote",
  "stylus-proc",
  "stylus-sdk",
+ "syn 2.0.68",
+]
+
+[[package]]
+name = "motsu-proc"
+version = "0.1.0"
+source = "git+https://github.com/openZeppelin/rust-contracts-stylus/?branch=build/motsu-version#0581b0a391990e1a5aaac7a70b05e2bd35932442"
+dependencies = [
+ "proc-macro2",
+ "quote",
  "syn 2.0.68",
 ]
 
@@ -2590,7 +2613,7 @@ dependencies = [
  "alloy-sol-types",
  "keccak-const",
  "mini-alloc",
- "motsu",
+ "motsu 0.1.0",
  "rand",
  "stylus-proc",
  "stylus-sdk",
