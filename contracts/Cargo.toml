@@ -6,7 +6,7 @@ edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
-version = "0.1.0-rc"
+version.workspace = true
 
 [dependencies]
 alloy-primitives.workspace = true
