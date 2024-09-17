@@ -14,6 +14,7 @@ use stylus_sdk::{
 };
 
 pub mod extensions;
+pub mod utils;
 
 sol! {
     /// Emitted when `value` tokens are moved from one account (`from`) to
