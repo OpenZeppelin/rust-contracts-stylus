@@ -67,7 +67,8 @@ impl SafeErc20 for Erc20 {
         let tx_data = (to, value);
         let data = TransferType::abi_encode_params(&tx_data);
         // Get function selector
-        let hashed_function_selector = function_selector!("transfer");
+        let hashed_function_selector =
+            function_selector!("transfer", Address, U256);
         // Combine function selector and input data (use abi_packed way)
         let calldata = [&hashed_function_selector[..4], &data].concat();
         self.call_optional_return(calldata)
