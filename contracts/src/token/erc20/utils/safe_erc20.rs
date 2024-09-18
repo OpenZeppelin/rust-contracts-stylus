@@ -10,7 +10,7 @@ use alloy_sol_types::{
 };
 use stylus_proc::SolidityError;
 use stylus_sdk::{
-    call::{call, Call},
+    call::{call, Call, RawCall},
     contract::address,
     evm::gas_left,
     function_selector, msg,
@@ -89,12 +89,11 @@ impl Erc20 {
     ///
     /// This is a variant of {_callOptionalReturnBool} that reverts if call fails to meet the requirements.
     fn call_optional_return(&mut self, data: Vec<u8>) -> Result<(), Error> {
-        let result = call(
-            Call::new_in(self).value(msg::value()).gas(gas_left()),
-            address(),
-            data.as_slice(),
-        );
-        match result {
+        match RawCall::new()
+            .gas(gas_left())
+            .limit_return_data(0, 32)
+            .call(address(), data.as_slice())
+        {
             Ok(data) => {
                 if data.is_empty() && !Address::has_code(&address()) {
                     return Err(Error::SafeErc20FailedOperation(
