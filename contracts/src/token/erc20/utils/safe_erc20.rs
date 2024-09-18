@@ -12,6 +12,7 @@ use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::{call, Call},
     contract::address,
+    evm::gas_left,
     function_selector, msg,
     storage::TopLevelStorage,
     types::AddressVM,
@@ -89,13 +90,13 @@ impl Erc20 {
     /// This is a variant of {_callOptionalReturnBool} that reverts if call fails to meet the requirements.
     fn call_optional_return(&mut self, data: Vec<u8>) -> Result<(), Error> {
         let result = call(
-            Call::new_in(self).value(msg::value()),
+            Call::new_in(self).value(msg::value()).gas(gas_left()),
             address(),
             data.as_slice(),
         );
         match result {
             Ok(data) => {
-                if data.is_empty() && Address::has_code(&address()) {
+                if data.is_empty() && !Address::has_code(&address()) {
                     return Err(Error::SafeErc20FailedOperation(
                         SafeErc20FailedOperation { token: address() },
                     ));
