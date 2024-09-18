@@ -5,7 +5,7 @@ edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
-version = "0.1.0-rc2"
+version = "0.1.0"
 
 [dependencies]
 const-hex.workspace = true
