@@ -10,12 +10,8 @@ use alloy_sol_types::{
 };
 use stylus_proc::SolidityError;
 use stylus_sdk::{
-    call::{call, Call, RawCall},
-    contract::address,
-    evm::gas_left,
-    function_selector, msg,
-    storage::TopLevelStorage,
-    types::AddressVM,
+    call::RawCall, contract::address, evm::gas_left, function_selector,
+    storage::TopLevelStorage, types::AddressVM,
 };
 
 sol! {
