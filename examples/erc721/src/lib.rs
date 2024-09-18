@@ -9,7 +9,7 @@ use openzeppelin_stylus::{
         extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
         Erc721, IErc721,
     },
-    utils::Pausable,
+    utils::{introspection::erc165::IErc165, Pausable},
 };
 use stylus_sdk::{
     abi::Bytes,
@@ -152,11 +152,8 @@ impl Erc721Example {
         Ok(())
     }
 
-    fn supports_interface(
-        interface_id: FixedBytes<4>,
-    ) -> Result<bool, Vec<u8>> {
-        let interface_id = u32::from_be_bytes(*interface_id);
-        let supported = interface_id == <Erc721 as IErc721>::INTERFACE_ID;
-        Ok(supported)
+    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc721::supports_interface(interface_id)
+            || Enumerable::supports_interface(interface_id)
     }
 }

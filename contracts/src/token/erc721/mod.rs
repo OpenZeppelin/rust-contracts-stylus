@@ -2,7 +2,7 @@
 use alloc::vec;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
-use openzeppelin_stylus_proc::interface;
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     alloy_sol_types::sol,
@@ -11,7 +11,10 @@ use stylus_sdk::{
     prelude::*,
 };
 
-use crate::utils::math::storage::{AddAssignUnchecked, SubAssignUnchecked};
+use crate::utils::{
+    introspection::erc165::{Erc165, IErc165},
+    math::storage::{AddAssignUnchecked, SubAssignUnchecked},
+};
 
 pub mod extensions;
 
@@ -199,7 +202,7 @@ sol_storage! {
 unsafe impl TopLevelStorage for Erc721 {}
 
 /// Required interface of an [`Erc721`] compliant contract.
-#[interface]
+#[interface_id]
 pub trait IErc721 {
     /// The error type associated to this ERC-721 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -549,6 +552,13 @@ impl IErc721 for Erc721 {
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
         self._operator_approvals.get(owner).get(operator)
+    }
+}
+
+impl IErc165 for Erc721 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -1156,6 +1166,7 @@ mod tests {
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
         Erc721, Error, IErc721,
     };
+    use crate::utils::introspection::erc165::IErc165;
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
     const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
@@ -2494,7 +2505,11 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721 as IErc721>::INTERFACE_ID;
-        let expected = 0x_80ac58cd;
+        let expected = 0x80ac58cd;
+        assert_eq!(actual, expected);
+
+        let actual = <Erc721 as IErc165>::INTERFACE_ID;
+        let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
     }
 }

@@ -9,7 +9,7 @@ use openzeppelin_stylus::{
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
         Erc20, IErc20,
     },
-    utils::Pausable,
+    utils::{introspection::erc165::IErc165, Pausable},
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
@@ -106,11 +106,8 @@ impl Erc20Example {
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
     }
 
-    fn supports_interface(
-        interface_id: FixedBytes<4>,
-    ) -> Result<bool, Vec<u8>> {
-        let interface_id = u32::from_be_bytes(*interface_id);
-        let supported = interface_id == <Erc20 as IErc20>::INTERFACE_ID;
-        Ok(supported)
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc20::supports_interface(interface_id)
+            || Erc20Metadata::supports_interface(interface_id)
     }
 }

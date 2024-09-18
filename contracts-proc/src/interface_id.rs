@@ -10,7 +10,10 @@ use syn::{
 };
 
 /// Computes interface id as an associated constant for the trait.
-pub(crate) fn interface(_attr: TokenStream, input: TokenStream) -> TokenStream {
+pub(crate) fn interface_id(
+    _attr: &TokenStream,
+    input: TokenStream,
+) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemTrait);
     let mut output = quote! {};
 
@@ -48,7 +51,7 @@ pub(crate) fn interface(_attr: TokenStream, input: TokenStream) -> TokenStream {
         let arg_types: Vec<_> = args
             .filter_map(|arg| match arg {
                 FnArg::Typed(t) => Some(t.ty.clone()),
-                _ => None,
+                FnArg::Receiver(_) => None,
             })
             .collect();
 

@@ -2,9 +2,14 @@
 
 use alloc::string::String;
 
+use alloy_primitives::FixedBytes;
+use openzeppelin_stylus_proc::interface_id;
 use stylus_proc::{public, sol_storage};
 
-use crate::utils::Metadata;
+use crate::{
+    token::erc20::extensions::IErc20Metadata,
+    utils::{introspection::erc165::IErc165, Metadata},
+};
 
 sol_storage! {
     /// Metadata of an [`crate::token::erc721::Erc721`] token.
@@ -17,6 +22,7 @@ sol_storage! {
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
+#[interface_id]
 pub trait IErc721Metadata {
     /// Returns the token collection name.
     ///
@@ -56,5 +62,12 @@ impl IErc721Metadata for Erc721Metadata {
 
     fn base_uri(&self) -> String {
         self._base_uri.get_string()
+    }
+}
+
+impl IErc165 for Erc721Metadata {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721Metadata>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
     }
 }

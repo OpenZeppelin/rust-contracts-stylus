@@ -2109,10 +2109,17 @@ async fn support_interface(alice: Account) -> eyre::Result<()> {
 
     assert_eq!(supports_interface, false);
 
-    let valid_interface_id: u32 = 0x_80ac58cd;
+    let erc721_interface_id: u32 = 0x80ac58cd;
     let Erc721::supportsInterfaceReturn {
         supportsInterface: supports_interface,
-    } = contract.supportsInterface(valid_interface_id.into()).call().await?;
+    } = contract.supportsInterface(erc721_interface_id.into()).call().await?;
+
+    assert_eq!(supports_interface, true);
+
+    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let Erc721::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
 
     assert_eq!(supports_interface, true);
 

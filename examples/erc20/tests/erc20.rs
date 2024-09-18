@@ -1350,17 +1350,24 @@ async fn support_interface(alice: Account) -> Result<()> {
         .await?
         .address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
-    let invalid_interface_id: u32 = 0x_ffffffff;
+    let invalid_interface_id: u32 = 0xffffffff;
     let Erc20::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
 
     assert_eq!(supports_interface, false);
 
-    let valid_interface_id: u32 = 0x_36372b07;
+    let erc20_interface_id: u32 = 0x36372b07;
     let Erc20::supportsInterfaceReturn {
         supportsInterface: supports_interface,
-    } = contract.supportsInterface(valid_interface_id.into()).call().await?;
+    } = contract.supportsInterface(erc20_interface_id.into()).call().await?;
+
+    assert_eq!(supports_interface, true);
+
+    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let Erc20::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
 
     assert_eq!(supports_interface, true);
 
