@@ -58,6 +58,15 @@ pub trait SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error>;
+
+    /// Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
+    /// calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.
+    fn safe_transfer_from(
+        &self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Self::Error>;
 }
 
 impl SafeErc20 for Erc20 {
@@ -69,6 +78,23 @@ impl SafeErc20 for Erc20 {
         let data = TransferType::abi_encode_params(&tx_data);
         let hashed_function_selector =
             function_selector!("transfer", Address, U256);
+        // Combine function selector and input data (use abi_packed way)
+        let calldata = [&hashed_function_selector[..4], &data].concat();
+
+        self.call_optional_return(calldata)
+    }
+
+    fn safe_transfer_from(
+        &self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Self::Error> {
+        type TransferType = (SOLAddress, SOLAddress, Uint<256>);
+        let tx_data = (from, to, value);
+        let data = TransferType::abi_encode_params(&tx_data);
+        let hashed_function_selector =
+            function_selector!("transferFrom", Address, Address, U256);
         // Combine function selector and input data (use abi_packed way)
         let calldata = [&hashed_function_selector[..4], &data].concat();
 
@@ -115,7 +141,7 @@ impl Erc20 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address};
+    use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
     use super::SafeErc20;
@@ -149,5 +175,28 @@ mod tests {
         assert_eq!(initial_sender_balance - one, contract.balance_of(sender));
         assert_eq!(initial_alice_balance + one, contract.balance_of(alice));
         assert_eq!(initial_supply, contract.total_supply());
+    }
+
+    #[motsu::test]
+    fn transfers_from(contract: Erc20) {
+        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let sender = msg::sender();
+
+        // Alice approves `msg::sender`.
+        let one = uint!(1_U256);
+        contract._allowances.setter(alice).setter(sender).set(one);
+
+        // Mint some tokens for Alice.
+        let two = uint!(2_U256);
+        contract._update(Address::ZERO, alice, two).unwrap();
+        assert_eq!(two, contract.balance_of(alice));
+
+        let result = contract.safe_transfer_from(alice, bob, one);
+        assert!(result.is_ok());
+
+        assert_eq!(one, contract.balance_of(alice));
+        assert_eq!(one, contract.balance_of(bob));
+        assert_eq!(U256::ZERO, contract.allowance(alice, sender));
     }
 }
