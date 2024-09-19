@@ -146,8 +146,8 @@ mod tests {
         assert!(result.is_ok());
 
         // Check updated balance & supply.
-        assert_eq!(initial_sender_balance - one, contract.balance_of(alice));
-        assert_eq!(initial_alice_balance + one, contract.balance_of(sender));
+        assert_eq!(initial_sender_balance - one, contract.balance_of(sender));
+        assert_eq!(initial_alice_balance + one, contract.balance_of(alice));
         assert_eq!(initial_supply, contract.total_supply());
     }
 }
