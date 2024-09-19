@@ -2,7 +2,7 @@
 
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{sol_interface, sol_storage, SolidityError};
+use stylus_proc::{public, sol_interface, sol_storage, SolidityError};
 use stylus_sdk::{
     call::Call, contract::address, storage::TopLevelStorage, types::AddressVM,
 };
@@ -58,6 +58,7 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for SafeErc20 {}
 
+#[public]
 impl SafeErc20 {
     /// Transfer `value` amount of `token` from the calling contract to `to`. If
     /// `token` returns no value, non-reverting calls are assumed to be
