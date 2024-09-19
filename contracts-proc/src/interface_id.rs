@@ -11,7 +11,7 @@ use syn::{
     parse_macro_input, FnArg, ItemTrait, LitStr, Result, Token, TraitItem,
 };
 
-/// Computes interface id as an associated constant for the trait.
+/// Computes an interface id as an associated constant for the trait.
 pub(crate) fn interface_id(
     _attr: &TokenStream,
     input: TokenStream,
