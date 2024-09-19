@@ -1,3 +1,5 @@
+//! Defines the `#[interface_id]` procedural macro.
+
 use std::mem;
 
 use convert_case::{Case, Casing};
