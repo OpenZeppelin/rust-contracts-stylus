@@ -10,11 +10,8 @@ use alloy_sol_types::{
 };
 use stylus_proc::SolidityError;
 use stylus_sdk::{
-    call::{call, Call},
-    contract::address,
-    function_selector,
-    storage::TopLevelStorage,
-    types::AddressVM,
+    call::RawCall, contract::address, function_selector,
+    storage::TopLevelStorage, types::AddressVM,
 };
 
 use crate::token::{erc20, erc20::Erc20};
@@ -95,7 +92,9 @@ impl Erc20 {
     /// This is a variant of {_callOptionalReturnBool} that reverts if call
     /// fails to meet the requirements.
     fn call_optional_return(&self, data: Vec<u8>) -> Result<(), Error> {
-        match call(Call::new(), todo!("get address of token"), data.as_slice())
+        match RawCall::new()
+            .limit_return_data(0, 32)
+            .call(todo!("get address of token"), data.as_slice())
         {
             Ok(data) => {
                 if data.is_empty() && !Address::has_code(&address()) {
