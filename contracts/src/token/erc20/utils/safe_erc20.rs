@@ -1,20 +1,13 @@
 //! Wrappers around ERC-20 operations that throw on failure.
 
-use alloc::vec::Vec;
-
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{
-    sol,
-    sol_data::{Address as SOLAddress, Uint},
-    SolType,
-};
-use stylus_proc::SolidityError;
+use alloy_sol_types::sol;
+use stylus_proc::{sol_interface, sol_storage, SolidityError};
 use stylus_sdk::{
-    call::RawCall, contract::address, function_selector,
-    storage::TopLevelStorage, types::AddressVM,
+    call::Call, contract::address, storage::TopLevelStorage, types::AddressVM,
 };
 
-use crate::token::{erc20, erc20::Erc20};
+use crate::token::erc20;
 
 sol! {
     /// An operation with an ERC-20 token failed.
@@ -39,90 +32,46 @@ pub enum Error {
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
-/// Wrappers around ERC-20 operations that throw on failure (when the token
-/// contract returns false). Tokens that return no value (and instead revert or
-/// throw on failure) are also supported, non-reverting calls are assumed to be
-/// successful.
-/// To use this library you can add a `using SafeERC20 for IERC20;` statement to
-/// your contract, which allows you to call the safe operations as
-/// `token.safeTransfer(...)`, etc.
-pub trait SafeErc20 {
-    /// The error type associated to this Safe ERC-20 trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
-    /// Transfer `value` amount of `token` from the calling contract to `to`. If
-    /// `token` returns no value, non-reverting calls are assumed to be
-    /// successful.
-    fn safe_transfer(
-        &self,
-        to: Address,
-        value: U256,
-    ) -> Result<(), Self::Error>;
-
-    /// Transfer `value` amount of `token` from `from` to `to`, spending the
-    /// approval given by `from` to the calling contract. If `token` returns
-    /// no value, non-reverting calls are assumed to be successful.
-    fn safe_transfer_from(
-        &self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), Self::Error>;
+sol_interface! {
+    /// Interface of the ERC-20 standard as defined in the ERC.
+    interface IERC20 {
+        /// Moves a `value` amount of tokens from the caller's account to `to`.
+        /// Returns a boolean value indicating whether the operation succeeded.
+        /// Emits a {Transfer} event.
+        function transfer(address to, uint256 value) external returns (bytes4);
+    }
 }
 
-impl SafeErc20 for Erc20 {
-    type Error = Error;
-
-    fn safe_transfer(&self, to: Address, value: U256) -> Result<(), Error> {
-        type TransferType = (SOLAddress, Uint<256>);
-        let tx_data = (to, value);
-        let data = TransferType::abi_encode_params(&tx_data);
-        let hashed_function_selector =
-            function_selector!("transfer", Address, U256);
-        // Combine function selector and input data (use abi_packed way)
-        let calldata = [&hashed_function_selector[..4], &data].concat();
-
-        self.call_optional_return(calldata)
-    }
-
-    fn safe_transfer_from(
-        &self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), Self::Error> {
-        type TransferType = (SOLAddress, SOLAddress, Uint<256>);
-        let tx_data = (from, to, value);
-        let data = TransferType::abi_encode_params(&tx_data);
-        let hashed_function_selector =
-            function_selector!("transferFrom", Address, Address, U256);
-        // Combine function selector and input data (use abi_packed way)
-        let calldata = [&hashed_function_selector[..4], &data].concat();
-
-        self.call_optional_return(calldata)
-    }
+sol_storage! {
+    /// Wrappers around ERC-20 operations that throw on failure (when the token
+    /// contract returns false). Tokens that return no value (and instead revert or
+    /// throw on failure) are also supported, non-reverting calls are assumed to be
+    /// successful.
+    /// To use this library you can add a `using SafeERC20 for IERC20;` statement to
+    /// your contract, which allows you to call the safe operations as
+    /// `token.safeTransfer(...)`, etc.
+    pub struct SafeErc20 {}
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc20 {}
+unsafe impl TopLevelStorage for SafeErc20 {}
 
-impl Erc20 {
-    /// Imitates a Solidity high-level call (i.e. a regular function call to a
-    /// contract), relaxing the requirement on the return value: the return
-    /// value is optional (but if data is returned, it must not be false).
-    /// @param token The token targeted by the call.
-    /// @param data The call data (encoded using abi.encode or one of its
-    /// variants).
-    ///
-    /// This is a variant of {_callOptionalReturnBool} that reverts if call
-    /// fails to meet the requirements.
-    fn call_optional_return(&self, data: Vec<u8>) -> Result<(), Error> {
-        match RawCall::new()
-            .limit_return_data(0, 32)
-            .call(todo!("get address of token"), data.as_slice())
-        {
+impl SafeErc20 {
+    /// Transfer `value` amount of `token` from the calling contract to `to`. If
+    /// `token` returns no value, non-reverting calls are assumed to be
+    /// successful.
+    pub fn safe_transfer(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        let erc20 = IERC20::new(token);
+        let call = Call::new_in(self);
+
+        match erc20.transfer(call, to, value) {
             Ok(data) => {
                 if data.is_empty() && !Address::has_code(&address()) {
                     return Err(Error::SafeErc20FailedOperation(
@@ -136,68 +85,7 @@ impl Erc20 {
                 ))
             }
         }
+
         Ok(())
-    }
-}
-
-#[cfg(all(test, feature = "std"))]
-mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::msg;
-
-    use super::SafeErc20;
-    use crate::token::erc20::{Erc20, IErc20};
-
-    #[motsu::test]
-    fn safe_transfer(contract: Erc20) {
-        let sender = msg::sender();
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let one = uint!(1_U256);
-
-        // Initialize state for the test case:
-        // Msg sender's & Alice's balance as `one`.
-        contract
-            ._update(Address::ZERO, sender, one)
-            .expect("should mint tokens");
-        contract
-            ._update(Address::ZERO, alice, one)
-            .expect("should mint tokens");
-
-        // Store initial balance & supply.
-        let initial_sender_balance = contract.balance_of(sender);
-        let initial_alice_balance = contract.balance_of(alice);
-        let initial_supply = contract.total_supply();
-
-        // Transfer action should work.
-        let result = contract.safe_transfer(alice, one);
-        assert!(result.is_ok());
-
-        // Check updated balance & supply.
-        assert_eq!(initial_sender_balance - one, contract.balance_of(sender));
-        assert_eq!(initial_alice_balance + one, contract.balance_of(alice));
-        assert_eq!(initial_supply, contract.total_supply());
-    }
-
-    #[motsu::test]
-    fn transfers_from(contract: Erc20) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-        let sender = msg::sender();
-
-        // Alice approves `msg::sender`.
-        let one = uint!(1_U256);
-        contract._allowances.setter(alice).setter(sender).set(one);
-
-        // Mint some tokens for Alice.
-        let two = uint!(2_U256);
-        contract._update(Address::ZERO, alice, two).unwrap();
-        assert_eq!(two, contract.balance_of(alice));
-
-        let result = contract.safe_transfer_from(alice, bob, one);
-        assert!(result.is_ok());
-
-        assert_eq!(one, contract.balance_of(alice));
-        assert_eq!(one, contract.balance_of(bob));
-        assert_eq!(U256::ZERO, contract.allowance(alice, sender));
     }
 }
