@@ -19,26 +19,26 @@ macro_rules! error {
 
 mod interface_id;
 
-/// Computes interface id as an associated constant `INTERFACE_ID` for the
-/// trait that describes contract's abi.
-/// Selector collision should be handled with macro `#[selector(name =
-/// "actualSolidityMethodName")]` on top of the method.
+/// Computes interface id as an associated constant `INTERFACE_ID` for the trait
+/// that describes contract's abi.
+/// Selector collision should be handled with
+/// macro `#[selector(name = "actualSolidityMethodName")]` on top of the method.
 ///
 /// # Examples
 ///
 /// ```rust,ignore
 /// #[interface_id]
 /// pub trait IErc721 {
-///     fn balance_of(&self, owner: Address) -> Result<U256, alloc::vec::Vec<u8>>;
+///     fn balance_of(&self, owner: Address) -> Result<U256, Vec<u8>>;
 ///
-///     fn owner_of(&self, token_id: U256) -> Result<Address, alloc::vec::Vec<u8>>;
+///     fn owner_of(&self, token_id: U256) -> Result<Address, Vec<u8>>;
 ///
 ///     fn safe_transfer_from(
 ///         &mut self,
 ///         from: Address,
 ///         to: Address,
 ///         token_id: U256,
-///     ) -> Result<(), alloc::vec::Vec<u8>>;
+///     ) -> Result<(), Vec<u8>>;
 ///
 ///     #[selector(name = "safeTransferFrom")]
 ///     fn safe_transfer_from_with_data(
@@ -47,7 +47,7 @@ mod interface_id;
 ///         to: Address,
 ///         token_id: U256,
 ///         data: Bytes,
-///     ) -> Result<(), alloc::vec::Vec<u8>>;
+///     ) -> Result<(), Vec<u8>>;
 /// }
 ///
 /// impl IErc165 for Erc721 {
