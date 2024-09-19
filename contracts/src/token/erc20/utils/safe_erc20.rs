@@ -57,7 +57,7 @@ pub trait SafeErc20 {
     /// `token` returns no value, non-reverting calls are assumed to be
     /// successful.
     fn safe_transfer(
-        &mut self,
+        &self,
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error>;
@@ -66,7 +66,7 @@ pub trait SafeErc20 {
 impl SafeErc20 for Erc20 {
     type Error = Error;
 
-    fn safe_transfer(&mut self, to: Address, value: U256) -> Result<(), Error> {
+    fn safe_transfer(&self, to: Address, value: U256) -> Result<(), Error> {
         type TransferType = (SOLAddress, Uint<256>);
         let tx_data = (to, value);
         let data = TransferType::abi_encode_params(&tx_data);
@@ -94,12 +94,9 @@ impl Erc20 {
     ///
     /// This is a variant of {_callOptionalReturnBool} that reverts if call
     /// fails to meet the requirements.
-    fn call_optional_return(&mut self, data: Vec<u8>) -> Result<(), Error> {
-        match call(
-            Call::new_in(self),
-            todo!("get address of token"),
-            data.as_slice(),
-        ) {
+    fn call_optional_return(&self, data: Vec<u8>) -> Result<(), Error> {
+        match call(Call::new(), todo!("get address of token"), data.as_slice())
+        {
             Ok(data) => {
                 if data.is_empty() && !Address::has_code(&address()) {
                     return Err(Error::SafeErc20FailedOperation(
