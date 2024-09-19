@@ -40,8 +40,8 @@ async fn safe_transfers(alice: Account, bob: Account) -> eyre::Result<()> {
     let ERC20Mock::balanceOfReturn { _0: bob_balance } =
         erc20_alice.balanceOf(bob_addr).call().await?;
 
-    assert_eq!(initial_alice_balance - value, alice_balance);
     assert_eq!(initial_bob_balance + value, bob_balance);
+    assert_eq!(initial_alice_balance - value, alice_balance);
 
     Ok(())
 }

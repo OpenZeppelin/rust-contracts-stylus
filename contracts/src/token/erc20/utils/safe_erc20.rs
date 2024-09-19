@@ -36,7 +36,7 @@ sol_interface! {
         /// Moves a `value` amount of tokens from the caller's account to `to`.
         /// Returns a boolean value indicating whether the operation succeeded.
         /// Emits a {Transfer} event.
-        function transfer(address to, uint256 value) external returns (bytes4);
+        function transfer(address to, uint256 amount) external returns (bool);
     }
 }
 
@@ -72,7 +72,7 @@ impl SafeErc20 {
 
         match erc20.transfer(call, to, value) {
             Ok(data) => {
-                if data.is_empty() && !Address::has_code(&token) {
+                if data && !Address::has_code(&token) {
                     return Err(Error::SafeErc20FailedOperation(
                         SafeErc20FailedOperation { token },
                     ));
