@@ -1,77 +1,51 @@
 #![cfg(feature = "e2e")]
 
 use alloy::primitives::uint;
-use e2e::{watch, Account, ReceiptExt};
+use alloy_primitives::U256;
+use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
 
-use abi::SafeErc20Example;
+use abi::SafeErc20;
 use mock::{erc20, erc20::ERC20Mock};
 
 mod abi;
 mod mock;
 
 #[e2e::test]
-async fn constructs(alice: Account) -> eyre::Result<()> {
+async fn safe_transfers(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
-    let contract = SafeErc20Example::new(contract_addr, &alice.wallet);
+    let contract_alice = SafeErc20::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let balance = uint!(10_U256);
+    let value = uint!(1_U256);
 
     let erc20_address = erc20::deploy(&alice.wallet).await?;
-    let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
-    let one = uint!(1_U256);
-    let _ = watch!(erc20.mint(alice.address(), one));
-    let balance = erc20.balanceOf(alice.address()).call().await?._0;
-    assert_eq!(balance, one);
+    let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+
+    let _ = watch!(erc20_alice.mint(alice_addr, balance));
+
+    let ERC20Mock::balanceOfReturn { _0: initial_alice_balance } =
+        erc20_alice.balanceOf(alice_addr).call().await?;
+    let ERC20Mock::balanceOfReturn { _0: initial_bob_balance } =
+        erc20_alice.balanceOf(bob_addr).call().await?;
+    assert_eq!(initial_alice_balance, balance);
+    assert_eq!(initial_bob_balance, U256::ZERO);
+
+    let err =
+        send!(contract_alice.safeTransfer(erc20_address, bob_addr, value))
+            .expect_err("should err I guess");
+    assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
+        token: erc20_address,
+    }));
+
+    let ERC20Mock::balanceOfReturn { _0: alice_balance } =
+        erc20_alice.balanceOf(alice_addr).call().await?;
+    let ERC20Mock::balanceOfReturn { _0: bob_balance } =
+        erc20_alice.balanceOf(bob_addr).call().await?;
+
+    assert_eq!(initial_alice_balance - value, alice_balance);
+    assert_eq!(initial_bob_balance + value, bob_balance);
 
     Ok(())
 }
-
-// #[e2e::test]
-// async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
-//     let receivers = vec![alice.address(), bob.address()];
-//     let amounts = vec![1000_u128, 1000_u128];
-//     // Deploy and mint batches of 1000 tokens to Alice and Bob.
-//     let receipt = alice
-//         .as_deployer()
-//         .with_constructor(ctr(receivers, amounts))
-//         .deploy()
-//         .await?;
-//     let contract = Erc721::new(receipt.address()?, &alice.wallet);
-
-//     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
-
-//     // Transfer first consecutive token from Alice to Bob.
-//     let _ = watch!(contract.transferFrom(
-//         alice.address(),
-//         bob.address(),
-//         first_consecutive_token_id
-//     ))?;
-
-//     let Erc721::ownerOfReturn { ownerOf } =
-//         contract.ownerOf(first_consecutive_token_id).call().await?;
-//     assert_eq!(ownerOf, bob.address());
-
-//     // Check that balances changed.
-//     let Erc721::balanceOfReturn { balance: alice_balance } =
-//         contract.balanceOf(alice.address()).call().await?;
-//     assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
-//     let Erc721::balanceOfReturn { balance: bob_balance } =
-//         contract.balanceOf(bob.address()).call().await?;
-//     assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
-
-//     // Test non-consecutive mint.
-//     let token_id = random_token_id();
-//     let _ = watch!(contract.mint(alice.address(), token_id))?;
-//     let Erc721::balanceOfReturn { balance: alice_balance } =
-//         contract.balanceOf(alice.address()).call().await?;
-//     assert_eq!(alice_balance, uint!(1000_U256));
-
-//     // Test transfer of the token that wasn't minted consecutive.
-//     let _ = watch!(contract.transferFrom(
-//         alice.address(),
-//         bob.address(),
-//         token_id
-//     ))?;
-//     let Erc721::balanceOfReturn { balance: alice_balance } =
-//         contract.balanceOf(alice.address()).call().await?;
-//     assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
-//     Ok(())
-// }

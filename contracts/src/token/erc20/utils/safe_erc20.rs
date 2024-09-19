@@ -74,15 +74,15 @@ impl SafeErc20 {
 
         match erc20.transfer(call, to, value) {
             Ok(data) => {
-                if data.is_empty() && !Address::has_code(&address()) {
+                if data.is_empty() && !Address::has_code(&token) {
                     return Err(Error::SafeErc20FailedOperation(
-                        SafeErc20FailedOperation { token: address() },
+                        SafeErc20FailedOperation { token },
                     ));
                 }
             }
             Err(_) => {
                 return Err(Error::SafeErc20FailedOperation(
-                    SafeErc20FailedOperation { token: address() },
+                    SafeErc20FailedOperation { token },
                 ))
             }
         }
