@@ -2,7 +2,7 @@
 
 use alloy::primitives::uint;
 use alloy_primitives::U256;
-use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
+use e2e::{receipt, watch, Account, ReceiptExt};
 
 use abi::SafeErc20;
 use mock::{erc20, erc20::ERC20Mock};
@@ -32,12 +32,8 @@ async fn safe_transfers(alice: Account, bob: Account) -> eyre::Result<()> {
     assert_eq!(initial_alice_balance, balance);
     assert_eq!(initial_bob_balance, U256::ZERO);
 
-    let err =
-        send!(contract_alice.safeTransfer(erc20_address, bob_addr, value))
-            .expect_err("should err I guess");
-    assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
-        token: erc20_address,
-    }));
+    let _ =
+        receipt!(contract_alice.safeTransfer(erc20_address, bob_addr, value))?;
 
     let ERC20Mock::balanceOfReturn { _0: alice_balance } =
         erc20_alice.balanceOf(alice_addr).call().await?;
