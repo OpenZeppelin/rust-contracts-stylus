@@ -17,7 +17,6 @@ pub(crate) fn interface_id(
     input: TokenStream,
 ) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemTrait);
-    let mut output = quote! {};
 
     let mut selectors = Vec::new();
     for item in &mut input.items {
@@ -68,7 +67,7 @@ pub(crate) fn interface_id(
     let (_impl_generics, ty_generics, where_clause) =
         input.generics.split_for_impl();
 
-    output.extend(quote! {
+    quote! {
         #(#attrs)*
         #vis trait #name #ty_generics #where_clause {
             #(#trait_items)*
@@ -78,9 +77,8 @@ pub(crate) fn interface_id(
                 #(#selectors)^*
             };
         }
-    });
-
-    output.into()
+    }
+    .into()
 }
 
 struct SelectorArgs {
