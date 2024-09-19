@@ -59,8 +59,9 @@ pub trait SafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error>;
 
-    /// Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
-    /// calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.
+    /// Transfer `value` amount of `token` from `from` to `to`, spending the
+    /// approval given by `from` to the calling contract. If `token` returns
+    /// no value, non-reverting calls are assumed to be successful.
     fn safe_transfer_from(
         &self,
         from: Address,
