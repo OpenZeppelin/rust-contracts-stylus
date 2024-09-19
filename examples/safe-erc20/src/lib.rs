@@ -17,7 +17,7 @@ sol_storage! {
 #[inherit(SafeErc20)]
 impl SafeErc20Example {
     // Add token minting feature.
-    pub fn safe_transfer_token(
+    pub fn safe_transfer(
         &mut self,
         token: Address,
         to: Address,

@@ -3,9 +3,7 @@
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::{public, sol_interface, sol_storage, SolidityError};
-use stylus_sdk::{
-    call::Call, contract::address, storage::TopLevelStorage, types::AddressVM,
-};
+use stylus_sdk::{call::Call, storage::TopLevelStorage, types::AddressVM};
 
 use crate::token::erc20;
 
