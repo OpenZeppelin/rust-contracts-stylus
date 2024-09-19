@@ -2,7 +2,7 @@
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{keccak256, Address, U256};
+use alloy_primitives::{Address, U256};
 use alloy_sol_types::{
     sol,
     sol_data::{Address as SOLAddress, Uint},
@@ -10,8 +10,8 @@ use alloy_sol_types::{
 };
 use stylus_proc::SolidityError;
 use stylus_sdk::{
-    call::RawCall, contract::address, storage::TopLevelStorage,
-    types::AddressVM,
+    call::RawCall, contract::address, function_selector,
+    storage::TopLevelStorage, types::AddressVM,
 };
 
 use crate::token::{erc20, erc20::Erc20};
@@ -67,7 +67,8 @@ impl SafeErc20 for Erc20 {
         type TransferType = (SOLAddress, Uint<256>);
         let tx_data = (to, value);
         let data = TransferType::abi_encode_params(&tx_data);
-        let hashed_function_selector = keccak256("transfer".as_bytes());
+        let hashed_function_selector =
+            function_selector!("transfer", Address, U256);
         // Combine function selector and input data (use abi_packed way)
         let calldata = [&hashed_function_selector[..4], &data].concat();
 
