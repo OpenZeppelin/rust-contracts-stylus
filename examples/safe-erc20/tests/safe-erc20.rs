@@ -2,7 +2,7 @@
 
 use alloy::primitives::uint;
 use alloy_primitives::U256;
-use e2e::{receipt, watch, Account, ReceiptExt};
+use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
 
 use abi::SafeErc20;
 use mock::{erc20, erc20::ERC20Mock};
@@ -42,6 +42,50 @@ async fn safe_transfers(alice: Account, bob: Account) -> eyre::Result<()> {
 
     assert_eq!(initial_bob_balance + value, bob_balance);
     assert_eq!(initial_alice_balance - value, alice_balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_transfer_rejects_with_eoa_as_token(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_alice = SafeErc20::new(contract_addr, &alice.wallet);
+    let alice_addr = bob.address();
+    let bob_addr = bob.address();
+
+    let value = uint!(1_U256);
+
+    let err = send!(contract_alice.safeTransfer(alice_addr, bob_addr, value))
+        .expect_err("should not be able to invoke 'transfer' on EOA");
+    assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
+        token: bob_addr
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_transfer_rejects_insufficient_balance(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_alice = SafeErc20::new(contract_addr, &alice.wallet);
+    let bob_addr = bob.address();
+
+    let value = uint!(1_U256);
+
+    let erc20_address = erc20::deploy(&alice.wallet).await?;
+
+    let err =
+        send!(contract_alice.safeTransfer(erc20_address, bob_addr, value))
+            .expect_err("should not transfer when insufficient balance");
+    assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
+        token: erc20_address
+    }));
 
     Ok(())
 }
