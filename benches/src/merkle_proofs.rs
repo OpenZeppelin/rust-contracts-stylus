@@ -65,7 +65,9 @@ pub async fn bench() -> eyre::Result<Report> {
         .wallet(EthereumWallet::from(alice.signer.clone()))
         .on_http(alice.url().parse()?);
 
-    let contract_addr = deploy(&alice).await;
+    let contract_addr = deploy(&alice).await?;
+    crate::cache_contract(&alice, contract_addr)?;
+
     let contract = Verifier::new(contract_addr, &alice_wallet);
 
     let proof = PROOF.map(|h| h.into()).to_vec();
@@ -81,6 +83,6 @@ pub async fn bench() -> eyre::Result<Report> {
     Ok(report)
 }
 
-async fn deploy(account: &Account) -> Address {
+async fn deploy(account: &Account) -> eyre::Result<Address> {
     crate::deploy(account, "merkle-proofs", None).await
 }

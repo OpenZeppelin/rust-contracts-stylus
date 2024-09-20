@@ -1,5 +1,3 @@
-use std::process::Command;
-
 use alloy::{
     network::{AnyNetwork, EthereumWallet},
     primitives::Address,
@@ -10,7 +8,6 @@ use alloy::{
 };
 use alloy_primitives::U256;
 use e2e::{receipt, Account};
-use eyre::{bail, Context};
 
 use crate::report::Report;
 
@@ -59,22 +56,11 @@ pub async fn bench() -> eyre::Result<Report> {
         .wallet(EthereumWallet::from(bob.signer.clone()))
         .on_http(bob.url().parse()?);
 
-    let contract_addr = deploy(&alice).await;
+    let contract_addr = deploy(&alice).await?;
+    crate::cache_contract(&alice, contract_addr)?;
+
     let contract = Erc20::new(contract_addr, &alice_wallet);
     let contract_bob = Erc20::new(contract_addr, &bob_wallet);
-
-    // Add contract to cache manager. We leave the bid unspecified, since we
-    // should have plenty of room to fill the cache (can hold ~4k contracts).
-    let status = Command::new("cargo-stylus")
-        .arg("cache")
-        .args(&["-e", &std::env::var("RPC_URL")?])
-        .args(&["--private-key", &format!("0x{}", alice.pk())])
-        .args(&["--address", &format!("{}", contract_addr)])
-        .status()
-        .with_context(|| "`cargo stylus cache` failed:")?;
-    if !status.success() {
-        bail!("Failed to cache Erc20 contract");
-    }
 
     // IMPORTANT: Order matters!
     use Erc20::*;
@@ -100,7 +86,7 @@ pub async fn bench() -> eyre::Result<Report> {
     Ok(report)
 }
 
-async fn deploy(account: &Account) -> Address {
+async fn deploy(account: &Account) -> eyre::Result<Address> {
     let args = Erc20Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),

@@ -13,6 +13,7 @@ async fn main() -> eyre::Result<()> {
     let report =
         reports.into_iter().fold(Reports::default(), Reports::merge_with);
 
+    println!();
     println!("{report}");
 
     Ok(())

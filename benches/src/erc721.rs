@@ -41,7 +41,9 @@ pub async fn bench() -> eyre::Result<Report> {
     let bob = Account::new().await?;
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice).await;
+    let contract_addr = deploy(&alice).await?;
+    crate::cache_contract(&alice, contract_addr)?;
+
     let contract = Erc721::new(contract_addr, &alice_wallet);
 
     let token_1 = uint!(1_U256);
@@ -75,7 +77,7 @@ pub async fn bench() -> eyre::Result<Report> {
     Ok(report)
 }
 
-async fn deploy(account: &Account) -> Address {
+async fn deploy(account: &Account) -> eyre::Result<Address> {
     let args = Erc721Example::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
     crate::deploy(account, "erc721", Some(args)).await

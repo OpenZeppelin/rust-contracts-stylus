@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use alloy::{
     primitives::Address,
     rpc::types::{
@@ -7,6 +9,7 @@ use alloy::{
 };
 use alloy_primitives::U128;
 use e2e::{Account, ReceiptExt};
+use eyre::WrapErr;
 use koba::config::{Deploy, Generate, PrivateKey};
 use serde::Deserialize;
 
@@ -15,8 +18,6 @@ pub mod erc20;
 pub mod erc721;
 pub mod merkle_proofs;
 pub mod report;
-
-const RPC_URL: &str = "http://localhost:8547";
 
 #[derive(Debug, Deserialize)]
 struct ArbOtherFields {
@@ -41,9 +42,9 @@ async fn deploy(
     account: &Account,
     contract_name: &str,
     args: Option<String>,
-) -> Address {
+) -> eyre::Result<Address> {
     let manifest_dir =
-        std::env::current_dir().expect("should get current dir from env");
+        std::env::current_dir().context("should get current dir from env")?;
 
     let wasm_path = manifest_dir
         .join("target")
@@ -53,7 +54,7 @@ async fn deploy(
     let sol_path = args.as_ref().map(|_| {
         manifest_dir
             .join("examples")
-            .join(format!("{}", contract_name))
+            .join(contract_name)
             .join("src")
             .join("constructor.sol")
     });
@@ -72,14 +73,36 @@ async fn deploy(
             keystore_path: None,
             keystore_password_path: None,
         },
-        endpoint: RPC_URL.to_owned(),
+        endpoint: env("RPC_URL")?,
         deploy_only: false,
         quiet: true,
     };
 
-    koba::deploy(&config)
-        .await
-        .expect("should deploy contract")
-        .address()
-        .expect("should return contract address")
+    koba::deploy(&config).await.expect("should deploy contract").address()
+}
+
+/// Try to cache a contract on the stylus network.
+/// Already cached contracts won't be cached, and this function will not return
+/// an error.
+/// Output will be forwarded to the child process.
+fn cache_contract(
+    account: &Account,
+    contract_addr: Address,
+) -> eyre::Result<()> {
+    // We don't need a status code.
+    // Since it is not zero when the contract is already cached.
+    let _ = Command::new("cargo")
+        .args(["stylus", "cache", "bid"])
+        .args(["-e", &env("RPC_URL")?])
+        .args(["--private-key", &format!("0x{}", account.pk())])
+        .arg(contract_addr.to_string())
+        .arg("0")
+        .status()
+        .context("failed to execute `cargo stylus cache bid` command")?;
+    Ok(())
+}
+
+/// Load the `name` environment variable.
+fn env(name: &str) -> eyre::Result<String> {
+    std::env::var(name).wrap_err(format!("failed to load {name}"))
 }

@@ -18,7 +18,14 @@ do
       shift
       ;;
     -q|--quit)
-      docker container stop $(docker container ls -q --filter name=nitro-testnode)
+      NITRO_CONTAINERS=$(docker container ls -q --filter name=nitro-testnode)
+
+      if [ -z "$NITRO_CONTAINERS" ]; then
+          echo "No running nitro test node containers"
+      else
+          docker container stop $NITRO_CONTAINERS || exit
+      fi
+
       exit 0
       ;;
     *)
@@ -41,10 +48,10 @@ then
   cd "$MYDIR" || exit
   cd ..
 
-  git clone --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
+  git clone -b release --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
   cd ./nitro-testnode || exit
-  # `release` branch.
-  git checkout 8cb6b84e31909157d431e7e4af9fb83799443e00 || exit
+  git pull origin release --recurse-submodules
+  git checkout 43861b001713db3526b74e905e383d41e9272760 || exit
 
   ./test-node.bash --no-run --init || exit
 fi

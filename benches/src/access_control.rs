@@ -50,7 +50,9 @@ pub async fn bench() -> eyre::Result<Report> {
         .wallet(EthereumWallet::from(bob.signer.clone()))
         .on_http(bob.url().parse()?);
 
-    let contract_addr = deploy(&alice).await;
+    let contract_addr = deploy(&alice).await?;
+    crate::cache_contract(&alice, contract_addr)?;
+
     let contract = AccessControl::new(contract_addr, &alice_wallet);
     let contract_bob = AccessControl::new(contract_addr, &bob_wallet);
 
@@ -72,7 +74,7 @@ pub async fn bench() -> eyre::Result<Report> {
     Ok(report)
 }
 
-async fn deploy(account: &Account) -> Address {
+async fn deploy(account: &Account) -> eyre::Result<Address> {
     let args = AccessControl::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
     crate::deploy(account, "access-control", Some(args)).await
