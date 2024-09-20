@@ -2098,6 +2098,10 @@ async fn token_by_index_after_burn_and_some_mints(
     Ok(())
 }
 
+// ============================================================================
+// Integration Tests: ERC-165 Support Interface
+// ============================================================================
+
 #[e2e::test]
 async fn support_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;

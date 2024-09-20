@@ -1341,6 +1341,10 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
+// ============================================================================
+// Integration Tests: ERC-165 Support Interface
+// ============================================================================
+
 #[e2e::test]
 async fn support_interface(alice: Account) -> Result<()> {
     let contract_addr = alice
