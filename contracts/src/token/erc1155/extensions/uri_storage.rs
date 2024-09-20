@@ -5,7 +5,7 @@ use alloc::string::String;
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage};
+use stylus_proc::{public, sol_storage};
 use stylus_sdk::evm;
 
 sol! {
@@ -42,7 +42,7 @@ impl Erc1155UriStorage {
     }
 }
 
-#[external]
+#[public]
 impl Erc1155UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
