@@ -2599,7 +2599,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus-proc"
-version = "0.1.0"
+version = "0.1.0-rc"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
