@@ -2,7 +2,7 @@
 
 use alloc::string::String;
 
-use stylus_proc::{external, sol_storage};
+use stylus_proc::{public, sol_storage};
 
 use crate::utils::Metadata;
 
@@ -44,7 +44,7 @@ pub trait IErc721Metadata {
 // FIXME: Apply multi-level inheritance to export Metadata's functions.
 // With the current version of SDK it is not possible.
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
-#[external]
+#[public]
 impl IErc721Metadata for Erc721Metadata {
     fn name(&self) -> String {
         self._metadata.name()

@@ -16,7 +16,10 @@ use crate::utils::math::alloy::Math;
 
 // TODO: add generics for other pairs (uint32, uint224) and (uint48, uint208).
 // Logic should be the same.
+/// [`Uint`] for 96 bits.
 pub type U96 = Uint<96, 2>;
+
+/// [`Uint`] for 160 bits.
 pub type U160 = Uint<160, 3>;
 
 sol! {

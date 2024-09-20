@@ -26,10 +26,8 @@ use alloc::vec;
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{external, sol_storage, SolidityError};
-use stylus_sdk::{
-    abi::Bytes, call::MethodError, evm, msg, prelude::TopLevelStorage,
-};
+use stylus_proc::{public, sol_storage, SolidityError};
+use stylus_sdk::{abi::Bytes, evm, msg, prelude::TopLevelStorage};
 
 use crate::{
     token::{
@@ -77,6 +75,7 @@ sol! {
     /// * `to_token_id` - Last token being transferred.
     /// * `from_address` - Address from which tokens will be transferred.
     /// * `to_address` - Address where the tokens will be transferred to.
+    #[allow(missing_docs)]
     event ConsecutiveTransfer(
         uint256 indexed from_token_id,
         uint256 to_token_id,
@@ -132,7 +131,7 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 
-#[external]
+#[public]
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
@@ -169,7 +168,7 @@ impl IErc721 for Erc721Consecutive {
             from,
             to,
             token_id,
-            &data,
+            data,
         )?)
     }
 
@@ -548,7 +547,7 @@ impl Erc721Consecutive {
             Address::ZERO,
             to,
             token_id,
-            &data,
+            data,
         )?)
     }
 
@@ -701,7 +700,7 @@ impl Erc721Consecutive {
             from,
             to,
             token_id,
-            &data,
+            data,
         )?)
     }
 
