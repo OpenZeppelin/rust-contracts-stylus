@@ -2306,7 +2306,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_internal_ransfers_to_invalid_receiver(
+    fn error_when_safe_transfer_internal_transfers_to_invalid_receiver(
         contract: Erc721,
     ) {
         let alice = msg::sender();
