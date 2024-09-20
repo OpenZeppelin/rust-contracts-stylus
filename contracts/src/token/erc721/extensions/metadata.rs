@@ -73,7 +73,7 @@ impl IErc165 for Erc721Metadata {
 mod tests {
     // use crate::token::erc721::extensions::{Erc721Metadata, IErc721Metadata};
 
-    // TODO#q: IErc721Metadata should be refactored to have same api as solidity
+    // TODO: IErc721Metadata should be refactored to have same api as solidity
     //  has:  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4764ea50750d8bda9096e833706beba86918b163/contracts/token/ERC721/extensions/IERC721Metadata.sol#L12
     // [motsu::test]
     // fn interface_id() {
