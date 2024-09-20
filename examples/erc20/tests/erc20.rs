@@ -1371,5 +1371,15 @@ async fn support_interface(alice: Account) -> Result<()> {
 
     assert_eq!(supports_interface, true);
 
+    let erc20_metadata_interface_id: u32 = 0xa219a025;
+    let Erc20::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract
+        .supportsInterface(erc20_metadata_interface_id.into())
+        .call()
+        .await?;
+
+    assert_eq!(supports_interface, true);
+
     Ok(())
 }

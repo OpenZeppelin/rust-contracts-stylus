@@ -559,4 +559,11 @@ mod tests {
             contract.token_of_owner_by_index(alice, U256::ZERO).unwrap_err();
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
+        let expected = 0x780e9d63;
+        assert_eq!(actual, expected);
+    }
 }

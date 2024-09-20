@@ -88,3 +88,15 @@ impl IErc165 for Erc20Metadata {
             == u32::from_be_bytes(*interface_id)
     }
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use crate::token::erc20::extensions::{Erc20Metadata, IErc20Metadata};
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
+        let expected = 0xa219a025;
+        assert_eq!(actual, expected);
+    }
+}

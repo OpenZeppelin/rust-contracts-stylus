@@ -44,12 +44,13 @@ pub(crate) fn interface_id(
             func.attrs.push(attr);
         }
 
-        let sol_name = override_name.unwrap_or_else(|| {
-            func.sig.ident.clone().to_string().to_case(Case::Camel)
-        });
+        let sol_name = override_name
+            .unwrap_or_else(|| func.sig.ident.to_string().to_case(Case::Camel));
 
-        let args = func.sig.inputs.iter();
-        let arg_types: Vec<_> = args
+        let arg_types: Vec<_> = func
+            .sig
+            .inputs
+            .iter()
             .filter_map(|arg| match arg {
                 FnArg::Typed(t) => Some(t.ty.clone()),
                 FnArg::Receiver(_) => None,

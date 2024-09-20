@@ -68,3 +68,15 @@ impl IErc165 for Erc721Metadata {
             == u32::from_be_bytes(*interface_id)
     }
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use crate::token::erc721::extensions::{Erc721Metadata, IErc721Metadata};
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
+        let expected = 0x5b5e139f;
+        assert_eq!(actual, expected);
+    }
+}
