@@ -2,7 +2,6 @@
 name = "motsu-proc"
 description = "Mostu's Procedural Macros"
 edition.workspace = true
-keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 version = "0.1.0"

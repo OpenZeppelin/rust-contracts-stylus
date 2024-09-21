@@ -2,7 +2,8 @@
 name = "motsu"
 description = "Unit Testing for Stylus"
 edition.workspace = true
-keywords.workspace = true
+categories = ["development-tools::testing", "cryptography::cryptocurrencies"]
+keywords = ["arbitrum", "ethereum", "stylus", "tests", "openzeppelin"]
 license.workspace = true
 repository.workspace = true
 version = "0.1.0"

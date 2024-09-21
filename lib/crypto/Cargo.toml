@@ -1,9 +1,9 @@
 [package]
 name = "openzeppelin-crypto"
 categories = ["cryptography", "algorithms", "no-std", "wasm"]
-description = "Cryptography Utilities"
+description = "Cryptographic Utilities"
 edition.workspace = true
-keywords.workspace = true
+keywords = ["crypto", "web3", "blockchain", "merkle"]
 license.workspace = true
 repository.workspace = true
 version.workspace = true
