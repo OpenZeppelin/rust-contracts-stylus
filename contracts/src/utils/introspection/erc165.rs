@@ -16,7 +16,7 @@ use openzeppelin_stylus_proc::interface_id;
 #[interface_id]
 pub trait IErc165 {
     /// Returns true if this contract implements the interface defined by
-    /// `interfaceId`. See the corresponding [ERC section]
+    /// `interface_id`. See the corresponding [ERC section]
     /// to learn more about how these ids are created.
     ///
     /// Method [`IErc165::supports_interface`] should be reexported with
