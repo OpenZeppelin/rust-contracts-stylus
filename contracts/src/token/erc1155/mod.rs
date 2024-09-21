@@ -1,5 +1,6 @@
 //! Implementation of the [`Erc1155`] token standard.
-use alloc::vec::Vec;
+// use alloc::{vec, vec::Vec};
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, Uint, U256};
 use stylus_sdk::{
@@ -45,7 +46,7 @@ sol! {
     ///
     /// If an [`URI`] event was emitted for `token_id`, the [standard]
     /// (https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions[guarantees]) that `value` will equal the value
-    /// returned by [`IERC1155MetadataURI-uri`].
+    /// returned by [`Erc1155UriStorage::uri`].
     #[allow(missing_docs)]
     event URI(string value, uint256 indexed token_id);
 }

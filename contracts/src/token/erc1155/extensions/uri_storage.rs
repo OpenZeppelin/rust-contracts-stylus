@@ -14,7 +14,7 @@ sol! {
     ///
     /// If an [`URI`] event was emitted for `token_id`, the standard
     /// https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions[guarantees] that `value` will equal the value
-    /// returned by {IERC1155MetadataURI-uri}.
+    /// returned by [`Self::uri`].
     #[allow(missing_docs)]
     event URI(string value, uint256 indexed token_id);
 }
@@ -24,21 +24,14 @@ sol_storage! {
     pub struct Erc1155UriStorage {
         /// Optional mapping for token URIs.
         mapping(uint256 => string) _token_uris;
-        /// Optional base URI
-        string _base_uri;
     }
 }
 
 impl Erc1155UriStorage {
     /// Sets `token_uri` as the `_token_uris` of `token_id`.
-    pub fn _set_uri(&mut self, token_id: U256, token_uri: String) {
+    pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(URI { value: self.uri(token_id), token_id });
-    }
-
-    /// Sets `base_uri` as the `_base_uri` for all tokens
-    pub fn _set_base_uri(&mut self, base_uri: String) {
-        self._base_uri.set_str(base_uri);
     }
 }
 
@@ -52,12 +45,41 @@ impl Erc1155UriStorage {
     /// * `token_id` - Id of a token.
     #[must_use]
     pub fn uri(&self, token_id: U256) -> String {
-        if !self._token_uris.getter(token_id).is_empty() {
-            let update_uri = self._base_uri.get_string()
-                + &self._token_uris.getter(token_id).get_string();
-            update_uri
-        } else {
-            todo!()
-        }
+        self._token_uris.getter(token_id).get_string()
+    }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::U256;
+    use stylus_sdk::contract;
+
+    use super::Erc1155UriStorage;
+
+    fn random_token_id() -> U256 {
+        let num: u32 = rand::random();
+        U256::from(num)
+    }
+
+    #[motsu::test]
+    fn test_get_uri(contract: Erc1155UriStorage) {
+        let token_id = random_token_id();
+
+        let token_uri = "https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155URIStorage".to_string();
+
+        contract._token_uris.setter(token_id).set_str(token_uri.clone());
+
+        assert_eq!(token_uri, contract.uri(token_id));
+    }
+
+    #[motsu::test]
+    fn test_set_uri(contract: Erc1155UriStorage) {
+        let token_id = random_token_id();
+
+        let token_uri = "https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155URIStorage".to_string();
+
+        contract._set_token_uri(token_id, token_uri.clone());
+
+        assert_eq!(token_uri, contract.uri(token_id));
     }
 }

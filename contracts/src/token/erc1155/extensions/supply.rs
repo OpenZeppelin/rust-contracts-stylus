@@ -10,6 +10,7 @@
 //!
 //! CAUTION: This extension should not be added in an upgrade to an already
 //! deployed contract.
+use alloc::vec::Vec;
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_proc::sol_storage;
