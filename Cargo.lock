@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "access-control-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -794,7 +794,7 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
 name = "basic-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy-primitives",
  "mini-alloc",
@@ -816,7 +816,7 @@ dependencies = [
 
 [[package]]
 name = "benches"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1262,7 +1262,7 @@ dependencies = [
 
 [[package]]
 name = "cryptography-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1522,7 +1522,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1537,7 +1537,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-permit-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1552,7 +1552,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-consecutive-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1569,7 +1569,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1585,7 +1585,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-metadata-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2368,7 +2368,7 @@ checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
 
 [[package]]
 name = "merkle-proofs-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
