@@ -24,56 +24,55 @@ pub(crate) fn interface_id(
             continue;
         };
 
-        let mut override_name = None;
+        let mut override_fn_name = None;
         for attr in mem::take(&mut func.attrs) {
-            let Some(ident) = attr.path().get_ident() else {
-                func.attrs.push(attr);
-                continue;
-            };
-            if *ident == "selector" {
-                if override_name.is_some() {
+            if attr.path().is_ident("selector") {
+                if override_fn_name.is_some() {
                     error!(attr.path(), "more than one selector attribute");
                 }
                 let args: SelectorArgs = match attr.parse_args() {
                     Ok(args) => args,
-                    Err(error) => error!(ident, "{}", error),
+                    Err(error) => error!(attr.path(), "{}", error),
                 };
-                override_name = Some(args.name);
-                continue;
+                override_fn_name = Some(args.name);
+            } else {
+                // Put back any other attributes.
+                func.attrs.push(attr);
             }
-            func.attrs.push(attr);
         }
 
-        let sol_name = override_name
-            .unwrap_or_else(|| func.sig.ident.to_string().to_case(Case::Camel));
+        let solidity_fn_name = override_fn_name.unwrap_or_else(|| {
+            let rust_fn_name = func.sig.ident.to_string();
+            rust_fn_name.to_case(Case::Camel)
+        });
 
-        let arg_types: Vec<_> = func
-            .sig
-            .inputs
-            .iter()
-            .filter_map(|arg| match arg {
-                FnArg::Typed(t) => Some(t.ty.clone()),
-                FnArg::Receiver(_) => None,
-            })
-            .collect();
+        let arg_types = func.sig.inputs.iter().filter_map(|arg| match arg {
+            FnArg::Typed(t) => Some(t.ty.clone()),
+            // Opt out any `self` arguments.
+            FnArg::Receiver(_) => None,
+        });
 
-        let selector = quote! { u32::from_be_bytes(stylus_sdk::function_selector!(#sol_name #(, #arg_types )*)) };
-        selectors.push(selector);
+        // Store selector expression from every function in the trait.
+        selectors.push(
+            quote! { u32::from_be_bytes(stylus_sdk::function_selector!(#solidity_fn_name #(, #arg_types )*)) }
+        );
     }
 
-    let name = input.ident.clone();
-    let vis = input.vis.clone();
-    let attrs = input.attrs.clone();
-    let trait_items = input.items.clone();
+    let name = input.ident;
+    let vis = input.vis;
+    let attrs = input.attrs;
+    let trait_items = input.items;
     let (_impl_generics, ty_generics, where_clause) =
         input.generics.split_for_impl();
 
+    // Keep the same trait with an additional associated constant
+    // `INTERFACE_ID`.
     quote! {
         #(#attrs)*
         #vis trait #name #ty_generics #where_clause {
             #(#trait_items)*
 
-            /// Solidity interface id associated with current trait.
+            #[doc = concat!("Solidity interface id associated with ", stringify!(#name), " trait.")]
             const INTERFACE_ID: u32 = {
                 #(#selectors)^*
             };
@@ -82,41 +81,21 @@ pub(crate) fn interface_id(
     .into()
 }
 
+/// Contains arguments of the `#[selector(..)]` attribute.
 struct SelectorArgs {
     name: String,
 }
 
 impl Parse for SelectorArgs {
     fn parse(input: ParseStream) -> Result<Self> {
-        let mut name = None;
+        let ident: Ident = input.parse()?;
 
-        if input.is_empty() {
-            error!(@input.span(), "missing id or text argument");
-        }
-
-        while !input.is_empty() {
-            let ident: Ident = input.parse()?;
+        if ident == "name" {
             let _: Token![=] = input.parse()?;
-
-            match ident.to_string().as_str() {
-                "name" => {
-                    let lit: LitStr = input.parse()?;
-                    if name.is_some() {
-                        error!(@lit, r#"only one "name" is allowed"#);
-                    }
-                    name = Some(lit.value());
-                }
-                _ => error!(@ident, "Unknown selector attribute"),
-            }
-
-            // allow a comma
-            let _: Result<Token![,]> = input.parse();
-        }
-
-        if let Some(name) = name {
-            Ok(Self { name })
+            let lit: LitStr = input.parse()?;
+            Ok(SelectorArgs { name: lit.value() })
         } else {
-            error!(@input.span(), r#""name" is required"#);
+            error!(@ident, "expected identifier 'name'")
         }
     }
 }

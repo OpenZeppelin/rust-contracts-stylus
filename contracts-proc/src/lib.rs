@@ -19,8 +19,8 @@ macro_rules! error {
 
 mod interface_id;
 
-/// Computes interface id as an associated constant `INTERFACE_ID` for the trait
-/// that describes contract's abi.
+/// Computes the interface id as an associated constant `INTERFACE_ID` for the
+/// trait that describes contract's abi.
 ///
 /// Selector collision should be handled with
 /// macro `#[selector(name = "actualSolidityMethodName")]` on top of the method.
