@@ -34,9 +34,20 @@ sol_interface! {
     /// Interface of the ERC-20 standard as defined in the ERC.
     interface IERC20 {
         /// Moves a `value` amount of tokens from the caller's account to `to`.
+        ///
         /// Returns a boolean value indicating whether the operation succeeded.
+        ///
         /// Emits a {Transfer} event.
         function transfer(address to, uint256 amount) external returns (bool);
+
+        /// Moves a `value` amount of tokens from `from` to `to` using the
+        /// allowance mechanism. `value` is then deducted from the caller's
+        /// allowance.
+        ///
+        /// Returns a boolean value indicating whether the operation succeeded.
+        ///
+        /// Emits a {Transfer} event.
+        function transferFrom(address from, address to, uint256 amount) external returns (bool);
     }
 }
 
@@ -71,6 +82,36 @@ impl SafeErc20 {
         let call = Call::new_in(self);
 
         match erc20.transfer(call, to, value) {
+            Ok(data) => {
+                if data && !Address::has_code(&token) {
+                    return Err(Error::SafeErc20FailedOperation(
+                        SafeErc20FailedOperation { token },
+                    ));
+                }
+            }
+            Err(_) => {
+                return Err(Error::SafeErc20FailedOperation(
+                    SafeErc20FailedOperation { token },
+                ))
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
+    /// calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.
+    pub fn safe_transfer_from(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        let erc20 = IERC20::new(token);
+        let call = Call::new_in(self);
+
+        match erc20.transfer_from(call, from, to, value) {
             Ok(data) => {
                 if data && !Address::has_code(&token) {
                     return Err(Error::SafeErc20FailedOperation(
