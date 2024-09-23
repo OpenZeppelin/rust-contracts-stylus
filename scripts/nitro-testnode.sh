@@ -21,7 +21,7 @@ do
       NITRO_CONTAINERS=$(docker container ls -q --filter name=nitro-testnode)
 
       if [ -z "$NITRO_CONTAINERS" ]; then
-          echo "No running nitro test node containers"
+          echo "No nitro-testnode containers running"
       else
           docker container stop $NITRO_CONTAINERS || exit
       fi
