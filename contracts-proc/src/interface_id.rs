@@ -73,6 +73,7 @@ pub(crate) fn interface_id(
             #(#trait_items)*
 
             #[doc = concat!("Solidity interface id associated with ", stringify!(#name), " trait.")]
+            #[doc = "Computed as a XOR of selectors for each function in the trait."]
             const INTERFACE_ID: u32 = {
                 #(#selectors)^*
             };
