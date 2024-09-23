@@ -1,8 +1,8 @@
 [package]
 name = "openzeppelin-stylus"
-categories = ["cryptography::cryptocurrencies", "no-std", "wasm"]
 description = "OpenZeppelin Contracts for Stylus"
 edition.workspace = true
+categories = ["cryptography::cryptocurrencies", "no-std", "wasm"]
 keywords = ["arbitrum", "ethereum", "stylus", "smart-contracts", "standards"]
 license.workspace = true
 repository.workspace = true
