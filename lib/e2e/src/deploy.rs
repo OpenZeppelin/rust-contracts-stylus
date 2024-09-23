@@ -1,6 +1,7 @@
+use std::path::Path;
+
 use alloy::{rpc::types::TransactionReceipt, sol_types::SolConstructor};
 use koba::config::Deploy;
-use std::path::Path;
 
 use crate::project::Crate;
 
