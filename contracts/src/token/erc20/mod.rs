@@ -6,11 +6,10 @@
 //! [`Erc20`] applications.
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    stylus_proc::{public, sol_storage},
+    stylus_proc::{public, sol_storage, SolidityError},
 };
 
 pub mod extensions;

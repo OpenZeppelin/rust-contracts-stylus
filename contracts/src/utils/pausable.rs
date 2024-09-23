@@ -11,8 +11,10 @@
 //! only once the modifiers are put in place.
 
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::{evm, msg};
+use stylus_sdk::{
+    evm, msg,
+    stylus_proc::{public, sol_storage, SolidityError},
+};
 
 sol! {
     /// Emitted when pause is triggered by `account`.

@@ -2,7 +2,7 @@
 
 use alloc::string::String;
 
-use stylus_proc::{public, sol_storage};
+use stylus_sdk::stylus_proc::{public, sol_storage};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;

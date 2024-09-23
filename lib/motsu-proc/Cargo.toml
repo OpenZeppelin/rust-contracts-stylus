@@ -17,7 +17,7 @@ motsu.workspace = true
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
-stylus-proc.workspace = true
+
 
 [lib]
 proc-macro = true
