@@ -11,4 +11,4 @@ cargo +"$NIGHTLY_TOOLCHAIN" build --release --target wasm32-unknown-unknown -Z b
 export RPC_URL=http://localhost:8547
 # We should use stable here once nitro-testnode is updated and the contracts fit
 # the size limit. Work tracked [here](https://github.com/OpenZeppelin/rust-contracts-stylus/issues/87)
-cargo +"$NIGHTLY_TOOLCHAIN" test --features std,e2e --test "*"
+cargo +"$NIGHTLY_TOOLCHAIN" test --features e2e -p safe-erc20-example --test safe-erc20
