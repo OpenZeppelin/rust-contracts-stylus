@@ -68,7 +68,7 @@ async fn safe_transfer_rejects_with_eoa_as_token(
 }
 
 #[e2e::test]
-async fn safe_transfer_rejects_insufficient_balance(
+async fn safe_transfer_rejects_on_error(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
