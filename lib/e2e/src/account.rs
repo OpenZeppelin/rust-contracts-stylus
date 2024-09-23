@@ -25,7 +25,7 @@ pub struct Account {
 }
 
 impl Account {
-    /// Create a new account with default funding of 100 ETH.
+    /// Create a new account with a default funding of [`DEFAULT_FUNDING_ETH`].
     ///
     /// # Errors
     ///
