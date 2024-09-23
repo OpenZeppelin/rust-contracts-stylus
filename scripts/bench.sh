@@ -10,9 +10,8 @@ cargo +"$NIGHTLY_TOOLCHAIN" build --release --target wasm32-unknown-unknown -Z b
 
 export RPC_URL=http://localhost:8547
 
-# No need to run benchmark infrastructure with release.
-# Just compilation will take longer.
-# Contracts already built with release.
+# No need to compile benchmarks with `--release`
+# since gas measurement happens on the contract side
 cargo run -p benches
 
 echo "Finished running benches!"
