@@ -1082,7 +1082,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_transfers_from_incorrect_owner(
+    fn error_when_safe_transfers_from_incorrect_owner(
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
@@ -1105,7 +1105,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_internal_transfers_nonexistent_token(
+    fn error_when_safe_transfers_nonexistent_token(
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
