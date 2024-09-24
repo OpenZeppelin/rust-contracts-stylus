@@ -1123,7 +1123,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_from_transfers_to_invalid_receiver(
+    fn error_when_safe_transfers_to_invalid_receiver(
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
