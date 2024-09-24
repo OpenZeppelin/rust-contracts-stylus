@@ -46,7 +46,6 @@ resolver = "2"
 authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
-keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 version = "0.1.0-rc"
 
