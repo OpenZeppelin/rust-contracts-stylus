@@ -1511,7 +1511,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfers_to_invalid_receiver(contract: Erc721) {
+    fn error_when_safe_transfer_to_invalid_receiver(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
@@ -2304,9 +2304,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_internal_transfers_to_invalid_receiver(
-        contract: Erc721,
-    ) {
+    fn error_when_internal_safe_transfer_to_invalid_receiver(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
@@ -2336,7 +2334,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_internal_transfers_from_incorrect_owner(
+    fn error_when_internal_safe_transfer_from_incorrect_owner(
         contract: Erc721,
     ) {
         let alice = msg::sender();
@@ -2364,7 +2362,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfers_nonexistent_token(contract: Erc721) {
+    fn error_when_safe_transfer_nonexistent_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
