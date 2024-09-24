@@ -1,6 +1,6 @@
 //! ERC-1155 token with storage based token URI management.
 //!
-//! Inspired by the [contracts::token::erc721::extensions::Erc721UriStorage]
+//! Inspired by the [`crate::token::erc721::extensions::Erc721UriStorage`]
 use alloc::string::String;
 
 use alloy_primitives::U256;
