@@ -128,4 +128,38 @@ impl SafeErc20 {
 
         Ok(())
     }
+
+    /// Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
+    /// non-reverting calls are assumed to be successful.
+    pub fn safe_increase_allowance(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        todo!()
+    }
+
+    /// Decrease the calling contract's allowance toward `spender` by `requestedDecrease`. If `token` returns no
+    /// value, non-reverting calls are assumed to be successful.
+    pub fn safe_decrease_allowance(
+        &mut self,
+        token: Address,
+        spender: Address,
+        requested_decrease: U256,
+    ) -> Result<(), Error> {
+        todo!()
+    }
+
+    /// Set the calling contract's allowance toward `spender` to `value`. If `token` returns no value,
+    /// non-reverting calls are assumed to be successful. Meant to be used with tokens that require the approval
+    /// to be set to zero before setting it to a non-zero value, such as USDT.
+    pub fn force_approve(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+    ) -> Result<(), Error> {
+        todo!()
+    }
 }
