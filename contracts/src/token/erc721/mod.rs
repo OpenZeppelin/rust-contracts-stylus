@@ -2362,7 +2362,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_nonexistent_token(contract: Erc721) {
+    fn error_when_internal_safe_transfer_nonexistent_token(contract: Erc721) {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
