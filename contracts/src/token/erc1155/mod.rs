@@ -1,5 +1,4 @@
 //! Implementation of the [`Erc1155`] token standard.
-// use alloc::{vec, vec::Vec};
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, Uint, U256};
