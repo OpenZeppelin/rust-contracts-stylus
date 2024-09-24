@@ -1,14 +1,19 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+#![cfg_attr(not(test), no_main, no_std)]
+extern crate alloc;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+use openzeppelin_stylus::{token::erc1155::Erc1155, utils::Pausable};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+sol_storage! {
+    #[entrypoint]
+    struct Erc1155Example {
+        #[borrow]
+        Erc1155 erc1155;
+        #[borrow]
+        Pausable pausable;
     }
 }
+
+#[public]
+#[inherit(Erc1155, Pausable)]
+impl Erc1155Example {}

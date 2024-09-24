@@ -1,6 +1,5 @@
 [package]
 name = "erc1155-example"
-version = "0.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,10 +7,21 @@ keywords.workspace = true
 repository.workspace = true
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts" }
+openzeppelin-stylus.workspace = true
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+stylus-proc.workspace = true
+mini-alloc.workspace = true
 
 [dev-dependencies]
-e2e = { path = "../../lib/e2e" }
+alloy.workspace = true
+e2e.workspace = true
+tokio.workspace = true
+eyre.workspace = true
+rand.workspace = true
 
-[lints]
-workspace = true
+[features]
+e2e = []
+
+[lib]
+crate-type = ["lib", "cdylib"]

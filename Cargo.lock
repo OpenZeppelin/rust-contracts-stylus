@@ -1516,8 +1516,16 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 name = "erc1155-example"
 version = "0.0.0"
 dependencies = [
+ "alloy",
+ "alloy-primitives",
  "e2e",
+ "eyre",
+ "mini-alloc",
  "openzeppelin-stylus",
+ "rand",
+ "stylus-proc",
+ "stylus-sdk",
+ "tokio",
 ]
 
 [[package]]

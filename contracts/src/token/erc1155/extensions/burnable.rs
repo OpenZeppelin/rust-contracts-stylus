@@ -134,7 +134,7 @@ mod tests {
 
     fn init(
         contract: &mut Erc1155,
-        reciever: Address,
+        receiver: Address,
         size: usize,
     ) -> (Vec<U256>, Vec<U256>) {
         let token_ids = random_token_ids(size);
@@ -142,7 +142,7 @@ mod tests {
 
         contract
             ._mint_batch(
-                reciever,
+                receiver,
                 token_ids.clone(),
                 values.clone(),
                 vec![0, 1, 2, 3].into(),

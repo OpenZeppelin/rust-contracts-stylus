@@ -1,5 +1,4 @@
 //! Implementation of the [`Erc1155`] token standard.
-// use alloc::{vec, vec::Vec};
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, Uint, U256};
@@ -229,7 +228,7 @@ pub trait IErc1155 {
     ) -> Result<U256, Self::Error>;
 
     /// Refer to:
-    /// https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-balanceOfBatch-address---uint256---
+    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-balanceOfBatch-address---uint256--->
     /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
     /// version of [`Erc1155::balance_of`].
     ///
@@ -338,7 +337,7 @@ pub trait IErc1155 {
     ) -> Result<(), Self::Error>;
 
     /// Refer to:
-    /// https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-safeBatchTransferFrom-address-address-uint256---uint256---bytes-
+    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-safeBatchTransferFrom-address-address-uint256---uint256---bytes->
     /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
     /// version of [`IErc1155::safe_transfer_from`].
     ///
@@ -1046,7 +1045,7 @@ mod tests {
 
     fn init(
         contract: &mut Erc1155,
-        reciever: Address,
+        receiver: Address,
         size: usize,
     ) -> (Vec<U256>, Vec<U256>) {
         let token_ids = random_token_ids(size);
@@ -1054,7 +1053,7 @@ mod tests {
 
         contract
             ._mint_batch(
-                reciever,
+                receiver,
                 token_ids.clone(),
                 values.clone(),
                 vec![0, 1, 2, 3].into(),

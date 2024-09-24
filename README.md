@@ -51,7 +51,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20)]
 impl Erc20Example { }
 ```

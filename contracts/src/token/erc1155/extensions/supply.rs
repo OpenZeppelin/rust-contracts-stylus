@@ -130,14 +130,14 @@ mod tests {
 
     fn init(
         contract: &mut Erc1155Supply,
-        reciever: Address,
+        receiver: Address,
         size: usize,
     ) -> (Vec<U256>, Vec<U256>) {
         let token_ids = random_token_ids(size);
         let values = random_values(size);
 
         contract
-            ._update(Address::ZERO, reciever, token_ids.clone(), values.clone())
+            ._update(Address::ZERO, receiver, token_ids.clone(), values.clone())
             .expect("Supply failed");
         (token_ids, values)
     }
