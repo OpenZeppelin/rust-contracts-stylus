@@ -129,7 +129,25 @@ impl SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Error> {
-        todo!()
+        type TransferType = (SOLAddress, Uint<256>);
+        let tx_data = (spender, value);
+        let data = TransferType::abi_encode_params(&tx_data);
+        let hashed_function_selector =
+            function_selector!("approve", Address, U256);
+        // Combine function selector and input data (use abi_packed way)
+        let approve_calldata = [&hashed_function_selector[..4], &data].concat();
+
+        if self.call_optional_return(token, approve_calldata.clone()).is_err() {
+            let tx_data = (spender, U256::ZERO);
+            let data = TransferType::abi_encode_params(&tx_data);
+            self.call_optional_return(
+                token,
+                [&hashed_function_selector[..4], &data].concat(),
+            )?;
+            self.call_optional_return(token, approve_calldata)?;
+        }
+
+        Ok(())
     }
 }
 
