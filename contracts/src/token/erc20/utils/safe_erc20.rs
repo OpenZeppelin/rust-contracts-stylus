@@ -1,9 +1,19 @@
 //! Wrappers around ERC-20 operations that throw on failure.
 
+use alloc::vec::Vec;
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::sol;
+use alloy_sol_types::{
+    sol,
+    sol_data::{Address as SOLAddress, Uint},
+    SolType,
+};
 use stylus_proc::{public, sol_interface, sol_storage, SolidityError};
-use stylus_sdk::{call::Call, storage::TopLevelStorage, types::AddressVM};
+use stylus_sdk::{
+    call::{call, Call},
+    function_selector,
+    storage::TopLevelStorage,
+    types::AddressVM,
+};
 
 use crate::token::erc20;
 
@@ -28,27 +38,6 @@ pub enum Error {
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed `decreaseAllowance` request.
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
-}
-
-sol_interface! {
-    /// Interface of the ERC-20 standard as defined in the ERC.
-    interface IERC20 {
-        /// Moves a `value` amount of tokens from the caller's account to `to`.
-        ///
-        /// Returns a boolean value indicating whether the operation succeeded.
-        ///
-        /// Emits a {Transfer} event.
-        function transfer(address to, uint256 amount) external returns (bool);
-
-        /// Moves a `value` amount of tokens from `from` to `to` using the
-        /// allowance mechanism. `value` is then deducted from the caller's
-        /// allowance.
-        ///
-        /// Returns a boolean value indicating whether the operation succeeded.
-        ///
-        /// Emits a {Transfer} event.
-        function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    }
 }
 
 sol_storage! {
@@ -78,25 +67,15 @@ impl SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Error> {
-        let erc20 = IERC20::new(token);
-        let call = Call::new_in(self);
+        type TransferType = (SOLAddress, Uint<256>);
+        let tx_data = (to, value);
+        let data = TransferType::abi_encode_params(&tx_data);
+        let hashed_function_selector =
+            function_selector!("transfer", Address, U256);
+        // Combine function selector and input data (use abi_packed way)
+        let calldata = [&hashed_function_selector[..4], &data].concat();
 
-        match erc20.transfer(call, to, value) {
-            Ok(data) => {
-                if data && !Address::has_code(&token) {
-                    return Err(Error::SafeErc20FailedOperation(
-                        SafeErc20FailedOperation { token },
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(Error::SafeErc20FailedOperation(
-                    SafeErc20FailedOperation { token },
-                ))
-            }
-        }
-
-        Ok(())
+        self.call_optional_return(token, calldata)
     }
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
@@ -108,25 +87,15 @@ impl SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Error> {
-        let erc20 = IERC20::new(token);
-        let call = Call::new_in(self);
+        type TransferType = (SOLAddress, SOLAddress, Uint<256>);
+        let tx_data = (from, to, value);
+        let data = TransferType::abi_encode_params(&tx_data);
+        let hashed_function_selector =
+            function_selector!("transferFrom", Address, Address, U256);
+        // Combine function selector and input data (use abi_packed way)
+        let calldata = [&hashed_function_selector[..4], &data].concat();
 
-        match erc20.transfer_from(call, from, to, value) {
-            Ok(data) => {
-                if data && !Address::has_code(&token) {
-                    return Err(Error::SafeErc20FailedOperation(
-                        SafeErc20FailedOperation { token },
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(Error::SafeErc20FailedOperation(
-                    SafeErc20FailedOperation { token },
-                ))
-            }
-        }
-
-        Ok(())
+        self.call_optional_return(token, calldata)
     }
 
     /// Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
@@ -161,5 +130,38 @@ impl SafeErc20 {
         value: U256,
     ) -> Result<(), Error> {
         todo!()
+    }
+}
+
+impl SafeErc20 {
+    /// Imitates a Solidity high-level call (i.e. a regular function call to a
+    /// contract), relaxing the requirement on the return value: the return
+    /// value is optional (but if data is returned, it must not be false).
+    /// @param token The token targeted by the call.
+    /// @param data The call data (encoded using abi.encode or one of its
+    /// variants).
+    ///
+    /// This is a variant of {_callOptionalReturnBool} that reverts if call
+    /// fails to meet the requirements.
+    fn call_optional_return(
+        &self,
+        token: Address,
+        data: Vec<u8>,
+    ) -> Result<(), Error> {
+        match call(Call::new(), token, data.as_slice()) {
+            Ok(data) => {
+                if data.is_empty() && !Address::has_code(&token) {
+                    return Err(Error::SafeErc20FailedOperation(
+                        SafeErc20FailedOperation { token },
+                    ));
+                }
+            }
+            Err(_) => {
+                return Err(Error::SafeErc20FailedOperation(
+                    SafeErc20FailedOperation { token },
+                ))
+            }
+        }
+        Ok(())
     }
 }
