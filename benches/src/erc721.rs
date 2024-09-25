@@ -8,7 +8,10 @@ use alloy::{
 };
 use e2e::{receipt, Account};
 
-use crate::report::Report;
+use crate::{
+    report::{ContractReport, FunctionReport},
+    CacheOpt,
+};
 
 sol!(
     #[sol(rpc)]
@@ -29,7 +32,23 @@ sol!(
 
 sol!("../examples/erc721/src/constructor.sol");
 
-pub async fn bench() -> eyre::Result<Report> {
+pub async fn bench() -> eyre::Result<ContractReport> {
+    let reports = run_with(CacheOpt::None).await?;
+    let report = reports
+        .into_iter()
+        .try_fold(ContractReport::new("Erc721"), ContractReport::add)?;
+
+    let cached_reports = run_with(CacheOpt::Bid(0)).await?;
+    let report = cached_reports
+        .into_iter()
+        .try_fold(report, ContractReport::add_cached)?;
+
+    Ok(report)
+}
+
+pub async fn run_with(
+    cache_opt: CacheOpt,
+) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
@@ -41,8 +60,7 @@ pub async fn bench() -> eyre::Result<Report> {
     let bob = Account::new().await?;
     let bob_addr = bob.address();
 
-    let contract_addr = deploy(&alice).await?;
-    crate::cache_contract(&alice, contract_addr)?;
+    let contract_addr = deploy(&alice, cache_opt).await?;
 
     let contract = Erc721::new(contract_addr, &alice_wallet);
 
@@ -72,13 +90,17 @@ pub async fn bench() -> eyre::Result<Report> {
         (burnCall::SIGNATURE, receipt!(contract.burn(token_1))?),
     ];
 
-    let report =
-        receipts.into_iter().try_fold(Report::new("Erc721"), Report::add)?;
-    Ok(report)
+    receipts
+        .into_iter()
+        .map(FunctionReport::new)
+        .collect::<eyre::Result<Vec<_>>>()
 }
 
-async fn deploy(account: &Account) -> eyre::Result<Address> {
+async fn deploy(
+    account: &Account,
+    cache_opt: CacheOpt,
+) -> eyre::Result<Address> {
     let args = Erc721Example::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc721", Some(args)).await
+    crate::deploy(account, "erc721", Some(args), cache_opt).await
 }

@@ -14,4 +14,7 @@ export RPC_URL=http://localhost:8547
 # since gas measurement happens on the contract side
 cargo run -p benches
 
+echo "NOTE: To measure non cached contract's gas usage correctly,
+ benchmarks should run on a clean instance of the nitro test node."
+echo
 echo "Finished running benches!"

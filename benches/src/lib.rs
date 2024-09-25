@@ -28,20 +28,21 @@ struct ArbOtherFields {
     l1_block_number: String,
 }
 
+/// Cache options for the contract.
+/// `Bid(0)` will likely cache the contract on the nitro test node.
+pub enum CacheOpt {
+    None,
+    Bid(u32),
+}
+
 type ArbTxReceipt =
     WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Log>>>;
-
-fn get_l2_gas_used(receipt: &ArbTxReceipt) -> eyre::Result<u128> {
-    let l2_gas = receipt.gas_used;
-    let arb_fields: ArbOtherFields = receipt.other.deserialize_as()?;
-    let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
-    Ok(l2_gas - l1_gas)
-}
 
 async fn deploy(
     account: &Account,
     contract_name: &str,
     args: Option<String>,
+    cache_opt: CacheOpt,
 ) -> eyre::Result<Address> {
     let manifest_dir =
         std::env::current_dir().context("should get current dir from env")?;
@@ -78,7 +79,16 @@ async fn deploy(
         quiet: true,
     };
 
-    koba::deploy(&config).await.expect("should deploy contract").address()
+    let address = koba::deploy(&config)
+        .await
+        .expect("should deploy contract")
+        .address()?;
+
+    if let CacheOpt::Bid(bid) = cache_opt {
+        cache_contract(account, address, bid)?;
+    }
+
+    Ok(address)
 }
 
 /// Try to cache a contract on the stylus network.
@@ -88,6 +98,7 @@ async fn deploy(
 fn cache_contract(
     account: &Account,
     contract_addr: Address,
+    bid: u32,
 ) -> eyre::Result<()> {
     // We don't need a status code.
     // Since it is not zero when the contract is already cached.
@@ -96,7 +107,7 @@ fn cache_contract(
         .args(["-e", &env("RPC_URL")?])
         .args(["--private-key", &format!("0x{}", account.pk())])
         .arg(contract_addr.to_string())
-        .arg("0")
+        .arg(bid.to_string())
         .status()
         .context("failed to execute `cargo stylus cache bid` command")?;
     Ok(())

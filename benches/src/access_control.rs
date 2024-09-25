@@ -8,7 +8,10 @@ use alloy::{
 };
 use e2e::{receipt, Account};
 
-use crate::report::Report;
+use crate::{
+    report::{ContractReport, FunctionReport},
+    CacheOpt,
+};
 
 sol!(
     #[sol(rpc)]
@@ -33,7 +36,22 @@ const ROLE: [u8; 32] =
 const NEW_ADMIN_ROLE: [u8; 32] =
     hex!("879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5");
 
-pub async fn bench() -> eyre::Result<Report> {
+pub async fn bench() -> eyre::Result<ContractReport> {
+    let receipts = run_with(CacheOpt::None).await?;
+    let report = receipts
+        .into_iter()
+        .try_fold(ContractReport::new("AccessControl"), ContractReport::add)?;
+
+    let cached_receipts = run_with(CacheOpt::Bid(0)).await?;
+    let report = cached_receipts
+        .into_iter()
+        .try_fold(report, ContractReport::add_cached)?;
+
+    Ok(report)
+}
+pub async fn run_with(
+    cache_opt: CacheOpt,
+) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
@@ -50,8 +68,7 @@ pub async fn bench() -> eyre::Result<Report> {
         .wallet(EthereumWallet::from(bob.signer.clone()))
         .on_http(bob.url().parse()?);
 
-    let contract_addr = deploy(&alice).await?;
-    crate::cache_contract(&alice, contract_addr)?;
+    let contract_addr = deploy(&alice, cache_opt).await?;
 
     let contract = AccessControl::new(contract_addr, &alice_wallet);
     let contract_bob = AccessControl::new(contract_addr, &bob_wallet);
@@ -68,14 +85,17 @@ pub async fn bench() -> eyre::Result<Report> {
         (setRoleAdminCall::SIGNATURE, receipt!(contract.setRoleAdmin(ROLE.into(), NEW_ADMIN_ROLE.into()))?),
     ];
 
-    let report = receipts
+    receipts
         .into_iter()
-        .try_fold(Report::new("AccessControl"), Report::add)?;
-    Ok(report)
+        .map(FunctionReport::new)
+        .collect::<eyre::Result<Vec<_>>>()
 }
 
-async fn deploy(account: &Account) -> eyre::Result<Address> {
+async fn deploy(
+    account: &Account,
+    cache_opt: CacheOpt,
+) -> eyre::Result<Address> {
     let args = AccessControl::constructorCall {};
     let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "access-control", Some(args)).await
+    crate::deploy(account, "access-control", Some(args), cache_opt).await
 }
