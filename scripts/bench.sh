@@ -11,7 +11,7 @@ cargo +"$NIGHTLY_TOOLCHAIN" build --release --target wasm32-unknown-unknown -Z b
 export RPC_URL=http://localhost:8547
 
 # No need to compile benchmarks with `--release`
-# since gas measurement happens on the contract side
+# since this only runs the benchmarking code and the contracts have already been compiled with `--release`
 cargo run -p benches
 
 echo "NOTE: To measure non cached contract's gas usage correctly,
