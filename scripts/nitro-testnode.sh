@@ -48,7 +48,7 @@ then
   cd "$MYDIR" || exit
   cd ..
 
-  git clone -b release --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
+  git clone --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
   cd ./nitro-testnode || exit
   git pull origin release --recurse-submodules
   git checkout 43861b001713db3526b74e905e383d41e9272760 || exit
