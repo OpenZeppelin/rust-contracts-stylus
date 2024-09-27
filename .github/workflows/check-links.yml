@@ -1,0 +1,23 @@
+name: Check Links
+# This workflow checks that all links in the documentation are valid.
+# It does this for antora docs(adoc) and markdown files.
+on:
+  push:
+    branches: [ main, v* ]
+  pull_request:
+    branches: [ main, v* ]
+
+jobs:
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --no-progress './**/*.adoc' './**/*.md'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
