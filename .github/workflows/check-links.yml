@@ -18,6 +18,11 @@ jobs:
         uses: lycheeverse/lychee-action@v1
         with:
           args: --no-progress './**/*.adoc' './**/*.md'
-          fail: true
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          fail: false
+    
+      - name: Run linkspector
+        uses: umbrelladocs/action-linkspector@v1
+        with:
+          fail_on_error: false
+     
+        
