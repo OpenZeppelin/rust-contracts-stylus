@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "contracts",
+  "contracts-proc",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
@@ -21,6 +22,7 @@ members = [
 ]
 default-members = [
   "contracts",
+  "contracts-proc",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
@@ -98,6 +100,7 @@ quote = "1.0.35"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
+openzeppelin-stylus-proc = { path = "contracts-proc" }
 openzeppelin-crypto = { path = "lib/crypto" }
 motsu = { path = "lib/motsu"}
 motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
