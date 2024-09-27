@@ -11,6 +11,7 @@ openzeppelin-stylus.workspace = true
 alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 alloy.workspace = true
 tokio.workspace = true
+futures.workspace = true
 eyre.workspace = true
 koba.workspace = true
 e2e.workspace = true

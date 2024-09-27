@@ -89,6 +89,7 @@ rand = "0.8.5"
 regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
+futures = "0.3.30"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }

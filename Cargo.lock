@@ -822,6 +822,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
+ "futures",
  "keccak-const",
  "koba",
  "openzeppelin-stylus",
