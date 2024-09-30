@@ -138,8 +138,12 @@ impl SafeErc20 {
             })?;
 
         if current_allowance < requested_decrease {
-            return Err(Error::SafeErc20FailedOperation(
-                SafeErc20FailedOperation { token },
+            return Err(Error::SafeErc20FailedDecreaseAllowance(
+                SafeErc20FailedDecreaseAllowance {
+                    spender,
+                    currentAllowance: current_allowance,
+                    requestedDecrease: requested_decrease,
+                },
             ));
         }
 
