@@ -121,20 +121,12 @@ impl SafeErc20 {
     ) -> Result<(), Error> {
         let erc20 = IERC20::new(token);
         let call = Call::new_in(self);
-        match erc20.allowance(call, address(), spender) {
-            Ok(old_allowance) => {
-                return self.force_approve(
-                    token,
-                    spender,
-                    old_allowance + value,
-                )
-            }
-            Err(_) => {
-                return Err(Error::SafeErc20FailedOperation(
-                    SafeErc20FailedOperation { token },
-                ))
-            }
-        }
+        let old_allowance = erc20.allowance(call, address(), spender).or(
+            Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                token,
+            })),
+        )?;
+        self.force_approve(token, spender, old_allowance + value)
     }
 
     /// Decrease the calling contract's allowance toward `spender` by `requestedDecrease`. If `token` returns no
@@ -165,17 +157,16 @@ impl SafeErc20 {
         // Combine function selector and input data (use abi_packed way)
         let approve_calldata = [&hashed_function_selector[..4], &data].concat();
 
-        if self.call_optional_return(token, approve_calldata.clone()).is_err() {
-            let tx_data = (spender, U256::ZERO);
-            let data = TransferType::abi_encode_params(&tx_data);
-            self.call_optional_return(
-                token,
-                [&hashed_function_selector[..4], &data].concat(),
-            )?;
-            self.call_optional_return(token, approve_calldata)?;
-        }
-
-        Ok(())
+        self.call_optional_return(token, approve_calldata.clone())
+            .or({
+                let tx_data = (spender, U256::ZERO);
+                let data = TransferType::abi_encode_params(&tx_data);
+                self.call_optional_return(
+                    token,
+                    [&hashed_function_selector[..4], &data].concat(),
+                )
+            })
+            .and(self.call_optional_return(token, approve_calldata))
     }
 }
 
