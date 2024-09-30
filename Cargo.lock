@@ -822,6 +822,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
+ "futures",
  "keccak-const",
  "koba",
  "openzeppelin-stylus",
@@ -2591,9 +2592,20 @@ dependencies = [
  "keccak-const",
  "mini-alloc",
  "motsu",
+ "openzeppelin-stylus-proc",
  "rand",
  "stylus-proc",
  "stylus-sdk",
+]
+
+[[package]]
+name = "openzeppelin-stylus-proc"
+version = "0.1.0-rc"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.68",
 ]
 
 [[package]]

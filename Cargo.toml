@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "contracts",
+  "contracts-proc",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
@@ -22,6 +23,7 @@ members = [
 ]
 default-members = [
   "contracts",
+  "contracts-proc",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
@@ -48,7 +50,6 @@ resolver = "2"
 authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
-keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 version = "0.1.0-rc"
 
@@ -92,6 +93,7 @@ rand = "0.8.5"
 regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
+futures = "0.3.30"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }
@@ -100,6 +102,7 @@ quote = "1.0.35"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
+openzeppelin-stylus-proc = { path = "contracts-proc" }
 openzeppelin-crypto = { path = "lib/crypto" }
 motsu = { path = "lib/motsu"}
 motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }

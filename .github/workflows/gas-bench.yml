@@ -31,6 +31,9 @@ jobs:
         with:
           key: "gas-bench"
 
+      - name: install cargo-stylus
+        run: cargo install cargo-stylus@0.5.1
+
       - name: install solc
         run: |
           curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.24/solc-static-linux
