@@ -2,6 +2,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, Uint, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     alloy_sol_types::sol,
@@ -10,7 +11,10 @@ use stylus_sdk::{
     prelude::*,
 };
 
-use crate::utils::math::storage::SubAssignUnchecked;
+use crate::utils::{
+    introspection::erc165::{Erc165, IErc165},
+    math::storage::SubAssignUnchecked,
+};
 
 pub mod extensions;
 
@@ -211,6 +215,7 @@ sol_storage! {
 unsafe impl TopLevelStorage for Erc1155 {}
 
 /// Required interface of an [`Erc1155`] compliant contract.
+#[interface_id]
 pub trait IErc1155 {
     /// The error type associated to this ERC-1155 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -392,9 +397,9 @@ impl IErc1155 for Erc1155 {
         }
 
         let balances: Vec<Uint<256, 4>> = accounts
-            .iter()
-            .zip(token_ids.iter())
-            .map(|(&account, &token_id)| {
+            .into_iter()
+            .zip(token_ids.into_iter())
+            .map(|(account, token_id)| {
                 self._balances.get(token_id).get(account)
             })
             .collect();
@@ -448,6 +453,13 @@ impl IErc1155 for Erc1155 {
         }
         self._safe_batch_transfer_from(from, to, token_ids, values, data)?;
         Ok(())
+    }
+}
+
+impl IErc165 for Erc1155 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc1155>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -1027,6 +1039,10 @@ mod tests {
         ERC1155InsufficientBalance, ERC1155InvalidArrayLength,
         ERC1155InvalidOperator, ERC1155InvalidReceiver, ERC1155InvalidSender,
         ERC1155MissingApprovalForAll, Erc1155, Error, IErc1155,
+    };
+    use crate::{
+        token::erc721::{Erc721, IErc721},
+        utils::introspection::erc165::IErc165,
     };
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
@@ -1793,5 +1809,16 @@ mod tests {
                 token_id
             }) if sender == CHARLIE && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
         ));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc1155 as IErc1155>::INTERFACE_ID;
+        let expected = 0xd9b67a26;
+        assert_eq!(actual, expected);
+
+        let actual = <Erc1155 as IErc165>::INTERFACE_ID;
+        let expected = 0x01ffc9a7;
+        assert_eq!(actual, expected);
     }
 }

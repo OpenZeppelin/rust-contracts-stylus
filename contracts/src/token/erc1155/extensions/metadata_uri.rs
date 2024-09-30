@@ -2,6 +2,7 @@
 
 use alloc::string::String;
 
+use openzeppelin_stylus_proc::interface_id;
 use stylus_proc::{public, sol_storage};
 
 sol_storage! {
@@ -13,6 +14,7 @@ sol_storage! {
 }
 
 /// Interface for the optional metadata functions from the ERC-1155 standard.
+#[interface_id]
 pub trait IErc1155MetadataURI {
     /// Returns the base of Uniform Resource Identifier (URI) for tokens'
     /// collection.
