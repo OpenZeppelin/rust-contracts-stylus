@@ -5,8 +5,9 @@ use alloy_primitives::{Address, U256};
 use alloy_sol_types::{sol, SolValue};
 use stylus_proc::{public, sol_interface, sol_storage, SolidityError};
 use stylus_sdk::{
-    call::{call, Call},
+    call::{Call, RawCall},
     contract::address,
+    evm::gas_left,
     function_selector,
     storage::TopLevelStorage,
     types::AddressVM,
@@ -198,13 +199,14 @@ impl SafeErc20 {
         token: Address,
         data: &[u8],
     ) -> Result<(), Error> {
-        match call(Call::new(), token, data) {
+        match RawCall::new()
+            .gas(gas_left())
+            .limit_return_data(0, 32)
+            .call(token, data)
+        {
             Ok(data)
-                if !(data.is_empty() || !Address::has_code(&token))
-                    && data[data.len() - 1] == 0x01
-                    && data[..data.len() - 1]
-                        .iter()
-                        .all(|&byte| byte == 0x00) =>
+                if !(data.is_empty() && !Address::has_code(&token))
+                    && encodes_true(&data) =>
             {
                 Ok(())
             }
@@ -215,4 +217,9 @@ impl SafeErc20 {
             }
         }
     }
+}
+
+fn encodes_true(data: &[u8]) -> bool {
+    data[..data.len() - 1].iter().all(|&byte| byte == 0)
+        && data[data.len() - 1] == 1
 }
