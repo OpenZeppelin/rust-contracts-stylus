@@ -137,7 +137,26 @@ impl SafeErc20 {
         spender: Address,
         requested_decrease: U256,
     ) -> Result<(), Error> {
-        todo!()
+        let erc20 = IERC20::new(token);
+        let call = Call::new_in(self);
+        let current_allowance =
+            erc20.allowance(call, address(), spender).or_else(|_| {
+                Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                }))
+            })?;
+
+        if current_allowance < requested_decrease {
+            return Err(Error::SafeErc20FailedOperation(
+                SafeErc20FailedOperation { token },
+            ));
+        }
+
+        self.force_approve(
+            token,
+            spender,
+            current_allowance - requested_decrease,
+        )
     }
 
     /// Set the calling contract's allowance toward `spender` to `value`. If `token` returns no value,
