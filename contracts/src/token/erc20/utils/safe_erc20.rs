@@ -10,6 +10,7 @@ use alloy_sol_types::{
 use stylus_proc::{public, sol_interface, sol_storage, SolidityError};
 use stylus_sdk::{
     call::{call, Call},
+    contract::address,
     function_selector,
     storage::TopLevelStorage,
     types::AddressVM,
@@ -38,6 +39,18 @@ pub enum Error {
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed `decreaseAllowance` request.
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
+}
+
+sol_interface! {
+    /// Interface of the ERC-20 standard as defined in the ERC.
+    interface IERC20 {
+        /// Returns the remaining number of tokens that `spender` will be
+        /// allowed to spend on behalf of `owner` through {transferFrom}. This is
+        /// zero by default.
+        ///
+        /// This value changes when {approve} or {transferFrom} are called.
+        function allowance(address owner, address spender) external view returns (uint256);
+    }
 }
 
 sol_storage! {
@@ -106,7 +119,22 @@ impl SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Error> {
-        todo!()
+        let erc20 = IERC20::new(token);
+        let call = Call::new_in(self);
+        match erc20.allowance(call, address(), spender) {
+            Ok(old_allowance) => {
+                return self.force_approve(
+                    token,
+                    spender,
+                    old_allowance + value,
+                )
+            }
+            Err(_) => {
+                return Err(Error::SafeErc20FailedOperation(
+                    SafeErc20FailedOperation { token },
+                ))
+            }
+        }
     }
 
     /// Decrease the calling contract's allowance toward `spender` by `requestedDecrease`. If `token` returns no
