@@ -3,13 +3,13 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
         extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
         Erc721, IErc721,
     },
-    utils::Pausable,
+    utils::{introspection::erc165::IErc165, Pausable},
 };
 use stylus_sdk::{
     abi::Bytes,
@@ -150,5 +150,10 @@ impl Erc721Example {
         )?;
 
         Ok(())
+    }
+
+    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc721::supports_interface(interface_id)
+            || Enumerable::supports_interface(interface_id)
     }
 }
