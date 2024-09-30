@@ -8,7 +8,10 @@ use alloy::{
 };
 use e2e::{receipt, Account};
 
-use crate::report::Report;
+use crate::{
+    report::{ContractReport, FunctionReport},
+    CacheOpt,
+};
 
 sol!(
     #[sol(rpc)]
@@ -57,7 +60,23 @@ const PROOF: [[u8; 32]; 16] = bytes_array! {
     "fd47b6c292f51911e8dfdc3e4f8bd127773b17f25b7a554beaa8741e99c41208",
 };
 
-pub async fn bench() -> eyre::Result<Report> {
+pub async fn bench() -> eyre::Result<ContractReport> {
+    let reports = run_with(CacheOpt::None).await?;
+    let report = reports
+        .into_iter()
+        .try_fold(ContractReport::new("MerkleProofs"), ContractReport::add)?;
+
+    let cached_reports = run_with(CacheOpt::Bid(0)).await?;
+    let report = cached_reports
+        .into_iter()
+        .try_fold(report, ContractReport::add_cached)?;
+
+    Ok(report)
+}
+
+pub async fn run_with(
+    cache_opt: CacheOpt,
+) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
@@ -65,7 +84,8 @@ pub async fn bench() -> eyre::Result<Report> {
         .wallet(EthereumWallet::from(alice.signer.clone()))
         .on_http(alice.url().parse()?);
 
-    let contract_addr = deploy(&alice).await;
+    let contract_addr = deploy(&alice, cache_opt).await?;
+
     let contract = Verifier::new(contract_addr, &alice_wallet);
 
     let proof = PROOF.map(|h| h.into()).to_vec();
@@ -75,12 +95,15 @@ pub async fn bench() -> eyre::Result<Report> {
         receipt!(contract.verify(proof, ROOT.into(), LEAF.into()))?,
     )];
 
-    let report = receipts
+    receipts
         .into_iter()
-        .try_fold(Report::new("MerkleProofs"), Report::add)?;
-    Ok(report)
+        .map(FunctionReport::new)
+        .collect::<eyre::Result<Vec<_>>>()
 }
 
-async fn deploy(account: &Account) -> Address {
-    crate::deploy(account, "merkle-proofs", None).await
+async fn deploy(
+    account: &Account,
+    cache_opt: CacheOpt,
+) -> eyre::Result<Address> {
+    crate::deploy(account, "merkle-proofs", None, cache_opt).await
 }

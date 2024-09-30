@@ -9,7 +9,10 @@ use alloy::{
 use alloy_primitives::U256;
 use e2e::{receipt, Account};
 
-use crate::report::Report;
+use crate::{
+    report::{ContractReport, FunctionReport},
+    CacheOpt,
+};
 
 sol!(
     #[sol(rpc)]
@@ -39,7 +42,23 @@ const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-pub async fn bench() -> eyre::Result<Report> {
+pub async fn bench() -> eyre::Result<ContractReport> {
+    let reports = run_with(CacheOpt::None).await?;
+    let report = reports
+        .into_iter()
+        .try_fold(ContractReport::new("Erc20"), ContractReport::add)?;
+
+    let cached_reports = run_with(CacheOpt::Bid(0)).await?;
+    let report = cached_reports
+        .into_iter()
+        .try_fold(report, ContractReport::add_cached)?;
+
+    Ok(report)
+}
+
+pub async fn run_with(
+    cache_opt: CacheOpt,
+) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
@@ -56,7 +75,8 @@ pub async fn bench() -> eyre::Result<Report> {
         .wallet(EthereumWallet::from(bob.signer.clone()))
         .on_http(bob.url().parse()?);
 
-    let contract_addr = deploy(&alice).await;
+    let contract_addr = deploy(&alice, cache_opt).await?;
+
     let contract = Erc20::new(contract_addr, &alice_wallet);
     let contract_bob = Erc20::new(contract_addr, &bob_wallet);
 
@@ -79,17 +99,21 @@ pub async fn bench() -> eyre::Result<Report> {
         (transferFromCall::SIGNATURE, receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
     ];
 
-    let report =
-        receipts.into_iter().try_fold(Report::new("Erc20"), Report::add)?;
-    Ok(report)
+    receipts
+        .into_iter()
+        .map(FunctionReport::new)
+        .collect::<eyre::Result<Vec<_>>>()
 }
 
-async fn deploy(account: &Account) -> Address {
+async fn deploy(
+    account: &Account,
+    cache_opt: CacheOpt,
+) -> eyre::Result<Address> {
     let args = Erc20Example::constructorCall {
         name_: TOKEN_NAME.to_owned(),
         symbol_: TOKEN_SYMBOL.to_owned(),
         cap_: CAP,
     };
     let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc20", Some(args)).await
+    crate::deploy(account, "erc20", Some(args), cache_opt).await
 }
