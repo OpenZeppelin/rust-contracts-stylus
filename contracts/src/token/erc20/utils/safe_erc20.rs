@@ -2,11 +2,7 @@
 
 use alloc::vec::Vec;
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{
-    sol,
-    sol_data::{Address as SOLAddress, Uint},
-    SolType,
-};
+use alloy_sol_types::{sol, SolValue};
 use stylus_proc::{public, sol_interface, sol_storage, SolidityError};
 use stylus_sdk::{
     call::{call, Call},
@@ -80,15 +76,12 @@ impl SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Error> {
-        type TransferType = (SOLAddress, Uint<256>);
-        let tx_data = (to, value);
-        let data = TransferType::abi_encode_params(&tx_data);
-        let hashed_function_selector =
-            function_selector!("transfer", Address, U256);
+        let encoded_args = (to, value).abi_encode_params();
+        let selector = function_selector!("transfer", Address, U256);
         // Combine function selector and input data (use abi_packed way)
-        let calldata = [&hashed_function_selector[..4], &data].concat();
+        let data = [&selector[..4], &encoded_args].concat();
 
-        self.call_optional_return(token, &calldata)
+        self.call_optional_return(token, &data)
     }
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
@@ -100,15 +93,13 @@ impl SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Error> {
-        type TransferType = (SOLAddress, SOLAddress, Uint<256>);
-        let tx_data = (from, to, value);
-        let data = TransferType::abi_encode_params(&tx_data);
-        let hashed_function_selector =
+        let encoded_args = (from, to, value).abi_encode_params();
+        let selector =
             function_selector!("transferFrom", Address, Address, U256);
         // Combine function selector and input data (use abi_packed way)
-        let calldata = [&hashed_function_selector[..4], &data].concat();
+        let data = [&selector[..4], &encoded_args].concat();
 
-        self.call_optional_return(token, &calldata)
+        self.call_optional_return(token, &data)
     }
 
     /// Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
@@ -140,7 +131,7 @@ impl SafeErc20 {
         let erc20 = IERC20::new(token);
         let call = Call::new_in(self);
         let current_allowance =
-            erc20.allowance(call, address(), spender).or_else(|_| {
+            erc20.allowance(call, address(), spender).or({
                 Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
                     token,
                 }))
@@ -176,9 +167,7 @@ impl SafeErc20 {
             value: U256,
             selector: &[u8],
         ) -> Vec<u8> {
-            type ApproveArgs = (SOLAddress, Uint<256>);
-            let args = (spender, value);
-            let encoded_args = ApproveArgs::abi_encode_params(&args);
+            let encoded_args = (spender, value).abi_encode_params();
             [&selector[..4], &encoded_args].concat()
         }
 
