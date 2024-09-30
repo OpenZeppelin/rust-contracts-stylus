@@ -216,7 +216,7 @@ deployment.
 Run the following commands to install the necessary toolchain:
 
 ```shell
-rustup install nightly-2024-01-01
+rustup install nightly-2024-07-25
 rustup component add rust-src
 ```
 
