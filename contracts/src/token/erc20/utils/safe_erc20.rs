@@ -88,7 +88,7 @@ impl SafeErc20 {
         // Combine function selector and input data (use abi_packed way)
         let calldata = [&hashed_function_selector[..4], &data].concat();
 
-        self.call_optional_return(token, calldata)
+        self.call_optional_return(token, &calldata)
     }
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
@@ -108,7 +108,7 @@ impl SafeErc20 {
         // Combine function selector and input data (use abi_packed way)
         let calldata = [&hashed_function_selector[..4], &data].concat();
 
-        self.call_optional_return(token, calldata)
+        self.call_optional_return(token, &calldata)
     }
 
     /// Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
@@ -149,56 +149,50 @@ impl SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Error> {
-        type TransferType = (SOLAddress, Uint<256>);
-        let tx_data = (spender, value);
-        let data = TransferType::abi_encode_params(&tx_data);
-        let hashed_function_selector =
-            function_selector!("approve", Address, U256);
-        // Combine function selector and input data (use abi_packed way)
-        let approve_calldata = [&hashed_function_selector[..4], &data].concat();
+        let selector = function_selector!("approve", Address, U256);
 
-        self.call_optional_return(token, approve_calldata.clone())
-            .or({
-                let tx_data = (spender, U256::ZERO);
-                let data = TransferType::abi_encode_params(&tx_data);
-                self.call_optional_return(
-                    token,
-                    [&hashed_function_selector[..4], &data].concat(),
-                )
-            })
-            .and(self.call_optional_return(token, approve_calldata))
+        // Helper function to construct calldata
+        fn build_approve_calldata(
+            spender: Address,
+            value: U256,
+            selector: &[u8],
+        ) -> Vec<u8> {
+            type ApproveArgs = (SOLAddress, Uint<256>);
+            let args = (spender, value);
+            let encoded_args = ApproveArgs::abi_encode_params(&args);
+            [&selector[..4], &encoded_args].concat()
+        }
+
+        // Try performing the approval with the desired value
+        let approve_data = build_approve_calldata(spender, value, &selector);
+        if self.call_optional_return(token, &approve_data).is_ok() {
+            return Ok(());
+        }
+
+        // If that fails, reset allowance to zero, then retry the desired approval
+        let reset_data = build_approve_calldata(spender, U256::ZERO, &selector);
+        self.call_optional_return(token, &reset_data)?;
+        self.call_optional_return(token, &approve_data)?;
+
+        Ok(())
     }
 }
 
 impl SafeErc20 {
-    /// Imitates a Solidity high-level call (i.e. a regular function call to a
-    /// contract), relaxing the requirement on the return value: the return
-    /// value is optional (but if data is returned, it must not be false).
-    /// @param token The token targeted by the call.
-    /// @param data The call data (encoded using abi.encode or one of its
-    /// variants).
-    ///
-    /// This is a variant of {_callOptionalReturnBool} that reverts if call
-    /// fails to meet the requirements.
+    /// Imitates a Solidity high-level call, relaxing the requirement on the return value:
+    /// if data is returned, it must not be `false`, otherwise calls are assumed to be successful.
     fn call_optional_return(
         &self,
         token: Address,
-        data: Vec<u8>,
+        data: &[u8],
     ) -> Result<(), Error> {
-        match call(Call::new(), token, data.as_slice()) {
-            Ok(data) => {
-                if data.is_empty() && !Address::has_code(&token) {
-                    return Err(Error::SafeErc20FailedOperation(
-                        SafeErc20FailedOperation { token },
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(Error::SafeErc20FailedOperation(
-                    SafeErc20FailedOperation { token },
-                ))
+        match call(Call::new(), token, data) {
+            Ok(data) if !data.is_empty() || Address::has_code(&token) => Ok(()),
+            _ => {
+                Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                }))
             }
         }
-        Ok(())
     }
 }
