@@ -706,7 +706,7 @@ impl Erc1155 {
     /// # Events
     ///
     /// Emits a [`TransferSingle`] event.
-    fn _mint(
+    pub fn _mint(
         &mut self,
         to: Address,
         token_id: U256,
@@ -743,7 +743,7 @@ impl Erc1155 {
     /// # Events
     ///
     /// Emits a [`TransferBatch`] event.
-    fn _mint_batch(
+    pub fn _mint_batch(
         &mut self,
         to: Address,
         token_ids: Vec<U256>,
