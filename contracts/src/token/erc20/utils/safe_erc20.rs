@@ -199,7 +199,15 @@ impl SafeErc20 {
         data: &[u8],
     ) -> Result<(), Error> {
         match call(Call::new(), token, data) {
-            Ok(data) if !data.is_empty() || Address::has_code(&token) => Ok(()),
+            Ok(data)
+                if !(data.is_empty() || !Address::has_code(&token))
+                    && data[data.len() - 1] == 0x01
+                    && data[..data.len() - 1]
+                        .iter()
+                        .all(|&byte| byte == 0x00) =>
+            {
+                Ok(())
+            }
             _ => {
                 Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
                     token,
