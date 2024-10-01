@@ -40,7 +40,7 @@ impl MyContract {
 }
 ----
 
-At deployment, the https://docs.rs/openzeppelin-stylus/0.1.0-rc/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.owner[`owner`] of an `Ownable` contract is set to the provided `initial_owner` parameter.
+At deployment, the https://docs.rs/broken-link[`owner`] of an `Ownable` contract is set to the provided `initial_owner` parameter.
 
 Ownable also lets you:
 
