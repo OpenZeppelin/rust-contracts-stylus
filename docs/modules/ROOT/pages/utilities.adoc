@@ -9,7 +9,7 @@ Here are some of the more popular ones.
 
 It's frequently helpful to know whether a contract supports an interface you'd like to use.
 https://eips.ethereum.org/EIPS/eip-165[`ERC-165`] is a standard that helps do runtime interface detection.
-Contracts for Stylus provides helpers for implementing ERC-165 in your contracts:
+Contracts for Stylus provide helpers for implementing ERC-165 in your contracts:
 
 * https://docs.rs/openzeppelin-stylus/0.1.0-rc/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html[`IERC165`] — this is the ERC-165 trait that defines https://docs.rs/openzeppelin-stylus/0.1.0-rc/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html#tymethod.supports_interface[`supportsInterface`]. In order to implement ERC-165 interface detection, you should manually expose https://docs.rs/openzeppelin-stylus/0.1.0-rc/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html#tymethod.supports_interface[`supportsInterface`] function in your contract.
 
