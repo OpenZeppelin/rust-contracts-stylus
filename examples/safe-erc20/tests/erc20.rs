@@ -11,7 +11,7 @@ mod abi;
 mod mock;
 
 #[e2e::test]
-async fn safe_transfers(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn transfers(alice: Account, bob: Account) -> eyre::Result<()> {
     let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
     let safe_erc20_mock_alice =
         SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
@@ -53,7 +53,7 @@ async fn safe_transfers(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn safe_transfer_rejects_on_error(
+async fn transfer_rejects_on_error(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -80,7 +80,7 @@ async fn safe_transfer_rejects_on_error(
 }
 
 #[e2e::test]
-async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
     let safe_erc20_mock_alice =
         SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
@@ -122,7 +122,7 @@ async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn safe_transfer_from_rejects_on_error(
+async fn transfer_from_rejects_on_error(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -153,4 +153,162 @@ async fn safe_transfer_from_rejects_on_error(
     }));
 
     Ok(())
+}
+
+mod approvals {
+    mod with_zero_allowance {
+        use alloy::primitives::uint;
+        use alloy_primitives::U256;
+        use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
+
+        use crate::abi::SafeErc20;
+        use crate::mock::{erc20, erc20::ERC20Mock};
+
+        #[e2e::test]
+        async fn doesnt_revert_when_force_approving_a_non_zero_allowance(
+            alice: Account,
+        ) -> eyre::Result<()> {
+            let safe_erc20_mock_addr =
+                alice.as_deployer().deploy().await?.address()?;
+            let safe_erc20_mock_alice =
+                SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+            let spender_addr = alice.address();
+
+            let erc20_address = erc20::deploy(&alice.wallet).await?;
+            let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+
+            let _ = watch!(erc20_alice.regular_approve(
+                safe_erc20_mock_addr,
+                spender_addr,
+                U256::ZERO
+            ));
+
+            let value = uint!(100_U256);
+
+            let _ = receipt!(safe_erc20_mock_alice.forceApprove(
+                erc20_address,
+                spender_addr,
+                value
+            ))?;
+
+            let ERC20Mock::allowanceReturn { _0: spender_allowance } =
+                erc20_alice
+                    .allowance(safe_erc20_mock_addr, spender_addr)
+                    .call()
+                    .await?;
+            assert_eq!(spender_allowance, value);
+
+            Ok(())
+        }
+
+        #[e2e::test]
+        async fn doesnt_revert_when_force_approving_a_zero_allowance(
+            alice: Account,
+        ) -> eyre::Result<()> {
+            let safe_erc20_mock_addr =
+                alice.as_deployer().deploy().await?.address()?;
+            let safe_erc20_mock_alice =
+                SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+            let spender_addr = alice.address();
+
+            let erc20_address = erc20::deploy(&alice.wallet).await?;
+            let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+
+            let _ = watch!(erc20_alice.regular_approve(
+                safe_erc20_mock_addr,
+                spender_addr,
+                U256::ZERO
+            ));
+
+            let _ = receipt!(safe_erc20_mock_alice.forceApprove(
+                erc20_address,
+                spender_addr,
+                U256::ZERO
+            ))?;
+
+            let ERC20Mock::allowanceReturn { _0: spender_allowance } =
+                erc20_alice
+                    .allowance(safe_erc20_mock_addr, spender_addr)
+                    .call()
+                    .await?;
+            assert_eq!(spender_allowance, U256::ZERO);
+
+            Ok(())
+        }
+
+        #[e2e::test]
+        async fn doesnt_revert_when_increasing_the_allowance(
+            alice: Account,
+        ) -> eyre::Result<()> {
+            let safe_erc20_mock_addr =
+                alice.as_deployer().deploy().await?.address()?;
+            let safe_erc20_mock_alice =
+                SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+            let spender_addr = alice.address();
+
+            let erc20_address = erc20::deploy(&alice.wallet).await?;
+            let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+
+            let _ = watch!(erc20_alice.regular_approve(
+                safe_erc20_mock_addr,
+                spender_addr,
+                U256::ZERO
+            ));
+
+            let value = uint!(10_U256);
+
+            let _ = receipt!(safe_erc20_mock_alice.safeIncreaseAllowance(
+                erc20_address,
+                spender_addr,
+                value
+            ))?;
+
+            let ERC20Mock::allowanceReturn { _0: spender_allowance } =
+                erc20_alice
+                    .allowance(safe_erc20_mock_addr, spender_addr)
+                    .call()
+                    .await?;
+            assert_eq!(spender_allowance, value);
+
+            Ok(())
+        }
+
+        #[e2e::test]
+        async fn reverts_when_decreasing_the_allowance(
+            alice: Account,
+        ) -> eyre::Result<()> {
+            let safe_erc20_mock_addr =
+                alice.as_deployer().deploy().await?.address()?;
+            let safe_erc20_mock_alice =
+                SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+            let spender_addr = alice.address();
+
+            let erc20_address = erc20::deploy(&alice.wallet).await?;
+            let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+
+            let _ = watch!(erc20_alice.regular_approve(
+                safe_erc20_mock_addr,
+                spender_addr,
+                U256::ZERO
+            ));
+
+            let value = uint!(10_U256);
+
+            let err = send!(safe_erc20_mock_alice.safeDecreaseAllowance(
+                erc20_address,
+                spender_addr,
+                value
+            ))
+            .expect_err("should not be able to succeed on 'decreaseAllowance'");
+            assert!(err.reverted_with(
+                SafeErc20::SafeErc20FailedDecreaseAllowance {
+                    spender: spender_addr,
+                    currentAllowance: U256::ZERO,
+                    requestedDecrease: value
+                }
+            ));
+
+            Ok(())
+        }
+    }
 }
