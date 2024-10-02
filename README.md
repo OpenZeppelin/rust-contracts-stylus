@@ -76,7 +76,7 @@ For more information on what this library will include in the future, see our
 
 ## Contribute
 
-OpenZeppelin Contracts for Stylus exist thanks to its contributors. There are
+OpenZeppelin Contracts for Stylus exists thanks to its contributors. There are
 many ways you can participate and help build high-quality software. Check out
 the [contribution guide](CONTRIBUTING.md)!
 
