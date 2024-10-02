@@ -6,10 +6,10 @@
 //! block using the [`Trace160::push`] function.
 use alloy_primitives::{uint, Uint, U256, U32};
 use alloy_sol_types::sol;
-use stylus_proc::{sol_storage, SolidityError};
 use stylus_sdk::{
     call::MethodError,
     storage::{StorageGuard, StorageGuardMut},
+    stylus_proc::{sol_storage, SolidityError},
 };
 
 use crate::utils::math::alloy::Math;
