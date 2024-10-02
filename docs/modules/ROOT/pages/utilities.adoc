@@ -36,7 +36,7 @@ impl Erc721Example {
 [[structures]]
 == Structures
 
-Some use cases require more powerful data structures than arrays and mappings offered natively in Stylus sdk.
+Some use cases require more powerful data structures than arrays and mappings offered natively in alloy and the Stylus sdk.
 Contracts provides these libraries for enhanced data structure management:
 
 - https://docs.rs/openzeppelin-stylus/0.1.0-rc/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
