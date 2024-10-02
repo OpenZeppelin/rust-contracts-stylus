@@ -205,8 +205,8 @@ impl SafeErc20 {
             .call(token, data)
         {
             Ok(data)
-                if !(data.is_empty() && !Address::has_code(&token))
-                    && encodes_true(&data) =>
+                if (data.is_empty() && Address::has_code(&token))
+                    || (!data.is_empty() && encodes_true(&data)) =>
             {
                 Ok(())
             }
