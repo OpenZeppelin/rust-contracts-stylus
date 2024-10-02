@@ -55,9 +55,9 @@ sol_storage! {
     /// contract returns false). Tokens that return no value (and instead revert or
     /// throw on failure) are also supported, non-reverting calls are assumed to be
     /// successful.
-    /// To use this library you can add a `using SafeERC20 for IERC20;` statement to
+    /// To use this library you can add a `#[inherit(SafeErc20)]` attribute to
     /// your contract, which allows you to call the safe operations as
-    /// `token.safeTransfer(...)`, etc.
+    /// `contract.safe_transfer(token_addr, ...)`, etc.
     pub struct SafeErc20 {}
 }
 
@@ -79,7 +79,6 @@ impl SafeErc20 {
     ) -> Result<(), Error> {
         let encoded_args = (to, value).abi_encode_params();
         let selector = function_selector!("transfer", Address, U256);
-        // Combine function selector and input data (use abi_packed way)
         let data = [&selector[..4], &encoded_args].concat();
 
         self.call_optional_return(token, &data)
@@ -97,7 +96,6 @@ impl SafeErc20 {
         let encoded_args = (from, to, value).abi_encode_params();
         let selector =
             function_selector!("transferFrom", Address, Address, U256);
-        // Combine function selector and input data (use abi_packed way)
         let data = [&selector[..4], &encoded_args].concat();
 
         self.call_optional_return(token, &data)
@@ -121,7 +119,7 @@ impl SafeErc20 {
         self.force_approve(token, spender, old_allowance + value)
     }
 
-    /// Decrease the calling contract's allowance toward `spender` by `requestedDecrease`. If `token` returns no
+    /// Decrease the calling contract's allowance toward `spender` by `requested_decrease`. If `token` returns no
     /// value, non-reverting calls are assumed to be successful.
     pub fn safe_decrease_allowance(
         &mut self,
@@ -192,7 +190,7 @@ impl SafeErc20 {
 }
 
 impl SafeErc20 {
-    /// Imitates a Solidity high-level call, relaxing the requirement on the return value:
+    /// Imitates a Stylus high-level call, relaxing the requirement on the return value:
     /// if data is returned, it must not be `false`, otherwise calls are assumed to be successful.
     fn call_optional_return(
         &self,
