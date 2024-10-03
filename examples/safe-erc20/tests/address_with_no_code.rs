@@ -103,12 +103,12 @@ async fn reverts_on_decrease_allowance(
     let bob_addr = bob.address();
     let has_no_code_addr = has_no_code.address();
 
-    let requested_descrease = uint!(1_U256);
+    let requested_decrease = uint!(1_U256);
 
     let err = send!(safe_erc20_mock_alice.safeDecreaseAllowance(
         has_no_code_addr,
         bob_addr,
-        requested_descrease
+        requested_decrease
     ))
     .expect_err("should not be able to invoke 'decreaseAllowance' on EOA");
     assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
