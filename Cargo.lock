@@ -3214,7 +3214,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "safe-erc20-example"
-version = "0.0.0"
+version = "0.1.0-rc"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -3222,7 +3222,6 @@ dependencies = [
  "eyre",
  "mini-alloc",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]

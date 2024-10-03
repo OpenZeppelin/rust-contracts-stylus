@@ -3,13 +3,13 @@
 use alloc::vec::Vec;
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::{sol, SolValue};
-use stylus_proc::{public, sol_interface, sol_storage, SolidityError};
 use stylus_sdk::{
     call::{Call, RawCall},
     contract::address,
     evm::gas_left,
     function_selector,
     storage::TopLevelStorage,
+    stylus_proc::{public, sol_interface, sol_storage, SolidityError},
     types::AddressVM,
 };
 
