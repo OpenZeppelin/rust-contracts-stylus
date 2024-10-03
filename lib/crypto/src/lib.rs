@@ -24,5 +24,8 @@ extern crate alloc;
 pub mod hash;
 pub mod merkle;
 
+mod curve;
+mod field;
 pub mod keccak;
+
 pub use keccak::KeccakBuilder;
