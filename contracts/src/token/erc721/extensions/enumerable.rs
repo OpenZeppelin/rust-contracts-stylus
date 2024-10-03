@@ -13,7 +13,7 @@
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_proc::{public, sol_storage, SolidityError};
+use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
 
 use crate::{
     token::{erc721, erc721::IErc721},

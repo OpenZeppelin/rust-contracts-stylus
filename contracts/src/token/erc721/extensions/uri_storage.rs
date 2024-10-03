@@ -5,8 +5,10 @@ use alloc::string::String;
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage};
-use stylus_sdk::evm;
+use stylus_sdk::{
+    evm,
+    stylus_proc::{public, sol_storage},
+};
 
 sol! {
     /// This event gets emitted when the metadata of a token is changed.

@@ -7,11 +7,10 @@
 use alloy_primitives::{Address, FixedBytes, U256};
 use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    stylus_proc::{public, sol_storage},
+    stylus_proc::{public, sol_storage, SolidityError},
 };
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
