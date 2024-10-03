@@ -20,9 +20,16 @@ Common cryptographic procedures for a blockchain environment.
 
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 extern crate alloc;
+extern crate core;
 
+pub mod biginteger;
+pub mod bits;
+pub mod const_helpers;
+pub mod curve;
+pub mod field;
 pub mod hash;
-pub mod merkle;
-
 pub mod keccak;
+pub mod merkle;
+pub mod poseidon2;
+
 pub use keccak::KeccakBuilder;
