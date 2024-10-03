@@ -31,7 +31,7 @@ sol! {
 /// A SafeErc20 error
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Erc20`] contract [`erc20::Error`].
+    /// Error type from [`erc20::Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
     /// An operation with an ERC-20 token failed.
     SafeErc20FailedOperation(SafeErc20FailedOperation),
