@@ -1,9 +1,8 @@
 #![cfg(feature = "e2e")]
 
+use abi::SafeErc20;
 use alloy::primitives::uint;
 use e2e::{receipt, watch, Account, ReceiptExt};
-
-use abi::SafeErc20;
 use mock::{erc20_force_approve, erc20_force_approve::ERC20ForceApproveMock};
 
 mod abi;

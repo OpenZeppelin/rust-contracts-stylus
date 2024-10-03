@@ -1,9 +1,8 @@
 #![cfg(feature = "e2e")]
 
+use abi::SafeErc20;
 use alloy::primitives::{uint, U256};
 use e2e::{send, Account, ReceiptExt, Revert};
-
-use abi::SafeErc20;
 
 mod abi;
 mod mock;

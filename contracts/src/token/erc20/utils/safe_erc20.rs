@@ -1,6 +1,7 @@
 //! Wrappers around ERC-20 operations that throw on failure.
 
 use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::{sol, SolValue};
 use stylus_sdk::{
@@ -84,8 +85,9 @@ impl SafeErc20 {
         self.call_optional_return(token, &data)
     }
 
-    /// Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
-    /// calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.
+    /// Transfer `value` amount of `token` from `from` to `to`, spending the
+    /// approval given by `from` to the calling contract. If `token` returns
+    /// no value, non-reverting calls are assumed to be successful.
     pub fn safe_transfer_from(
         &mut self,
         token: Address,
@@ -101,8 +103,9 @@ impl SafeErc20 {
         self.call_optional_return(token, &data)
     }
 
-    /// Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
-    /// non-reverting calls are assumed to be successful.
+    /// Increase the calling contract's allowance toward `spender` by `value`.
+    /// If `token` returns no value, non-reverting calls are assumed to be
+    /// successful.
     pub fn safe_increase_allowance(
         &mut self,
         token: Address,
@@ -119,8 +122,9 @@ impl SafeErc20 {
         self.force_approve(token, spender, old_allowance + value)
     }
 
-    /// Decrease the calling contract's allowance toward `spender` by `requested_decrease`. If `token` returns no
-    /// value, non-reverting calls are assumed to be successful.
+    /// Decrease the calling contract's allowance toward `spender` by
+    /// `requested_decrease`. If `token` returns no value, non-reverting
+    /// calls are assumed to be successful.
     pub fn safe_decrease_allowance(
         &mut self,
         token: Address,
@@ -153,8 +157,9 @@ impl SafeErc20 {
         )
     }
 
-    /// Set the calling contract's allowance toward `spender` to `value`. If `token` returns no value,
-    /// non-reverting calls are assumed to be successful. Meant to be used with tokens that require the approval
+    /// Set the calling contract's allowance toward `spender` to `value`. If
+    /// `token` returns no value, non-reverting calls are assumed to be
+    /// successful. Meant to be used with tokens that require the approval
     /// to be set to zero before setting it to a non-zero value, such as USDT.
     pub fn force_approve(
         &mut self,
@@ -180,7 +185,8 @@ impl SafeErc20 {
             return Ok(());
         }
 
-        // If that fails, reset allowance to zero, then retry the desired approval
+        // If that fails, reset allowance to zero, then retry the desired
+        // approval
         let reset_data = build_approve_calldata(spender, U256::ZERO, &selector);
         self.call_optional_return(token, &reset_data)?;
         self.call_optional_return(token, &approve_data)?;
@@ -190,8 +196,9 @@ impl SafeErc20 {
 }
 
 impl SafeErc20 {
-    /// Imitates a Stylus high-level call, relaxing the requirement on the return value:
-    /// if data is returned, it must not be `false`, otherwise calls are assumed to be successful.
+    /// Imitates a Stylus high-level call, relaxing the requirement on the
+    /// return value: if data is returned, it must not be `false`, otherwise
+    /// calls are assumed to be successful.
     fn call_optional_return(
         &self,
         token: Address,
