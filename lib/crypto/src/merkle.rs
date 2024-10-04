@@ -304,7 +304,7 @@ where
                 proof_pos += 1;
             };
 
-            let hash = commutative_hash_pair(&a, &b, builder.build_hasher());
+            let hash = commutative_hash_pair(&a, b, builder.build_hasher());
             hashes.push(hash);
         }
 
