@@ -21,7 +21,7 @@ use crate::{
 };
 
 sol_storage! {
-    /// State of [`crate::token::erc1155::Erc1155`] token's supply.
+    /// State of [`Erc1155`] token's supply.
     pub struct Erc1155Supply {
         /// Erc1155 contract storage.
         Erc1155 erc1155;
@@ -65,8 +65,9 @@ impl Erc1155Supply {
     ///
     /// # Events
     ///
-    /// Emits a [`TransferSingle`] event if the arrays contain one element, and
-    /// [`TransferBatch`] otherwise.
+    /// Emits a [`crate::token::erc1155::TransferSingle`]
+    /// event if the arrays contain one element,
+    /// and [`crate::token::erc1155::TransferBatch`] otherwise.
     pub fn _update(
         &mut self,
         from: Address,

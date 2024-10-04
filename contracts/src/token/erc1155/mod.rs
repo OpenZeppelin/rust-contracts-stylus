@@ -652,7 +652,7 @@ impl Erc1155 {
     }
 
     /// Refer to:
-    /// https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155-_safeBatchTransferFrom-address-address-uint256---uint256---bytes-
+    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155-_safeBatchTransferFrom-address-address-uint256---uint256---bytes->
     /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
     /// version of [`Self::_safe_transfer_from`].
     ///
@@ -740,7 +740,7 @@ impl Erc1155 {
     }
 
     /// Refer to:
-    /// https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155-_mintBatch-address-uint256---uint256---bytes-
+    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155-_mintBatch-address-uint256---uint256---bytes->
     /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
     /// version of [`Self::_mint`].
     ///

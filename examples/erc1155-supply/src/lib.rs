@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc1155::extensions::supply::Erc1155Supply;
+use openzeppelin_stylus::token::erc1155::extensions::Erc1155Supply;
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
