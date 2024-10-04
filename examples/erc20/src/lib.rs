@@ -9,7 +9,7 @@ use openzeppelin_stylus::{
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
         Erc20, IErc20,
     },
-    utils::{pausable::Error, Pausable},
+    utils::Pausable,
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
@@ -106,11 +106,11 @@ impl Erc20Example {
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
     }
 
-    pub fn pause(&mut self) -> Result<(), Error> {
-        self.pausable.pause()
+    pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+        self.pausable.pause().map_err(|e| e.into())
     }
 
-    pub fn unpause(&mut self) -> Result<(), Error> {
-        self.pausable.unpause()
+    pub fn unpause(&mut self) -> Result<(), Vec<u8>> {
+        self.pausable.unpause().map_err(|e| e.into())
     }
 }
