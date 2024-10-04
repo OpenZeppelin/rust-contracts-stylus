@@ -835,7 +835,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_errors_when_invalid_sender(contract: Erc20) {
+    fn transfer_from_errors_when_invalid_approver(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         contract
