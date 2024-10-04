@@ -1526,22 +1526,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "erc1155-supply-example"
-version = "0.1.0-rc"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "alloy-sol-types",
- "e2e",
- "eyre",
- "mini-alloc",
- "openzeppelin-stylus",
- "rand",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
 name = "erc20-example"
 version = "0.1.0-rc"
 dependencies = [
