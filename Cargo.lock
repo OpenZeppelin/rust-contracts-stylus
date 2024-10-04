@@ -1521,7 +1521,6 @@ dependencies = [
  "mini-alloc",
  "openzeppelin-stylus",
  "rand",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -1538,7 +1537,6 @@ dependencies = [
  "mini-alloc",
  "openzeppelin-stylus",
  "rand",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]

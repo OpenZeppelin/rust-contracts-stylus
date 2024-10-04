@@ -13,8 +13,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{uint, Address, U256};
-use stylus_proc::sol_storage;
-use stylus_sdk::prelude::*;
+use stylus_sdk::{prelude::*, stylus_proc::sol_storage};
 
 use crate::{
     token::erc1155::{Erc1155, Error},
