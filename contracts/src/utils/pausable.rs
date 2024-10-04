@@ -8,7 +8,8 @@
 //! which can be added to the functions of your contract.
 //!
 //! Note that they will not be pausable by simply including this module,
-//! only once the modifiers are put in place.
+//! only once functions [`Pausable::when_not_paused`] and
+//! [`Pausable::when_paused`] are put in place.
 //!
 //! Note that [`Pausable::pause`] and [`Pausable::unpause`] methods are not
 //! exposed by default.
@@ -71,42 +72,6 @@ impl Pausable {
     fn paused(&self) -> bool {
         self._paused.get()
     }
-
-    /// Modifier to make a function callable only when the contract is NOT
-    /// paused.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// If the contract is in the `Paused` state, then the error
-    /// [`Error::EnforcedPause`] is returned.
-    pub fn when_not_paused(&self) -> Result<(), Error> {
-        if self._paused.get() {
-            return Err(Error::EnforcedPause(EnforcedPause {}));
-        }
-        Ok(())
-    }
-
-    /// Modifier to make a function callable
-    /// only when the contract is paused.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// If the contract is in `Unpaused` state, then the error
-    /// [`Error::ExpectedPause`] is returned.
-    pub fn when_paused(&self) -> Result<(), Error> {
-        if !self._paused.get() {
-            return Err(Error::ExpectedPause(ExpectedPause {}));
-        }
-        Ok(())
-    }
 }
 
 impl Pausable {
@@ -141,6 +106,40 @@ impl Pausable {
         self.when_paused()?;
         self._paused.set(false);
         evm::log(Unpaused { account: msg::sender() });
+        Ok(())
+    }
+
+    /// Returns error when the contract is NOT paused.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// If the contract is in the `Paused` state, then the error
+    /// [`Error::EnforcedPause`] is returned.
+    pub fn when_not_paused(&self) -> Result<(), Error> {
+        if self._paused.get() {
+            return Err(Error::EnforcedPause(EnforcedPause {}));
+        }
+        Ok(())
+    }
+
+    /// Returns error when the contract is paused.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// If the contract is in `Unpaused` state, then the error
+    /// [`Error::ExpectedPause`] is returned.
+    pub fn when_paused(&self) -> Result<(), Error> {
+        if !self._paused.get() {
+            return Err(Error::ExpectedPause(ExpectedPause {}));
+        }
         Ok(())
     }
 }
