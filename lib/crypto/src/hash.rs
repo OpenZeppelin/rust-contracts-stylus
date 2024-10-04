@@ -148,10 +148,10 @@ where
     S: Hasher,
 {
     if a > b {
-        return hash_pair(b, a, state);
+        hash_pair(b, a, state)
+    } else {
+        hash_pair(a, b, state)
     }
-
-    hash_pair(a, b, state)
 }
 
 #[cfg(all(test, feature = "std"))]
