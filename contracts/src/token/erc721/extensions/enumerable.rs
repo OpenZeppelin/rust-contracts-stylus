@@ -10,11 +10,15 @@
 //! [`Erc721Enumerable`].
 // TODO: Add link for `Erc721Consecutive` to module docs.
 
-use alloy_primitives::{uint, Address, U256};
+use alloy_primitives::{uint, Address, FixedBytes, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage, SolidityError};
+use openzeppelin_stylus_proc::interface_id;
+use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
 
-use crate::token::{erc721, erc721::IErc721};
+use crate::{
+    token::{erc721, erc721::IErc721},
+    utils::introspection::erc165::IErc165,
+};
 
 sol! {
     /// Indicates an error when an `owner`'s token query
@@ -63,6 +67,7 @@ sol_storage! {
 
 /// This is the interface of the optional `Enumerable` extension
 /// of the ERC-721 standard.
+#[interface_id]
 pub trait IErc721Enumerable {
     /// The error type associated to this ERC-721 enumerable trait
     /// implementation.
@@ -141,6 +146,13 @@ impl IErc721Enumerable for Erc721Enumerable {
         self._all_tokens.get(index).ok_or(
             ERC721OutOfBoundsIndex { owner: Address::ZERO, index }.into(),
         )
+    }
+}
+
+impl IErc165 for Erc721Enumerable {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721Enumerable>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
     }
 }
 
@@ -546,5 +558,12 @@ mod tests {
         let err =
             contract.token_of_owner_by_index(alice, U256::ZERO).unwrap_err();
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
+        let expected = 0x780e9d63;
+        assert_eq!(actual, expected);
     }
 }

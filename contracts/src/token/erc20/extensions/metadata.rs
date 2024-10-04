@@ -2,7 +2,11 @@
 
 use alloc::string::String;
 
-use stylus_proc::{public, sol_storage};
+use alloy_primitives::FixedBytes;
+use openzeppelin_stylus_proc::interface_id;
+use stylus_sdk::stylus_proc::{public, sol_storage};
+
+use crate::utils::introspection::erc165::IErc165;
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
@@ -20,6 +24,7 @@ sol_storage! {
 }
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
+#[interface_id]
 pub trait IErc20Metadata {
     /// Returns the name of the token.
     ///
@@ -74,5 +79,24 @@ impl IErc20Metadata for Erc20Metadata {
         // https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
         // gets resolved.
         DEFAULT_DECIMALS
+    }
+}
+
+impl IErc165 for Erc20Metadata {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc20Metadata>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+    }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use crate::token::erc20::extensions::{Erc20Metadata, IErc20Metadata};
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
+        let expected = 0xa219a025;
+        assert_eq!(actual, expected);
     }
 }

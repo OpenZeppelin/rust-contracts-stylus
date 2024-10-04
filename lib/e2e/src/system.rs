@@ -61,17 +61,19 @@ pub fn provider() -> Provider {
 }
 
 /// Send `amount` eth to `address` in the nitro-tesnode.
-pub fn fund_account(address: Address, amount: &str) -> eyre::Result<()> {
-    // ./test-node.bash script send-l2 --to
-    // address_0x01fA6bf4Ee48B6C95900BCcf9BEA172EF5DBd478 --ethamount 10
+pub fn fund_account(address: Address, amount: u32) -> eyre::Result<()> {
     let node_script = get_node_path()?.join("test-node.bash");
+    if !node_script.exists() {
+        bail!("Test nitro node wasn't setup properly. Try to setup it first with `./scripts/nitro-testnode.sh -i -d`")
+    };
+
     let output = std::process::Command::new(node_script)
         .arg("script")
         .arg("send-l2")
         .arg("--to")
         .arg(format!("address_{address}"))
         .arg("--ethamount")
-        .arg(amount)
+        .arg(amount.to_string())
         .output()?;
 
     if !output.status.success() {

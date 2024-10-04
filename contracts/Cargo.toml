@@ -1,24 +1,24 @@
 [package]
 name = "openzeppelin-stylus"
-categories = ["no-std", "wasm"]
 description = "OpenZeppelin Contracts for Stylus"
 edition.workspace = true
-keywords.workspace = true
+categories = ["cryptography::cryptocurrencies", "no-std", "wasm"]
+keywords = ["arbitrum", "ethereum", "stylus", "smart-contracts", "standards"]
 license.workspace = true
 repository.workspace = true
-version = "0.1.0-rc"
+version.workspace = true
 
 [dependencies]
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
-stylus-proc.workspace = true
 mini-alloc.workspace = true
 keccak-const.workspace = true
+openzeppelin-stylus-proc.workspace = true
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
-motsu = { path = "../lib/motsu" }
+motsu.workspace = true
 rand.workspace = true
 
 [features]
