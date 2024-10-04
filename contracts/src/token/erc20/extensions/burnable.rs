@@ -168,7 +168,7 @@ mod tests {
             .set(one);
 
         let result = contract.burn_from(Address::ZERO, one);
-        assert!(matches!(result, Err(Error::InvalidSender(_))));
+        assert!(matches!(result, Err(Error::InvalidApprover(_))));
     }
 
     #[motsu::test]
