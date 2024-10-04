@@ -42,10 +42,9 @@
 //! this role.
 use alloy_primitives::{Address, B256};
 use alloy_sol_types::sol;
-use stylus_proc::SolidityError;
 use stylus_sdk::{
     evm, msg,
-    stylus_proc::{public, sol_storage},
+    stylus_proc::{public, sol_storage, SolidityError},
 };
 
 sol! {
