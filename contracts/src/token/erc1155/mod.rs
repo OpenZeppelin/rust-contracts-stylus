@@ -16,8 +16,6 @@ use crate::utils::{
     math::storage::SubAssignUnchecked,
 };
 
-pub mod extensions;
-
 sol! {
     /// Emitted when `value` amount of tokens of type `token_id` are transferred from `from` to `to` by `operator`.
     #[allow(missing_docs)]

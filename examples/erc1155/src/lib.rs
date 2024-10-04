@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
-    token::erc1155::{extensions::IErc1155Burnable, Erc1155, IErc1155},
+    token::erc1155::{Erc1155, IErc1155},
     utils::Pausable,
 };
 use stylus_sdk::{
@@ -37,30 +37,6 @@ impl Erc1155Example {
             .setter(owner)
             .setter(operator)
             .set(approved);
-        Ok(())
-    }
-
-    pub fn burn(
-        &mut self,
-        account: Address,
-        token_id: U256,
-        value: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
-        self.erc1155.burn(account, token_id, value)?;
-        Ok(())
-    }
-
-    pub fn burn_batch(
-        &mut self,
-        account: Address,
-        token_ids: Vec<U256>,
-        values: Vec<U256>,
-    ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
-
-        self.erc1155.burn_batch(account, token_ids, values)?;
         Ok(())
     }
 
