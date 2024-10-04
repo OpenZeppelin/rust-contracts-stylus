@@ -7,8 +7,8 @@
 //! and [`Pausable::when_paused`],
 //! which can be added to the functions of your contract.
 //!
-//! Note that your contract will not be pausable by simply including this module,
-//! only where you use these function.
+//! Note that your contract will not be pausable by simply including this
+//! module, only where you use these function.
 
 use alloy_sol_types::sol;
 use stylus_proc::{public, sol_storage, SolidityError};
