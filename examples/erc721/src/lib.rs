@@ -9,7 +9,7 @@ use openzeppelin_stylus::{
         extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
         Erc721, IErc721,
     },
-    utils::Pausable,
+    utils::{pausable::Error, Pausable},
 };
 use stylus_sdk::{
     abi::Bytes,
@@ -150,5 +150,13 @@ impl Erc721Example {
         )?;
 
         Ok(())
+    }
+
+    pub fn pause(&mut self) -> Result<(), Error> {
+        self.pausable.pause()
+    }
+
+    pub fn unpause(&mut self) -> Result<(), Error> {
+        self.pausable.unpause()
     }
 }

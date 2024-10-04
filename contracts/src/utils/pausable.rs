@@ -9,6 +9,10 @@
 //!
 //! Note that they will not be pausable by simply including this module,
 //! only once the modifiers are put in place.
+//!
+//! Note that [`Pausable::pause`] and [`Pausable::unpause`] methods are not
+//! exposed by default.
+//! You should expose them manually in your contract's abi.
 
 use alloy_sol_types::sol;
 use stylus_proc::{public, sol_storage, SolidityError};
@@ -68,40 +72,6 @@ impl Pausable {
         self._paused.get()
     }
 
-    /// Triggers `Paused` state.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// If the contract is in `Paused` state, then the error
-    /// [`Error::EnforcedPause`] is returned.
-    pub fn pause(&mut self) -> Result<(), Error> {
-        self.when_not_paused()?;
-        self._paused.set(true);
-        evm::log(Paused { account: msg::sender() });
-        Ok(())
-    }
-
-    /// Triggers `Unpaused` state.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// If the contract is in `Unpaused` state, then the error
-    /// [`Error::ExpectedPause`] is returned.
-    pub fn unpause(&mut self) -> Result<(), Error> {
-        self.when_paused()?;
-        self._paused.set(false);
-        evm::log(Unpaused { account: msg::sender() });
-        Ok(())
-    }
-
     /// Modifier to make a function callable only when the contract is NOT
     /// paused.
     ///
@@ -135,6 +105,42 @@ impl Pausable {
         if !self._paused.get() {
             return Err(Error::ExpectedPause(ExpectedPause {}));
         }
+        Ok(())
+    }
+}
+
+impl Pausable {
+    /// Triggers `Paused` state.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// If the contract is in `Paused` state, then the error
+    /// [`Error::EnforcedPause`] is returned.
+    pub fn pause(&mut self) -> Result<(), Error> {
+        self.when_not_paused()?;
+        self._paused.set(true);
+        evm::log(Paused { account: msg::sender() });
+        Ok(())
+    }
+
+    /// Triggers `Unpaused` state.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// If the contract is in `Unpaused` state, then the error
+    /// [`Error::ExpectedPause`] is returned.
+    pub fn unpause(&mut self) -> Result<(), Error> {
+        self.when_paused()?;
+        self._paused.set(false);
+        evm::log(Unpaused { account: msg::sender() });
         Ok(())
     }
 }
