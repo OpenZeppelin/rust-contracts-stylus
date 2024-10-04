@@ -1,7 +1,5 @@
 #![cfg(feature = "e2e")]
 
-use std::println;
-
 use abi::Erc1155;
 use alloy::{
     primitives::{uint, Address, U256},
@@ -36,7 +34,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn test_error_array_length_mismatch(
+async fn error_when_array_length_mismatch(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -61,7 +59,7 @@ async fn test_error_array_length_mismatch(
 }
 
 #[e2e::test]
-async fn test_balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
+async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
     let token_ids = random_token_ids(1);
@@ -74,7 +72,7 @@ async fn test_balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn test_balance_of_batch_zero_balance(
+async fn balance_of_batch_zero_balance(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -97,7 +95,7 @@ async fn test_balance_of_batch_zero_balance(
 }
 
 #[e2e::test]
-async fn test_set_approval_for_all(
+async fn set_approval_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -139,7 +137,7 @@ async fn test_set_approval_for_all(
 }
 
 #[e2e::test]
-async fn test_error_invalid_operator_when_approval_for_all(
+async fn error_when_invalid_operator_approval_for_all(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -158,7 +156,7 @@ async fn test_error_invalid_operator_when_approval_for_all(
 }
 
 #[e2e::test]
-async fn is_approved_for_all_invalid_operator(
+async fn error_when_invalid_operator_is_approved_for_all_(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -177,7 +175,7 @@ async fn is_approved_for_all_invalid_operator(
 }
 
 #[e2e::test]
-async fn test_mints(alice: Account) -> eyre::Result<()> {
+async fn mints(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -208,7 +206,7 @@ async fn test_mints(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn test_mint_batch(
+async fn mint_batch(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -289,10 +287,7 @@ async fn test_mint_batch(
 }
 
 #[e2e::test]
-async fn test_safe_transfer_from(
-    alice: Account,
-    bob: Account,
-) -> eyre::Result<()> {
+async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -331,7 +326,7 @@ async fn test_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_invalid_receiver_when_safe_transfer_from(
+async fn error_when_invalid_receiver_safe_transfer_from(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -360,7 +355,7 @@ async fn test_error_invalid_receiver_when_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_invalid_sender_when_safe_transfer_from(
+async fn error_when_invalid_sender_safe_transfer_from(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -396,7 +391,7 @@ async fn test_error_invalid_sender_when_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_missing_approval_when_safe_transfer_from(
+async fn error_when_missing_approval_safe_transfer_from(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -429,7 +424,7 @@ async fn test_error_missing_approval_when_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_insufficient_balance_when_safe_transfer_from(
+async fn error_when_insufficient_balance_safe_transfer_from(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -466,7 +461,7 @@ async fn test_error_insufficient_balance_when_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn test_safe_batch_transfer_from(
+async fn safe_batch_transfer_from(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -518,7 +513,7 @@ async fn test_safe_batch_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_invalid_receiver_when_safe_batch_transfer_from(
+async fn error_when_invalid_receiver_safe_batch_transfer_from(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -553,7 +548,7 @@ async fn test_error_invalid_receiver_when_safe_batch_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_invalid_sender_when_safe_batch_transfer_from(
+async fn error_when_invalid_sender_safe_batch_transfer_from(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -594,7 +589,7 @@ async fn test_error_invalid_sender_when_safe_batch_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_missing_approval_when_safe_batch_transfer_from(
+async fn error_when_missing_approval_safe_batch_transfer_from(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -633,7 +628,7 @@ async fn test_error_missing_approval_when_safe_batch_transfer_from(
 }
 
 #[e2e::test]
-async fn test_error_insufficient_balance_when_safe_batch_transfer_from(
+async fn error_when_insufficient_balance_safe_batch_transfer_from(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -675,7 +670,7 @@ async fn test_error_insufficient_balance_when_safe_batch_transfer_from(
 }
 
 #[e2e::test]
-async fn test_burns(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn burns(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -703,7 +698,7 @@ async fn test_burns(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn test_error_missing_approval_when_burn(
+async fn error_when_missing_approval_burn(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -730,9 +725,7 @@ async fn test_error_missing_approval_when_burn(
 }
 
 #[e2e::test]
-async fn test_error_invalid_sender_when_burn(
-    alice: Account,
-) -> eyre::Result<()> {
+async fn error_when_invalid_sender_burn(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -762,7 +755,7 @@ async fn test_error_invalid_sender_when_burn(
 }
 
 #[e2e::test]
-async fn test_burns_batch(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn burns_batch(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -818,7 +811,7 @@ async fn test_burns_batch(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn test_error_missing_approval_when_burn_batch(
+async fn error_when_missing_approval_burn_batch(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -850,7 +843,7 @@ async fn test_error_missing_approval_when_burn_batch(
 }
 
 #[e2e::test]
-async fn test_error_invalid_sender_when_burn_batch(
+async fn error_when_invalid_sender_burn_batch(
     alice: Account,
     bob: Account,
     dave: Account,

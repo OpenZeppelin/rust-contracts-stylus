@@ -35,15 +35,19 @@ sol_storage! {
 
 #[public]
 impl Erc1155Supply {
-    fn total_supply(&self, token_id: U256) -> U256 {
+    /// Total value of tokens in with a given id.
+    pub fn total_supply(&self, token_id: U256) -> U256 {
         self._total_supply.get(token_id)
     }
 
-    fn total_supply_all(&self) -> U256 {
+    /// Total value of tokens.
+    #[selector(name = "totalSupply")]
+    pub fn total_supply_all(&self) -> U256 {
         *self._total_supply_all
     }
 
-    fn exists(&self, token_id: U256) -> bool {
+    /// Indicates whether any token exist with a given id, or not.
+    pub fn exists(&self, token_id: U256) -> bool {
         self.total_supply(token_id) > uint!(0_U256)
     }
 }
@@ -64,7 +68,7 @@ impl Erc1155Supply {
     ///
     /// Emits a [`TransferSingle`] event if the arrays contain one element, and
     /// [`TransferBatch`] otherwise.
-    fn _update(
+    pub fn _update(
         &mut self,
         from: Address,
         to: Address,
@@ -138,12 +142,12 @@ mod tests {
 
         contract
             ._update(Address::ZERO, receiver, token_ids.clone(), values.clone())
-            .expect("Supply failed");
+            .expect("should supply");
         (token_ids, values)
     }
 
     #[motsu::test]
-    fn test_supply_of_zero_supply(contract: Erc1155Supply) {
+    fn supply_of_zero_supply(contract: Erc1155Supply) {
         let token_ids = random_token_ids(1);
         assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
         assert_eq!(U256::ZERO, contract.total_supply_all());
@@ -151,30 +155,30 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_supply_with_zero_address_sender(contract: Erc1155Supply) {
+    fn supply_with_zero_address_sender(contract: Erc1155Supply) {
         let token_ids = random_token_ids(1);
         let values = random_values(1);
         contract
             ._update(Address::ZERO, ALICE, token_ids.clone(), values.clone())
-            .expect("Supply failed");
+            .expect("should supply");
         assert_eq!(values[0], contract.total_supply(token_ids[0]));
         assert_eq!(values[0], contract.total_supply_all());
         assert!(contract.exists(token_ids[0]));
     }
 
     #[motsu::test]
-    fn test_supply_with_zero_address_receiver(contract: Erc1155Supply) {
+    fn supply_with_zero_address_receiver(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 1);
         contract
             ._update(ALICE, Address::ZERO, token_ids.clone(), values.clone())
-            .expect("Supply failed");
+            .expect("should supply");
         assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
         assert_eq!(U256::ZERO, contract.total_supply_all());
         assert!(!contract.exists(token_ids[0]));
     }
 
     #[motsu::test]
-    fn test_supply_batch(contract: Erc1155Supply) {
+    fn supply_batch(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, BOB, 4);
         assert_eq!(
             values[0],

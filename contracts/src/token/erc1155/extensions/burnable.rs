@@ -152,7 +152,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_burns(contract: Erc1155) {
+    fn burns(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
@@ -176,7 +176,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_error_missing_approval_when_burn(contract: Erc1155) {
+    fn error_when_missing_approval_burns(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
@@ -194,7 +194,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_error_invalid_sender_when_burn(contract: Erc1155) {
+    fn error_when_invalid_sender_burns(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 1);
         let invalid_sender = Address::ZERO;
@@ -218,7 +218,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_burns_batch(contract: Erc1155) {
+    fn burns_batch(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 4);
 
@@ -266,7 +266,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_error_missing_approval_when_burn_batch(contract: Erc1155) {
+    fn error_when_missing_approval_burn_batch(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 2);
 
@@ -284,7 +284,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_error_invalid_sender_when_burn_batch(contract: Erc1155) {
+    fn error_when_invalid_sender_burn_batch(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 5);
         let invalid_sender = Address::ZERO;
