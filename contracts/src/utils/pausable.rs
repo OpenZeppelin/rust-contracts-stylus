@@ -7,8 +7,8 @@
 //! and [`Pausable::when_paused`],
 //! which can be added to the functions of your contract.
 //!
-//! Note that they will not be pausable by simply including this module,
-//! only once the modifiers are put in place.
+//! Note that your contract will not be pausable by simply including this module,
+//! only where you use these function.
 
 use alloy_sol_types::sol;
 use stylus_proc::{public, sol_storage, SolidityError};
@@ -102,7 +102,7 @@ impl Pausable {
         Ok(())
     }
 
-    /// Modifier to make a function callable only when the contract is NOT
+    /// Helper to make a function callable only when the contract is NOT
     /// paused.
     ///
     /// # Arguments
@@ -120,7 +120,7 @@ impl Pausable {
         Ok(())
     }
 
-    /// Modifier to make a function callable
+    /// Helper to make a function callable
     /// only when the contract is paused.
     ///
     /// # Arguments
