@@ -87,7 +87,7 @@ impl<S: Size> Trace<S> {
     }
 
     /// Returns the value in the first (oldest) checkpoint with key greater or
-    /// equal than the search key, or `T::Value::ZERO` if there is none.
+    /// equal than the search key, or `S::Value::ZERO` if there is none.
     ///
     /// # Arguments
     ///
@@ -104,7 +104,7 @@ impl<S: Size> Trace<S> {
     }
 
     /// Returns the value in the last (most recent) checkpoint with key
-    /// lower or equal than the search key, or `T::Value::ZERO` if there is
+    /// lower or equal than the search key, or `S::Value::ZERO` if there is
     /// none.
     ///
     /// # Arguments
@@ -122,7 +122,7 @@ impl<S: Size> Trace<S> {
     }
 
     /// Returns the value in the last (most recent) checkpoint with key lower or
-    /// equal than the search key, or `T::Value::ZERO` if there is none.
+    /// equal than the search key, or `S::Value::ZERO` if there is none.
     ///
     /// This is a variant of [`Self::upper_lookup`] that is optimized to find
     /// "recent" checkpoints (checkpoints with high keys).
@@ -155,7 +155,7 @@ impl<S: Size> Trace<S> {
         }
     }
 
-    /// Returns the value in the most recent checkpoint, or `T::Value::ZERO` if
+    /// Returns the value in the most recent checkpoint, or `S::Value::ZERO` if
     /// there are no checkpoints.
     ///
     /// # Arguments
