@@ -115,7 +115,7 @@ sol! {
 pub enum Error {
     /// Error type from [`Erc721`] contract [`erc721::Error`].
     Erc721(erc721::Error),
-    /// Error type from checkpoint contract [`structs::checkpoints::Error`].
+    /// Error type from checkpoint contract [`checkpoints::Error`].
     Checkpoints(checkpoints::Error),
     /// Batch mint is restricted to the constructor.
     /// Any batch mint not emitting the [`Transfer`] event outside of

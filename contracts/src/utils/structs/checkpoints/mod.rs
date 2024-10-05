@@ -44,21 +44,21 @@ impl MethodError for Error {
 
 /// State of the checkpoint library contract.
 #[storage]
-pub struct Trace<T: Size> {
+pub struct Trace<S: Size> {
     /// Stores checkpoints in a dynamic array sorted by key.
-    _checkpoints: StorageVec<Checkpoint<T>>,
+    _checkpoints: StorageVec<Checkpoint<S>>,
 }
 
 /// State of a single checkpoint.
 #[storage]
-pub struct Checkpoint<T: Size> {
+pub struct Checkpoint<S: Size> {
     /// The key of the checkpoint. Used as a sorting key.
-    _key: T::KeyStorage,
+    _key: S::KeyStorage,
     /// The value corresponding to the key.
-    _value: T::ValueStorage,
+    _value: S::ValueStorage,
 }
 
-impl<T: Size> Trace<T> {
+impl<S: Size> Trace<S> {
     /// Pushes a (`key`, `value`) pair into a `Trace` so that it is
     /// stored as the checkpoint.
     ///
@@ -80,9 +80,9 @@ impl<T: Size> Trace<T> {
     /// maintain sorted order).
     pub fn push(
         &mut self,
-        key: T::Key,
-        value: T::Value,
-    ) -> Result<(T::Value, T::Value), Error> {
+        key: S::Key,
+        value: S::Value,
+    ) -> Result<(S::Value, S::Value), Error> {
         self._insert(key, value)
     }
 
@@ -93,11 +93,11 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to lookup.
-    pub fn lower_lookup(&self, key: T::Key) -> T::Value {
+    pub fn lower_lookup(&self, key: S::Key) -> S::Value {
         let len = self.length();
         let pos = self._lower_binary_lookup(key, U256::ZERO, len);
         if pos == len {
-            T::Value::ZERO
+            S::Value::ZERO
         } else {
             self._index(pos)._value.get()
         }
@@ -111,11 +111,11 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to lookup.
-    pub fn upper_lookup(&self, key: T::Key) -> T::Value {
+    pub fn upper_lookup(&self, key: S::Key) -> S::Value {
         let len = self.length();
         let pos = self._upper_binary_lookup(key, U256::ZERO, len);
         if pos == U256::ZERO {
-            T::Value::ZERO
+            S::Value::ZERO
         } else {
             self._index(pos - uint!(1_U256))._value.get()
         }
@@ -131,7 +131,7 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to query.
-    pub fn upper_lookup_recent(&self, key: T::Key) -> T::Value {
+    pub fn upper_lookup_recent(&self, key: S::Key) -> S::Value {
         let len = self.length();
 
         let mut low = U256::ZERO;
@@ -149,7 +149,7 @@ impl<T: Size> Trace<T> {
         let pos = self._upper_binary_lookup(key, low, high);
 
         if pos == U256::ZERO {
-            T::Value::ZERO
+            S::Value::ZERO
         } else {
             self._index(pos - uint!(1_U256))._value.get()
         }
@@ -161,10 +161,10 @@ impl<T: Size> Trace<T> {
     /// # Arguments
     ///
     /// * `&self` - Read access to the checkpoint's state.
-    pub fn latest(&self) -> T::Value {
+    pub fn latest(&self) -> S::Value {
         let pos = self.length();
         if pos == U256::ZERO {
-            T::Value::ZERO
+            S::Value::ZERO
         } else {
             self._index(pos - uint!(1_U256))._value.get()
         }
@@ -177,7 +177,7 @@ impl<T: Size> Trace<T> {
     /// # Arguments
     ///
     /// * `&self` - Read access to the checkpoint's state.
-    pub fn latest_checkpoint(&self) -> Option<(T::Key, T::Value)> {
+    pub fn latest_checkpoint(&self) -> Option<(S::Key, S::Value)> {
         let pos = self.length();
         if pos == U256::ZERO {
             None
@@ -206,7 +206,7 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
-    pub fn at(&self, pos: U32) -> (T::Key, T::Value) {
+    pub fn at(&self, pos: U32) -> (S::Key, S::Value) {
         let guard = self._checkpoints.get(pos).unwrap_or_else(|| {
             panic!("should get checkpoint at index `{pos}`")
         });
@@ -230,9 +230,9 @@ impl<T: Size> Trace<T> {
     /// returned.
     fn _insert(
         &mut self,
-        key: T::Key,
-        value: T::Value,
-    ) -> Result<(T::Value, T::Value), Error> {
+        key: S::Key,
+        value: S::Value,
+    ) -> Result<(S::Value, S::Value), Error> {
         let pos = self.length();
         if pos > U256::ZERO {
             let last = self._index(pos - uint!(1_U256));
@@ -253,7 +253,7 @@ impl<T: Size> Trace<T> {
             Ok((last_value, value))
         } else {
             self._unchecked_push(key, value);
-            Ok((T::Value::ZERO, value))
+            Ok((S::Value::ZERO, value))
         }
     }
 
@@ -273,7 +273,7 @@ impl<T: Size> Trace<T> {
     /// * `high` - Exclusive index where search ends.
     fn _upper_binary_lookup(
         &self,
-        key: T::Key,
+        key: S::Key,
         mut low: U256,
         mut high: U256,
     ) -> U256 {
@@ -304,7 +304,7 @@ impl<T: Size> Trace<T> {
     /// * `high` - Exclusive index where search ends.
     fn _lower_binary_lookup(
         &self,
-        key: T::Key,
+        key: S::Key,
         mut low: U256,
         mut high: U256,
     ) -> U256 {
@@ -330,7 +330,7 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
-    fn _index(&self, pos: U256) -> StorageGuard<Checkpoint<T>> {
+    fn _index(&self, pos: U256) -> StorageGuard<Checkpoint<S>> {
         self._checkpoints
             .get(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
@@ -347,7 +347,7 @@ impl<T: Size> Trace<T> {
     ///
     /// * `&mut self` - Write access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
-    fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint<T>> {
+    fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint<S>> {
         self._checkpoints
             .setter(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
@@ -360,7 +360,7 @@ impl<T: Size> Trace<T> {
     /// * `&mut self` - Write access to the checkpoint's state.
     /// * `key` - Checkpoint key to insert.
     /// * `value` - Checkpoint value corresponding to insertion `key`.
-    fn _unchecked_push(&mut self, key: T::Key, value: T::Value) {
+    fn _unchecked_push(&mut self, key: S::Key, value: S::Value) {
         let mut new_checkpoint = self._checkpoints.grow();
         new_checkpoint._key.set(key);
         new_checkpoint._value.set(value);
