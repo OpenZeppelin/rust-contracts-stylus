@@ -40,9 +40,9 @@ use crate::{
     },
     utils::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
-        structs,
         structs::{
             bitmap::BitMap,
+            checkpoints,
             checkpoints::{Size, Trace, S160},
         },
     },
@@ -116,7 +116,7 @@ pub enum Error {
     /// Error type from [`Erc721`] contract [`erc721::Error`].
     Erc721(erc721::Error),
     /// Error type from checkpoint contract [`structs::checkpoints::Error`].
-    Checkpoints(structs::checkpoints::Error),
+    Checkpoints(checkpoints::Error),
     /// Batch mint is restricted to the constructor.
     /// Any batch mint not emitting the [`Transfer`] event outside of
     /// the constructor is non ERC-721 compliant.
