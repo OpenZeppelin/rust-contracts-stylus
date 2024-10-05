@@ -40,10 +40,13 @@ use crate::{
     },
     utils::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
+        structs,
         structs::{
             bitmap::BitMap,
-            checkpoints,
-            checkpoints::{trace::Trace, Size, S160},
+            checkpoints::{
+                generic_size::{Size, S160},
+                Trace,
+            },
         },
     },
 };
@@ -115,8 +118,8 @@ sol! {
 pub enum Error {
     /// Error type from [`Erc721`] contract [`erc721::Error`].
     Erc721(erc721::Error),
-    /// Error type from checkpoint contract [`checkpoints::trace::Error`].
-    Checkpoints(checkpoints::trace::Error),
+    /// Error type from checkpoint contract [`structs::checkpoints::Error`].
+    Checkpoints(structs::checkpoints::Error),
     /// Batch mint is restricted to the constructor.
     /// Any batch mint not emitting the [`Transfer`] event outside of
     /// the constructor is non ERC-721 compliant.
