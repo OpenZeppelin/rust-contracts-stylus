@@ -1,6 +1,6 @@
 //! Contains generic size utilities for checkpoint storage contract.
 
-use std::ops::{Add, Div, Mul, Sub};
+use core::ops::{Add, Div, Mul, Sub};
 
 use alloy_primitives::Uint;
 use stylus_sdk::prelude::*;
