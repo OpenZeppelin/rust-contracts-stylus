@@ -43,10 +43,7 @@ use crate::{
         structs,
         structs::{
             bitmap::BitMap,
-            checkpoints::{
-                generic_size::{Size, S160},
-                Trace,
-            },
+            checkpoints::{Size, Trace, S160},
         },
     },
 };
