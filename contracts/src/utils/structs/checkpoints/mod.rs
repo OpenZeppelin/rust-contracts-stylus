@@ -1,5 +1,5 @@
 //! Contract for checkpointing values as they change at different points in
-//! time, to looking up past values by block number later.
+//! time, and later looking up and later looking up past values by block number.
 //!
 //! To create a history of checkpoints, define a variable type [`Trace`]
 //! in your contract.
