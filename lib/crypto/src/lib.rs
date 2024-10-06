@@ -27,5 +27,5 @@ pub mod merkle;
 mod curve;
 mod field;
 pub mod keccak;
-
+pub mod poseidon2;
 pub use keccak::KeccakBuilder;
