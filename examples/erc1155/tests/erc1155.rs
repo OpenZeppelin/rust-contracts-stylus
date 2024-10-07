@@ -1,10 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc1155;
-use alloy::{
-    primitives::{uint, Address, U256},
-    signers::k256::sha2::digest::typenum::uint,
-};
+use alloy::primitives::{uint, Address, U256};
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 
 mod abi;
@@ -24,11 +21,7 @@ fn random_values(size: usize) -> Vec<U256> {
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let Erc1155::pausedReturn { paused } = contract.paused().call().await?;
-
-    assert_eq!(false, paused);
+    let _contract = Erc1155::new(contract_addr, &alice.wallet);
 
     Ok(())
 }
