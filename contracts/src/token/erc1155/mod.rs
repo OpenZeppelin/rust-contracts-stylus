@@ -307,7 +307,7 @@ pub trait IErc1155 {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account of the sender.
+    /// * `from` - Account to transfer tokens from.
     /// * `to` - Account of the recipient.
     /// * `id` - Token id as a number.
     /// * `value` - Amount of tokens to be transferred.
@@ -355,7 +355,7 @@ pub trait IErc1155 {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account of the sender.
+    /// * `from` - Account to transfer tokens from.
     /// * `to` - Account of the recipient.
     /// * `ids` - Array of all tokens ids.
     /// * `values` - Array of all amount of tokens to be transferred.
@@ -371,7 +371,7 @@ pub trait IErc1155 {
     /// If the `from` is not the caller (`msg::sender()`),
     /// and the caller does not have the right to approve, then the error
     /// [`Error::MissingApprovalForAll`] is returned.
-    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// If [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     /// If `ids` length is not equal to `values` length, then the error
@@ -416,7 +416,7 @@ impl IErc1155 for Erc1155 {
         accounts: Vec<Address>,
         ids: Vec<U256>,
     ) -> Result<Vec<U256>, Self::Error> {
-        Self::require_equal_arrays::<U256, Address>(&ids, &accounts)?;
+        Self::require_equal_arrays(&ids, &accounts)?;
 
         let balances: Vec<U256> = accounts
             .iter()
@@ -432,8 +432,7 @@ impl IErc1155 for Erc1155 {
         operator: Address,
         approved: bool,
     ) -> Result<(), Self::Error> {
-        self._set_approval_for_all(msg::sender(), operator, approved)?;
-        Ok(())
+        self._set_approval_for_all(msg::sender(), operator, approved)
     }
 
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
@@ -449,8 +448,7 @@ impl IErc1155 for Erc1155 {
         data: Bytes,
     ) -> Result<(), Self::Error> {
         self.authorize_transfer(from)?;
-        self._safe_transfer_from(from, to, id, value, data)?;
-        Ok(())
+        self._safe_transfer_from(from, to, id, value, data)
     }
 
     fn safe_batch_transfer_from(
@@ -462,8 +460,7 @@ impl IErc1155 for Erc1155 {
         data: Bytes,
     ) -> Result<(), Self::Error> {
         self.authorize_transfer(from)?;
-        self._safe_batch_transfer_from(from, to, ids, values, data)?;
-        Ok(())
+        self._safe_batch_transfer_from(from, to, ids, values, data)
     }
 }
 
@@ -475,68 +472,16 @@ impl IErc165 for Erc1155 {
 }
 
 impl Erc1155 {
-    /// Checks if `ids` array has same length as `values`.
-    ///
-    /// # Arguments
-    ///
-    /// * `ids` - array of `ids`.
-    /// * `values` - array of `values`.
-    ///
-    /// # Errors
-    ///
-    /// If length of `ids` is not equal to length of `values`, then the error
-    /// [`Error::InvalidArrayLength`] is returned.
-    fn require_equal_arrays<T, U>(
-        ids: &[T],
-        values: &[U],
-    ) -> Result<(), Error> {
-        if ids.len() != values.len() {
-            return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
-                ids_length: U256::from(ids.len()),
-                values_length: U256::from(values.len()),
-            }));
-        }
-        Ok(())
-    }
-
-    /// Checks if `sender` is authorized to transfer tokens.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Write access to the contract's state.
-    /// * `from` - Tokens' owner.
-    ///
-    /// # Errors
-    ///
-    /// If the `from` is not the caller (`msg::sender()`),
-    /// and the caller does not have the right to approve, then the error
-    /// [`Error::MissingApprovalForAll`] is returned.
-    ///
-    /// # Requirements
-    ///
-    /// * If the caller is not `from`, it must have been approved to spend
-    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
-    fn authorize_transfer(&self, from: Address) -> Result<(), Error> {
-        let sender = msg::sender();
-        if from != sender && !self.is_approved_for_all(from, sender) {
-            return Err(Error::MissingApprovalForAll(
-                ERC1155MissingApprovalForAll { operator: sender, owner: from },
-            ));
-        }
-
-        Ok(())
-    }
-
     /// Transfers a `value` amount of tokens of type `ids` from `from` to
     /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
     ///
-    /// # Requirements
+    /// # Arguments
     ///
-    /// * If `to` refers to a smart contract, it must implement either
-    ///   [`IERC1155Receiver::on_erc_1155_received`] or
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] and return the
-    ///   acceptance magic value.
-    /// * `ids` and `values` must have the same length.
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account of the recipient.
+    /// * `ids` - Array of all tokens ids.
+    /// * `values` - Array of all amount of tokens to be transferred.
     ///
     /// # Errors
     ///
@@ -546,7 +491,7 @@ impl Erc1155 {
     /// then the error [`Error::InsufficientBalance`] is returned.
     ///
     /// NOTE: The ERC-1155 acceptance check is not performed in this function.
-    /// See [`Self::_updateWithAcceptanceCheck`] instead.
+    /// See [`Self::_update_with_acceptance_check`] instead.
     ///
     /// # Events
     ///
@@ -559,52 +504,18 @@ impl Erc1155 {
         ids: Vec<U256>,
         values: Vec<U256>,
     ) -> Result<(), Error> {
-        if ids.len() != values.len() {
-            return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
-                ids_length: U256::from(ids.len()),
-                values_length: U256::from(values.len()),
-            }));
-        }
+        Self::require_equal_arrays(&ids, &values)?;
 
         let operator = msg::sender();
-        for (&token_id, &value) in ids.iter().zip(values.iter()) {
-            if !from.is_zero() {
-                let from_balance = self.balance_of(from, token_id);
-                if from_balance < value {
-                    return Err(Error::InsufficientBalance(
-                        ERC1155InsufficientBalance {
-                            sender: from,
-                            balance: from_balance,
-                            needed: value,
-                            token_id,
-                        },
-                    ));
-                }
-                self._balances
-                    .setter(token_id)
-                    .setter(from)
-                    .sub_assign_unchecked(value);
-            }
 
-            if !to.is_zero() {
-                let new_value = self
-                    ._balances
-                    .setter(token_id)
-                    .setter(to)
-                    .checked_add(value)
-                    .expect("should not exceed `U256::MAX` for `_balances`");
-                self._balances.setter(token_id).setter(to).set(new_value);
-            }
-        }
+        ids.iter().zip(values.iter()).try_for_each(|(&token_id, &value)| {
+            self.do_update(from, to, token_id, value)
+        })?;
 
         if ids.len() == 1 {
-            evm::log(TransferSingle {
-                operator,
-                from,
-                to,
-                id: ids[0],
-                value: values[0],
-            });
+            let id = ids[0];
+            let value = values[0];
+            evm::log(TransferSingle { operator, from, to, id, value });
         } else {
             evm::log(TransferBatch { operator, from, to, ids, values });
         }
@@ -619,12 +530,31 @@ impl Erc1155 {
     ///
     /// # Arguments
     ///
-    /// * `from` - Account of the sender.
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account to transfer tokens from.
     /// * `to` - Account of the recipient.
     /// * `ids` - Array of all token id.
     /// * `values` - Array of all amount of tokens to be transferred.
     /// * `data` - Additional data with no specified format, sent in call to
     ///   `to`.
+    ///
+    /// # Errors
+    ///
+    /// If length of `ids` is not equal to length of `values`, then the
+    /// error [`Error::InvalidArrayLength`] is returned.
+    /// If `value` is greater than the balance of the `from` account,
+    /// then the error [`Error::InsufficientBalance`] is returned.
+    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// interface id or returned with error, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    /// interface id or returned with error, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`TransferSingle`] event if the arrays contain one element, and
+    /// [`TransferBatch`] otherwise.
     fn _update_with_acceptance_check(
         &mut self,
         from: Address,
@@ -634,38 +564,26 @@ impl Erc1155 {
         data: Bytes,
     ) -> Result<(), Error> {
         self._update(from, to, ids.clone(), values.clone())?;
+
         if !to.is_zero() {
-            let operator = msg::sender();
-            if ids.len() == 1 {
-                let token_id = ids[0];
-                let value = values[0];
-                self._check_on_erc1155_received(
-                    operator, from, to, token_id, value, data,
-                )?;
-            } else {
-                self._check_on_erc1155_batch_received(
-                    operator, from, to, ids, values, data,
-                )?;
-            }
+            self.do_check_on_erc1155_received(
+                msg::sender(),
+                from,
+                to,
+                ReceiverData::new(ids, values),
+                data.to_vec().into(),
+            )?
         }
+
         Ok(())
     }
 
     /// Transfers a `value` tokens of token type `id` from `from` to `to`.
     ///
-    /// # Requirements
-    ///
-    /// * `to` cannot be the `Address::ZERO`.
-    /// * `from` must have a balance of tokens of type `id` of at least `value`
-    ///   amount.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC1155Receiver::on_erc_1155_received`] and return the
-    /// acceptance magic value.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account of the sender.
+    /// * `from` - Account to transfer tokens from.
     /// * `to` - Account of the recipient.
     /// * `id` - Token id as a number.
     /// * `value` - Amount of tokens to be transferred.
@@ -678,8 +596,11 @@ impl Erc1155 {
     /// [`Error::InvalidReceiver`] is returned.
     /// If `from` is the `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
+    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// interface id or returned with error, then the error
+    /// [`Error::InvalidReceiver`] is returned.
     ///
-    /// # Event
+    /// # Events
     ///
     /// Emits a [`TransferSingle`] event.
     fn _safe_transfer_from(
@@ -690,38 +611,15 @@ impl Erc1155 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
-                receiver: to,
-            }));
-        }
-        if from.is_zero() {
-            return Err(Error::InvalidSender(ERC1155InvalidSender {
-                sender: from,
-            }));
-        }
-        self._update_with_acceptance_check(
-            from,
-            to,
-            vec![id],
-            vec![value],
-            data,
-        )
+        self.do_safe_transfer_from(from, to, vec![id], vec![value], data)
     }
 
     /// Batched version of [`Self::_safe_transfer_from`].
     ///
-    /// # Requirements
-    ///
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] and return the
-    /// acceptance magic value.
-    /// * `ids` and `values` must have the same length.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account of the sender.
+    /// * `from` - Account to transfer tokens from.
     /// * `to` - Account of the recipient.
     /// * `ids` - Array of all token id.
     /// * `values` - Array of all amount of tokens to be transferred.
@@ -735,7 +633,7 @@ impl Erc1155 {
     /// If `from` is the `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
     ///
-    /// Event
+    /// # Events
     ///
     /// Emits a [`TransferBatch`] event.
     fn _safe_batch_transfer_from(
@@ -746,32 +644,28 @@ impl Erc1155 {
         values: Vec<U256>,
         data: Bytes,
     ) -> Result<(), Error> {
-        if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
-                receiver: to,
-            }));
-        }
-        if from.is_zero() {
-            return Err(Error::InvalidSender(ERC1155InvalidSender {
-                sender: from,
-            }));
-        }
-        self._update_with_acceptance_check(from, to, ids, values, data)
+        self.do_safe_transfer_from(from, to, ids, values, data)
     }
 
     /// Creates a `value` amount of tokens of type `id`, and assigns
     /// them to `to`.
     ///
-    /// # Requirements
+    /// # Arguments
     ///
-    /// * `to` cannot be the `Address::ZERO`.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC1155Receiver::on_erc_1155_received`] and return the acceptance
-    ///   magic value.
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `to` - Account of the recipient.
+    /// * `id` - Token id.
+    /// * `value` - Amount of tokens to be minted.
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
     ///
     /// # Events
     ///
     /// Emits a [`TransferSingle`] event.
+    ///
+    /// # Panics
+    ///
+    /// If balance exceeds `U256::MAX`. It may happen during `mint` operation.
     pub fn _mint(
         &mut self,
         to: Address,
@@ -779,19 +673,7 @@ impl Erc1155 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
-                receiver: to,
-            }));
-        }
-        self._update_with_acceptance_check(
-            Address::ZERO,
-            to,
-            vec![id],
-            vec![value],
-            data,
-        )?;
-        Ok(())
+        self.do_mint(to, vec![id], vec![value], data)
     }
 
     /// Batched version of [`Self::_mint`].
@@ -806,6 +688,10 @@ impl Erc1155 {
     /// # Events
     ///
     /// Emits a [`TransferBatch`] event.
+    ///
+    /// # Panics
+    ///
+    /// If balance exceeds `U256::MAX`. It may happen during `mint` operation.
     pub fn _mint_batch(
         &mut self,
         to: Address,
@@ -813,19 +699,7 @@ impl Erc1155 {
         values: Vec<U256>,
         data: Bytes,
     ) -> Result<(), Error> {
-        if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
-                receiver: to,
-            }));
-        }
-        self._update_with_acceptance_check(
-            Address::ZERO,
-            to,
-            ids,
-            values,
-            data,
-        )?;
-        Ok(())
+        self.do_mint(to, ids, values, data)
     }
 
     /// Destroys a `value` amount of tokens of type `id` from `from`
@@ -849,19 +723,7 @@ impl Erc1155 {
         id: U256,
         value: U256,
     ) -> Result<(), Error> {
-        if from.is_zero() {
-            return Err(Error::InvalidSender(ERC1155InvalidSender {
-                sender: from,
-            }));
-        }
-        self._update_with_acceptance_check(
-            from,
-            Address::ZERO,
-            vec![id],
-            vec![value],
-            vec![].into(),
-        )?;
-        Ok(())
+        self.do_burn(from, vec![id], vec![value])
     }
 
     /// Batched version of [`Self::_burn`].
@@ -886,19 +748,7 @@ impl Erc1155 {
         ids: Vec<U256>,
         values: Vec<U256>,
     ) -> Result<(), Error> {
-        if from.is_zero() {
-            return Err(Error::InvalidSender(ERC1155InvalidSender {
-                sender: from,
-            }));
-        }
-        self._update_with_acceptance_check(
-            from,
-            Address::ZERO,
-            ids,
-            values,
-            vec![].into(),
-        )?;
-        Ok(())
+        self.do_burn(from, ids, values)
     }
 
     /// Approve `operator` to operate on all of `owner` tokens.
@@ -928,132 +778,66 @@ impl Erc1155 {
         evm::log(ApprovalForAll { account: owner, operator, approved });
         Ok(())
     }
+}
 
-    /// Performs an acceptance check for the provided `operator` by
-    /// calling [`IERC1155Receiver::on_erc_1155_received`] on the `to` address.
-    /// The `operator` is generally the address that initiated the token
-    /// transfer (i.e. `msg.sender`).
-    ///
-    /// The acceptance call is not executed and treated as a no-op if the
-    /// target address is doesn't contain code (i.e. an EOA). Otherwise,
-    /// the recipient must implement [`IERC1155Receiver::on_erc_1155_received`]
-    /// and return the acceptance magic value to accept the transfer.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `operator` - Account to add to the set of authorized operators.
-    /// * `from` - Account of the sender.
-    /// * `to` - Account of the recipient.
-    /// * `id` - Token id as a number.
-    /// * `value` - Amount of tokens to be transferred.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
-    /// interface id or returned with error, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    fn _check_on_erc1155_received(
-        &mut self,
-        operator: Address,
-        from: Address,
-        to: Address,
-        id: U256,
-        value: U256,
-        data: Bytes,
-    ) -> Result<(), Error> {
-        const RECEIVER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("f23a6e61");
+struct ReceiverData {
+    selector: FixedBytes<4>,
+    transfer: Transfer,
+}
 
-        if !to.has_code() {
-            return Ok(());
+impl ReceiverData {
+    fn new(ids: Vec<U256>, values: Vec<U256>) -> Self {
+        if ids.len() == 1 {
+            Self::single(ids[0], values[0])
+        } else {
+            Self::batch(ids, values)
         }
-
-        let receiver = IERC1155Receiver::new(to);
-        let call = Call::new_in(self);
-        let result = receiver.on_erc_1155_received(
-            call,
-            operator,
-            from,
-            id,
-            value,
-            data.to_vec().into(),
-        );
-
-        let response = match result {
-            Ok(id) => id,
-            Err(e) => {
-                if let call::Error::Revert(ref reason) = e {
-                    if reason.len() > 0 {
-                        // Non-IERC1155Receiver implementer.
-                        return Err(Error::InvalidReceiverWithReason(e));
-                    }
-                }
-
-                return Err(ERC1155InvalidReceiver { receiver: to }.into());
-            }
-        };
-
-        // Token rejected.
-        if response != RECEIVER_FN_SELECTOR {
-            return Err(ERC1155InvalidReceiver { receiver: to }.into());
-        }
-
-        Ok(())
     }
 
-    /// Performs a batch acceptance check for the provided `operator` by
-    /// calling [`IERC1155Receiver::on_erc_1155_received`] on the `to` address.
-    /// The `operator` is generally the address that initiated the token
-    /// transfer (i.e. `msg.sender`).
-    ///
-    /// The acceptance call is not executed and treated as a no-op if the
-    /// target address doesn't contain code (i.e. an EOA). Otherwise,
-    /// the recipient must implement [`IERC1155Receiver::on_erc_1155_received`]
-    /// and return the acceptance magic value to accept the transfer.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `operator` - Account to add to the set of authorized operators.
-    /// * `from` - Account of the sender.
-    /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all token id.
-    /// * `values` - Array of all amount of tokens to be transferred.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
-    /// interface id or returned with error, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    fn _check_on_erc1155_batch_received(
+    fn single(id: U256, value: U256) -> Self {
+        Self {
+            selector: fixed_bytes!("f23a6e61"),
+            transfer: Transfer::Single { id, value },
+        }
+    }
+
+    fn batch(ids: Vec<U256>, values: Vec<U256>) -> Self {
+        Self {
+            selector: fixed_bytes!("bc197c81"),
+            transfer: Transfer::Batch { ids, values },
+        }
+    }
+}
+
+pub enum Transfer {
+    Single { id: U256, value: U256 },
+    Batch { ids: Vec<U256>, values: Vec<U256> },
+}
+
+impl Erc1155 {
+    fn do_check_on_erc1155_received(
         &mut self,
         operator: Address,
         from: Address,
         to: Address,
-        ids: Vec<U256>,
-        values: Vec<U256>,
-        data: Bytes,
+        details: ReceiverData,
+        data: alloy_primitives::Bytes,
     ) -> Result<(), Error> {
-        const RECEIVER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("bc197c81");
-
         if !to.has_code() {
             return Ok(());
         }
 
         let receiver = IERC1155Receiver::new(to);
         let call = Call::new_in(self);
-        let result = receiver.on_erc_1155_batch_received(
-            call,
-            operator,
-            from,
-            ids,
-            values,
-            data.to_vec().into(),
-        );
+        let result = match details.transfer {
+            Transfer::Single { id, value } => receiver
+                .on_erc_1155_received(call, operator, from, id, value, data),
+
+            Transfer::Batch { ids, values } => receiver
+                .on_erc_1155_batch_received(
+                    call, operator, from, ids, values, data,
+                ),
+        };
 
         let id = match result {
             Ok(id) => id,
@@ -1070,14 +854,216 @@ impl Erc1155 {
         };
 
         // Token rejected.
-        if id != RECEIVER_FN_SELECTOR {
+        if id != details.selector {
             return Err(ERC1155InvalidReceiver { receiver: to }.into());
         }
 
         Ok(())
     }
-}
 
+    fn do_mint(
+        &mut self,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), Error> {
+        if to.is_zero() {
+            return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
+                receiver: to,
+            }));
+        }
+        self._update_with_acceptance_check(
+            Address::ZERO,
+            to,
+            ids,
+            values,
+            data,
+        )?;
+        Ok(())
+    }
+
+    fn do_burn(
+        &mut self,
+        from: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+    ) -> Result<(), Error> {
+        if from.is_zero() {
+            return Err(Error::InvalidSender(ERC1155InvalidSender {
+                sender: from,
+            }));
+        }
+        self._update_with_acceptance_check(
+            from,
+            Address::ZERO,
+            ids,
+            values,
+            vec![].into(),
+        )?;
+        Ok(())
+    }
+
+    // TODO
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account of the recipient.
+    /// * `ids` - Array of all token id.
+    /// * `values` - Array of all amount of tokens to be transferred.
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
+    ///
+    /// # Errors
+    ///
+    /// If `to` is the `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If `from` is the `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// interface id or returned with error, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    /// interface id or returned with error, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`TransferSingle`] event if the arrays contain one element, and
+    /// [`TransferBatch`] otherwise.
+    fn do_safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), Error> {
+        if to.is_zero() {
+            return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
+                receiver: to,
+            }));
+        }
+        if from.is_zero() {
+            return Err(Error::InvalidSender(ERC1155InvalidSender {
+                sender: from,
+            }));
+        }
+        self._update_with_acceptance_check(from, to, ids, values, data)
+    }
+
+    /// Transfers a `value` amount of `token_id` from `from` to
+    /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account of the recipient.
+    /// * `token_id` - Token id.
+    /// * `value` - Amount of tokens to be transferred.
+    ///
+    /// # Errors
+    ///
+    /// If `value` is greater than the balance of the `from` account,
+    /// then the error [`Error::InsufficientBalance`] is returned.
+    ///
+    ///
+    /// # Panics
+    ///
+    /// If balance exceeds `U256::MAX`. It may happen during `mint` operation.
+    fn do_update(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        value: U256,
+    ) -> Result<(), Error> {
+        if !from.is_zero() {
+            let from_balance = self.balance_of(from, token_id);
+            if from_balance < value {
+                return Err(Error::InsufficientBalance(
+                    ERC1155InsufficientBalance {
+                        sender: from,
+                        balance: from_balance,
+                        needed: value,
+                        token_id,
+                    },
+                ));
+            }
+            self._balances
+                .setter(token_id)
+                .setter(from)
+                .sub_assign_unchecked(value);
+        }
+
+        if !to.is_zero() {
+            let new_balance = self
+                ._balances
+                .setter(token_id)
+                .setter(to)
+                .checked_add(value)
+                .expect("should not exceed `U256::MAX` for `_balances`");
+            self._balances.setter(token_id).setter(to).set(new_balance);
+        }
+
+        Ok(())
+    }
+
+    /// Checks if `ids` array has same length as `values`.
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - array of `ids`.
+    /// * `values` - array of `values`.
+    ///
+    /// # Errors
+    ///
+    /// If length of `ids` is not equal to length of `values`, then the error
+    /// [`Error::InvalidArrayLength`] is returned.
+    fn require_equal_arrays<T, U>(
+        ids: &[T],
+        values: &[U],
+    ) -> Result<(), Error> {
+        if ids.len() != values.len() {
+            return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
+                ids_length: U256::from(ids.len()),
+                values_length: U256::from(values.len()),
+            }));
+        }
+        Ok(())
+    }
+
+    /// Checks if `sender` is authorized to transfer tokens.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Write access to the contract's state.
+    /// * `from` - Account to transfer tokens from.
+    ///
+    /// # Errors
+    ///
+    /// If the `from` is not the caller (`msg::sender()`),
+    /// and the caller does not have the right to approve, then the error
+    /// [`Error::MissingApprovalForAll`] is returned.
+    ///
+    /// # Requirements
+    ///
+    /// * If the caller is not `from`, it must have been approved to spend
+    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
+    fn authorize_transfer(&self, from: Address) -> Result<(), Error> {
+        let sender = msg::sender();
+        if from != sender && !self.is_approved_for_all(from, sender) {
+            return Err(Error::MissingApprovalForAll(
+                ERC1155MissingApprovalForAll { operator: sender, owner: from },
+            ));
+        }
+
+        Ok(())
+    }
+}
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
