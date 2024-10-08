@@ -1,4 +1,4 @@
-//! Implementation of the [`Erc1155`] token standard.
+//! Implementation of the ERC-1155 token standard.
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{fixed_bytes, Address, FixedBytes, Uint, U256};
@@ -8,7 +8,8 @@ use stylus_sdk::{
     alloy_sol_types::sol,
     call::{self, Call, MethodError},
     evm, msg,
-    prelude::*,
+    prelude::{public, sol_interface, sol_storage, AddressVM, SolidityError},
+    storage::TopLevelStorage,
 };
 
 use crate::utils::{
@@ -17,7 +18,8 @@ use crate::utils::{
 };
 
 sol! {
-    /// Emitted when `value` amount of tokens of type `id` are transferred from `from` to `to` by `operator`.
+    /// Emitted when `value` amount of tokens of type `id` are
+    /// transferred from `from` to `to` by `operator`.
     #[allow(missing_docs)]
     event TransferSingle(
         address indexed operator,
@@ -38,23 +40,19 @@ sol! {
         uint256[] values
     );
 
-    /// Emitted when `account` grants or revokes permission to `operator` to transfer their tokens, according to
-    /// `approved`.
+    /// Emitted when `account` grants or revokes permission to `operator`
+    /// to transfer their tokens, according to `approved`.
     #[allow(missing_docs)]
-    event ApprovalForAll(address indexed account, address indexed operator, bool approved);
-
-    /// Emitted when the URI for token type `id` changes to `value`, if it is a non-programmatic URI.
-    ///
-    /// If an [`URI`] event was emitted for `id`, the [standard]
-    /// (https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions[guarantees]) that `value` will equal the value
-    /// returned by [`Erc1155UriStorage::uri`].
-    #[allow(missing_docs)]
-    event URI(string value, uint256 indexed id);
+    event ApprovalForAll(
+        address indexed account,
+        address indexed operator,
+        bool approved
+    );
 }
 
 sol! {
-    /// Indicates an error related to the current `balance` of a `sender`. Used
-    /// in transfers.
+    /// Indicates an error related to the current `balance` of a `sender`.
+    /// Used in transfers.
     ///
     /// * `sender` - Address whose tokens are being transferred.
     /// * `balance` - Current balance for the interacting account.
@@ -62,7 +60,12 @@ sol! {
     /// * `token_id` - Identifier number of a token.
     #[derive(Debug)]
     #[allow(missing_docs)]
-    error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 token_id);
+    error ERC1155InsufficientBalance(
+        address sender,
+        uint256 balance,
+        uint256 needed,
+        uint256 token_id
+    );
 
     /// Indicates a failure with the token `sender`. Used in transfers.
     ///
@@ -81,7 +84,8 @@ sol! {
     /// Indicates a failure with the `operator`’s approval. Used
     /// in transfers.
     ///
-    /// * `operator` - Address that may be allowed to operate on tokens without being their owner.
+    /// * `operator` - Address that may be allowed to operate on tokens
+    /// without being their owner.
     /// * `owner` - Address of the current owner of a token.
     #[derive(Debug)]
     #[allow(missing_docs)]
@@ -98,12 +102,14 @@ sol! {
     /// Indicates a failure with the `operator` to be approved.
     /// Used in approvals.
     ///
-    /// * `operator` - Address that may be allowed to operate on tokens without being their owner.
+    /// * `operator` - Address that may be allowed to operate on tokens
+    /// without being their owner.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC1155InvalidOperator(address operator);
 
-    /// Indicates an array length mismatch between token ids and values in a safeBatchTransferFrom operation.
+    /// Indicates an array length mismatch between token ids and values in a
+    /// [`IErc1155::safe_batch_transfer_from`] operation.
     /// Used in batch transfers.
     ///
     /// * `ids_length` - Length of the array of token identifiers.
@@ -118,8 +124,8 @@ sol! {
 /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Indicates an error related to the current `balance` of `sender`. Used
-    /// in transfers.
+    /// Indicates an error related to the current `balance` of `sender`.
+    /// Used in transfers.
     InsufficientBalance(ERC1155InsufficientBalance),
     /// Indicates a failure with the token `sender`. Used in transfers.
     InvalidSender(ERC1155InvalidSender),
@@ -130,14 +136,15 @@ pub enum Error {
     InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     MissingApprovalForAll(ERC1155MissingApprovalForAll),
-    /// Indicates a failure with the `approver` of a token to be approved. Used
-    /// in approvals.
+    /// Indicates a failure with the `approver` of a token to be approved.
+    /// Used in approvals.
     InvalidApprover(ERC1155InvalidApprover),
     /// Indicates a failure with the `operator` to be approved. Used in
     /// approvals.
     InvalidOperator(ERC1155InvalidOperator),
     /// Indicates an array length mismatch between token ids and values in a
-    /// safeBatchTransferFrom operation. Used in batch transfers.
+    /// [`Erc1155::safe_batch_transfer_from`] operation.
+    /// Used in batch transfers.
     InvalidArrayLength(ERC1155InvalidArrayLength),
 }
 
@@ -148,16 +155,19 @@ impl MethodError for Error {
 }
 
 sol_interface! {
+    /// Interface that must be implemented by smart contracts
+    /// in order to receive ERC-1155 token transfers.
     interface IERC1155Receiver {
-
-        /// Handles the receipt of a single ERC-1155 token type. This function is
-        /// called at the end of a `safeTransferFrom` after the balance has been updated.
+        /// Handles the receipt of a single ERC-1155 token type.
+        /// This function is called at the end of a
+        /// [`Erc1155::safe_batch_transfer_from`]
+        /// after the balance has been updated.
         ///
         /// NOTE: To accept the transfer, this must return
         /// `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))`
         /// (i.e. 0xf23a6e61, or its own function selector).
         ///
-        /// * `operator` - The address which initiated the transfer (i.e. msg.sender).
+        /// * `operator` - The address which initiated the transfer.
         /// * `from` - The address which previously owned the token.
         /// * `id` - The ID of the token being transferred.
         /// * `value` - The amount of tokens being transferred.
@@ -171,19 +181,22 @@ sol_interface! {
             bytes calldata data
         ) external returns (bytes4);
 
-        /// Handles the receipt of a multiple ERC-1155 token types. This function
-        /// is called at the end of a [`Erc1155::safe_batch_transfer_from`] after the balances have
+        /// Handles the receipt of a multiple ERC-1155 token types.
+        /// This function is called at the end of a
+        /// [`Erc1155::safe_batch_transfer_from`] after the balances have
         /// been updated.
         ///
         /// NOTE: To accept the transfer(s), this must return
         /// `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`
         /// (i.e. 0xbc197c81, or its own function selector).
         ///
-        /// * `operator` - The address which initiated the batch transfer (i.e. msg.sender)
-        /// * `from` - The address which previously owned the token
-        /// * `ids` - An array containing ids of each token being transferred (order and length must match values array)
-        /// * `values` - An array containing amounts of each token being transferred (order and length must match ids array)
-        /// * `data` - Additional data with no specified format
+        /// * `operator` - The address which initiated the batch transfer.
+        /// * `from` - The address which previously owned the token.
+        /// * `ids` - An array containing ids of each token being transferred
+        /// (order and length must match values array).
+        /// * `values` - An array containing amounts of each token
+        /// being transferred (order and length must match ids array).
+        /// * `data` - Additional data with no specified format.
         #[allow(missing_docs)]
         function onERC1155BatchReceived(
             address operator,
@@ -314,7 +327,7 @@ pub trait IErc1155 {
     ///
     /// # Requirements:
     /// *
-    /// * `to` cannot be the zero address.
+    /// * `to` cannot be the `Address::ZERO`.
     /// * If the caller is not `from`, it must have been approved to spend
     ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
     /// * `from` must have a balance of tokens of type `id` of at least `value`
@@ -448,7 +461,7 @@ impl IErc165 for Erc1155 {
 
 impl Erc1155 {
     /// Transfers a `value` amount of tokens of type `ids` from `from` to
-    /// `to`. Will mint (or burn) if `from` (or `to`) is the zero address.
+    /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
     ///
     /// Requirements:
     ///
@@ -596,7 +609,7 @@ impl Erc1155 {
     ///
     /// If `to` is the `Address::ZERO`, then the error
     /// [`Error::InvalidReceiver`] is returned.
-    /// If `from` is the zero address, then the error
+    /// If `from` is the `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
     ///
     /// # Event
@@ -653,9 +666,9 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// If `to` is the zero address, then the error [`Error::InvalidReceiver`]
-    /// is returned.
-    /// If `from` is the zero address, then the error
+    /// If `to` is the `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If `from` is the `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
     ///
     /// Event
@@ -762,8 +775,8 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// If `from` is the zero address, then the error [`Error::InvalidSender`]
-    /// is returned.
+    /// If `from` is the Address::ZERO, then the error
+    /// [`Error::InvalidSender`] is returned.
     ///
     /// Requirements:
     ///
@@ -801,8 +814,8 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// If `from` is the zero address, then the error [`Error::InvalidSender`]
-    /// is returned.
+    /// If `from` is the Address::ZERO, then the error
+    /// [`Error::InvalidSender`] is returned.
     ///
     /// Requirements:
     ///
@@ -1274,7 +1287,7 @@ mod tests {
                 values[0],
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens to the zero address");
+            .expect_err("should not transfer tokens to the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -1304,7 +1317,7 @@ mod tests {
                 values[0],
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens from the zero address");
+            .expect_err("should not transfer tokens from the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -1404,7 +1417,7 @@ mod tests {
                 values[0],
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens to the zero address");
+            .expect_err("should not transfer tokens to the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -1436,7 +1449,7 @@ mod tests {
                 values[0],
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens from the zero address");
+            .expect_err("should not transfer tokens from the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -1545,7 +1558,7 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens to the zero address");
+            .expect_err("should not transfer tokens to the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -1575,7 +1588,7 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens from the zero address");
+            .expect_err("should not transfer tokens from the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -1682,7 +1695,7 @@ mod tests {
                 values.clone(),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens to the zero address");
+            .expect_err("should not transfer tokens to the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -1714,7 +1727,7 @@ mod tests {
                 values.clone(),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens from the zero address");
+            .expect_err("should not transfer tokens from the `Address::ZERO`");
 
         assert!(matches!(
             err,
