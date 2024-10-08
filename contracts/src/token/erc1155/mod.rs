@@ -29,7 +29,7 @@ sol! {
         uint256 value
     );
 
-    /// Equivalent to multiple [`TransferSingle`] events, where `operator`.
+    /// Equivalent to multiple [`TransferSingle`] events, where `operator`
     /// `from` and `to` are the same for all transfers.
     #[allow(missing_docs)]
     event TransferBatch(
@@ -67,25 +67,27 @@ sol! {
         uint256 token_id
     );
 
-    /// Indicates a failure with the token `sender`. Used in transfers.
+    /// Indicates a failure with the token `sender`.
+    /// Used in transfers.
     ///
     /// * `sender` - Address whose tokens are being transferred.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC1155InvalidSender(address sender);
 
-    /// Indicates a failure with the token `receiver`. Used in transfers.
+    /// Indicates a failure with the token `receiver`.
+    /// Used in transfers.
     ///
     /// * `receiver` - Address to which tokens are being transferred.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC1155InvalidReceiver(address receiver);
 
-    /// Indicates a failure with the `operator`’s approval. Used
-    /// in transfers.
+    /// Indicates a failure with the `operator`’s approval.
+    /// Used in transfers.
     ///
     /// * `operator` - Address that may be allowed to operate on tokens
-    /// without being their owner.
+    ///   without being their owner.
     /// * `owner` - Address of the current owner of a token.
     #[derive(Debug)]
     #[allow(missing_docs)]
@@ -160,7 +162,7 @@ sol_interface! {
     interface IERC1155Receiver {
         /// Handles the receipt of a single ERC-1155 token type.
         /// This function is called at the end of a
-        /// [`Erc1155::safe_batch_transfer_from`]
+        /// [`IErc1155::safe_batch_transfer_from`]
         /// after the balance has been updated.
         ///
         /// NOTE: To accept the transfer, this must return
@@ -183,8 +185,8 @@ sol_interface! {
 
         /// Handles the receipt of a multiple ERC-1155 token types.
         /// This function is called at the end of a
-        /// [`Erc1155::safe_batch_transfer_from`] after the balances have
-        /// been updated.
+        /// [`IErc1155::safe_batch_transfer_from`]
+        /// after the balances have been updated.
         ///
         /// NOTE: To accept the transfer(s), this must return
         /// `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`
@@ -193,9 +195,9 @@ sol_interface! {
         /// * `operator` - The address which initiated the batch transfer.
         /// * `from` - The address which previously owned the token.
         /// * `ids` - An array containing ids of each token being transferred
-        /// (order and length must match values array).
+        ///   (order and length must match values array).
         /// * `values` - An array containing amounts of each token
-        /// being transferred (order and length must match ids array).
+        ///   being transferred (order and length must match ids array).
         /// * `data` - Additional data with no specified format.
         #[allow(missing_docs)]
         function onERC1155BatchReceived(
@@ -236,11 +238,7 @@ pub trait IErc1155 {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - Account of the token's owner.
     /// * `id` - Token id as a number.
-    fn balance_of(
-        &self,
-        account: Address,
-        id: U256,
-    ) -> Result<U256, Self::Error>;
+    fn balance_of(&self, account: Address, id: U256) -> U256;
 
     /// Batched version of [`IErc1155::balance_of`].
     ///
@@ -256,16 +254,16 @@ pub trait IErc1155 {
     ///
     /// # Errors
     ///
-    /// * If the length of `accounts` is not equal to the length of `ids`, then
-    ///   the error [`Error::InvalidArrayLength`] is returned.
+    /// * If the length of `accounts` is not equal to the length of `ids`,
+    /// then the error [`Error::InvalidArrayLength`] is returned.
     fn balance_of_batch(
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
     ) -> Result<Vec<U256>, Self::Error>;
 
-    /// Grants or revokes permission to `operator` to transfer the caller's
-    /// tokens, according to `approved`.
+    /// Grants or revokes permission to `operator`
+    /// to transfer the caller's tokens, according to `approved`.
     ///
     /// # Arguments
     ///
@@ -273,7 +271,7 @@ pub trait IErc1155 {
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `approved` - Flag that determines whether or not permission will be
     ///   granted to `operator`. If true, this means `operator` will be allowed
-    ///   to manage `msg::sender`'s assets.
+    ///   to manage `msg::sender()`'s assets.
     ///
     /// # Errors
     ///
@@ -299,14 +297,22 @@ pub trait IErc1155 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    /// * `owner` - Account of the token's owner.
+    /// * `account` - Account of the token's owner.
     /// * `operator` - Account to be checked.
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool;
 
     /// Transfers a `value` amount of tokens of type `id` from `from` to
     /// `to`.
     ///
-    /// Emits a [`TransferSingle`] event.
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account of the sender.
+    /// * `to` - Account of the recipient.
+    /// * `id` - Token id as a number.
+    /// * `value` - Amount of tokens to be transferred.
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
     ///
     /// # Errors
     ///
@@ -331,7 +337,11 @@ pub trait IErc1155 {
     ///   amount.
     /// * If `to` refers to a smart contract, it must implement
     ///   [`IERC1155Receiver::on_erc_1155_received`] and return the
-    /// acceptance magic value.
+    ///  acceptance magic value.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`TransferSingle`] event.
     fn safe_transfer_from(
         &mut self,
         from: Address,
@@ -343,15 +353,48 @@ pub trait IErc1155 {
 
     /// Batched version of [`IErc1155::safe_transfer_from`].
     ///
-    /// Emits either a [`TransferSingle`] or a [`TransferBatch`] event,
-    /// depending on the length of the array arguments.
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `from` - Account of the sender.
+    /// * `to` - Account of the recipient.
+    /// * `ids` - Array of all tokens ids.
+    /// * `values` - Array of all amount of tokens to be transferred.
+    /// * `data` - Additional data with no specified format, sent in call to
+    ///   `to`.
+    ///
+    /// # Errors
+    ///
+    /// If `to` is `Address::ZERO`, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If `from` is `Address::ZERO`, then the error
+    /// [`Error::InvalidSender`] is returned.
+    /// If the `from` is not sender, then the error
+    /// [`Error::MissingApprovalForAll`] is returned.
+    /// If the caller does not have the right to approve, then the error
+    /// [`Error::MissingApprovalForAll`] is returned.
+    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// interface id or returned with error, then the error
+    /// [`Error::InvalidReceiver`] is returned.
+    /// If `ids` length is not equal to `values` length, then the error
+    /// [`Error::InvalidArrayLength`]
     ///
     /// # Requirements
     ///
+    /// * `to` cannot be the `Address::ZERO`.
+    /// * If the caller is not `from`, it must have been approved to spend
+    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
+    /// * `from` must have a balance of tokens being transferred of at least
+    ///   transferred amount.
     /// * `ids` and `values` must have the same length.
     /// * If `to` refers to a smart contract, it must implement
     ///   [`IERC1155Receiver::on_erc_1155_batch_received`] and return the
-    /// acceptance magic value.
+    ///   acceptance magic value.
+    ///
+    /// # Events
+    ///
+    /// Emits either a [`TransferSingle`] or a [`TransferBatch`] event,
+    /// depending on the length of the array arguments.
     fn safe_batch_transfer_from(
         &mut self,
         from: Address,
@@ -366,12 +409,8 @@ pub trait IErc1155 {
 impl IErc1155 for Erc1155 {
     type Error = Error;
 
-    fn balance_of(
-        &self,
-        account: Address,
-        id: U256,
-    ) -> Result<U256, Self::Error> {
-        Ok(self._balances.get(id).get(account))
+    fn balance_of(&self, account: Address, id: U256) -> U256 {
+        self._balances.get(id).get(account)
     }
 
     fn balance_of_batch(
@@ -475,7 +514,7 @@ impl Erc1155 {
     /// NOTE: The ERC-1155 acceptance check is not performed in this function.
     /// See [`Self::_updateWithAcceptanceCheck`] instead.
     ///
-    /// Event
+    /// # Events
     ///
     /// Emits a [`TransferSingle`] event if the arrays contain one element, and
     /// [`TransferBatch`] otherwise.
@@ -496,7 +535,7 @@ impl Erc1155 {
         let operator = msg::sender();
         for (&token_id, &value) in ids.iter().zip(values.iter()) {
             if !from.is_zero() {
-                let from_balance = self.balance_of(from, token_id)?;
+                let from_balance = self.balance_of(from, token_id);
                 if from_balance < value {
                     return Err(Error::InsufficientBalance(
                         ERC1155InsufficientBalance {
@@ -1056,9 +1095,7 @@ mod tests {
     fn balance_of_zero_balance(contract: Erc1155) {
         let owner = msg::sender();
         let token_id = random_token_ids(1)[0];
-        let balance = contract
-            .balance_of(owner, token_id)
-            .expect("should return `U256::ZERO`");
+        let balance = contract.balance_of(owner, token_id);
         assert_eq!(U256::ZERO, balance);
     }
 
@@ -1137,9 +1174,7 @@ mod tests {
             ._mint(alice, token_id, value, vec![0, 1, 2, 3].into())
             .expect("should mint tokens for Alice");
 
-        let balance = contract
-            .balance_of(alice, token_id)
-            .expect("should return the balance of Alice");
+        let balance = contract.balance_of(alice, token_id);
 
         assert_eq!(balance, value);
     }
@@ -1159,9 +1194,7 @@ mod tests {
             )
             .expect("should mint tokens for Alice");
         token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract
-                .balance_of(ALICE, token_id)
-                .expect("should return the balance of Alice");
+            let balance = contract.balance_of(ALICE, token_id);
             assert_eq!(balance, value);
         });
 
@@ -1174,9 +1207,7 @@ mod tests {
             )
             .expect("should mint tokens for BOB");
         token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract
-                .balance_of(BOB, token_id)
-                .expect("should return the balance of BOB");
+            let balance = contract.balance_of(BOB, token_id);
             assert_eq!(balance, value);
         });
 
@@ -1189,9 +1220,7 @@ mod tests {
             )
             .expect("should mint tokens for DAVE");
         token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract
-                .balance_of(DAVE, token_id)
-                .expect("should return the balance of DAVE");
+            let balance = contract.balance_of(DAVE, token_id);
             assert_eq!(balance, value);
         });
 
@@ -1204,9 +1233,7 @@ mod tests {
             )
             .expect("should mint tokens for CHARLIE");
         token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract
-                .balance_of(CHARLIE, token_id)
-                .expect("should return the balance of CHARLIE");
+            let balance = contract.balance_of(CHARLIE, token_id);
             assert_eq!(balance, value);
         });
 
@@ -1247,12 +1274,8 @@ mod tests {
             )
             .expect("should transfer tokens from Alice to Bob");
 
-        let balance_id_one = contract
-            .balance_of(DAVE, token_ids[0])
-            .expect("should return Bob's balance of the token 0");
-        let balance_id_two = contract
-            .balance_of(DAVE, token_ids[1])
-            .expect("should return Bob's balance of the token 1");
+        let balance_id_one = contract.balance_of(DAVE, token_ids[0]);
+        let balance_id_two = contract.balance_of(DAVE, token_ids[1]);
 
         assert_eq!(amount_one, balance_id_one);
         assert_eq!(amount_two, balance_id_two);
@@ -1380,9 +1403,7 @@ mod tests {
             )
             .expect("should transfer tokens from Alice to Bob");
 
-        let balance = contract
-            .balance_of(CHARLIE, token_ids[0])
-            .expect("should return Bob's balance of the token 0");
+        let balance = contract.balance_of(CHARLIE, token_ids[0]);
 
         assert_eq!(values[0], balance);
     }
@@ -1518,12 +1539,8 @@ mod tests {
             )
             .expect("should transfer tokens from Alice to Bob");
 
-        let balance_id_one = contract
-            .balance_of(BOB, token_ids[0])
-            .expect("should return Bob's balance of the token 0");
-        let balance_id_two = contract
-            .balance_of(BOB, token_ids[1])
-            .expect("should return Bob's balance of the token 1");
+        let balance_id_one = contract.balance_of(BOB, token_ids[0]);
+        let balance_id_two = contract.balance_of(BOB, token_ids[1]);
 
         assert_eq!(amount_one, balance_id_one);
         assert_eq!(amount_two, balance_id_two);
@@ -1653,12 +1670,8 @@ mod tests {
             )
             .expect("should transfer tokens from Alice to Bob");
 
-        let balance_id_one = contract
-            .balance_of(BOB, token_ids[0])
-            .expect("should return Bob's balance of the token 0");
-        let balance_id_two = contract
-            .balance_of(BOB, token_ids[1])
-            .expect("should return Bob's balance of the token 1");
+        let balance_id_one = contract.balance_of(BOB, token_ids[0]);
+        let balance_id_two = contract.balance_of(BOB, token_ids[1]);
 
         assert_eq!(values[0], balance_id_one);
         assert_eq!(values[1], balance_id_two);
