@@ -82,7 +82,7 @@ impl SafeErc20 {
         let selector = function_selector!("transfer", Address, U256);
         let data = [&selector[..4], &encoded_args].concat();
 
-        self.call_optional_return(token, &data)
+        self._call_optional_return(token, &data)
     }
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the
@@ -100,7 +100,7 @@ impl SafeErc20 {
             function_selector!("transferFrom", Address, Address, U256);
         let data = [&selector[..4], &encoded_args].concat();
 
-        self.call_optional_return(token, &data)
+        self._call_optional_return(token, &data)
     }
 
     /// Increase the calling contract's allowance toward `spender` by `value`.
@@ -181,15 +181,15 @@ impl SafeErc20 {
 
         // Try performing the approval with the desired value
         let approve_data = build_approve_calldata(spender, value, &selector);
-        if self.call_optional_return(token, &approve_data).is_ok() {
+        if self._call_optional_return(token, &approve_data).is_ok() {
             return Ok(());
         }
 
         // If that fails, reset allowance to zero, then retry the desired
         // approval
         let reset_data = build_approve_calldata(spender, U256::ZERO, &selector);
-        self.call_optional_return(token, &reset_data)?;
-        self.call_optional_return(token, &approve_data)?;
+        self._call_optional_return(token, &reset_data)?;
+        self._call_optional_return(token, &approve_data)?;
 
         Ok(())
     }
@@ -199,7 +199,7 @@ impl SafeErc20 {
     /// Imitates a Stylus high-level call, relaxing the requirement on the
     /// return value: if data is returned, it must not be `false`, otherwise
     /// calls are assumed to be successful.
-    fn call_optional_return(
+    fn _call_optional_return(
         &self,
         token: Address,
         data: &[u8],
