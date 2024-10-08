@@ -64,7 +64,9 @@ define_checkpoint_size!(S224, 32, 224);
 define_checkpoint_size!(S208, 48, 208);
 
 /// Abstracts number inside the checkpoint contract.
-pub trait Num: Add + Sub + Mul + Div + Ord + Sized + Copy {
+pub(crate) trait Num:
+    Add + Sub + Mul + Div + Ord + Sized + Copy
+{
     /// Zero value of the number.
     const ZERO: Self;
 }
@@ -74,7 +76,7 @@ impl<const B: usize, const L: usize> Num for Uint<B, L> {
 }
 
 /// Abstracts accessor inside the checkpoint contract.
-pub trait Accessor {
+pub(crate) trait Accessor {
     /// Type of the number associated with the storage type.
     type Wraps: Num;
 
