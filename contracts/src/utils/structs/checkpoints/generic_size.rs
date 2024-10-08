@@ -2,8 +2,7 @@
 
 use core::ops::{Add, Div, Mul, Sub};
 
-use alloy_primitives::Uint;
-use stylus_sdk::prelude::*;
+use stylus_sdk::{alloy_primitives::Uint, prelude::*};
 
 /// Trait that associates types of specific size for checkpoints key and value.
 pub trait Size {
@@ -22,35 +21,47 @@ pub trait Size {
         + Accessor<Wraps = Self::Value>;
 }
 
-/// Size of checkpoint storage contract with 96-bit key and 160-bit value.
-pub struct S160;
+/// Defines size of checkpoint storage contract with specific key and value
+/// bits.
+///
+/// # Arguments
+///
+/// * `$name` - Identifier of the typed size.
+/// * `$key_bits` - Number of bits in checkpoint's key.
+/// * `$value_bits` - Number of bits in checkpoint's value.
+macro_rules! define_checkpoint_size {
+    ($name:ident, $key_bits:expr, $value_bits:expr) => {
+        #[doc = "Size of checkpoint storage contract with"]
+        #[doc = stringify!($key_bits)]
+        #[doc = "bit key and "]
+        #[doc = stringify!($value_bits)]
+        #[doc = "bit value."]
+        pub struct $name;
 
-impl Size for S160 {
-    type Key = <Self::KeyStorage as Accessor>::Wraps;
-    type KeyStorage = stylus_sdk::storage::StorageUint<96, 2>;
-    type Value = <Self::ValueStorage as Accessor>::Wraps;
-    type ValueStorage = stylus_sdk::storage::StorageUint<160, 3>;
+        impl Size for $name {
+            type Key = stylus_sdk::alloy_primitives::Uint<
+                $key_bits,
+                { usize::div_ceil($key_bits, 64) },
+            >;
+            type KeyStorage = stylus_sdk::storage::StorageUint<
+                $key_bits,
+                { usize::div_ceil($key_bits, 64) },
+            >;
+            type Value = stylus_sdk::alloy_primitives::Uint<
+                $value_bits,
+                { usize::div_ceil($value_bits, 64) },
+            >;
+            type ValueStorage = stylus_sdk::storage::StorageUint<
+                $value_bits,
+                { usize::div_ceil($value_bits, 64) },
+            >;
+        }
+    };
 }
 
-/// Size of checkpoint storage contract with 32-bit key and 224-bit value.
-pub struct S224;
-
-impl Size for S224 {
-    type Key = <Self::KeyStorage as Accessor>::Wraps;
-    type KeyStorage = stylus_sdk::storage::StorageUint<32, 1>;
-    type Value = <Self::ValueStorage as Accessor>::Wraps;
-    type ValueStorage = stylus_sdk::storage::StorageUint<224, 4>;
-}
-
-/// Size of checkpoint storage contract with 48-bit key and 208-bit value.
-pub struct S208;
-
-impl Size for S208 {
-    type Key = <Self::KeyStorage as Accessor>::Wraps;
-    type KeyStorage = stylus_sdk::storage::StorageUint<48, 1>;
-    type Value = <Self::ValueStorage as Accessor>::Wraps;
-    type ValueStorage = stylus_sdk::storage::StorageUint<208, 4>;
-}
+define_checkpoint_size!(S160, 96, 160);
+define_checkpoint_size!(S224, 32, 224);
+define_checkpoint_size!(S208, 48, 208);
 
 /// Abstracts number inside the checkpoint contract.
 pub trait Num: Add + Sub + Mul + Div + Ord + Sized + Copy {
