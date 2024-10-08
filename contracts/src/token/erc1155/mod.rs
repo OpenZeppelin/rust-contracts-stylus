@@ -1,7 +1,7 @@
 //! Implementation of the ERC-1155 token standard.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{fixed_bytes, Address, FixedBytes, Uint, U256};
+use alloy_primitives::{fixed_bytes, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -320,9 +320,8 @@ pub trait IErc1155 {
     /// [`Error::InvalidReceiver`] is returned.
     /// If `from` is `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
-    /// If the `from` is not sender, then the error
-    /// [`Error::MissingApprovalForAll`] is returned.
-    /// If the caller does not have the right to approve, then the error
+    /// If the `from` is not the caller (`msg::sender()`),
+    /// and the caller does not have the right to approve, then the error
     /// [`Error::MissingApprovalForAll`] is returned.
     /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     /// interface id or returned with error, then the error
@@ -369,9 +368,8 @@ pub trait IErc1155 {
     /// [`Error::InvalidReceiver`] is returned.
     /// If `from` is `Address::ZERO`, then the error
     /// [`Error::InvalidSender`] is returned.
-    /// If the `from` is not sender, then the error
-    /// [`Error::MissingApprovalForAll`] is returned.
-    /// If the caller does not have the right to approve, then the error
+    /// If the `from` is not the caller (`msg::sender()`),
+    /// and the caller does not have the right to approve, then the error
     /// [`Error::MissingApprovalForAll`] is returned.
     /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     /// interface id or returned with error, then the error
@@ -418,20 +416,14 @@ impl IErc1155 for Erc1155 {
         accounts: Vec<Address>,
         ids: Vec<U256>,
     ) -> Result<Vec<U256>, Self::Error> {
-        if accounts.len() != ids.len() {
-            return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
-                ids_length: U256::from(ids.len()),
-                values_length: U256::from(accounts.len()),
-            }));
-        }
+        Self::require_equal_arrays::<U256, Address>(&ids, &accounts)?;
 
-        let balances: Vec<Uint<256, 4>> = accounts
-            .into_iter()
-            .zip(ids.into_iter())
-            .map(|(account, token_id)| {
-                self._balances.get(token_id).get(account)
-            })
+        let balances: Vec<U256> = accounts
+            .iter()
+            .zip(ids.iter())
+            .map(|(account, token_id)| self.balance_of(*account, *token_id))
             .collect();
+
         Ok(balances)
     }
 
@@ -456,12 +448,7 @@ impl IErc1155 for Erc1155 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        let sender = msg::sender();
-        if from != sender && !self.is_approved_for_all(from, sender) {
-            return Err(Error::MissingApprovalForAll(
-                ERC1155MissingApprovalForAll { operator: sender, owner: from },
-            ));
-        }
+        self.authorize_transfer(from)?;
         self._safe_transfer_from(from, to, id, value, data)?;
         Ok(())
     }
@@ -474,12 +461,7 @@ impl IErc1155 for Erc1155 {
         values: Vec<U256>,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        let sender = msg::sender();
-        if from != sender && !self.is_approved_for_all(from, sender) {
-            return Err(Error::MissingApprovalForAll(
-                ERC1155MissingApprovalForAll { operator: sender, owner: from },
-            ));
-        }
+        self.authorize_transfer(from)?;
         self._safe_batch_transfer_from(from, to, ids, values, data)?;
         Ok(())
     }
@@ -493,6 +475,58 @@ impl IErc165 for Erc1155 {
 }
 
 impl Erc1155 {
+    /// Checks if `ids` array has same length as `values`.
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - array of `ids`.
+    /// * `values` - array of `values`.
+    ///
+    /// # Errors
+    ///
+    /// If length of `ids` is not equal to length of `values`, then the error
+    /// [`Error::InvalidArrayLength`] is returned.
+    fn require_equal_arrays<T, U>(
+        ids: &[T],
+        values: &[U],
+    ) -> Result<(), Error> {
+        if ids.len() != values.len() {
+            return Err(Error::InvalidArrayLength(ERC1155InvalidArrayLength {
+                ids_length: U256::from(ids.len()),
+                values_length: U256::from(values.len()),
+            }));
+        }
+        Ok(())
+    }
+
+    /// Checks if `sender` is authorized to transfer tokens.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Write access to the contract's state.
+    /// * `from` - Tokens' owner.
+    ///
+    /// # Errors
+    ///
+    /// If the `from` is not the caller (`msg::sender()`),
+    /// and the caller does not have the right to approve, then the error
+    /// [`Error::MissingApprovalForAll`] is returned.
+    ///
+    /// # Requirements
+    ///
+    /// * If the caller is not `from`, it must have been approved to spend
+    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
+    fn authorize_transfer(&self, from: Address) -> Result<(), Error> {
+        let sender = msg::sender();
+        if from != sender && !self.is_approved_for_all(from, sender) {
+            return Err(Error::MissingApprovalForAll(
+                ERC1155MissingApprovalForAll { operator: sender, owner: from },
+            ));
+        }
+
+        Ok(())
+    }
+
     /// Transfers a `value` amount of tokens of type `ids` from `from` to
     /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
     ///
