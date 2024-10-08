@@ -242,10 +242,7 @@ pub trait IErc1155 {
         id: U256,
     ) -> Result<U256, Self::Error>;
 
-    /// Refer to:
-    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-balanceOfBatch-address---uint256--->
-    /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
-    /// version of [`IErc1155::balance_of`].
+    /// Batched version of [`IErc1155::balance_of`].
     ///
     /// # Arguments
     ///
@@ -253,7 +250,7 @@ pub trait IErc1155 {
     /// * `accounts` - All account of the tokens' owner.
     /// * `ids` - All token identifiers.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `accounts` and `ids` must have the same length.
     ///
@@ -283,7 +280,7 @@ pub trait IErc1155 {
     /// * If `operator` is `Address::ZERO`, then the error
     /// [`Error::InvalidOperator`] is returned.
     ///
-    /// # Requirements:
+    /// # Requirements
     ///
     /// * The `operator` cannot be the `Address::ZERO`.
     ///
@@ -325,8 +322,8 @@ pub trait IErc1155 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     ///
-    /// # Requirements:
-    /// *
+    /// # Requirements
+    ///
     /// * `to` cannot be the `Address::ZERO`.
     /// * If the caller is not `from`, it must have been approved to spend
     ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
@@ -344,15 +341,12 @@ pub trait IErc1155 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// Refer to:
-    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#IERC1155-safeBatchTransferFrom-address-address-uint256---uint256---bytes->
-    /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
-    /// version of [`IErc1155::safe_transfer_from`].
+    /// Batched version of [`IErc1155::safe_transfer_from`].
     ///
     /// Emits either a [`TransferSingle`] or a [`TransferBatch`] event,
     /// depending on the length of the array arguments.
     ///
-    /// * Requirements:
+    /// # Requirements
     ///
     /// * `ids` and `values` must have the same length.
     /// * If `to` refers to a smart contract, it must implement
@@ -463,7 +457,7 @@ impl Erc1155 {
     /// Transfers a `value` amount of tokens of type `ids` from `from` to
     /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * If `to` refers to a smart contract, it must implement either
     ///   [`IERC1155Receiver::on_erc_1155_received`] or
@@ -586,7 +580,7 @@ impl Erc1155 {
 
     /// Transfers a `value` tokens of token type `id` from `from` to `to`.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `to` cannot be the `Address::ZERO`.
     /// * `from` must have a balance of tokens of type `id` of at least `value`
@@ -642,12 +636,9 @@ impl Erc1155 {
         )
     }
 
-    /// Refer to:
-    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155-_safeBatchTransferFrom-address-address-uint256---uint256---bytes->
-    /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
-    /// version of [`Self::_safe_transfer_from`].
+    /// Batched version of [`Self::_safe_transfer_from`].
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * If `to` refers to a smart contract, it must implement
     ///   [`IERC1155Receiver::on_erc_1155_batch_received`] and return the
@@ -698,7 +689,7 @@ impl Erc1155 {
     /// Creates a `value` amount of tokens of type `id`, and assigns
     /// them to `to`.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `to` cannot be the `Address::ZERO`.
     /// * If `to` refers to a smart contract, it must implement
@@ -730,12 +721,9 @@ impl Erc1155 {
         Ok(())
     }
 
-    /// Refer to:
-    /// <https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155-_mintBatch-address-uint256---uint256---bytes->
-    /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
-    /// version of [`Self::_mint`].
+    /// Batched version of [`Self::_mint`].
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `to` cannot be the `Address::ZERO`.
     /// * If `to` refers to a smart contract, it must implement
@@ -778,7 +766,7 @@ impl Erc1155 {
     /// If `from` is the Address::ZERO, then the error
     /// [`Error::InvalidSender`] is returned.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `from` cannot be the `Address::ZERO`.
     /// * `from` must have at least `value` amount of tokens of type `id`.
@@ -803,10 +791,7 @@ impl Erc1155 {
         Ok(())
     }
 
-    /// Refer to:
-    /// https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155-_burnBatch-address-uint256---uint256---
-    /// [Batched](https://docs.openzeppelin.com/contracts/5.x/erc1155#batch-operations)
-    /// [`Self::_burn`].
+    /// Batched version of [`Self::_burn`].
     ///
     /// # Events
     ///
@@ -817,7 +802,7 @@ impl Erc1155 {
     /// If `from` is the Address::ZERO, then the error
     /// [`Error::InvalidSender`] is returned.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `from` cannot be the `Address::ZERO`.
     /// * `from` must have at least `value` amount of tokens of type `id`.
@@ -847,7 +832,7 @@ impl Erc1155 {
     ///
     /// Emits an [`ApprovalForAll`] event.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `operator` cannot be the `Address::ZERO`.
     ///
