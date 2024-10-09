@@ -1,20 +1,25 @@
-//! A vesting wallet is an ownable contract that can receive native currency and ERC20 tokens, and release these
-//! assets to the wallet owner, also referred to as "beneficiary", according to a vesting schedule.
+//! A vesting wallet is an ownable contract that can receive native currency and
+//! ERC20 tokens, and release these assets to the wallet owner, also referred to
+//! as "beneficiary", according to a vesting schedule.
 //!
-//! Any assets transferred to this contract will follow the vesting schedule as if they were locked from the beginning.
-//! Consequently, if the vesting has already started, any amount of tokens sent to this contract will (at least partly)
-//! be immediately releasable.
+//! Any assets transferred to this contract will follow the vesting schedule as
+//! if they were locked from the beginning. Consequently, if the vesting has
+//! already started, any amount of tokens sent to this contract will (at least
+//! partly) be immediately releasable.
 //!
-//! By setting the duration to 0, one can configure this contract to behave like an asset timelock that hold tokens for
-//! a beneficiary until a specified time.
+//! By setting the duration to 0, one can configure this contract to behave like
+//! an asset timelock that hold tokens for a beneficiary until a specified time.
 //!
-//! NOTE: Since the wallet is [`crate::access::ownable::Ownable`], and ownership can be transferred, it is possible to sell unvested tokens.
-//! Preventing this in a smart contract is difficult, considering that: 1) a beneficiary address could be a
-//! counterfactually deployed contract, 2) there is likely to be a migration path for EOAs to become contracts in the
-//! near future.
+//! NOTE: Since the wallet is [`crate::access::ownable::Ownable`], and ownership
+//! can be transferred, it is possible to sell unvested tokens. Preventing this
+//! in a smart contract is difficult, considering that: 1) a beneficiary address
+//! could be a counterfactually deployed contract, 2) there is likely to be a
+//! migration path for EOAs to become contracts in the near future.
 //!
-//! NOTE: When using this contract with any token whose balance is adjusted automatically (i.e. a rebase token), make
-//! sure to account the supply/balance adjustment in the vesting schedule to ensure the vested amount is as intended.
+//! NOTE: When using this contract with any token whose balance is adjusted
+//! automatically (i.e. a rebase token), make sure to account the supply/balance
+//! adjustment in the vesting schedule to ensure the vested amount is as
+//! intended.
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
@@ -64,7 +69,8 @@ sol_interface! {
 /// A Permit error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`stylus_sdk::call::Call`] contract [`stylus_sdk::call::Error`].
+    /// Error type from [`stylus_sdk::call::Call`] contract
+    /// [`stylus_sdk::call::Error`].
     StylusError(stylus_sdk::call::Error),
     /// Indicates an error related to the underlying ERC20 transfer.
     ReleaseTokenFailed(ReleaseTokenFailed),
@@ -139,8 +145,8 @@ impl VestingWallet {
         self.vested_amount_eth(block::timestamp()) - self.released_eth()
     }
 
-    /// Getter for the amount of releasable `token` tokens. `token` should be the address of an
-    /// [`erc20::ERC20`] contract.
+    /// Getter for the amount of releasable `token` tokens. `token` should be
+    /// the address of an [`erc20::ERC20`] contract.
     #[selector(name = "releasable")]
     pub fn releasable_token(&mut self, token: Address) -> U256 {
         self.vested_amount_token(token, block::timestamp())
@@ -192,7 +198,8 @@ impl VestingWallet {
         Ok(())
     }
 
-    /// Calculates the amount of ether that has already vested. Default implementation is a linear vesting curve.
+    /// Calculates the amount of ether that has already vested. Default
+    /// implementation is a linear vesting curve.
     #[selector(name = "vestedAmount")]
     pub fn vested_amount_eth(&self, timestamp: u64) -> U256 {
         self._vesting_schedule(
@@ -201,7 +208,8 @@ impl VestingWallet {
         )
     }
 
-    /// Calculates the amount of tokens that has already vested. Default implementation is a linear vesting curve.
+    /// Calculates the amount of tokens that has already vested. Default
+    /// implementation is a linear vesting curve.
     #[selector(name = "vestedAmount")]
     pub fn vested_amount_token(
         &mut self,
@@ -219,8 +227,9 @@ impl VestingWallet {
 }
 
 impl VestingWallet {
-    /// Virtual implementation of the vesting formula. This returns the amount vested, as a function of time, for
-    /// an asset given its total historical allocation.
+    /// Virtual implementation of the vesting formula. This returns the amount
+    /// vested, as a function of time, for an asset given its total
+    /// historical allocation.
     pub fn _vesting_schedule(
         &self,
         total_allocation: U256,
