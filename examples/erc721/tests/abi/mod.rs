@@ -24,10 +24,6 @@ sol!(
         function pause() external;
         function unpause() external;
         #[derive(Debug)]
-        function whenPaused() external view;
-        #[derive(Debug)]
-        function whenNotPaused() external view;
-        #[derive(Debug)]
         function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256 tokenId);
         #[derive(Debug)]
         function tokenByIndex(uint256 index) external view returns (uint256 tokenId);
