@@ -18,6 +18,7 @@
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::{sol, SolValue};
 use stylus_sdk::{
+    block,
     call::{Call, RawCall},
     contract::{self, address},
     evm::gas_left,
@@ -118,6 +119,20 @@ impl VestingWallet {
     #[selector(name = "released")]
     pub fn released_token(&self, token: Address) -> U256 {
         self._erc20_released.get(token)
+    }
+
+    /// Getter for the amount of releasable eth.
+    #[selector(name = "releasable")]
+    pub fn releasable_eth(&self) -> U256 {
+        self.vested_amount_eth(block::timestamp()) - self.released_eth()
+    }
+
+    /// Getter for the amount of releasable `token` tokens. `token` should be the address of an
+    /// [`erc20::ERC20`] contract.
+    #[selector(name = "releasable")]
+    pub fn releasable_token(&mut self, token: Address) -> U256 {
+        self.vested_amount_token(token, block::timestamp())
+            - self.released_token(token)
     }
 
     /// Calculates the amount of ether that has already vested. Default implementation is a linear vesting curve.
