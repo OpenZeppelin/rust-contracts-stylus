@@ -15,9 +15,9 @@
 //!
 //! NOTE: When using this contract with any token whose balance is adjusted automatically (i.e. a rebase token), make
 //! sure to account the supply/balance adjustment in the vesting schedule to ensure the vested amount is as intended.
-use alloc::vec::Vec;
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
+use stylus_proc::SolidityError;
 use stylus_sdk::{
     block,
     call::{call, Call},
@@ -29,6 +29,13 @@ use stylus_sdk::{
 use crate::access::ownable::Ownable;
 
 sol! {
+    /// Indicates an error related to the underlying ERC20 transfer.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error ReleaseTokenFailed(address token);
+}
+
+sol! {
     /// Emitted when `amount` of ether has been released.
     #[allow(missing_docs)]
     event EtherReleased(uint256 amount);
@@ -36,6 +43,7 @@ sol! {
     /// Emitted when `amount` of ERC20 `token` has been released.
     #[allow(missing_docs)]
     event ERC20Released(address indexed token, uint256 amount);
+
 }
 
 sol_interface! {
@@ -51,6 +59,15 @@ sol_interface! {
         /// Emits a [`erc20::Transfer`] event.
         function transfer(address recipient, uint256 amount) external returns (bool);
     }
+}
+
+/// A Permit error.
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    /// Error type from [`stylus_sdk::call::Call`] contract [`stylus_sdk::call::Error`].
+    StylusError(stylus_sdk::call::Error),
+    /// Indicates an error related to the underlying ERC20 transfer.
+    ReleaseTokenFailed(ReleaseTokenFailed),
 }
 
 sol_storage! {
@@ -134,7 +151,7 @@ impl VestingWallet {
     ///
     /// Emits an [`EtherReleased`] event.
     #[selector(name = "release")]
-    pub fn release_eth(&mut self) -> Result<(), Vec<u8>> {
+    pub fn release_eth(&mut self) -> Result<(), Error> {
         let amount = self.releasable_eth();
         let released = self
             .released_eth()
@@ -154,10 +171,7 @@ impl VestingWallet {
     ///
     /// Emits an [`ERC20Released`] event.
     #[selector(name = "release")]
-    pub fn release_token(
-        &mut self,
-        token: Address,
-    ) -> Result<bool, stylus_sdk::call::Error> {
+    pub fn release_token(&mut self, token: Address) -> Result<(), Error> {
         let amount = self.releasable_token(token);
         let released = self
             .released_token(token)
@@ -170,7 +184,12 @@ impl VestingWallet {
         let erc20 = IERC20::new(token);
         let owner = self.ownable.owner();
         let call = Call::new_in(self);
-        erc20.transfer(call, owner, amount)
+        let succeeded = erc20.transfer(call, owner, amount)?;
+        if !succeeded {
+            return Err(ReleaseTokenFailed { token }.into());
+        }
+
+        Ok(())
     }
 
     /// Calculates the amount of ether that has already vested. Default implementation is a linear vesting curve.
