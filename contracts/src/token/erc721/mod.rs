@@ -1,5 +1,8 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::vec;
+use alloc::{
+    string::{String, ToString},
+    vec,
+};
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -11,9 +14,12 @@ use stylus_sdk::{
     prelude::*,
 };
 
-use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
-    math::storage::{AddAssignUnchecked, SubAssignUnchecked},
+use crate::{
+    token::erc721::extensions::{Erc721Metadata, IErc721Metadata},
+    utils::{
+        introspection::erc165::{Erc165, IErc165},
+        math::storage::{AddAssignUnchecked, SubAssignUnchecked},
+    },
 };
 
 pub mod extensions;
@@ -185,6 +191,8 @@ sol_interface! {
 sol_storage! {
     /// State of an [`Erc721`] token.
     pub struct Erc721 {
+        /// Metadata fields associated with token.
+        Erc721Metadata _metadata;
         /// Maps tokens to owners.
         mapping(uint256 => address) _owners;
         /// Maps users to balances.
@@ -555,9 +563,31 @@ impl IErc721 for Erc721 {
     }
 }
 
+impl IErc721Metadata for Erc721 {
+    fn name(&self) -> String {
+        self._metadata._metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self._metadata._metadata.symbol()
+    }
+
+    fn token_uri(&self, token_id: U256) -> Result<String, Error> {
+        self._require_owned(token_id)?;
+        let base_uri = self._metadata._base_uri.get_string();
+        let uri = if !base_uri.is_empty() {
+            base_uri + &token_id.to_string()
+        } else {
+            "".to_string()
+        };
+        Ok(uri)
+    }
+}
+
 impl IErc165 for Erc721 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc721Metadata::supports_interface(interface_id)
             || Erc165::supports_interface(interface_id)
     }
 }

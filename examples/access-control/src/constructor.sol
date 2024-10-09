@@ -2,6 +2,9 @@
 pragma solidity ^0.8.21;
 
 contract AccessControlExample {
+    string private _name;
+    string private _symbol;
+    
     mapping(address => uint256) _balances;
     mapping(address => mapping(address => uint256)) _allowances;
     uint256 _totalSupply;

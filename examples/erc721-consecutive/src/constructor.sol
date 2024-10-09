@@ -2,6 +2,10 @@
 pragma solidity ^0.8.21;
 
 contract Erc721ConsecutiveExample {
+    string private _name;
+    string private _symbol;
+    string private _baseUri;
+    
     mapping(uint256 tokenId => address) private _owners;
     mapping(address owner => uint256) private _balances;
     mapping(uint256 tokenId => address) private _tokenApprovals;

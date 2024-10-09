@@ -47,30 +47,9 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 
     let Erc721::nameReturn { name } = contract.name().call().await?;
     let Erc721::symbolReturn { symbol } = contract.symbol().call().await?;
-    let Erc721::baseUriReturn { baseURI } = contract.baseUri().call().await?;
 
     assert_eq!(TOKEN_NAME.to_owned(), name);
     assert_eq!(TOKEN_SYMBOL.to_owned(), symbol);
-    assert_eq!(base_uri.to_owned(), baseURI);
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn constructs_with_base_uri(alice: Account) -> eyre::Result<()> {
-    let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus";
-
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(base_uri))
-        .deploy()
-        .await?
-        .address()?;
-    let contract = Erc721::new(contract_addr, &alice.wallet);
-
-    let Erc721::baseUriReturn { baseURI } = contract.baseUri().call().await?;
-
-    assert_eq!(base_uri.to_owned(), baseURI);
 
     Ok(())
 }
