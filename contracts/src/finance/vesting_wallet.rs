@@ -83,6 +83,34 @@ sol_storage! {
 
 #[public]
 impl VestingWallet {
+    /// The contract should be able to receive Eth.
     #[payable]
-    fn receive_ether(&self) {}
+    pub fn receive_ether(&self) {}
+
+    /// Getter for the start timestamp.
+    pub fn start(&self) -> U256 {
+        U256::from(self._start.get())
+    }
+
+    /// Getter for the vesting duration.
+    pub fn duration(&self) -> U256 {
+        U256::from(self._duration.get())
+    }
+
+    /// Getter for the end timestamp.
+    pub fn end(&self) -> U256 {
+        self.start() + self.duration()
+    }
+
+    /// Amount of eth already released
+    #[selector(name = "released")]
+    pub fn released_eth(&self) -> U256 {
+        self._released.get()
+    }
+
+    /// Amount of token already released
+    #[selector(name = "released")]
+    pub fn released_token(&self, token: Address) -> U256 {
+        self._erc20_released.get(token)
+    }
 }
