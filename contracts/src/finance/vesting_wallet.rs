@@ -15,13 +15,11 @@
 //!
 //! NOTE: When using this contract with any token whose balance is adjusted automatically (i.e. a rebase token), make
 //! sure to account the supply/balance adjustment in the vesting schedule to ensure the vested amount is as intended.
-use alloc::vec::Vec;
-
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::{sol, SolValue};
 use stylus_sdk::{
     call::{Call, RawCall},
-    contract::address,
+    contract::{self, address},
     evm::gas_left,
     function_selector,
     storage::TopLevelStorage,
@@ -51,6 +49,9 @@ pub enum Error {
 sol_interface! {
     /// Interface of the [`erc20::Erc20`] standard as defined in the ERC.
     interface IERC20 {
+        /// Returns the value of tokens owned by `account`.
+        function balanceOf(address account) external view returns (uint256);
+
         /// Moves a `value` amount of tokens from the caller's account to `to`.
         ///
         /// Returns a boolean value indicating whether the operation succeeded.
@@ -80,6 +81,11 @@ sol_storage! {
         uint64 _duration;
     }
 }
+
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for VestingWallet {}
 
 #[public]
 impl VestingWallet {
@@ -112,5 +118,49 @@ impl VestingWallet {
     #[selector(name = "released")]
     pub fn released_token(&self, token: Address) -> U256 {
         self._erc20_released.get(token)
+    }
+
+    /// Calculates the amount of ether that has already vested. Default implementation is a linear vesting curve.
+    #[selector(name = "vestedAmount")]
+    pub fn vested_amount_eth(&self, timestamp: u64) -> U256 {
+        self._vesting_schedule(
+            contract::balance() + self.released_eth(),
+            timestamp,
+        )
+    }
+
+    /// Calculates the amount of tokens that has already vested. Default implementation is a linear vesting curve.
+    #[selector(name = "vestedAmount")]
+    pub fn vested_amount_token(
+        &mut self,
+        token: Address,
+        timestamp: u64,
+    ) -> U256 {
+        let erc20 = IERC20::new(token);
+        let call = Call::new_in(self);
+        let balance = erc20
+            .balance_of(call, contract::address())
+            .expect("should return the balance");
+
+        self._vesting_schedule(balance + self.released_token(token), timestamp)
+    }
+}
+
+impl VestingWallet {
+    /// Virtual implementation of the vesting formula. This returns the amount vested, as a function of time, for
+    /// an asset given its total historical allocation.
+    pub fn _vesting_schedule(
+        &self,
+        total_allocation: U256,
+        timestamp: u64,
+    ) -> U256 {
+        if U256::from(timestamp) < self.start() {
+            U256::ZERO
+        } else if U256::from(timestamp) >= self.end() {
+            total_allocation
+        } else {
+            (total_allocation * (U256::from(timestamp) - self.start()))
+                / self.duration()
+        }
     }
 }
