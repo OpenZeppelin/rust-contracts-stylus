@@ -132,7 +132,7 @@ impl VestingWallet {
 
     /// Release the native token (ether) that have already vested.
     ///
-    /// Emits a [`EtherReleased`] event.
+    /// Emits an [`EtherReleased`] event.
     #[selector(name = "release")]
     pub fn release_eth(&mut self) -> Result<(), Vec<u8>> {
         let amount = self.releasable_eth();
@@ -152,7 +152,7 @@ impl VestingWallet {
 
     /// Release the tokens that have already vested.
     ///
-    /// Emits a [`ERC20Released`] event.
+    /// Emits an [`ERC20Released`] event.
     #[selector(name = "release")]
     pub fn release_token(
         &mut self,
