@@ -13,7 +13,7 @@ quote.workspace = true
 syn.workspace = true
 
 [dev-dependencies]
-motsu = { path = "../motsu" }
+motsu.workspace = true
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
