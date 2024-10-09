@@ -225,6 +225,84 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc1155 {}
 
+/// Data structure to be passed to contract
+/// implementing [`IErc1155Receiver`] interface.
+struct Erc1155ReceiverData {
+    /// Function Selector
+    fn_selector: FixedBytes<4>,
+    /// Transfer details, either [`Transfer::Single`] or [`Transfer::Batch`].
+    transfer: Transfer,
+}
+
+impl Erc1155ReceiverData {
+    /// Creates a new instance based on transfer details.
+    ///
+    /// If `ids` array has only 1 element,
+    /// it means that it is a [`Transfer::Single`].
+    /// If `ids` array has many elements,
+    /// it means that it is a [`Transfer::Batch`].
+    ///
+    /// NOTE: Does not check if `ids` length is equal to `values`.
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - Array of tokens ids being transferred.
+    /// * `values` - Array of all amount of tokens being transferred.
+    fn new(ids: Vec<U256>, values: Vec<U256>) -> Self {
+        if ids.len() == 1 {
+            Self::single(ids[0], values[0])
+        } else {
+            Self::batch(ids, values)
+        }
+    }
+
+    /// Creates a new instance for a [`Transfer::Single`].
+    /// Check [`IErc1155Receiver::on_erc_1155_received`].
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Token id being transferred.
+    /// * `value` - Amount of tokens being transferred.
+    fn single(id: U256, value: U256) -> Self {
+        Self {
+            fn_selector: fixed_bytes!("f23a6e61"),
+            transfer: Transfer::Single { id, value },
+        }
+    }
+
+    /// Creates a new instance for a [`Transfer::Batch`].
+    /// Check [`IErc1155Receiver::on_erc_1155_batch_received`].
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - Array of tokens ids being transferred.
+    /// * `values` - Array of all amount of tokens being transferred.
+    fn batch(ids: Vec<U256>, values: Vec<U256>) -> Self {
+        Self {
+            fn_selector: fixed_bytes!("bc197c81"),
+            transfer: Transfer::Batch { ids, values },
+        }
+    }
+}
+
+/// Struct representing token transfer details.
+enum Transfer {
+    /// Transfer of a single token.
+    ///
+    /// # Attributes
+    ///
+    /// * `id` - Token id being transferred.
+    /// * `value` - Amount of tokens being transferred.
+    Single { id: U256, value: U256 },
+    /// Batch tokens transfer.
+    ///
+    /// # Attributes
+    ///
+    /// * `ids` - Array of tokens ids being transferred.
+    /// * `values` - Array of all amount of tokens being transferred.
+    Batch { ids: Vec<U256>, values: Vec<U256> },
+}
+
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]
 pub trait IErc1155 {
@@ -570,7 +648,7 @@ impl Erc1155 {
                 msg::sender(),
                 from,
                 to,
-                ReceiverData::new(ids, values),
+                Erc1155ReceiverData::new(ids, values),
                 data.to_vec().into(),
             )?
         }
@@ -780,47 +858,13 @@ impl Erc1155 {
     }
 }
 
-struct ReceiverData {
-    selector: FixedBytes<4>,
-    transfer: Transfer,
-}
-
-impl ReceiverData {
-    fn new(ids: Vec<U256>, values: Vec<U256>) -> Self {
-        if ids.len() == 1 {
-            Self::single(ids[0], values[0])
-        } else {
-            Self::batch(ids, values)
-        }
-    }
-
-    fn single(id: U256, value: U256) -> Self {
-        Self {
-            selector: fixed_bytes!("f23a6e61"),
-            transfer: Transfer::Single { id, value },
-        }
-    }
-
-    fn batch(ids: Vec<U256>, values: Vec<U256>) -> Self {
-        Self {
-            selector: fixed_bytes!("bc197c81"),
-            transfer: Transfer::Batch { ids, values },
-        }
-    }
-}
-
-pub enum Transfer {
-    Single { id: U256, value: U256 },
-    Batch { ids: Vec<U256>, values: Vec<U256> },
-}
-
 impl Erc1155 {
     fn do_check_on_erc1155_received(
         &mut self,
         operator: Address,
         from: Address,
         to: Address,
-        details: ReceiverData,
+        details: Erc1155ReceiverData,
         data: alloy_primitives::Bytes,
     ) -> Result<(), Error> {
         if !to.has_code() {
@@ -854,7 +898,7 @@ impl Erc1155 {
         };
 
         // Token rejected.
-        if id != details.selector {
+        if id != details.fn_selector {
             return Err(ERC1155InvalidReceiver { receiver: to }.into());
         }
 
