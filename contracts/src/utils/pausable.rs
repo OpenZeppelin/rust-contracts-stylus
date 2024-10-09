@@ -7,8 +7,8 @@
 //! and [`Pausable::when_paused`],
 //! which can be added to the functions of your contract.
 //!
-//! Note that your contract will not be pausable by simply including this module,
-//! only once and where you use [`Pausable::when_not_paused`].
+//! Note that your contract will not be pausable by simply including this
+//! module, only once and where you use [`Pausable::when_not_paused`].
 //!
 //! Note that [`Pausable::pause`] and [`Pausable::unpause`] methods are not
 //! exposed by default.
