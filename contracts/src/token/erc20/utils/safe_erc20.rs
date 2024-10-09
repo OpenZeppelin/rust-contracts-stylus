@@ -1,5 +1,10 @@
-//! Wrappers around ERC-20 operations that throw on failure.
-
+//! Wrappers around ERC-20 operations that throw on failure (when the token
+//! contract returns false). Tokens that return no value (and instead revert or
+//! throw on failure) are also supported, non-reverting calls are assumed to be
+//! successful.
+//! To use this library you can add a `#[inherit(SafeErc20)]` attribute to
+//! your contract, which allows you to call the safe operations as
+//! `contract.safe_transfer(token_addr, ...)`, etc.
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
@@ -52,13 +57,7 @@ sol_interface! {
 }
 
 sol_storage! {
-    /// Wrappers around ERC-20 operations that throw on failure (when the token
-    /// contract returns false). Tokens that return no value (and instead revert or
-    /// throw on failure) are also supported, non-reverting calls are assumed to be
-    /// successful.
-    /// To use this library you can add a `#[inherit(SafeErc20)]` attribute to
-    /// your contract, which allows you to call the safe operations as
-    /// `contract.safe_transfer(token_addr, ...)`, etc.
+    /// State of the SafeErc20 Contract.
     pub struct SafeErc20 {}
 }
 
