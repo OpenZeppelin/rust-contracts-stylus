@@ -15,20 +15,18 @@
 //!
 //! NOTE: When using this contract with any token whose balance is adjusted automatically (i.e. a rebase token), make
 //! sure to account the supply/balance adjustment in the vesting schedule to ensure the vested amount is as intended.
+use alloc::vec::Vec;
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{sol, SolValue};
+use alloy_sol_types::sol;
 use stylus_sdk::{
     block,
-    call::{Call, RawCall},
-    contract::{self, address},
-    evm::gas_left,
-    function_selector,
+    call::{call, Call},
+    contract, evm, function_selector,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_interface, sol_storage, SolidityError},
-    types::AddressVM,
+    stylus_proc::{public, sol_interface, sol_storage},
 };
 
-use crate::token::erc20;
+use crate::access::ownable::Ownable;
 
 sol! {
     /// Emitted when `amount` of ether has been released.
@@ -38,13 +36,6 @@ sol! {
     /// Emitted when `amount` of ERC20 `token` has been released.
     #[allow(missing_docs)]
     event ERC20Released(address indexed token, uint256 amount);
-}
-
-/// A VestingWallet error
-#[derive(SolidityError, Debug)]
-pub enum Error {
-    /// Error type from [`erc20::Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
 }
 
 sol_interface! {
@@ -80,6 +71,9 @@ sol_storage! {
         uint64 _start;
         /// Vesting duration.
         uint64 _duration;
+        /// Ownable contract
+        #[borrow]
+        Ownable ownable;
     }
 }
 
@@ -89,6 +83,7 @@ sol_storage! {
 unsafe impl TopLevelStorage for VestingWallet {}
 
 #[public]
+#[inherit(Ownable)]
 impl VestingWallet {
     /// The contract should be able to receive Eth.
     #[payable]
@@ -133,6 +128,49 @@ impl VestingWallet {
     pub fn releasable_token(&mut self, token: Address) -> U256 {
         self.vested_amount_token(token, block::timestamp())
             - self.released_token(token)
+    }
+
+    /// Release the native token (ether) that have already vested.
+    ///
+    /// Emits a [`EtherReleased`] event.
+    #[selector(name = "release")]
+    pub fn release_eth(&mut self) -> Result<(), Vec<u8>> {
+        let amount = self.releasable_eth();
+        let released = self
+            .released_eth()
+            .checked_add(amount)
+            .expect("should not exceed `U256::MAX` for `_released`");
+        self._released.set(released);
+
+        evm::log(EtherReleased { amount });
+
+        let owner = self.ownable.owner();
+        call(Call::new_in(self).value(amount), owner, &[])?;
+
+        Ok(())
+    }
+
+    /// Release the tokens that have already vested.
+    ///
+    /// Emits a [`ERC20Released`] event.
+    #[selector(name = "release")]
+    pub fn release_token(
+        &mut self,
+        token: Address,
+    ) -> Result<bool, stylus_sdk::call::Error> {
+        let amount = self.releasable_token(token);
+        let released = self
+            .released_token(token)
+            .checked_add(amount)
+            .expect("should not exceed `U256::MAX` for `_erc20Released`");
+        self._erc20_released.setter(token).set(released);
+
+        evm::log(ERC20Released { token, amount });
+
+        let erc20 = IERC20::new(token);
+        let owner = self.ownable.owner();
+        let call = Call::new_in(self);
+        erc20.transfer(call, owner, amount)
     }
 
     /// Calculates the amount of ether that has already vested. Default implementation is a linear vesting curve.
