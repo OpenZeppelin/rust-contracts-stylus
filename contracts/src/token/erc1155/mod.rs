@@ -17,6 +17,18 @@ use crate::utils::{
     math::storage::SubAssignUnchecked,
 };
 
+/// `bytes4(
+///     keccak256(
+///         "onERC1155Received(address,address,uint256,uint256,bytes)"
+/// ))`
+const SINGLE_TRANSFER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("f23a6e61");
+
+/// `bytes4(
+///     keccak256(
+///         "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"
+/// ))`
+const BATCH_TRANSFER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("bc197c81");
+
 sol! {
     /// Emitted when `value` amount of tokens of type `id` are
     /// transferred from `from` to `to` by `operator`.
@@ -165,9 +177,9 @@ sol_interface! {
         /// [`IErc1155::safe_batch_transfer_from`]
         /// after the balance has been updated.
         ///
-        /// NOTE: To accept the transfer, this must return
-        /// `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))`
-        /// (i.e. 0xf23a6e61, or its own function selector).
+        /// NOTE: To accept the transfer,
+        /// this must return [`SINGLE_TRANSFER_FN_SELECTOR`],
+        /// or its own function selector.
         ///
         /// * `operator` - The address which initiated the transfer.
         /// * `from` - The address which previously owned the token.
@@ -188,9 +200,9 @@ sol_interface! {
         /// [`IErc1155::safe_batch_transfer_from`]
         /// after the balances have been updated.
         ///
-        /// NOTE: To accept the transfer(s), this must return
-        /// `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`
-        /// (i.e. 0xbc197c81, or its own function selector).
+        /// NOTE: To accept the transfer(s),
+        /// this must return [`BATCH_TRANSFER_FN_SELECTOR`],
+        /// or its own function selector.
         ///
         /// * `operator` - The address which initiated the batch transfer.
         /// * `from` - The address which previously owned the token.
@@ -236,6 +248,7 @@ struct Erc1155ReceiverData {
 
 impl Erc1155ReceiverData {
     /// Creates a new instance based on transfer details.
+    /// Assumes that `ids` is not empty.
     ///
     /// If `ids` array has only 1 element,
     /// it means that it is a [`Transfer::Single`].
@@ -265,7 +278,7 @@ impl Erc1155ReceiverData {
     /// * `value` - Amount of tokens being transferred.
     fn single(id: U256, value: U256) -> Self {
         Self {
-            fn_selector: fixed_bytes!("f23a6e61"),
+            fn_selector: SINGLE_TRANSFER_FN_SELECTOR,
             transfer: Transfer::Single { id, value },
         }
     }
@@ -279,13 +292,14 @@ impl Erc1155ReceiverData {
     /// * `values` - Array of all amount of tokens being transferred.
     fn batch(ids: Vec<U256>, values: Vec<U256>) -> Self {
         Self {
-            fn_selector: fixed_bytes!("bc197c81"),
+            fn_selector: BATCH_TRANSFER_FN_SELECTOR,
             transfer: Transfer::Batch { ids, values },
         }
     }
 }
 
 /// Struct representing token transfer details.
+#[derive(Debug, PartialEq)]
 enum Transfer {
     /// Transfer of a single token.
     ///
@@ -1116,7 +1130,9 @@ mod tests {
     use super::{
         ERC1155InsufficientBalance, ERC1155InvalidArrayLength,
         ERC1155InvalidOperator, ERC1155InvalidReceiver, ERC1155InvalidSender,
-        ERC1155MissingApprovalForAll, Erc1155, Error, IErc1155,
+        ERC1155MissingApprovalForAll, Erc1155, Erc1155ReceiverData, Error,
+        IErc1155, Transfer, BATCH_TRANSFER_FN_SELECTOR,
+        SINGLE_TRANSFER_FN_SELECTOR,
     };
     use crate::{
         token::erc721::IErc721, utils::introspection::erc165::IErc165,
@@ -1129,7 +1145,7 @@ mod tests {
         address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
-        (0..size).map(|_| U256::from(rand::random::<u32>())).collect()
+        (0..size).map(U256::from).collect()
     }
 
     pub(crate) fn random_values(size: usize) -> Vec<U256> {
@@ -1153,6 +1169,24 @@ mod tests {
             )
             .expect("Mint failed");
         (token_ids, values)
+    }
+
+    #[test]
+    fn should_create_transfer_single() {
+        let id = uint!(1_U256);
+        let value = uint!(10_U256);
+        let details = Erc1155ReceiverData::new(vec![id], vec![value]);
+        assert_eq!(SINGLE_TRANSFER_FN_SELECTOR, details.fn_selector);
+        assert_eq!(Transfer::Single { id, value }, details.transfer);
+    }
+
+    #[test]
+    fn should_create_transfer_batch() {
+        let ids = random_token_ids(5);
+        let values = random_values(5);
+        let details = Erc1155ReceiverData::new(ids.clone(), values.clone());
+        assert_eq!(BATCH_TRANSFER_FN_SELECTOR, details.fn_selector);
+        assert_eq!(Transfer::Batch { ids, values }, details.transfer);
     }
 
     #[motsu::test]
