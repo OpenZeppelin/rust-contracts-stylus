@@ -24,10 +24,6 @@ sol!(
         function paused() external view returns (bool paused);
         function pause() external;
         function unpause() external;
-        #[derive(Debug)]
-        function whenPaused() external view;
-        #[derive(Debug)]
-        function whenNotPaused() external view;
 
         error EnforcedPause();
         error ExpectedPause();
