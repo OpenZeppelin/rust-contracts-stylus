@@ -21,20 +21,6 @@ sol_storage! {
 #[public]
 #[inherit(Erc1155)]
 impl Erc1155Example {
-    pub fn set_operator_approvals(
-        &mut self,
-        owner: Address,
-        operator: Address,
-        approved: bool,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155
-            ._operator_approvals
-            .setter(owner)
-            .setter(operator)
-            .set(approved);
-        Ok(())
-    }
-
     pub fn mint(
         &mut self,
         to: Address,
