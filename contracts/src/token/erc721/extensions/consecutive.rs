@@ -43,10 +43,12 @@ use crate::{
         structs::{
             bitmap::BitMap,
             checkpoints,
-            checkpoints::{Trace160, U96},
+            checkpoints::{Size, Trace, S160},
         },
     },
 };
+
+type U96 = <S160 as Size>::Key;
 
 sol_storage! {
     /// State of an [`Erc721Consecutive`] token.
@@ -54,7 +56,7 @@ sol_storage! {
         /// Erc721 contract storage.
         Erc721 erc721;
         /// Checkpoint library contract for sequential ownership.
-        Trace160 _sequential_ownership;
+        Trace<S160> _sequential_ownership;
         /// BitMap library contract for sequential burn of tokens.
         BitMap _sequential_burn;
         /// Used to offset the first token id in
@@ -793,18 +795,15 @@ mod tests {
     use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
-    use crate::{
-        token::{
-            erc721,
-            erc721::{
-                extensions::consecutive::{
-                    ERC721ExceededMaxBatchMint, Erc721Consecutive, Error,
-                },
-                tests::random_token_id,
-                ERC721InvalidReceiver, ERC721NonexistentToken, IErc721,
+    use crate::token::{
+        erc721,
+        erc721::{
+            extensions::consecutive::{
+                ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
             },
+            tests::random_token_id,
+            ERC721InvalidReceiver, ERC721NonexistentToken, IErc721,
         },
-        utils::structs::checkpoints::U96,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
