@@ -129,7 +129,7 @@ impl VestingWallet {
 
     /// Amount of token already released
     #[selector(name = "released")]
-    pub fn released_token(&self, token: Address) -> U256 {
+    pub fn released_erc20(&self, token: Address) -> U256 {
         self._erc20_released.get(token)
     }
 
@@ -142,9 +142,9 @@ impl VestingWallet {
     /// Getter for the amount of releasable `token` tokens. `token` should be
     /// the address of an [`crate::token::erc20::Erc20`] contract.
     #[selector(name = "releasable")]
-    pub fn releasable_token(&mut self, token: Address) -> U256 {
-        self.vested_amount_token(token, block::timestamp())
-            - self.released_token(token)
+    pub fn releasable_erc20(&mut self, token: Address) -> U256 {
+        self.vested_amount_erc20(token, block::timestamp())
+            - self.released_erc20(token)
     }
 
     /// Release the native token (ether) that have already vested.
@@ -171,10 +171,10 @@ impl VestingWallet {
     ///
     /// Emits an [`ERC20Released`] event.
     #[selector(name = "release")]
-    pub fn release_token(&mut self, token: Address) -> Result<(), Error> {
-        let amount = self.releasable_token(token);
+    pub fn release_erc20(&mut self, token: Address) -> Result<(), Error> {
+        let amount = self.releasable_erc20(token);
         let released = self
-            .released_token(token)
+            .released_erc20(token)
             .checked_add(amount)
             .expect("should not exceed `U256::MAX` for `_erc20Released`");
         self._erc20_released.setter(token).set(released);
@@ -205,7 +205,7 @@ impl VestingWallet {
     /// Calculates the amount of tokens that has already vested. Default
     /// implementation is a linear vesting curve.
     #[selector(name = "vestedAmount")]
-    pub fn vested_amount_token(
+    pub fn vested_amount_erc20(
         &mut self,
         token: Address,
         timestamp: u64,
@@ -216,7 +216,7 @@ impl VestingWallet {
             .balance_of(call, contract::address())
             .expect("should return the balance");
 
-        self._vesting_schedule(balance + self.released_token(token), timestamp)
+        self._vesting_schedule(balance + self.released_erc20(token), timestamp)
     }
 }
 
@@ -284,9 +284,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_released_token(contract: VestingWallet) {
+    fn reads_released_erc20(contract: VestingWallet) {
         let one = uint!(1_U256);
         contract._erc20_released.setter(TOKEN).set(one);
-        assert_eq!(one, contract.released_token(TOKEN));
+        assert_eq!(one, contract.released_erc20(TOKEN));
     }
 }
