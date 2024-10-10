@@ -253,10 +253,10 @@ mod tests {
 
     use super::{Error, VestingWallet};
 
-    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    const TOKEN: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
     #[motsu::test]
-    fn reads_start(contract: Ownable) {
+    fn reads_start(contract: VestingWallet) {
         let expected = uint!(1000_U64);
         contract._start.set(expected);
         let start = contract.start();
@@ -264,7 +264,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_duration(contract: Ownable) {
+    fn reads_duration(contract: VestingWallet) {
         let expected = uint!(1000_U64);
         contract._duration.set(expected);
         let duration = contract.duration();
@@ -272,7 +272,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_end(contract: Ownable) {
+    fn reads_end(contract: VestingWallet) {
         let start = uint!(1000_U64);
         let duration = uint!(1000_U64);
         contract._start.set(start);
@@ -282,7 +282,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_released_eth(contract: Ownable) {
+    fn reads_released_eth(contract: VestingWallet) {
         let one = uint!(1_U256);
         contract._released.set(one);
         let released = contract.released_eth();
@@ -290,10 +290,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_released_token(contract: Ownable) {
+    fn reads_released_token(contract: VestingWallet) {
         let one = uint!(1_U256);
-        contract._erc20_released.set(one);
-        let released = contract.released_token();
+        contract._erc20_released.setter(TOKEN).set(one);
+        let released = contract.released_token(TOKEN);
         assert_eq!(one, released);
     }
 }
