@@ -5,8 +5,10 @@ use alloc::string::String;
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage};
+use stylus_proc::sol_storage;
 use stylus_sdk::evm;
+
+use crate::token::erc721::{extensions::Erc721Metadata, Error, IErc721};
 
 sol! {
     /// This event gets emitted when the metadata of a token is changed.
@@ -46,19 +48,59 @@ impl Erc721UriStorage {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
-}
 
-#[public]
-impl Erc721UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Id of a token.
-    #[must_use]
-    pub fn token_uri(&self, token_id: U256) -> String {
-        self._token_uris.getter(token_id).get_string()
+    /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
+    /// * `metadata` - Read access to a [`Erc721Metadata`] contract.
+    ///
+    /// # Errors
+    ///
+    /// If the token does not exist, then the error
+    /// [`Error::NonexistentToken`] is returned.
+    ///
+    /// NOTE: In order to have [`Erc721UriStorage::token_uri`] exposed in ABI,
+    /// you need to do this manually.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// #[selector(name = "tokenURI")]
+    /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
+    ///     Ok(self.uri_storage.token_uri(
+    ///        token_id,
+    ///        &self.erc721,
+    ///        &self.metadata,
+    ///    )?)
+    /// }
+    pub fn token_uri(
+        &self,
+        token_id: U256,
+        erc721: &impl IErc721<Error = Error>,
+        metadata: &Erc721Metadata,
+    ) -> Result<String, Error> {
+        let _owner = erc721.owner_of(token_id)?;
+
+        let token_uri = self._token_uris.getter(token_id).get_string();
+        let base = metadata.base_uri();
+
+        // If there is no base URI, return the token URI.
+        if base.is_empty() {
+            return Ok(token_uri);
+        }
+
+        // If both are set, concatenate the `base_uri` and `token_uri`.
+        let uri = if !token_uri.is_empty() {
+            base + &token_uri
+        } else {
+            metadata.token_uri(token_id, erc721)?
+        };
+
+        Ok(uri)
     }
 }
 

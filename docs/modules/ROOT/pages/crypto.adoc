@@ -22,6 +22,6 @@ pub fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
 }
 ----
 
-Note that these functions use `keccak256` as the hashing algorithm, but our library also provides generic counterparts: https://docs.rs/openzeppelin-crypto/0.1.0-rc/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify_with_builder[`verify_with_builer`] and https://docs.rs/openzeppelin-crypto/0.1.0-rc/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify_multi_proof_with_builder[`verify_multi_proof_with_builder`].
+Note that these functions use `keccak256` as the hashing algorithm, but our library also provides generic counterparts: https://docs.rs/openzeppelin-crypto/0.1.0-rc/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify_with_builder[`verify_with_builder`] and https://docs.rs/openzeppelin-crypto/0.1.0-rc/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify_multi_proof_with_builder[`verify_multi_proof_with_builder`].
 
 We also provide an adapter https://docs.rs/openzeppelin-crypto/0.1.0-rc/openzeppelin_crypto/hash/index.html[`hash`] module to use your own hashers in conjunction with them that resembles Rust's standard library's API.
