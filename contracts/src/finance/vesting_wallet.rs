@@ -67,7 +67,7 @@ sol_interface! {
     }
 }
 
-/// A Permit error.
+/// An error that occurred in the [`VestingWallet`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Error type from [`stylus_sdk::call::Call`] contract
