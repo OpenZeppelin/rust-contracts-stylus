@@ -34,13 +34,6 @@ use stylus_sdk::{
 use crate::access::ownable::Ownable;
 
 sol! {
-    /// Indicates an error related to the underlying ERC20 transfer.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ReleaseTokenFailed(address token);
-}
-
-sol! {
     /// Emitted when `amount` of ether has been released.
     #[allow(missing_docs)]
     event EtherReleased(uint256 amount);
@@ -48,7 +41,13 @@ sol! {
     /// Emitted when `amount` of ERC20 `token` has been released.
     #[allow(missing_docs)]
     event ERC20Released(address indexed token, uint256 amount);
+}
 
+sol! {
+    /// Indicates an error related to the underlying ERC20 transfer.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error ReleaseTokenFailed(address token);
 }
 
 sol_interface! {
