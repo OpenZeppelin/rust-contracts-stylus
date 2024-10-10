@@ -52,7 +52,7 @@ sol! {
 }
 
 sol_interface! {
-    /// Interface of the [`erc20::Erc20`] standard as defined in the ERC.
+    /// Interface of the [`crate::token::erc20::Erc20`] standard as defined in the ERC.
     interface IERC20 {
         /// Returns the value of tokens owned by `account`.
         function balanceOf(address account) external view returns (uint256);
@@ -61,7 +61,7 @@ sol_interface! {
         ///
         /// Returns a boolean value indicating whether the operation succeeded.
         ///
-        /// Emits a [`erc20::Transfer`] event.
+        /// Emits a [`crate::token::erc20::Transfer`] event.
         function transfer(address recipient, uint256 amount) external returns (bool);
     }
 }
@@ -77,14 +77,7 @@ pub enum Error {
 }
 
 sol_storage! {
-    /// Wrappers around ERC-20 operations that throw on failure (when the token
-    /// contract returns false). Tokens that return no value (and instead revert or
-    /// throw on failure) are also supported, non-reverting calls are assumed to be
-    /// successful.
-    /// To use this library you can add a `#[inherit(SafeErc20)]` attribute to
-    /// your contract, which allows you to call the safe operations as
-    /// `contract.safe_transfer(token_addr, ...)`, etc.
-    #[allow(clippy::pub_underscore_fields)]
+    /// State of a VestingWallet Contract.
     pub struct VestingWallet {
         /// Amount of eth already released.
         uint256 _released;
@@ -146,7 +139,7 @@ impl VestingWallet {
     }
 
     /// Getter for the amount of releasable `token` tokens. `token` should be
-    /// the address of an [`erc20::ERC20`] contract.
+    /// the address of an [`crate::token::erc20::Erc20`] contract.
     #[selector(name = "releasable")]
     pub fn releasable_token(&mut self, token: Address) -> U256 {
         self.vested_amount_token(token, block::timestamp())
