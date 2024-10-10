@@ -2,12 +2,13 @@
 pragma solidity ^0.8.21;
 
 contract BasicToken {
-    mapping(address account => uint256) private _balances;
-    mapping(address account => mapping(address spender => uint256))
-        private _allowances;
-    uint256 private _totalSupply;
     string private _name;
     string private _symbol;
+
+    mapping(address account => uint256) private _balances;
+    mapping(address account => mapping(address spender => uint256))
+    private _allowances;
+    uint256 private _totalSupply;
 
     constructor(string memory name_, string memory symbol_) {
         _name = name_;

@@ -4,13 +4,21 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
-use alloy_primitives::{Address, U256};
+use alloc::string::String;
+
+use alloy_primitives::{Address, FixedBytes, U256};
 use alloy_sol_types::sol;
+use openzeppelin_stylus_proc::interface_id;
 use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
     stylus_proc::{public, sol_storage},
+};
+
+use crate::{
+    token::erc20::extensions::{Erc20Metadata, IErc20Metadata},
+    utils::introspection::erc165::{Erc165, IErc165},
 };
 
 pub mod extensions;
@@ -101,6 +109,8 @@ impl MethodError for Error {
 sol_storage! {
     /// State of an `Erc20` token.
     pub struct Erc20 {
+        /// Metadata fields associated with token.
+        Erc20Metadata _metadata;
         /// Maps users to balances.
         mapping(address => uint256) _balances;
         /// Maps users to a mapping of each spender's allowance.
@@ -111,6 +121,7 @@ sol_storage! {
 }
 
 /// Required interface of an [`Erc20`] compliant contract.
+#[interface_id]
 pub trait IErc20 {
     /// The error type associated to this ERC-20 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -283,6 +294,24 @@ impl IErc20 for Erc20 {
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
         Ok(true)
+    }
+}
+
+impl IErc20Metadata for Erc20 {
+    fn name(&self) -> String {
+        self._metadata._metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self._metadata._metadata.symbol()
+    }
+}
+
+impl IErc165 for Erc20 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc20Metadata::supports_interface(interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -550,6 +579,9 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::{Erc20, Error, IErc20};
+    use crate::{
+        token::erc721::IErc721, utils::introspection::erc165::IErc165,
+    };
 
     #[motsu::test]
     fn reads_balance(contract: Erc20) {
@@ -881,5 +913,16 @@ mod tests {
         let one = uint!(1_U256);
         let result = contract.approve(Address::ZERO, one);
         assert!(matches!(result, Err(Error::InvalidSpender(_))));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20 as IErc20>::INTERFACE_ID;
+        let expected = 0x36372b07;
+        assert_eq!(actual, expected);
+
+        let actual = <Erc20 as IErc165>::INTERFACE_ID;
+        let expected = 0x01ffc9a7;
+        assert_eq!(actual, expected);
     }
 }

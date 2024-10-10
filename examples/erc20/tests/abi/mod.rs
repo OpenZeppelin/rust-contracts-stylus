@@ -25,6 +25,8 @@ sol!(
         function pause() external;
         function unpause() external;
 
+        function supportsInterface(bytes4 interface_id) external view returns (bool supportsInterface);
+
         error EnforcedPause();
         error ExpectedPause();
 

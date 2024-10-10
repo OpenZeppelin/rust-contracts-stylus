@@ -1,15 +1,15 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloc::vec::Vec;
+use alloc::{string::String, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc20::{
-        extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
+        extensions::{capped, Capped, IErc20Burnable, IErc20Metadata},
         Erc20, IErc20,
     },
-    utils::Pausable,
+    utils::{introspection::erc165::IErc165, Pausable},
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
@@ -21,8 +21,6 @@ sol_storage! {
         #[borrow]
         Erc20 erc20;
         #[borrow]
-        Erc20Metadata metadata;
-        #[borrow]
         Capped capped;
         #[borrow]
         Pausable pausable;
@@ -30,12 +28,20 @@ sol_storage! {
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
+#[inherit(Erc20, Capped, Pausable)]
 impl Erc20Example {
-    // Overrides the default [`Metadata::decimals`], and sets it to `10`.
-    //
-    // If you don't provide this method in the `entrypoint` contract, it will
-    // default to `18`.
+    pub fn name(&self) -> String {
+        self.erc20.name()
+    }
+
+    pub fn symbol(&self) -> String {
+        self.erc20.symbol()
+    }
+
+    /// Overrides the default [`Erc20::decimals`], and sets it to `10`.
+    ///
+    /// If you don't provide this method in the `entrypoint` contract, it will
+    /// default to `18`.
     pub fn decimals(&self) -> u8 {
         DECIMALS
     }
@@ -104,6 +110,10 @@ impl Erc20Example {
     ) -> Result<bool, Vec<u8>> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+    }
+
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc20::supports_interface(interface_id)
     }
 
     pub fn pause(&mut self) -> Result<(), Vec<u8>> {
