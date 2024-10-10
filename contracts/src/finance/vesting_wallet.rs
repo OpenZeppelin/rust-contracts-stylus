@@ -45,6 +45,8 @@ sol! {
 
 sol! {
     /// Indicates an error related to the underlying ERC20 transfer.
+    ///
+    /// * `token` - Address of the token being released.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ReleaseTokenFailed(address token);
@@ -61,7 +63,7 @@ sol_interface! {
         /// Returns a boolean value indicating whether the operation succeeded.
         ///
         /// Emits a [`crate::token::erc20::Transfer`] event.
-        function transfer(address recipient, uint256 amount) external returns (bool);
+        function transfer(address to, uint256 value) external returns (bool);
     }
 }
 
