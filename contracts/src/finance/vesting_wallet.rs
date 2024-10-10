@@ -289,4 +289,19 @@ mod tests {
         contract._erc20_released.setter(TOKEN).set(one);
         assert_eq!(one, contract.released_erc20(TOKEN));
     }
+
+    #[motsu::test]
+    fn reads_vested_allocation(contract: VestingWallet) {
+        let start = start();
+        let duration = U64::from(DURATION);
+        contract._start.set(start);
+        contract._duration.set(duration);
+
+        let one = uint!(1_U256);
+        let two = uint!(2_U256);
+
+        assert_eq!(U256::ZERO, contract._vesting_schedule(two, start - 1));
+        assert_eq!(one, contract._vesting_schedule(two, start + duration / 2));
+        assert_eq!(two, contract._vesting_schedule(two, start + duration));
+    }
 }
