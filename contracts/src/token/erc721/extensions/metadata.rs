@@ -1,10 +1,14 @@
 //! Optional Metadata of the ERC-721 standard.
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 
+use alloy_primitives::U256;
 use stylus_proc::{public, sol_storage};
 
-use crate::utils::Metadata;
+use crate::{
+    token::erc721::{Error, IErc721},
+    utils::Metadata,
+};
 
 sol_storage! {
     /// Metadata of an [`crate::token::erc721::Erc721`] token.
@@ -31,14 +35,6 @@ pub trait IErc721Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     fn symbol(&self) -> String;
-
-    /// Returns the base of Uniform Resource Identifier (URI) for tokens'
-    /// collection.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    fn base_uri(&self) -> String;
 }
 
 // FIXME: Apply multi-level inheritance to export Metadata's functions.
@@ -53,8 +49,57 @@ impl IErc721Metadata for Erc721Metadata {
     fn symbol(&self) -> String {
         self._metadata.symbol()
     }
+}
 
-    fn base_uri(&self) -> String {
+impl Erc721Metadata {
+    /// Returns the base of Uniform Resource Identifier (URI) for tokens'
+    /// collection.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    pub fn base_uri(&self) -> String {
         self._base_uri.get_string()
+    }
+
+    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Id of a token.
+    /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
+    ///
+    /// # Errors
+    ///
+    /// If the token does not exist, then the error
+    /// [`Error::NonexistentToken`] is returned.
+    ///
+    /// NOTE: In order to have [`Erc721Metadata::token_uri`] exposed in ABI,
+    /// you need to do this manually.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// #[selector(name = "tokenURI")]
+    /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
+    ///     Ok(self.metadata.token_uri(token_id, &self.erc721)?)
+    /// }
+    pub fn token_uri(
+        &self,
+        token_id: U256,
+        erc721: &impl IErc721<Error = Error>,
+    ) -> Result<String, Error> {
+        let _owner = erc721.owner_of(token_id)?;
+
+        let base_uri = self.base_uri();
+
+        let token_uri = if base_uri.is_empty() {
+            String::new()
+        } else {
+            base_uri + &token_id.to_string()
+        };
+
+        Ok(token_uri)
     }
 }
