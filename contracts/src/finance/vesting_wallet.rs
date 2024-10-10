@@ -245,3 +245,55 @@ impl VestingWallet {
         }
     }
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{address, uint, Address, U256};
+    use stylus_sdk::msg;
+
+    use super::{Error, VestingWallet};
+
+    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
+    #[motsu::test]
+    fn reads_start(contract: Ownable) {
+        let expected = uint!(1000_U64);
+        contract._start.set(expected);
+        let start = contract.start();
+        assert_eq!(U256::from(expected), start);
+    }
+
+    #[motsu::test]
+    fn reads_duration(contract: Ownable) {
+        let expected = uint!(1000_U64);
+        contract._duration.set(expected);
+        let duration = contract.duration();
+        assert_eq!(U256::from(expected), duration);
+    }
+
+    #[motsu::test]
+    fn reads_end(contract: Ownable) {
+        let start = uint!(1000_U64);
+        let duration = uint!(1000_U64);
+        contract._start.set(start);
+        contract._duration.set(duration);
+        let end = contract.end();
+        assert_eq!(U256::from(start + duration), end);
+    }
+
+    #[motsu::test]
+    fn reads_released_eth(contract: Ownable) {
+        let one = uint!(1_U256);
+        contract._released.set(one);
+        let released = contract.released_eth();
+        assert_eq!(one, released);
+    }
+
+    #[motsu::test]
+    fn reads_released_token(contract: Ownable) {
+        let one = uint!(1_U256);
+        contract._erc20_released.set(one);
+        let released = contract.released_token();
+        assert_eq!(one, released);
+    }
+}
