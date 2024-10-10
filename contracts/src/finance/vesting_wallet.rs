@@ -248,52 +248,61 @@ impl VestingWallet {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::msg;
+    use alloy_primitives::{address, uint, Address, U256, U64};
+    use stylus_sdk::block;
 
-    use super::{Error, VestingWallet};
+    use super::VestingWallet;
 
-    const TOKEN: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    const DURATION: u64 = 4 * 365 * 86400; // 4 years
+
+    fn start() -> U64 {
+        U64::from(block::timestamp() + 3600) // 1 hour
+    }
 
     #[motsu::test]
     fn reads_start(contract: VestingWallet) {
-        let expected = uint!(1000_U64);
-        contract._start.set(expected);
-        let start = contract.start();
-        assert_eq!(U256::from(expected), start);
+        let start = start();
+        contract._start.set(start);
+        assert_eq!(U256::from(start), contract.start());
     }
 
     #[motsu::test]
     fn reads_duration(contract: VestingWallet) {
-        let expected = uint!(1000_U64);
-        contract._duration.set(expected);
-        let duration = contract.duration();
-        assert_eq!(U256::from(expected), duration);
+        contract._duration.set(U64::from(DURATION));
+        assert_eq!(U256::from(DURATION), contract.duration());
     }
 
     #[motsu::test]
     fn reads_end(contract: VestingWallet) {
-        let start = uint!(1000_U64);
-        let duration = uint!(1000_U64);
+        let start = start();
+        let duration = U64::from(DURATION);
         contract._start.set(start);
         contract._duration.set(duration);
-        let end = contract.end();
-        assert_eq!(U256::from(start + duration), end);
+        assert_eq!(U256::from(start + duration), contract.end());
     }
 
-    #[motsu::test]
-    fn reads_released_eth(contract: VestingWallet) {
-        let one = uint!(1_U256);
-        contract._released.set(one);
-        let released = contract.released_eth();
-        assert_eq!(one, released);
+    mod eth_vesting {
+        use super::*;
+
+        #[motsu::test]
+        fn reads_released_eth(contract: VestingWallet) {
+            let one = uint!(1_U256);
+            contract._released.set(one);
+            assert_eq!(one, contract.released_eth());
+        }
     }
 
-    #[motsu::test]
-    fn reads_released_token(contract: VestingWallet) {
-        let one = uint!(1_U256);
-        contract._erc20_released.setter(TOKEN).set(one);
-        let released = contract.released_token(TOKEN);
-        assert_eq!(one, released);
+    mod erc20_vesting {
+        use super::*;
+
+        const TOKEN: Address =
+            address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
+        #[motsu::test]
+        fn reads_released_token(contract: VestingWallet) {
+            let one = uint!(1_U256);
+            contract._erc20_released.setter(TOKEN).set(one);
+            assert_eq!(one, contract.released_token(TOKEN));
+        }
     }
 }
