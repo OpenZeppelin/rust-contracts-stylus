@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Link Checker
         uses: lycheeverse/lychee-action@v1
         with:
@@ -30,9 +30,8 @@ jobs:
     if: startsWith(github.ref, 'refs/heads/v') || startsWith(github.base_ref, 'v')
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run linkspector
         uses: umbrelladocs/action-linkspector@v1
         with:
           fail_on_error: true
-
