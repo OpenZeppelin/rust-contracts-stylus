@@ -20,7 +20,7 @@
 //! automatically (i.e. a rebase token), make sure to account the supply/balance
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, U64};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
 use stylus_sdk::{
@@ -198,7 +198,7 @@ impl VestingWallet {
     pub fn vested_amount_eth(&self, timestamp: u64) -> U256 {
         self._vesting_schedule(
             contract::balance() + self.released_eth(),
-            timestamp,
+            U64::from(timestamp),
         )
     }
 
@@ -216,7 +216,10 @@ impl VestingWallet {
             .balance_of(call, contract::address())
             .expect("should return the balance");
 
-        self._vesting_schedule(balance + self.released_erc20(token), timestamp)
+        self._vesting_schedule(
+            balance + self.released_erc20(token),
+            U64::from(timestamp),
+        )
     }
 }
 
@@ -227,7 +230,7 @@ impl VestingWallet {
     pub fn _vesting_schedule(
         &self,
         total_allocation: U256,
-        timestamp: u64,
+        timestamp: U64,
     ) -> U256 {
         if U256::from(timestamp) < self.start() {
             U256::ZERO
@@ -300,8 +303,14 @@ mod tests {
         let one = uint!(1_U256);
         let two = uint!(2_U256);
 
-        assert_eq!(U256::ZERO, contract._vesting_schedule(two, start - 1));
-        assert_eq!(one, contract._vesting_schedule(two, start + duration / 2));
+        assert_eq!(
+            U256::ZERO,
+            contract._vesting_schedule(two, start - U64::from(1))
+        );
+        assert_eq!(
+            one,
+            contract._vesting_schedule(two, start + duration / U64::from(2))
+        );
         assert_eq!(two, contract._vesting_schedule(two, start + duration));
     }
 }
