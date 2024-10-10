@@ -64,7 +64,7 @@ stylus-sdk = { version = "=0.6.0", default-features = false }
 stylus-proc = { version = "=0.6.0", default-features = false }
 mini-alloc = "0.4.2"
 
-alloy = { version = "0.1.4", features = [
+alloy = { version = "=0.1.4", features = [
   "contract",
   "network",
   "providers",
@@ -77,8 +77,8 @@ alloy = { version = "0.1.4", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "0.7.6", default-features = false }
-alloy-sol-types = { version = "0.7.6", default-features = false }
+alloy-primitives = { version = "=0.7.6", default-features = false }
+alloy-sol-types = { version = "=0.7.6", default-features = false }
 
 const-hex = { version = "1.11.1", default-features = false }
 eyre = "0.6.8"
