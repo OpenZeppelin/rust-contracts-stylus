@@ -21,6 +21,7 @@ impl<F: PrimeField> Poseidon2Params<F> {
 
     pub const INIT_SHAKE: &'static str = "Poseidon2";
 
+    // TODO#q: these params should be generically set
     pub fn new(
         t: usize,
         d: usize,

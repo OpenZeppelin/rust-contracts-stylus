@@ -172,6 +172,7 @@ impl<F: PrimeField> Poseidon2<F> {
     fn matmul_internal(&self, input: &mut [F], mat_internal_diag_m_1: &[F]) {
         let t = self.params.t;
 
+        // TODO#q:`t` param should be generic
         match t {
             2 => {
                 // [2, 1]
@@ -654,4 +655,6 @@ mod poseidon2_tests_vesta {
         assert_eq!(perm[1], from_hex("0x2c76327e0b7653873263158cf8545c282364b183880fcdea93ca8526d518c66f"));
         assert_eq!(perm[2], from_hex("0x262316c0ce5244838c75873299b59d763ae0849d2dd31bdc95caf7db1c2901bf"));
     }
+
+    // TODO#q: test against `zkhash` implementation should be added
 }

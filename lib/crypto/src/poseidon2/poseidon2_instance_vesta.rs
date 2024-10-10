@@ -288,5 +288,6 @@ lazy_static! {
     ],
     ];
 
-    pub static ref POSEIDON2_VESTA_PARAMS: Arc<Poseidon2Params<Scalar>> = Arc::new(Poseidon2Params::new(3, 5, 8, 56, &MAT_DIAG3_M_1, &MAT_INTERNAL3, &RC3));
+    pub static ref POSEIDON2_VESTA_PARAMS: Arc<Poseidon2Params<Scalar>> =
+        Arc::new(Poseidon2Params::new(3, 5, 8, 56, &MAT_DIAG3_M_1, &MAT_INTERNAL3, &RC3));
 }
