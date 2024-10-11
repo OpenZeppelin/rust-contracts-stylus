@@ -12,6 +12,7 @@ members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc1155",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
@@ -32,6 +33,7 @@ default-members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc1155",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
@@ -101,10 +103,10 @@ quote = "1.0.35"
 openzeppelin-stylus = { path = "contracts" }
 openzeppelin-stylus-proc = { path = "contracts-proc" }
 openzeppelin-crypto = { path = "lib/crypto" }
-motsu = { path = "lib/motsu"}
+motsu = { path = "lib/motsu" }
 motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
 e2e = { path = "lib/e2e" }
-e2e-proc = {path = "lib/e2e-proc"}
+e2e-proc = { path = "lib/e2e-proc" }
 
 [profile.release]
 codegen-units = 1
