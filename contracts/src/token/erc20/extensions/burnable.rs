@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_from_errors_when_invalid_sender(contract: Erc20) {
+    fn burns_from_errors_when_invalid_approver(contract: Erc20) {
         let one = uint!(1_U256);
 
         contract
@@ -168,7 +168,7 @@ mod tests {
             .set(one);
 
         let result = contract.burn_from(Address::ZERO, one);
-        assert!(matches!(result, Err(Error::InvalidSender(_))));
+        assert!(matches!(result, Err(Error::InvalidApprover(_))));
     }
 
     #[motsu::test]
