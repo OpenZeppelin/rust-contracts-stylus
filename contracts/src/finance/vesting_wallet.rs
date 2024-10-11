@@ -89,7 +89,6 @@ sol_storage! {
         /// Vesting duration.
         uint64 _duration;
         /// Ownable contract
-        #[borrow]
         Ownable ownable;
     }
 }
@@ -100,7 +99,6 @@ sol_storage! {
 unsafe impl TopLevelStorage for VestingWallet {}
 
 #[public]
-#[inherit(Ownable)]
 impl VestingWallet {
     /// The contract should be able to receive Eth.
     #[payable]
