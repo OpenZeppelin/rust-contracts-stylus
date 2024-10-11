@@ -31,7 +31,7 @@ use stylus_sdk::{
     stylus_proc::{public, sol_interface, sol_storage},
 };
 
-use crate::access::ownable::Ownable;
+use crate::access::{ownable, ownable::Ownable};
 
 sol! {
     /// Emitted when `amount` of ether has been released.
@@ -70,6 +70,8 @@ sol_interface! {
 /// An error that occurred in the [`VestingWallet`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
+    /// Error type from [`Ownable`] contract [`ownable::Error`].
+    Ownable(ownable::Error),
     /// Error type from [`stylus_sdk::call::Call`] contract
     /// [`stylus_sdk::call::Error`].
     StylusError(stylus_sdk::call::Error),
@@ -80,6 +82,8 @@ pub enum Error {
 sol_storage! {
     /// State of a VestingWallet Contract.
     pub struct VestingWallet {
+        /// Ownable contract
+        Ownable ownable;
         /// Amount of eth already released.
         uint256 _released;
         /// Amount of ERC20 tokens already released.
@@ -88,8 +92,6 @@ sol_storage! {
         uint64 _start;
         /// Vesting duration.
         uint64 _duration;
-        /// Ownable contract
-        Ownable ownable;
     }
 }
 
@@ -103,6 +105,11 @@ impl VestingWallet {
     /// The contract should be able to receive Eth.
     #[payable]
     pub fn receive_ether(&self) {}
+
+    /// Returns the address of the current owner.
+    pub fn owner(&self) -> Address {
+        self.ownable.owner()
+    }
 
     /// Getter for the start timestamp.
     pub fn start(&self) -> U256 {
