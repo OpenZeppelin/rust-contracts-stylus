@@ -10,11 +10,6 @@
 //! By setting the duration to 0, one can configure this contract to behave like
 //! an asset timelock that hold tokens for a beneficiary until a specified time.
 //!
-//! Fields `_start` (indicates the timestamp when the vesting start),
-//! `_duration` (indicates how long the vesting lasts), and `_owner` (the
-//! beneficiary of the wallet) can be set during construction with `koba` (stylus
-//! construction tooling) within solidity constructor file.
-//!
 //! NOTE: Since the wallet is [`crate::access::ownable::Ownable`], and ownership
 //! can be transferred, it is possible to sell unvested tokens. Preventing this
 //! in a smart contract is difficult, considering that: 1) a beneficiary address
@@ -35,6 +30,8 @@ use stylus_sdk::{
     storage::TopLevelStorage,
     stylus_proc::{public, sol_interface, sol_storage},
 };
+
+use crate::access::ownable::Ownable;
 
 sol! {
     /// Emitted when `amount` of ether has been released.
@@ -91,6 +88,9 @@ sol_storage! {
         uint64 _start;
         /// Vesting duration.
         uint64 _duration;
+        /// Ownable contract
+        #[borrow]
+        Ownable ownable;
     }
 }
 
@@ -100,6 +100,7 @@ sol_storage! {
 unsafe impl TopLevelStorage for VestingWallet {}
 
 #[public]
+#[inherit(Ownable)]
 impl VestingWallet {
     /// The contract should be able to receive Eth.
     #[payable]
@@ -121,29 +122,79 @@ impl VestingWallet {
     }
 
     /// Amount of eth already released
+    #[selector(name = "released")]
     pub fn released_eth(&self) -> U256 {
         self._released.get()
     }
 
     /// Amount of token already released
+    #[selector(name = "released")]
     pub fn released_erc20(&self, token: Address) -> U256 {
         self._erc20_released.get(token)
     }
 
     /// Getter for the amount of releasable eth.
+    #[selector(name = "releasable")]
     pub fn releasable_eth(&self) -> U256 {
         self.vested_amount_eth(block::timestamp()) - self.released_eth()
     }
 
     /// Getter for the amount of releasable `token` tokens. `token` should be
     /// the address of an [`crate::token::erc20::Erc20`] contract.
+    #[selector(name = "releasable")]
     pub fn releasable_erc20(&mut self, token: Address) -> U256 {
         self.vested_amount_erc20(token, block::timestamp())
             - self.released_erc20(token)
     }
 
+    /// Release the native token (ether) that have already vested.
+    ///
+    /// Emits an [`EtherReleased`] event.
+    #[selector(name = "release")]
+    pub fn release_eth(&mut self) -> Result<(), Error> {
+        let amount = self.releasable_eth();
+        let released = self
+            .released_eth()
+            .checked_add(amount)
+            .expect("should not exceed `U256::MAX` for `_released`");
+        self._released.set(released);
+
+        evm::log(EtherReleased { amount });
+
+        let owner = self.ownable.owner();
+        call(Call::new_in(self).value(amount), owner, &[])?;
+
+        Ok(())
+    }
+
+    /// Release the tokens that have already vested.
+    ///
+    /// Emits an [`ERC20Released`] event.
+    #[selector(name = "release")]
+    pub fn release_erc20(&mut self, token: Address) -> Result<(), Error> {
+        let amount = self.releasable_erc20(token);
+        let released = self
+            .released_erc20(token)
+            .checked_add(amount)
+            .expect("should not exceed `U256::MAX` for `_erc20Released`");
+        self._erc20_released.setter(token).set(released);
+
+        evm::log(ERC20Released { token, amount });
+
+        let erc20 = IERC20::new(token);
+        let owner = self.ownable.owner();
+        let call = Call::new_in(self);
+        let succeeded = erc20.transfer(call, owner, amount)?;
+        if !succeeded {
+            return Err(ReleaseTokenFailed { token }.into());
+        }
+
+        Ok(())
+    }
+
     /// Calculates the amount of ether that has already vested. Default
     /// implementation is a linear vesting curve.
+    #[selector(name = "vestedAmount")]
     pub fn vested_amount_eth(&self, timestamp: u64) -> U256 {
         self._vesting_schedule(
             contract::balance() + self.released_eth(),
@@ -153,6 +204,7 @@ impl VestingWallet {
 
     /// Calculates the amount of tokens that has already vested. Default
     /// implementation is a linear vesting curve.
+    #[selector(name = "vestedAmount")]
     pub fn vested_amount_erc20(
         &mut self,
         token: Address,
@@ -188,51 +240,6 @@ impl VestingWallet {
             (total_allocation * (U256::from(timestamp) - self.start()))
                 / self.duration()
         }
-    }
-
-    /// Release the native token (ether) that have already vested.
-    ///
-    /// Emits an [`EtherReleased`] event.
-    pub fn _release_eth(&mut self, to: Address) -> Result<(), Error> {
-        let amount = self.releasable_eth();
-        let released = self
-            .released_eth()
-            .checked_add(amount)
-            .expect("should not exceed `U256::MAX` for `_released`");
-        self._released.set(released);
-
-        evm::log(EtherReleased { amount });
-
-        call(Call::new_in(self).value(amount), to, &[])?;
-
-        Ok(())
-    }
-
-    /// Release the tokens that have already vested.
-    ///
-    /// Emits an [`ERC20Released`] event.
-    pub fn _release_erc20(
-        &mut self,
-        to: Address,
-        token: Address,
-    ) -> Result<(), Error> {
-        let amount = self.releasable_erc20(token);
-        let released = self
-            .released_erc20(token)
-            .checked_add(amount)
-            .expect("should not exceed `U256::MAX` for `_erc20Released`");
-        self._erc20_released.setter(token).set(released);
-
-        evm::log(ERC20Released { token, amount });
-
-        let erc20 = IERC20::new(token);
-        let call = Call::new_in(self);
-        let succeeded = erc20.transfer(call, to, amount)?;
-        if !succeeded {
-            return Err(ReleaseTokenFailed { token }.into());
-        }
-
-        Ok(())
     }
 }
 

@@ -14,17 +14,17 @@ contract VestingWalletExample {
         address indexed previousOwner,
         address indexed newOwner
     );
-    
+
     constructor(address beneficiary, uint64 startTimestamp, uint64 durationSeconds) payable {
+        _start = startTimestamp;
+        _duration = durationSeconds;
+        
         if (beneficiary == address(0)) {
             revert OwnableInvalidOwner(address(0));
         }
         _transferOwnership(beneficiary);
-        
-        _start = startTimestamp;
-        _duration = durationSeconds;
     }
-
+    
     function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = _owner;
         _owner = newOwner;
