@@ -4,6 +4,7 @@ use alloy::sol;
 sol!(
      #[sol(rpc)]
      contract VestingWallet {
+          function owner() public view virtual returns (address owner);
           function start() external view returns (uint256 start);
           function duration() external view returns (uint256 duration);
           function end() external view returns (uint256 end);
