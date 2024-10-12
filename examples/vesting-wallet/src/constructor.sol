@@ -6,8 +6,8 @@ contract VestingWalletExample {
     
     uint256 private _released;
     mapping(address token => uint256) private _erc20Released;
-    uint64 private immutable _start;
-    uint64 private immutable _duration;
+    uint64 private _start;
+    uint64 private _duration;
 
     constructor(address beneficiary, uint64 startTimestamp, uint64 durationSeconds) {
         _owner = beneficiary;
