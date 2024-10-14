@@ -42,14 +42,13 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .address()?;
     let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-    let VestingWallet::startReturn { start } = contract.start().call().await?;
-    let VestingWallet::durationReturn { duration } =
-        contract.duration().call().await?;
-    let VestingWallet::endReturn { end } = contract.end().call().await?;
+    let start = contract.start().call().await?.start;
+    let duration = contract.duration().call().await?.duration;
+    let end = contract.end().call().await?.end;
 
     assert_eq!(U256::from(START), start);
     assert_eq!(U256::from(DURATION), duration);
-    assert_eq!(end, U256::from(START + DURATION));
+    assert_eq!(U256::from(START + DURATION), end);
 
     Ok(())
 }
