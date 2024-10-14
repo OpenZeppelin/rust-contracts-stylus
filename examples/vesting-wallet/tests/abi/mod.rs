@@ -17,8 +17,13 @@ sol!(
           function vestedAmount(uint64 timestamp) external view returns (uint256 vestedAmount);
           function vestedAmount(address token, uint64 timestamp) external view returns (uint256 vestedAmount);
 
+          error OwnableUnauthorizedAccount(address account);
+          error OwnableInvalidOwner(address owner);
+
           error ReleaseTokenFailed(address token);
 
+          #[derive(Debug, PartialEq)]
+          event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
           #[derive(Debug, PartialEq)]
           event EtherReleased(uint256 amount);
           #[derive(Debug, PartialEq)]

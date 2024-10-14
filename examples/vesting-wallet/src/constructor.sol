@@ -9,9 +9,25 @@ contract VestingWalletExample {
     uint64 private _start;
     uint64 private _duration;
 
-    constructor(address beneficiary, uint64 startTimestamp, uint64 durationSeconds) {
-        _owner = beneficiary;
+    error OwnableInvalidOwner(address owner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
+    constructor(address beneficiary, uint64 startTimestamp, uint64 durationSeconds) payable {
+         if (beneficiary == address(0)) {
+            revert OwnableInvalidOwner(address(0));
+        }
+        _transferOwnership(beneficiary);
+        
         _start = startTimestamp;
         _duration = durationSeconds;
+    }
+
+    function _transferOwnership(address newOwner) internal virtual {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }
