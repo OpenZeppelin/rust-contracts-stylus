@@ -2,7 +2,11 @@
 
 use alloc::string::String;
 
-use stylus_proc::{public, sol_storage};
+use alloy_primitives::FixedBytes;
+use openzeppelin_stylus_proc::interface_id;
+use stylus_proc::sol_storage;
+
+use crate::{token::erc20::Erc20, utils::introspection::erc165::IErc165};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
@@ -20,6 +24,7 @@ sol_storage! {
 }
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
+#[interface_id]
 pub trait IErc20Metadata {
     /// Returns the name of the token.
     ///
@@ -53,26 +58,26 @@ pub trait IErc20Metadata {
     /// no way it affects any of the arithmetic of the contract, including
     /// [`super::super::IErc20::balance_of`] and
     /// [`super::super::IErc20::transfer`].
-    fn decimals(&self) -> u8;
+    fn decimals(&self) -> u8 {
+        DEFAULT_DECIMALS
+    }
 }
 
-// FIXME: Apply multi-level inheritance to export Metadata's functions.
-// With the current version of SDK it is not possible.
-// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
-#[public]
-impl IErc20Metadata for Erc20Metadata {
-    fn name(&self) -> String {
-        self._metadata.name()
+impl IErc165 for Erc20Metadata {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Erc20 as IErc20Metadata>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
     }
+}
 
-    fn symbol(&self) -> String {
-        self._metadata.symbol()
-    }
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use crate::token::erc20::{extensions::IErc20Metadata, Erc20};
 
-    fn decimals(&self) -> u8 {
-        // TODO: Use `U8` an avoid the conversion once
-        // https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
-        // gets resolved.
-        DEFAULT_DECIMALS
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20 as IErc20Metadata>::INTERFACE_ID;
+        let expected = 0xa219a025;
+        assert_eq!(actual, expected);
     }
 }
