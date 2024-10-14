@@ -72,6 +72,50 @@ async fn rejects_zero_address_for_beneficiary(
     Ok(())
 }
 
+mod ether_vesting {
+    use super::*;
+
+    #[e2e::test]
+    async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
+        let balance = 1000_u64;
+        let start = START;
+        let duration = DURATION;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, duration))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
+
+        for i in 0..64 {
+            let timestamp = i * duration / 60 + start;
+            let expected_amount = U256::from(std::cmp::min(
+                balance,
+                balance * (timestamp - start) / duration,
+            ));
+
+            // TODO: update timestamp
+
+            let vested_amount =
+                contract.vestedAmount_0(timestamp).call().await?.vestedAmount;
+            assert_eq!(
+                expected_amount, vested_amount,
+                "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
+            );
+
+            // TODO: can't assert until block::timestamp can be manipulated
+            // let VestingWallet::releasable_1Return { releasable } =
+            //     contract.releasable_1(erc20_address).call().await?;
+            // assert_eq!(expected_amount, releasable);
+        }
+
+        Ok(())
+    }
+}
+
 mod erc20_vesting {
     use super::*;
 
@@ -101,12 +145,13 @@ mod erc20_vesting {
 
             // TODO: update timestamp
 
-            let VestingWallet::vestedAmount_1Return { vestedAmount } = contract
+            let vested_amount = contract
                 .vestedAmount_1(erc20_address, timestamp)
                 .call()
-                .await?;
+                .await?
+                .vestedAmount;
             assert_eq!(
-                expected_amount, vestedAmount,
+                expected_amount, vested_amount,
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
 

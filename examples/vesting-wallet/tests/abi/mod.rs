@@ -5,7 +5,7 @@ sol!(
      #[sol(rpc)]
      contract VestingWallet {
           function owner() public view virtual returns (address owner);
-          receive() external payable virtual;
+          function receiveEther() external payable virtual;
           function start() external view returns (uint256 start);
           function duration() external view returns (uint256 duration);
           function end() external view returns (uint256 end);
