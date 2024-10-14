@@ -10,7 +10,9 @@ mod abi;
 
 sol!("src/constructor.sol");
 
-const HOUR: u64 = 3600;
+// Epoch timestamp: 1st January 2025 00::00::00
+const BLOCK_TIMESTAMP: u64 = 1_735_689_600;
+const START: u64 = BLOCK_TIMESTAMP + 3600; // 1 hour
 const YEAR: u64 = 365 * 86400;
 
 fn ctr(
@@ -27,24 +29,22 @@ fn ctr(
 
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
-    let start = HOUR;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(alice.address(), start, YEAR))
+        .with_constructor(ctr(alice.address(), START, YEAR))
         .deploy()
         .await?
         .address()?;
     let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-    let VestingWallet::startReturn { start: _start } =
-        contract.start().call().await?;
+    let VestingWallet::startReturn { start } = contract.start().call().await?;
     let VestingWallet::durationReturn { duration } =
         contract.duration().call().await?;
     let VestingWallet::endReturn { end } = contract.end().call().await?;
 
-    assert_eq!(U256::from(start), _start);
+    assert_eq!(U256::from(START), start);
     assert_eq!(U256::from(YEAR), duration);
-    assert_eq!(end, U256::from(start + YEAR));
+    assert_eq!(end, U256::from(START + YEAR));
 
     Ok(())
 }
