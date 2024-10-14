@@ -72,19 +72,17 @@ async fn rejects_zero_address_for_beneficiary(
     Ok(())
 }
 
-#[e2e::test]
-async fn erc20_vesting(alice: Account) -> eyre::Result<()> {
-    let balance = 1000_u64;
+mod erc20_vesting {
+    use super::*;
 
-    for i in 0..1 {
-        let start = START - 3600;
-        let timestamp = i * DURATION / 60 + start;
-        let expected_amount =
-            U256::from(balance * (timestamp - start) / DURATION);
-
+    #[e2e::test]
+    async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
+        let balance = 1000_u64;
+        let start = START;
+        let duration = DURATION;
         let contract_addr = alice
             .as_deployer()
-            .with_constructor(ctr(alice.address(), start, DURATION))
+            .with_constructor(ctr(alice.address(), start, duration))
             .deploy()
             .await?
             .address()?;
@@ -94,14 +92,30 @@ async fn erc20_vesting(alice: Account) -> eyre::Result<()> {
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
         let _ = watch!(erc20_alice.mint(contract_addr, U256::from(balance)));
 
-        let VestingWallet::vestedAmount_1Return { vestedAmount } =
-            contract.vestedAmount_1(erc20_address, timestamp).call().await?;
-        assert_eq!(expected_amount, vestedAmount);
+        for i in 0..64 {
+            let timestamp = i * duration / 60 + start;
+            let expected_amount = U256::from(std::cmp::min(
+                balance,
+                balance * (timestamp - start) / duration,
+            ));
 
-        let VestingWallet::releasable_1Return { releasable } =
-            contract.releasable_1(erc20_address).call().await?;
-        assert_eq!(expected_amount, releasable);
+            // TODO: update timestamp
+
+            let VestingWallet::vestedAmount_1Return { vestedAmount } = contract
+                .vestedAmount_1(erc20_address, timestamp)
+                .call()
+                .await?;
+            assert_eq!(
+                expected_amount, vestedAmount,
+                "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
+            );
+
+            // TODO: can't assert until block::timestamp can be manipulated
+            // let VestingWallet::releasable_1Return { releasable } =
+            //     contract.releasable_1(erc20_address).call().await?;
+            // assert_eq!(expected_amount, releasable);
+        }
+
+        Ok(())
     }
-
-    Ok(())
 }
