@@ -2,7 +2,7 @@
 
 use alloy::sol;
 use alloy_primitives::{Address, U256};
-use e2e::{watch, Account, ReceiptExt};
+use e2e::{watch, Account, ReceiptExt, Revert};
 
 use crate::{
     abi::VestingWallet,
@@ -55,32 +55,53 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn erc20_vesting(alice: Account) -> eyre::Result<()> {
-    let start = START - 3600;
-    let balance = 1000_u64;
-    let i = 0_u64;
-    let timestamp = i * DURATION / 60 + start;
-    let expected_amount = U256::from(balance * (timestamp - start) / DURATION);
-
-    let contract_addr = alice
+async fn rejects_zero_address_for_beneficiary(
+    alice: Account,
+) -> eyre::Result<()> {
+    let err = alice
         .as_deployer()
-        .with_constructor(ctr(alice.address(), START, DURATION))
+        .with_constructor(ctr(Address::ZERO, START, DURATION))
         .deploy()
-        .await?
-        .address()?;
-    let contract = VestingWallet::new(contract_addr, &alice.wallet);
+        .await
+        .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
-    let erc20_address = erc20::deploy(&alice.wallet).await?;
-    let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
-    let _ = watch!(erc20_alice.mint(contract_addr, U256::from(balance)));
+    assert!(err.reverted_with(VestingWallet::OwnableInvalidOwner {
+        owner: Address::ZERO
+    }));
 
-    let VestingWallet::vestedAmount_1Return { vestedAmount } =
-        contract.vestedAmount_1(erc20_address, timestamp).call().await?;
-    assert_eq!(expected_amount, vestedAmount);
+    Ok(())
+}
 
-    let VestingWallet::releasable_1Return { releasable } =
-        contract.releasable_1(erc20_address).call().await?;
-    assert_eq!(expected_amount, releasable);
+#[e2e::test]
+async fn erc20_vesting(alice: Account) -> eyre::Result<()> {
+    let balance = 1000_u64;
+
+    for i in 0..1 {
+        let start = START - 3600;
+        let timestamp = i * DURATION / 60 + start;
+        let expected_amount =
+            U256::from(balance * (timestamp - start) / DURATION);
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20_alice.mint(contract_addr, U256::from(balance)));
+
+        let VestingWallet::vestedAmount_1Return { vestedAmount } =
+            contract.vestedAmount_1(erc20_address, timestamp).call().await?;
+        assert_eq!(expected_amount, vestedAmount);
+
+        let VestingWallet::releasable_1Return { releasable } =
+            contract.releasable_1(erc20_address).call().await?;
+        assert_eq!(expected_amount, releasable);
+    }
 
     Ok(())
 }
