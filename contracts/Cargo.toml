@@ -11,6 +11,9 @@ version = "0.1.0-rc"
 [dependencies]
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
+alloy-sol-macro.workspace = true
+alloy-sol-macro-expander.workspace = true
+alloy-sol-macro-input.workspace = true
 stylus-sdk.workspace = true
 stylus-proc.workspace = true
 mini-alloc.workspace = true

@@ -79,6 +79,9 @@ alloy = { version = "=0.1.4", features = [
 # using `alloy` we can remove these.
 alloy-primitives = { version = "=0.7.6", default-features = false }
 alloy-sol-types = { version = "=0.7.6", default-features = false }
+alloy-sol-macro = { version = "=0.7.6", default-features = false }
+alloy-sol-macro-expander = { version = "=0.7.6", default-features = false }
+alloy-sol-macro-input = { version = "=0.7.6", default-features = false }
 
 const-hex = { version = "1.11.1", default-features = false }
 eyre = "0.6.8"

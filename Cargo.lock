@@ -2587,6 +2587,9 @@ name = "openzeppelin-stylus"
 version = "0.1.0-rc"
 dependencies = [
  "alloy-primitives",
+ "alloy-sol-macro",
+ "alloy-sol-macro-expander",
+ "alloy-sol-macro-input",
  "alloy-sol-types",
  "keccak-const",
  "mini-alloc",
