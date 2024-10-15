@@ -3,13 +3,13 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc20::{
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
         Erc20, IErc20,
     },
-    utils::Pausable,
+    utils::{introspection::erc165::IErc165, Pausable},
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
@@ -104,6 +104,11 @@ impl Erc20Example {
     ) -> Result<bool, Vec<u8>> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+    }
+
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc20::supports_interface(interface_id)
+            || Erc20Metadata::supports_interface(interface_id)
     }
 
     pub fn pause(&mut self) -> Result<(), Vec<u8>> {

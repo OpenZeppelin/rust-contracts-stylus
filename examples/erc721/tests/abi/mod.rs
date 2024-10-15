@@ -18,15 +18,20 @@ sol!(
         function setApprovalForAll(address operator, bool approved) external;
         function totalSupply() external view returns (uint256 totalSupply);
         function transferFrom(address from, address to, uint256 tokenId) external;
+
         function mint(address to, uint256 tokenId) external;
         function burn(uint256 tokenId) external;
+
         function paused() external view returns (bool paused);
         function pause() external;
         function unpause() external;
+
         #[derive(Debug)]
         function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256 tokenId);
         #[derive(Debug)]
         function tokenByIndex(uint256 index) external view returns (uint256 tokenId);
+
+        function supportsInterface(bytes4 interface_id) external view returns (bool supportsInterface);
 
         error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
         error ERC721InsufficientApproval(address operator, uint256 tokenId);

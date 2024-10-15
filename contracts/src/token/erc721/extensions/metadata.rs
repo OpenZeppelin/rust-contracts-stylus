@@ -90,7 +90,7 @@ impl Erc721Metadata {
         token_id: U256,
         erc721: &impl IErc721<Error = Error>,
     ) -> Result<String, Error> {
-        let _owner = erc721.owner_of(token_id)?;
+        erc721.owner_of(token_id)?;
 
         let base_uri = self.base_uri();
 
