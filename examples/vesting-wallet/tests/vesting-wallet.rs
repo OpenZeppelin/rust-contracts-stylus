@@ -318,7 +318,7 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_release_100_percent_vesting_in_past(
+    async fn check_release_100_percent_vesting_in_the_past(
         alice: Account,
     ) -> eyre::Result<()> {
         let expected_releasable = U256::from(BALANCE);
@@ -615,7 +615,7 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn check_release_100_percent_vesting_in_past(
+    async fn check_release_100_percent_vesting_in_the_past(
         alice: Account,
     ) -> eyre::Result<()> {
         let expected_releasable = U256::from(BALANCE);
