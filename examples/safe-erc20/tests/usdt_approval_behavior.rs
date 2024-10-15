@@ -13,9 +13,8 @@ async fn safe_increase_allowance_works(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_force_approve::deploy(&alice.wallet).await?;
@@ -25,23 +24,23 @@ async fn safe_increase_allowance_works(
     let value = uint!(10_U256);
 
     let _ = watch!(erc20_alice.regular_approve(
-        safe_erc20_mock_addr,
+        safe_erc20_addr,
         bob_addr,
         init_approval
     ));
 
-    let ERC20ForceApproveMock::allowanceReturn { _0: initial_bob_allowance } =
-        erc20_alice.allowance(safe_erc20_mock_addr, bob_addr).call().await?;
+    let initial_bob_allowance =
+        erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
     assert_eq!(initial_bob_allowance, init_approval);
 
-    let _ = receipt!(safe_erc20_mock_alice.safeIncreaseAllowance(
+    let _ = receipt!(safe_erc20_alice.safeIncreaseAllowance(
         erc20_address,
         bob_addr,
         value
     ));
 
-    let ERC20ForceApproveMock::allowanceReturn { _0: bob_allowance } =
-        erc20_alice.allowance(safe_erc20_mock_addr, bob_addr).call().await?;
+    let bob_allowance =
+        erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
     assert_eq!(bob_allowance, init_approval + value);
 
     Ok(())
@@ -52,9 +51,8 @@ async fn safe_decrease_allowance_works(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_force_approve::deploy(&alice.wallet).await?;
@@ -64,23 +62,23 @@ async fn safe_decrease_allowance_works(
     let value = uint!(10_U256);
 
     let _ = watch!(erc20_alice.regular_approve(
-        safe_erc20_mock_addr,
+        safe_erc20_addr,
         bob_addr,
         init_approval
     ));
 
-    let ERC20ForceApproveMock::allowanceReturn { _0: initial_bob_allowance } =
-        erc20_alice.allowance(safe_erc20_mock_addr, bob_addr).call().await?;
+    let initial_bob_allowance =
+        erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
     assert_eq!(initial_bob_allowance, init_approval);
 
-    let _ = receipt!(safe_erc20_mock_alice.safeDecreaseAllowance(
+    let _ = receipt!(safe_erc20_alice.safeDecreaseAllowance(
         erc20_address,
         bob_addr,
         value
     ));
 
-    let ERC20ForceApproveMock::allowanceReturn { _0: bob_allowance } =
-        erc20_alice.allowance(safe_erc20_mock_addr, bob_addr).call().await?;
+    let bob_allowance =
+        erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
     assert_eq!(bob_allowance, init_approval - value);
 
     Ok(())
@@ -88,9 +86,8 @@ async fn safe_decrease_allowance_works(
 
 #[e2e::test]
 async fn force_approve_works(alice: Account, bob: Account) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_force_approve::deploy(&alice.wallet).await?;
@@ -100,23 +97,23 @@ async fn force_approve_works(alice: Account, bob: Account) -> eyre::Result<()> {
     let updated_approval = uint!(10_U256);
 
     let _ = watch!(erc20_alice.regular_approve(
-        safe_erc20_mock_addr,
+        safe_erc20_addr,
         bob_addr,
         init_approval
     ));
 
-    let ERC20ForceApproveMock::allowanceReturn { _0: initial_bob_allowance } =
-        erc20_alice.allowance(safe_erc20_mock_addr, bob_addr).call().await?;
+    let initial_bob_allowance =
+        erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
     assert_eq!(initial_bob_allowance, init_approval);
 
-    let _ = receipt!(safe_erc20_mock_alice.forceApprove(
+    let _ = receipt!(safe_erc20_alice.forceApprove(
         erc20_address,
         bob_addr,
         updated_approval
     ));
 
-    let ERC20ForceApproveMock::allowanceReturn { _0: bob_allowance } =
-        erc20_alice.allowance(safe_erc20_mock_addr, bob_addr).call().await?;
+    let bob_allowance =
+        erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
     assert_eq!(bob_allowance, updated_approval);
 
     Ok(())

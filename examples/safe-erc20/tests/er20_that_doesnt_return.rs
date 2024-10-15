@@ -42,11 +42,11 @@ mod transfers {
             value
         ))?;
 
-        let safe_erc20_mock_balance =
+        let safe_erc20_balance =
             erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
         let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
 
-        assert_eq!(initial_safe_erc20_balance - value, safe_erc20_mock_balance);
+        assert_eq!(initial_safe_erc20_balance - value, safe_erc20_balance);
         assert_eq!(initial_bob_balance + value, bob_balance);
 
         Ok(())

@@ -10,14 +10,14 @@ mod mock;
 
 #[e2e::test]
 async fn reverts_on_transfer(alice: Account, bob: Account) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice =
+        SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
 
-    let err = send!(safe_erc20_mock_alice.safeTransfer(
+    let err = send!(safe_erc20_alice.safeTransfer(
         erc20_address,
         bob_addr,
         U256::ZERO
@@ -35,15 +35,15 @@ async fn reverts_on_transfer_from(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice =
+        SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
 
-    let err = send!(safe_erc20_mock_alice.safeTransferFrom(
+    let err = send!(safe_erc20_alice.safeTransferFrom(
         erc20_address,
         alice_addr,
         bob_addr,
@@ -62,14 +62,14 @@ async fn reverts_on_increase_allowance(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice =
+        SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
 
-    let err = send!(safe_erc20_mock_alice.safeIncreaseAllowance(
+    let err = send!(safe_erc20_alice.safeIncreaseAllowance(
         erc20_address,
         bob_addr,
         U256::ZERO
@@ -87,14 +87,14 @@ async fn reverts_on_decrease_allowance(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice =
+        SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
 
-    let err = send!(safe_erc20_mock_alice.safeDecreaseAllowance(
+    let err = send!(safe_erc20_alice.safeDecreaseAllowance(
         erc20_address,
         bob_addr,
         U256::ZERO
@@ -112,14 +112,14 @@ async fn reverts_on_force_approve(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_mock_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_mock_alice =
-        SafeErc20::new(safe_erc20_mock_addr, &alice.wallet);
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_alice =
+        SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
 
-    let err = send!(safe_erc20_mock_alice.forceApprove(
+    let err = send!(safe_erc20_alice.forceApprove(
         erc20_address,
         bob_addr,
         U256::ZERO
