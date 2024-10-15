@@ -58,7 +58,7 @@ impl IErc165 for Erc721Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         // NOTE: interface id is calculated using additional selector
         //  [`Erc721Metadata::token_uri`]
-        0x5b5e139f == u32::from_be_bytes(*interface_id)
+        0x_5b5e139f == u32::from_be_bytes(*interface_id)
     }
 }
 
