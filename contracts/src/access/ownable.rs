@@ -54,12 +54,13 @@ sol_storage! {
     }
 }
 
-#[public]
-impl Ownable {
+/// Required interface of an [`Ownable`] compliant contract.
+pub trait IOwnable {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns the address of the current owner.
-    pub fn owner(&self) -> Address {
-        self._owner.get()
-    }
+    fn owner(&self) -> Address;
 
     /// Checks if the [`msg::sender`] is set as the owner.
     ///
@@ -67,16 +68,7 @@ impl Ownable {
     ///
     /// If called by any account other than the owner, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
-    pub fn only_owner(&self) -> Result<(), Error> {
-        let account = msg::sender();
-        if self.owner() != account {
-            return Err(Error::UnauthorizedAccount(
-                OwnableUnauthorizedAccount { account },
-            ));
-        }
-
-        Ok(())
-    }
+    fn only_owner(&self) -> Result<(), Self::Error>;
 
     /// Transfers ownership of the contract to a new account (`new_owner`). Can
     /// only be called by the current owner.
@@ -90,10 +82,47 @@ impl Ownable {
     ///
     /// If `new_owner` is the zero address, then the error
     /// [`OwnableInvalidOwner`] is returned.
-    pub fn transfer_ownership(
+    fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error>;
+
+    /// Leaves the contract without owner. It will not be possible to call
+    /// [`Self::only_owner`] functions. Can only be called by the current owner.
+    ///
+    /// NOTE: Renouncing ownership will leave the contract without an owner,
+    /// thereby disabling any functionality that is only available to the owner.
+    ///
+    /// # Errors
+    ///
+    /// If not called by the owner, then the error
+    /// [`Error::UnauthorizedAccount`] is returned.
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+}
+
+#[public]
+impl IOwnable for Ownable {
+    type Error = Error;
+
+    fn owner(&self) -> Address {
+        self._owner.get()
+    }
+
+    fn only_owner(&self) -> Result<(), Self::Error> {
+        let account = msg::sender();
+        if self.owner() != account {
+            return Err(Error::UnauthorizedAccount(
+                OwnableUnauthorizedAccount { account },
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
         self.only_owner()?;
 
         if new_owner == Address::ZERO {
@@ -107,17 +136,7 @@ impl Ownable {
         Ok(())
     }
 
-    /// Leaves the contract without owner. It will not be possible to call
-    /// [`Self::only_owner`] functions. Can only be called by the current owner.
-    ///
-    /// NOTE: Renouncing ownership will leave the contract without an owner,
-    /// thereby disabling any functionality that is only available to the owner.
-    ///
-    /// # Errors
-    ///
-    /// If not called by the owner, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
-    pub fn renounce_ownership(&mut self) -> Result<(), Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
@@ -144,7 +163,7 @@ mod tests {
     use alloy_primitives::{address, Address};
     use stylus_sdk::msg;
 
-    use super::{Error, Ownable};
+    use super::{Error, IOwnable, Ownable};
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 

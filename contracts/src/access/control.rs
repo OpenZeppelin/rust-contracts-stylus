@@ -115,7 +115,7 @@ sol_storage! {
     }
 }
 
-/// Required interface of a [`AccessControl`] compliant contract.
+/// Required interface of an [`AccessControl`] compliant contract.
 pub trait IAccessControl {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -148,8 +148,6 @@ pub trait IAccessControl {
 
     /// Returns the admin role that controls `role`. See [`Self::grant_role`]
     /// and [`Self::revoke_role`].
-    ///
-    /// To change a role's admin, use [`Self::_set_role_admin`].
     ///
     /// # Arguments
     ///
