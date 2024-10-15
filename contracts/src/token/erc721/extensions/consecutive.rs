@@ -131,6 +131,16 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 
+/// Extension of [`Erc721`] that adds consecutive transfer.
+pub trait IErc721Consecutive: IErc721 {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+}
+
+impl IErc721Consecutive for Erc721Consecutive {
+    type Error = Error;
+}
+
 #[public]
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
