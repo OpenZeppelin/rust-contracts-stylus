@@ -10,7 +10,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{
     extensions::{
         Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
-        IErc721Burnable, IErc721Metadata,
+        IErc721Burnable, IErc721Metadata, IErc721UriStorage,
     },
     Erc721, IErc721,
 };

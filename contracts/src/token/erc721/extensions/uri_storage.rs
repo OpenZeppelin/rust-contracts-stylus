@@ -31,6 +31,26 @@ sol_storage! {
     }
 }
 
+/// Interface of [`Erc721`] token with storage-based token URI management.
+pub trait IErc721UriStorage {
+    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - Id of a token.
+    #[must_use]
+    fn token_uri(&self, token_id: U256) -> String;
+}
+
+#[public]
+impl IErc721UriStorage for Erc721UriStorage {
+    #[must_use]
+    fn token_uri(&self, token_id: U256) -> String {
+        self._token_uris.getter(token_id).get_string()
+    }
+}
+
 impl Erc721UriStorage {
     /// Sets `token_uri` as the tokenURI of `token_id`.
     ///
@@ -48,25 +68,11 @@ impl Erc721UriStorage {
     }
 }
 
-#[public]
-impl Erc721UriStorage {
-    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - Id of a token.
-    #[must_use]
-    pub fn token_uri(&self, token_id: U256) -> String {
-        self._token_uris.getter(token_id).get_string()
-    }
-}
-
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
 
-    use super::Erc721UriStorage;
+    use super::{Erc721UriStorage, IErc721UriStorage};
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();
