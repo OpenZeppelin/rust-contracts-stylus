@@ -103,7 +103,7 @@ quote = "1.0.35"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
-openzeppelin-stylus-proc = { path = "contracts-proc" }
+openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0-rc" }
 openzeppelin-crypto = { path = "lib/crypto" }
 motsu = { path = "lib/motsu"}
 motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
