@@ -6,7 +6,7 @@ use alloy_primitives::FixedBytes;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_proc::{public, sol_storage};
 
-use crate::utils::{introspection::erc165::IErc165, Metadata};
+use crate::utils::{introspection::erc165::IErc165, IMetadata, Metadata};
 
 sol_storage! {
     /// Metadata of an [`crate::token::erc721::Erc721`] token.

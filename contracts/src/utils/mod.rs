@@ -7,5 +7,5 @@ pub mod nonces;
 pub mod pausable;
 pub mod structs;
 
-pub use metadata::Metadata;
-pub use pausable::Pausable;
+pub use metadata::{IMetadata, Metadata};
+pub use pausable::{IPausable, Pausable};
