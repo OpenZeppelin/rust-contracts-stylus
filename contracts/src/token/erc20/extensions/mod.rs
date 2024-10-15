@@ -5,6 +5,6 @@ pub mod metadata;
 pub mod permit;
 
 pub use burnable::IErc20Burnable;
-pub use capped::Capped;
+pub use capped::{Capped, IErc20Capped};
 pub use metadata::{Erc20Metadata, IErc20Metadata};
 pub use permit::Erc20Permit;

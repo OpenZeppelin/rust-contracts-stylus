@@ -1,4 +1,4 @@
-//! Capped Contract.
+//! Optional Capped Contract.
 //!
 //! Extension of ERC-20 standard that adds a cap to the supply of tokens.
 //!
@@ -43,10 +43,21 @@ sol_storage! {
     }
 }
 
-#[public]
-impl Capped {
+/// Extension of [`Erc20`] that adds a cap to the supply of tokens.
+pub trait IErc20Capped {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns the cap on the token's total supply.
-    pub fn cap(&self) -> U256 {
+    fn cap(&self) -> U256;
+}
+
+#[public]
+impl IErc20Capped for Capped {
+    type Error = Error;
+
+    /// Returns the cap on the token's total supply.
+    fn cap(&self) -> U256 {
         self._cap.get()
     }
 }
@@ -55,7 +66,7 @@ impl Capped {
 mod tests {
     use alloy_primitives::uint;
 
-    use super::Capped;
+    use super::{Capped, IErc20Capped};
 
     #[motsu::test]
     fn cap_works(contract: Capped) {
