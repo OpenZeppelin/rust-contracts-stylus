@@ -383,8 +383,8 @@ mod erc20_vesting {
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
-        let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
-        let _ = watch!(erc20_alice.mint(contract_addr, U256::from(BALANCE)))?;
+        let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
 
         for i in 0..64 {
             let timestamp = i * DURATION / 60 + start;
@@ -403,6 +403,267 @@ mod erc20_vesting {
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
         }
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
+        let expected_releasable = U256::ZERO;
+        let start = block_timestamp(&alice).await?;
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+
+        let old_alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let old_contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_eq!(U256::ZERO, released);
+        assert_in_delta(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_1(erc20_address))?;
+
+        let alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(old_alice_balance, alice_balance);
+        assert_in_delta(old_contract_balance, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
+        let expected_releasable = U256::from(BALANCE / 4);
+        let timestamp = block_timestamp(&alice).await?;
+        let start = timestamp - DURATION / 4;
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+
+        let old_alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let old_contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_eq!(U256::ZERO, released);
+        assert_in_delta(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_1(erc20_address))?;
+
+        let alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(old_alice_balance + released, alice_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
+        let expected_releasable = U256::from(BALANCE / 2);
+        let timestamp = block_timestamp(&alice).await?;
+        let start = timestamp - DURATION / 2;
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+
+        let old_alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let old_contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_eq!(U256::ZERO, released);
+        assert_in_delta(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_1(erc20_address))?;
+
+        let alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(old_alice_balance + released, alice_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
+        let expected_releasable = U256::from(BALANCE);
+        let timestamp = block_timestamp(&alice).await?;
+        let start = timestamp - DURATION;
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+
+        let old_alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let old_contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_eq!(U256::ZERO, released);
+        assert_in_delta(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_1(erc20_address))?;
+
+        let alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(old_alice_balance + released, alice_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn check_release_100_percent_vesting_in_past(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let expected_releasable = U256::from(BALANCE);
+        let timestamp = block_timestamp(&alice).await?;
+        let start = timestamp - DURATION * 4 / 3;
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+
+        let old_alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let old_contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_eq!(U256::ZERO, released);
+        assert_in_delta(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_1(erc20_address))?;
+
+        let alice_balance =
+            erc20.balanceOf(alice.address()).call().await?.balance;
+        let contract_balance =
+            erc20.balanceOf(contract_addr).call().await?.balance;
+        let released =
+            contract.released_1(erc20_address).call().await?.released;
+        let releasable =
+            contract.releasable_1(erc20_address).call().await?.releasable;
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(old_alice_balance + released, alice_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
 
         Ok(())
     }
