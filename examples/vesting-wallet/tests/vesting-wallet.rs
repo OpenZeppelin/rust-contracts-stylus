@@ -1,14 +1,12 @@
 #![cfg(feature = "e2e")]
 
+use abi::VestingWallet;
 use alloy::{eips::BlockId, providers::Provider, sol};
 use alloy_primitives::{Address, U256};
-use e2e::{watch, Account, ReceiptExt, Revert};
+use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use mock::{erc20, erc20::ERC20Mock};
 
-use crate::{
-    abi::VestingWallet,
-    mock::{erc20, erc20::ERC20Mock},
-    VestingWalletExample::constructorCall,
-};
+use crate::VestingWalletExample::constructorCall;
 
 mod abi;
 mod mock;
@@ -125,7 +123,7 @@ mod ether_vesting {
     #[e2e::test]
     async fn check_releasable_0_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
-        let expected_amount = U256::ZERO;
+        let expected_releasable = U256::ZERO;
         let start = block_timestamp(&alice).await?;
 
         let contract_addr = alice
@@ -138,8 +136,34 @@ mod ether_vesting {
 
         let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
 
+        let old_alice_balance =
+            alice.wallet.get_balance(alice.address()).await?;
+        let old_contract_balance =
+            alice.wallet.get_balance(contract_addr).await?;
+
+        let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_amount, releasable);
+        assert_eq!(U256::ZERO, released);
+        assert_eq!(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_0())?;
+
+        let alice_balance = alice.wallet.get_balance(alice.address()).await?;
+        let contract_balance = alice.wallet.get_balance(contract_addr).await?;
+        let released = contract.released_0().call().await?.released;
+        let releasable = contract.releasable_0().call().await?.releasable;
+        assert_eq!(expected_releasable, released);
+        assert_eq!(U256::ZERO, releasable);
+        assert_eq!(
+            old_alice_balance
+                - U256::from(receipt.gas_used * receipt.effective_gas_price),
+            alice_balance
+        );
+        assert_eq!(old_contract_balance, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
 
         Ok(())
     }
@@ -147,7 +171,7 @@ mod ether_vesting {
     #[e2e::test]
     async fn check_releasable_25_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
-        let expected_amount = U256::from(balance / 4);
+        let expected_releasable = U256::from(balance / 4);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION / 4;
 
@@ -161,8 +185,34 @@ mod ether_vesting {
 
         let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
 
+        let old_alice_balance =
+            alice.wallet.get_balance(alice.address()).await?;
+        let old_contract_balance =
+            alice.wallet.get_balance(contract_addr).await?;
+
+        let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_amount, releasable);
+        assert_eq!(U256::ZERO, released);
+        assert_eq!(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_0())?;
+
+        let alice_balance = alice.wallet.get_balance(alice.address()).await?;
+        let contract_balance = alice.wallet.get_balance(contract_addr).await?;
+        let released = contract.released_0().call().await?.released;
+        let releasable = contract.releasable_0().call().await?.releasable;
+        assert_eq!(expected_releasable, released);
+        assert_eq!(U256::ZERO, releasable);
+        assert_eq!(
+            old_alice_balance + released
+                - U256::from(receipt.gas_used * receipt.effective_gas_price),
+            alice_balance
+        );
+        assert_eq!(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
 
         Ok(())
     }
@@ -170,7 +220,7 @@ mod ether_vesting {
     #[e2e::test]
     async fn check_releasable_50_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
-        let expected_amount = U256::from(balance / 2);
+        let expected_releasable = U256::from(balance / 2);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION / 2;
 
@@ -184,8 +234,34 @@ mod ether_vesting {
 
         let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
 
+        let old_alice_balance =
+            alice.wallet.get_balance(alice.address()).await?;
+        let old_contract_balance =
+            alice.wallet.get_balance(contract_addr).await?;
+
+        let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_amount, releasable);
+        assert_eq!(U256::ZERO, released);
+        assert_eq!(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_0())?;
+
+        let alice_balance = alice.wallet.get_balance(alice.address()).await?;
+        let contract_balance = alice.wallet.get_balance(contract_addr).await?;
+        let released = contract.released_0().call().await?.released;
+        let releasable = contract.releasable_0().call().await?.releasable;
+        assert_eq!(expected_releasable, released);
+        assert_eq!(U256::ZERO, releasable);
+        assert_eq!(
+            old_alice_balance + released
+                - U256::from(receipt.gas_used * receipt.effective_gas_price),
+            alice_balance
+        );
+        assert_eq!(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
 
         Ok(())
     }
@@ -193,7 +269,7 @@ mod ether_vesting {
     #[e2e::test]
     async fn check_releasable_100_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
-        let expected_amount = U256::from(balance);
+        let expected_releasable = U256::from(balance);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION;
 
@@ -207,8 +283,34 @@ mod ether_vesting {
 
         let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
 
+        let old_alice_balance =
+            alice.wallet.get_balance(alice.address()).await?;
+        let old_contract_balance =
+            alice.wallet.get_balance(contract_addr).await?;
+
+        let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_amount, releasable);
+        assert_eq!(U256::ZERO, released);
+        assert_eq!(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_0())?;
+
+        let alice_balance = alice.wallet.get_balance(alice.address()).await?;
+        let contract_balance = alice.wallet.get_balance(contract_addr).await?;
+        let released = contract.released_0().call().await?.released;
+        let releasable = contract.releasable_0().call().await?.releasable;
+        assert_eq!(expected_releasable, released);
+        assert_eq!(U256::ZERO, releasable);
+        assert_eq!(
+            old_alice_balance + released
+                - U256::from(receipt.gas_used * receipt.effective_gas_price),
+            alice_balance
+        );
+        assert_eq!(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
 
         Ok(())
     }
@@ -218,7 +320,7 @@ mod ether_vesting {
         alice: Account,
     ) -> eyre::Result<()> {
         let balance = 1000_u64;
-        let expected_amount = U256::from(balance);
+        let expected_releasable = U256::from(balance);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION * 4 / 3;
 
@@ -232,8 +334,34 @@ mod ether_vesting {
 
         let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
 
+        let old_alice_balance =
+            alice.wallet.get_balance(alice.address()).await?;
+        let old_contract_balance =
+            alice.wallet.get_balance(contract_addr).await?;
+
+        let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_amount, releasable);
+        assert_eq!(U256::ZERO, released);
+        assert_eq!(expected_releasable, releasable);
+
+        let receipt = receipt!(contract.release_0())?;
+
+        let alice_balance = alice.wallet.get_balance(alice.address()).await?;
+        let contract_balance = alice.wallet.get_balance(contract_addr).await?;
+        let released = contract.released_0().call().await?.released;
+        let releasable = contract.releasable_0().call().await?.releasable;
+        assert_eq!(expected_releasable, released);
+        assert_eq!(U256::ZERO, releasable);
+        assert_eq!(
+            old_alice_balance + released
+                - U256::from(receipt.gas_used * receipt.effective_gas_price),
+            alice_balance
+        );
+        assert_eq!(old_contract_balance - released, contract_balance);
+
+        assert!(
+            receipt.emits(VestingWallet::EtherReleased { amount: released })
+        );
 
         Ok(())
     }
