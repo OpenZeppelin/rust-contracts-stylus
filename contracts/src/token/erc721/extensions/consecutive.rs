@@ -1,5 +1,5 @@
 //! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
-//! in https://eips.ethereum.org/EIPS/eip-2309[ERC-2309].
+//! in <https://eips.ethereum.org/EIPS/eip-2309>[ERC-2309].
 //!
 //! This extension allows the minting large batches of tokens, during
 //! contract construction only. For upgradeable contracts, this implies that

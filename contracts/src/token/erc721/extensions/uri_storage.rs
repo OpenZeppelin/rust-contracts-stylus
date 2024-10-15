@@ -31,7 +31,8 @@ sol_storage! {
     }
 }
 
-/// Interface of [`Erc721`] token with storage-based token URI management.
+/// Extension of [`crate::token::erc721::Erc721`] token
+/// that adds storage-based token URI management.
 pub trait IErc721UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///

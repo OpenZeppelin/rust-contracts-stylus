@@ -43,7 +43,8 @@ sol_storage! {
     }
 }
 
-/// Extension of [`Erc20`] that adds a cap to the supply of tokens.
+/// Extension of [`crate::token::erc20::Erc20`] token
+/// that adds a cap to the supply of tokens.
 pub trait IErc20Capped {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
