@@ -10,6 +10,7 @@ sol! {
     // SPDX-License-Identifier: MIT
     contract ERC20Mock is ERC20 {
         constructor() ERC20("ERC20Mock", "MTK") {}
+
         function balanceOf(address account) public override view returns (uint256 balance) {
             return super.balanceOf(account);
         }
