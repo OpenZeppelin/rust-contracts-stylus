@@ -6,10 +6,7 @@ use alloy_primitives::{FixedBytes, U256};
 use stylus_proc::{public, sol_storage};
 
 use crate::{
-    token::{
-        erc20::extensions::IErc20Metadata,
-        erc721::{Error, IErc721},
-    },
+    token::erc721::{Error, IErc721},
     utils::{introspection::erc165::IErc165, Metadata},
 };
 
