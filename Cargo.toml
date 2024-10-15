@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "contracts",
+  "contracts-proc",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
@@ -21,6 +22,7 @@ members = [
 ]
 default-members = [
   "contracts",
+  "contracts-proc",
   "lib/crypto",
   "lib/motsu",
   "lib/motsu-proc",
@@ -48,6 +50,7 @@ edition = "2021"
 license = "MIT"
 keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
+version = "0.1.0-rc"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -97,6 +100,15 @@ tokio = { version = "1.12.0", features = ["full"] }
 syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
+
+# members
+openzeppelin-stylus = { path = "contracts" }
+openzeppelin-stylus-proc = { path = "contracts-proc" }
+openzeppelin-crypto = { path = "lib/crypto" }
+motsu = { path = "lib/motsu"}
+motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
+e2e = { path = "lib/e2e" }
+e2e-proc = {path = "lib/e2e-proc"}
 
 [profile.release]
 codegen-units = 1

@@ -28,5 +28,17 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: check motsu-proc
+        run: cargo publish -p motsu-proc --dry-run
+
+      - name: check motsu
+        run: cargo publish -p motsu --dry-run
+
+      - name: check openzeppelin-crypto
+        run: cargo publish -p openzeppelin-crypto --target wasm32-unknown-unknown  --dry-run
+
+      - name: check openzeppelin-stylus-proc
+        run: cargo publish -p openzeppelin-stylus-proc --target wasm32-unknown-unknown  --dry-run
+
       - name: check openzeppelin-stylus
         run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown  --dry-run
