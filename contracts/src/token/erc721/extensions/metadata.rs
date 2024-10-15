@@ -2,12 +2,15 @@
 
 use alloc::string::{String, ToString};
 
-use alloy_primitives::U256;
+use alloy_primitives::{FixedBytes, U256};
 use stylus_proc::{public, sol_storage};
 
 use crate::{
-    token::erc721::{Error, IErc721},
-    utils::Metadata,
+    token::{
+        erc20::extensions::IErc20Metadata,
+        erc721::{Error, IErc721},
+    },
+    utils::{introspection::erc165::IErc165, Metadata},
 };
 
 sol_storage! {
@@ -48,6 +51,14 @@ impl IErc721Metadata for Erc721Metadata {
 
     fn symbol(&self) -> String {
         self._metadata.symbol()
+    }
+}
+
+impl IErc165 for Erc721Metadata {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        // NOTE: interface id is calculated using additional selector
+        //  [`Erc721Metadata::token_uri`]
+        0x5b5e139f == u32::from_be_bytes(*interface_id)
     }
 }
 
