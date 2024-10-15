@@ -16,11 +16,11 @@ use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 sol_storage! {
     #[entrypoint]
     struct Erc721MetadataExample {
-        UriStorage uri_storage;
         #[borrow]
         Erc721 erc721;
         #[borrow]
         Metadata metadata;
+        UriStorage uri_storage;
     }
 }
 
