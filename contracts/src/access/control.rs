@@ -115,10 +115,13 @@ sol_storage! {
     }
 }
 
-#[public]
-impl AccessControl {
+/// Required interface of a [`AccessControl`] compliant contract.
+pub trait IAccessControl {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// The default admin role. `[0; 32]` by default.
-    pub const DEFAULT_ADMIN_ROLE: [u8; 32] = [0; 32];
+    const DEFAULT_ADMIN_ROLE: [u8; 32] = [0; 32];
 
     /// Returns `true` if `account` has been granted `role`.
     ///
@@ -128,9 +131,7 @@ impl AccessControl {
     /// * `role` - The role identifier.
     /// * `account` - The account to check for membership.
     #[must_use]
-    pub fn has_role(&self, role: B256, account: Address) -> bool {
-        self._roles.getter(role).has_role.get(account)
-    }
+    fn has_role(&self, role: B256, account: Address) -> bool;
 
     /// Checks if [`msg::sender`] has been granted `role`.
     ///
@@ -143,9 +144,7 @@ impl AccessControl {
     ///
     /// If [`msg::sender`] has not been granted `role`, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
-    pub fn only_role(&self, role: B256) -> Result<(), Error> {
-        self._check_role(role, msg::sender())
-    }
+    fn only_role(&self, role: B256) -> Result<(), Self::Error>;
 
     /// Returns the admin role that controls `role`. See [`Self::grant_role`]
     /// and [`Self::revoke_role`].
@@ -157,9 +156,7 @@ impl AccessControl {
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
     #[must_use]
-    pub fn get_role_admin(&self, role: B256) -> B256 {
-        *self._roles.getter(role).admin_role
-    }
+    fn get_role_admin(&self, role: B256) -> B256;
 
     /// Grants `role` to `account`.
     ///
@@ -184,16 +181,11 @@ impl AccessControl {
     /// # Events
     ///
     /// May emit a [`RoleGranted`] event.
-    pub fn grant_role(
+    fn grant_role(
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), Error> {
-        let admin_role = self.get_role_admin(role);
-        self.only_role(admin_role)?;
-        self._grant_role(role, account);
-        Ok(())
-    }
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from `account`.
     ///
@@ -217,16 +209,11 @@ impl AccessControl {
     /// # Events
     ///
     /// May emit a [`RoleRevoked`] event.
-    pub fn revoke_role(
+    fn revoke_role(
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), Error> {
-        let admin_role = self.get_role_admin(role);
-        self.only_role(admin_role)?;
-        self._revoke_role(role, account);
-        Ok(())
-    }
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from the calling account.
     ///
@@ -254,11 +241,58 @@ impl AccessControl {
     ///
     /// If the calling account has its `role` revoked, emits a [`RoleRevoked`]
     /// event.
-    pub fn renounce_role(
+    fn renounce_role(
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error>;
+}
+
+#[public]
+impl IAccessControl for AccessControl {
+    type Error = Error;
+
+    #[must_use]
+    fn has_role(&self, role: B256, account: Address) -> bool {
+        self._roles.getter(role).has_role.get(account)
+    }
+
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
+        self._check_role(role, msg::sender())
+    }
+
+    #[must_use]
+    fn get_role_admin(&self, role: B256) -> B256 {
+        *self._roles.getter(role).admin_role
+    }
+
+    fn grant_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self._grant_role(role, account);
+        Ok(())
+    }
+
+    fn revoke_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self._revoke_role(role, account);
+        Ok(())
+    }
+
+    fn renounce_role(
+        &mut self,
+        role: B256,
+        confirmation: Address,
+    ) -> Result<(), Self::Error> {
         if msg::sender() != confirmation {
             return Err(Error::BadConfirmation(
                 AccessControlBadConfirmation {},
@@ -372,7 +406,7 @@ mod tests {
     use alloy_primitives::{address, Address};
     use stylus_sdk::msg;
 
-    use super::{AccessControl, Error};
+    use super::{AccessControl, Error, IAccessControl};
 
     /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice;

@@ -11,7 +11,7 @@ use eyre::Result;
 mod abi;
 
 const DEFAULT_ADMIN_ROLE: [u8; 32] =
-    openzeppelin_stylus::access::control::AccessControl::DEFAULT_ADMIN_ROLE;
+    <openzeppelin_stylus::access::control::AccessControl as openzeppelin_stylus::access::control::IAccessControl>::DEFAULT_ADMIN_ROLE;
 const ROLE: [u8; 32] = access_control_example::TRANSFER_ROLE;
 const NEW_ADMIN_ROLE: [u8; 32] =
     hex!("879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5");
