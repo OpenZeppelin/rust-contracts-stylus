@@ -1,12 +1,12 @@
 [package]
 name = "openzeppelin-stylus-proc"
 description = "Procedural macros for OpenZeppelin Stylus contracts"
-version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 keywords.workspace = true
 repository.workspace = true
+version = "0.1.0"
 
 
 [dependencies]
