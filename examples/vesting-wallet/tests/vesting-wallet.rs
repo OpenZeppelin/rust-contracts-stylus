@@ -94,10 +94,9 @@ mod ether_vesting {
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
         let start = block_timestamp(&alice).await?;
-        let duration = DURATION;
         let contract_addr = alice
             .as_deployer()
-            .with_constructor(ctr(alice.address(), start, duration))
+            .with_constructor(ctr(alice.address(), start, DURATION))
             .deploy()
             .await?
             .address()?;
@@ -106,13 +105,11 @@ mod ether_vesting {
         let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
 
         for i in 0..64 {
-            let timestamp = i * duration / 60 + start;
+            let timestamp = i * DURATION / 60 + start;
             let expected_amount = U256::from(std::cmp::min(
                 balance,
-                balance * (timestamp - start) / duration,
+                balance * (timestamp - start) / DURATION,
             ));
-
-            // TODO: update timestamp
 
             let vested_amount =
                 contract.vestedAmount_0(timestamp).call().await?.vestedAmount;
@@ -121,10 +118,12 @@ mod ether_vesting {
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
 
-            // TODO: can't assert until block::timestamp can be manipulated
-            // let VestingWallet::releasable_1Return { releasable } =
-            //     contract.releasable_1(erc20_address).call().await?;
-            // assert_eq!(expected_amount, releasable);
+            // let releasable =
+            // contract.releasable_0().call().await?.releasable;
+            // assert_eq!(
+            //     expected_amount, releasable,
+            //     "\n---\ni: {i}\nstart: {start}\ntimestamp:
+            // {timestamp}\n---\n" );
         }
 
         Ok(())
@@ -138,10 +137,9 @@ mod erc20_vesting {
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
         let start = block_timestamp(&alice).await?;
-        let duration = DURATION;
         let contract_addr = alice
             .as_deployer()
-            .with_constructor(ctr(alice.address(), start, duration))
+            .with_constructor(ctr(alice.address(), start, DURATION))
             .deploy()
             .await?
             .address()?;
@@ -149,16 +147,14 @@ mod erc20_vesting {
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
-        let _ = watch!(erc20_alice.mint(contract_addr, U256::from(balance)));
+        let _ = watch!(erc20_alice.mint(contract_addr, U256::from(balance)))?;
 
         for i in 0..64 {
-            let timestamp = i * duration / 60 + start;
+            let timestamp = i * DURATION / 60 + start;
             let expected_amount = U256::from(std::cmp::min(
                 balance,
-                balance * (timestamp - start) / duration,
+                balance * (timestamp - start) / DURATION,
             ));
-
-            // TODO: update timestamp
 
             let vested_amount = contract
                 .vestedAmount_1(erc20_address, timestamp)
