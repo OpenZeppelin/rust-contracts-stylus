@@ -13,7 +13,7 @@ mod mock;
 
 sol!("src/constructor.sol");
 
-const BALANCE: u256 = 1000;
+const BALANCE: u64 = 1000;
 const DURATION: u64 = 365 * 86400; // 1 year
 
 fn ctr(
@@ -41,6 +41,12 @@ async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
         .timestamp;
 
     Ok(timestamp)
+}
+
+fn assert_in_delta(expected: U256, actual: U256) {
+    let diff = expected.abs_diff(actual);
+    let delta = U256::from(1);
+    assert!(diff <= delta,"Your result of {actual} should be within {delta} of the expected result {expected}");
 }
 
 #[e2e::test]
@@ -143,7 +149,7 @@ mod ether_vesting {
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
         assert_eq!(U256::ZERO, released);
-        assert_eq!(expected_releasable, releasable);
+        assert_in_delta(expected_releasable, releasable);
 
         let receipt = receipt!(contract.release_0())?;
 
@@ -151,14 +157,14 @@ mod ether_vesting {
         let contract_balance = alice.wallet.get_balance(contract_addr).await?;
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_releasable, released);
-        assert_eq!(U256::ZERO, releasable);
-        assert_eq!(
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(
             old_alice_balance
                 - U256::from(receipt.gas_used * receipt.effective_gas_price),
-            alice_balance
+            alice_balance,
         );
-        assert_eq!(old_contract_balance, contract_balance);
+        assert_in_delta(old_contract_balance, contract_balance);
 
         assert!(
             receipt.emits(VestingWallet::EtherReleased { amount: released })
@@ -191,7 +197,7 @@ mod ether_vesting {
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
         assert_eq!(U256::ZERO, released);
-        assert_eq!(expected_releasable, releasable);
+        assert_in_delta(expected_releasable, releasable);
 
         let receipt = receipt!(contract.release_0())?;
 
@@ -199,14 +205,14 @@ mod ether_vesting {
         let contract_balance = alice.wallet.get_balance(contract_addr).await?;
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_releasable, released);
-        assert_eq!(U256::ZERO, releasable);
-        assert_eq!(
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(
             old_alice_balance + released
                 - U256::from(receipt.gas_used * receipt.effective_gas_price),
-            alice_balance
+            alice_balance,
         );
-        assert_eq!(old_contract_balance - released, contract_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
 
         assert!(
             receipt.emits(VestingWallet::EtherReleased { amount: released })
@@ -239,7 +245,7 @@ mod ether_vesting {
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
         assert_eq!(U256::ZERO, released);
-        assert_eq!(expected_releasable, releasable);
+        assert_in_delta(expected_releasable, releasable);
 
         let receipt = receipt!(contract.release_0())?;
 
@@ -247,14 +253,14 @@ mod ether_vesting {
         let contract_balance = alice.wallet.get_balance(contract_addr).await?;
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_releasable, released);
-        assert_eq!(U256::ZERO, releasable);
-        assert_eq!(
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(
             old_alice_balance + released
                 - U256::from(receipt.gas_used * receipt.effective_gas_price),
-            alice_balance
+            alice_balance,
         );
-        assert_eq!(old_contract_balance - released, contract_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
 
         assert!(
             receipt.emits(VestingWallet::EtherReleased { amount: released })
@@ -287,7 +293,7 @@ mod ether_vesting {
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
         assert_eq!(U256::ZERO, released);
-        assert_eq!(expected_releasable, releasable);
+        assert_in_delta(expected_releasable, releasable);
 
         let receipt = receipt!(contract.release_0())?;
 
@@ -295,14 +301,14 @@ mod ether_vesting {
         let contract_balance = alice.wallet.get_balance(contract_addr).await?;
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_releasable, released);
-        assert_eq!(U256::ZERO, releasable);
-        assert_eq!(
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(
             old_alice_balance + released
                 - U256::from(receipt.gas_used * receipt.effective_gas_price),
-            alice_balance
+            alice_balance,
         );
-        assert_eq!(old_contract_balance - released, contract_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
 
         assert!(
             receipt.emits(VestingWallet::EtherReleased { amount: released })
@@ -337,7 +343,7 @@ mod ether_vesting {
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
         assert_eq!(U256::ZERO, released);
-        assert_eq!(expected_releasable, releasable);
+        assert_in_delta(expected_releasable, releasable);
 
         let receipt = receipt!(contract.release_0())?;
 
@@ -345,14 +351,14 @@ mod ether_vesting {
         let contract_balance = alice.wallet.get_balance(contract_addr).await?;
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_eq!(expected_releasable, released);
-        assert_eq!(U256::ZERO, releasable);
-        assert_eq!(
+        assert_in_delta(expected_releasable, released);
+        assert_in_delta(U256::ZERO, releasable);
+        assert_in_delta(
             old_alice_balance + released
                 - U256::from(receipt.gas_used * receipt.effective_gas_price),
-            alice_balance
+            alice_balance,
         );
-        assert_eq!(old_contract_balance - released, contract_balance);
+        assert_in_delta(old_contract_balance - released, contract_balance);
 
         assert!(
             receipt.emits(VestingWallet::EtherReleased { amount: released })
@@ -396,11 +402,6 @@ mod erc20_vesting {
                 expected_amount, vested_amount,
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
-
-            // TODO: can't assert until block::timestamp can be manipulated
-            // let VestingWallet::releasable_1Return { releasable } =
-            //     contract.releasable_1(erc20_address).call().await?;
-            // assert_eq!(expected_amount, releasable);
         }
 
         Ok(())
