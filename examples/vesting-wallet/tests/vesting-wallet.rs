@@ -121,7 +121,7 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_releasable_0_percent(alice: Account) -> eyre::Result<()> {
+    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
         let expected_releasable = U256::ZERO;
         let start = block_timestamp(&alice).await?;
@@ -169,7 +169,7 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_releasable_25_percent(alice: Account) -> eyre::Result<()> {
+    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
         let expected_releasable = U256::from(balance / 4);
         let timestamp = block_timestamp(&alice).await?;
@@ -218,7 +218,7 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_releasable_50_percent(alice: Account) -> eyre::Result<()> {
+    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
         let expected_releasable = U256::from(balance / 2);
         let timestamp = block_timestamp(&alice).await?;
@@ -267,7 +267,7 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_releasable_100_percent(alice: Account) -> eyre::Result<()> {
+    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
         let expected_releasable = U256::from(balance);
         let timestamp = block_timestamp(&alice).await?;
@@ -316,7 +316,7 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_releasable_100_percent_vesting_in_past(
+    async fn check_release_100_percent_vesting_in_past(
         alice: Account,
     ) -> eyre::Result<()> {
         let balance = 1000_u64;
