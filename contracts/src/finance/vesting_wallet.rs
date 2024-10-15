@@ -112,6 +112,16 @@ impl VestingWallet {
     }
 
     /// Getter for the start timestamp.
+    pub fn timestamp(&self) -> u64 {
+        block::timestamp()
+    }
+
+    /// Getter for the start timestamp.
+    pub fn block_number(&self) -> u64 {
+        block::number()
+    }
+
+    /// Getter for the start timestamp.
     pub fn start(&self) -> U256 {
         U256::from(self._start.get())
     }

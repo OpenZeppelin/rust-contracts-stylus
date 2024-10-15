@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use alloy::sol;
+use alloy::{eips::BlockId, providers::Provider, sol};
 use alloy_primitives::{Address, U256};
 use e2e::{watch, Account, ReceiptExt, Revert};
 
@@ -15,9 +15,6 @@ mod mock;
 
 sol!("src/constructor.sol");
 
-// Epoch timestamp: 1st January 2025 00::00::00
-const BLOCK_TIMESTAMP: u64 = 1_735_689_600;
-const START: u64 = BLOCK_TIMESTAMP + 3600; // 1 hour
 const DURATION: u64 = 365 * 86400; // 1 year
 
 fn ctr(
@@ -32,11 +29,27 @@ fn ctr(
     }
 }
 
+async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
+    let timestamp = account
+        .wallet
+        .get_block(
+            BlockId::latest(),
+            alloy::rpc::types::BlockTransactionsKind::Full,
+        )
+        .await?
+        .expect("latest block should exist")
+        .header
+        .timestamp;
+
+    Ok(timestamp)
+}
+
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
+    let start_timestamp = block_timestamp(&alice).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(alice.address(), START, DURATION))
+        .with_constructor(ctr(alice.address(), start_timestamp, DURATION))
         .deploy()
         .await?
         .address()?;
@@ -48,9 +61,9 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let end = contract.end().call().await?.end;
 
     assert_eq!(alice.address(), owner);
-    assert_eq!(U256::from(START), start);
+    assert_eq!(U256::from(start_timestamp), start);
     assert_eq!(U256::from(DURATION), duration);
-    assert_eq!(U256::from(START + DURATION), end);
+    assert_eq!(U256::from(start_timestamp + DURATION), end);
 
     Ok(())
 }
@@ -59,9 +72,10 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 async fn rejects_zero_address_for_beneficiary(
     alice: Account,
 ) -> eyre::Result<()> {
+    let start = block_timestamp(&alice).await?;
     let err = alice
         .as_deployer()
-        .with_constructor(ctr(Address::ZERO, START, DURATION))
+        .with_constructor(ctr(Address::ZERO, start, DURATION))
         .deploy()
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
@@ -79,7 +93,7 @@ mod ether_vesting {
     #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
-        let start = START;
+        let start = block_timestamp(&alice).await?;
         let duration = DURATION;
         let contract_addr = alice
             .as_deployer()
@@ -123,7 +137,7 @@ mod erc20_vesting {
     #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let balance = 1000_u64;
-        let start = START;
+        let start = block_timestamp(&alice).await?;
         let duration = DURATION;
         let contract_addr = alice
             .as_deployer()

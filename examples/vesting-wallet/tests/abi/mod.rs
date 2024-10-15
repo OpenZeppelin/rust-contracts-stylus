@@ -6,6 +6,8 @@ sol!(
      contract VestingWallet {
           function owner() public view virtual returns (address owner);
           function receiveEther() external payable virtual;
+          function timestamp() external view returns (uint64 timestamp);
+          function blockNumber() external view returns (uint64 blockNumber);
           function start() external view returns (uint256 start);
           function duration() external view returns (uint256 duration);
           function end() external view returns (uint256 end);
