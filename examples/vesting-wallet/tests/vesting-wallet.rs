@@ -43,6 +43,11 @@ async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
     Ok(timestamp)
 }
 
+/// Since the block timestamp can theoretically change between the initial fetch (to calculate the `start` timestamp)
+/// and the final release of vested funds in the test, it is best we assert that the released amount is within
+/// some predefined range.
+/// The reason why the timestamp can change is that we perform many mutations on-chain, from deploying and activating
+/// contracts, sending initial ETH/ERC20 to the contract and then finally releasing the funds.
 fn assert_in_delta(expected: U256, actual: U256) {
     let diff = expected.abs_diff(actual);
     let delta = U256::from(1);
