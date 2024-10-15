@@ -107,8 +107,11 @@ impl Erc721UriStorage {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
+    use motsu::prelude::*;
+    use stylus_sdk::msg;
 
     use super::Erc721UriStorage;
+    use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();
@@ -117,17 +120,36 @@ mod tests {
 
     #[motsu::test]
     fn get_token_uri_works(contract: Erc721UriStorage) {
+        let alice = msg::sender();
+
+        let mut erc721 = Erc721::default();
+        let metadata = Erc721Metadata::default();
+
         let token_id = random_token_id();
+
+        erc721._mint(alice, token_id).expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract._token_uris.setter(token_id).set_str(token_uri.clone());
 
-        assert_eq!(token_uri, contract.token_uri(token_id));
+        assert_eq!(
+            token_uri,
+            contract
+                .token_uri(token_id, &erc721, &metadata)
+                .expect("should return token URI")
+        );
     }
 
     #[motsu::test]
     fn set_token_uri_works(contract: Erc721UriStorage) {
+        let alice = msg::sender();
+
         let token_id = random_token_id();
+
+        let mut erc721 = Erc721::default();
+        let metadata = Erc721Metadata::default();
+
+        erc721._mint(alice, token_id).expect("should mint a token for Alice");
 
         let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract._token_uris.setter(token_id).set_str(initial_token_uri);
@@ -135,6 +157,11 @@ mod tests {
         let token_uri = String::from("Updated Token URI");
         contract._set_token_uri(token_id, token_uri.clone());
 
-        assert_eq!(token_uri, contract.token_uri(token_id));
+        assert_eq!(
+            token_uri,
+            contract
+                .token_uri(token_id, &erc721, &metadata)
+                .expect("should return token URI")
+        );
     }
 }
