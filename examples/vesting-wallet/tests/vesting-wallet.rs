@@ -102,11 +102,14 @@ mod ether_vesting {
 
     async fn run_check_release(
         alice: Account,
-        expected_releasable: U256,
         time_passed: u64,
     ) -> eyre::Result<()> {
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - time_passed;
+        let expected_amount = U256::from(std::cmp::min(
+            BALANCE,
+            BALANCE * time_passed / DURATION,
+        ));
 
         let contract_addr = alice
             .as_deployer()
@@ -126,7 +129,7 @@ mod ether_vesting {
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
         assert_eq!(U256::ZERO, released);
-        assert_in_delta(expected_releasable, releasable);
+        assert_in_delta(expected_amount, releasable);
 
         let receipt = receipt!(contract.release_0())?;
 
@@ -134,7 +137,7 @@ mod ether_vesting {
         let contract_balance = alice.wallet.get_balance(contract_addr).await?;
         let released = contract.released_0().call().await?.released;
         let releasable = contract.releasable_0().call().await?.releasable;
-        assert_in_delta(expected_releasable, released);
+        assert_in_delta(expected_amount, released);
         assert_in_delta(U256::ZERO, releasable);
         assert_in_delta(
             old_alice_balance + released
@@ -183,29 +186,29 @@ mod ether_vesting {
 
     #[e2e::test]
     async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::ZERO, 0).await
+        run_check_release(alice, 0).await
     }
 
     #[e2e::test]
     async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE / 4), DURATION / 4).await
+        run_check_release(alice, DURATION / 4).await
     }
 
     #[e2e::test]
     async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE / 2), DURATION / 2).await
+        run_check_release(alice, DURATION / 2).await
     }
 
     #[e2e::test]
     async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE), DURATION).await
+        run_check_release(alice, DURATION).await
     }
 
     #[e2e::test]
     async fn check_release_100_percent_vesting_in_the_past(
         alice: Account,
     ) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE), DURATION * 4 / 3).await
+        run_check_release(alice, DURATION * 4 / 3).await
     }
 }
 
@@ -214,11 +217,14 @@ mod erc20_vesting {
 
     async fn run_check_release(
         alice: Account,
-        expected_releasable: U256,
         time_passed: u64,
     ) -> eyre::Result<()> {
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - time_passed;
+        let expected_amount = U256::from(std::cmp::min(
+            BALANCE,
+            BALANCE * time_passed / DURATION,
+        ));
 
         let contract_addr = alice
             .as_deployer()
@@ -242,7 +248,7 @@ mod erc20_vesting {
         let releasable =
             contract.releasable_1(erc20_address).call().await?.releasable;
         assert_eq!(U256::ZERO, released);
-        assert_in_delta(expected_releasable, releasable);
+        assert_in_delta(expected_amount, releasable);
 
         let receipt = receipt!(contract.release_1(erc20_address))?;
 
@@ -254,7 +260,7 @@ mod erc20_vesting {
             contract.released_1(erc20_address).call().await?.released;
         let releasable =
             contract.releasable_1(erc20_address).call().await?.releasable;
-        assert_in_delta(expected_releasable, released);
+        assert_in_delta(expected_amount, released);
         assert_in_delta(U256::ZERO, releasable);
         assert_in_delta(old_alice_balance + released, alice_balance);
         assert_in_delta(old_contract_balance - released, contract_balance);
@@ -304,28 +310,28 @@ mod erc20_vesting {
 
     #[e2e::test]
     async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::ZERO, 0).await
+        run_check_release(alice, 0).await
     }
 
     #[e2e::test]
     async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE / 4), DURATION / 4).await
+        run_check_release(alice, DURATION / 4).await
     }
 
     #[e2e::test]
     async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE / 2), DURATION / 2).await
+        run_check_release(alice, DURATION / 2).await
     }
 
     #[e2e::test]
     async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE), DURATION).await
+        run_check_release(alice, DURATION).await
     }
 
     #[e2e::test]
     async fn check_release_100_percent_vesting_in_the_past(
         alice: Account,
     ) -> eyre::Result<()> {
-        run_check_release(alice, U256::from(BALANCE), DURATION * 4 / 3).await
+        run_check_release(alice, DURATION * 4 / 3).await
     }
 }
