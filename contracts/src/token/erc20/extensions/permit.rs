@@ -18,7 +18,7 @@ use crate::{
     token::erc20::{self, Erc20, IErc20},
     utils::{
         cryptography::{ecdsa, eip712::IEip712},
-        nonces::Nonces,
+        nonces::{INonces, Nonces},
     },
 };
 
