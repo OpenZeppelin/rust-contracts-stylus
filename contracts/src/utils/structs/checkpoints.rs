@@ -57,7 +57,8 @@ sol_storage! {
     }
 }
 
-impl Trace160 {
+/// Required interface of a [`Trace160`] compliant contract.
+pub trait ITrace160 {
     /// Pushes a (`key`, `value`) pair into a `Trace160` so that it is
     /// stored as the checkpoint.
     ///
@@ -77,13 +78,7 @@ impl Trace160 {
     /// If the `key` is lower than previously pushed checkpoint's key, the error
     /// [`Error::CheckpointUnorderedInsertion`] is returned (necessary to
     /// maintain sorted order).
-    pub fn push(
-        &mut self,
-        key: U96,
-        value: U160,
-    ) -> Result<(U160, U160), Error> {
-        self._insert(key, value)
-    }
+    fn push(&mut self, key: U96, value: U160) -> Result<(U160, U160), Error>;
 
     /// Returns the value in the first (oldest) checkpoint with key greater or
     /// equal than the search key, or `U160::ZERO` if there is none.
@@ -92,15 +87,7 @@ impl Trace160 {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to lookup.
-    pub fn lower_lookup(&self, key: U96) -> U160 {
-        let len = self.length();
-        let pos = self._lower_binary_lookup(key, U256::ZERO, len);
-        if pos == len {
-            U160::ZERO
-        } else {
-            self._index(pos)._value.get()
-        }
-    }
+    fn lower_lookup(&self, key: U96) -> U160;
 
     /// Returns the value in the last (most recent) checkpoint with key
     /// lower or equal than the search key, or `U160::ZERO` if there is none.
@@ -109,15 +96,7 @@ impl Trace160 {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to lookup.
-    pub fn upper_lookup(&self, key: U96) -> U160 {
-        let len = self.length();
-        let pos = self._upper_binary_lookup(key, U256::ZERO, len);
-        if pos == U256::ZERO {
-            U160::ZERO
-        } else {
-            self._index(pos - uint!(1_U256))._value.get()
-        }
-    }
+    fn upper_lookup(&self, key: U96) -> U160;
 
     /// Returns the value in the last (most recent) checkpoint with key lower or
     /// equal than the search key, or `U160::ZERO` if there is none.
@@ -129,7 +108,71 @@ impl Trace160 {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `key` - Checkpoint's key to query.
-    pub fn upper_lookup_recent(&self, key: U96) -> U160 {
+    fn upper_lookup_recent(&self, key: U96) -> U160;
+
+    /// Returns the value in the most recent checkpoint, or `U160::ZERO` if
+    /// there are no checkpoints.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the checkpoint's state.
+    fn latest(&self) -> U160;
+
+    /// Returns whether there is a checkpoint in the structure (i.g. it is not
+    /// empty), and if so, the key and value in the most recent checkpoint.
+    /// Otherwise, [`None`] will be returned.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the checkpoint's state.
+    fn latest_checkpoint(&self) -> Option<(U96, U160)>;
+
+    /// Returns the number of checkpoints.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the checkpoint's state.
+    fn length(&self) -> U256;
+
+    /// Returns checkpoint at given position.
+    ///
+    /// # Panics
+    ///
+    /// If `pos` exceeds [`Self::length`].
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the checkpoint's state.
+    /// * `pos` - Index of the checkpoint.
+    fn at(&self, pos: U32) -> (U96, U160);
+}
+
+impl ITrace160 for Trace160 {
+    fn push(&mut self, key: U96, value: U160) -> Result<(U160, U160), Error> {
+        self._insert(key, value)
+    }
+
+    fn lower_lookup(&self, key: U96) -> U160 {
+        let len = self.length();
+        let pos = self._lower_binary_lookup(key, U256::ZERO, len);
+        if pos == len {
+            U160::ZERO
+        } else {
+            self._index(pos)._value.get()
+        }
+    }
+
+    fn upper_lookup(&self, key: U96) -> U160 {
+        let len = self.length();
+        let pos = self._upper_binary_lookup(key, U256::ZERO, len);
+        if pos == U256::ZERO {
+            U160::ZERO
+        } else {
+            self._index(pos - uint!(1_U256))._value.get()
+        }
+    }
+
+    fn upper_lookup_recent(&self, key: U96) -> U160 {
         let len = self.length();
 
         let mut low = U256::ZERO;
@@ -153,13 +196,7 @@ impl Trace160 {
         }
     }
 
-    /// Returns the value in the most recent checkpoint, or `U160::ZERO` if
-    /// there are no checkpoints.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the checkpoint's state.
-    pub fn latest(&self) -> U160 {
+    fn latest(&self) -> U160 {
         let pos = self.length();
         if pos == U256::ZERO {
             U160::ZERO
@@ -168,14 +205,7 @@ impl Trace160 {
         }
     }
 
-    /// Returns whether there is a checkpoint in the structure (i.g. it is not
-    /// empty), and if so, the key and value in the most recent checkpoint.
-    /// Otherwise, [`None`] will be returned.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the checkpoint's state.
-    pub fn latest_checkpoint(&self) -> Option<(U96, U160)> {
+    fn latest_checkpoint(&self) -> Option<(U96, U160)> {
         let pos = self.length();
         if pos == U256::ZERO {
             None
@@ -185,32 +215,19 @@ impl Trace160 {
         }
     }
 
-    /// Returns the number of checkpoints.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the checkpoint's state.
-    pub fn length(&self) -> U256 {
+    fn length(&self) -> U256 {
         U256::from(self._checkpoints.len())
     }
 
-    /// Returns checkpoint at given position.
-    ///
-    /// # Panics
-    ///
-    /// If `pos` exceeds [`Self::length`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the checkpoint's state.
-    /// * `pos` - Index of the checkpoint.
-    pub fn at(&self, pos: U32) -> (U96, U160) {
+    fn at(&self, pos: U32) -> (U96, U160) {
         let guard = self._checkpoints.get(pos).unwrap_or_else(|| {
             panic!("should get checkpoint at index `{pos}`")
         });
         (guard._key.get(), guard._value.get())
     }
+}
 
+impl Trace160 {
     /// Pushes a (`key`, `value`) pair into an ordered list of checkpoints,
     /// either by inserting a new checkpoint, or by updating the last one.
     /// Returns the previous value and the new value as an ordered pair.
@@ -370,7 +387,7 @@ mod tests {
     use alloy_primitives::uint;
 
     use crate::utils::structs::checkpoints::{
-        CheckpointUnorderedInsertion, Error, Trace160,
+        CheckpointUnorderedInsertion, Error, ITrace160, Trace160,
     };
 
     #[motsu::test]
