@@ -27,19 +27,15 @@ sol_storage! {
     }
 }
 
-impl BitMap {
+/// Required interface of a [`BitMap`] compliant contract.
+pub trait IBitMap {
     /// Returns whether the bit at `index` is set.
     ///
     /// # Arguments
     ///
     /// * `index` - index of the boolean value in the bit map.
     #[must_use]
-    pub fn get(&self, index: U256) -> bool {
-        let bucket = Self::get_bucket(index);
-        let mask = Self::get_mask(index);
-        let value = self._data.get(bucket);
-        (value & mask) != U256::ZERO
-    }
+    fn get(&self, index: U256) -> bool;
 
     /// Sets the bit at `index` to the boolean `value`.
     ///
@@ -47,7 +43,47 @@ impl BitMap {
     ///
     /// * `index` - index of boolean value in the bit map.
     /// * `value` - boolean value to set in the bit map.
-    pub fn set_to(&mut self, index: U256, value: bool) {
+    fn set_to(&mut self, index: U256, value: bool);
+
+    /// Sets the bit at `index`.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - index of boolean value that should be set `true`.
+    fn set(&mut self, index: U256);
+
+    /// Unsets the bit at `index`.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - index of boolean value that should be set `false`.
+    fn unset(&mut self, index: U256);
+
+    /// Get mask of value in the bucket.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - index of boolean value in the bit map.
+    fn get_mask(index: U256) -> U256;
+
+    /// Get bucket index.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - index of boolean value in the bit map.
+    fn get_bucket(index: U256) -> U256;
+}
+
+impl IBitMap for BitMap {
+    #[must_use]
+    fn get(&self, index: U256) -> bool {
+        let bucket = Self::get_bucket(index);
+        let mask = Self::get_mask(index);
+        let value = self._data.get(bucket);
+        (value & mask) != U256::ZERO
+    }
+
+    fn set_to(&mut self, index: U256, value: bool) {
         if value {
             self.set(index);
         } else {
@@ -55,12 +91,7 @@ impl BitMap {
         }
     }
 
-    /// Sets the bit at `index`.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - index of boolean value that should be set `true`.
-    pub fn set(&mut self, index: U256) {
+    fn set(&mut self, index: U256) {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
         let mut value = self._data.setter(bucket);
@@ -68,12 +99,7 @@ impl BitMap {
         value.set(prev | mask);
     }
 
-    /// Unsets the bit at `index`.
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - index of boolean value that should be set `false`.
-    pub fn unset(&mut self, index: U256) {
+    fn unset(&mut self, index: U256) {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
         let mut value = self._data.setter(bucket);
@@ -81,12 +107,10 @@ impl BitMap {
         value.set(prev & !mask);
     }
 
-    /// Get mask of value in the bucket.
     fn get_mask(index: U256) -> U256 {
         ONE << (index & HEX_FF)
     }
 
-    /// Get bucket index.
     fn get_bucket(index: U256) -> U256 {
         index >> 8
     }
@@ -97,7 +121,7 @@ mod tests {
     use alloy_primitives::{private::proptest::proptest, U256};
     use motsu::prelude::*;
 
-    use crate::utils::structs::bitmap::BitMap;
+    use super::{BitMap, IBitMap};
 
     #[motsu::test]
     fn set_value() {

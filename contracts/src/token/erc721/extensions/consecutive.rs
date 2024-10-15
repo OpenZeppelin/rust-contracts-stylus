@@ -41,7 +41,7 @@ use crate::{
     utils::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
-            bitmap::BitMap,
+            bitmap::{BitMap, IBitMap},
             checkpoints,
             checkpoints::{ITrace160, Trace160, U96},
         },
