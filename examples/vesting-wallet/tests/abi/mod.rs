@@ -18,7 +18,6 @@ sol!(
           function vestedAmount(uint64 timestamp) external view returns (uint256 vestedAmount);
           function vestedAmount(address token, uint64 timestamp) external view returns (uint256 vestedAmount);
 
-          error OwnableUnauthorizedAccount(address account);
           error OwnableInvalidOwner(address owner);
 
           error ReleaseTokenFailed(address token);
