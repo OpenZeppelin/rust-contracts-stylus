@@ -13,6 +13,7 @@ mod mock;
 
 sol!("src/constructor.sol");
 
+const BALANCE: u256 = 1000;
 const DURATION: u64 = 365 * 86400; // 1 year
 
 fn ctr(
@@ -90,7 +91,6 @@ mod ether_vesting {
 
     #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
-        let balance = 1000_u64;
         let start = block_timestamp(&alice).await?;
         let contract_addr = alice
             .as_deployer()
@@ -100,13 +100,13 @@ mod ether_vesting {
             .address()?;
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-        let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
+        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
 
         for i in 0..64 {
             let timestamp = i * DURATION / 60 + start;
             let expected_amount = U256::from(std::cmp::min(
-                balance,
-                balance * (timestamp - start) / DURATION,
+                BALANCE,
+                BALANCE * (timestamp - start) / DURATION,
             ));
 
             let vested_amount =
@@ -122,7 +122,6 @@ mod ether_vesting {
 
     #[e2e::test]
     async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
-        let balance = 1000_u64;
         let expected_releasable = U256::ZERO;
         let start = block_timestamp(&alice).await?;
 
@@ -134,7 +133,7 @@ mod ether_vesting {
             .address()?;
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-        let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
+        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
 
         let old_alice_balance =
             alice.wallet.get_balance(alice.address()).await?;
@@ -170,8 +169,7 @@ mod ether_vesting {
 
     #[e2e::test]
     async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
-        let balance = 1000_u64;
-        let expected_releasable = U256::from(balance / 4);
+        let expected_releasable = U256::from(BALANCE / 4);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION / 4;
 
@@ -183,7 +181,7 @@ mod ether_vesting {
             .address()?;
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-        let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
+        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
 
         let old_alice_balance =
             alice.wallet.get_balance(alice.address()).await?;
@@ -219,8 +217,7 @@ mod ether_vesting {
 
     #[e2e::test]
     async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
-        let balance = 1000_u64;
-        let expected_releasable = U256::from(balance / 2);
+        let expected_releasable = U256::from(BALANCE / 2);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION / 2;
 
@@ -232,7 +229,7 @@ mod ether_vesting {
             .address()?;
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-        let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
+        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
 
         let old_alice_balance =
             alice.wallet.get_balance(alice.address()).await?;
@@ -268,8 +265,7 @@ mod ether_vesting {
 
     #[e2e::test]
     async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
-        let balance = 1000_u64;
-        let expected_releasable = U256::from(balance);
+        let expected_releasable = U256::from(BALANCE);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION;
 
@@ -281,7 +277,7 @@ mod ether_vesting {
             .address()?;
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-        let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
+        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
 
         let old_alice_balance =
             alice.wallet.get_balance(alice.address()).await?;
@@ -319,8 +315,7 @@ mod ether_vesting {
     async fn check_release_100_percent_vesting_in_past(
         alice: Account,
     ) -> eyre::Result<()> {
-        let balance = 1000_u64;
-        let expected_releasable = U256::from(balance);
+        let expected_releasable = U256::from(BALANCE);
         let timestamp = block_timestamp(&alice).await?;
         let start = timestamp - DURATION * 4 / 3;
 
@@ -332,7 +327,7 @@ mod ether_vesting {
             .address()?;
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-        let _ = watch!(contract.receiveEther().value(U256::from(balance)))?;
+        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
 
         let old_alice_balance =
             alice.wallet.get_balance(alice.address()).await?;
@@ -372,7 +367,6 @@ mod erc20_vesting {
 
     #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
-        let balance = 1000_u64;
         let start = block_timestamp(&alice).await?;
         let contract_addr = alice
             .as_deployer()
@@ -384,13 +378,13 @@ mod erc20_vesting {
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
-        let _ = watch!(erc20_alice.mint(contract_addr, U256::from(balance)))?;
+        let _ = watch!(erc20_alice.mint(contract_addr, U256::from(BALANCE)))?;
 
         for i in 0..64 {
             let timestamp = i * DURATION / 60 + start;
             let expected_amount = U256::from(std::cmp::min(
-                balance,
-                balance * (timestamp - start) / DURATION,
+                BALANCE,
+                BALANCE * (timestamp - start) / DURATION,
             ));
 
             let vested_amount = contract
