@@ -24,8 +24,8 @@ use alloy_primitives::{Address, U256, U64};
 use alloy_sol_types::sol;
 use stylus_proc::SolidityError;
 use stylus_sdk::{
-    block,
-    call::{call, Call},
+    block, call,
+    call::{transfer_eth, Call},
     contract, evm, function_selector,
     storage::TopLevelStorage,
     stylus_proc::{public, sol_interface, sol_storage},
@@ -44,6 +44,11 @@ sol! {
 }
 
 sol! {
+    /// Indicates an error related to the underlying Ether transfer.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error ReleaseEtherFailed();
+
     /// Indicates an error related to the underlying ERC20 transfer.
     ///
     /// * `token` - Address of the token being released.
@@ -72,9 +77,10 @@ sol_interface! {
 pub enum Error {
     /// Error type from [`Ownable`] contract [`ownable::Error`].
     Ownable(ownable::Error),
-    /// Error type from [`stylus_sdk::call::Call`] contract
-    /// [`stylus_sdk::call::Error`].
-    StylusError(stylus_sdk::call::Error),
+    /// Error type from [`call::Call`] contract [`call::Error`].
+    StylusError(call::Error),
+    /// Indicates an error related to the underlying Ether transfer.
+    ReleaseEtherFailed(ReleaseEtherFailed),
     /// Indicates an error related to the underlying ERC20 transfer.
     ReleaseTokenFailed(ReleaseTokenFailed),
 }
@@ -199,10 +205,8 @@ impl VestingWallet {
 
         evm::log(EtherReleased { amount });
 
-        let owner = self.ownable.owner();
-        call(Call::new_in(self).value(amount), owner, &[])?;
-
-        Ok(())
+        transfer_eth(self.ownable.owner(), amount)
+            .map_err(|_| Error::ReleaseEtherFailed(ReleaseEtherFailed {}))
     }
 
     /// Release the tokens that have already vested.
