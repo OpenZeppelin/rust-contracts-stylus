@@ -2583,8 +2583,11 @@ dependencies = [
  "hex-literal",
  "lazy_static",
  "mini-alloc",
+ "num-bigint",
+ "num-traits",
  "rand",
  "tiny-keccak",
+ "zeroize",
 ]
 
 [[package]]
