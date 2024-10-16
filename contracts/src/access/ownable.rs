@@ -11,6 +11,7 @@
 use alloy_primitives::Address;
 use alloy_sol_types::sol;
 use stylus_sdk::{
+    call::MethodError,
     evm, msg,
     stylus_proc::{public, sol_storage, SolidityError},
 };
@@ -43,6 +44,12 @@ pub enum Error {
     UnauthorizedAccount(OwnableUnauthorizedAccount),
     /// The owner is not a valid owner account. (eg. `Address::ZERO`)
     InvalidOwner(OwnableInvalidOwner),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 sol_storage! {
