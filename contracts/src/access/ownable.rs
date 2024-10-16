@@ -67,23 +67,6 @@ impl Ownable {
         self._owner.get()
     }
 
-    /// Checks if the [`msg::sender`] is set as the owner.
-    ///
-    /// # Errors
-    ///
-    /// If called by any account other than the owner, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
-    pub fn only_owner(&self) -> Result<(), Error> {
-        let account = msg::sender();
-        if self.owner() != account {
-            return Err(Error::UnauthorizedAccount(
-                OwnableUnauthorizedAccount { account },
-            ));
-        }
-
-        Ok(())
-    }
-
     /// Transfers ownership of the contract to a new account (`new_owner`). Can
     /// only be called by the current owner.
     ///
@@ -131,6 +114,23 @@ impl Ownable {
 }
 
 impl Ownable {
+    /// Checks if the [`msg::sender`] is set as the owner.
+    ///
+    /// # Errors
+    ///
+    /// If called by any account other than the owner, then the error
+    /// [`Error::UnauthorizedAccount`] is returned.
+    pub fn only_owner(&self) -> Result<(), Error> {
+        let account = msg::sender();
+        if self.owner() != account {
+            return Err(Error::UnauthorizedAccount(
+                OwnableUnauthorizedAccount { account },
+            ));
+        }
+
+        Ok(())
+    }
+    
     /// Transfers ownership of the contract to a new account (`new_owner`).
     /// Internal function without access restriction.
     ///

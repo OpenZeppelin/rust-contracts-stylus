@@ -70,17 +70,6 @@ impl Ownable2Step {
         self._pending_owner.get()
     }
 
-    /// Checks if the [`msg::sender`] is set as the owner.
-    ///
-    /// # Errors
-    ///
-    /// If called by any account other than the owner, then the error
-    /// [`OwnableError::UnauthorizedAccount`] is returned.
-    pub fn only_owner(&self) -> Result<(), OwnableError> {
-        self._ownable.only_owner()?;
-        Ok(())
-    }
-
     /// Initiates the transfer of ownership to a new account (`new_owner`).
     /// Can only be called by the current owner.
     ///
