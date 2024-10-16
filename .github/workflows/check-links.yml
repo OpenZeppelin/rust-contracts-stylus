@@ -15,16 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Link Checker
         uses: lycheeverse/lychee-action@v1
         with:
           args: --no-progress './**/*.md'
           fail: true
-    
+
       - name: Run linkspector
         uses: umbrelladocs/action-linkspector@v1
         with:
           fail_on_error: true
-     
-        
