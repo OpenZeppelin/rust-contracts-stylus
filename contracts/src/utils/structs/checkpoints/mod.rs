@@ -7,7 +7,7 @@
 //! define sizes for key and value.
 //! Then store a new checkpoint for the current
 //! transaction block using the [`Trace::push`] function.
-mod generic_size;
+pub mod generic_size;
 
 use alloy_primitives::{uint, U256, U32};
 use alloy_sol_types::sol;
