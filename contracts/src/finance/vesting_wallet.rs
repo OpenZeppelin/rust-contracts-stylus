@@ -111,6 +111,39 @@ impl VestingWallet {
         self.ownable.owner()
     }
 
+    /// Transfers ownership of the contract to a new account (`new_owner`). Can
+    /// only be called by the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `new_owner` - The next owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// If `new_owner` is the zero address, then the error
+    /// [`OwnableInvalidOwner`] is returned.
+    pub fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Error> {
+        Ok(self.ownable.transfer_ownership(new_owner)?)
+    }
+
+    /// Leaves the contract without owner. It will not be possible to call
+    /// [`Self::only_owner`] functions. Can only be called by the current owner.
+    ///
+    /// NOTE: Renouncing ownership will leave the contract without an owner,
+    /// thereby disabling any functionality that is only available to the owner.
+    ///
+    /// # Errors
+    ///
+    /// If not called by the owner, then the error
+    /// [`Error::UnauthorizedAccount`] is returned.
+    pub fn renounce_ownership(&mut self) -> Result<(), Error> {
+        Ok(self.ownable.renounce_ownership()?)
+    }
+
     /// Getter for the start timestamp.
     pub fn start(&self) -> U256 {
         U256::from(self._start.get())
