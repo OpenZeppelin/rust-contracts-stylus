@@ -151,7 +151,7 @@ impl Ownable2Step {
     }
 }
 
-#[cfg(all(test))]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address};
     use stylus_sdk::msg;
@@ -179,7 +179,9 @@ mod tests {
     fn initiates_ownership_transfer(contract: Ownable2Step) {
         contract._ownable._owner.set(msg::sender());
 
-        contract.transfer_ownership(ALICE).expect("should initiate ownership transfer");
+        contract
+            .transfer_ownership(ALICE)
+            .expect("should initiate ownership transfer");
         let pending_owner = contract._pending_owner.get();
         assert_eq!(pending_owner, ALICE);
         assert_eq!(contract.owner(), msg::sender());
@@ -190,7 +192,10 @@ mod tests {
         contract._ownable._owner.set(ALICE);
 
         let err = contract.transfer_ownership(BOB).unwrap_err();
-        assert!(matches!(err, Error::Ownable(OwnableError::UnauthorizedAccount(_))));
+        assert!(matches!(
+            err,
+            Error::Ownable(OwnableError::UnauthorizedAccount(_))
+        ));
     }
 
     #[motsu::test]
@@ -209,14 +214,19 @@ mod tests {
         contract._pending_owner.set(BOB);
 
         let err = contract.accept_ownership().unwrap_err();
-        assert!(matches!(err, Error::Ownable(OwnableError::UnauthorizedAccount(_))));
+        assert!(matches!(
+            err,
+            Error::Ownable(OwnableError::UnauthorizedAccount(_))
+        ));
     }
 
     #[motsu::test]
     fn completes_two_step_ownership_transfer(contract: Ownable2Step) {
         contract._ownable._owner.set(msg::sender());
 
-        contract.transfer_ownership(ALICE).expect("should initiate ownership transfer");
+        contract
+            .transfer_ownership(ALICE)
+            .expect("should initiate ownership transfer");
         assert_eq!(contract.pending_owner(), ALICE);
 
         // Simulate ALICE accepting ownership, since we cannot set `msg::sender`
@@ -259,7 +269,9 @@ mod tests {
         contract._ownable._owner.set(msg::sender());
         contract._pending_owner.set(ALICE);
 
-        contract.transfer_ownership(Address::ZERO).expect("should cancel transfer");
+        contract
+            .transfer_ownership(Address::ZERO)
+            .expect("should cancel transfer");
         assert_eq!(contract.pending_owner(), Address::ZERO);
         assert_eq!(contract.owner(), msg::sender());
     }
@@ -268,7 +280,9 @@ mod tests {
     fn allows_owner_to_overwrite_transfer(contract: Ownable2Step) {
         contract._ownable._owner.set(msg::sender());
 
-        contract.transfer_ownership(ALICE).expect("should initiate ownership transfer");
+        contract
+            .transfer_ownership(ALICE)
+            .expect("should initiate ownership transfer");
         assert_eq!(contract.pending_owner(), ALICE);
 
         contract.transfer_ownership(BOB).expect("should overwrite transfer");

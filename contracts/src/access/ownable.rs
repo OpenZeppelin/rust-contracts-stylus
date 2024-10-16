@@ -130,7 +130,7 @@ impl Ownable {
 
         Ok(())
     }
-    
+
     /// Transfers ownership of the contract to a new account (`new_owner`).
     /// Internal function without access restriction.
     ///
