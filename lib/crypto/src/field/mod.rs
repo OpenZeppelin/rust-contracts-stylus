@@ -1,30 +1,17 @@
-// TODO#q: make sense to use ark_ff at first
-
-// use ark_ff::fields::{Fp256, MontBackend, MontConfig};
-//
-// #[derive(MontConfig)]
-// #[modulus =
-// "21888242871839275222246405745257275088548364400416034343698204186575808495617"
-// ] #[generator = "5"]
-// pub struct FrConfig;
-// pub type Fr = Fp256<MontBackend<FrConfig, 4>>;
-
-// TODO#q: Use https://crates.io/crates/num-bigint crate for bigint numbers
-
 use core::{
     fmt::{Debug, Display},
     hash::Hash,
-    ops::Neg,
-};
-use std::{
     iter::Product,
-    ops::{Div, DivAssign},
+    ops::{
+        Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
+    },
 };
 
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
 pub mod merkle_tree_fp;
+pub mod prime;
 pub mod utils;
 pub mod vesta;
 
@@ -42,11 +29,11 @@ pub trait Field:
     + One
     + Ord
     + Neg<Output = Self>
-    // + UniformRand
+    // + UniformRand  // TODO#q add unifrom randomisation
     + Zeroize
     + Sized
     + Hash
-    // + CanonicalSerialize // TODO
+    // + CanonicalSerialize // TODO#q add this serialisation
     // + CanonicalSerializeWithFlags
     // + CanonicalDeserialize
     // + CanonicalDeserializeWithFlags
@@ -236,8 +223,8 @@ pub trait AdditiveGroup:
     Eq
     + 'static
     + Sized
-    + CanonicalSerialize
-    + CanonicalDeserialize
+    // + CanonicalSerialize // TODO#q add this serialisation
+    // + CanonicalDeserialize
     + Copy
     + Clone
     + Default
@@ -246,7 +233,7 @@ pub trait AdditiveGroup:
     + Hash
     + Debug
     + Display
-    + UniformRand
+    // + UniformRand // TODO#q add unifrom randomisation
     + Zeroize
     + Zero
     + Neg<Output = Self>
