@@ -1,18 +1,15 @@
 #![cfg_attr(not(test), no_main, no_std)]
 extern crate alloc;
 
-use alloc::{
-    string::{String, ToString},
-    vec::Vec,
-};
+use alloc::{string::String, vec::Vec};
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{
     extensions::{
         Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
-        IErc721Burnable, IErc721Metadata,
+        IErc721Burnable,
     },
-    Erc721, IErc721,
+    Erc721,
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
@@ -23,13 +20,12 @@ sol_storage! {
         Erc721 erc721;
         #[borrow]
         Metadata metadata;
-        #[borrow]
         UriStorage uri_storage;
     }
 }
 
 #[public]
-#[inherit(Erc721, Metadata, UriStorage)]
+#[inherit(Erc721, Metadata)]
 impl Erc721MetadataExample {
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
         Ok(self.erc721._mint(to, token_id)?)
@@ -39,29 +35,13 @@ impl Erc721MetadataExample {
         Ok(self.erc721.burn(token_id)?)
     }
 
-    // Overrides [`Erc721UriStorage::token_uri`].
-    // Returns the Uniform Resource Identifier (URI) for tokenId token.
     #[selector(name = "tokenURI")]
     pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-        let _owner = self.erc721.owner_of(token_id)?;
-
-        let base = self.metadata.base_uri();
-        let token_uri = self.uri_storage.token_uri(token_id);
-
-        // If there is no base URI, return the token URI.
-        if base.is_empty() {
-            return Ok(token_uri);
-        }
-
-        // If both are set,
-        // concatenate the base URI and token URI.
-        let uri = if !token_uri.is_empty() {
-            base + &token_uri
-        } else {
-            base + &token_id.to_string()
-        };
-
-        Ok(uri)
+        Ok(self.uri_storage.token_uri(
+            token_id,
+            &self.erc721,
+            &self.metadata,
+        )?)
     }
 
     #[selector(name = "setTokenURI")]
