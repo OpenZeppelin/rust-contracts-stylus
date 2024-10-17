@@ -37,42 +37,12 @@
 //!     }
 //! }
 //! ```
-//!
-//! Note that for proper usage, tests should have exclusive access to storage,
-//! since they run in parallel, which may cause undesired results.
-//!
-//! One solution is to wrap tests with a function that acquires a global mutex:
-//!
-//! ```rust,no_run
-//! use std::sync::{Mutex, MutexGuard};
-//!
-//! use motsu::prelude::reset_storage;
-//!
-//! pub static STORAGE_MUTEX: Mutex<()> = Mutex::new(());
-//!
-//! pub fn acquire_storage() -> MutexGuard<'static, ()> {
-//!     STORAGE_MUTEX.lock().unwrap()
-//! }
-//!
-//! pub fn with_context<C: Default>(closure: impl FnOnce(&mut C)) {
-//!     let _lock = acquire_storage();
-//!     let mut contract = C::default();
-//!     closure(&mut contract);
-//!     reset_storage();
-//! }
-//!
-//! #[motsu::test]
-//! fn reads_balance() {
-//!     let balance = token.balance_of(Address::ZERO);
-//!     assert_eq!(balance, U256::ZERO);
-//! }
-//! ```
 #![allow(clippy::missing_safety_doc)]
 use std::slice;
 
 use tiny_keccak::{Hasher, Keccak};
 
-use crate::storage::{read_bytes32, write_bytes32, STORAGE};
+use crate::context::TestContext;
 
 pub(crate) const WORD_BYTES: usize = 32;
 pub(crate) type Bytes32 = [u8; WORD_BYTES];
@@ -90,10 +60,10 @@ pub unsafe extern "C" fn native_keccak256(
 ) {
     let mut hasher = Keccak::v256();
 
-    let data = unsafe { slice::from_raw_parts(bytes, len) };
+    let data = slice::from_raw_parts(bytes, len);
     hasher.update(data);
 
-    let output = unsafe { slice::from_raw_parts_mut(output, WORD_BYTES) };
+    let output = slice::from_raw_parts_mut(output, WORD_BYTES);
     hasher.finalize(output);
 }
 
@@ -110,16 +80,7 @@ pub unsafe extern "C" fn native_keccak256(
 /// May panic if unable to lock `STORAGE`.
 #[no_mangle]
 pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
-    let key = unsafe { read_bytes32(key) };
-
-    let value = STORAGE
-        .lock()
-        .unwrap()
-        .get(&key)
-        .map(Bytes32::to_owned)
-        .unwrap_or_default();
-
-    unsafe { write_bytes32(out, value) };
+    TestContext::current().get_bytes_raw(key, out);
 }
 
 /// Writes a 32-byte value to the permanent storage cache. Stylus's storage
@@ -141,8 +102,7 @@ pub unsafe extern "C" fn storage_cache_bytes32(
     key: *const u8,
     value: *const u8,
 ) {
-    let (key, value) = unsafe { (read_bytes32(key), read_bytes32(value)) };
-    STORAGE.lock().unwrap().insert(key, value);
+    TestContext::current().set_bytes_raw(key, value);
 }
 
 /// Persists any dirty values in the storage cache to the EVM state trie,
