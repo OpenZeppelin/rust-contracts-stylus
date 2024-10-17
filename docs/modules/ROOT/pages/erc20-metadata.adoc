@@ -26,7 +26,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
 impl Erc20Example {
     // ...

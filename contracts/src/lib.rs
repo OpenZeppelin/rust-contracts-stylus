@@ -6,10 +6,6 @@ A library for secure smart contract development written in Rust for
 This library offers common smart contract primitives and affordances that take
 advantage of the nature of Stylus.
 
-> This project is still in a very early and experimental phase. It has never
-> been audited nor thoroughly reviewed for security vulnerabilities. Do not use
-> in production.
-
 ## Usage
 
 To start using it, add `openzeppelin-stylus` to your `Cargo.toml`, or simply run
@@ -36,7 +32,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20)]
 impl MyContract { }
 ```

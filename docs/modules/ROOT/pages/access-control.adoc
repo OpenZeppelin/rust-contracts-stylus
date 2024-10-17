@@ -21,7 +21,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Ownable)]
 impl MyContract {
     fn normal_thing(&self) {
@@ -90,7 +90,7 @@ pub const MINTER_ROLE: [u8; 32] = [
     166,
 ];
 
-#[external]
+#[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
     pub const MINTER_ROLE: [u8; 32] = MINTER_ROLE;
@@ -136,7 +136,7 @@ pub const BURNER_ROLE: [u8; 32] = [
     224, 87, 73, 143, 95, 0, 36, 97, 144, 234, 84, 34, 5, 118, 168, 72,
 ];
 
-#[external]
+#[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
     pub const MINTER_ROLE: [u8; 32] = MINTER_ROLE;
