@@ -30,8 +30,11 @@ sol_storage! {
     }
 }
 
-#[public]
-impl Nonces {
+/// Required interface of a [`Nonces`] compliant contract.
+pub trait INonces {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns the unused nonce for the given account.
     ///
     /// # Arguments
@@ -39,7 +42,15 @@ impl Nonces {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address for which to return the nonce.
     #[must_use]
-    pub fn nonces(&self, owner: Address) -> U256 {
+    fn nonces(&self, owner: Address) -> U256;
+}
+
+#[public]
+impl INonces for Nonces {
+    type Error = Error;
+
+    #[must_use]
+    fn nonces(&self, owner: Address) -> U256 {
         self._nonces.get(owner)
     }
 }
@@ -113,7 +124,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::ONE;
-    use crate::utils::nonces::{Error, Nonces};
+    use crate::utils::nonces::{Error, INonces, Nonces};
 
     #[motsu::test]
     fn initiate_nonce(contract: Nonces) {

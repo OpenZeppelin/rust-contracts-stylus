@@ -1,5 +1,5 @@
 //! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
-//! in https://eips.ethereum.org/EIPS/eip-2309[ERC-2309].
+//! in <https://eips.ethereum.org/EIPS/eip-2309>[ERC-2309].
 //!
 //! This extension allows the minting large batches of tokens, during
 //! contract construction only. For upgradeable contracts, this implies that
@@ -41,9 +41,9 @@ use crate::{
     utils::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
-            bitmap::BitMap,
+            bitmap::{BitMap, IBitMap},
             checkpoints,
-            checkpoints::{Size, Trace, S160},
+            checkpoints::{ITrace, Size, Trace, S160},
         },
     },
 };
@@ -132,6 +132,16 @@ pub enum Error {
 unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
+
+/// Extension of [`Erc721`] that adds consecutive transfer.
+pub trait IErc721Consecutive: IErc721 {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+}
+
+impl IErc721Consecutive for Erc721Consecutive {
+    type Error = Error;
+}
 
 #[public]
 impl IErc721 for Erc721Consecutive {

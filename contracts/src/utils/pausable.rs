@@ -61,13 +61,23 @@ sol_storage! {
     }
 }
 
-#[public]
-impl Pausable {
+/// Required interface of a [`Pausable`] compliant contract.
+pub trait IPausable {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns true if the contract is paused, and false otherwise.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    fn paused(&self) -> bool;
+}
+
+#[public]
+impl IPausable for Pausable {
+    type Error = Error;
+
     fn paused(&self) -> bool {
         self._paused.get()
     }
@@ -147,7 +157,7 @@ impl Pausable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use crate::utils::pausable::{Error, Pausable};
+    use crate::utils::pausable::{Error, IPausable, Pausable};
 
     #[motsu::test]
     fn paused_works(contract: Pausable) {

@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
-    access::ownable::Ownable,
+    access::ownable::{IOwnable, Ownable},
     token::erc20::{Erc20, IErc20},
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
