@@ -19,7 +19,6 @@ sol!(
         function transferFrom(address from, address to, uint256 tokenId) external;
         function mint(address to, uint256 tokenId) external;
         function burn(uint256 tokenId) external;
-        function baseUri() external view returns (string memory baseURI);
         function name() external view returns (string memory name);
         function symbol() external view returns (string memory symbol);
         #[derive(Debug)]
