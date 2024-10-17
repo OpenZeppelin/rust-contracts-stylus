@@ -25,7 +25,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc721, Erc721Enumerable)]
 impl Erc721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {

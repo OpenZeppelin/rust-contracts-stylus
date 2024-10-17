@@ -26,7 +26,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20, Capped)]
 impl Erc20Example {
     // Add token minting feature.

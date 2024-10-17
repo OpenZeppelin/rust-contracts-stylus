@@ -33,7 +33,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc721, Erc721Metadata, Erc721UriStorage)]
 impl Erc721MetadataExample {
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {

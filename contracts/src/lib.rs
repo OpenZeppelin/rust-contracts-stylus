@@ -32,7 +32,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20)]
 impl MyContract { }
 ```
