@@ -4,7 +4,13 @@ use std::{collections::HashMap, ptr};
 
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
-use stylus_sdk::{alloy_primitives::uint, prelude::StorageType};
+use stylus_sdk::{
+    alloy_primitives::{
+        private::derive_more::{Deref, DerefMut},
+        uint,
+    },
+    prelude::StorageType,
+};
 
 use crate::prelude::{Bytes32, WORD_BYTES};
 
@@ -101,9 +107,12 @@ pub trait DefaultStorage: StorageType {
     /// Initializes fields of contract storage and child contract storages with
     /// default values.
     #[must_use]
-    fn default() -> Self {
-        unsafe { Self::new(uint!(0_U256), 0) }
+    fn default() -> StorageGuard<Self> {
+        StorageGuard(unsafe { Self::new(uint!(0_U256), 0) })
     }
 }
 
 impl<ST: StorageType> DefaultStorage for ST {}
+
+#[derive(Deref, DerefMut)]
+pub struct StorageGuard<ST: StorageType>(ST);

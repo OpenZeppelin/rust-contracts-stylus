@@ -454,7 +454,7 @@ mod tests {
         assert_eq!(owner, alice);
 
         let res =
-            contract._add_token_to_owner_enumeration(alice, token_id, &erc721);
+            contract._add_token_to_owner_enumeration(alice, token_id, &*erc721);
         assert!(res.is_ok());
 
         let test_token_id = contract
@@ -483,7 +483,7 @@ mod tests {
         assert_eq!(owner, alice);
 
         let res =
-            contract._add_token_to_owner_enumeration(alice, token_id, &erc721);
+            contract._add_token_to_owner_enumeration(alice, token_id, &*erc721);
         assert!(res.is_ok());
 
         let err =
@@ -525,7 +525,7 @@ mod tests {
         assert_eq!(owner, alice);
 
         let res =
-            contract._add_token_to_owner_enumeration(alice, token_id, &erc721);
+            contract._add_token_to_owner_enumeration(alice, token_id, &*erc721);
         assert!(res.is_ok());
 
         // Transfer the token from ALICE to BOB.
@@ -538,11 +538,11 @@ mod tests {
         assert_eq!(owner, BOB);
 
         let res = contract
-            ._remove_token_from_owner_enumeration(alice, token_id, &erc721);
+            ._remove_token_from_owner_enumeration(alice, token_id, &*erc721);
         assert!(res.is_ok());
 
         let res =
-            contract._add_token_to_owner_enumeration(BOB, token_id, &erc721);
+            contract._add_token_to_owner_enumeration(BOB, token_id, &*erc721);
         assert!(res.is_ok());
 
         let test_token_id = contract
