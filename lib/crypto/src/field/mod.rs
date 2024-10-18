@@ -102,6 +102,7 @@ pub trait Field:
     /// Constructs a field element from a single base prime field elements.
     fn from_base_prime_field(elem: Self::BasePrimeField) -> Self;
 
+// TODO#q: add random bytes conversions
 /*    
     /// Attempt to deserialize a field element. Returns `None` if the
     /// deserialization fails.

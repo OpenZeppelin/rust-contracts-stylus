@@ -22,14 +22,13 @@ Common cryptographic procedures for a blockchain environment.
 extern crate alloc;
 extern crate core;
 
-pub mod hash;
-pub mod merkle;
-
 pub mod biginteger;
 pub mod bits;
-mod curve;
-mod field;
+pub mod curve;
+pub mod field;
+pub mod hash;
 pub mod keccak;
+pub mod merkle;
 pub mod poseidon2;
 
 pub use keccak::KeccakBuilder;
