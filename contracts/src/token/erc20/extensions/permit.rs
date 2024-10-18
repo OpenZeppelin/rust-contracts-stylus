@@ -177,7 +177,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
             return Err(ERC2612InvalidSigner { signer, owner }.into());
         }
 
-        self.erc20._approve(owner, spender, value)?;
+        self.erc20._approve(owner, spender, value, true)?;
 
         Ok(())
     }

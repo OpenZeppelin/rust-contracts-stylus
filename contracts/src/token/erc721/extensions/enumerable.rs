@@ -8,7 +8,6 @@
 //! [`super::super::Erc721::balance_of`] logic, such as `Erc721Consecutive`,
 //! interfere with enumerability and should not be used together with
 //! [`Erc721Enumerable`].
-// TODO: Add link for `Erc721Consecutive` to module docs.
 
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use alloy_sol_types::sol;
@@ -72,8 +71,6 @@ pub trait IErc721Enumerable {
     /// The error type associated to this ERC-721 enumerable trait
     /// implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
-
-    // TODO: fn supports_interface (#33)
 
     /// Returns a token ID owned by `owner` at a given `index` of its token
     /// list.

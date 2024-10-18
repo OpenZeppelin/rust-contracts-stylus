@@ -1,14 +1,13 @@
 [package]
 name = "openzeppelin-stylus-proc"
 description = "Procedural macros for OpenZeppelin Stylus contracts"
-version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-categories = ["cryptography::cryptocurrencies", "no-std", "wasm"]
-keywords = ["arbitrum", "ethereum", "stylus", "smart-contracts", "standards"]
 repository.workspace = true
-
+keywords = ["arbitrum", "ethereum", "stylus", "smart-contracts", "standards"]
+categories = ["cryptography::cryptocurrencies", "no-std", "wasm"]
+version = "0.1.0"
 
 [dependencies]
 proc-macro2.workspace = true

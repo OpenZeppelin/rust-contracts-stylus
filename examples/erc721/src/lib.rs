@@ -156,4 +156,12 @@ impl Erc721Example {
         Erc721::supports_interface(interface_id)
             || Enumerable::supports_interface(interface_id)
     }
+
+    pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+        self.pausable.pause().map_err(|e| e.into())
+    }
+
+    pub fn unpause(&mut self) -> Result<(), Vec<u8>> {
+        self.pausable.unpause().map_err(|e| e.into())
+    }
 }
