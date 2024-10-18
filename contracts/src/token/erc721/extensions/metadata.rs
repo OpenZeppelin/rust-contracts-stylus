@@ -3,7 +3,8 @@
 use alloc::string::{String, ToString};
 
 use alloy_primitives::{FixedBytes, U256};
-use stylus_proc::{public, sol_storage};
+use openzeppelin_stylus_proc::interface_id;
+use stylus_sdk::stylus_proc::{public, sol_storage};
 
 use crate::{
     token::erc721::{Error, IErc721},
@@ -21,6 +22,7 @@ sol_storage! {
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
+#[interface_id]
 pub trait IErc721Metadata {
     /// Returns the token collection name.
     ///
@@ -110,4 +112,18 @@ impl Erc721Metadata {
 
         Ok(token_uri)
     }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    // use crate::token::erc721::extensions::{Erc721Metadata, IErc721Metadata};
+
+    // TODO: IErc721Metadata should be refactored to have same api as solidity
+    //  has:  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4764ea50750d8bda9096e833706beba86918b163/contracts/token/ERC721/extensions/IERC721Metadata.sol#L12
+    // [motsu::test]
+    // fn interface_id() {
+    //     let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
+    //     let expected = 0x5b5e139f;
+    //     assert_eq!(actual, expected);
+    // }
 }

@@ -10,17 +10,26 @@ on:
     branches: [ main, v* ]
 
 jobs:
-  check-links:
-    name: Check Links
+  check-links-md:
+    name: Check Markdown Links
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Link Checker
-        uses: lycheeverse/lychee-action@v1
+        uses: lycheeverse/lychee-action@v2
         with:
           args: --no-progress './**/*.md'
           fail: true
+
+  check-links-adoc:
+    name: Check AsciiDoc Links
+    runs-on: ubuntu-latest
+    # We only run the AsciiDoc link checker on v* branches because:
+    # 1. The main branch may contain documentation that is not yet published.
+    if: startsWith(github.ref, 'refs/heads/v') || startsWith(github.base_ref, 'v')
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Run linkspector
         uses: umbrelladocs/action-linkspector@v1

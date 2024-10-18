@@ -1,64 +1,157 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
-use crate::{get_l2_gas_used, ArbTxReceipt};
+use crate::{ArbOtherFields, ArbTxReceipt};
 
 const SEPARATOR: &str = "::";
 
 #[derive(Debug)]
-pub struct Report {
-    contract: String,
-    fns: Vec<(String, u128)>,
+pub struct FunctionReport {
+    sig: String,
+    gas: u128,
 }
 
-impl Report {
+impl FunctionReport {
+    pub(crate) fn new(receipt: (&str, ArbTxReceipt)) -> eyre::Result<Self> {
+        Ok(FunctionReport {
+            sig: receipt.0.to_owned(),
+            gas: get_l2_gas_used(&receipt.1)?,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct ContractReport {
+    contract: String,
+    functions: Vec<FunctionReport>,
+    functions_cached: Vec<FunctionReport>,
+}
+
+impl ContractReport {
     pub fn new(contract: &str) -> Self {
-        Report { contract: contract.to_owned(), fns: vec![] }
+        ContractReport {
+            contract: contract.to_owned(),
+            functions: vec![],
+            functions_cached: vec![],
+        }
     }
 
-    pub fn add(mut self, receipt: (&str, ArbTxReceipt)) -> eyre::Result<Self> {
-        let gas = get_l2_gas_used(&receipt.1)?;
-        self.fns.push((receipt.0.to_owned(), gas));
+    pub fn add(mut self, fn_report: FunctionReport) -> eyre::Result<Self> {
+        self.functions.push(fn_report);
         Ok(self)
     }
 
-    fn get_longest_signature(&self) -> usize {
+    pub fn add_cached(
+        mut self,
+        fn_report: FunctionReport,
+    ) -> eyre::Result<Self> {
+        self.functions_cached.push(fn_report);
+        Ok(self)
+    }
+
+    fn signature_max_len(&self) -> usize {
         let prefix_len = self.contract.len() + SEPARATOR.len();
-        self.fns
+        self.functions
             .iter()
-            .map(|(sig, _)| prefix_len + sig.len())
+            .map(|FunctionReport { sig: name, .. }| prefix_len + name.len())
+            .max()
+            .unwrap_or_default()
+    }
+
+    fn gas_max_len(&self) -> usize {
+        self.functions
+            .iter()
+            .map(|FunctionReport { gas, .. }| gas.to_string().len())
+            .max()
+            .unwrap_or_default()
+    }
+
+    fn gas_cached_max_len(&self) -> usize {
+        self.functions_cached
+            .iter()
+            .map(|FunctionReport { gas, .. }| gas.to_string().len())
             .max()
             .unwrap_or_default()
     }
 }
 
 #[derive(Debug, Default)]
-pub struct Reports(Vec<Report>);
+pub struct BenchmarkReport(Vec<ContractReport>);
 
-impl Reports {
-    pub fn merge_with(mut self, report: Report) -> Self {
+impl BenchmarkReport {
+    pub fn merge_with(mut self, report: ContractReport) -> Self {
         self.0.push(report);
         self
     }
+
+    pub fn column_width(
+        &self,
+        column_value: impl FnMut(&ContractReport) -> usize,
+        header: &str,
+    ) -> usize {
+        self.0
+            .iter()
+            .map(column_value)
+            .chain(std::iter::once(header.len()))
+            .max()
+            .unwrap_or_default()
+    }
 }
 
-impl Display for Reports {
+impl Display for BenchmarkReport {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let reports = &self.0;
-        let width = reports
-            .iter()
-            .map(Report::get_longest_signature)
-            .max()
-            .unwrap_or_default();
+        const HEADER_SIG: &str = "Contract::function";
+        const HEADER_GAS_CACHED: &str = "Cached";
+        const HEADER_GAS: &str = "Not Cached";
 
-        for report in reports {
+        // Calculating the width of table columns.
+        let width1 =
+            self.column_width(ContractReport::signature_max_len, HEADER_SIG);
+        let width2 = self.column_width(
+            ContractReport::gas_cached_max_len,
+            HEADER_GAS_CACHED,
+        );
+        let width3 = self.column_width(ContractReport::gas_max_len, HEADER_GAS);
+
+        // Print headers for the table columns.
+        writeln!(
+            f,
+            "| {HEADER_SIG:<width1$} | {HEADER_GAS_CACHED:>width2$} | {HEADER_GAS:>width3$} |"
+        )?;
+        writeln!(
+            f,
+            "| {:->width1$} | {:->width2$} | {:->width3$} |",
+            "", "", ""
+        )?;
+
+        // Merging a non-cached gas report with a cached one.
+        for report in &self.0 {
             let prefix = format!("{}{SEPARATOR}", report.contract);
+            let gas: HashMap<_, _> = report
+                .functions
+                .iter()
+                .map(|func| (&*func.sig, func.gas))
+                .collect();
 
-            for (sig, gas) in &report.fns {
-                let signature = format!("{prefix}{sig}");
-                writeln!(f, "{signature:<width$} {gas:>10}")?;
+            for report_cached in &report.functions_cached {
+                let sig = &*report_cached.sig;
+                let gas_cached = &report_cached.gas;
+                let gas = gas[sig];
+
+                let full_sig = format!("{prefix}{sig}");
+                writeln!(
+                    f,
+                    "| {full_sig:<width1$} | {gas_cached:>width2$} | {gas:>width3$} |"
+                )?;
             }
         }
 
         Ok(())
     }
+}
+
+fn get_l2_gas_used(receipt: &ArbTxReceipt) -> eyre::Result<u128> {
+    let l2_gas = receipt.gas_used;
+    let arb_fields: ArbOtherFields = receipt.other.deserialize_as()?;
+    let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
+    Ok(l2_gas - l1_gas)
 }

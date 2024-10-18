@@ -11,8 +11,12 @@
 //! and thus is not required to hold Ether at all.
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
-use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
+use stylus_sdk::{
+    block,
+    prelude::StorageType,
+    storage::TopLevelStorage,
+    stylus_proc::{public, sol_storage, SolidityError},
+};
 
 use crate::{
     token::erc20::{self, Erc20, IErc20},

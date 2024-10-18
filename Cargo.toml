@@ -48,7 +48,6 @@ resolver = "2"
 authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
-keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 version = "0.1.0"
 
@@ -64,7 +63,6 @@ all = "warn"
 [workspace.dependencies]
 # stylus-related
 stylus-sdk = { version = "=0.6.0", default-features = false }
-stylus-proc = { version = "=0.6.0", default-features = false }
 mini-alloc = "0.4.2"
 
 alloy = { version = "=0.1.4", features = [
@@ -95,6 +93,7 @@ rand = "0.8.5"
 regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
+futures = "0.3.30"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }

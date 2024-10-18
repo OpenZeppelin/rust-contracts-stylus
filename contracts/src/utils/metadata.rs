@@ -1,7 +1,7 @@
 //! Common Metadata Smart Contract.
 use alloc::string::String;
 
-use stylus_proc::{public, sol_storage};
+use stylus_sdk::stylus_proc::{public, sol_storage};
 
 sol_storage! {
     /// Metadata of the token.
