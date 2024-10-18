@@ -1,7 +1,7 @@
 use ark_std::{cmp::min, str::FromStr};
 use num_bigint::BigUint;
 
-use crate::field::Field;
+use crate::field::{fft_friendly::FftField, Field};
 
 /// The interface for a prime field, i.e. the field of integers modulo a prime
 /// $p$. In the following example we'll use the prime field underlying the

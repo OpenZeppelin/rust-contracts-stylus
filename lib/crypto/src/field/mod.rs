@@ -1,20 +1,27 @@
 use core::{
     fmt::{Debug, Display},
     hash::Hash,
-    iter::Product,
+    iter::{Product, Sum},
     ops::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
     },
 };
-
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
+use crate::field::bits::{BitIteratorBE, BitIteratorLE};
+use crate::field::prime::PrimeField;
+use crate::field::sqrt::{LegendreSymbol, SqrtPrecomputation};
 
 pub mod merkle_tree_fp;
 pub mod prime;
 pub mod utils;
 pub mod vesta;
+pub mod fft_friendly;
+pub mod sqrt;
+mod bits;
 
+/// The interface for a generic field.
+/// Types implementing [`Field`] support common field operations such as addition, subtraction, multiplication, and inverses.
 pub trait Field:
     'static
     + Copy
@@ -87,33 +94,27 @@ pub trait Field:
     ) -> Option<Self>;
 
     /// Constructs a field element from a single base prime field elements.
-    /// ```
-    /// # use ark_ff::Field;
-    /// # use ark_test_curves::bls12_381::Fq as F;
-    /// # use ark_test_curves::bls12_381::Fq2 as F2;
-    /// # use ark_std::One;
-    /// assert_eq!(F2::from_base_prime_field(F::one()), F2::one());
-    /// ```
     fn from_base_prime_field(elem: Self::BasePrimeField) -> Self;
 
-    /// Attempt to deserialize a field element. Returns `None` if the
-    /// deserialization fails.
-    ///
-    /// This function is primarily intended for sampling random field elements
-    /// from a hash-function or RNG output.
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-        Self::from_random_bytes_with_flags::<EmptyFlags>(bytes).map(|f| f.0)
-    }
-
-    /// Attempt to deserialize a field element, splitting the bitflags metadata
-    /// according to `F` specification. Returns `None` if the deserialization
-    /// fails.
-    ///
-    /// This function is primarily intended for sampling random field elements
-    /// from a hash-function or RNG output.
-    fn from_random_bytes_with_flags<F: Flags>(
-        bytes: &[u8],
-    ) -> Option<(Self, F)>;
+    
+    // /// Attempt to deserialize a field element. Returns `None` if the
+    // /// deserialization fails.
+    // ///
+    // /// This function is primarily intended for sampling random field elements
+    // /// from a hash-function or RNG output.
+    // fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
+    //     Self::from_random_bytes_with_flags::<EmptyFlags>(bytes).map(|f| f.0)
+    // }
+    // 
+    // /// Attempt to deserialize a field element, splitting the bitflags metadata
+    // /// according to `F` specification. Returns `None` if the deserialization
+    // /// fails.
+    // ///
+    // /// This function is primarily intended for sampling random field elements
+    // /// from a hash-function or RNG output.
+    // fn from_random_bytes_with_flags<F: Flags>(
+    //     bytes: &[u8],
+    // ) -> Option<(Self, F)>;
 
     /// Returns a `LegendreSymbol`, which indicates whether this field element
     /// is  1 : a quadratic residue
@@ -183,7 +184,7 @@ pub trait Field:
     fn pow<S: AsRef<[u64]>>(&self, exp: S) -> Self {
         let mut res = Self::one();
 
-        for i in crate::BitIteratorBE::without_leading_zeros(exp) {
+        for i in BitIteratorBE::without_leading_zeros(exp) {
             res.square_in_place();
 
             if i {
@@ -207,7 +208,7 @@ pub trait Field:
     ) -> Option<Self> {
         let mut res = Self::one();
         for (pow, bit) in
-            crate::BitIteratorLE::without_trailing_zeros(exp).enumerate()
+            BitIteratorLE::without_trailing_zeros(exp).enumerate()
         {
             if bit {
                 res *= powers_of_2.get(pow)?;
@@ -233,7 +234,7 @@ pub trait AdditiveGroup:
     + Hash
     + Debug
     + Display
-    // + UniformRand // TODO#q add unifrom randomisation
+    // + UniformRand // TODO#q add uniform rand generation
     + Zeroize
     + Zero
     + Neg<Output = Self>
@@ -255,8 +256,8 @@ pub trait AdditiveGroup:
     + for<'a> AddAssign<&'a mut Self>
     + for<'a> SubAssign<&'a mut Self>
     + for<'a> MulAssign<&'a mut <Self as AdditiveGroup>::Scalar>
-    + ark_std::iter::Sum<Self>
-    + for<'a> ark_std::iter::Sum<&'a Self>
+    + Sum<Self>
+    + for<'a> Sum<&'a Self>
 {
     type Scalar: Field;
 
