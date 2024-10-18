@@ -11,6 +11,7 @@
 use alloy_primitives::Address;
 use alloy_sol_types::sol;
 use stylus_sdk::{
+    call::MethodError,
     evm, msg,
     stylus_proc::{public, sol_storage, SolidityError},
 };
@@ -45,6 +46,12 @@ pub enum Error {
     InvalidOwner(OwnableInvalidOwner),
 }
 
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
 sol_storage! {
     /// State of an `Ownable` contract.
     pub struct Ownable {
@@ -58,23 +65,6 @@ impl Ownable {
     /// Returns the address of the current owner.
     pub fn owner(&self) -> Address {
         self._owner.get()
-    }
-
-    /// Checks if the [`msg::sender`] is set as the owner.
-    ///
-    /// # Errors
-    ///
-    /// If called by any account other than the owner, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
-    pub fn only_owner(&self) -> Result<(), Error> {
-        let account = msg::sender();
-        if self.owner() != account {
-            return Err(Error::UnauthorizedAccount(
-                OwnableUnauthorizedAccount { account },
-            ));
-        }
-
-        Ok(())
     }
 
     /// Transfers ownership of the contract to a new account (`new_owner`). Can
@@ -124,6 +114,23 @@ impl Ownable {
 }
 
 impl Ownable {
+    /// Checks if the [`msg::sender`] is set as the owner.
+    ///
+    /// # Errors
+    ///
+    /// If called by any account other than the owner, then the error
+    /// [`Error::UnauthorizedAccount`] is returned.
+    pub fn only_owner(&self) -> Result<(), Error> {
+        let account = msg::sender();
+        if self.owner() != account {
+            return Err(Error::UnauthorizedAccount(
+                OwnableUnauthorizedAccount { account },
+            ));
+        }
+
+        Ok(())
+    }
+
     /// Transfers ownership of the contract to a new account (`new_owner`).
     /// Internal function without access restriction.
     ///
