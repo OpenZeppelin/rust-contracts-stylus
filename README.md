@@ -35,15 +35,14 @@ openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-st
 ```
 
 > [!NOTE]
-
-This library is designed to be `no_std`. When using it in your project, ensure that your dependencies are not importing the standard library. You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
-
-```toml
-[dependencies]
-alloy-primitives = { version = "=0.7.6", default-features = false }
-```
-
-This avoids errors such as `found duplicate lang item 'panic_impl'` when running `cargo stylus check`.
+> This library is designed to be `no_std`. When using it in your project, ensure that your dependencies are not importing the standard library. You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
+>
+> ```toml
+> [dependencies]
+> alloy-primitives = { version = "=0.7.6", default-features = false }
+> ```
+>
+> This avoids errors such as `found duplicate lang item 'panic_impl'` when running `cargo stylus check`.
 
 Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
