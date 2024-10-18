@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use ark_ff::PrimeField;
 
 use crate::poseidon2::utils;

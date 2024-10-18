@@ -1,6 +1,7 @@
 // NOTE#q: this utils ported from root of poseidon2 crate
 
-// use std::cmp::min;
+// use core::cmp::min;
+use alloc::vec::Vec;
 
 use ark_ff::PrimeField;
 
@@ -46,12 +47,12 @@ pub fn mat_inverse<F: PrimeField>(mat: &[Vec<F>]) -> Vec<Vec<F>> {
         let el_inv = m[row][row].inverse().unwrap();
         for col in 0..n {
             match col.cmp(&row) {
-                std::cmp::Ordering::Less => inv[row][col].mul_assign(&el_inv),
-                std::cmp::Ordering::Equal => {
+                core::cmp::Ordering::Less => inv[row][col].mul_assign(&el_inv),
+                core::cmp::Ordering::Equal => {
                     m[row][col] = F::one();
                     inv[row][col].mul_assign(&el_inv)
                 }
-                std::cmp::Ordering::Greater => m[row][col].mul_assign(&el_inv),
+                core::cmp::Ordering::Greater => m[row][col].mul_assign(&el_inv),
             }
         }
     }

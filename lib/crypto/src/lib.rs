@@ -25,8 +25,11 @@ extern crate core;
 pub mod hash;
 pub mod merkle;
 
+pub mod biginteger;
+pub mod bits;
 mod curve;
 mod field;
 pub mod keccak;
 pub mod poseidon2;
+
 pub use keccak::KeccakBuilder;

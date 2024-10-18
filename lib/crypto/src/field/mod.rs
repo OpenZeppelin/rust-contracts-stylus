@@ -6,22 +6,28 @@ use core::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
     },
 };
+
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
-use crate::field::bits::{BitIteratorBE, BitIteratorLE};
-use crate::field::prime::PrimeField;
-use crate::field::sqrt::{LegendreSymbol, SqrtPrecomputation};
 
+use crate::{
+    bits::{BitIteratorBE, BitIteratorLE},
+    field::{
+        prime::PrimeField,
+        sqrt::{LegendreSymbol, SqrtPrecomputation},
+    },
+};
+
+pub mod fft_friendly;
 pub mod merkle_tree_fp;
 pub mod prime;
+pub mod sqrt;
 pub mod utils;
 pub mod vesta;
-pub mod fft_friendly;
-pub mod sqrt;
-mod bits;
 
 /// The interface for a generic field.
-/// Types implementing [`Field`] support common field operations such as addition, subtraction, multiplication, and inverses.
+/// Types implementing [`Field`] support common field operations such as
+/// addition, subtraction, multiplication, and inverses.
 pub trait Field:
     'static
     + Copy
@@ -96,26 +102,26 @@ pub trait Field:
     /// Constructs a field element from a single base prime field elements.
     fn from_base_prime_field(elem: Self::BasePrimeField) -> Self;
 
+/*    
+    /// Attempt to deserialize a field element. Returns `None` if the
+    /// deserialization fails.
+    ///
+    /// This function is primarily intended for sampling random field elements
+    /// from a hash-function or RNG output.
+    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
+        Self::from_random_bytes_with_flags::<EmptyFlags>(bytes).map(|f| f.0)
+    }
     
-    // /// Attempt to deserialize a field element. Returns `None` if the
-    // /// deserialization fails.
-    // ///
-    // /// This function is primarily intended for sampling random field elements
-    // /// from a hash-function or RNG output.
-    // fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-    //     Self::from_random_bytes_with_flags::<EmptyFlags>(bytes).map(|f| f.0)
-    // }
-    // 
-    // /// Attempt to deserialize a field element, splitting the bitflags metadata
-    // /// according to `F` specification. Returns `None` if the deserialization
-    // /// fails.
-    // ///
-    // /// This function is primarily intended for sampling random field elements
-    // /// from a hash-function or RNG output.
-    // fn from_random_bytes_with_flags<F: Flags>(
-    //     bytes: &[u8],
-    // ) -> Option<(Self, F)>;
-
+    /// Attempt to deserialize a field element, splitting the bitflags metadata
+    /// according to `F` specification. Returns `None` if the deserialization
+    /// fails.
+    ///
+    /// This function is primarily intended for sampling random field elements
+    /// from a hash-function or RNG output.
+    fn from_random_bytes_with_flags<F: Flags>(
+        bytes: &[u8],
+    ) -> Option<(Self, F)>;
+*/
     /// Returns a `LegendreSymbol`, which indicates whether this field element
     /// is  1 : a quadratic residue
     ///  0 : equal to 0
