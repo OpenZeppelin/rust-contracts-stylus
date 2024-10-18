@@ -7,8 +7,8 @@ This is particularly useful for non-fungible tokens (NFTs) where each token is u
 [[usage]]
 == Usage
 
-In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin-stylus/0.1.0-rc/openzeppelin_stylus/token/erc721/extensions/uri_storage/index.html[URI Storage] flavour,
-your token should also use https://docs.rs/openzeppelin-stylus/0.1.0-rc/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`] extension to provide additional metadata for each token.
+In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/token/erc721/extensions/uri_storage/index.html[URI Storage] flavour,
+your token should also use https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`] extension to provide additional metadata for each token.
 You need to create a specified contract as follows:
 
 [source,rust]
@@ -28,7 +28,6 @@ sol_storage! {
         Erc721 erc721;
         #[borrow]
         Erc721Metadata metadata;
-        #[borrow]
         Erc721UriStorage uri_storage;
     }
 }
@@ -46,25 +45,11 @@ impl Erc721MetadataExample {
 
     #[selector(name = "tokenURI")]
     pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-        let _owner = self.erc721.owner_of(token_id)?;
-
-        let base = self.metadata.base_uri();
-        let token_uri = self.uri_storage.token_uri(token_id);
-
-        // If there is no base URI, return the token URI.
-        if base.is_empty() {
-            return Ok(token_uri);
-        }
-
-        // If both are set,
-        // concatenate the base URI and token URI.
-        let uri = if !token_uri.is_empty() {
-            base + &token_uri
-        } else {
-            base + &token_id.to_string()
-        };
-
-        Ok(uri)
+        Ok(self.uri_storage.token_uri(
+            token_id,
+            &self.erc721,
+            &self.metadata,
+        )?)
     }
 
     #[selector(name = "setTokenURI")]
