@@ -14,6 +14,7 @@ tiny-keccak.workspace = true
 num-traits = "0.2.14"
 zeroize = "1.8.1"
 num-bigint = "0.4.6"
+ruint = "1.12.3"
 # TODO#q: remove these dependencies. Used by poseidon-hash
 ark-ff = { version = "0.4.2", default-features = false }
 ark-std = { version = "0.4.0", default-features = false }

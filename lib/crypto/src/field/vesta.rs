@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use core::convert::TryInto;
 
 use ark_ff::fields::{Fp256, MontBackend, MontConfig};
 

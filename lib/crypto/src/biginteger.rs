@@ -1,3 +1,5 @@
+use alloc::vec;
+
 use ark_std::{
     borrow::Borrow,
     fmt::{Debug, Display, UpperHex},

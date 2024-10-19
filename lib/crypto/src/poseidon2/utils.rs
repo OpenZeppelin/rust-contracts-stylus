@@ -1,7 +1,7 @@
 // NOTE#q: this utils ported from root of poseidon2 crate
 
 // use core::cmp::min;
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use ark_ff::PrimeField;
 

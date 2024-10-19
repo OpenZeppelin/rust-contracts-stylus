@@ -1,4 +1,4 @@
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use std::sync::Arc;
 
 use lazy_static::lazy_static;

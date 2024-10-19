@@ -2586,6 +2586,7 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "rand",
+ "ruint",
  "tiny-keccak",
  "zeroize",
 ]

@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use ark_ff::PrimeField;
 // use rand::{thread_rng, Rng};
 // use sha3::digest::XofReader;
