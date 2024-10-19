@@ -1,7 +1,7 @@
 //! Defines the `#[interface_id]` procedural macro.
 
 // use std::mem;
-use core::mem;
+// use core::mem;
 
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
@@ -26,21 +26,25 @@ pub(crate) fn interface_id(
         };
 
         let mut override_fn_name = None;
-        for attr in mem::take(&mut func.attrs) {
+        // Create a new vector to hold the attributes we want to keep
+        let mut new_attrs = Vec::new();
+        for attr in &func.attrs {
             if attr.path().is_ident("selector") {
-                if override_fn_name.is_some() {
-                    error!(attr.path(), "more than one selector attribute");
-                }
                 let args: SelectorArgs = match attr.parse_args() {
                     Ok(args) => args,
                     Err(error) => error!(attr.path(), "{}", error),
                 };
+                if override_fn_name.is_some() {
+                    error!(attr.path(), "more than one selector attribute");
+                }
                 override_fn_name = Some(args.name);
             } else {
-                // Put back any other attributes.
-                func.attrs.push(attr);
+                // Keep other attributes
+                new_attrs.push(attr.clone());
             }
         }
+        // Replace the original attributes with the new vector
+        func.attrs = new_attrs;
 
         let solidity_fn_name = override_fn_name.unwrap_or_else(|| {
             let rust_fn_name = func.sig.ident.to_string();
