@@ -10,7 +10,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
@@ -797,7 +797,7 @@ name = "basic-example"
 version = "0.1.0"
 dependencies = [
  "alloy-primitives",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
@@ -1268,7 +1268,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
@@ -1520,7 +1520,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
@@ -1535,7 +1535,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
@@ -1551,7 +1551,7 @@ dependencies = [
  "alloy-sol-types",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "rand",
  "stylus-proc",
@@ -1567,7 +1567,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "rand",
  "stylus-proc",
@@ -1583,7 +1583,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "rand",
  "stylus-proc",
@@ -2364,7 +2364,7 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-crypto",
  "stylus-proc",
  "stylus-sdk",
@@ -2384,6 +2384,15 @@ checksum = "bd9993556d3850cdbd0da06a3dc81297edcfa050048952d84d75e8b944e8f5af"
 dependencies = [
  "cfg-if 1.0.0",
  "wee_alloc",
+]
+
+[[package]]
+name = "mini-alloc"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14eacc4bfcf10da9b6d5185ef51b2dc75434afac34b4d8aabe40f6b141ee071c"
+dependencies = [
+ "cfg-if 1.0.0",
 ]
 
 [[package]]
@@ -2577,7 +2586,7 @@ name = "openzeppelin-crypto"
 version = "0.1.0"
 dependencies = [
  "hex-literal",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "rand",
  "tiny-keccak",
 ]
@@ -2592,7 +2601,7 @@ dependencies = [
  "alloy-sol-macro-input",
  "alloy-sol-types",
  "keccak-const",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "motsu",
  "openzeppelin-stylus-proc",
  "rand",
@@ -2618,7 +2627,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
+ "mini-alloc 0.4.2",
  "openzeppelin-stylus",
  "stylus-proc",
  "stylus-sdk",
@@ -3561,6 +3570,7 @@ dependencies = [
  "hex",
  "keccak-const",
  "lazy_static",
+ "mini-alloc 0.6.0",
  "stylus-proc",
 ]
 
