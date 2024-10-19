@@ -1,0 +1,17 @@
+= ERC-1155
+
+ERC1155 is a novel token standard that aims to take the best from previous standards to create a xref:tokens.adoc#different-kinds-of-tokens[*fungibility-agnostic*] and *gas-efficient* xref:tokens.adoc#but_first_coffee_a_primer_on_token_contracts[token contract].
+
+TIP: ERC1155 draws ideas from all of https://docs.rs/openzeppelin_stylus/token/erc20/struct.Erc20.html[ERC20], https://docs.rs/openzeppelin_stylus/token/erc721/struct.Erc721.html[ERC721], and [ERC777]. 
+If you’re unfamiliar with those standards, head to their guides before moving on.
+
+== Multi Token Standard
+
+The distinctive feature of ERC1155 is that it uses a single smart contract to represent multiple tokens at once.
+This is why its [balanceOf] function differs from ERC20’s and ERC777’s: it has an additional `id` argument for the identifier of the token that you want to query the balance of.
+
+This is similar to how ERC721 does things, but in that standard a token `id` has no concept of balance: each token is non-fungible and exists or doesn’t.
+The ERC721 [balanceOf] function refers to how many different tokens an account has, not how many of each. On the other hand, in ERC1155 accounts have a distinct balance for each token `id`, and non-fungible tokens are implemented by simply minting a single one of them.
+
+This approach leads to massive gas savings for projects that require multiple tokens.
+Instead of deploying a new contract for each token type, a single ERC1155 token contract can hold the entire system state, reducing deployment costs and complexity.
