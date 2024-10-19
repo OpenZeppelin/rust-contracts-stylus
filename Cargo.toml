@@ -18,6 +18,7 @@ members = [
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
+  "examples/safe-erc20",
   "benches",
 ]
 default-members = [
@@ -32,6 +33,7 @@ default-members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/safe-erc20",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
