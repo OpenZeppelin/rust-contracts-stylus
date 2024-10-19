@@ -1,6 +1,7 @@
 //! Defines the `#[interface_id]` procedural macro.
 
-use std::mem;
+// use std::mem;
+use core::mem;
 
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
