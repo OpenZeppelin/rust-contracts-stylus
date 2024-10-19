@@ -28,7 +28,7 @@ pub fn signed_mod_reduction(n: u64, modulus: u64) -> i64 {
 
 /// This defines a `BigInteger`, a smart wrapper around a
 /// sequence of `u64` limbs, least-significant limb first.
-// TODO: get rid of this trait once we can use associated constants in const
+// TODO#q: get rid of this trait once we can use associated constants in const
 // generics.
 pub trait BigInteger:
     // CanonicalSerialize
