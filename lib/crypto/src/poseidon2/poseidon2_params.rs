@@ -1,4 +1,4 @@
-use alloc::{vec, vec::Vec};
+use alloc::{borrow::ToOwned, vec, vec::Vec};
 
 use ark_ff::PrimeField;
 
