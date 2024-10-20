@@ -43,9 +43,6 @@ impl MyContract { }
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
 
-#[global_allocator]
-static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
-
 pub mod access;
 pub mod token;
 pub mod utils;
