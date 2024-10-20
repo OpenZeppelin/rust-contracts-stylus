@@ -9,7 +9,6 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-mini-alloc.workspace = true
 tiny-keccak.workspace = true
 
 [dev-dependencies]
