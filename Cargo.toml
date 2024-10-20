@@ -65,7 +65,6 @@ all = "warn"
 # stylus-related
 stylus-sdk = "0.6.0"
 stylus-proc = { version = "=0.6.0", default-features = false }
-mini-alloc = "0.4.2"
 
 alloy = { version = "=0.1.4", features = [
   "contract",
