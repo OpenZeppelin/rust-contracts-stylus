@@ -29,6 +29,7 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
+          rustflags: ""
 
       - name: Add rust targets ${{ matrix.target }}
         run: rustup target add ${{ matrix.target }}
