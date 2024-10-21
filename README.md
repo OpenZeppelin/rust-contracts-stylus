@@ -34,6 +34,21 @@ changes from the `main` branch:
 openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus" }
 ```
 
+> [!NOTE]
+> This library is designed to be `no_std`, which helps reduce wasm size. When using it in your project, ensure that your dependencies are not importing the standard library. You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
+>
+> ```toml
+> [dependencies]
+> alloy-primitives = { version = "=0.7.6", default-features = false }
+> ```
+>
+> If you want to use it on an `std` environment, you will have to set the `std` flag when importing OpenZeppelin Contracts, otherwise you will get an error `found duplicate lang item 'panic_impl'` when building the project.
+>
+> ```toml
+> [dependencies]
+> openzeppelin-stylus = { version = "0.1.0", features = ["std"] }
+> ```
+
 Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 

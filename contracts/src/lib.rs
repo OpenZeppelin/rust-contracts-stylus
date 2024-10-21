@@ -22,6 +22,7 @@ Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
 ```ignore
+use stylus_sdk::prelude::*;
 use openzeppelin_stylus::token::erc20::Erc20;
 
 sol_storage! {
@@ -43,14 +44,11 @@ impl MyContract { }
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
 
-#[global_allocator]
-static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
-
 pub mod access;
 pub mod token;
 pub mod utils;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", not(feature = "std")))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
