@@ -25,7 +25,7 @@ jobs:
         with:
           target: wasm32-unknown-unknown
           components: rust-src
-          toolchain: nightly-2024-01-01
+          toolchain: nightly-2024-09-05
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -41,5 +41,5 @@ jobs:
         run: ./scripts/nitro-testnode.sh -d -i
       - name: run benches
         run: |
-          export NIGHTLY_TOOLCHAIN=${{steps.toolchain.outputs.name}}
+          export RUSTUP_TOOLCHAIN=${{steps.toolchain.outputs.name}}
           ./scripts/bench.sh
