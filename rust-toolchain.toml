@@ -3,4 +3,4 @@
 # the size limit.
 channel = "nightly-2024-09-05"
 components = ["rust-src"]
-targets = [ "wasm32-unknown-unknown"]
+targets = ["wasm32-unknown-unknown"]
