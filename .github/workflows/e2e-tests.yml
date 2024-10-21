@@ -30,9 +30,11 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           cache-key: "e2e-tests"
+          # Set default empty to avoid overriding rustflags with `.
+          rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.1
+        run: cargo install cargo-stylus@0.5.3
 
       - name: Install solc
         run: |
