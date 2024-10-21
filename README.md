@@ -3,11 +3,6 @@
 **A library for secure smart contract development** written in Rust for
 [Arbitrum Stylus](https://docs.arbitrum.io/stylus/stylus-gentle-introduction).
 
-> [!WARNING]
-> This project is still in a very early and experimental phase. It has never
-> been audited nor thoroughly reviewed for security vulnerabilities. Do not use
-> in production.
-
 ## Features
 
 - Security-first smart contracts, ported from the [`openzeppelin-contracts`]
@@ -31,7 +26,7 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "0.1.0-rc"
+openzeppelin-stylus = "0.1.0"
 ```
 
 Optionally, you can specify a git dependency if you want to have the latest
@@ -71,8 +66,7 @@ For more information on what this library will include in the future, see our
 [roadmap].
 
 [basic]: ./examples/basic
-
-[roadmap]: https://github.com/OpenZeppelin/rust-contracts-stylus/milestone/1
+[roadmap]: https://github.com/OpenZeppelin/rust-contracts-stylus/milestone/2
 
 ## Contribute
 
@@ -82,10 +76,7 @@ the [contribution guide](CONTRIBUTING.md)!
 
 ## Security
 
-> [!WARNING]
-> This project is still in a very early and experimental phase. It has never
-> been audited nor thoroughly reviewed for security vulnerabilities. Do not use
-> in production.
+Past audits can be found in [`audits/`](./audits).
 
 Refer to our [Security Policy](SECURITY.md) for more details.
 
