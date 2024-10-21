@@ -1,0 +1,6 @@
+[toolchain]
+# We should use stable here once nitro-testnode is updated and the contracts fit
+# the size limit.
+channel = "nightly-2024-09-05"
+components = ["rust-src"]
+targets = [ "wasm32-unknown-unknown"]

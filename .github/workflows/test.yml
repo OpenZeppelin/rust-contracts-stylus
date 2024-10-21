@@ -37,20 +37,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Install ${{ matrix.toolchain }}
-        uses: dtolnay/rust-toolchain@master
+
+      - name: Install rust ${{ matrix.toolchain }}
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
-      - name: cargo generate-lockfile
+
+      - name: Cargo generate-lockfile
         # Enable this ci template to run regardless of whether the lockfile is
         # checked in or not.
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
+
         # https://twitter.com/jonhoo/status/1571290371124260865
-      - name: cargo test --locked
+      - name: Run unit tests
         run: cargo test --locked --features std --all-targets
+
         # https://github.com/rust-lang/cargo/issues/6669
-      - name: cargo test --doc
+      - name: Run doc tests
         run: cargo test --locked --features std --doc
   os-check:
     # Run cargo test on MacOS and Windows.
@@ -66,12 +70,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: cargo generate-lockfile
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
-      - name: cargo test
+
+      - name: Run unit tests
         run: cargo test --locked --features std --all-targets
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
@@ -101,20 +110,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
+          toolchain: stable
           components: llvm-tools-preview
-      - name: cargo install cargo-llvm-cov
+
+      - name: Cargo install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
-      - name: cargo generate-lockfile
+
+      - name: Cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
-      - name: cargo llvm-cov
-        # FIXME: Include e2e tests in coverage.
+
+      - name: Cargo llvm-cov
         run: cargo llvm-cov --locked --features std --lcov --output-path lcov.info
+
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
+
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v4
         with:

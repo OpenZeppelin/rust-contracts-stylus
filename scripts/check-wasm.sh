@@ -22,8 +22,6 @@ get_example_crate_names () {
   find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
 }
 
-RUSTUP_TOOLCHAIN=${RUSTUP_TOOLCHAIN:-nightly}
-
 cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
 
 for CRATE_NAME in $(get_example_crate_names)
