@@ -160,8 +160,9 @@ impl MethodError for Error {
     }
 }
 
+pub use receiver::*;
 #[allow(missing_docs)]
-pub mod receiver {
+mod receiver {
     stylus_proc::sol_interface! {
         /// [`Erc721`] token receiver interface.
         ///
@@ -1120,7 +1121,7 @@ impl Erc721 {
             return Ok(());
         }
 
-        let receiver = receiver::IERC721Receiver::new(to);
+        let receiver = IERC721Receiver::new(to);
         let call = Call::new_in(self);
         let result = receiver.on_erc_721_received(
             call,
