@@ -11,10 +11,23 @@ version.workspace = true
 [dependencies]
 mini-alloc.workspace = true
 tiny-keccak.workspace = true
+itertools = "0.13.0"
+num-traits = "0.2.14"
+zeroize = "1.8.1"
+num-bigint = "0.4.6"
+ruint = { version = "1.12.3", features = ["zeroize", "num-traits", "num-bigint"] }
+educe = "0.6.0"
+ark-serialize = { version = "0.4.2", default-features = false }
+# TODO#q: remove these dependencies. Used by poseidon-hash
+ark-ff = { version = "0.4.2", default-features = false }
+ark-std = { version = "0.4.0", default-features = false, features = ["getrandom"] }
+lazy_static = "1.5.0"
+hex = "0.4.3"
 
 [dev-dependencies]
 hex-literal = "0.4.1"
 rand.workspace = true
+ruint = { version = "1.12.3", features = ["zeroize", "num-traits", "arbitrary"] }
 
 [features]
 std = []
