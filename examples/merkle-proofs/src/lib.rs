@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
+#![cfg_attr(not(feature = "std"), no_main)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -13,12 +13,6 @@ use stylus_sdk::{
     alloy_sol_types::sol,
     prelude::{entrypoint, public, sol_storage},
 };
-
-#[cfg(target_arch = "wasm32")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
 
 sol! {
     error MerkleProofInvalidMultiProofLength();

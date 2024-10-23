@@ -47,9 +47,3 @@ extern crate alloc;
 pub mod access;
 pub mod token;
 pub mod utils;
-
-#[cfg(all(target_arch = "wasm32", not(feature = "std")))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}

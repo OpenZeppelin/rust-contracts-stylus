@@ -31,7 +31,7 @@ rand.workspace = true
 std = []
 
 [lib]
-crate-type = ["lib", "cdylib"]
+crate-type = ["lib"]
 
 [lints]
 workspace = true
