@@ -160,7 +160,7 @@ impl MethodError for Error {
     }
 }
 
-pub use receiver::*;
+pub use receiver::IERC721Receiver;
 #[allow(missing_docs)]
 mod receiver {
     stylus_proc::sol_interface! {
