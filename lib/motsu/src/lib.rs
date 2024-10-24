@@ -42,20 +42,9 @@
 //! }
 //! ```
 //!
-//! Note that currently, test suites using [`motsu::test`][test_attribute] will
-//! run serially because of global access to storage.
-//!
-//! ### Notice
-//!
-//! We maintain this crate on a best-effort basis. We use it extensively on our
-//! own tests, so we will add here any symbols we may need. However, since we
-//! expect this to be a temporary solution, don't expect us to address all
-//! requests.
-//!
 //! [test_attribute]: crate::test
 mod context;
 pub mod prelude;
 mod shims;
-mod storage;
 
 pub use motsu_proc::test;

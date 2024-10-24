@@ -15,37 +15,39 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
     let fn_block = &item_fn.block;
     let fn_args = &sig.inputs;
 
-    // If the test function has no params, then it doesn't need access to the
-    // contract, so it is just a regular test.
-    if fn_args.is_empty() {
-        return quote! {
-            #( #attrs )*
-            #[test]
-            fn #fn_name() #fn_return_type {
-                let _lock = ::motsu::prelude::acquire_storage();
-                let res = #fn_block;
-                ::motsu::prelude::reset_storage();
-                res
-            }
-        }
-        .into();
+    // Currently, more than one contract per unit test is not supported.
+    if fn_args.len() > 1 {
+        error!(fn_args, "expected at most one contract in test signature");
     }
 
-    // We can unwrap because we handle the empty case above. We don't support
-    // more than one parameter for now, so we skip them.
-    let arg = fn_args.first().unwrap();
-    let FnArg::Typed(arg) = arg else {
-        error!(arg, "unexpected receiver argument in test signature");
-    };
-    let contract_arg_binding = &arg.pat;
-    let contract_ty = &arg.ty;
+    // Whether 1 or none contracts will be declared.
+    let contract_declarations = fn_args.into_iter().map(|arg| {
+        let FnArg::Typed(arg) = arg else {
+            error!(arg, "unexpected receiver argument in test signature");
+        };
+        let contract_arg_binding = &arg.pat;
+        let contract_ty = &arg.ty;
+
+        // Test case assumes, that contract's variable has `&mut` reference
+        // to contract's type.
+        quote! {
+            let mut #contract_arg_binding = <#contract_ty>::default();
+            let #contract_arg_binding = &mut #contract_arg_binding;
+        }
+    });
+
+    // Output full testcase function.
+    // Declare contract.
+    // And in the end, reset storage for test context.
     quote! {
         #( #attrs )*
         #[test]
         fn #fn_name() #fn_return_type {
-            ::motsu::prelude::with_context::<#contract_ty>(| #contract_arg_binding |
-                #fn_block
-            )
+            use ::motsu::prelude::DefaultStorage;
+            #( #contract_declarations )*
+            let res = #fn_block;
+            ::motsu::prelude::TestContext::current().reset_storage();
+            res
         }
     }
     .into()
