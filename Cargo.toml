@@ -63,9 +63,8 @@ all = "warn"
 
 [workspace.dependencies]
 # stylus-related
-stylus-sdk = { version = "=0.6.0", default-features = false }
-stylus-proc = { version = "=0.6.0", default-features = false }
-mini-alloc = "0.4.2"
+stylus-sdk = "0.6.0"
+stylus-proc = "0.6.0"
 
 alloy = { version = "=0.1.4", features = [
   "contract",
