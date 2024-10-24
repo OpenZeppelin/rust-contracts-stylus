@@ -18,27 +18,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up rust
-        uses: dtolnay/rust-toolchain@master
-        id: toolchain
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          target: wasm32-unknown-unknown
-          components: rust-src
-          toolchain: nightly-2024-01-01
+          rustflags: ""
 
-      - uses: Swatinem/rust-cache@v2
-
-      - name: check motsu-proc
+      - name: Check motsu-proc
         run: cargo publish -p motsu-proc --dry-run
 
-      - name: check motsu
+      - name: Check motsu
         run: cargo publish -p motsu --dry-run
 
-      - name: check openzeppelin-crypto
+      - name: Check openzeppelin-crypto
         run: cargo publish -p openzeppelin-crypto --target wasm32-unknown-unknown  --dry-run
 
-      - name: check openzeppelin-stylus-proc
+      - name: Check openzeppelin-stylus-proc
         run: cargo publish -p openzeppelin-stylus-proc --target wasm32-unknown-unknown  --dry-run
 
-      - name: check openzeppelin-stylus
+      - name: Check openzeppelin-stylus
         run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown  --dry-run
