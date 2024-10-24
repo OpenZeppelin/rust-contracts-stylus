@@ -32,7 +32,7 @@ jobs:
         with:
           target: wasm32-unknown-unknown
           components: rust-src
-          toolchain: nightly-2024-01-01
+          toolchain: nightly-2024-07-25
 
       - uses: Swatinem/rust-cache@v2
         with:
