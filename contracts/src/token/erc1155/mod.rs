@@ -170,6 +170,7 @@ impl MethodError for Error {
 
 pub use receiver::IERC1155Receiver;
 
+#[allow(missing_docs)]
 mod receiver {
     stylus_sdk::stylus_proc::sol_interface! {
         /// Interface that must be implemented by smart contracts
