@@ -23,8 +23,8 @@ impl TestContext {
 
     /// Get the value at `key` in storage.
     pub(crate) fn get_bytes(self, key: &Bytes32) -> Bytes32 {
-        let storage = TESTS_STORAGE.entry(self.thread_name).or_default();
-        storage.contract.get(key).copied().unwrap_or_default()
+        let storage = MOCK_STORAGE.entry(self.thread_name).or_default();
+        storage.contract_data.get(key).copied().unwrap_or_default()
     }
 
     /// Get the raw value at raw `key` in storage.
@@ -36,8 +36,8 @@ impl TestContext {
 
     /// Set the value at `key` in storage to `val`.
     pub(crate) fn set_bytes(self, key: Bytes32, val: Bytes32) {
-        let mut storage = TESTS_STORAGE.entry(self.thread_name).or_default();
-        storage.contract.insert(key, val);
+        let mut storage = MOCK_STORAGE.entry(self.thread_name).or_default();
+        storage.contract_data.insert(key, val);
     }
 
     /// Set the raw value at `key` in storage to raw `val`.
@@ -49,7 +49,7 @@ impl TestContext {
     /// Clears storage, removing all key-value pairs associated with the current
     /// test thread.
     pub fn reset_storage(self) {
-        TESTS_STORAGE.remove(&self.thread_name);
+        MOCK_STORAGE.remove(&self.thread_name);
     }
 }
 
@@ -58,7 +58,7 @@ impl TestContext {
 ///
 /// The key is the name of the test thread, and the value is the storage of the
 /// test case.
-static TESTS_STORAGE: Lazy<DashMap<TestThreadName, TestStorage>> =
+static MOCK_STORAGE: Lazy<DashMap<TestThreadName, MockStorage>> =
     Lazy::new(DashMap::new);
 
 /// Test thread name metadata.
@@ -76,10 +76,11 @@ impl TestThreadName {
     }
 }
 
-/// Context of the test case.
+/// Storage for unit test's mock data.
 #[derive(Default)]
-struct TestStorage {
-    pub contract: HashMap<Bytes32, Bytes32>,
+struct MockStorage {
+    /// Contract's mock data storage.
+    contract_data: HashMap<Bytes32, Bytes32>,
 }
 
 /// Read the word at address `key`.
