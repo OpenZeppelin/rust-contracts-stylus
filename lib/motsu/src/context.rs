@@ -9,6 +9,7 @@ use stylus_sdk::{alloy_primitives::uint, prelude::StorageType};
 use crate::prelude::{Bytes32, WORD_BYTES};
 
 /// Context of stylus unit tests associated with the current test thread.
+#[allow(clippy::module_name_repetitions)]
 pub struct TestContext {
     thread_name: TestThreadName,
 }
