@@ -17,6 +17,9 @@ use crate::utils::{
     math::storage::SubAssignUnchecked,
 };
 
+mod receiver;
+pub use receiver::IERC1155Receiver;
+
 /// `bytes4(
 ///     keccak256(
 ///         "onERC1155Received(address,address,uint256,uint256,bytes)"
@@ -168,65 +171,6 @@ impl MethodError for Error {
     }
 }
 
-pub use receiver::IERC1155Receiver;
-
-#[allow(missing_docs)]
-mod receiver {
-    stylus_sdk::stylus_proc::sol_interface! {
-        /// Interface that must be implemented by smart contracts
-        /// in order to receive ERC-1155 token transfers.
-        interface IERC1155Receiver {
-            /// Handles the receipt of a single ERC-1155 token type.
-            /// This function is called at the end of a
-            /// [`IErc1155::safe_batch_transfer_from`]
-            /// after the balance has been updated.
-            ///
-            /// NOTE: To accept the transfer,
-            /// this must return [`SINGLE_TRANSFER_FN_SELECTOR`],
-            /// or its own function selector.
-            ///
-            /// * `operator` - The address which initiated the transfer.
-            /// * `from` - The address which previously owned the token.
-            /// * `id` - The ID of the token being transferred.
-            /// * `value` - The amount of tokens being transferred.
-            /// * `data` - Additional data with no specified format.
-            #[allow(missing_docs)]
-            function onERC1155Received(
-                address operator,
-                address from,
-                uint256 id,
-                uint256 value,
-                bytes calldata data
-            ) external returns (bytes4);
-
-            /// Handles the receipt of a multiple ERC-1155 token types.
-            /// This function is called at the end of a
-            /// [`IErc1155::safe_batch_transfer_from`]
-            /// after the balances have been updated.
-            ///
-            /// NOTE: To accept the transfer(s),
-            /// this must return [`BATCH_TRANSFER_FN_SELECTOR`],
-            /// or its own function selector.
-            ///
-            /// * `operator` - The address which initiated the batch transfer.
-            /// * `from` - The address which previously owned the token.
-            /// * `ids` - An array containing ids of each token being transferred
-            ///   (order and length must match values array).
-            /// * `values` - An array containing amounts of each token
-            ///   being transferred (order and length must match ids array).
-            /// * `data` - Additional data with no specified format.
-            #[allow(missing_docs)]
-            function onERC1155BatchReceived(
-                address operator,
-                address from,
-                uint256[] calldata ids,
-                uint256[] calldata values,
-                bytes calldata data
-            ) external returns (bytes4);
-        }
-    }
-}
-
 sol_storage! {
     /// State of an [`Erc1155`] token.
     pub struct Erc1155 {
@@ -241,86 +185,6 @@ sol_storage! {
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc1155 {}
-
-/// Data structure to be passed to contract
-/// implementing [`IERC1155Receiver`] interface.
-struct Erc1155ReceiverData {
-    /// ERC-1155 Receiver function selector.
-    receiver_fn_selector: FixedBytes<4>,
-    /// Transfer details, either [`Transfer::Single`] or [`Transfer::Batch`].
-    transfer: Transfer,
-}
-
-impl Erc1155ReceiverData {
-    /// Creates a new instance based on transfer details.
-    /// Assumes that `ids` is not empty.
-    ///
-    /// If `ids` array has only 1 element,
-    /// it means that it is a [`Transfer::Single`].
-    /// If `ids` array has many elements,
-    /// it means that it is a [`Transfer::Batch`].
-    ///
-    /// NOTE: Does not check if `ids` length is equal to `values`.
-    ///
-    /// # Arguments
-    ///
-    /// * `ids` - Array of tokens ids being transferred.
-    /// * `values` - Array of all amount of tokens being transferred.
-    fn new(ids: Vec<U256>, values: Vec<U256>) -> Self {
-        if ids.len() == 1 {
-            Self::single(ids[0], values[0])
-        } else {
-            Self::batch(ids, values)
-        }
-    }
-
-    /// Creates a new instance for a [`Transfer::Single`].
-    /// Check [`IERC1155Receiver::on_erc_1155_received`].
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - Token id being transferred.
-    /// * `value` - Amount of tokens being transferred.
-    fn single(id: U256, value: U256) -> Self {
-        Self {
-            receiver_fn_selector: SINGLE_TRANSFER_FN_SELECTOR,
-            transfer: Transfer::Single { id, value },
-        }
-    }
-
-    /// Creates a new instance for a [`Transfer::Batch`].
-    /// Check [`IERC1155Receiver::on_erc_1155_batch_received`].
-    ///
-    /// # Arguments
-    ///
-    /// * `ids` - Array of tokens ids being transferred.
-    /// * `values` - Array of all amount of tokens being transferred.
-    fn batch(ids: Vec<U256>, values: Vec<U256>) -> Self {
-        Self {
-            receiver_fn_selector: BATCH_TRANSFER_FN_SELECTOR,
-            transfer: Transfer::Batch { ids, values },
-        }
-    }
-}
-
-/// Struct representing token transfer details.
-#[derive(Debug, PartialEq)]
-enum Transfer {
-    /// Transfer of a single token.
-    ///
-    /// # Attributes
-    ///
-    /// * `id` - Token id being transferred.
-    /// * `value` - Amount of tokens being transferred.
-    Single { id: U256, value: U256 },
-    /// Batch tokens transfer.
-    ///
-    /// # Attributes
-    ///
-    /// * `ids` - Array of tokens ids being transferred.
-    /// * `values` - Array of all amount of tokens being transferred.
-    Batch { ids: Vec<U256>, values: Vec<U256> },
-}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]
@@ -1227,6 +1091,87 @@ impl Erc1155 {
         Ok(())
     }
 }
+
+/// Data struct to be passed to a contract that
+/// implements [`IERC1155Receiver`] interface.
+struct Erc1155ReceiverData {
+    /// ERC-1155 Receiver function selector.
+    receiver_fn_selector: FixedBytes<4>,
+    /// Transfer details, either [`Transfer::Single`] or [`Transfer::Batch`].
+    transfer: Transfer,
+}
+
+impl Erc1155ReceiverData {
+    /// Creates a new instance based on transfer details.
+    /// Assumes that `ids` is not empty.
+    ///
+    /// If `ids` array has only 1 element,
+    /// it means that it is a [`Transfer::Single`].
+    /// If `ids` array has many elements,
+    /// it means that it is a [`Transfer::Batch`].
+    ///
+    /// NOTE: Does not check if `ids` length is equal to `values`.
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - Array of tokens ids being transferred.
+    /// * `values` - Array of all amount of tokens being transferred.
+    fn new(ids: Vec<U256>, values: Vec<U256>) -> Self {
+        if ids.len() == 1 {
+            Self::single(ids[0], values[0])
+        } else {
+            Self::batch(ids, values)
+        }
+    }
+
+    /// Creates a new instance for a [`Transfer::Single`].
+    /// Check [`IERC1155Receiver::on_erc_1155_received`].
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Token id being transferred.
+    /// * `value` - Amount of tokens being transferred.
+    fn single(id: U256, value: U256) -> Self {
+        Self {
+            receiver_fn_selector: SINGLE_TRANSFER_FN_SELECTOR,
+            transfer: Transfer::Single { id, value },
+        }
+    }
+
+    /// Creates a new instance for a [`Transfer::Batch`].
+    /// Check [`IERC1155Receiver::on_erc_1155_batch_received`].
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - Array of tokens ids being transferred.
+    /// * `values` - Array of all amount of tokens being transferred.
+    fn batch(ids: Vec<U256>, values: Vec<U256>) -> Self {
+        Self {
+            receiver_fn_selector: BATCH_TRANSFER_FN_SELECTOR,
+            transfer: Transfer::Batch { ids, values },
+        }
+    }
+}
+
+/// Struct representing token transfer details.
+#[derive(Debug, PartialEq)]
+enum Transfer {
+    /// Transfer of a single token.
+    ///
+    /// # Attributes
+    ///
+    /// * `id` - Token id being transferred.
+    /// * `value` - Amount of tokens being transferred.
+    Single { id: U256, value: U256 },
+    /// Batch tokens transfer.
+    ///
+    /// # Attributes
+    ///
+    /// * `ids` - Array of tokens ids being transferred.
+    /// * `values` - Array of all amount of tokens being transferred.
+    Batch { ids: Vec<U256>, values: Vec<U256> },
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
@@ -1239,9 +1184,7 @@ mod tests {
         IErc1155, Transfer, BATCH_TRANSFER_FN_SELECTOR,
         SINGLE_TRANSFER_FN_SELECTOR,
     };
-    use crate::{
-        token::erc721::IErc721, utils::introspection::erc165::IErc165,
-    };
+    use crate::utils::introspection::erc165::IErc165;
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
