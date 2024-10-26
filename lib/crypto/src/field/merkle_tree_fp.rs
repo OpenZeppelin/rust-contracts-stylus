@@ -1,7 +1,7 @@
 use alloc::{borrow::ToOwned, vec::Vec};
 use core::marker::PhantomData;
 
-use ark_ff::PrimeField;
+use crate::field::PrimeField;
 
 pub trait MerkleTreeHash<F: PrimeField> {
     fn compress(&self, input: &[&F]) -> F;

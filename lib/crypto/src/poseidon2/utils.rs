@@ -3,8 +3,7 @@
 // use core::cmp::min;
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
-use ark_ff::PrimeField;
-
+use crate::field::prime::PrimeField;
 // pub fn from_u64<F: PrimeField>(val: u64) -> F {
 //     F::from_repr(F::Repr::from(val)).unwrap()
 // }

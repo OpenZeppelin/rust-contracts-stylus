@@ -1,11 +1,12 @@
 use alloc::vec::Vec;
 
-use ark_ff::PrimeField;
 // use rand::{thread_rng, Rng};
 // use sha3::digest::XofReader;
 // use std::cmp::min;
 // use core::num::ParseIntError;
 use hex::FromHex;
+
+use crate::field::prime::PrimeField;
 
 pub fn from_hex<F: PrimeField>(s: &str) -> F {
     let a = Vec::from_hex(&s[2..]).expect("Invalid Hex String");

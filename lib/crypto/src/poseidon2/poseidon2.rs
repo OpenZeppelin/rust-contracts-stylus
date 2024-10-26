@@ -1,9 +1,7 @@
 use alloc::{borrow::ToOwned, sync::Arc, vec::Vec};
 
-use ark_ff::PrimeField;
-
 use super::poseidon2_params::Poseidon2Params;
-use crate::field::merkle_tree_fp::MerkleTreeHash;
+use crate::field::{merkle_tree_fp::MerkleTreeHash, prime::PrimeField};
 
 #[derive(Clone, Debug)]
 pub struct Poseidon2<F: PrimeField> {

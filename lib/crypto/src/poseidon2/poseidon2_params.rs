@@ -1,8 +1,6 @@
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
-use ark_ff::PrimeField;
-
-use crate::poseidon2::utils;
+use crate::{field::prime::PrimeField, poseidon2::utils};
 
 #[derive(Clone, Debug)]
 pub struct Poseidon2Params<F: PrimeField> {

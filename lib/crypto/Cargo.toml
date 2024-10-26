@@ -12,17 +12,17 @@ version.workspace = true
 mini-alloc.workspace = true
 tiny-keccak.workspace = true
 num-traits = "0.2.14"
-zeroize = "1.8.1"
+zeroize = { version = "1.8.1", features = ["derive"] }
 num-bigint = "0.4.6"
 ruint = "1.12.3"
 ark-serialize = { version = "0.4.2", default-features = false }
 ark-ff-macros = "0.4.2"
-educe = "0.6.0"
-# TODO#q: remove these dependencies. Used by poseidon-hash
-ark-ff = { version = "0.4.2", default-features = false }
 ark-std = { version = "0.4.0", default-features = false, features = ["getrandom"] }
-lazy_static = "1.5.0"
+educe = "0.6.0"
 hex = "0.4.3"
+
+# TODO#q: remove these dependencies. Used by poseidon-hash
+lazy_static = "1.5.0"
 
 [dev-dependencies]
 hex-literal = "0.4.1"
