@@ -1,7 +1,9 @@
 use alloc::{borrow::ToOwned, sync::Arc, vec::Vec};
 
 use super::poseidon2_params::Poseidon2Params;
-use crate::field::{merkle_tree_fp::MerkleTreeHash, prime::PrimeField};
+use crate::{
+    field::prime::PrimeField, poseidon2::merkle_tree_fp::MerkleTreeHash,
+};
 
 #[derive(Clone, Debug)]
 pub struct Poseidon2<F: PrimeField> {
@@ -603,15 +605,13 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 #[allow(unused_imports)]
 #[cfg(test)]
 mod poseidon2_tests_vesta {
-    use std::convert::TryFrom;
-
     use super::*;
     use crate::{
-        field::{
+        field::vesta::FpVesta,
+        poseidon2::{
+            poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
             utils::{from_hex, random_scalar},
-            vesta::FpVesta,
         },
-        poseidon2::poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
     };
 
     type Scalar = FpVesta;

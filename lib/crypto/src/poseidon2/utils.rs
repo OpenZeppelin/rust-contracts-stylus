@@ -3,10 +3,30 @@
 // use core::cmp::min;
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
+use hex::FromHex;
+
 use crate::field::prime::PrimeField;
-// pub fn from_u64<F: PrimeField>(val: u64) -> F {
-//     F::from_repr(F::Repr::from(val)).unwrap()
-// }
+
+pub fn from_hex<F: PrimeField>(s: &str) -> F {
+    let a = Vec::from_hex(&s[2..]).expect("Invalid Hex String");
+    F::from_be_bytes_mod_order(&a as &[u8])
+}
+
+pub fn random_scalar<F: PrimeField>() -> F {
+    let mut rng = ark_std::rand::thread_rng();
+    F::rand(&mut rng)
+}
+
+pub fn random_scalar_without_0<F: PrimeField>() -> F {
+    loop {
+        let element = random_scalar::<F>();
+        if !element.is_zero() {
+            return element;
+        }
+    }
+}
+
+//------------------------------------------------------------
 
 // guassian elimination
 pub fn mat_inverse<F: PrimeField>(mat: &[Vec<F>]) -> Vec<Vec<F>> {

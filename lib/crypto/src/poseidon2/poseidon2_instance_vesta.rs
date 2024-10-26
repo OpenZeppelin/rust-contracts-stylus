@@ -3,7 +3,7 @@ use alloc::{sync::Arc, vec, vec::Vec};
 use lazy_static::lazy_static;
 
 use super::poseidon2_params::Poseidon2Params;
-use crate::field::{utils::from_hex, vesta::FpVesta};
+use crate::{field::vesta::FpVesta, poseidon2::utils::from_hex};
 
 type Scalar = FpVesta;
 
