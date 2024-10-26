@@ -16,7 +16,6 @@ zeroize = { version = "1.8.1", features = ["derive"] }
 num-bigint = "0.4.6"
 ruint = "1.12.3"
 ark-serialize = { version = "0.4.2", default-features = false }
-ark-ff-macros = "0.4.2"
 ark-std = { version = "0.4.0", default-features = false, features = ["getrandom"] }
 educe = "0.6.0"
 hex = "0.4.3"
