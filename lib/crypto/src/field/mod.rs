@@ -7,6 +7,11 @@ use core::{
     },
 };
 
+use ark_serialize::{
+    CanonicalDeserialize, CanonicalDeserializeWithFlags, CanonicalSerialize,
+    CanonicalSerializeWithFlags, EmptyFlags, Flags,
+};
+use ark_std::UniformRand;
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
@@ -19,6 +24,7 @@ use crate::{
 };
 
 pub mod fft_friendly;
+pub mod fp;
 pub mod merkle_tree_fp;
 pub mod prime;
 pub mod sqrt;
@@ -42,14 +48,14 @@ pub trait Field:
     + One
     + Ord
     + Neg<Output = Self>
-    // + UniformRand  // TODO#q add unifrom randomisation
+    + UniformRand
     + Zeroize
     + Sized
     + Hash
-    // + CanonicalSerialize // TODO#q add this serialisation
-    // + CanonicalSerializeWithFlags
-    // + CanonicalDeserialize
-    // + CanonicalDeserializeWithFlags
+    + CanonicalSerialize
+    + CanonicalSerializeWithFlags
+    + CanonicalDeserialize
+    + CanonicalDeserializeWithFlags
     + AdditiveGroup<Scalar = Self>
     + Div<Self, Output = Self>
     + DivAssign<Self>
@@ -102,8 +108,8 @@ pub trait Field:
     /// Constructs a field element from a single base prime field elements.
     fn from_base_prime_field(elem: Self::BasePrimeField) -> Self;
 
-// TODO#q: add random bytes conversions
-/*    
+    // TODO#q: add random bytes conversions
+
     /// Attempt to deserialize a field element. Returns `None` if the
     /// deserialization fails.
     ///
@@ -112,7 +118,7 @@ pub trait Field:
     fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
         Self::from_random_bytes_with_flags::<EmptyFlags>(bytes).map(|f| f.0)
     }
-    
+
     /// Attempt to deserialize a field element, splitting the bitflags metadata
     /// according to `F` specification. Returns `None` if the deserialization
     /// fails.
@@ -122,7 +128,7 @@ pub trait Field:
     fn from_random_bytes_with_flags<F: Flags>(
         bytes: &[u8],
     ) -> Option<(Self, F)>;
-*/
+
     /// Returns a `LegendreSymbol`, which indicates whether this field element
     /// is  1 : a quadratic residue
     ///  0 : equal to 0
@@ -214,8 +220,7 @@ pub trait Field:
         exp: S,
     ) -> Option<Self> {
         let mut res = Self::one();
-        for (pow, bit) in
-            BitIteratorLE::without_trailing_zeros(exp).enumerate()
+        for (pow, bit) in BitIteratorLE::without_trailing_zeros(exp).enumerate()
         {
             if bit {
                 res *= powers_of_2.get(pow)?;
