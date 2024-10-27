@@ -417,69 +417,70 @@ impl<P: FpConfig<N>, const N: usize> PartialOrd for Fp<P, N> {
     }
 }
 
+//TODO#q: replace unwrap(...) with expect(...)
 impl<P: FpConfig<N>, const N: usize> From<u128> for Fp<P, N> {
-    fn from(mut other: u128) -> Self {
-        todo!()
+    fn from(other: u128) -> Self {
+        Fp::from_bigint(Uint::from_u128(other)).unwrap()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<i128> for Fp<P, N> {
     fn from(other: i128) -> Self {
-        todo!()
+        other.unsigned_abs().into()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<bool> for Fp<P, N> {
     fn from(other: bool) -> Self {
-        todo!()
+        u8::from(other).into()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<u64> for Fp<P, N> {
     fn from(other: u64) -> Self {
-        todo!()
+        Fp::from_bigint(Uint::from_u64(other)).unwrap()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<i64> for Fp<P, N> {
     fn from(other: i64) -> Self {
-        todo!()
+        other.unsigned_abs().into()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<u32> for Fp<P, N> {
     fn from(other: u32) -> Self {
-        todo!()
+        Fp::from_bigint(Uint::from_u32(other)).unwrap()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<i32> for Fp<P, N> {
     fn from(other: i32) -> Self {
-        todo!()
+        other.unsigned_abs().into()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<u16> for Fp<P, N> {
     fn from(other: u16) -> Self {
-        todo!()
+        Fp::from_bigint(Uint::from_u16(other)).unwrap()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<i16> for Fp<P, N> {
     fn from(other: i16) -> Self {
-        todo!()
+        other.unsigned_abs().into()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<u8> for Fp<P, N> {
     fn from(other: u8) -> Self {
-        todo!()
+        Fp::from_bigint(Uint::from_u8(other)).unwrap()
     }
 }
 
 impl<P: FpConfig<N>, const N: usize> From<i8> for Fp<P, N> {
     fn from(other: i8) -> Self {
-        todo!()
+        other.unsigned_abs().into()
     }
 }
 
