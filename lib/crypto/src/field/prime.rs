@@ -28,10 +28,7 @@ use crate::{biginteger::BigInteger, field::Field};
 /// assert_eq!(n, F::zero());
 /// ```
 pub trait PrimeField:
-    Field
-    + FromStr
-    + From<<Self as PrimeField>::BigInt>
-    + Into<<Self as PrimeField>::BigInt>
+    Field + From<<Self as PrimeField>::BigInt> + Into<<Self as PrimeField>::BigInt>
 {
     /// A `BigInteger` type that can represent elements of this field.
     type BigInt: BigInteger;

@@ -1,5 +1,4 @@
 use ark_std::UniformRand;
-use num_bigint::BigUint;
 
 use crate::biginteger::BigInteger;
 
@@ -218,6 +217,7 @@ fn biginteger_bits_test<B: BigInteger>() {
 
 // Test conversion from BigInteger to BigUint
 fn biginteger_conversion_test<B: BigInteger>() {
+    use num_bigint::BigUint;
     let mut rng = ark_std::test_rng();
 
     let x: B = UniformRand::rand(&mut rng);

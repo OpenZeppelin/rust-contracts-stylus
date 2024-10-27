@@ -1093,29 +1093,6 @@ impl<P: FpConfig<N>, const N: usize> CanonicalDeserialize for Fp<P, N> {
     }
 }
 
-impl<P: FpConfig<N>, const N: usize> FromStr for Fp<P, N> {
-    type Err = ();
-
-    /// Interpret a string of numbers as a (congruent) prime field element.
-    /// Does not accept unnecessary leading zeroes or a blank string.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use num_bigint::{BigInt, BigUint};
-        use num_traits::Signed;
-
-        let modulus = BigInt::from(P::MODULUS);
-        let mut a = BigInt::from_str(s).map_err(|_| ())? % &modulus;
-        if a.is_negative() {
-            a += modulus
-        }
-        BigUint::try_from(a)
-            .map_err(|_| ())
-            .and_then(TryFrom::try_from)
-            .ok()
-            .and_then(Self::from_bigint)
-            .ok_or(())
-    }
-}
-
 /// Outputs a string containing the value of `self`,
 /// represented as a decimal without leading zeroes.
 impl<P: FpConfig<N>, const N: usize> Display for Fp<P, N> {
@@ -1468,19 +1445,20 @@ impl<P: FpConfig<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
     }
 }
 
-impl<P: FpConfig<N>, const N: usize> From<num_bigint::BigUint> for Fp<P, N> {
-    #[inline]
-    fn from(val: num_bigint::BigUint) -> Fp<P, N> {
-        Fp::<P, N>::from_le_bytes_mod_order(&val.to_bytes_le())
-    }
-}
-
-impl<P: FpConfig<N>, const N: usize> From<Fp<P, N>> for num_bigint::BigUint {
-    #[inline(always)]
-    fn from(other: Fp<P, N>) -> Self {
-        other.into_bigint().into()
-    }
-}
+// TODO#q: add feature num_bigint
+// impl<P: FpConfig<N>, const N: usize> From<num_bigint::BigUint> for Fp<P, N> {
+//     #[inline]
+//     fn from(val: num_bigint::BigUint) -> Fp<P, N> {
+//         Fp::<P, N>::from_le_bytes_mod_order(&val.to_bytes_le())
+//     }
+// }
+//
+// impl<P: FpConfig<N>, const N: usize> From<Fp<P, N>> for num_bigint::BigUint {
+//     #[inline(always)]
+//     fn from(other: Fp<P, N>) -> Self {
+//         other.into_bigint().into()
+//     }
+// }
 
 impl<P: FpConfig<N>, const N: usize> From<Fp<P, N>> for BigInt<N> {
     #[inline(always)]
