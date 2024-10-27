@@ -3,28 +3,35 @@
 // use core::cmp::min;
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
+use crypto_bigint::U256;
 use hex::FromHex;
 
-use crate::field::prime::PrimeField;
+use crate::field::{prime::PrimeField, vesta::FpVesta};
 
-pub fn from_hex<F: PrimeField>(s: &str) -> F {
-    let a = Vec::from_hex(&s[2..]).expect("Invalid Hex String");
-    F::from_be_bytes_mod_order(&a as &[u8])
+pub fn from_hex(s: &str) -> FpVesta {
+    FpVesta::new(U256::from_be_hex(s))
 }
 
-pub fn random_scalar<F: PrimeField>() -> F {
-    let mut rng = ark_std::rand::thread_rng();
-    F::rand(&mut rng)
-}
+// TODO#q: use generic factory
+// pub fn from_hex<F: PrimeField>(s: &str) -> F {
+//     let a = Vec::from_hex(&s[2..]).expect("Invalid Hex String");
+//     F::from_be_bytes_mod_order(&a as &[u8])
+// }
 
-pub fn random_scalar_without_0<F: PrimeField>() -> F {
-    loop {
-        let element = random_scalar::<F>();
-        if !element.is_zero() {
-            return element;
-        }
-    }
-}
+// TODO#q: add random
+// pub fn random_scalar<F: PrimeField>() -> F {
+//     let mut rng = ark_std::rand::thread_rng();
+//     F::rand(&mut rng)
+// }
+
+// pub fn random_scalar_without_0<F: PrimeField>() -> F {
+//     loop {
+//         let element = random_scalar::<F>();
+//         if !element.is_zero() {
+//             return element;
+//         }
+//     }
+// }
 
 //------------------------------------------------------------
 
