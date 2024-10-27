@@ -2611,6 +2611,7 @@ version = "0.1.0-rc"
 dependencies = [
  "ark-serialize 0.4.2",
  "ark-std 0.4.0",
+ "crypto-bigint",
  "educe",
  "hex",
  "hex-literal",

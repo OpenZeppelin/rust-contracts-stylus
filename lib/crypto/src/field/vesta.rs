@@ -13,6 +13,7 @@ pub type FpVesta = Fp256<FieldConfig>;
 use crate::{field::fp::Fp, BigInt};
 #[automatically_derived]
 impl FpConfig<4usize> for FieldConfig {
+    // TODO#q: convert from number
     const GENERATOR: Fp<FieldConfig, 4> = {
         let (is_positive, limbs) = (
             true,

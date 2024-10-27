@@ -97,14 +97,10 @@ pub trait Field:
     + One
     + Ord
     + Neg<Output = Self>
-    + UniformRand
+    // + UniformRand // TODO#q: and random
     + Zeroize
     + Sized
     + Hash
-    + CanonicalSerialize // TODO#q: remove
-    + CanonicalSerializeWithFlags // TODO#q: remove
-    + CanonicalDeserialize // TODO#q: remove
-    + CanonicalDeserializeWithFlags // TODO#q: remove
     + AdditiveGroup<Scalar = Self>
     + Div<Self, Output = Self>
     + DivAssign<Self>
@@ -136,27 +132,6 @@ pub trait Field:
     /// Returns the extension degree of this field with respect
     /// to `Self::BasePrimeField`.
     fn extension_degree() -> u64;
-
-    // TODO#q: remove
-    /// Attempt to deserialize a field element. Returns `None` if the
-    /// deserialization fails.
-    ///
-    /// This function is primarily intended for sampling random field elements
-    /// from a hash-function or RNG output.
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-        Self::from_random_bytes_with_flags::<EmptyFlags>(bytes).map(|f| f.0)
-    }
-
-    // TODO#q: remove
-    /// Attempt to deserialize a field element, splitting the bitflags metadata
-    /// according to `F` specification. Returns `None` if the deserialization
-    /// fails.
-    ///
-    /// This function is primarily intended for sampling random field elements
-    /// from a hash-function or RNG output.
-    fn from_random_bytes_with_flags<F: Flags>(
-        bytes: &[u8],
-    ) -> Option<(Self, F)>;
 
     /// Returns `self * self`.
     #[must_use]
@@ -219,8 +194,6 @@ pub trait AdditiveGroup:
     Eq
     + 'static
     + Sized
-    + CanonicalSerialize // TODO#q: remove
-    + CanonicalDeserialize // TODO#q: remove
     + Copy
     + Clone
     + Default

@@ -1,5 +1,3 @@
-use core::str::FromStr;
-
 use ark_std::cmp::min;
 
 use crate::{biginteger::BigInteger, field::Field};
@@ -49,47 +47,4 @@ pub trait PrimeField:
     /// Converts an element of the prime field into an integer in the range
     /// 0..(p - 1).
     fn into_bigint(self) -> Self::BigInt;
-
-    // TODO#q: remove
-    // TODO#q: this is necessary for hex conversion
-    /// Reads bytes in big-endian, and converts them to a field element.
-    /// If the integer represented by `bytes` is larger than the modulus `p`,
-    /// this method performs the appropriate reduction.
-    fn from_be_bytes_mod_order(bytes: &[u8]) -> Self {
-        let mut bytes_copy = bytes.to_vec();
-        bytes_copy.reverse();
-        Self::from_le_bytes_mod_order(&bytes_copy)
-    }
-
-    // TODO#q: remove
-    /// Reads bytes in little-endian, and converts them to a field element.
-    /// If the integer represented by `bytes` is larger than the modulus `p`,
-    /// this method performs the appropriate reduction.
-    fn from_le_bytes_mod_order(bytes: &[u8]) -> Self {
-        let num_modulus_bytes = ((Self::MODULUS_BIT_SIZE + 7) / 8) as usize;
-        let num_bytes_to_directly_convert =
-            min(num_modulus_bytes - 1, bytes.len());
-        // Copy the leading little-endian bytes directly into a field element.
-        // The number of bytes directly converted must be less than the
-        // number of bytes needed to represent the modulus, as we must begin
-        // modular reduction once the data is of the same number of bytes as the
-        // modulus.
-        let (bytes, bytes_to_directly_convert) =
-            bytes.split_at(bytes.len() - num_bytes_to_directly_convert);
-        // Guaranteed to not be None, as the input is less than the modulus
-        // size.
-        let mut res =
-            Self::from_random_bytes(&bytes_to_directly_convert).unwrap();
-
-        // Update the result, byte by byte.
-        // We go through existing field arithmetic, which handles the reduction.
-        // TODO: If we need higher speeds, parse more bytes at once, or
-        // implement modular multiplication by a u64
-        let window_size = Self::from(256u64);
-        for byte in bytes.iter().rev() {
-            res *= window_size;
-            res += Self::from(*byte);
-        }
-        res
-    }
 }

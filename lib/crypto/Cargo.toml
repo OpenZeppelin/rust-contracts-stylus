@@ -15,6 +15,7 @@ num-traits = "0.2.14"
 zeroize = { version = "1.8.1", features = ["derive"] }
 educe = "0.6.0"
 hex = "0.4.3"
+crypto-bigint = { version = "0.5.5", features = ["zeroize"] }
 
 # TODO#q: add feature flag and conversion to Fp
 num-bigint = "0.4.6"
