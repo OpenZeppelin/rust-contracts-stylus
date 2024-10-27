@@ -20,6 +20,7 @@ use ark_std::{
     vec::*,
     UniformRand,
 };
+use crypto_bigint::Uint;
 use num_bigint::BigUint;
 use zeroize::Zeroize;
 
@@ -27,9 +28,6 @@ use crate::{
     bits::{BitIteratorBE, BitIteratorLE},
     const_for,
 };
-
-#[macro_use]
-pub mod arithmetic;
 
 /// This defines a `BigInteger`, a smart wrapper around a
 /// sequence of `u64` limbs, least-significant limb first.

@@ -349,8 +349,7 @@ impl<P: FpConfig<N>, const N: usize> PrimeField for Fp<P, N> {
     type BigInt = Uint<N>;
 
     const MODULUS: Self::BigInt = P::MODULUS;
-    const MODULUS_BIT_SIZE: u32 = P::MODULUS.const_num_bits();
-    const TRACE: Self::BigInt = P::MODULUS.two_adic_coefficient();
+    const MODULUS_BIT_SIZE: usize = P::MODULUS.bits();
 
     #[inline]
     fn from_bigint(r: Uint<N>) -> Option<Self> {

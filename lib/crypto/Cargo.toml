@@ -21,7 +21,7 @@ crypto-bigint = { version = "0.5.5", features = ["zeroize"] }
 num-bigint = "0.4.6"
 
 # TODO#q: add feature flag and conversion to Fp
-ruint = "1.12.3"
+#ruint = "1.12.3"
 
 # TODO#q: remove these dependencies. Used by poseidon-hash
 lazy_static = "1.5.0"
