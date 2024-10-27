@@ -10,7 +10,8 @@ use crate::{
 
 /// The interface for a prime field, i.e. the field of integers modulo a prime
 /// $p$. In the following example we'll use the prime field underlying the
-/// BLS12-381 G1 curve. ```rust
+/// BLS12-381 G1 curve.
+/// ```rust
 /// use ark_ff::{BigInteger, Field, PrimeField, Zero};
 /// use ark_std::{test_rng, One, UniformRand};
 /// use ark_test_curves::bls12_381::Fq as F;

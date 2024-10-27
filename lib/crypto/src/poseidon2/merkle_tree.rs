@@ -7,6 +7,7 @@ pub trait MerkleTreeHash<F: PrimeField> {
     fn compress(&self, input: &[&F]) -> F;
 }
 
+// TODO#q: use our MerkleTree
 #[derive(Clone, Debug)]
 pub struct MerkleTree<F: PrimeField, P: MerkleTreeHash<F>> {
     perm: P,

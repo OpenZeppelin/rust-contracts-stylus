@@ -1323,6 +1323,8 @@ pub trait BigInteger:
     /// ```
     fn to_bytes_le(&self) -> Vec<u8>;
 
+    /// NOTE#q: not used in poseidon
+    /// TODO#q: remove
     /// Returns the windowed non-adjacent form of `self`, for a window of size
     /// `w`.
     fn find_wnaf(&self, w: usize) -> Option<Vec<i64>> {

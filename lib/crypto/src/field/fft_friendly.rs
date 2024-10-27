@@ -1,5 +1,8 @@
 use crate::field::{utils, Field};
 
+/// NOTE#q: not used in poseidon
+/// TODO#q: remove
+
 /// The interface for fields that are able to be used in FFTs.
 pub trait FftField: Field {
     /// The generator of the multiplicative group of the field

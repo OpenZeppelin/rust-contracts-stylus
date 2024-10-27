@@ -76,6 +76,8 @@ pub trait Field:
     + From<bool>
     + Product<Self>
 {
+    // TODO#q: can we reverse inheritance? Rename Field -> PrimeField and
+    //  inherit ExtensionField: PrimeField
     type BasePrimeField: PrimeField;
 
     /// Determines the algorithm for computing square roots.
@@ -107,8 +109,6 @@ pub trait Field:
     /// Constructs a field element from a single base prime field elements.
     fn from_base_prime_field(elem: Self::BasePrimeField) -> Self;
 
-    // TODO#q: add random bytes conversions
-
     /// Attempt to deserialize a field element. Returns `None` if the
     /// deserialization fails.
     ///
@@ -134,6 +134,8 @@ pub trait Field:
     /// -1 : a quadratic non-residue
     fn legendre(&self) -> LegendreSymbol;
 
+    // NOTE#q: not used in poseidon
+    // TODO#q: remove
     /// Returns the square root of self, if it exists.
     #[must_use]
     fn sqrt(&self) -> Option<Self> {
@@ -166,6 +168,8 @@ pub trait Field:
     /// sets `self` to `self.inverse().unwrap()`.
     fn inverse_in_place(&mut self) -> Option<&mut Self>;
 
+    /// NOTE#q: not used in poseidon
+    /// TODO#q: remove
     /// Returns `sum([a_i * b_i])`.
     #[inline]
     fn sum_of_products<const T: usize>(a: &[Self; T], b: &[Self; T]) -> Self {
@@ -176,11 +180,15 @@ pub trait Field:
         sum
     }
 
+    /// NOTE#q: not used in poseidon
+    /// TODO#q: remove
     /// Sets `self` to `self^s`, where `s =
     /// Self::BasePrimeField::MODULUS^power`. This is also called the
     /// Frobenius automorphism.
     fn frobenius_map_in_place(&mut self, power: usize);
 
+    /// NOTE#q: not used in poseidon
+    /// TODO#q: remove
     /// Returns `self^s`, where `s = Self::BasePrimeField::MODULUS^power`.
     /// This is also called the Frobenius automorphism.
     #[must_use]
@@ -190,6 +198,7 @@ pub trait Field:
         this
     }
 
+    // NOTE#q: not used in poseidon
     /// Returns `self^exp`, where `exp` is an integer represented with `u64`
     /// limbs, least significant limb first.
     #[must_use]
@@ -206,6 +215,7 @@ pub trait Field:
         res
     }
 
+    // NOTE#q: not used in poseidon
     /// Exponentiates a field element `f` by a number represented with `u64`
     /// limbs, using a precomputed table containing as many powers of 2 of
     /// `f` as the 1 + the floor of log2 of the exponent `exp`, starting
@@ -235,8 +245,8 @@ pub trait AdditiveGroup:
     Eq
     + 'static
     + Sized
-    // + CanonicalSerialize // TODO#q add this serialisation
-    // + CanonicalDeserialize
+    + CanonicalSerialize
+    + CanonicalDeserialize
     + Copy
     + Clone
     + Default

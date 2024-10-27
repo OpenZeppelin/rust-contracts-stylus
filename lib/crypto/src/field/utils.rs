@@ -1,3 +1,6 @@
+/// NOTE#q: not used in poseidon
+/// TODO#q: remove
+
 /// Calculates the k-adicity of n, i.e., the number of trailing 0s in a base-k
 /// representation.
 pub fn k_adicity(k: u64, mut n: u64) -> u32 {
