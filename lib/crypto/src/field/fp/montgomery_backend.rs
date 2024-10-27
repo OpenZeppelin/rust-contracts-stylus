@@ -389,7 +389,7 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
 }
 
 /// Compute -M^{-1} mod 2^64.
-pub const fn inv<T: MontConfig<N>, const N: usize>() -> u64 {
+pub const fn inv<T: FpConfig<N>, const N: usize>() -> u64 {
     // We compute this as follows.
     // First, MODULUS mod 2^64 is just the lower 64 bits of MODULUS.
     // Hence MODULUS mod 2^64 = MODULUS.0[0] mod 2^64.
@@ -411,7 +411,7 @@ pub const fn inv<T: MontConfig<N>, const N: usize>() -> u64 {
 
 #[inline]
 pub const fn can_use_no_carry_mul_optimization<
-    T: MontConfig<N>,
+    T: FpConfig<N>,
     const N: usize,
 >() -> bool {
     // Checking the modulus at compile time
@@ -423,7 +423,7 @@ pub const fn can_use_no_carry_mul_optimization<
 }
 
 #[inline]
-pub const fn modulus_has_spare_bit<T: MontConfig<N>, const N: usize>() -> bool {
+pub const fn modulus_has_spare_bit<T: FpConfig<N>, const N: usize>() -> bool {
     T::MODULUS.0[N - 1] >> 63 == 0
 }
 
@@ -530,148 +530,6 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     #[allow(clippy::modulo_one)]
     fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
         T::into_bigint(a)
-    }
-}
-
-impl<T: MontConfig<N>, const N: usize> Fp<MontBackend<T, N>, N> {
-    #[doc(hidden)]
-    pub const INV: u64 = T::INV;
-    #[doc(hidden)]
-    pub const R: BigInt<N> = T::R;
-    #[doc(hidden)]
-    pub const R2: BigInt<N> = T::R2;
-
-    /// Construct a new field element from its underlying
-    /// [`struct@BigInt`] data type.
-    #[inline]
-    pub const fn new(element: BigInt<N>) -> Self {
-        let mut r = Self(element, PhantomData);
-        if r.const_is_zero() {
-            r
-        } else {
-            r = r.mul(&Fp(T::R2, PhantomData));
-            r
-        }
-    }
-
-    /// Construct a new field element from its underlying
-    /// [`struct@BigInt`] data type.
-    ///
-    /// Unlike [`Self::new`], this method does not perform Montgomery reduction.
-    /// Thus, this method should be used only when constructing
-    /// an element from an integer that has already been put in
-    /// Montgomery form.
-    #[inline]
-    pub const fn new_unchecked(element: BigInt<N>) -> Self {
-        Self(element, PhantomData)
-    }
-
-    const fn const_is_zero(&self) -> bool {
-        self.0.const_is_zero()
-    }
-
-    #[doc(hidden)]
-    const fn const_neg(self) -> Self {
-        if !self.const_is_zero() {
-            Self::new_unchecked(Self::sub_with_borrow(&T::MODULUS, &self.0))
-        } else {
-            self
-        }
-    }
-
-    /// Interpret a set of limbs (along with a sign) as a field element.
-    /// For *internal* use only; please use the `ark_ff::MontFp` macro instead
-    /// of this method
-    #[doc(hidden)]
-    pub const fn from_sign_and_limbs(is_positive: bool, limbs: &[u64]) -> Self {
-        let mut repr = BigInt::<N>([0; N]);
-        assert!(limbs.len() <= N);
-        crate::const_for!((i in 0..(limbs.len())) {
-            repr.0[i] = limbs[i];
-        });
-        let res = Self::new(repr);
-        if is_positive {
-            res
-        } else {
-            res.const_neg()
-        }
-    }
-
-    const fn mul_without_cond_subtract(mut self, other: &Self) -> (bool, Self) {
-        let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
-        crate::const_for!((i in 0..N) {
-            let mut carry = 0;
-            crate::const_for!((j in 0..N) {
-                let k = i + j;
-                if k >= N {
-                    hi[k - N] = mac_with_carry!(hi[k - N], (self.0).0[i], (other.0).0[j], &mut carry);
-                } else {
-                    lo[k] = mac_with_carry!(lo[k], (self.0).0[i], (other.0).0[j], &mut carry);
-                }
-            });
-            hi[i] = carry;
-        });
-        // Montgomery reduction
-        let mut carry2 = 0;
-        crate::const_for!((i in 0..N) {
-            let tmp = lo[i].wrapping_mul(T::INV);
-            let mut carry;
-            mac!(lo[i], tmp, T::MODULUS.0[0], &mut carry);
-            crate::const_for!((j in 1..N) {
-                let k = i + j;
-                if k >= N {
-                    hi[k - N] = mac_with_carry!(hi[k - N], tmp, T::MODULUS.0[j], &mut carry);
-                }  else {
-                    lo[k] = mac_with_carry!(lo[k], tmp, T::MODULUS.0[j], &mut carry);
-                }
-            });
-            hi[i] = adc!(hi[i], carry, &mut carry2);
-        });
-
-        crate::const_for!((i in 0..N) {
-            (self.0).0[i] = hi[i];
-        });
-        (carry2 != 0, self)
-    }
-
-    const fn mul(self, other: &Self) -> Self {
-        let (carry, res) = self.mul_without_cond_subtract(other);
-        if T::MODULUS_HAS_SPARE_BIT {
-            res.const_subtract_modulus()
-        } else {
-            res.const_subtract_modulus_with_carry(carry)
-        }
-    }
-
-    const fn const_is_valid(&self) -> bool {
-        crate::const_for!((i in 0..N) {
-            if (self.0).0[N - i - 1] < T::MODULUS.0[N - i - 1] {
-                return true
-            } else if (self.0).0[N - i - 1] > T::MODULUS.0[N - i - 1] {
-                return false
-            }
-        });
-        false
-    }
-
-    #[inline]
-    const fn const_subtract_modulus(mut self) -> Self {
-        if !self.const_is_valid() {
-            self.0 = Self::sub_with_borrow(&self.0, &T::MODULUS);
-        }
-        self
-    }
-
-    #[inline]
-    const fn const_subtract_modulus_with_carry(mut self, carry: bool) -> Self {
-        if carry || !self.const_is_valid() {
-            self.0 = Self::sub_with_borrow(&self.0, &T::MODULUS);
-        }
-        self
-    }
-
-    const fn sub_with_borrow(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
-        a.const_sub_with_borrow(b).0
     }
 }
 
