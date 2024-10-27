@@ -315,7 +315,7 @@ impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
 
     #[inline]
     fn characteristic() -> &'static [u64] {
-        P::MODULUS.as_ref()
+        P::MODULUS.as_words()
     }
 
     #[inline]

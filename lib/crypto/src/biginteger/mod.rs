@@ -44,8 +44,8 @@ pub trait BigInteger:
     + 'static
     // + UniformRand // TODO#q: implement UnifromRand
     + Zeroize
-    + AsMut<[u64]>
-    + AsRef<[u64]>
+    // + AsMut<[u64]> // TODO#q: think how to hold a reference to bytes
+    // + AsRef<[u64]>
     + From<u64>
     + From<u32>
     + From<u16>
@@ -367,7 +367,8 @@ pub trait BigInteger:
     /// ```
     fn from_bits_le(bits: &[bool]) -> Self;
 
-    /// Returns the bit representation in a big endian boolean array,
+    // TODO#q: reuse BitIterator
+/*    /// Returns the bit representation in a big endian boolean array,
     /// with leading zeroes.
     /// # Example
     ///
@@ -399,7 +400,7 @@ pub trait BigInteger:
     /// ```
     fn to_bits_le(&self) -> Vec<bool> {
         BitIteratorLE::new(self).collect::<Vec<_>>()
-    }
+    }*/
 
     /// Returns the byte representation in a big endian byte array,
     /// with leading zeros.
@@ -499,13 +500,14 @@ impl<const N: usize> BigInteger for crypto_bigint::Uint<N> {
         todo!()
     }
 
-    fn to_bits_be(&self) -> Vec<bool> {
+    // TODO#q: reuse bit iterator
+    /*fn to_bits_be(&self) -> Vec<bool> {
         todo!()
     }
 
     fn to_bits_le(&self) -> Vec<bool> {
         todo!()
-    }
+    }*/
 
     fn to_bytes_be(&self) -> Vec<u8> {
         todo!()

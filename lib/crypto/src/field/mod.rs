@@ -147,7 +147,9 @@ pub trait Field:
     /// If `self.inverse().is_none()`, this just returns `None`. Otherwise, it
     /// sets `self` to `self.inverse().unwrap()`.
     fn inverse_in_place(&mut self) -> Option<&mut Self>;
-
+    
+    // TODO#q: reuse bit iterator
+    /*
     // NOTE#q: not used in poseidon
     /// Returns `self^exp`, where `exp` is an integer represented with `u64`
     /// limbs, least significant limb first.
@@ -187,6 +189,7 @@ pub trait Field:
         }
         Some(res)
     }
+    */
 }
 
 // TODO#q: move to a different module
