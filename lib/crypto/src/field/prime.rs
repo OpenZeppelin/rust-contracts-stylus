@@ -50,6 +50,7 @@ pub trait PrimeField:
     /// 0..(p - 1).
     fn into_bigint(self) -> Self::BigInt;
 
+    // TODO#q: remove
     // TODO#q: this is necessary for hex conversion
     /// Reads bytes in big-endian, and converts them to a field element.
     /// If the integer represented by `bytes` is larger than the modulus `p`,
@@ -60,6 +61,7 @@ pub trait PrimeField:
         Self::from_le_bytes_mod_order(&bytes_copy)
     }
 
+    // TODO#q: remove
     /// Reads bytes in little-endian, and converts them to a field element.
     /// If the integer represented by `bytes` is larger than the modulus `p`,
     /// this method performs the appropriate reduction.

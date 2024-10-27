@@ -101,10 +101,10 @@ pub trait Field:
     + Zeroize
     + Sized
     + Hash
-    + CanonicalSerialize
-    + CanonicalSerializeWithFlags
-    + CanonicalDeserialize
-    + CanonicalDeserializeWithFlags
+    + CanonicalSerialize // TODO#q: remove
+    + CanonicalSerializeWithFlags // TODO#q: remove
+    + CanonicalDeserialize // TODO#q: remove
+    + CanonicalDeserializeWithFlags // TODO#q: remove
     + AdditiveGroup<Scalar = Self>
     + Div<Self, Output = Self>
     + DivAssign<Self>
@@ -137,6 +137,7 @@ pub trait Field:
     /// to `Self::BasePrimeField`.
     fn extension_degree() -> u64;
 
+    // TODO#q: remove
     /// Attempt to deserialize a field element. Returns `None` if the
     /// deserialization fails.
     ///
@@ -146,6 +147,7 @@ pub trait Field:
         Self::from_random_bytes_with_flags::<EmptyFlags>(bytes).map(|f| f.0)
     }
 
+    // TODO#q: remove
     /// Attempt to deserialize a field element, splitting the bitflags metadata
     /// according to `F` specification. Returns `None` if the deserialization
     /// fails.
@@ -217,8 +219,8 @@ pub trait AdditiveGroup:
     Eq
     + 'static
     + Sized
-    + CanonicalSerialize
-    + CanonicalDeserialize
+    + CanonicalSerialize // TODO#q: remove
+    + CanonicalDeserialize // TODO#q: remove
     + Copy
     + Clone
     + Default

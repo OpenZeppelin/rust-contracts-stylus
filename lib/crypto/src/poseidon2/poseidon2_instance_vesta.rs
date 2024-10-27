@@ -7,6 +7,8 @@ use crate::{field::vesta::FpVesta, poseidon2::utils::from_hex};
 
 type Scalar = FpVesta;
 
+// TODO#q: use crypto_bigint Fp::new(U256:from_be_hex("0x..."))
+
 lazy_static! {
     pub static ref MAT_DIAG3_M_1: Vec<Scalar> = vec![
         from_hex("0x0000000000000000000000000000000000000000000000000000000000000001"),
