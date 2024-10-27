@@ -4,12 +4,15 @@
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
 use crypto_bigint::U256;
-use hex::FromHex;
 
 use crate::field::{prime::PrimeField, vesta::FpVesta};
 
 pub fn from_hex(s: &str) -> FpVesta {
-    FpVesta::new(U256::from_be_hex(s))
+    let hex_bytes = s.as_bytes();
+    let hex_bytes = &hex_bytes[2..];
+    let be_slice = hex::decode(hex_bytes).unwrap();
+
+    FpVesta::new(U256::from_be_slice(&be_slice))
 }
 
 // TODO#q: use generic factory
