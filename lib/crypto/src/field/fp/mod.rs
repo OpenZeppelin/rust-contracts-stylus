@@ -15,7 +15,10 @@ use ark_std::{
     str::FromStr,
     string::*,
 };
-use crypto_bigint::Uint;
+use crypto_bigint::{
+    modular::constant_mod::{Residue, ResidueParams},
+    Limb, Uint, Word, U256,
+};
 use educe::Educe;
 use num_traits::{One, Zero};
 
@@ -195,6 +198,35 @@ pub type Fp704<P> = Fp<P, 11>;
 pub type Fp768<P> = Fp<P, 12>;
 pub type Fp832<P> = Fp<P, 13>;
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct Modulus<const LIMBS: usize> {}
+impl<const LIMBS: usize> ResidueParams<LIMBS> for Modulus<LIMBS> {
+    const LIMBS: usize = LIMBS;
+    const MODULUS: Uint<LIMBS> = {
+        let res = <Uint<LIMBS>>::from_be_hex(
+            "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
+        );
+
+        if res.as_limbs()[0].0 & 1 == 0 {
+            panic!("modulus must be odd");
+        }
+
+        res
+    };
+    const MOD_NEG_INV: Limb = Limb(Word::MIN.wrapping_sub(
+        Self::MODULUS.inv_mod2k_vartime(Word::BITS as usize).as_limbs()[0].0,
+    ));
+    const R: Uint<LIMBS> =
+        Uint::MAX.const_rem(&Self::MODULUS).0.wrapping_add(&Uint::ONE);
+    const R2: Uint<LIMBS> =
+        Uint::const_rem_wide(Self::R.square_wide(), &Self::MODULUS).0;
+    const R3: Uint<LIMBS> = ::crypto_bigint::modular::montgomery_reduction(
+        &Self::R2.square_wide(),
+        &Self::MODULUS,
+        Self::MOD_NEG_INV,
+    );
+}
+
 impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     #[doc(hidden)]
     pub const INV: u64 = P::INV;
@@ -207,6 +239,7 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     /// [`struct@BigInt`] data type.
     #[inline]
     pub const fn new(element: Uint<N>) -> Self {
+        let residue = Residue::<Fp::MODULUS, N>::new(&element);
         todo!()
     }
 
