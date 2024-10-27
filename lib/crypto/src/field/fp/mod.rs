@@ -18,10 +18,6 @@ use ark_std::{
 use educe::Educe;
 use num_traits::{One, Zero};
 
-#[macro_use]
-mod montgomery_backend;
-pub use montgomery_backend::*;
-
 use crate::{
     biginteger::{BigInt, BigInteger},
     field::{prime::PrimeField, AdditiveGroup, Field},
@@ -420,6 +416,45 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     }
 }
 
+/// Compute -M^{-1} mod 2^64.
+pub const fn inv<T: FpConfig<N>, const N: usize>() -> u64 {
+    // We compute this as follows.
+    // First, MODULUS mod 2^64 is just the lower 64 bits of MODULUS.
+    // Hence MODULUS mod 2^64 = MODULUS.0[0] mod 2^64.
+    //
+    // Next, computing the inverse mod 2^64 involves exponentiating by
+    // the multiplicative group order, which is euler_totient(2^64) - 1.
+    // Now, euler_totient(2^64) = 1 << 63, and so
+    // euler_totient(2^64) - 1 = (1 << 63) - 1 = 1111111... (63 digits).
+    // We compute this powering via standard square and multiply.
+    let mut inv = 1u64;
+    crate::const_for!((_i in 0..63) {
+        // Square
+        inv = inv.wrapping_mul(inv);
+        // Multiply
+        inv = inv.wrapping_mul(T::MODULUS.0[0]);
+    });
+    inv.wrapping_neg()
+}
+
+#[inline]
+pub const fn can_use_no_carry_mul_optimization<
+    T: FpConfig<N>,
+    const N: usize,
+>() -> bool {
+    // Checking the modulus at compile time
+    let mut all_remaining_bits_are_one = T::MODULUS.0[N - 1] == u64::MAX >> 1;
+    crate::const_for!((i in 1..N) {
+        all_remaining_bits_are_one  &= T::MODULUS.0[N - i - 1] == u64::MAX;
+    });
+    modulus_has_spare_bit::<T, N>() && !all_remaining_bits_are_one
+}
+
+#[inline]
+pub const fn modulus_has_spare_bit<T: FpConfig<N>, const N: usize>() -> bool {
+    T::MODULUS.0[N - 1] >> 63 == 0
+}
+
 /// Represents an element of the prime field F_p, where `p == P::MODULUS`.
 /// This type can represent elements in any field of size at most N * 64 bits.
 #[derive(Educe)]
@@ -587,8 +622,6 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     const fn sub_with_borrow(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
         a.const_sub_with_borrow(b).0
     }
-
-    //NOTE#q---------------------------------------
 
     #[doc(hidden)]
     #[inline]
