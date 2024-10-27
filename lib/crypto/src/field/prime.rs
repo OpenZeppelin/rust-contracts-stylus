@@ -1,7 +1,6 @@
 use core::str::FromStr;
 
 use ark_std::cmp::min;
-use num_bigint::BigUint;
 
 use crate::{biginteger::BigInteger, field::Field};
 
@@ -33,8 +32,6 @@ pub trait PrimeField:
     + FromStr
     + From<<Self as PrimeField>::BigInt>
     + Into<<Self as PrimeField>::BigInt>
-    + From<BigUint>
-    + Into<BigUint>
 {
     /// A `BigInteger` type that can represent elements of this field.
     type BigInt: BigInteger;
