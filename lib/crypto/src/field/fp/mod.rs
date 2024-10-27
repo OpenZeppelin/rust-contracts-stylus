@@ -15,11 +15,12 @@ use ark_std::{
     str::FromStr,
     string::*,
 };
+use crypto_bigint::Uint;
 use educe::Educe;
 use num_traits::{One, Zero};
 
 use crate::{
-    biginteger::{BigInt, BigInteger},
+    biginteger::BigInteger,
     field::{prime::PrimeField, AdditiveGroup, Field},
 };
 
@@ -27,7 +28,7 @@ use crate::{
 /// Also specifies how to perform arithmetic on field elements.
 pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
-    const MODULUS: BigInt<N>;
+    const MODULUS: Uint<N>;
 
     /// A multiplicative generator of the field.
     /// `Self::GENERATOR` is an element having multiplicative order
@@ -36,7 +37,7 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Additive identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
-    const ZERO: Fp<Self, N> = Fp::new_unchecked(BigInt([0u64; N]));
+    const ZERO: Fp<Self, N> = Fp::new_unchecked(Uint::ZERO);
 
     /// Multiplicative identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
@@ -44,10 +45,10 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Let `M` be the power of 2^64 nearest to `Self::MODULUS_BITS`. Then
     /// `R = M % Self::MODULUS`.
-    const R: BigInt<N> = Self::MODULUS.montgomery_r();
+    const R: Uint<N> = Self::MODULUS.montgomery_r();
 
     /// R2 = R^2 % Self::MODULUS
-    const R2: BigInt<N> = Self::MODULUS.montgomery_r2();
+    const R2: Uint<N> = Self::MODULUS.montgomery_r2();
 
     /// INV = -MODULUS^{-1} mod 2^64
     const INV: u64 = inv::<Self, N>();
@@ -117,13 +118,13 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// Construct a field element from an integer in the range
     /// `0..(Self::MODULUS - 1)`. Returns `None` if the integer is outside
     /// this range.
-    fn from_bigint(r: BigInt<N>) -> Option<Fp<Self, N>> {
+    fn from_bigint(r: Uint<N>) -> Option<Fp<Self, N>> {
         todo!()
     }
 
     /// Convert a field element to an integer in the range `0..(Self::MODULUS -
     /// 1)`.
-    fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
+    fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
         todo!()
     }
 }
@@ -176,7 +177,7 @@ pub struct Fp<P: FpConfig<N>, const N: usize>(
     /// To convert an element to a [`BigInt`](struct@BigInt), use `into_bigint`
     /// or `into`.
     #[doc(hidden)]
-    pub BigInt<N>,
+    pub Uint<N>,
     #[doc(hidden)] pub PhantomData<P>,
 );
 
@@ -198,14 +199,14 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     #[doc(hidden)]
     pub const INV: u64 = P::INV;
     #[doc(hidden)]
-    pub const R: BigInt<N> = P::R;
+    pub const R: Uint<N> = P::R;
     #[doc(hidden)]
-    pub const R2: BigInt<N> = P::R2;
+    pub const R2: Uint<N> = P::R2;
 
     /// Construct a new field element from its underlying
     /// [`struct@BigInt`] data type.
     #[inline]
-    pub const fn new(element: BigInt<N>) -> Self {
+    pub const fn new(element: Uint<N>) -> Self {
         todo!()
     }
 
@@ -217,7 +218,7 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     /// an element from an integer that has already been put in
     /// Montgomery form.
     #[inline]
-    pub const fn new_unchecked(element: BigInt<N>) -> Self {
+    pub const fn new_unchecked(element: Uint<N>) -> Self {
         todo!()
     }
 
@@ -345,18 +346,18 @@ impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
 }
 
 impl<P: FpConfig<N>, const N: usize> PrimeField for Fp<P, N> {
-    type BigInt = BigInt<N>;
+    type BigInt = Uint<N>;
 
     const MODULUS: Self::BigInt = P::MODULUS;
     const MODULUS_BIT_SIZE: u32 = P::MODULUS.const_num_bits();
     const TRACE: Self::BigInt = P::MODULUS.two_adic_coefficient();
 
     #[inline]
-    fn from_bigint(r: BigInt<N>) -> Option<Self> {
+    fn from_bigint(r: Uint<N>) -> Option<Self> {
         P::from_bigint(r)
     }
 
-    fn into_bigint(self) -> BigInt<N> {
+    fn into_bigint(self) -> Uint<N> {
         P::into_bigint(self)
     }
 }
@@ -849,17 +850,17 @@ impl<P: FpConfig<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
 //     }
 // }
 
-impl<P: FpConfig<N>, const N: usize> From<Fp<P, N>> for BigInt<N> {
+impl<P: FpConfig<N>, const N: usize> From<Fp<P, N>> for Uint<N> {
     #[inline(always)]
     fn from(fp: Fp<P, N>) -> Self {
         fp.into_bigint()
     }
 }
 
-impl<P: FpConfig<N>, const N: usize> From<BigInt<N>> for Fp<P, N> {
+impl<P: FpConfig<N>, const N: usize> From<Uint<N>> for Fp<P, N> {
     /// Converts `Self::BigInteger` into `Self`
     #[inline(always)]
-    fn from(int: BigInt<N>) -> Self {
+    fn from(int: Uint<N>) -> Self {
         Self::from_bigint(int).unwrap()
     }
 }
