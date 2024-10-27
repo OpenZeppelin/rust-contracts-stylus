@@ -29,7 +29,7 @@ use crate::{biginteger::BigInteger, field::Field};
 /// assert_eq!(n, F::zero());
 /// ```
 pub trait PrimeField:
-    Field<BasePrimeField = Self>
+    Field
     + FromStr
     + From<<Self as PrimeField>::BigInt>
     + Into<<Self as PrimeField>::BigInt>

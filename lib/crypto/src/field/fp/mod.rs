@@ -704,33 +704,10 @@ impl<P: FpConfig<N>, const N: usize> AdditiveGroup for Fp<P, N> {
 }
 
 impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
-    type BasePrimeField = Self;
-
     const ONE: Self = P::ONE;
 
     fn extension_degree() -> u64 {
         1
-    }
-
-    fn from_base_prime_field(elem: Self::BasePrimeField) -> Self {
-        elem
-    }
-
-    fn to_base_prime_field_elements(
-        &self,
-    ) -> impl Iterator<Item = Self::BasePrimeField> {
-        iter::once(*self)
-    }
-
-    fn from_base_prime_field_elems(
-        elems: impl IntoIterator<Item = Self::BasePrimeField>,
-    ) -> Option<Self> {
-        let mut elems = elems.into_iter();
-        let elem = elems.next()?;
-        if elems.next().is_some() {
-            return None;
-        }
-        Some(elem)
     }
 
     #[inline]
@@ -815,12 +792,6 @@ impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
         } else {
             None
         }
-    }
-
-    /// Fp is already a "BasePrimeField", so it's just mul by self
-    #[inline]
-    fn mul_by_base_prime_field(&self, elem: &Self::BasePrimeField) -> Self {
-        *self * elem
     }
 }
 

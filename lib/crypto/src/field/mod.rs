@@ -126,35 +126,16 @@ pub trait Field:
     + From<bool>
     + Product<Self>
 {
-    // TODO#q: can we reverse inheritance? Rename Field -> PrimeField and
-    //  inherit ExtensionField: Field and PrimeField: Field
-    type BasePrimeField: PrimeField;
-
     /// The multiplicative identity of the field.
     const ONE: Self;
 
     /// Returns the characteristic of the field,
     /// in little-endian representation.
-    fn characteristic() -> &'static [u64] {
-        Self::BasePrimeField::characteristic()
-    }
+    fn characteristic() -> &'static [u64];
 
     /// Returns the extension degree of this field with respect
     /// to `Self::BasePrimeField`.
     fn extension_degree() -> u64;
-
-    fn to_base_prime_field_elements(
-        &self,
-    ) -> impl Iterator<Item = Self::BasePrimeField>;
-
-    /// Convert a slice of base prime field elements into a field element.
-    /// If the slice length != Self::extension_degree(), must return None.
-    fn from_base_prime_field_elems(
-        elems: impl IntoIterator<Item = Self::BasePrimeField>,
-    ) -> Option<Self>;
-
-    /// Constructs a field element from a single base prime field elements.
-    fn from_base_prime_field(elem: Self::BasePrimeField) -> Self;
 
     /// Attempt to deserialize a field element. Returns `None` if the
     /// deserialization fails.
@@ -229,10 +210,9 @@ pub trait Field:
         }
         Some(res)
     }
-
-    fn mul_by_base_prime_field(&self, elem: &Self::BasePrimeField) -> Self;
 }
 
+// TODO#q: move to a different module
 pub trait AdditiveGroup:
     Eq
     + 'static
