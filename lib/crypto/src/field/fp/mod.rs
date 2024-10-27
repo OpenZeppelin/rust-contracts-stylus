@@ -92,12 +92,6 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// Set a *= b.
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>);
 
-    /// Compute the inner product `<a, b>`.
-    fn sum_of_products<const T: usize>(
-        a: &[Fp<Self, N>; T],
-        b: &[Fp<Self, N>; T],
-    ) -> Fp<Self, N>;
-
     /// Set a *= a.
     fn square_in_place(a: &mut Fp<Self, N>);
 
@@ -259,11 +253,6 @@ impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
     }
 
     #[inline]
-    fn sum_of_products<const T: usize>(a: &[Self; T], b: &[Self; T]) -> Self {
-        P::sum_of_products(a, b)
-    }
-
-    #[inline]
     fn from_random_bytes_with_flags<F: Flags>(
         bytes: &[u8],
     ) -> Option<(Self, F)> {
@@ -341,10 +330,6 @@ impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
             None
         }
     }
-
-    /// The Frobenius map has no effect in a prime field.
-    #[inline]
-    fn frobenius_map_in_place(&mut self, _: usize) {}
 
     #[inline]
     fn legendre(&self) -> LegendreSymbol {

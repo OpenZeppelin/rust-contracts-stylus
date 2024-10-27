@@ -428,129 +428,6 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
 
         BigInt::new(r)
     }
-
-    fn sum_of_products<const M: usize>(
-        a: &[Fp<MontBackend<Self, N>, N>; M],
-        b: &[Fp<MontBackend<Self, N>, N>; M],
-    ) -> Fp<MontBackend<Self, N>, N> {
-        // Adapted from https://github.com/zkcrypto/bls12_381/pull/84 by @str4d.
-
-        // For a single `a x b` multiplication, operand scanning (schoolbook)
-        // takes each limb of `a` in turn, and multiplies it by all of
-        // the limbs of `b` to compute the result as a double-width
-        // intermediate representation, which is then fully reduced at
-        // the carry. Here however we have pairs of multiplications (a_i, b_i),
-        // the results of which are summed.
-        //
-        // The intuition for this algorithm is two-fold:
-        // - We can interleave the operand scanning for each pair, by processing
-        //   the jth limb of each `a_i` together. As these have the same offset
-        //   within the overall operand scanning flow, their results can be
-        //   summed directly.
-        // - We can interleave the multiplication and reduction steps, resulting
-        //   in a single bitshift by the limb size after each iteration. This
-        //   means we only need to store a single extra limb overall, instead of
-        //   keeping around all the intermediate results and eventually having
-        //   twice as many limbs.
-
-        let modulus_size = Self::MODULUS.const_num_bits() as usize;
-        if modulus_size >= 64 * N - 1 {
-            a.iter().zip(b).map(|(a, b)| *a * b).sum()
-        } else if M == 2 {
-            // Algorithm 2, line 2
-            let result = (0..N).fold(BigInt::zero(), |mut result, j| {
-                // Algorithm 2, line 3
-                let mut carry_a = 0;
-                let mut carry_b = 0;
-                for (a, b) in a.iter().zip(b) {
-                    let a = &a.0;
-                    let b = &b.0;
-                    let mut carry2 = 0;
-                    result.0[0] =
-                        fa::mac(result.0[0], a.0[j], b.0[0], &mut carry2);
-                    for k in 1..N {
-                        result.0[k] = fa::mac_with_carry(
-                            result.0[k],
-                            a.0[j],
-                            b.0[k],
-                            &mut carry2,
-                        );
-                    }
-                    carry_b = fa::adc(&mut carry_a, carry_b, carry2);
-                }
-
-                let k = result.0[0].wrapping_mul(Self::INV);
-                let mut carry2 = 0;
-                fa::mac_discard(
-                    result.0[0],
-                    k,
-                    Self::MODULUS.0[0],
-                    &mut carry2,
-                );
-                for i in 1..N {
-                    result.0[i - 1] = fa::mac_with_carry(
-                        result.0[i],
-                        k,
-                        Self::MODULUS.0[i],
-                        &mut carry2,
-                    );
-                }
-                result.0[N - 1] =
-                    fa::adc_no_carry(carry_a, carry_b, &mut carry2);
-                result
-            });
-            let mut result = Fp::new_unchecked(result);
-            result.subtract_modulus();
-            debug_assert_eq!(
-                a.iter().zip(b).map(|(a, b)| *a * b).sum::<Fp<_, N>>(),
-                result
-            );
-            result
-        } else {
-            let chunk_size = 2 * (N * 64 - modulus_size) - 1;
-            // chunk_size is at least 1, since MODULUS_BIT_SIZE is at most N *
-            // 64 - 1.
-            a.chunks(chunk_size)
-                .zip(b.chunks(chunk_size))
-                .map(|(a, b)| {
-                    // Algorithm 2, line 2
-                    let result = (0..N).fold(BigInt::zero(), |mut result, j| {
-                        // Algorithm 2, line 3
-                        let (temp, carry) = a.iter().zip(b).fold(
-                            (result, 0),
-                            |(mut temp, mut carry), (Fp(a, _), Fp(b, _))| {
-                                let mut carry2 = 0;
-                                temp.0[0] = fa::mac(temp.0[0], a.0[j], b.0[0], &mut carry2);
-                                for k in 1..N {
-                                    temp.0[k] =
-                                        fa::mac_with_carry(temp.0[k], a.0[j], b.0[k], &mut carry2);
-                                }
-                                carry = fa::adc_no_carry(carry, 0, &mut carry2);
-                                (temp, carry)
-                            },
-                        );
-
-                        let k = temp.0[0].wrapping_mul(Self::INV);
-                        let mut carry2 = 0;
-                        fa::mac_discard(temp.0[0], k, Self::MODULUS.0[0], &mut carry2);
-                        for i in 1..N {
-                            result.0[i - 1] =
-                                fa::mac_with_carry(temp.0[i], k, Self::MODULUS.0[i], &mut carry2);
-                        }
-                        result.0[N - 1] = fa::adc_no_carry(carry, 0, &mut carry2);
-                        result
-                    });
-                    let mut result = Fp::new_unchecked(result);
-                    result.subtract_modulus();
-                    debug_assert_eq!(
-                        a.iter().zip(b).map(|(a, b)| *a * b).sum::<Fp<_, N>>(),
-                        result
-                    );
-                    result
-                })
-                .sum()
-        }
-    }
 }
 
 /// Compute -M^{-1} mod 2^64.
@@ -723,13 +600,6 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
         T::mul_assign(a, b)
     }
 
-    fn sum_of_products<const M: usize>(
-        a: &[Fp<Self, N>; M],
-        b: &[Fp<Self, N>; M],
-    ) -> Fp<Self, N> {
-        T::sum_of_products(a, b)
-    }
-
     #[inline]
     #[allow(unused_braces, clippy::absurd_extreme_comparisons)]
     fn square_in_place(a: &mut Fp<Self, N>) {
@@ -896,25 +766,8 @@ impl<T: MontConfig<N>, const N: usize> Fp<MontBackend<T, N>, N> {
 #[cfg(test)]
 mod test {
     use ark_std::{str::FromStr, vec::*};
-    // use ark_test_curves::secp256k1::Fr;
     use num_bigint::{BigInt, BigUint, Sign};
-    /*
-        #[test]
-        fn test_mont_macro_correctness() {
-            let (is_positive, limbs) = str_to_limbs_u64(
-                "111192936301596926984056301862066282284536849596023571352007112326586892541694",
-            );
-            let t = Fr::from_sign_and_limbs(is_positive, &limbs);
 
-            let result: BigUint = t.into();
-            let expected = BigUint::from_str(
-                "111192936301596926984056301862066282284536849596023571352007112326586892541694",
-            )
-            .unwrap();
-
-            assert_eq!(result, expected);
-        }
-    */
     fn str_to_limbs_u64(num: &str) -> (bool, Vec<u64>) {
         let (sign, digits) = BigInt::from_str(num)
             .expect("could not parse to bigint")

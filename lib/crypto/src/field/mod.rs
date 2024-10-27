@@ -135,7 +135,6 @@ pub trait Field:
     fn legendre(&self) -> LegendreSymbol;
 
     // NOTE#q: not used in poseidon
-    // TODO#q: remove
     /// Returns the square root of self, if it exists.
     #[must_use]
     fn sqrt(&self) -> Option<Self> {
@@ -167,36 +166,6 @@ pub trait Field:
     /// If `self.inverse().is_none()`, this just returns `None`. Otherwise, it
     /// sets `self` to `self.inverse().unwrap()`.
     fn inverse_in_place(&mut self) -> Option<&mut Self>;
-
-    /// NOTE#q: not used in poseidon
-    /// TODO#q: remove
-    /// Returns `sum([a_i * b_i])`.
-    #[inline]
-    fn sum_of_products<const T: usize>(a: &[Self; T], b: &[Self; T]) -> Self {
-        let mut sum = Self::zero();
-        for i in 0..a.len() {
-            sum += a[i] * b[i];
-        }
-        sum
-    }
-
-    /// NOTE#q: not used in poseidon
-    /// TODO#q: remove
-    /// Sets `self` to `self^s`, where `s =
-    /// Self::BasePrimeField::MODULUS^power`. This is also called the
-    /// Frobenius automorphism.
-    fn frobenius_map_in_place(&mut self, power: usize);
-
-    /// NOTE#q: not used in poseidon
-    /// TODO#q: remove
-    /// Returns `self^s`, where `s = Self::BasePrimeField::MODULUS^power`.
-    /// This is also called the Frobenius automorphism.
-    #[must_use]
-    fn frobenius_map(&self, power: usize) -> Self {
-        let mut this = *self;
-        this.frobenius_map_in_place(power);
-        this
-    }
 
     // NOTE#q: not used in poseidon
     /// Returns `self^exp`, where `exp` is an integer represented with `u64`
