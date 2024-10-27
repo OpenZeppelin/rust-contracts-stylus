@@ -48,14 +48,16 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Let `M` be the power of 2^64 nearest to `Self::MODULUS_BITS`. Then
     /// `R = M % Self::MODULUS`.
-    const R: Uint<N> = Self::MODULUS.montgomery_r();
+    const R: Uint<N> = <Fp<Self, N> as ResidueParams<N>>::R;
 
     /// R2 = R^2 % Self::MODULUS
-    const R2: Uint<N> = Self::MODULUS.montgomery_r2();
+    const R2: Uint<N> = <Fp<Self, N> as ResidueParams<N>>::R2;
 
     /// INV = -MODULUS^{-1} mod 2^64
-    const INV: u64 = inv::<Self, N>();
+    const INV: u64 = <Fp<Self, N> as ResidueParams<N>>::MOD_NEG_INV.0;
 
+    // TODO#q: remove this optimizations
+    /*
     /// Can we use the no-carry optimization for multiplication
     /// outlined [here](https://hackmd.io/@gnark/modular_multiplication)?
     ///
@@ -82,6 +84,7 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// (a) `Self::MODULUS[N-1] >> 63 == 0`
     #[doc(hidden)]
     const MODULUS_HAS_SPARE_BIT: bool = modulus_has_spare_bit::<Self, N>();
+    */
 
     /// Set a += b.
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
@@ -132,6 +135,7 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     }
 }
 
+/*
 /// Compute -M^{-1} mod 2^64.
 pub const fn inv<T: FpConfig<N>, const N: usize>() -> u64 {
     // We compute this as follows.
@@ -169,7 +173,7 @@ pub const fn can_use_no_carry_mul_optimization<
 #[inline]
 pub const fn modulus_has_spare_bit<T: FpConfig<N>, const N: usize>() -> bool {
     T::MODULUS.0[N - 1] >> 63 == 0
-}
+}*/
 
 /// Represents an element of the prime field F_p, where `p == P::MODULUS`.
 /// This type can represent elements in any field of size at most N * 64 bits.
@@ -198,31 +202,24 @@ pub type Fp704<P> = Fp<P, 11>;
 pub type Fp768<P> = Fp<P, 12>;
 pub type Fp832<P> = Fp<P, 13>;
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct Modulus<const LIMBS: usize> {}
-impl<const LIMBS: usize> ResidueParams<LIMBS> for Modulus<LIMBS> {
+// #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+// pub struct Modulus<const LIMBS: usize> {}
+impl<const LIMBS: usize, P: FpConfig<LIMBS>> ResidueParams<LIMBS>
+    for Fp<P, LIMBS>
+{
     const LIMBS: usize = LIMBS;
-    const MODULUS: Uint<LIMBS> = {
-        let res = <Uint<LIMBS>>::from_be_hex(
-            "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
-        );
-
-        if res.as_limbs()[0].0 & 1 == 0 {
-            panic!("modulus must be odd");
-        }
-
-        res
-    };
+    // TODO#q: modulus should be checked for not being odd
+    const MODULUS: Uint<LIMBS> = P::MODULUS;
     const MOD_NEG_INV: Limb = Limb(Word::MIN.wrapping_sub(
-        Self::MODULUS.inv_mod2k_vartime(Word::BITS as usize).as_limbs()[0].0,
+        P::MODULUS.inv_mod2k_vartime(Word::BITS as usize).as_limbs()[0].0,
     ));
     const R: Uint<LIMBS> =
-        Uint::MAX.const_rem(&Self::MODULUS).0.wrapping_add(&Uint::ONE);
+        Uint::MAX.const_rem(&P::MODULUS).0.wrapping_add(&Uint::ONE);
     const R2: Uint<LIMBS> =
-        Uint::const_rem_wide(Self::R.square_wide(), &Self::MODULUS).0;
+        Uint::const_rem_wide(Self::R.square_wide(), &P::MODULUS).0;
     const R3: Uint<LIMBS> = ::crypto_bigint::modular::montgomery_reduction(
         &Self::R2.square_wide(),
-        &Self::MODULUS,
+        &P::MODULUS,
         Self::MOD_NEG_INV,
     );
 }
@@ -239,8 +236,8 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     /// [`struct@BigInt`] data type.
     #[inline]
     pub const fn new(element: Uint<N>) -> Self {
-        let residue = Residue::<Fp::MODULUS, N>::new(&element);
-        todo!()
+        let residue = Residue::<Self, N>::new(&element);
+        Self::new_unchecked(residue.to_montgomery())
     }
 
     /// Construct a new field element from its underlying
@@ -252,7 +249,7 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     /// Montgomery form.
     #[inline]
     pub const fn new_unchecked(element: Uint<N>) -> Self {
-        todo!()
+        Fp(element, PhantomData)
     }
 
     const fn const_is_zero(&self) -> bool {
