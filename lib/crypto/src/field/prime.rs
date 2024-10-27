@@ -3,10 +3,7 @@ use core::str::FromStr;
 use ark_std::cmp::min;
 use num_bigint::BigUint;
 
-use crate::{
-    biginteger::BigInteger,
-    field::{fft_friendly::FftField, Field},
-};
+use crate::{biginteger::BigInteger, field::Field};
 
 /// The interface for a prime field, i.e. the field of integers modulo a prime
 /// $p$. In the following example we'll use the prime field underlying the
@@ -33,7 +30,6 @@ use crate::{
 /// ```
 pub trait PrimeField:
     Field<BasePrimeField = Self>
-    + FftField
     + FromStr
     + From<<Self as PrimeField>::BigInt>
     + Into<<Self as PrimeField>::BigInt>

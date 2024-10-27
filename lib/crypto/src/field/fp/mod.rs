@@ -25,7 +25,6 @@ pub use montgomery_backend::*;
 use crate::{
     biginteger::{BigInt, BigInteger},
     field::{
-        fft_friendly::FftField,
         prime::PrimeField,
         sqrt::{LegendreSymbol, SqrtPrecomputation},
         AdditiveGroup, Field,
@@ -55,22 +54,6 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// Then `TWO_ADICITY` is the two-adicity of `N`, i.e. the integer `s`
     /// such that `N = 2^s * t` for some odd integer `t`.
     const TWO_ADICITY: u32;
-
-    /// 2^s root of unity computed by GENERATOR^t
-    const TWO_ADIC_ROOT_OF_UNITY: Fp<Self, N>;
-
-    /// An integer `b` such that there exists a multiplicative subgroup
-    /// of size `b^k` for some integer `k`.
-    const SMALL_SUBGROUP_BASE: Option<u32> = None;
-
-    /// The integer `k` such that there exists a multiplicative subgroup
-    /// of size `Self::SMALL_SUBGROUP_BASE^k`.
-    const SMALL_SUBGROUP_BASE_ADICITY: Option<u32> = None;
-
-    /// GENERATOR^((MODULUS-1) / (2^s *
-    /// SMALL_SUBGROUP_BASE^SMALL_SUBGROUP_BASE_ADICITY)) Used for mixed-radix
-    /// FFT.
-    const LARGE_SUBGROUP_ROOT_OF_UNITY: Option<Fp<Self, N>> = None;
 
     /// Precomputed material for use when computing square roots.
     /// Currently uses the generic Tonelli-Shanks,
@@ -372,17 +355,6 @@ impl<P: FpConfig<N>, const N: usize> PrimeField for Fp<P, N> {
     fn into_bigint(self) -> BigInt<N> {
         P::into_bigint(self)
     }
-}
-
-impl<P: FpConfig<N>, const N: usize> FftField for Fp<P, N> {
-    const GENERATOR: Self = P::GENERATOR;
-    const LARGE_SUBGROUP_ROOT_OF_UNITY: Option<Self> =
-        P::LARGE_SUBGROUP_ROOT_OF_UNITY;
-    const SMALL_SUBGROUP_BASE: Option<u32> = P::SMALL_SUBGROUP_BASE;
-    const SMALL_SUBGROUP_BASE_ADICITY: Option<u32> =
-        P::SMALL_SUBGROUP_BASE_ADICITY;
-    const TWO_ADICITY: u32 = P::TWO_ADICITY;
-    const TWO_ADIC_ROOT_OF_UNITY: Self = P::TWO_ADIC_ROOT_OF_UNITY;
 }
 
 /// Note that this implementation of `Ord` compares field elements viewing

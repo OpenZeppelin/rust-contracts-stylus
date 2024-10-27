@@ -23,11 +23,9 @@ use crate::{
     },
 };
 
-pub mod fft_friendly;
 pub mod fp;
 pub mod prime;
 pub mod sqrt;
-pub mod utils;
 pub mod vesta;
 
 /// The interface for a generic field.

@@ -555,20 +555,14 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     /// `Self::GENERATOR` is an element having multiplicative order
     /// `Self::MODULUS - 1`.
     const GENERATOR: Fp<Self, N> = T::GENERATOR;
-    const LARGE_SUBGROUP_ROOT_OF_UNITY: Option<Fp<Self, N>> =
-        T::LARGE_SUBGROUP_ROOT_OF_UNITY;
     /// The modulus of the field.
     const MODULUS: BigInt<N> = T::MODULUS;
     /// Multiplicative identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
     const ONE: Fp<Self, N> = Fp::new_unchecked(T::R);
-    const SMALL_SUBGROUP_BASE: Option<u32> = T::SMALL_SUBGROUP_BASE;
-    const SMALL_SUBGROUP_BASE_ADICITY: Option<u32> =
-        T::SMALL_SUBGROUP_BASE_ADICITY;
     const SQRT_PRECOMP: Option<SqrtPrecomputation<Fp<Self, N>>> =
         T::SQRT_PRECOMP;
     const TWO_ADICITY: u32 = Self::MODULUS.two_adic_valuation();
-    const TWO_ADIC_ROOT_OF_UNITY: Fp<Self, N> = T::TWO_ADIC_ROOT_OF_UNITY;
     /// Additive identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
     const ZERO: Fp<Self, N> = Fp::new_unchecked(BigInt([0u64; N]));
