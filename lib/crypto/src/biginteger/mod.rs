@@ -188,22 +188,6 @@ impl<const N: usize> BigInt<N> {
         true
     }
 
-    /// Compute the largest integer `s` such that `self = 2**s * t + 1` for odd
-    /// `t`.
-    #[doc(hidden)]
-    pub const fn two_adic_valuation(mut self) -> u32 {
-        assert!(self.const_is_odd());
-        let mut two_adicity = 0;
-        // Since `self` is odd, we can always subtract one
-        // without a borrow
-        self.0[0] -= 1;
-        while self.const_is_even() {
-            self = self.const_shr();
-            two_adicity += 1;
-        }
-        two_adicity
-    }
-
     /// Compute the smallest odd integer `t` such that `self = 2**s * t + 1` for
     /// some integer `s = self.two_adic_valuation()`.
     #[doc(hidden)]
@@ -217,17 +201,6 @@ impl<const N: usize> BigInt<N> {
         }
         assert!(self.const_is_odd());
         self
-    }
-
-    /// Divide `self` by 2, rounding down if necessary.
-    /// That is, if `self.is_odd()`, compute `(self - 1)/2`.
-    /// Else, compute `self/2`.
-    #[doc(hidden)]
-    pub const fn divide_by_2_round_down(mut self) -> Self {
-        if self.const_is_odd() {
-            self.0[0] -= 1;
-        }
-        self.const_shr()
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
@@ -248,20 +221,6 @@ impl<const N: usize> BigInt<N> {
         });
 
         (self, borrow != 0)
-    }
-
-    #[inline]
-    pub(crate) const fn const_add_with_carry(
-        mut self,
-        other: &Self,
-    ) -> (Self, bool) {
-        let mut carry = 0;
-
-        crate::const_for!((i in 0..N) {
-            self.0[i] = adc!(self.0[i], other.0[i], &mut carry);
-        });
-
-        (self, carry != 0)
     }
 
     const fn const_mul2_with_carry(mut self) -> (Self, bool) {

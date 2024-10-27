@@ -17,15 +17,11 @@ use zeroize::Zeroize;
 
 use crate::{
     bits::{BitIteratorBE, BitIteratorLE},
-    field::{
-        prime::PrimeField,
-        sqrt::{LegendreSymbol, SqrtPrecomputation},
-    },
+    field::prime::PrimeField,
 };
 
 pub mod fp;
 pub mod prime;
-pub mod sqrt;
 pub mod vesta;
 
 /// The interface for a generic field.
@@ -78,9 +74,6 @@ pub trait Field:
     //  inherit ExtensionField: PrimeField
     type BasePrimeField: PrimeField;
 
-    /// Determines the algorithm for computing square roots.
-    const SQRT_PRECOMP: Option<SqrtPrecomputation<Self>>;
-
     /// The multiplicative identity of the field.
     const ONE: Self;
 
@@ -125,30 +118,6 @@ pub trait Field:
     fn from_random_bytes_with_flags<F: Flags>(
         bytes: &[u8],
     ) -> Option<(Self, F)>;
-
-    /// Returns a `LegendreSymbol`, which indicates whether this field element
-    /// is  1 : a quadratic residue
-    ///  0 : equal to 0
-    /// -1 : a quadratic non-residue
-    fn legendre(&self) -> LegendreSymbol;
-
-    // NOTE#q: not used in poseidon
-    /// Returns the square root of self, if it exists.
-    #[must_use]
-    fn sqrt(&self) -> Option<Self> {
-        match Self::SQRT_PRECOMP {
-            Some(tv) => tv.sqrt(self),
-            None => unimplemented!(),
-        }
-    }
-
-    /// Sets `self` to be the square root of `self`, if it exists.
-    fn sqrt_in_place(&mut self) -> Option<&mut Self> {
-        (*self).sqrt().map(|sqrt| {
-            *self = sqrt;
-            self
-        })
-    }
 
     /// Returns `self * self`.
     #[must_use]

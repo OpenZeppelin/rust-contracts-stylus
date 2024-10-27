@@ -42,17 +42,12 @@ pub trait PrimeField:
     /// The modulus `p`.
     const MODULUS: Self::BigInt;
 
-    /// The value `(p - 1)/ 2`.
-    const MODULUS_MINUS_ONE_DIV_TWO: Self::BigInt;
-
     /// The size of the modulus in bits.
     const MODULUS_BIT_SIZE: u32;
 
     /// The trace of the field is defined as the smallest integer `t` such that
     /// by `2^s * t = p - 1`, and `t` is coprime to 2.
     const TRACE: Self::BigInt;
-    /// The value `(t - 1)/ 2`.
-    const TRACE_MINUS_ONE_DIV_TWO: Self::BigInt;
 
     /// Construct a prime field element from an integer in the range 0..(p - 1).
     fn from_bigint(repr: Self::BigInt) -> Option<Self>;

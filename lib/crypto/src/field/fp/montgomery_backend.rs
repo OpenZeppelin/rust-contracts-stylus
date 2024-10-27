@@ -56,48 +56,6 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     #[doc(hidden)]
     const MODULUS_HAS_SPARE_BIT: bool = modulus_has_spare_bit::<Self, N>();
 
-    /// 2^s root of unity computed by GENERATOR^t
-    const TWO_ADIC_ROOT_OF_UNITY: Fp<MontBackend<Self, N>, N>;
-
-    /// An integer `b` such that there exists a multiplicative subgroup
-    /// of size `b^k` for some integer `k`.
-    const SMALL_SUBGROUP_BASE: Option<u32> = None;
-
-    /// The integer `k` such that there exists a multiplicative subgroup
-    /// of size `Self::SMALL_SUBGROUP_BASE^k`.
-    const SMALL_SUBGROUP_BASE_ADICITY: Option<u32> = None;
-
-    /// GENERATOR^((MODULUS-1) / (2^s *
-    /// SMALL_SUBGROUP_BASE^SMALL_SUBGROUP_BASE_ADICITY)).
-    /// Used for mixed-radix FFT.
-    const LARGE_SUBGROUP_ROOT_OF_UNITY: Option<Fp<MontBackend<Self, N>, N>> =
-        None;
-
-    /// Precomputed material for use when computing square roots.
-    /// The default is to use the standard Tonelli-Shanks algorithm.
-    const SQRT_PRECOMP: Option<
-        SqrtPrecomputation<Fp<MontBackend<Self, N>, N>>,
-    > = sqrt_precomputation::<N, Self>();
-
-    /// (MODULUS + 1) / 4 when MODULUS % 4 == 3. Used for square root
-    /// precomputations.
-    #[doc(hidden)]
-    const MODULUS_PLUS_ONE_DIV_FOUR: Option<BigInt<N>> = {
-        match Self::MODULUS.mod_4() == 3 {
-            true => {
-                let (modulus_plus_one, carry) =
-                    Self::MODULUS.const_add_with_carry(&BigInt::<N>::one());
-                let mut result = modulus_plus_one.divide_by_2_round_down();
-                // Since modulus_plus_one is even, dividing by 2 results in a
-                // MSB of 0. Thus we can set MSB to `carry` to
-                // get the correct result of (MODULUS + 1) // 2:
-                result.0[N - 1] |= (carry as u64) << 63;
-                Some(result.divide_by_2_round_down())
-            }
-            false => None,
-        }
-    };
-
     /// Sets `a = a + b`.
     #[inline(always)]
     fn add_assign(
@@ -469,40 +427,7 @@ pub const fn modulus_has_spare_bit<T: MontConfig<N>, const N: usize>() -> bool {
     T::MODULUS.0[N - 1] >> 63 == 0
 }
 
-#[inline]
-pub const fn can_use_no_carry_square_optimization<
-    T: MontConfig<N>,
-    const N: usize,
->() -> bool {
-    // Checking the modulus at compile time
-    let top_two_bits_are_zero = T::MODULUS.0[N - 1] >> 62 == 0;
-    let mut all_remaining_bits_are_one = T::MODULUS.0[N - 1] == u64::MAX >> 2;
-    crate::const_for!((i in 1..N) {
-        all_remaining_bits_are_one  &= T::MODULUS.0[N - i - 1] == u64::MAX;
-    });
-    top_two_bits_are_zero && !all_remaining_bits_are_one
-}
-
-pub const fn sqrt_precomputation<const N: usize, T: MontConfig<N>>(
-) -> Option<SqrtPrecomputation<Fp<MontBackend<T, N>, N>>> {
-    match T::MODULUS.mod_4() {
-        3 => match T::MODULUS_PLUS_ONE_DIV_FOUR.as_ref() {
-            Some(BigInt(modulus_plus_one_div_four)) => {
-                Some(SqrtPrecomputation::Case3Mod4 {
-                    modulus_plus_one_div_four,
-                })
-            }
-            None => None,
-        },
-        _ => Some(SqrtPrecomputation::TonelliShanks {
-            two_adicity: <MontBackend<T, N>>::TWO_ADICITY,
-            quadratic_nonresidue_to_trace: T::TWO_ADIC_ROOT_OF_UNITY,
-            trace_of_modulus_minus_one_div_two:
-                &<Fp<MontBackend<T, N>, N>>::TRACE_MINUS_ONE_DIV_TWO.0,
-        }),
-    }
-}
-
+// TODO#q: we should have smame kind of macro. Useful for unit tests
 /// Construct a [`Fp<MontBackend<T, N>, N>`] element from a literal string. This
 /// should be used primarily for constructing constant field elements; in a
 /// non-const context, [`Fp::from_str`](`ark_std::str::FromStr::from_str`) is
@@ -539,14 +464,10 @@ macro_rules! MontFp {
         $crate::Fp::from_sign_and_limbs(is_positive, &limbs)
     }};
 }
-
 use num_traits::Zero;
 pub use MontFp;
 
-use crate::{
-    biginteger::{BigInt, BigInteger},
-    field::{prime::PrimeField, sqrt::SqrtPrecomputation},
-};
+use crate::biginteger::{BigInt, BigInteger};
 
 pub struct MontBackend<T: MontConfig<N>, const N: usize>(PhantomData<T>);
 
@@ -560,9 +481,6 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     /// Multiplicative identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
     const ONE: Fp<Self, N> = Fp::new_unchecked(T::R);
-    const SQRT_PRECOMP: Option<SqrtPrecomputation<Fp<Self, N>>> =
-        T::SQRT_PRECOMP;
-    const TWO_ADICITY: u32 = Self::MODULUS.two_adic_valuation();
     /// Additive identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
     const ZERO: Fp<Self, N> = Fp::new_unchecked(BigInt([0u64; N]));

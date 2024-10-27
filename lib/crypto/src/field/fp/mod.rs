@@ -24,11 +24,7 @@ pub use montgomery_backend::*;
 
 use crate::{
     biginteger::{BigInt, BigInteger},
-    field::{
-        prime::PrimeField,
-        sqrt::{LegendreSymbol, SqrtPrecomputation},
-        AdditiveGroup, Field,
-    },
+    field::{prime::PrimeField, AdditiveGroup, Field},
 };
 
 /// A trait that specifies the configuration of a prime field.
@@ -49,16 +45,6 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// Multiplicative identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
     const ONE: Fp<Self, N>;
-
-    /// Let `N` be the size of the multiplicative group defined by the field.
-    /// Then `TWO_ADICITY` is the two-adicity of `N`, i.e. the integer `s`
-    /// such that `N = 2^s * t` for some odd integer `t`.
-    const TWO_ADICITY: u32;
-
-    /// Precomputed material for use when computing square roots.
-    /// Currently uses the generic Tonelli-Shanks,
-    /// which works for every modulus.
-    const SQRT_PRECOMP: Option<SqrtPrecomputation<Fp<Self, N>>>;
 
     /// Set a += b.
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>);
@@ -203,7 +189,6 @@ impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
     type BasePrimeField = Self;
 
     const ONE: Self = P::ONE;
-    const SQRT_PRECOMP: Option<SqrtPrecomputation<Self>> = P::SQRT_PRECOMP;
 
     fn extension_degree() -> u64 {
         1
@@ -314,21 +299,6 @@ impl<P: FpConfig<N>, const N: usize> Field for Fp<P, N> {
         }
     }
 
-    #[inline]
-    fn legendre(&self) -> LegendreSymbol {
-        use crate::field::LegendreSymbol::*;
-
-        // s = self^((MODULUS - 1) // 2)
-        let s = self.pow(Self::MODULUS_MINUS_ONE_DIV_TWO);
-        if s.is_zero() {
-            Zero
-        } else if s.is_one() {
-            QuadraticResidue
-        } else {
-            QuadraticNonResidue
-        }
-    }
-
     /// Fp is already a "BasePrimeField", so it's just mul by self
     #[inline]
     fn mul_by_base_prime_field(&self, elem: &Self::BasePrimeField) -> Self {
@@ -341,11 +311,7 @@ impl<P: FpConfig<N>, const N: usize> PrimeField for Fp<P, N> {
 
     const MODULUS: Self::BigInt = P::MODULUS;
     const MODULUS_BIT_SIZE: u32 = P::MODULUS.const_num_bits();
-    const MODULUS_MINUS_ONE_DIV_TWO: Self::BigInt =
-        P::MODULUS.divide_by_2_round_down();
     const TRACE: Self::BigInt = P::MODULUS.two_adic_coefficient();
-    const TRACE_MINUS_ONE_DIV_TWO: Self::BigInt =
-        Self::TRACE.divide_by_2_round_down();
 
     #[inline]
     fn from_bigint(r: BigInt<N>) -> Option<Self> {
