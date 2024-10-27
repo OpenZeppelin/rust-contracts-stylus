@@ -1,4 +1,4 @@
-use crate::field::fp::{Fp256, MontBackend, MontConfig};
+use crate::field::fp::{Fp256, FpConfig};
 
 /*
 #[derive(MontConfig)]
@@ -7,13 +7,13 @@ use crate::field::fp::{Fp256, MontBackend, MontConfig};
 pub struct FqConfig;
 */
 
-pub struct FqConfig;
-pub type FpVesta = Fp256<MontBackend<FqConfig, 4>>;
+pub struct FieldConfig;
+pub type FpVesta = Fp256<FieldConfig>;
 
 use crate::{field::fp::Fp, BigInt};
 #[automatically_derived]
-impl MontConfig<4usize> for FqConfig {
-    const GENERATOR: Fp<MontBackend<FqConfig, 4>, 4> = {
+impl FpConfig<4usize> for FieldConfig {
+    const GENERATOR: Fp<FieldConfig, 4> = {
         let (is_positive, limbs) = (
             true,
             [

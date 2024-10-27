@@ -40,7 +40,7 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Additive identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
-    const ZERO: Fp<Self, N>;
+    const ZERO: Fp<Self, N> = Fp::new_unchecked(BigInt([0u64; N]));
 
     /// Multiplicative identity of the field, i.e. the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
@@ -84,34 +84,340 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     const MODULUS_HAS_SPARE_BIT: bool = modulus_has_spare_bit::<Self, N>();
 
     /// Set a += b.
-    fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>);
+    fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+        // This cannot exceed the backing capacity.
+        let c = a.0.add_with_carry(&b.0);
+        // However, it may need to be reduced
+        if Self::MODULUS_HAS_SPARE_BIT {
+            a.subtract_modulus()
+        } else {
+            a.subtract_modulus_with_carry(c)
+        }
+    }
 
     /// Set a -= b.
-    fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>);
+    fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+        // If `other` is larger than `self`, add the modulus to self first.
+        if b.0 > a.0 {
+            a.0.add_with_carry(&Self::MODULUS);
+        }
+        a.0.sub_with_borrow(&b.0);
+    }
 
     /// Set a = a + a.
-    fn double_in_place(a: &mut Fp<Self, N>);
+    fn double_in_place(a: &mut Fp<Self, N>) {
+        // This cannot exceed the backing capacity.
+        let c = a.0.mul2();
+        // However, it may need to be reduced.
+        if Self::MODULUS_HAS_SPARE_BIT {
+            a.subtract_modulus()
+        } else {
+            a.subtract_modulus_with_carry(c)
+        }
+    }
 
     /// Set a = -a;
-    fn neg_in_place(a: &mut Fp<Self, N>);
+    fn neg_in_place(a: &mut Fp<Self, N>) {
+        if !a.is_zero() {
+            let mut tmp = Self::MODULUS;
+            tmp.sub_with_borrow(&a.0);
+            a.0 = tmp;
+        }
+    }
 
     /// Set a *= b.
-    fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>);
+    fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+        // No-carry optimisation applied to CIOS
+        if Self::CAN_USE_NO_CARRY_MUL_OPT {
+            if N <= 6
+                && N > 1
+                && cfg!(all(
+                    feature = "asm",
+                    target_feature = "bmi2",
+                    target_feature = "adx",
+                    target_arch = "x86_64"
+                ))
+            {
+                #[cfg(
+                    all(
+                        feature = "asm",
+                        target_feature = "bmi2",
+                        target_feature = "adx",
+                        target_arch = "x86_64"
+                    )
+                )]
+                #[allow(unsafe_code, unused_mut)]
+                #[rustfmt::skip]
+
+                // Tentatively avoid using assembly for `N == 1`.
+                match N {
+                    2 => { ark_ff_asm::x86_64_asm_mul!(2, (a.0).0, (b.0).0); },
+                    3 => { ark_ff_asm::x86_64_asm_mul!(3, (a.0).0, (b.0).0); },
+                    4 => { ark_ff_asm::x86_64_asm_mul!(4, (a.0).0, (b.0).0); },
+                    5 => { ark_ff_asm::x86_64_asm_mul!(5, (a.0).0, (b.0).0); },
+                    6 => { ark_ff_asm::x86_64_asm_mul!(6, (a.0).0, (b.0).0); },
+                    _ => unsafe { ark_std::hint::unreachable_unchecked() },
+                };
+            } else {
+                let mut r = [0u64; N];
+
+                for i in 0..N {
+                    let mut carry1 = 0u64;
+                    r[0] = crate::biginteger::arithmetic::mac(
+                        r[0],
+                        (a.0).0[0],
+                        (b.0).0[i],
+                        &mut carry1,
+                    );
+
+                    let k = r[0].wrapping_mul(Self::INV);
+
+                    let mut carry2 = 0u64;
+                    crate::biginteger::arithmetic::mac_discard(
+                        r[0],
+                        k,
+                        Self::MODULUS.0[0],
+                        &mut carry2,
+                    );
+
+                    for j in 1..N {
+                        r[j] = crate::biginteger::arithmetic::mac_with_carry(
+                            r[j],
+                            (a.0).0[j],
+                            (b.0).0[i],
+                            &mut carry1,
+                        );
+                        r[j - 1] =
+                            crate::biginteger::arithmetic::mac_with_carry(
+                                r[j],
+                                k,
+                                Self::MODULUS.0[j],
+                                &mut carry2,
+                            );
+                    }
+                    r[N - 1] = carry1 + carry2;
+                }
+                (a.0).0.copy_from_slice(&r);
+            }
+            a.subtract_modulus();
+        } else {
+            // Alternative implementation
+            // Implements CIOS.
+            let (carry, res) = a.mul_without_cond_subtract(b);
+            *a = res;
+
+            if Self::MODULUS_HAS_SPARE_BIT {
+                a.subtract_modulus_with_carry(carry);
+            } else {
+                a.subtract_modulus();
+            }
+        }
+    }
 
     /// Set a *= a.
-    fn square_in_place(a: &mut Fp<Self, N>);
+    fn square_in_place(a: &mut Fp<Self, N>) {
+        if N == 1 {
+            // We default to multiplying with `a` using the `Mul` impl
+            // for the N == 1 case
+            *a *= *a;
+            return;
+        }
+        if Self::CAN_USE_NO_CARRY_SQUARE_OPT
+            && (2..=6).contains(&N)
+            && cfg!(all(
+                feature = "asm",
+                target_feature = "bmi2",
+                target_feature = "adx",
+                target_arch = "x86_64"
+            ))
+        {
+            #[cfg(all(
+                feature = "asm",
+                target_feature = "bmi2",
+                target_feature = "adx",
+                target_arch = "x86_64"
+            ))]
+            #[allow(unsafe_code, unused_mut)]
+            #[rustfmt::skip]
+            match N {
+                2 => { ark_ff_asm::x86_64_asm_square!(2, (a.0).0); },
+                3 => { ark_ff_asm::x86_64_asm_square!(3, (a.0).0); },
+                4 => { ark_ff_asm::x86_64_asm_square!(4, (a.0).0); },
+                5 => { ark_ff_asm::x86_64_asm_square!(5, (a.0).0); },
+                6 => { ark_ff_asm::x86_64_asm_square!(6, (a.0).0); },
+                _ => unsafe { ark_std::hint::unreachable_unchecked() },
+            };
+            a.subtract_modulus();
+            return;
+        }
+
+        let mut r = crate::const_helpers::MulBuffer::<N>::zeroed();
+
+        let mut carry = 0;
+        for i in 0..(N - 1) {
+            for j in (i + 1)..N {
+                r[i + j] = crate::biginteger::arithmetic::mac_with_carry(
+                    r[i + j],
+                    (a.0).0[i],
+                    (a.0).0[j],
+                    &mut carry,
+                );
+            }
+            r.b1[i] = carry;
+            carry = 0;
+        }
+
+        r.b1[N - 1] = r.b1[N - 2] >> 63;
+        for i in 2..(2 * N - 1) {
+            r[2 * N - i] = (r[2 * N - i] << 1) | (r[2 * N - (i + 1)] >> 63);
+        }
+        r.b0[1] <<= 1;
+
+        for i in 0..N {
+            r[2 * i] = crate::biginteger::arithmetic::mac_with_carry(
+                r[2 * i],
+                (a.0).0[i],
+                (a.0).0[i],
+                &mut carry,
+            );
+            carry =
+                crate::biginteger::arithmetic::adc(&mut r[2 * i + 1], 0, carry);
+        }
+        // Montgomery reduction
+        let mut carry2 = 0;
+        for i in 0..N {
+            let k = r[i].wrapping_mul(Self::INV);
+            carry = 0;
+            crate::biginteger::arithmetic::mac_discard(
+                r[i],
+                k,
+                Self::MODULUS.0[0],
+                &mut carry,
+            );
+            for j in 1..N {
+                r[j + i] = crate::biginteger::arithmetic::mac_with_carry(
+                    r[j + i],
+                    k,
+                    Self::MODULUS.0[j],
+                    &mut carry,
+                );
+            }
+            carry2 =
+                crate::biginteger::arithmetic::adc(&mut r.b1[i], carry, carry2);
+        }
+        (a.0).0.copy_from_slice(&r.b1);
+        if Self::MODULUS_HAS_SPARE_BIT {
+            a.subtract_modulus();
+        } else {
+            a.subtract_modulus_with_carry(carry2 != 0);
+        }
+    }
 
     /// Compute a^{-1} if `a` is not zero.
-    fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>>;
+    fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
+        if a.is_zero() {
+            return None;
+        }
+        // Guajardo Kumar Paar Pelzl
+        // Efficient Software-Implementation of Finite Fields with Applications
+        // to Cryptography
+        // Algorithm 16 (BEA for Inversion in Fp)
+
+        let one = BigInt::from(1u64);
+
+        let mut u = a.0;
+        let mut v = Self::MODULUS;
+        let mut b = Fp::new_unchecked(Self::R2); // Avoids unnecessary reduction step.
+        let mut c = Fp::zero();
+
+        while u != one && v != one {
+            while u.is_even() {
+                u.div2();
+
+                if b.0.is_even() {
+                    b.0.div2();
+                } else {
+                    let carry = b.0.add_with_carry(&Self::MODULUS);
+                    b.0.div2();
+                    if !Self::MODULUS_HAS_SPARE_BIT && carry {
+                        (b.0).0[N - 1] |= 1 << 63;
+                    }
+                }
+            }
+
+            while v.is_even() {
+                v.div2();
+
+                if c.0.is_even() {
+                    c.0.div2();
+                } else {
+                    let carry = c.0.add_with_carry(&Self::MODULUS);
+                    c.0.div2();
+                    if !Self::MODULUS_HAS_SPARE_BIT && carry {
+                        (c.0).0[N - 1] |= 1 << 63;
+                    }
+                }
+            }
+
+            if v < u {
+                u.sub_with_borrow(&v);
+                b -= &c;
+            } else {
+                v.sub_with_borrow(&u);
+                c -= &b;
+            }
+        }
+
+        if u == one {
+            Some(b)
+        } else {
+            Some(c)
+        }
+    }
 
     /// Construct a field element from an integer in the range
     /// `0..(Self::MODULUS - 1)`. Returns `None` if the integer is outside
     /// this range.
-    fn from_bigint(other: BigInt<N>) -> Option<Fp<Self, N>>;
+    fn from_bigint(r: BigInt<N>) -> Option<Fp<Self, N>> {
+        let mut r = Fp::new_unchecked(r);
+        if r.is_zero() {
+            Some(r)
+        } else if r.is_geq_modulus() {
+            None
+        } else {
+            r *= &Fp::new_unchecked(Self::R2);
+            Some(r)
+        }
+    }
 
     /// Convert a field element to an integer in the range `0..(Self::MODULUS -
     /// 1)`.
-    fn into_bigint(other: Fp<Self, N>) -> BigInt<N>;
+    fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
+        let mut r = (a.0).0;
+        // Montgomery Reduction
+        for i in 0..N {
+            let k = r[i].wrapping_mul(Self::INV);
+            let mut carry = 0;
+
+            crate::biginteger::arithmetic::mac_with_carry(
+                r[i],
+                k,
+                Self::MODULUS.0[0],
+                &mut carry,
+            );
+            for j in 1..N {
+                r[(j + i) % N] = crate::biginteger::arithmetic::mac_with_carry(
+                    r[(j + i) % N],
+                    k,
+                    Self::MODULUS.0[j],
+                    &mut carry,
+                );
+            }
+            r[i % N] = carry;
+        }
+
+        BigInt::new(r)
+    }
 }
 
 /// Represents an element of the prime field F_p, where `p == P::MODULUS`.
