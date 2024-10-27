@@ -1281,37 +1281,4 @@ pub trait BigInteger:
     /// assert_eq!(arr, vec);
     /// ```
     fn to_bytes_le(&self) -> Vec<u8>;
-
-    /// NOTE#q: not used in poseidon
-    /// TODO#q: remove
-    /// Returns the windowed non-adjacent form of `self`, for a window of size
-    /// `w`.
-    fn find_wnaf(&self, w: usize) -> Option<Vec<i64>> {
-        // w > 2 due to definition of wNAF, and w < 64 to make sure that `i64`
-        // can fit each signed digit
-        if (2..64).contains(&w) {
-            let mut res = vec![];
-            let mut e = *self;
-
-            while !e.is_zero() {
-                let z: i64;
-                if e.is_odd() {
-                    z = signed_mod_reduction(e.as_ref()[0], 1 << w);
-                    if z >= 0 {
-                        e.sub_with_borrow(&Self::from(z as u64));
-                    } else {
-                        e.add_with_carry(&Self::from((-z) as u64));
-                    }
-                } else {
-                    z = 0;
-                }
-                res.push(z);
-                e.div2();
-            }
-
-            Some(res)
-        } else {
-            None
-        }
-    }
 }
