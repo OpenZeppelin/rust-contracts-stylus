@@ -148,7 +148,6 @@ pub trait Field:
     /// sets `self` to `self.inverse().unwrap()`.
     fn inverse_in_place(&mut self) -> Option<&mut Self>;
     
-    // TODO#q: reuse bit iterator
     /*
     // NOTE#q: not used in poseidon
     /// Returns `self^exp`, where `exp` is an integer represented with `u64`
@@ -191,6 +190,7 @@ pub trait Field:
     }
     */
 }
+
 
 // TODO#q: move to a different module
 pub trait AdditiveGroup:

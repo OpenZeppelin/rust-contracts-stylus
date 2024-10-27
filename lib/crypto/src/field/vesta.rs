@@ -32,24 +32,26 @@ impl FpConfig<4usize> for FieldConfig {
     ]);
 }
 
-// #[automatically_derived]
-// impl FpConfig<4usize> for FieldConfig {
-//     const GENERATOR: Fp<FieldConfig, 4> = {
-//         let (is_positive, limbs) = (
-//             true,
-//             [
-//                 12037607305579515999u64,
-//                 11221139188353527881u64,
-//                 11411081306099606126u64,
-//                 3307517586042601304u64,
-//             ],
-//         );
-//         Fp::from_sign_and_limbs(is_positive, &limbs)
-//     };
-//     const MODULUS: BigInt<4> = BigInt([
-//         10108024940646105089u64,
-//         2469829653919213789u64,
-//         0u64,
-//         4611686018427387904u64,
-//     ]);
-// }
+/*
+#[automatically_derived]
+impl FpConfig<4usize> for FieldConfig {
+    const GENERATOR: Fp<FieldConfig, 4> = {
+        let (is_positive, limbs) = (
+            true,
+            [
+                12037607305579515999u64,
+                11221139188353527881u64,
+                11411081306099606126u64,
+                3307517586042601304u64,
+            ],
+        );
+        Fp::from_sign_and_limbs(is_positive, &limbs)
+    };
+    const MODULUS: BigInt<4> = BigInt([
+        10108024940646105089u64,
+        2469829653919213789u64,
+        0u64,
+        4611686018427387904u64,
+    ]);
+}
+*/
