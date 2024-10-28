@@ -34,6 +34,29 @@ changes from the `main` branch:
 openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus" }
 ```
 
+> [!NOTE]
+> This library is designed to be `no_std`, which helps reduce wasm size. If you want your project to be `no_std` as well, ensure that your dependencies are not importing the standard library.  
+>You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
+>
+> ```toml
+> [dependencies]
+> alloy-primitives = { version = "=0.7.6", default-features = false }
+>
+> ```
+>
+> You will also need to define your own panic handler for `cargo stylus check` to pass.
+> Here's an example of a simple panic handler you can use in your `lib.rs` file:
+>
+> ```rust
+> #[cfg(target_arch = "wasm32")]
+> #[panic_handler]
+> fn panic(_info: &core::panic::PanicInfo) -> ! {
+>     loop {}
+> }
+> ```
+>
+> The library also works on an `std` environment, without the need to define a panic handler or making extra changes to your project.
+
 Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
