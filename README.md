@@ -23,7 +23,7 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "0.1.0"
+openzeppelin-stylus = "0.1.1"
 ```
 
 Optionally, you can specify a git dependency if you want to have the latest
@@ -35,7 +35,7 @@ openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-st
 ```
 
 > [!NOTE]
-> This library is designed to be `no_std`, which helps reduce wasm size. If you want your project to be `no_std` as well, ensure that your dependencies are not importing the standard library.  
+> This library is designed to be `no_std`, which helps reduce wasm size. If you want your project to be `no_std` as well, ensure that your dependencies are not importing the standard library.
 >You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
 >
 > ```toml
