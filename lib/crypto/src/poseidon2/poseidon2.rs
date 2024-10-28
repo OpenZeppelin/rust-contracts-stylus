@@ -290,18 +290,18 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 //             input.push(Scalar::from(i as u64));
 //         }
 //         let perm = poseidon2.permutation(&input);
-//         assert_eq!(perm[0], from_hex("0x01eaef96bdf1c0c1"));
-//         assert_eq!(perm[1], from_hex("0x1f0d2cc525b2540c"));
-//         assert_eq!(perm[2], from_hex("0x6282c1dfe1e0358d"));
-//         assert_eq!(perm[3], from_hex("0xe780d721f698e1e6"));
-//         assert_eq!(perm[4], from_hex("0x280c0b6f753d833b"));
-//         assert_eq!(perm[5], from_hex("0x1b942dd5023156ab"));
-//         assert_eq!(perm[6], from_hex("0x43f0df3fcccb8398"));
-//         assert_eq!(perm[7], from_hex("0xe8e8190585489025"));
-//         assert_eq!(perm[8], from_hex("0x56bdbf72f77ada22"));
-//         assert_eq!(perm[9], from_hex("0x7911c32bf9dcd705"));
-//         assert_eq!(perm[10], from_hex("0xec467926508fbe67"));
-//         assert_eq!(perm[11], from_hex("0x6a50450ddf85a6ed"));
+//         assert_eq!(perm[0], from_hex!("0x01eaef96bdf1c0c1"));
+//         assert_eq!(perm[1], from_hex!("0x1f0d2cc525b2540c"));
+//         assert_eq!(perm[2], from_hex!("0x6282c1dfe1e0358d"));
+//         assert_eq!(perm[3], from_hex!("0xe780d721f698e1e6"));
+//         assert_eq!(perm[4], from_hex!("0x280c0b6f753d833b"));
+//         assert_eq!(perm[5], from_hex!("0x1b942dd5023156ab"));
+//         assert_eq!(perm[6], from_hex!("0x43f0df3fcccb8398"));
+//         assert_eq!(perm[7], from_hex!("0xe8e8190585489025"));
+//         assert_eq!(perm[8], from_hex!("0x56bdbf72f77ada22"));
+//         assert_eq!(perm[9], from_hex!("0x7911c32bf9dcd705"));
+//         assert_eq!(perm[10], from_hex!("0xec467926508fbe67"));
+//         assert_eq!(perm[11], from_hex!("0x6a50450ddf85a6ed"));
 //     }
 // }
 //
@@ -358,30 +358,30 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 //             input.push(Scalar::from(i as u64));
 //         }
 //         let perm = poseidon2.permutation(&input);
-//         assert_eq!(perm[0], from_hex("0x2ed3e23d"));
-//         assert_eq!(perm[1], from_hex("0x12921fb0"));
-//         assert_eq!(perm[2], from_hex("0x0e659e79"));
-//         assert_eq!(perm[3], from_hex("0x61d81dc9"));
-//         assert_eq!(perm[4], from_hex("0x32bae33b"));
-//         assert_eq!(perm[5], from_hex("0x62486ae3"));
-//         assert_eq!(perm[6], from_hex("0x1e681b60"));
-//         assert_eq!(perm[7], from_hex("0x24b91325"));
-//         assert_eq!(perm[8], from_hex("0x2a2ef5b9"));
-//         assert_eq!(perm[9], from_hex("0x50e8593e"));
-//         assert_eq!(perm[10], from_hex("0x5bc818ec"));
-//         assert_eq!(perm[11], from_hex("0x10691997"));
-//         assert_eq!(perm[12], from_hex("0x35a14520"));
-//         assert_eq!(perm[13], from_hex("0x2ba6a3c5"));
-//         assert_eq!(perm[14], from_hex("0x279d47ec"));
-//         assert_eq!(perm[15], from_hex("0x55014e81"));
-//         assert_eq!(perm[16], from_hex("0x5953a67f"));
-//         assert_eq!(perm[17], from_hex("0x2f403111"));
-//         assert_eq!(perm[18], from_hex("0x6b8828ff"));
-//         assert_eq!(perm[19], from_hex("0x1801301f"));
-//         assert_eq!(perm[20], from_hex("0x2749207a"));
-//         assert_eq!(perm[21], from_hex("0x3dc9cf21"));
-//         assert_eq!(perm[22], from_hex("0x3c985ba2"));
-//         assert_eq!(perm[23], from_hex("0x57a99864"));
+//         assert_eq!(perm[0], from_hex!("0x2ed3e23d"));
+//         assert_eq!(perm[1], from_hex!("0x12921fb0"));
+//         assert_eq!(perm[2], from_hex!("0x0e659e79"));
+//         assert_eq!(perm[3], from_hex!("0x61d81dc9"));
+//         assert_eq!(perm[4], from_hex!("0x32bae33b"));
+//         assert_eq!(perm[5], from_hex!("0x62486ae3"));
+//         assert_eq!(perm[6], from_hex!("0x1e681b60"));
+//         assert_eq!(perm[7], from_hex!("0x24b91325"));
+//         assert_eq!(perm[8], from_hex!("0x2a2ef5b9"));
+//         assert_eq!(perm[9], from_hex!("0x50e8593e"));
+//         assert_eq!(perm[10], from_hex!("0x5bc818ec"));
+//         assert_eq!(perm[11], from_hex!("0x10691997"));
+//         assert_eq!(perm[12], from_hex!("0x35a14520"));
+//         assert_eq!(perm[13], from_hex!("0x2ba6a3c5"));
+//         assert_eq!(perm[14], from_hex!("0x279d47ec"));
+//         assert_eq!(perm[15], from_hex!("0x55014e81"));
+//         assert_eq!(perm[16], from_hex!("0x5953a67f"));
+//         assert_eq!(perm[17], from_hex!("0x2f403111"));
+//         assert_eq!(perm[18], from_hex!("0x6b8828ff"));
+//         assert_eq!(perm[19], from_hex!("0x1801301f"));
+//         assert_eq!(perm[20], from_hex!("0x2749207a"));
+//         assert_eq!(perm[21], from_hex!("0x3dc9cf21"));
+//         assert_eq!(perm[22], from_hex!("0x3c985ba2"));
+//         assert_eq!(perm[23], from_hex!("0x57a99864"));
 //     }
 // }
 //
@@ -442,10 +442,10 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 //         }
 //         let perm_2 = poseidon2_2.permutation(&input_2);
 //         assert_eq!(perm_2[0],
-// from_hex("0x73c46dd530e248a87b61d19e67fa1b4ed30fc3d09f16531fe189fb945a15ce4e"
-// ));         assert_eq!(perm_2[1],
-// from_hex("0x1f0e305ee21c9366d5793b80251405032a3fee32b9dd0b5f4578262891b043b4"
-// ));
+// from_hex!("
+// 0x73c46dd530e248a87b61d19e67fa1b4ed30fc3d09f16531fe189fb945a15ce4e" ));
+// assert_eq!(perm_2[1], from_hex!("
+// 0x1f0e305ee21c9366d5793b80251405032a3fee32b9dd0b5f4578262891b043b4" ));
 //
 //         let poseidon2_3 = Poseidon2::new(&POSEIDON2_BLS_3_PARAMS);
 //         let mut input_3: Vec<Scalar> = vec![];
@@ -454,12 +454,12 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 //         }
 //         let perm_3 = poseidon2_3.permutation(&input_3);
 //         assert_eq!(perm_3[0],
-// from_hex("0x1b152349b1950b6a8ca75ee4407b6e26ca5cca5650534e56ef3fd45761fbf5f0"
-// ));         assert_eq!(perm_3[1],
-// from_hex("0x4c5793c87d51bdc2c08a32108437dc0000bd0275868f09ebc5f36919af5b3891"
-// ));         assert_eq!(perm_3[2],
-// from_hex("0x1fc8ed171e67902ca49863159fe5ba6325318843d13976143b8125f08b50dc6b"
-// ));
+// from_hex!("
+// 0x1b152349b1950b6a8ca75ee4407b6e26ca5cca5650534e56ef3fd45761fbf5f0" ));
+// assert_eq!(perm_3[1], from_hex!("
+// 0x4c5793c87d51bdc2c08a32108437dc0000bd0275868f09ebc5f36919af5b3891" ));
+// assert_eq!(perm_3[2], from_hex!("
+// 0x1fc8ed171e67902ca49863159fe5ba6325318843d13976143b8125f08b50dc6b" ));
 //
 //         let poseidon2_4 = Poseidon2::new(&POSEIDON2_BLS_4_PARAMS);
 //         let mut input_4: Vec<Scalar> = vec![];
@@ -468,14 +468,14 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 //         }
 //         let perm_4 = poseidon2_4.permutation(&input_4);
 //         assert_eq!(perm_4[0],
-// from_hex("0x28ff6c4edf9768c08ae26290487e93449cc8bc155fc2fad92a344adceb3ada6d"
-// ));         assert_eq!(perm_4[1],
-// from_hex("0x0e56f2b6fad25075aa93560185b70e2b180ed7e269159c507c288b6747a0db2d"
-// ));         assert_eq!(perm_4[2],
-// from_hex("0x6d8196f28da6006bb89b3df94600acdc03d0ba7c2b0f3f4409a54c1db6bf30d0"
-// ));         assert_eq!(perm_4[3],
-// from_hex("0x07cfb49540ee456cce38b8a7d1a930a57ffc6660737f6589ef184c5e15334e36"
-// ));     }
+// from_hex!("
+// 0x28ff6c4edf9768c08ae26290487e93449cc8bc155fc2fad92a344adceb3ada6d" ));
+// assert_eq!(perm_4[1], from_hex!("
+// 0x0e56f2b6fad25075aa93560185b70e2b180ed7e269159c507c288b6747a0db2d" ));
+// assert_eq!(perm_4[2], from_hex!("
+// 0x6d8196f28da6006bb89b3df94600acdc03d0ba7c2b0f3f4409a54c1db6bf30d0" ));
+// assert_eq!(perm_4[3], from_hex!("
+// 0x07cfb49540ee456cce38b8a7d1a930a57ffc6660737f6589ef184c5e15334e36" ));     }
 // }
 //
 // #[allow(unused_imports)]
@@ -524,12 +524,12 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 //         }
 //         let perm = poseidon2.permutation(&input);
 //         assert_eq!(perm[0],
-// from_hex("0x0bb61d24daca55eebcb1929a82650f328134334da98ea4f847f760054f4a3033"
-// ));         assert_eq!(perm[1],
-// from_hex("0x303b6f7c86d043bfcbcc80214f26a30277a15d3f74ca654992defe7ff8d03570"
-// ));         assert_eq!(perm[2],
-// from_hex("0x1ed25194542b12eef8617361c3ba7c52e660b145994427cc86296242cf766ec8"
-// ));
+// from_hex!("
+// 0x0bb61d24daca55eebcb1929a82650f328134334da98ea4f847f760054f4a3033" ));
+// assert_eq!(perm[1], from_hex!("
+// 0x303b6f7c86d043bfcbcc80214f26a30277a15d3f74ca654992defe7ff8d03570" ));
+// assert_eq!(perm[2], from_hex!("
+// 0x1ed25194542b12eef8617361c3ba7c52e660b145994427cc86296242cf766ec8" ));
 //
 //     }
 // }
@@ -590,12 +590,12 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 //         }
 //         let perm = poseidon2.permutation(&input);
 //         assert_eq!(perm[0],
-// from_hex("0x1a9b54c7512a914dd778282c44b3513fea7251420b9d95750baae059b2268d7a"
-// ));         assert_eq!(perm[1],
-// from_hex("0x1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc"
-// ));         assert_eq!(perm[2],
-// from_hex("0x079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401"
-// ));
+// from_hex!("
+// 0x1a9b54c7512a914dd778282c44b3513fea7251420b9d95750baae059b2268d7a" ));
+// assert_eq!(perm[1], from_hex!("
+// 0x1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc" ));
+// assert_eq!(perm[2], from_hex!("
+// 0x079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401" ));
 //
 //     }
 // }
@@ -605,10 +605,8 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 mod poseidon2_tests_vesta {
     use super::*;
     use crate::{
-        field::vesta::FpVesta,
-        poseidon2::{
-            poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS, utils::from_hex,
-        },
+        field::vesta::FpVesta, from_hex,
+        poseidon2::poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
     };
 
     type Scalar = FpVesta;
@@ -647,9 +645,9 @@ mod poseidon2_tests_vesta {
             input.push(Scalar::from(i as u64));
         }
         let perm = poseidon2.permutation(&input);
-        assert_eq!(perm[0], from_hex("0x261ecbdfd62c617b82d297705f18c788fc9831b14a6a2b8f61229bef68ce2792"));
-        assert_eq!(perm[1], from_hex("0x2c76327e0b7653873263158cf8545c282364b183880fcdea93ca8526d518c66f"));
-        assert_eq!(perm[2], from_hex("0x262316c0ce5244838c75873299b59d763ae0849d2dd31bdc95caf7db1c2901bf"));
+        assert_eq!(perm[0], from_hex!("261ecbdfd62c617b82d297705f18c788fc9831b14a6a2b8f61229bef68ce2792"));
+        assert_eq!(perm[1], from_hex!("2c76327e0b7653873263158cf8545c282364b183880fcdea93ca8526d518c66f"));
+        assert_eq!(perm[2], from_hex!("262316c0ce5244838c75873299b59d763ae0849d2dd31bdc95caf7db1c2901bf"));
     }
 
     // TODO#q: test against `zkhash` implementation should be added

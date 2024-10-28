@@ -2613,7 +2613,6 @@ dependencies = [
  "ark-std 0.4.0",
  "crypto-bigint",
  "educe",
- "hex",
  "hex-literal",
  "lazy_static",
  "mini-alloc",

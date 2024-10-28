@@ -3,21 +3,22 @@
 // use core::cmp::min;
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
-use crypto_bigint::U256;
+use crate::field::prime::PrimeField;
 
-use crate::field::{prime::PrimeField, vesta::FpVesta};
-
-pub fn from_hex(s: &str) -> FpVesta {
-    let hex_bytes = s.as_bytes();
-    let hex_bytes = &hex_bytes[2..];
-    let be_slice = hex::decode(hex_bytes).unwrap();
-
-    FpVesta::new(U256::from_be_slice(&be_slice))
+// This macro converts string to field element
+#[macro_export]
+macro_rules! from_hex {
+    ($s:literal) => {{
+        let bytes = ::hex_literal::hex!($s);
+        $crate::field::vesta::FpVesta::new(
+            ::crypto_bigint::U256::from_be_slice(&bytes),
+        )
+    }};
 }
 
 // TODO#q: use generic factory
 // pub fn from_hex<F: PrimeField>(s: &str) -> F {
-//     let a = Vec::from_hex(&s[2..]).expect("Invalid Hex String");
+//     let a = Vec::from_hex!(&s[2..]).expect("Invalid Hex String");
 //     F::from_be_bytes_mod_order(&a as &[u8])
 // }
 
