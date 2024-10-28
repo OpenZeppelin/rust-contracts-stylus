@@ -22,13 +22,11 @@ Common cryptographic procedures for a blockchain environment.
 extern crate alloc;
 extern crate core;
 
-#[macro_use]
 pub mod biginteger;
 pub use biginteger::BigInteger;
 pub mod bits;
 #[macro_use]
 pub mod field;
-pub mod const_helpers;
 pub mod hash;
 pub mod keccak;
 pub mod merkle;
