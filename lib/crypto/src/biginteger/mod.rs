@@ -417,7 +417,7 @@ pub trait BigInteger:
 }
 
 impl<const N: usize> BigInteger for crypto_bigint::Uint<N> {
-    const NUM_LIMBS: usize = 0;
+    const NUM_LIMBS: usize = N;
 
     fn add_with_carry(&mut self, other: &Self) -> bool {
         todo!()

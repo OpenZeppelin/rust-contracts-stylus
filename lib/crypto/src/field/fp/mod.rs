@@ -106,6 +106,7 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     }
 }
 
+// TODO#q: store residue inside Fp
 /// Represents an element of the prime field F_p, where `p == P::MODULUS`.
 /// This type can represent elements in any field of size at most N * 64 bits.
 #[derive(Educe)]
