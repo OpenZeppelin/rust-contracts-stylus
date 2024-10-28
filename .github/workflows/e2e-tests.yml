@@ -1,7 +1,7 @@
 # This workflow runs our end-to-end tests suite.
 #
 # It roughly follows these steps:
-# - Install Rust
+# - Install rust
 # - Install `cargo-stylus`
 # - Install `solc`
 # - Spin up `nitro-testnode`
