@@ -1,10 +1,12 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc1155;
-use alloy::primitives::{uint, Address, U256};
+use alloy::primitives::{fixed_bytes, uint, Address, U256};
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use mock::{receiver, receiver::ERC1155ReceiverMock};
 
 mod abi;
+mod mock;
 
 fn random_token_ids(size: usize) -> Vec<U256> {
     (0..size).map(U256::from).collect()
@@ -15,7 +17,7 @@ fn random_values(size: usize) -> Vec<U256> {
 }
 
 // ============================================================================
-// Integration Tests: ERC-1155 Token Standard
+// Integration Tests: ERC-1155 Token
 // ============================================================================
 
 #[e2e::test]
@@ -344,6 +346,189 @@ async fn safe_transfer_from_with_approval(
     let Erc1155::balanceOfReturn { balance: bob_balance } =
         contract_alice.balanceOf(bob_addr, token_id).call().await?;
     assert_eq!(initial_bob_balance - value, bob_balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_transfer_to_receiver_contract(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_addr =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
+            .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ));
+
+    let Erc1155::balanceOfReturn { balance: initial_alice_balance } =
+        contract.balanceOf(alice_addr, token_id).call().await?;
+    let Erc1155::balanceOfReturn { balance: initial_receiver_balance } =
+        contract.balanceOf(receiver_addr, token_id).call().await?;
+
+    let receipt = receipt!(contract.safeTransferFrom(
+        alice_addr,
+        receiver_addr,
+        token_id,
+        value,
+        vec![].into()
+    ))?;
+
+    assert!(receipt.emits(Erc1155::TransferSingle {
+        operator: alice_addr,
+        from: alice_addr,
+        to: receiver_addr,
+        id: token_id,
+        value
+    }));
+
+    assert!(receipt.emits(ERC1155ReceiverMock::Received {
+        operator: alice_addr,
+        from: alice_addr,
+        id: token_id,
+        value,
+        data: fixed_bytes!("").into(),
+    }));
+
+    let Erc1155::balanceOfReturn { balance: alice_balance } =
+        contract.balanceOf(alice_addr, token_id).call().await?;
+    assert_eq!(initial_alice_balance - value, alice_balance);
+
+    let Erc1155::balanceOfReturn { balance: receiver_balance } =
+        contract.balanceOf(receiver_addr, token_id).call().await?;
+    assert_eq!(initial_receiver_balance + value, receiver_balance);
+
+    Ok(())
+}
+
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_reverts_with_reason(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithMessage,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let _err = send!(contract.safeTransferFrom(
+        alice_addr,
+        receiver_address,
+        token_id,
+        value,
+        vec![].into()
+    ))
+    .expect_err("should not transfer when receiver errors with reason");
+
+    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
+    //     b"ERC1155ReceiverMock: reverting on receive".to_vec()
+    // )));
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_without_reason(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let err = send!(contract.safeTransferFrom(
+        alice_addr,
+        receiver_address,
+        token_id,
+        value,
+        vec![].into()
+    ))
+    .expect_err("should not transfer when receiver reverts");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
+            .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let err = send!(contract.safeTransferFrom(
+        alice_addr,
+        receiver_address,
+        token_id,
+        value,
+        vec![].into()
+    ))
+    .expect_err("should not transfer when receiver panics");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
 
     Ok(())
 }
