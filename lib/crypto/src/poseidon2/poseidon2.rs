@@ -647,7 +647,6 @@ mod poseidon2_tests_vesta {
             input.push(Scalar::from(i as u64));
         }
         let perm = poseidon2.permutation(&input);
-        // TODO#q: use crypto_bigint Fp::new(U256:from_be_hex("0x..."))
         assert_eq!(perm[0], from_hex("0x261ecbdfd62c617b82d297705f18c788fc9831b14a6a2b8f61229bef68ce2792"));
         assert_eq!(perm[1], from_hex("0x2c76327e0b7653873263158cf8545c282364b183880fcdea93ca8526d518c66f"));
         assert_eq!(perm[2], from_hex("0x262316c0ce5244838c75873299b59d763ae0849d2dd31bdc95caf7db1c2901bf"));
