@@ -142,8 +142,6 @@ pub trait Field:
     /// sets `self` to `self.inverse().unwrap()`.
     fn inverse_in_place(&mut self) -> Option<&mut Self>;
 
-    /*
-    // NOTE#q: not used in poseidon (bit iterator)
     /// Returns `self^exp`, where `exp` is an integer represented with `u64`
     /// limbs, least significant limb first.
     #[must_use]
@@ -160,7 +158,6 @@ pub trait Field:
         res
     }
 
-    // NOTE#q: not used in poseidon (bit iterator)
     /// Exponentiates a field element `f` by a number represented with `u64`
     /// limbs, using a precomputed table containing as many powers of 2 of
     /// `f` as the 1 + the floor of log2 of the exponent `exp`, starting
@@ -182,7 +179,6 @@ pub trait Field:
         }
         Some(res)
     }
-    */
 }
 
 // TODO#q: move to a different module

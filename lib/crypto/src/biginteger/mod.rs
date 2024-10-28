@@ -10,8 +10,6 @@ use zeroize::Zeroize;
 
 /// This defines a `BigInteger`, a smart wrapper around a
 /// sequence of `u64` limbs, least-significant limb first.
-// TODO: get rid of this trait once we can use associated constants in const
-// generics.
 pub trait BigInteger:
     'static
     + Copy
@@ -25,8 +23,6 @@ pub trait BigInteger:
     + Sized
     + Sync
     + Zeroize
-    // + AsMut<[u64]> // TODO#q: think how to hold a reference to bytes
-    // + AsRef<[u64]>
     + From<u64>
     + From<u32>
     + From<u16>
@@ -349,7 +345,7 @@ pub trait BigInteger:
     fn from_bits_le(bits: &[bool]) -> Self;
 
     // TODO#q: reuse BitIterator
-/*    /// Returns the bit representation in a big endian boolean array,
+    /*    /// Returns the bit representation in a big endian boolean array,
     /// with leading zeroes.
     /// # Example
     ///
