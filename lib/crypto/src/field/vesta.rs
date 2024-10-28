@@ -1,9 +1,9 @@
 use crypto_bigint::Uint;
 
-use crate::field::fp::{Fp256, FpConfig};
+use crate::field::fp::{Fp256, FpParams};
 
-pub struct FieldConfig;
-pub type FpVesta = Fp256<FieldConfig>;
+pub struct FieldParam;
+pub type FpVesta = Fp256<FieldParam>;
 
 use crate::field::fp::Fp;
 
@@ -16,8 +16,8 @@ use crate::field::fp::Fp;
 pub struct FqConfig;
 */
 #[automatically_derived]
-impl FpConfig<4usize> for FieldConfig {
-    const GENERATOR: Fp<FieldConfig, 4> = {
+impl FpParams<4usize> for FieldParam {
+    const GENERATOR: Fp<FieldParam, 4> = {
         Fp::new_unchecked(Uint::<4>::from_words([
             12037607305579515999u64,
             11221139188353527881u64,
