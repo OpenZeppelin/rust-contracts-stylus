@@ -91,7 +91,7 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
         // TODO#q: refactor
         let r1 = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
         let r2 = Residue::<Fp<Self, N>, N>::from_montgomery(b.0);
-        *a = Fp::new((r1 + r2).to_montgomery());
+        *a = Fp::new_unchecked((r1 + r2).to_montgomery());
     }
 
     /// Set a -= b.
@@ -103,7 +103,7 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     fn double_in_place(a: &mut Fp<Self, N>) {
         // TODO#q: refactor
         let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        *a = Fp::new((r + r).to_montgomery());
+        *a = Fp::new_unchecked((r + r).to_montgomery());
     }
 
     /// Set a = -a;
@@ -116,14 +116,14 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
         // TODO#q: refactor
         let r1 = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
         let r2 = Residue::<Fp<Self, N>, N>::from_montgomery(b.0);
-        *a = Fp::new((r1 * r2).to_montgomery());
+        *a = Fp::new_unchecked((r1 * r2).to_montgomery());
     }
 
     /// Set a *= a.
     fn square_in_place(a: &mut Fp<Self, N>) {
         // TODO#q: refactor
         let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        *a = Fp::new(r.square().to_montgomery());
+        *a = Fp::new_unchecked(r.square().to_montgomery());
     }
 
     /// Compute a^{-1} if `a` is not zero.
