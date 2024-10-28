@@ -1,6 +1,7 @@
 use core::{
     cmp::Ordering,
     fmt::{Debug, Display, Formatter},
+    hash::{Hash, Hasher},
     marker::PhantomData,
     ops::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
@@ -37,32 +38,27 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Let `M` be the power of 2^64 nearest to `Self::MODULUS_BITS`. Then
     /// `R = M % Self::MODULUS`.
-    const R: Uint<N> = <Fp<Self, N> as ResidueParams<N>>::R;
+    const R: Uint<N> = <ResidueParam<Self, N> as ResidueParams<N>>::R;
 
     /// R2 = R^2 % Self::MODULUS
-    const R2: Uint<N> = <Fp<Self, N> as ResidueParams<N>>::R2;
+    const R2: Uint<N> = <ResidueParam<Self, N> as ResidueParams<N>>::R2;
 
     /// INV = -MODULUS^{-1} mod 2^64
-    const INV: u64 = <Fp<Self, N> as ResidueParams<N>>::MOD_NEG_INV.0;
+    const INV: u64 = <ResidueParam<Self, N> as ResidueParams<N>>::MOD_NEG_INV.0;
 
     /// Set a += b.
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        // TODO#q: refactor
-        let r1 = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        let r2 = Residue::<Fp<Self, N>, N>::from_montgomery(b.0);
-        *a = Fp::new_unchecked((r1 + r2).to_montgomery());
+        a.residue += b.residue;
     }
 
     /// Set a -= b.
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        todo!()
+        a.residue -= b.residue;
     }
 
     /// Set a = a + a.
     fn double_in_place(a: &mut Fp<Self, N>) {
-        // TODO#q: refactor
-        let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        *a = Fp::new_unchecked((r + r).to_montgomery());
+        a.residue = a.residue + a.residue;
     }
 
     /// Set a = -a;
@@ -72,24 +68,20 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Set a *= b.
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        // TODO#q: refactor
-        let r1 = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        let r2 = Residue::<Fp<Self, N>, N>::from_montgomery(b.0);
-        *a = Fp::new_unchecked((r1 * r2).to_montgomery());
+        a.residue *= b.residue;
     }
 
     /// Set a *= a.
     fn square_in_place(a: &mut Fp<Self, N>) {
-        // TODO#q: refactor
-        let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        *a = Fp::new_unchecked(r.square().to_montgomery());
+        a.residue = a.residue.square();
     }
 
     /// Compute a^{-1} if `a` is not zero.
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
-        // let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        // let (a, choice) = r.invert();
-        todo!()
+        let (residue, choice) = a.residue.invert();
+        let is_inverse: bool = choice.into();
+
+        is_inverse.then_some(Fp { residue, phantom: PhantomData })
     }
 
     /// Construct a field element from an integer in the range
@@ -103,24 +95,28 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// Convert a field element to an integer in the range `0..(Self::MODULUS -
     /// 1)`.
     fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
-        let residue = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
-        residue.retrieve()
+        a.residue.retrieve()
     }
 }
 
-// TODO#q: store residue inside Fp
 /// Represents an element of the prime field F_p, where `p == P::MODULUS`.
 /// This type can represent elements in any field of size at most N * 64 bits.
 #[derive(Educe)]
-#[educe(Default, Hash, Clone, Copy, PartialEq, Eq)]
-pub struct Fp<P: FpConfig<N>, const N: usize>(
+#[educe(Default, Clone, Copy, PartialEq, Eq)]
+pub struct Fp<P: FpConfig<N>, const N: usize> {
     /// Contains the element in Montgomery form for efficient multiplication.
     /// To convert an element to a [`BigInt`](struct@BigInt), use `into_bigint`
     /// or `into`.
+    pub residue: Residue<ResidueParam<P, N>, N>,
     #[doc(hidden)]
-    pub Uint<N>,
-    #[doc(hidden)] pub PhantomData<P>,
-);
+    phantom: PhantomData<P>,
+}
+
+impl<P: FpConfig<N>, const N: usize> Hash for Fp<P, N> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.residue.as_montgomery().hash(state);
+    }
+}
 
 // TODO#q: add doc comments with macro
 pub type Fp64<P> = Fp<P, 1>;
@@ -137,10 +133,11 @@ pub type Fp704<P> = Fp<P, 11>;
 pub type Fp768<P> = Fp<P, 12>;
 pub type Fp832<P> = Fp<P, 13>;
 
-// #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-// pub struct Modulus<const LIMBS: usize> {}
-impl<const LIMBS: usize, P: FpConfig<LIMBS>> ResidueParams<LIMBS>
-    for Fp<P, LIMBS>
+#[derive(Educe)]
+#[educe(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct ResidueParam<P: FpConfig<LIMBS>, const LIMBS: usize>(PhantomData<P>);
+impl<P: FpConfig<LIMBS>, const LIMBS: usize> ResidueParams<LIMBS>
+    for ResidueParam<P, LIMBS>
 {
     const LIMBS: usize = LIMBS;
     // TODO#q: modulus should be checked for not being odd
@@ -171,8 +168,10 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     /// [`struct@BigInt`] data type.
     #[inline]
     pub const fn new(element: Uint<N>) -> Self {
-        let residue = Residue::<Self, N>::new(&element);
-        Self::new_unchecked(residue.to_montgomery())
+        Fp {
+            residue: Residue::<ResidueParam<P, N>, N>::new(&element),
+            phantom: PhantomData,
+        }
     }
 
     /// Construct a new field element from its underlying
@@ -184,7 +183,10 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     /// Montgomery form.
     #[inline]
     pub const fn new_unchecked(element: Uint<N>) -> Self {
-        Fp(element, PhantomData)
+        Fp {
+            residue: Residue::<ResidueParam<P, N>, N>::from_montgomery(element),
+            phantom: PhantomData,
+        }
     }
 
     const fn const_is_zero(&self) -> bool {
@@ -204,10 +206,11 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
         todo!()
     }
 
+    // TODO#q: do we need it
     #[doc(hidden)]
     #[inline]
     pub fn is_geq_modulus(&self) -> bool {
-        self.0 >= P::MODULUS
+        self.residue.as_montgomery() >= &P::MODULUS
     }
 
     // NOTE#q: use for rand Distribution trait
@@ -796,7 +799,7 @@ impl<P: FpConfig<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
     // The phantom data does not contain element-specific data
     // and thus does not need to be zeroized.
     fn zeroize(&mut self) {
-        self.0.zeroize();
+        self.residue.zeroize();
     }
 }
 
