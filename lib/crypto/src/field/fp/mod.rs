@@ -88,7 +88,10 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Set a += b.
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        todo!()
+        // TODO#q: refactor
+        let r1 = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
+        let r2 = Residue::<Fp<Self, N>, N>::from_montgomery(b.0);
+        *a = Fp::new((r1 + r2).to_montgomery());
     }
 
     /// Set a -= b.
@@ -98,7 +101,9 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Set a = a + a.
     fn double_in_place(a: &mut Fp<Self, N>) {
-        todo!()
+        // TODO#q: refactor
+        let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
+        *a = Fp::new((r + r).to_montgomery());
     }
 
     /// Set a = -a;
@@ -108,12 +113,17 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Set a *= b.
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        todo!()
+        // TODO#q: refactor
+        let r1 = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
+        let r2 = Residue::<Fp<Self, N>, N>::from_montgomery(b.0);
+        *a = Fp::new((r1 * r2).to_montgomery());
     }
 
     /// Set a *= a.
     fn square_in_place(a: &mut Fp<Self, N>) {
-        todo!()
+        // TODO#q: refactor
+        let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
+        *a = Fp::new(r.square().to_montgomery());
     }
 
     /// Compute a^{-1} if `a` is not zero.
@@ -125,13 +135,15 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
     /// `0..(Self::MODULUS - 1)`. Returns `None` if the integer is outside
     /// this range.
     fn from_bigint(r: Uint<N>) -> Option<Fp<Self, N>> {
-        todo!()
+        // TODO#q: process other cases
+        Some(Fp::new(r))
     }
 
     /// Convert a field element to an integer in the range `0..(Self::MODULUS -
     /// 1)`.
     fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
-        todo!()
+        let residue = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
+        residue.retrieve()
     }
 }
 
@@ -269,13 +281,13 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
         todo!()
     }
 
+    #[doc(hidden)]
+    #[inline]
+    pub fn is_geq_modulus(&self) -> bool {
+        self.0 >= P::MODULUS
+    }
+
     // NOTE#q: use for rand Distribution trait
-    // #[doc(hidden)]
-    // #[inline]
-    // pub fn is_geq_modulus(&self) -> bool {
-    //     self.0 >= P::MODULUS
-    // }
-    //
     // fn num_bits_to_shave() -> usize {
     //     64 * N - (Self::MODULUS_BIT_SIZE as usize)
     // }
