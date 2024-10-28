@@ -87,6 +87,8 @@ pub trait FpConfig<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Compute a^{-1} if `a` is not zero.
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
+        // let r = Residue::<Fp<Self, N>, N>::from_montgomery(a.0);
+        // let (a, choice) = r.invert();
         todo!()
     }
 
