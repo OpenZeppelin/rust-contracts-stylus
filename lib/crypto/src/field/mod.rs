@@ -6,11 +6,6 @@ use core::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
     },
 };
-
-use ark_serialize::{
-    CanonicalDeserialize, CanonicalDeserializeWithFlags, CanonicalSerialize,
-    CanonicalSerializeWithFlags, EmptyFlags, Flags,
-};
 use ark_std::UniformRand;
 use num_traits::{One, Zero};
 use zeroize::Zeroize;

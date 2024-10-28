@@ -1,10 +1,3 @@
-use core::iter;
-
-use ark_serialize::{
-    buffer_byte_size, CanonicalDeserialize, CanonicalDeserializeWithFlags,
-    CanonicalSerialize, CanonicalSerializeWithFlags, Compress, EmptyFlags,
-    Flags, SerializationError, Valid, Validate,
-};
 use ark_std::{
     cmp::*,
     fmt::{Display, Formatter, Result as FmtResult},
@@ -12,20 +5,16 @@ use ark_std::{
     ops::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
     },
-    str::FromStr,
     string::*,
 };
 use crypto_bigint::{
     modular::constant_mod::{Residue, ResidueParams},
-    Limb, Uint, Word, U256,
+    Limb, Uint, Word,
 };
 use educe::Educe;
 use num_traits::{One, Zero};
 
-use crate::{
-    biginteger::BigInteger,
-    field::{prime::PrimeField, AdditiveGroup, Field},
-};
+use crate::field::{prime::PrimeField, AdditiveGroup, Field};
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.

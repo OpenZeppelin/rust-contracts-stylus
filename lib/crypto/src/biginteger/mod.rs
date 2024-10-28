@@ -1,30 +1,13 @@
-#[allow(unused)]
-use ark_serialize::{
-    CanonicalDeserialize, CanonicalSerialize, Compress, SerializationError,
-    Valid, Validate,
-};
 use ark_std::{
     borrow::Borrow,
     fmt::{Debug, Display, UpperHex},
-    io::{Read, Write},
     ops::{
-        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
-        Shl, ShlAssign, Shr, ShrAssign,
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl,
+        ShlAssign, Shr, ShrAssign,
     },
-    rand::{
-        distributions::{Distribution, Standard},
-        Rng,
-    },
-    str::FromStr,
-    vec,
     vec::*,
-    UniformRand,
 };
-use crypto_bigint::Uint;
-use num_bigint::BigUint;
 use zeroize::Zeroize;
-
-use crate::bits::{BitIteratorBE, BitIteratorLE};
 
 /// This defines a `BigInteger`, a smart wrapper around a
 /// sequence of `u64` limbs, least-significant limb first.
