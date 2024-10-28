@@ -1,5 +1,3 @@
-use ark_std::cmp::min;
-
 use crate::{biginteger::BigInteger, field::Field};
 
 /// The interface for a prime field, i.e. the field of integers modulo a prime

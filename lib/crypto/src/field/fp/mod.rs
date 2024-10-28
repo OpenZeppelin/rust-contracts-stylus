@@ -1,12 +1,12 @@
-use ark_std::{
-    cmp::*,
-    fmt::{Display, Formatter, Result as FmtResult},
+use core::{
+    cmp::Ordering,
+    fmt::{Debug, Display, Formatter},
     marker::PhantomData,
     ops::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
     },
-    string::*,
 };
+
 use crypto_bigint::{
     modular::constant_mod::{Residue, ResidueParams},
     Limb, Uint, Word,
@@ -213,9 +213,9 @@ impl<P: FpConfig<N>, const N: usize> Fp<P, N> {
     // }
 }
 
-impl<P: FpConfig<N>, const N: usize> ark_std::fmt::Debug for Fp<P, N> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> ark_std::fmt::Result {
-        ark_std::fmt::Debug::fmt(&self.into_bigint(), f)
+impl<P: FpConfig<N>, const N: usize> Debug for Fp<P, N> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&self.into_bigint(), f)
     }
 }
 
@@ -449,7 +449,7 @@ impl<P: FpConfig<N>, const N: usize> From<i8> for Fp<P, N> {
 /// represented as a decimal without leading zeroes.
 impl<P: FpConfig<N>, const N: usize> Display for Fp<P, N> {
     #[inline]
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let string = self.into_bigint().to_string();
         write!(f, "{}", string)
     }

@@ -6,7 +6,7 @@ use core::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
     },
 };
-use ark_std::UniformRand;
+
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
@@ -92,7 +92,6 @@ pub trait Field:
     + One
     + Ord
     + Neg<Output = Self>
-    // + UniformRand // TODO#q: and random
     + Zeroize
     + Sized
     + Hash
@@ -142,9 +141,9 @@ pub trait Field:
     /// If `self.inverse().is_none()`, this just returns `None`. Otherwise, it
     /// sets `self` to `self.inverse().unwrap()`.
     fn inverse_in_place(&mut self) -> Option<&mut Self>;
-    
+
     /*
-    // NOTE#q: not used in poseidon
+    // NOTE#q: not used in poseidon (bit iterator)
     /// Returns `self^exp`, where `exp` is an integer represented with `u64`
     /// limbs, least significant limb first.
     #[must_use]
@@ -161,7 +160,7 @@ pub trait Field:
         res
     }
 
-    // NOTE#q: not used in poseidon
+    // NOTE#q: not used in poseidon (bit iterator)
     /// Exponentiates a field element `f` by a number represented with `u64`
     /// limbs, using a precomputed table containing as many powers of 2 of
     /// `f` as the 1 + the floor of log2 of the exponent `exp`, starting
@@ -186,7 +185,6 @@ pub trait Field:
     */
 }
 
-
 // TODO#q: move to a different module
 pub trait AdditiveGroup:
     Eq
@@ -200,7 +198,6 @@ pub trait AdditiveGroup:
     + Hash
     + Debug
     + Display
-    // + UniformRand // TODO#q add uniform rand generation
     + Zeroize
     + Zero
     + Neg<Output = Self>

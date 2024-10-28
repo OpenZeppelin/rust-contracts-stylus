@@ -26,15 +26,13 @@ num-bigint = "0.4.6"
 
 # TODO#q: remove these dependencies. Used by poseidon-hash
 lazy_static = "1.5.0"
-# TODO#q: remove these dependencies. Used by field implementation
-ark-std = { version = "0.4.0", default-features = false, features = ["getrandom"] }
 
 [dev-dependencies]
 rand.workspace = true
 
 [features]
 std = []
-rand = ["dep:rand"]
+rand = ["dep:rand", "crypto-bigint/rand"]
 
 [lints]
 workspace = true

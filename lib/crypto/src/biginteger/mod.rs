@@ -1,12 +1,11 @@
-use ark_std::{
-    borrow::Borrow,
+use core::{
     fmt::{Debug, Display, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl,
         ShlAssign, Shr, ShrAssign,
     },
-    vec::*,
 };
+
 use zeroize::Zeroize;
 
 /// This defines a `BigInteger`, a smart wrapper around a
@@ -14,7 +13,8 @@ use zeroize::Zeroize;
 // TODO: get rid of this trait once we can use associated constants in const
 // generics.
 pub trait BigInteger:
-    Copy
+    'static
+    + Copy
     + Clone
     + Debug
     + Default
@@ -24,8 +24,6 @@ pub trait BigInteger:
     + Send
     + Sized
     + Sync
-    + 'static
-    // + UniformRand // TODO#q: implement UnifromRand
     + Zeroize
     // + AsMut<[u64]> // TODO#q: think how to hold a reference to bytes
     // + AsRef<[u64]>
