@@ -157,7 +157,12 @@ pub trait Field:
     }
 }
 
-// TODO#q: move to a different module
+/// Defines an abstract group with additive notation.
+/// Support addition and subtraction with itself and multiplication by scalar.
+/// Scalar and group can be different types.
+///
+/// E.g., Points on an elliptic curve define an additive group and can be
+/// multiplied by a scalar.
 pub trait AdditiveGroup:
     Eq
     + 'static
@@ -194,9 +199,10 @@ pub trait AdditiveGroup:
     + Sum<Self>
     + for<'a> Sum<&'a Self>
 {
+    /// Scalar associated with the group.
     type Scalar: Field;
 
-    /// The additive identity of the field.
+    /// Additive identity of the group.
     const ZERO: Self;
 
     /// Doubles `self`.
@@ -206,6 +212,7 @@ pub trait AdditiveGroup:
         copy.double_in_place();
         copy
     }
+
     /// Doubles `self` in place.
     fn double_in_place(&mut self) -> &mut Self {
         self.add_assign(*self);
