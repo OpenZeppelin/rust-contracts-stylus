@@ -122,6 +122,7 @@ pub struct Fp<P: FpConfig<N>, const N: usize>(
     #[doc(hidden)] pub PhantomData<P>,
 );
 
+// TODO#q: add doc comments with macro
 pub type Fp64<P> = Fp<P, 1>;
 pub type Fp128<P> = Fp<P, 2>;
 pub type Fp192<P> = Fp<P, 3>;
