@@ -84,9 +84,10 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         is_inverse.then_some(Fp { residue })
     }
 
-    /// Construct a field element from an integer in the range
-    /// `0..(Self::MODULUS - 1)`. Returns `None` if the integer is outside
-    /// this range.
+    // TODO#q: do we need to return Option<_> here?
+    /// Construct a field element from an integer from `0` to `Self::MODULUS -
+    /// 1`.
+    /// Returns `None` if the integer is outside this range.
     fn from_bigint(r: Uint<N>) -> Option<Fp<Self, N>> {
         if r >= Self::MODULUS {
             None
@@ -95,8 +96,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         }
     }
 
-    /// Convert a field element to an integer in the range `0..(Self::MODULUS -
-    /// 1)`.
+    /// Convert a field element to an integer from `0` to `Self::MODULUS - 1`.
     fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
         a.residue.retrieve()
     }
@@ -144,6 +144,7 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> ResidueParams<LIMBS>
     const LIMBS: usize = LIMBS;
     const MODULUS: Uint<LIMBS> = {
         let modulus = P::MODULUS;
+        // Uint represents integer in low-endian form.
         assert!(modulus.as_limbs()[0].0 & 1 == 1, "modulus must be odd");
         modulus
     };
@@ -169,20 +170,18 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[doc(hidden)]
     pub const R2: Uint<N> = P::R2;
 
-    /// Construct a new field element from its underlying
-    /// [`struct@BigInt`] data type.
+    /// Construct a new field element from [`Uint`] and convert it in
+    /// Montgomery form.
     #[inline]
     pub const fn new(element: Uint<N>) -> Self {
         Fp { residue: Residue::<ResidueParam<P, N>, N>::new(&element) }
     }
 
-    /// Construct a new field element from its underlying
-    /// [`struct@BigInt`] data type.
+    /// Construct a new field element from [`Uint`].
     ///
     /// Unlike [`Self::new`], this method does not perform Montgomery reduction.
-    /// Thus, this method should be used only when constructing
-    /// an element from an integer that has already been put in
-    /// Montgomery form.
+    /// This method should be used only when constructing an element from an
+    /// integer that has already been put in Montgomery form.
     #[inline]
     pub const fn new_unchecked(element: Uint<N>) -> Self {
         Fp {
@@ -301,6 +300,7 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
     }
 }
 
+// TODO#q: rephrase comment
 /// Note that this implementation of `Ord` compares field elements viewing
 /// them as integers in the range 0, 1, ..., P::MODULUS - 1. However, other
 /// implementations of `PrimeField` might choose a different ordering, and
@@ -314,6 +314,7 @@ impl<P: FpParams<N>, const N: usize> Ord for Fp<P, N> {
     }
 }
 
+// TODO#q: rephrase comment
 /// Note that this implementation of `PartialOrd` compares field elements
 /// viewing them as integers in the range 0, 1, ..., `P::MODULUS` - 1. However,
 /// other implementations of `PrimeField` might choose a different ordering, and
@@ -432,8 +433,8 @@ impl<P: FpParams<N>, const N: usize> From<i8> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> Display for Fp<P, N> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        let string = self.into_bigint().to_string();
-        write!(f, "{}", string)
+        let str = self.into_bigint().to_string();
+        write!(f, "{str}")
     }
 }
 
@@ -563,7 +564,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::AddAssign<&'a Self>
 {
     #[inline]
     fn add_assign(&mut self, other: &Self) {
-        P::add_assign(self, other)
+        P::add_assign(self, other);
     }
 }
 
@@ -648,7 +649,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::iter::Sum<&'a Self>
 impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<Self> for Fp<P, N> {
     #[inline(always)]
     fn add_assign(&mut self, other: Self) {
-        self.add_assign(&other)
+        self.add_assign(&other);
     }
 }
 
@@ -656,7 +657,7 @@ impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<Self> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<Self> for Fp<P, N> {
     #[inline(always)]
     fn sub_assign(&mut self, other: Self) {
-        self.sub_assign(&other)
+        self.sub_assign(&other);
     }
 }
 
@@ -666,7 +667,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::AddAssign<&'a mut Self>
 {
     #[inline(always)]
     fn add_assign(&mut self, other: &'a mut Self) {
-        self.add_assign(&*other)
+        self.add_assign(&*other);
     }
 }
 
@@ -676,7 +677,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::SubAssign<&'a mut Self>
 {
     #[inline(always)]
     fn sub_assign(&mut self, other: &'a mut Self) {
-        self.sub_assign(&*other)
+        self.sub_assign(&*other);
     }
 }
 
@@ -684,7 +685,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::MulAssign<&'a Self>
     for Fp<P, N>
 {
     fn mul_assign(&mut self, other: &Self) {
-        P::mul_assign(self, other)
+        P::mul_assign(self, other);
     }
 }
 
@@ -772,7 +773,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::iter::Product<&'a Self>
 impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<Self> for Fp<P, N> {
     #[inline(always)]
     fn mul_assign(&mut self, other: Self) {
-        self.mul_assign(&other)
+        self.mul_assign(&other);
     }
 }
 
@@ -782,7 +783,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::DivAssign<&'a mut Self>
 {
     #[inline(always)]
     fn div_assign(&mut self, other: &'a mut Self) {
-        self.div_assign(&*other)
+        self.div_assign(&*other);
     }
 }
 
@@ -792,7 +793,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::MulAssign<&'a mut Self>
 {
     #[inline(always)]
     fn mul_assign(&mut self, other: &'a mut Self) {
-        self.mul_assign(&*other)
+        self.mul_assign(&*other);
     }
 }
 
@@ -800,7 +801,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::MulAssign<&'a mut Self>
 impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<Self> for Fp<P, N> {
     #[inline(always)]
     fn div_assign(&mut self, other: Self) {
-        self.div_assign(&other)
+        self.div_assign(&other);
     }
 }
 
