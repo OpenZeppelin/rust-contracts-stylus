@@ -23,7 +23,6 @@ extern crate alloc;
 extern crate core;
 
 pub mod biginteger;
-pub use biginteger::BigInteger;
 pub mod bits;
 #[macro_use]
 pub mod field;
