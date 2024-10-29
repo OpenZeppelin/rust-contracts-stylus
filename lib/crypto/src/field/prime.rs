@@ -14,11 +14,10 @@ pub trait PrimeField:
     /// The size of the modulus in bits.
     const MODULUS_BIT_SIZE: usize;
 
-    /// Construct a prime field element from an integer in the range `0..(p -
-    /// 1)`.
-    fn from_bigint(repr: Self::BigInt) -> Option<Self>;
+    /// Construct a prime field element from a big integer.
+    fn from_bigint(repr: Self::BigInt) -> Self;
 
-    /// Converts an element of the prime field into an integer in the range
-    /// `0..(p - 1)`.
+    /// Converts an element of the prime field into an integer less than
+    /// [`Self::MODULUS`].
     fn into_bigint(self) -> Self::BigInt;
 }

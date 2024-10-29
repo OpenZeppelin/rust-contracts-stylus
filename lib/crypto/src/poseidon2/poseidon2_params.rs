@@ -1,6 +1,6 @@
-use alloc::{borrow::ToOwned, vec, vec::Vec};
+use alloc::{borrow::ToOwned, vec::Vec};
 
-use crate::{field::prime::PrimeField, poseidon2::utils};
+use crate::field::prime::PrimeField;
 
 #[derive(Clone, Debug)]
 pub struct Poseidon2Params<F: PrimeField> {

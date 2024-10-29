@@ -1,25 +1,41 @@
-//! TODO#q: docs: describe module and add same kind of example but for Fp
+//! This module provides common arithmetics to work with finite fields.
+//! Implementations of some used fields provided in the [`instance`]
+//! module.
+//!
+//! Here is an example operations over a prime finite field (aka Fp) with a
+//! prime modulus `17` and generator element `3`.
+//!
 //! ## Example
 //! ```rust
-//! use ark_ff::{AdditiveGroup, fields::{Field, Fp64, MontBackend, MontConfig}};
+//! use openzeppelin_crypto::{
+//!     bigint::crypto_bigint::U64,
+//!     field::{
+//!         fp::{Fp64, FpParams},
+//!         group::AdditiveGroup,
+//!         Field,   
+//!     },
+//!     fp_from_num,
+//!     from_num,
+//! };
 //!
-//! #[derive(MontConfig)]
-//! #[modulus = "17"]
-//! #[generator = "3"]
-//! pub struct FqConfig;
-//! pub type Fq = Fp64<MontBackend<FqConfig, 1>>;
+//! pub type ExampleField = Fp64<FpParam>;
+//! pub struct FpParam;
+//! impl FpParams<1> for FpParam {
+//!     const MODULUS: U64 = from_num!("17");
+//!     const GENERATOR: Fp64<FpParam> = fp_from_num!("3");
+//! }
 //!
 //! # fn main() {
-//! let a = Fq::from(9);
-//! let b = Fq::from(10);
+//! let a = ExampleField::from(9);
+//! let b = ExampleField::from(10);
 //!
-//! assert_eq!(a, Fq::from(26));          // 26 =  9 mod 17
-//! assert_eq!(a - b, Fq::from(16));      // -1 = 16 mod 17
-//! assert_eq!(a + b, Fq::from(2));       // 19 =  2 mod 17
-//! assert_eq!(a * b, Fq::from(5));       // 90 =  5 mod 17
-//! assert_eq!(a.square(), Fq::from(13)); // 81 = 13 mod 17
-//! assert_eq!(b.double(), Fq::from(3));  // 20 =  3 mod 17
-//! assert_eq!(a / b, a * b.inverse().unwrap()); // need to unwrap since `b` could be 0 which is not invertible
+//! assert_eq!(a, ExampleField::from(26));          // 26 =  9 mod 17
+//! assert_eq!(a - b, ExampleField::from(16));      // -1 = 16 mod 17
+//! assert_eq!(a + b, ExampleField::from(2));       // 19 =  2 mod 17
+//! assert_eq!(a * b, ExampleField::from(5));       // 90 =  5 mod 17
+//! assert_eq!(a.square(), ExampleField::from(13)); // 81 = 13 mod 17
+//! assert_eq!(b.double(), ExampleField::from(3));  // 20 =  3 mod 17
+//! assert_eq!(a / b, a * b.inverse().unwrap());    // need to unwrap since `b` could be 0 which is not invertible
 //! # }
 //! ```
 use core::{

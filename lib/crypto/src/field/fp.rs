@@ -84,19 +84,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         is_inverse.then_some(Fp { residue })
     }
 
-    // TODO#q: do we need to return Option<_> here?
-    /// Construct a field element from an integer from `0` to `Self::MODULUS -
-    /// 1`.
-    /// Returns `None` if the integer is outside this range.
-    fn from_bigint(r: Uint<N>) -> Option<Fp<Self, N>> {
-        if r >= Self::MODULUS {
-            None
-        } else {
-            Some(Fp::new(r))
-        }
+    /// Construct a field element from an integer.
+    ///
+    /// By the end element will be converted to a montgomery form and reduced.
+    fn from_bigint(r: Uint<N>) -> Fp<Self, N> {
+        Fp::new(r)
     }
 
-    /// Convert a field element to an integer from `0` to `Self::MODULUS - 1`.
+    /// Convert a field element to an integer less than [`Self::MODULUS`].
     fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
         a.residue.retrieve()
     }
@@ -183,6 +178,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// Construct a new field element from [`Uint`] and convert it in
     /// Montgomery form.
     #[inline]
+    #[must_use]
     pub const fn new(element: Uint<N>) -> Self {
         Fp { residue: Residue::<ResidueParam<P, N>, N>::new(&element) }
     }
@@ -193,6 +189,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// This method should be used only when constructing an element from an
     /// integer that has already been put in Montgomery form.
     #[inline]
+    #[must_use]
     pub const fn new_unchecked(element: Uint<N>) -> Self {
         Fp {
             residue: Residue::<ResidueParam<P, N>, N>::from_montgomery(element),
@@ -301,8 +298,8 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
     const MODULUS_BIT_SIZE: usize = P::MODULUS.bits();
 
     #[inline]
-    fn from_bigint(r: Uint<N>) -> Option<Self> {
-        P::from_bigint(r)
+    fn from_bigint(repr: Self::BigInt) -> Self {
+        P::from_bigint(repr)
     }
 
     fn into_bigint(self) -> Uint<N> {
@@ -341,7 +338,6 @@ impl<P: FpParams<N>, const N: usize> PartialOrd for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> From<u128> for Fp<P, N> {
     fn from(other: u128) -> Self {
         Fp::from_bigint(Uint::from_u128(other))
-            .expect("should be less than modulus")
     }
 }
 
@@ -360,7 +356,6 @@ impl<P: FpParams<N>, const N: usize> From<bool> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> From<u64> for Fp<P, N> {
     fn from(other: u64) -> Self {
         Fp::from_bigint(Uint::from_u64(other))
-            .expect("should be less than modulus")
     }
 }
 
@@ -373,7 +368,6 @@ impl<P: FpParams<N>, const N: usize> From<i64> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> From<u32> for Fp<P, N> {
     fn from(other: u32) -> Self {
         Fp::from_bigint(Uint::from_u32(other))
-            .expect("should be less than modulus")
     }
 }
 
@@ -386,7 +380,6 @@ impl<P: FpParams<N>, const N: usize> From<i32> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> From<u16> for Fp<P, N> {
     fn from(other: u16) -> Self {
         Fp::from_bigint(Uint::from_u16(other))
-            .expect("should be less than modulus")
     }
 }
 
@@ -399,7 +392,6 @@ impl<P: FpParams<N>, const N: usize> From<i16> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> From<u8> for Fp<P, N> {
     fn from(other: u8) -> Self {
         Fp::from_bigint(Uint::from_u8(other))
-            .expect("should be less than modulus")
     }
 }
 
@@ -830,7 +822,7 @@ impl<P: FpParams<N>, const N: usize> From<Uint<N>> for Fp<P, N> {
     /// Converts `Self::BigInteger` into `Self`
     #[inline(always)]
     fn from(int: Uint<N>) -> Self {
-        Self::from_bigint(int).expect("should be less than modulus")
+        Self::from_bigint(int)
     }
 }
 
