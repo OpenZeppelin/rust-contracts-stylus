@@ -605,7 +605,7 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 mod poseidon2_tests_vesta {
     use super::*;
     use crate::{
-        field::vesta::FpVesta, fp_from_hex,
+        field::instance::FpVesta, fp_from_hex,
         poseidon2::poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
     };
 

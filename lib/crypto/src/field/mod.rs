@@ -39,8 +39,8 @@ use crate::bits::BitIteratorBE;
 
 pub mod fp;
 pub mod group;
+pub mod instance;
 pub mod prime;
-pub mod vesta;
 
 /// Defines an abstract field.
 /// Types implementing [`Field`] support common field operations such as
