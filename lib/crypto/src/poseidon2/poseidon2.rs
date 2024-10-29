@@ -1,5 +1,7 @@
 use alloc::{borrow::ToOwned, sync::Arc, vec::Vec};
 
+use crypto_bigint::Random;
+
 use super::poseidon2_params::Poseidon2Params;
 use crate::{field::prime::PrimeField, poseidon2::merkle_tree::MerkleTreeHash};
 
@@ -605,12 +607,8 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 mod poseidon2_tests_vesta {
     use super::*;
     use crate::{
-        field::instance::FpVesta,
-        fp_from_hex,
-        poseidon2::{
-            poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
-            utils::random_scalar,
-        },
+        field::instance::FpVesta, fp_from_hex,
+        poseidon2::poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
     };
 
     type Scalar = FpVesta;
@@ -654,4 +652,11 @@ mod poseidon2_tests_vesta {
     }
 
     // TODO#q: test against `zkhash` implementation should be added
+}
+
+#[allow(unused_imports)]
+#[cfg(test)]
+pub fn random_scalar<F: PrimeField + Random>() -> F {
+    let mut rng = rand::thread_rng();
+    F::random(&mut rng)
 }
