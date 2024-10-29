@@ -1326,70 +1326,96 @@ mod tests {
     }
 
     #[motsu::test]
+    fn error_when_mints_to_invalid_receiver(contract: Erc1155) {
+        let invalid_receiver = Address::ZERO;
+        let token_id = random_token_ids(1)[0];
+        let value = random_values(1)[0];
+
+        let err = contract
+            ._mint(invalid_receiver, token_id, value, vec![0, 1, 2, 3].into())
+            .expect_err("should not mint tokens for invalid receiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+    }
+
+    #[motsu::test]
     fn mints_batch(contract: Erc1155) {
         let token_ids = random_token_ids(4);
         let values = random_values(4);
         let accounts = vec![ALICE, BOB, DAVE, CHARLIE];
 
-        contract
+        for account in accounts {
+            contract
+                ._mint_batch(
+                    account,
+                    token_ids.clone(),
+                    values.clone(),
+                    vec![0, 1, 2, 3].into(),
+                )
+                .expect("should batch mint tokens");
+
+            token_ids.iter().zip(values.iter()).for_each(
+                |(&token_id, &value)| {
+                    assert_eq!(value, contract.balance_of(account, token_id));
+                },
+            );
+
+            let balances = contract
+                .balance_of_batch(
+                    vec![account, account, account, account],
+                    token_ids.clone(),
+                )
+                .expect("should return balances");
+
+            assert_eq!(values, balances);
+        }
+    }
+
+    #[motsu::test]
+    fn error_when_batch_mints_to_invalid_receiver(contract: Erc1155) {
+        let token_ids = random_token_ids(1);
+        let values = random_values(1);
+        let invalid_receiver = Address::ZERO;
+
+        let err = contract
             ._mint_batch(
-                ALICE,
-                token_ids.clone(),
-                values.clone(),
+                invalid_receiver,
+                token_ids,
+                values,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect("should mint tokens for Alice");
-        token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract.balance_of(ALICE, token_id);
-            assert_eq!(balance, value);
-        });
+            .expect_err("should not batch mint tokens for invalid receiver");
 
-        contract
-            ._mint_batch(
-                BOB,
-                token_ids.clone(),
-                values.clone(),
-                vec![0, 1, 2, 3].into(),
-            )
-            .expect("should mint tokens for BOB");
-        token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract.balance_of(BOB, token_id);
-            assert_eq!(balance, value);
-        });
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+    }
 
-        contract
-            ._mint_batch(
-                DAVE,
-                token_ids.clone(),
-                values.clone(),
-                vec![0, 1, 2, 3].into(),
-            )
-            .expect("should mint tokens for DAVE");
-        token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract.balance_of(DAVE, token_id);
-            assert_eq!(balance, value);
-        });
+    #[motsu::test]
+    fn error_when_batch_mints_not_equal_arrays(contract: Erc1155) {
+        let token_ids = random_token_ids(3);
+        let values = random_values(4);
 
-        contract
-            ._mint_batch(
-                CHARLIE,
-                token_ids.clone(),
-                values.clone(),
-                vec![0, 1, 2, 3].into(),
-            )
-            .expect("should mint tokens for CHARLIE");
-        token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            let balance = contract.balance_of(CHARLIE, token_id);
-            assert_eq!(balance, value);
-        });
+        let err = contract
+            ._mint_batch(ALICE, token_ids, values, vec![0, 1, 2, 3].into())
+            .expect_err(
+                "should not batch mint tokens when not equal array lengths",
+            );
 
-        let balances = contract
-            .balance_of_batch(accounts.clone(), token_ids.clone())
-            .expect("should return the balances of all accounts");
-
-        balances.iter().zip(values.iter()).for_each(|(&balance, &value)| {
-            assert_eq!(balance, value);
-        });
+        assert!(matches!(
+            err,
+            Error::InvalidArrayLength(ERC1155InvalidArrayLength {
+                ids_length, values_length
+            }) if ids_length == uint!(3_U256) && values_length == uint!(4_U256)
+        ));
     }
 
     #[motsu::test]
