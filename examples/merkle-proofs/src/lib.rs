@@ -8,10 +8,10 @@ use openzeppelin_crypto::{
     merkle::{self, Verifier},
     KeccakBuilder,
 };
-use stylus_proc::SolidityError;
 use stylus_sdk::{
     alloy_sol_types::sol,
     prelude::{entrypoint, public, sol_storage},
+    stylus_proc::SolidityError,
 };
 
 sol! {

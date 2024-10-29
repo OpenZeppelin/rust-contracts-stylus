@@ -12,8 +12,11 @@
 - [Unit] and [integration] test affordances, used in our own tests.
 
 [`openzeppelin-contracts`]: https://github.com/OpenZeppelin/openzeppelin-contracts
+
 [`koba`]: https://github.com/OpenZeppelin/koba
+
 [Unit]: ./lib/motsu/README.md
+
 [integration]: ./lib/e2e/README.md
 
 ## Usage
@@ -73,7 +76,7 @@ sol_storage! {
 
 #[public]
 #[inherit(Erc20)]
-impl Erc20Example { }
+impl Erc20Example {}
 ```
 
 For a more complex display of what this library offers, refer to our
@@ -85,8 +88,6 @@ For a full example that includes deploying and querying a contract, see the
 For more information on what this library will include in the future, see our
 [roadmap].
 
-[specify a git dependency]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories
-[examples]: ./examples
 [basic]: ./examples/basic
 [roadmap]: https://github.com/OpenZeppelin/rust-contracts-stylus/milestone/2
 
@@ -104,4 +105,5 @@ Refer to our [Security Policy](SECURITY.md) for more details.
 
 ## License
 
-OpenZeppelin Contracts for Stylus is released under the [MIT License](./LICENSE).
+OpenZeppelin Contracts for Stylus is released under
+the [MIT License](./LICENSE).

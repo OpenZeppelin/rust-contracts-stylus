@@ -1,18 +1,21 @@
-use benches::{access_control, erc20, erc721, merkle_proofs, report::Reports};
+use benches::{
+    access_control, erc20, erc721, merkle_proofs, report::BenchmarkReport,
+};
+use futures::FutureExt;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
-    let reports = tokio::join!(
-        access_control::bench(),
-        erc20::bench(),
-        erc721::bench(),
-        merkle_proofs::bench()
-    );
+    let report = futures::future::try_join_all([
+        access_control::bench().boxed(),
+        erc20::bench().boxed(),
+        erc721::bench().boxed(),
+        merkle_proofs::bench().boxed(),
+    ])
+    .await?
+    .into_iter()
+    .fold(BenchmarkReport::default(), BenchmarkReport::merge_with);
 
-    let reports = [reports.0?, reports.1?, reports.2?, reports.3?];
-    let report =
-        reports.into_iter().fold(Reports::default(), Reports::merge_with);
-
+    println!();
     println!("{report}");
 
     Ok(())

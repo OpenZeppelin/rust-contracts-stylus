@@ -5,8 +5,7 @@ use alloc::string::String;
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
-use stylus_proc::sol_storage;
-use stylus_sdk::evm;
+use stylus_sdk::{evm, stylus_proc::sol_storage};
 
 use crate::token::erc721::{extensions::Erc721Metadata, Error, IErc721};
 
@@ -107,8 +106,7 @@ impl Erc721UriStorage {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
-    use stylus_proc::sol_storage;
-    use stylus_sdk::msg;
+    use stylus_sdk::{msg, stylus_proc::sol_storage};
 
     use super::Erc721UriStorage;
     use crate::token::erc721::{extensions::Erc721Metadata, Erc721};

@@ -1,9 +1,9 @@
 [package]
 name = "openzeppelin-stylus"
-categories = ["no-std", "wasm"]
 description = "OpenZeppelin Contracts for Stylus"
 edition.workspace = true
-keywords.workspace = true
+categories = ["cryptography::cryptocurrencies", "no-std", "wasm"]
+keywords = ["arbitrum", "ethereum", "stylus", "smart-contracts", "standards"]
 license.workspace = true
 repository.workspace = true
 version.workspace = true
@@ -15,7 +15,6 @@ alloy-sol-macro.workspace = true
 alloy-sol-macro-expander.workspace = true
 alloy-sol-macro-input.workspace = true
 stylus-sdk.workspace = true
-stylus-proc.workspace = true
 keccak-const.workspace = true
 openzeppelin-stylus-proc.workspace = true
 

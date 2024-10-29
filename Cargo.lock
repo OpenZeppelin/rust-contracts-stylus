@@ -11,7 +11,6 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -797,7 +796,6 @@ version = "0.1.1"
 dependencies = [
  "alloy-primitives",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
 ]
 
@@ -820,6 +818,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
+ "futures",
  "keccak-const",
  "koba",
  "openzeppelin-stylus",
@@ -1261,7 +1260,6 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -1512,7 +1510,6 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -1526,7 +1523,6 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -1542,7 +1538,6 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -1557,7 +1552,6 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -1572,7 +1566,6 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
@@ -2345,7 +2338,6 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "openzeppelin-crypto",
- "stylus-proc",
  "stylus-sdk",
 ]
 
@@ -2410,7 +2402,6 @@ dependencies = [
  "motsu",
  "proc-macro2",
  "quote",
- "stylus-proc",
  "stylus-sdk",
  "syn 2.0.68",
 ]
@@ -2572,7 +2563,6 @@ dependencies = [
  "motsu",
  "openzeppelin-stylus-proc",
  "rand",
- "stylus-proc",
  "stylus-sdk",
 ]
 
@@ -2595,7 +2585,6 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]
