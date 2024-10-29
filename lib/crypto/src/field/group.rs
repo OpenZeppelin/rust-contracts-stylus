@@ -1,5 +1,5 @@
-use core::fmt::{Debug, Display};
-use std::{
+use core::{
+    fmt::{Debug, Display},
     hash::Hash,
     iter::Sum,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
@@ -14,7 +14,7 @@ use crate::field::Field;
 /// Support addition and subtraction with itself and multiplication by scalar.
 /// Scalar and group can be different types.
 ///
-/// E.g., Points on an elliptic curve define an additive group and can be
+/// E.g., points on an elliptic curve define an additive group and can be
 /// multiplied by a scalar.
 pub trait AdditiveGroup:
     Eq

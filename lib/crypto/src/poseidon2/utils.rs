@@ -5,7 +5,7 @@ use alloc::{borrow::ToOwned, vec, vec::Vec};
 
 use crate::field::prime::PrimeField;
 
-// This macro converts string to field element
+// This macro converts a string to a field element
 #[macro_export]
 macro_rules! from_hex {
     ($s:literal) => {{

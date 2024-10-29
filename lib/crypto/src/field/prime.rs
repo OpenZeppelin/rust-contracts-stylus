@@ -1,4 +1,4 @@
-use crate::{biginteger::BigInteger, field::Field};
+use crate::{bigint::BigInteger, field::Field};
 
 /// Defines an abstract prime field.
 /// I.e., the field of integers of prime module [`Self::MODULUS`].

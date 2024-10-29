@@ -1,6 +1,5 @@
-//! TODO#q: docs: describe module
+//! TODO#q: docs: describe module and add same kind of example but for Fp
 //! ## Example
-//! TODO#q: docs: dd same kind of example but for Fp
 //! ```rust
 //! use ark_ff::{AdditiveGroup, fields::{Field, Fp64, MontBackend, MontConfig}};
 //!
