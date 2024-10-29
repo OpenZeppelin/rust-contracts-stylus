@@ -163,7 +163,7 @@ impl MethodError for Error {
 pub use receiver::IERC721Receiver;
 #[allow(missing_docs)]
 mod receiver {
-    stylus_proc::sol_interface! {
+    stylus_sdk::stylus_proc::sol_interface! {
         /// [`Erc721`] token receiver interface.
         ///
         /// Interface for any contract that wants to support `safe_transfers`
