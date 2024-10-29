@@ -11,8 +11,7 @@ mod mock;
 #[e2e::test]
 async fn reverts_on_transfer(alice: Account, bob: Account) -> eyre::Result<()> {
     let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_alice =
-        SafeErc20::new(safe_erc20_addr, &alice.wallet);
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
@@ -36,8 +35,7 @@ async fn reverts_on_transfer_from(
     bob: Account,
 ) -> eyre::Result<()> {
     let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_alice =
-        SafeErc20::new(safe_erc20_addr, &alice.wallet);
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -63,8 +61,7 @@ async fn reverts_on_increase_allowance(
     bob: Account,
 ) -> eyre::Result<()> {
     let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_alice =
-        SafeErc20::new(safe_erc20_addr, &alice.wallet);
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
@@ -88,8 +85,7 @@ async fn reverts_on_decrease_allowance(
     bob: Account,
 ) -> eyre::Result<()> {
     let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_alice =
-        SafeErc20::new(safe_erc20_addr, &alice.wallet);
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
@@ -113,8 +109,7 @@ async fn reverts_on_force_approve(
     bob: Account,
 ) -> eyre::Result<()> {
     let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
-    let safe_erc20_alice =
-        SafeErc20::new(safe_erc20_addr, &alice.wallet);
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
 
     let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
