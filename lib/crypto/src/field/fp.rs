@@ -119,20 +119,30 @@ impl<P: FpParams<N>, const N: usize> Hash for Fp<P, N> {
     }
 }
 
-// TODO#q: add doc comments with macro
-pub type Fp64<P> = Fp<P, 1>;
-pub type Fp128<P> = Fp<P, 2>;
-pub type Fp192<P> = Fp<P, 3>;
-pub type Fp256<P> = Fp<P, 4>;
-pub type Fp320<P> = Fp<P, 5>;
-pub type Fp384<P> = Fp<P, 6>;
-pub type Fp448<P> = Fp<P, 7>;
-pub type Fp512<P> = Fp<P, 8>;
-pub type Fp576<P> = Fp<P, 9>;
-pub type Fp640<P> = Fp<P, 10>;
-pub type Fp704<P> = Fp<P, 11>;
-pub type Fp768<P> = Fp<P, 12>;
-pub type Fp832<P> = Fp<P, 13>;
+/// Declare [`Fp`] type for different bit sizes.
+macro_rules! declare_fp {
+    ($name:ident, $bits:expr) => {
+        #[doc = "Finite field with max"]
+        #[doc = stringify!($bits)]
+        #[doc = "bits size per element."]
+        pub type $name<P> =
+            crate::field::fp::Fp<P, { usize::div_ceil($bits, 64) }>;
+    };
+}
+
+declare_fp!(Fp64, 64);
+declare_fp!(Fp128, 128);
+declare_fp!(Fp192, 192);
+declare_fp!(Fp256, 256);
+declare_fp!(Fp320, 320);
+declare_fp!(Fp384, 384);
+declare_fp!(Fp448, 448);
+declare_fp!(Fp512, 512);
+declare_fp!(Fp576, 576);
+declare_fp!(Fp640, 640);
+declare_fp!(Fp704, 704);
+declare_fp!(Fp768, 768);
+declare_fp!(Fp832, 832);
 
 #[derive(Educe)]
 #[educe(Clone, Copy, Debug, Default, Eq, PartialEq)]
