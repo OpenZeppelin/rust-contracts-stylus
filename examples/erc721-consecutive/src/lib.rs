@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main, no_std)]
+#![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
 use alloy_primitives::{Address, U256};
