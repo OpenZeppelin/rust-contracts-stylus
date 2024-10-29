@@ -409,34 +409,15 @@ impl<P: FpParams<N>, const N: usize> From<i8> for Fp<P, N> {
     }
 }
 
-// TODO#q: add rand Distribution trait
-// impl<P: FpConfig<N>, const N: usize>
-//     ark_std::rand::distributions::Distribution<Fp<P, N>>
-//     for ark_std::rand::distributions::Standard
-// {
-//     #[inline]
-//     fn sample<R: ark_std::rand::Rng + ?Sized>(&self, rng: &mut R) -> Fp<P, N>
-// {         loop {
-//             let mut tmp = Fp(
-//                 rng.sample(ark_std::rand::distributions::Standard),
-//                 PhantomData,
-//             );
-//             let shave_bits = Fp::<P, N>::num_bits_to_shave();
-//             // Mask away the unused bits at the beginning.
-//             assert!(shave_bits <= 64);
-//             let mask =
-//                 if shave_bits == 64 { 0 } else { u64::MAX >> shave_bits };
-//
-//             if let Some(val) = tmp.0 .0.last_mut() {
-//                 *val &= mask
-//             }
-//
-//             if !tmp.is_geq_modulus() {
-//                 return tmp;
-//             }
-//         }
-//     }
-// }
+#[cfg(feature = "rand")]
+impl<P: FpParams<LIMBS>, const LIMBS: usize> crypto_bigint::Random
+    for Fp<P, LIMBS>
+{
+    #[inline]
+    fn random(rng: &mut impl crypto_bigint::rand_core::CryptoRngCore) -> Self {
+        Fp { residue: Residue::<ResidueParam<P, LIMBS>, LIMBS>::random(rng) }
+    }
+}
 
 /// Outputs a string containing the value of `self`,
 /// represented as a decimal without leading zeroes.

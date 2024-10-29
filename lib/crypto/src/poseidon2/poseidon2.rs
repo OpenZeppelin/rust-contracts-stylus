@@ -605,16 +605,19 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 mod poseidon2_tests_vesta {
     use super::*;
     use crate::{
-        field::instance::FpVesta, fp_from_hex,
-        poseidon2::poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
+        field::instance::FpVesta,
+        fp_from_hex,
+        poseidon2::{
+            poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
+            utils::random_scalar,
+        },
     };
 
     type Scalar = FpVesta;
 
     static TESTRUNS: usize = 5;
 
-    // TODO#q: it should pass after random implementation
-    /*#[test]
+    #[test]
     fn consistent_perm() {
         let poseidon2 = Poseidon2::new(&POSEIDON2_VESTA_PARAMS);
         let t = poseidon2.params.t;
@@ -635,7 +638,7 @@ mod poseidon2_tests_vesta {
             assert_eq!(perm1, perm2);
             assert_ne!(perm1, perm3);
         }
-    }*/
+    }
 
     #[test]
     fn kats() {
