@@ -209,18 +209,7 @@ Make sure all tests are passing with:
 
 ### Running end-to-end tests
 
-In order to run end-to-end (e2e) tests you need to have a specific nightly toolchain.
-"Nightly" is necessary to use optimization compiler flags and have contract wasm small enough to be eligible for
-deployment.
-
-Run the following commands to install the necessary toolchain:
-
-```shell
-rustup install nightly-2024-01-01
-rustup component add rust-src
-```
-
-Also, you should have the cargo stylus tool:
+In order to run end-to-end (e2e) tests, you should have the cargo stylus tool:
 
 ```shell
 cargo install cargo-stylus
