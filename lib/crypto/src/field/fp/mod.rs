@@ -15,7 +15,7 @@ use crypto_bigint::{
 use educe::Educe;
 use num_traits::{One, Zero};
 
-use crate::field::{prime::PrimeField, AdditiveGroup, Field};
+use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.
