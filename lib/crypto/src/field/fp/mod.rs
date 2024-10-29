@@ -189,22 +189,6 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             residue: Residue::<ResidueParam<P, N>, N>::from_montgomery(element),
         }
     }
-
-    // TODO#q: we can add other const operations here
-
-    const fn const_is_zero(&self) -> bool {
-        todo!()
-    }
-
-    #[doc(hidden)]
-    const fn const_neg(self) -> Self {
-        Self::new_unchecked(self.residue.neg().to_montgomery())
-    }
-
-    // NOTE#q: use for rand Distribution trait
-    // fn num_bits_to_shave() -> usize {
-    //     64 * N - (Self::MODULUS_BIT_SIZE as usize)
-    // }
 }
 
 impl<P: FpParams<N>, const N: usize> Debug for Fp<P, N> {
