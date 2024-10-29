@@ -841,3 +841,21 @@ impl<P: FpParams<N>, const N: usize> From<Uint<N>> for Fp<P, N> {
         Self::from_bigint(int).expect("should be less than modulus")
     }
 }
+
+/// This macro converts a string base-10 number to a field element.
+#[macro_export]
+macro_rules! fp_from_num {
+    ($num:literal) => {
+        $crate::field::fp::Fp::new($crate::bigint::from_str_radix($num, 10))
+    };
+}
+
+/// This macro converts a string hex number to a field element.
+#[macro_export]
+macro_rules! fp_from_hex {
+    ($num:literal) => {{
+        $crate::field::fp::Fp::new(
+            $crate::bigint::crypto_bigint::Uint::from_be_hex($num),
+        )
+    }};
+}

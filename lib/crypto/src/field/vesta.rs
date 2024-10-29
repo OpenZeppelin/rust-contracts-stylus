@@ -1,22 +1,14 @@
-use crypto_bigint::{Limb, Uint};
-use hex_literal::hex;
+use crypto_bigint::U256;
 
-use crate::field::fp::{Fp256, FpParams};
+use crate::{
+    field::fp::{Fp256, FpParams},
+    fp_from_num, from_num,
+};
 
-pub struct FieldParam;
 pub type FpVesta = Fp256<FieldParam>;
 
-use crate::{bigint::from_str_radix, field::fp::Fp, from_hex};
-
-// TODO#q: Use proc macro or function macro
-//  Can look smth like this:
-/*
-#[derive(MontConfig)]
-#[modulus = "28948022309329048855892746252171976963363056481941647379679742748393362948097"]
-#[generator = "5"]
-pub struct FqConfig;
-*/
+pub struct FieldParam;
 impl FpParams<4> for FieldParam {
-    const GENERATOR: Fp<FieldParam, 4> = Fp::new(from_str_radix("5", 10));
-    const MODULUS: Uint<4> = from_str_radix("28948022309329048855892746252171976963363056481941647379679742748393362948097", 10);
+    const GENERATOR: Fp256<FieldParam> = fp_from_num!("5");
+    const MODULUS: U256 = from_num!("28948022309329048855892746252171976963363056481941647379679742748393362948097");
 }

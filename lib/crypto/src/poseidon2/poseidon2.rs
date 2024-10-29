@@ -605,7 +605,7 @@ impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
 mod poseidon2_tests_vesta {
     use super::*;
     use crate::{
-        field::vesta::FpVesta, from_hex,
+        field::vesta::FpVesta, fp_from_hex,
         poseidon2::poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
     };
 
@@ -645,9 +645,9 @@ mod poseidon2_tests_vesta {
             input.push(Scalar::from(i as u64));
         }
         let perm = poseidon2.permutation(&input);
-        assert_eq!(perm[0], from_hex!("261ecbdfd62c617b82d297705f18c788fc9831b14a6a2b8f61229bef68ce2792"));
-        assert_eq!(perm[1], from_hex!("2c76327e0b7653873263158cf8545c282364b183880fcdea93ca8526d518c66f"));
-        assert_eq!(perm[2], from_hex!("262316c0ce5244838c75873299b59d763ae0849d2dd31bdc95caf7db1c2901bf"));
+        assert_eq!(perm[0], fp_from_hex!("261ecbdfd62c617b82d297705f18c788fc9831b14a6a2b8f61229bef68ce2792"));
+        assert_eq!(perm[1], fp_from_hex!("2c76327e0b7653873263158cf8545c282364b183880fcdea93ca8526d518c66f"));
+        assert_eq!(perm[2], fp_from_hex!("262316c0ce5244838c75873299b59d763ae0849d2dd31bdc95caf7db1c2901bf"));
     }
 
     // TODO#q: test against `zkhash` implementation should be added

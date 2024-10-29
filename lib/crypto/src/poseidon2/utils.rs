@@ -5,17 +5,6 @@ use alloc::{borrow::ToOwned, vec, vec::Vec};
 
 use crate::field::prime::PrimeField;
 
-// This macro converts a string to a field element
-#[macro_export]
-macro_rules! from_hex {
-    ($s:literal) => {{
-        let bytes = ::hex_literal::hex!($s);
-        $crate::field::vesta::FpVesta::new(
-            ::crypto_bigint::U256::from_be_slice(&bytes),
-        )
-    }};
-}
-
 // TODO#q: use generic factory
 // pub fn from_hex<F: PrimeField>(s: &str) -> F {
 //     let a = Vec::from_hex!(&s[2..]).expect("Invalid Hex String");

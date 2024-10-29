@@ -137,7 +137,7 @@ impl<const N: usize> BigInteger for Uint<N> {
 
 /// Parse a number from a string in a given radix.
 ///
-/// I.e., convert string encoded integer to base-`radix` number.
+/// I.e., convert string encoded integer `s` to base-`radix` number.
 #[must_use]
 pub const fn from_str_radix<const LIMBS: usize>(
     s: &str,
@@ -205,6 +205,22 @@ pub(crate) const fn parse_utf8_byte(byte: u8) -> char {
     }
 }
 
+/// This macro converts a string base-10 number to a big integer.
+#[macro_export]
+macro_rules! from_num {
+    ($num:literal) => {
+        $crate::bigint::from_str_radix($num, 10)
+    };
+}
+
+/// This macro converts a string hex number to a big integer.
+#[macro_export]
+macro_rules! from_hex {
+    ($num:literal) => {
+        $crate::bigint::crypto_bigint::Uint::from_be_hex($num)
+    };
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -212,6 +228,7 @@ mod test {
     #[test]
     fn test_from_str_radix() {
         let uint = from_str_radix::<4>("28948022309329048855892746252171976963363056481941647379679742748393362948097", 10);
+        #[allow(clippy::unreadable_literal)]
         let expected = Uint::<4>::from_words([
             10108024940646105089u64,
             2469829653919213789u64,
