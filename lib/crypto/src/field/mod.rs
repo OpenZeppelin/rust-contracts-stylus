@@ -119,7 +119,7 @@ pub trait Field:
     fn pow<S: AsRef<[u64]>>(&self, exp: S) -> Self {
         let mut res = Self::one();
 
-        for i in BitIteratorBE::without_leading_zeros(exp) {
+        for i in exp.bit_be_trimmed_iter() {
             res.square_in_place();
 
             if i {

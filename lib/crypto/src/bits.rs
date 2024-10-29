@@ -1,35 +1,39 @@
-/// Iterates over a slice of `u64` in *big-endian* order.
-#[derive(Debug)]
-pub struct BitIteratorBE<Slice: AsRef<[u64]>> {
-    s: Slice,
-    n: usize,
+/// Iterates over bits in big-endian order.
+pub trait BitIteratorBE {
+    /// Returns an iterator over the bits of the integer, starting from the most
+    /// significant bit.
+    fn bit_be_iter(&self) -> impl Iterator<Item = bool>;
+
+    /// Returns an iterator over the bits of the integer, starting from the most
+    /// significant bit, and without leading zeroes.
+    fn bit_be_trimmed_iter(&self) -> impl Iterator<Item = bool>;
 }
 
-impl<Slice: AsRef<[u64]>> BitIteratorBE<Slice> {
-    pub fn new(s: Slice) -> Self {
-        let n = s.as_ref().len() * 64;
-        BitIteratorBE { s, n }
+impl<T: AsRef<[u64]>> BitIteratorBE for T {
+    fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
+        self.as_ref().iter().copied().flat_map(u64_to_bits)
     }
 
-    /// Construct an iterator that automatically skips any leading zeros.
-    /// That is, it skips all zeros before the most-significant one.
-    pub fn without_leading_zeros(s: Slice) -> impl Iterator<Item = bool> {
-        Self::new(s).skip_while(|b| !b)
+    fn bit_be_trimmed_iter(&self) -> impl Iterator<Item = bool> {
+        self.bit_be_iter().skip_while(|&b| !b)
     }
 }
 
-impl<Slice: AsRef<[u64]>> Iterator for BitIteratorBE<Slice> {
-    type Item = bool;
+/// Convert u64 to bits iterator.
+pub fn u64_to_bits(num: u64) -> impl Iterator<Item = bool> {
+    (0..64).map(move |i| num & (1 << i) != 0)
+}
 
-    fn next(&mut self) -> Option<bool> {
-        if self.n == 0 {
-            None
-        } else {
-            self.n -= 1;
-            let part = self.n / 64;
-            let bit = self.n - (64 * part);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-            Some(self.s.as_ref()[part] & (1 << bit) > 0)
-        }
+    #[test]
+    fn test_bit_iterator_be() {
+        let num = [0, 0b11 << 60];
+        let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
+
+        assert_eq!(bits.len(), 4);
+        assert_eq!(bits, vec![true, true, false, false]);
     }
 }
