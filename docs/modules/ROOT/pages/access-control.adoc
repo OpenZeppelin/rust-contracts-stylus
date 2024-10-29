@@ -7,7 +7,7 @@ Access control—that is, "who is allowed to do this thing"—is incredibly impo
 
 The most common and basic form of access control is the concept of _ownership_: there's an account that is the `owner` of a contract and can do administrative tasks on it. This approach is perfectly reasonable for contracts that have a single administrative user.
 
-OpenZeppelin Contracts for Stylus provides https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/ownable/struct.Ownable.html[`Ownable`] for implementing ownership in your contracts.
+OpenZeppelin Contracts for Stylus provides https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/access/ownable/struct.Ownable.html[`Ownable`] for implementing ownership in your contracts.
 
 [source,rust]
 ----
@@ -21,7 +21,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Ownable)]
 impl MyContract {
     fn normal_thing(&self) {
@@ -40,12 +40,12 @@ impl MyContract {
 }
 ----
 
-At deployment, the https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.owner[`owner`] of an `Ownable` contract is set to the provided `initial_owner` parameter.
+At deployment, the https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.owner[`owner`] of an `Ownable` contract is set to the provided `initial_owner` parameter.
 
 Ownable also lets you:
 
-* https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.transfer_ownership[`transfer_ownership`] from the owner account to a new one, and
-* https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.renounce_ownership[`renounce_ownership`] for the owner to relinquish this administrative privilege, a common pattern after an initial stage with centralized administration is over.
+* https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.transfer_ownership[`transfer_ownership`] from the owner account to a new one, and
+* https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/access/ownable/struct.Ownable.html#method.renounce_ownership[`renounce_ownership`] for the owner to relinquish this administrative privilege, a common pattern after an initial stage with centralized administration is over.
 
 WARNING: Removing the owner altogether will mean that administrative tasks that are protected by `only_owner` will no longer be callable!
 
@@ -66,7 +66,7 @@ Most software uses access control systems that are role-based: some users are re
 [[using-access-control]]
 === Using `AccessControl`
 
-OpenZeppelin Contracts provides https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/control/struct.AccessControl.html[`AccessControl`] for implementing role-based access control. Its usage is straightforward: for each role that you want to define,
+OpenZeppelin Contracts provides https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/access/control/struct.AccessControl.html[`AccessControl`] for implementing role-based access control. Its usage is straightforward: for each role that you want to define,
 you will create a new _role identifier_ that is used to grant, revoke, and check if an account has that role.
 
 Here's a simple example of using `AccessControl` in an xref:erc20.adoc[ERC-20 token] to define a 'minter' role, which allows accounts that have it create new tokens. Note that the example is unassuming of the way you construct your contract.
@@ -90,7 +90,7 @@ pub const MINTER_ROLE: [u8; 32] = [
     166,
 ];
 
-#[external]
+#[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
     pub const MINTER_ROLE: [u8; 32] = MINTER_ROLE;
@@ -105,7 +105,7 @@ impl Example {
 }
 ----
 
-NOTE: Make sure you fully understand how https://docs.rs/openzeppelin-stylus/latest/openzeppelin_stylus/access/control/struct.AccessControl.html[`AccessControl`] works before using it on your system, or copy-pasting the examples from this guide.
+NOTE: Make sure you fully understand how https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/access/control/struct.AccessControl.html[`AccessControl`] works before using it on your system, or copy-pasting the examples from this guide.
 
 While clear and explicit, this isn't anything we wouldn't have been able to achieve with `Ownable`. Indeed, where `AccessControl` shines is in scenarios where granular permissions are required, which can be implemented by defining _multiple_ roles.
 
@@ -136,7 +136,7 @@ pub const BURNER_ROLE: [u8; 32] = [
     224, 87, 73, 143, 95, 0, 36, 97, 144, 234, 84, 34, 5, 118, 168, 72,
 ];
 
-#[external]
+#[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
     pub const MINTER_ROLE: [u8; 32] = MINTER_ROLE;

@@ -1,13 +1,13 @@
 = ERC-20 Permit
 Implementation of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in https://eips.ethereum.org/EIPS/eip-2612[`EIP-2612`].
 
-Adds the permit method, which can be used to change an account’s ERC20 allowance (see https://docs.rs/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.allowance[`IErc20::allowance`]) by presenting a message signed by the account. By not relying on https://docs.rs/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.approve[`IErc20::approve`], the token holder account doesn’t need to send a transaction, and thus is not required to hold Ether at all.
+Adds the permit method, which can be used to change an account’s ERC20 allowance (see https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.allowance[`IErc20::allowance`]) by presenting a message signed by the account. By not relying on https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.approve[`IErc20::approve`], the token holder account doesn’t need to send a transaction, and thus is not required to hold Ether at all.
 
 
 [[usage]]
 == Usage
 
-In order to have https://docs.rs/openzeppelin_stylus/token/erc20/extensions/permit/index.html[`ERC-20 Permit`] token, you need to use only this contract without xref:erc20.adoc[ERC-20] as follows:
+In order to have https://docs.rs/openzeppelin-stylus/0.1.0/openzeppelin_stylus/token/erc20/extensions/permit/index.html[`ERC-20 Permit`] token, you need to use only this contract without xref:erc20.adoc[ERC-20] as follows:
 
 [source,rust]
 ----
@@ -31,7 +31,7 @@ impl IEip712 for Eip712 {
     const VERSION: &'static str = "1";
 }
 
-#[external]
+#[public]
 #[inherit(Erc20Permit<Eip712>)]
 impl Erc20PermitExample {
     // ...
