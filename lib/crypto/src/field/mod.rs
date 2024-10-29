@@ -102,12 +102,10 @@ pub trait Field:
     /// The multiplicative identity of the field.
     const ONE: Self;
 
-    // TODO#q: seems we should move it to PrimeField
     /// Returns the characteristic of the field,
     /// in little-endian representation.
     fn characteristic() -> &'static [u64];
 
-    // TODO#q: seems we should move it to PrimeField
     /// Returns the extension degree of this field with respect
     /// to `Self::BasePrimeField`.
     fn extension_degree() -> u64;

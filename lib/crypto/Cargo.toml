@@ -19,9 +19,6 @@ rand = { workspace = true, optional = true, default-features = false }
 hex-literal = "0.4.1"
 
 # TODO#q: add feature flag and conversion to Fp
-num-bigint = "0.4.6"
-
-# TODO#q: add feature flag and conversion to Fp
 #ruint = "1.12.3"
 
 # TODO#q: remove these dependencies. Used by poseidon-hash

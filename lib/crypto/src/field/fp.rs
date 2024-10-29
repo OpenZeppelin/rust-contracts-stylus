@@ -796,21 +796,6 @@ impl<P: FpParams<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
     }
 }
 
-// TODO#q: add feature num_bigint
-// impl<P: FpConfig<N>, const N: usize> From<num_bigint::BigUint> for Fp<P, N> {
-//     #[inline]
-//     fn from(val: num_bigint::BigUint) -> Fp<P, N> {
-//         Fp::<P, N>::from_le_bytes_mod_order(&val.to_bytes_le())
-//     }
-// }
-//
-// impl<P: FpConfig<N>, const N: usize> From<Fp<P, N>> for num_bigint::BigUint {
-//     #[inline(always)]
-//     fn from(other: Fp<P, N>) -> Self {
-//         other.into_bigint().into()
-//     }
-// }
-
 impl<P: FpParams<N>, const N: usize> From<Fp<P, N>> for Uint<N> {
     #[inline(always)]
     fn from(fp: Fp<P, N>) -> Self {
