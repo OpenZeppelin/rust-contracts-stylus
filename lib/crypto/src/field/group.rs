@@ -59,7 +59,6 @@ pub trait AdditiveGroup:
     const ZERO: Self;
 
     /// Doubles `self`.
-    #[must_use]
     fn double(&self) -> Self {
         let mut copy = *self;
         copy.double_in_place();

@@ -63,43 +63,36 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     const INV: Word = ResidueParam::<Self, N>::MOD_NEG_INV.0;
 
     /// Set `a += b`.
-    #[must_use]
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         a.residue += b.residue;
     }
 
     /// Set `a -= b`.
-    #[must_use]
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         a.residue -= b.residue;
     }
 
     /// Set `a = a + a`.
-    #[must_use]
     fn double_in_place(a: &mut Fp<Self, N>) {
         a.residue = a.residue + a.residue;
     }
 
     /// Set `a = -a`;
-    #[must_use]
     fn neg_in_place(a: &mut Fp<Self, N>) {
         a.residue = a.residue.neg();
     }
 
     /// Set `a *= b`.
-    #[must_use]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         a.residue *= b.residue;
     }
 
     /// Set `a *= a`.
-    #[must_use]
     fn square_in_place(a: &mut Fp<Self, N>) {
         a.residue = a.residue.square();
     }
 
     /// Compute `a^{-1}` if `a` is not zero.
-    #[must_use]
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
         let (residue, choice) = a.residue.invert();
         let is_inverse: bool = choice.into();
@@ -110,13 +103,11 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// Construct a field element from an integer.
     ///
     /// By the end element will be converted to a montgomery form and reduced.
-    #[must_use]
     fn from_bigint(r: Uint<N>) -> Fp<Self, N> {
         Fp::new(r)
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
-    #[must_use]
     fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
         a.residue.retrieve()
     }
@@ -212,7 +203,6 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// Construct a new field element from [`Uint`] and convert it in
     /// Montgomery form.
     #[inline]
-    #[must_use]
     pub const fn new(element: Uint<N>) -> Self {
         Fp { residue: Residue::<ResidueParam<P, N>, N>::new(&element) }
     }
@@ -223,7 +213,6 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// This method should be used only when constructing an element from an
     /// integer that has already been put in Montgomery form.
     #[inline]
-    #[must_use]
     pub const fn new_unchecked(element: Uint<N>) -> Self {
         Fp {
             residue: Residue::<ResidueParam<P, N>, N>::from_montgomery(element),
@@ -435,7 +424,6 @@ impl<P: FpParams<N>, const N: usize> core::ops::Neg for Fp<P, N> {
     type Output = Self;
 
     #[inline]
-    #[must_use]
     fn neg(mut self) -> Self {
         P::neg_in_place(&mut self);
         self
