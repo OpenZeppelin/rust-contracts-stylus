@@ -444,9 +444,7 @@ impl<P: FpParams<N>, const N: usize> core::ops::Neg for Fp<P, N> {
     }
 }
 
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Add<&'a Fp<P, N>>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Add<&Fp<P, N>> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
@@ -457,9 +455,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::Add<&'a Fp<P, N>>
     }
 }
 
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Sub<&'a Fp<P, N>>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Sub<&Fp<P, N>> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
@@ -470,9 +466,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::Sub<&'a Fp<P, N>>
     }
 }
 
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Mul<&'a Fp<P, N>>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Mul<&Fp<P, N>> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
@@ -483,9 +477,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::Mul<&'a Fp<P, N>>
     }
 }
 
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Div<&'a Fp<P, N>>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Div<&Fp<P, N>> for Fp<P, N> {
     type Output = Self;
 
     /// Returns `self * other.inverse()` if `other.inverse()` is `Some`, and
@@ -554,18 +546,14 @@ impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Div<&'b Fp<P, N>>
     }
 }
 
-impl<'a, P: FpParams<N>, const N: usize> core::ops::AddAssign<&'a Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<&Self> for Fp<P, N> {
     #[inline]
     fn add_assign(&mut self, other: &Self) {
         P::add_assign(self, other);
     }
 }
 
-impl<'a, P: FpParams<N>, const N: usize> core::ops::SubAssign<&'a Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<&Self> for Fp<P, N> {
     #[inline]
     fn sub_assign(&mut self, other: &Self) {
         P::sub_assign(self, other);
@@ -585,13 +573,11 @@ impl<P: FpParams<N>, const N: usize> core::ops::Add<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Add<&'a mut Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Add<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
-    fn add(mut self, other: &'a mut Self) -> Self {
+    fn add(mut self, other: &mut Self) -> Self {
         use core::ops::AddAssign;
         self.add_assign(&*other);
         self
@@ -611,13 +597,11 @@ impl<P: FpParams<N>, const N: usize> core::ops::Sub<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Sub<&'a mut Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Sub<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
-    fn sub(mut self, other: &'a mut Self) -> Self {
+    fn sub(mut self, other: &mut Self) -> Self {
         use core::ops::SubAssign;
         self.sub_assign(&*other);
         self
@@ -657,28 +641,26 @@ impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::AddAssign<&'a mut Self>
+impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<&mut Self>
     for Fp<P, N>
 {
     #[inline(always)]
-    fn add_assign(&mut self, other: &'a mut Self) {
+    fn add_assign(&mut self, other: &mut Self) {
         self.add_assign(&*other);
     }
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::SubAssign<&'a mut Self>
+impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<&mut Self>
     for Fp<P, N>
 {
     #[inline(always)]
-    fn sub_assign(&mut self, other: &'a mut Self) {
+    fn sub_assign(&mut self, other: &mut Self) {
         self.sub_assign(&*other);
     }
 }
 
-impl<'a, P: FpParams<N>, const N: usize> core::ops::MulAssign<&'a Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<&Self> for Fp<P, N> {
     fn mul_assign(&mut self, other: &Self) {
         P::mul_assign(self, other);
     }
@@ -686,9 +668,7 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::MulAssign<&'a Self>
 
 /// Computes `self *= other.inverse()` if `other.inverse()` is `Some`, and
 /// panics otherwise.
-impl<'a, P: FpParams<N>, const N: usize> core::ops::DivAssign<&'a Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<&Self> for Fp<P, N> {
     #[inline(always)]
     fn div_assign(&mut self, other: &Self) {
         use core::ops::MulAssign;
@@ -721,13 +701,11 @@ impl<P: FpParams<N>, const N: usize> core::ops::Div<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Mul<&'a mut Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Mul<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline(always)]
-    fn mul(mut self, other: &'a mut Self) -> Self {
+    fn mul(mut self, other: &mut Self) -> Self {
         use core::ops::MulAssign;
         self.mul_assign(&*other);
         self
@@ -735,13 +713,11 @@ impl<'a, P: FpParams<N>, const N: usize> core::ops::Mul<&'a mut Self>
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::Div<&'a mut Self>
-    for Fp<P, N>
-{
+impl<P: FpParams<N>, const N: usize> core::ops::Div<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline(always)]
-    fn div(mut self, other: &'a mut Self) -> Self {
+    fn div(mut self, other: &mut Self) -> Self {
         use core::ops::DivAssign;
         self.div_assign(&*other);
         self
@@ -756,10 +732,8 @@ impl<P: FpParams<N>, const N: usize> core::iter::Product<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::iter::Product<&'a Self>
-    for Fp<P, N>
-{
-    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+impl<P: FpParams<N>, const N: usize> core::iter::Product<&Self> for Fp<P, N> {
+    fn product<I: Iterator<Item = &Self>>(iter: I) -> Self {
         iter.fold(Self::one(), core::ops::Mul::mul)
     }
 }
@@ -773,21 +747,21 @@ impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::DivAssign<&'a mut Self>
+impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<&mut Self>
     for Fp<P, N>
 {
     #[inline(always)]
-    fn div_assign(&mut self, other: &'a mut Self) {
+    fn div_assign(&mut self, other: &mut Self) {
         self.div_assign(&*other);
     }
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::ops::MulAssign<&'a mut Self>
+impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<&mut Self>
     for Fp<P, N>
 {
     #[inline(always)]
-    fn mul_assign(&mut self, other: &'a mut Self) {
+    fn mul_assign(&mut self, other: &mut Self) {
         self.mul_assign(&*other);
     }
 }
