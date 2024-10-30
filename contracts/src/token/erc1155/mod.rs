@@ -544,7 +544,7 @@ impl Erc1155 {
         to: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._update(from, to, ids.clone(), values.clone())?;
 
@@ -876,7 +876,7 @@ impl Erc1155 {
             to,
             ids,
             values,
-            data,
+            &data,
         )?;
         Ok(())
     }
@@ -923,7 +923,7 @@ impl Erc1155 {
             Address::ZERO,
             ids,
             values,
-            vec![].into(),
+            &vec![].into(),
         )?;
         Ok(())
     }
@@ -983,7 +983,7 @@ impl Erc1155 {
                 sender: from,
             }));
         }
-        self._update_with_acceptance_check(from, to, ids, values, data)
+        self._update_with_acceptance_check(from, to, ids, values, &data)
     }
 
     /// Transfers a `value` amount of `token_id` from `from` to
