@@ -160,25 +160,29 @@ impl MethodError for Error {
     }
 }
 
-sol_interface! {
-    /// [`Erc721`] token receiver interface.
-    ///
-    /// Interface for any contract that wants to support `safe_transfers`
-    /// from [`Erc721`] asset contracts.
-    interface IERC721Receiver {
-        /// Whenever an [`Erc721`] `token_id` token is transferred
-        /// to this contract via [`Erc721::safe_transfer_from`].
+pub use receiver::IERC721Receiver;
+#[allow(missing_docs)]
+mod receiver {
+    stylus_sdk::stylus_proc::sol_interface! {
+        /// [`Erc721`] token receiver interface.
         ///
-        /// It must return its function selector to confirm the token transfer.
-        /// If any other value is returned or the interface is not implemented
-        /// by the recipient, the transfer will be reverted.
-        #[allow(missing_docs)]
-        function onERC721Received(
-            address operator,
-            address from,
-            uint256 token_id,
-            bytes calldata data
-        ) external returns (bytes4);
+        /// Interface for any contract that wants to support `safe_transfers`
+        /// from [`Erc721`] asset contracts.
+        interface IERC721Receiver {
+            /// Whenever an [`Erc721`] `token_id` token is transferred
+            /// to this contract via [`Erc721::safe_transfer_from`].
+            ///
+            /// It must return its function selector to confirm the token transfer.
+            /// If any other value is returned or the interface is not implemented
+            /// by the recipient, the transfer will be reverted.
+            #[allow(missing_docs)]
+            function onERC721Received(
+                address operator,
+                address from,
+                uint256 token_id,
+                bytes calldata data
+            ) external returns (bytes4);
+        }
     }
 }
 
@@ -489,8 +493,6 @@ impl IErc721 for Erc721 {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        // TODO: Once the SDK supports the conversion,
-        // use alloy_primitives::bytes!("") here.
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
@@ -675,9 +677,6 @@ impl Erc721 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
-    // TODO: Right now this function is pointless since it is not used.
-    // But once we will be able to override internal functions,
-    // it will make a difference.
     pub fn _increase_balance(&mut self, account: Address, value: U128) {
         self._balances.setter(account).add_assign_unchecked(U256::from(value));
     }

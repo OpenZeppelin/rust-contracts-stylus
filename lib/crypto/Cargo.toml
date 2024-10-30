@@ -9,7 +9,6 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-mini-alloc.workspace = true
 tiny-keccak.workspace = true
 num-traits = "0.2.14"
 zeroize = { version = "1.8.1", features = ["derive"] }
