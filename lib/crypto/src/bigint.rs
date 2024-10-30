@@ -154,6 +154,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
     let uint_radix = Uint::from_u32(radix);
 
     loop {
+        // Try to parse a digit from utf-8 byte
         let ch = parse_utf8_byte(bytes[index]);
         let digit = match ch.to_digit(radix) {
             None => {
@@ -165,13 +166,16 @@ pub const fn from_str_radix<const LIMBS: usize>(
         // Add a digit multiplied by order.
         uint = add(&uint, &mul(&digit, &order));
 
-        // Increase the order of magnitude.
-        order = mul(&uint_radix, &order);
-
+        // If we reached the beginning of the string, return the number.
         if index == 0 {
             return uint;
         }
+
+        // Move to the next digit.
         index -= 1;
+
+        // Increase the order of magnitude.
+        order = mul(&uint_radix, &order);
     }
 }
 
@@ -236,5 +240,11 @@ mod test {
             4611686018427387904u64,
         ]);
         assert_eq!(uint, expected);
+    }
+
+    #[test]
+    fn test_goldilocks() {
+        let uint = from_str_radix::<1>("18446744069414584321", 10);
+        println!("{}", uint);
     }
 }
