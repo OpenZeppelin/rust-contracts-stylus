@@ -1213,7 +1213,7 @@ mod tests {
                 receiver,
                 token_ids.clone(),
                 values.clone(),
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect("Mint failed");
         (token_ids, values)
@@ -1317,7 +1317,7 @@ mod tests {
         let value = random_values(1)[0];
 
         contract
-            ._mint(alice, token_id, value, vec![0, 1, 2, 3].into())
+            ._mint(alice, token_id, value, &vec![0, 1, 2, 3].into())
             .expect("should mint tokens for Alice");
 
         let balance = contract.balance_of(alice, token_id);
@@ -1332,7 +1332,7 @@ mod tests {
         let value = random_values(1)[0];
 
         let err = contract
-            ._mint(invalid_receiver, token_id, value, vec![0, 1, 2, 3].into())
+            ._mint(invalid_receiver, token_id, value, &vec![0, 1, 2, 3].into())
             .expect_err("should not mint tokens for invalid receiver");
 
         assert!(matches!(
@@ -1355,7 +1355,7 @@ mod tests {
                     account,
                     token_ids.clone(),
                     values.clone(),
-                    vec![0, 1, 2, 3].into(),
+                    &vec![0, 1, 2, 3].into(),
                 )
                 .expect("should batch mint tokens");
 
@@ -1387,7 +1387,7 @@ mod tests {
                 invalid_receiver,
                 token_ids,
                 values,
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect_err("should not batch mint tokens for invalid receiver");
 
@@ -1405,7 +1405,7 @@ mod tests {
         let values = random_values(4);
 
         let err = contract
-            ._mint_batch(ALICE, token_ids, values, vec![0, 1, 2, 3].into())
+            ._mint_batch(ALICE, token_ids, values, &vec![0, 1, 2, 3].into())
             .expect_err(
                 "should not batch mint tokens when not equal array lengths",
             );
