@@ -46,7 +46,7 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
             use ::motsu::prelude::DefaultStorage;
             #( #contract_declarations )*
             let res = #fn_block;
-            ::motsu::prelude::TestContext::current().reset_storage();
+            ::motsu::prelude::Context::current().reset_storage();
             res
         }
     }
