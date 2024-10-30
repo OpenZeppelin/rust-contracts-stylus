@@ -732,8 +732,10 @@ impl<P: FpParams<N>, const N: usize> core::iter::Product<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::iter::Product<&Self> for Fp<P, N> {
-    fn product<I: Iterator<Item = &Self>>(iter: I) -> Self {
+impl<'a, P: FpParams<N>, const N: usize> core::iter::Product<&'a Self>
+    for Fp<P, N>
+{
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::one(), core::ops::Mul::mul)
     }
 }

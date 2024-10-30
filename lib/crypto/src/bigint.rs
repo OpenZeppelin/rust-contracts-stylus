@@ -240,11 +240,12 @@ mod test {
             4611686018427387904u64,
         ]);
         assert_eq!(uint, expected);
-    }
 
-    #[test]
-    fn test_goldilocks() {
         let uint = from_str_radix::<1>("18446744069414584321", 10);
-        println!("{}", uint);
+        let expected = from_str_radix::<1>(
+            "1111111111111111111111111111111100000000000000000000000000000001",
+            2,
+        );
+        assert_eq!(uint, expected);
     }
 }
