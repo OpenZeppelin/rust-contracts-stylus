@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use crypto_bigint::{U256, U64};
 
 use crate::{

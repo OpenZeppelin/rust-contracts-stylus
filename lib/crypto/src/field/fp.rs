@@ -35,7 +35,6 @@ use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.
-#[allow(clippy::module_name_repetitions)]
 pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
     const MODULUS: Uint<N>;
@@ -128,7 +127,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 /// for 64-bit systems and N * 32 bits for 32-bit systems.
 #[derive(Educe)]
 #[educe(Default, Clone, Copy, PartialEq, Eq)]
-#[allow(clippy::module_name_repetitions)]
 pub struct Fp<P: FpParams<N>, const N: usize> {
     /// Contains the element in Montgomery form for efficient multiplication.
     /// To convert an element to a [`BigInt`], use [`FpParams::into_bigint`]

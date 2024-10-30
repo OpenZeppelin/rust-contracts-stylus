@@ -41,8 +41,8 @@
 use core::{
     fmt::{Debug, Display},
     hash::Hash,
-    iter::{Product, Sum},
-    ops::{Div, DivAssign, Neg, Sub},
+    iter::Product,
+    ops::{Div, DivAssign, Neg},
 };
 
 use group::AdditiveGroup;
