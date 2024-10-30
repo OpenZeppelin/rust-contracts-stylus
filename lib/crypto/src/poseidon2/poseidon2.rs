@@ -2,7 +2,7 @@ use alloc::{borrow::ToOwned, sync::Arc, vec::Vec};
 
 use crypto_bigint::Random;
 
-use super::poseidon2_params::Poseidon2Params;
+use super::params::Poseidon2Params;
 use crate::{field::prime::PrimeField, poseidon2::merkle_tree::MerkleTreeHash};
 
 #[derive(Clone, Debug)]
@@ -608,7 +608,7 @@ mod poseidon2_tests_vesta {
     use super::*;
     use crate::{
         field::instance::FpVesta, fp_from_hex,
-        poseidon2::poseidon2_instance_vesta::POSEIDON2_VESTA_PARAMS,
+        poseidon2::instance::vesta::POSEIDON2_VESTA_PARAMS,
     };
 
     type Scalar = FpVesta;

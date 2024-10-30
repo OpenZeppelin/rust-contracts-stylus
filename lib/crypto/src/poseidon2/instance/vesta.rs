@@ -2,12 +2,11 @@ use alloc::{sync::Arc, vec, vec::Vec};
 
 use lazy_static::lazy_static;
 
-use super::poseidon2_params::Poseidon2Params;
-use crate::{field::instance::FpVesta, fp_from_hex};
+use crate::{
+    field::instance::FpVesta, fp_from_hex, poseidon2::params::Poseidon2Params,
+};
 
 type Scalar = FpVesta;
-
-// TODO#q: use crypto_bigint Fp::new(U256:from_be_hex("..."))
 
 lazy_static! {
     pub static ref MAT_DIAG3_M_1: Vec<Scalar> = vec![
