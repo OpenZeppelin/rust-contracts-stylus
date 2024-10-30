@@ -42,7 +42,7 @@ use std::slice;
 
 use tiny_keccak::{Hasher, Keccak};
 
-use crate::context::TestContext;
+use crate::context::Context;
 
 pub(crate) const WORD_BYTES: usize = 32;
 pub(crate) type Bytes32 = [u8; WORD_BYTES];
@@ -80,7 +80,7 @@ pub unsafe extern "C" fn native_keccak256(
 /// May panic if unable to lock `STORAGE`.
 #[no_mangle]
 pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
-    TestContext::current().get_bytes_raw(key, out);
+    Context::current().get_bytes_raw(key, out);
 }
 
 /// Writes a 32-byte value to the permanent storage cache. Stylus's storage
@@ -102,7 +102,7 @@ pub unsafe extern "C" fn storage_cache_bytes32(
     key: *const u8,
     value: *const u8,
 ) {
-    TestContext::current().set_bytes_raw(key, value);
+    Context::current().set_bytes_raw(key, value);
 }
 
 /// Persists any dirty values in the storage cache to the EVM state trie,
