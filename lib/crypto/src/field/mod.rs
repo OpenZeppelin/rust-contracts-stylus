@@ -101,6 +101,7 @@ pub trait Field:
     const ONE: Self;
 
     /// Returns `self * self`.
+    #[must_use]
     fn square(&self) -> Self;
 
     /// Squares `self` in place.
@@ -116,6 +117,7 @@ pub trait Field:
     /// Returns `self^exp`, where `exp` is an integer represented with `u64`
     /// limbs.
     /// Least significant limb first.
+    #[must_use]
     fn pow<S: AsRef<[u64]>>(&self, exp: S) -> Self {
         let mut res = Self::one();
 

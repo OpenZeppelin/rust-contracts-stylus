@@ -16,12 +16,14 @@ pub trait PrimeField:
 
     /// Returns the characteristic of the field,
     /// in little-endian representation.
+    #[must_use]
     fn characteristic() -> Self::BigInt {
         Self::MODULUS
     }
 
     /// Returns the extension degree of this field with respect
     /// to `Self::BasePrimeField`.
+    #[must_use]
     fn extension_degree() -> usize {
         1
     }

@@ -138,6 +138,7 @@ impl<const N: usize> BigInteger for Uint<N> {
 /// Parse a number from a string in a given radix.
 ///
 /// I.e., convert string encoded integer `s` to base-`radix` number.
+#[must_use]
 pub const fn from_str_radix<const LIMBS: usize>(
     s: &str,
     radix: u32,
@@ -179,6 +180,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
 }
 
 /// Multiply two numbers and panic on overflow.
+#[must_use]
 pub const fn mul<const LIMBS: usize>(
     a: &Uint<LIMBS>,
     b: &Uint<LIMBS>,
@@ -189,6 +191,7 @@ pub const fn mul<const LIMBS: usize>(
 }
 
 /// Add two numbers and panic on overflow.
+#[must_use]
 pub const fn add<const LIMBS: usize>(
     a: &Uint<LIMBS>,
     b: &Uint<LIMBS>,

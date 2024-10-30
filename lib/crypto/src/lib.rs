@@ -19,7 +19,6 @@ Common cryptographic procedures for a blockchain environment.
 */
 
 #![allow(clippy::module_name_repetitions)]
-#![allow(clippy::must_use_candidate)]
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 extern crate alloc;
 extern crate core;

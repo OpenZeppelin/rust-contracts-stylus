@@ -9,10 +9,12 @@ pub struct Poseidon2<F: PrimeField> {
 }
 
 impl<F: PrimeField> Poseidon2<F> {
+    #[must_use]
     pub fn new(params: &Arc<Poseidon2Params<F>>) -> Self {
         Poseidon2 { params: Arc::clone(params) }
     }
 
+    #[must_use]
     pub fn get_t(&self) -> usize {
         self.params.t
     }
