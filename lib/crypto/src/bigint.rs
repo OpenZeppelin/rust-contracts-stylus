@@ -1,5 +1,5 @@
 use core::{
-    fmt::{Debug, Display, UpperHex},
+    fmt::{Debug, Display},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl,
         ShlAssign, Shr, ShrAssign,
@@ -185,7 +185,7 @@ pub const fn mul<const LIMBS: usize>(
     a: &Uint<LIMBS>,
     b: &Uint<LIMBS>,
 ) -> Uint<LIMBS> {
-    let (low, high) = a.mul_wide(&b);
+    let (low, high) = a.mul_wide(b);
     assert!(high.bits() == 0, "overflow on multiplication");
     low
 }

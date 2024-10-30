@@ -1,3 +1,18 @@
+//! This module contains the implementation of a prime field element [`Fp`],
+//! altogether with exact implementations [`Fp64`] for 64-bit, [`Fp128`] for
+//! 128-bit elements and so on.
+//!
+//! Finite field element [`Fp`] wraps a biginteger element in [motgomery form],
+//! which is used for efficient multiplication and division.
+//!
+//! Note that implementation of `Ord` for [`Fp`] compares field elements viewing
+//! them as integers in the range `0, 1, ..., P::MODULUS - 1`.
+//! However, other implementations of `PrimeField` might choose a different
+//! ordering, and as such, users should use this `Ord` for applications where
+//! any ordering suffices (like in a `BTreeMap`), and not in applications
+//! where a particular ordering is required.
+//!
+//! [motgomery form]: https://en.wikipedia.org/wiki/Montgomery_modular_multiplication
 use alloc::string::ToString;
 use core::{
     cmp::Ordering,
@@ -20,64 +35,72 @@ use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.
+#[allow(clippy::module_name_repetitions)]
 pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
     const MODULUS: Uint<N>;
 
     /// A multiplicative generator of the field.
-    /// `Self::GENERATOR` is an element having multiplicative order
-    /// `Self::MODULUS - 1`.
+    /// [`Self::GENERATOR`] is an element having multiplicative order
+    /// `MODULUS - 1`.
     const GENERATOR: Fp<Self, N>;
 
-    /// Additive identity of the field, i.e. the element `e`
+    /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
     const ZERO: Fp<Self, N> = Fp::new_unchecked(Uint::ZERO);
 
-    /// Multiplicative identity of the field, i.e. the element `e`
+    /// Multiplicative identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
     const ONE: Fp<Self, N> = Fp::new_unchecked(Self::R);
 
-    /// Let `M` be the power of 2^64 nearest to `Self::MODULUS_BITS`. Then
-    /// `R = M % Self::MODULUS`.
+    /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
+    /// `R = M % MODULUS`.
     const R: Uint<N> = ResidueParam::<Self, N>::R;
 
-    /// R2 = R^2 % Self::MODULUS
+    /// `R2 = R^2 % MODULUS`
     const R2: Uint<N> = ResidueParam::<Self, N>::R2;
 
-    /// INV = -MODULUS^{-1} mod 2^64
+    /// `INV = -MODULUS^{-1} mod 2^64`
     const INV: Word = ResidueParam::<Self, N>::MOD_NEG_INV.0;
 
-    /// Set a += b.
+    /// Set `a += b`.
+    #[must_use]
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         a.residue += b.residue;
     }
 
-    /// Set a -= b.
+    /// Set `a -= b`.
+    #[must_use]
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         a.residue -= b.residue;
     }
 
-    /// Set a = a + a.
+    /// Set `a = a + a`.
+    #[must_use]
     fn double_in_place(a: &mut Fp<Self, N>) {
         a.residue = a.residue + a.residue;
     }
 
-    /// Set a = -a;
+    /// Set `a = -a`;
+    #[must_use]
     fn neg_in_place(a: &mut Fp<Self, N>) {
         a.residue = a.residue.neg();
     }
 
-    /// Set a *= b.
+    /// Set `a *= b`.
+    #[must_use]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         a.residue *= b.residue;
     }
 
-    /// Set a *= a.
+    /// Set `a *= a`.
+    #[must_use]
     fn square_in_place(a: &mut Fp<Self, N>) {
         a.residue = a.residue.square();
     }
 
-    /// Compute a^{-1} if `a` is not zero.
+    /// Compute `a^{-1}` if `a` is not zero.
+    #[must_use]
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
         let (residue, choice) = a.residue.invert();
         let is_inverse: bool = choice.into();
@@ -88,23 +111,27 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// Construct a field element from an integer.
     ///
     /// By the end element will be converted to a montgomery form and reduced.
+    #[must_use]
     fn from_bigint(r: Uint<N>) -> Fp<Self, N> {
         Fp::new(r)
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
+    #[must_use]
     fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
         a.residue.retrieve()
     }
 }
 
-/// Represents an element of the prime field F_p, where `p == P::MODULUS`.
-/// This type can represent elements in any field of size at most N * 64 bits.
+/// Represents an element of the prime field `F_p`, where `p == P::MODULUS`.
+/// This type can represent elements in any field of size at most N * 64 bits
+/// for 64-bit systems and N * 32 bits for 32-bit systems.
 #[derive(Educe)]
 #[educe(Default, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::module_name_repetitions)]
 pub struct Fp<P: FpParams<N>, const N: usize> {
     /// Contains the element in Montgomery form for efficient multiplication.
-    /// To convert an element to a [`BigInt`](struct@BigInt), use `into_bigint`
+    /// To convert an element to a [`BigInt`], use [`FpParams::into_bigint`]
     /// or `into`.
     residue: Residue<ResidueParam<P, N>, N>,
 }
@@ -307,27 +334,12 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
     }
 }
 
-// TODO#q: rephrase comment
-/// Note that this implementation of `Ord` compares field elements viewing
-/// them as integers in the range 0, 1, ..., P::MODULUS - 1. However, other
-/// implementations of `PrimeField` might choose a different ordering, and
-/// as such, users should use this `Ord` for applications where
-/// any ordering suffices (like in a BTreeMap), and not in applications
-/// where a particular ordering is required.
 impl<P: FpParams<N>, const N: usize> Ord for Fp<P, N> {
-    #[inline(always)]
     fn cmp(&self, other: &Self) -> Ordering {
         self.into_bigint().cmp(&other.into_bigint())
     }
 }
 
-// TODO#q: rephrase comment
-/// Note that this implementation of `PartialOrd` compares field elements
-/// viewing them as integers in the range 0, 1, ..., `P::MODULUS` - 1. However,
-/// other implementations of `PrimeField` might choose a different ordering, and
-/// as such, users should use this `PartialOrd` for applications where
-/// any ordering suffices (like in a BTreeMap), and not in applications
-/// where a particular ordering is required.
 impl<P: FpParams<N>, const N: usize> PartialOrd for Fp<P, N> {
     #[inline(always)]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {

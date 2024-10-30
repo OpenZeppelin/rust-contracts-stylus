@@ -20,6 +20,7 @@ impl<T: AsRef<[u64]>> BitIteratorBE for T {
 }
 
 /// Convert u64 to bits iterator.
+#[allow(clippy::module_name_repetitions)]
 pub fn u64_to_bits(num: u64) -> impl Iterator<Item = bool> {
     (0..64).map(move |i| num & (1 << i) != 0)
 }
