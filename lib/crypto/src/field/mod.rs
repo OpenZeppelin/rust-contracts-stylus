@@ -10,9 +10,9 @@
 //! use openzeppelin_crypto::{
 //!     bigint::crypto_bigint::U64,
 //!     field::{
-//!         fp::{Fp64, FpParams},
+//!         fp::{Fp64, FpParams, LIMBS_64},
 //!         group::AdditiveGroup,
-//!         Field,   
+//!         Field,
 //!     },
 //!     fp_from_num,
 //!     from_num,
@@ -20,7 +20,7 @@
 //!
 //! pub type ExampleField = Fp64<FpParam>;
 //! pub struct FpParam;
-//! impl FpParams<1> for FpParam {
+//! impl FpParams<LIMBS_64> for FpParam {
 //!     const MODULUS: U64 = from_num!("17");
 //!     const GENERATOR: Fp64<FpParam> = fp_from_num!("3");
 //! }

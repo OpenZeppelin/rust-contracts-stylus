@@ -35,66 +35,66 @@ use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.
-pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
+pub trait FpParams<const LIMBS: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
-    const MODULUS: Uint<N>;
+    const MODULUS: Uint<LIMBS>;
 
     /// A multiplicative generator of the field.
     /// [`Self::GENERATOR`] is an element having multiplicative order
     /// `MODULUS - 1`.
-    const GENERATOR: Fp<Self, N>;
+    const GENERATOR: Fp<Self, LIMBS>;
 
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
-    const ZERO: Fp<Self, N> = Fp::new_unchecked(Uint::ZERO);
+    const ZERO: Fp<Self, LIMBS> = Fp::new_unchecked(Uint::ZERO);
 
     /// Multiplicative identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
-    const ONE: Fp<Self, N> = Fp::new_unchecked(Self::R);
+    const ONE: Fp<Self, LIMBS> = Fp::new_unchecked(Self::R);
 
     /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
     /// `R = M % MODULUS`.
-    const R: Uint<N> = ResidueParam::<Self, N>::R;
+    const R: Uint<LIMBS> = ResidueParam::<Self, LIMBS>::R;
 
     /// `R2 = R^2 % MODULUS`
-    const R2: Uint<N> = ResidueParam::<Self, N>::R2;
+    const R2: Uint<LIMBS> = ResidueParam::<Self, LIMBS>::R2;
 
     /// `INV = -MODULUS^{-1} mod 2^64`
-    const INV: Word = ResidueParam::<Self, N>::MOD_NEG_INV.0;
+    const INV: Word = ResidueParam::<Self, LIMBS>::MOD_NEG_INV.0;
 
     /// Set `a += b`.
-    fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+    fn add_assign(a: &mut Fp<Self, LIMBS>, b: &Fp<Self, LIMBS>) {
         a.residue += b.residue;
     }
 
     /// Set `a -= b`.
-    fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+    fn sub_assign(a: &mut Fp<Self, LIMBS>, b: &Fp<Self, LIMBS>) {
         a.residue -= b.residue;
     }
 
     /// Set `a = a + a`.
-    fn double_in_place(a: &mut Fp<Self, N>) {
+    fn double_in_place(a: &mut Fp<Self, LIMBS>) {
         a.residue = a.residue + a.residue;
     }
 
     /// Set `a = -a`;
-    fn neg_in_place(a: &mut Fp<Self, N>) {
+    fn neg_in_place(a: &mut Fp<Self, LIMBS>) {
         a.residue = a.residue.neg();
     }
 
     /// Set `a *= b`.
-    fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+    fn mul_assign(a: &mut Fp<Self, LIMBS>, b: &Fp<Self, LIMBS>) {
         a.residue *= b.residue;
     }
 
     /// Set `a *= a`.
-    fn square_in_place(a: &mut Fp<Self, N>) {
+    fn square_in_place(a: &mut Fp<Self, LIMBS>) {
         a.residue = a.residue.square();
     }
 
     /// Compute `a^{-1}` if `a` is not zero.
     #[must_use]
-    fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
+    fn inverse(a: &Fp<Self, LIMBS>) -> Option<Fp<Self, LIMBS>> {
         let (residue, choice) = a.residue.invert();
         let is_inverse: bool = choice.into();
 
@@ -105,13 +105,13 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     ///
     /// By the end element will be converted to a montgomery form and reduced.
     #[must_use]
-    fn from_bigint(r: Uint<N>) -> Fp<Self, N> {
+    fn from_bigint(r: Uint<LIMBS>) -> Fp<Self, LIMBS> {
         Fp::new(r)
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
-    fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
+    fn into_bigint(a: Fp<Self, LIMBS>) -> Uint<LIMBS> {
         a.residue.retrieve()
     }
 }
@@ -122,17 +122,11 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 /// for 64-bit systems and N * 32 bits for 32-bit systems.
 #[derive(Educe)]
 #[educe(Default, Clone, Copy, PartialEq, Eq)]
-pub struct Fp<P: FpParams<N>, const N: usize> {
+pub struct Fp<P: FpParams<LIMBS>, const LIMBS: usize> {
     /// Contains the element in Montgomery form for efficient multiplication.
     /// To convert an element to a [`BigInt`], use [`FpParams::into_bigint`]
     /// or `into`.
-    residue: Residue<ResidueParam<P, N>, N>,
-}
-
-impl<P: FpParams<N>, const N: usize> Hash for Fp<P, N> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.residue.as_montgomery().hash(state);
-    }
+    residue: Residue<ResidueParam<P, LIMBS>, LIMBS>,
 }
 
 /// Declare [`Fp`] types for different bit sizes.
@@ -208,20 +202,20 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> ResidueParams<LIMBS>
     );
 }
 
-impl<P: FpParams<N>, const N: usize> Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Fp<P, LIMBS> {
     #[doc(hidden)]
     pub const INV: Word = P::INV;
     #[doc(hidden)]
-    pub const R: Uint<N> = P::R;
+    pub const R: Uint<LIMBS> = P::R;
     #[doc(hidden)]
-    pub const R2: Uint<N> = P::R2;
+    pub const R2: Uint<LIMBS> = P::R2;
 
     /// Construct a new field element from [`Uint`] and convert it in
     /// Montgomery form.
     #[inline]
     #[must_use]
-    pub const fn new(element: Uint<N>) -> Self {
-        Fp { residue: Residue::<ResidueParam<P, N>, N>::new(&element) }
+    pub const fn new(element: Uint<LIMBS>) -> Self {
+        Fp { residue: Residue::<ResidueParam<P, LIMBS>, LIMBS>::new(&element) }
     }
 
     /// Construct a new field element from [`Uint`].
@@ -231,20 +225,28 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// integer that has already been put in Montgomery form.
     #[inline]
     #[must_use]
-    pub const fn new_unchecked(element: Uint<N>) -> Self {
+    pub const fn new_unchecked(element: Uint<LIMBS>) -> Self {
         Fp {
-            residue: Residue::<ResidueParam<P, N>, N>::from_montgomery(element),
+            residue: Residue::<ResidueParam<P, LIMBS>, LIMBS>::from_montgomery(
+                element,
+            ),
         }
     }
 }
 
-impl<P: FpParams<N>, const N: usize> Debug for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Hash for Fp<P, LIMBS> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.residue.as_montgomery().hash(state);
+    }
+}
+
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Debug for Fp<P, LIMBS> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.into_bigint(), f)
     }
 }
 
-impl<P: FpParams<N>, const N: usize> Zero for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Zero for Fp<P, LIMBS> {
     #[inline]
     fn zero() -> Self {
         P::ZERO
@@ -256,7 +258,7 @@ impl<P: FpParams<N>, const N: usize> Zero for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> One for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> One for Fp<P, LIMBS> {
     #[inline]
     fn one() -> Self {
         P::ONE
@@ -268,7 +270,7 @@ impl<P: FpParams<N>, const N: usize> One for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> AdditiveGroup for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> AdditiveGroup for Fp<P, LIMBS> {
     type Scalar = Self;
 
     const ZERO: Self = P::ZERO;
@@ -293,7 +295,7 @@ impl<P: FpParams<N>, const N: usize> AdditiveGroup for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Field for Fp<P, LIMBS> {
     const ONE: Self = P::ONE;
 
     #[inline]
@@ -323,8 +325,8 @@ impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
-    type BigInt = Uint<N>;
+impl<P: FpParams<LIMBS>, const LIMBS: usize> PrimeField for Fp<P, LIMBS> {
+    type BigInt = Uint<LIMBS>;
 
     const MODULUS: Self::BigInt = P::MODULUS;
     const MODULUS_BIT_SIZE: usize = P::MODULUS.bits();
@@ -334,85 +336,85 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
         P::from_bigint(repr)
     }
 
-    fn into_bigint(self) -> Uint<N> {
+    fn into_bigint(self) -> Uint<LIMBS> {
         P::into_bigint(self)
     }
 }
 
-impl<P: FpParams<N>, const N: usize> Ord for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Ord for Fp<P, LIMBS> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.into_bigint().cmp(&other.into_bigint())
     }
 }
 
-impl<P: FpParams<N>, const N: usize> PartialOrd for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> PartialOrd for Fp<P, LIMBS> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<u128> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u128> for Fp<P, LIMBS> {
     fn from(other: u128) -> Self {
         Fp::from_bigint(Uint::from_u128(other))
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<i128> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i128> for Fp<P, LIMBS> {
     fn from(other: i128) -> Self {
         other.unsigned_abs().into()
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<bool> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<bool> for Fp<P, LIMBS> {
     fn from(other: bool) -> Self {
         u8::from(other).into()
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<u64> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u64> for Fp<P, LIMBS> {
     fn from(other: u64) -> Self {
         Fp::from_bigint(Uint::from_u64(other))
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<i64> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i64> for Fp<P, LIMBS> {
     fn from(other: i64) -> Self {
         other.unsigned_abs().into()
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<u32> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u32> for Fp<P, LIMBS> {
     fn from(other: u32) -> Self {
         Fp::from_bigint(Uint::from_u32(other))
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<i32> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i32> for Fp<P, LIMBS> {
     fn from(other: i32) -> Self {
         other.unsigned_abs().into()
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<u16> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u16> for Fp<P, LIMBS> {
     fn from(other: u16) -> Self {
         Fp::from_bigint(Uint::from_u16(other))
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<i16> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i16> for Fp<P, LIMBS> {
     fn from(other: i16) -> Self {
         other.unsigned_abs().into()
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<u8> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u8> for Fp<P, LIMBS> {
     fn from(other: u8) -> Self {
         Fp::from_bigint(Uint::from_u8(other))
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<i8> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i8> for Fp<P, LIMBS> {
     fn from(other: i8) -> Self {
         other.unsigned_abs().into()
     }
@@ -430,7 +432,7 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> crypto_bigint::Random
 
 /// Outputs a string containing the value of `self`,
 /// represented as a decimal without leading zeroes.
-impl<P: FpParams<N>, const N: usize> Display for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Display for Fp<P, LIMBS> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let str = self.into_bigint().to_string();
@@ -438,7 +440,7 @@ impl<P: FpParams<N>, const N: usize> Display for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::Neg for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Neg for Fp<P, LIMBS> {
     type Output = Self;
 
     #[inline]
@@ -448,7 +450,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Neg for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::Add<&Fp<P, N>> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Add<&Fp<P, LIMBS>>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -459,7 +463,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Add<&Fp<P, N>> for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::Sub<&Fp<P, N>> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Sub<&Fp<P, LIMBS>>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -470,7 +476,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Sub<&Fp<P, N>> for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::Mul<&Fp<P, N>> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Mul<&Fp<P, LIMBS>>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -481,7 +489,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Mul<&Fp<P, N>> for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::Div<&Fp<P, N>> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<&Fp<P, LIMBS>>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     /// Returns `self * other.inverse()` if `other.inverse()` is `Some`, and
@@ -494,13 +504,13 @@ impl<P: FpParams<N>, const N: usize> core::ops::Div<&Fp<P, N>> for Fp<P, N> {
     }
 }
 
-impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Add<&'b Fp<P, N>>
-    for &'a Fp<P, N>
+impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Add<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
 {
-    type Output = Fp<P, N>;
+    type Output = Fp<P, LIMBS>;
 
     #[inline]
-    fn add(self, other: &'b Fp<P, N>) -> Fp<P, N> {
+    fn add(self, other: &'b Fp<P, LIMBS>) -> Fp<P, LIMBS> {
         use core::ops::AddAssign;
         let mut result = *self;
         result.add_assign(other);
@@ -508,13 +518,13 @@ impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Add<&'b Fp<P, N>>
     }
 }
 
-impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Sub<&'b Fp<P, N>>
-    for &'a Fp<P, N>
+impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Sub<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
 {
-    type Output = Fp<P, N>;
+    type Output = Fp<P, LIMBS>;
 
     #[inline]
-    fn sub(self, other: &Fp<P, N>) -> Fp<P, N> {
+    fn sub(self, other: &Fp<P, LIMBS>) -> Fp<P, LIMBS> {
         use core::ops::SubAssign;
         let mut result = *self;
         result.sub_assign(other);
@@ -522,13 +532,13 @@ impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Sub<&'b Fp<P, N>>
     }
 }
 
-impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Mul<&'b Fp<P, N>>
-    for &'a Fp<P, N>
+impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Mul<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
 {
-    type Output = Fp<P, N>;
+    type Output = Fp<P, LIMBS>;
 
     #[inline]
-    fn mul(self, other: &Fp<P, N>) -> Fp<P, N> {
+    fn mul(self, other: &Fp<P, LIMBS>) -> Fp<P, LIMBS> {
         use core::ops::MulAssign;
         let mut result = *self;
         result.mul_assign(other);
@@ -536,13 +546,13 @@ impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Mul<&'b Fp<P, N>>
     }
 }
 
-impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Div<&'b Fp<P, N>>
-    for &'a Fp<P, N>
+impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Div<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
 {
-    type Output = Fp<P, N>;
+    type Output = Fp<P, LIMBS>;
 
     #[inline]
-    fn div(self, other: &Fp<P, N>) -> Fp<P, N> {
+    fn div(self, other: &Fp<P, LIMBS>) -> Fp<P, LIMBS> {
         use core::ops::DivAssign;
         let mut result = *self;
         result.div_assign(other);
@@ -550,14 +560,18 @@ impl<'a, 'b, P: FpParams<N>, const N: usize> core::ops::Div<&'b Fp<P, N>>
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<&Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::AddAssign<&Self>
+    for Fp<P, LIMBS>
+{
     #[inline]
     fn add_assign(&mut self, other: &Self) {
         P::add_assign(self, other);
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<&Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::SubAssign<&Self>
+    for Fp<P, LIMBS>
+{
     #[inline]
     fn sub_assign(&mut self, other: &Self) {
         P::sub_assign(self, other);
@@ -565,7 +579,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<&Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Add<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Add<Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -577,7 +593,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Add<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Add<&mut Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Add<&mut Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -589,7 +607,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Add<&mut Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Sub<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Sub<Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -601,7 +621,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Sub<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Sub<&mut Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Sub<&mut Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -613,15 +635,17 @@ impl<P: FpParams<N>, const N: usize> core::ops::Sub<&mut Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::iter::Sum<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::iter::Sum<Self>
+    for Fp<P, LIMBS>
+{
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::zero(), core::ops::Add::add)
     }
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::iter::Sum<&'a Self>
-    for Fp<P, N>
+impl<'a, P: FpParams<LIMBS>, const LIMBS: usize> core::iter::Sum<&'a Self>
+    for Fp<P, LIMBS>
 {
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::zero(), core::ops::Add::add)
@@ -629,7 +653,9 @@ impl<'a, P: FpParams<N>, const N: usize> core::iter::Sum<&'a Self>
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::AddAssign<Self>
+    for Fp<P, LIMBS>
+{
     #[inline]
     fn add_assign(&mut self, other: Self) {
         self.add_assign(&other);
@@ -637,7 +663,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::SubAssign<Self>
+    for Fp<P, LIMBS>
+{
     #[inline]
     fn sub_assign(&mut self, other: Self) {
         self.sub_assign(&other);
@@ -645,8 +673,8 @@ impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<&mut Self>
-    for Fp<P, N>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::AddAssign<&mut Self>
+    for Fp<P, LIMBS>
 {
     #[inline]
     fn add_assign(&mut self, other: &mut Self) {
@@ -655,8 +683,8 @@ impl<P: FpParams<N>, const N: usize> core::ops::AddAssign<&mut Self>
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<&mut Self>
-    for Fp<P, N>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::SubAssign<&mut Self>
+    for Fp<P, LIMBS>
 {
     #[inline]
     fn sub_assign(&mut self, other: &mut Self) {
@@ -664,7 +692,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<&mut Self>
     }
 }
 
-impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<&Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::MulAssign<&Self>
+    for Fp<P, LIMBS>
+{
     fn mul_assign(&mut self, other: &Self) {
         P::mul_assign(self, other);
     }
@@ -672,7 +702,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<&Self> for Fp<P, N> {
 
 /// Computes `self *= other.inverse()` if `other.inverse()` is `Some`, and
 /// panics otherwise.
-impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<&Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::DivAssign<&Self>
+    for Fp<P, LIMBS>
+{
     #[inline]
     fn div_assign(&mut self, other: &Self) {
         use core::ops::MulAssign;
@@ -681,7 +713,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<&Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Mul<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Mul<Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -693,7 +727,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Mul<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Div<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -705,7 +741,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Div<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Mul<&mut Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Mul<&mut Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -717,7 +755,9 @@ impl<P: FpParams<N>, const N: usize> core::ops::Mul<&mut Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::Div<&mut Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<&mut Self>
+    for Fp<P, LIMBS>
+{
     type Output = Self;
 
     #[inline]
@@ -729,15 +769,17 @@ impl<P: FpParams<N>, const N: usize> core::ops::Div<&mut Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::iter::Product<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::iter::Product<Self>
+    for Fp<P, LIMBS>
+{
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::one(), core::ops::Mul::mul)
     }
 }
 
 #[allow(unused_qualifications)]
-impl<'a, P: FpParams<N>, const N: usize> core::iter::Product<&'a Self>
-    for Fp<P, N>
+impl<'a, P: FpParams<LIMBS>, const LIMBS: usize> core::iter::Product<&'a Self>
+    for Fp<P, LIMBS>
 {
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::one(), core::ops::Mul::mul)
@@ -745,7 +787,9 @@ impl<'a, P: FpParams<N>, const N: usize> core::iter::Product<&'a Self>
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::MulAssign<Self>
+    for Fp<P, LIMBS>
+{
     #[inline]
     fn mul_assign(&mut self, other: Self) {
         self.mul_assign(&other);
@@ -753,8 +797,8 @@ impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<Self> for Fp<P, N> {
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<&mut Self>
-    for Fp<P, N>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::DivAssign<&mut Self>
+    for Fp<P, LIMBS>
 {
     #[inline]
     fn div_assign(&mut self, other: &mut Self) {
@@ -763,8 +807,8 @@ impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<&mut Self>
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<&mut Self>
-    for Fp<P, N>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::MulAssign<&mut Self>
+    for Fp<P, LIMBS>
 {
     #[inline]
     fn mul_assign(&mut self, other: &mut Self) {
@@ -773,14 +817,16 @@ impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<&mut Self>
 }
 
 #[allow(unused_qualifications)]
-impl<P: FpParams<N>, const N: usize> core::ops::DivAssign<Self> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::DivAssign<Self>
+    for Fp<P, LIMBS>
+{
     #[inline]
     fn div_assign(&mut self, other: Self) {
         self.div_assign(&other);
     }
 }
 
-impl<P: FpParams<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> zeroize::Zeroize for Fp<P, LIMBS> {
     // The phantom data does not contain element-specific data
     // and thus does not need to be zeroized.
     fn zeroize(&mut self) {
@@ -788,17 +834,21 @@ impl<P: FpParams<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<Fp<P, N>> for Uint<N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<Fp<P, LIMBS>>
+    for Uint<LIMBS>
+{
     #[inline]
-    fn from(fp: Fp<P, N>) -> Self {
+    fn from(fp: Fp<P, LIMBS>) -> Self {
         fp.into_bigint()
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<Uint<N>> for Fp<P, N> {
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<Uint<LIMBS>>
+    for Fp<P, LIMBS>
+{
     /// Converts `Self::BigInteger` into `Self`
     #[inline]
-    fn from(int: Uint<N>) -> Self {
+    fn from(int: Uint<LIMBS>) -> Self {
         Self::from_bigint(int)
     }
 }
