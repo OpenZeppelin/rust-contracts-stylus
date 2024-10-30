@@ -14,6 +14,18 @@ pub trait PrimeField:
     /// The size of the modulus in bits.
     const MODULUS_BIT_SIZE: usize;
 
+    /// Returns the characteristic of the field,
+    /// in little-endian representation.
+    fn characteristic() -> Self::BigInt {
+        Self::MODULUS
+    }
+
+    /// Returns the extension degree of this field with respect
+    /// to `Self::BasePrimeField`.
+    fn extension_degree() -> usize {
+        1
+    }
+
     /// Construct a prime field element from a big integer.
     fn from_bigint(repr: Self::BigInt) -> Self;
 

@@ -1,7 +1,5 @@
 use alloc::{borrow::ToOwned, sync::Arc, vec::Vec};
 
-use crypto_bigint::Random;
-
 use super::params::Poseidon2Params;
 use crate::{field::prime::PrimeField, poseidon2::merkle_tree::MerkleTreeHash};
 
@@ -656,7 +654,7 @@ mod poseidon2_tests_vesta {
 
 #[allow(unused_imports)]
 #[cfg(test)]
-pub fn random_scalar<F: PrimeField + Random>() -> F {
+pub fn random_scalar<F: PrimeField + crypto_bigint::Random>() -> F {
     let mut rng = rand::thread_rng();
     F::random(&mut rng)
 }

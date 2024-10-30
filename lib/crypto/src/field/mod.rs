@@ -102,14 +102,6 @@ pub trait Field:
     /// The multiplicative identity of the field.
     const ONE: Self;
 
-    /// Returns the characteristic of the field,
-    /// in little-endian representation.
-    fn characteristic() -> &'static [u64];
-
-    /// Returns the extension degree of this field with respect
-    /// to `Self::BasePrimeField`.
-    fn extension_degree() -> u64;
-
     /// Returns `self * self`.
     #[must_use]
     fn square(&self) -> Self;

@@ -13,7 +13,7 @@ tiny-keccak.workspace = true
 num-traits = "0.2.14"
 zeroize = { version = "1.8.1", features = ["derive"] }
 educe = "0.6.0"
-crypto-bigint = { version = "0.5.5", features = ["zeroize"] }
+crypto-bigint = { version = "0.5.5", default-features = false, features = ["zeroize"] }
 rand = { workspace = true, optional = true, default-features = false }
 hex-literal = "0.4.1"
 

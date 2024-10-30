@@ -45,7 +45,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     const R2: Uint<N> = ResidueParam::<Self, N>::R2;
 
     /// INV = -MODULUS^{-1} mod 2^64
-    const INV: u64 = ResidueParam::<Self, N>::MOD_NEG_INV.0;
+    const INV: Word = ResidueParam::<Self, N>::MOD_NEG_INV.0;
 
     /// Set a += b.
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
@@ -118,11 +118,19 @@ impl<P: FpParams<N>, const N: usize> Hash for Fp<P, N> {
 /// Declare [`Fp`] type for different bit sizes.
 macro_rules! declare_fp {
     ($name:ident, $bits:expr) => {
+        #[cfg(target_pointer_width = "64")]
         #[doc = "Finite field with max"]
         #[doc = stringify!($bits)]
         #[doc = "bits size per element."]
         pub type $name<P> =
             crate::field::fp::Fp<P, { usize::div_ceil($bits, 64) }>;
+
+        #[cfg(target_pointer_width = "32")]
+        #[doc = "Finite field with max"]
+        #[doc = stringify!($bits)]
+        #[doc = "bits size per element."]
+        pub type $name<P> =
+            crate::field::fp::Fp<P, { usize::div_ceil($bits, 32) }>;
     };
 }
 
@@ -170,7 +178,7 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> ResidueParams<LIMBS>
 
 impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[doc(hidden)]
-    pub const INV: u64 = P::INV;
+    pub const INV: Word = P::INV;
     #[doc(hidden)]
     pub const R: Uint<N> = P::R;
     #[doc(hidden)]
@@ -255,15 +263,6 @@ impl<P: FpParams<N>, const N: usize> AdditiveGroup for Fp<P, N> {
 
 impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
     const ONE: Self = P::ONE;
-
-    fn extension_degree() -> u64 {
-        1
-    }
-
-    #[inline]
-    fn characteristic() -> &'static [u64] {
-        P::MODULUS.as_words()
-    }
 
     #[inline]
     fn square(&self) -> Self {
