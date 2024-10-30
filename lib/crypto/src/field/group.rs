@@ -1,3 +1,5 @@
+//! This module provides a generic interface for groups with additive notation.
+
 use core::{
     fmt::{Debug, Display},
     hash::Hash,

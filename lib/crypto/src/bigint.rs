@@ -1,3 +1,6 @@
+//! This module provides a generic interface and constant
+//! functions for big integers.
+
 use core::{
     fmt::{Debug, Display},
     ops::{
@@ -171,11 +174,11 @@ pub const fn from_str_radix<const LIMBS: usize>(
             return uint;
         }
 
-        // Move to the next digit.
-        index -= 1;
-
         // Increase the order of magnitude.
         order = mul(&uint_radix, &order);
+
+        // Move to the next digit.
+        index -= 1;
     }
 }
 
@@ -231,7 +234,10 @@ mod test {
 
     #[test]
     fn convert_from_str_radix() {
-        let uint = from_str_radix::<4>("28948022309329048855892746252171976963363056481941647379679742748393362948097", 10);
+        let uint_from_base10 = from_str_radix::<4>(
+            "28948022309329048855892746252171976963363056481941647379679742748393362948097",
+            10
+        );
         #[allow(clippy::unreadable_literal)]
         let expected = Uint::<4>::from_words([
             10108024940646105089u64,
@@ -239,13 +245,13 @@ mod test {
             0u64,
             4611686018427387904u64,
         ]);
-        assert_eq!(uint, expected);
+        assert_eq!(uint_from_base10, expected);
 
-        let uint = from_str_radix::<1>("18446744069414584321", 10);
-        let expected = from_str_radix::<1>(
+        let uint_from_base10 = from_str_radix::<1>("18446744069414584321", 10);
+        let uint_from_binary = from_str_radix::<1>(
             "1111111111111111111111111111111100000000000000000000000000000001",
             2,
         );
-        assert_eq!(uint, expected);
+        assert_eq!(uint_from_base10, uint_from_binary);
     }
 }

@@ -1,3 +1,5 @@
+//! This module contains the field instances for some popular curves.
+
 #![allow(missing_docs)]
 use crypto_bigint::{U256, U64};
 

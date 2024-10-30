@@ -1,3 +1,5 @@
+//! This module provides a generic interface for finite prime fields.
+
 use crate::{bigint::BigInteger, field::Field};
 
 /// Defines an abstract prime field.
