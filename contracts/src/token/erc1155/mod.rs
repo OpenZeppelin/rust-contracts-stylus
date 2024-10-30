@@ -555,7 +555,7 @@ impl Erc1155 {
                 to,
                 Erc1155ReceiverData::new(ids, values),
                 data.to_vec().into(),
-            )?
+            )?;
         }
 
         Ok(())
@@ -804,7 +804,7 @@ impl Erc1155 {
             Ok(id) => id,
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
-                    if reason.len() > 0 {
+                    if !reason.is_empty() {
                         // Non-IERC1155Receiver implementer.
                         return Err(Error::InvalidReceiverWithReason(e));
                     }
