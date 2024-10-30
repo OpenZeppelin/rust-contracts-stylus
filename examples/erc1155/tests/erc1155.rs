@@ -121,6 +121,166 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
+async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_addr =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
+            .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let Erc1155::balanceOfReturn { balance: initial_receiver_balance } =
+        contract.balanceOf(receiver_addr, token_id).call().await?;
+
+    let receipt =
+        receipt!(contract.mint(receiver_addr, token_id, value, vec![].into()))?;
+
+    assert!(receipt.emits(Erc1155::TransferSingle {
+        operator: alice_addr,
+        from: Address::ZERO,
+        to: receiver_addr,
+        id: token_id,
+        value
+    }));
+
+    assert!(receipt.emits(ERC1155ReceiverMock::Received {
+        operator: alice_addr,
+        from: Address::ZERO,
+        id: token_id,
+        value,
+        data: fixed_bytes!("").into(),
+    }));
+
+    let Erc1155::balanceOfReturn { balance: receiver_balance } =
+        contract.balanceOf(receiver_addr, token_id).call().await?;
+    assert_eq!(initial_receiver_balance + value, receiver_balance);
+
+    Ok(())
+}
+
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_reverts_with_reason_in_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithMessage,
+    )
+    .await?;
+
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let _err = send!(contract.mint(
+        receiver_address,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))
+    .expect_err("should not mint when receiver errors with reason");
+
+    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
+    //     b"ERC1155ReceiverMock: reverting on receive".to_vec()
+    // )));
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_without_reason_in_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
+    )
+    .await?;
+
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let err = send!(contract.mint(
+        receiver_address,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))
+    .expect_err("should not mint when receiver reverts");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_panics_in_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
+            .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let err = send!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))
+    .expect_err("should not mint when receiver panics");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_invalid_receiver_contract_in_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let _err = send!(contract.mint(
+        contract_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))
+    .expect_err("should not mint when invalid receiver contract");
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn mint_batch(
     alice: Account,
     bob: Account,
@@ -166,6 +326,217 @@ async fn mint_batch(
 
         assert_eq!(values, balances);
     }
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint_batch_transfer_to_receiver_contract(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_addr =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
+            .await?;
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let Erc1155::balanceOfBatchReturn { balances: initial_receiver_balances } =
+        contract
+            .balanceOfBatch(
+                vec![receiver_addr, receiver_addr],
+                token_ids.clone(),
+            )
+            .call()
+            .await?;
+
+    let receipt = receipt!(contract.mintBatch(
+        receiver_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ))?;
+
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: Address::ZERO,
+        to: receiver_addr,
+        ids: token_ids.clone(),
+        values: values.clone()
+    }));
+
+    assert!(receipt.emits(ERC1155ReceiverMock::BatchReceived {
+        operator: alice_addr,
+        from: Address::ZERO,
+        ids: token_ids.clone(),
+        values: values.clone(),
+        data: fixed_bytes!("").into(),
+    }));
+
+    let Erc1155::balanceOfBatchReturn { balances: receiver_balances } =
+        contract
+            .balanceOfBatch(
+                vec![receiver_addr, receiver_addr],
+                token_ids.clone(),
+            )
+            .call()
+            .await?;
+
+    for (idx, value) in values.iter().enumerate() {
+        assert_eq!(
+            initial_receiver_balances[idx] + value,
+            receiver_balances[idx]
+        );
+    }
+
+    Ok(())
+}
+
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithMessage,
+    )
+    .await?;
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let _err = watch!(contract.mintBatch(
+        receiver_address,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ))
+    .expect_err("should not mint batch when receiver errors with reason");
+
+    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
+    //     b"ERC1155ReceiverMock: reverting on receive".to_vec()
+    // )));
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_without_reason_in_batch_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
+    )
+    .await?;
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let err = send!(contract.mintBatch(
+        receiver_address,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ))
+    .expect_err("should not mint batch when receiver reverts");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+// FIXME: Update our `reverted_with` implementation such that we can also check
+// when the error is a `stylus_sdk::call::Error`.
+#[e2e::test]
+#[ignore]
+async fn errors_when_receiver_panics_in_batch_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
+            .await?;
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let err = send!(contract.mintBatch(
+        receiver_address,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ))
+    .expect_err("should not mint batch when receiver panics");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_invalid_receiver_contract_in_batch_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let _err = send!(contract.mintBatch(
+        contract_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ))
+    .expect_err("should not mint batch when invalid receiver contract");
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_invalid_array_length_in_batch_mint(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
+
+    let bob_addr = bob.address();
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let err = send!(contract_alice.mintBatch(
+        bob_addr,
+        vec![token_ids[0]],
+        values,
+        vec![].into()
+    ))
+    .expect_err("should return `ERC1155InvalidArrayLength`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidArrayLength {
+        idsLength: uint!(1_U256),
+        valuesLength: uint!(2_U256)
+    }));
+
     Ok(())
 }
 
