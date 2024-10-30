@@ -401,7 +401,7 @@ impl<P: FpParams<N>, const N: usize> From<i8> for Fp<P, N> {
     }
 }
 
-#[cfg(feature = "rand")]
+#[cfg(any(feature = "rand", test))]
 impl<P: FpParams<LIMBS>, const LIMBS: usize> crypto_bigint::Random
     for Fp<P, LIMBS>
 {
