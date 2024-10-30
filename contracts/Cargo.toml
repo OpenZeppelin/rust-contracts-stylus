@@ -15,7 +15,6 @@ alloy-sol-macro.workspace = true
 alloy-sol-macro-expander.workspace = true
 alloy-sol-macro-input.workspace = true
 stylus-sdk.workspace = true
-mini-alloc.workspace = true
 keccak-const.workspace = true
 openzeppelin-stylus-proc.workspace = true
 
@@ -31,7 +30,7 @@ rand.workspace = true
 std = []
 
 [lib]
-crate-type = ["lib", "cdylib"]
+crate-type = ["lib"]
 
 [lints]
 workspace = true
