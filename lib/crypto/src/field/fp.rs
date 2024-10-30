@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use core::{
     cmp::Ordering,
     fmt::{Debug, Display, Formatter},
