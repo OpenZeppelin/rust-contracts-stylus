@@ -28,7 +28,7 @@ impl Erc1155Example {
         amount: U256,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
-        self.erc1155._mint(to, token_id, amount, data)?;
+        self.erc1155._mint(to, token_id, amount, &data)?;
         Ok(())
     }
 
@@ -39,7 +39,7 @@ impl Erc1155Example {
         amounts: Vec<U256>,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
-        self.erc1155._mint_batch(to, token_ids, amounts, data)?;
+        self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
         Ok(())
     }
 }

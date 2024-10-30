@@ -421,7 +421,7 @@ impl IErc1155 for Erc1155 {
         data: Bytes,
     ) -> Result<(), Self::Error> {
         self.authorize_transfer(from)?;
-        self.do_safe_transfer_from(from, to, vec![id], vec![value], data)
+        self.do_safe_transfer_from(from, to, vec![id], vec![value], &data)
     }
 
     fn safe_batch_transfer_from(
@@ -433,7 +433,7 @@ impl IErc1155 for Erc1155 {
         data: Bytes,
     ) -> Result<(), Self::Error> {
         self.authorize_transfer(from)?;
-        self.do_safe_transfer_from(from, to, ids, values, data)
+        self.do_safe_transfer_from(from, to, ids, values, &data)
     }
 }
 
@@ -593,7 +593,7 @@ impl Erc1155 {
         to: Address,
         id: U256,
         value: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._do_mint(to, vec![id], vec![value], data)
     }
@@ -635,7 +635,7 @@ impl Erc1155 {
         to: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._do_mint(to, ids, values, data)
     }
@@ -864,7 +864,7 @@ impl Erc1155 {
         to: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         if to.is_zero() {
             return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
@@ -876,7 +876,7 @@ impl Erc1155 {
             to,
             ids,
             values,
-            &data,
+            data,
         )?;
         Ok(())
     }
@@ -971,7 +971,7 @@ impl Erc1155 {
         to: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         if to.is_zero() {
             return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
@@ -983,7 +983,7 @@ impl Erc1155 {
                 sender: from,
             }));
         }
-        self._update_with_acceptance_check(from, to, ids, values, &data)
+        self._update_with_acceptance_check(from, to, ids, values, data)
     }
 
     /// Transfers a `value` amount of `token_id` from `from` to
@@ -1593,7 +1593,7 @@ mod tests {
                 invalid_receiver,
                 token_ids,
                 values,
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect_err("should not transfer tokens to the `Address::ZERO`");
 
