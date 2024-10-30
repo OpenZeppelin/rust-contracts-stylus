@@ -2,19 +2,9 @@
 use crypto_bigint::{U256, U64};
 
 use crate::{
-    field::fp::{Fp256, Fp64, FpParams},
+    field::fp::{Fp256, Fp64, FpParams, LIMBS_256, LIMBS_64},
     fp_from_num, from_num,
 };
-// TODO#q: move it to bigint module
-#[cfg(target_pointer_width = "64")]
-const LIMBS_256: usize = 4;
-#[cfg(target_pointer_width = "32")]
-const LIMBS_256: usize = 8;
-
-#[cfg(target_pointer_width = "64")]
-const LIMBS_64: usize = 1;
-#[cfg(target_pointer_width = "32")]
-const LIMBS_64: usize = 2;
 
 pub type FpVesta = Fp256<VestaParam>;
 pub struct VestaParam;

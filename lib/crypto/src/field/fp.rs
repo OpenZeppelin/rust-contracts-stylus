@@ -135,38 +135,50 @@ impl<P: FpParams<N>, const N: usize> Hash for Fp<P, N> {
     }
 }
 
-/// Declare [`Fp`] type for different bit sizes.
+/// Declare [`Fp`] types for different bit sizes.
 macro_rules! declare_fp {
-    ($name:ident, $bits:expr) => {
+    ($fp:ident, $limbs:ident, $bits:expr) => {
         #[cfg(target_pointer_width = "64")]
         #[doc = "Finite field with max"]
         #[doc = stringify!($bits)]
-        #[doc = "bits size per element."]
-        pub type $name<P> =
+        #[doc = "bits size element."]
+        pub type $fp<P> =
             crate::field::fp::Fp<P, { usize::div_ceil($bits, 64) }>;
+
+        #[cfg(target_pointer_width = "64")]
+        #[doc = "Number of limbs in the field with"]
+        #[doc = stringify!($bits)]
+        #[doc = "bits size element."]
+        pub const $limbs: usize = usize::div_ceil($bits, 64);
 
         #[cfg(target_pointer_width = "32")]
         #[doc = "Finite field with max"]
         #[doc = stringify!($bits)]
-        #[doc = "bits size per element."]
-        pub type $name<P> =
+        #[doc = "bits size element."]
+        pub type $fp<P> =
             crate::field::fp::Fp<P, { usize::div_ceil($bits, 32) }>;
+
+        #[cfg(target_pointer_width = "32")]
+        #[doc = "Number of limbs in the field with"]
+        #[doc = stringify!($bits)]
+        #[doc = "bits size element."]
+        pub const $limbs: usize = usize::div_ceil($bits, 32);
     };
 }
 
-declare_fp!(Fp64, 64);
-declare_fp!(Fp128, 128);
-declare_fp!(Fp192, 192);
-declare_fp!(Fp256, 256);
-declare_fp!(Fp320, 320);
-declare_fp!(Fp384, 384);
-declare_fp!(Fp448, 448);
-declare_fp!(Fp512, 512);
-declare_fp!(Fp576, 576);
-declare_fp!(Fp640, 640);
-declare_fp!(Fp704, 704);
-declare_fp!(Fp768, 768);
-declare_fp!(Fp832, 832);
+declare_fp!(Fp64, LIMBS_64, 64);
+declare_fp!(Fp128, LIMBS_128, 128);
+declare_fp!(Fp192, LIMBS_192, 192);
+declare_fp!(Fp256, LIMBS_256, 256);
+declare_fp!(Fp320, LIMBS_320, 320);
+declare_fp!(Fp384, LIMBS_384, 384);
+declare_fp!(Fp448, LIMBS_448, 448);
+declare_fp!(Fp512, LIMBS_512, 512);
+declare_fp!(Fp576, LIMBS_576, 576);
+declare_fp!(Fp640, LIMBS_640, 640);
+declare_fp!(Fp704, LIMBS_704, 704);
+declare_fp!(Fp768, LIMBS_768, 768);
+declare_fp!(Fp832, LIMBS_832, 832);
 
 #[derive(Educe)]
 #[educe(Clone, Copy, Debug, Default, Eq, PartialEq)]
