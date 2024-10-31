@@ -1,12 +1,11 @@
 pub mod instance;
-pub mod merkle_tree;
 pub mod params;
 
 use alloc::{borrow::ToOwned, sync::Arc, vec::Vec};
 
 use params::Poseidon2Params;
 
-use crate::{field::prime::PrimeField, poseidon2::merkle_tree::MerkleTreeHash};
+use crate::field::prime::PrimeField;
 
 #[derive(Clone, Debug)]
 pub struct Poseidon2<F: PrimeField> {
@@ -231,6 +230,10 @@ impl<F: PrimeField> Poseidon2<F> {
             })
             .collect()
     }
+}
+
+pub trait MerkleTreeHash<F: PrimeField> {
+    fn compress(&self, input: &[&F]) -> F;
 }
 
 impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
