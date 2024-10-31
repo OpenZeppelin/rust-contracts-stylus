@@ -11,8 +11,10 @@ use core::{
 
 #[allow(clippy::module_name_repetitions)]
 pub use crypto_bigint;
-use crypto_bigint::{Integer, Limb, Uint, Zero};
+use crypto_bigint::{Integer, Limb, Uint, Word, Zero};
 use zeroize::Zeroize;
+
+use crate::bits::BitIteratorBE;
 
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
@@ -52,7 +54,7 @@ pub trait BigInteger:
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
 
-    /// Returns true iff this number is odd.
+    /// Returns true if this number is odd.
     /// # Example
     ///
     /// ```
@@ -63,7 +65,8 @@ pub trait BigInteger:
     /// ```
     fn is_odd(&self) -> bool;
 
-    /// Returns true iff this number is even.
+    /// Returns true if this number is even.
+    ///
     /// # Example
     ///
     /// ```
@@ -74,7 +77,8 @@ pub trait BigInteger:
     /// ```
     fn is_even(&self) -> bool;
 
-    /// Returns true iff this number is zero.
+    /// Returns true if this number is zero.
+    ///
     /// # Example
     ///
     /// ```
@@ -135,6 +139,12 @@ impl<const N: usize> BigInteger for Uint<N> {
 
     fn get_bit(&self, i: usize) -> bool {
         self.bit(i).into()
+    }
+}
+
+impl<const N: usize> BitIteratorBE for Uint<N> {
+    fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
+        self.as_words().iter().rev().flat_map(Word::bit_be_iter)
     }
 }
 
@@ -253,5 +263,15 @@ mod test {
             2,
         );
         assert_eq!(uint_from_base10, uint_from_binary);
+    }
+
+    #[test]
+    fn uint_bit_iterator_be() {
+        let words: [Word; 4] = [0b1100, 0, 0, 0];
+        let num = Uint::<4>::from_words(words);
+        let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
+
+        assert_eq!(bits.len(), 4);
+        assert_eq!(bits, vec![true, true, false, false]);
     }
 }

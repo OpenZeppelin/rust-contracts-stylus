@@ -95,6 +95,9 @@ tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.30"
 dashmap = "6.1.0"
 crypto-bigint = { version = "0.5.5", default-features = false, features = ["zeroize"] }
+num-traits = "0.2.14"
+zeroize = { version = "1.8.1", features = ["derive"] }
+proptest = "1"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }

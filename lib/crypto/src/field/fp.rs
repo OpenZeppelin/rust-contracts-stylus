@@ -29,7 +29,7 @@ use crypto_bigint::{
     Limb, Uint, Word,
 };
 use educe::Educe;
-use num_traits::{One, Zero};
+use num_traits::{One, ToPrimitive, Zero};
 
 use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
@@ -132,31 +132,19 @@ pub struct Fp<P: FpParams<LIMBS>, const LIMBS: usize> {
 /// Declare [`Fp`] types for different bit sizes.
 macro_rules! declare_fp {
     ($fp:ident, $limbs:ident, $bits:expr) => {
-        #[cfg(target_pointer_width = "64")]
         #[doc = "Finite field with max"]
         #[doc = stringify!($bits)]
         #[doc = "bits size element."]
-        pub type $fp<P> =
-            crate::field::fp::Fp<P, { usize::div_ceil($bits, 64) }>;
+        pub type $fp<P> = crate::field::fp::Fp<
+            P,
+            { usize::div_ceil($bits, ::crypto_bigint::Word::BITS as usize) },
+        >;
 
-        #[cfg(target_pointer_width = "64")]
         #[doc = "Number of limbs in the field with"]
         #[doc = stringify!($bits)]
         #[doc = "bits size element."]
-        pub const $limbs: usize = usize::div_ceil($bits, 64);
-
-        #[cfg(target_pointer_width = "32")]
-        #[doc = "Finite field with max"]
-        #[doc = stringify!($bits)]
-        #[doc = "bits size element."]
-        pub type $fp<P> =
-            crate::field::fp::Fp<P, { usize::div_ceil($bits, 32) }>;
-
-        #[cfg(target_pointer_width = "32")]
-        #[doc = "Number of limbs in the field with"]
-        #[doc = stringify!($bits)]
-        #[doc = "bits size element."]
-        pub const $limbs: usize = usize::div_ceil($bits, 32);
+        pub const $limbs: usize =
+            usize::div_ceil($bits, ::crypto_bigint::Word::BITS as usize);
     };
 }
 
@@ -298,6 +286,7 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> AdditiveGroup for Fp<P, LIMBS> {
 impl<P: FpParams<LIMBS>, const LIMBS: usize> Field for Fp<P, LIMBS> {
     const ONE: Self = P::ONE;
 
+    // TODO#q: refactor trait
     #[inline]
     fn square(&self) -> Self {
         let mut temp = *self;
@@ -354,17 +343,48 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> PartialOrd for Fp<P, LIMBS> {
     }
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u128> for Fp<P, LIMBS> {
-    fn from(other: u128) -> Self {
-        Fp::from_bigint(Uint::from_u128(other))
-    }
+/// Auto implements conversion from unsigned integer of type `$int` to [`Fp`].
+macro_rules! impl_fp_from_unsigned_int {
+    ($int:ty) => {
+        impl<P: FpParams<LIMBS>, const LIMBS: usize> From<$int>
+            for Fp<P, LIMBS>
+        {
+            fn from(other: $int) -> Self {
+                Fp::from_bigint(Uint::from(other))
+            }
+        }
+    };
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i128> for Fp<P, LIMBS> {
-    fn from(other: i128) -> Self {
-        other.unsigned_abs().into()
-    }
+/// Auto implements conversion from signed integer of type `$int` to [`Fp`].
+macro_rules! impl_fp_from_signed_int {
+    ($int:ty) => {
+        impl<P: FpParams<LIMBS>, const LIMBS: usize> From<$int>
+            for Fp<P, LIMBS>
+        {
+            fn from(other: $int) -> Self {
+                let abs = other.unsigned_abs().into();
+                if other.is_positive() {
+                    abs
+                } else {
+                    -abs
+                }
+            }
+        }
+    };
 }
+
+impl_fp_from_unsigned_int!(u128);
+impl_fp_from_unsigned_int!(u64);
+impl_fp_from_unsigned_int!(u32);
+impl_fp_from_unsigned_int!(u16);
+impl_fp_from_unsigned_int!(u8);
+
+impl_fp_from_signed_int!(i128);
+impl_fp_from_signed_int!(i64);
+impl_fp_from_signed_int!(i32);
+impl_fp_from_signed_int!(i16);
+impl_fp_from_signed_int!(i8);
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> From<bool> for Fp<P, LIMBS> {
     fn from(other: bool) -> Self {
@@ -372,53 +392,34 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> From<bool> for Fp<P, LIMBS> {
     }
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u64> for Fp<P, LIMBS> {
-    fn from(other: u64) -> Self {
-        Fp::from_bigint(Uint::from_u64(other))
-    }
+/// Auto implements conversion from [`Fp`] to integer of type `$int`.
+///
+/// Conversion is available only for a single limb field elements,
+/// i.e. `LIMBS = 1`.
+macro_rules! impl_int_from_fp {
+    ($int:ty) => {
+        impl<P: FpParams<1>> From<Fp<P, 1>> for $int {
+            fn from(other: Fp<P, 1>) -> Self {
+                let uint = other.into_bigint();
+                let words = uint.as_words();
+                <$int>::try_from(words[0]).unwrap_or_else(|_| {
+                    panic!("should convert to {}", stringify!($int))
+                })
+            }
+        }
+    };
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i64> for Fp<P, LIMBS> {
-    fn from(other: i64) -> Self {
-        other.unsigned_abs().into()
-    }
-}
-
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u32> for Fp<P, LIMBS> {
-    fn from(other: u32) -> Self {
-        Fp::from_bigint(Uint::from_u32(other))
-    }
-}
-
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i32> for Fp<P, LIMBS> {
-    fn from(other: i32) -> Self {
-        other.unsigned_abs().into()
-    }
-}
-
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u16> for Fp<P, LIMBS> {
-    fn from(other: u16) -> Self {
-        Fp::from_bigint(Uint::from_u16(other))
-    }
-}
-
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i16> for Fp<P, LIMBS> {
-    fn from(other: i16) -> Self {
-        other.unsigned_abs().into()
-    }
-}
-
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<u8> for Fp<P, LIMBS> {
-    fn from(other: u8) -> Self {
-        Fp::from_bigint(Uint::from_u8(other))
-    }
-}
-
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<i8> for Fp<P, LIMBS> {
-    fn from(other: i8) -> Self {
-        other.unsigned_abs().into()
-    }
-}
+impl_int_from_fp!(u128);
+impl_int_from_fp!(u64);
+impl_int_from_fp!(u32);
+impl_int_from_fp!(u16);
+impl_int_from_fp!(u8);
+impl_int_from_fp!(i128);
+impl_int_from_fp!(i64);
+impl_int_from_fp!(i32);
+impl_int_from_fp!(i16);
+impl_int_from_fp!(i8);
 
 #[cfg(test)]
 impl<P: FpParams<LIMBS>, const LIMBS: usize> crypto_bigint::Random
@@ -504,8 +505,8 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<&Fp<P, LIMBS>>
     }
 }
 
-impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Add<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Add<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -518,8 +519,8 @@ impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
     }
 }
 
-impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Sub<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Sub<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -532,8 +533,8 @@ impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
     }
 }
 
-impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Mul<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Mul<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -546,8 +547,8 @@ impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
     }
 }
 
-impl<'a, 'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Div<&'b Fp<P, LIMBS>> for &'a Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Div<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -708,7 +709,7 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::DivAssign<&Self>
     #[inline]
     fn div_assign(&mut self, other: &Self) {
         use core::ops::MulAssign;
-        self.mul_assign(&other.inverse().unwrap());
+        self.mul_assign(&other.inverse().expect("should not divide by zero"));
     }
 }
 
@@ -869,4 +870,113 @@ macro_rules! fp_from_hex {
             $crate::bigint::crypto_bigint::Uint::from_be_hex($num),
         )
     }};
+}
+
+#[cfg(test)]
+mod tests {
+    use num_traits::Euclid;
+    use proptest::prelude::*;
+
+    use super::*;
+    use crate::{
+        bigint::crypto_bigint::U64,
+        field::{
+            fp::{Fp64, FpParams, LIMBS_64},
+            group::AdditiveGroup,
+            prime::PrimeField,
+            Field,
+        },
+        fp_from_num, from_num,
+    };
+
+    pub type Field64 = Fp64<Fp64Param>;
+    pub struct Fp64Param;
+    impl FpParams<LIMBS_64> for Fp64Param {
+        const GENERATOR: Fp64<Fp64Param> = fp_from_num!("3");
+        const MODULUS: U64 = from_num!("1000003"); // Prime number
+    }
+
+    const MODULUS: i128 = 1000003; // Prime number
+
+    proptest! {
+        #[test]
+        fn add(a: i64, b: i64) {
+            let res = Field64::from(a) + Field64::from(b);
+            let res: i128 = res.into();
+            let a = a as i128;
+            let b = b as i128;
+            prop_assert_eq!(res, (a + b).rem_euclid(MODULUS));
+        }
+
+        #[test]
+        fn double(a: i64) {
+            let res = Field64::from(a).double();
+            let res: i128 = res.into();
+            let a = a as i128;
+            prop_assert_eq!(res, (a + a).rem_euclid(MODULUS));
+        }
+
+        #[test]
+        fn sub(a: i64, b: i64) {
+            let res = Field64::from(a) - Field64::from(b);
+            let res: i128 = res.into();
+            let a = a as i128;
+            let b = b as i128;
+            prop_assert_eq!(res, (a - b).rem_euclid(MODULUS));
+        }
+
+        #[test]
+        fn mul(a: i64, b: i64) {
+            let res = Field64::from(a) * Field64::from(b);
+            let res: i128 = res.into();
+            let a = a as i128;
+            let b = b as i128;
+            prop_assert_eq!(res, (a * b).rem_euclid(MODULUS));
+        }
+
+        #[test]
+        fn square(a: i64) {
+            let res = Field64::from(a).square();
+            let res: i128 = res.into();
+            let a = a as i128;
+            prop_assert_eq!(res, (a * a).rem_euclid(MODULUS));
+        }
+
+        #[test]
+        fn div(a: i64, b: i64) {
+            // Skip if `b` is zero.
+            if (b as i128) % MODULUS == 0 {
+                return Ok(());
+            }
+
+            let res = Field64::from(a) / Field64::from(b);
+            let res: i128 = res.into();
+            let a = a as i128;
+            let b = b as i128;
+            // a / b = res mod M => res * b = a mod M
+            prop_assert_eq!((res * b).rem_euclid(MODULUS), a.rem_euclid(MODULUS));
+        }
+
+        #[test]
+        fn pow(a: i64, b in 0_u32..1000) {
+            /// Compute a^b in an expensive and iterative way.
+            fn dumb_pow(a: i128, b: i128) -> i128 {
+                (0..b).fold(1, |acc, _| (acc * a).rem_euclid(MODULUS))
+            }
+
+            let res = Field64::from(a).pow(b);
+            let res: i128 = res.into();
+            let a = a as i128;
+            let b = b as i128;
+            prop_assert_eq!(res, dumb_pow(a, b));
+        }
+
+        #[test]
+        fn neg(a: i64) {
+            let res = -Field64::from(a);
+            let res: i128 = res.into();
+            let a = a as i128;
+            prop_assert_eq!(res, (-a).rem_euclid(MODULUS));
+        }
+    }
 }

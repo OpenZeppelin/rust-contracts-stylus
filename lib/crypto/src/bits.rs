@@ -1,5 +1,7 @@
 //! Bit manipulation utilities.
 
+use num_traits::{Num, ToPrimitive};
+
 /// Iterates over bits in big-endian order.
 pub trait BitIteratorBE {
     /// Returns an iterator over the bits of the integer, starting from the most
@@ -8,31 +10,35 @@ pub trait BitIteratorBE {
 
     /// Returns an iterator over the bits of the integer, starting from the most
     /// significant bit, and without leading zeroes.
-    fn bit_be_trimmed_iter(&self) -> impl Iterator<Item = bool>;
-}
-
-impl<T: AsRef<[u64]>> BitIteratorBE for T {
-    fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
-        self.as_ref().iter().copied().flat_map(u64_to_bits)
-    }
-
     fn bit_be_trimmed_iter(&self) -> impl Iterator<Item = bool> {
         self.bit_be_iter().skip_while(|&b| !b)
     }
 }
 
-/// Convert u64 to bits iterator.
-pub fn u64_to_bits(num: u64) -> impl Iterator<Item = bool> {
-    (0..64).map(move |i| num & (1 << i) != 0)
+macro_rules! impl_bit_iter_be {
+    ($int:ty, $bits:expr) => {
+        impl BitIteratorBE for $int {
+            fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
+                (0..$bits).rev().map(move |i| self & (1 << i) != 0)
+            }
+        }
+    };
 }
+
+impl_bit_iter_be!(u8, 8);
+impl_bit_iter_be!(u16, 16);
+impl_bit_iter_be!(u32, 32);
+impl_bit_iter_be!(u64, 64);
+impl_bit_iter_be!(u128, 128);
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
-    fn test_bit_iterator_be() {
-        let num = [0, 0b11 << 60];
+    fn u64_bit_iterator_be() {
+        let num: u64 = 0b1100;
         let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
 
         assert_eq!(bits.len(), 4);
