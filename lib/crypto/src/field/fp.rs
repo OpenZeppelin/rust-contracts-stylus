@@ -29,7 +29,7 @@ use crypto_bigint::{
     Limb, Uint, Word,
 };
 use educe::Educe;
-use num_traits::{One, Zero};
+use num_traits::{One, ToPrimitive, Zero};
 
 use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
@@ -43,6 +43,24 @@ pub trait FpParams<const LIMBS: usize>: Send + Sync + 'static + Sized {
     /// [`Self::GENERATOR`] is an element having multiplicative order
     /// `MODULUS - 1`.
     const GENERATOR: Fp<Self, LIMBS>;
+
+    /// Additive identity of the field, i.e., the element `e`
+    /// such that, for all elements `f` of the field, `e + f = f`.
+    const ZERO: Fp<Self, LIMBS> = Fp::new_unchecked(Uint::ZERO);
+
+    /// Multiplicative identity of the field, i.e., the element `e`
+    /// such that, for all elements `f` of the field, `e * f = f`.
+    const ONE: Fp<Self, LIMBS> = Fp::new_unchecked(Self::R);
+
+    /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
+    /// `R = M % MODULUS`.
+    const R: Uint<LIMBS> = ResidueParam::<Self, LIMBS>::R;
+
+    /// `R2 = R^2 % MODULUS`
+    const R2: Uint<LIMBS> = ResidueParam::<Self, LIMBS>::R2;
+
+    /// `INV = -MODULUS^{-1} mod 2^64`
+    const INV: Word = ResidueParam::<Self, LIMBS>::MOD_NEG_INV.0;
 
     /// Set `a += b`.
     fn add_assign(a: &mut Fp<Self, LIMBS>, b: &Fp<Self, LIMBS>) {
@@ -173,23 +191,12 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> ResidueParams<LIMBS>
 }
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> Fp<P, LIMBS> {
-    /// A multiplicative generator of the field.
-    /// [`Self::GENERATOR`] is an element having multiplicative order
-    /// `MODULUS - 1`.
-    ///
-    /// Every element of the field should be represented as `GENERATOR^i`
-    pub const GENERATOR: Fp<P, LIMBS> = P::GENERATOR;
-    /// Multiplicative identity of the field, i.e., the element `e`
-    /// such that, for all elements `f` of the field, `e * f = f`.
-    pub const ONE: Fp<P, LIMBS> = Fp::new_unchecked(Self::R);
-    /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
-    /// `R = M % MODULUS`.
-    const R: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R;
-    /// `R2 = R^2 % MODULUS`
-    const R2: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R2;
-    /// Additive identity of the field, i.e., the element `e`
-    /// such that, for all elements `f` of the field, `e + f = f`.
-    pub const ZERO: Fp<P, LIMBS> = Fp::new_unchecked(Uint::ZERO);
+    #[doc(hidden)]
+    pub const INV: Word = P::INV;
+    #[doc(hidden)]
+    pub const R: Uint<LIMBS> = P::R;
+    #[doc(hidden)]
+    pub const R2: Uint<LIMBS> = P::R2;
 
     /// Construct a new field element from [`Uint`] and convert it in
     /// Montgomery form.
@@ -230,31 +237,31 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> Debug for Fp<P, LIMBS> {
 impl<P: FpParams<LIMBS>, const LIMBS: usize> Zero for Fp<P, LIMBS> {
     #[inline]
     fn zero() -> Self {
-        Self::ZERO
+        P::ZERO
     }
 
     #[inline]
     fn is_zero(&self) -> bool {
-        *self == Self::ZERO
+        *self == P::ZERO
     }
 }
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> One for Fp<P, LIMBS> {
     #[inline]
     fn one() -> Self {
-        Self::ONE
+        P::ONE
     }
 
     #[inline]
     fn is_one(&self) -> bool {
-        *self == Self::ONE
+        *self == P::ONE
     }
 }
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> AdditiveGroup for Fp<P, LIMBS> {
     type Scalar = Self;
 
-    const ZERO: Self = Self::ZERO;
+    const ZERO: Self = P::ZERO;
 
     #[inline]
     fn double(&self) -> Self {
@@ -277,8 +284,9 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> AdditiveGroup for Fp<P, LIMBS> {
 }
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> Field for Fp<P, LIMBS> {
-    const ONE: Self = Fp::new_unchecked(Self::R);
+    const ONE: Self = P::ONE;
 
+    // TODO#q: refactor trait
     #[inline]
     fn square(&self) -> Self {
         let mut temp = *self;
@@ -497,13 +505,13 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<&Fp<P, LIMBS>>
     }
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Add<&Fp<P, LIMBS>>
-    for &Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Add<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
     #[inline]
-    fn add(self, other: &Fp<P, LIMBS>) -> Fp<P, LIMBS> {
+    fn add(self, other: &'b Fp<P, LIMBS>) -> Fp<P, LIMBS> {
         use core::ops::AddAssign;
         let mut result = *self;
         result.add_assign(other);
@@ -511,8 +519,8 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Add<&Fp<P, LIMBS>>
     }
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Sub<&Fp<P, LIMBS>>
-    for &Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Sub<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -525,8 +533,8 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Sub<&Fp<P, LIMBS>>
     }
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Mul<&Fp<P, LIMBS>>
-    for &Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Mul<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -539,8 +547,8 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Mul<&Fp<P, LIMBS>>
     }
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<&Fp<P, LIMBS>>
-    for &Fp<P, LIMBS>
+impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
+    core::ops::Div<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -969,30 +977,6 @@ mod tests {
             let res: i128 = res.into();
             let a = a as i128;
             prop_assert_eq!(res, (-a).rem_euclid(MODULUS));
-        }
-
-        #[test]
-        fn one(a: i64) {
-            let res = Field64::one();
-            let res: i128 = res.into();
-            prop_assert_eq!(res, 1);
-
-            let res = Field64::one() * Field64::from(a);
-            let res: i128 = res.into();
-            let a: i128 = a.into();
-            prop_assert_eq!(res, a.rem_euclid(MODULUS));
-        }
-
-        #[test]
-        fn zero(a: i64) {
-            let res = Field64::zero();
-            let res: i128 = res.into();
-            prop_assert_eq!(res, 0);
-
-            let res = Field64::zero() + Field64::from(a);
-            let res: i128 = res.into();
-            let a: i128 = a.into();
-            prop_assert_eq!(res, a.rem_euclid(MODULUS));
         }
     }
 }

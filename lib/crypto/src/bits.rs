@@ -1,5 +1,7 @@
 //! Bit manipulation utilities.
 
+use num_traits::{Num, ToPrimitive};
+
 /// Iterates over bits in big-endian order.
 pub trait BitIteratorBE {
     /// Returns an iterator over the bits of the integer, starting from the most
