@@ -10,21 +10,16 @@ version.workspace = true
 
 [dependencies]
 tiny-keccak.workspace = true
-num-traits = "0.2.14"
-zeroize = { version = "1.8.1", features = ["derive"] }
-educe = "0.6.0"
+num-traits.workspace = true
+zeroize.workspace = true
 crypto-bigint.workspace = true
+educe = "0.6.0"
 hex-literal = "0.4.1"
-
-# TODO#q: add feature flag and conversion to Fp
-#ruint = "1.12.3"
-
-# TODO#q: remove these dependencies. Used by poseidon-hash
-lazy_static = "1.5.0"
 
 [dev-dependencies]
 crypto-bigint = { workspace = true, default-features = false, features = ["rand"] }
 rand.workspace = true
+proptest.workspace = true
 
 [features]
 std = []

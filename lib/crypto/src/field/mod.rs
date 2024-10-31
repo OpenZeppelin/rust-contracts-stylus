@@ -118,7 +118,7 @@ pub trait Field:
     /// limbs.
     /// Least significant limb first.
     #[must_use]
-    fn pow<S: AsRef<[u64]>>(&self, exp: S) -> Self {
+    fn pow<S: BitIteratorBE>(&self, exp: S) -> Self {
         let mut res = Self::one();
 
         for i in exp.bit_be_trimmed_iter() {
