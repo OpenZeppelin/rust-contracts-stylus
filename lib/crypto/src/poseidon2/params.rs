@@ -4,15 +4,24 @@ use crate::field::prime::PrimeField;
 
 #[derive(Clone, Debug)]
 pub struct Poseidon2Params<F: PrimeField> {
+    /// 3
     pub(crate) t: usize, // statesize
+    /// 5
     pub(crate) d: usize, // sbox degree
+    /// 4
     pub(crate) rounds_f_beginning: usize,
+    /// 56
     pub(crate) rounds_p: usize,
     #[allow(dead_code)]
+    /// 4
     pub(crate) rounds_f_end: usize,
+    /// 64
     pub(crate) rounds: usize,
+    /// len 1
     pub(crate) mat_internal_diag_m_1: Vec<F>,
+    /// len 3
     pub(crate) _mat_internal: Vec<Vec<F>>,
+    /// len 64
     pub(crate) round_constants: Vec<Vec<F>>,
 }
 
@@ -23,18 +32,18 @@ impl<F: PrimeField> Poseidon2Params<F> {
 
     // TODO#q: these params should be generically set
     pub fn new(
-        t: usize,
-        d: usize,
-        rounds_f: usize,
-        rounds_p: usize,
+        t: usize,        // 3
+        d: usize,        // 5
+        rounds_f: usize, // 8
+        rounds_p: usize, // 56
         mat_internal_diag_m_1: &[F],
         mat_internal: &[Vec<F>],
         round_constants: &[Vec<F>],
     ) -> Self {
         assert!(d == 3 || d == 5 || d == 7 || d == 11);
         assert_eq!(rounds_f % 2, 0);
-        let r = rounds_f / 2;
-        let rounds = rounds_f + rounds_p;
+        let r = rounds_f / 2; // 4
+        let rounds = rounds_f + rounds_p; // 64
 
         Poseidon2Params {
             t,
