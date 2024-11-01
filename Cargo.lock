@@ -2595,6 +2595,7 @@ dependencies = [
  "crypto-bigint",
  "educe",
  "hex-literal",
+ "lazy_static",
  "num-traits",
  "proptest",
  "rand",
