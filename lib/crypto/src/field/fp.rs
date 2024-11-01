@@ -186,6 +186,7 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> Fp<P, LIMBS> {
     /// `R = M % MODULUS`.
     const R: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R;
     /// `R2 = R^2 % MODULUS`
+    #[allow(dead_code)]
     const R2: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R2;
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
