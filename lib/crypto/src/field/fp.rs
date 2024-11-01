@@ -29,7 +29,7 @@ use crypto_bigint::{
     Limb, Uint, Word,
 };
 use educe::Educe;
-use num_traits::{One, ToPrimitive, Zero};
+use num_traits::{One, Zero};
 
 use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
@@ -286,7 +286,6 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> AdditiveGroup for Fp<P, LIMBS> {
 impl<P: FpParams<LIMBS>, const LIMBS: usize> Field for Fp<P, LIMBS> {
     const ONE: Self = P::ONE;
 
-    // TODO#q: refactor trait
     #[inline]
     fn square(&self) -> Self {
         let mut temp = *self;
