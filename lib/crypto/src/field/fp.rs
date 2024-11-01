@@ -504,13 +504,13 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<&Fp<P, LIMBS>>
     }
 }
 
-impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Add<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Add<&Fp<P, LIMBS>>
+    for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
     #[inline]
-    fn add(self, other: &'b Fp<P, LIMBS>) -> Fp<P, LIMBS> {
+    fn add(self, other: &Fp<P, LIMBS>) -> Fp<P, LIMBS> {
         use core::ops::AddAssign;
         let mut result = *self;
         result.add_assign(other);
@@ -518,8 +518,8 @@ impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
     }
 }
 
-impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Sub<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Sub<&Fp<P, LIMBS>>
+    for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
@@ -532,8 +532,8 @@ impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
     }
 }
 
-impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Mul<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Mul<&Fp<P, LIMBS>>
+    for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
