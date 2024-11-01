@@ -546,8 +546,8 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Mul<&Fp<P, LIMBS>>
     }
 }
 
-impl<'b, P: FpParams<LIMBS>, const LIMBS: usize>
-    core::ops::Div<&'b Fp<P, LIMBS>> for &Fp<P, LIMBS>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> core::ops::Div<&Fp<P, LIMBS>>
+    for &Fp<P, LIMBS>
 {
     type Output = Fp<P, LIMBS>;
 
