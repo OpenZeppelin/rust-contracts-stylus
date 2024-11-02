@@ -2127,3 +2127,85 @@ lazy_static! {
             &RC24
         ));
 }
+
+#[allow(unused_imports)]
+#[cfg(test)]
+mod poseidon2_tests_babybear {
+    use crate::{
+        field::instance::FpBabyBear,
+        fp_from_hex,
+        poseidon2::{
+            instance::babybear::{
+                POSEIDON2_BABYBEAR_16_PARAMS, POSEIDON2_BABYBEAR_24_PARAMS,
+            },
+            *,
+        },
+    };
+
+    type Scalar = FpBabyBear;
+
+    static TESTRUNS: usize = 5;
+
+    #[test]
+    fn consistent_perm() {
+        let instances = vec![
+            Poseidon2::new(&POSEIDON2_BABYBEAR_16_PARAMS),
+            Poseidon2::new(&POSEIDON2_BABYBEAR_24_PARAMS),
+        ];
+        for instance in instances {
+            let t = instance.params.t;
+            for _ in 0..TESTRUNS {
+                let input1: Vec<Scalar> =
+                    (0..t).map(|_| random_scalar()).collect();
+
+                let mut input2: Vec<Scalar>;
+                loop {
+                    input2 = (0..t).map(|_| random_scalar()).collect();
+                    if input1 != input2 {
+                        break;
+                    }
+                }
+
+                let perm1 = instance.permutation(&input1);
+                let perm2 = instance.permutation(&input1);
+                let perm3 = instance.permutation(&input2);
+                assert_eq!(perm1, perm2);
+                assert_ne!(perm1, perm3);
+            }
+        }
+    }
+
+    #[test]
+    fn kats() {
+        let poseidon2 = Poseidon2::new(&POSEIDON2_BABYBEAR_24_PARAMS);
+        let mut input: Vec<Scalar> = vec![];
+        for i in 0..poseidon2.params.t {
+            input.push(Scalar::from(i as u64));
+        }
+        let perm = poseidon2.permutation(&input);
+        assert_eq!(perm[0], fp_from_hex!("2ed3e23d"));
+        assert_eq!(perm[1], fp_from_hex!("12921fb0"));
+        assert_eq!(perm[2], fp_from_hex!("0e659e79"));
+        assert_eq!(perm[3], fp_from_hex!("61d81dc9"));
+        assert_eq!(perm[4], fp_from_hex!("32bae33b"));
+        assert_eq!(perm[5], fp_from_hex!("62486ae3"));
+        assert_eq!(perm[6], fp_from_hex!("1e681b60"));
+        assert_eq!(perm[7], fp_from_hex!("24b91325"));
+        assert_eq!(perm[8], fp_from_hex!("2a2ef5b9"));
+        assert_eq!(perm[9], fp_from_hex!("50e8593e"));
+        assert_eq!(perm[10], fp_from_hex!("5bc818ec"));
+        assert_eq!(perm[11], fp_from_hex!("10691997"));
+        assert_eq!(perm[12], fp_from_hex!("35a14520"));
+        assert_eq!(perm[13], fp_from_hex!("2ba6a3c5"));
+        assert_eq!(perm[14], fp_from_hex!("279d47ec"));
+        assert_eq!(perm[15], fp_from_hex!("55014e81"));
+        assert_eq!(perm[16], fp_from_hex!("5953a67f"));
+        assert_eq!(perm[17], fp_from_hex!("2f403111"));
+        assert_eq!(perm[18], fp_from_hex!("6b8828ff"));
+        assert_eq!(perm[19], fp_from_hex!("1801301f"));
+        assert_eq!(perm[20], fp_from_hex!("2749207a"));
+        assert_eq!(perm[21], fp_from_hex!("3dc9cf21"));
+        assert_eq!(perm[22], fp_from_hex!("3c985ba2"));
+        assert_eq!(perm[23], fp_from_hex!("57a99864"));
+    }
+}

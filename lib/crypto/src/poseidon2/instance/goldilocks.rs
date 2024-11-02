@@ -3027,3 +3027,76 @@ lazy_static! {
             &RC20
         ));
 }
+
+#[allow(unused_imports)]
+#[cfg(test)]
+mod poseidon2_tests_goldilocks {
+    use crate::{
+        field::instance::FpGoldiLocks,
+        fp_from_hex,
+        poseidon2::{
+            instance::goldilocks::{
+                POSEIDON2_GOLDILOCKS_12_PARAMS, POSEIDON2_GOLDILOCKS_16_PARAMS,
+                POSEIDON2_GOLDILOCKS_20_PARAMS, POSEIDON2_GOLDILOCKS_8_PARAMS,
+            },
+            *,
+        },
+    };
+
+    type Scalar = FpGoldiLocks;
+
+    static TESTRUNS: usize = 5;
+
+    #[test]
+    fn consistent_perm() {
+        let instances = vec![
+            Poseidon2::new(&POSEIDON2_GOLDILOCKS_8_PARAMS),
+            Poseidon2::new(&POSEIDON2_GOLDILOCKS_12_PARAMS),
+            Poseidon2::new(&POSEIDON2_GOLDILOCKS_16_PARAMS),
+            Poseidon2::new(&POSEIDON2_GOLDILOCKS_20_PARAMS),
+        ];
+        for instance in instances {
+            let t = instance.params.t;
+            for _ in 0..TESTRUNS {
+                let input1: Vec<Scalar> =
+                    (0..t).map(|_| random_scalar()).collect();
+
+                let mut input2: Vec<Scalar>;
+                loop {
+                    input2 = (0..t).map(|_| random_scalar()).collect();
+                    if input1 != input2 {
+                        break;
+                    }
+                }
+
+                let perm1 = instance.permutation(&input1);
+                let perm2 = instance.permutation(&input1);
+                let perm3 = instance.permutation(&input2);
+                assert_eq!(perm1, perm2);
+                assert_ne!(perm1, perm3);
+            }
+        }
+    }
+
+    #[test]
+    fn kats() {
+        let poseidon2 = Poseidon2::new(&POSEIDON2_GOLDILOCKS_12_PARAMS);
+        let mut input: Vec<Scalar> = vec![];
+        for i in 0..poseidon2.params.t {
+            input.push(Scalar::from(i as u64));
+        }
+        let perm = poseidon2.permutation(&input);
+        assert_eq!(perm[0], fp_from_hex!("01eaef96bdf1c0c1"));
+        assert_eq!(perm[1], fp_from_hex!("1f0d2cc525b2540c"));
+        assert_eq!(perm[2], fp_from_hex!("6282c1dfe1e0358d"));
+        assert_eq!(perm[3], fp_from_hex!("e780d721f698e1e6"));
+        assert_eq!(perm[4], fp_from_hex!("280c0b6f753d833b"));
+        assert_eq!(perm[5], fp_from_hex!("1b942dd5023156ab"));
+        assert_eq!(perm[6], fp_from_hex!("43f0df3fcccb8398"));
+        assert_eq!(perm[7], fp_from_hex!("e8e8190585489025"));
+        assert_eq!(perm[8], fp_from_hex!("56bdbf72f77ada22"));
+        assert_eq!(perm[9], fp_from_hex!("7911c32bf9dcd705"));
+        assert_eq!(perm[10], fp_from_hex!("ec467926508fbe67"));
+        assert_eq!(perm[11], fp_from_hex!("6a50450ddf85a6ed"));
+    }
+}

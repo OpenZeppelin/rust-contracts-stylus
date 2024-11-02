@@ -291,3 +291,68 @@ lazy_static! {
     
     pub static ref POSEIDON2_BN256_PARAMS: Arc<Poseidon2Params<Scalar>> = Arc::new(Poseidon2Params::new(3, 5, 8, 56, &MAT_DIAG3_M_1, &MAT_INTERNAL3, &RC3));
 }
+
+#[allow(unused_imports)]
+#[cfg(test)]
+mod poseidon2_tests_bn256 {
+    use crate::poseidon2::*;
+    use crate::{
+        field::instance::FpBN256, fp_from_hex,
+        poseidon2::instance::bn256::POSEIDON2_BN256_PARAMS,
+    };
+
+    type Scalar = FpBN256;
+
+    static TESTRUNS: usize = 5;
+
+    #[test]
+    fn consistent_perm() {
+        let poseidon2 = Poseidon2::new(&POSEIDON2_BN256_PARAMS);
+        let t = poseidon2.params.t;
+        for _ in 0..TESTRUNS {
+            let input1: Vec<Scalar> = (0..t).map(|_| random_scalar()).collect();
+
+            let mut input2: Vec<Scalar>;
+            loop {
+                input2 = (0..t).map(|_| random_scalar()).collect();
+                if input1 != input2 {
+                    break;
+                }
+            }
+
+            let perm1 = poseidon2.permutation(&input1);
+            let perm2 = poseidon2.permutation(&input1);
+            let perm3 = poseidon2.permutation(&input2);
+            assert_eq!(perm1, perm2);
+            assert_ne!(perm1, perm3);
+        }
+    }
+
+    #[test]
+    fn kats() {
+        let poseidon2 = Poseidon2::new(&POSEIDON2_BN256_PARAMS);
+        let mut input: Vec<Scalar> = vec![];
+        for i in 0..poseidon2.params.t {
+            input.push(Scalar::from(i as u64));
+        }
+        let perm = poseidon2.permutation(&input);
+        assert_eq!(
+            perm[0],
+            fp_from_hex!(
+                "0bb61d24daca55eebcb1929a82650f328134334da98ea4f847f760054f4a3033"
+            )
+        );
+        assert_eq!(
+            perm[1],
+            fp_from_hex!(
+                "303b6f7c86d043bfcbcc80214f26a30277a15d3f74ca654992defe7ff8d03570"
+            )
+        );
+        assert_eq!(
+            perm[2],
+            fp_from_hex!(
+                "1ed25194542b12eef8617361c3ba7c52e660b145994427cc86296242cf766ec8"
+            )
+        );
+    }
+}

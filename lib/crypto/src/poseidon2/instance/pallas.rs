@@ -1322,3 +1322,79 @@ lazy_static! {
 
     pub static ref POSEIDON2_PALLAS_8_PARAMS: Arc<Poseidon2Params<Scalar>> = Arc::new(Poseidon2Params::new(8, 5, 8, 57, &MAT_DIAG8_M_1, &MAT_INTERNAL8, &RC8));
 }
+
+#[allow(unused_imports)]
+#[cfg(test)]
+mod poseidon2_tests_pallas {
+    use crate::poseidon2::*;
+    use crate::{
+        field::instance::FpPallas,
+        fp_from_hex,
+        poseidon2::instance::pallas::{
+            POSEIDON2_PALLAS_3_PARAMS, POSEIDON2_PALLAS_4_PARAMS,
+            POSEIDON2_PALLAS_8_PARAMS,
+        },
+    };
+
+    type Scalar = FpPallas;
+
+    static TESTRUNS: usize = 5;
+
+    #[test]
+    fn consistent_perm() {
+        let instances = vec![
+            Poseidon2::new(&POSEIDON2_PALLAS_3_PARAMS),
+            Poseidon2::new(&POSEIDON2_PALLAS_4_PARAMS),
+            Poseidon2::new(&POSEIDON2_PALLAS_8_PARAMS),
+        ];
+        for instance in instances {
+            let t = instance.params.t;
+            for _ in 0..TESTRUNS {
+                let input1: Vec<Scalar> =
+                    (0..t).map(|_| random_scalar()).collect();
+
+                let mut input2: Vec<Scalar>;
+                loop {
+                    input2 = (0..t).map(|_| random_scalar()).collect();
+                    if input1 != input2 {
+                        break;
+                    }
+                }
+
+                let perm1 = instance.permutation(&input1);
+                let perm2 = instance.permutation(&input1);
+                let perm3 = instance.permutation(&input2);
+                assert_eq!(perm1, perm2);
+                assert_ne!(perm1, perm3);
+            }
+        }
+    }
+
+    #[test]
+    fn kats() {
+        let poseidon2 = Poseidon2::new(&POSEIDON2_PALLAS_3_PARAMS);
+        let mut input: Vec<Scalar> = vec![];
+        for i in 0..poseidon2.params.t {
+            input.push(Scalar::from(i as u64));
+        }
+        let perm = poseidon2.permutation(&input);
+        assert_eq!(
+            perm[0],
+            fp_from_hex!(
+                "1a9b54c7512a914dd778282c44b3513fea7251420b9d95750baae059b2268d7a"
+            )
+        );
+        assert_eq!(
+            perm[1],
+            fp_from_hex!(
+                "1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc"
+            )
+        );
+        assert_eq!(
+            perm[2],
+            fp_from_hex!(
+                "079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401"
+            )
+        );
+    }
+}
