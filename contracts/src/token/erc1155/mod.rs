@@ -389,7 +389,7 @@ impl IErc1155 for Erc1155 {
         accounts: Vec<Address>,
         ids: Vec<U256>,
     ) -> Result<Vec<U256>, Self::Error> {
-        Self::require_equal_arrays(&ids, &accounts)?;
+        Self::require_equal_arrays_length(&ids, &accounts)?;
 
         let balances: Vec<U256> = accounts
             .iter()
@@ -482,13 +482,13 @@ impl Erc1155 {
         ids: Vec<U256>,
         values: Vec<U256>,
     ) -> Result<(), Error> {
-        Self::require_equal_arrays(&ids, &values)?;
+        Self::require_equal_arrays_length(&ids, &values)?;
 
         let operator = msg::sender();
 
-        ids.iter().zip(values.iter()).try_for_each(|(&token_id, &value)| {
-            self.do_update(from, to, token_id, value)
-        })?;
+        for (&token_id, &value) in ids.iter().zip(values.iter()) {
+            self.do_update(from, to, token_id, value)?;
+        }
 
         if ids.len() == 1 {
             let id = ids[0];
@@ -1032,10 +1032,8 @@ impl Erc1155 {
         }
 
         if !to.is_zero() {
-            let new_balance = self
-                ._balances
-                .setter(token_id)
-                .setter(to)
+            let balance = self._balances.getter(token_id).get(to);
+            let new_balance = balance
                 .checked_add(value)
                 .expect("should not exceed `U256::MAX` for `_balances`");
             self._balances.setter(token_id).setter(to).set(new_balance);
@@ -1055,7 +1053,7 @@ impl Erc1155 {
     ///
     /// If length of `ids` is not equal to length of `values`, then the error
     /// [`Error::InvalidArrayLength`] is returned.
-    fn require_equal_arrays<T, U>(
+    fn require_equal_arrays_length<T, U>(
         ids: &[T],
         values: &[U],
     ) -> Result<(), Error> {
