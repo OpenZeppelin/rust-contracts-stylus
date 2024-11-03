@@ -15,21 +15,6 @@ lazy_static! {
         fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000002"),
     ];
 
-    pub static ref MAT_INTERNAL3: Vec<Vec<Scalar>> = vec![
-        vec![fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000002"),
-        fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
-        fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
-        ],
-        vec![fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
-        fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000002"),
-        fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
-        ],
-        vec![fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
-        fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
-        fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000003"),
-        ],
-    ];
-
     pub static ref RC3: Vec<Vec<Scalar>> = vec![
     vec![fp_from_hex!("360d7470611e473d353f628f76d110f34e71162f31003b7057538c2596426303"),
     fp_from_hex!("2bab94d7ae222d135dc3c6c5febfaa314908ac2f12ebe06fbdb74213bf63188b"),
@@ -290,8 +275,32 @@ lazy_static! {
     ];
 
     pub static ref POSEIDON2_VESTA_PARAMS: Arc<Poseidon2Params<Scalar>> =
-        Arc::new(Poseidon2Params::new(3, 5, 8, 56, &MAT_DIAG3_M_1, &MAT_INTERNAL3, &RC3));
+        Arc::new(Poseidon2Params::new(3, 5, 8, 56, &MAT_DIAG3_M_1, &RC3));
 }
+
+pub struct VestaParams;
+
+// #[rustfmt::skip]
+// impl PoseidonParams<Scalar> for VestaParams {
+//     const T: usize = 0;
+//     const D: usize = 0;
+//     const ROUNDS_F_BEGINNING: usize = 0;
+//     const ROUNDS_P: usize = 0;
+//     const ROUNDS_F_END: usize = 0;
+//     const ROUNDS: usize = 0;
+//     const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+//         fp_from_hex!(
+//             
+// "0000000000000000000000000000000000000000000000000000000000000001"         ),
+//         fp_from_hex!(
+//             
+// "0000000000000000000000000000000000000000000000000000000000000001"         ),
+//         fp_from_hex!(
+//             
+// "0000000000000000000000000000000000000000000000000000000000000002"         ),
+//     ];
+//     const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[];
+// }
 
 #[allow(unused_imports)]
 #[cfg(test)]

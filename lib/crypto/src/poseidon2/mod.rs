@@ -63,32 +63,7 @@ impl<F: PrimeField> Poseidon2<F> {
     }
 
     fn sbox_p(&self, input: &F) -> F {
-        let mut input2 = *input;
-        input2.square_in_place();
-
-        match self.params.d {
-            3 => {
-                let mut out = input2;
-                out.mul_assign(input);
-                out
-            }
-            5 => {
-                let mut out = input2;
-                out.square_in_place();
-                out.mul_assign(input);
-                out
-            }
-            7 => {
-                let mut out = input2;
-                out.square_in_place();
-                out.mul_assign(&input2);
-                out.mul_assign(input);
-                out
-            }
-            _ => {
-                panic!()
-            }
-        }
+        input.pow(self.params.d)
     }
 
     fn matmul_m4(&self, input: &mut [F]) {
@@ -125,6 +100,7 @@ impl<F: PrimeField> Poseidon2<F> {
         }
     }
 
+    /// Apply the external MDS matrix M_E to the state
     fn matmul_external(&self, input: &mut [F]) {
         let t = self.params.t;
         match t {
@@ -173,6 +149,7 @@ impl<F: PrimeField> Poseidon2<F> {
         }
     }
 
+    /// Apply the internal MDS matrix M_I to the state
     fn matmul_internal(&self, input: &mut [F], mat_internal_diag_m_1: &[F]) {
         let t = self.params.t;
 
@@ -219,6 +196,7 @@ impl<F: PrimeField> Poseidon2<F> {
         }
     }
 
+    /// Add a round constant to the state.
     fn add_rc(&self, input: &[F], rc: &[F]) -> Vec<F> {
         input
             .iter()

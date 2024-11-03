@@ -2,6 +2,17 @@ use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::field::prime::PrimeField;
 
+// pub trait PoseidonParams<F: PrimeField> {
+//     const T: usize; // statesize
+//     const D: usize; // sbox degree
+//     const ROUNDS_F_BEGINNING: usize;
+//     const ROUNDS_P: usize;
+//     const ROUNDS_F_END: usize;
+//     const ROUNDS: usize;
+//     const MAT_INTERNAL_DIAG_M_1: &'static [F];
+//     const ROUND_CONSTANTS: &'static [&'static [F]];
+// }
+
 #[derive(Clone, Debug)]
 pub struct Poseidon2Params<F: PrimeField> {
     /// 3
@@ -19,8 +30,6 @@ pub struct Poseidon2Params<F: PrimeField> {
     pub(crate) rounds: usize,
     /// len 1
     pub(crate) mat_internal_diag_m_1: Vec<F>,
-    /// len 3
-    pub(crate) _mat_internal: Vec<Vec<F>>,
     /// len 64
     pub(crate) round_constants: Vec<Vec<F>>,
 }
@@ -37,7 +46,6 @@ impl<F: PrimeField> Poseidon2Params<F> {
         rounds_f: usize, // 8
         rounds_p: usize, // 56
         mat_internal_diag_m_1: &[F],
-        mat_internal: &[Vec<F>],
         round_constants: &[Vec<F>],
     ) -> Self {
         assert!(d == 3 || d == 5 || d == 7 || d == 11);
@@ -53,7 +61,6 @@ impl<F: PrimeField> Poseidon2Params<F> {
             rounds_f_end: r,
             rounds,
             mat_internal_diag_m_1: mat_internal_diag_m_1.to_owned(),
-            _mat_internal: mat_internal.to_owned(),
             round_constants: round_constants.to_owned(),
         }
     }
