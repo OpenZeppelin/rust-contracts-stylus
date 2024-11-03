@@ -864,7 +864,6 @@ macro_rules! fp_from_hex {
 
 #[cfg(test)]
 mod tests {
-    use num_traits::Euclid;
     use proptest::prelude::*;
 
     use super::*;
@@ -873,7 +872,6 @@ mod tests {
         field::{
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
-            prime::PrimeField,
             Field,
         },
         fp_from_num, from_num,

@@ -31,6 +31,7 @@ impl_bit_iter_be!(u128, 128);
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec::Vec;
 
     use super::*;
 
