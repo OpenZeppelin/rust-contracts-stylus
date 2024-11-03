@@ -14,20 +14,21 @@ pub trait BitIteratorBE {
 }
 
 macro_rules! impl_bit_iter_be {
-    ($int:ty, $bits:expr) => {
+    ($int:ty) => {
         impl BitIteratorBE for $int {
             fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
-                (0..$bits).rev().map(move |i| self & (1 << i) != 0)
+                (0..<$int>::BITS).rev().map(move |i| self & (1 << i) != 0)
             }
         }
     };
 }
 
-impl_bit_iter_be!(u8, 8);
-impl_bit_iter_be!(u16, 16);
-impl_bit_iter_be!(u32, 32);
-impl_bit_iter_be!(u64, 64);
-impl_bit_iter_be!(u128, 128);
+impl_bit_iter_be!(u8);
+impl_bit_iter_be!(u16);
+impl_bit_iter_be!(u32);
+impl_bit_iter_be!(u64);
+impl_bit_iter_be!(u128);
+impl_bit_iter_be!(usize);
 
 #[cfg(test)]
 mod tests {
