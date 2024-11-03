@@ -148,7 +148,6 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     fn matmul_internal(&self, input: &mut [F], mat_internal_diag_m_1: &[F]) {
         let t = P::T;
 
-        // TODO#q:`t` param should be generic
         match t {
             2 => {
                 // [2, 1]

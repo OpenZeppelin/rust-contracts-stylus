@@ -396,6 +396,4 @@ mod poseidon2_tests_vesta {
         assert_eq!(perm[1], fp_from_hex!("2c76327e0b7653873263158cf8545c282364b183880fcdea93ca8526d518c66f"));
         assert_eq!(perm[2], fp_from_hex!("262316c0ce5244838c75873299b59d763ae0849d2dd31bdc95caf7db1c2901bf"));
     }
-
-    // TODO#q: test against `zkhash` implementation should be added
 }

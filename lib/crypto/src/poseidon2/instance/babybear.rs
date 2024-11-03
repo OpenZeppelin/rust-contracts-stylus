@@ -1,414 +1,17 @@
-use alloc::{sync::Arc, vec, vec::Vec};
-
-use lazy_static::lazy_static;
-
 use crate::{
-    field::instance::FpBabyBear, fp_from_hex,
-    poseidon2::params::Poseidon2Params,
+    field::instance::FpBabyBear, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
 type Scalar = FpBabyBear;
+struct BabyBear24Params;
 
-lazy_static! {
-    pub static ref MAT_DIAG16_M_1: Vec<Scalar> = vec![
-        fp_from_hex!("0a632d94"),
-        fp_from_hex!("6db657b7"),
-        fp_from_hex!("56fbdc9e"),
-        fp_from_hex!("052b3d8a"),
-        fp_from_hex!("33745201"),
-        fp_from_hex!("5c03108c"),
-        fp_from_hex!("0beba37b"),
-        fp_from_hex!("258c2e8b"),
-        fp_from_hex!("12029f39"),
-        fp_from_hex!("694909ce"),
-        fp_from_hex!("6d231724"),
-        fp_from_hex!("21c3b222"),
-        fp_from_hex!("3c0904a5"),
-        fp_from_hex!("01d6acda"),
-        fp_from_hex!("27705c83"),
-        fp_from_hex!("5231c802"),
-    ];
-    pub static ref RC16: Vec<Vec<Scalar>> = vec![
-        vec![
-            fp_from_hex!("69cbb6af"),
-            fp_from_hex!("46ad93f9"),
-            fp_from_hex!("60a00f4e"),
-            fp_from_hex!("6b1297cd"),
-            fp_from_hex!("23189afe"),
-            fp_from_hex!("732e7bef"),
-            fp_from_hex!("72c246de"),
-            fp_from_hex!("2c941900"),
-            fp_from_hex!("0557eede"),
-            fp_from_hex!("1580496f"),
-            fp_from_hex!("3a3ea77b"),
-            fp_from_hex!("54f3f271"),
-            fp_from_hex!("0f49b029"),
-            fp_from_hex!("47872fe1"),
-            fp_from_hex!("221e2e36"),
-            fp_from_hex!("1ab7202e"),
-        ],
-        vec![
-            fp_from_hex!("487779a6"),
-            fp_from_hex!("3851c9d8"),
-            fp_from_hex!("38dc17c0"),
-            fp_from_hex!("209f8849"),
-            fp_from_hex!("268dcee8"),
-            fp_from_hex!("350c48da"),
-            fp_from_hex!("5b9ad32e"),
-            fp_from_hex!("0523272b"),
-            fp_from_hex!("3f89055b"),
-            fp_from_hex!("01e894b2"),
-            fp_from_hex!("13ddedde"),
-            fp_from_hex!("1b2ef334"),
-            fp_from_hex!("7507d8b4"),
-            fp_from_hex!("6ceeb94e"),
-            fp_from_hex!("52eb6ba2"),
-            fp_from_hex!("50642905"),
-        ],
-        vec![
-            fp_from_hex!("05453f3f"),
-            fp_from_hex!("06349efc"),
-            fp_from_hex!("6922787c"),
-            fp_from_hex!("04bfff9c"),
-            fp_from_hex!("768c714a"),
-            fp_from_hex!("3e9ff21a"),
-            fp_from_hex!("15737c9c"),
-            fp_from_hex!("2229c807"),
-            fp_from_hex!("0d47f88c"),
-            fp_from_hex!("097e0ecc"),
-            fp_from_hex!("27eadba0"),
-            fp_from_hex!("2d7d29e4"),
-            fp_from_hex!("3502aaa0"),
-            fp_from_hex!("0f475fd7"),
-            fp_from_hex!("29fbda49"),
-            fp_from_hex!("018afffd"),
-        ],
-        vec![
-            fp_from_hex!("0315b618"),
-            fp_from_hex!("6d4497d1"),
-            fp_from_hex!("1b171d9e"),
-            fp_from_hex!("52861abd"),
-            fp_from_hex!("2e5d0501"),
-            fp_from_hex!("3ec8646c"),
-            fp_from_hex!("6e5f250a"),
-            fp_from_hex!("148ae8e6"),
-            fp_from_hex!("17f5fa4a"),
-            fp_from_hex!("3e66d284"),
-            fp_from_hex!("0051aa3b"),
-            fp_from_hex!("483f7913"),
-            fp_from_hex!("2cfe5f15"),
-            fp_from_hex!("023427ca"),
-            fp_from_hex!("2cc78315"),
-            fp_from_hex!("1e36ea47"),
-        ],
-        vec![
-            fp_from_hex!("5a8053c0"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("693be639"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("3858867d"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("19334f6b"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("128f0fd8"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("4e2b1ccb"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("61210ce0"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("3c318939"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("0b5b2f22"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("2edb11d5"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("213effdf"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("0cac4606"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("241af16d"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-            fp_from_hex!("00000000"),
-        ],
-        vec![
-            fp_from_hex!("7290a80d"),
-            fp_from_hex!("6f7e5329"),
-            fp_from_hex!("598ec8a8"),
-            fp_from_hex!("76a859a0"),
-            fp_from_hex!("6559e868"),
-            fp_from_hex!("657b83af"),
-            fp_from_hex!("13271d3f"),
-            fp_from_hex!("1f876063"),
-            fp_from_hex!("0aeeae37"),
-            fp_from_hex!("706e9ca6"),
-            fp_from_hex!("46400cee"),
-            fp_from_hex!("72a05c26"),
-            fp_from_hex!("2c589c9e"),
-            fp_from_hex!("20bd37a7"),
-            fp_from_hex!("6a2d3d10"),
-            fp_from_hex!("20523767"),
-        ],
-        vec![
-            fp_from_hex!("5b8fe9c4"),
-            fp_from_hex!("2aa501d6"),
-            fp_from_hex!("1e01ac3e"),
-            fp_from_hex!("1448bc54"),
-            fp_from_hex!("5ce5ad1c"),
-            fp_from_hex!("4918a14d"),
-            fp_from_hex!("2c46a83f"),
-            fp_from_hex!("4fcf6876"),
-            fp_from_hex!("61d8d5c8"),
-            fp_from_hex!("6ddf4ff9"),
-            fp_from_hex!("11fda4d3"),
-            fp_from_hex!("02933a8f"),
-            fp_from_hex!("170eaf81"),
-            fp_from_hex!("5a9c314f"),
-            fp_from_hex!("49a12590"),
-            fp_from_hex!("35ec52a1"),
-        ],
-        vec![
-            fp_from_hex!("58eb1611"),
-            fp_from_hex!("5e481e65"),
-            fp_from_hex!("367125c9"),
-            fp_from_hex!("0eba33ba"),
-            fp_from_hex!("1fc28ded"),
-            fp_from_hex!("066399ad"),
-            fp_from_hex!("0cbec0ea"),
-            fp_from_hex!("75fd1af0"),
-            fp_from_hex!("50f5bf4e"),
-            fp_from_hex!("643d5f41"),
-            fp_from_hex!("6f4fe718"),
-            fp_from_hex!("5b3cbbde"),
-            fp_from_hex!("1e3afb3e"),
-            fp_from_hex!("296fb027"),
-            fp_from_hex!("45e1547b"),
-            fp_from_hex!("4a8db2ab"),
-        ],
-        vec![
-            fp_from_hex!("59986d19"),
-            fp_from_hex!("30bcdfa3"),
-            fp_from_hex!("1db63932"),
-            fp_from_hex!("1d7c2824"),
-            fp_from_hex!("53b33681"),
-            fp_from_hex!("0673b747"),
-            fp_from_hex!("038a98a3"),
-            fp_from_hex!("2c5bce60"),
-            fp_from_hex!("351979cd"),
-            fp_from_hex!("5008fb73"),
-            fp_from_hex!("547bca78"),
-            fp_from_hex!("711af481"),
-            fp_from_hex!("3f93bf64"),
-            fp_from_hex!("644d987b"),
-            fp_from_hex!("3c8bcd87"),
-            fp_from_hex!("608758b8"),
-        ],
-    ];
-    pub static ref MAT_DIAG24_M_1: Vec<Scalar> = vec![
+#[rustfmt::skip]
+impl PoseidonParams<Scalar> for BabyBear24Params {
+    const T: usize = 24;
+    const D: u8 = 7;
+    const ROUNDS_F: usize = 8;
+    const ROUNDS_P: usize = 21;
+    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
         fp_from_hex!("409133f0"),
         fp_from_hex!("1667a8a1"),
         fp_from_hex!("06a6c7b6"),
@@ -434,8 +37,8 @@ lazy_static! {
         fp_from_hex!("00d0ca4c"),
         fp_from_hex!("36c0e388"),
     ];
-    pub static ref RC24: Vec<Vec<Scalar>> = vec![
-        vec![
+    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+        &[
             fp_from_hex!("0fa20c37"),
             fp_from_hex!("0795bb97"),
             fp_from_hex!("12c60b9c"),
@@ -461,7 +64,7 @@ lazy_static! {
             fp_from_hex!("54bac179"),
             fp_from_hex!("31947706"),
         ],
-        vec![
+        &[
             fp_from_hex!("29799d3b"),
             fp_from_hex!("6e01ae90"),
             fp_from_hex!("203a7a64"),
@@ -487,7 +90,7 @@ lazy_static! {
             fp_from_hex!("0e620bb8"),
             fp_from_hex!("3af5a33b"),
         ],
-        vec![
+        &[
             fp_from_hex!("4465cc0e"),
             fp_from_hex!("019df68f"),
             fp_from_hex!("4af8d068"),
@@ -513,7 +116,7 @@ lazy_static! {
             fp_from_hex!("1aad2994"),
             fp_from_hex!("3368a483"),
         ],
-        vec![
+        &[
             fp_from_hex!("07a86f3a"),
             fp_from_hex!("5ea43ff1"),
             fp_from_hex!("2443780e"),
@@ -539,7 +142,7 @@ lazy_static! {
             fp_from_hex!("6a36dbbe"),
             fp_from_hex!("4cff27a5"),
         ],
-        vec![
+        &[
             fp_from_hex!("1da78ec2"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -565,7 +168,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("730b0924"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -591,7 +194,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("3eb56cf3"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -617,7 +220,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("5bd93073"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -643,7 +246,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("37204c97"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -669,7 +272,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("51642d89"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -695,7 +298,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("66e943e8"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -721,7 +324,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("1a3e72de"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -747,7 +350,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("70beb1e9"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -773,7 +376,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("30ff3b3f"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -799,7 +402,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("4240d1c4"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -825,7 +428,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("12647b8d"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -851,7 +454,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("65d86965"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -877,7 +480,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("49ef4d7c"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -903,7 +506,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("47785697"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -929,7 +532,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("46b3969f"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -955,7 +558,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("5c7b7a0e"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -981,7 +584,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("7078fc60"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -1007,7 +610,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("4f22d482"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -1033,7 +636,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("482a9aee"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -1059,7 +662,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("6beb839d"),
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
@@ -1085,7 +688,7 @@ lazy_static! {
             fp_from_hex!("00000000"),
             fp_from_hex!("00000000"),
         ],
-        vec![
+        &[
             fp_from_hex!("032959ad"),
             fp_from_hex!("2b18af6a"),
             fp_from_hex!("55d3dc8c"),
@@ -1111,7 +714,7 @@ lazy_static! {
             fp_from_hex!("6ad69f52"),
             fp_from_hex!("3e0c0e0d"),
         ],
-        vec![
+        &[
             fp_from_hex!("48126114"),
             fp_from_hex!("2a9d62cc"),
             fp_from_hex!("17441f23"),
@@ -1137,7 +740,7 @@ lazy_static! {
             fp_from_hex!("2d0af1c1"),
             fp_from_hex!("08f583cc"),
         ],
-        vec![
+        &[
             fp_from_hex!("5d6ff60f"),
             fp_from_hex!("6324c1e5"),
             fp_from_hex!("74412fb7"),
@@ -1163,7 +766,7 @@ lazy_static! {
             fp_from_hex!("59dce8db"),
             fp_from_hex!("6cee892a"),
         ],
-        vec![
+        &[
             fp_from_hex!("47f07350"),
             fp_from_hex!("7106ce93"),
             fp_from_hex!("3bd4a7a9"),
@@ -1190,10 +793,6 @@ lazy_static! {
             fp_from_hex!("5244e9d4"),
         ],
     ];
-    pub static ref POSEIDON2_BABYBEAR_16_PARAMS: Arc<Poseidon2Params<Scalar>> =
-        Arc::new(Poseidon2Params::new(16, 7, 8, 13, &MAT_DIAG16_M_1, &RC16));
-    pub static ref POSEIDON2_BABYBEAR_24_PARAMS: Arc<Poseidon2Params<Scalar>> =
-        Arc::new(Poseidon2Params::new(24, 7, 8, 21, &MAT_DIAG24_M_1, &RC24));
 }
 
 #[allow(unused_imports)]
@@ -1202,12 +801,7 @@ mod poseidon2_tests_babybear {
     use crate::{
         field::instance::FpBabyBear,
         fp_from_hex,
-        poseidon2::{
-            instance::babybear::{
-                POSEIDON2_BABYBEAR_16_PARAMS, POSEIDON2_BABYBEAR_24_PARAMS,
-            },
-            *,
-        },
+        poseidon2::{instance::babybear::BabyBear24Params, *},
     };
 
     type Scalar = FpBabyBear;
@@ -1216,38 +810,32 @@ mod poseidon2_tests_babybear {
 
     #[test]
     fn consistent_perm() {
-        let instances = vec![
-            Poseidon2::new(&POSEIDON2_BABYBEAR_16_PARAMS),
-            Poseidon2::new(&POSEIDON2_BABYBEAR_24_PARAMS),
-        ];
-        for instance in instances {
-            let t = instance.params.t;
-            for _ in 0..TESTRUNS {
-                let input1: Vec<Scalar> =
-                    (0..t).map(|_| random_scalar()).collect();
+        let instance = Poseidon2::<BabyBear24Params, _>::new();
+        let t = BabyBear24Params::T;
+        for _ in 0..TESTRUNS {
+            let input1: Vec<Scalar> = (0..t).map(|_| random_scalar()).collect();
 
-                let mut input2: Vec<Scalar>;
-                loop {
-                    input2 = (0..t).map(|_| random_scalar()).collect();
-                    if input1 != input2 {
-                        break;
-                    }
+            let mut input2: Vec<Scalar>;
+            loop {
+                input2 = (0..t).map(|_| random_scalar()).collect();
+                if input1 != input2 {
+                    break;
                 }
-
-                let perm1 = instance.permutation(&input1);
-                let perm2 = instance.permutation(&input1);
-                let perm3 = instance.permutation(&input2);
-                assert_eq!(perm1, perm2);
-                assert_ne!(perm1, perm3);
             }
+
+            let perm1 = instance.permutation(&input1);
+            let perm2 = instance.permutation(&input1);
+            let perm3 = instance.permutation(&input2);
+            assert_eq!(perm1, perm2);
+            assert_ne!(perm1, perm3);
         }
     }
 
     #[test]
     fn kats() {
-        let poseidon2 = Poseidon2::new(&POSEIDON2_BABYBEAR_24_PARAMS);
+        let poseidon2 = Poseidon2::<BabyBear24Params, _>::new();
         let mut input: Vec<Scalar> = vec![];
-        for i in 0..poseidon2.params.t {
+        for i in 0..BabyBear24Params::T {
             input.push(Scalar::from(i as u64));
         }
         let perm = poseidon2.permutation(&input);
