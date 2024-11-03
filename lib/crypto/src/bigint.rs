@@ -12,6 +12,7 @@ use core::{
 #[allow(clippy::module_name_repetitions)]
 pub use crypto_bigint;
 use crypto_bigint::{Integer, Limb, Uint, Word, Zero};
+use num_traits::ConstZero;
 use zeroize::Zeroize;
 
 use crate::bits::BitIteratorBE;
@@ -192,6 +193,45 @@ pub const fn from_str_radix<const LIMBS: usize>(
     }
 }
 
+/// Parse a number from a hex string.
+///
+/// If the string number is shorter, returns a [`Uint`] with leading zeroes.
+#[must_use]
+pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
+    // The lowest order byte is at the end of the string.
+    // Begin parsing from the last index of the string.
+    let bytes = s.as_bytes();
+    let mut index = bytes.len() - 1;
+
+    // The lowest order limb is at the beginning of the `num` array.
+    // Begin indexing from `0`.
+    let mut num = [Word::ZERO; LIMBS];
+    let mut num_index = 0;
+
+    let digit_radix = 16;
+    let digit_size = 4; // 2^4 = 16
+    let digits_in_limb = bytes.len() / LIMBS;
+
+    loop {
+        let ch = parse_utf8_byte(bytes[index]);
+        let digit = match ch.to_digit(digit_radix) {
+            None => {
+                panic!("invalid digit");
+            }
+            Some(digit) => digit as Word,
+        };
+
+        let digit_mask = digit << ((num_index % digits_in_limb) * digit_size);
+        num[num_index / digits_in_limb] |= digit_mask;
+
+        if index == 0 {
+            return Uint::from_words(num);
+        }
+        index -= 1;
+        num_index += 1;
+    }
+}
+
 /// Multiply two numbers and panic on overflow.
 #[must_use]
 pub const fn mul<const LIMBS: usize>(
@@ -234,7 +274,7 @@ macro_rules! from_num {
 #[macro_export]
 macro_rules! from_hex {
     ($num:literal) => {
-        $crate::bigint::crypto_bigint::Uint::from_be_hex($num)
+        $crate::bigint::from_str_hex($num)
     };
 }
 
@@ -248,7 +288,7 @@ mod test {
     fn convert_from_str_radix() {
         let uint_from_base10 = from_str_radix::<4>(
             "28948022309329048855892746252171976963363056481941647379679742748393362948097",
-            10
+            10,
         );
         #[allow(clippy::unreadable_literal)]
         let expected = Uint::<4>::from_words([
