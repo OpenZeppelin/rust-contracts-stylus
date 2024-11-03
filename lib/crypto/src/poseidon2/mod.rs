@@ -1,30 +1,28 @@
 pub mod instance;
 pub mod params;
 
-use alloc::{borrow::ToOwned, sync::Arc, vec::Vec};
+use alloc::{borrow::ToOwned, vec::Vec};
 
-use params::Poseidon2Params;
-
-use crate::field::prime::PrimeField;
+use crate::{field::prime::PrimeField, poseidon2::params::PoseidonParams};
 
 #[derive(Clone, Debug)]
-pub struct Poseidon2<F: PrimeField> {
-    pub(crate) params: Arc<Poseidon2Params<F>>,
+pub struct Poseidon2<P: PoseidonParams<F>, F: PrimeField> {
+    phantom: core::marker::PhantomData<(P, F)>,
 }
 
-impl<F: PrimeField> Poseidon2<F> {
+impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     #[must_use]
-    pub fn new(params: &Arc<Poseidon2Params<F>>) -> Self {
-        Poseidon2 { params: Arc::clone(params) }
+    pub fn new() -> Self {
+        Self { phantom: core::marker::PhantomData }
     }
 
     #[must_use]
     pub fn get_t(&self) -> usize {
-        self.params.t
+        P::T
     }
 
     pub fn permutation(&self, input: &[F]) -> Vec<F> {
-        let t = self.params.t;
+        let t = P::T;
         assert_eq!(input.len(), t);
 
         let mut current_state = input.to_owned();
@@ -32,42 +30,39 @@ impl<F: PrimeField> Poseidon2<F> {
         // Linear layer at beginning
         self.matmul_external(&mut current_state);
 
-        for r in 0..self.params.rounds_f_beginning {
-            current_state =
-                self.add_rc(&current_state, &self.params.round_constants[r]);
+        for r in 0..P::ROUNDS_F_BEGINNING {
+            current_state = self.add_rc(&current_state, &P::ROUND_CONSTANTS[r]);
             current_state = self.sbox(&current_state);
             self.matmul_external(&mut current_state);
         }
 
-        let p_end = self.params.rounds_f_beginning + self.params.rounds_p;
-        for r in self.params.rounds_f_beginning..p_end {
-            current_state[0].add_assign(&self.params.round_constants[r][0]);
+        let p_end = P::ROUNDS_F_BEGINNING + P::ROUNDS_P;
+        for r in P::ROUNDS_F_BEGINNING..p_end {
+            current_state[0].add_assign(P::ROUND_CONSTANTS[r][0]);
             current_state[0] = self.sbox_p(&current_state[0]);
-            self.matmul_internal(
-                &mut current_state,
-                &self.params.mat_internal_diag_m_1,
-            );
+            self.matmul_internal(&mut current_state, P::MAT_INTERNAL_DIAG_M_1);
         }
 
-        for r in p_end..self.params.rounds {
-            current_state =
-                self.add_rc(&current_state, &self.params.round_constants[r]);
+        for r in p_end..P::ROUNDS {
+            current_state = self.add_rc(&current_state, P::ROUND_CONSTANTS[r]);
             current_state = self.sbox(&current_state);
             self.matmul_external(&mut current_state);
         }
         current_state
     }
 
+    // TODO#q: rename to external sbox
     fn sbox(&self, input: &[F]) -> Vec<F> {
         input.iter().map(|el| self.sbox_p(el)).collect()
     }
 
+    // TODO#q: rename to internal sbox
     fn sbox_p(&self, input: &F) -> F {
-        input.pow(self.params.d)
+        input.pow(P::D)
     }
 
     fn matmul_m4(&self, input: &mut [F]) {
-        let t = self.params.t;
+        let t = P::T;
         let t4 = t / 4;
         for i in 0..t4 {
             let start_index = i * 4;
@@ -102,7 +97,7 @@ impl<F: PrimeField> Poseidon2<F> {
 
     /// Apply the external MDS matrix M_E to the state
     fn matmul_external(&self, input: &mut [F]) {
-        let t = self.params.t;
+        let t = P::T;
         match t {
             2 => {
                 // Matrix circ(2, 1)
@@ -151,7 +146,7 @@ impl<F: PrimeField> Poseidon2<F> {
 
     /// Apply the internal MDS matrix M_I to the state
     fn matmul_internal(&self, input: &mut [F], mat_internal_diag_m_1: &[F]) {
-        let t = self.params.t;
+        let t = P::T;
 
         // TODO#q:`t` param should be generic
         match t {
@@ -214,7 +209,9 @@ pub trait MerkleTreeHash<F: PrimeField> {
     fn compress(&self, input: &[&F]) -> F;
 }
 
-impl<F: PrimeField> MerkleTreeHash<F> for Poseidon2<F> {
+impl<P: PoseidonParams<F>, F: PrimeField> MerkleTreeHash<F>
+    for Poseidon2<P, F>
+{
     fn compress(&self, input: &[&F]) -> F {
         self.permutation(&[input[0].to_owned(), input[1].to_owned(), F::zero()])
             [0]

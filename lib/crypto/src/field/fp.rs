@@ -858,7 +858,9 @@ macro_rules! fp_from_num {
 #[macro_export]
 macro_rules! fp_from_hex {
     ($num:literal) => {{
-        $crate::field::fp::Fp::new($crate::bigint::from_str_radix($num, 16))
+        $crate::field::fp::Fp::new(
+            $crate::bigint::crypto_bigint::Uint::from_be_hex($num),
+        )
     }};
 }
 

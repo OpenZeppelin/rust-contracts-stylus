@@ -234,7 +234,7 @@ macro_rules! from_num {
 #[macro_export]
 macro_rules! from_hex {
     ($num:literal) => {
-        $crate::bigint::from_str_radix($num, 16)
+        $crate::bigint::crypto_bigint::Uint::from_be_hex($num)
     };
 }
 
