@@ -3,7 +3,6 @@ name: publish openzeppelin-stylus
 permissions:
   contents: read
 on:
-  on:
   push:
     tags:
       - v*

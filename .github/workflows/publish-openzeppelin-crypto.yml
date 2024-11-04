@@ -3,7 +3,6 @@ name: publish openzeppelin-crypto
 permissions:
   contents: read
 on:
-  on:
   push:
     tags:
       - v*
