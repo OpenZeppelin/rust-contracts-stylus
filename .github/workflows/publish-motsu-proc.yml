@@ -27,4 +27,4 @@ jobs:
         run: cargo publish -p motsu-proc --dry-run
 
       - name: Publish motsu-proc
-        run: cargo publish -p motsu-proc --token "$MOTSU_PROC_TOKEN"
+        run: cargo publish -p motsu-proc --token $MOTSU_PROC_TOKEN
