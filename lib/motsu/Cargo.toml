@@ -14,6 +14,7 @@ once_cell.workspace = true
 tiny-keccak.workspace = true
 stylus-sdk.workspace = true
 motsu-proc.workspace = true
+dashmap.workspace = true
 
 [lints]
 workspace = true
