@@ -1,0 +1,32 @@
+name: publish openzeppelin-stylus
+# This workflow publishes openzeppelin-stylus on crates.io.
+permissions:
+  contents: read
+on:
+  push:
+    tags:
+      - v*
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  check-publish:
+    name: Publish openzeppelin-stylus on crates.io
+    env:
+      OPENZEPPELIN_STYLUS_TOKEN: ${{ secrets.OPENZEPPELIN_STYLUS_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+
+      - name: Check openzeppelin-stylus
+        run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown --dry-run
+
+      - name: Publish openzeppelin-stylus
+        run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown --token $OPENZEPPELIN_STYLUS_TOKEN
