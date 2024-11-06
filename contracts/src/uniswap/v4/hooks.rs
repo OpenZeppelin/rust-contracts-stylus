@@ -12,6 +12,7 @@
 //! Should only be callable by the v4 PoolManager.
 
 use alloy_primitives::{Address, Bytes, FixedBytes, I128, U160, U256};
+use alloy_sol_types::sol;
 use stylus_sdk::stylus_proc::SolidityError;
 
 use crate::uniswap::v4::{
@@ -19,11 +20,22 @@ use crate::uniswap::v4::{
     I24, U24,
 };
 
+sol! {
+    /// Emitted when a hook is not implemented.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error HookNotImplemented();
+}
+
 /// An Uniswap V4 Hook error.
 #[derive(SolidityError, Debug)]
-pub enum Error {}
+pub enum Error {
+    /// Indicates a hook that is not implemented.
+    NotImplemented(HookNotImplemented),
+}
 
 /// Uniswap V4 Hooks Interface.
+#[allow(unused_variables)]
 pub trait IHooks {
     /// The hook called before the state of a pool is initialized.
     ///
@@ -44,7 +56,9 @@ pub trait IHooks {
         sender: Address,
         key: PoolKey,
         sqrt_price_x96: U160,
-    ) -> Result<FixedBytes<4>, Error>;
+    ) -> Result<FixedBytes<4>, Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called after the state of a pool is initialized.
     ///
@@ -67,7 +81,9 @@ pub trait IHooks {
         key: PoolKey,
         sqrt_price_x96: U160,
         tick: I24,
-    ) -> Result<FixedBytes<4>, Error>;
+    ) -> Result<FixedBytes<4>, Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called before liquidity is added.
     ///
@@ -91,7 +107,9 @@ pub trait IHooks {
         key: PoolKey,
         params: ModifyLiquidityParams,
         hook_data: Bytes,
-    ) -> Result<FixedBytes<4>, Error>;
+    ) -> Result<FixedBytes<4>, Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called after liquidity is added
     ///
@@ -122,7 +140,9 @@ pub trait IHooks {
         delta: BalanceDelta,
         fees_accrued: BalanceDelta,
         hook_data: Bytes,
-    ) -> Result<(FixedBytes<4>, BalanceDelta), Error>;
+    ) -> Result<(FixedBytes<4>, BalanceDelta), Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called before liquidity is removed.
     ///
@@ -146,7 +166,9 @@ pub trait IHooks {
         key: PoolKey,
         params: ModifyLiquidityParams,
         hook_data: Bytes,
-    ) -> Result<FixedBytes<4>, Error>;
+    ) -> Result<FixedBytes<4>, Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called after liquidity is removed.
     ///
@@ -177,7 +199,9 @@ pub trait IHooks {
         delta: BalanceDelta,
         fees_accrued: BalanceDelta,
         hook_data: Bytes,
-    ) -> Result<(FixedBytes<4>, BalanceDelta), Error>;
+    ) -> Result<(FixedBytes<4>, BalanceDelta), Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called before a swap.
     ///
@@ -205,7 +229,9 @@ pub trait IHooks {
         key: PoolKey,
         params: SwapParams,
         hook_data: Bytes,
-    ) -> Result<(FixedBytes<4>, BeforeSwapDelta, U24), Error>;
+    ) -> Result<(FixedBytes<4>, BeforeSwapDelta, U24), Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called after a swap.
     ///
@@ -233,7 +259,9 @@ pub trait IHooks {
         params: SwapParams,
         delta: BalanceDelta,
         hook_data: Bytes,
-    ) -> Result<(FixedBytes<4>, I128), Error>;
+    ) -> Result<(FixedBytes<4>, I128), Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called before donate.
     ///
@@ -259,7 +287,9 @@ pub trait IHooks {
         amount0: U256,
         amount1: U256,
         hook_data: Bytes,
-    ) -> Result<FixedBytes<4>, Error>;
+    ) -> Result<FixedBytes<4>, Error> {
+        Err(HookNotImplemented {}.into())
+    }
 
     /// The hook called after donate
     ///
@@ -285,5 +315,7 @@ pub trait IHooks {
         amount0: U256,
         amount1: U256,
         hook_data: Bytes,
-    ) -> Result<FixedBytes<4>, Error>;
+    ) -> Result<FixedBytes<4>, Error> {
+        Err(HookNotImplemented {}.into())
+    }
 }
