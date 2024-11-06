@@ -7,8 +7,12 @@
 //! and [`Pausable::when_paused`],
 //! which can be added to the functions of your contract.
 //!
-//! Note that they will not be pausable by simply including this module,
-//! only once the modifiers are put in place.
+//! Note that your contract will not be pausable by simply including this
+//! module, only once and where you use [`Pausable::when_not_paused`].
+//!
+//! Note that [`Pausable::pause`] and [`Pausable::unpause`] methods are not
+//! exposed by default.
+//! You should expose them manually in your contract's abi.
 
 use alloy_sol_types::sol;
 use stylus_sdk::{
@@ -69,7 +73,9 @@ impl Pausable {
     fn paused(&self) -> bool {
         self._paused.get()
     }
+}
 
+impl Pausable {
     /// Triggers `Paused` state.
     ///
     /// # Arguments
@@ -104,7 +110,7 @@ impl Pausable {
         Ok(())
     }
 
-    /// Modifier to make a function callable only when the contract is NOT
+    /// Helper to make a function callable only when the contract is NOT
     /// paused.
     ///
     /// # Arguments
@@ -122,7 +128,7 @@ impl Pausable {
         Ok(())
     }
 
-    /// Modifier to make a function callable
+    /// Helper to make a function callable
     /// only when the contract is paused.
     ///
     /// # Arguments
