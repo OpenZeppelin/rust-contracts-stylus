@@ -71,6 +71,13 @@ pub enum Error {
 /// Uniswap V4 Hooks Interface.
 #[allow(unused_variables)]
 pub trait IHooks {
+    /// Returns a struct of permissions to signal
+    /// which hook functions are to be implemented.
+    ///
+    /// Used at deployment to validate the address correctly represent
+    /// the expected permissions.
+    fn get_hook_permissions() -> Permissions;
+
     /// The hook called before the state of a pool is initialized.
     ///
     /// Returns the function selector for the hook.
