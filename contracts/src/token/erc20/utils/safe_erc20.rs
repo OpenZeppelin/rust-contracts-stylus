@@ -28,7 +28,7 @@ sol! {
     #[allow(missing_docs)]
     error SafeErc20FailedOperation(address token);
 
-    /// Indicates a failed [`ISafeErc20::decrease_allowance`] request.
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
     ///
     /// * `spender` - Address of future tokens' spender.
     /// * `current_allowance` - Current allowance of the `spender`.
