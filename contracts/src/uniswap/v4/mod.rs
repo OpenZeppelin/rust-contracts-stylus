@@ -2,5 +2,5 @@
 pub mod hooks;
 pub mod types;
 
-pub use hooks::IHooks;
+pub use hooks::{IHooks, Permissions};
 pub use types::*;

@@ -76,7 +76,11 @@ pub trait IHooks {
     ///
     /// Used at deployment to validate the address correctly represent
     /// the expected permissions.
-    fn get_hook_permissions() -> Permissions;
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    fn get_hook_permissions(&self) -> Permissions;
 
     /// The hook called before the state of a pool is initialized.
     ///
@@ -266,6 +270,7 @@ pub trait IHooks {
     ///
     /// May return an [`Error`].
     fn before_swap(
+        &mut self,
         sender: Address,
         key: PoolKey,
         params: SwapParams,
