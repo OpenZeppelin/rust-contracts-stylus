@@ -15,6 +15,8 @@ sol!(
     }
 
     contract Erc20 {
+        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
+
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
         #[derive(Debug, PartialEq)]

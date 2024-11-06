@@ -59,6 +59,46 @@ mod transfers {
     }
 
     #[e2e::test]
+    async fn reverts_on_transfer_with_internal_error(
+        alice: Account,
+        bob: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let bob_addr = bob.address();
+
+        let value = uint!(1_U256);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+
+        let initial_safe_erc20_balance =
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
+        let initial_bob_balance =
+            erc20_alice.balanceOf(bob_addr).call().await?._0;
+
+        let err = send!(safe_erc20_alice.safeTransfer(
+            erc20_address,
+            bob_addr,
+            value
+        ))
+        .expect_err("should not transfer when insufficient balance");
+
+        assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
+            token: erc20_address
+        }));
+
+        let safe_erc20_balance =
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+
+        assert_eq!(initial_safe_erc20_balance, safe_erc20_balance);
+        assert_eq!(initial_bob_balance, bob_balance);
+
+        Ok(())
+    }
+
+    #[e2e::test]
     async fn does_not_revert_on_transfer_from(
         alice: Account,
         bob: Account,
@@ -102,6 +142,49 @@ mod transfers {
 
         assert_eq!(initial_alice_balance - value, alice_balance);
         assert_eq!(initial_bob_balance + value, bob_balance);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_on_transfer_from_internal_error(
+        alice: Account,
+        bob: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let alice_addr = alice.address();
+        let bob_addr = bob.address();
+
+        let value = uint!(1_U256);
+
+        let erc20_address = erc20::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
+
+        let _ = watch!(erc20_alice.approve(safe_erc20_addr, value));
+
+        let initial_alice_balance =
+            erc20_alice.balanceOf(alice_addr).call().await?._0;
+        let initial_bob_balance =
+            erc20_alice.balanceOf(bob_addr).call().await?._0;
+
+        let err = send!(safe_erc20_alice.safeTransferFrom(
+            erc20_address,
+            alice_addr,
+            bob_addr,
+            value
+        ))
+        .expect_err("should not transfer when insufficient balance");
+
+        assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
+            token: erc20_address
+        }));
+
+        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+
+        assert_eq!(initial_alice_balance, alice_balance);
+        assert_eq!(initial_bob_balance, bob_balance);
 
         Ok(())
     }
