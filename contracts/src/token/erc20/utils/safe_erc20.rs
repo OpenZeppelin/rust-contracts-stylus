@@ -49,7 +49,7 @@ pub enum Error {
     Erc20(erc20::Error),
     /// An operation with an ERC-20 token failed.
     SafeErc20FailedOperation(SafeErc20FailedOperation),
-    /// Indicates a failed [`ISafeErc20::decrease_allowance`] request.
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
@@ -84,6 +84,22 @@ pub trait ISafeErc20 {
     /// Transfer `value` amount of `token` from the calling contract to `to`. If
     /// `token` returns no value, non-reverting calls are assumed to be
     /// successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the call returns value that is not `true`, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     fn safe_transfer(
         &mut self,
         token: Address,
@@ -94,6 +110,23 @@ pub trait ISafeErc20 {
     /// Transfer `value` amount of `token` from `from` to `to`, spending the
     /// approval given by `from` to the calling contract. If `token` returns
     /// no value, non-reverting calls are assumed to be successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the call returns value that is not `true`, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     fn safe_transfer_from(
         &mut self,
         token: Address,
@@ -105,6 +138,22 @@ pub trait ISafeErc20 {
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
     /// successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `spender` - Account that will spend the tokens.
+    /// * `value` - Value to increase current allowance for `spender`.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the call returns value that is not `true`, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     ///
     /// # Panics
     ///
@@ -119,6 +168,24 @@ pub trait ISafeErc20 {
     /// Decrease the calling contract's allowance toward `spender` by
     /// `requested_decrease`. If `token` returns no value, non-reverting
     /// calls are assumed to be successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `spender` - Account that will spend the tokens.
+    /// * `requested_decrease` - Value allowed to be spent by `spender`.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the current allowance is less than `requested_decrease`, then the
+    /// error [`Error::SafeErc20FailedDecreaseAllowance`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the call returns value that is not `true`, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     fn safe_decrease_allowance(
         &mut self,
         token: Address,
@@ -130,6 +197,22 @@ pub trait ISafeErc20 {
     /// `token` returns no value, non-reverting calls are assumed to be
     /// successful. Meant to be used with tokens that require the approval
     /// to be set to zero before setting it to a non-zero value, such as USDT.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `spender` - Account that will spend the tokens.
+    /// * `value` - Value allowed to be spent by `spender`.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the call returns value that is not `true`, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     fn force_approve(
         &mut self,
         token: Address,
@@ -220,9 +303,7 @@ impl ISafeErc20 for SafeErc20 {
         let reset_approval_call =
             IErc20::approveCall { spender, value: U256::ZERO };
         self.call_optional_return(token, &reset_approval_call)?;
-        self.call_optional_return(token, &approve_call)?;
-
-        Ok(())
+        self.call_optional_return(token, &approve_call)
     }
 }
 
@@ -230,6 +311,21 @@ impl SafeErc20 {
     /// Imitates a Stylus high-level call, relaxing the requirement on the
     /// return value: if data is returned, it must not be `false`, otherwise
     /// calls are assumed to be successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `call` - [`IErc20`] call that implements [`SolCall`] trait.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the call returns value that is not `true`, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     fn call_optional_return(
         &self,
         token: Address,
@@ -244,11 +340,26 @@ impl SafeErc20 {
             .limit_return_data(0, 32)
             .call(token, &call.abi_encode())
         {
-            Ok(data) if data.is_empty() || encodes_true(&data) => Ok(()),
+            Ok(data) if data.is_empty() || Self::encodes_true(&data) => Ok(()),
             _ => Err(SafeErc20FailedOperation { token }.into()),
         }
     }
 
+    /// Returns the remaining number of ERC-20 tokens that `spender`
+    /// will be allowed to spend on behalf of owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `spender` - Account that will spend the tokens.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the contract fails to read `spender`'s allowance, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     fn allowance(
         &mut self,
         token: Address,
@@ -271,10 +382,15 @@ impl SafeErc20 {
 
         Ok(U256::from_be_slice(&allowance))
     }
-}
 
-fn encodes_true(data: &[u8]) -> bool {
-    data.split_last().map_or(false, |(last, rest)| {
-        *last == 1 && rest.iter().all(|&byte| byte == 0)
-    })
+    /// Returns true if a slice of bytes is an ABI encoded `true` value.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Slice of bytes.
+    fn encodes_true(data: &[u8]) -> bool {
+        data.split_last().map_or(false, |(last, rest)| {
+            *last == 1 && rest.iter().all(|&byte| byte == 0)
+        })
+    }
 }
