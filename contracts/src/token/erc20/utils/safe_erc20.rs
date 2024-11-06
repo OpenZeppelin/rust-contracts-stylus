@@ -5,12 +5,11 @@
 //! To use this library you can add a `#[inherit(SafeErc20)]` attribute to
 //! your contract, which allows you to call the safe operations as
 //! `contract.safe_transfer(token_addr, ...)`, etc.
-use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{sol, SolValue};
+use alloy_sol_types::{sol, SolCall};
 use stylus_sdk::{
-    call::{Call, RawCall},
+    call::RawCall,
     contract::address,
     evm::gas_left,
     function_selector,
@@ -54,16 +53,16 @@ pub enum Error {
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
-pub use token::IErc20;
+pub use token::*;
 #[allow(missing_docs)]
 mod token {
-    stylus_sdk::stylus_proc::sol_interface! {
+    alloy_sol_types::sol! {
         /// Interface of the ERC-20 standard as defined in the ERC.
         interface IErc20 {
             function allowance(address owner, address spender) external view returns (uint256);
-            function approve(address spender, uint256 amount) external returns (bool);
-            function transfer(address recipient, uint256 amount) external returns (bool);
-            function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+            function approve(address spender, uint256 value) external returns (bool);
+            function transfer(address to, uint256 value) external returns (bool);
+            function transferFrom(address from, address to, uint256 value) external returns (bool);
         }
     }
 }
@@ -149,11 +148,9 @@ impl ISafeErc20 for SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let encoded_args = (to, value).abi_encode_params();
-        let selector = function_selector!("transfer", Address, U256);
-        let data = [&selector[..4], &encoded_args].concat();
+        let call = IErc20::transferCall { to, value };
 
-        self._call_optional_return(token, &data)
+        self._call_optional_return(token, &call)
     }
 
     fn safe_transfer_from(
@@ -163,12 +160,9 @@ impl ISafeErc20 for SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let encoded_args = (from, to, value).abi_encode_params();
-        let selector =
-            function_selector!("transferFrom", Address, Address, U256);
-        let data = [&selector[..4], &encoded_args].concat();
+        let call = IErc20::transferFromCall { from, to, value };
 
-        self._call_optional_return(token, &data)
+        self._call_optional_return(token, &call)
     }
 
     fn safe_increase_allowance(
@@ -214,29 +208,19 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let selector = function_selector!("approve", Address, U256);
-
-        // Helper function to construct calldata
-        fn build_approve_calldata(
-            spender: Address,
-            value: U256,
-            selector: &[u8],
-        ) -> Vec<u8> {
-            let encoded_args = (spender, value).abi_encode_params();
-            [&selector[..4], &encoded_args].concat()
-        }
+        let approve_call = IErc20::approveCall { spender, value };
 
         // Try performing the approval with the desired value
-        let approve_data = build_approve_calldata(spender, value, &selector);
-        if self._call_optional_return(token, &approve_data).is_ok() {
+        if self._call_optional_return(token, &approve_call).is_ok() {
             return Ok(());
         }
 
         // If that fails, reset allowance to zero, then retry the desired
         // approval
-        let reset_data = build_approve_calldata(spender, U256::ZERO, &selector);
-        self._call_optional_return(token, &reset_data)?;
-        self._call_optional_return(token, &approve_data)?;
+        let reset_approval_call =
+            IErc20::approveCall { spender, value: U256::ZERO };
+        self._call_optional_return(token, &reset_approval_call)?;
+        self._call_optional_return(token, &approve_call)?;
 
         Ok(())
     }
@@ -249,15 +233,19 @@ impl SafeErc20 {
     fn _call_optional_return(
         &self,
         token: Address,
-        data: &[u8],
+        call: &impl SolCall,
     ) -> Result<(), Error> {
+        if !Address::has_code(&token) {
+            return Err(SafeErc20FailedOperation { token }.into());
+        }
+
         match RawCall::new()
             .gas(gas_left())
             .limit_return_data(0, 32)
-            .call(token, data)
+            .call(token, &call.abi_encode())
         {
             Ok(data)
-                if (data.is_empty() && Address::has_code(&token))
+                if data.is_empty()
                     || (!data.is_empty() && encodes_true(&data)) =>
             {
                 Ok(())
@@ -271,11 +259,22 @@ impl SafeErc20 {
         token: Address,
         spender: Address,
     ) -> Result<U256, Error> {
-        let erc20 = IErc20::new(token);
-        let call = Call::new_in(self);
-        erc20
-            .allowance(call, address(), spender)
-            .map_err(|_| SafeErc20FailedOperation { token }.into())
+        if !Address::has_code(&token) {
+            return Err(SafeErc20FailedOperation { token }.into());
+        }
+
+        let call = IErc20::allowanceCall { owner: address(), spender };
+        let allowance = RawCall::new()
+            .gas(gas_left())
+            .limit_return_data(0, 32)
+            .call(token, &call.abi_encode())
+            .map_err(|_| {
+                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                })
+            })?;
+
+        Ok(U256::from_be_slice(&allowance))
     }
 }
 
