@@ -15,10 +15,44 @@ use alloy_primitives::{Address, Bytes, FixedBytes, I128, U160, U256};
 use alloy_sol_types::sol;
 use stylus_sdk::stylus_proc::SolidityError;
 
-use crate::uniswap::v4::{
+use crate::uniswap::v4::types::{
     BalanceDelta, BeforeSwapDelta, ModifyLiquidityParams, PoolKey, SwapParams,
     I24, U24,
 };
+
+sol! {
+    /// Struct representing hook's permissions.
+    struct Permissions {
+        /// Indicates whether `[`IHooks::before_initialize`]` hook is available.
+        bool beforeInitialize;
+        /// Indicates whether `[`IHooks::after_initialize`]` hook is available.
+        bool afterInitialize;
+        /// Indicates whether `[`IHooks::before_add_liquidity`]` hook is available.
+        bool beforeAddLiquidity;
+        /// Indicates whether `[`IHooks::after_add_liquidity`]` hook is available.
+        bool afterAddLiquidity;
+        /// Indicates whether `[`IHooks::before_remove_liquidity`]` hook is available.
+        bool beforeRemoveLiquidity;
+        /// Indicates whether `[`IHooks::after_remove_liquidity`]` hook is available.
+        bool afterRemoveLiquidity;
+        /// Indicates whether `[`IHooks::before_swap`]` hook is available.
+        bool beforeSwap;
+        /// Indicates whether `[`IHooks::after_swap`]` hook is available.
+        bool afterSwap;
+        /// Indicates whether `[`IHooks::before_donate`]` hook is available.
+        bool beforeDonate;
+        /// Indicates whether `[`IHooks::after_donate`]` hook is available.
+        bool afterDonate;
+        /// Indicates whether the hook is available.
+        bool beforeSwapReturnDelta;
+        /// Indicates whether the hook is available.
+        bool afterSwapReturnDelta;
+        /// Indicates whether the hook is available.
+        bool afterAddLiquidityReturnDelta;
+        /// Indicates whether the hook is available.
+        bool afterRemoveLiquidityReturnDelta;
+    }
+}
 
 sol! {
     /// Emitted when a hook is not implemented.
