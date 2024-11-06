@@ -15,7 +15,7 @@ use stylus_sdk::{
     evm::gas_left,
     function_selector,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_interface, sol_storage, SolidityError},
+    stylus_proc::{public, sol_storage, SolidityError},
     types::AddressVM,
 };
 
@@ -33,29 +33,32 @@ sol! {
     error SafeErc20FailedDecreaseAllowance(address spender, uint256 currentAllowance, uint256 requestedDecrease);
 }
 
-/// A SafeErc20 error
+/// A [`SafeErc20`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Error type from [`erc20::Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
     /// An operation with an ERC-20 token failed.
     SafeErc20FailedOperation(SafeErc20FailedOperation),
-    /// Indicates a failed `decreaseAllowance` request.
+    /// Indicates a failed [`ISafeErc20::decrease_allowance`] request.
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
-sol_interface! {
-    /// Interface of the ERC-20 standard as defined in the ERC.
-    interface IERC20 {
-        /// Returns the remaining number of tokens that `spender` will be
-        /// allowed to spend on behalf of `owner` through {transferFrom}. This is
-        /// zero by default.
-        ///
-        /// This value changes when {approve} or {transferFrom} are called.
-        function allowance(address owner, address spender) external view returns (uint256);
+pub use token::IERC20;
+#[allow(missing_docs)]
+mod token {
+    stylus_sdk::stylus_proc::sol_interface! {
+        /// Interface of the ERC-20 standard as defined in the ERC.
+        interface IERC20 {
+            /// Returns the remaining number of tokens that `spender` will be
+            /// allowed to spend on behalf of `owner` through {transferFrom}. This is
+            /// zero by default.
+            ///
+            /// This value changes when {approve} or {transferFrom} are called.
+            function allowance(address owner, address spender) external view returns (uint256);
+        }
     }
 }
-
 sol_storage! {
     /// State of the SafeErc20 Contract.
     pub struct SafeErc20 {}
@@ -66,17 +69,74 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for SafeErc20 {}
 
-#[public]
-impl SafeErc20 {
+/// Required interface of an [`SafeErc20`] utility contract.
+pub trait ISafeErc20 {
+    /// The error type associated to this ERC-20 trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Transfer `value` amount of `token` from the calling contract to `to`. If
     /// `token` returns no value, non-reverting calls are assumed to be
     /// successful.
-    pub fn safe_transfer(
+    fn safe_transfer(
         &mut self,
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error>;
+
+    /// Transfer `value` amount of `token` from `from` to `to`, spending the
+    /// approval given by `from` to the calling contract. If `token` returns
+    /// no value, non-reverting calls are assumed to be successful.
+    fn safe_transfer_from(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Self::Error>;
+
+    /// Increase the calling contract's allowance toward `spender` by `value`.
+    /// If `token` returns no value, non-reverting calls are assumed to be
+    /// successful.
+    fn safe_increase_allowance(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+    ) -> Result<(), Self::Error>;
+
+    /// Decrease the calling contract's allowance toward `spender` by
+    /// `requested_decrease`. If `token` returns no value, non-reverting
+    /// calls are assumed to be successful.
+    fn safe_decrease_allowance(
+        &mut self,
+        token: Address,
+        spender: Address,
+        requested_decrease: U256,
+    ) -> Result<(), Self::Error>;
+
+    /// Set the calling contract's allowance toward `spender` to `value`. If
+    /// `token` returns no value, non-reverting calls are assumed to be
+    /// successful. Meant to be used with tokens that require the approval
+    /// to be set to zero before setting it to a non-zero value, such as USDT.
+    fn force_approve(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+    ) -> Result<(), Self::Error>;
+}
+
+#[public]
+impl ISafeErc20 for SafeErc20 {
+    type Error = Error;
+
+    fn safe_transfer(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<(), Self::Error> {
         let encoded_args = (to, value).abi_encode_params();
         let selector = function_selector!("transfer", Address, U256);
         let data = [&selector[..4], &encoded_args].concat();
@@ -84,16 +144,13 @@ impl SafeErc20 {
         self._call_optional_return(token, &data)
     }
 
-    /// Transfer `value` amount of `token` from `from` to `to`, spending the
-    /// approval given by `from` to the calling contract. If `token` returns
-    /// no value, non-reverting calls are assumed to be successful.
-    pub fn safe_transfer_from(
+    fn safe_transfer_from(
         &mut self,
         token: Address,
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         let encoded_args = (from, to, value).abi_encode_params();
         let selector =
             function_selector!("transferFrom", Address, Address, U256);
@@ -102,15 +159,12 @@ impl SafeErc20 {
         self._call_optional_return(token, &data)
     }
 
-    /// Increase the calling contract's allowance toward `spender` by `value`.
-    /// If `token` returns no value, non-reverting calls are assumed to be
-    /// successful.
-    pub fn safe_increase_allowance(
+    fn safe_increase_allowance(
         &mut self,
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         let erc20 = IERC20::new(token);
         let call = Call::new_in(self);
         let old_allowance = erc20.allowance(call, address(), spender).or(
@@ -121,15 +175,12 @@ impl SafeErc20 {
         self.force_approve(token, spender, old_allowance + value)
     }
 
-    /// Decrease the calling contract's allowance toward `spender` by
-    /// `requested_decrease`. If `token` returns no value, non-reverting
-    /// calls are assumed to be successful.
-    pub fn safe_decrease_allowance(
+    fn safe_decrease_allowance(
         &mut self,
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         let erc20 = IERC20::new(token);
         let call = Call::new_in(self);
         let current_allowance =
@@ -156,16 +207,12 @@ impl SafeErc20 {
         )
     }
 
-    /// Set the calling contract's allowance toward `spender` to `value`. If
-    /// `token` returns no value, non-reverting calls are assumed to be
-    /// successful. Meant to be used with tokens that require the approval
-    /// to be set to zero before setting it to a non-zero value, such as USDT.
-    pub fn force_approve(
+    fn force_approve(
         &mut self,
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         let selector = function_selector!("approve", Address, U256);
 
         // Helper function to construct calldata
