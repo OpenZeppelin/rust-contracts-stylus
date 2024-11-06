@@ -23,14 +23,24 @@ use crate::token::erc20;
 
 sol! {
     /// An operation with an ERC-20 token failed.
+    ///
+    /// * `token` - Address of the ERC-20 token.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error SafeErc20FailedOperation(address token);
 
-     /// Indicates a failed `decreaseAllowance` request.
+    /// Indicates a failed [`ISafeErc20::decrease_allowance`] request.
+    ///
+    /// * `spender` - Address of future tokens' spender.
+    /// * `current_allowance` - Current allowance of the `spender`.
+    /// * `requested_decrease` - Requested decrease in allowance for `spender`.
     #[derive(Debug)]
     #[allow(missing_docs)]
-    error SafeErc20FailedDecreaseAllowance(address spender, uint256 currentAllowance, uint256 requestedDecrease);
+    error SafeErc20FailedDecreaseAllowance(
+        address spender,
+        uint256 current_allowance,
+        uint256 requested_decrease
+    );
 }
 
 /// A [`SafeErc20`] error.
@@ -44,18 +54,16 @@ pub enum Error {
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
-pub use token::IERC20;
+pub use token::IErc20;
 #[allow(missing_docs)]
 mod token {
     stylus_sdk::stylus_proc::sol_interface! {
         /// Interface of the ERC-20 standard as defined in the ERC.
-        interface IERC20 {
-            /// Returns the remaining number of tokens that `spender` will be
-            /// allowed to spend on behalf of `owner` through {transferFrom}. This is
-            /// zero by default.
-            ///
-            /// This value changes when {approve} or {transferFrom} are called.
+        interface IErc20 {
             function allowance(address owner, address spender) external view returns (uint256);
+            function approve(address spender, uint256 amount) external returns (bool);
+            function transfer(address recipient, uint256 amount) external returns (bool);
+            function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
         }
     }
 }
@@ -98,6 +106,10 @@ pub trait ISafeErc20 {
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
     /// successful.
+    ///
+    /// # Panics
+    ///
+    /// If increased allowance exceeds `U256::MAX`.
     fn safe_increase_allowance(
         &mut self,
         token: Address,
@@ -165,14 +177,11 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let erc20 = IERC20::new(token);
-        let call = Call::new_in(self);
-        let old_allowance = erc20.allowance(call, address(), spender).or(
-            Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                token,
-            })),
-        )?;
-        self.force_approve(token, spender, old_allowance + value)
+        let current_allowance = self.allowance(token, spender)?;
+        let new_allowance = current_allowance
+            .checked_add(value)
+            .expect("should not exceed `U256::MAX` for allowance");
+        self.force_approve(token, spender, new_allowance)
     }
 
     fn safe_decrease_allowance(
@@ -181,23 +190,15 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         requested_decrease: U256,
     ) -> Result<(), Self::Error> {
-        let erc20 = IERC20::new(token);
-        let call = Call::new_in(self);
-        let current_allowance =
-            erc20.allowance(call, address(), spender).or({
-                Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                    token,
-                }))
-            })?;
+        let current_allowance = self.allowance(token, spender)?;
 
         if current_allowance < requested_decrease {
-            return Err(Error::SafeErc20FailedDecreaseAllowance(
-                SafeErc20FailedDecreaseAllowance {
-                    spender,
-                    currentAllowance: current_allowance,
-                    requestedDecrease: requested_decrease,
-                },
-            ));
+            return Err(SafeErc20FailedDecreaseAllowance {
+                spender,
+                current_allowance,
+                requested_decrease,
+            }
+            .into());
         }
 
         self.force_approve(
@@ -261,12 +262,20 @@ impl SafeErc20 {
             {
                 Ok(())
             }
-            _ => {
-                Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                    token,
-                }))
-            }
+            _ => Err(SafeErc20FailedOperation { token }.into()),
         }
+    }
+
+    fn allowance(
+        &mut self,
+        token: Address,
+        spender: Address,
+    ) -> Result<U256, Error> {
+        let erc20 = IErc20::new(token);
+        let call = Call::new_in(self);
+        erc20
+            .allowance(call, address(), spender)
+            .map_err(|_| SafeErc20FailedOperation { token }.into())
     }
 }
 
