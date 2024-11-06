@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main, no_std)]
+#![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
 use openzeppelin_stylus::token::erc20::utils::safe_erc20::SafeErc20;
