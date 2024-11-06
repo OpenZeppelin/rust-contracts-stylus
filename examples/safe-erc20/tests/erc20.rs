@@ -1,9 +1,9 @@
 #![cfg(feature = "e2e")]
 
-use abi::SafeErc20;
+use abi::{Erc20, SafeErc20};
 use alloy::primitives::uint;
 use alloy_primitives::U256;
-use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use mock::{erc20, erc20::ERC20Mock};
 
 mod abi;
@@ -13,7 +13,7 @@ mod transfers {
     use super::*;
 
     #[e2e::test]
-    async fn doesnt_revert_on_transfer(
+    async fn does_not_revert_on_transfer(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -36,11 +36,17 @@ mod transfers {
         assert_eq!(initial_safe_erc20_balance, balance);
         assert_eq!(initial_bob_balance, U256::ZERO);
 
-        let _ = receipt!(safe_erc20_alice.safeTransfer(
+        let receipt = receipt!(safe_erc20_alice.safeTransfer(
             erc20_address,
             bob_addr,
             value
         ))?;
+
+        assert!(receipt.emits(Erc20::Transfer {
+            from: safe_erc20_addr,
+            to: bob_addr,
+            value
+        }));
 
         let safe_erc20_balance =
             erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
@@ -53,7 +59,7 @@ mod transfers {
     }
 
     #[e2e::test]
-    async fn doesnt_revert_on_transfer_from(
+    async fn does_not_revert_on_transfer_from(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -78,12 +84,18 @@ mod transfers {
         assert_eq!(initial_alice_balance, balance);
         assert_eq!(initial_bob_balance, U256::ZERO);
 
-        let _ = receipt!(safe_erc20_alice.safeTransferFrom(
+        let receipt = receipt!(safe_erc20_alice.safeTransferFrom(
             erc20_address,
             alice_addr,
             bob_addr,
             value
         ))?;
+
+        assert!(receipt.emits(Erc20::Transfer {
+            from: alice_addr,
+            to: bob_addr,
+            value
+        }));
 
         let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
         let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
@@ -100,7 +112,7 @@ mod approvals {
         use super::super::*;
 
         #[e2e::test]
-        async fn doesnt_revert_when_force_approving_a_non_zero_allowance(
+        async fn does_not_revert_when_force_approving_a_non_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -120,11 +132,17 @@ mod approvals {
 
             let value = uint!(100_U256);
 
-            let _ = receipt!(safe_erc20_alice.forceApprove(
+            let receipt = receipt!(safe_erc20_alice.forceApprove(
                 erc20_address,
                 spender_addr,
                 value
             ))?;
+
+            assert!(receipt.emits(Erc20::Approval {
+                owner: safe_erc20_addr,
+                spender: spender_addr,
+                value,
+            }));
 
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
@@ -137,7 +155,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn doesnt_revert_when_force_approving_a_zero_allowance(
+        async fn does_not_revert_when_force_approving_a_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -155,11 +173,17 @@ mod approvals {
                 U256::ZERO
             ));
 
-            let _ = receipt!(safe_erc20_alice.forceApprove(
+            let receipt = receipt!(safe_erc20_alice.forceApprove(
                 erc20_address,
                 spender_addr,
                 U256::ZERO
             ))?;
+
+            assert!(receipt.emits(Erc20::Approval {
+                owner: safe_erc20_addr,
+                spender: spender_addr,
+                value: U256::ZERO,
+            }));
 
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
@@ -172,7 +196,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn doesnt_revert_when_increasing_the_allowance(
+        async fn does_not_revert_when_increasing_the_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -192,11 +216,17 @@ mod approvals {
 
             let value = uint!(10_U256);
 
-            let _ = receipt!(safe_erc20_alice.safeIncreaseAllowance(
+            let receipt = receipt!(safe_erc20_alice.safeIncreaseAllowance(
                 erc20_address,
                 spender_addr,
                 value
             ))?;
+
+            assert!(receipt.emits(Erc20::Approval {
+                owner: safe_erc20_addr,
+                spender: spender_addr,
+                value,
+            }));
 
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
@@ -251,7 +281,7 @@ mod approvals {
         use super::super::*;
 
         #[e2e::test]
-        async fn doesnt_revert_when_force_approving_a_non_zero_allowance(
+        async fn does_not_revert_when_force_approving_a_non_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -273,11 +303,17 @@ mod approvals {
 
             let value = uint!(20_U256);
 
-            let _ = receipt!(safe_erc20_alice.forceApprove(
+            let receipt = receipt!(safe_erc20_alice.forceApprove(
                 erc20_address,
                 spender_addr,
                 value
             ))?;
+
+            assert!(receipt.emits(Erc20::Approval {
+                owner: safe_erc20_addr,
+                spender: spender_addr,
+                value,
+            }));
 
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
@@ -290,7 +326,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn doesnt_revert_when_force_approving_a_zero_allowance(
+        async fn does_not_revert_when_force_approving_a_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -310,11 +346,17 @@ mod approvals {
                 allowance
             ));
 
-            let _ = receipt!(safe_erc20_alice.forceApprove(
+            let receipt = receipt!(safe_erc20_alice.forceApprove(
                 erc20_address,
                 spender_addr,
                 U256::ZERO
             ))?;
+
+            assert!(receipt.emits(Erc20::Approval {
+                owner: safe_erc20_addr,
+                spender: spender_addr,
+                value: U256::ZERO,
+            }));
 
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
@@ -327,7 +369,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn doesnt_revert_when_increasing_the_allowance(
+        async fn does_not_revert_when_increasing_the_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -349,11 +391,17 @@ mod approvals {
 
             let value = uint!(10_U256);
 
-            let _ = receipt!(safe_erc20_alice.safeIncreaseAllowance(
+            let receipt = receipt!(safe_erc20_alice.safeIncreaseAllowance(
                 erc20_address,
                 spender_addr,
                 value
             ))?;
+
+            assert!(receipt.emits(Erc20::Approval {
+                owner: safe_erc20_addr,
+                spender: spender_addr,
+                value: allowance + value,
+            }));
 
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
@@ -366,7 +414,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn doesnt_revert_when_decreasing_the_allowance_to_a_positive_value(
+        async fn does_not_revert_when_decreasing_the_allowance_to_a_positive_value(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -388,11 +436,17 @@ mod approvals {
 
             let value = uint!(50_U256);
 
-            let _ = receipt!(safe_erc20_alice.safeDecreaseAllowance(
+            let receipt = receipt!(safe_erc20_alice.safeDecreaseAllowance(
                 erc20_address,
                 spender_addr,
                 value
             ))?;
+
+            assert!(receipt.emits(Erc20::Approval {
+                owner: safe_erc20_addr,
+                spender: spender_addr,
+                value: allowance - value,
+            }));
 
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
