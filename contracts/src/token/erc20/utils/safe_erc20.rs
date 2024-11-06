@@ -57,7 +57,7 @@ pub use token::*;
 #[allow(missing_docs)]
 mod token {
     alloy_sol_types::sol! {
-        /// Interface of the ERC-20 standard as defined in the ERC.
+        /// Interface of the ERC-20 token.
         interface IErc20 {
             function allowance(address owner, address spender) external view returns (uint256);
             function approve(address spender, uint256 value) external returns (bool);
@@ -67,7 +67,7 @@ mod token {
     }
 }
 sol_storage! {
-    /// State of the SafeErc20 Contract.
+    /// State of the [`SafeErc20`] Contract.
     pub struct SafeErc20 {}
 }
 
@@ -78,7 +78,7 @@ unsafe impl TopLevelStorage for SafeErc20 {}
 
 /// Required interface of an [`SafeErc20`] utility contract.
 pub trait ISafeErc20 {
-    /// The error type associated to this ERC-20 trait implementation.
+    /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Transfer `value` amount of `token` from the calling contract to `to`. If
