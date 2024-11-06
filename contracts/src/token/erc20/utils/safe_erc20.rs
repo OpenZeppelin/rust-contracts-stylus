@@ -150,7 +150,7 @@ impl ISafeErc20 for SafeErc20 {
     ) -> Result<(), Self::Error> {
         let call = IErc20::transferCall { to, value };
 
-        self._call_optional_return(token, &call)
+        self.call_optional_return(token, &call)
     }
 
     fn safe_transfer_from(
@@ -162,7 +162,7 @@ impl ISafeErc20 for SafeErc20 {
     ) -> Result<(), Self::Error> {
         let call = IErc20::transferFromCall { from, to, value };
 
-        self._call_optional_return(token, &call)
+        self.call_optional_return(token, &call)
     }
 
     fn safe_increase_allowance(
@@ -211,7 +211,7 @@ impl ISafeErc20 for SafeErc20 {
         let approve_call = IErc20::approveCall { spender, value };
 
         // Try performing the approval with the desired value
-        if self._call_optional_return(token, &approve_call).is_ok() {
+        if self.call_optional_return(token, &approve_call).is_ok() {
             return Ok(());
         }
 
@@ -219,8 +219,8 @@ impl ISafeErc20 for SafeErc20 {
         // approval
         let reset_approval_call =
             IErc20::approveCall { spender, value: U256::ZERO };
-        self._call_optional_return(token, &reset_approval_call)?;
-        self._call_optional_return(token, &approve_call)?;
+        self.call_optional_return(token, &reset_approval_call)?;
+        self.call_optional_return(token, &approve_call)?;
 
         Ok(())
     }
@@ -230,7 +230,7 @@ impl SafeErc20 {
     /// Imitates a Stylus high-level call, relaxing the requirement on the
     /// return value: if data is returned, it must not be `false`, otherwise
     /// calls are assumed to be successful.
-    fn _call_optional_return(
+    fn call_optional_return(
         &self,
         token: Address,
         call: &impl SolCall,
@@ -244,12 +244,7 @@ impl SafeErc20 {
             .limit_return_data(0, 32)
             .call(token, &call.abi_encode())
         {
-            Ok(data)
-                if data.is_empty()
-                    || (!data.is_empty() && encodes_true(&data)) =>
-            {
-                Ok(())
-            }
+            Ok(data) if data.is_empty() || encodes_true(&data) => Ok(()),
             _ => Err(SafeErc20FailedOperation { token }.into()),
         }
     }
@@ -279,6 +274,7 @@ impl SafeErc20 {
 }
 
 fn encodes_true(data: &[u8]) -> bool {
-    data[..data.len() - 1].iter().all(|&byte| byte == 0)
-        && data[data.len() - 1] == 1
+    data.split_last().map_or(false, |(last, rest)| {
+        *last == 1 && rest.iter().all(|&byte| byte == 0)
+    })
 }
