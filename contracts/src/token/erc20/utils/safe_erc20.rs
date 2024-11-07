@@ -2,6 +2,7 @@
 //! contract returns false). Tokens that return no value (and instead revert or
 //! throw on failure) are also supported, non-reverting calls are assumed to be
 //! successful.
+//!
 //! To use this library you can add a `#[inherit(SafeErc20)]` attribute to
 //! your contract, which allows you to call the safe operations as
 //! `contract.safe_transfer(token_addr, ...)`, etc.
@@ -233,7 +234,7 @@ impl ISafeErc20 for SafeErc20 {
     ) -> Result<(), Self::Error> {
         let call = IErc20::transferCall { to, value };
 
-        self.call_optional_return(token, &call)
+        Self::call_optional_return(token, &call)
     }
 
     fn safe_transfer_from(
@@ -245,7 +246,7 @@ impl ISafeErc20 for SafeErc20 {
     ) -> Result<(), Self::Error> {
         let call = IErc20::transferFromCall { from, to, value };
 
-        self.call_optional_return(token, &call)
+        Self::call_optional_return(token, &call)
     }
 
     fn safe_increase_allowance(
@@ -254,7 +255,7 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let current_allowance = self.allowance(token, spender)?;
+        let current_allowance = Self::allowance(token, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
             .expect("should not exceed `U256::MAX` for allowance");
@@ -267,7 +268,7 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         requested_decrease: U256,
     ) -> Result<(), Self::Error> {
-        let current_allowance = self.allowance(token, spender)?;
+        let current_allowance = Self::allowance(token, spender)?;
 
         if current_allowance < requested_decrease {
             return Err(SafeErc20FailedDecreaseAllowance {
@@ -294,7 +295,7 @@ impl ISafeErc20 for SafeErc20 {
         let approve_call = IErc20::approveCall { spender, value };
 
         // Try performing the approval with the desired value
-        if self.call_optional_return(token, &approve_call).is_ok() {
+        if Self::call_optional_return(token, &approve_call).is_ok() {
             return Ok(());
         }
 
@@ -302,8 +303,8 @@ impl ISafeErc20 for SafeErc20 {
         // approval
         let reset_approval_call =
             IErc20::approveCall { spender, value: U256::ZERO };
-        self.call_optional_return(token, &reset_approval_call)?;
-        self.call_optional_return(token, &approve_call)
+        Self::call_optional_return(token, &reset_approval_call)?;
+        Self::call_optional_return(token, &approve_call)
     }
 }
 
@@ -314,7 +315,6 @@ impl SafeErc20 {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the ERC-20 token contract.
     /// * `call` - [`IErc20`] call that implements [`SolCall`] trait.
     ///
@@ -327,7 +327,6 @@ impl SafeErc20 {
     /// If the call returns value that is not `true`, then the error
     /// [`Error::SafeErc20FailedOperation`] is returned.
     fn call_optional_return(
-        &self,
         token: Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
@@ -350,7 +349,6 @@ impl SafeErc20 {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the ERC-20 token contract.
     /// * `spender` - Account that will spend the tokens.
     ///
@@ -360,11 +358,7 @@ impl SafeErc20 {
     /// [`Error::SafeErc20FailedOperation`] is returned.
     /// If the contract fails to read `spender`'s allowance, then the error
     /// [`Error::SafeErc20FailedOperation`] is returned.
-    fn allowance(
-        &mut self,
-        token: Address,
-        spender: Address,
-    ) -> Result<U256, Error> {
+    fn allowance(token: Address, spender: Address) -> Result<U256, Error> {
         if !Address::has_code(&token) {
             return Err(SafeErc20FailedOperation { token }.into());
         }
