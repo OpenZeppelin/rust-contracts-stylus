@@ -94,6 +94,12 @@ tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.30"
 dashmap = "6.1.0"
+crypto-bigint = { version = "0.5.5", default-features = false, features = ["zeroize"] }
+num-traits = "0.2.14"
+zeroize = { version = "1.8.1", features = ["derive"] }
+proptest = "1"
+educe = "0.6.0"
+hex-literal = "0.4.1"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }
@@ -104,10 +110,10 @@ quote = "1.0.35"
 openzeppelin-stylus = { path = "contracts" }
 openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
-motsu = { path = "lib/motsu"}
+motsu = { path = "lib/motsu" }
 motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
 e2e = { path = "lib/e2e" }
-e2e-proc = {path = "lib/e2e-proc"}
+e2e-proc = { path = "lib/e2e-proc" }
 
 [profile.release]
 codegen-units = 1
