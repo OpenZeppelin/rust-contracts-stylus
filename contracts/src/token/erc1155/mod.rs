@@ -1215,6 +1215,10 @@ mod tests {
         (token_ids, values)
     }
 
+    fn append(values: Vec<U256>, value: u64) -> Vec<U256> {
+        values.into_iter().chain(std::iter::once(U256::from(value))).collect()
+    }
+
     #[test]
     fn should_create_transfer_single() {
         let id = uint!(1_U256);
@@ -1365,7 +1369,7 @@ mod tests {
 
     #[motsu::test]
     fn mints_batch_same_token(contract: Erc1155) {
-        let token_id = U256::from(1);
+        let token_id = uint!(1_U256);
         let values = random_values(4);
         let expected_balance: U256 = values.iter().sum();
 
@@ -1419,6 +1423,155 @@ mod tests {
             ._mint_batch(ALICE, token_ids, values, &vec![0, 1, 2, 3].into())
             .expect_err(
                 "should not batch mint tokens when not equal array lengths",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidArrayLength(ERC1155InvalidArrayLength {
+                ids_length, values_length
+            }) if ids_length == uint!(3_U256) && values_length == uint!(4_U256)
+        ));
+    }
+
+    #[motsu::test]
+    fn burns(contract: Erc1155) {
+        let (token_ids, values) = init(contract, ALICE, 1);
+        let token_id = token_ids[0];
+        let value = values[0];
+
+        contract._burn(ALICE, token_id, value).expect("should burn tokens");
+
+        let balances = contract.balance_of(ALICE, token_id);
+
+        assert_eq!(U256::ZERO, balances);
+    }
+
+    #[motsu::test]
+    fn error_when_burns_from_invalid_sender(contract: Erc1155) {
+        let (token_ids, values) = init(contract, ALICE, 1);
+        let invalid_sender = Address::ZERO;
+
+        let err = contract
+            ._burn(invalid_sender, token_ids[0], values[0])
+            .expect_err("should not burn token for invalid sender");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSender(ERC1155InvalidSender {
+                sender
+            }) if sender == invalid_sender
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_burns_with_insufficient_balance(contract: Erc1155) {
+        let (token_ids, values) = init(contract, ALICE, 1);
+
+        let err = contract
+            ._burn(ALICE, token_ids[0], values[0] + uint!(1_U256))
+            .expect_err("should not burn token when insufficient balance");
+
+        assert!(matches!(
+            err,
+            Error::InsufficientBalance(ERC1155InsufficientBalance {
+                sender,
+                balance,
+                needed,
+                token_id
+            }) if sender == ALICE && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+        ));
+    }
+
+    #[motsu::test]
+    fn burns_batch(contract: Erc1155) {
+        let (token_ids, values) = init(contract, ALICE, 4);
+
+        contract
+            ._burn_batch(ALICE, token_ids.clone(), values.clone())
+            .expect("should batch burn tokens");
+
+        let balances = contract
+            .balance_of_batch(vec![ALICE; 4], token_ids.clone())
+            .expect("should return balances");
+
+        assert_eq!(vec![U256::ZERO; 4], balances);
+    }
+
+    #[motsu::test]
+    fn burns_batch_same_token(contract: Erc1155) {
+        let token_id = uint!(1_U256);
+        let value = uint!(80_U256);
+
+        contract
+            ._mint(ALICE, token_id, value, &vec![0, 1, 2, 3].into())
+            .expect("should mint token");
+
+        contract
+            ._burn_batch(
+                ALICE,
+                vec![token_id; 4],
+                vec![
+                    uint!(20_U256),
+                    uint!(10_U256),
+                    uint!(30_U256),
+                    uint!(20_U256),
+                ],
+            )
+            .expect("should batch burn tokens");
+
+        assert_eq!(U256::ZERO, contract.balance_of(ALICE, token_id));
+    }
+
+    #[motsu::test]
+    fn error_when_batch_burns_from_invalid_sender(contract: Erc1155) {
+        let (token_ids, values) = init(contract, ALICE, 4);
+        let invalid_sender = Address::ZERO;
+
+        let err = contract
+            ._burn_batch(invalid_sender, token_ids, values)
+            .expect_err("should not batch burn tokens for invalid sender");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSender(ERC1155InvalidSender {
+                sender
+            }) if sender == invalid_sender
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_batch_burns_with_insufficient_balance(contract: Erc1155) {
+        let (token_ids, values) = init(contract, ALICE, 4);
+
+        let err = contract
+            ._burn_batch(
+                ALICE,
+                token_ids.clone(),
+                values.clone().into_iter().map(|x| x + uint!(1_U256)).collect(),
+            )
+            .expect_err(
+                "should not batch burn tokens when insufficient balance",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InsufficientBalance(ERC1155InsufficientBalance {
+                sender,
+                balance,
+                needed,
+                token_id
+            }) if sender == ALICE && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_batch_burns_not_equal_arrays(contract: Erc1155) {
+        let (token_ids, values) = init(contract, ALICE, 3);
+
+        let err = contract
+            ._burn_batch(ALICE, token_ids, append(values, 4))
+            .expect_err(
+                "should not batch burn tokens when not equal array lengths",
             );
 
         assert!(matches!(
@@ -1848,10 +2001,7 @@ mod tests {
                 DAVE,
                 CHARLIE,
                 token_ids.clone(),
-                values
-                    .into_iter()
-                    .chain(std::iter::once(U256::from(4)))
-                    .collect(),
+                append(values, 4),
                 vec![].into(),
             )
             .expect_err(
@@ -2017,10 +2167,7 @@ mod tests {
                 DAVE,
                 CHARLIE,
                 token_ids.clone(),
-                values
-                    .into_iter()
-                    .chain(std::iter::once(U256::from(4)))
-                    .collect(),
+                append(values, 4),
                 vec![0, 1, 2, 3].into(),
             )
             .expect_err(
