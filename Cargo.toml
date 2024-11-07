@@ -113,7 +113,7 @@ openzeppelin-stylus = { path = "contracts" }
 openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
 motsu = { path = "lib/motsu" }
-motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
+motsu-proc = { path = "lib/motsu-proc", version = ">=0.1, <0.3" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }
 
