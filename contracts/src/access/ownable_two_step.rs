@@ -113,7 +113,8 @@ impl Ownable2Step {
     }
 
     /// Leaves the contract without owner. It will not be possible to call
-    /// [`Self::only_owner`] functions. Can only be called by the current owner.
+    /// [`Ownable::only_owner`] functions. Can only be called by the current
+    /// owner.
     ///
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby disabling any functionality that is only available to the owner.
