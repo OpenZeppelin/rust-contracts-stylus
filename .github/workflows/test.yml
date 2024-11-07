@@ -44,6 +44,11 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           rustflags: ""
 
+      - name: "Install nextest"
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Cargo generate-lockfile
         # Enable this ci template to run regardless of whether the lockfile is
         # checked in or not.
@@ -56,7 +61,7 @@ jobs:
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
-        run: cargo nextest run --locked --features std --doc
+        run: cargo test --locked --features std --doc
   os-check:
     # Run cargo test on MacOS and Windows.
     runs-on: ${{ matrix.os }}
@@ -77,6 +82,11 @@ jobs:
         with:
           toolchain: stable
           rustflags: ""
+
+      - name: "Install nextest"
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
 
       - name: Cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
