@@ -3,7 +3,7 @@
 //! throw on failure) are also supported, non-reverting calls are assumed to be
 //! successful.
 //!
-//! To use this library you can add a `#[inherit(SafeErc20)]` attribute to
+//! To use this library, you can add a `#[inherit(SafeErc20)]` attribute to
 //! your contract, which allows you to call the safe operations as
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
@@ -299,7 +299,7 @@ impl ISafeErc20 for SafeErc20 {
             return Ok(());
         }
 
-        // If that fails, reset allowance to zero, then retry the desired
+        // If that fails, reset the allowance to zero, then retry the desired
         // approval
         let reset_approval_call =
             IErc20::approveCall { spender, value: U256::ZERO };
