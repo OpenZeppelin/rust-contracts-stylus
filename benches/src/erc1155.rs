@@ -3,7 +3,7 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
     uint,
 };
 use e2e::{receipt, Account};
@@ -100,7 +100,5 @@ async fn deploy(
     account: &Account,
     cache_opt: CacheOpt,
 ) -> eyre::Result<Address> {
-    let args = Erc1155Example::constructorCall {};
-    let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc1155", Some(args), cache_opt).await
+    crate::deploy(account, "erc1155", None, cache_opt).await
 }
