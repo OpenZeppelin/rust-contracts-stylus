@@ -32,11 +32,9 @@ sol! {
     event OwnershipTransferStarted(address indexed previous_owner, address indexed new_owner);
 
     /// Emitted when ownership gets transferred between accounts.
-    // TODO: Can we remove this and use the one in Ownable directly?
     event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
 }
-// TODO: Since we are not introducing any new error type
-// would we be better removing this and just relying on OwnableError?
+
 /// An error that occurred in the implementation of an [`Ownable2Step`]
 /// contract.
 #[derive(SolidityError, Debug)]
@@ -57,9 +55,6 @@ sol_storage! {
 
 #[public]
 impl Ownable2Step {
-    //TODO: For functions re-exported from Ownable, should we refer
-    // to the docs in Ownable?
-    // Check what we've don in other examples and in Solidity.
     /// Returns the address of the current owner.
     pub fn owner(&self) -> Address {
         self._ownable.owner()
@@ -86,7 +81,7 @@ impl Ownable2Step {
         &mut self,
         new_owner: Address,
     ) -> Result<(), Error> {
-        self.only_owner()?;
+        self._ownable.only_owner()?;
         self._pending_owner.set(new_owner);
 
         let current_owner = self.owner();
@@ -128,7 +123,7 @@ impl Ownable2Step {
     /// If not called by the owner, then the error
     /// [`OwnableError::UnauthorizedAccount`]
     pub fn renounce_ownership(&mut self) -> Result<(), Error> {
-        self.only_owner()?;
+        self._ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
     }
@@ -148,17 +143,6 @@ impl Ownable2Step {
     fn _transfer_ownership(&mut self, new_owner: Address) {
         self._pending_owner.set(Address::ZERO);
         self._ownable._transfer_ownership(new_owner);
-    }
-
-    /// Checks if the [`msg::sender`] is set as the owner.
-    ///
-    /// # Errors
-    ///
-    /// If called by any account other than the owner, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
-    pub fn only_owner(&self) -> Result<(), Error> {
-        self._ownable.only_owner()?;
-        Ok(())
     }
 }
 

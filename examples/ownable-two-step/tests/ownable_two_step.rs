@@ -44,7 +44,9 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn construct_reverts_when_zero_owner(alice: Account) -> Result<()> {
+async fn construct_reverts_when_owner_is_zero_address(
+    alice: Account,
+) -> Result<()> {
     let err = alice
         .as_deployer()
         .with_constructor(ctr(Address::ZERO))
