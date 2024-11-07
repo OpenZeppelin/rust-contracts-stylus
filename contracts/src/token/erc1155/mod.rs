@@ -197,7 +197,7 @@ pub trait IErc1155 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    /// * `owner` - Account of the token's owner.
+    /// * `account` - Account of the token's owner.
     /// * `id` - Token id as a number.
     fn balance_of(&self, account: Address, id: U256) -> U256;
 
