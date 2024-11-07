@@ -1269,9 +1269,8 @@ mod tests {
             .balance_of_batch(accounts, token_ids)
             .expect("should return a vector of `U256::ZERO`");
 
-        for balance in balances {
-            assert_eq!(U256::ZERO, balance);
-        }
+        let expected = vec![U256::ZERO; 4];
+        assert_eq!(expected, balances);
     }
 
     #[motsu::test]
@@ -1362,6 +1361,30 @@ mod tests {
             .expect("should return balances");
 
         assert_eq!(values, balances);
+    }
+
+    #[motsu::test]
+    fn mints_batch_same_token(contract: Erc1155) {
+        let token_id = U256::from(1);
+        let values = random_values(4);
+        let expected_balance: U256 = values.iter().sum();
+
+        contract
+            ._mint_batch(
+                ALICE,
+                vec![token_id; 4],
+                values.clone(),
+                &vec![0, 1, 2, 3].into(),
+            )
+            .expect("should batch mint tokens");
+
+        assert_eq!(expected_balance, contract.balance_of(ALICE, token_id));
+
+        let balances = contract
+            .balance_of_batch(vec![ALICE; 4], vec![token_id; 4])
+            .expect("should return balances");
+
+        assert_eq!(vec![expected_balance; 4], balances);
     }
 
     #[motsu::test]
@@ -1814,6 +1837,36 @@ mod tests {
     }
 
     #[motsu::test]
+    fn error_when_not_equal_arrays_safe_batch_transfer_from(contract: Erc1155) {
+        let alice = msg::sender();
+        let (token_ids, values) = init(contract, alice, 4);
+
+        contract._operator_approvals.setter(DAVE).setter(alice).set(true);
+
+        let err = contract
+            .safe_batch_transfer_from(
+                DAVE,
+                CHARLIE,
+                token_ids.clone(),
+                values
+                    .into_iter()
+                    .chain(std::iter::once(U256::from(4)))
+                    .collect(),
+                vec![].into(),
+            )
+            .expect_err(
+                "should not transfer tokens when not equal array lengths",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidArrayLength(ERC1155InvalidArrayLength {
+                ids_length, values_length
+            }) if ids_length == uint!(4_U256) && values_length == uint!(5_U256)
+        ));
+    }
+
+    #[motsu::test]
     fn safe_batch_transfer_from_with_data(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, DAVE, 2);
@@ -1947,6 +2000,38 @@ mod tests {
                 needed,
                 token_id
             }) if sender == CHARLIE && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_not_equal_arrays_safe_batch_transfer_from_with_data(
+        contract: Erc1155,
+    ) {
+        let alice = msg::sender();
+        let (token_ids, values) = init(contract, alice, 4);
+
+        contract._operator_approvals.setter(DAVE).setter(alice).set(true);
+
+        let err = contract
+            .safe_batch_transfer_from(
+                DAVE,
+                CHARLIE,
+                token_ids.clone(),
+                values
+                    .into_iter()
+                    .chain(std::iter::once(U256::from(4)))
+                    .collect(),
+                vec![0, 1, 2, 3].into(),
+            )
+            .expect_err(
+                "should not transfer tokens when not equal array lengths",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidArrayLength(ERC1155InvalidArrayLength {
+                ids_length, values_length
+            }) if ids_length == uint!(4_U256) && values_length == uint!(5_U256)
         ));
     }
 
