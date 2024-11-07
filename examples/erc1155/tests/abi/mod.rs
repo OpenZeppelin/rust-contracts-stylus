@@ -13,6 +13,8 @@ sol!(
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
+        function burn(address from, uint256 id, uint256 amount) external;
+        function burnBatch(address from, uint256[] memory ids, uint256[] memory amounts) external;
 
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);

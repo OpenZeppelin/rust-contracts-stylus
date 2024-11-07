@@ -541,6 +541,296 @@ async fn error_invalid_array_length_in_batch_mint(
 }
 
 #[e2e::test]
+async fn burns(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let Erc1155::balanceOfReturn { balance: initial_balance } =
+        contract.balanceOf(alice_addr, token_id).call().await?;
+    assert_eq!(value, initial_balance);
+
+    let receipt = receipt!(contract.burn(alice_addr, token_id, value,))?;
+
+    assert!(receipt.emits(Erc1155::TransferSingle {
+        operator: alice_addr,
+        from: alice_addr,
+        to: Address::ZERO,
+        id: token_id,
+        value
+    }));
+
+    let Erc1155::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr, token_id).call().await?;
+
+    assert_eq!(U256::ZERO, balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_burns_from_invalid_sender(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+    let invalid_sender = Address::ZERO;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let err = send!(contract.burn(invalid_sender, token_id, value,))
+        .expect_err("should return `ERC1155InvalidSender`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidSender {
+        sender: invalid_sender,
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_burns_with_insufficient_balance(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let err =
+        send!(contract.burn(alice_addr, token_id, value + uint!(1_U256),))
+            .expect_err("should return `ERC1155InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
+        sender: alice_addr,
+        balance: value,
+        needed: value + uint!(1_U256),
+        id: token_id
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_batch(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(3);
+    let values = random_values(3);
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let Erc1155::balanceOfBatchReturn { balances: initial_balances } = contract
+        .balanceOfBatch(vec![alice_addr; 3], token_ids.clone())
+        .call()
+        .await?;
+    assert_eq!(values, initial_balances);
+
+    let receipt = receipt!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+    ))?;
+
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: alice_addr,
+        to: Address::ZERO,
+        ids: token_ids.clone(),
+        values: values.clone(),
+    }));
+
+    let Erc1155::balanceOfBatchReturn { balances } =
+        contract.balanceOfBatch(vec![alice_addr; 3], token_ids).call().await?;
+
+    assert_eq!(vec![U256::ZERO; 3], balances);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_batch_same_token(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = uint!(80_U256);
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let Erc1155::balanceOfReturn { balance: initial_balance } =
+        contract.balanceOf(alice_addr, token_id).call().await?;
+    assert_eq!(value, initial_balance);
+
+    let token_ids = vec![token_id; 4];
+    let values =
+        vec![uint!(20_U256), uint!(10_U256), uint!(30_U256), uint!(20_U256)];
+    let receipt = receipt!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+    ))?;
+
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: alice_addr,
+        to: Address::ZERO,
+        ids: token_ids,
+        values,
+    }));
+
+    let Erc1155::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr, token_id).call().await?;
+
+    assert_eq!(U256::ZERO, balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_batch_burns_from_invalid_sender(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(3);
+    let values = random_values(3);
+    let invalid_sender = Address::ZERO;
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let err = send!(contract.burnBatch(
+        invalid_sender,
+        token_ids.clone(),
+        values.clone(),
+    ))
+    .expect_err("should return `ERC1155InvalidSender`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidSender {
+        sender: invalid_sender,
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_batch_burns_with_insufficient_balance(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(3);
+    let values = random_values(3);
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let err = send!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone().into_iter().map(|x| x + uint!(1_U256)).collect(),
+    ))
+    .expect_err("should return `ERC1155InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
+        sender: alice_addr,
+        balance: values[0],
+        needed: values[0] + uint!(1_U256),
+        id: token_ids[0]
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_batch_burns_not_equal_arrays(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(3);
+    let values = random_values(3);
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![0, 1, 2, 3].into()
+    ))?;
+
+    let err = send!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        values
+            .clone()
+            .into_iter()
+            .chain(std::iter::once(U256::from(4)))
+            .collect(),
+    ))
+    .expect_err("should return `ERC1155InvalidArrayLength`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidArrayLength {
+        idsLength: uint!(3_U256),
+        valuesLength: uint!(4_U256)
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn set_approval_for_all(
     alice: Account,
     bob: Account,

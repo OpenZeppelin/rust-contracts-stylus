@@ -42,4 +42,24 @@ impl Erc1155Example {
         self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
         Ok(())
     }
+
+    pub fn burn(
+        &mut self,
+        to: Address,
+        token_id: U256,
+        amount: U256,
+    ) -> Result<(), Vec<u8>> {
+        self.erc1155._burn(to, token_id, amount)?;
+        Ok(())
+    }
+
+    pub fn burn_batch(
+        &mut self,
+        to: Address,
+        token_ids: Vec<U256>,
+        amounts: Vec<U256>,
+    ) -> Result<(), Vec<u8>> {
+        self.erc1155._burn_batch(to, token_ids, amounts)?;
+        Ok(())
+    }
 }

@@ -663,7 +663,7 @@ impl Erc1155 {
     /// # Panics
     ///
     /// Should not panic.
-    fn _burn(
+    pub fn _burn(
         &mut self,
         from: Address,
         id: U256,
@@ -698,7 +698,7 @@ impl Erc1155 {
     /// # Panics
     ///
     /// Should not panic.
-    fn _burn_batch(
+    pub fn _burn_batch(
         &mut self,
         from: Address,
         ids: Vec<U256>,
