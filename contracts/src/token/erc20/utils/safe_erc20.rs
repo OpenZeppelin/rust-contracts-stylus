@@ -294,13 +294,13 @@ impl ISafeErc20 for SafeErc20 {
     ) -> Result<(), Self::Error> {
         let approve_call = IErc20::approveCall { spender, value };
 
-        // Try performing the approval with the desired value
+        // Try performing the approval with the desired value.
         if Self::call_optional_return(token, &approve_call).is_ok() {
             return Ok(());
         }
 
         // If that fails, reset the allowance to zero, then retry the desired
-        // approval
+        // approval.
         let reset_approval_call =
             IErc20::approveCall { spender, value: U256::ZERO };
         Self::call_optional_return(token, &reset_approval_call)?;
@@ -345,7 +345,7 @@ impl SafeErc20 {
     }
 
     /// Returns the remaining number of ERC-20 tokens that `spender`
-    /// will be allowed to spend on behalf of owner.
+    /// will be allowed to spend on behalf of an owner.
     ///
     /// # Arguments
     ///
