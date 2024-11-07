@@ -4,7 +4,7 @@ use alloc::string::String;
 
 use alloy_primitives::FixedBytes;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_proc::{public, sol_storage};
+use stylus_sdk::stylus_proc::{public, sol_storage};
 
 use crate::utils::introspection::erc165::IErc165;
 
@@ -61,9 +61,6 @@ pub trait IErc20Metadata {
     fn decimals(&self) -> u8;
 }
 
-// FIXME: Apply multi-level inheritance to export Metadata's functions.
-// With the current version of SDK it is not possible.
-// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[public]
 impl IErc20Metadata for Erc20Metadata {
     fn name(&self) -> String {
@@ -75,9 +72,6 @@ impl IErc20Metadata for Erc20Metadata {
     }
 
     fn decimals(&self) -> u8 {
-        // TODO: Use `U8` an avoid the conversion once
-        // https://github.com/OffchainLabs/stylus-sdk-rs/issues/117
-        // gets resolved.
         DEFAULT_DECIMALS
     }
 }

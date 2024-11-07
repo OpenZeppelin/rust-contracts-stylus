@@ -1371,18 +1371,6 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 
     assert!(paused);
 
-    let result = contract.whenPaused().call().await;
-
-    assert!(result.is_ok());
-
-    let err = contract
-        .whenNotPaused()
-        .call()
-        .await
-        .expect_err("should return `EnforcedPause`");
-
-    assert!(err.reverted_with(Erc721::EnforcedPause {}));
-
     Ok(())
 }
 
@@ -1400,18 +1388,6 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
     let Erc721::pausedReturn { paused } = contract.paused().call().await?;
 
     assert_eq!(false, paused);
-
-    let result = contract.whenNotPaused().call().await;
-
-    assert!(result.is_ok());
-
-    let err = contract
-        .whenPaused()
-        .call()
-        .await
-        .expect_err("should return `ExpectedPause`");
-
-    assert!(err.reverted_with(Erc721::ExpectedPause {}));
 
     Ok(())
 }

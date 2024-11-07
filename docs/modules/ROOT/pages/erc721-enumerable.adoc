@@ -5,7 +5,7 @@ The OpenZeppelin xref:erc721.adoc[ERC-721] Enumerable extension is used to provi
 [[usage]]
 == Usage
 
-In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin_stylus/token/erc721/extensions/enumerable/index.html[Enumerable] flavour,
+In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin-stylus/0.1.1/openzeppelin_stylus/token/erc721/extensions/enumerable/index.html[Enumerable] flavour,
 you need to create a specified contract as follows:
 
 [source,rust]
@@ -25,7 +25,7 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc721, Erc721Enumerable)]
 impl Erc721Example {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {

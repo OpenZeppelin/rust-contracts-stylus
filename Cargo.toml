@@ -12,12 +12,14 @@ members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc1155",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
+  "examples/safe-erc20",
   "benches",
 ]
 default-members = [
@@ -32,6 +34,8 @@ default-members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc1155",
+  "examples/safe-erc20",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/access-control",
@@ -49,7 +53,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.1.0-rc"
+version = "0.1.1"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -62,11 +66,9 @@ all = "warn"
 
 [workspace.dependencies]
 # stylus-related
-stylus-sdk = { version = "=0.6.0", default-features = false }
-stylus-proc = { version = "=0.6.0", default-features = false }
-mini-alloc = "0.4.2"
+stylus-sdk = "0.6.0"
 
-alloy = { version = "0.1.4", features = [
+alloy = { version = "=0.1.4", features = [
   "contract",
   "network",
   "providers",
@@ -79,8 +81,11 @@ alloy = { version = "0.1.4", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "0.7.6", default-features = false }
-alloy-sol-types = { version = "0.7.6", default-features = false }
+alloy-primitives = { version = "=0.7.6", default-features = false }
+alloy-sol-types = { version = "=0.7.6", default-features = false }
+alloy-sol-macro = { version = "=0.7.6", default-features = false }
+alloy-sol-macro-expander = { version = "=0.7.6", default-features = false }
+alloy-sol-macro-input = { version = "=0.7.6", default-features = false }
 
 const-hex = { version = "1.11.1", default-features = false }
 eyre = "0.6.8"
@@ -92,6 +97,13 @@ regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.30"
+dashmap = "6.1.0"
+crypto-bigint = { version = "0.5.5", default-features = false, features = ["zeroize"] }
+num-traits = "0.2.14"
+zeroize = { version = "1.8.1", features = ["derive"] }
+proptest = "1"
+educe = "0.6.0"
+hex-literal = "0.4.1"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }
@@ -100,12 +112,12 @@ quote = "1.0.35"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
-openzeppelin-stylus-proc = { path = "contracts-proc" }
+openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
-motsu = { path = "lib/motsu"}
-motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
+motsu = { path = "lib/motsu" }
+motsu-proc = { path = "lib/motsu-proc", version = "0.2.0" }
 e2e = { path = "lib/e2e" }
-e2e-proc = {path = "lib/e2e-proc"}
+e2e-proc = { path = "lib/e2e-proc" }
 
 [profile.release]
 codegen-units = 1

@@ -8,12 +8,11 @@
 //! [`super::super::Erc721::balance_of`] logic, such as `Erc721Consecutive`,
 //! interfere with enumerability and should not be used together with
 //! [`Erc721Enumerable`].
-// TODO: Add link for `Erc721Consecutive` to module docs.
 
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_proc::{public, sol_storage, SolidityError};
+use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
 
 use crate::{
     token::{erc721, erc721::IErc721},
@@ -72,8 +71,6 @@ pub trait IErc721Enumerable {
     /// The error type associated to this ERC-721 enumerable trait
     /// implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
-
-    // TODO: fn supports_interface (#33)
 
     /// Returns a token ID owned by `owner` at a given `index` of its token
     /// list.
@@ -330,7 +327,6 @@ impl Erc721Enumerable {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
-    use motsu::prelude::*;
     use stylus_sdk::msg;
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};

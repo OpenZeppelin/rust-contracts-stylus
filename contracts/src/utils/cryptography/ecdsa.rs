@@ -6,10 +6,10 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
-use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::{self, Call, MethodError},
     storage::TopLevelStorage,
+    stylus_proc::SolidityError,
 };
 
 use crate::utils::cryptography::ecdsa;
@@ -30,13 +30,6 @@ sol! {
     #[allow(missing_docs)]
     error ECDSAInvalidSignature();
 
-    /// The signature has an invalid length.
-    ///
-    /// * `length` - Length of the signature.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ECDSAInvalidSignatureLength(uint256 length);
-
     /// The signature has an `S` value that is in the upper half order.
     ///
     /// * `s` - Invalid `S` value.
@@ -50,8 +43,6 @@ sol! {
 pub enum Error {
     /// The signature derives the `Address::ZERO`.
     InvalidSignature(ECDSAInvalidSignature),
-    /// The signature has an invalid length.
-    InvalidSignatureLength(ECDSAInvalidSignatureLength),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),
 }
@@ -186,7 +177,7 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 /// and for v in (302): v ∈ {27, 28}.
 ///
 /// Most signatures from current libraries generate a unique signature
-/// with an s-value in the lower half order.ECDSAInvalidSignatureLength
+/// with an s-value in the lower half order.
 ///
 /// If your library generates malleable signatures,
 /// such as s-values in the upper range, calculate a new s-value

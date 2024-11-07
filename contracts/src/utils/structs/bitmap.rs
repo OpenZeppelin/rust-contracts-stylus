@@ -14,7 +14,7 @@
 //!
 //! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
 use alloy_primitives::{uint, U256};
-use stylus_proc::sol_storage;
+use stylus_sdk::stylus_proc::sol_storage;
 
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);
@@ -95,7 +95,6 @@ impl BitMap {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{private::proptest::proptest, U256};
-    use motsu::prelude::*;
 
     use crate::utils::structs::bitmap::BitMap;
 
