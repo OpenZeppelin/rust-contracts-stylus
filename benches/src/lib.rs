@@ -14,6 +14,7 @@ use koba::config::{Deploy, Generate, PrivateKey};
 use serde::Deserialize;
 
 pub mod access_control;
+pub mod erc1155;
 pub mod erc20;
 pub mod erc721;
 pub mod merkle_proofs;
