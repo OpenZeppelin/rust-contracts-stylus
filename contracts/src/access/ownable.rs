@@ -10,6 +10,7 @@
 //! to the owner.
 use alloy_primitives::Address;
 use alloy_sol_types::sol;
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
@@ -63,16 +64,18 @@ sol_storage! {
     }
 }
 
-#[public]
-impl Ownable {
+/// Interface for IOwnable.
+#[interface_id]
+pub trait IOwnable {
+    /// The error type associated to this Ownable trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns the address of the current owner.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn owner(&self) -> Address {
-        self._owner.get()
-    }
+    fn owner(&self) -> Address;
 
     /// Transfers ownership of the contract to a new account (`new_owner`). Can
     /// only be called by the current owner.
@@ -90,25 +93,11 @@ impl Ownable {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    pub fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Error> {
-        self.only_owner()?;
-
-        if new_owner == Address::ZERO {
-            return Err(Error::InvalidOwner(OwnableInvalidOwner {
-                owner: Address::ZERO,
-            }));
-        }
-
-        self._transfer_ownership(new_owner);
-
-        Ok(())
-    }
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
-    /// [`Self::only_owner`] functions. Can only be called by the current owner.
+    /// functions that require `only_owner`. Can only be called by the current
+    /// owner.
     ///
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby disabling any functionality that is only available to the owner.
@@ -125,7 +114,32 @@ impl Ownable {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    pub fn renounce_ownership(&mut self) -> Result<(), Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Error>;
+}
+
+#[public]
+impl IOwnable for Ownable {
+    type Error = Error;
+
+    fn owner(&self) -> Address {
+        self._owner.get()
+    }
+
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
+        self.only_owner()?;
+
+        if new_owner == Address::ZERO {
+            return Err(Error::InvalidOwner(OwnableInvalidOwner {
+                owner: Address::ZERO,
+            }));
+        }
+
+        self._transfer_ownership(new_owner);
+
+        Ok(())
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())

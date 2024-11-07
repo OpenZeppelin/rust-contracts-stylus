@@ -24,7 +24,7 @@ use stylus_sdk::{
 };
 
 use crate::access::ownable::{
-    Error as OwnableError, Ownable, OwnableUnauthorizedAccount,
+    Error as OwnableError, IOwnable, Ownable, OwnableUnauthorizedAccount,
 };
 
 sol! {
