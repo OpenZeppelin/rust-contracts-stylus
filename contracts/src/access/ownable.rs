@@ -187,7 +187,7 @@ mod tests {
     use alloy_primitives::{address, Address};
     use stylus_sdk::msg;
 
-    use super::{Error, Ownable};
+    use super::{Error, IOwnable, Ownable};
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
