@@ -1548,6 +1548,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
+name = "erc1155-example"
+version = "0.1.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "rand",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc20-example"
 version = "0.1.1"
 dependencies = [
@@ -2430,7 +2444,7 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 
 [[package]]
 name = "motsu"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "const-hex",
  "dashmap 6.1.0",
