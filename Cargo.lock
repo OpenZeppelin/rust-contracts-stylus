@@ -2605,6 +2605,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ownable-two-step"
+version = "0.0.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "owo-colors"
 version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
