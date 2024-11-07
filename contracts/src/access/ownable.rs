@@ -18,6 +18,9 @@ use stylus_sdk::{
 
 sol! {
     /// Emitted when ownership gets transferred between accounts.
+    ///
+    /// * `previous_owner` - Address of the previous owner.
+    /// * `new_owner` - Address of the new owner.
     #[allow(missing_docs)]
     event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
 }
@@ -63,6 +66,10 @@ sol_storage! {
 #[public]
 impl Ownable {
     /// Returns the address of the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn owner(&self) -> Address {
         self._owner.get()
     }
@@ -79,6 +86,10 @@ impl Ownable {
     ///
     /// If `new_owner` is the zero address, then the error
     /// [`OwnableInvalidOwner`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`OwnershipTransferred`] event.
     pub fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -102,10 +113,18 @@ impl Ownable {
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby disabling any functionality that is only available to the owner.
     ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
     /// # Errors
     ///
     /// If not called by the owner, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`OwnershipTransferred`] event.
     pub fn renounce_ownership(&mut self) -> Result<(), Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
@@ -138,6 +157,10 @@ impl Ownable {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `new_owner` - Account that's gonna be the next owner.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`OwnershipTransferred`] event.
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let previous_owner = self._owner.get();
         self._owner.set(new_owner);

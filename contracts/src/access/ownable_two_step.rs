@@ -13,8 +13,8 @@
 //! later be changed with [`Ownable2Step::transfer_ownership`] and
 //! [`Ownable2Step::accept_ownership`].
 //!
-//! This module is used through inheritance. It will make available all
-//! functions from parent (`Ownable`).
+//! This module uses [`Ownable`] as a member, and makes all its public functions
+//! available.
 
 use alloy_primitives::Address;
 use alloy_sol_types::sol;
@@ -29,9 +29,16 @@ use crate::access::ownable::{
 
 sol! {
     /// Emitted when ownership transfer starts.
+    ///
+    /// * `previous_owner` - Address of the previous owner.
+    /// * `new_owner` - Address of the new owner, to which the ownership will be
+    ///   transferred.
     event OwnershipTransferStarted(address indexed previous_owner, address indexed new_owner);
 
     /// Emitted when ownership gets transferred between accounts.
+    ///
+    /// * `previous_owner` - Address of the previous owner.
+    /// * `new_owner` - Address of the new owner.
     event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
 }
 
@@ -56,17 +63,29 @@ sol_storage! {
 #[public]
 impl Ownable2Step {
     /// Returns the address of the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn owner(&self) -> Address {
         self._ownable.owner()
     }
 
     /// Returns the address of the pending owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     pub fn pending_owner(&self) -> Address {
         self._pending_owner.get()
     }
 
-    /// Initiates the transfer of ownership to a new account (`new_owner`).
-    /// Can only be called by the current owner.
+    /// Starts the ownership transfer of the contract to a new account. Replaces
+    /// the pending transfer if there is one. Can only be called by the
+    /// current owner.
+    ///
+    /// Setting `newOwner` to the zero address is allowed; this can be used to
+    /// cancel an initiated ownership transfer.
     ///
     /// # Arguments
     ///
@@ -77,6 +96,10 @@ impl Ownable2Step {
     ///
     /// If called by any account other than the owner, then the error
     /// [`OwnableError::UnauthorizedAccount`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`OwnershipTransferStarted`] event.
     pub fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -95,10 +118,18 @@ impl Ownable2Step {
     /// Accepts the ownership of the contract. Can only be called by the
     /// pending owner.
     ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
     /// # Errors
     ///
     /// If called by any account other than the pending owner, then the error
     /// [`OwnableError::UnauthorizedAccount`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`OwnershipTransferred`] event.
     pub fn accept_ownership(&mut self) -> Result<(), Error> {
         let sender = msg::sender();
         let pending_owner = self.pending_owner();
@@ -119,10 +150,15 @@ impl Ownable2Step {
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby disabling any functionality that is only available to the owner.
     ///
+    /// # Arguments
     /// # Errors
     ///
     /// If not called by the owner, then the error
-    /// [`OwnableError::UnauthorizedAccount`]
+    /// [`OwnableError::UnauthorizedAccount`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`OwnershipTransferred`] event.
     pub fn renounce_ownership(&mut self) -> Result<(), Error> {
         self._ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
@@ -141,6 +177,10 @@ impl Ownable2Step {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `new_owner` - Account that's gonna be the next owner.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`OwnershipTransferred`] event.
     fn _transfer_ownership(&mut self, new_owner: Address) {
         self._pending_owner.set(Address::ZERO);
         self._ownable._transfer_ownership(new_owner);
