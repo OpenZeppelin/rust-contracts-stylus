@@ -31,7 +31,7 @@ sol_interface! {
             bytes calldata data
         ) external returns (bytes4);
 
-        /// Handles the receipt of a multiple ERC-1155 token types.
+        /// Handles the receipt of multiple ERC-1155 token types.
         /// This function is called at the end of a
         /// [`IErc1155::safe_batch_transfer_from`]
         /// after the balances have been updated.

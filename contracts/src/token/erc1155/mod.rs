@@ -511,7 +511,7 @@ impl Erc1155 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `from` - Account to transfer tokens from.
     /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all token id.
+    /// * `ids` - Array of all token ids.
     /// * `values` - Array of all amount of tokens to be transferred.
     /// * `data` - Additional data with no specified format, sent in call to
     ///   `to`.
@@ -750,7 +750,7 @@ impl Erc1155 {
     /// case of batch transfer on the `to` address.
     ///
     /// The acceptance call is not executed and treated as a no-op if the
-    /// target address is doesn't contain code (i.e. an EOA). Otherwise,
+    /// target address doesn't contain code (i.e. an EOA). Otherwise,
     /// the recipient must implement either
     /// [`IERC1155Receiver::on_erc_1155_received`] for single transfer, or
     /// [`IERC1155Receiver::on_erc_1155_batch_received`] for a batch transfer,
@@ -760,7 +760,7 @@ impl Erc1155 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - Generally the address that initiated the token transfer
-    ///   (e.g. `msg.sender`).
+    ///   (e.g. `msg::sender()`).
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `details` - Details about token transfer, check
@@ -832,7 +832,7 @@ impl Erc1155 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all tokens ids to be minted.
+    /// * `ids` - Array of all token ids to be minted.
     /// * `values` - Array of all amounts of tokens to be minted.
     /// * `data` - Additional data with no specified format, sent in call to
     ///   `to`.
@@ -964,7 +964,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// Should not panic.
+    /// If updated balance exceeds `U256::MAX`.
     fn do_safe_transfer_from(
         &mut self,
         from: Address,
@@ -1066,7 +1066,7 @@ impl Erc1155 {
         Ok(())
     }
 
-    /// Checks if `msg::sender` is authorized to transfer tokens.
+    /// Checks if `msg::sender()` is authorized to transfer tokens.
     ///
     /// # Arguments
     ///
