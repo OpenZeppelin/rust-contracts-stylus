@@ -8,7 +8,6 @@ use crate::hash::{BuildHasher, Hash, Hasher};
 /// proofs][crate].
 ///
 /// It instantiates a [`Keccak256`] hasher.
-#[allow(clippy::module_name_repetitions)]
 pub struct KeccakBuilder;
 
 impl BuildHasher for KeccakBuilder {
@@ -24,7 +23,6 @@ impl BuildHasher for KeccakBuilder {
 ///
 /// The underlying implementation is guaranteed to match that of the
 /// `keccak256` algorithm, commonly used in Ethereum.
-#[allow(clippy::module_name_repetitions)]
 pub struct Keccak256(Keccak);
 
 impl Hasher for Keccak256 {
