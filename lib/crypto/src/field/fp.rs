@@ -867,7 +867,6 @@ macro_rules! fp_from_hex {
 
 #[cfg(test)]
 mod tests {
-    use num_traits::Euclid;
     use proptest::prelude::*;
 
     use super::*;
@@ -877,13 +876,12 @@ mod tests {
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
             prime::PrimeField,
-            Field,
         },
         fp_from_num, from_num,
     };
 
-    pub type Field64 = Fp64<Fp64Param>;
-    pub struct Fp64Param;
+    type Field64 = Fp64<Fp64Param>;
+    struct Fp64Param;
     impl FpParams<LIMBS_64> for Fp64Param {
         const GENERATOR: Fp64<Fp64Param> = fp_from_num!("3");
         const MODULUS: U64 = from_num!("1000003"); // Prime number
