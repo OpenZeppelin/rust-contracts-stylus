@@ -875,7 +875,6 @@ mod tests {
         field::{
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
-            prime::PrimeField,
         },
         fp_from_num, from_num,
     };
