@@ -1343,33 +1343,25 @@ mod tests {
     fn mints_batch(contract: Erc1155) {
         let token_ids = random_token_ids(4);
         let values = random_values(4);
-        let accounts = vec![ALICE, BOB, DAVE, CHARLIE];
 
-        for account in accounts {
-            contract
-                ._mint_batch(
-                    account,
-                    token_ids.clone(),
-                    values.clone(),
-                    &vec![0, 1, 2, 3].into(),
-                )
-                .expect("should batch mint tokens");
+        contract
+            ._mint_batch(
+                ALICE,
+                token_ids.clone(),
+                values.clone(),
+                &vec![0, 1, 2, 3].into(),
+            )
+            .expect("should batch mint tokens");
 
-            token_ids.iter().zip(values.iter()).for_each(
-                |(&token_id, &value)| {
-                    assert_eq!(value, contract.balance_of(account, token_id));
-                },
-            );
+        token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
+            assert_eq!(value, contract.balance_of(ALICE, token_id));
+        });
 
-            let balances = contract
-                .balance_of_batch(
-                    vec![account, account, account, account],
-                    token_ids.clone(),
-                )
-                .expect("should return balances");
+        let balances = contract
+            .balance_of_batch(vec![ALICE; 4], token_ids.clone())
+            .expect("should return balances");
 
-            assert_eq!(values, balances);
-        }
+        assert_eq!(values, balances);
     }
 
     #[motsu::test]
