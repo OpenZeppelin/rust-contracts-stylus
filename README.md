@@ -26,7 +26,7 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "0.1.1"
+openzeppelin-stylus = "0.2.0-alpha.1"
 ```
 
 Optionally, you can specify a git dependency if you want to have the latest
