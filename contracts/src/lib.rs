@@ -51,3 +51,4 @@ extern crate alloc;
 pub mod access;
 pub mod token;
 pub mod utils;
+pub mod governance;
