@@ -36,6 +36,7 @@ async fn constructs(alice: Account) -> Result<()> {
 
     let Ownable2Step::ownerReturn { owner } = contract.owner().call().await?;
     assert_eq!(owner, alice_addr);
+
     let Ownable2Step::pendingOwnerReturn { pendingOwner } =
         contract.pendingOwner().call().await?;
     assert_eq!(pendingOwner, Address::ZERO);
@@ -57,6 +58,7 @@ async fn construct_reverts_when_owner_is_zero_address(
     assert!(err.reverted_with(Ownable2Step::OwnableInvalidOwner {
         owner: Address::ZERO
     }));
+
     Ok(())
 }
 
@@ -147,6 +149,113 @@ async fn accept_ownership(alice: Account, bob: Account) -> Result<()> {
     let Ownable2Step::pendingOwnerReturn { pendingOwner } =
         contract.pendingOwner().call().await?;
     assert_eq!(pendingOwner, Address::ZERO);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn cancel_transfer_ownership(alice: Account, bob: Account) -> Result<()> {
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Ownable2Step::new(contract_addr, &alice.wallet);
+
+    let receipt = receipt!(contract.transferOwnership(bob_addr))?;
+    assert!(receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: bob_addr,
+    }));
+
+    let receipt = receipt!(contract.transferOwnership(Address::ZERO))?;
+    assert!(receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: Address::ZERO,
+    }));
+
+    // Connect as Bob and try to accept ownership
+    let contract = Ownable2Step::new(contract_addr, &bob.wallet);
+    let err = send!(contract.acceptOwnership())
+        .expect_err("should not accept when not pending owner");
+
+    err.reverted_with(Ownable2Step::OwnableUnauthorizedAccount {
+        account: bob_addr,
+    });
+
+    let Ownable2Step::ownerReturn { owner } = contract.owner().call().await?;
+    assert_eq!(owner, alice_addr);
+
+    let Ownable2Step::pendingOwnerReturn { pendingOwner } =
+        contract.pendingOwner().call().await?;
+    assert_eq!(pendingOwner, Address::ZERO);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn overwrite_previous_transfer_ownership(
+    alice: Account,
+    bob: Account,
+    charlie: Account,
+) -> Result<()> {
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let charlie_addr = charlie.address();
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Ownable2Step::new(contract_addr, &alice.wallet);
+
+    let receipt = receipt!(contract.transferOwnership(bob_addr))?;
+    assert!(receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: bob_addr,
+    }));
+
+    let receipt = receipt!(contract.transferOwnership(charlie_addr))?;
+    assert!(receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: charlie_addr,
+    }));
+
+    let Ownable2Step::pendingOwnerReturn { pendingOwner } =
+        contract.pendingOwner().call().await?;
+    assert_eq!(pendingOwner, charlie_addr);
+
+    // Connect as Bob and try to accept ownership
+    let contract = Ownable2Step::new(contract_addr, &bob.wallet);
+    let err = send!(contract.acceptOwnership())
+        .expect_err("should not accept when not pending owner");
+
+    err.reverted_with(Ownable2Step::OwnableUnauthorizedAccount {
+        account: bob_addr,
+    });
+
+    // Connect as Charlie and accept ownership
+    let contract = Ownable2Step::new(contract_addr, &charlie.wallet);
+    let receipt = receipt!(contract.acceptOwnership())?;
+    assert!(receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: charlie_addr,
+    }));
+
+    let Ownable2Step::pendingOwnerReturn { pendingOwner } =
+        contract.pendingOwner().call().await?;
+    assert_eq!(pendingOwner, Address::ZERO);
+
+    let Ownable2Step::ownerReturn { owner } = contract.owner().call().await?;
+    assert_eq!(owner, charlie_addr);
 
     Ok(())
 }
