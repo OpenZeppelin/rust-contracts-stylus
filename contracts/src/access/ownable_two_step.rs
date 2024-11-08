@@ -91,8 +91,8 @@ pub trait IOwnable2Step {
     /// Replaces the pending transfer if there is one. Can only be called by the
     /// current owner.
     ///
-    /// Setting `new_owner` to the Address::ZERO is allowed; this can be used to
-    /// cancel an initiated ownership transfer.
+    /// Setting `new_owner` to `Address::ZERO` is allowed; this can be used
+    /// to cancel an initiated ownership transfer.
     ///
     /// # Arguments
     ///
@@ -197,7 +197,7 @@ impl IOwnable2Step for Ownable2Step {
 
 impl Ownable2Step {
     /// Transfers ownership of the contract to a new account (`new_owner`) and
-    /// sets [`Self::pending_owner`] to Address::ZERO to avoid situations
+    /// sets [`Self::pending_owner`] to `Address::ZERO` to avoid situations
     /// where the transfer has been completed or the current owner renounces,
     /// but [`Self::pending_owner`] can still accept ownership.
     ///

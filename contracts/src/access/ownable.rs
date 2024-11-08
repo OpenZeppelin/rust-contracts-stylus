@@ -134,7 +134,7 @@ impl IOwnable for Ownable {
     ) -> Result<(), Self::Error> {
         self.only_owner()?;
 
-        if new_owner == Address::ZERO {
+        if new_owner.is_zero() {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
                 owner: Address::ZERO,
             }));
