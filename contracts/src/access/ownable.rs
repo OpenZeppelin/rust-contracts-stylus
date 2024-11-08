@@ -64,10 +64,10 @@ sol_storage! {
     }
 }
 
-/// Interface for IOwnable.
+/// Interface for an [`Ownable`] contract.
 #[interface_id]
 pub trait IOwnable {
-    /// The error type associated to this Ownable trait implementation.
+    /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the address of the current owner.
@@ -77,8 +77,8 @@ pub trait IOwnable {
     /// * `&self` - Read access to the contract's state.
     fn owner(&self) -> Address;
 
-    /// Transfers ownership of the contract to a new account (`new_owner`). Can
-    /// only be called by the current owner.
+    /// Transfers ownership of the contract to a new account (`new_owner`).
+    /// Can only be called by the current owner.
     ///
     /// # Arguments
     ///
@@ -93,7 +93,10 @@ pub trait IOwnable {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error>;
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// functions that require `only_owner`. Can only be called by the current
@@ -114,7 +117,7 @@ pub trait IOwnable {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    fn renounce_ownership(&mut self) -> Result<(), Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
 #[public]
@@ -125,10 +128,13 @@ impl IOwnable for Ownable {
         self._owner.get()
     }
 
-    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
         self.only_owner()?;
 
-        if new_owner == Address::ZERO {
+        if new_owner.is_zero() {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
                 owner: Address::ZERO,
             }));
@@ -139,7 +145,7 @@ impl IOwnable for Ownable {
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
@@ -148,6 +154,10 @@ impl IOwnable for Ownable {
 
 impl Ownable {
     /// Checks if the [`msg::sender`] is set as the owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     ///
     /// # Errors
     ///
@@ -170,7 +180,7 @@ impl Ownable {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `new_owner` - Account that's gonna be the next owner.
+    /// * `new_owner` - Account that is going to be the next owner.
     ///
     /// # Events
     ///
