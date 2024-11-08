@@ -154,7 +154,10 @@ async fn accept_ownership(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_ownership_cancel_transfer(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_ownership_cancel_transfer(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
