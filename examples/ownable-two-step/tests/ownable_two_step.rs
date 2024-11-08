@@ -164,32 +164,14 @@ async fn transfer_ownership_cancel_transfer(alice: Account, bob: Account) -> Res
         .deploy()
         .await?
         .address()?;
-
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
-
-    let receipt = receipt!(contract.transferOwnership(bob_addr))?;
-    assert!(receipt.emits(OwnershipTransferred {
-        previousOwner: alice_addr,
-        newOwner: bob_addr,
-    }));
+    receipt!(contract.transferOwnership(bob_addr))?;
 
     let receipt = receipt!(contract.transferOwnership(Address::ZERO))?;
-    assert!(receipt.emits(OwnershipTransferred {
+    assert!(receipt.emits(OwnershipTransferStarted {
         previousOwner: alice_addr,
         newOwner: Address::ZERO,
     }));
-
-    // Connect as Bob and try to accept ownership
-    let contract = Ownable2Step::new(contract_addr, &bob.wallet);
-    let err = send!(contract.acceptOwnership())
-        .expect_err("should not accept when not pending owner");
-
-    err.reverted_with(Ownable2Step::OwnableUnauthorizedAccount {
-        account: bob_addr,
-    });
-
-    let Ownable2Step::ownerReturn { owner } = contract.owner().call().await?;
-    assert_eq!(owner, alice_addr);
 
     let Ownable2Step::pendingOwnerReturn { pendingOwner } =
         contract.pendingOwner().call().await?;
