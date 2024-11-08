@@ -31,15 +31,21 @@ sol! {
     /// Emitted when ownership transfer starts.
     ///
     /// * `previous_owner` - Address of the previous owner.
-    /// * `new_owner` - Address of the new owner, to which the ownership will be
-    ///   transferred.
-    event OwnershipTransferStarted(address indexed previous_owner, address indexed new_owner);
+    /// * `new_owner` - Address of the new owner, to which the ownership
+    ///   will be transferred.
+    event OwnershipTransferStarted(
+        address indexed previous_owner,
+        address indexed new_owner
+    );
 
     /// Emitted when ownership gets transferred between accounts.
     ///
     /// * `previous_owner` - Address of the previous owner.
     /// * `new_owner` - Address of the new owner.
-    event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
+    event OwnershipTransferred(
+        address indexed previous_owner,
+        address indexed new_owner
+    );
 }
 
 /// An error that occurred in the implementation of an [`Ownable2Step`]
@@ -60,31 +66,32 @@ sol_storage! {
     }
 }
 
-#[public]
-impl Ownable2Step {
+/// Interface for an [`Ownable2Step`] contract.
+pub trait IOwnable2Step {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns the address of the current owner.
+    ///
+    /// Re-export of [`Ownable::owner`].
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn owner(&self) -> Address {
-        self._ownable.owner()
-    }
+    fn owner(&self) -> Address;
 
     /// Returns the address of the pending owner.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    pub fn pending_owner(&self) -> Address {
-        self._pending_owner.get()
-    }
+    fn pending_owner(&self) -> Address;
 
-    /// Starts the ownership transfer of the contract to a new account. Replaces
-    /// the pending transfer if there is one. Can only be called by the
+    /// Starts the ownership transfer of the contract to a new account.
+    /// Replaces the pending transfer if there is one. Can only be called by the
     /// current owner.
     ///
-    /// Setting `newOwner` to the zero address is allowed; this can be used to
+    /// Setting `new_owner` to the Address::ZERO is allowed; this can be used to
     /// cancel an initiated ownership transfer.
     ///
     /// # Arguments
@@ -100,23 +107,13 @@ impl Ownable2Step {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferStarted`] event.
-    pub fn transfer_ownership(
+    fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Error> {
-        self._ownable.only_owner()?;
-        self._pending_owner.set(new_owner);
+    ) -> Result<(), Self::Error>;
 
-        let current_owner = self.owner();
-        evm::log(OwnershipTransferStarted {
-            previous_owner: current_owner,
-            new_owner,
-        });
-        Ok(())
-    }
-
-    /// Accepts the ownership of the contract. Can only be called by the
-    /// pending owner.
+    /// Accepts the ownership of the contract.
+    /// Can only be called by the pending owner.
     ///
     /// # Arguments
     ///
@@ -130,18 +127,7 @@ impl Ownable2Step {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    pub fn accept_ownership(&mut self) -> Result<(), Error> {
-        let sender = msg::sender();
-        let pending_owner = self.pending_owner();
-        if sender != pending_owner {
-            return Err(OwnableError::UnauthorizedAccount(
-                OwnableUnauthorizedAccount { account: sender },
-            )
-            .into());
-        }
-        self._transfer_ownership(sender);
-        Ok(())
-    }
+    fn accept_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Ownable::only_owner`] functions. Can only be called by the current
@@ -159,7 +145,50 @@ impl Ownable2Step {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    pub fn renounce_ownership(&mut self) -> Result<(), Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+}
+
+#[public]
+impl IOwnable2Step for Ownable2Step {
+    type Error = Error;
+
+    fn owner(&self) -> Address {
+        self._ownable.owner()
+    }
+
+    fn pending_owner(&self) -> Address {
+        self._pending_owner.get()
+    }
+
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
+        self._ownable.only_owner()?;
+        self._pending_owner.set(new_owner);
+
+        let current_owner = self.owner();
+        evm::log(OwnershipTransferStarted {
+            previous_owner: current_owner,
+            new_owner,
+        });
+        Ok(())
+    }
+
+    fn accept_ownership(&mut self) -> Result<(), Self::Error> {
+        let sender = msg::sender();
+        let pending_owner = self.pending_owner();
+        if sender != pending_owner {
+            return Err(OwnableError::UnauthorizedAccount(
+                OwnableUnauthorizedAccount { account: sender },
+            )
+            .into());
+        }
+        self._transfer_ownership(sender);
+        Ok(())
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Error> {
         self._ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
@@ -168,9 +197,10 @@ impl Ownable2Step {
 
 impl Ownable2Step {
     /// Transfers ownership of the contract to a new account (`new_owner`) and
-    /// sets [`Self::pending_owner`] to zero to avoid situations where the
-    /// transfer has been completed or the current owner renounces, but
-    /// [`Self::pending_owner`] can still accept ownership.
+    /// sets [`Self::pending_owner`] to Address::ZERO to avoid situations
+    /// where the transfer has been completed or the current owner renounces,
+    /// but [`Self::pending_owner`] can still accept ownership.
+    ///
     /// Internal function without access restriction.
     ///
     /// # Arguments
@@ -192,7 +222,7 @@ mod tests {
     use alloy_primitives::{address, Address};
     use stylus_sdk::msg;
 
-    use super::{Error, Ownable2Step, OwnableError};
+    use super::{Error, IOwnable2Step, Ownable2Step, OwnableError};
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
     const BOB: Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");

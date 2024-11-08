@@ -64,10 +64,10 @@ sol_storage! {
     }
 }
 
-/// Interface for IOwnable.
+/// Interface for an [`Ownable`] contract.
 #[interface_id]
 pub trait IOwnable {
-    /// The error type associated to this trait implementation.
+    /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the address of the current owner.
@@ -155,6 +155,10 @@ impl IOwnable for Ownable {
 impl Ownable {
     /// Checks if the [`msg::sender`] is set as the owner.
     ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    ///
     /// # Errors
     ///
     /// If called by any account other than the owner, then the error
@@ -176,7 +180,7 @@ impl Ownable {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `new_owner` - Account that's gonna be the next owner.
+    /// * `new_owner` - Account that is going to be the next owner.
     ///
     /// # Events
     ///
