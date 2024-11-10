@@ -16,6 +16,7 @@ use stylus_sdk::{
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 pub mod extensions;
+pub mod utils;
 
 sol! {
     /// Emitted when `value` tokens are moved from one account (`from`) to

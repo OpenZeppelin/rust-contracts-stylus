@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
--
+- ERC-1155 Multi Token Standard. #275
+- `SafeErc20` Utility. #289
+- Finite Fields arithmetics. #376
 
 ### Changed
 

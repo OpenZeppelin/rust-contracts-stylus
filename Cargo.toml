@@ -1,42 +1,46 @@
 [workspace]
 members = [
-    "contracts",
-    "contracts-proc",
-    "lib/crypto",
-    "lib/motsu",
-    "lib/motsu-proc",
-    "lib/e2e",
-    "lib/e2e-proc",
-    "examples/erc20",
-    "examples/erc20-permit",
-    "examples/erc721",
-    "examples/erc721-consecutive",
-    "examples/erc721-metadata",
-    "examples/merkle-proofs",
-    "examples/ownable",
-    "examples/access-control",
-    "examples/basic/token",
-    "examples/basic/script",
-    "examples/ecdsa",
-    "benches",
+  "contracts",
+  "contracts-proc",
+  "lib/crypto",
+  "lib/motsu",
+  "lib/motsu-proc",
+  "lib/e2e",
+  "lib/e2e-proc",
+  "examples/erc20",
+  "examples/erc20-permit",
+  "examples/erc721",
+  "examples/erc721-consecutive",
+  "examples/erc721-metadata",
+  "examples/erc1155",
+  "examples/merkle-proofs",
+  "examples/ownable",
+  "examples/access-control",
+  "examples/basic/token",
+  "examples/basic/script",
+  "examples/ecdsa",
+  "examples/safe-erc20",
+  "benches",
 ]
 default-members = [
-    "contracts",
-    "contracts-proc",
-    "lib/crypto",
-    "lib/motsu",
-    "lib/motsu-proc",
-    "lib/e2e-proc",
-    "examples/erc20",
-    "examples/erc20-permit",
-    "examples/erc721",
-    "examples/erc721-consecutive",
-    "examples/erc721-metadata",
-    "examples/merkle-proofs",
-    "examples/ownable",
-    "examples/access-control",
-    "examples/basic/token",
-    "examples/ecdsa",
+  "contracts",
+  "contracts-proc",
+  "lib/crypto",
+  "lib/motsu",
+  "lib/motsu-proc",
+  "lib/e2e-proc",
+  "examples/erc20",
+  "examples/erc20-permit",
+  "examples/erc721",
+  "examples/erc721-consecutive",
+  "examples/erc721-metadata",
+  "examples/erc1155",
+  "examples/safe-erc20",
+  "examples/merkle-proofs",
+  "examples/ownable",
+  "examples/access-control",
+  "examples/basic/token",
+  "examples/ecdsa",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
@@ -65,14 +69,14 @@ all = "warn"
 stylus-sdk = "0.6.0"
 
 alloy = { version = "=0.1.4", features = [
-    "contract",
-    "network",
-    "providers",
-    "provider-http",
-    "rpc-client",
-    "rpc-types-eth",
-    "signer-local",
-    "getrandom",
+  "contract",
+  "network",
+  "providers",
+  "provider-http",
+  "rpc-client",
+  "rpc-types-eth",
+  "signer-local",
+  "getrandom",
 ] }
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
@@ -98,6 +102,8 @@ crypto-bigint = { version = "0.5.5", default-features = false, features = ["zero
 num-traits = "0.2.14"
 zeroize = { version = "1.8.1", features = ["derive"] }
 proptest = "1"
+educe = "0.6.0"
+hex-literal = "0.4.1"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }
@@ -109,7 +115,7 @@ openzeppelin-stylus = { path = "contracts" }
 openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
 motsu = { path = "lib/motsu" }
-motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
+motsu-proc = { path = "lib/motsu-proc", version = "0.2.0" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }
 

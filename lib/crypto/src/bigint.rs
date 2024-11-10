@@ -288,7 +288,7 @@ mod test {
     fn convert_from_str_radix() {
         let uint_from_base10 = from_str_radix::<4>(
             "28948022309329048855892746252171976963363056481941647379679742748393362948097",
-            10,
+            10
         );
         #[allow(clippy::unreadable_literal)]
         let expected = Uint::<4>::from_words([

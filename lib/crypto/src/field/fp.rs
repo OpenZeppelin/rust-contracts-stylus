@@ -186,6 +186,7 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> Fp<P, LIMBS> {
     /// `R = M % MODULUS`.
     const R: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R;
     /// `R2 = R^2 % MODULUS`
+    #[allow(dead_code)]
     const R2: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R2;
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
@@ -872,13 +873,12 @@ mod tests {
         field::{
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
-            Field,
         },
         fp_from_num, from_num,
     };
 
-    pub type Field64 = Fp64<Fp64Param>;
-    pub struct Fp64Param;
+    type Field64 = Fp64<Fp64Param>;
+    struct Fp64Param;
     impl FpParams<LIMBS_64> for Fp64Param {
         const GENERATOR: Fp64<Fp64Param> = fp_from_num!("3");
         const MODULUS: U64 = from_num!("1000003"); // Prime number
