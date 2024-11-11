@@ -27,7 +27,7 @@ use stylus_sdk::{
     call::{transfer_eth, Call},
     contract, evm, function_selector,
     storage::TopLevelStorage,
-    stylus_proc::{SolidityError, public, sol_interface, sol_storage},
+    stylus_proc::{public, sol_interface, sol_storage, SolidityError},
 };
 
 use crate::access::{ownable, ownable::Ownable};
