@@ -1,6 +1,7 @@
 //! A vesting wallet is an ownable contract that can receive native currency and
-//! ERC20 tokens, and release these assets to the wallet owner, also referred to
-//! as "beneficiary", according to a vesting schedule.
+//! [`crate::token::erc20::Erc20`] tokens, and release these assets to the
+//! wallet owner, also referred to as "beneficiary", according to a vesting
+//! schedule.
 //!
 //! Any assets transferred to this contract will follow the vesting schedule as
 //! if they were locked from the beginning. Consequently, if the vesting has
@@ -35,10 +36,15 @@ use crate::access::{ownable, ownable::Ownable};
 
 sol! {
     /// Emitted when `amount` of ether has been released.
+    ///
+    /// * `amount` - Total ether released.
     #[allow(missing_docs)]
     event EtherReleased(uint256 amount);
 
     /// Emitted when `amount` of ERC20 `token` has been released.
+    ///
+    /// * `token` - Address of the token being released.
+    /// * `amount` - Number of tokens released.
     #[allow(missing_docs)]
     event ERC20Released(address indexed token, uint256 amount);
 }
@@ -83,7 +89,7 @@ pub enum Error {
 }
 
 sol_storage! {
-    /// State of a VestingWallet Contract.
+    /// State of the [`VestingWallet`] Contract.
     pub struct VestingWallet {
         /// Ownable contract
         Ownable ownable;
