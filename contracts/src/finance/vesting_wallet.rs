@@ -281,7 +281,7 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256 {
-        self._vesting_schedule(
+        self.vesting_schedule(
             contract::balance() + self.released_eth(),
             U64::from(timestamp),
         )
@@ -295,7 +295,7 @@ impl IVestingWallet for VestingWallet {
             .balance_of(call, contract::address())
             .expect("should return the balance");
 
-        self._vesting_schedule(
+        self.vesting_schedule(
             balance + self.released_erc20(token),
             U64::from(timestamp),
         )
@@ -306,11 +306,7 @@ impl VestingWallet {
     /// Virtual implementation of the vesting formula. This returns the amount
     /// vested, as a function of time, for an asset given its total
     /// historical allocation.
-    fn _vesting_schedule(
-        &self,
-        total_allocation: U256,
-        timestamp: U64,
-    ) -> U256 {
+    fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         if U256::from(timestamp) < self.start() {
             U256::ZERO
         } else if U256::from(timestamp) >= self.end() {
@@ -384,12 +380,12 @@ mod tests {
 
         assert_eq!(
             U256::ZERO,
-            contract._vesting_schedule(two, start - U64::from(1))
+            contract.vesting_schedule(two, start - U64::from(1))
         );
         assert_eq!(
             one,
-            contract._vesting_schedule(two, start + duration / U64::from(2))
+            contract.vesting_schedule(two, start + duration / U64::from(2))
         );
-        assert_eq!(two, contract._vesting_schedule(two, start + duration));
+        assert_eq!(two, contract.vesting_schedule(two, start + duration));
     }
 }
