@@ -56,22 +56,13 @@ sol! {
     error ReleaseTokenFailed(address token);
 }
 
-pub use erc20::IERC20;
+pub use token::IErc20;
 #[allow(missing_docs)]
-mod erc20 {
-    use stylus_sdk::stylus_proc::sol_interface;
-
-    sol_interface! {
-        /// Interface of the [`crate::token::erc20::Erc20`] standard as defined in the ERC.
-        interface IERC20 {
-            /// Returns the value of tokens owned by `account`.
+mod token {
+    stylus_sdk::stylus_proc::sol_interface! {
+        /// Interface of the ERC-20 token.
+        interface IErc20 {
             function balanceOf(address account) external view returns (uint256);
-
-            /// Moves a `value` amount of tokens from the caller's account to `to`.
-            ///
-            /// Returns a boolean value indicating whether the operation succeeded.
-            ///
-            /// Emits a [`crate::token::erc20::Transfer`] event.
             function transfer(address to, uint256 value) external returns (bool);
         }
     }
