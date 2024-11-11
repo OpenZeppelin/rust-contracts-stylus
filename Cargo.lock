@@ -4024,15 +4024,13 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vesting-wallet-example"
-version = "0.0.0"
+version = "0.1.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
- "mini-alloc",
  "openzeppelin-stylus",
- "stylus-proc",
  "stylus-sdk",
  "tokio",
 ]

@@ -22,13 +22,12 @@
 //! intended.
 use alloy_primitives::{Address, U256, U64};
 use alloy_sol_types::sol;
-use stylus_proc::SolidityError;
 use stylus_sdk::{
     block, call,
     call::{transfer_eth, Call},
     contract, evm, function_selector,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_interface, sol_storage},
+    stylus_proc::{SolidityError, public, sol_interface, sol_storage},
 };
 
 use crate::access::{ownable, ownable::Ownable};
