@@ -1,8 +1,12 @@
 #![cfg(feature = "e2e")]
 
 use abi::VestingWallet;
-use alloy::{eips::BlockId, providers::Provider, sol};
-use alloy_primitives::{Address, U256};
+use alloy::{
+    eips::BlockId,
+    primitives::{Address, U256},
+    providers::Provider,
+    sol,
+};
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
 use mock::{erc20, erc20::ERC20Mock};
 

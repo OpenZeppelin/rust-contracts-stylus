@@ -27,7 +27,7 @@ use stylus_sdk::{
     call::{transfer_eth, Call},
     contract, evm, function_selector,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_interface, sol_storage, SolidityError},
+    stylus_proc::{public, sol_storage, SolidityError},
 };
 
 use crate::access::{ownable, ownable::Ownable};
@@ -56,18 +56,24 @@ sol! {
     error ReleaseTokenFailed(address token);
 }
 
-sol_interface! {
-    /// Interface of the [`crate::token::erc20::Erc20`] standard as defined in the ERC.
-    interface IERC20 {
-        /// Returns the value of tokens owned by `account`.
-        function balanceOf(address account) external view returns (uint256);
+pub use erc20::IERC20;
+#[allow(missing_docs)]
+mod erc20 {
+    use stylus_sdk::stylus_proc::sol_interface;
 
-        /// Moves a `value` amount of tokens from the caller's account to `to`.
-        ///
-        /// Returns a boolean value indicating whether the operation succeeded.
-        ///
-        /// Emits a [`crate::token::erc20::Transfer`] event.
-        function transfer(address to, uint256 value) external returns (bool);
+    sol_interface! {
+        /// Interface of the [`crate::token::erc20::Erc20`] standard as defined in the ERC.
+        interface IERC20 {
+            /// Returns the value of tokens owned by `account`.
+            function balanceOf(address account) external view returns (uint256);
+
+            /// Moves a `value` amount of tokens from the caller's account to `to`.
+            ///
+            /// Returns a boolean value indicating whether the operation succeeded.
+            ///
+            /// Emits a [`crate::token::erc20::Transfer`] event.
+            function transfer(address to, uint256 value) external returns (bool);
+        }
     }
 }
 
