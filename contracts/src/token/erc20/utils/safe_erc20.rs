@@ -77,7 +77,7 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for SafeErc20 {}
 
-/// Required interface of an [`SafeErc20`] utility contract.
+/// Required interface of a [`SafeErc20`] utility contract.
 pub trait ISafeErc20 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
