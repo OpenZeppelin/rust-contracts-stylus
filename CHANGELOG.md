@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ERC-1155 Multi Token Standard. #275
 - `SafeErc20` Utility. #289
 - Finite Fields arithmetics. #376
+- `VestingWallet` contract. #402
 
 ### Changed
 
--
+- Implemented `MethodError` for `ownable::Error`. #402
 
 ### Fixed
 
