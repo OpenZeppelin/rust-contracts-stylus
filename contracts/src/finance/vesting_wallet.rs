@@ -119,10 +119,18 @@ pub trait IVestingWallet {
     fn receive_ether(&self);
 
     /// Returns the address of the current owner.
+    ///
+    /// Re-export of [`Ownable::owner`].
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn owner(&self) -> Address;
 
     /// Transfers ownership of the contract to a new account (`new_owner`). Can
     /// only be called by the current owner.
+    ///
+    /// Re-export of [`Ownable::transfer_ownership`].
     ///
     /// # Arguments
     ///
@@ -131,8 +139,14 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
+    /// If called by any account other than the owner, then the error
+    /// [`ownable::Error::UnauthorizedAccount`] is returned.
     /// If `new_owner` is the zero address, then the error
-    /// [`OwnableInvalidOwner`] is returned.
+    /// [`ownable::Error::InvalidOwner`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`ownable::OwnershipTransferred`] event.
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -141,42 +155,92 @@ pub trait IVestingWallet {
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Self::only_owner`] functions. Can only be called by the current owner.
     ///
+    /// Re-export of [`Ownable::renounce_ownership`].
+    ///
     /// NOTE: Renouncing ownership will leave the contract without an owner,
     /// thereby disabling any functionality that is only available to the owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
     ///
     /// # Errors
     ///
     /// If not called by the owner, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// [`ownable::Error::UnauthorizedAccount`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits a [`ownable::OwnershipTransferred`] event.
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Getter for the start timestamp.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn start(&self) -> U256;
 
     /// Getter for the vesting duration.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn duration(&self) -> U256;
 
     /// Getter for the end timestamp.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Panics
+    ///
+    /// If end time exceeds `U256::MAX`.
     fn end(&self) -> U256;
 
-    /// Amount of eth already released
+    /// Amount of eth already released.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     #[selector(name = "released")]
     fn released_eth(&self) -> U256;
 
-    /// Amount of token already released
+    /// Amount of token already released.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `token` - Address of the token being released.
     #[selector(name = "released")]
     fn released_erc20(&self, token: Address) -> U256;
 
     /// Getter for the amount of releasable eth.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
     /// Getter for the amount of releasable `token` tokens. `token` should be
     /// the address of an [`crate::token::erc20::Erc20`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the releasable token.
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address) -> U256;
 
     /// Release the native token (ether) that have already vested.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
+    /// # Events
     ///
     /// Emits an [`EtherReleased`] event.
     #[selector(name = "release")]
@@ -184,17 +248,43 @@ pub trait IVestingWallet {
 
     /// Release the tokens that have already vested.
     ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the token being released.
+    ///
+    /// # Events
+    ///
     /// Emits an [`ERC20Released`] event.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
     /// Calculates the amount of ether that has already vested. Default
     /// implementation is a linear vesting curve.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `timestamp` - Point in time for which to check the vested amount.
+    ///
+    /// # Panics
+    ///
+    /// If total allocation exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
     /// Calculates the amount of tokens that has already vested. Default
     /// implementation is a linear vesting curve.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the token being released.
+    /// * `timestamp` - Point in time for which to check the vested amount.
+    ///
+    /// # Panics
+    ///
+    /// If total allocation exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(&mut self, token: Address, timestamp: u64) -> U256;
 }
@@ -229,6 +319,7 @@ impl IVestingWallet for VestingWallet {
         U256::from(self._duration.get())
     }
 
+    // TODO: checked_add
     fn end(&self) -> U256 {
         self.start() + self.duration()
     }
@@ -243,11 +334,13 @@ impl IVestingWallet for VestingWallet {
         self._erc20_released.get(token)
     }
 
+    // TODO: checked_sub
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256 {
         self.vested_amount_eth(block::timestamp()) - self.released_eth()
     }
 
+    // TODO: checked_sub
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address) -> U256 {
         self.vested_amount_erc20(token, block::timestamp())
@@ -291,6 +384,7 @@ impl IVestingWallet for VestingWallet {
         Ok(())
     }
 
+    // TODO: checked_add
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256 {
         self.vesting_schedule(
@@ -299,6 +393,8 @@ impl IVestingWallet for VestingWallet {
         )
     }
 
+    // TODO: checked_add
+    // TODO: use RawCall to remove the need for &mut self
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(&mut self, token: Address, timestamp: u64) -> U256 {
         let erc20 = IErc20::new(token);
@@ -315,6 +411,9 @@ impl IVestingWallet for VestingWallet {
 }
 
 impl VestingWallet {
+    // TODO: checked_mul
+    // TODO: unchecked_sub
+    // TODO: unchecked_div?
     /// Virtual implementation of the vesting formula. This returns the amount
     /// vested, as a function of time, for an asset given its total
     /// historical allocation.
