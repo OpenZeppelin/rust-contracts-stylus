@@ -133,7 +133,10 @@ pub trait IVestingWallet {
     ///
     /// If `new_owner` is the zero address, then the error
     /// [`OwnableInvalidOwner`] is returned.
-    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error>;
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Self::only_owner`] functions. Can only be called by the current owner.
@@ -145,7 +148,7 @@ pub trait IVestingWallet {
     ///
     /// If not called by the owner, then the error
     /// [`Error::UnauthorizedAccount`] is returned.
-    fn renounce_ownership(&mut self) -> Result<(), Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Getter for the start timestamp.
     fn start(&self) -> U256;
@@ -177,13 +180,13 @@ pub trait IVestingWallet {
     ///
     /// Emits an [`EtherReleased`] event.
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), Error>;
+    fn release_eth(&mut self) -> Result<(), Self::Error>;
 
     /// Release the tokens that have already vested.
     ///
     /// Emits an [`ERC20Released`] event.
     #[selector(name = "release")]
-    fn release_erc20(&mut self, token: Address) -> Result<(), Error>;
+    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
     /// Calculates the amount of ether that has already vested. Default
     /// implementation is a linear vesting curve.
@@ -207,11 +210,14 @@ impl IVestingWallet for VestingWallet {
         self.ownable.owner()
     }
 
-    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 
@@ -249,7 +255,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), Error> {
+    fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
         let released = self
             .released_eth()
@@ -264,7 +270,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_erc20(&mut self, token: Address) -> Result<(), Error> {
+    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
         let amount = self.releasable_erc20(token);
         let released = self
             .released_erc20(token)
