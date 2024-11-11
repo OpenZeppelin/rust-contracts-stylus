@@ -323,7 +323,7 @@ mod tests {
     use alloy_primitives::{address, uint, Address, U256, U64};
     use stylus_sdk::block;
 
-    use super::VestingWallet;
+    use super::{IVestingWallet, VestingWallet};
 
     const TOKEN: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
     const DURATION: u64 = 4 * 365 * 86400; // 4 years
