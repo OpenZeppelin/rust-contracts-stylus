@@ -263,7 +263,7 @@ impl IVestingWallet for VestingWallet {
         let released = self
             .released_erc20(token)
             .checked_add(amount)
-            .expect("should not exceed `U256::MAX` for `_erc20Released`");
+            .expect("should not exceed `U256::MAX` for `_erc20_released`");
         self._erc20_released.setter(token).set(released);
 
         evm::log(ERC20Released { token, amount });
