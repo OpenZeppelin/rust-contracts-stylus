@@ -16,6 +16,7 @@ use stylus_sdk::{
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 pub mod extensions;
+pub mod utils;
 
 sol! {
     /// Emitted when `value` tokens are moved from one account (`from`) to
@@ -72,6 +73,14 @@ sol! {
     #[allow(missing_docs)]
     error ERC20InvalidSpender(address spender);
 
+    /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+    /// approver Address initiating an approval operation.
+    ///
+    /// * `approver` - Address initiating an approval operation.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error ERC20InvalidApprover(address approver);
+
 }
 
 /// An [`Erc20`] error defined as described in [ERC-6093].
@@ -92,6 +101,9 @@ pub enum Error {
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
     InvalidSpender(ERC20InvalidSpender),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals. approver Address initiating an approval operation.
+    InvalidApprover(ERC20InvalidApprover),
 }
 
 impl MethodError for Error {
@@ -273,7 +285,7 @@ impl IErc20 for Erc20 {
         value: U256,
     ) -> Result<bool, Self::Error> {
         let owner = msg::sender();
-        self._approve(owner, spender, value)
+        self._approve(owner, spender, value, true)
     }
 
     fn transfer_from(
@@ -306,6 +318,7 @@ impl Erc20 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
+    /// * `emit_event` - Emit an [`Approval`] event flag.
     ///
     /// # Errors
     ///
@@ -320,7 +333,14 @@ impl Erc20 {
         owner: Address,
         spender: Address,
         value: U256,
+        emit_event: bool,
     ) -> Result<bool, Error> {
+        if owner.is_zero() {
+            return Err(Error::InvalidApprover(ERC20InvalidApprover {
+                approver: Address::ZERO,
+            }));
+        }
+
         if spender.is_zero() {
             return Err(Error::InvalidSpender(ERC20InvalidSpender {
                 spender: Address::ZERO,
@@ -328,7 +348,9 @@ impl Erc20 {
         }
 
         self._allowances.setter(owner).insert(spender, value);
-        evm::log(Approval { owner, spender, value });
+        if emit_event {
+            evm::log(Approval { owner, spender, value });
+        }
         Ok(true)
     }
 
@@ -533,7 +555,7 @@ impl Erc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Error> {
-        let current_allowance = self._allowances.get(owner).get(spender);
+        let current_allowance = self.allowance(owner, spender);
         if current_allowance != U256::MAX {
             if current_allowance < value {
                 return Err(Error::InsufficientAllowance(
@@ -545,9 +567,7 @@ impl Erc20 {
                 ));
             }
 
-            self._allowances
-                .setter(owner)
-                .insert(spender, current_allowance - value);
+            self._approve(owner, spender, current_allowance - value, false)?;
         }
 
         Ok(())
@@ -560,10 +580,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::{Erc20, Error, IErc20};
-    use crate::{
-        token::erc721::{Erc721, IErc721},
-        utils::introspection::erc165::IErc165,
-    };
+    use crate::utils::introspection::erc165::IErc165;
 
     #[motsu::test]
     fn reads_balance(contract: Erc20) {
@@ -830,7 +847,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_errors_when_invalid_sender(contract: Erc20) {
+    fn transfer_from_errors_when_invalid_approver(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         contract
@@ -839,7 +856,7 @@ mod tests {
             .setter(msg::sender())
             .set(one);
         let result = contract.transfer_from(Address::ZERO, alice, one);
-        assert!(matches!(result, Err(Error::InvalidSender(_))));
+        assert!(matches!(result, Err(Error::InvalidApprover(_))));
     }
 
     #[motsu::test]

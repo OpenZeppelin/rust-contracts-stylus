@@ -8,11 +8,11 @@ Developers can build a Merkle Tree off-chain, which allows for verifying that an
 
 TIP: OpenZeppelin Contracts provides a https://github.com/OpenZeppelin/merkle-tree[JavaScript library] for building trees off-chain and generating proofs.
 
-https://docs.rs/crypto/latest/merkle/struct.Verifier.html[`MerkleProof`] provides:
+https://docs.rs/openzeppelin-crypto/0.1.1/openzeppelin_crypto/merkle/struct.Verifier.html[`MerkleProof`] provides:
 
-* https://docs.rs/crypto/latest/merkle/struct.Verifier.html#method.verify[`verify`] - can prove that some value is part of a https://en.wikipedia.org/wiki/Merkle_tree[Merkle tree].
+* https://docs.rs/openzeppelin-crypto/0.1.1/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify[`verify`] - can prove that some value is part of a https://en.wikipedia.org/wiki/Merkle_tree[Merkle tree].
 
-* https://docs.rs/crypto/latest/merkle/struct.Verifier.html#method.verify_multi_proof[`verify_multi_proof`] - can prove multiple values are part of a Merkle tree.
+* https://docs.rs/openzeppelin-crypto/0.1.1/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify_multi_proof[`verify_multi_proof`] - can prove multiple values are part of a Merkle tree.
 
 [source,rust]
 ----
@@ -22,6 +22,6 @@ pub fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
 }
 ----
 
-Note that these functions use `keccak256` as the hashing algorithm, but our library also provides generic counterparts: https://docs.rs/crypto/latest/merkle/struct.Verifier.html#method.verify_with_builder[`verify_with_builder`] and https://docs.rs/crypto/latest/merkle/struct.Verifier.html#method.verify_multi_proof_with_builder[`verify_multi_proof_with_builder`].
+Note that these functions use `keccak256` as the hashing algorithm, but our library also provides generic counterparts: https://docs.rs/openzeppelin-crypto/0.1.1/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify_with_builder[`verify_with_builder`] and https://docs.rs/openzeppelin-crypto/0.1.1/openzeppelin_crypto/merkle/struct.Verifier.html#method.verify_multi_proof_with_builder[`verify_multi_proof_with_builder`].
 
-We also provide an adapter https://docs.rs/crypto/latest/hash/index.html[`hash`] module to use your own hashers in conjunction with them that resembles Rust's standard library's API.
+We also provide an adapter https://docs.rs/openzeppelin-crypto/0.1.1/openzeppelin_crypto/hash/index.html[`hash`] module to use your own hashers in conjunction with them that resembles Rust's standard library's API.

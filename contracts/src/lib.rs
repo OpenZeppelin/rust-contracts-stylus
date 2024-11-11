@@ -6,10 +6,6 @@ A library for secure smart contract development written in Rust for
 This library offers common smart contract primitives and affordances that take
 advantage of the nature of Stylus.
 
-> This project is still in a very early and experimental phase. It has never
-> been audited nor thoroughly reviewed for security vulnerabilities. Do not use
-> in production.
-
 ## Usage
 
 To start using it, add `openzeppelin-stylus` to your `Cargo.toml`, or simply run
@@ -26,6 +22,7 @@ Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
 ```ignore
+use stylus_sdk::prelude::*;
 use openzeppelin_stylus::token::erc20::Erc20;
 
 sol_storage! {
@@ -36,27 +33,22 @@ sol_storage! {
     }
 }
 
-#[external]
+#[public]
 #[inherit(Erc20)]
 impl MyContract { }
 ```
 */
 
-#![allow(clippy::pub_underscore_fields, clippy::module_name_repetitions)]
+#![allow(
+    clippy::pub_underscore_fields,
+    clippy::module_name_repetitions,
+    clippy::used_underscore_items
+)]
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
-
-#[global_allocator]
-static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 pub mod access;
 pub mod finance;
 pub mod token;
 pub mod utils;
-
-#[cfg(target_arch = "wasm32")]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}

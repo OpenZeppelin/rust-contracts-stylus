@@ -1,11 +1,13 @@
 name: check-publish
-# This workflow checks that the libraries can be published on crates.io.
+# This workflow checks if the libraries can be published on crates.io.
 permissions:
   contents: read
 on:
   push:
-    branches: [ main ]
+    branches: [ main, release/* ]
   pull_request:
+    branches: [ main, release/* ]
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -18,28 +20,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up rust
-        uses: dtolnay/rust-toolchain@master
-        id: toolchain
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          target: wasm32-unknown-unknown
-          components: rust-src
-          toolchain: nightly-2024-01-01
+          rustflags: ""
 
-      - uses: Swatinem/rust-cache@v2
-
-      - name: check motsu-proc
+      - name: Check motsu-proc
         run: cargo publish -p motsu-proc --dry-run
 
-      - name: check motsu
+      - name: Check motsu
         run: cargo publish -p motsu --dry-run
 
-      - name: check openzeppelin-crypto
+      - name: Check openzeppelin-crypto
         run: cargo publish -p openzeppelin-crypto --target wasm32-unknown-unknown  --dry-run
 
-      - name: check openzeppelin-stylus-proc
+      - name: Check openzeppelin-stylus-proc
         run: cargo publish -p openzeppelin-stylus-proc --target wasm32-unknown-unknown  --dry-run
 
-        # TODO: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/291
-      # - name: check openzeppelin-stylus
-        # run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown  --dry-run
+      - name: Check openzeppelin-stylus
+        run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown  --dry-run

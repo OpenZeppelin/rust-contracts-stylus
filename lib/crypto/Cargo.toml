@@ -9,12 +9,17 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-mini-alloc.workspace = true
 tiny-keccak.workspace = true
+num-traits.workspace = true
+zeroize.workspace = true
+crypto-bigint.workspace = true
+educe.workspace = true
+hex-literal.workspace = true
 
 [dev-dependencies]
-hex-literal = "0.4.1"
+crypto-bigint = { workspace = true, default-features = false, features = ["rand"] }
 rand.workspace = true
+proptest.workspace = true
 
 [features]
 std = []

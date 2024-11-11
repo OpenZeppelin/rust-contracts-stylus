@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main, no_std)]
+#![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -109,5 +109,13 @@ impl Erc20Example {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc20::supports_interface(interface_id)
             || Erc20Metadata::supports_interface(interface_id)
+    }
+
+    pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+        self.pausable.pause().map_err(|e| e.into())
+    }
+
+    pub fn unpause(&mut self) -> Result<(), Vec<u8>> {
+        self.pausable.unpause().map_err(|e| e.into())
     }
 }
