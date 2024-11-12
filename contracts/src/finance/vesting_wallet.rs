@@ -170,7 +170,8 @@ pub trait IVestingWallet {
     ) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
-    /// [`Self::only_owner`] functions. Can only be called by the current owner.
+    /// [`Ownable::only_owner`] functions. Can only be called by the current
+    /// owner.
     ///
     /// Re-export of [`Ownable::renounce_ownership`].
     ///
