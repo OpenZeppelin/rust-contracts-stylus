@@ -203,13 +203,13 @@ async fn overwrite_previous_transfer_ownership(
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.transferOwnership(bob_addr))?;
-    assert!(receipt.emits(OwnershipTransferred {
+    assert!(receipt.emits(OwnershipTransferStarted {
         previousOwner: alice_addr,
         newOwner: bob_addr,
     }));
 
     let receipt = receipt!(contract.transferOwnership(charlie_addr))?;
-    assert!(receipt.emits(OwnershipTransferred {
+    assert!(receipt.emits(OwnershipTransferStarted {
         previousOwner: alice_addr,
         newOwner: charlie_addr,
     }));
