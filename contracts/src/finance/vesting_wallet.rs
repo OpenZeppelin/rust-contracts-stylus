@@ -335,15 +335,17 @@ impl IVestingWallet for VestingWallet {
         self._erc20_released.get(token)
     }
 
-    // TODO: checked_sub
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256 {
+        // SAFETY: total vested amount is by definition greater than or equal to
+        // the vested and released amount.
         self.vested_amount_eth(block::timestamp()) - self.released_eth()
     }
 
-    // TODO: checked_sub
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address) -> U256 {
+        // SAFETY: total vested amount is by definition greater than or equal to
+        // the vested and released amount.
         self.vested_amount_erc20(token, block::timestamp())
             - self.released_erc20(token)
     }
