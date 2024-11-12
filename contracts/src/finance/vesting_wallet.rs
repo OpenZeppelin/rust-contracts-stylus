@@ -234,6 +234,11 @@ pub trait IVestingWallet {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Panics
+    ///
+    /// If total allocation exceeds `U256::MAX`.
+    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
@@ -244,6 +249,15 @@ pub trait IVestingWallet {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token` - Address of the releasable token.
+    ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::InvalidToken`] is returned.
+    ///
+    /// # Panics
+    ///
+    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
 
@@ -253,9 +267,19 @@ pub trait IVestingWallet {
     ///
     /// * `&mut self` - Write access to the contract's state.
     ///
+    /// # Errors
+    ///
+    /// If ETH transfer fails, then the error [`Error::ReleaseEtherFailed`] is
+    /// returned.
+    ///
     /// # Events
     ///
     /// Emits an [`EtherReleased`] event.
+    ///
+    /// # Panics
+    ///
+    /// If total allocation exceeds `U256::MAX`.
+    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error>;
 
@@ -266,9 +290,20 @@ pub trait IVestingWallet {
     /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the token being released.
     ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::InvalidToken`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::ReleaseTokenFailed`] is returned.
+    ///
     /// # Events
     ///
     /// Emits an [`ERC20Released`] event.
+    ///
+    /// # Panics
+    ///
+    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
@@ -283,6 +318,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
+    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
@@ -295,9 +331,14 @@ pub trait IVestingWallet {
     /// * `token` - Address of the token being released.
     /// * `timestamp` - Point in time for which to check the vested amount.
     ///
+    /// # Errors
+    ///
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::InvalidToken`] is returned.
+    ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
+    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &self,
@@ -460,7 +501,7 @@ impl VestingWallet {
             // `self.start()`, as checked by earlier bounds.
             let scaled_allocation = total_allocation
                 .checked_mul(timestamp - self.start())
-                .expect("allocation overflow: exceeds `U256::MAX`");
+                .expect("scaled allocation overflow: exceeds `U256::MAX`");
 
             // SAFETY: `self.duration()` is non-zero. If `self.duration()` were
             // zero, then `end == start`, meaning that `timestamp >= self.end()`
