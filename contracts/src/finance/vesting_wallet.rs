@@ -108,8 +108,6 @@ sol_storage! {
     pub struct VestingWallet {
         /// Ownable contract
         Ownable ownable;
-        /// SafeErc20 contract
-        SafeErc20 safe_erc20;
         /// Amount of eth already released.
         uint256 _released;
         /// Amount of ERC20 tokens already released.
@@ -118,6 +116,8 @@ sol_storage! {
         uint64 _start;
         /// Vesting duration.
         uint64 _duration;
+        /// SafeErc20 contract
+        SafeErc20 safe_erc20;
     }
 }
 
