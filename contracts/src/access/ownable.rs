@@ -128,6 +128,7 @@ impl IOwnable for Ownable {
         self._owner.get()
     }
 
+    #[selector(name = "transferOwnership")]
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -145,6 +146,7 @@ impl IOwnable for Ownable {
         Ok(())
     }
 
+    #[selector(name = "renounceOwnership")]
     fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);

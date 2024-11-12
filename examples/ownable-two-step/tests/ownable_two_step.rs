@@ -84,6 +84,11 @@ async fn transfer_ownership_initiates_transfer(
         newOwner: bob_addr,
     }));
 
+    assert!(!receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: bob_addr,
+    }));
+
     // Current owner is still Alice
     let Ownable2Step::ownerReturn { owner } = contract.owner().call().await?;
     assert_eq!(owner, alice_addr);
@@ -176,6 +181,11 @@ async fn transfer_ownership_cancel_transfer(
         newOwner: Address::ZERO,
     }));
 
+    assert!(!receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: Address::ZERO,
+    }));
+
     let Ownable2Step::pendingOwnerReturn { pendingOwner } =
         contract.pendingOwner().call().await?;
     assert_eq!(pendingOwner, Address::ZERO);
@@ -208,8 +218,18 @@ async fn overwrite_previous_transfer_ownership(
         newOwner: bob_addr,
     }));
 
+    assert!(!receipt.emits(OwnershipTransferred {
+        previousOwner: alice_addr,
+        newOwner: bob_addr,
+    }));
+
     let receipt = receipt!(contract.transferOwnership(charlie_addr))?;
     assert!(receipt.emits(OwnershipTransferStarted {
+        previousOwner: alice_addr,
+        newOwner: charlie_addr,
+    }));
+
+    assert!(!receipt.emits(OwnershipTransferred {
         previousOwner: alice_addr,
         newOwner: charlie_addr,
     }));

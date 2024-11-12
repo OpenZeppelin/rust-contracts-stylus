@@ -11,18 +11,18 @@ contract Ownable2StepExample {
 
     error OwnableInvalidOwner(address owner);
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     constructor(address initialOwner) {
         if (initialOwner == address(0)) {
             revert OwnableInvalidOwner(address(0));
         }
-        _transferOwnership(initialOwner);
-    }
 
-    function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
+        _owner = initialOwner;
+        emit OwnershipTransferred(oldOwner, initialOwner);
     }
 }
