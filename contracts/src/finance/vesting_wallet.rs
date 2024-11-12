@@ -22,18 +22,20 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 use alloy_primitives::{Address, U256, U64};
-use alloy_sol_types::sol;
+use alloy_sol_types::{sol, SolCall};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    block, call,
-    call::{transfer_eth, Call},
+    block,
+    call::{self, transfer_eth, RawCall},
     contract, evm, function_selector,
     storage::TopLevelStorage,
     stylus_proc::{public, sol_storage, SolidityError},
+    types::AddressVM,
 };
 
 use crate::{
-    access::{ownable, ownable::Ownable},
+    access::ownable::{self, Ownable},
+    token::erc20::utils::safe_erc20::{ISafeErc20, SafeErc20},
     utils::math::storage::AddAssignUnchecked,
 };
 
@@ -64,13 +66,20 @@ sol! {
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ReleaseTokenFailed(address token);
+
+    /// The token address is not valid. (eg. `Address::ZERO`)
+    ///
+    /// * `token` - Address of the token being released.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error InvalidToken(address token);
 }
 
 // TODO: use existing IErc20
 pub use token::IErc20;
 #[allow(missing_docs)]
 mod token {
-    stylus_sdk::stylus_proc::sol_interface! {
+    alloy_sol_types::sol! {
         /// Interface of the ERC-20 token.
         interface IErc20 {
             function balanceOf(address account) external view returns (uint256);
@@ -90,6 +99,8 @@ pub enum Error {
     ReleaseEtherFailed(ReleaseEtherFailed),
     /// Indicates an error related to the underlying [`IErc20`] transfer.
     ReleaseTokenFailed(ReleaseTokenFailed),
+    /// The token address is not valid. (eg. `Address::ZERO`)
+    InvalidToken(InvalidToken),
 }
 
 sol_storage! {
@@ -97,6 +108,8 @@ sol_storage! {
     pub struct VestingWallet {
         /// Ownable contract
         Ownable ownable;
+        /// SafeErc20 contract
+        SafeErc20 safe_erc20;
         /// Amount of eth already released.
         uint256 _released;
         /// Amount of ERC20 tokens already released.
@@ -229,10 +242,10 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `token` - Address of the releasable token.
     #[selector(name = "releasable")]
-    fn releasable_erc20(&mut self, token: Address) -> U256;
+    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
 
     /// Release the native token (ether) that have already vested.
     ///
@@ -278,7 +291,7 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `token` - Address of the token being released.
     /// * `timestamp` - Point in time for which to check the vested amount.
     ///
@@ -286,7 +299,11 @@ pub trait IVestingWallet {
     ///
     /// If total allocation exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
-    fn vested_amount_erc20(&mut self, token: Address, timestamp: u64) -> U256;
+    fn vested_amount_erc20(
+        &self,
+        token: Address,
+        timestamp: u64,
+    ) -> Result<U256, Self::Error>;
 }
 
 #[public]
@@ -343,11 +360,11 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "releasable")]
-    fn releasable_erc20(&mut self, token: Address) -> U256 {
+    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error> {
+        let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the vested and released amount.
-        self.vested_amount_erc20(token, block::timestamp())
-            - self.released_erc20(token)
+        Ok(vested - self.released_erc20(token))
     }
 
     #[selector(name = "release")]
@@ -367,21 +384,18 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
-        let amount = self.releasable_erc20(token);
+        let amount = self.releasable_erc20(token)?;
+        let owner = self.ownable.owner();
+
+        self.safe_erc20.safe_transfer(token, owner, amount).map_err(|_| {
+            Error::ReleaseTokenFailed(ReleaseTokenFailed { token })
+        })?;
 
         // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
         // exceed `U256::MAX`.
         self._erc20_released.setter(token).add_assign_unchecked(amount);
 
         evm::log(ERC20Released { token, amount });
-
-        let erc20 = IErc20::new(token);
-        let owner = self.ownable.owner();
-        let call = Call::new_in(self);
-        let succeeded = erc20.transfer(call, owner, amount)?;
-        if !succeeded {
-            return Err(ReleaseTokenFailed { token }.into());
-        }
 
         Ok(())
     }
@@ -395,21 +409,28 @@ impl IVestingWallet for VestingWallet {
         self.vesting_schedule(total_allocation, U64::from(timestamp))
     }
 
-    // TODO: use RawCall to remove the need for &mut self
     #[selector(name = "vestedAmount")]
-    fn vested_amount_erc20(&mut self, token: Address, timestamp: u64) -> U256 {
-        let erc20 = IErc20::new(token);
-        let call = Call::new_in(self);
-        let balance = erc20
-            .balance_of(call, contract::address())
+    fn vested_amount_erc20(
+        &self,
+        token: Address,
+        timestamp: u64,
+    ) -> Result<U256, Self::Error> {
+        if !Address::has_code(&token) {
+            return Err(InvalidToken { token }.into());
+        }
+
+        let call = IErc20::balanceOfCall { account: contract::address() };
+        let balance = RawCall::new()
+            .limit_return_data(0, 32)
+            .call(token, &call.abi_encode())
+            .map(|b| U256::from_be_slice(&b))
             .expect("should return the balance");
 
         // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
         // exceed `U256::MAX`.
-        self.vesting_schedule(
-            balance + self.released_erc20(token),
-            U64::from(timestamp),
-        )
+        let total_allocation = balance + self.released_erc20(token);
+
+        Ok(self.vesting_schedule(total_allocation, U64::from(timestamp)))
     }
 }
 
