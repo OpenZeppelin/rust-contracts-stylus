@@ -32,7 +32,10 @@ use stylus_sdk::{
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
-use crate::access::{ownable, ownable::Ownable};
+use crate::{
+    access::{ownable, ownable::Ownable},
+    utils::math::storage::AddAssignUnchecked,
+};
 
 sol! {
     /// Emitted when `amount` of ether has been released.
@@ -317,8 +320,9 @@ impl IVestingWallet for VestingWallet {
     }
 
     fn end(&self) -> U256 {
-        // SAFETY: both `start` and `duration` are stored as u64
-        unsafe { self.start().checked_add(self.duration()).unwrap_unchecked() }
+        // SAFETY: both `start` and `duration` are stored as u64, so they cannot
+        // exceed `U256::MAX`
+        self.start() + self.duration()
     }
 
     #[selector(name = "released")]
@@ -365,11 +369,7 @@ impl IVestingWallet for VestingWallet {
 
         // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
         // exceed `U256::MAX`.
-        let released = unsafe {
-            self.released_erc20(token).checked_add(amount).unwrap_unchecked()
-        };
-
-        self._erc20_released.setter(token).set(released);
+        self._erc20_released.setter(token).add_assign_unchecked(amount);
 
         evm::log(ERC20Released { token, amount });
 
@@ -404,11 +404,10 @@ impl IVestingWallet for VestingWallet {
 
         // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
         // exceed `U256::MAX`.
-        let total_allocation = unsafe {
-            balance.checked_add(self.released_erc20(token)).unwrap_unchecked()
-        };
-
-        self.vesting_schedule(total_allocation, U64::from(timestamp))
+        self.vesting_schedule(
+            balance + self.released_erc20(token),
+            U64::from(timestamp),
+        )
     }
 }
 
@@ -436,21 +435,14 @@ impl VestingWallet {
         } else {
             // SAFETY: `timestamp` is guaranteed to be greater than
             // `self.start()`, as checked by earlier bounds.
-            // SAFETY: `self.duration()` is non-zero. If `self.duration()` were
-            // zero, then `end == start`, meaning that `timestamp >=
-            // self.end()` and the function would have returned
-            // earlier.
-            unsafe {
-                let elapsed =
-                    timestamp.checked_sub(self.start()).unwrap_unchecked();
-                let scaled_allocation = total_allocation
-                    .checked_mul(elapsed)
-                    .expect("allocation overflow: exceeds `U256::MAX`");
+            let scaled_allocation = total_allocation
+                .checked_mul(timestamp - self.start())
+                .expect("allocation overflow: exceeds `U256::MAX`");
 
-                scaled_allocation
-                    .checked_div(self.duration())
-                    .unwrap_unchecked()
-            }
+            // SAFETY: `self.duration()` is non-zero. If `self.duration()` were
+            // zero, then `end == start`, meaning that `timestamp >= self.end()`
+            // and the function would have returned earlier.
+            scaled_allocation / self.duration()
         }
     }
 }
