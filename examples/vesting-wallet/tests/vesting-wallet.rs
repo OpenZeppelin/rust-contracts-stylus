@@ -221,6 +221,26 @@ mod ether_vesting {
 mod erc20_vesting {
     use super::*;
 
+    async fn deploy(
+        account: &Account,
+        start: u64,
+        duration: u64,
+        allocation: u64,
+    ) -> eyre::Result<(Address, Address)> {
+        let contract_addr = account
+            .as_deployer()
+            .with_constructor(ctr(account.address(), start, duration))
+            .deploy()
+            .await?
+            .address()?;
+
+        let erc20_address = erc20::deploy(&account.wallet).await?;
+        let erc20 = ERC20Mock::new(erc20_address, &account.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(allocation)))?;
+
+        Ok((contract_addr, erc20_address))
+    }
+
     async fn run_check_release(
         alice: Account,
         time_passed: u64,
@@ -231,18 +251,11 @@ mod erc20_vesting {
             BALANCE,
             BALANCE * time_passed / DURATION,
         ));
+        let (contract_addr, erc20_address) =
+            deploy(&alice, start, DURATION, BALANCE).await?;
 
-        let contract_addr = alice
-            .as_deployer()
-            .with_constructor(ctr(alice.address(), start, DURATION))
-            .deploy()
-            .await?
-            .address()?;
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
-
-        let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
-        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
 
         let old_alice_balance =
             erc20.balanceOf(alice.address()).call().await?.balance;
@@ -308,17 +321,10 @@ mod erc20_vesting {
     #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
-        let contract_addr = alice
-            .as_deployer()
-            .with_constructor(ctr(alice.address(), start, DURATION))
-            .deploy()
-            .await?
-            .address()?;
-        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+        let (contract_addr, erc20_address) =
+            deploy(&alice, start, DURATION, BALANCE).await?;
 
-        let erc20_address = erc20::deploy(&alice.wallet).await?;
-        let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
-        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
         for i in 0..64 {
             let timestamp = i * DURATION / 60 + start;
