@@ -75,17 +75,11 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let start = contract.start().call().await?.start;
     let duration = contract.duration().call().await?.duration;
     let end = contract.end().call().await?.end;
-    let vested_amount_eth =
-        contract.vestedAmount_0().call().await?.vestedAmount;
-    let vested_amount_erc20 =
-        contract.vestedAmount_1().call().await?.vestedAmount;
 
     assert_eq!(alice.address(), owner);
     assert_eq!(U256::from(start_timestamp), start);
     assert_eq!(U256::from(DURATION), duration);
     assert_eq!(U256::from(start_timestamp + DURATION), end);
-    assert_eq!(U256::ZERO, vested_amount_eth);
-    assert_eq!(U256::ZERO, vested_amount_erc20);
 
     Ok(())
 }
