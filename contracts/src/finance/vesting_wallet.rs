@@ -407,9 +407,6 @@ impl IVestingWallet for VestingWallet {
 }
 
 impl VestingWallet {
-    // TODO: checked_mul
-    // TODO: unchecked_sub
-    // TODO: unchecked_div?
     /// Virtual implementation of the vesting formula. This returns the amount
     /// vested, as a function of time, for an asset given its total
     /// historical allocation.
@@ -419,14 +416,35 @@ impl VestingWallet {
     /// * `&self` - Read access to the contract's state.
     /// * `total_allocation` - Total vested amount.
     /// * `timestamp` - Point in time for which to calculate the vested amount.
+    ///
+    /// # Panics
+    ///
+    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
-        if U256::from(timestamp) < self.start() {
+        let timestamp = U256::from(timestamp);
+
+        if timestamp < self.start() {
             U256::ZERO
-        } else if U256::from(timestamp) >= self.end() {
+        } else if timestamp >= self.end() {
             total_allocation
         } else {
-            (total_allocation * (U256::from(timestamp) - self.start()))
-                / self.duration()
+            // SAFETY: `timestamp` is guaranteed to be greater than
+            // `self.start()`, as checked by earlier bounds.
+            // SAFETY: `self.duration()` is non-zero. If `self.duration()` were
+            // zero, then `end == start`, meaning that `timestamp >=
+            // self.end()` and the function would have returned
+            // earlier.
+            unsafe {
+                let elapsed =
+                    timestamp.checked_sub(self.start()).unwrap_unchecked();
+                let scaled_allocation = total_allocation
+                    .checked_mul(elapsed)
+                    .expect("allocation overflow: exceeds `U256::MAX`");
+
+                scaled_allocation
+                    .checked_div(self.duration())
+                    .unwrap_unchecked()
+            }
         }
     }
 }
