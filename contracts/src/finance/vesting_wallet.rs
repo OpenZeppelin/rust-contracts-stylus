@@ -63,6 +63,7 @@ sol! {
     error ReleaseTokenFailed(address token);
 }
 
+// TODO: use existing IErc20
 pub use token::IErc20;
 #[allow(missing_docs)]
 mod token {
@@ -361,10 +362,13 @@ impl IVestingWallet for VestingWallet {
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
         let amount = self.releasable_erc20(token);
-        let released = self
-            .released_erc20(token)
-            .checked_add(amount)
-            .expect("should not exceed `U256::MAX` for `_erc20_released`");
+
+        // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
+        // exceed `U256::MAX`.
+        let released = unsafe {
+            self.released_erc20(token).checked_add(amount).unwrap_unchecked()
+        };
+
         self._erc20_released.setter(token).set(released);
 
         evm::log(ERC20Released { token, amount });
@@ -380,16 +384,15 @@ impl IVestingWallet for VestingWallet {
         Ok(())
     }
 
-    // TODO: checked_add
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256 {
-        self.vesting_schedule(
-            contract::balance() + self.released_eth(),
-            U64::from(timestamp),
-        )
+        let total_allocation = contract::balance()
+            .checked_add(self.released_eth())
+            .expect("total allocation should not exceed `U256::MAX`");
+
+        self.vesting_schedule(total_allocation, U64::from(timestamp))
     }
 
-    // TODO: checked_add
     // TODO: use RawCall to remove the need for &mut self
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(&mut self, token: Address, timestamp: u64) -> U256 {
@@ -399,10 +402,13 @@ impl IVestingWallet for VestingWallet {
             .balance_of(call, contract::address())
             .expect("should return the balance");
 
-        self.vesting_schedule(
-            balance + self.released_erc20(token),
-            U64::from(timestamp),
-        )
+        // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
+        // exceed `U256::MAX`.
+        let total_allocation = unsafe {
+            balance.checked_add(self.released_erc20(token)).unwrap_unchecked()
+        };
+
+        self.vesting_schedule(total_allocation, U64::from(timestamp))
     }
 }
 
