@@ -28,7 +28,7 @@ impl Ownable2StepExample {
         to: Address,
         value: U256,
     ) -> Result<(), Vec<u8>> {
-        self.ownable._ownable.only_owner()?;
+        self.ownable.only_owner()?;
         self.erc20.transfer(to, value)?;
         Ok(())
     }
