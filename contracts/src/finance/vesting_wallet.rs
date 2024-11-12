@@ -499,8 +499,10 @@ impl VestingWallet {
         } else {
             // SAFETY: `timestamp` is guaranteed to be greater than
             // `self.start()`, as checked by earlier bounds.
+            let elapsed = timestamp - self.start();
+
             let scaled_allocation = total_allocation
-                .checked_mul(timestamp - self.start())
+                .checked_mul(elapsed)
                 .expect("scaled allocation overflow: exceeds `U256::MAX`");
 
             // SAFETY: `self.duration()` is non-zero. If `self.duration()` were
@@ -562,7 +564,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_vested_allocation(contract: VestingWallet) {
+    fn gets_vesting_schedule(contract: VestingWallet) {
         let start = start();
         let duration = U64::from(DURATION);
         contract._start.set(start);
