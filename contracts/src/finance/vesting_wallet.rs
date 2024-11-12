@@ -413,6 +413,12 @@ impl VestingWallet {
     /// Virtual implementation of the vesting formula. This returns the amount
     /// vested, as a function of time, for an asset given its total
     /// historical allocation.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `total_allocation` - Total vested amount.
+    /// * `timestamp` - Point in time for which to calculate the vested amount.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         if U256::from(timestamp) < self.start() {
             U256::ZERO
