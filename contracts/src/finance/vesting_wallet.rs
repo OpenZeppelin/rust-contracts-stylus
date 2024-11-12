@@ -146,7 +146,7 @@ pub trait IVestingWallet {
     ///
     /// # Events
     ///
-    /// Emits a [`ownable::OwnershipTransferred`] event.
+    /// Emits an [`ownable::OwnershipTransferred`] event.
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -171,7 +171,7 @@ pub trait IVestingWallet {
     ///
     /// # Events
     ///
-    /// Emits a [`ownable::OwnershipTransferred`] event.
+    /// Emits an [`ownable::OwnershipTransferred`] event.
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Getter for the start timestamp.
@@ -193,10 +193,6 @@ pub trait IVestingWallet {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Panics
-    ///
-    /// If end time exceeds `U256::MAX`.
     fn end(&self) -> U256;
 
     /// Amount of eth already released.
@@ -319,9 +315,9 @@ impl IVestingWallet for VestingWallet {
         U256::from(self._duration.get())
     }
 
-    // TODO: checked_add
     fn end(&self) -> U256 {
-        self.start() + self.duration()
+        // SAFETY: both `start` and `duration` are stored as u64
+        unsafe { self.start().checked_add(self.duration()).unwrap_unchecked() }
     }
 
     #[selector(name = "released")]
