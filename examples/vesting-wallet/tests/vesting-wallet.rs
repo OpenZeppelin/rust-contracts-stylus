@@ -160,6 +160,33 @@ mod ether_vesting {
     }
 
     #[e2e::test]
+    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, 0).await
+    }
+
+    #[e2e::test]
+    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, DURATION / 4).await
+    }
+
+    #[e2e::test]
+    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, DURATION / 2).await
+    }
+
+    #[e2e::test]
+    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, DURATION).await
+    }
+
+    #[e2e::test]
+    async fn check_release_100_percent_vesting_in_the_past(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        run_check_release(alice, DURATION * 4 / 3).await
+    }
+
+    #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
         let contract_addr = alice
@@ -188,33 +215,6 @@ mod ether_vesting {
         }
 
         Ok(())
-    }
-
-    #[e2e::test]
-    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, 0).await
-    }
-
-    #[e2e::test]
-    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, DURATION / 4).await
-    }
-
-    #[e2e::test]
-    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, DURATION / 2).await
-    }
-
-    #[e2e::test]
-    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, DURATION).await
-    }
-
-    #[e2e::test]
-    async fn check_release_100_percent_vesting_in_the_past(
-        alice: Account,
-    ) -> eyre::Result<()> {
-        run_check_release(alice, DURATION * 4 / 3).await
     }
 }
 
@@ -279,6 +279,33 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
+    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, 0).await
+    }
+
+    #[e2e::test]
+    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, DURATION / 4).await
+    }
+
+    #[e2e::test]
+    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, DURATION / 2).await
+    }
+
+    #[e2e::test]
+    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
+        run_check_release(alice, DURATION).await
+    }
+
+    #[e2e::test]
+    async fn check_release_100_percent_vesting_in_the_past(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        run_check_release(alice, DURATION * 4 / 3).await
+    }
+
+    #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
         let contract_addr = alice
@@ -312,32 +339,5 @@ mod erc20_vesting {
         }
 
         Ok(())
-    }
-
-    #[e2e::test]
-    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, 0).await
-    }
-
-    #[e2e::test]
-    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, DURATION / 4).await
-    }
-
-    #[e2e::test]
-    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, DURATION / 2).await
-    }
-
-    #[e2e::test]
-    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
-        run_check_release(alice, DURATION).await
-    }
-
-    #[e2e::test]
-    async fn check_release_100_percent_vesting_in_the_past(
-        alice: Account,
-    ) -> eyre::Result<()> {
-        run_check_release(alice, DURATION * 4 / 3).await
     }
 }

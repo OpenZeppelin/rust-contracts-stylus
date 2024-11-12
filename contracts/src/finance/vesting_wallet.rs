@@ -397,7 +397,7 @@ impl IVestingWallet for VestingWallet {
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256 {
         // SAFETY: total vested amount is by definition greater than or equal to
-        // the vested and released amount.
+        // the released amount.
         self.vested_amount_eth(block::timestamp()) - self.released_eth()
     }
 
@@ -405,7 +405,7 @@ impl IVestingWallet for VestingWallet {
     fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error> {
         let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
-        // the vested and released amount.
+        // the released amount.
         Ok(vested - self.released_erc20(token))
     }
 
@@ -504,7 +504,7 @@ impl VestingWallet {
 
             let scaled_allocation = total_allocation
                 .checked_mul(elapsed)
-                .expect("scaled allocation overflow: exceeds `U256::MAX`");
+                .expect("scaled allocation exceeds `U256::MAX`");
 
             // SAFETY: `self.duration()` is non-zero. If `self.duration()` were
             // zero, then `end == start`, meaning that `timestamp >= self.end()`
@@ -551,6 +551,15 @@ mod tests {
     }
 
     #[motsu::test]
+    fn reads_max_end(contract: VestingWallet) {
+        let start = U64::MAX;
+        let duration = U64::MAX;
+        contract._start.set(start);
+        contract._duration.set(duration);
+        assert_eq!(U256::from(start + duration), contract.end());
+    }
+
+    #[motsu::test]
     fn reads_released_eth(contract: VestingWallet) {
         let one = uint!(1_U256);
         contract._released.set(one);
@@ -583,5 +592,26 @@ mod tests {
             contract.vesting_schedule(two, start + duration / U64::from(2))
         );
         assert_eq!(two, contract.vesting_schedule(two, start + duration));
+        assert_eq!(
+            two,
+            contract.vesting_schedule(two, start + duration + U64::from(1))
+        );
+    }
+
+    #[motsu::test]
+    fn gets_vesting_schedule_zero_duration(contract: VestingWallet) {
+        let start = start();
+        contract._start.set(start);
+        contract._duration.set(U64::ZERO);
+
+        let one = uint!(1_U256);
+        let two = uint!(2_U256);
+
+        assert_eq!(
+            U256::ZERO,
+            contract.vesting_schedule(two, start - U64::from(1))
+        );
+        assert_eq!(two, contract.vesting_schedule(two, start));
+        assert_eq!(two, contract.vesting_schedule(two, start + U64::from(1)));
     }
 }
