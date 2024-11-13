@@ -7,7 +7,7 @@ use alloy::{
     providers::Provider,
     sol,
 };
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use mock::{erc20, erc20::ERC20Mock};
 
 use crate::VestingWalletExample::constructorCall;
@@ -343,6 +343,63 @@ mod erc20_vesting {
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
         }
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn releasable_erc20_reverts_on_invalid_token(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let start = block_timestamp(&alice).await?;
+        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?.0;
+
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.releasable_1(Address::ZERO))
+            .expect_err("should not get releasable amount for invalid token");
+
+        assert!(err.reverted_with(VestingWallet::InvalidToken {
+            token: Address::ZERO
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn release_erc20_reverts_on_invalid_token(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let start = block_timestamp(&alice).await?;
+        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?.0;
+
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.release_1(Address::ZERO))
+            .expect_err("should not release for invalid token");
+
+        assert!(err.reverted_with(VestingWallet::InvalidToken {
+            token: Address::ZERO
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn vested_amount_erc20_reverts_on_invalid_token(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let start = block_timestamp(&alice).await?;
+        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?.0;
+
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.vestedAmount_1(Address::ZERO, start))
+            .expect_err("should not get vested amount for invalid token");
+
+        assert!(err.reverted_with(VestingWallet::InvalidToken {
+            token: Address::ZERO
+        }));
 
         Ok(())
     }
