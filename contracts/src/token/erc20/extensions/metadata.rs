@@ -63,7 +63,13 @@ pub trait IErc20Metadata {
 
 #[public]
 impl IErc20Metadata for Erc20Metadata {
-    fn name(&self) -> String {
+/*************  ✨ Codeium Command ⭐  *************/
+    /// Returns the name of the token.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+/******  2b8d3510-0370-4d5f-9b85-1889f061f3d5  *******/    fn name(&self) -> String {
         self._metadata.name()
     }
 
