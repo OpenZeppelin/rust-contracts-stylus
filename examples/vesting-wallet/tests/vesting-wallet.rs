@@ -386,6 +386,38 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
+    async fn release_erc20_reverts_on_failed_transfer(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        use mock::{
+            erc20_return_false, erc20_return_false::ERC20ReturnFalseMock,
+        };
+
+        let start = block_timestamp(&alice).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(alice.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+
+        let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
+        let erc20 = ERC20ReturnFalseMock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.release_1(erc20_address))
+            .expect_err("should not release when transfer fails");
+
+        assert!(err.reverted_with(VestingWallet::ReleaseTokenFailed {
+            token: erc20_address
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
     async fn vested_amount_erc20_reverts_on_invalid_token(
         alice: Account,
     ) -> eyre::Result<()> {
