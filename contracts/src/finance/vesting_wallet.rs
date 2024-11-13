@@ -556,7 +556,7 @@ mod tests {
         let duration = U64::MAX;
         contract._start.set(start);
         contract._duration.set(duration);
-        assert_eq!(U256::from(start + duration), contract.end());
+        assert_eq!(U256::from(start) + U256::from(duration), contract.end());
     }
 
     #[motsu::test]
