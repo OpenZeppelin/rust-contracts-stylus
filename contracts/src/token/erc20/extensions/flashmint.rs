@@ -20,7 +20,7 @@ sol! {
 
     #[derive(Debug)]
     #[allow(missing_docs)]
-    error ERC3156ExceededMaxLoan(uint256 maxLoan);
+    error ERC3156ExceededMaxLoan(uint256 max_loan);
 
 
      #[derive(Debug)]
