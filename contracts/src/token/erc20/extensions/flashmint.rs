@@ -1,13 +1,15 @@
-
-use alloy_primitives::{Address, U256, Bytes, B256, b256};
-use stylus_sdk::msg;
-use stylus_sdk::{
-    contract, prelude::*,
-     call::{ Call, MethodError}
-};
-use crate::token::erc20::{self, Erc20, IErc20};
-use crate::flashloan::borrower::IERC3156FlashBorrower;
+use alloy_primitives::{b256, Address, Bytes, B256, U256};
 use alloy_sol_types::sol;
+use stylus_sdk::{
+    call::{Call, MethodError},
+    contract, msg,
+    prelude::*,
+};
+
+use crate::{
+    flashloan::borrower::IERC3156FlashBorrower,
+    token::erc20::{self, Erc20, IErc20},
+};
 
 sol! {
 
@@ -33,19 +35,23 @@ impl MethodError for Error {
     }
 }
 
-pub trait  IERC3156FlashLender {
+pub trait IERC3156FlashLender {
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    fn max_flash_loan(&self , token:Address) -> U256;
+    fn max_flash_loan(&self, token: Address) -> U256;
 
-    fn flash_fee(&self, token:Address, amount:U256)  -> Result<U256, Self::Error> ;
+    fn flash_fee(
+        &self,
+        token: Address,
+        amount: U256,
+    ) -> Result<U256, Self::Error>;
 
     fn flash_loan(
         &mut self,
         receiver: Address,
-        token:Address,
-        amount:U256,
-        data:Bytes
+        token: Address,
+        amount: U256,
+        data: Bytes,
     ) -> Result<bool, Self::Error>;
 }
 
@@ -58,15 +64,13 @@ pub enum Error {
 
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
-
 }
 
 const RETURN_VALUE: B256 =
     b256!("439148f0bbc682ca079e46d6e2c2f0c1e3b820f1a291b069d8882abf8cf18dd9");
 
 impl IERC3156FlashLender for Erc20 {
-    
-    type Error = Error ;
+    type Error = Error;
 
     /// Returns the maximum amount of tokens that can be borrowed
     /// from this contract in a flash loan.
@@ -75,9 +79,9 @@ impl IERC3156FlashLender for Erc20 {
     /// `U256::MIN`.
     ///
     /// * `token` - The address of the ERC-20 token that will be loaned.
-    fn max_flash_loan(&self, token:Address) -> U256 {
+    fn max_flash_loan(&self, token: Address) -> U256 {
         if token == contract::address() {
-            return   U256::MAX - self.total_supply();
+            return U256::MAX - self.total_supply();
         }
         U256::MIN
     }
@@ -91,11 +95,13 @@ impl IERC3156FlashLender for Erc20 {
     ///
     /// * `token` - The address of the ERC-20 token that will be loaned.
     /// * `amount` - The amount of tokens that will be loaned.
-    fn flash_fee(&self,token:Address, amount:U256)  -> Result<U256, Error> {
+    fn flash_fee(&self, token: Address, amount: U256) -> Result<U256, Error> {
         if token != contract::address() {
-            return Err(Error::UnsupportedToken(ERC3156UnsupportedToken { token}));
+            return Err(Error::UnsupportedToken(ERC3156UnsupportedToken {
+                token,
+            }));
         }
-        Ok(self._flash_fee(token , amount))
+        Ok(self._flash_fee(token, amount))
     }
 
     /// Executes a flash loan.
@@ -112,34 +118,41 @@ impl IERC3156FlashLender for Erc20 {
     fn flash_loan(
         &mut self,
         receiver: Address,
-        token:Address,
-        value:U256,
-        data:alloy_primitives::Bytes
+        token: Address,
+        value: U256,
+        data: alloy_primitives::Bytes,
     ) -> Result<bool, Error> {
-        let  max_loan =  self.max_flash_loan(token);
+        let max_loan = self.max_flash_loan(token);
         if value > max_loan {
-            return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan { maxLoan: max_loan }));
+            return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
+                maxLoan: max_loan,
+            }));
         }
 
-        let fee =  self.flash_fee(token, value)?;
+        let fee = self.flash_fee(token, value)?;
         self._mint(receiver, value)?;
         let loan_reciver = IERC3156FlashBorrower::new(receiver);
         let config = Call::new();
-        if loan_reciver.on_flash_loan(config,msg::sender(), token, value,fee,data).unwrap() != RETURN_VALUE  {
-            return Err(Error::InvalidReceiver(ERC3156InvalidReceiver { receiver }));
+        if loan_reciver
+            .on_flash_loan(config, msg::sender(), token, value, fee, data)
+            .unwrap()
+            != RETURN_VALUE
+        {
+            return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
+                receiver,
+            }));
         }
-        let  flash_fee_receiver = self._flash_fee_receiver(); 
+        let flash_fee_receiver = self._flash_fee_receiver();
         self._spend_allowance(receiver, msg::sender(), value + fee)?;
         if fee.is_zero() || flash_fee_receiver.is_zero() {
             self._burn(receiver, value + fee)?;
         } else {
-           self._burn(receiver, value)?;
-           self._transfer(receiver, flash_fee_receiver, fee)?;
+            self._burn(receiver, value)?;
+            self._transfer(receiver, flash_fee_receiver, fee)?;
         }
 
         Ok(true)
     }
-    
 }
 
 impl Erc20 {
