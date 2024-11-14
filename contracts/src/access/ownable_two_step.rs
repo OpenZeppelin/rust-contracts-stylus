@@ -188,22 +188,6 @@ impl IOwnable2Step for Ownable2Step {
 }
 
 impl Ownable2Step {
-    /// Checks if the [`msg::sender`] is set as the owner.
-    ///
-    /// Re-export of [`Ownable::only_owner`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// If called by any account other than the owner, then the error
-    /// [`OwnableError::UnauthorizedAccount`] is returned.
-    pub fn only_owner(&self) -> Result<(), OwnableError> {
-        self._ownable.only_owner()
-    }
-
     /// Transfers ownership of the contract to a new account (`new_owner`) and
     /// sets [`Self::pending_owner`] to `Address::ZERO` to avoid situations
     /// where the transfer has been completed or the current owner renounces,
@@ -218,7 +202,7 @@ impl Ownable2Step {
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
     fn _transfer_ownership(&mut self, new_owner: Address) {
         self._pending_owner.set(Address::ZERO);
         self._ownable._transfer_ownership(new_owner);
