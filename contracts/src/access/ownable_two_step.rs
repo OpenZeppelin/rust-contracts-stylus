@@ -38,14 +38,6 @@ sol! {
         address indexed new_owner
     );
 
-    /// Emitted when ownership gets transferred between accounts.
-    ///
-    /// * `previous_owner` - Address of the previous owner.
-    /// * `new_owner` - Address of the new owner.
-    event OwnershipTransferred(
-        address indexed previous_owner,
-        address indexed new_owner
-    );
 }
 
 /// An error that occurred in the implementation of an [`Ownable2Step`]
@@ -126,7 +118,7 @@ pub trait IOwnable2Step {
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
     fn accept_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
@@ -144,7 +136,7 @@ pub trait IOwnable2Step {
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
@@ -210,7 +202,7 @@ impl Ownable2Step {
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
     fn _transfer_ownership(&mut self, new_owner: Address) {
         self._pending_owner.set(Address::ZERO);
         self._ownable._transfer_ownership(new_owner);
