@@ -3,9 +3,7 @@
 use stylus_sdk::stylus_proc::sol_interface;
 
 sol_interface! {
-
     interface IERC3156FlashBorrower {
-
         #[allow(missing_docs)]
         function onFlashLoan(
             address initiator,
