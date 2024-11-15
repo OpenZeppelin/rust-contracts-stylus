@@ -7,7 +7,7 @@
 3. Install the [solidity compiler] version `0.8.24` 
 (NOTE: it is important to use this exact version to avoid compatibility issues).
 4. Install toolchain providing `cargo` using [rustup].
-5. Install the cargo stylus tool with `cargo install --force cargo-stylus`
+5. Install the cargo stylus tool with `cargo install --force cargo-stylus`.
 
 Note: If you encounter the `linker 'cc' not found` error during stylus
 installation, make to sure to first install the necessary build tools with the
