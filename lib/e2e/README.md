@@ -31,7 +31,7 @@ async fn accounts_are_funded(alice: Account) -> eyre::Result<()> {
 }
 ```
 
-A `Account` is a thin wrapper over a [`PrivateKeySigner`] and an `alloy` provider with a
+An `Account` is a thin wrapper over a [`PrivateKeySigner`] and an `alloy` provider with a
 [`WalletFiller`]. Both of them are connected to the RPC endpoint defined by the
 `RPC_URL` environment variable. This means that a `Account` is the main proxy
 between the RPC and the test code.
@@ -47,7 +47,6 @@ async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 ```
 
-[`LocalWallet`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/signer-local/src/lib.rs#L37
 
 [`WalletFiller`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/provider/src/fillers/wallet.rs#L30
 
