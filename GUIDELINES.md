@@ -3,7 +3,7 @@
 ## Setup
 
 1. Clone this repository.
-2. Install [Docker].
+2. Install [docker].
 3. Install the [solidity compiler] version `0.8.24` 
 (NOTE: it is important to use this exact version to avoid compatibility issues).
 4. Install toolchain providing `cargo` using [rustup].
@@ -14,7 +14,7 @@ installation, make to sure to first install the necessary build tools with the
 following command: `sudo apt-get install build-essential pkg-config libssl-dev -y`,
 and retry installing the stylus tool.
 
-[Docker]: https://docs.docker.com/engine/install/
+[docker]: https://docs.docker.com/engine/install/
 
 [solidity compiler]: https://docs.soliditylang.org/en/latest/installing-solidity.html#linux-packages
 
