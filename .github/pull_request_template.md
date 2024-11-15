@@ -19,3 +19,4 @@ Some of the items may not apply.
 
 - [ ] Tests
 - [ ] Documentation
+- [ ] Changelog

@@ -801,7 +801,7 @@ dependencies = [
 
 [[package]]
 name = "basic-example-script"
-version = "0.0.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2644,6 +2644,19 @@ dependencies = [
 
 [[package]]
 name = "ownable-example"
+version = "0.2.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "ownable-two-step"
 version = "0.2.0-alpha.1"
 dependencies = [
  "alloy",
