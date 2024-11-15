@@ -34,7 +34,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    access::ownable::{self, Ownable},
+    access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{ISafeErc20, SafeErc20},
     utils::math::storage::AddAssignUnchecked,
 };

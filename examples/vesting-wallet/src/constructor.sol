@@ -3,7 +3,7 @@ pragma solidity ^0.8.21;
 
 contract VestingWalletExample {
     address private _owner;
-    
+
     uint256 private _released;
     mapping(address token => uint256) private _erc20Released;
     uint64 private _start;
@@ -20,7 +20,7 @@ contract VestingWalletExample {
             revert OwnableInvalidOwner(address(0));
         }
         _transferOwnership(beneficiary);
-        
+
         _start = startTimestamp;
         _duration = durationSeconds;
     }

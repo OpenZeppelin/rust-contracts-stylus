@@ -9,18 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- ERC-1155 Multi Token Standard. #275
-- `SafeErc20` Utility. #289
-- Finite Fields arithmetics. #376
 - `VestingWallet` contract. #402
 
 ### Changed
 
-- Implemented `MethodError` for `ownable::Error`. #402
+-
 
 ### Fixed
 
 -
+
+## [v0.2.0-alpha.1] - 2024-11-15
+
+### Added
+
+- ERC-1155 Multi Token Standard. #275
+- `SafeErc20` Utility. #289
+- Finite Fields arithmetics. #376
+- `Ownable2Step` contract. #352
+- `IOwnable` trait. #352
+
+### Changed(breaking)
+
+- Removed `only_owner` from the public interface of `Ownable`. #352
 
 ## [0.1.1] - 2024-10-28
 
