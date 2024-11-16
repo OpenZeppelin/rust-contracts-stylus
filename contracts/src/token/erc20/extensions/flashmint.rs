@@ -1,15 +1,12 @@
 use alloy_primitives::{b256, Address, Bytes, B256, U256};
 use alloy_sol_types::sol;
 use stylus_sdk::{
-    call::{Call, MethodError},
+    call::Call,
     contract, msg,
     prelude::*,
 };
 
-use crate::{
-    flashloan::borrower::IERC3156FlashBorrower,
-    token::erc20::{self, Erc20, IErc20},
-};
+use crate::token::erc20::{self, Erc20, IErc20,utils::borrower::IERC3156FlashBorrower};
 
 sol! {
     /// Indicate an error related to an unsupported loan token.
@@ -65,7 +62,7 @@ pub trait IERC3156FlashLender {
         amount: U256,
     ) -> Result<U256, Self::Error>;
 
-        /// Executes a flash loan.
+    /// Executes a flash loan.
     ///
     /// This function is part of the ERC-3156 (Flash Loans) standard.
     ///
@@ -143,8 +140,13 @@ impl IERC3156FlashLender for Erc20 {
         let fee = self.flash_fee(token, value)?;
         self._mint(receiver, value)?;
         let loan_reciver = IERC3156FlashBorrower::new(receiver);
+        if Address::has_code(&loan_reciver) {
+            return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
+                receiver,
+            }));
+        }
         let call = Call::new();
-        let loan_return = loan_reciver .on_flash_loan(call, msg::sender(), token, value, fee, data);
+        let loan_return = loan_reciver.on_flash_loan(call, msg::sender(), token, value, fee, data);
         if  loan_return.is_err() {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,

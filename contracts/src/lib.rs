@@ -49,6 +49,5 @@ impl MyContract { }
 extern crate alloc;
 
 pub mod access;
-pub mod flashloan;
 pub mod token;
 pub mod utils;
