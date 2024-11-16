@@ -1,12 +1,13 @@
+//! Optional Flashloan extension of the ERC-20 standard.
+//! using the IERC3156FlashBorrower interface to borrow tokens.
+
 use alloy_primitives::{b256, Address, Bytes, B256, U256};
 use alloy_sol_types::sol;
-use stylus_sdk::{
-    call::Call,
-    contract, msg,
-    prelude::*,
-};
+use stylus_sdk::{call::Call, contract, msg, prelude::*};
 
-use crate::token::erc20::{self, Erc20, IErc20,utils::borrower::IERC3156FlashBorrower};
+use crate::token::erc20::{
+    self, utils::borrower::IERC3156FlashBorrower, Erc20, IErc20,
+};
 
 sol! {
     /// Indicate an error related to an unsupported loan token.
@@ -33,11 +34,10 @@ sol! {
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
 pub trait IERC3156FlashLender {
-
     /// The error type associated to this ERC-20 Burnable trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-     /// Returns the maximum amount of tokens that can be borrowed
+    /// Returns the maximum amount of tokens that can be borrowed
     /// from this contract in a flash loan.
     ///
     /// For tokens that are not supported, this function returns
@@ -45,7 +45,6 @@ pub trait IERC3156FlashLender {
     ///
     /// * `token` - The address of the ERC-20 token that will be loaned.
     fn max_flash_loan(&self, token: Address) -> U256;
-
 
     /// Calculates the fee for a flash loan.
     ///
@@ -90,7 +89,8 @@ pub enum Error {
     UnsupportedToken(ERC3156UnsupportedToken),
 
     /// Indicate an error related to the loan amount exceeds the maximum.
-    /// The requested amount is higher than the allowed loan for this token max_loan.
+    /// The requested amount is higher than the allowed loan for this token
+    /// max_loan.
     ExceededMaxLoan(ERC3156ExceededMaxLoan),
 
     /// Indicate  an  error related to an invalid flash loan receiver.
@@ -133,7 +133,7 @@ impl IERC3156FlashLender for Erc20 {
         let max_loan = self.max_flash_loan(token);
         if value > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
-                 max_loan,
+                max_loan,
             }));
         }
 
@@ -146,8 +146,15 @@ impl IERC3156FlashLender for Erc20 {
             }));
         }
         let call = Call::new();
-        let loan_return = loan_reciver.on_flash_loan(call, msg::sender(), token, value, fee, data);
-        if  loan_return.is_err() {
+        let loan_return = loan_reciver.on_flash_loan(
+            call,
+            msg::sender(),
+            token,
+            value,
+            fee,
+            data,
+        );
+        if loan_return.is_err() {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
@@ -172,7 +179,6 @@ impl IERC3156FlashLender for Erc20 {
 }
 
 impl Erc20 {
-    
     /// Calculates the fee for a flash loan.
     ///
     /// The fee is currently fixed at 0.
@@ -191,4 +197,112 @@ impl Erc20 {
     pub fn _flash_fee_receiver(&self) -> Address {
         Address::ZERO
     }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{address, uint, Address, U256};
+    use stylus_sdk::msg;
+
+    use super::IERC3156FlashLender;
+    use crate::token::erc20::{Erc20, Error, IErc20};
+
+    #[motsu::test]
+    fn max_flash_loan(contract: Erc20) {
+        let zero = U256::ZERO;
+        let one = uint!(1_U256);
+
+        assert_eq!(zero, contract.total_supply());
+
+        // Mint some tokens for msg::sender().
+        //let sender = msg::sender();
+
+        // let two = uint!(2_U256);
+        // contract._update(Address::ZERO, sender, two).unwrap();
+        // assert_eq!(two, contract.balance_of(sender));
+        // assert_eq!(two, contract.total_supply());
+
+        // contract.burn(one).unwrap();
+
+        // assert_eq!(one, contract.balance_of(sender));
+        // assert_eq!(one, contract.total_supply());
+    }
+
+    // #[motsu::test]
+    // fn burns_errors_when_insufficient_balance(contract: Erc20) {
+    //     let zero = U256::ZERO;
+    //     let one = uint!(1_U256);
+    //     let sender = msg::sender();
+
+    //     assert_eq!(zero, contract.balance_of(sender));
+
+    //     let result = contract.burn(one);
+    //     assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+    // }
+
+    // #[motsu::test]
+    // fn burn_from(contract: Erc20) {
+    //     let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    //     let sender = msg::sender();
+
+    //     // Alice approves `msg::sender`.
+    //     let one = uint!(1_U256);
+    //     contract._allowances.setter(alice).setter(sender).set(one);
+
+    //     // Mint some tokens for Alice.
+    //     let two = uint!(2_U256);
+    //     contract._update(Address::ZERO, alice, two).unwrap();
+    //     assert_eq!(two, contract.balance_of(alice));
+    //     assert_eq!(two, contract.total_supply());
+
+    //     contract.burn_from(alice, one).unwrap();
+
+    //     assert_eq!(one, contract.balance_of(alice));
+    //     assert_eq!(one, contract.total_supply());
+    //     assert_eq!(U256::ZERO, contract.allowance(alice, sender));
+    // }
+
+    // #[motsu::test]
+    // fn burns_from_errors_when_insufficient_balance(contract: Erc20) {
+    //     let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
+    //     // Alice approves `msg::sender`.
+    //     let zero = U256::ZERO;
+    //     let one = uint!(1_U256);
+
+    //     contract._allowances.setter(alice).setter(msg::sender()).set(one);
+    //     assert_eq!(zero, contract.balance_of(alice));
+
+    //     let one = uint!(1_U256);
+
+    //     let result = contract.burn_from(alice, one);
+    //     assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+    // }
+
+    // #[motsu::test]
+    // fn burns_from_errors_when_invalid_approver(contract: Erc20) {
+    //     let one = uint!(1_U256);
+
+    //     contract
+    //         ._allowances
+    //         .setter(Address::ZERO)
+    //         .setter(msg::sender())
+    //         .set(one);
+
+    //     let result = contract.burn_from(Address::ZERO, one);
+    //     assert!(matches!(result, Err(Error::InvalidApprover(_))));
+    // }
+
+    // #[motsu::test]
+    // fn burns_from_errors_when_insufficient_allowance(contract: Erc20) {
+    //     let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+
+    //     // Mint some tokens for Alice.
+    //     let one = uint!(1_U256);
+    //     contract._update(Address::ZERO, alice, one).unwrap();
+    //     assert_eq!(one, contract.balance_of(alice));
+
+    //     let result = contract.burn_from(alice, one);
+    //     assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
+    // }
 }
