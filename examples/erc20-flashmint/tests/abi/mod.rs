@@ -4,7 +4,7 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-    contract Erc20FlashMint {
+    contract Erc20Flashmint {
         function totalSupply() external view returns (uint256 totalSupply);
         function balanceOf(address account) external view returns (uint256 balance);
         function transfer(address recipient, uint256 amount) external returns (bool);
@@ -14,15 +14,9 @@ sol!(
 
         function mint(address account, uint256 amount) external;
 
-        function maxFlashLoan(address token) external view returns (uint256);
-        function flashFee(address token, uint256 amount) external view returns (uint256);
-
-        function flashLoan(
-        address receiver,
-        address token,
-        uint256 amount,
-        bytes calldata data
-        ) external returns (bool);
+        function maxFlashLoan(address token) external view returns (uint256 maxFlashLoan);
+        function flashFee(address token, uint256 amount) external view returns (uint256 fee);
+        function flashLoan(address receiver,address token, uint256 amount, bytes calldata data) external returns (bool);
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
