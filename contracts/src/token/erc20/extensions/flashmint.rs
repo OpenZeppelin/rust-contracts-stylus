@@ -106,7 +106,7 @@ pub enum Error {
 
 
 sol_storage! {
-    pub struct Erc20FlashMint {
+    pub struct Erc20Flashmint  {
        uint256 _flash_fee_amount;
        address _flash_fee_receiver_address;
        Erc20 erc20;
@@ -120,7 +120,7 @@ const RETURN_VALUE: B256 =
 
 
 #[public]
-impl IERC3156FlashLender for  Erc20FlashMint {
+impl IERC3156FlashLender for  Erc20Flashmint {
     type Error = Error;
     fn max_flash_loan(&self, token: Address) -> U256 {
         if token == contract::address() {
@@ -193,7 +193,7 @@ impl IERC3156FlashLender for  Erc20FlashMint {
     }
 }
 
-impl Erc20FlashMint {
+impl Erc20Flashmint {
     /// Calculates the fee for a flash loan.
     ///
     /// The fee is currently fixed at 0.
