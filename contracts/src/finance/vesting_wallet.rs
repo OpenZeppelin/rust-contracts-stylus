@@ -220,6 +220,7 @@ pub trait IVestingWallet {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[selector(name = "released")]
     fn released_eth(&self) -> U256;
 
     /// Amount of token already released.
@@ -228,6 +229,7 @@ pub trait IVestingWallet {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token` - Address of the token being released.
+    #[selector(name = "released")]
     fn released_erc20(&self, token: Address) -> U256;
 
     /// Getter for the amount of releasable Ether.
@@ -240,6 +242,7 @@ pub trait IVestingWallet {
     ///
     /// If total allocation exceeds `U256::MAX`.
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
     /// Getter for the amount of releasable `token` tokens. `token` should be
@@ -258,6 +261,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    #[selector(name = "releasable")]
     fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
 
     /// Release the native tokens (Ether) that have already vested.
@@ -279,6 +283,7 @@ pub trait IVestingWallet {
     ///
     /// If total allocation exceeds `U256::MAX`.
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error>;
 
     /// Release the tokens that have already vested.
@@ -302,6 +307,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
     /// Calculates the amount of Ether that has already vested. Default
@@ -316,6 +322,7 @@ pub trait IVestingWallet {
     ///
     /// If total allocation exceeds `U256::MAX`.
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
     /// Calculates the amount of tokens that has already vested. Default
@@ -335,6 +342,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &self,
         token: Address,
