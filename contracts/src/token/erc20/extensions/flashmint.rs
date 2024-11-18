@@ -1,9 +1,7 @@
 //! Optional Flashloan extension of the ERC-20 standard.
 //! using the IERC3156FlashBorrower interface to borrow tokens.
 
-use alloc::borrow;
 use alloy_primitives::{b256, Address, B256,Bytes, U256};
-use alloy_sol_macro_expander::expand::ty;
 use alloy_sol_types::sol;
 use stylus_sdk::{call::Call, contract, msg, prelude::*, abi::Bytes as AbiBytes};
 
@@ -114,6 +112,7 @@ sol_storage! {
 }
 
 
+unsafe impl TopLevelStorage for Erc20Flashmint {}
 
 const RETURN_VALUE: B256 =
     b256!("439148f0bbc682ca079e46d6e2c2f0c1e3b820f1a291b069d8882abf8cf18dd9");
@@ -123,10 +122,11 @@ const RETURN_VALUE: B256 =
 impl IERC3156FlashLender for  Erc20Flashmint {
     type Error = Error;
     fn max_flash_loan(&self, token: Address) -> U256 {
-        if token == contract::address() {
-            return U256::MAX - self.erc20.total_supply();
-        }
-        U256::MIN
+        self.erc20.total_supply()
+        // if token == contract::address() {
+        //     return U256::MAX - self.erc20.total_supply();
+        // }
+        // U256::MIN
     }
 
     fn flash_fee(&self, token: Address, amount: U256) -> Result<U256,Self::Error> {
