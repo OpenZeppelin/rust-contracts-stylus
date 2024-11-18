@@ -5,13 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.2.0-alpha.1] - 2024-11-15
 
 ### Added
 
 - ERC-1155 Multi Token Standard. #275
 - `SafeErc20` Utility. #289
 - Finite Fields arithmetics. #376
+- `Ownable2Step` contract. #352
+- `IOwnable` trait. #352
+
+### Changed(breaking)
+
+- Removed `only_owner` from the public interface of `Ownable`. #352
 
 ### Changed
 
