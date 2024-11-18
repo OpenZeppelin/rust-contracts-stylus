@@ -13,21 +13,35 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
-const DECIMALS: u8 = 10;
 
 sol_storage! {
     #[entrypoint]
     struct Erc20FlashmintExample {
-        #[borrow]
-        Erc20 erc20;
         #[borrow]
         Erc20Flashmint erc20_flashmint;
     }
 }
 
 #[public]
-#[inherit(Erc20,Erc20Flashmint)]
+#[inherit(Erc20Flashmint)]
 impl Erc20FlashmintExample {
+    pub fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Vec<u8>> {
+        self.erc20_flashmint.erc20.transfer(to, value).map_err(|e| e.into())
+    }
+
+    pub fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Vec<u8>> {
+        self.erc20_flashmint.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+    }
+
      // Add token minting feature.
     pub fn mint(
         &mut self,
