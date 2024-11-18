@@ -608,7 +608,6 @@ mod tests {
         contract._start.set(start);
         contract._duration.set(U64::ZERO);
 
-        let one = uint!(1_U256);
         let two = uint!(2_U256);
 
         assert_eq!(
