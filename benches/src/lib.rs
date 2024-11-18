@@ -19,6 +19,7 @@ pub mod erc20;
 pub mod erc721;
 pub mod merkle_proofs;
 pub mod report;
+pub mod vesting_wallet;
 
 #[derive(Debug, Deserialize)]
 struct ArbOtherFields {
@@ -31,6 +32,7 @@ struct ArbOtherFields {
 
 /// Cache options for the contract.
 /// `Bid(0)` will likely cache the contract on the nitro test node.
+#[derive(Clone)]
 pub enum CacheOpt {
     None,
     Bid(u32),
