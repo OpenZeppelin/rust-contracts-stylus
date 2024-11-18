@@ -75,7 +75,6 @@ sol! {
     error InvalidToken(address token);
 }
 
-// TODO: use existing IErc20
 pub use token::IErc20;
 #[allow(missing_docs)]
 mod token {
