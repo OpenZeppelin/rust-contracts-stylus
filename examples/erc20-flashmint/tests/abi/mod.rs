@@ -24,7 +24,7 @@ sol!(
         error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
         error ERC20InvalidSpender(address spender);
 
-    
+
         error ERC3156UnsupportedToken(address token);
         error ERC3156ExceededMaxLoan(uint256 maxLoan);
         error ERC3156InvalidReceiver(address receiver);

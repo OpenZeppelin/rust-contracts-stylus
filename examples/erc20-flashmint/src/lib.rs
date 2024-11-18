@@ -3,16 +3,9 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
-use openzeppelin_stylus::{
-    token::erc20::{
-        extensions:: Erc20Flashmint,
-        Erc20, IErc20,
-    },
-    utils::{introspection::erc165::IErc165, Pausable},
-};
+use alloy_primitives::{Address, U256};
+use openzeppelin_stylus::token::erc20::{extensions::Erc20Flashmint, IErc20};
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
-
 
 sol_storage! {
     #[entrypoint]
@@ -39,10 +32,13 @@ impl Erc20FlashmintExample {
         to: Address,
         value: U256,
     ) -> Result<bool, Vec<u8>> {
-        self.erc20_flashmint.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+        self.erc20_flashmint
+            .erc20
+            .transfer_from(from, to, value)
+            .map_err(|e| e.into())
     }
 
-     // Add token minting feature.
+    // Add token minting feature.
     pub fn mint(
         &mut self,
         account: Address,

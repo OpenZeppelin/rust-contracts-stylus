@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![cfg(feature = "e2e")]
 use alloy::{
-    primitives::{fixed_bytes, Address},
+    primitives:: Address,
     sol,
 };
 use e2e::Wallet;
@@ -50,9 +50,7 @@ sol! {
     }
 }
 
-pub async fn deploy(
-    wallet: &Wallet,
-) -> eyre::Result<Address> {
+pub async fn deploy(wallet: &Wallet) -> eyre::Result<Address> {
     // Deploy the contract.
     let contract = ERC3156FlashBorrowerMock::deploy(wallet, true, true).await?;
     Ok(*contract.address())

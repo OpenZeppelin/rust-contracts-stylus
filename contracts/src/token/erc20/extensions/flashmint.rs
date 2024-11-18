@@ -1,13 +1,14 @@
 //! Optional Flashloan extension of the ERC-20 standard.
 //! using the IERC3156FlashBorrower interface to borrow tokens.
 
-use alloy_primitives::{b256, Address, B256,Bytes, U256};
+use alloy_primitives::{b256, Address, Bytes, B256, U256};
 use alloy_sol_types::sol;
-use stylus_sdk::{call::Call, contract, msg, prelude::*, abi::Bytes as AbiBytes};
+use stylus_sdk::{
+    abi::Bytes as AbiBytes, call::Call, contract, msg, prelude::*,
+};
 
 use crate::token::erc20::{
-    self, utils::borrower::IERC3156FlashBorrower, 
-    Erc20, IErc20,
+    self, utils::borrower::IERC3156FlashBorrower, Erc20, IErc20,
 };
 
 sol! {
@@ -102,7 +103,6 @@ pub enum Error {
     Erc20(erc20::Error),
 }
 
-
 sol_storage! {
     pub struct Erc20Flashmint  {
        uint256 _flash_fee_amount;
@@ -111,16 +111,15 @@ sol_storage! {
     }
 }
 
-
 unsafe impl TopLevelStorage for Erc20Flashmint {}
 
 const RETURN_VALUE: B256 =
     b256!("439148f0bbc682ca079e46d6e2c2f0c1e3b820f1a291b069d8882abf8cf18dd9");
 
-
 #[public]
-impl IERC3156FlashLender for  Erc20Flashmint {
+impl IERC3156FlashLender for Erc20Flashmint {
     type Error = Error;
+
     fn max_flash_loan(&self, token: Address) -> U256 {
         self.erc20.total_supply()
         // if token == contract::address() {
@@ -129,7 +128,11 @@ impl IERC3156FlashLender for  Erc20Flashmint {
         // U256::MIN
     }
 
-    fn flash_fee(&self, token: Address, amount: U256) -> Result<U256,Self::Error> {
+    fn flash_fee(
+        &self,
+        token: Address,
+        amount: U256,
+    ) -> Result<U256, Self::Error> {
         if token != contract::address() {
             return Err(Error::UnsupportedToken(ERC3156UnsupportedToken {
                 token,
@@ -204,7 +207,7 @@ impl Erc20Flashmint {
         let _ = token;
         let _ = value;
         if self._flash_fee_amount.is_zero() {
-            return  U256::MIN
+            return U256::MIN;
         }
         self._flash_fee_amount.get()
     }
@@ -221,26 +224,25 @@ impl Erc20Flashmint {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address,uint,  U256};
+    use alloy_primitives::{address, uint, U256};
     use stylus_sdk::msg;
 
-    use crate::token::erc20::{Erc20, IErc20};
-
     use super::Erc20FlashMint;
-    use crate::token::erc20::extensions::flashmint::IERC3156FlashLender;
-
+    use crate::token::erc20::{
+        extensions::flashmint::IERC3156FlashLender, Erc20, IErc20,
+    };
 
     #[motsu::test]
     fn max_flash_loan_token_match(contract: Erc20FlashMint) {
-        let token =  address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
-        let max_flash_loan =  contract.max_flash_loan(token);
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+        let max_flash_loan = contract.max_flash_loan(token);
         assert_eq!(max_flash_loan, U256::MAX);
     }
-    
+
     #[motsu::test]
     fn max_flash_loan_token_mismatch(contract: Erc20FlashMint) {
-        let token =  address!("dce82b5f92c98f27f116f70491a487effdb6a2a6");
-        let max_flash_loan =  contract.max_flash_loan(token);
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a6");
+        let max_flash_loan = contract.max_flash_loan(token);
         assert_eq!(max_flash_loan, U256::MIN);
     }
 
