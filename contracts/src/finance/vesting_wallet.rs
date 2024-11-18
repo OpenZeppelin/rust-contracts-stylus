@@ -40,9 +40,9 @@ use crate::{
 };
 
 sol! {
-    /// Emitted when `amount` of ether has been released.
+    /// Emitted when `amount` of Ether has been released.
     ///
-    /// * `amount` - Total ether released.
+    /// * `amount` - Total Ether released.
     #[allow(missing_docs)]
     event EtherReleased(uint256 amount);
 
@@ -107,7 +107,7 @@ sol_storage! {
     pub struct VestingWallet {
         /// [`Ownable`] contract.
         Ownable ownable;
-        /// Amount of eth already released.
+        /// Amount of Ether already released.
         uint256 _released;
         /// Amount of ERC-20 tokens already released.
         mapping(address => uint256) _erc20_released;
@@ -131,7 +131,7 @@ pub trait IVestingWallet {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// The contract should be able to receive Eth.
+    /// The contract should be able to receive Ether.
     ///
     /// # Arguments
     ///
@@ -216,7 +216,7 @@ pub trait IVestingWallet {
     /// * `&self` - Read access to the contract's state.
     fn end(&self) -> U256;
 
-    /// Amount of eth already released.
+    /// Amount of Ether already released.
     ///
     /// # Arguments
     ///
@@ -233,7 +233,7 @@ pub trait IVestingWallet {
     #[selector(name = "released")]
     fn released_erc20(&self, token: Address) -> U256;
 
-    /// Getter for the amount of releasable eth.
+    /// Getter for the amount of releasable Ether.
     ///
     /// # Arguments
     ///
@@ -265,7 +265,7 @@ pub trait IVestingWallet {
     #[selector(name = "releasable")]
     fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
 
-    /// Release the native token (ether) that have already vested.
+    /// Release the native tokens (Ether) that have already vested.
     ///
     /// # Arguments
     ///
@@ -273,7 +273,7 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If ETH transfer fails, then the error [`Error::ReleaseEtherFailed`] is
+    /// If Ether transfer fails, then the error [`Error::ReleaseEtherFailed`] is
     /// returned.
     ///
     /// # Events
@@ -311,7 +311,7 @@ pub trait IVestingWallet {
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
-    /// Calculates the amount of ether that has already vested. Default
+    /// Calculates the amount of Ether that has already vested. Default
     /// implementation is a linear vesting curve.
     ///
     /// # Arguments
