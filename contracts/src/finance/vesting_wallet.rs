@@ -46,7 +46,7 @@ sol! {
     #[allow(missing_docs)]
     event EtherReleased(uint256 amount);
 
-    /// Emitted when `amount` of ERC20 `token` has been released.
+    /// Emitted when `amount` of ERC-20 `token` has been released.
     ///
     /// * `token` - Address of the token being released.
     /// * `amount` - Number of tokens released.
@@ -60,14 +60,14 @@ sol! {
     #[allow(missing_docs)]
     error ReleaseEtherFailed();
 
-    /// Indicates an error related to the underlying ERC20 transfer.
+    /// Indicates an error related to the underlying ERC-20 transfer.
     ///
     /// * `token` - Address of the token being released.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ReleaseTokenFailed(address token);
 
-    /// The token address is not valid. (eg. `Address::ZERO`)
+    /// The token address is not valid. (eg. `Address::ZERO`).
     ///
     /// * `token` - Address of the token being released.
     #[derive(Debug)]
@@ -99,24 +99,24 @@ pub enum Error {
     ReleaseEtherFailed(ReleaseEtherFailed),
     /// Indicates an error related to the underlying [`IErc20`] transfer.
     ReleaseTokenFailed(ReleaseTokenFailed),
-    /// The token address is not valid. (eg. `Address::ZERO`)
+    /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
 }
 
 sol_storage! {
     /// State of the [`VestingWallet`] Contract.
     pub struct VestingWallet {
-        /// Ownable contract
+        /// [`Ownable`] contract.
         Ownable ownable;
         /// Amount of eth already released.
         uint256 _released;
-        /// Amount of ERC20 tokens already released.
+        /// Amount of ERC-20 tokens already released.
         mapping(address => uint256) _erc20_released;
         /// Start timestamp.
         uint64 _start;
         /// Vesting duration.
         uint64 _duration;
-        /// SafeErc20 contract
+        /// [`SafeErc20`] contract.
         SafeErc20 safe_erc20;
     }
 }
@@ -133,6 +133,10 @@ pub trait IVestingWallet {
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// The contract should be able to receive Eth.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn receive_ether(&self);
 
     /// Returns the address of the current owner.
