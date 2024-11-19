@@ -75,17 +75,6 @@ sol! {
     error InvalidToken(address token);
 }
 
-pub use token::IErc20;
-#[allow(missing_docs)]
-mod token {
-    stylus_sdk::stylus_proc::sol_interface! {
-        /// Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-        }
-    }
-}
-
 /// An error that occurred in the [`VestingWallet`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
@@ -99,6 +88,17 @@ pub enum Error {
     ReleaseTokenFailed(ReleaseTokenFailed),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
+}
+
+pub use token::IErc20;
+#[allow(missing_docs)]
+mod token {
+    stylus_sdk::stylus_proc::sol_interface! {
+        /// Interface of the ERC-20 token.
+        interface IErc20 {
+            function balanceOf(address account) external view returns (uint256);
+        }
+    }
 }
 
 sol_storage! {
