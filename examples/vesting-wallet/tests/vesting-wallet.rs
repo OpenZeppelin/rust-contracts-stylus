@@ -114,7 +114,7 @@ mod ether_vesting {
     ) -> eyre::Result<Address> {
         let contract_addr = account
             .as_deployer()
-            .with_constructor(ctr(account.address(), start, DURATION))
+            .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
             .address()?;
@@ -136,6 +136,7 @@ mod ether_vesting {
             BALANCE * time_passed / DURATION,
         ));
         let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
         let old_alice_balance =
             alice.wallet.get_balance(alice.address()).await?;
@@ -255,8 +256,12 @@ mod erc20_vesting {
         mint_to: Address,
         allocation: u64,
     ) -> eyre::Result<Address> {
-        let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
-        let erc20 = ERC20ReturnFalseMock::new(erc20_address, &alice.wallet);
+        use mock::{
+            erc20_return_false, erc20_return_false::ERC20ReturnFalseMock,
+        };
+
+        let erc20_address = erc20_return_false::deploy(&account.wallet).await?;
+        let erc20 = ERC20ReturnFalseMock::new(erc20_address, &account.wallet);
         let _ = watch!(erc20.mint(mint_to, U256::from(allocation)))?;
         Ok(erc20_address)
     }
@@ -411,10 +416,6 @@ mod erc20_vesting {
     async fn release_erc20_reverts_on_failed_transfer(
         alice: Account,
     ) -> eyre::Result<()> {
-        use mock::{
-            erc20_return_false, erc20_return_false::ERC20ReturnFalseMock,
-        };
-
         let start = block_timestamp(&alice).await?;
         let contract_addr = deploy(&alice, start, DURATION).await?;
         let erc20_address =
