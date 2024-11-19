@@ -240,7 +240,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    /// If vested amount exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
@@ -259,7 +259,7 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    /// If vested amount exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address)
         -> Result<U256, Self::Error>;
@@ -282,7 +282,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    /// If vested amount exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error>;
 
@@ -307,7 +307,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    /// If vested amount exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
@@ -322,7 +322,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    /// If vested amount exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
@@ -343,7 +343,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    /// If vested amount exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &mut self,
@@ -500,7 +500,7 @@ impl VestingWallet {
     ///
     /// # Panics
     ///
-    /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
+    /// If vested amount exceeds `U256::MAX`.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         let timestamp = U256::from(timestamp);
 
