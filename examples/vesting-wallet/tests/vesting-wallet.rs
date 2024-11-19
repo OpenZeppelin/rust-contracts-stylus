@@ -7,7 +7,10 @@ use alloy::{
     providers::Provider,
     sol,
 };
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{
+    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
+    Revert,
+};
 use mock::{erc20, erc20::ERC20Mock};
 
 use crate::VestingWalletExample::constructorCall;
@@ -243,11 +246,11 @@ mod erc20_vesting {
     async fn deploy_erc20(
         account: &Account,
         mint_to: Address,
-        allocation: u64,
+        allocation: U256,
     ) -> eyre::Result<Address> {
         let erc20_address = erc20::deploy(&account.wallet).await?;
         let erc20 = ERC20Mock::new(erc20_address, &account.wallet);
-        let _ = watch!(erc20.mint(mint_to, U256::from(allocation)))?;
+        let _ = watch!(erc20.mint(mint_to, allocation))?;
         Ok(erc20_address)
     }
 
@@ -278,7 +281,7 @@ mod erc20_vesting {
         ));
         let contract_addr = deploy(&alice, start, DURATION).await?;
         let erc20_address =
-            deploy_erc20(&alice, contract_addr, BALANCE).await?;
+            deploy_erc20(&alice, contract_addr, U256::from(BALANCE)).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
         let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -349,7 +352,7 @@ mod erc20_vesting {
         let start = block_timestamp(&alice).await?;
         let contract_addr = deploy(&alice, start, DURATION).await?;
         let erc20_address =
-            deploy_erc20(&alice, contract_addr, BALANCE).await?;
+            deploy_erc20(&alice, contract_addr, U256::from(BALANCE)).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
@@ -448,6 +451,26 @@ mod erc20_vesting {
         assert!(err.reverted_with(VestingWallet::InvalidToken {
             token: Address::ZERO
         }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn vested_amount_reverts_on_scaled_allocation_overflow(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let start = block_timestamp(&alice).await?;
+        let timestamp = DURATION / 2 + start;
+        let contract_addr = deploy(&alice, start, DURATION).await?;
+        let erc20_address =
+            deploy_erc20(&alice, contract_addr, U256::MAX).await?;
+
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.vestedAmount_1(erc20_address, timestamp))
+            .expect_err("should exceed `U256::MAX`");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
 
         Ok(())
     }
