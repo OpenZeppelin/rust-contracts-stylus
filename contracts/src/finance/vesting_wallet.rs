@@ -30,7 +30,6 @@ use stylus_sdk::{
     contract, evm, function_selector,
     storage::TopLevelStorage,
     stylus_proc::{public, sol_storage, SolidityError},
-    types::AddressVM,
 };
 
 use crate::{
@@ -468,15 +467,11 @@ impl IVestingWallet for VestingWallet {
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error> {
-        if !Address::has_code(&token) {
-            return Err(InvalidToken { token }.into());
-        }
-
         let erc20 = IErc20::new(token);
         let call = Call::new_in(self);
         let balance = erc20
             .balance_of(call, contract::address())
-            .expect("should return the balance");
+            .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance
             .checked_add(self.released_erc20(token))
