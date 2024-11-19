@@ -225,20 +225,36 @@ mod erc20_vesting {
         account: &Account,
         start: u64,
         duration: u64,
-        allocation: u64,
-    ) -> eyre::Result<(Address, Address)> {
+    ) -> eyre::Result<Address> {
         let contract_addr = account
             .as_deployer()
             .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
             .address()?;
+        Ok(contract_addr)
+    }
 
+    async fn deploy_erc20(
+        account: &Account,
+        mint_to: Address,
+        allocation: u64,
+    ) -> eyre::Result<Address> {
         let erc20_address = erc20::deploy(&account.wallet).await?;
         let erc20 = ERC20Mock::new(erc20_address, &account.wallet);
-        let _ = watch!(erc20.mint(contract_addr, U256::from(allocation)))?;
+        let _ = watch!(erc20.mint(mint_to, U256::from(allocation)))?;
+        Ok(erc20_address)
+    }
 
-        Ok((contract_addr, erc20_address))
+    async fn deploy_erc20_return_false(
+        account: &Account,
+        mint_to: Address,
+        allocation: u64,
+    ) -> eyre::Result<Address> {
+        let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
+        let erc20 = ERC20ReturnFalseMock::new(erc20_address, &alice.wallet);
+        let _ = watch!(erc20.mint(mint_to, U256::from(allocation)))?;
+        Ok(erc20_address)
     }
 
     async fn run_check_release(
@@ -251,8 +267,9 @@ mod erc20_vesting {
             BALANCE,
             BALANCE * time_passed / DURATION,
         ));
-        let (contract_addr, erc20_address) =
-            deploy(&alice, start, DURATION, BALANCE).await?;
+        let contract_addr = deploy(&alice, start, DURATION).await?;
+        let erc20_address =
+            deploy_erc20(&alice, contract_addr, BALANCE).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
         let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -321,8 +338,9 @@ mod erc20_vesting {
     #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
-        let (contract_addr, erc20_address) =
-            deploy(&alice, start, DURATION, BALANCE).await?;
+        let contract_addr = deploy(&alice, start, DURATION).await?;
+        let erc20_address =
+            deploy_erc20(&alice, contract_addr, BALANCE).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
@@ -352,7 +370,7 @@ mod erc20_vesting {
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
-        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?.0;
+        let contract_addr = deploy(&alice, start, DURATION).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
@@ -371,7 +389,7 @@ mod erc20_vesting {
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
-        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?.0;
+        let contract_addr = deploy(&alice, start, DURATION).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
@@ -394,16 +412,9 @@ mod erc20_vesting {
         };
 
         let start = block_timestamp(&alice).await?;
-        let contract_addr = alice
-            .as_deployer()
-            .with_constructor(ctr(alice.address(), start, DURATION))
-            .deploy()
-            .await?
-            .address()?;
-
-        let erc20_address = erc20_return_false::deploy(&alice.wallet).await?;
-        let erc20 = ERC20ReturnFalseMock::new(erc20_address, &alice.wallet);
-        let _ = watch!(erc20.mint(contract_addr, U256::from(BALANCE)))?;
+        let contract_addr = deploy(&alice, start, DURATION).await?;
+        let erc20_address =
+            deploy_erc20_return_false(&alice, contract_addr, BALANCE).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
@@ -422,7 +433,7 @@ mod erc20_vesting {
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
-        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?.0;
+        let contract_addr = deploy(&alice, start, DURATION).await?;
 
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
