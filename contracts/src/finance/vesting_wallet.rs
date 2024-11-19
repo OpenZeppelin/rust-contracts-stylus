@@ -130,13 +130,6 @@ pub trait IVestingWallet {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// The contract should be able to receive Ether.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    fn receive_ether(&self);
-
     /// Returns the address of the current owner.
     ///
     /// Re-export of [`Ownable::owner`].
@@ -193,6 +186,13 @@ pub trait IVestingWallet {
     ///
     /// Emits an [`ownable::OwnershipTransferred`] event.
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+
+    /// The contract should be able to receive Ether.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    fn receive_ether(&self);
 
     /// Getter for the start timestamp.
     ///
@@ -355,9 +355,6 @@ pub trait IVestingWallet {
 impl IVestingWallet for VestingWallet {
     type Error = Error;
 
-    #[payable]
-    fn receive_ether(&self) {}
-
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -372,6 +369,9 @@ impl IVestingWallet for VestingWallet {
     fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
+
+    #[payable]
+    fn receive_ether(&self) {}
 
     fn start(&self) -> U256 {
         U256::from(self._start.get())
