@@ -382,8 +382,8 @@ impl IVestingWallet for VestingWallet {
     }
 
     fn end(&self) -> U256 {
-        // SAFETY: both `start` and `duration` are stored as u64, so they cannot
-        // exceed `U256::MAX`
+        // SAFETY: both `start` and `duration` are stored as u64,
+        // so they cannot exceed `U256::MAX`
         self.start() + self.duration()
     }
 
