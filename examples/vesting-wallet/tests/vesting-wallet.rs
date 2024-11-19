@@ -106,6 +106,25 @@ async fn rejects_zero_address_for_beneficiary(
 mod ether_vesting {
     use super::*;
 
+    async fn deploy(
+        account: &Account,
+        start: u64,
+        duration: u64,
+        allocation: u64,
+    ) -> eyre::Result<Address> {
+        let contract_addr = account
+            .as_deployer()
+            .with_constructor(ctr(account.address(), start, DURATION))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = VestingWallet::new(contract_addr, &account.wallet);
+
+        let _ = watch!(contract.receiveEther().value(U256::from(allocation)))?;
+
+        Ok(contract_addr)
+    }
+
     async fn run_check_release(
         alice: Account,
         time_passed: u64,
@@ -116,16 +135,7 @@ mod ether_vesting {
             BALANCE,
             BALANCE * time_passed / DURATION,
         ));
-
-        let contract_addr = alice
-            .as_deployer()
-            .with_constructor(ctr(alice.address(), start, DURATION))
-            .deploy()
-            .await?
-            .address()?;
-        let contract = VestingWallet::new(contract_addr, &alice.wallet);
-
-        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
+        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?;
 
         let old_alice_balance =
             alice.wallet.get_balance(alice.address()).await?;
@@ -189,15 +199,9 @@ mod ether_vesting {
     #[e2e::test]
     async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
-        let contract_addr = alice
-            .as_deployer()
-            .with_constructor(ctr(alice.address(), start, DURATION))
-            .deploy()
-            .await?
-            .address()?;
-        let contract = VestingWallet::new(contract_addr, &alice.wallet);
+        let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?;
 
-        let _ = watch!(contract.receiveEther().value(U256::from(BALANCE)))?;
+        let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
         for i in 0..64 {
             let timestamp = i * DURATION / 60 + start;
