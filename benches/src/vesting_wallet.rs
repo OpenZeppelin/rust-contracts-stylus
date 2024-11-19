@@ -85,6 +85,7 @@ pub async fn run_with(
     use VestingWallet::*;
     #[rustfmt::skip]
     let receipts = vec![
+        (receiveEtherCall::SIGNATURE, receipt!(contract.receiveEther())?),
         (startCall::SIGNATURE, receipt!(contract.start())?),
         (durationCall::SIGNATURE, receipt!(contract.duration())?),
         (endCall::SIGNATURE, receipt!(contract.end())?),
