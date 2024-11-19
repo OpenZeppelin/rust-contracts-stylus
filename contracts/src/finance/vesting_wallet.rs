@@ -36,7 +36,6 @@ use stylus_sdk::{
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{ISafeErc20, SafeErc20},
-    utils::math::storage::AddAssignUnchecked,
 };
 
 sol! {
@@ -307,6 +306,7 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
+    /// If total allocation exceeds `U256::MAX`.
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
@@ -342,6 +342,7 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
+    /// If total allocation exceeds `U256::MAX`.
     /// If `total_allocation * (timestamp - self.start())` exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
@@ -441,9 +442,12 @@ impl IVestingWallet for VestingWallet {
             Error::ReleaseTokenFailed(ReleaseTokenFailed { token })
         })?;
 
-        // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
-        // exceed `U256::MAX`.
-        self._erc20_released.setter(token).add_assign_unchecked(amount);
+        let released = self._erc20_released.get(token);
+        self._erc20_released.setter(token).set(
+            released
+                .checked_add(amount)
+                .expect("total released should not exceed `U256::MAX`"),
+        );
 
         evm::log(ERC20Released { token, amount });
 
@@ -475,9 +479,9 @@ impl IVestingWallet for VestingWallet {
             .balance_of(call, contract::address())
             .expect("should return the balance");
 
-        // SAFETY: total supply of a [`crate::token::erc20::Erc20`] cannot
-        // exceed `U256::MAX`.
-        let total_allocation = balance + self.released_erc20(token);
+        let total_allocation = balance
+            .checked_add(self.released_erc20(token))
+            .expect("total allocation should not exceed `U256::MAX`");
 
         Ok(self.vesting_schedule(total_allocation, U64::from(timestamp)))
     }
