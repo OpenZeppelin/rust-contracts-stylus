@@ -245,7 +245,7 @@ pub trait IVestingWallet {
     fn releasable_eth(&self) -> U256;
 
     /// Getter for the amount of releasable `token` tokens. `token` should be
-    /// the address of an [`crate::token::erc20::Erc20`] contract.
+    /// the address of an ERC-20 contract.
     ///
     /// # Arguments
     ///
