@@ -18,18 +18,18 @@ sol!(
     #[sol(rpc)]
     contract VestingWallet {
         function owner() public view virtual returns (address owner);
-          function receiveEther() external payable virtual;
-          function start() external view returns (uint256 start);
-          function duration() external view returns (uint256 duration);
-          function end() external view returns (uint256 end);
-          function released() external view returns (uint256 released);
-          function released(address token) external view returns (uint256 released);
-          function releasable() external view returns (uint256 releasable);
-          function releasable(address token) external view returns (uint256 releasable);
-          function release() external;
-          function release(address token) external;
-          function vestedAmount(uint64 timestamp) external view returns (uint256 vestedAmount);
-          function vestedAmount(address token, uint64 timestamp) external view returns (uint256 vestedAmount);
+        function receiveEther() external payable virtual;
+        function start() external view returns (uint256 start);
+        function duration() external view returns (uint256 duration);
+        function end() external view returns (uint256 end);
+        function released() external view returns (uint256 released);
+        function released(address token) external view returns (uint256 released);
+        function releasable() external view returns (uint256 releasable);
+        function releasable(address token) external view returns (uint256 releasable);
+        function release() external;
+        function release(address token) external;
+        function vestedAmount(uint64 timestamp) external view returns (uint256 vestedAmount);
+        function vestedAmount(address token, uint64 timestamp) external view returns (uint256 vestedAmount);
     }
 
     #[sol(rpc)]
