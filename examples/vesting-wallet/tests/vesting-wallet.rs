@@ -198,7 +198,7 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
+    async fn check_vested_amount(alice: Account) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
         let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?;
 
@@ -345,7 +345,7 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn check_vesting_schedule(alice: Account) -> eyre::Result<()> {
+    async fn check_vested_amount(alice: Account) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
         let contract_addr = deploy(&alice, start, DURATION).await?;
         let erc20_address =
