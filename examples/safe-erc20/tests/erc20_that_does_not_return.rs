@@ -352,7 +352,7 @@ mod approvals {
                 spender_addr,
                 value
             ))
-            .expect_err("should not exceed U256::MAX");
+            .expect_err("should exceed U256::MAX");
 
             assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
 
