@@ -424,10 +424,12 @@ impl IVestingWallet for VestingWallet {
             .expect("should not exceed `U256::MAX` for `_released`");
         self._released.set(released);
 
+        transfer_eth(self.ownable.owner(), amount)
+            .map_err(|_| Error::ReleaseEtherFailed(ReleaseEtherFailed {}))?;
+
         evm::log(EtherReleased { amount });
 
-        transfer_eth(self.ownable.owner(), amount)
-            .map_err(|_| Error::ReleaseEtherFailed(ReleaseEtherFailed {}))
+        Ok(())
     }
 
     #[selector(name = "release")]
