@@ -60,14 +60,14 @@ sol! {
     #[allow(missing_docs)]
     error ReleaseEtherFailed();
 
-    /// Indicates an error related to the underlying ERC-20 transfer.
+    /// Indicates an error related to the underlying ERC-20 `token` transfer.
     ///
     /// * `token` - Address of the token being released.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ReleaseTokenFailed(address token);
 
-    /// The token address is not valid. (eg. `Address::ZERO`).
+    /// The token address is not valid (eg. `Address::ZERO`).
     ///
     /// * `token` - Address of the token being released.
     #[derive(Debug)]
@@ -504,7 +504,7 @@ impl VestingWallet {
             total_allocation
         } else {
             // SAFETY: `timestamp` is guaranteed to be greater than
-            // `self.start()`, as checked by earlier bounds.
+            // `self.start()` as checked by earlier bounds.
             let elapsed = timestamp - self.start();
 
             let scaled_allocation = total_allocation
