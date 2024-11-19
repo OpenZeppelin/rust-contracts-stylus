@@ -36,6 +36,7 @@ use stylus_sdk::{
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{ISafeErc20, SafeErc20},
+    utils::math::storage::AddAssignUnchecked,
 };
 
 sol! {
@@ -240,7 +241,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If vested amount exceeds `U256::MAX`.
+    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
@@ -259,7 +260,8 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// If vested amount exceeds `U256::MAX`.
+    /// If total allocation exceeds `U256::MAX`.
+    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address)
         -> Result<U256, Self::Error>;
@@ -282,7 +284,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If vested amount exceeds `U256::MAX`.
+    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error>;
 
@@ -307,7 +309,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If vested amount exceeds `U256::MAX`.
+    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
@@ -322,7 +324,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If vested amount exceeds `U256::MAX`.
+    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
@@ -343,7 +345,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If vested amount exceeds `U256::MAX`.
+    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &mut self,
@@ -419,11 +421,10 @@ impl IVestingWallet for VestingWallet {
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
-        let released = self
-            .released_eth()
-            .checked_add(amount)
-            .expect("should not exceed `U256::MAX` for `_released`");
-        self._released.set(released);
+        // SAFETY: total vested amount is by definition smaller than or equal to
+        // the total allocation, which is already verified to be smaller than
+        // `U256::MAX` in [`Self::releasable_eth`].
+        self._released.set(self._released.get() + amount);
 
         transfer_eth(self.ownable.owner(), amount)
             .map_err(|_| Error::ReleaseEtherFailed(ReleaseEtherFailed {}))?;
@@ -442,12 +443,10 @@ impl IVestingWallet for VestingWallet {
             Error::ReleaseTokenFailed(ReleaseTokenFailed { token })
         })?;
 
-        let released = self._erc20_released.get(token);
-        self._erc20_released.setter(token).set(
-            released
-                .checked_add(amount)
-                .expect("total released should not exceed `U256::MAX`"),
-        );
+        // SAFETY: total vested amount is by definition smaller than or equal to
+        // the total allocation, which is already verified to be smaller than
+        // `U256::MAX` in [`Self::releasable_erc20`].
+        self._erc20_released.setter(token).add_assign_unchecked(amount);
 
         evm::log(ERC20Released { token, amount });
 
@@ -500,7 +499,7 @@ impl VestingWallet {
     ///
     /// # Panics
     ///
-    /// If vested amount exceeds `U256::MAX`.
+    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         let timestamp = U256::from(timestamp);
 
