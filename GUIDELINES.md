@@ -2,21 +2,20 @@
 
 ## Setup
 
-1. Clone this repository.
-2. Install [Docker].
-3. Install the [solidity compiler] version `0.8.24` 
+1. Install [Docker].
+1. Install the [Solidity Compiler] version `0.8.24` 
 (NOTE: it is important to use this exact version to avoid compatibility issues).
-4. Install toolchain providing `cargo` using [rustup].
-5. Install the cargo stylus tool with `cargo install --force cargo-stylus`.
+1. Install toolchain providing `cargo` using [rustup].
+1. Install the cargo stylus tool with `cargo install --force cargo-stylus`.
 
-Note: If you encounter the `linker 'cc' not found` error during stylus
-installation, make to sure to first install the necessary build tools with the
-following command: `sudo apt-get install build-essential pkg-config libssl-dev -y`,
+Note: If you are using Linux and encounter the `linker 'cc' not found` error during
+stylus installation, make to sure to first install the necessary build tools with
+the following command: `sudo apt-get install build-essential pkg-config libssl-dev -y`,
 and retry installing the stylus tool.
 
 [Docker]: https://docs.docker.com/engine/install/
 
-[solidity compiler]: https://docs.soliditylang.org/en/latest/installing-solidity.html#linux-packages
+[Solidity Compiler]: https://docs.soliditylang.org/en/latest/installing-solidity.html#linux-packages
 
 [rustup]: https://rustup.rs/
 
