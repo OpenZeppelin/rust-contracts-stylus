@@ -1,5 +1,24 @@
 # Engineering Guidelines
 
+## Setup
+
+1. Install [Docker].
+1. Install the [Solidity Compiler] version `0.8.24` 
+(NOTE: it is important to use this exact version to avoid compatibility issues).
+1. Install toolchain providing `cargo` using [rustup].
+1. Install the cargo stylus tool with `cargo install --force cargo-stylus`.
+
+Note: If you are using Linux and encounter the `linker 'cc' not found` error during
+stylus installation, make to sure to first install the necessary build tools with
+the following command: `sudo apt-get install build-essential pkg-config libssl-dev -y`,
+and retry installing the stylus tool.
+
+[Docker]: https://docs.docker.com/engine/install/
+
+[Solidity Compiler]: https://docs.soliditylang.org/en/latest/installing-solidity.html#linux-packages
+
+[rustup]: https://rustup.rs/
+
 ## Testing
 
 Code must be thoroughly tested with quality unit tests.
@@ -209,15 +228,6 @@ Make sure all tests are passing with:
 
 ### Running end-to-end tests
 
-In order to run end-to-end (e2e) tests, you should have the cargo stylus tool:
-
-```shell
-cargo install cargo-stylus
-```
-
-Since most of the e2e tests use [koba](https://github.com/OpenZeppelin/koba) for deploying contracts, you need to
-[install](https://docs.soliditylang.org/en/latest/installing-solidity.html#) the solidity compiler (`v0.8.24`).
-
 To run e2e tests, you need to have a local nitro test node up and running.
 Run the following command and wait till script exit successfully:
 
@@ -249,6 +259,8 @@ prefixed with "WIP:".
 
 Branch names don't matter, and commit messages within a pull request mostly
 don't matter either, although they can help the review process.
+
+[Semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 ## Writing commit messages
 
@@ -290,6 +302,8 @@ When it comes to formatting, here's a model git commit message[1]:
        single space, with blank lines in between, but conventions vary here.
      - Use a hanging indent.
 
+[Conventional Commits]: https://www.conventionalcommits.org/en/v1.0.0/
+
 ## Rust Conventions
 
 In addition to the official [The Rust Style Guide] we have a number of other
@@ -311,7 +325,3 @@ conventions that must be followed.
 [The Rust Style Guide]: https://doc.rust-lang.org/nightly/style-guide/
 
 [EIP-6093]: https://eips.ethereum.org/EIPS/eip-6093
-
-[Semantic versioning]: https://semver.org/spec/v2.0.0.html
-
-[Conventional Commits]: https://www.conventionalcommits.org/en/v1.0.0/

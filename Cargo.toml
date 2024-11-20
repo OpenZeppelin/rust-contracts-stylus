@@ -19,6 +19,7 @@ members = [
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
+  "examples/ownable-two-step",
   "examples/safe-erc20",
   "benches",
 ]
@@ -38,6 +39,7 @@ default-members = [
   "examples/safe-erc20",
   "examples/merkle-proofs",
   "examples/ownable",
+  "examples/ownable-two-step",
   "examples/access-control",
   "examples/basic/token",
   "examples/ecdsa",
@@ -53,7 +55,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.1.1"
+version = "0.2.0-alpha.1"
 
 [workspace.lints.rust]
 missing_docs = "warn"
