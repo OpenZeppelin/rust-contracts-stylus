@@ -32,7 +32,6 @@ struct ArbOtherFields {
 
 /// Cache options for the contract.
 /// `Bid(0)` will likely cache the contract on the nitro test node.
-#[derive(Clone)]
 pub enum CacheOpt {
     None,
     Bid(u32),
