@@ -4,14 +4,14 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-    contract Erc20Flashmint {
+    contract Erc20FlashMint {
         function totalSupply() external view returns (uint256 totalSupply);
         function balanceOf(address account) external view returns (uint256 balance);
         function transfer(address recipient, uint256 amount) external returns (bool);
         function allowance(address owner, address spender) external view returns (uint256 allowance);
         function approve(address spender, uint256 amount) external returns (bool);
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-
+        
         function mint(address account, uint256 amount) external;
 
         function maxFlashLoan(address token) external view returns (uint256 maxLoan);
