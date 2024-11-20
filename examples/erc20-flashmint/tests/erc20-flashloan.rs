@@ -1,16 +1,13 @@
 #![cfg(feature = "e2e")]
 
-use std::{assert_eq,  println};
+use std::{assert_eq, println};
 
 use abi::Erc20Flashmint;
 use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use e2e::{
-    receipt, send, Account, ReceiptExt,
-    Revert,
-};
+use e2e::{receipt, send, Account, ReceiptExt, Revert};
 use eyre::Result;
 // use stylus_sdk::contract::address;
 use mock::borrower;

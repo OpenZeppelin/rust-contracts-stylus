@@ -1,9 +1,6 @@
 #![allow(dead_code)]
 #![cfg(feature = "e2e")]
-use alloy::{
-    primitives:: Address,
-    sol,
-};
+use alloy::{primitives::Address, sol};
 use e2e::Wallet;
 
 sol! {
