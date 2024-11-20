@@ -6,6 +6,7 @@ use alloy::{
     sol_types::{SolCall, SolConstructor},
     uint,
 };
+use alloy_primitives::U256;
 use e2e::{receipt, Account};
 
 use crate::{
@@ -30,17 +31,22 @@ sol!(
         function vestedAmount(uint64 timestamp) external view returns (uint256 vestedAmount);
         function vestedAmount(address token, uint64 timestamp) external view returns (uint256 vestedAmount);
     }
+
+    #[sol(rpc)]
+    contract Erc20 {
+        function mint(address account, uint256 amount) external;
+    }
 );
 
 sol!("../examples/vesting-wallet/src/constructor.sol");
-// sol!("../examples/erc20/src/constructor.sol");
+sol!("../examples/erc20/src/constructor.sol");
 
 const START_TIMESTAMP: u64 = 1000;
 const DURATION_SECONDS: u64 = 1000;
 
-// const TOKEN_NAME: &str = "Test Token";
-// const TOKEN_SYMBOL: &str = "TTK";
-// const CAP: U256 = uint!(1_000_000_U256);
+const TOKEN_NAME: &str = "Test Token";
+const TOKEN_SYMBOL: &str = "TTK";
+const CAP: U256 = uint!(1_000_000_U256);
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     let reports = run_with(CacheOpt::None).await?;
@@ -66,20 +72,16 @@ pub async fn run_with(
         .wallet(EthereumWallet::from(alice.signer.clone()))
         .on_http(alice.url().parse()?);
 
-    let contract_addr = deploy(&alice, cache_opt).await?;
-    // let erc20_addr = deploy_token(&alice, cache_opt).await?;
+    let contract_addr = deploy(&alice, cache_opt.clone()).await?;
+    let erc20_addr = deploy_token(&alice, cache_opt).await?;
 
     let contract = VestingWallet::new(contract_addr, &alice_wallet);
-    // let erc20 = Erc20::new(erc20_addr, &alice_wallet);
+    let erc20 = Erc20::new(erc20_addr, &alice_wallet);
 
     let _ = receipt!(contract.receiveEther().value(uint!(1000_U256)))?;
-    // let _ = receipt!(erc20.mint(contract_addr, uint!(1000_U256)))?;
-
-    let timestamp = START_TIMESTAMP + DURATION_SECONDS / 2;
+    let _ = receipt!(erc20.mint(contract_addr, uint!(1000_U256)))?;
 
     // IMPORTANT: Order matters!
-    // TODO: uncomment ERC-20-related benches once solution to
-    // `error` ProgramNotActivated()` is found.
     use VestingWallet::*;
     #[rustfmt::skip]
     let receipts = vec![
@@ -88,13 +90,13 @@ pub async fn run_with(
         (durationCall::SIGNATURE, receipt!(contract.duration())?),
         (endCall::SIGNATURE, receipt!(contract.end())?),
         (released_0Call::SIGNATURE, receipt!(contract.released_0())?),
-        // (released_1Call::SIGNATURE, receipt!(contract.released_1(erc20_addr))?),
+        (released_1Call::SIGNATURE, receipt!(contract.released_1(erc20_addr))?),
         (releasable_0Call::SIGNATURE, receipt!(contract.releasable_0())?),
-        // (releasable_1Call::SIGNATURE, receipt!(contract.releasable_1(erc20_addr))?),
+        (releasable_1Call::SIGNATURE, receipt!(contract.releasable_1(erc20_addr))?),
         (release_0Call::SIGNATURE, receipt!(contract.release_0())?),
-        // (release_1Call::SIGNATURE, receipt!(contract.release_1(erc20_addr))?),
-        (vestedAmount_0Call::SIGNATURE, receipt!(contract.vestedAmount_0(timestamp))?),
-        // (vestedAmount_1Call::SIGNATURE, receipt!(contract.vestedAmount_1(erc20_addr, timestamp))?),
+        (release_1Call::SIGNATURE, receipt!(contract.release_1(erc20_addr))?),
+        (vestedAmount_0Call::SIGNATURE, receipt!(contract.vestedAmount_0(START_TIMESTAMP))?),
+        (vestedAmount_1Call::SIGNATURE, receipt!(contract.vestedAmount_1(erc20_addr, START_TIMESTAMP))?),
     ];
 
     receipts
@@ -116,15 +118,15 @@ async fn deploy(
     crate::deploy(account, "vesting-wallet", Some(args), cache_opt).await
 }
 
-// async fn deploy_token(
-//     account: &Account,
-//     cache_opt: CacheOpt,
-// ) -> eyre::Result<Address> {
-//     let args = Erc20Example::constructorCall {
-//         name_: TOKEN_NAME.to_owned(),
-//         symbol_: TOKEN_SYMBOL.to_owned(),
-//         cap_: CAP,
-//     };
-//     let args = alloy::hex::encode(args.abi_encode());
-//     crate::deploy(account, "erc20", Some(args), cache_opt).await
-// }
+async fn deploy_token(
+    account: &Account,
+    cache_opt: CacheOpt,
+) -> eyre::Result<Address> {
+    let args = Erc20Example::constructorCall {
+        name_: TOKEN_NAME.to_owned(),
+        symbol_: TOKEN_SYMBOL.to_owned(),
+        cap_: CAP,
+    };
+    let args = alloy::hex::encode(args.abi_encode());
+    crate::deploy(account, "erc20", Some(args), cache_opt).await
+}
