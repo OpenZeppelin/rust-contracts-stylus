@@ -1,5 +1,6 @@
 use benches::{
-    access_control, erc20, erc721, merkle_proofs, report::BenchmarkReport,
+    access_control, erc1155, erc20, erc721, merkle_proofs,
+    report::BenchmarkReport,
 };
 use futures::FutureExt;
 
@@ -9,6 +10,7 @@ async fn main() -> eyre::Result<()> {
         access_control::bench().boxed(),
         erc20::bench().boxed(),
         erc721::bench().boxed(),
+        erc1155::bench().boxed(),
         merkle_proofs::bench().boxed(),
     ])
     .await?
