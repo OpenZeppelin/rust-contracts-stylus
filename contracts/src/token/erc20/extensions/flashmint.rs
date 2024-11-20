@@ -83,7 +83,7 @@ pub trait IERC3156FlashLender {
     ) -> Result<bool, Self::Error>;
 }
 
-/// A Permit error.
+/// A FlashlMint    error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicate an error related to an unsupported loan token.
@@ -103,29 +103,17 @@ pub enum Error {
     Erc20(erc20::Error),
 }
 
-sol_storage! {
-    pub struct Erc20Flashmint  {
-       uint256 _flash_fee_amount;
-       address _flash_fee_receiver_address;
-       Erc20 erc20;
-    }
-}
-
-unsafe impl TopLevelStorage for Erc20Flashmint {}
-
 const RETURN_VALUE: B256 =
     b256!("439148f0bbc682ca079e46d6e2c2f0c1e3b820f1a291b069d8882abf8cf18dd9");
 
-#[public]
-impl IERC3156FlashLender for Erc20Flashmint {
+impl IERC3156FlashLender for Erc20 {
     type Error = Error;
 
     fn max_flash_loan(&self, token: Address) -> U256 {
-        self.erc20.total_supply()
-        // if token == contract::address() {
-        //     return U256::MAX - self.erc20.total_supply();
-        // }
-        // U256::MIN
+        if token == contract::address() {
+            return U256::MAX - self.total_supply();
+        }
+        U256::MIN
     }
 
     fn flash_fee(
@@ -156,7 +144,7 @@ impl IERC3156FlashLender for Erc20Flashmint {
         }
 
         let fee = self.flash_fee(token, value)?;
-        self.erc20._mint(receiver, value)?;
+        self._mint(receiver, value)?;
         let loan_reciver = IERC3156FlashBorrower::new(receiver);
         if Address::has_code(&loan_reciver) {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
@@ -184,19 +172,19 @@ impl IERC3156FlashLender for Erc20Flashmint {
         }
 
         let flash_fee_receiver = self._flash_fee_receiver();
-        self.erc20._spend_allowance(receiver, msg::sender(), value + fee)?;
+        self._spend_allowance(receiver, msg::sender(), value + fee)?;
         if fee.is_zero() || flash_fee_receiver.is_zero() {
-            self.erc20._burn(receiver, value + fee)?;
+            self._burn(receiver, value + fee)?;
         } else {
-            self.erc20._burn(receiver, value)?;
-            self.erc20._transfer(receiver, flash_fee_receiver, fee)?;
+            self._burn(receiver, value)?;
+            self._transfer(receiver, flash_fee_receiver, fee)?;
         }
 
         Ok(true)
     }
 }
 
-impl Erc20Flashmint {
+impl Erc20 {
     /// Calculates the fee for a flash loan.
     ///
     /// The fee is currently fixed at 0.
@@ -206,57 +194,117 @@ impl Erc20Flashmint {
     pub fn _flash_fee(&self, token: Address, value: U256) -> U256 {
         let _ = token;
         let _ = value;
-        if self._flash_fee_amount.is_zero() {
-            return U256::MIN;
-        }
-        self._flash_fee_amount.get()
+        return U256::MIN;
     }
 
     /// Returns the address of the receiver contract that will receive the flash
     /// loan. The default implementation returns `Address::ZERO`.
     pub fn _flash_fee_receiver(&self) -> Address {
-        if self._flash_fee_receiver_address.eq(&Address::ZERO) {
-            return self._flash_fee_receiver_address.get();
-        }
         Address::ZERO
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, U256};
-    use stylus_sdk::msg;
 
-    use super::Erc20FlashMint;
+    use alloc::vec;
+
+    use alloy_primitives::{address, uint, Address, U256};
+    use stylus_sdk:: msg;
+
     use crate::token::erc20::{
-        extensions::flashmint::IERC3156FlashLender, Erc20, IErc20,
+        extensions::flashmint::{Error, IERC3156FlashLender,
+        },
+        Erc20,
     };
 
     #[motsu::test]
-    fn max_flash_loan_token_match(contract: Erc20FlashMint) {
+    fn max_flash_loan_token_match(contract: Erc20) {
         let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
         let max_flash_loan = contract.max_flash_loan(token);
         assert_eq!(max_flash_loan, U256::MAX);
     }
 
     #[motsu::test]
-    fn max_flash_loan_token_mismatch(contract: Erc20FlashMint) {
+    fn max_flash_loan_token_mismatch(contract: Erc20) {
         let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a6");
         let max_flash_loan = contract.max_flash_loan(token);
         assert_eq!(max_flash_loan, U256::MIN);
     }
 
     #[motsu::test]
-    fn burns_errors_when_insufficient_balance(contract: Erc20FlashMint) {
-        let zero = U256::ZERO;
-        let one = uint!(1_U256);
-        let sender = msg::sender();
-
-        assert_eq!(zero, contract.erc20.balance_of(sender));
-
-        // let result = contract.burn(one);
-        // assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+    fn max_flash_loan_when_token_minted(contract: Erc20) {
+        contract._mint(msg::sender(), uint!(10000_U256)).unwrap();
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+        let max_flash_loan = contract.max_flash_loan(token);
+        assert_eq!(max_flash_loan, U256::MAX - uint!(10000_U256));
     }
+
+    #[motsu::test]
+    fn flash_fee(contract: Erc20) {
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+        let flash_fee = contract.flash_fee(token, uint!(1000_U256)).unwrap();
+        assert_eq!(flash_fee, U256::MIN);
+    }
+
+    #[motsu::test]
+    fn error_flash_fee_when_invalid_token(contract: Erc20) {
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a6");
+        let result = contract.flash_fee(token, uint!(1000_U256));
+        assert!(matches!(result, Err(Error::UnsupportedToken(_))));
+    }
+
+    #[motsu::test]
+    fn error_flash_loan_when_exceeded_max_loan(contract: Erc20) {
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+        let _ = contract._mint(msg::sender(), uint!(10000_U256));
+        let result = contract.flash_loan(
+            msg::sender(),
+            token,
+            U256::MAX,
+            vec![0, 1].into(),
+        );
+        assert!(matches!(result, Err(Error::ExceededMaxLoan(_))));
+    }
+
+    #[motsu::test]
+    fn error_flash_loan_when_zero_receiver_address(contract: Erc20) {
+        let invalid_reciver = Address::ZERO;
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+        let result = contract.flash_loan(
+            invalid_reciver,
+            token,
+            uint!(1000_U256),
+            vec![0, 1].into(),
+        );
+        assert_eq!(result.is_err(), true);
+    }
+
+    #[motsu::test]
+    fn error_flash_loan_when_invalid_receiver(contract: Erc20) {
+        let invalid_reciver =
+            address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
+        let token = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+        let result = contract.flash_loan(
+            invalid_reciver,
+            token,
+            uint!(1000_U256),
+            vec![0, 1].into(),
+        );
+        assert_eq!(result.is_err(), true);
+    }
+
+    // #[motsu::test]
+    // fn burns_errors_when_insufficient_balance(contract: Erc20) {
+    //     let zero = U256::ZERO;
+    //     let one = uint!(1_U256);
+    //     let sender = msg::sender();
+
+    //     assert_eq!(zero, contract.balance_of(sender));
+
+    //     // let result = contract.burn(one);
+    //     // assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+    // }
 
     // #[motsu::test]
     // fn burn_from(contract: Erc20) {
