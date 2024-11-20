@@ -18,7 +18,7 @@ use openzeppelin_stylus::{
 
 sol_storage! {
     #[entrypoint]
-    struct Erc721Example {
+    struct PausableErc721 {
         #[borrow]
         Erc721 erc721;
         #[borrow]
@@ -28,20 +28,16 @@ sol_storage! {
 
 #[public]
 #[inherit(Erc721, Pausable)]
-impl Erc721Example {
+impl PausableErc721 {
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc721.burn(token_id)?;
+        self._update(Address::ZERO, token_id, msg::sender())?;
         Ok(())
     }
 
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
         // ...
-        self.pausable.when_not_paused()?;
+        let previous_owner = self._update(to, token_id, Address::ZERO)?;
         // ...
-        self.erc721._mint(to, token_id)?;
         Ok(())
     }
 
@@ -51,11 +47,7 @@ impl Erc721Example {
         to: Address,
         token_id: U256,
     ) -> Result<(), Vec<u8>> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc721.safe_transfer_from(from, to, token_id)?;
-        Ok(())
+        self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
     #[selector(name = "safeTransferFrom")]
@@ -66,10 +58,8 @@ impl Erc721Example {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
+        self.transfer_from(from, to, token_id)?;
         // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc721.safe_transfer_from_with_data(from, to, token_id, data)?;
         Ok(())
     }
 
@@ -80,10 +70,21 @@ impl Erc721Example {
         token_id: U256,
     ) -> Result<(), Vec<u8>> {
         // ...
-        self.pausable.when_not_paused()?;
+        let previous_owner = self._update(to, token_id, msg::sender())?;
         // ...
-        self.erc721.transfer_from(from, to, token_id)?;
         Ok(())
+    }
+}
+
+impl PausableErc721 {
+    fn _update(
+        &mut self,
+        to: Address,
+        token_id: U256,
+        auth: Address,
+    ) -> Result<Address, Vec<u8>> {
+        self.pausable.when_not_paused()?;
+        Ok(self.erc721._update(to, token_id, auth)?)
     }
 }
 ----
@@ -92,7 +93,7 @@ Additionally, you need to ensure proper initialization during xref:deploy.adoc[c
 
 [source,solidity]
 ----
-contract Erc721Example {
+contract PausableErc721 {
     bool private _paused;
 
     constructor() {
