@@ -17,17 +17,32 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     #[must_use]
-    pub fn get_t(&self) -> usize {
+    pub const fn state_size(&self) -> usize {
         P::T
     }
 
+    #[must_use]
+    const fn round_f_beginning(&self) -> usize {
+        P::ROUNDS_F / 2
+    }
+
+    #[must_use]
+    const fn round_f_end(&self) -> usize {
+        P::ROUNDS_F / 2
+    }
+
+    #[must_use]
+    const fn rounds(&self) -> usize {
+        P::ROUNDS_F + P::ROUNDS_P
+    }
+
     pub fn permutation(&self, input: &[F]) -> Vec<F> {
-        let t = P::T;
+        let t = self.state_size();
         assert_eq!(input.len(), t);
 
         let mut current_state = input.to_owned();
 
-        // Linear layer at beginning
+        // Linear layer at the beginning
         self.matmul_external(&mut current_state);
 
         for r in 0..P::ROUNDS_F_BEGINNING {
