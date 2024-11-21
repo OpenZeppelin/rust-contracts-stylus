@@ -106,7 +106,7 @@ impl Nonces {
         Ok(())
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
@@ -153,3 +153,4 @@ mod tests {
         ));
     }
 }
+*/

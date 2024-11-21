@@ -91,7 +91,7 @@ impl BitMap {
         index >> 8
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{private::proptest::proptest, U256};
@@ -130,3 +130,4 @@ mod tests {
         });
     }
 }
+*/

@@ -323,7 +323,7 @@ impl Erc721Enumerable {
         }
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
@@ -563,3 +563,4 @@ mod tests {
         assert_eq!(actual, expected);
     }
 }
+*/

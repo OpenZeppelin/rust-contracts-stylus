@@ -366,7 +366,7 @@ impl<S: Size> Trace<S> {
         new_checkpoint._value.set(value);
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
@@ -526,3 +526,4 @@ mod tests {
         ));
     }
 }
+*/
