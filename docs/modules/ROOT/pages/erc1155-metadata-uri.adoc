@@ -39,13 +39,14 @@ impl Erc1155Example {
         Ok(self.erc1155._mint(to, id, value, &data)?)
     }
 
-    pub fn burn(
+    pub fn mint_batch(
         &mut self,
-        from: Address,
-        id: U256,
-        value: U256,
+        to: Address,
+        token_ids: Vec<U256>,
+        amounts: Vec<U256>,
+        data: Bytes,
     ) -> Result<(), Vec<u8>> {
-        Ok(self.erc1155._burn(from, id, value)?)
+        Ok(self.erc1155._mint_batch(to, token_ids, amounts, &data)?)
     }
 
     pub fn set_uri(&mut self, new_uri: String) {
