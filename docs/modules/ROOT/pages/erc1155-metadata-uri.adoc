@@ -1,0 +1,76 @@
+= ERC-1155 Metadata URI
+
+The OpenZeppelin xref:erc1155.adoc[ERC-1155] Metadata URI extension is needed to manage and store URIs for individual tokens. This extension allows each token to have its own unique URI,
+which can point to metadata about the token, such as images, descriptions, and other attributes.
+This is particularly useful for non-fungible tokens (NFTs) where each token is unique and may have different metadata.
+
+[[usage]]
+== Usage
+
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.1.1/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[Metadata URI] flavour,
+you need to add the following code to your contract:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc1155::{
+    extensions::{
+        Erc1155MetadataUri, IErc1155MetadataUri,
+    },
+    Erc1155, IErc1155,
+};
+
+sol_storage! {
+    #[entrypoint]
+    struct Erc1155Example {
+        #[borrow]
+        Erc1155 erc1155;
+        #[borrow]
+        Erc1155MetadataUri metadata_uri;
+    }
+}
+
+#[public]
+#[inherit(Erc1155, Erc1155MetadataUri)]
+impl Erc1155Example {
+    pub fn mint(
+        &mut self,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: &Bytes,
+    ) -> Result<(), ec<u8>> {
+        Ok(self.erc1155._mint(to, id, value, data)?)
+    }
+
+    pub fn burn(
+        &mut self,
+        from: Address,
+        id: U256,
+        value: U256,
+    ) -> Result<(), Vec<u8>> {
+        Ok(self.erc1155._burn(from, id, value)?)
+    }
+
+    pub fn set_uri(&mut self, new_uri: String) {
+        self.metadata_uri._set_uri(new_uri)
+    }
+}
+----
+
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
+Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc1155Example {
+    // ...
+
+    string private _uri;
+
+    constructor(string memory uri_) {
+        // ...
+        _uri = uri_;
+        // ...
+    }
+}
+----
