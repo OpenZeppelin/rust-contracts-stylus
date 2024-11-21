@@ -3,7 +3,7 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::SolCall,
+    sol_types::{SolCall, SolConstructor},
     uint,
 };
 use e2e::{receipt, Account};
@@ -24,10 +24,16 @@ sol!(
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
+        function uri(uint256 id) external view returns (string memory uri);
+        function setURI(string memory newUri) external;
     }
 );
 
 sol!("../examples/erc1155/src/constructor.sol");
+
+const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
+const NEW_URI: &str =
+    "https://new.github.com/OpenZeppelin/rust-contracts-stylus";
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     let reports = run_with(CacheOpt::None).await?;
@@ -87,7 +93,9 @@ pub async fn run_with(
         (setApprovalForAllCall::SIGNATURE, receipt!(contract.setApprovalForAll(bob_addr, true))?),
         (isApprovedForAllCall::SIGNATURE, receipt!(contract.isApprovedForAll(alice_addr, bob_addr))?),
         (safeTransferFromCall::SIGNATURE, receipt!(contract.safeTransferFrom(alice_addr, bob_addr, token_1, value_1, data.clone()))?),
-        (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids, values, data.clone()))?)
+        (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids, values, data.clone()))?),
+        (uriCall::SIGNATURE, receipt!(contract.uri(token_1))?),
+        (setURICall::SIGNATURE, receipt!(contract.setURI(NEW_URI.to_owned()))?)
     ];
 
     receipts
@@ -100,5 +108,7 @@ async fn deploy(
     account: &Account,
     cache_opt: CacheOpt,
 ) -> eyre::Result<Address> {
-    crate::deploy(account, "erc1155", None, cache_opt).await
+    let args = Erc1155Example::constructorCall { uri_: URI.to_owned() };
+    let args = alloy::hex::encode(args.abi_encode());
+    crate::deploy(account, "erc1155", Some(args), cache_opt).await
 }

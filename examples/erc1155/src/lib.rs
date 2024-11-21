@@ -4,7 +4,9 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc1155::Erc1155;
+use openzeppelin_stylus::token::erc1155::{
+    extensions::Erc1155MetadataUri, Erc1155,
+};
 use stylus_sdk::{
     abi::Bytes,
     prelude::{entrypoint, public, sol_storage},
@@ -15,11 +17,13 @@ sol_storage! {
     struct Erc1155Example {
         #[borrow]
         Erc1155 erc1155;
+        #[borrow]
+        Erc1155MetadataUri metadata_uri;
     }
 }
 
 #[public]
-#[inherit(Erc1155)]
+#[inherit(Erc1155, Erc1155MetadataUri)]
 impl Erc1155Example {
     pub fn mint(
         &mut self,
@@ -41,5 +45,10 @@ impl Erc1155Example {
     ) -> Result<(), Vec<u8>> {
         self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
         Ok(())
+    }
+
+    #[selector(name = "setURI")]
+    pub fn set_uri(&mut self, new_uri: String) {
+        self.metadata_uri._set_uri(new_uri)
     }
 }

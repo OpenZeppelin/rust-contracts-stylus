@@ -13,6 +13,9 @@ sol!(
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
+        #[derive(Debug)]
+        function uri(uint256 id) external view returns (string memory uri);
+        function setURI(string memory newUri) external;
 
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
@@ -27,5 +30,7 @@ sol!(
         event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
         #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed account, address indexed operator, bool approved);
-    }
+        #[derive(Debug, PartialEq)]
+        event URI(string value, uint256 indexed id);
+}
 );
