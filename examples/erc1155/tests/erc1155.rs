@@ -41,7 +41,10 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .deploy()
         .await?
         .address()?;
-    let _contract = Erc1155::new(contract_addr, &alice.wallet);
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let uri = contract.uri(U256::from(1)).call().await?.uri;
+    assert_eq!(URI, uri);
 
     Ok(())
 }
@@ -634,6 +637,27 @@ async fn error_invalid_array_length_in_batch_mint(
         idsLength: uint!(1_U256),
         valuesLength: uint!(2_U256)
     }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn sets_uri(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(URI))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let new_uri = "https://new.github.com/OpenZeppelin/rust-contracts-stylus";
+    let token_id = random_token_ids(1)[0];
+
+    let _ = watch!(contract.setURI(new_uri.to_owned()))?;
+
+    let uri = contract.uri(token_id).call().await?.uri;
+    assert_eq!(new_uri, uri);
 
     Ok(())
 }
