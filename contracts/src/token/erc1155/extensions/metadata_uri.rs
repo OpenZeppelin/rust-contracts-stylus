@@ -88,15 +88,44 @@ impl Erc1155MetadataUri {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    // use crate::token::erc1155::extensions::{Erc1155MetadataUri,
-    // IErc1155MetadataUri};
+    use alloy_primitives::U256;
 
-    // TODO: IErc1155MetadataUri should be refactored to have same api as
-    // solidity  has:  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4764ea50750d8bda9096e833706beba86918b163/contracts/token/ERC1155/extensions/IErc1155MetadataUri.sol#L12
-    // [motsu::test]
-    // fn interface_id() {
-    //     let actual = <Erc1155MetadataUri as
-    // IErc1155MetadataUri>::INTERFACE_ID;     let expected = 0x5b5e139f;
-    //     assert_eq!(actual, expected);
-    // }
+    use super::{Erc1155MetadataUri, IErc1155MetadataUri};
+
+    fn random_token_id() -> U256 {
+        let num: u32 = rand::random();
+        U256::from(num)
+    }
+
+    #[motsu::test]
+    fn uri_ignores_token_id(contract: Erc1155MetadataUri) {
+        let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
+        contract._uri.set_str(uri.clone());
+
+        let token_id = random_token_id();
+        assert_eq!(uri, contract.uri(token_id));
+
+        let token_id = random_token_id();
+        assert_eq!(uri, contract.uri(token_id));
+    }
+
+    #[motsu::test]
+    fn set_uri_works(contract: Erc1155MetadataUri) {
+        let token_id = random_token_id();
+        let old_uri = String::from("https://token-cdn-domain/\\{id\\}.json");
+        contract._uri.set_str(old_uri.clone());
+        assert_eq!(old_uri, contract.uri(token_id));
+
+        let new_uri =
+            String::from("https://new-token-cdn-domain/\\{id\\}.json");
+        contract._set_uri(new_uri.clone());
+        assert_eq!(new_uri, contract.uri(token_id));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc1155MetadataUri as IErc1155MetadataUri>::INTERFACE_ID;
+        let expected = 0x0e89341c;
+        assert_eq!(actual, expected);
+    }
 }
