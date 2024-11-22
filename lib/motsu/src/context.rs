@@ -3,7 +3,7 @@
 use std::{borrow::BorrowMut, collections::HashMap, ptr, slice, sync::Mutex};
 
 use alloy_primitives::Address;
-use dashmap::DashMap;
+use dashmap::{mapref::one::RefMut, DashMap};
 use once_cell::sync::Lazy;
 use stylus_sdk::{
     abi::Router,
@@ -28,9 +28,16 @@ impl Context {
         Self { thread_name: ThreadName::current() }
     }
 
+    /// Get the raw value at `key` in storage and write it to `value`.
+    pub(crate) unsafe fn get_bytes_raw(self, key: *const u8, value: *mut u8) {
+        let key = read_bytes32(key);
+
+        write_bytes32(value, self.get_bytes(&key));
+    }
+
     /// Get the value at `key` in storage.
     pub(crate) fn get_bytes(self, key: &Bytes32) -> Bytes32 {
-        let storage = STORAGE.entry(self.thread_name).or_default();
+        let storage = self.get_storage();
         let msg_receiver =
             storage.msg_receiver.expect("msg_receiver should be set");
         storage
@@ -42,16 +49,15 @@ impl Context {
             .unwrap_or_default()
     }
 
-    /// Get the raw value at `key` in storage and write it to `value`.
-    pub(crate) unsafe fn get_bytes_raw(self, key: *const u8, value: *mut u8) {
-        let key = read_bytes32(key);
-
-        write_bytes32(value, self.get_bytes(&key));
+    /// Set the raw value at `key` in storage to `value`.
+    pub(crate) unsafe fn set_bytes_raw(self, key: *const u8, value: *const u8) {
+        let (key, value) = (read_bytes32(key), read_bytes32(value));
+        self.set_bytes(key, value);
     }
 
     /// Set the value at `key` in storage to `value`.
     pub(crate) fn set_bytes(self, key: Bytes32, value: Bytes32) {
-        let mut storage = STORAGE.entry(self.thread_name).or_default();
+        let mut storage = self.get_storage();
         let msg_receiver =
             storage.msg_receiver.expect("msg_receiver should be set");
         storage
@@ -61,43 +67,50 @@ impl Context {
             .insert(key, value);
     }
 
-    /// Set the raw value at `key` in storage to `value`.
-    pub(crate) unsafe fn set_bytes_raw(self, key: *const u8, value: *const u8) {
-        let (key, value) = (read_bytes32(key), read_bytes32(value));
-        self.set_bytes(key, value);
-    }
-
     /// Clears storage, removing all key-value pairs associated with the current
     /// test thread.
     pub fn reset_storage(self) {
         STORAGE.remove(&self.thread_name);
     }
 
+    /// Get reference to the storage for the current test thread.
+    fn get_storage(&self) -> RefMut<'static, ThreadName, MockStorage> {
+        STORAGE
+            .get_mut(&self.thread_name)
+            .expect("contract should be initialised first")
+    }
+
+    /// Get reference to the call storage for the current test thread.
+    fn get_call_storage(&self) -> RefMut<'static, ThreadName, CallStorage> {
+        CALL_STORAGE
+            .get_mut(&self.thread_name.clone())
+            .expect("contract should be initialised first")
+    }
+
     /// Set the message sender account address.
-    pub(crate) fn set_msg_sender(self, msg_sender: Address) -> Option<Address> {
-        let mut storage = STORAGE.entry(self.thread_name).or_default();
-        storage.msg_sender.replace(msg_sender)
+    pub(crate) fn set_msg_sender(
+        &self,
+        msg_sender: Address,
+    ) -> Option<Address> {
+        self.get_storage().msg_sender.replace(msg_sender)
     }
 
     /// Get the message sender account address.
-    pub(crate) fn get_msg_sender(self) -> Option<Address> {
-        let storage = STORAGE.entry(self.thread_name).or_default();
-        storage.msg_sender
+    pub(crate) fn get_msg_sender(&self) -> Option<Address> {
+        self.get_storage().msg_sender
     }
 
     /// Set the address of the contract, that should be called.
     pub(crate) fn set_msg_receiver(
-        self,
+        &self,
         msg_receiver: Address,
     ) -> Option<Address> {
-        let mut storage = STORAGE.entry(self.thread_name).or_default();
-        storage.msg_receiver.replace(msg_receiver)
+        self.get_storage().msg_receiver.replace(msg_receiver)
     }
 
     /// Get the address of the contract, that should be called.
-    pub(crate) fn get_msg_receiver(self) -> Option<Address> {
-        let storage = STORAGE.entry(self.thread_name).or_default();
-        storage.msg_receiver
+    pub(crate) fn get_msg_receiver(&self) -> Option<Address> {
+        self.get_storage().msg_receiver
     }
 
     /// Initialise contract storage for the current test thread and
@@ -117,7 +130,7 @@ impl Context {
         }
 
         if CALL_STORAGE
-            .entry(self.thread_name.clone())
+            .entry(self.thread_name)
             .or_default()
             .contract_router
             .insert(
@@ -151,7 +164,6 @@ impl Context {
                 0
             }
             Err(err) => {
-                // TODO#q: how should we process errors?
                 return_data_len.write(err.len());
                 self.set_return_data(err);
                 1
@@ -160,11 +172,7 @@ impl Context {
     }
 
     pub(crate) fn set_return_data(&self, data: Vec<u8>) {
-        let _ = CALL_STORAGE
-            .entry(self.thread_name.clone())
-            .or_default()
-            .call_output
-            .insert(data);
+        let _ = self.get_call_storage().call_output.insert(data);
     }
 
     pub(crate) fn call_contract(
@@ -208,9 +216,7 @@ impl Context {
     }
 
     pub(crate) fn get_return_data(&self) -> Vec<u8> {
-        CALL_STORAGE
-            .entry(self.thread_name.clone())
-            .or_default()
+        self.get_call_storage()
             .call_output
             .take()
             .expect("call_output should be set")
