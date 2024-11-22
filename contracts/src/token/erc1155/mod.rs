@@ -1,13 +1,13 @@
 //! Implementation of the ERC-1155 token standard.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{fixed_bytes, Address, FixedBytes, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     alloy_sol_types::sol,
     call::{self, Call, MethodError},
-    evm, msg,
+    evm, function_selector, msg,
     prelude::{public, sol_storage, AddressVM, SolidityError},
     storage::TopLevelStorage,
 };
@@ -22,17 +22,23 @@ pub mod extensions;
 mod receiver;
 pub use receiver::IERC1155Receiver;
 
-/// `bytes4(
-///     keccak256(
-///         "onERC1155Received(address,address,uint256,uint256,bytes)"
-/// ))`
-const SINGLE_TRANSFER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("f23a6e61");
+const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+    "onERC1155Received",
+    Address,
+    Address,
+    U256,
+    U256,
+    Bytes
+);
 
-/// `bytes4(
-///     keccak256(
-///         "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"
-/// ))`
-const BATCH_TRANSFER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("bc197c81");
+const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+    "onERC1155BatchReceived",
+    Address,
+    Address,
+    Vec<U256>,
+    Vec<U256>,
+    Bytes
+);
 
 sol! {
     /// Emitted when `value` amount of tokens of type `id` are
@@ -1094,7 +1100,7 @@ impl Erc1155 {
 /// implements [`IERC1155Receiver`] interface.
 struct Erc1155ReceiverData {
     /// ERC-1155 Receiver function selector.
-    receiver_fn_selector: FixedBytes<4>,
+    receiver_fn_selector: [u8; 4],
     /// Transfer details, either [`Transfer::Single`] or [`Transfer::Batch`].
     transfer: Transfer,
 }
@@ -1172,15 +1178,14 @@ enum Transfer {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use alloy_primitives::{address, fixed_bytes, uint, Address, U256};
     use stylus_sdk::msg;
 
     use super::{
         ERC1155InsufficientBalance, ERC1155InvalidArrayLength,
         ERC1155InvalidOperator, ERC1155InvalidReceiver, ERC1155InvalidSender,
         ERC1155MissingApprovalForAll, Erc1155, Erc1155ReceiverData, Error,
-        IErc1155, Transfer, BATCH_TRANSFER_FN_SELECTOR,
-        SINGLE_TRANSFER_FN_SELECTOR,
+        IErc1155, Transfer,
     };
     use crate::utils::introspection::erc165::IErc165;
 
@@ -1226,7 +1231,7 @@ mod tests {
         let id = uint!(1_U256);
         let value = uint!(10_U256);
         let details = Erc1155ReceiverData::new(vec![id], vec![value]);
-        assert_eq!(SINGLE_TRANSFER_FN_SELECTOR, details.receiver_fn_selector);
+        assert_eq!(fixed_bytes!("f23a6e61"), details.receiver_fn_selector);
         assert_eq!(Transfer::Single { id, value }, details.transfer);
     }
 
@@ -1235,7 +1240,7 @@ mod tests {
         let ids = random_token_ids(5);
         let values = random_values(5);
         let details = Erc1155ReceiverData::new(ids.clone(), values.clone());
-        assert_eq!(BATCH_TRANSFER_FN_SELECTOR, details.receiver_fn_selector);
+        assert_eq!(fixed_bytes!("bc197c81"), details.receiver_fn_selector);
         assert_eq!(Transfer::Batch { ids, values }, details.transfer);
     }
 
