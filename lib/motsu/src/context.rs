@@ -1,6 +1,6 @@
 //! Unit-testing context for Stylus contracts.
 
-use std::{borrow::BorrowMut, collections::HashMap, ptr, sync::Mutex};
+use std::{borrow::BorrowMut, collections::HashMap, ptr, slice, sync::Mutex};
 
 use alloy_primitives::Address;
 use dashmap::DashMap;
@@ -24,6 +24,7 @@ impl Context {
     /// Get test context associated with the current test thread.
     #[must_use]
     pub fn current() -> Self {
+        // TODO#q: STORAGE entry call here
         Self { thread_name: ThreadName::current() }
     }
 
@@ -116,6 +117,80 @@ impl Context {
             panic!("contract storage already initialized - contract_address: {contract_address}");
         }
     }
+
+    pub(crate) unsafe fn call_contract_raw(
+        self,
+        address: *const u8,
+        calldata: *const u8,
+        calldata_len: usize,
+        return_data_len: *mut usize,
+    ) -> u8 {
+        let address_bytes = slice::from_raw_parts(address, 20);
+        let address = Address::from_slice(address_bytes);
+
+        let input = slice::from_raw_parts(calldata, calldata_len);
+        let selector =
+            u32::from_be_bytes(TryInto::try_into(&input[..4]).unwrap());
+
+        match self.call_contract(address, selector, &input[4..]) {
+            Ok(res) => {
+                return_data_len.write(res.len());
+                self.set_return_data(res);
+                0
+            }
+            Err(err) => {
+                return_data_len.write(err.len());
+                self.set_return_data(err);
+                1
+            }
+        }
+    }
+
+    pub(crate) fn set_return_data(&self, data: Vec<u8>) {
+        let _ = STORAGE
+            .entry(self.thread_name.clone())
+            .or_default()
+            .call_output
+            .insert(data);
+    }
+
+    pub(crate) fn call_contract(
+        &self,
+        contract_address: Address,
+        selector: u32,
+        input: &[u8],
+    ) -> ArbResult {
+        let storage = STORAGE.entry(self.thread_name.clone()).or_default();
+
+        let router = storage
+            .contract_router
+            .get(&contract_address)
+            .expect("contract router should be set");
+
+        let mut router = router.lock().expect("should lock test router");
+        router.route(selector, input).unwrap_or_else(|| {
+            panic!("selector not found - selector: {selector}")
+        })
+    }
+
+    pub(crate) unsafe fn read_return_data_raw(
+        self,
+        dest: *mut u8,
+        size: usize,
+    ) -> usize {
+        let data = self.get_return_data();
+        ptr::copy(data.as_ptr(), dest, size);
+        0
+    }
+
+    pub(crate) fn get_return_data(&self) -> Vec<u8> {
+        STORAGE
+            .entry(self.thread_name.clone())
+            .or_default()
+            .call_output
+            .take()
+            .expect("call_output should be set")
+    }
 }
 
 /// Read the word from location pointed by `ptr`.
@@ -165,6 +240,8 @@ struct MockStorage {
     // Contract's address to router mapping.
     // NOTE: Mutex is important since contract type is not `Sync`.
     contract_router: HashMap<Address, std::sync::Mutex<Box<dyn TestRouter>>>,
+    // Output of a contract call.
+    call_output: Option<Vec<u8>>,
 }
 
 type ContractStorage = HashMap<Bytes32, Bytes32>;

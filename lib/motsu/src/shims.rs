@@ -236,10 +236,7 @@ pub unsafe extern "C" fn read_return_data(
     _offset: usize,
     _size: usize,
 ) -> usize {
-    // TODO: #156
-    // No-op: we do not use this function in our unit-tests,
-    // but the binary does include it.
-    0
+    Context::current().read_return_data_raw(_dest, _size)
 }
 
 /// Calls the contract at the given address with options for passing value and
@@ -265,10 +262,12 @@ pub unsafe extern "C" fn call_contract(
     _gas: u64,
     _return_data_len: *mut usize,
 ) -> u8 {
-    // TODO: #156
-    // No-op: we do not use this function in our unit-tests,
-    // but the binary does include it.
-    0
+    Context::current().call_contract_raw(
+        _contract,
+        _calldata,
+        _calldata_len,
+        _return_data_len,
+    )
 }
 
 /// Static calls the contract at the given address, with the option to limit the
