@@ -145,7 +145,8 @@ pub const EOA_CODEHASH: &[u8; 66] =
 /// May panic if fails to parse `MSG_SENDER` as an address.
 #[no_mangle]
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
-    let msg_sender = Context::current().get_msg_sender();
+    let msg_sender =
+        Context::current().get_msg_sender().expect("msg_sender should be set");
     std::ptr::copy(msg_sender.as_ptr(), sender, 20);
 }
 

@@ -76,26 +76,35 @@ impl Context {
         STORAGE.remove(&self.thread_name);
     }
 
-    pub(crate) fn set_msg_sender(self, msg_sender: Address) {
+    /// Set the message sender account address.
+    pub(crate) fn set_msg_sender(self, msg_sender: Address) -> Option<Address> {
         let mut storage = STORAGE.entry(self.thread_name).or_default();
-        let _ = storage.msg_sender.insert(msg_sender);
+        storage.msg_sender.replace(msg_sender)
     }
 
-    pub(crate) fn get_msg_sender(self) -> Address {
+    /// Get the message sender account address.
+    pub(crate) fn get_msg_sender(self) -> Option<Address> {
         let storage = STORAGE.entry(self.thread_name).or_default();
-        storage.msg_sender.expect("msg_sender should be set")
+        storage.msg_sender
     }
 
-    pub(crate) fn set_msg_receiver(self, msg_receiver: Address) {
+    /// Set the address of the contract, that should be called.
+    pub(crate) fn set_msg_receiver(
+        self,
+        msg_receiver: Address,
+    ) -> Option<Address> {
         let mut storage = STORAGE.entry(self.thread_name).or_default();
-        let _ = storage.msg_receiver.insert(msg_receiver);
+        storage.msg_receiver.replace(msg_receiver)
     }
 
-    pub(crate) fn get_msg_receiver(self) -> Address {
+    /// Get the address of the contract, that should be called.
+    pub(crate) fn get_msg_receiver(self) -> Option<Address> {
         let storage = STORAGE.entry(self.thread_name).or_default();
-        storage.msg_receiver.expect("msg_receiver should be set")
+        storage.msg_receiver
     }
 
+    /// Initialise contract storage for the current test thread and
+    /// `contract_address`.
     pub(crate) fn init_contract<ST: StorageType + TestRouter + 'static>(
         self,
         contract_address: Address,
@@ -171,7 +180,7 @@ impl Context {
         let previous_receiver = storage.msg_receiver.replace(contract_address);
         let previous_sender = storage.msg_sender.take();
         storage.msg_sender = previous_receiver; // now the sender is current contract
-        drop(storage);
+        drop(storage); // TODO#q: use msg_receiver setter (avoid a deadlock the other way)
 
         let call_storage =
             CALL_STORAGE.entry(self.thread_name.clone()).or_default();
@@ -198,7 +207,7 @@ impl Context {
     ) -> usize {
         let data = self.get_return_data();
         ptr::copy(data.as_ptr(), dest, size);
-        0
+        data.len()
     }
 
     pub(crate) fn get_return_data(&self) -> Vec<u8> {
@@ -281,8 +290,9 @@ pub trait TestRouter: Send {
     fn route(&mut self, selector: u32, input: &[u8]) -> Option<ArbResult>;
 }
 
-impl<R: Router<R> + TopLevelStorage + BorrowMut<R::Storage> + Send> TestRouter
-    for R
+impl<R> TestRouter for R
+where
+    R: Router<R> + TopLevelStorage + BorrowMut<R::Storage> + Send,
 {
     fn route(&mut self, selector: u32, input: &[u8]) -> Option<ArbResult> {
         <Self as Router<R>>::route(self, selector, input)
@@ -319,8 +329,8 @@ impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        Context::current().set_msg_sender(self.caller_address);
-        Context::current().set_msg_receiver(self.contract_address);
+        let _ = Context::current().set_msg_sender(self.caller_address);
+        let _ = Context::current().set_msg_receiver(self.contract_address);
         &self.contract
     }
 }
@@ -328,8 +338,8 @@ impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
 impl<ST: StorageType> ::core::ops::DerefMut for ContractCall<ST> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        Context::current().set_msg_sender(self.caller_address);
-        Context::current().set_msg_receiver(self.contract_address);
+        let _ = Context::current().set_msg_sender(self.caller_address);
+        let _ = Context::current().set_msg_receiver(self.contract_address);
         &mut self.contract
     }
 }
