@@ -1,5 +1,5 @@
 //! Common imports for `motsu` tests.
 pub use crate::{
-    context::{Context, DefaultStorage},
+    context::{Account, Context, ContractCall, DefaultStorage},
     shims::*,
 };

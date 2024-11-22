@@ -2,15 +2,10 @@
 
 use std::{collections::HashMap, ptr};
 
+use alloy_primitives::Address;
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
-use stylus_sdk::{
-    alloy_primitives::{
-        private::derive_more::{Deref, DerefMut},
-        uint,
-    },
-    prelude::StorageType,
-};
+use stylus_sdk::{alloy_primitives::uint, prelude::StorageType};
 
 use crate::prelude::{Bytes32, WORD_BYTES};
 
@@ -107,12 +102,76 @@ pub trait DefaultStorage: StorageType {
     /// Initializes fields of contract storage and child contract storages with
     /// default values.
     #[must_use]
-    fn default() -> StorageGuard<Self> {
-        StorageGuard(unsafe { Self::new(uint!(0_U256), 0) })
+    fn default() -> Contract<Self> {
+        Contract::random()
     }
 }
 
 impl<ST: StorageType> DefaultStorage for ST {}
 
-#[derive(Deref, DerefMut)]
-pub struct StorageGuard<ST: StorageType>(ST);
+pub struct ContractCall<ST: StorageType> {
+    contract: ST,
+    caller: Address,
+}
+
+impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
+    type Target = ST;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.contract
+    }
+}
+
+impl<ST: StorageType> ::core::ops::DerefMut for ContractCall<ST> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.contract
+    }
+}
+
+pub struct Contract<ST: StorageType> {
+    phantom: ::core::marker::PhantomData<ST>,
+    address: Address,
+}
+
+impl<ST: StorageType> Contract<ST> {
+    pub fn new(address: Address) -> Self {
+        // TODO#q: save contract instance to storage
+        Self { phantom: ::core::marker::PhantomData, address }
+    }
+
+    pub fn random() -> Self {
+        Self::new(Address::random())
+    }
+}
+
+pub struct Account {
+    address: Address,
+}
+
+impl Account {
+    pub const fn new(address: Address) -> Self {
+        Self { address }
+    }
+
+    pub fn random() -> Self {
+        Self::new(Address::random())
+    }
+
+    // TODO#q: we also need an initializer
+
+    pub fn deploys<ST: StorageType>(&self) -> Contract<ST> {
+        Contract::random()
+    }
+
+    pub fn uses<ST: StorageType>(
+        &self,
+        contract: &mut Contract<ST>,
+    ) -> ContractCall<ST> {
+        ContractCall {
+            contract: unsafe { ST::new(uint!(0_U256), 0) },
+            caller: self.address,
+        }
+    }
+}
