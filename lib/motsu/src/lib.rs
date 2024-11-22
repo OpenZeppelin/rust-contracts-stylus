@@ -48,3 +48,98 @@ pub mod prelude;
 mod shims;
 
 pub use motsu_proc::test;
+
+#[cfg(all(test))]
+mod tests {
+    #![deny(rustdoc::broken_intra_doc_links)]
+    extern crate alloc;
+
+    use alloy_primitives::uint;
+    use stylus_sdk::{
+        alloy_primitives::{Address, U256},
+        call::Call,
+        prelude::{public, sol_storage, TopLevelStorage},
+    };
+
+    use crate::context::Account;
+
+    sol_storage! {
+        pub struct PingContract {
+            uint256 _pings_count;
+            // TODO#q: add last pinged address.
+        }
+    }
+
+    #[public]
+    impl PingContract {
+        fn ping(&mut self, to: Address, value: U256) -> Result<U256, Vec<u8>> {
+            let receiver = receiver::PongContract::new(to);
+            let call = Call::new_in(self);
+            let value =
+                receiver.pong(call, value).expect("should pong successfully");
+
+            let pings_count = self._pings_count.get();
+            self._pings_count.set(pings_count + uint!(1_U256));
+            Ok(value)
+        }
+
+        fn ping_count(&self) -> U256 {
+            self._pings_count.get()
+        }
+    }
+
+    unsafe impl TopLevelStorage for PingContract {}
+
+    mod receiver {
+        use super::alloc;
+        stylus_sdk::stylus_proc::sol_interface! {
+            interface PongContract {
+                #[allow(missing_docs)]
+                function pong(uint256 value) external returns (uint256);
+            }
+        }
+    }
+
+    sol_storage! {
+        pub struct PongContract {
+            uint256 _pongs_count;
+            uint256 _value;
+        }
+    }
+
+    #[public]
+    impl PongContract {
+        pub fn pong(&mut self, value: U256) -> Result<U256, Vec<u8>> {
+            let pongs_count = self._pongs_count.get();
+            self._pongs_count.set(pongs_count + uint!(1_U256));
+            Ok(value + uint!(1_U256))
+        }
+
+        fn pong_count(&self) -> U256 {
+            self._pongs_count.get()
+        }
+    }
+
+    unsafe impl TopLevelStorage for PongContract {}
+
+    #[test]
+    fn ping_pong_works() {
+        use crate::prelude::DefaultStorage;
+        let mut ping = PingContract::default();
+        let ping = &mut ping;
+        let mut pong = PongContract::default();
+        let pong = &mut pong;
+
+        let alice = Account::random();
+        let mut ping = alice.uses(ping);
+        let mut pong = alice.uses(pong);
+
+        let value = uint!(1_U256);
+        let ponged_value =
+            ping.ping(pong.address(), value).expect("should ping successfully");
+
+        assert_eq!(ponged_value, value + uint!(1_U256));
+        assert_eq!(ping.ping_count(), uint!(1_U256));
+        assert_eq!(pong.pong_count(), uint!(1_U256));
+    }
+}

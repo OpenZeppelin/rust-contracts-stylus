@@ -163,6 +163,12 @@ pub struct ContractCall<ST: StorageType> {
     contract_address: Address,
 }
 
+impl<ST: StorageType> ContractCall<ST> {
+    pub fn address(&self) -> Address {
+        self.contract_address
+    }
+}
+
 impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
     type Target = ST;
 
@@ -199,6 +205,10 @@ impl<ST: StorageType> Contract<ST> {
 
     pub fn random() -> Self {
         Self::new(Address::random())
+    }
+
+    pub fn address(&self) -> Address {
+        self.address
     }
 }
 

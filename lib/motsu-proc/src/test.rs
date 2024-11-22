@@ -15,11 +15,6 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
     let fn_stmts = &item_fn.block.stmts;
     let fn_args = &sig.inputs;
 
-    // Currently, more than one contract per unit test is not supported.
-    if fn_args.len() > 1 {
-        error!(fn_args, "expected at most one contract in test signature");
-    }
-
     // Whether 1 or none contracts will be declared.
     let contract_declarations = fn_args.into_iter().map(|arg| {
         let FnArg::Typed(arg) = arg else {

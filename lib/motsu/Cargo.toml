@@ -17,6 +17,7 @@ motsu-proc.workspace = true
 dashmap.workspace = true
 derive_more = { version = "1.0.0", features = ["full"] }
 alloy-primitives = { workspace = true, features = ["arbitrary", "rand"] }
+alloy-sol-types.workspace = true
 
 [lints]
 workspace = true
