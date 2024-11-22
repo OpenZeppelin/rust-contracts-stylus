@@ -1037,7 +1037,7 @@ mod poseidon2_tests_bls12 {
         for i in 0..BLS2Params::T {
             input_2.push(Scalar::from(i as u64));
         }
-        let perm_2 = poseidon2_2.permutation(&input_2);
+        let perm_2 = poseidon2_2.permute(&input_2);
         assert_eq!(
             perm_2[0],
             fp_from_hex!(
@@ -1056,7 +1056,7 @@ mod poseidon2_tests_bls12 {
         for i in 0..BLS3Params::T {
             input_3.push(Scalar::from(i as u64));
         }
-        let perm_3 = poseidon2_3.permutation(&input_3);
+        let perm_3 = poseidon2_3.permute(&input_3);
         assert_eq!(
             perm_3[0],
             fp_from_hex!(
@@ -1081,7 +1081,7 @@ mod poseidon2_tests_bls12 {
         for i in 0..BLS4Params::T {
             input_4.push(Scalar::from(i as u64));
         }
-        let perm_4 = poseidon2_4.permutation(&input_4);
+        let perm_4 = poseidon2_4.permute(&input_4);
         assert_eq!(
             perm_4[0],
             fp_from_hex!(

@@ -376,9 +376,9 @@ mod poseidon2_tests_bn256 {
                 }
             }
 
-            let perm1 = poseidon2.permutation(&input1);
-            let perm2 = poseidon2.permutation(&input1);
-            let perm3 = poseidon2.permutation(&input2);
+            let perm1 = poseidon2.permute(&input1);
+            let perm2 = poseidon2.permute(&input1);
+            let perm3 = poseidon2.permute(&input2);
             assert_eq!(perm1, perm2);
             assert_ne!(perm1, perm3);
         }
@@ -391,7 +391,7 @@ mod poseidon2_tests_bn256 {
         for i in 0..BN256Params::T {
             input.push(Scalar::from(i as u64));
         }
-        let perm = poseidon2.permutation(&input);
+        let perm = poseidon2.permute(&input);
         assert_eq!(
             perm[0],
             fp_from_hex!(

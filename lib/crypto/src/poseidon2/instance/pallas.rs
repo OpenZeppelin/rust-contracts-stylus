@@ -375,9 +375,9 @@ mod poseidon2_tests_pallas {
                 }
             }
 
-            let perm1 = instance.permutation(&input1);
-            let perm2 = instance.permutation(&input1);
-            let perm3 = instance.permutation(&input2);
+            let perm1 = instance.permute(&input1);
+            let perm2 = instance.permute(&input1);
+            let perm3 = instance.permute(&input2);
             assert_eq!(perm1, perm2);
             assert_ne!(perm1, perm3);
         }
@@ -390,7 +390,7 @@ mod poseidon2_tests_pallas {
         for i in 0..PallasParams::T {
             input.push(Scalar::from(i as u64));
         }
-        let perm = poseidon2.permutation(&input);
+        let perm = poseidon2.permute(&input);
         assert_eq!(
             perm[0],
             fp_from_hex!(
