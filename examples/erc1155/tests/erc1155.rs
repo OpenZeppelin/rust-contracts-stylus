@@ -61,7 +61,7 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
 
     let Erc1155::balanceOfReturn { balance } =
         contract.balanceOf(alice.address(), token_ids[0]).call().await?;
-    assert_eq!(uint!(0_U256), balance);
+    assert_eq!(U256::ZERO, balance);
 
     Ok(())
 }
@@ -81,10 +81,7 @@ async fn balance_of_batch_zero_balance(
 
     let Erc1155::balanceOfBatchReturn { balances } =
         contract.balanceOfBatch(accounts, token_ids).call().await?;
-    assert_eq!(
-        vec![uint!(0_U256), uint!(0_U256), uint!(0_U256), uint!(0_U256)],
-        balances
-    );
+    assert_eq!(vec![U256::ZERO, U256::ZERO, U256::ZERO, U256::ZERO], balances);
 
     Ok(())
 }
@@ -1600,7 +1597,7 @@ async fn burns(alice: Account, bob: Account) -> eyre::Result<()> {
 
     let balance =
         contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
-    assert_eq!(uint!(0_U256), balance);
+    assert_eq!(U256::ZERO, balance);
 
     Ok(())
 }
@@ -1702,7 +1699,7 @@ async fn burns_batch(alice: Account, bob: Account) -> eyre::Result<()> {
 
     for id in token_ids {
         let balance = contract.balanceOf(bob_addr, id).call().await?.balance;
-        assert_eq!(uint!(0_U256), balance);
+        assert_eq!(U256::ZERO, balance);
     }
 
     Ok(())
