@@ -1567,9 +1567,47 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
 }
 
 #[e2e::test]
-async fn burns(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn burns(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(1);
+    let values = random_values(1);
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_ids[0],
+        values[0],
+        vec![].into()
+    ));
+
+    let initial_balance =
+        contract.balanceOf(alice_addr, token_ids[0]).call().await?.balance;
+    assert_eq!(values[0], initial_balance);
+
+    let receipt = receipt!(contract.burn(alice_addr, token_ids[0], values[0]))?;
+
+    assert!(receipt.emits(Erc1155::TransferSingle {
+        operator: alice_addr,
+        from: alice_addr,
+        to: Address::ZERO,
+        id: token_ids[0],
+        value: values[0],
+    }));
+
+    let balance =
+        contract.balanceOf(alice_addr, token_ids[0]).call().await?.balance;
+    assert_eq!(U256::ZERO, balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1583,7 +1621,7 @@ async fn burns(alice: Account, bob: Account) -> eyre::Result<()> {
         contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
     assert_eq!(values[0], initial_balance);
 
-    let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
+    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
 
     let receipt = receipt!(contract.burn(bob_addr, token_ids[0], values[0]))?;
 
@@ -1660,9 +1698,56 @@ async fn error_when_invalid_sender_burn(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn burns_batch(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn burns_batch(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(4);
+    let values = random_values(4);
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    for (&id, &value) in token_ids.iter().zip(values.iter()) {
+        let balance = contract.balanceOf(alice_addr, id).call().await?.balance;
+        assert_eq!(value, balance);
+    }
+
+    let receipt = receipt!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone()
+    ))?;
+
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: alice_addr,
+        to: Address::ZERO,
+        ids: token_ids.clone(),
+        values,
+    }));
+
+    for id in token_ids {
+        let balance = contract.balanceOf(alice_addr, id).call().await?.balance;
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_batch_with_approval(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1681,7 +1766,7 @@ async fn burns_batch(alice: Account, bob: Account) -> eyre::Result<()> {
         assert_eq!(value, balance);
     }
 
-    let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
+    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
 
     let receipt = receipt!(contract.burnBatch(
         bob_addr,
