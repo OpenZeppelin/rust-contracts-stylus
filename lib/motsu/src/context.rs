@@ -52,6 +52,16 @@ impl Context {
     pub fn reset_storage(self) {
         STORAGE.remove(&self.thread_name);
     }
+
+    pub(crate) fn set_msg_sender(self, msg_sender: Address) {
+        let mut storage = STORAGE.entry(self.thread_name).or_default();
+        let _ = storage.msg_sender.insert(msg_sender);
+    }
+
+    pub(crate) fn get_msg_sender(self) -> Address {
+        let storage = STORAGE.entry(self.thread_name).or_default();
+        storage.msg_sender.expect("msg_sender should be set")
+    }
 }
 
 /// Storage mock: A global mutable key-value store.
@@ -80,6 +90,7 @@ impl ThreadName {
 /// Storage for unit test's mock data.
 #[derive(Default)]
 struct MockStorage {
+    msg_sender: Option<Address>,
     /// Contract's mock data storage.
     contract_data: HashMap<Bytes32, Bytes32>,
 }
@@ -119,6 +130,7 @@ impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
+        Context::current().set_msg_sender(self.caller);
         &self.contract
     }
 }
@@ -126,6 +138,7 @@ impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
 impl<ST: StorageType> ::core::ops::DerefMut for ContractCall<ST> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
+        Context::current().set_msg_sender(self.caller);
         &mut self.contract
     }
 }
@@ -140,6 +153,8 @@ impl<ST: StorageType> Contract<ST> {
         // TODO#q: save contract instance to storage
         Self { phantom: ::core::marker::PhantomData, address }
     }
+
+    // TODO#q: probably we need generic initializer
 
     pub fn random() -> Self {
         Self::new(Address::random())
@@ -159,10 +174,12 @@ impl Account {
         Self::new(Address::random())
     }
 
-    // TODO#q: we also need an initializer
-
     pub fn deploys<ST: StorageType>(&self) -> Contract<ST> {
         Contract::random()
+    }
+
+    pub fn address(&self) -> Address {
+        self.address
     }
 
     pub fn uses<ST: StorageType>(

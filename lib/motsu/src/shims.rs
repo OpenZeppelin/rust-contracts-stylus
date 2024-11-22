@@ -145,8 +145,9 @@ pub const EOA_CODEHASH: &[u8; 66] =
 /// May panic if fails to parse `MSG_SENDER` as an address.
 #[no_mangle]
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
-    let addr = const_hex::const_decode_to_array::<20>(MSG_SENDER).unwrap();
-    std::ptr::copy(addr.as_ptr(), sender, 20);
+    let msg_sender = Context::current().get_msg_sender();
+    let x: &[u8; 20] = msg_sender.as_ref();
+    std::ptr::copy(x.as_ptr(), sender, 20);
 }
 
 /// Gets the address of the current program. The semantics are equivalent to
