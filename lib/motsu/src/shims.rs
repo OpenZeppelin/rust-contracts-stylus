@@ -146,8 +146,14 @@ pub const EOA_CODEHASH: &[u8; 66] =
 #[no_mangle]
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
     let msg_sender = Context::current().get_msg_sender();
-    let x: &[u8; 20] = msg_sender.as_ref();
-    std::ptr::copy(x.as_ptr(), sender, 20);
+    std::ptr::copy(msg_sender.as_ptr(), sender, 20);
+}
+
+/// Get the ETH value (U256) in wei sent to the program.
+#[no_mangle]
+pub unsafe extern "C" fn msg_value(value: *mut u8) {
+    let dummy_msg_value: Bytes32 = Bytes32::default();
+    std::ptr::copy(dummy_msg_value.as_ptr(), value, 32);
 }
 
 /// Gets the address of the current program. The semantics are equivalent to

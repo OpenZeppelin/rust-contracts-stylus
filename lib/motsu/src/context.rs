@@ -30,6 +30,9 @@ impl Context {
 
     /// Get the value at `key` in storage.
     pub(crate) fn get_bytes(self, key: &Bytes32) -> Bytes32 {
+        // TODO#q: fix deadlock here.
+        //  When contract is called from another contract, it access storage
+        // second time.  Split STORAGE into two parts.
         let storage = STORAGE.entry(self.thread_name).or_default();
         let msg_receiver =
             storage.msg_receiver.expect("msg_receiver should be set");
@@ -139,6 +142,7 @@ impl Context {
                 0
             }
             Err(err) => {
+                // TODO#q: how should we process errors?
                 return_data_len.write(err.len());
                 self.set_return_data(err);
                 1
