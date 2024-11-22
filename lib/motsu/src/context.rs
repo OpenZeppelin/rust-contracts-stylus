@@ -100,8 +100,9 @@ impl Context {
         self,
         contract_address: Address,
     ) {
-        let mut storage = STORAGE.entry(self.thread_name).or_default();
-        if storage
+        if STORAGE
+            .entry(self.thread_name.clone())
+            .or_default()
             .contract_data
             .insert(contract_address, HashMap::new())
             .is_some()
@@ -109,7 +110,9 @@ impl Context {
             panic!("contract storage already initialized - contract_address: {contract_address}");
         }
 
-        if storage
+        if CALL_STORAGE
+            .entry(self.thread_name.clone())
+            .or_default()
             .contract_router
             .insert(
                 contract_address,
@@ -151,7 +154,7 @@ impl Context {
     }
 
     pub(crate) fn set_return_data(&self, data: Vec<u8>) {
-        let _ = STORAGE
+        let _ = CALL_STORAGE
             .entry(self.thread_name.clone())
             .or_default()
             .call_output
@@ -165,22 +168,23 @@ impl Context {
         input: &[u8],
     ) -> ArbResult {
         let mut storage = STORAGE.entry(self.thread_name.clone()).or_default();
-
         let previous_receiver = storage.msg_receiver.replace(contract_address);
         let previous_sender = storage.msg_sender.take();
         storage.msg_sender = previous_receiver; // now the sender is current contract
+        drop(storage);
 
-        let router = storage
+        let call_storage =
+            CALL_STORAGE.entry(self.thread_name.clone()).or_default();
+        let router = call_storage
             .contract_router
             .get(&contract_address)
             .expect("contract router should be set");
-
         let mut router = router.lock().expect("should lock test router");
         let result = router.route(selector, input).unwrap_or_else(|| {
             panic!("selector not found - selector: {selector}")
         });
-        std::mem::drop(router);
 
+        let mut storage = STORAGE.entry(self.thread_name.clone()).or_default();
         storage.msg_receiver = previous_receiver;
         storage.msg_sender = previous_sender;
 
@@ -198,7 +202,7 @@ impl Context {
     }
 
     pub(crate) fn get_return_data(&self) -> Vec<u8> {
-        STORAGE
+        CALL_STORAGE
             .entry(self.thread_name.clone())
             .or_default()
             .call_output
@@ -251,14 +255,24 @@ struct MockStorage {
     msg_receiver: Option<Address>,
     /// Contract's address to mock data storage mapping.
     contract_data: HashMap<Address, ContractStorage>,
+}
+
+type ContractStorage = HashMap<Bytes32, Bytes32>;
+
+/// The key is the name of the test thread, and the value is external call
+/// metadata.
+static CALL_STORAGE: Lazy<DashMap<ThreadName, CallStorage>> =
+    Lazy::new(DashMap::new);
+
+/// Metadata related to call of external contract.
+#[derive(Default)]
+struct CallStorage {
     // Contract's address to router mapping.
     // NOTE: Mutex is important since contract type is not `Sync`.
     contract_router: HashMap<Address, std::sync::Mutex<Box<dyn TestRouter>>>,
     // Output of a contract call.
     call_output: Option<Vec<u8>>,
 }
-
-type ContractStorage = HashMap<Bytes32, Bytes32>;
 
 /// A trait for routing messages to the appropriate selector in tests.
 pub trait TestRouter: Send {
