@@ -160,7 +160,11 @@ impl Context {
         selector: u32,
         input: &[u8],
     ) -> ArbResult {
-        let storage = STORAGE.entry(self.thread_name.clone()).or_default();
+        let mut storage = STORAGE.entry(self.thread_name.clone()).or_default();
+
+        let previous_receiver = storage.msg_receiver.replace(contract_address);
+        let previous_sender = storage.msg_sender.take();
+        storage.msg_sender = previous_receiver; // now the sender is current contract
 
         let router = storage
             .contract_router
@@ -168,9 +172,15 @@ impl Context {
             .expect("contract router should be set");
 
         let mut router = router.lock().expect("should lock test router");
-        router.route(selector, input).unwrap_or_else(|| {
+        let result = router.route(selector, input).unwrap_or_else(|| {
             panic!("selector not found - selector: {selector}")
-        })
+        });
+        std::mem::drop(router);
+
+        storage.msg_receiver = previous_receiver;
+        storage.msg_sender = previous_sender;
+
+        result
     }
 
     pub(crate) unsafe fn read_return_data_raw(
