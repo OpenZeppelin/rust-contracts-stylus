@@ -58,10 +58,10 @@ mod tests {
     use stylus_sdk::{
         alloy_primitives::{Address, U256},
         call::Call,
-        prelude::{public, sol_storage, TopLevelStorage},
+        prelude::{public, sol_storage, StorageType, TopLevelStorage},
     };
 
-    use crate::context::Account;
+    use crate::context::{Account, TestRouter};
 
     sol_storage! {
         pub struct PingContract {
@@ -141,5 +141,15 @@ mod tests {
         assert_eq!(ponged_value, value + uint!(1_U256));
         assert_eq!(ping.ping_count(), uint!(1_U256));
         assert_eq!(pong.pong_count(), uint!(1_U256));
+    }
+
+    #[test]
+    fn smoke() {
+        let mut ping_contract = unsafe { PingContract::new(uint!(0_U256), 0) };
+        <PingContract as TestRouter>::route(
+            &mut ping_contract,
+            0,
+            &[0, 0, 0, 0],
+        );
     }
 }

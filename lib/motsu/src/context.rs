@@ -1,11 +1,16 @@
 //! Unit-testing context for Stylus contracts.
 
-use std::{collections::HashMap, ptr};
+use std::{borrow::BorrowMut, collections::HashMap, ptr, sync::Mutex};
 
 use alloy_primitives::Address;
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
-use stylus_sdk::{alloy_primitives::uint, prelude::StorageType};
+use stylus_sdk::{
+    abi::Router,
+    alloy_primitives::uint,
+    prelude::{StorageType, TopLevelStorage},
+    ArbResult,
+};
 
 use crate::prelude::{Bytes32, WORD_BYTES};
 
@@ -28,7 +33,7 @@ impl Context {
         let msg_receiver =
             storage.msg_receiver.expect("msg_receiver should be set");
         storage
-            .contracts
+            .contract_data
             .get(&msg_receiver)
             .expect("contract receiver should have a storage initialised")
             .get(key)
@@ -49,7 +54,7 @@ impl Context {
         let msg_receiver =
             storage.msg_receiver.expect("msg_receiver should be set");
         storage
-            .contracts
+            .contract_data
             .get_mut(&msg_receiver)
             .expect("contract receiver should have a storage initialised")
             .insert(key, value);
@@ -87,13 +92,42 @@ impl Context {
         storage.msg_receiver.expect("msg_receiver should be set")
     }
 
-    pub(crate) fn init_contract(self, contract_address: Address) {
+    pub(crate) fn init_contract<ST: StorageType + TestRouter + 'static>(
+        self,
+        contract_address: Address,
+    ) {
         let mut storage = STORAGE.entry(self.thread_name).or_default();
-        if storage.contracts.insert(contract_address, HashMap::new()).is_some()
+        if storage
+            .contract_data
+            .insert(contract_address, HashMap::new())
+            .is_some()
+        {
+            panic!("contract storage already initialized - contract_address: {contract_address}");
+        }
+
+        if storage
+            .contract_router
+            .insert(
+                contract_address,
+                Mutex::new(Box::new(unsafe { ST::new(uint!(0_U256), 0) })),
+            )
+            .is_some()
         {
             panic!("contract storage already initialized - contract_address: {contract_address}");
         }
     }
+}
+
+/// Read the word from location pointed by `ptr`.
+unsafe fn read_bytes32(ptr: *const u8) -> Bytes32 {
+    let mut res = Bytes32::default();
+    ptr::copy(ptr, res.as_mut_ptr(), WORD_BYTES);
+    res
+}
+
+/// Write the word `bytes` to the location pointed by `ptr`.
+unsafe fn write_bytes32(ptr: *mut u8, bytes: Bytes32) {
+    ptr::copy(bytes.as_ptr(), ptr, WORD_BYTES);
 }
 
 /// Storage mock: A global mutable key-value store.
@@ -119,34 +153,40 @@ impl ThreadName {
     }
 }
 
-/// Storage for unit test's mock data.
+/// Storage for unit test's mock data.x
 #[derive(Default)]
 struct MockStorage {
     /// Address of the message sender.
     msg_sender: Option<Address>,
     /// Address of the contract that is currently receiving the message.
     msg_receiver: Option<Address>,
-    /// Contract's mock data storage.
-    contracts: HashMap<Address, ContractStorage>,
+    /// Contract's address to mock data storage mapping.
+    contract_data: HashMap<Address, ContractStorage>,
+    // Contract's address to router mapping.
+    // NOTE: Mutex is important since contract type is not `Sync`.
+    contract_router: HashMap<Address, std::sync::Mutex<Box<dyn TestRouter>>>,
 }
 
 type ContractStorage = HashMap<Bytes32, Bytes32>;
 
-/// Read the word from location pointed by `ptr`.
-unsafe fn read_bytes32(ptr: *const u8) -> Bytes32 {
-    let mut res = Bytes32::default();
-    ptr::copy(ptr, res.as_mut_ptr(), WORD_BYTES);
-    res
+/// A trait for routing messages to the appropriate selector in tests.
+pub trait TestRouter: Send {
+    /// Tries to find and execute a method for the given selector, returning
+    /// `None` if none is found.
+    fn route(&mut self, selector: u32, input: &[u8]) -> Option<ArbResult>;
 }
 
-/// Write the word `bytes` to the location pointed by `ptr`.
-unsafe fn write_bytes32(ptr: *mut u8, bytes: Bytes32) {
-    ptr::copy(bytes.as_ptr(), ptr, WORD_BYTES);
+impl<R: Router<R> + TopLevelStorage + BorrowMut<R::Storage> + Send> TestRouter
+    for R
+{
+    fn route(&mut self, selector: u32, input: &[u8]) -> Option<ArbResult> {
+        <Self as Router<R>>::route(self, selector, input)
+    }
 }
 
 /// Initializes fields of contract storage and child contract storages with
 /// default values.
-pub trait DefaultStorage: StorageType {
+pub trait DefaultStorage: StorageType + TestRouter + 'static {
     /// Initializes fields of contract storage and child contract storages with
     /// default values.
     #[must_use]
@@ -155,7 +195,7 @@ pub trait DefaultStorage: StorageType {
     }
 }
 
-impl<ST: StorageType> DefaultStorage for ST {}
+impl<ST: StorageType + TestRouter + 'static> DefaultStorage for ST {}
 
 pub struct ContractCall<ST: StorageType> {
     contract: ST,
@@ -194,9 +234,9 @@ pub struct Contract<ST: StorageType> {
     address: Address,
 }
 
-impl<ST: StorageType> Contract<ST> {
+impl<ST: StorageType + TestRouter + 'static> Contract<ST> {
     pub fn new(address: Address) -> Self {
-        Context::current().init_contract(address);
+        Context::current().init_contract::<ST>(address);
 
         Self { phantom: ::core::marker::PhantomData, address }
     }
@@ -217,14 +257,17 @@ pub struct Account {
 }
 
 impl Account {
+    #[must_use]
     pub const fn new(address: Address) -> Self {
         Self { address }
     }
 
+    #[must_use]
     pub fn random() -> Self {
         Self::new(Address::random())
     }
 
+    #[must_use]
     pub fn address(&self) -> Address {
         self.address
     }
