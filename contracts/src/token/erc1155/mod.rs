@@ -17,6 +17,8 @@ use crate::utils::{
     math::storage::SubAssignUnchecked,
 };
 
+pub mod extensions;
+
 mod receiver;
 pub use receiver::IERC1155Receiver;
 
