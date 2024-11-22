@@ -145,7 +145,7 @@ mod tests {
                 receiver,
                 token_ids.clone(),
                 values.clone(),
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect("Mint failed");
         (token_ids, values)
@@ -154,24 +154,34 @@ mod tests {
     #[motsu::test]
     fn burns(contract: Erc1155) {
         let alice = msg::sender();
+        let (token_ids, values) = init(contract, alice, 1);
+
+        let initial_balance = contract.balance_of(alice, token_ids[0]);
+        assert_eq!(values[0], initial_balance);
+
+        contract
+            .burn(alice, token_ids[0], values[0])
+            .expect("should burn own tokens");
+
+        let balance = contract.balance_of(alice, token_ids[0]);
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    #[motsu::test]
+    fn burns_with_approval(contract: Erc1155) {
+        let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
-        let initial_balance = contract
-            .balance_of(BOB, token_ids[0])
-            .expect("should return the BOB's balance of token 0");
-
+        let initial_balance = contract.balance_of(BOB, token_ids[0]);
         assert_eq!(values[0], initial_balance);
 
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         contract
             .burn(BOB, token_ids[0], values[0])
-            .expect("should burn alice's token");
+            .expect("should burn Bob's token");
 
-        let balance = contract
-            .balance_of(BOB, token_ids[0])
-            .expect("should return the BOB's balance of token 0");
-
+        let balance = contract.balance_of(BOB, token_ids[0]);
         assert_eq!(U256::ZERO, balance);
     }
 
@@ -220,49 +230,43 @@ mod tests {
     #[motsu::test]
     fn burns_batch(contract: Erc1155) {
         let alice = msg::sender();
+        let (token_ids, values) = init(contract, alice, 4);
+
+        for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
+            let balance = contract.balance_of(alice, token_id);
+            assert_eq!(value, balance);
+        }
+
+        contract
+            .burn_batch(alice, token_ids.clone(), values.clone())
+            .expect("should burn own tokens");
+
+        for token_id in token_ids {
+            let balance = contract.balance_of(alice, token_id);
+            assert_eq!(U256::ZERO, balance);
+        }
+    }
+
+    #[motsu::test]
+    fn burns_batch_with_approval(contract: Erc1155) {
+        let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 4);
 
-        let initial_balance_0 = contract
-            .balance_of(BOB, token_ids[0])
-            .expect("should return the BOB's balance of token 0");
-        let initial_balance_1 = contract
-            .balance_of(BOB, token_ids[1])
-            .expect("should return the BOB's balance of token 1");
-        let initial_balance_2 = contract
-            .balance_of(BOB, token_ids[2])
-            .expect("should return the BOB's balance of token 2");
-        let initial_balance_3 = contract
-            .balance_of(BOB, token_ids[3])
-            .expect("should return the BOB's balance of token 3");
-
-        assert_eq!(values[0], initial_balance_0);
-        assert_eq!(values[1], initial_balance_1);
-        assert_eq!(values[2], initial_balance_2);
-        assert_eq!(values[3], initial_balance_3);
+        for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
+            let balance = contract.balance_of(BOB, token_id);
+            assert_eq!(value, balance);
+        }
 
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         contract
             .burn_batch(BOB, token_ids.clone(), values.clone())
-            .expect("should burn alice's tokens");
+            .expect("should burn Bob's tokens");
 
-        let balance_0 = contract
-            .balance_of(BOB, token_ids[0])
-            .expect("should return the BOB's balance of token 0");
-        let balance_1 = contract
-            .balance_of(BOB, token_ids[1])
-            .expect("should return the BOB's balance of token 1");
-        let balance_2 = contract
-            .balance_of(BOB, token_ids[2])
-            .expect("should return the BOB's balance of token 2");
-        let balance_3 = contract
-            .balance_of(BOB, token_ids[3])
-            .expect("should return the BOB's balance of token 3");
-
-        assert_eq!(U256::ZERO, balance_0);
-        assert_eq!(U256::ZERO, balance_1);
-        assert_eq!(U256::ZERO, balance_2);
-        assert_eq!(U256::ZERO, balance_3);
+        for token_id in token_ids {
+            let balance = contract.balance_of(BOB, token_id);
+            assert_eq!(U256::ZERO, balance);
+        }
     }
 
     #[motsu::test]
