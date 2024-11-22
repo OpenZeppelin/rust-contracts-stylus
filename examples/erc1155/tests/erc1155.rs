@@ -1588,10 +1588,18 @@ async fn burns(alice: Account, bob: Account) -> eyre::Result<()> {
 
     let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
 
-    let _ = watch!(contract.burn(bob_addr, token_ids[0], values[0]))?;
+    let receipt = receipt!(contract.burn(bob_addr, token_ids[0], values[0]))?;
 
-    let Erc1155::balanceOfReturn { balance } =
-        contract.balanceOf(bob_addr, token_ids[0]).call().await?;
+    assert!(receipt.emits(Erc1155::TransferSingle {
+        operator: alice_addr,
+        from: bob_addr,
+        to: Address::ZERO,
+        id: token_ids[0],
+        value: values[0],
+    }));
+
+    let balance =
+        contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
     assert_eq!(uint!(0_U256), balance);
 
     Ok(())
@@ -1671,41 +1679,31 @@ async fn burns_batch(alice: Account, bob: Account) -> eyre::Result<()> {
         vec![].into()
     ));
 
-    let initial_balance_0 =
-        contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
-    let initial_balance_1 =
-        contract.balanceOf(bob_addr, token_ids[1]).call().await?.balance;
-    let initial_balance_2 =
-        contract.balanceOf(bob_addr, token_ids[2]).call().await?.balance;
-    let initial_balance_3 =
-        contract.balanceOf(bob_addr, token_ids[3]).call().await?.balance;
-
-    assert_eq!(values[0], initial_balance_0);
-    assert_eq!(values[1], initial_balance_1);
-    assert_eq!(values[2], initial_balance_2);
-    assert_eq!(values[3], initial_balance_3);
+    for (&id, &value) in token_ids.iter().zip(values.iter()) {
+        let balance = contract.balanceOf(bob_addr, id).call().await?.balance;
+        assert_eq!(value, balance);
+    }
 
     let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
 
-    let _ = watch!(contract.burnBatch(
+    let receipt = receipt!(contract.burnBatch(
         bob_addr,
         token_ids.clone(),
         values.clone()
     ))?;
 
-    let final_balance_0 =
-        contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
-    let final_balance_1 =
-        contract.balanceOf(bob_addr, token_ids[1]).call().await?.balance;
-    let final_balance_2 =
-        contract.balanceOf(bob_addr, token_ids[2]).call().await?.balance;
-    let final_balance_3 =
-        contract.balanceOf(bob_addr, token_ids[3]).call().await?.balance;
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: bob_addr,
+        to: Address::ZERO,
+        ids: token_ids.clone(),
+        values,
+    }));
 
-    assert_eq!(uint!(0_U256), final_balance_0);
-    assert_eq!(uint!(0_U256), final_balance_1);
-    assert_eq!(uint!(0_U256), final_balance_2);
-    assert_eq!(uint!(0_U256), final_balance_3);
+    for id in token_ids {
+        let balance = contract.balanceOf(bob_addr, id).call().await?.balance;
+        assert_eq!(uint!(0_U256), balance);
+    }
 
     Ok(())
 }
@@ -1730,9 +1728,8 @@ async fn error_when_missing_approval_burn_batch(
         vec![].into()
     ));
 
-    let err =
-        send!(contract.burnBatch(bob_addr, token_ids.clone(), values.clone()))
-            .expect_err("should return `ERC1155MissingApprovalForAll`");
+    let err = send!(contract.burnBatch(bob_addr, token_ids, values))
+        .expect_err("should return `ERC1155MissingApprovalForAll`");
 
     assert!(err.reverted_with(Erc1155::ERC1155MissingApprovalForAll {
         operator: alice_addr,
@@ -1751,6 +1748,7 @@ async fn error_when_invalid_sender_burn_batch(
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let invalid_sender = Address::ZERO;
+    let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_ids = random_token_ids(2);
     let values = random_values(2);
@@ -1761,18 +1759,11 @@ async fn error_when_invalid_sender_burn_batch(
         values.clone(),
         vec![].into()
     ));
-    let _ = watch!(contract.setOperatorApprovals(
-        invalid_sender,
-        alice.address(),
-        true
-    ));
+    let _ =
+        watch!(contract.setOperatorApprovals(invalid_sender, alice_addr, true));
 
-    let err = send!(contract.burnBatch(
-        invalid_sender,
-        token_ids.clone(),
-        values.clone()
-    ))
-    .expect_err("should return `ERC1155InvalidSender`");
+    let err = send!(contract.burnBatch(invalid_sender, token_ids, values))
+        .expect_err("should return `ERC1155InvalidSender`");
 
     assert!(err.reverted_with(Erc1155::ERC1155InvalidSender {
         sender: invalid_sender
