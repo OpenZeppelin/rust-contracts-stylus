@@ -16,6 +16,9 @@ sol!(
         function burn(address account, uint256 id, uint256 value) external;
         function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
 
+        // Helper function for testing
+        function setOperatorApprovals(address owner, address operator, bool approved) external;
+
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
         error ERC1155InvalidSender(address sender);

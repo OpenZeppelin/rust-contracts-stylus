@@ -1607,7 +1607,6 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
-    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1621,7 +1620,7 @@ async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
         contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
     assert_eq!(values[0], initial_balance);
 
-    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+    let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
 
     let receipt = receipt!(contract.burn(bob_addr, token_ids[0], values[0]))?;
 
@@ -1747,7 +1746,6 @@ async fn burns_batch_with_approval(
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
-    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1766,7 +1764,7 @@ async fn burns_batch_with_approval(
         assert_eq!(value, balance);
     }
 
-    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+    let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
 
     let receipt = receipt!(contract.burnBatch(
         bob_addr,
