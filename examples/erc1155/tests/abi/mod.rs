@@ -9,10 +9,13 @@ sol!(
         function balanceOfBatch(address[] accounts, uint256[] ids) external view returns (uint256[] memory balances);
         function isApprovedForAll(address account, address operator) external view returns (bool approved);
         function setApprovalForAll(address operator, bool approved) external;
+        function setOperatorApprovals(address owner, address operator, bool approved) external;
         function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes memory data) external;
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
+        function burn(address account, uint256 id, uint256 value) external;
+        function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
 
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
