@@ -25,7 +25,15 @@ impl Context {
     /// Get the value at `key` in storage.
     pub(crate) fn get_bytes(self, key: &Bytes32) -> Bytes32 {
         let storage = STORAGE.entry(self.thread_name).or_default();
-        storage.contract_data.get(key).copied().unwrap_or_default()
+        let msg_receiver =
+            storage.msg_receiver.expect("msg_receiver should be set");
+        storage
+            .contracts
+            .get(&msg_receiver)
+            .expect("contract receiver should have a storage initialised")
+            .get(key)
+            .copied()
+            .unwrap_or_default()
     }
 
     /// Get the raw value at `key` in storage and write it to `value`.
@@ -38,7 +46,13 @@ impl Context {
     /// Set the value at `key` in storage to `value`.
     pub(crate) fn set_bytes(self, key: Bytes32, value: Bytes32) {
         let mut storage = STORAGE.entry(self.thread_name).or_default();
-        storage.contract_data.insert(key, value);
+        let msg_receiver =
+            storage.msg_receiver.expect("msg_receiver should be set");
+        storage
+            .contracts
+            .get_mut(&msg_receiver)
+            .expect("contract receiver should have a storage initialised")
+            .insert(key, value);
     }
 
     /// Set the raw value at `key` in storage to `value`.
@@ -61,6 +75,24 @@ impl Context {
     pub(crate) fn get_msg_sender(self) -> Address {
         let storage = STORAGE.entry(self.thread_name).or_default();
         storage.msg_sender.expect("msg_sender should be set")
+    }
+
+    pub(crate) fn set_msg_receiver(self, msg_receiver: Address) {
+        let mut storage = STORAGE.entry(self.thread_name).or_default();
+        let _ = storage.msg_receiver.insert(msg_receiver);
+    }
+
+    pub(crate) fn get_msg_receiver(self) -> Address {
+        let storage = STORAGE.entry(self.thread_name).or_default();
+        storage.msg_receiver.expect("msg_receiver should be set")
+    }
+
+    pub(crate) fn init_contract(self, contract_address: Address) {
+        let mut storage = STORAGE.entry(self.thread_name).or_default();
+        if storage.contracts.insert(contract_address, HashMap::new()).is_some()
+        {
+            panic!("contract storage already initialized - contract_address: {contract_address}");
+        }
     }
 }
 
@@ -90,10 +122,15 @@ impl ThreadName {
 /// Storage for unit test's mock data.
 #[derive(Default)]
 struct MockStorage {
+    /// Address of the message sender.
     msg_sender: Option<Address>,
+    /// Address of the contract that is currently receiving the message.
+    msg_receiver: Option<Address>,
     /// Contract's mock data storage.
-    contract_data: HashMap<Bytes32, Bytes32>,
+    contracts: HashMap<Address, ContractStorage>,
 }
+
+type ContractStorage = HashMap<Bytes32, Bytes32>;
 
 /// Read the word from location pointed by `ptr`.
 unsafe fn read_bytes32(ptr: *const u8) -> Bytes32 {
@@ -122,7 +159,8 @@ impl<ST: StorageType> DefaultStorage for ST {}
 
 pub struct ContractCall<ST: StorageType> {
     contract: ST,
-    caller: Address,
+    caller_address: Address,
+    contract_address: Address,
 }
 
 impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
@@ -130,7 +168,8 @@ impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        Context::current().set_msg_sender(self.caller);
+        Context::current().set_msg_sender(self.caller_address);
+        Context::current().set_msg_receiver(self.contract_address);
         &self.contract
     }
 }
@@ -138,7 +177,8 @@ impl<ST: StorageType> ::core::ops::Deref for ContractCall<ST> {
 impl<ST: StorageType> ::core::ops::DerefMut for ContractCall<ST> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        Context::current().set_msg_sender(self.caller);
+        Context::current().set_msg_sender(self.caller_address);
+        Context::current().set_msg_receiver(self.contract_address);
         &mut self.contract
     }
 }
@@ -150,7 +190,8 @@ pub struct Contract<ST: StorageType> {
 
 impl<ST: StorageType> Contract<ST> {
     pub fn new(address: Address) -> Self {
-        // TODO#q: save contract instance to storage
+        Context::current().init_contract(address);
+
         Self { phantom: ::core::marker::PhantomData, address }
     }
 
@@ -174,10 +215,6 @@ impl Account {
         Self::new(Address::random())
     }
 
-    pub fn deploys<ST: StorageType>(&self) -> Contract<ST> {
-        Contract::random()
-    }
-
     pub fn address(&self) -> Address {
         self.address
     }
@@ -188,7 +225,8 @@ impl Account {
     ) -> ContractCall<ST> {
         ContractCall {
             contract: unsafe { ST::new(uint!(0_U256), 0) },
-            caller: self.address,
+            caller_address: self.address,
+            contract_address: contract.address,
         }
     }
 }
