@@ -12,6 +12,7 @@ pub struct VestaParams;
 impl PoseidonParams<Scalar> for VestaParams {
     const T: usize = 3;
     const D: u8 = 5;
+    const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 56;
     const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[

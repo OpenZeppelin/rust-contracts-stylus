@@ -5,15 +5,27 @@ use alloc::{borrow::ToOwned, vec::Vec};
 
 use crate::{field::prime::PrimeField, poseidon2::params::PoseidonParams};
 
+#[derive(Clone, Copy, Debug)]
+enum Mode {
+    Absorbing,
+    Squeezing,
+}
+
 #[derive(Clone, Debug)]
 pub struct Poseidon2<P: PoseidonParams<F>, F: PrimeField> {
-    phantom: core::marker::PhantomData<(P, F)>,
+    phantom: core::marker::PhantomData<P>,
+    state: Box<[F]>,
+    mode: Mode,
 }
 
 impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     #[must_use]
     pub fn new() -> Self {
-        Self { phantom: core::marker::PhantomData }
+        Self {
+            phantom: core::marker::PhantomData,
+            state: vec![F::zero(); P::T].into_boxed_slice(),
+            mode: Mode::Absorbing,
+        }
     }
 
     #[must_use]
@@ -161,7 +173,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
 
     /// Apply the internal MDS matrix M_I to the state
     fn matmul_internal(&self, input: &mut [F], mat_internal_diag_m_1: &[F]) {
-        let t = P::T;
+        let t = self.state_size();
 
         match t {
             2 => {
