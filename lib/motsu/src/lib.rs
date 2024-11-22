@@ -134,7 +134,7 @@ mod tests {
         let mut ping = alice.uses(ping);
         let mut pong = alice.uses(pong);
 
-        let value = uint!(1_U256);
+        let value = uint!(10_U256);
         let ponged_value =
             ping.ping(pong.address(), value).expect("should ping successfully");
 

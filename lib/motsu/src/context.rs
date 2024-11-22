@@ -24,7 +24,6 @@ impl Context {
     /// Get test context associated with the current test thread.
     #[must_use]
     pub fn current() -> Self {
-        // TODO#q: STORAGE entry call here
         Self { thread_name: ThreadName::current() }
     }
 
@@ -181,10 +180,12 @@ impl Context {
         selector: u32,
         input: &[u8],
     ) -> ArbResult {
-        let previous_receiver = self.set_msg_receiver(contract_address);
-        let previous_msg_sender = self.set_msg_sender(
-            previous_receiver.expect("msg_receiver should be set"),
-        );
+        let previous_receiver = self
+            .set_msg_receiver(contract_address)
+            .expect("previous msg_receiver should be set");
+        let previous_msg_sender = self
+            .set_msg_sender(previous_receiver)
+            .expect("previous msg_sender should be set");
 
         let call_storage = self.get_call_storage();
         let router = call_storage
@@ -196,9 +197,8 @@ impl Context {
             panic!("selector not found - selector: {selector}")
         });
 
-        let mut storage = self.get_storage();
-        storage.msg_receiver = previous_receiver;
-        storage.msg_sender = previous_msg_sender;
+        let _ = self.set_msg_receiver(previous_receiver);
+        let _ = self.set_msg_sender(previous_msg_sender);
 
         result
     }
