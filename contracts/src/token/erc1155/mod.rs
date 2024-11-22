@@ -695,8 +695,9 @@ impl Erc1155 {
     /// [`Error::InvalidSender`] is returned.
     /// If length of `ids` is not equal to length of `values`, then the
     /// error [`Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`Error::InsufficientBalance`] is returned.
+    /// If any of the `values` is greater than the balance of the respective
+    /// token from `tokens` of the `from` account, then the error
+    /// [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
@@ -903,8 +904,9 @@ impl Erc1155 {
     /// [`Error::InvalidSender`] is returned.
     /// If length of `ids` is not equal to length of `values`, then the
     /// error [`Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`Error::InsufficientBalance`] is returned.
+    /// If any of the `values` is greater than the balance of the respective
+    /// token from `tokens` of the `from` account, then the error
+    /// [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
