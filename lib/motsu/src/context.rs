@@ -181,14 +181,12 @@ impl Context {
         selector: u32,
         input: &[u8],
     ) -> ArbResult {
-        let mut storage = STORAGE.entry(self.thread_name.clone()).or_default();
-        let previous_receiver = storage.msg_receiver.replace(contract_address);
-        let previous_sender = storage.msg_sender.take();
-        storage.msg_sender = previous_receiver; // now the sender is current contract
-        drop(storage); // TODO#q: use msg_receiver setter (avoid a deadlock the other way)
+        let previous_receiver = self.set_msg_receiver(contract_address);
+        let previous_msg_sender = self.set_msg_sender(
+            previous_receiver.expect("msg_receiver should be set"),
+        );
 
-        let call_storage =
-            CALL_STORAGE.entry(self.thread_name.clone()).or_default();
+        let call_storage = self.get_call_storage();
         let router = call_storage
             .contract_router
             .get(&contract_address)
@@ -198,9 +196,9 @@ impl Context {
             panic!("selector not found - selector: {selector}")
         });
 
-        let mut storage = STORAGE.entry(self.thread_name.clone()).or_default();
+        let mut storage = self.get_storage();
         storage.msg_receiver = previous_receiver;
-        storage.msg_sender = previous_sender;
+        storage.msg_sender = previous_msg_sender;
 
         result
     }
@@ -258,7 +256,7 @@ impl ThreadName {
     }
 }
 
-/// Storage for unit test's mock data.x
+/// Storage for unit test's mock data.
 #[derive(Default)]
 struct MockStorage {
     /// Address of the message sender.
