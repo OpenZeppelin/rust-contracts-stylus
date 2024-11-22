@@ -24,6 +24,8 @@ sol!(
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
+        function burn(address account, uint256 id, uint256 value) external;
+        function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
     }
 );
 
@@ -87,7 +89,9 @@ pub async fn run_with(
         (setApprovalForAllCall::SIGNATURE, receipt!(contract.setApprovalForAll(bob_addr, true))?),
         (isApprovedForAllCall::SIGNATURE, receipt!(contract.isApprovedForAll(alice_addr, bob_addr))?),
         (safeTransferFromCall::SIGNATURE, receipt!(contract.safeTransferFrom(alice_addr, bob_addr, token_1, value_1, data.clone()))?),
-        (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids, values, data.clone()))?)
+        (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids.clone(), values.clone(), data))?),
+        (burnCall::SIGNATURE, receipt!(contract.burn(bob_addr, token_1, value_1))?),
+        (burnBatchCall::SIGNATURE, receipt!(contract.burnBatch(bob_addr, ids, values))?),
     ];
 
     receipts
