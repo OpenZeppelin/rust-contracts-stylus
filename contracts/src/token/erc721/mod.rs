@@ -1156,8 +1156,15 @@ impl Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::msg;
+    use alloy_primitives::{
+        address, fixed_bytes, uint, Address, FixedBytes, U256,
+    };
+    use motsu::prelude::Account;
+    use stylus_sdk::{
+        abi::Bytes,
+        msg,
+        prelude::{public, sol_storage, TopLevelStorage},
+    };
 
     use super::{
         ERC721IncorrectOwner, ERC721InsufficientApproval,
@@ -2507,4 +2514,45 @@ mod tests {
         assert_eq!(actual, expected);
     }
     */
+
+    sol_storage! {
+        pub struct Erc721ReceiverMock {
+            uint256 _received_token_id;
+        }
+    }
+
+    #[public]
+    impl Erc721ReceiverMock {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            operator: Address,
+            from: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> FixedBytes<4> {
+            self._received_token_id.set(token_id);
+            fixed_bytes!("150b7a02")
+        }
+
+        fn received_token_id(&self) -> U256 {
+            self._received_token_id.get()
+        }
+    }
+
+    unsafe impl TopLevelStorage for Erc721ReceiverMock {}
+
+    #[motsu::test]
+    fn on_erc721_received(erc721: Erc721, receiver: Erc721ReceiverMock) {
+        let alice = Account::random();
+        let token_id = random_token_id();
+        alice
+            .uses(erc721)
+            ._safe_mint(receiver.address(), token_id, vec![0, 1, 2, 3].into())
+            .unwrap();
+
+        let received_token_id = alice.uses(receiver).received_token_id();
+
+        assert_eq!(received_token_id, token_id);
+    }
 }

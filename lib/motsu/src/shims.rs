@@ -124,9 +124,14 @@ pub const CONTRACT_ADDRESS: &[u8; 42] =
 /// Arbitrum's CHAID ID.
 pub const CHAIN_ID: u64 = 42161;
 
-/// Externally Owned Account (EOA) code hash.
+/// Externally Owned Account (EOA) code hash (wallet account).
 pub const EOA_CODEHASH: &[u8; 66] =
     b"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+
+/// Contract Account (CA) code hash (smart contract code).
+/// NOTE: can be any 256-bit value to pass `has_code` check.
+pub const CA_CODEHASH: &[u8; 66] =
+    b"0x1111111111111111111111111111111111111111111111111111111111111111";
 
 /// Gets the address of the account that called the program. For normal
 /// L2-to-L2 transactions the semantics are equivalent to that of the EVM's
@@ -209,9 +214,15 @@ pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
 ///
 /// May panic if fails to parse `ACCOUNT_CODEHASH` as a keccack hash.
 #[no_mangle]
-pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
+pub unsafe extern "C" fn account_codehash(address: *const u8, dest: *mut u8) {
+    let code_hash = if Context::current().has_code_raw(address) {
+        CA_CODEHASH
+    } else {
+        EOA_CODEHASH
+    };
+
     let account_codehash =
-        const_hex::const_decode_to_array::<32>(EOA_CODEHASH).unwrap();
+        const_hex::const_decode_to_array::<32>(code_hash).unwrap();
 
     std::ptr::copy(account_codehash.as_ptr(), dest, 32);
 }
