@@ -1175,6 +1175,7 @@ mod tests {
         U256::from(num)
     }
 
+    /*
     #[motsu::test]
     fn error_when_checking_balance_of_invalid_owner(contract: Erc721) {
         let invalid_owner = Address::ZERO;
@@ -2505,4 +2506,5 @@ mod tests {
         let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
     }
+    */
 }

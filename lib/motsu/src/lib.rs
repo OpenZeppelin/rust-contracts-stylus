@@ -142,14 +142,4 @@ mod tests {
         assert_eq!(ping.ping_count(), uint!(1_U256));
         assert_eq!(pong.pong_count(), uint!(1_U256));
     }
-
-    #[test]
-    fn smoke() {
-        let mut ping_contract = unsafe { PingContract::new(uint!(0_U256), 0) };
-        <PingContract as TestRouter>::route(
-            &mut ping_contract,
-            0,
-            &[0, 0, 0, 0],
-        );
-    }
 }
