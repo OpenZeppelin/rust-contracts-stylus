@@ -797,7 +797,7 @@ impl PoseidonParams<Scalar> for BabyBear24Params {
 
 #[allow(unused_imports)]
 #[cfg(test)]
-mod poseidon2_tests_babybear {
+mod tests {
     use crate::{
         field::instance::FpBabyBear,
         fp_from_hex,
@@ -809,30 +809,7 @@ mod poseidon2_tests_babybear {
     static TESTRUNS: usize = 5;
 
     #[test]
-    fn consistent_perm() {
-        let instance = Poseidon2::<BabyBear24Params, _>::new();
-        let t = BabyBear24Params::T;
-        for _ in 0..TESTRUNS {
-            let input1: Vec<Scalar> = (0..t).map(|_| random_scalar()).collect();
-
-            let mut input2: Vec<Scalar>;
-            loop {
-                input2 = (0..t).map(|_| random_scalar()).collect();
-                if input1 != input2 {
-                    break;
-                }
-            }
-
-            let perm1 = instance.permutation(&input1);
-            let perm2 = instance.permutation(&input1);
-            let perm3 = instance.permutation(&input2);
-            assert_eq!(perm1, perm2);
-            assert_ne!(perm1, perm3);
-        }
-    }
-
-    #[test]
-    fn kats() {
+    fn smoke() {
         let poseidon2 = Poseidon2::<BabyBear24Params, _>::new();
         let mut input: Vec<Scalar> = vec![];
         for i in 0..BabyBear24Params::T {

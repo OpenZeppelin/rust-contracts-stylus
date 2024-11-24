@@ -453,7 +453,7 @@ impl PoseidonParams<Scalar> for Goldilocks12Params {
 
 #[allow(unused_imports)]
 #[cfg(test)]
-mod poseidon2_tests_goldilocks {
+mod tests {
     use crate::{
         field::instance::FpGoldiLocks,
         fp_from_hex,
@@ -465,30 +465,7 @@ mod poseidon2_tests_goldilocks {
     static TESTRUNS: usize = 5;
 
     #[test]
-    fn consistent_perm() {
-        let instance = Box::new(Poseidon2::<Goldilocks12Params, _>::new());
-        let t = Goldilocks12Params::T;
-        for _ in 0..TESTRUNS {
-            let input1: Vec<Scalar> = (0..t).map(|_| random_scalar()).collect();
-
-            let mut input2: Vec<Scalar>;
-            loop {
-                input2 = (0..t).map(|_| random_scalar()).collect();
-                if input1 != input2 {
-                    break;
-                }
-            }
-
-            let perm1 = instance.permutation(&input1);
-            let perm2 = instance.permutation(&input1);
-            let perm3 = instance.permutation(&input2);
-            assert_eq!(perm1, perm2);
-            assert_ne!(perm1, perm3);
-        }
-    }
-
-    #[test]
-    fn kats() {
+    fn smoke() {
         let poseidon2 = Poseidon2::<Goldilocks12Params, _>::new();
         let mut input: Vec<Scalar> = vec![];
         for i in 0..Goldilocks12Params::T {

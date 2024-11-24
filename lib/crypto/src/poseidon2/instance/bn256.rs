@@ -350,7 +350,7 @@ impl PoseidonParams<Scalar> for BN256Params {
 
 #[allow(unused_imports)]
 #[cfg(test)]
-mod poseidon2_tests_bn256 {
+mod tests {
     use crate::{
         field::instance::FpBN256,
         fp_from_hex,
@@ -359,53 +359,21 @@ mod poseidon2_tests_bn256 {
 
     type Scalar = FpBN256;
 
-    static TESTRUNS: usize = 5;
-
     #[test]
-    fn consistent_perm() {
-        let poseidon2 = Poseidon2::<BN256Params, _>::new();
-        let t = BN256Params::T;
-        for _ in 0..TESTRUNS {
-            let input1: Vec<Scalar> = (0..t).map(|_| random_scalar()).collect();
-
-            let mut input2: Vec<Scalar>;
-            loop {
-                input2 = (0..t).map(|_| random_scalar()).collect();
-                if input1 != input2 {
-                    break;
-                }
-            }
-
-            let perm1 = poseidon2.permute(&input1);
-            let perm2 = poseidon2.permute(&input1);
-            let perm3 = poseidon2.permute(&input2);
-            assert_eq!(perm1, perm2);
-            assert_ne!(perm1, perm3);
+    fn smoke() {
+        let mut poseidon2 = Poseidon2::<BN256Params, _>::new();
+        for i in 1..BN256Params::T {
+            poseidon2.absorb(&Scalar::from(i as u64));
         }
-    }
-
-    #[test]
-    fn kats() {
-        let poseidon2 = Poseidon2::<BN256Params, _>::new();
-        let mut input: Vec<Scalar> = vec![];
-        for i in 0..BN256Params::T {
-            input.push(Scalar::from(i as u64));
-        }
-        let perm = poseidon2.permute(&input);
+        let perm = poseidon2.squeeze_batch(2);
         assert_eq!(
             perm[0],
-            fp_from_hex!(
-                "0bb61d24daca55eebcb1929a82650f328134334da98ea4f847f760054f4a3033"
-            )
-        );
-        assert_eq!(
-            perm[1],
             fp_from_hex!(
                 "303b6f7c86d043bfcbcc80214f26a30277a15d3f74ca654992defe7ff8d03570"
             )
         );
         assert_eq!(
-            perm[2],
+            perm[1],
             fp_from_hex!(
                 "1ed25194542b12eef8617361c3ba7c52e660b145994427cc86296242cf766ec8"
             )

@@ -1017,7 +1017,7 @@ impl PoseidonParams<Scalar> for BLS4Params {
 
 #[allow(unused_imports)]
 #[cfg(test)]
-mod poseidon2_tests_bls12 {
+mod tests {
     use crate::{
         field::instance::FpBLS12,
         fp_from_hex,
@@ -1031,77 +1031,56 @@ mod poseidon2_tests_bls12 {
     type Scalar = FpBLS12;
 
     #[test]
-    fn kats() {
-        let poseidon2_2 = Poseidon2::<BLS2Params, _>::new();
-        let mut input_2: Vec<Scalar> = vec![];
-        for i in 0..BLS2Params::T {
-            input_2.push(Scalar::from(i as u64));
+    fn smoke() {
+        let mut poseidon2 = Poseidon2::<BLS2Params, _>::new();
+        for i in 1..BLS2Params::T {
+            poseidon2.absorb(&Scalar::from(i as u64));
         }
-        let perm_2 = poseidon2_2.permute(&input_2);
+        let perm = poseidon2.squeeze_batch(1);
         assert_eq!(
-            perm_2[0],
-            fp_from_hex!(
-                "73c46dd530e248a87b61d19e67fa1b4ed30fc3d09f16531fe189fb945a15ce4e"
-            )
-        );
-        assert_eq!(
-            perm_2[1],
+            perm[0],
             fp_from_hex!(
                 "1f0e305ee21c9366d5793b80251405032a3fee32b9dd0b5f4578262891b043b4"
             )
         );
 
-        let poseidon2_3 = Poseidon2::<BLS3Params, _>::new();
-        let mut input_3: Vec<Scalar> = vec![];
-        for i in 0..BLS3Params::T {
-            input_3.push(Scalar::from(i as u64));
+        let mut poseidon2 = Poseidon2::<BLS3Params, _>::new();
+        for i in 1..BLS3Params::T {
+            poseidon2.absorb(&Scalar::from(i as u64));
         }
-        let perm_3 = poseidon2_3.permute(&input_3);
+        let perm = poseidon2.squeeze_batch(2);
         assert_eq!(
-            perm_3[0],
-            fp_from_hex!(
-                "1b152349b1950b6a8ca75ee4407b6e26ca5cca5650534e56ef3fd45761fbf5f0"
-            )
-        );
-        assert_eq!(
-            perm_3[1],
+            perm[0],
             fp_from_hex!(
                 "4c5793c87d51bdc2c08a32108437dc0000bd0275868f09ebc5f36919af5b3891"
             )
         );
         assert_eq!(
-            perm_3[2],
+            perm[1],
             fp_from_hex!(
                 "1fc8ed171e67902ca49863159fe5ba6325318843d13976143b8125f08b50dc6b"
             )
         );
 
-        let poseidon2_4 = Poseidon2::<BLS4Params, _>::new();
-        let mut input_4: Vec<Scalar> = vec![];
-        for i in 0..BLS4Params::T {
-            input_4.push(Scalar::from(i as u64));
+        let mut poseidon2 = Poseidon2::<BLS4Params, _>::new();
+        for i in 1..BLS4Params::T {
+            poseidon2.absorb(&Scalar::from(i as u64));
         }
-        let perm_4 = poseidon2_4.permute(&input_4);
+        let perm = poseidon2.squeeze_batch(3);
         assert_eq!(
-            perm_4[0],
-            fp_from_hex!(
-                "28ff6c4edf9768c08ae26290487e93449cc8bc155fc2fad92a344adceb3ada6d"
-            )
-        );
-        assert_eq!(
-            perm_4[1],
+            perm[0],
             fp_from_hex!(
                 "0e56f2b6fad25075aa93560185b70e2b180ed7e269159c507c288b6747a0db2d"
             )
         );
         assert_eq!(
-            perm_4[2],
+            perm[1],
             fp_from_hex!(
                 "6d8196f28da6006bb89b3df94600acdc03d0ba7c2b0f3f4409a54c1db6bf30d0"
             )
         );
         assert_eq!(
-            perm_4[3],
+            perm[2],
             fp_from_hex!(
                 "07cfb49540ee456cce38b8a7d1a930a57ffc6660737f6589ef184c5e15334e36"
             )

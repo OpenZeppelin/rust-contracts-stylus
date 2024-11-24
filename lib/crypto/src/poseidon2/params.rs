@@ -1,7 +1,6 @@
 use crate::field::prime::PrimeField;
 
 // TODO#q: remove numbers from docs
-// TODO#q: update docs
 
 pub trait PoseidonParams<F: PrimeField> {
     /// State size. (3)

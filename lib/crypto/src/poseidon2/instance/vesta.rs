@@ -351,7 +351,7 @@ impl PoseidonParams<Scalar> for VestaParams {
 
 #[allow(unused_imports)]
 #[cfg(test)]
-mod poseidon2_tests_vesta {
+mod tests {
     use crate::{
         field::instance::FpVesta,
         fp_from_hex,
@@ -360,34 +360,8 @@ mod poseidon2_tests_vesta {
 
     type Scalar = FpVesta;
 
-    // static TESTRUNS: usize = 5;
-
-    // #[test]
-    // fn consistent_perm() {
-    //     let poseidon2 = Poseidon2::<VestaParams, _>::new();
-    //     let t = VestaParams::T;
-    //     for _ in 0..TESTRUNS {
-    //         let input1: Vec<Scalar> = (0..t).map(|_|
-    // random_scalar()).collect();
-    //
-    //         let mut input2: Vec<Scalar>;
-    //         loop {
-    //             input2 = (0..t).map(|_| random_scalar()).collect();
-    //             if input1 != input2 {
-    //                 break;
-    //             }
-    //         }
-    //
-    //         let perm1 = poseidon2.permute(&input1);
-    //         let perm2 = poseidon2.permute(&input1);
-    //         let perm3 = poseidon2.permute(&input2);
-    //         assert_eq!(perm1, perm2);
-    //         assert_ne!(perm1, perm3);
-    //     }
-    // }
-
     #[test]
-    fn kats() {
+    fn smoke() {
         let mut poseidon2 = Poseidon2::<VestaParams, _>::new();
         for i in 1..VestaParams::T {
             poseidon2.absorb(&Scalar::from(i as u64));

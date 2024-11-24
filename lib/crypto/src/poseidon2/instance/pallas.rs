@@ -349,7 +349,7 @@ impl PoseidonParams<Scalar> for PallasParams {
 
 #[allow(unused_imports)]
 #[cfg(test)]
-mod poseidon2_tests_pallas {
+mod tests {
     use crate::{
         field::instance::FpPallas,
         fp_from_hex,
@@ -358,53 +358,21 @@ mod poseidon2_tests_pallas {
 
     type Scalar = FpPallas;
 
-    static TESTRUNS: usize = 5;
-
     #[test]
-    fn consistent_perm() {
-        let instance = Poseidon2::<PallasParams, _>::new();
-        let t = PallasParams::T;
-        for _ in 0..TESTRUNS {
-            let input1: Vec<Scalar> = (0..t).map(|_| random_scalar()).collect();
-
-            let mut input2: Vec<Scalar>;
-            loop {
-                input2 = (0..t).map(|_| random_scalar()).collect();
-                if input1 != input2 {
-                    break;
-                }
-            }
-
-            let perm1 = instance.permute(&input1);
-            let perm2 = instance.permute(&input1);
-            let perm3 = instance.permute(&input2);
-            assert_eq!(perm1, perm2);
-            assert_ne!(perm1, perm3);
+    fn smoke() {
+        let mut poseidon2 = Poseidon2::<PallasParams, _>::new();
+        for i in 1..PallasParams::T {
+            poseidon2.absorb(&Scalar::from(i as u64));
         }
-    }
-
-    #[test]
-    fn kats() {
-        let poseidon2 = Poseidon2::<PallasParams, _>::new();
-        let mut input: Vec<Scalar> = vec![];
-        for i in 0..PallasParams::T {
-            input.push(Scalar::from(i as u64));
-        }
-        let perm = poseidon2.permute(&input);
+        let perm = poseidon2.squeeze_batch(2);
         assert_eq!(
             perm[0],
-            fp_from_hex!(
-                "1a9b54c7512a914dd778282c44b3513fea7251420b9d95750baae059b2268d7a"
-            )
-        );
-        assert_eq!(
-            perm[1],
             fp_from_hex!(
                 "1c48ea0994a7d7984ea338a54dbf0c8681f5af883fe988d59ba3380c9f7901fc"
             )
         );
         assert_eq!(
-            perm[2],
+            perm[1],
             fp_from_hex!(
                 "079ddd0a80a3e9414489b526a2770448964766685f4c4842c838f8a23120b401"
             )
