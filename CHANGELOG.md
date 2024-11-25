@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `IErc1155Burnable` extension. #
+- `IErc1155Burnable` extension. #417 
 
 ### Changed
 
-- Use `function_selector!` to calculate transfer type selector in `Erc1155`. #
+- Use `function_selector!` to calculate transfer type selector in `Erc1155`. #417 
 
 ### Fixed
 
