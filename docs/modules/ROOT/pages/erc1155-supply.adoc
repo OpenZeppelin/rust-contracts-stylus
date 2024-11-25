@@ -20,6 +20,7 @@ sol_storage! {
         Erc1155Supply erc1155_supply;
     }
 }
+
 #[public]
 #[inherit(Erc1155Supply)]
 impl Erc1155Example {
