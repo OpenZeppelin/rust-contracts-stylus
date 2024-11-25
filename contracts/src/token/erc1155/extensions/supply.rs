@@ -755,6 +755,7 @@ mod tests {
     use crate::token::erc1155::IErc1155;
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    const BOB: Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
         (0..size).map(|_| U256::from(rand::random::<u32>())).collect()
@@ -808,6 +809,31 @@ mod tests {
         }
         let total_supply: U256 = values.iter().sum();
         assert_eq!(total_supply, contract.total_supply_all());
+    }
+
+    #[motsu::test]
+    #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
+    fn mint_panics_on_total_supply_overflow(contract: Erc1155Supply) {
+        let token_id = random_token_ids(1)[0];
+        let one = U256::from(1);
+        let two = U256::from(2);
+        contract
+            ._mint(ALICE, token_id, U256::MAX / two + one, &vec![].into())
+            .expect("should mint to ALICE");
+        contract
+            ._mint(BOB, token_id, U256::MAX / two + one, &vec![].into())
+            .expect("should mint to BOB");
+        let _ = contract._mint(ALICE, token_id, one, &vec![].into());
+    }
+
+    #[motsu::test]
+    #[should_panic = "should not exceed `U256::MAX` for `_total_supply_all`"]
+    fn mint_panics_on_total_supply_all_overflow(contract: Erc1155Supply) {
+        contract
+            ._mint(ALICE, U256::from(1), U256::MAX, &vec![].into())
+            .expect("should mint");
+        let _ =
+            contract._mint(ALICE, U256::from(2), U256::from(1), &vec![].into());
     }
 
     #[motsu::test]
