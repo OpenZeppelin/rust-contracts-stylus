@@ -456,11 +456,11 @@ impl Erc1155Supply {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: &Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc1155::Error> {
         if to.is_zero() {
-            return Err(Error::InvalidReceiver(ERC1155InvalidReceiver {
-                receiver: to,
-            }));
+            return Err(erc1155::Error::InvalidReceiver(
+                erc1155::ERC1155InvalidReceiver { receiver: to },
+            ));
         }
         self._update_with_acceptance_check(
             Address::ZERO,
@@ -503,11 +503,11 @@ impl Erc1155Supply {
         from: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc1155::Error> {
         if from.is_zero() {
-            return Err(Error::InvalidSender(ERC1155InvalidSender {
-                sender: from,
-            }));
+            return Err(erc1155::Error::InvalidSender(
+                erc1155::ERC1155InvalidSender { sender: from },
+            ));
         }
         self._update_with_acceptance_check(
             from,
@@ -552,7 +552,7 @@ impl Erc1155Supply {
         id: U256,
         value: U256,
         data: &Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc1155::Error> {
         self._do_mint(to, vec![id], vec![value], data)
     }
 
@@ -594,7 +594,7 @@ impl Erc1155Supply {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: &Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc1155::Error> {
         self._do_mint(to, ids, values, data)
     }
 
@@ -626,7 +626,7 @@ impl Erc1155Supply {
         from: Address,
         id: U256,
         value: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc1155::Error> {
         self._do_burn(from, vec![id], vec![value])
     }
 
@@ -661,7 +661,7 @@ impl Erc1155Supply {
         from: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc1155::Error> {
         self._do_burn(from, ids, values)
     }
 
@@ -758,19 +758,15 @@ mod tests {
 
     #[motsu::test]
     fn supply_of_zero_supply(contract: Erc1155Supply) {
-        let token_ids = random_token_ids(1);
-        assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
+        let token_id = random_token_ids(1)[0];
+        assert_eq!(U256::ZERO, contract.total_supply(token_id));
         assert_eq!(U256::ZERO, contract.total_supply_all());
-        assert!(!contract.exists(token_ids[0]));
+        assert!(!contract.exists(token_id));
     }
 
     #[motsu::test]
     fn supply_with_zero_address_sender(contract: Erc1155Supply) {
-        let token_ids = random_token_ids(1);
-        let values = random_values(1);
-        contract
-            ._update(Address::ZERO, ALICE, token_ids.clone(), values.clone())
-            .expect("should supply");
+        let (token_ids, values) = init(contract, ALICE, 1);
         assert_eq!(values[0], contract.total_supply(token_ids[0]));
         assert_eq!(values[0], contract.total_supply_all());
         assert!(contract.exists(token_ids[0]));
@@ -790,25 +786,11 @@ mod tests {
     #[motsu::test]
     fn supply_batch(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, BOB, 4);
-        assert_eq!(
-            values[0],
-            contract.erc1155.balance_of(BOB, token_ids[0]).unwrap()
-        );
-        assert_eq!(
-            values[1],
-            contract.erc1155.balance_of(BOB, token_ids[1]).unwrap()
-        );
-        assert_eq!(
-            values[2],
-            contract.erc1155.balance_of(BOB, token_ids[2]).unwrap()
-        );
-        assert_eq!(
-            values[3],
-            contract.erc1155.balance_of(BOB, token_ids[3]).unwrap()
-        );
-        assert!(contract.exists(token_ids[0]));
-        assert!(contract.exists(token_ids[1]));
-        assert!(contract.exists(token_ids[2]));
-        assert!(contract.exists(token_ids[3]));
+        for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
+            assert_eq!(value, contract.erc1155.balance_of(BOB, token_id));
+            assert!(contract.exists(token_ids[0]));
+        }
+        let total_supply: U256 = values.iter().sum();
+        assert_eq!(total_supply, contract.total_supply_all());
     }
 }
