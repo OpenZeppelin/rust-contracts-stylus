@@ -19,7 +19,14 @@ pub struct Poseidon2<P: PoseidonParams<F>, F: PrimeField> {
     index: usize,
 }
 
+impl<P: PoseidonParams<F>, F: PrimeField> Default for Poseidon2<P, F> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
+    /// Create a new Poseidon sponge.
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -31,23 +38,27 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         }
     }
 
+    /// Size of poseidon sponge's state.
     #[must_use]
-    pub const fn state_size(&self) -> usize {
+    pub const fn state_size() -> usize {
         P::T
     }
 
+    /// Start index of partial rounds.
     #[must_use]
-    const fn round_f_beginning(&self) -> usize {
+    const fn partial_round_start() -> usize {
         P::ROUNDS_F / 2
     }
 
+    /// End index of partial rounds (noninclusive).
     #[must_use]
-    const fn round_f_end(&self) -> usize {
-        P::ROUNDS_F / 2
+    const fn partial_round_end() -> usize {
+        Self::partial_round_start() + P::ROUNDS_P
     }
 
+    /// Total number of rounds.
     #[must_use]
-    const fn rounds(&self) -> usize {
+    const fn rounds() -> usize {
         P::ROUNDS_F + P::ROUNDS_P
     }
 
@@ -57,7 +68,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
             panic!("cannot absorb while squeezing");
         }
 
-        if self.index == self.state_size() {
+        if self.index == Self::state_size() {
             self.permute();
             self.index = P::CAPACITY;
         }
@@ -78,22 +89,21 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         // Linear layer at the beginning.
         self.matmul_external();
 
-        for r in 0..self.round_f_beginning() {
-            self.add_rc(P::ROUND_CONSTANTS[r]);
-            self.sbox();
+        for round in 0..Self::partial_round_start() {
+            self.add_rc_external(round);
+            self.apply_sbox_external();
             self.matmul_external();
         }
 
-        let p_end = self.round_f_beginning() + P::ROUNDS_P;
-        for r in self.round_f_beginning()..p_end {
-            self.state[0] += P::ROUND_CONSTANTS[r][0];
-            self.state[0] = Self::sbox_p(&self.state[0]);
+        for round in Self::partial_round_start()..Self::partial_round_end() {
+            self.add_rc_internal(round);
+            self.apply_sbox_internal();
             self.matmul_internal();
         }
 
-        for r in p_end..self.rounds() {
-            self.add_rc(P::ROUND_CONSTANTS[r]);
-            self.sbox();
+        for round in Self::partial_round_end()..Self::rounds() {
+            self.add_rc_external(round);
+            self.apply_sbox_external();
             self.matmul_external();
         }
     }
@@ -101,7 +111,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     /// Squeeze a single element from the sponge.
     pub fn squeeze(&mut self) -> F {
         if matches!(self.mode, Mode::Absorbing)
-            || self.index == self.state_size()
+            || self.index == Self::state_size()
         {
             self.permute();
             self.mode = Mode::Squeezing;
@@ -118,56 +128,21 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         (0..n).map(|_| self.squeeze()).collect()
     }
 
-    // TODO#q: rename to external sbox
-    fn sbox(&mut self) {
-        for elem in self.state.iter_mut() {
-            *elem = Self::sbox_p(elem);
+    /// Apply sbox to the entire state in the external round.
+    fn apply_sbox_external(&mut self) {
+        for elem in &mut self.state {
+            *elem = elem.pow(P::D);
         }
     }
 
-    // TODO#q: rename to internal sbox
-    fn sbox_p(input: &F) -> F {
-        input.pow(P::D)
-    }
-
-    fn matmul_m4(&mut self) {
-        let state = &mut self.state;
-        let t = P::T;
-        let t4 = t / 4;
-        for i in 0..t4 {
-            let start_index = i * 4;
-            let mut t_0 = state[start_index];
-            t_0 += &state[start_index + 1];
-            let mut t_1 = state[start_index + 2];
-            t_1 += &state[start_index + 3];
-            let mut t_2 = state[start_index + 1];
-            t_2.double_in_place();
-            t_2 += &t_1;
-            let mut t_3 = state[start_index + 3];
-            t_3.double_in_place();
-            t_3 += &t_0;
-            let mut t_4 = t_1;
-            t_4.double_in_place();
-            t_4.double_in_place();
-            t_4 += &t_3;
-            let mut t_5 = t_0;
-            t_5.double_in_place();
-            t_5.double_in_place();
-            t_5 += &t_2;
-            let mut t_6 = t_3;
-            t_6 += &t_5;
-            let mut t_7 = t_2;
-            t_7 += &t_4;
-            state[start_index] = t_6;
-            state[start_index + 1] = t_5;
-            state[start_index + 2] = t_7;
-            state[start_index + 3] = t_4;
-        }
+    /// Apply sbox to the first element in the internal round.
+    fn apply_sbox_internal(&mut self) {
+        self.state[0] = self.state[0].pow(P::D);
     }
 
     /// Apply the external MDS matrix M_E to the state.
     fn matmul_external(&mut self) {
-        let t = P::T;
+        let t = Self::state_size();
         match t {
             2 => {
                 // Matrix circ(2, 1)
@@ -211,9 +186,44 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         }
     }
 
+    fn matmul_m4(&mut self) {
+        let state = &mut self.state;
+        let t = Self::state_size();
+        let t4 = t / 4;
+        for i in 0..t4 {
+            let start_index = i * 4;
+            let mut t_0 = state[start_index];
+            t_0 += &state[start_index + 1];
+            let mut t_1 = state[start_index + 2];
+            t_1 += &state[start_index + 3];
+            let mut t_2 = state[start_index + 1];
+            t_2.double_in_place();
+            t_2 += &t_1;
+            let mut t_3 = state[start_index + 3];
+            t_3.double_in_place();
+            t_3 += &t_0;
+            let mut t_4 = t_1;
+            t_4.double_in_place();
+            t_4.double_in_place();
+            t_4 += &t_3;
+            let mut t_5 = t_0;
+            t_5.double_in_place();
+            t_5.double_in_place();
+            t_5 += &t_2;
+            let mut t_6 = t_3;
+            t_6 += &t_5;
+            let mut t_7 = t_2;
+            t_7 += &t_4;
+            state[start_index] = t_6;
+            state[start_index + 1] = t_5;
+            state[start_index + 2] = t_7;
+            state[start_index + 3] = t_4;
+        }
+    }
+
     /// Apply the internal MDS matrix M_I to the state.
     fn matmul_internal(&mut self) {
-        let t = P::T;
+        let t = Self::state_size();
 
         match t {
             2 => {
@@ -249,11 +259,18 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         }
     }
 
-    /// Add a round constant to the state.
-    fn add_rc(&mut self, rc: &[F]) {
-        for (a, b) in self.state.iter_mut().zip(rc.iter()) {
+    /// Add a round constant to the entire state in external round.
+    fn add_rc_external(&mut self, round: usize) {
+        for (a, b) in
+            self.state.iter_mut().zip(P::ROUND_CONSTANTS[round].iter())
+        {
             *a += b;
         }
+    }
+
+    // Add a round constant to the first state element in internal round.
+    fn add_rc_internal(&mut self, round: usize) {
+        self.state[0] += P::ROUND_CONSTANTS[round][0];
     }
 }
 

@@ -355,7 +355,9 @@ mod tests {
     use crate::{
         field::instance::FpVesta,
         fp_from_hex,
-        poseidon2::{instance::vesta::VestaParams, *},
+        poseidon2::{
+            instance::vesta::VestaParams, params::PoseidonParams, Poseidon2,
+        },
     };
 
     type Scalar = FpVesta;
