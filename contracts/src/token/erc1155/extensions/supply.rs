@@ -795,6 +795,7 @@ mod tests {
     #[motsu::test]
     fn after_mint_single(contract: Erc1155Supply) {
         let (token_ids, values) = setup(contract, ALICE, 1);
+        assert_eq!(values[0], contract.balance_of(ALICE, token_ids[0]));
         assert_eq!(values[0], contract.total_supply(token_ids[0]));
         assert_eq!(values[0], contract.total_supply_all());
         assert!(contract.exists(token_ids[0]));
@@ -804,7 +805,8 @@ mod tests {
     fn after_mint_batch(contract: Erc1155Supply) {
         let (token_ids, values) = setup(contract, ALICE, 4);
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
-            assert_eq!(value, contract.erc1155.balance_of(ALICE, token_id));
+            assert_eq!(value, contract.balance_of(ALICE, token_id));
+            assert_eq!(value, contract.total_supply(token_id));
             assert!(contract.exists(token_id));
         }
         let total_supply: U256 = values.iter().sum();
