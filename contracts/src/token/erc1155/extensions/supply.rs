@@ -738,7 +738,6 @@ mod tests {
     use crate::token::erc1155::IErc1155;
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
         (0..size).map(|_| U256::from(rand::random::<u32>())).collect()
