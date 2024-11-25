@@ -7,8 +7,6 @@ sol!(
         function balanceOf(address account, uint256 id) external view returns (uint256 balance);
         #[derive(Debug)]
         function balanceOfBatch(address[] accounts, uint256[] ids) external view returns (uint256[] memory balances);
-        function isApprovedForAll(address account, address operator) external view returns (bool approved);
-        function setApprovalForAll(address operator, bool approved) external;
         function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes memory data) external;
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
