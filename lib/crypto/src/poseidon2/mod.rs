@@ -1,3 +1,13 @@
+//! This module contains the Poseidon hash ([whitepaper]) function implemented
+//! as a [Sponge Function].
+//!
+//! Poseidon permutation here follows referenced in [whitepaper] original [rust
+//! implementation] with slight improvements.
+//!
+//! [Sponge function]: https://en.wikipedia.org/wiki/Sponge_function
+//! [whitepaper]: https://eprint.iacr.org/2023/323.pdf
+//! [rust implementation]: https://github.com/HorizenLabs/poseidon2
+
 pub mod instance;
 pub mod params;
 
@@ -5,12 +15,16 @@ use alloc::vec::Vec;
 
 use crate::{field::prime::PrimeField, poseidon2::params::PoseidonParams};
 
+/// Determines whether poseidon sponge in absorbing or squeezing state.
+/// In squeezing state, sponge can only squeeze elements.
 #[derive(Clone, Copy, Debug)]
 enum Mode {
     Absorbing,
     Squeezing,
 }
 
+/// Poseidon2 sponge that can absorb any number of [`F`] field elements and be
+/// squeezed to a finite number of [`F`] field elements.
 #[derive(Clone, Debug)]
 pub struct Poseidon2<P: PoseidonParams<F>, F: PrimeField> {
     phantom: core::marker::PhantomData<P>,
@@ -276,6 +290,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
 
 #[allow(unused_imports)]
 #[cfg(test)]
+#[must_use]
 pub fn random_scalar<F: PrimeField + crypto_bigint::Random>() -> F {
     let mut rng = rand::thread_rng();
     F::random(&mut rng)

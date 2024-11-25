@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use crate::{
     field::instance::FpPallas, fp_from_hex, poseidon2::params::PoseidonParams,
 };

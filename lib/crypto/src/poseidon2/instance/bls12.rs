@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use crate::{
     field::instance::FpBLS12, fp_from_hex, poseidon2::params::PoseidonParams,
 };
@@ -5,6 +6,7 @@ use crate::{
 type Scalar = FpBLS12;
 
 pub struct BLS2Params;
+
 #[rustfmt::skip]
 impl PoseidonParams<Scalar> for BLS2Params {
     const T: usize = 2;

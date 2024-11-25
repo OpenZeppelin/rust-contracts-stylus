@@ -1,5 +1,4 @@
-#![deny(long_running_const_eval)]
-
+#![allow(missing_docs)]
 use crate::{
     field::instance::FpVesta, fp_from_hex, poseidon2::params::PoseidonParams,
 };

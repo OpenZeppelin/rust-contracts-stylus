@@ -1,14 +1,17 @@
+#![allow(missing_docs)]
 use crate::{
     field::instance::FpBabyBear, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
 type Scalar = FpBabyBear;
-struct BabyBear24Params;
+
+pub struct BabyBear24Params;
 
 #[rustfmt::skip]
 impl PoseidonParams<Scalar> for BabyBear24Params {
     const T: usize = 24;
     const D: u8 = 7;
+    const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 21;
     const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
@@ -806,39 +809,37 @@ mod tests {
 
     type Scalar = FpBabyBear;
 
-    static TESTRUNS: usize = 5;
-
     #[test]
     fn smoke() {
-        let poseidon2 = Poseidon2::<BabyBear24Params, _>::new();
-        let mut input: Vec<Scalar> = vec![];
-        for i in 0..BabyBear24Params::T {
-            input.push(Scalar::from(i as u64));
+        let mut poseidon2 = Poseidon2::<BabyBear24Params, _>::new();
+        for i in 1..BabyBear24Params::T {
+            poseidon2.absorb(&Scalar::from(i as u64));
         }
-        let perm = poseidon2.permutation(&input);
-        assert_eq!(perm[0], fp_from_hex!("2ed3e23d"));
-        assert_eq!(perm[1], fp_from_hex!("12921fb0"));
-        assert_eq!(perm[2], fp_from_hex!("0e659e79"));
-        assert_eq!(perm[3], fp_from_hex!("61d81dc9"));
-        assert_eq!(perm[4], fp_from_hex!("32bae33b"));
-        assert_eq!(perm[5], fp_from_hex!("62486ae3"));
-        assert_eq!(perm[6], fp_from_hex!("1e681b60"));
-        assert_eq!(perm[7], fp_from_hex!("24b91325"));
-        assert_eq!(perm[8], fp_from_hex!("2a2ef5b9"));
-        assert_eq!(perm[9], fp_from_hex!("50e8593e"));
-        assert_eq!(perm[10], fp_from_hex!("5bc818ec"));
-        assert_eq!(perm[11], fp_from_hex!("10691997"));
-        assert_eq!(perm[12], fp_from_hex!("35a14520"));
-        assert_eq!(perm[13], fp_from_hex!("2ba6a3c5"));
-        assert_eq!(perm[14], fp_from_hex!("279d47ec"));
-        assert_eq!(perm[15], fp_from_hex!("55014e81"));
-        assert_eq!(perm[16], fp_from_hex!("5953a67f"));
-        assert_eq!(perm[17], fp_from_hex!("2f403111"));
-        assert_eq!(perm[18], fp_from_hex!("6b8828ff"));
-        assert_eq!(perm[19], fp_from_hex!("1801301f"));
-        assert_eq!(perm[20], fp_from_hex!("2749207a"));
-        assert_eq!(perm[21], fp_from_hex!("3dc9cf21"));
-        assert_eq!(perm[22], fp_from_hex!("3c985ba2"));
-        assert_eq!(perm[23], fp_from_hex!("57a99864"));
+        let mut perm = poseidon2
+            .squeeze_batch(BabyBear24Params::T - BabyBear24Params::CAPACITY)
+            .into_iter();
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("12921fb0"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("0e659e79"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("61d81dc9"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("32bae33b"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("62486ae3"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("1e681b60"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("24b91325"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("2a2ef5b9"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("50e8593e"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("5bc818ec"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("10691997"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("35a14520"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("2ba6a3c5"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("279d47ec"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("55014e81"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("5953a67f"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("2f403111"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("6b8828ff"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("1801301f"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("2749207a"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("3dc9cf21"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("3c985ba2"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("57a99864"));
     }
 }
