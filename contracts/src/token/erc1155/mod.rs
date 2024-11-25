@@ -842,7 +842,7 @@ impl Erc1155 {
     /// # Errors
     ///
     /// If `to` is `Address::ZERO`, then the error
-    /// [`Error:InvalidReceiver`] is returned.
+    /// [`Error::InvalidReceiver`] is returned.
     /// If length of `ids` is not equal to length of `values`, then the
     /// error [`Error::InvalidArrayLength`] is returned.
     /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
