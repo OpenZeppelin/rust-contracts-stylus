@@ -1566,6 +1566,10 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
     Ok(())
 }
 
+// ============================================================================
+// Integration Tests: ERC-1155 Burnable Extension
+// ============================================================================
+
 #[e2e::test]
 async fn burns(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;

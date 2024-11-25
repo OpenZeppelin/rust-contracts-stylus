@@ -21,13 +21,14 @@ pub trait IErc1155Burnable {
     ///
     /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Account to burn tokens from.
     /// * `token_id` - Token id to be burnt.
     /// * `value` - Amount to be burnt.
     ///
     /// # Errors
     ///
-    /// If the caller is not account address and the account has not been
+    /// If the caller is not `account` address and the `account` has not been
     /// approved, then the error [`Error::MissingApprovalForAll`] is
     /// returned.
     /// If `from` is the `Address::ZERO`, then the error
@@ -51,13 +52,14 @@ pub trait IErc1155Burnable {
     ///
     /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Accounts to burn tokens from.
     /// * `values` - All amount to be burnt.
     /// * `token_ids` - All token id to be burnt.
     ///
     /// # Errors
     ///
-    /// If the caller is not account address and the account has not been
+    /// If the caller is not `account` address and the `account` has not been
     /// approved, then the error [`Error::MissingApprovalForAll`] is
     /// returned.
     /// If `from` is the `Address::ZERO`, then the error
@@ -228,7 +230,7 @@ mod tests {
 
         let err = contract
             .burn(invalid_sender, token_ids[0], values[0])
-            .expect_err("should not burn tokens from the zero address");
+            .expect_err("should not burn tokens from the `Address::ZERO`");
 
         assert!(matches!(
             err,
@@ -250,7 +252,7 @@ mod tests {
 
         contract
             .burn_batch(alice, token_ids.clone(), values.clone())
-            .expect("should burn own tokens");
+            .expect("should burn own tokens in batch");
 
         for token_id in token_ids {
             let balance = contract.balance_of(alice, token_id);
@@ -272,7 +274,7 @@ mod tests {
 
         contract
             .burn_batch(BOB, token_ids.clone(), values.clone())
-            .expect("should burn Bob's tokens");
+            .expect("should burn Bob's tokens in batch");
 
         for token_id in token_ids {
             let balance = contract.balance_of(BOB, token_id);
@@ -287,7 +289,7 @@ mod tests {
 
         let err = contract
             .burn_batch(BOB, token_ids.clone(), values.clone())
-            .expect_err("should not burn tokens without approval");
+            .expect_err("should not burn tokens in batch without approval");
 
         assert!(matches!(
             err,
@@ -312,7 +314,7 @@ mod tests {
 
         let err = contract
             .burn_batch(invalid_sender, token_ids.clone(), values.clone())
-            .expect_err("should not burn tokens from the zero address");
+            .expect_err("should not burn tokens in batch from the `Address::ZERO`");
 
         assert!(matches!(
             err,
