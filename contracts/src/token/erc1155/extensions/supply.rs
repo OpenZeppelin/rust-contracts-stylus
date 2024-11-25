@@ -820,4 +820,17 @@ mod tests {
         }
         assert_eq!(U256::ZERO, contract.total_supply_all());
     }
+
+    #[motsu::test]
+    fn supply_unaffected_by_no_op(contract: Erc1155Supply) {
+        let token_ids = random_token_ids(1);
+        let values = random_values(1);
+
+        contract
+            ._update(Address::ZERO, Address::ZERO, token_ids.clone(), values)
+            .expect("should supply");
+        assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
+        assert_eq!(U256::ZERO, contract.total_supply_all());
+        assert!(!contract.exists(token_ids[0]));
+    }
 }
