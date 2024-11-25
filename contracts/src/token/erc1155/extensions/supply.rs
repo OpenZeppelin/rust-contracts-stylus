@@ -1,8 +1,8 @@
 //! Extension of ERC-1155 that adds tracking of total supply per id.
 //!
 //! Useful for scenarios where Fungible and Non-fungible tokens have to be
-//! clearly identified. Note: While a totalSupply of 1 might mean the
-//! corresponding is an NFT, there is no guarantees that no other token
+//! clearly identified. Note: While a total_supply of 1 might mean the
+//! corresponding is an NFT, there are no guarantees that no other tokens
 //! with the same id are not going to be minted.
 //!
 //! NOTE: This contract implies a global limit of 2**256 - 1 to the number
@@ -29,11 +29,11 @@ use crate::{
 sol_storage! {
     /// State of an [`Erc1155Supply`] token.
     pub struct Erc1155Supply {
-        /// Erc1155 contract storage.
+        /// ERC-1155 contract storage.
         Erc1155 erc1155;
-        /// Mapping from token ID to total supply.
+        /// Mapping from token id to total supply.
         mapping(uint256 => uint256) _total_supply;
-        /// Total supply of all token IDs.
+        /// Total supply of all token ids.
         uint256 _total_supply_all;
     }
 }
@@ -50,9 +50,9 @@ impl Erc1155Supply {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    /// * `id` - Token id.
-    pub fn total_supply(&self, token_id: U256) -> U256 {
-        self._total_supply.get(token_id)
+    /// * `id` - Token id as a number.
+    pub fn total_supply(&self, id: U256) -> U256 {
+        self._total_supply.get(id)
     }
 
     /// Total value of tokens.
@@ -70,9 +70,9 @@ impl Erc1155Supply {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    /// * `id` - Token id.
-    pub fn exists(&self, token_id: U256) -> bool {
-        self.total_supply(token_id) > U256::ZERO
+    /// * `id` - Token id as a number.
+    pub fn exists(&self, id: U256) -> bool {
+        self.total_supply(id) > U256::ZERO
     }
 
     /// Returns the value of tokens of type `id` owned by `account`.
@@ -282,12 +282,10 @@ impl Erc1155Supply {
 }
 
 impl Erc1155Supply {
-    // =========================================================================
-    // Overriding _update requires reimplementing all the functions that use it.
-    // =========================================================================
+    // Note: overriding `_update` requires reimplementing all of the functions
+    // that use it.
 
-    /// Override of [`Erc1155::_update`] that restricts normal minting to after
-    /// construction.
+    /// Override of [`Erc1155::_update`] that updates the supply of tokens.
     ///
     /// # Arguments
     ///
@@ -297,10 +295,25 @@ impl Erc1155Supply {
     /// * `token_ids` - Array of all token id.
     /// * `values` - Array of all amount of tokens to be supplied.
     ///
+    /// # Errors
+    ///
+    /// If length of `ids` is not equal to length of `values`, then the
+    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
+    /// If `value` is greater than the balance of the `from` account,
+    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
+    ///
+    /// NOTE: The ERC-1155 acceptance check is not performed in this function.
+    /// See [`Self::_update_with_acceptance_check`] instead.
+    ///
     /// # Events
     ///
     /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
     /// element, and [`erc1155::TransferBatch`] otherwise.
+    ///
+    /// # Panics
+    ///
+    /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
+    /// the `mint` operation.
     fn _update(
         &mut self,
         from: Address,
@@ -393,8 +406,8 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// If updated balance exceeds `U256::MAX`, may happen during `mint`
-    /// operation.
+    /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
+    /// the `mint` operation.
     fn _update_with_acceptance_check(
         &mut self,
         from: Address,
@@ -444,7 +457,7 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// If updated balance exceeds `U256::MAX`.
+    /// If updated balance and/or supply exceeds `U256::MAX`.
     fn _mint(
         &mut self,
         to: Address,
@@ -486,7 +499,7 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// If updated balance exceeds `U256::MAX`.
+    /// If updated balance and/or supply exceeds `U256::MAX`.
     fn _mint_batch(
         &mut self,
         to: Address,
@@ -601,7 +614,7 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// If updated balance exceeds `U256::MAX`.
+    /// If updated balance and/or supply exceeds `U256::MAX`.
     fn _do_mint(
         &mut self,
         to: Address,
@@ -707,7 +720,7 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// If updated balance exceeds `U256::MAX`.
+    /// If updated balance and/or supply exceeds `U256::MAX`.
     fn do_safe_transfer_from(
         &mut self,
         from: Address,
