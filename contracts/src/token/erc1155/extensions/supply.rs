@@ -301,7 +301,7 @@ impl Erc1155Supply {
     ///
     /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
     /// element, and [`erc1155::TransferBatch`] otherwise.
-    pub fn _update(
+    fn _update(
         &mut self,
         from: Address,
         to: Address,
@@ -445,7 +445,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// If updated balance exceeds `U256::MAX`.
-    pub fn _mint(
+    fn _mint(
         &mut self,
         to: Address,
         id: U256,
@@ -487,7 +487,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// If updated balance exceeds `U256::MAX`.
-    pub fn _mint_batch(
+    fn _mint_batch(
         &mut self,
         to: Address,
         ids: Vec<U256>,
@@ -520,7 +520,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// Should not panic.
-    pub fn _burn(
+    fn _burn(
         &mut self,
         from: Address,
         id: U256,
@@ -555,7 +555,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// Should not panic.
-    pub fn _burn_batch(
+    fn _burn_batch(
         &mut self,
         from: Address,
         ids: Vec<U256>,
