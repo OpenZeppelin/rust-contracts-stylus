@@ -1,4 +1,4 @@
-//! Extension of ERC-1155 that adds tracking of total supply per id.
+//! Extension of ERC-1155 that adds tracking of total supply per token id.
 //!
 //! Useful for scenarios where Fungible and Non-fungible tokens have to be
 //! clearly identified. Note: While a total_supply of 1 might mean the

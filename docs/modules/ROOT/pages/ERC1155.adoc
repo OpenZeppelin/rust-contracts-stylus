@@ -1,3 +1,10 @@
 = ERC-1155
 
 ERC1155 is a novel token standard that aims to take the best from previous standards to create a xref:tokens.adoc#different-kinds-of-tokens[*fungibility-agnostic*] and *gas-efficient* xref:tokens.adoc#but_first_coffee_a_primer_on_token_contracts[token contract].
+
+[[erc1155-token-extensions]]
+== Extensions
+
+Additionally, there are multiple custom extensions, including:
+
+* xref:erc1155-supply.adoc[ERC-1155 Supply]: Extension of that adds tracking of total supply per token id.
