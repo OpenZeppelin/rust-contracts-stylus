@@ -11,7 +11,7 @@
 //! By setting the duration to 0, one can configure this contract to behave like
 //! an asset timelock that hold tokens for a beneficiary until a specified time.
 //!
-//! NOTE: Since the wallet is [`crate::access::ownable::Ownable`], and ownership
+//! NOTE: Since the wallet is [`Ownable`], and ownership
 //! can be transferred, it is possible to sell unvested tokens. Preventing this
 //! in a smart contract is difficult, considering that: 1) a beneficiary address
 //! could be a counterfactually deployed contract, 2) there is likely to be a
@@ -79,7 +79,7 @@ sol! {
 pub enum Error {
     /// Error type from [`Ownable`] contract [`ownable::Error`].
     Ownable(ownable::Error),
-    /// Error type from [`call::Call`] contract [`call::Error`].
+    /// Error type from [`Call`] contract [`call::Error`].
     StylusError(call::Error),
     /// Indicates an error related to the underlying Ether transfer.
     ReleaseEtherFailed(ReleaseEtherFailed),
@@ -152,7 +152,7 @@ pub trait IVestingWallet {
     ///
     /// If called by any account other than the owner, then the error
     /// [`ownable::Error::UnauthorizedAccount`] is returned.
-    /// If `new_owner` is the zero address, then the error
+    /// If `new_owner` is the `Address::ZERO`, then the error
     /// [`ownable::Error::InvalidOwner`] is returned.
     ///
     /// # Events
@@ -240,7 +240,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
@@ -260,7 +260,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address)
         -> Result<U256, Self::Error>;
@@ -308,12 +308,12 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
-    /// Calculates the amount of Ether that has already vested. Default
-    /// implementation is a linear vesting curve.
+    /// Calculates the amount of Ether that has already vested.
+    /// The Default implementation is a linear vesting curve.
     ///
     /// # Arguments
     ///
@@ -323,12 +323,12 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
-    /// Calculates the amount of tokens that has already vested. Default
-    /// implementation is a linear vesting curve.
+    /// Calculates the amount of tokens that has already vested.
+    /// The Default implementation is a linear vesting curve.
     ///
     /// # Arguments
     ///
@@ -344,7 +344,7 @@ pub trait IVestingWallet {
     /// # Panics
     ///
     /// If total allocation exceeds `U256::MAX`.
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &mut self,
@@ -494,7 +494,7 @@ impl VestingWallet {
     ///
     /// # Panics
     ///
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         let timestamp = U256::from(timestamp);
 

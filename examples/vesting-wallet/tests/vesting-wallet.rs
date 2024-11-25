@@ -60,7 +60,7 @@ async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
 fn assert_in_delta(expected: U256, actual: U256) {
     let diff = expected.abs_diff(actual);
     let delta = U256::from(1);
-    assert!(diff <= delta,"Your result of {actual} should be within {delta} of the expected result {expected}");
+    assert!(diff <= delta, "Your result of {actual} should be within {delta} of the expected result {expected}");
 }
 
 #[e2e::test]
