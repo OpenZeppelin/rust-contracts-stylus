@@ -84,7 +84,7 @@ impl Erc1155Supply {
     /// * `&self` - Read access to the contract's state.
     /// * `account` - Account of the token's owner.
     /// * `id` - Token id as a number.
-    fn balance_of(&self, account: Address, id: U256) -> U256 {
+    pub fn balance_of(&self, account: Address, id: U256) -> U256 {
         self.erc1155.balance_of(account, id)
     }
 
@@ -106,7 +106,7 @@ impl Erc1155Supply {
     ///
     /// * If the length of `accounts` is not equal to the length of `ids`,
     /// then the error [`erc1155::Error::InvalidArrayLength`] is returned.
-    fn balance_of_batch(
+    pub fn balance_of_batch(
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
@@ -139,7 +139,7 @@ impl Erc1155Supply {
     /// # Events
     ///
     /// Emits an [`erc1155::ApprovalForAll`] event.
-    fn set_approval_for_all(
+    pub fn set_approval_for_all(
         &mut self,
         operator: Address,
         approved: bool,
@@ -157,7 +157,11 @@ impl Erc1155Supply {
     /// * `&self` - Read access to the contract's state.
     /// * `account` - Account of the token's owner.
     /// * `operator` - Account to be checked.
-    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
+    pub fn is_approved_for_all(
+        &self,
+        account: Address,
+        operator: Address,
+    ) -> bool {
         self.erc1155.is_approved_for_all(account, operator)
     }
 
@@ -207,7 +211,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// Should not panic.
-    fn safe_transfer_from(
+    pub fn safe_transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -268,7 +272,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// Should not panic.
-    fn safe_batch_transfer_from(
+    pub fn safe_batch_transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -314,7 +318,7 @@ impl Erc1155Supply {
     ///
     /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
     /// the `mint` operation.
-    fn _update(
+    pub fn _update(
         &mut self,
         from: Address,
         to: Address,
@@ -408,7 +412,7 @@ impl Erc1155Supply {
     ///
     /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
     /// the `mint` operation.
-    fn _update_with_acceptance_check(
+    pub fn _update_with_acceptance_check(
         &mut self,
         from: Address,
         to: Address,
@@ -458,7 +462,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// If updated balance and/or supply exceeds `U256::MAX`.
-    fn _mint(
+    pub fn _mint(
         &mut self,
         to: Address,
         id: U256,
@@ -500,7 +504,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// If updated balance and/or supply exceeds `U256::MAX`.
-    fn _mint_batch(
+    pub fn _mint_batch(
         &mut self,
         to: Address,
         ids: Vec<U256>,
@@ -533,7 +537,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// Should not panic.
-    fn _burn(
+    pub fn _burn(
         &mut self,
         from: Address,
         id: U256,
@@ -568,7 +572,7 @@ impl Erc1155Supply {
     /// # Panics
     ///
     /// Should not panic.
-    fn _burn_batch(
+    pub fn _burn_batch(
         &mut self,
         from: Address,
         ids: Vec<U256>,
