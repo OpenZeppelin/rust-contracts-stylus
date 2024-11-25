@@ -831,11 +831,12 @@ mod tests {
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply_all`"]
     fn mint_panics_on_total_supply_all_overflow(contract: Erc1155Supply) {
+        let token_ids = random_token_ids(2);
         contract
-            ._mint(ALICE, U256::from(1), U256::MAX, &vec![].into())
+            ._mint(ALICE, token_ids[0], U256::MAX, &vec![].into())
             .expect("should mint");
         let _ =
-            contract._mint(ALICE, U256::from(2), U256::from(1), &vec![].into());
+            contract._mint(ALICE, token_ids[1], U256::from(1), &vec![].into());
     }
 
     #[motsu::test]
