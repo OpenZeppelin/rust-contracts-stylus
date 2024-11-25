@@ -809,8 +809,8 @@ mod tests {
             assert_eq!(value, contract.total_supply(token_id));
             assert!(contract.exists(token_id));
         }
-        let total_supply: U256 = values.iter().sum();
-        assert_eq!(total_supply, contract.total_supply_all());
+        let total_supply_all: U256 = values.iter().sum();
+        assert_eq!(total_supply_all, contract.total_supply_all());
     }
 
     #[motsu::test]
