@@ -23,8 +23,8 @@ impl Context {
 
     /// Get the value at `key` in storage.
     pub(crate) fn get_bytes(self, key: &Bytes32) -> Bytes32 {
-        let storage = STORAGE.entry(self.thread_name).or_default();
-        storage.contract_data.get(key).copied().unwrap_or_default()
+        let context = EVM.entry(self.thread_name).or_default();
+        context.storage.contract_data.get(key).copied().unwrap_or_default()
     }
 
     /// Get the raw value at `key` in storage and write it to `value`.
@@ -36,8 +36,8 @@ impl Context {
 
     /// Set the value at `key` in storage to `value`.
     pub(crate) fn set_bytes(self, key: Bytes32, value: Bytes32) {
-        let mut storage = STORAGE.entry(self.thread_name).or_default();
-        storage.contract_data.insert(key, value);
+        let mut context = EVM.entry(self.thread_name).or_default();
+        context.storage.contract_data.insert(key, value);
     }
 
     /// Set the raw value at `key` in storage to `value`.
@@ -49,17 +49,21 @@ impl Context {
     /// Clears storage, removing all key-value pairs associated with the current
     /// test thread.
     pub fn reset_storage(self) {
-        STORAGE.remove(&self.thread_name);
+        EVM.remove(&self.thread_name);
     }
 }
 
-/// Storage mock: A global mutable key-value store.
+#[derive(Default)]
+struct TestCase {
+    storage: MockStorage,
+}
+
+/// A global mutable key-value store mockig EVM behaviour.
 /// Allows concurrent access.
 ///
-/// The key is the name of the test thread, and the value is the storage of the
-/// test case.
-static STORAGE: Lazy<DashMap<ThreadName, MockStorage>> =
-    Lazy::new(DashMap::new);
+/// The key is the name of the test thread,
+/// and the value is the context of the test case.
+static EVM: Lazy<DashMap<ThreadName, TestCase>> = Lazy::new(DashMap::new);
 
 /// Test thread name metadata.
 #[derive(Clone, Eq, PartialEq, Hash)]
