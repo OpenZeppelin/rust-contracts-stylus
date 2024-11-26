@@ -143,21 +143,21 @@ async fn can_deploy_mock_borrower(alice: Account) -> Result<()> {
     Ok(())
 }
 
-// #[e2e::test]
-// async fn flash_loan(alice: Account) -> Result<()> {
-//      let contract_addr = alice
-//         .as_deployer()
-//         .with_default_constructor::<constructorCall>()
-//         .deploy()
-//         .await?
-//         .address()?;
-//     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
-//     let alice_addr = alice.address();
-//     let random_address =
-// address!("a6CB74633b3F981AB239ed5fe17E714184236b9C");
+#[e2e::test]
+async fn flash_loan(alice: Account) -> Result<()> {
+     let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let random_address =
+address!("a6CB74633b3F981AB239ed5fe17E714184236b9C");
 
-//     let Erc20FlashMint::maxFlashLoanReturn { maxLoan } =
-//         contract.maxFlashLoan(random_address).call().await?;
-//     assert_eq!(maxLoan, U256::MIN);
-//     Ok(())
-// }
+    let Erc20FlashMint::maxFlashLoanReturn { maxLoan } =
+        contract.maxFlashLoan(random_address).call().await?;
+    assert_eq!(maxLoan, U256::MIN);
+    Ok(())
+}

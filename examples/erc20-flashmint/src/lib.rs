@@ -7,7 +7,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc20::{
         extensions:: IERC3156FlashLender,
-        Erc20, IErc20,
+        Erc20,
     },
     utils::introspection::erc165::IErc165,
 };
@@ -54,5 +54,12 @@ impl Erc20FlashMintExample {
     }
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc20::supports_interface(interface_id)
+    }
+}
+
+
+impl Erc20FlashMintExample {
+    pub fn _flash_fee_receiver(&self) -> Address {
+        Address::ZERO
     }
 }
