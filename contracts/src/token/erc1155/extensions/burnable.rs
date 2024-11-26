@@ -34,11 +34,6 @@ pub trait IErc1155Burnable {
     /// [`Error::InvalidSender`] is returned.
     /// If `value` is greater than the balance of the `from` account,
     /// then the error [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must exist.
-    /// * The caller or account must own `token_id` or be an approved operator.
     fn burn(
         &mut self,
         account: Address,
@@ -67,11 +62,6 @@ pub trait IErc1155Burnable {
     /// If any of the `values` is greater than the balance of the respective
     /// token from `tokens` of the `from` account, then the error
     /// [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must exist.
-    /// * The caller or account must own `token_id` or be an approved operator.
     fn burn_batch(
         &mut self,
         account: Address,
