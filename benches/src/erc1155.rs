@@ -25,7 +25,6 @@ sol!(
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
         function uri(uint256 id) external view returns (string memory uri);
-        function setURI(string memory newUri) external;
     }
 );
 
@@ -95,7 +94,6 @@ pub async fn run_with(
         (safeTransferFromCall::SIGNATURE, receipt!(contract.safeTransferFrom(alice_addr, bob_addr, token_1, value_1, data.clone()))?),
         (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids, values, data.clone()))?),
         (uriCall::SIGNATURE, receipt!(contract.uri(token_1))?),
-        (setURICall::SIGNATURE, receipt!(contract.setURI(NEW_URI.to_owned()))?)
     ];
 
     receipts

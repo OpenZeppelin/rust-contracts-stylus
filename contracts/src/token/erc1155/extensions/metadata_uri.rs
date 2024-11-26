@@ -69,35 +69,6 @@ impl IErc165 for Erc1155MetadataUri {
     }
 }
 
-impl Erc1155MetadataUri {
-    /// Sets a new URI for all token types, by relying on the token type ID
-    /// substitution mechanism [defined in the ERC].
-    ///
-    /// [defined in the ERC]: https://eips.ethereum.org/EIPS/eip-1155#metadata
-    ///
-    /// By this mechanism, any occurrence of the `\{id\}` substring in either
-    /// the URI or any of the values in the JSON file at said URI will be
-    /// replaced by clients with the token type ID.
-    ///
-    /// For example, the `https://token-cdn-domain/\{id\}.json` URI would be
-    /// interpreted by clients as
-    /// `https://token-cdn-domain/000000000000000000000000000000000000000000000000000000000004cce0.json`
-    /// for token type ID 0x4cce0.
-    ///
-    /// See [`Self::uri`].
-    ///
-    /// Because these URIs cannot be meaningfully represented by the
-    /// [`crate::token::erc1155::URI`] event, this function emits no events.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `new_uri` - New URI value.
-    pub fn _set_uri(&mut self, new_uri: String) {
-        self._uri.set_str(new_uri);
-    }
-}
-
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
@@ -119,19 +90,6 @@ mod tests {
 
         let token_id = random_token_id();
         assert_eq!(uri, contract.uri(token_id));
-    }
-
-    #[motsu::test]
-    fn set_uri_works(contract: Erc1155MetadataUri) {
-        let token_id = random_token_id();
-        let old_uri = String::from("https://token-cdn-domain/\\{id\\}.json");
-        contract._uri.set_str(old_uri.clone());
-        assert_eq!(old_uri, contract.uri(token_id));
-
-        let new_uri =
-            String::from("https://new-token-cdn-domain/\\{id\\}.json");
-        contract._set_uri(new_uri.clone());
-        assert_eq!(new_uri, contract.uri(token_id));
     }
 
     #[motsu::test]

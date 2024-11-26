@@ -642,27 +642,6 @@ async fn error_invalid_array_length_in_batch_mint(
 }
 
 #[e2e::test]
-async fn sets_uri(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(URI))
-        .deploy()
-        .await?
-        .address()?;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let new_uri = "https://new.github.com/OpenZeppelin/rust-contracts-stylus";
-    let token_id = random_token_ids(1)[0];
-
-    let _ = watch!(contract.setURI(new_uri.to_owned()))?;
-
-    let uri = contract.uri(token_id).call().await?.uri;
-    assert_eq!(new_uri, uri);
-
-    Ok(())
-}
-
-#[e2e::test]
 async fn set_approval_for_all(
     alice: Account,
     bob: Account,

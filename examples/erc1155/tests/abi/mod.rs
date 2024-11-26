@@ -15,7 +15,6 @@ sol!(
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
         #[derive(Debug)]
         function uri(uint256 id) external view returns (string memory uri);
-        function setURI(string memory newUri) external;
 
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);

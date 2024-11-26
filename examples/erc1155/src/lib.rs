@@ -46,9 +46,4 @@ impl Erc1155Example {
         self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
         Ok(())
     }
-
-    #[selector(name = "setURI")]
-    pub fn set_uri(&mut self, new_uri: String) {
-        self.metadata_uri._set_uri(new_uri)
-    }
 }
