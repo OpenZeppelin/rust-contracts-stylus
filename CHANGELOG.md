@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
--
+- Implement `MethodError` for `safe_erc20::Error`. #402
 
 ### Fixed
 
