@@ -1264,7 +1264,10 @@ async fn error_when_transfer_in_paused_state(
 }
 
 #[e2e::test]
-async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
+async fn error_when_transfer_from_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
