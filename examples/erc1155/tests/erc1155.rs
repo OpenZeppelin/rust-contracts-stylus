@@ -1026,7 +1026,7 @@ async fn error_when_insufficient_balance_safe_transfer_from(
         sender: bob_addr,
         balance: value,
         needed: value + uint!(1_U256),
-        id: token_id
+        tokenId: token_id
     }));
 
     Ok(())
@@ -1560,7 +1560,7 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
         sender: bob_addr,
         balance: values[0],
         needed: values[0] + uint!(1_U256),
-        id: token_ids[0]
+        tokenId: token_ids[0]
     }));
 
     Ok(())
@@ -1721,7 +1721,7 @@ async fn error_when_insufficient_balance_burn(
         sender: alice_addr,
         balance: value,
         needed: to_burn,
-        id: token_id
+        tokenId: token_id
     }));
 
     Ok(())
@@ -1911,7 +1911,7 @@ async fn error_when_insufficient_balance_burn_batch(
         sender: alice_addr,
         balance: values[0],
         needed: to_burn[0],
-        id: token_ids[0]
+        tokenId: token_ids[0]
     }));
 
     Ok(())
