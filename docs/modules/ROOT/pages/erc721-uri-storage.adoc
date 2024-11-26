@@ -40,7 +40,7 @@ impl Erc721MetadataExample {
     }
 
     pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
-        Ok(self.erc721._burn(token_id)?)
+        Ok(self.erc721.burn(token_id)?)
     }
 
     #[selector(name = "tokenURI")]
