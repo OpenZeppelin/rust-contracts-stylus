@@ -218,6 +218,30 @@ mod tests {
     }
 
     #[motsu::test]
+    fn error_when_insufficient_balance_burn(contract: Erc1155) {
+        let alice = msg::sender();
+        let (token_ids, values) = init(contract, alice, 1);
+
+        let token_id = token_ids[0];
+        let value = values[0];
+        let to_burn = value + U256::from(1);
+
+        let err = contract
+            .burn(alice, token_id, to_burn)
+            .expect_err("should return `ERC1155InsufficientBalance`");
+
+        assert!(matches!(
+            err,
+            Error::InsufficientBalance(ERC1155InsufficientBalance {
+                sender: alice_addr,
+                balance,
+                needed,
+                id,
+            }) if sender == alice && balance == value && needed == to_burn && id == token_id
+        ));
+    }
+
+    #[motsu::test]
     fn burns_batch(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 4);
@@ -300,6 +324,28 @@ mod tests {
             Error::InvalidSender(ERC1155InvalidSender {
                 sender,
             }) if sender == invalid_sender
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_insufficient_balance_burn_batch(contract: Erc1155) {
+        let alice = msg::sender();
+        let (token_ids, values) = init(contract, alice, 5);
+        let to_burn: Vec<U256> =
+            values.iter().map(|v| v + U256::from(1)).collect();
+
+        let err = contract
+            .burn_batch(alice, token_ids.clone(), to_burn.clone())
+            .expect_err("should return `ERC1155InsufficientBalance`");
+
+        assert!(matches!(
+            err,
+            Error::InsufficientBalance(ERC1155InsufficientBalance {
+                sender: alice_addr,
+                balance,
+                needed,
+                id,
+            }) if sender == alice && balance == values[0] && needed == to_burn[0] && id == token_ids[0]
         ));
     }
 }
