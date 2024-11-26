@@ -1701,6 +1701,33 @@ async fn error_when_invalid_sender_burn(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
+async fn error_when_insufficient_balance_burn(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+    let to_burn = value + uint!(1_U256);
+
+    let _ = watch!(contract.mint(alice_addr, token_id, value, vec![].into()));
+
+    let err = send!(contract.burn(alice_addr, token_id, to_burn))
+        .expect_err("should return `ERC1155InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
+        sender: alice_addr,
+        balance: value,
+        needed: to_burn,
+        id: token_id
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn burns_batch(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
@@ -1826,19 +1853,17 @@ async fn error_when_missing_approval_burn_batch(
 #[e2e::test]
 async fn error_when_invalid_sender_burn_batch(
     alice: Account,
-    bob: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let invalid_sender = Address::ZERO;
     let alice_addr = alice.address();
-    let bob_addr = bob.address();
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
     let _ = watch!(contract.mintBatch(
-        bob_addr,
+        alice_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
@@ -1851,6 +1876,42 @@ async fn error_when_invalid_sender_burn_batch(
 
     assert!(err.reverted_with(Erc1155::ERC1155InvalidSender {
         sender: invalid_sender
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_insufficient_balance_burn_batch(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+    let to_burn: Vec<U256> = values.iter().map(|v| v + uint!(1_U256)).collect();
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    let err = send!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        to_burn.clone()
+    ))
+    .expect_err("should return `ERC1155InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
+        sender: alice_addr,
+        balance: values[0],
+        needed: to_burn[0],
+        id: token_ids[0]
     }));
 
     Ok(())
