@@ -116,8 +116,8 @@ mod tests {
     use super::IErc1155Burnable;
     use crate::token::erc1155::{
         tests::{random_token_ids, random_values},
-        ERC1155InvalidSender, ERC1155MissingApprovalForAll, Erc1155, Error,
-        IErc1155,
+        ERC1155InsufficientBalance, ERC1155InvalidSender,
+        ERC1155MissingApprovalForAll, Erc1155, Error, IErc1155,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
@@ -233,11 +233,11 @@ mod tests {
         assert!(matches!(
             err,
             Error::InsufficientBalance(ERC1155InsufficientBalance {
-                sender: alice_addr,
+                sender,
                 balance,
                 needed,
-                id,
-            }) if sender == alice && balance == value && needed == to_burn && id == token_id
+                token_id,
+            }) if sender == alice && balance == value && needed == to_burn && token_id == token_id
         ));
     }
 
@@ -341,11 +341,11 @@ mod tests {
         assert!(matches!(
             err,
             Error::InsufficientBalance(ERC1155InsufficientBalance {
-                sender: alice_addr,
+                sender,
                 balance,
                 needed,
-                id,
-            }) if sender == alice && balance == values[0] && needed == to_burn[0] && id == token_ids[0]
+                token_id,
+            }) if sender == alice && balance == values[0] && needed == to_burn[0] && token_id == token_ids[0]
         ));
     }
 }
