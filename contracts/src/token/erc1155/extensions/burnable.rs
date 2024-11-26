@@ -79,17 +79,8 @@ impl IErc1155Burnable for Erc1155 {
         token_id: U256,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let sender = msg::sender();
-        if account != sender && !self.is_approved_for_all(account, sender) {
-            return Err(Error::MissingApprovalForAll(
-                ERC1155MissingApprovalForAll {
-                    owner: account,
-                    operator: sender,
-                },
-            ));
-        }
-        self._burn(account, token_id, value)?;
-        Ok(())
+        self.ensure_approved_or_owner(account)?;
+        self._burn(account, token_id, value)
     }
 
     fn burn_batch(
@@ -98,6 +89,13 @@ impl IErc1155Burnable for Erc1155 {
         token_ids: Vec<U256>,
         values: Vec<U256>,
     ) -> Result<(), Self::Error> {
+        self.ensure_approved_or_owner(account)?;
+        self._burn_batch(account, token_ids, values)
+    }
+}
+
+impl Erc1155 {
+    fn ensure_approved_or_owner(&self, account: Address) -> Result<(), Error> {
         let sender = msg::sender();
         if account != sender && !self.is_approved_for_all(account, sender) {
             return Err(Error::MissingApprovalForAll(
@@ -107,7 +105,6 @@ impl IErc1155Burnable for Erc1155 {
                 },
             ));
         }
-        self._burn_batch(account, token_ids, values)?;
         Ok(())
     }
 }
