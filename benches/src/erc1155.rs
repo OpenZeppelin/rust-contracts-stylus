@@ -31,8 +31,6 @@ sol!(
 sol!("../examples/erc1155/src/constructor.sol");
 
 const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
-const NEW_URI: &str =
-    "https://new.github.com/OpenZeppelin/rust-contracts-stylus";
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     let reports = run_with(CacheOpt::None).await?;
