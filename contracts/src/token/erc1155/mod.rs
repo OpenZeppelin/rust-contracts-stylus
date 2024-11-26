@@ -1180,14 +1180,15 @@ enum Transfer {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, fixed_bytes, uint, Address, U256};
+    use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
     use super::{
         ERC1155InsufficientBalance, ERC1155InvalidArrayLength,
         ERC1155InvalidOperator, ERC1155InvalidReceiver, ERC1155InvalidSender,
         ERC1155MissingApprovalForAll, Erc1155, Erc1155ReceiverData, Error,
-        IErc1155, Transfer,
+        IErc1155, Transfer, BATCH_TRANSFER_FN_SELECTOR,
+        SINGLE_TRANSFER_FN_SELECTOR,
     };
     use crate::utils::introspection::erc165::IErc165;
 
@@ -1233,7 +1234,7 @@ mod tests {
         let id = uint!(1_U256);
         let value = uint!(10_U256);
         let details = Erc1155ReceiverData::new(vec![id], vec![value]);
-        assert_eq!(fixed_bytes!("f23a6e61"), details.receiver_fn_selector);
+        assert_eq!(SINGLE_TRANSFER_FN_SELECTOR, details.receiver_fn_selector);
         assert_eq!(Transfer::Single { id, value }, details.transfer);
     }
 
@@ -1242,7 +1243,7 @@ mod tests {
         let ids = random_token_ids(5);
         let values = random_values(5);
         let details = Erc1155ReceiverData::new(ids.clone(), values.clone());
-        assert_eq!(fixed_bytes!("bc197c81"), details.receiver_fn_selector);
+        assert_eq!(BATCH_TRANSFER_FN_SELECTOR, details.receiver_fn_selector);
         assert_eq!(Transfer::Batch { ids, values }, details.transfer);
     }
 
