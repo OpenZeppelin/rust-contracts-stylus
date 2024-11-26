@@ -14,6 +14,7 @@ alloy-sol-types.workspace = true
 alloy-sol-macro.workspace = true
 alloy-sol-macro-expander.workspace = true
 alloy-sol-macro-input.workspace = true
+ed25519-zebra.workspace = true
 stylus-sdk.workspace = true
 keccak-const.workspace = true
 openzeppelin-stylus-proc.workspace = true
