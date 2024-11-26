@@ -12,11 +12,10 @@ use crate::token::erc1155::{
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
 /// own tokens and those that they have been approved to use.
 pub trait IErc1155Burnable {
-    /// The error type associated to this ERC-1155 burnable trait
-    /// implementation.
+    /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// The approval is cleared when `value` of token is burned from `account`.
+    /// Destroys a `value` amount of token from `account`.
     ///
     /// # Arguments
     ///
@@ -41,7 +40,7 @@ pub trait IErc1155Burnable {
         value: U256,
     ) -> Result<(), Self::Error>;
 
-    /// The approval is cleared when batch of tokens is burned from `account`.
+    /// Destroys a batch of tokens from `account`.
     ///
     /// # Arguments
     ///
