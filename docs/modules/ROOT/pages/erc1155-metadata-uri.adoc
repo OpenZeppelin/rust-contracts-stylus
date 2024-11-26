@@ -1,7 +1,7 @@
 = ERC-1155 Metadata URI
 
 The OpenZeppelin xref:erc1155.adoc[ERC-1155] Metadata URI extension is needed to manage and store URIs for individual tokens. This extension allows each token to have its own unique URI,
-which can point to metadata about the token, such as images, descriptions, and other attributes.
+which points to a JSON file that conforms to the https://eips.ethereum.org/EIPS/eip-1155#erc-1155-metadata-uri-json-schema[ERC-1155 Metadata URI JSON Schema].
 This is particularly useful for non-fungible tokens (NFTs) where each token is unique and may have different metadata.
 
 [[usage]]
