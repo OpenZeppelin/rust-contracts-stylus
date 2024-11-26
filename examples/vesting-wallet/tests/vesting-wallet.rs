@@ -5,6 +5,7 @@ use alloy::{
     eips::BlockId,
     primitives::{Address, U256},
     providers::Provider,
+    rpc::types::BlockTransactionsKind,
     sol,
 };
 use e2e::{
@@ -38,10 +39,7 @@ fn ctr(
 async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
     let timestamp = account
         .wallet
-        .get_block(
-            BlockId::latest(),
-            alloy::rpc::types::BlockTransactionsKind::Full,
-        )
+        .get_block(BlockId::latest(), BlockTransactionsKind::Full)
         .await?
         .expect("latest block should exist")
         .header
