@@ -27,7 +27,7 @@ use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     block,
-    call::{self, transfer_eth, Call},
+    call::{self, call, Call},
     contract, evm, function_selector,
     storage::TopLevelStorage,
     stylus_proc::{public, sol_storage, SolidityError},
@@ -73,12 +73,10 @@ sol! {
 pub enum Error {
     /// Error type from [`Ownable`] contract [`ownable::Error`].
     Ownable(ownable::Error),
-    /// Error type from [`Call`] contract [`call::Error`].
-    StylusError(call::Error),
+    /// Indicates an error related to the underlying Ether transfer.
+    ReleaseEtherFailed(call::Error),
     /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
     SafeErc20(safe_erc20::Error),
-    /// Indicates an error related to the underlying Ether transfer.
-    ReleaseEtherFailed(ReleaseEtherFailed),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
 }
@@ -419,8 +417,9 @@ impl IVestingWallet for VestingWallet {
         // `U256::MAX` in [`Self::releasable_eth`].
         self._released.set(self._released.get() + amount);
 
-        transfer_eth(self.ownable.owner(), amount)
-            .map_err(|_| Error::ReleaseEtherFailed(ReleaseEtherFailed {}))?;
+        let owner = self.ownable.owner();
+
+        call(Call::new_in(self).value(amount), owner, &[])?;
 
         evm::log(EtherReleased { amount });
 
