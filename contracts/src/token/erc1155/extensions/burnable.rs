@@ -16,8 +16,7 @@ pub trait IErc1155Burnable {
     /// implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// The approval is cleared when the token is burned. Relies on the `_burn`
-    /// mechanism.
+    /// The approval is cleared when `value` of token is burned from `account`.
     ///
     /// # Arguments
     ///
@@ -47,8 +46,7 @@ pub trait IErc1155Burnable {
         value: U256,
     ) -> Result<(), Self::Error>;
 
-    /// The approval is cleared when the token is burned. Relies on the
-    /// `_burn_batch` mechanism.
+    /// The approval is cleared when batch of tokens is burned from `account`.
     ///
     /// # Arguments
     ///
@@ -314,7 +312,9 @@ mod tests {
 
         let err = contract
             .burn_batch(invalid_sender, token_ids.clone(), values.clone())
-            .expect_err("should not burn tokens in batch from the `Address::ZERO`");
+            .expect_err(
+                "should not burn tokens in batch from the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
