@@ -116,19 +116,12 @@ mod tests {
 
     use super::IErc1155Burnable;
     use crate::token::erc1155::{
+        tests::{random_token_ids, random_values},
         ERC1155InvalidSender, ERC1155MissingApprovalForAll, Erc1155, Error,
         IErc1155,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-
-    pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
-        (0..size).map(|_| U256::from(rand::random::<u32>())).collect()
-    }
-
-    pub(crate) fn random_values(size: usize) -> Vec<U256> {
-        (1..size + 1).map(U256::from).collect()
-    }
 
     fn init(
         contract: &mut Erc1155,
