@@ -520,39 +520,44 @@ mod tests {
     const TOKEN: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
     const DURATION: u64 = 4 * 365 * 86400; // 4 years
 
-    fn start() -> U64 {
-        U64::from(block::timestamp() + 3600) // 1 hour
+    fn start() -> u64 {
+        block::timestamp() + 3600 // 1 hour
+    }
+
+    fn init(
+        contract: &mut VestingWallet,
+        start: u64,
+        duration: u64,
+    ) -> (U64, U64) {
+        let start = U64::from(start);
+        let duration = U64::from(duration);
+        contract._start.set(start);
+        contract._duration.set(duration);
+        (start, duration)
     }
 
     #[motsu::test]
     fn reads_start(contract: VestingWallet) {
-        let start = start();
-        contract._start.set(start);
+        let (start, _) = init(contract, start(), 0);
         assert_eq!(U256::from(start), contract.start());
     }
 
     #[motsu::test]
     fn reads_duration(contract: VestingWallet) {
-        contract._duration.set(U64::from(DURATION));
-        assert_eq!(U256::from(DURATION), contract.duration());
+        let (_, duration) = init(contract, 0, DURATION);
+        assert_eq!(U256::from(duration), contract.duration());
     }
 
     #[motsu::test]
     fn reads_end(contract: VestingWallet) {
-        let start = start();
-        let duration = U64::from(DURATION);
-        contract._start.set(start);
-        contract._duration.set(duration);
+        let (start, duration) = init(contract, start(), DURATION);
         assert_eq!(U256::from(start + duration), contract.end());
     }
 
     #[motsu::test]
     fn reads_max_end(contract: VestingWallet) {
-        let start = U64::MAX;
-        let duration = U64::MAX;
-        contract._start.set(start);
-        contract._duration.set(duration);
-        assert_eq!(U256::from(start) + U256::from(duration), contract.end());
+        init(contract, u64::MAX, u64::MAX);
+        assert_eq!(U256::from(U64::MAX) + U256::from(U64::MAX), contract.end());
     }
 
     #[motsu::test]
@@ -571,10 +576,7 @@ mod tests {
 
     #[motsu::test]
     fn gets_vesting_schedule(contract: VestingWallet) {
-        let start = start();
-        let duration = U64::from(DURATION);
-        contract._start.set(start);
-        contract._duration.set(duration);
+        let (start, duration) = init(contract, start(), DURATION);
 
         let one = uint!(1_U256);
         let two = uint!(2_U256);
@@ -596,9 +598,7 @@ mod tests {
 
     #[motsu::test]
     fn gets_vesting_schedule_zero_duration(contract: VestingWallet) {
-        let start = start();
-        contract._start.set(start);
-        contract._duration.set(U64::ZERO);
+        let (start, _) = init(contract, start(), 0);
 
         let two = uint!(2_U256);
 
