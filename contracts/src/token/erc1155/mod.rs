@@ -65,15 +65,6 @@ sol! {
         address indexed operator,
         bool approved
     );
-
-    /// Emitted when the URI for token type `id` changes to `value`, if it is
-    /// a non-programmatic URI.
-    ///
-    /// If a [`URI`] event was emitted for `id`, the standard [guarantees] that
-    /// `value` will equal the value returned by [`extensions::IErc1155MetadataUri::uri`].
-    ///
-    /// [guarantees]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
-   event URI(string value, uint256 indexed id);
 }
 
 sol! {
