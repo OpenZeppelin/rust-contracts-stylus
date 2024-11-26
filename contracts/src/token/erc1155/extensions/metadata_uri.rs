@@ -43,8 +43,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
     /// This implementation returns the same URI for *all* token types.
     /// Clients calling this function must replace the `\{id\}` substring with
     /// the actual token type ID.
-    fn uri(&self, id: U256) -> String {
-        let _ = id;
+    fn uri(&self, _id: U256) -> String {
         self._uri.get_string()
     }
 }
