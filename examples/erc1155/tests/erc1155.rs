@@ -1611,6 +1611,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1624,7 +1625,7 @@ async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
         contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
     assert_eq!(values[0], initial_balance);
 
-    let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
+    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
 
     let receipt = receipt!(contract.burn(bob_addr, token_ids[0], values[0]))?;
 
@@ -1665,36 +1666,6 @@ async fn error_when_missing_approval_burn(
     assert!(err.reverted_with(Erc1155::ERC1155MissingApprovalForAll {
         operator: alice_addr,
         owner: bob_addr
-    }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn error_when_invalid_sender_burn(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let alice_addr = alice.address();
-    let token_ids = random_token_ids(1);
-    let values = random_values(1);
-    let invalid_sender = Address::ZERO;
-
-    let _ = watch!(contract.mint(
-        alice_addr,
-        token_ids[0],
-        values[0],
-        vec![].into()
-    ));
-
-    let _ =
-        watch!(contract.setOperatorApprovals(invalid_sender, alice_addr, true));
-
-    let err = send!(contract.burn(invalid_sender, token_ids[0], values[0]))
-        .expect_err("should not burn tokens from the zero address");
-
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidSender {
-        sender: invalid_sender
     }));
 
     Ok(())
@@ -1777,6 +1748,7 @@ async fn burns_batch_with_approval(
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1795,7 +1767,7 @@ async fn burns_batch_with_approval(
         assert_eq!(value, balance);
     }
 
-    let _ = watch!(contract.setOperatorApprovals(bob_addr, alice_addr, true));
+    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
 
     let receipt = receipt!(contract.burnBatch(
         bob_addr,
@@ -1845,37 +1817,6 @@ async fn error_when_missing_approval_burn_batch(
     assert!(err.reverted_with(Erc1155::ERC1155MissingApprovalForAll {
         operator: alice_addr,
         owner: bob_addr
-    }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn error_when_invalid_sender_burn_batch(
-    alice: Account,
-) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let invalid_sender = Address::ZERO;
-    let alice_addr = alice.address();
-    let token_ids = random_token_ids(2);
-    let values = random_values(2);
-
-    let _ = watch!(contract.mintBatch(
-        alice_addr,
-        token_ids.clone(),
-        values.clone(),
-        vec![].into()
-    ));
-    let _ =
-        watch!(contract.setOperatorApprovals(invalid_sender, alice_addr, true));
-
-    let err = send!(contract.burnBatch(invalid_sender, token_ids, values))
-        .expect_err("should return `ERC1155InvalidSender`");
-
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidSender {
-        sender: invalid_sender
     }));
 
     Ok(())
