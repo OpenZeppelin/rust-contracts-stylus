@@ -13,7 +13,7 @@ fn random_token_ids(size: usize) -> Vec<U256> {
 }
 
 fn random_values(size: usize) -> Vec<U256> {
-    (0..size).map(|_| U256::from(rand::random::<u128>())).collect()
+    (1..size + 1).map(U256::from).collect()
 }
 
 // ============================================================================
