@@ -10,7 +10,7 @@
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::{sol, SolCall};
 use stylus_sdk::{
-    call::RawCall,
+    call::{MethodError, RawCall},
     contract::address,
     evm::gas_left,
     function_selector,
@@ -52,6 +52,12 @@ pub enum Error {
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 pub use token::*;

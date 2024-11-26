@@ -21,7 +21,7 @@ sol!(
           error OwnableUnauthorizedAccount(address account);
           error OwnableInvalidOwner(address owner);
           error ReleaseEtherFailed();
-          error ReleaseTokenFailed(address token);
+          error SafeErc20FailedOperation(address token);
           error InvalidToken(address token);
 
           #[derive(Debug, PartialEq)]

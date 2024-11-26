@@ -21,6 +21,7 @@
 //! automatically (i.e. a rebase token), make sure to account the supply/balance
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
+
 use alloy_primitives::{Address, U256, U64};
 use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
@@ -34,7 +35,7 @@ use stylus_sdk::{
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
-    token::erc20::utils::safe_erc20::{ISafeErc20, SafeErc20},
+    token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
     utils::math::storage::AddAssignUnchecked,
 };
 
@@ -59,13 +60,6 @@ sol! {
     #[allow(missing_docs)]
     error ReleaseEtherFailed();
 
-    /// Indicates an error related to the underlying ERC-20 `token` transfer.
-    ///
-    /// * `token` - Address of the token being released.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ReleaseTokenFailed(address token);
-
     /// The token address is not valid (eg. `Address::ZERO`).
     ///
     /// * `token` - Address of the token being released.
@@ -81,10 +75,10 @@ pub enum Error {
     Ownable(ownable::Error),
     /// Error type from [`Call`] contract [`call::Error`].
     StylusError(call::Error),
+    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
+    SafeErc20(safe_erc20::Error),
     /// Indicates an error related to the underlying Ether transfer.
     ReleaseEtherFailed(ReleaseEtherFailed),
-    /// Indicates an error related to the underlying [`IErc20`] transfer.
-    ReleaseTokenFailed(ReleaseTokenFailed),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
 }
@@ -299,7 +293,7 @@ pub trait IVestingWallet {
     /// If the `token` address is not a contract, then the error
     /// [`Error::InvalidToken`] is returned.
     /// If the contract fails to execute the call, then the error
-    /// [`Error::ReleaseTokenFailed`] is returned.
+    /// [`safe_erc20::Error::SafeErc20FailedOperation`] is returned.
     ///
     /// # Events
     ///
@@ -438,9 +432,7 @@ impl IVestingWallet for VestingWallet {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
-        self.safe_erc20.safe_transfer(token, owner, amount).map_err(|_| {
-            Error::ReleaseTokenFailed(ReleaseTokenFailed { token })
-        })?;
+        self.safe_erc20.safe_transfer(token, owner, amount)?;
 
         // SAFETY: total vested amount is by definition smaller than or equal to
         // the total allocation, which is already verified to be smaller than

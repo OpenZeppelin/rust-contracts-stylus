@@ -429,7 +429,7 @@ mod erc20_vesting {
         let err = send!(contract.release_1(erc20_address))
             .expect_err("should not release when transfer fails");
 
-        assert!(err.reverted_with(VestingWallet::ReleaseTokenFailed {
+        assert!(err.reverted_with(VestingWallet::SafeErc20FailedOperation {
             token: erc20_address
         }));
 
