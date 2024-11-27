@@ -847,7 +847,7 @@ mod tests {
             ._burn_batch(ALICE, token_ids.clone(), values.clone())
             .expect("should burn batch");
 
-        for &token_id in token_ids.iter() {
+        for &token_id in &token_ids {
             assert_eq!(
                 U256::ZERO,
                 contract.erc1155.balance_of(ALICE, token_id)

@@ -243,7 +243,7 @@ async fn after_burn_batch(alice: Account) -> eyre::Result<()> {
         values,
     }));
 
-    for &token_id in token_ids.iter() {
+    for &token_id in &token_ids {
         let balance =
             contract.balanceOf(alice_addr, token_id).call().await?.balance;
         let token_exists = contract.exists(token_id).call().await?._0;
@@ -350,7 +350,7 @@ async fn supply_unaffected_by_safe_transfer_from_batch(
 
     // total supplies (all) logic has been checked in other tests, assume valid
     let mut initial_total_supplies: Vec<U256> = vec![];
-    for &token_id in token_ids.iter() {
+    for &token_id in &token_ids {
         let supply = contract.totalSupply_0(token_id).call().await?._0;
         initial_total_supplies.push(supply);
     }
