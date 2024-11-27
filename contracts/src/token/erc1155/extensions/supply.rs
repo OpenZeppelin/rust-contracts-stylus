@@ -1,7 +1,7 @@
 //! Extension of ERC-1155 that adds tracking of total supply per token id.
 //!
 //! Useful for scenarios where Fungible and Non-fungible tokens have to be
-//! clearly identified. Note: While a total_supply of 1 might mean the
+//! clearly identified. Note: While a `_total_supply` of 1 might mean the
 //! corresponding is an NFT, there are no guarantees that no other tokens
 //! with the same id are not going to be minted.
 //!
