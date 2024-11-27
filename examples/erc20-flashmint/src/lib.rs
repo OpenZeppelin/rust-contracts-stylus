@@ -27,8 +27,9 @@ sol_storage! {
 impl Erc20FlashMintExample {
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), Vec<u8>> {
-        self.erc20._mint(to, value).map_err(|e| e.into())
+        Ok(self.erc20._mint(to, value)?)
     }
+
     fn max_flash_loan(&self, token: Address) -> U256 {
         self.erc20.max_flash_loan(token)
     }
@@ -52,6 +53,7 @@ impl Erc20FlashMintExample {
         // you cn collect your fee here
        Ok(self.erc20.flash_loan(receiver, token, value, data)?)
     }
+
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc20::supports_interface(interface_id)
     }
