@@ -318,7 +318,7 @@ impl Erc1155Supply {
     ///
     /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
     /// the `mint` operation.
-    pub fn _update(
+    fn _update(
         &mut self,
         from: Address,
         to: Address,
@@ -402,7 +402,7 @@ impl Erc1155Supply {
     ///
     /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
     /// the `mint` operation.
-    pub fn _update_with_acceptance_check(
+    fn _update_with_acceptance_check(
         &mut self,
         from: Address,
         to: Address,
