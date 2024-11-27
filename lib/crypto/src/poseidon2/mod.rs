@@ -77,6 +77,10 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Absorb a single element into the sponge.
+    ///
+    /// # Panics
+    ///
+    /// May panic if absorbing while squeezing.
     pub fn absorb(&mut self, elem: &F) {
         if let Mode::Squeezing = self.mode {
             panic!("cannot absorb while squeezing");
@@ -154,7 +158,8 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         self.state[0] = self.state[0].pow(P::D);
     }
 
-    /// Apply the external MDS matrix M_E to the state.
+    /// Apply the external MDS matrix `M_E` to the state.
+    #[allow(clippy::needless_range_loop)]
     fn matmul_external(&mut self) {
         let t = Self::state_size();
         match t {
@@ -235,7 +240,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         }
     }
 
-    /// Apply the internal MDS matrix M_I to the state.
+    /// Apply the internal MDS matrix `M_I` to the state.
     fn matmul_internal(&mut self) {
         let t = Self::state_size();
 
