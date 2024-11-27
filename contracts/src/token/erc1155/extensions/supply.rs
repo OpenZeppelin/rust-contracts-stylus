@@ -328,17 +328,15 @@ impl Erc1155Supply {
         self.erc1155._update(from, to, token_ids.clone(), values.clone())?;
 
         if from.is_zero() {
-            let mut total_mint_value = U256::ZERO;
-            token_ids.iter().zip(values.iter()).for_each(
-                |(&token_id, &value)| {
-                    let total_supply =
-                        self.total_supply(token_id).checked_add(value).expect(
-                            "should not exceed `U256::MAX` for `_total_supply`",
-                        );
-                    self._total_supply.setter(token_id).set(total_supply);
-                    total_mint_value += value;
-                },
-            );
+            for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
+                let total_supply =
+                    self.total_supply(token_id).checked_add(value).expect(
+                        "should not exceed `U256::MAX` for `_total_supply`",
+                    );
+                self._total_supply.setter(token_id).set(total_supply);
+            }
+
+            let total_mint_value = values.iter().sum();
             let total_supply_all =
                 self.total_supply_all().checked_add(total_mint_value).expect(
                     "should not exceed `U256::MAX` for `_total_supply_all`",
@@ -347,26 +345,18 @@ impl Erc1155Supply {
         }
 
         if to.is_zero() {
-            let mut total_burn_value = U256::ZERO;
-            token_ids.iter().zip(values.iter()).for_each(
-                |(&token_id, &value)| {
-                    /*
-                    SAFETY: Overflow not possible:
-                    values[i] <= balance_of(from, token_ids[i]) <= total_supply(token_ids[i])
-                     */
-                    self._total_supply
-                        .setter(token_id)
-                        .sub_assign_unchecked(value);
-                    /*
-                    SAFETY: Overflow not possible:
-                    sum_i(values[i]) <= sum_i(total_supply(token_ids[i])) <= total_supply_all
-                     */
-                    total_burn_value += value;
-                },
-            );
+            for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
+                /*
+                SAFETY: Overflow not possible:
+                values[i] <= balance_of(from, token_ids[i]) <= total_supply(token_ids[i])
+                 */
+                self._total_supply.setter(token_id).sub_assign_unchecked(value);
+            }
+
+            let total_burn_value: U256 = values.iter().sum();
             /*
             SAFETY: Overflow not possible:
-            totalBurnValue = sum_i(values[i]) <= sum_i(totalSupply(ids[i])) <= totalSupplyAll
+            total_burn_value = sum_i(values[i]) <= sum_i(total_supply(ids[i])) <= total_supply_all
              */
             let total_supply_all =
                 self._total_supply_all.get() - total_burn_value;
