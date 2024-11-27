@@ -14,6 +14,8 @@ sol_interface! {
         /// To indicate successful handling of the flash loan, this function should return
         /// the `keccak256` hash of "ERC3156FlashBorrower.onFlashLoan".
         ///
+        /// # Arguments
+        ///
         /// * `initiator` - The address which initiated the flash loan.
         /// * `token` - The address of the token being loaned (loan currency).
         /// * `amount` - The amount of tokens lent in the flash loan.
