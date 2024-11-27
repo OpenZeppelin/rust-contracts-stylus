@@ -11,7 +11,7 @@
 pub mod instance;
 pub mod params;
 
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec, vec::Vec};
 
 use crate::{field::prime::PrimeField, poseidon2::params::PoseidonParams};
 
