@@ -134,3 +134,10 @@ incremental = false
 
 [profile.dev]
 panic = "abort"
+
+[workspace.metadata.typos]
+default = { extend-ignore-identifiers-re = [
+  # ignore hex data samples.
+  "[0-9a-fA-F][0-9a-fA-F]",
+] }
+files = { extend-exclude = [] }
