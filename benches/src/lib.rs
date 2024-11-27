@@ -19,6 +19,7 @@ pub mod erc1155_supply;
 pub mod erc20;
 pub mod erc721;
 pub mod merkle_proofs;
+pub mod ownable;
 pub mod report;
 
 #[derive(Debug, Deserialize)]
