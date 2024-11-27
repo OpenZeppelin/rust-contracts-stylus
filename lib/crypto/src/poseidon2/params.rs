@@ -10,7 +10,7 @@ pub trait PoseidonParams<F: PrimeField> {
     /// State size.
     const T: usize;
 
-    /// SBox degree.
+    /// Sbox degree.
     const D: u8;
 
     /// Capacity of the sponge construction.
@@ -24,7 +24,8 @@ pub trait PoseidonParams<F: PrimeField> {
     /// Number of partial rounds.
     const ROUNDS_P: usize;
 
-    // TODO#q: we need this parameter just for state size more than 3.
+    /// MDS (Maximum Distance Separable) matrix used in the Poseidon
+    /// permutation.
     const MAT_INTERNAL_DIAG_M_1: &'static [F];
 
     /// The round constants used in the full and partial rounds of the Poseidon
