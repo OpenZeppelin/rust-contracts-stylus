@@ -29,25 +29,7 @@ sol_storage! {
 #[public]
 #[inherit(Erc1155, Erc1155MetadataUri)]
 impl Erc1155Example {
-    pub fn mint(
-        &mut self,
-        to: Address,
-        id: U256,
-        value: U256,
-        data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        Ok(self.erc1155._mint(to, id, value, &data)?)
-    }
-
-    pub fn mint_batch(
-        &mut self,
-        to: Address,
-        token_ids: Vec<U256>,
-        amounts: Vec<U256>,
-        data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        Ok(self.erc1155._mint_batch(to, token_ids, amounts, &data)?)
-    }
+    // ...
 }
 ----
 
