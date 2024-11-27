@@ -15,6 +15,8 @@ mod mock;
 
 sol!("src/constructor.sol");
 
+const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
+
 fn random_token_ids(size: usize) -> Vec<U256> {
     (0..size).map(U256::from).collect()
 }
@@ -23,11 +25,15 @@ fn random_values(size: usize) -> Vec<U256> {
     (0..size).map(|_| U256::from(rand::random::<u128>())).collect()
 }
 
+impl Default for constructorCall {
+    fn default() -> Self {
+        ctr(URI)
+    }
+}
+
 fn ctr(uri: &str) -> constructorCall {
     constructorCall { uri_: uri.to_owned() }
 }
-
-const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 
 // ============================================================================
 // Integration Tests: ERC-1155 Token
@@ -37,7 +43,7 @@ const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -56,7 +62,7 @@ async fn invalid_array_length_error_in_balance_of_batch(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -83,7 +89,7 @@ async fn invalid_array_length_error_in_balance_of_batch(
 async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -106,7 +112,7 @@ async fn balance_of_batch_zero_balance(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -129,7 +135,7 @@ async fn balance_of_batch_zero_balance(
 async fn mints(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -165,7 +171,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -217,7 +223,7 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -252,7 +258,7 @@ async fn errors_when_receiver_reverts_without_reason_in_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -291,7 +297,7 @@ async fn errors_when_receiver_panics_in_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -326,7 +332,7 @@ async fn errors_when_invalid_receiver_contract_in_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -354,7 +360,7 @@ async fn mint_batch(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -406,7 +412,7 @@ async fn mint_batch_transfer_to_receiver_contract(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -480,7 +486,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -515,7 +521,7 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -554,7 +560,7 @@ async fn errors_when_receiver_panics_in_batch_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -588,7 +594,7 @@ async fn errors_when_invalid_receiver_contract_in_batch_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -615,7 +621,7 @@ async fn error_invalid_array_length_in_batch_mint(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -648,7 +654,7 @@ async fn set_approval_for_all(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -694,7 +700,7 @@ async fn error_when_invalid_operator_approval_for_all(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -716,7 +722,7 @@ async fn error_when_invalid_operator_approval_for_all(
 async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -738,7 +744,7 @@ async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
 async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -794,7 +800,7 @@ async fn safe_transfer_from_with_approval(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -853,7 +859,7 @@ async fn safe_transfer_to_receiver_contract(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -923,7 +929,7 @@ async fn errors_when_receiver_reverts_with_reason(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -967,7 +973,7 @@ async fn errors_when_receiver_reverts_without_reason(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1013,7 +1019,7 @@ async fn errors_when_receiver_reverts_without_reason(
 async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1056,7 +1062,7 @@ async fn errors_when_invalid_receiver_contract(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1091,7 +1097,7 @@ async fn error_when_invalid_receiver_safe_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1127,7 +1133,7 @@ async fn error_when_missing_approval_safe_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1165,7 +1171,7 @@ async fn error_when_insufficient_balance_safe_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1208,7 +1214,7 @@ async fn safe_batch_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1280,7 +1286,7 @@ async fn safe_batch_transfer_to_receiver_contract(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1374,7 +1380,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1418,7 +1424,7 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_transfer(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1466,7 +1472,7 @@ async fn errors_when_receiver_panics_in_batch_transfer(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1509,7 +1515,7 @@ async fn errors_when_invalid_receiver_contract_in_batch_transfer(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1546,7 +1552,7 @@ async fn safe_batch_transfer_from_with_approval(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1622,7 +1628,7 @@ async fn error_when_invalid_receiver_safe_batch_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1663,7 +1669,7 @@ async fn error_invalid_array_length_in_safe_batch_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1706,7 +1712,7 @@ async fn error_when_missing_approval_safe_batch_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
@@ -1750,7 +1756,7 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI))
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
