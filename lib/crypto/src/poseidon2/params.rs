@@ -6,6 +6,7 @@
 
 use crate::field::prime::PrimeField;
 
+/// Poseidon hash parameters.
 pub trait PoseidonParams<F: PrimeField> {
     /// State size.
     const T: usize;
