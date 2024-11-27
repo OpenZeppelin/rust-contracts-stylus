@@ -266,8 +266,9 @@ impl Erc1155Supply {
     ///
     /// # Events
     ///
-    /// Emits either a [`TransferSingle`] or a [`erc1155::TransferBatch`] event,
-    /// depending on the length of the array arguments.
+    /// Emits either a [`erc1155::TransferSingle`] or a
+    /// [`erc1155::TransferBatch`] event, depending on the length of the array
+    /// arguments.
     ///
     /// # Panics
     ///
@@ -441,8 +442,8 @@ impl Erc1155Supply {
     ///
     /// If `to` is `Address::ZERO`, then the error
     /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
-    /// interface id or returned with error, then the error
+    /// If [`erc1155::IERC1155Receiver::on_erc_1155_received`] hasn't returned
+    /// its interface id or returned with error, then the error
     /// [`erc1155::Error::InvalidReceiver`] is returned.
     ///
     /// # Events
