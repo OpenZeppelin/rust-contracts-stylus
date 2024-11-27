@@ -36,7 +36,6 @@ use stylus_sdk::{
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
-    utils::math::storage::AddAssignUnchecked,
 };
 
 sol! {
@@ -412,10 +411,13 @@ impl IVestingWallet for VestingWallet {
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
-        // SAFETY: total vested amount is by definition smaller than or equal to
-        // the total allocation, which is already verified to be smaller than
-        // `U256::MAX` in [`Self::releasable_eth`].
-        self._released.set(self._released.get() + amount);
+
+        let released = self
+            ._released
+            .get()
+            .checked_add(amount)
+            .expect("total released should not exceed `U256::MAX`");
+        self._released.set(released);
 
         let owner = self.ownable.owner();
 
@@ -433,10 +435,12 @@ impl IVestingWallet for VestingWallet {
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
-        // SAFETY: total vested amount is by definition smaller than or equal to
-        // the total allocation, which is already verified to be smaller than
-        // `U256::MAX` in [`Self::releasable_erc20`].
-        self._erc20_released.setter(token).add_assign_unchecked(amount);
+        let released = self
+            ._erc20_released
+            .get(token)
+            .checked_add(amount)
+            .expect("total released should not exceed `U256::MAX`");
+        self._erc20_released.setter(token).set(released);
 
         evm::log(ERC20Released { token, amount });
 
