@@ -70,7 +70,7 @@ impl IErc165 for Erc1155MetadataUri {
 mod tests {
     use alloy_primitives::U256;
 
-    use super::{Erc1155MetadataUri, IErc1155MetadataUri};
+    use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();
