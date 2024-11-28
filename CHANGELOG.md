@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `VestingWallet` contract. #402
-- `IErc1155Burnable` extension. #417
+- `Erc1155Burnable` extension. #417
 
 ### Changed
 
