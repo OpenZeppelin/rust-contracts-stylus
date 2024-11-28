@@ -22,7 +22,7 @@ fn random_token_ids(size: usize) -> Vec<U256> {
 }
 
 fn random_values(size: usize) -> Vec<U256> {
-    (0..size).map(|_| U256::from(rand::random::<u128>())).collect()
+    (1..size + 1).map(U256::from).collect()
 }
 
 impl Default for constructorCall {
@@ -98,7 +98,7 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
 
     let Erc1155::balanceOfReturn { balance } =
         contract.balanceOf(alice.address(), token_ids[0]).call().await?;
-    assert_eq!(uint!(0_U256), balance);
+    assert_eq!(U256::ZERO, balance);
 
     Ok(())
 }
@@ -123,10 +123,7 @@ async fn balance_of_batch_zero_balance(
 
     let Erc1155::balanceOfBatchReturn { balances } =
         contract.balanceOfBatch(accounts, token_ids).call().await?;
-    assert_eq!(
-        vec![uint!(0_U256), uint!(0_U256), uint!(0_U256), uint!(0_U256)],
-        balances
-    );
+    assert_eq!(vec![U256::ZERO, U256::ZERO, U256::ZERO, U256::ZERO], balances);
 
     Ok(())
 }
@@ -1201,7 +1198,7 @@ async fn error_when_insufficient_balance_safe_transfer_from(
         sender: bob_addr,
         balance: value,
         needed: value + uint!(1_U256),
-        id: token_id
+        tokenId: token_id
     }));
 
     Ok(())
@@ -1790,7 +1787,339 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
         sender: bob_addr,
         balance: values[0],
         needed: values[0] + uint!(1_U256),
-        id: token_ids[0]
+        tokenId: token_ids[0]
+    }));
+
+    Ok(())
+}
+
+// ============================================================================
+// Integration Tests: ERC-1155 Burnable Extension
+// ============================================================================
+
+#[e2e::test]
+async fn burns(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(1);
+    let values = random_values(1);
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_ids[0],
+        values[0],
+        vec![].into()
+    ));
+
+    let initial_balance =
+        contract.balanceOf(alice_addr, token_ids[0]).call().await?.balance;
+    assert_eq!(values[0], initial_balance);
+
+    let receipt = receipt!(contract.burn(alice_addr, token_ids[0], values[0]))?;
+
+    assert!(receipt.emits(Erc1155::TransferSingle {
+        operator: alice_addr,
+        from: alice_addr,
+        to: Address::ZERO,
+        id: token_ids[0],
+        value: values[0],
+    }));
+
+    let balance =
+        contract.balanceOf(alice_addr, token_ids[0]).call().await?.balance;
+    assert_eq!(U256::ZERO, balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_ids = random_token_ids(1);
+    let values = random_values(1);
+
+    let _ =
+        watch!(contract.mint(bob_addr, token_ids[0], values[0], vec![].into()));
+
+    let initial_balance =
+        contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
+    assert_eq!(values[0], initial_balance);
+
+    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+
+    let receipt = receipt!(contract.burn(bob_addr, token_ids[0], values[0]))?;
+
+    assert!(receipt.emits(Erc1155::TransferSingle {
+        operator: alice_addr,
+        from: bob_addr,
+        to: Address::ZERO,
+        id: token_ids[0],
+        value: values[0],
+    }));
+
+    let balance =
+        contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
+    assert_eq!(U256::ZERO, balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_missing_approval_burn(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_ids = random_token_ids(1);
+    let values = random_values(1);
+
+    let _ =
+        watch!(contract.mint(bob_addr, token_ids[0], values[0], vec![].into()));
+
+    let err = send!(contract.burn(bob_addr, token_ids[0], values[0]))
+        .expect_err("should return `ERC1155MissingApprovalForAll`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155MissingApprovalForAll {
+        operator: alice_addr,
+        owner: bob_addr
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_insufficient_balance_burn(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+    let to_burn = value + uint!(1_U256);
+
+    let _ = watch!(contract.mint(alice_addr, token_id, value, vec![].into()));
+
+    let err = send!(contract.burn(alice_addr, token_id, to_burn))
+        .expect_err("should return `ERC1155InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
+        sender: alice_addr,
+        balance: value,
+        needed: to_burn,
+        tokenId: token_id
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_batch(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(4);
+    let values = random_values(4);
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    for (&id, &value) in token_ids.iter().zip(values.iter()) {
+        let balance = contract.balanceOf(alice_addr, id).call().await?.balance;
+        assert_eq!(value, balance);
+    }
+
+    let receipt = receipt!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone()
+    ))?;
+
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: alice_addr,
+        to: Address::ZERO,
+        ids: token_ids.clone(),
+        values,
+    }));
+
+    for id in token_ids {
+        let balance = contract.balanceOf(alice_addr, id).call().await?.balance;
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burns_batch_with_approval(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_ids = random_token_ids(4);
+    let values = random_values(4);
+
+    let _ = watch!(contract.mintBatch(
+        bob_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    for (&id, &value) in token_ids.iter().zip(values.iter()) {
+        let balance = contract.balanceOf(bob_addr, id).call().await?.balance;
+        assert_eq!(value, balance);
+    }
+
+    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+
+    let receipt = receipt!(contract.burnBatch(
+        bob_addr,
+        token_ids.clone(),
+        values.clone()
+    ))?;
+
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: bob_addr,
+        to: Address::ZERO,
+        ids: token_ids.clone(),
+        values,
+    }));
+
+    for id in token_ids {
+        let balance = contract.balanceOf(bob_addr, id).call().await?.balance;
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_missing_approval_burn_batch(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let _ = watch!(contract.mintBatch(
+        bob_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    let err = send!(contract.burnBatch(bob_addr, token_ids, values))
+        .expect_err("should return `ERC1155MissingApprovalForAll`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155MissingApprovalForAll {
+        operator: alice_addr,
+        owner: bob_addr
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_insufficient_balance_burn_batch(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+    let to_burn: Vec<U256> = values.iter().map(|v| v + uint!(1_U256)).collect();
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    let err = send!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        to_burn.clone()
+    ))
+    .expect_err("should return `ERC1155InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
+        sender: alice_addr,
+        balance: values[0],
+        needed: to_burn[0],
+        tokenId: token_ids[0]
     }));
 
     Ok(())

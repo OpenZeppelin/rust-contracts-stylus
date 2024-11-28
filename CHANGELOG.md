@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `VestingWallet` contract. #402
+- `Erc1155Burnable` extension. #417
 - `Erc1155MetadataUri` extension. #416
 
 ### Changed
 
-- Added `URI` event to `Erc1155`. #416
+- Implement `MethodError` for `safe_erc20::Error`. #402
+- Use `function_selector!` to calculate transfer type selector in `Erc1155`. #417
 
 ### Fixed
 
@@ -32,14 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed(breaking)
 
 - Removed `only_owner` from the public interface of `Ownable`. #352
-
-### Changed
-
--
-
-### Fixed
-
--
 
 ## [0.1.1] - 2024-10-28
 
