@@ -97,5 +97,9 @@ mod tests {
         let actual = <Erc1155MetadataUri as IErc1155MetadataUri>::INTERFACE_ID;
         let expected = 0x0e89341c;
         assert_eq!(actual, expected);
+
+        let actual = <Erc1155MetadataUri as IErc165>::INTERFACE_ID;
+        let expected = 0x01ffc9a7;
+        assert_eq!(actual, expected);
     }
 }
