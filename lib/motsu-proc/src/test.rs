@@ -38,7 +38,6 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
         #( #attrs )*
         #[test]
         fn #fn_name() #fn_return_type {
-            use ::motsu::prelude::DefaultStorage;
             #( #contract_declarations )*
             let res = {
                 #( #fn_stmts )*

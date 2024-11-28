@@ -61,7 +61,7 @@ mod tests {
         prelude::{public, sol_storage, StorageType, TopLevelStorage},
     };
 
-    use crate::context::{Account, TestRouter};
+    use crate::context::{Account, Contract, TestRouter};
 
     sol_storage! {
         pub struct PingContract {
@@ -124,22 +124,21 @@ mod tests {
 
     #[test]
     fn ping_pong_works() {
-        use crate::prelude::DefaultStorage;
-        let mut ping = PingContract::default();
+        let mut ping = Contract::<PingContract>::default();
         let ping = &mut ping;
-        let mut pong = PongContract::default();
+        let mut pong = Contract::<PongContract>::default();
         let pong = &mut pong;
 
         let alice = Account::random();
-        let mut ping = alice.uses(ping);
-        let mut pong = alice.uses(pong);
 
         let value = uint!(10_U256);
-        let ponged_value =
-            ping.ping(pong.address(), value).expect("should ping successfully");
+        let ponged_value = ping
+            .sender(alice)
+            .ping(pong.address(), value)
+            .expect("should ping successfully");
 
         assert_eq!(ponged_value, value + uint!(1_U256));
-        assert_eq!(ping.ping_count(), uint!(1_U256));
-        assert_eq!(pong.pong_count(), uint!(1_U256));
+        assert_eq!(ping.sender(alice).ping_count(), uint!(1_U256));
+        assert_eq!(pong.sender(alice).pong_count(), uint!(1_U256));
     }
 }

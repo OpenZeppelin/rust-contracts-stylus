@@ -313,18 +313,11 @@ where
     }
 }
 
-/// Initializes fields of contract storage and child contract storages with
-/// default values.
-pub trait DefaultStorage: StorageType + TestRouter + 'static {
-    /// Initializes fields of contract storage and child contract storages with
-    /// default values.
-    #[must_use]
-    fn default() -> Contract<Self> {
+impl<ST: StorageType + TestRouter + 'static> Default for Contract<ST> {
+    fn default() -> Self {
         Contract::random()
     }
 }
-
-impl<ST: StorageType + TestRouter + 'static> DefaultStorage for ST {}
 
 pub struct ContractCall<ST: StorageType> {
     contract: ST,
@@ -379,8 +372,17 @@ impl<ST: StorageType + TestRouter + 'static> Contract<ST> {
     pub fn address(&self) -> Address {
         self.address
     }
+
+    pub fn sender(&self, account: Account) -> ContractCall<ST> {
+        ContractCall {
+            contract: unsafe { ST::new(uint!(0_U256), 0) },
+            caller_address: account.address,
+            contract_address: self.address,
+        }
+    }
 }
 
+#[derive(Clone, Copy)]
 pub struct Account {
     address: Address,
 }
@@ -399,16 +401,5 @@ impl Account {
     #[must_use]
     pub fn address(&self) -> Address {
         self.address
-    }
-
-    pub fn uses<ST: StorageType>(
-        &self,
-        contract: &mut Contract<ST>,
-    ) -> ContractCall<ST> {
-        ContractCall {
-            contract: unsafe { ST::new(uint!(0_U256), 0) },
-            caller_address: self.address,
-            contract_address: contract.address,
-        }
     }
 }

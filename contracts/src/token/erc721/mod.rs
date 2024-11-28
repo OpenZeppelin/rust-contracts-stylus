@@ -1159,7 +1159,7 @@ mod tests {
     use alloy_primitives::{
         address, fixed_bytes, uint, Address, FixedBytes, U256,
     };
-    use motsu::prelude::Account;
+    use motsu::prelude::{Account, Contract};
     use stylus_sdk::{
         abi::Bytes,
         msg,
@@ -2543,15 +2543,18 @@ mod tests {
     unsafe impl TopLevelStorage for Erc721ReceiverMock {}
 
     #[motsu::test]
-    fn on_erc721_received(erc721: Erc721, receiver: Erc721ReceiverMock) {
+    fn on_erc721_received(
+        erc721: Contract<Erc721>,
+        receiver: Contract<Erc721ReceiverMock>,
+    ) {
         let alice = Account::random();
         let token_id = random_token_id();
-        alice
-            .uses(erc721)
+        erc721
+            .sender(alice)
             ._safe_mint(receiver.address(), token_id, vec![0, 1, 2, 3].into())
             .unwrap();
 
-        let received_token_id = alice.uses(receiver).received_token_id();
+        let received_token_id = receiver.sender(alice).received_token_id();
 
         assert_eq!(received_token_id, token_id);
     }
