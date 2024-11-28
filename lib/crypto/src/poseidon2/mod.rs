@@ -292,11 +292,3 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         self.state[0] += P::ROUND_CONSTANTS[round][0];
     }
 }
-
-#[allow(unused_imports)]
-#[cfg(test)]
-#[must_use]
-pub fn random_scalar<F: PrimeField + crypto_bigint::Random>() -> F {
-    let mut rng = rand::thread_rng();
-    F::random(&mut rng)
-}

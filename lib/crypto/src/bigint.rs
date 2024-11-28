@@ -293,7 +293,7 @@ macro_rules! from_hex {
 
 #[cfg(test)]
 mod test {
-    use alloc::vec::Vec;
+    use alloc::{vec, vec::Vec};
 
     use proptest::proptest;
 
