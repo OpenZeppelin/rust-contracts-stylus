@@ -78,7 +78,7 @@ impl Context {
     }
 
     /// Get the message sender account address.
-    pub(crate) fn get_msg_sender(&self) -> Option<Address> {
+    pub fn get_msg_sender(&self) -> Option<Address> {
         self.get_storage().msg_sender
     }
 

@@ -63,10 +63,17 @@ mod tests {
 
     use crate::context::{Account, Contract, TestRouter};
 
+    /// Message sender that mocks `msg::sender()` in tests.
+    pub fn msg_sender() -> Address {
+        crate::prelude::Context::current()
+            .get_msg_sender()
+            .expect("msg_sender should be set")
+    }
+
     sol_storage! {
         pub struct PingContract {
             uint256 _pings_count;
-            // TODO#q: add last pinged address.
+            address _pinged_from;
         }
     }
 
@@ -80,11 +87,16 @@ mod tests {
 
             let pings_count = self._pings_count.get();
             self._pings_count.set(pings_count + uint!(1_U256));
+            self._pinged_from.set(msg_sender());
             Ok(value)
         }
 
         fn ping_count(&self) -> U256 {
             self._pings_count.get()
+        }
+
+        fn pinged_from(&self) -> Address {
+            self._pinged_from.get()
         }
     }
 
@@ -103,7 +115,7 @@ mod tests {
     sol_storage! {
         pub struct PongContract {
             uint256 _pongs_count;
-            uint256 _value;
+            address _ponged_from;
         }
     }
 
@@ -112,11 +124,16 @@ mod tests {
         pub fn pong(&mut self, value: U256) -> Result<U256, Vec<u8>> {
             let pongs_count = self._pongs_count.get();
             self._pongs_count.set(pongs_count + uint!(1_U256));
+            self._ponged_from.set(msg_sender());
             Ok(value + uint!(1_U256))
         }
 
         fn pong_count(&self) -> U256 {
             self._pongs_count.get()
+        }
+
+        fn ponged_from(&self) -> Address {
+            self._ponged_from.get()
         }
     }
 
@@ -140,5 +157,8 @@ mod tests {
         assert_eq!(ponged_value, value + uint!(1_U256));
         assert_eq!(ping.sender(alice).ping_count(), uint!(1_U256));
         assert_eq!(pong.sender(alice).pong_count(), uint!(1_U256));
+
+        assert_eq!(ping.sender(alice).pinged_from(), alice.address());
+        assert_eq!(pong.sender(alice).ponged_from(), ping.address());
     }
 }
