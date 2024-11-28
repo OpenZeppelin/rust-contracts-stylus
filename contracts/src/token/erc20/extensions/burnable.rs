@@ -12,7 +12,7 @@ pub trait IErc20Burnable {
     /// The error type associated to this ERC-20 Burnable trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// Destroys a `value` amount of tokens from the caller. lowering the total
+    /// Destroys a `value` amount of tokens from the caller, lowering the total
     /// supply.
     ///
     /// Relies on the `update` mechanism.

@@ -78,7 +78,7 @@ pub async fn run_with(
     // IMPORTANT: Order matters!
     use Erc1155Supply::*;
     #[rustfmt::skip]
-    let receipts = vec![        
+    let receipts = vec![
         (mintCall::SIGNATURE, receipt!(contract.mint(alice_addr, token_1, value_1, data.clone()))?),
         (mintBatchCall::SIGNATURE, receipt!(contract.mintBatch(alice_addr, ids.clone(), values.clone(), data.clone()))?),
         (existsCall::SIGNATURE, receipt!(contract.exists(token_1))?),
