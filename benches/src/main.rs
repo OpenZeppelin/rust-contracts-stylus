@@ -1,5 +1,5 @@
 use benches::{
-    access_control, erc1155, erc20, erc721, merkle_proofs, ownable, report,
+    access_control, erc1155, erc20, erc721, merkle_proofs, ownable,
     report::BenchmarkReport,
 };
 use futures::FutureExt;
