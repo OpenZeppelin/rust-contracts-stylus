@@ -240,7 +240,7 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `token` - Address of the releasable token.
     ///
     /// # Errors
@@ -253,8 +253,7 @@ pub trait IVestingWallet {
     /// If total allocation exceeds `U256::MAX`.
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
-    fn releasable_erc20(&mut self, token: Address)
-        -> Result<U256, Self::Error>;
+    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
 
     /// Release the native tokens (Ether) that have already vested.
     ///
@@ -323,7 +322,7 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `token` - Address of the token being released.
     /// * `timestamp` - Point in time for which to check the vested amount.
     ///
@@ -338,7 +337,7 @@ pub trait IVestingWallet {
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
-        &mut self,
+        &self,
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error>;
@@ -398,10 +397,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "releasable")]
-    fn releasable_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<U256, Self::Error> {
+    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error> {
         let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
@@ -458,14 +454,13 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
-        &mut self,
+        &self,
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error> {
         let erc20 = IErc20::new(token);
-        let call = Call::new_in(self);
         let balance = erc20
-            .balance_of(call, contract::address())
+            .balance_of(Call::new(), contract::address())
             .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance
