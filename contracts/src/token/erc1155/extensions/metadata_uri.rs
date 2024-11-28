@@ -48,9 +48,6 @@ pub trait IErc1155MetadataUri {
     fn uri(&self, id: U256) -> String;
 }
 
-// FIXME: Apply multi-level inheritance to export Metadata's functions.
-// With the current version of SDK it is not possible.
-// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[public]
 impl IErc1155MetadataUri for Erc1155MetadataUri {
     /// This implementation returns the same URI for all token types.
