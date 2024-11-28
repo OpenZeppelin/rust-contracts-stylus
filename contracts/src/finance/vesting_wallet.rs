@@ -429,14 +429,14 @@ impl IVestingWallet for VestingWallet {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
-        self.safe_erc20.safe_transfer(token, owner, amount)?;
-
         let released = self
             ._erc20_released
             .get(token)
             .checked_add(amount)
             .expect("total released should not exceed `U256::MAX`");
         self._erc20_released.setter(token).set(released);
+
+        self.safe_erc20.safe_transfer(token, owner, amount)?;
 
         evm::log(ERC20Released { token, amount });
 
