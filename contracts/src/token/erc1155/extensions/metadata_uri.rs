@@ -38,7 +38,7 @@ sol_storage! {
 pub trait IErc1155MetadataUri {
     /// Returns the URI for token type `id`.
     ///
-    /// If the `\{id\}` substring is present in the URI, it must be replaced by
+    /// If the `id` substring is present in the URI, it must be replaced by
     /// clients with the actual token type ID.
     ///
     /// # Arguments
@@ -53,8 +53,8 @@ pub trait IErc1155MetadataUri {
 // See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
 #[public]
 impl IErc1155MetadataUri for Erc1155MetadataUri {
-    /// This implementation returns the same URI for *all* token types.
-    /// Clients calling this function must replace the `\{id\}` substring with
+    /// This implementation returns the same URI for all token types.
+    /// Clients calling this function must replace the `id` substring with
     /// the actual token type ID.
     fn uri(&self, _id: U256) -> String {
         self._uri.get_string()
