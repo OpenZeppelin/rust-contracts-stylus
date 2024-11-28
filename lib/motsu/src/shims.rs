@@ -114,20 +114,6 @@ pub fn storage_flush_cache(_: bool) {
     // No-op: we don't use the cache in our unit-tests.
 }
 
-/// Dummy msg sender set for tests.
-pub const MSG_SENDER: &[u8; 42] = b"0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
-
-/// Dummy contract address set for tests.
-pub const CONTRACT_ADDRESS: &[u8; 42] =
-    b"0xdCE82b5f92C98F27F116F70491a487EFFDb6a2a9";
-
-/// Arbitrum's CHAID ID.
-pub const CHAIN_ID: u64 = 42161;
-
-/// Externally Owned Account (EOA) code hash.
-pub const EOA_CODEHASH: &[u8; 66] =
-    b"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
-
 /// Gets the address of the account that called the program. For normal
 /// L2-to-L2 transactions the semantics are equivalent to that of the EVM's
 /// [`CALLER`] opcode, including in cases arising from [`DELEGATE_CALL`].
@@ -145,7 +131,8 @@ pub const EOA_CODEHASH: &[u8; 66] =
 /// May panic if fails to parse `MSG_SENDER` as an address.
 #[no_mangle]
 pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
-    let addr = const_hex::const_decode_to_array::<20>(MSG_SENDER).unwrap();
+    let msg_sender = Context::current().msg_sender();
+    let addr = const_hex::const_decode_to_array::<20>(&msg_sender).unwrap();
     std::ptr::copy(addr.as_ptr(), sender, 20);
 }
 
@@ -159,8 +146,9 @@ pub unsafe extern "C" fn msg_sender(sender: *mut u8) {
 /// May panic if fails to parse `CONTRACT_ADDRESS` as an address.
 #[no_mangle]
 pub unsafe extern "C" fn contract_address(address: *mut u8) {
+    let contract_address = Context::current().contract_address();
     let addr =
-        const_hex::const_decode_to_array::<20>(CONTRACT_ADDRESS).unwrap();
+        const_hex::const_decode_to_array::<20>(&contract_address).unwrap();
     std::ptr::copy(addr.as_ptr(), address, 20);
 }
 
@@ -170,7 +158,7 @@ pub unsafe extern "C" fn contract_address(address: *mut u8) {
 /// [`CHAINID`]: https://www.evm.codes/#46
 #[no_mangle]
 pub unsafe extern "C" fn chainid() -> u64 {
-    CHAIN_ID
+    Context::current().chain_id()
 }
 
 /// Emits an EVM log with the given number of topics and data, the first bytes
@@ -202,8 +190,9 @@ pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
 /// May panic if fails to parse `ACCOUNT_CODEHASH` as a keccack hash.
 #[no_mangle]
 pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
+    let account_codehash = Context::current().account_codehash();
     let account_codehash =
-        const_hex::const_decode_to_array::<32>(EOA_CODEHASH).unwrap();
+        const_hex::const_decode_to_array::<32>(&account_codehash).unwrap();
 
     std::ptr::copy(account_codehash.as_ptr(), dest, 32);
 }
@@ -333,6 +322,5 @@ pub unsafe extern "C" fn delegate_call_contract(
 /// [`Block Numbers and Time`]: https://developer.arbitrum.io/time
 #[no_mangle]
 pub unsafe extern "C" fn block_timestamp() -> u64 {
-    // Epoch timestamp: 1st January 2025 00::00::00
-    1_735_689_600
+    Context::current().block_timestamp()
 }

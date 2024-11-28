@@ -8,6 +8,10 @@ use stylus_sdk::{alloy_primitives::uint, prelude::StorageType};
 
 use crate::prelude::{Bytes32, WORD_BYTES};
 
+mod environment;
+
+use environment::Environment;
+
 /// Context of stylus unit tests associated with the current test thread.
 #[allow(clippy::module_name_repetitions)]
 pub struct Context {
@@ -51,11 +55,43 @@ impl Context {
     pub fn reset_storage(self) {
         EVM.remove(&self.thread_name);
     }
+
+    /// Gets the code hash of the account at the given address.
+    pub fn account_codehash(self) -> [u8; 66] {
+        let context = EVM.entry(self.thread_name).or_default();
+        context.environment.account_codehash()
+    }
+
+    /// Gets a bounded estimate of the Unix timestamp at which the Sequencer
+    /// sequenced the transaction.
+    pub fn block_timestamp(self) -> u64 {
+        let context = EVM.entry(self.thread_name).or_default();
+        context.environment.block_timestamp()
+    }
+
+    /// Gets the chain ID of the current chain.
+    pub fn chain_id(self) -> u64 {
+        let context = EVM.entry(self.thread_name).or_default();
+        context.environment.chain_id()
+    }
+
+    /// Gets the address of the current program.
+    pub fn contract_address(self) -> [u8; 42] {
+        let context = EVM.entry(self.thread_name).or_default();
+        context.environment.contract_address()
+    }
+
+    /// Gets the address of the account that called the program.
+    pub fn msg_sender(self) -> [u8; 42] {
+        let context = EVM.entry(self.thread_name).or_default();
+        context.environment.msg_sender()
+    }
 }
 
 #[derive(Default)]
 struct TestCase {
     storage: MockStorage,
+    environment: Environment,
 }
 
 /// A global mutable key-value store mockig EVM behaviour.
