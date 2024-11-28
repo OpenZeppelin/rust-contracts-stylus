@@ -10,7 +10,7 @@
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::{sol, SolCall};
 use stylus_sdk::{
-    call::RawCall,
+    call::{MethodError, RawCall},
     contract::address,
     evm::gas_left,
     function_selector,
@@ -54,6 +54,12 @@ pub enum Error {
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
 pub use token::*;
 #[allow(missing_docs)]
 mod token {
@@ -77,7 +83,7 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for SafeErc20 {}
 
-/// Required interface of an [`SafeErc20`] utility contract.
+/// Required interface of a [`SafeErc20`] utility contract.
 pub trait ISafeErc20 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

@@ -1,5 +1,5 @@
 [package]
-name = "benches"
+name = "vesting-wallet-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -8,13 +8,17 @@ version.workspace = true
 
 [dependencies]
 openzeppelin-stylus.workspace = true
-alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+
+[dev-dependencies]
 alloy.workspace = true
-tokio.workspace = true
-futures.workspace = true
 eyre.workspace = true
-koba.workspace = true
+tokio.workspace = true
 e2e.workspace = true
-serde = "1.0.203"
-keccak-const = "0.2.0"
-itertools = "0.13.0"
+
+[features]
+e2e = []
+
+[lib]
+crate-type = ["lib", "cdylib"]
