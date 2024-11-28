@@ -3,7 +3,7 @@
 ## Setup
 
 1. Install [Docker].
-1. Install the [Solidity Compiler] version `0.8.24`
+1. Install the [Solidity Compiler] version `0.8.24`.
 (NOTE: it is important to use this exact version to avoid compatibility issues).
 1. Install toolchain providing `cargo` using [rustup].
 1. Install the cargo stylus tool with `cargo install --force cargo-stylus`.
