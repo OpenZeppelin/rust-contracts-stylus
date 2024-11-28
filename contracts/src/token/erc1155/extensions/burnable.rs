@@ -46,8 +46,8 @@ pub trait IErc1155Burnable {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Accounts to burn tokens from.
-    /// * `values` - All amount to be burnt.
     /// * `token_ids` - All token id to be burnt.
+    /// * `values` - All amount to be burnt.
     ///
     /// # Errors
     ///
