@@ -3,9 +3,10 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc1155::{
-    extensions::Erc1155MetadataUri, Erc1155,
+use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus::{
+    token::erc1155::{extensions::Erc1155MetadataUri, Erc1155},
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{
     abi::Bytes,
@@ -45,5 +46,10 @@ impl Erc1155Example {
     ) -> Result<(), Vec<u8>> {
         self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
         Ok(())
+    }
+
+    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc1155::supports_interface(interface_id)
+            || Erc1155MetadataUri::supports_interface(interface_id)
     }
 }
