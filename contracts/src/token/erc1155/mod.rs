@@ -1,13 +1,13 @@
 //! Implementation of the ERC-1155 token standard.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{fixed_bytes, Address, FixedBytes, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     alloy_sol_types::sol,
     call::{self, Call, MethodError},
-    evm, msg,
+    evm, function_selector, msg,
     prelude::{public, sol_storage, AddressVM, SolidityError},
     storage::TopLevelStorage,
 };
@@ -17,20 +17,28 @@ use crate::utils::{
     math::storage::SubAssignUnchecked,
 };
 
+pub mod extensions;
+
 mod receiver;
 pub use receiver::IERC1155Receiver;
 
-/// `bytes4(
-///     keccak256(
-///         "onERC1155Received(address,address,uint256,uint256,bytes)"
-/// ))`
-const SINGLE_TRANSFER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("f23a6e61");
+const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+    "onERC1155Received",
+    Address,
+    Address,
+    U256,
+    U256,
+    Bytes
+);
 
-/// `bytes4(
-///     keccak256(
-///         "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"
-/// ))`
-const BATCH_TRANSFER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("bc197c81");
+const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+    "onERC1155BatchReceived",
+    Address,
+    Address,
+    Vec<U256>,
+    Vec<U256>,
+    Bytes
+);
 
 sol! {
     /// Emitted when `value` amount of tokens of type `id` are
@@ -687,8 +695,9 @@ impl Erc1155 {
     /// [`Error::InvalidSender`] is returned.
     /// If length of `ids` is not equal to length of `values`, then the
     /// error [`Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`Error::InsufficientBalance`] is returned.
+    /// If any of the `values` is greater than the balance of the respective
+    /// token from `tokens` of the `from` account, then the error
+    /// [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
@@ -895,8 +904,9 @@ impl Erc1155 {
     /// [`Error::InvalidSender`] is returned.
     /// If length of `ids` is not equal to length of `values`, then the
     /// error [`Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`Error::InsufficientBalance`] is returned.
+    /// If any of the `values` is greater than the balance of the respective
+    /// token from `tokens` of the `from` account, then the error
+    /// [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
@@ -1092,7 +1102,7 @@ impl Erc1155 {
 /// implements [`IERC1155Receiver`] interface.
 struct Erc1155ReceiverData {
     /// ERC-1155 Receiver function selector.
-    receiver_fn_selector: FixedBytes<4>,
+    receiver_fn_selector: [u8; 4],
     /// Transfer details, either [`Transfer::Single`] or [`Transfer::Batch`].
     transfer: Transfer,
 }
@@ -1193,7 +1203,7 @@ mod tests {
     }
 
     pub(crate) fn random_values(size: usize) -> Vec<U256> {
-        (0..size).map(|_| U256::from(rand::random::<u128>())).collect()
+        (1..size + 1).map(U256::from).collect()
     }
 
     fn init(

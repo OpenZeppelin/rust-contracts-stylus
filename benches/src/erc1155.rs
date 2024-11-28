@@ -24,6 +24,8 @@ sol!(
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
+        function burn(address account, uint256 id, uint256 value) external;
+        function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
     }
 );
 
@@ -56,10 +58,16 @@ pub async fn run_with(
 
     let bob = Account::new().await?;
     let bob_addr = bob.address();
+    let bob_wallet = ProviderBuilder::new()
+        .network::<AnyNetwork>()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(bob.signer.clone()))
+        .on_http(bob.url().parse()?);
 
     let contract_addr = deploy(&alice, cache_opt).await?;
 
     let contract = Erc1155::new(contract_addr, &alice_wallet);
+    let contract_bob = Erc1155::new(contract_addr, &bob_wallet);
 
     let token_1 = uint!(1_U256);
     let token_2 = uint!(2_U256);
@@ -87,7 +95,10 @@ pub async fn run_with(
         (setApprovalForAllCall::SIGNATURE, receipt!(contract.setApprovalForAll(bob_addr, true))?),
         (isApprovedForAllCall::SIGNATURE, receipt!(contract.isApprovedForAll(alice_addr, bob_addr))?),
         (safeTransferFromCall::SIGNATURE, receipt!(contract.safeTransferFrom(alice_addr, bob_addr, token_1, value_1, data.clone()))?),
-        (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids, values, data.clone()))?)
+        (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids.clone(), values.clone(), data))?),
+        // We should burn Bob's tokens on behalf of Bob not Alice.
+        (burnCall::SIGNATURE, receipt!(contract_bob.burn(bob_addr, token_1, value_1))?),
+        (burnBatchCall::SIGNATURE, receipt!(contract_bob.burnBatch(bob_addr, ids, values))?),
     ];
 
     receipts
