@@ -819,6 +819,7 @@ dependencies = [
  "e2e",
  "eyre",
  "futures",
+ "itertools 0.13.0",
  "keccak-const",
  "koba",
  "openzeppelin-stylus",
