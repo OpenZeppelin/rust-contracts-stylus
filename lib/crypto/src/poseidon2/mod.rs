@@ -107,18 +107,21 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         // Linear layer at the beginning.
         self.matmul_external();
 
+        // Run the first half of the full round.
         for round in 0..Self::partial_round_start() {
             self.add_rc_external(round);
             self.apply_sbox_external();
             self.matmul_external();
         }
 
+        // Run the partial round.
         for round in Self::partial_round_start()..Self::partial_round_end() {
             self.add_rc_internal(round);
             self.apply_sbox_internal();
             self.matmul_internal();
         }
 
+        // Run the second half of the full round.
         for round in Self::partial_round_end()..Self::rounds() {
             self.add_rc_external(round);
             self.apply_sbox_external();
@@ -177,13 +180,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
                 self.state[2] += sum;
             }
             4 => {
-                // Applying cheap 4x4 MDS matrix to each 4-element part of the
-                // state.
                 self.matmul_m4();
             }
             8 | 12 | 16 | 20 | 24 => {
-                // Applying cheap 4x4 MDS matrix to each 4-element part of the
-                // state.
                 self.matmul_m4();
 
                 // Applying second cheap matrix for t > 4.
@@ -200,11 +199,12 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
                 }
             }
             _ => {
-                panic!()
+                panic!("not supported state size")
             }
         }
     }
 
+    /// Apply the cheap 4x4 MDS matrix to each 4-element part of the state.
     fn matmul_m4(&mut self) {
         let state = &mut self.state;
         let t = Self::state_size();
