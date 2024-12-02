@@ -115,7 +115,7 @@ mod sol_defs {
 }
 
 pub use sol_defs::VestingWallet;
-use sol_defs::*;
+use sol_defs::{ERC20Released, Error, EtherReleased, InvalidToken};
 use token::IErc20;
 
 #[allow(missing_docs)]
