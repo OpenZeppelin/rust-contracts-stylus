@@ -28,8 +28,6 @@ default-members = [
   "contracts",
   "contracts-proc",
   "lib/crypto",
-  "lib/motsu",
-  "lib/motsu-proc",
   "lib/e2e-proc",
   "examples/erc20",
   "examples/erc20-permit",
