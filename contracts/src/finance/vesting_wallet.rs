@@ -33,7 +33,14 @@ use stylus_sdk::{
 };
 
 use crate::{
-    access::ownable::IOwnable, token::erc20::utils::safe_erc20::ISafeErc20,
+    access::{
+        ownable,
+        ownable::{IOwnable, Ownable},
+    },
+    token::erc20::utils::{
+        safe_erc20,
+        safe_erc20::{ISafeErc20, SafeErc20},
+    },
 };
 
 #[cfg_attr(coverage, coverage(off))]
@@ -44,10 +51,7 @@ mod sol_defs {
         stylus_proc::{sol_storage, SolidityError},
     };
 
-    use crate::{
-        access::ownable::{self, Ownable},
-        token::erc20::utils::safe_erc20::{self, SafeErc20},
-    };
+    use super::{ownable, safe_erc20, Ownable, SafeErc20};
 
     sol! {
         /// Emitted when `amount` of Ether has been released.
