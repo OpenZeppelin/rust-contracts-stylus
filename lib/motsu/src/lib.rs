@@ -64,6 +64,7 @@ mod tests {
     use crate::context::{Account, Contract, TestRouter};
 
     /// Message sender that mocks `msg::sender()` in tests.
+    #[must_use]
     pub fn msg_sender() -> Address {
         crate::prelude::Context::current()
             .get_msg_sender()
