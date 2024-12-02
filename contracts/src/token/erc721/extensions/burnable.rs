@@ -7,9 +7,6 @@ use crate::token::erc721::{Erc721, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {
-    /// The error type associated to this ERC-721 burnable trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Burns `token_id`.
     ///
     /// The approval is cleared when the token is burned. Relies on the `_burn`
@@ -34,13 +31,11 @@ pub trait IErc721Burnable {
     /// # Events
     ///
     /// Emits a [`super::super::Transfer`] event.
-    fn burn(&mut self, token_id: U256) -> Result<(), Self::Error>;
+    fn burn(&mut self, token_id: U256) -> Result<(), Error>;
 }
 
 impl IErc721Burnable for Erc721 {
-    type Error = Error;
-
-    fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
+    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         // Setting an "auth" arguments enables the
         // [`super::super::Erc721::_is_authorized`] check which verifies that
         // the token exists (from != `Address::ZERO`).

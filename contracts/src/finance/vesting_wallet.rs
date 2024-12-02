@@ -37,7 +37,6 @@ use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
 };
-
 sol! {
     /// Emitted when `amount` of Ether has been released.
     ///
@@ -117,9 +116,6 @@ unsafe impl TopLevelStorage for VestingWallet {}
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]
 pub trait IVestingWallet {
-    /// The error type associated to this trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns the address of the current owner.
     ///
     /// Re-export of [`Ownable::owner`].
@@ -149,10 +145,7 @@ pub trait IVestingWallet {
     /// # Events
     ///
     /// Emits an [`ownable::OwnershipTransferred`] event.
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Ownable::only_owner`] functions. Can only be called by the current
@@ -175,7 +168,7 @@ pub trait IVestingWallet {
     /// # Events
     ///
     /// Emits an [`ownable::OwnershipTransferred`] event.
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Error>;
 
     /// The contract should be able to receive Ether.
     ///
@@ -253,7 +246,7 @@ pub trait IVestingWallet {
     /// If total allocation exceeds `U256::MAX`.
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
-    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
+    fn releasable_erc20(&self, token: Address) -> Result<U256, Error>;
 
     /// Release the native tokens (Ether) that have already vested.
     ///
@@ -275,7 +268,7 @@ pub trait IVestingWallet {
     /// If total allocation exceeds `U256::MAX`.
     /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), Self::Error>;
+    fn release_eth(&mut self) -> Result<(), Error>;
 
     /// Release the tokens that have already vested.
     ///
@@ -300,7 +293,7 @@ pub trait IVestingWallet {
     /// If total allocation exceeds `U256::MAX`.
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
-    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
+    fn release_erc20(&mut self, token: Address) -> Result<(), Error>;
 
     /// Calculates the amount of Ether that has already vested.
     /// The Default implementation is a linear vesting curve.
@@ -340,25 +333,20 @@ pub trait IVestingWallet {
         &self,
         token: Address,
         timestamp: u64,
-    ) -> Result<U256, Self::Error>;
+    ) -> Result<U256, Error>;
 }
 
 #[public]
 impl IVestingWallet for VestingWallet {
-    type Error = Error;
-
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
 
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 
@@ -397,7 +385,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "releasable")]
-    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error> {
+    fn releasable_erc20(&self, token: Address) -> Result<U256, Error> {
         let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
@@ -405,7 +393,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), Self::Error> {
+    fn release_eth(&mut self) -> Result<(), Error> {
         let amount = self.releasable_eth();
 
         let released = self
@@ -425,7 +413,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
+    fn release_erc20(&mut self, token: Address) -> Result<(), Error> {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
@@ -457,7 +445,7 @@ impl IVestingWallet for VestingWallet {
         &self,
         token: Address,
         timestamp: u64,
-    ) -> Result<U256, Self::Error> {
+    ) -> Result<U256, Error> {
         let erc20 = IErc20::new(token);
         let balance = erc20
             .balance_of(Call::new(), contract::address())

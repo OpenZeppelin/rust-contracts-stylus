@@ -127,9 +127,6 @@ sol_storage! {
 /// Required interface of an [`Erc20`] compliant contract.
 #[interface_id]
 pub trait IErc20 {
-    /// The error type associated to this ERC-20 trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns the number of tokens in existence.
     ///
     /// # Arguments
@@ -165,11 +162,7 @@ pub trait IErc20 {
     /// # Events
     ///
     /// Emits a [`Transfer`] event.
-    fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error>;
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error>;
 
     /// Returns the remaining number of tokens that `spender` will be allowed
     /// to spend on behalf of `owner` through `transfer_from`. This is zero by
@@ -210,11 +203,8 @@ pub trait IErc20 {
     /// # Events
     ///
     /// Emits an [`Approval`] event.
-    fn approve(
-        &mut self,
-        spender: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error>;
+    fn approve(&mut self, spender: Address, value: U256)
+        -> Result<bool, Error>;
 
     /// Moves a `value` number of tokens from `from` to `to` using the
     /// allowance mechanism. `value` is then deducted from the caller's
@@ -250,13 +240,11 @@ pub trait IErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, Error>;
 }
 
 #[public]
 impl IErc20 for Erc20 {
-    type Error = Error;
-
     fn total_supply(&self) -> U256 {
         self._total_supply.get()
     }
@@ -265,11 +253,7 @@ impl IErc20 for Erc20 {
         self._balances.get(account)
     }
 
-    fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error> {
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
         let from = msg::sender();
         self._transfer(from, to, value)?;
         Ok(true)
@@ -283,7 +267,7 @@ impl IErc20 for Erc20 {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         let owner = msg::sender();
         self._approve(owner, spender, value, true)
     }
@@ -293,7 +277,7 @@ impl IErc20 for Erc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;

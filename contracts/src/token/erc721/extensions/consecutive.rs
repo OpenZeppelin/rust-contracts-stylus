@@ -24,12 +24,13 @@
 
 use alloc::vec;
 
-use alloy_primitives::{uint, Address, U256};
+use alloy_primitives::{uint, Address, FixedBytes, U256};
 use alloy_sol_types::sol;
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     evm, msg,
-    prelude::TopLevelStorage,
+    prelude::*,
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
@@ -43,6 +44,7 @@ use crate::{
         },
     },
     utils::{
+        introspection::erc165::{Erc165, IErc165},
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
@@ -137,10 +139,62 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 
-#[public]
-impl IErc721 for Erc721Consecutive {
-    type Error = Error;
+#[interface_id]
+pub trait IErc721Consecutive {
+    /// Re-export of [`Erc721::balance_of`].
+    fn balance_of(&self, owner: Address) -> Result<U256, Error>;
 
+    /// Re-export of [`Erc721::owner_of`].
+    fn owner_of(&self, token_id: U256) -> Result<Address, Error>;
+
+    /// Re-export of [`Erc721::safe_transfer_from`].
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error>;
+
+    /// Re-export of [`Erc721::safe_transfer_from_with_data`].
+    #[selector(name = "safeTransferFrom")]
+    fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Error>;
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Error>;
+
+    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error>;
+
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), Error>;
+
+    fn get_approved(&self, token_id: U256) -> Result<Address, Error>;
+
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool;
+}
+
+impl IErc165 for Erc721Consecutive {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721Consecutive>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
+#[public]
+impl IErc721Consecutive for Erc721Consecutive {
     fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         Ok(self.erc721.balance_of(owner)?)
     }
@@ -1331,5 +1385,15 @@ mod tests {
                 token_id: t_id
             })) if token_id == t_id
         ));
+    }
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID;
+        let expected = 0x80ac58cd;
+        assert_eq!(actual, expected);
+
+        let actual = <Erc721Consecutive as IErc165>::INTERFACE_ID;
+        let expected = 0x01ffc9a7;
+        assert_eq!(actual, expected);
     }
 }

@@ -66,10 +66,7 @@ sol_storage! {
 
 /// Interface for an [`Ownable`] contract.
 #[interface_id]
-pub trait IOwnable {
-    /// The error type associated to the trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
+pub trait IOwnable: IError {
     /// Returns the address of the current owner.
     ///
     /// # Arguments
@@ -93,10 +90,7 @@ pub trait IOwnable {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// functions that require `only_owner`. Can only be called by the current
@@ -117,21 +111,16 @@ pub trait IOwnable {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferred`] event.
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Error>;
 }
 
 #[public]
 impl IOwnable for Ownable {
-    type Error = Error;
-
     fn owner(&self) -> Address {
         self._owner.get()
     }
 
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
         self.only_owner()?;
 
         if new_owner.is_zero() {
@@ -145,7 +134,7 @@ impl IOwnable for Ownable {
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())

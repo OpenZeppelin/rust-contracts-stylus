@@ -68,10 +68,6 @@ sol_storage! {
 /// of the ERC-721 standard.
 #[interface_id]
 pub trait IErc721Enumerable {
-    /// The error type associated to this ERC-721 enumerable trait
-    /// implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns a token ID owned by `owner` at a given `index` of its token
     /// list.
     ///
@@ -90,7 +86,7 @@ pub trait IErc721Enumerable {
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, Self::Error>;
+    ) -> Result<U256, Error>;
 
     /// Returns the total amount of tokens stored by the contract.
     ///
@@ -113,18 +109,16 @@ pub trait IErc721Enumerable {
     ///
     /// * If an `owner`'s token query is out of bounds for `index`,
     /// then the error [`Error::OutOfBoundsIndex`] is returned.
-    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
+    fn token_by_index(&self, index: U256) -> Result<U256, Error>;
 }
 
 #[public]
 impl IErc721Enumerable for Erc721Enumerable {
-    type Error = Error;
-
     fn token_of_owner_by_index(
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, Self::Error> {
+    ) -> Result<U256, Error> {
         let token = self._owned_tokens.getter(owner).get(index);
 
         if token.is_zero() {
@@ -139,7 +133,7 @@ impl IErc721Enumerable for Erc721Enumerable {
         U256::from(tokens_length)
     }
 
-    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error> {
+    fn token_by_index(&self, index: U256) -> Result<U256, Error> {
         self._all_tokens.get(index).ok_or(
             ERC721OutOfBoundsIndex { owner: Address::ZERO, index }.into(),
         )
@@ -173,7 +167,7 @@ impl Erc721Enumerable {
         &mut self,
         to: Address,
         token_id: U256,
-        erc721: &impl IErc721<Error = erc721::Error>,
+        erc721: &impl IErc721,
     ) -> Result<(), erc721::Error> {
         let length = erc721.balance_of(to)? - uint!(1_U256);
         self._owned_tokens.setter(to).setter(length).set(token_id);
@@ -224,7 +218,7 @@ impl Erc721Enumerable {
         &mut self,
         from: Address,
         token_id: U256,
-        erc721: &impl IErc721<Error = erc721::Error>,
+        erc721: &impl IErc721,
     ) -> Result<(), erc721::Error> {
         // To prevent a gap in from's tokens array,
         // we store the last token in the index of the token to delete,

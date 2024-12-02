@@ -26,7 +26,6 @@ use stylus_sdk::{
 use crate::access::ownable::{
     Error as OwnableError, IOwnable, Ownable, OwnableUnauthorizedAccount,
 };
-
 sol! {
     /// Emitted when ownership transfer starts.
     ///
@@ -60,9 +59,6 @@ sol_storage! {
 
 /// Interface for an [`Ownable2Step`] contract.
 pub trait IOwnable2Step {
-    /// The error type associated to the trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns the address of the current owner.
     ///
     /// Re-export of [`Ownable::owner`].
@@ -99,10 +95,7 @@ pub trait IOwnable2Step {
     /// # Events
     ///
     /// Emits a [`OwnershipTransferStarted`] event.
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error>;
 
     /// Accepts the ownership of the contract.
     /// Can only be called by the pending owner.
@@ -119,7 +112,7 @@ pub trait IOwnable2Step {
     /// # Events
     ///
     /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
-    fn accept_ownership(&mut self) -> Result<(), Self::Error>;
+    fn accept_ownership(&mut self) -> Result<(), Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Ownable::only_owner`] functions. Can only be called by the current
@@ -137,13 +130,11 @@ pub trait IOwnable2Step {
     /// # Events
     ///
     /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Error>;
 }
 
 #[public]
 impl IOwnable2Step for Ownable2Step {
-    type Error = Error;
-
     fn owner(&self) -> Address {
         self._ownable.owner()
     }
@@ -152,10 +143,7 @@ impl IOwnable2Step for Ownable2Step {
         self._pending_owner.get()
     }
 
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
         self._ownable.only_owner()?;
         self._pending_owner.set(new_owner);
 
@@ -167,7 +155,7 @@ impl IOwnable2Step for Ownable2Step {
         Ok(())
     }
 
-    fn accept_ownership(&mut self) -> Result<(), Self::Error> {
+    fn accept_ownership(&mut self) -> Result<(), Error> {
         let sender = msg::sender();
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
