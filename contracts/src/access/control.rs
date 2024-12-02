@@ -40,6 +40,8 @@
 //! accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, B256};
 use alloy_sol_types::sol;
 use stylus_sdk::{

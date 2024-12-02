@@ -9,6 +9,8 @@
 //! interfere with enumerability and should not be used together with
 //! [`Erc721Enumerable`].
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
@@ -18,7 +20,6 @@ use crate::{
     token::{erc721, erc721::IErc721},
     utils::introspection::erc165::IErc165,
 };
-
 sol! {
     /// Indicates an error when an `owner`'s token query
     /// was out of bounds for `index`.

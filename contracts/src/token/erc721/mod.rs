@@ -1,5 +1,4 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::vec;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -18,6 +17,8 @@ use crate::utils::{
 };
 
 pub mod extensions;
+
+use alloc::{vec, vec::Vec};
 
 sol! {
     /// Emitted when the `token_id` token is transferred from `from` to `to`.
