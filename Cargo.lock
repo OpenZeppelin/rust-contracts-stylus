@@ -819,6 +819,7 @@ dependencies = [
  "e2e",
  "eyre",
  "futures",
+ "itertools 0.13.0",
  "keccak-const",
  "koba",
  "openzeppelin-stylus",
@@ -1556,7 +1557,6 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "rand",
  "stylus-sdk",
  "tokio",
 ]
@@ -4036,6 +4036,19 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "vesting-wallet-example"
+version = "0.2.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
 
 [[package]]
 name = "wait-timeout"

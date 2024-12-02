@@ -52,7 +52,7 @@ impl Nonces {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address for which to consume the nonce.
     ///
-    /// /// # Panics
+    /// # Panics
     ///
     /// This function will panic if the nonce for the given `owner` has reached
     /// the maximum value representable by `U256`, causing the `checked_add`
