@@ -117,16 +117,18 @@ jobs:
     #
     # for lots of more discussion.
     runs-on: ubuntu-latest
-    name: ubuntu / stable / coverage
+    name: ubuntu / nightly / coverage
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Install rust
+        # We run in nightly to make use of 'feature(coverage_attribute)' attribute.
+        # See `contracts/src/lib.rs`.
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           components: llvm-tools-preview
           rustflags: ""
 
