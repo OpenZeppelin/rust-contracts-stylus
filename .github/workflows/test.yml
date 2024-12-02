@@ -124,7 +124,7 @@ jobs:
           submodules: true
 
       - name: Install rust
-        # We run in nightly to make use of 'feature(coverage_attribute)' attribute.
+        # We run in nightly to make use of the `#[coverage(off)]` attribute.
         # See `contracts/src/lib.rs`.
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
