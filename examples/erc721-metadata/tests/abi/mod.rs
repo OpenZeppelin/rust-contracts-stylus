@@ -24,7 +24,7 @@ sol!(
         #[derive(Debug)]
         function tokenURI(uint256 tokenId) external view returns (string memory tokenURI);
         function setTokenURI(uint256 tokenId, string memory tokenURI) external;
-        function supportsInterface(bytes4 interfaceIf) external pure returns (bool);
+        function supportsInterface(bytes4 interfaceId) external pure returns (bool);
 
         error ERC721InvalidOwner(address owner);
         error ERC721NonexistentToken(uint256 tokenId);
