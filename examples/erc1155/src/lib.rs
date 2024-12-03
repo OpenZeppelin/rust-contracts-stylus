@@ -55,20 +55,6 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn set_operator_approvals(
-        &mut self,
-        owner: Address,
-        operator: Address,
-        approved: bool,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155
-            ._operator_approvals
-            .setter(owner)
-            .setter(operator)
-            .set(approved);
-        Ok(())
-    }
-
     pub fn burn(
         &mut self,
         account: Address,
