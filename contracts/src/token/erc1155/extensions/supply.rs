@@ -657,7 +657,7 @@ impl Erc1155Supply {
 mod tests {
     use alloy_primitives::{address, Address, U256};
 
-    use super::Erc1155Supply;
+    use super::{Erc1155Supply, IErc1155Supply};
     use crate::token::erc1155::IErc1155;
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
