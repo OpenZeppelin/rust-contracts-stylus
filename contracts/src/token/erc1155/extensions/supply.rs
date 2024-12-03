@@ -658,7 +658,9 @@ mod tests {
     use alloy_primitives::{address, Address, U256};
 
     use super::{Erc1155Supply, IErc1155Supply};
-    use crate::token::erc1155::IErc1155;
+    use crate::token::erc1155::{
+        ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+    };
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
     const BOB: Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -720,6 +722,24 @@ mod tests {
     }
 
     #[motsu::test]
+    fn mint_reverts_on_invalid_receiver(contract: Erc1155Supply) {
+        let token_id = random_token_ids(1)[0];
+        let two = U256::from(2);
+        let invalid_receiver = Address::ZERO;
+
+        let err = contract
+            ._mint(invalid_receiver, token_id, two, &vec![].into())
+            .expect_err("should revert with `InvalidReceiver`");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver {
+                receiver
+            }) if receiver == invalid_receiver
+        ));
+    }
+
+    #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
     fn mint_panics_on_total_supply_overflow(contract: Erc1155Supply) {
         let token_id = random_token_ids(1)[0];
@@ -770,6 +790,23 @@ mod tests {
             assert!(!contract.exists(token_id));
         }
         assert_eq!(U256::ZERO, contract.total_supply_all());
+    }
+
+    #[motsu::test]
+    fn burn_reverts_when_invalid_sender(contract: Erc1155Supply) {
+        let (token_ids, values) = setup(contract, ALICE, 1);
+        let invalid_sender = Address::ZERO;
+
+        let err = contract
+            ._burn(invalid_sender, token_ids[0], values[0])
+            .expect_err("should not burn token for invalid sender");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSender(ERC1155InvalidSender {
+                sender
+            }) if sender == invalid_sender
+        ));
     }
 
     #[motsu::test]
