@@ -2177,3 +2177,291 @@ async fn support_interface(alice: Account) -> eyre::Result<()> {
 
     Ok(())
 }
+
+// ============================================================================
+// Integration Tests: ERC-1155 Pausable Extension
+// ============================================================================
+
+#[e2e::test]
+async fn pauses(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receipt = receipt!(contract.pause())?;
+
+    assert!(receipt.emits(Erc1155::Paused { account: alice.address() }));
+
+    let paused = contract.paused().call().await?.paused;
+
+    assert!(paused);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn unpauses(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(contract.pause())?;
+
+    let receipt = receipt!(contract.unpause())?;
+
+    assert!(receipt.emits(Erc1155::Unpaused { account: alice.address() }));
+
+    let paused = contract.paused().call().await?.paused;
+
+    assert_eq!(false, paused);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let _ = watch!(contract.pause())?;
+
+    let err = send!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ))
+    .expect_err("should return EnforcedPause");
+
+    assert!(err.reverted_with(Erc1155::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint_batch_reverts_in_paused_state(
+    alice: Account,
+    bob: Account,
+    dave: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let dave_addr = dave.address();
+    let token_ids = random_token_ids(3);
+    let values = random_values(3);
+
+    let accounts = vec![alice_addr, bob_addr, dave_addr];
+    let _ = watch!(contract.pause())?;
+
+    for account in accounts {
+        let err = send!(contract.mintBatch(
+            account,
+            token_ids.clone(),
+            values.clone(),
+            vec![0, 1, 2, 3].into()
+        ))
+        .expect_err("should return EnforcedPause");
+
+        assert!(err.reverted_with(Erc1155::EnforcedPause {}));
+    }
+    Ok(())
+}
+
+#[e2e::test]
+async fn burn_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(1);
+    let values = random_values(1);
+
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_ids[0],
+        values[0],
+        vec![].into()
+    ));
+
+    let _ = watch!(contract.pause())?;
+
+    let err = send!(contract.burn(alice_addr, token_ids[0], values[0]))
+        .expect_err("should return EnforcedPause");
+
+    assert!(err.reverted_with(Erc1155::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn burn_batch_reverts_in_paused_state(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_ids = random_token_ids(4);
+    let values = random_values(4);
+
+    let _ = watch!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    let _ = watch!(contract.pause())?;
+
+    let err = send!(contract.burnBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone()
+    ))
+    .expect_err("should return EnforcedPause");
+
+    assert!(err.reverted_with(Erc1155::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_transfer_from_reverts_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+    let _ = watch!(contract.mint(
+        alice_addr,
+        token_id,
+        value,
+        vec![0, 1, 2, 3].into()
+    ));
+
+    let _ = watch!(contract.pause())?;
+
+    let err = send!(contract.safeTransferFrom(
+        alice_addr,
+        bob_addr,
+        token_id,
+        value,
+        vec![].into()
+    ))
+    .expect_err("should return EnforcedPause");
+
+    assert!(err.reverted_with(Erc1155::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_batch_transfer_from_reverts_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let _ = watch!(contract_alice.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ));
+
+    let _ = watch!(contract_alice.pause())?;
+
+    let err = send!(contract_alice.safeBatchTransferFrom(
+        alice_addr,
+        bob_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![].into()
+    ))
+    .expect_err("should return EnforcedPause");
+
+    assert!(err.reverted_with(Erc1155::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn set_approval_for_all_does_not_revert_in_paused_state(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+
+    let _ = watch!(contract.pause())?;
+
+    let approved_value = true;
+    let receipt =
+        receipt!(contract.setApprovalForAll(bob_addr, approved_value))?;
+
+    assert!(receipt.emits(Erc1155::ApprovalForAll {
+        account: alice_addr,
+        operator: bob_addr,
+        approved: approved_value,
+    }));
+
+    let Erc1155::isApprovedForAllReturn { approved } =
+        contract.isApprovedForAll(alice_addr, bob_addr).call().await?;
+    assert_eq!(approved_value, approved);
+
+    Ok(())
+}

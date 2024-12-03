@@ -27,6 +27,8 @@ sol!(
         error ERC1155InvalidReceiver(address receiver);
         error ERC1155MissingApprovalForAll(address operator, address owner);
         error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 tokenId);
+        error EnforcedPause();
+        error ExpectedPause();
 
         #[derive(Debug, PartialEq)]
         event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
@@ -36,5 +38,10 @@ sol!(
         event ApprovalForAll(address indexed account, address indexed operator, bool approved);
         #[derive(Debug, PartialEq)]
         event URI(string value, uint256 indexed id);
+        #[derive(Debug, PartialEq)]
+        event Paused(address account);
+        #[derive(Debug, PartialEq)]
+        event Unpaused(address account);
+
 }
 );

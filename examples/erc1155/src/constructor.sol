@@ -6,7 +6,7 @@ contract Erc1155Example {
     mapping(address => mapping(address => bool)) private _isApprovedForAll;
 
     string private _uri;
-    bool _paused;
+    bool private _paused;
 
     constructor(string memory uri_) {
         _uri = uri_;
