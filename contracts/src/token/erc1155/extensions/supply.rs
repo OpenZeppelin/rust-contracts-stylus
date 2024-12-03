@@ -673,7 +673,7 @@ mod tests {
         (0..size).map(|_| U256::from(rand::random::<u128>())).collect()
     }
 
-    fn setup(
+    fn init(
         contract: &mut Erc1155Supply,
         receiver: Address,
         size: usize,
@@ -702,7 +702,7 @@ mod tests {
 
     #[motsu::test]
     fn after_mint_single(contract: Erc1155Supply) {
-        let (token_ids, values) = setup(contract, ALICE, 1);
+        let (token_ids, values) = init(contract, ALICE, 1);
         assert_eq!(values[0], contract.balance_of(ALICE, token_ids[0]));
         assert_eq!(values[0], contract.total_supply(token_ids[0]));
         assert_eq!(values[0], contract.total_supply_all());
@@ -711,7 +711,7 @@ mod tests {
 
     #[motsu::test]
     fn after_mint_batch(contract: Erc1155Supply) {
-        let (token_ids, values) = setup(contract, ALICE, 4);
+        let (token_ids, values) = init(contract, ALICE, 4);
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
             assert_eq!(value, contract.balance_of(ALICE, token_id));
             assert_eq!(value, contract.total_supply(token_id));
@@ -767,7 +767,7 @@ mod tests {
 
     #[motsu::test]
     fn after_burn_single(contract: Erc1155Supply) {
-        let (token_ids, values) = setup(contract, ALICE, 1);
+        let (token_ids, values) = init(contract, ALICE, 1);
         contract._burn(ALICE, token_ids[0], values[0]).expect("should burn");
 
         assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
@@ -777,7 +777,7 @@ mod tests {
 
     #[motsu::test]
     fn after_burn_batch(contract: Erc1155Supply) {
-        let (token_ids, values) = setup(contract, ALICE, 4);
+        let (token_ids, values) = init(contract, ALICE, 4);
         contract
             ._burn_batch(ALICE, token_ids.clone(), values.clone())
             .expect("should burn batch");
@@ -794,7 +794,7 @@ mod tests {
 
     #[motsu::test]
     fn burn_reverts_when_invalid_sender(contract: Erc1155Supply) {
-        let (token_ids, values) = setup(contract, ALICE, 1);
+        let (token_ids, values) = init(contract, ALICE, 1);
         let invalid_sender = Address::ZERO;
 
         let err = contract
