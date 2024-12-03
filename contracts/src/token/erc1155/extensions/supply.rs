@@ -261,7 +261,7 @@ impl Erc1155Supply {
         }
 
         if to.is_zero() {
-            for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
+            for (token_id, &value) in token_ids.into_iter().zip(values.iter()) {
                 /*
                 SAFETY: Overflow not possible:
                 values[i] <= balance_of(from, token_ids[i]) <= total_supply(token_ids[i])
@@ -269,7 +269,7 @@ impl Erc1155Supply {
                 self._total_supply.setter(token_id).sub_assign_unchecked(value);
             }
 
-            let total_burn_value: U256 = values.iter().sum();
+            let total_burn_value: U256 = values.into_iter().sum();
             /*
             SAFETY: Overflow not possible:
             total_burn_value = sum_i(values[i]) <= sum_i(total_supply(ids[i])) <= total_supply_all
