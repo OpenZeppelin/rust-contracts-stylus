@@ -44,13 +44,11 @@ impl Erc1155UriStorage {
     ) -> String {
         let token_uri = self._token_uris.get(token_id).get_string();
 
-        let uri = if token_uri.is_empty() {
+        if token_uri.is_empty() {
             metadata_uri.uri(token_id)
         } else {
             self._base_uri.get_string() + &token_uri
-        };
-
-        uri
+        }
     }
 
     /// Sets `token_uri` as the tokenURI of `token_id`.
