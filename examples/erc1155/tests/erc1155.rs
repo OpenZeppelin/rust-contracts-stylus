@@ -2184,7 +2184,13 @@ async fn support_interface(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn pauses(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.pause())?;
@@ -2200,7 +2206,13 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn unpauses(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let _ = watch!(contract.pause())?;
