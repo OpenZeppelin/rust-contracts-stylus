@@ -26,6 +26,7 @@ sol!("../examples/erc1155-metadata-uri/src/constructor.sol");
 
 const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 const BASE_URI: &str = "https://github.com";
+const TOKEN_URI: &str = "/some/token/uri";
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     let reports = run_with(CacheOpt::None).await?;
@@ -57,13 +58,12 @@ pub async fn run_with(
     let contract = Erc1155MetadataUri::new(contract_addr, &alice_wallet);
 
     let token_id = uint!(1_U256);
-    let token_uri = "/some/token/uri".to_string();
 
     // IMPORTANT: Order matters!
     use Erc1155MetadataUri::*;
     #[rustfmt::skip]
     let receipts = vec![
-        (setTokenURICall::SIGNATURE, receipt!(contract.setTokenURI(token_id, token_uri))?),
+        (setTokenURICall::SIGNATURE, receipt!(contract.setTokenURI(token_id, TOKEN_URI.to_owned()))?),
         (setBaseURICall::SIGNATURE, receipt!(contract.setBaseURI(BASE_URI.to_owned()))?),
         (uriCall::SIGNATURE, receipt!(contract.uri(token_id))?),
     ];
