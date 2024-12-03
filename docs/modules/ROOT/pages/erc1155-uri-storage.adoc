@@ -1,0 +1,91 @@
+= ERC-1155 URI Storage
+
+The OpenZeppelin xref:erc1155.adoc[ERC-1155] URI Storage extension is needed to manage and store URIs for individual tokens. This extension allows each token to have its own unique URI,
+which can point to metadata about the token, such as images, descriptions, and other attributes.
+This is particularly useful for non-fungible tokens (NFTs) where each token is unique and may have different metadata.
+
+[[usage]]
+== Usage
+
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/token/erc1155/extensions/uri_storage/index.html[URI Storage] flavour,
+your token should also use https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[`ERC-1155 Metadata URI`] extension to provide additional URI metadata for each token.
+You need to create a specified contract as follows:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc1155::{
+    extensions::{Erc1155MetadataUri, Erc1155UriStorage, IErc1155Burnable},
+    Erc1155,
+};
+use stylus_sdk::{
+    abi::Bytes,
+    prelude::{entrypoint, public, sol_storage},
+};
+
+sol_storage! {
+    #[entrypoint]
+    struct Erc1155Example {
+        #[borrow]
+        Erc1155 erc1155;
+        #[borrow]
+        Erc1155MetadataUri metadata_uri;
+        Erc1155UriStorage uri_storage;
+    }
+}
+
+#[public]
+#[inherit(Erc1155, Erc1155MetadataUri)]
+impl Erc1155Example {
+    pub fn mint(
+        &mut self,
+        to: Address,
+        token_id: U256,
+        amount: U256,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
+        self.erc1155._mint(to, token_id, amount, &data)?;
+        Ok(())
+    }
+
+    fn burn(
+        &mut self,
+        account: Address,
+        token_id: U256,
+        value: U256,
+    ) -> Result<(), Vec<u8>> {
+        self.erc1155.burn(account, token_id, value)?;
+        Ok(())
+    }
+
+    pub fn uri(&self, token_id: U256) -> String {
+        self.uri_storage.uri(token_id, &self.metadata_uri)
+    }
+
+    #[selector(name = "setTokenURI")]
+    pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+        self.uri_storage.set_token_uri(token_id, token_uri, &self.metadata_uri)
+    }
+}
+----
+
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
+Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc1155Example {
+    // ...
+
+    string private _uri;
+    string private _baseUri;
+
+    mapping(uint256 => string) _tokenUris;
+
+    constructor(string memory uri_, string memory baseUri_) {
+        // ...
+        _uri = uri_;
+        _baseUri = baseUri_;
+        // ...
+    }
+}
+----
