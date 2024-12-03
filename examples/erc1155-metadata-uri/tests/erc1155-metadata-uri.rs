@@ -22,7 +22,7 @@ fn ctr(uri: &str, base_uri: &str) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn uri_returns_metadata_uri_for_non_existent_token(
+async fn uri_returns_metadata_uri_when_token_uri_is_not_set(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice

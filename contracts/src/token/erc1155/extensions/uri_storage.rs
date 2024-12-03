@@ -101,7 +101,7 @@ mod tests {
     }
 
     sol_storage! {
-        struct Erc1155MetadataExample {
+        struct Erc1155Example {
             Erc1155 erc1155;
             Erc1155MetadataUri metadata_uri;
             Erc1155UriStorage uri_storage;
@@ -109,15 +109,40 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_get_uri(contract: Erc1155MetadataExample) {
+    fn uri_returns_metadata_uri_when_token_uri_is_not_set(
+        contract: Erc1155Example,
+    ) {
+        let token_id = random_token_id();
+        let uri = "https://some.metadata/token/uri";
+
+        contract.metadata_uri._uri.set_str(uri.to_owned());
+
+        assert_eq!(
+            uri,
+            contract.uri_storage.uri(token_id, &contract.metadata_uri)
+        );
+    }
+
+    #[motsu::test]
+    fn uri_returns_empty_string_when_no_uri_is_set(contract: Erc1155Example) {
         let token_id = random_token_id();
 
-        let token_uri = "https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155URIStorage".to_string();
+        assert!(contract
+            .uri_storage
+            .uri(token_id, &contract.metadata_uri)
+            .is_empty());
+    }
+
+    #[motsu::test]
+    fn uri_returns_token_uri_when_base_uri_is_empty(contract: Erc1155Example) {
+        let token_id = random_token_id();
+        let token_uri = "https://some.short/token/uri";
+
         contract
             .uri_storage
             ._token_uris
             .setter(token_id)
-            .set_str(token_uri.clone());
+            .set_str(token_uri.to_owned());
 
         assert_eq!(
             token_uri,
@@ -126,31 +151,55 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_get_uri_with_base_uri(contract: Erc1155MetadataExample) {
+    fn uri_returns_concatenated_base_uri_and_token_uri(
+        contract: Erc1155Example,
+    ) {
         let token_id = random_token_id();
+        let base_uri = "https://some.base.uri";
+        let token_uri = "/some/token/uri";
 
-        let base_uri = "https://docs.openzeppelin.com/".to_string();
-        contract.uri_storage._base_uri.set_str(base_uri.clone());
-
-        let token_uri =
-            "contracts/5.x/api/token/erc1155#ERC1155URIStorage".to_string();
+        contract.uri_storage._base_uri.set_str(base_uri.to_owned());
         contract
             .uri_storage
             ._token_uris
             .setter(token_id)
-            .set_str(token_uri.clone());
+            .set_str(token_uri.to_owned());
 
         assert_eq!(
-            base_uri + &token_uri,
+            base_uri.to_string() + token_uri,
             contract.uri_storage.uri(token_id, &contract.metadata_uri)
         );
     }
 
     #[motsu::test]
-    fn test_set_uri(contract: Erc1155MetadataExample) {
+    fn uri_ignores_metadata_uri_when_token_uri_is_set(
+        contract: Erc1155Example,
+    ) {
         let token_id = random_token_id();
+        let uri = "https://some.metadata/token/uri";
+        let token_uri = "https://some.short/token/uri";
 
-        let token_uri = "https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155URIStorage".to_string();
+        contract.metadata_uri._uri.set_str(uri.to_owned());
+        contract
+            .uri_storage
+            ._token_uris
+            .setter(token_id)
+            .set_str(token_uri.to_owned());
+
+        assert_eq!(
+            token_uri,
+            contract.uri_storage.uri(token_id, &contract.metadata_uri)
+        );
+    }
+
+    #[motsu::test]
+    fn test_set_uri(contract: Erc1155Example) {
+        let token_id = random_token_id();
+        let uri = "https://some.metadata/token/uri";
+        let token_uri = "https://some.short/token/uri".to_string();
+
+        contract.metadata_uri._uri.set_str(uri.to_owned());
+
         contract.uri_storage.set_token_uri(
             token_id,
             token_uri.clone(),
