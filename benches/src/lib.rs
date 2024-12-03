@@ -3,7 +3,7 @@ use std::process::Command;
 use alloy::{
     primitives::Address,
     rpc::types::{
-        serde_helpers::WithOtherFields, AnyReceiptEnvelope, Log,
+        serde_helpers::WithOtherFields, AnyReceiptEnvelope, Log, Receipt,
         TransactionReceipt,
     },
 };
@@ -40,7 +40,7 @@ pub enum CacheOpt {
 }
 
 type ArbTxReceipt =
-    WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Log>>>;
+    WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Receipt<Log>>>>;
 
 async fn deploy(
     account: &Account,
