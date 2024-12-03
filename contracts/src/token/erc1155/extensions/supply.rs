@@ -82,6 +82,7 @@ pub trait IErc1155Supply {
     /// Batched version of [`Erc1155::balance_of`].
     ///
     /// Re-export of [`Erc1155::balance_of_batch`].
+    #[allow(clippy::missing_errors_doc)]
     fn balance_of_batch(
         &self,
         accounts: Vec<Address>,
@@ -92,6 +93,7 @@ pub trait IErc1155Supply {
     /// to transfer the caller's tokens, according to `approved`.
     ///
     /// Re-export of [`Erc1155::set_approval_for_all`].
+    #[allow(clippy::missing_errors_doc)]
     fn set_approval_for_all(
         &mut self,
         operator: Address,
@@ -102,12 +104,14 @@ pub trait IErc1155Supply {
     /// tokens.
     ///
     /// Re-export of [`Erc1155::is_approved_for_all`].
+    #[allow(clippy::missing_errors_doc)]
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool;
 
     /// Transfers a `value` amount of tokens of type `id` from `from` to
     /// `to`.
     ///
     /// Re-export of [`Erc1155::safe_transfer_from`].
+    #[allow(clippy::missing_errors_doc)]
     fn safe_transfer_from(
         &mut self,
         from: Address,
@@ -120,6 +124,7 @@ pub trait IErc1155Supply {
     /// Batched version of [`IErc1155Supply::safe_transfer_from`].
     ///
     /// Re-export of [`Erc1155::safe_batch_transfer_from`].
+    #[allow(clippy::missing_errors_doc)]
     fn safe_batch_transfer_from(
         &mut self,
         from: Address,
