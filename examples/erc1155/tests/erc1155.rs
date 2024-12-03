@@ -52,6 +52,10 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let uri = contract.uri(U256::from(1)).call().await?.uri;
     assert_eq!(URI, uri);
 
+    let paused = contract.paused().call().await?.paused;
+
+    assert_eq!(false, paused);
+
     Ok(())
 }
 

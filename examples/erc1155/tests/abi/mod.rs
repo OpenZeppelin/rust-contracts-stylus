@@ -16,8 +16,10 @@ sol!(
         function burn(address account, uint256 id, uint256 value) external;
         function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
         function uri(uint256 id) external view returns (string memory uri);
-
         function supportsInterface(bytes4 interfaceId) external view returns (bool);
+        function paused() external view returns (bool paused);
+        function pause() external;
+        function unpause() external;
 
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
