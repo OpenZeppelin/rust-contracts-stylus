@@ -3,7 +3,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
 
-use alloc::string::String;
+use alloc::{string::String, vec::Vec};
 
 use alloy_primitives::{FixedBytes, U256};
 use alloy_sol_macro::sol;
