@@ -139,15 +139,25 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 
+/// This is the interface of the optional `Consecutive Transfer Extension` for
+/// [`Erc721`] token.
 #[interface_id]
 pub trait IErc721Consecutive {
-    /// Re-export of [`Erc721::balance_of`].
+    /// Returns the number of tokens in `owner`'s account.
+    ///
+    /// Re-export of [`IErc721::balance_of`].
     fn balance_of(&self, owner: Address) -> Result<U256, Error>;
 
-    /// Re-export of [`Erc721::owner_of`].
+    /// Returns the owner of the `token_id` token.
+    ///
+    /// Re-export of [`IErc721::owner_of`].
     fn owner_of(&self, token_id: U256) -> Result<Address, Error>;
 
-    /// Re-export of [`Erc721::safe_transfer_from`].
+    /// Safely transfers `token_id` token from `from` to `to`, checking first
+    /// that contract recipients are aware of the [`Erc721`] protocol to
+    /// prevent tokens from being forever locked.
+    ///
+    /// Re-export of [`IErc721::safe_transfer_from`].
     fn safe_transfer_from(
         &mut self,
         from: Address,
@@ -155,7 +165,9 @@ pub trait IErc721Consecutive {
         token_id: U256,
     ) -> Result<(), Error>;
 
-    /// Re-export of [`Erc721::safe_transfer_from_with_data`].
+    /// Safely transfers `token_id` token from `from` to `to`.
+    ///
+    /// Re-export of [`IErc721::safe_transfer_from_with_data`].
     #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
         &mut self,
@@ -165,6 +177,9 @@ pub trait IErc721Consecutive {
         data: Bytes,
     ) -> Result<(), Error>;
 
+    /// Transfers `token_id` token from `from` to `to`.
+    ///
+    /// Re-export of [IErc721::transfer_from].
     fn transfer_from(
         &mut self,
         from: Address,
@@ -172,16 +187,29 @@ pub trait IErc721Consecutive {
         token_id: U256,
     ) -> Result<(), Error>;
 
+    /// Gives permission to `to` to transfer `token_id` token to another
+    /// account. The approval is cleared when the token is transferred.
+    ///
+    /// Re-export of [`IErc721::approve`].
     fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error>;
 
+    /// Approve or remove `operator` as an operator for the caller.
+    ///
+    /// Re-export of [`IErc721::set_approval_for_all`].
     fn set_approval_for_all(
         &mut self,
         operator: Address,
         approved: bool,
     ) -> Result<(), Error>;
 
+    /// Returns the account approved for `token_id` token.
+    ///
+    /// Re-export of [`IErc721::get_approved`].
     fn get_approved(&self, token_id: U256) -> Result<Address, Error>;
 
+    /// Returns whether the `operator` is allowed to manage all the assets of
+    /// `owner`.
+    /// Re-export of [IErc721::is_approved_for_all].
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool;
 }
 

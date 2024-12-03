@@ -1,5 +1,5 @@
 //! Common Metadata Smart Contract.
-use alloc::{string::String, vec, vec::Vec};
+use alloc::{string::String, vec::Vec};
 
 use stylus_sdk::stylus_proc::{public, sol_storage};
 sol_storage! {
