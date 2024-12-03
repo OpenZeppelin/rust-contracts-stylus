@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc1155::{
-        extensions::{Erc1155MetadataUri, IErc1155Burnable},
+        extensions::{Erc1155MetadataUri, Erc1155UriStorage, IErc1155Burnable},
         Erc1155,
     },
     utils::introspection::erc165::IErc165,
@@ -23,6 +23,7 @@ sol_storage! {
         Erc1155 erc1155;
         #[borrow]
         Erc1155MetadataUri metadata_uri;
+        Erc1155UriStorage uri_storage;
     }
 }
 
@@ -88,5 +89,9 @@ impl Erc1155Example {
     pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc1155::supports_interface(interface_id)
             || Erc1155MetadataUri::supports_interface(interface_id)
+    }
+
+    pub fn uri(&self, token_id: U256) -> String {
+        self.uri_storage.uri(token_id, &self.metadata_uri)
     }
 }
