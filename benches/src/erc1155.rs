@@ -3,7 +3,7 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
     uint,
 };
 use e2e::{receipt, Account};
@@ -26,13 +26,8 @@ sol!(
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
         function burn(address account, uint256 id, uint256 value) external;
         function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
-        function uri(uint256 id) external view returns (string memory uri);
     }
 );
-
-sol!("../examples/erc1155/src/constructor.sol");
-
-const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     let reports = run_with(CacheOpt::None).await?;
@@ -102,7 +97,6 @@ pub async fn run_with(
         // We should burn Bob's tokens on behalf of Bob, not Alice.
         (burnCall::SIGNATURE, receipt!(contract_bob.burn(bob_addr, token_1, value_1))?),
         (burnBatchCall::SIGNATURE, receipt!(contract_bob.burnBatch(bob_addr, ids, values))?),
-        (uriCall::SIGNATURE, receipt!(contract.uri(token_1))?),
     ];
 
     receipts
@@ -115,7 +109,5 @@ async fn deploy(
     account: &Account,
     cache_opt: CacheOpt,
 ) -> eyre::Result<Address> {
-    let args = Erc1155Example::constructorCall { uri_: URI.to_owned() };
-    let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc1155", Some(args), cache_opt).await
+    crate::deploy(account, "erc1155", None, cache_opt).await
 }
