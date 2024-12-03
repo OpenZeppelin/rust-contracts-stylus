@@ -10,8 +10,7 @@ contract Erc1155MetadataUriExample {
 
     mapping(uint256 => string) _tokenUris;
     
-    constructor(string memory uri_, string memory baseUri_) {
+    constructor(string memory uri_) {
         _uri = uri_;
-        _baseUri = baseUri_;
     }
 }

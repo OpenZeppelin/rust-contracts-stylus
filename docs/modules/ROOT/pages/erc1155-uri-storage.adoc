@@ -41,6 +41,11 @@ impl Erc1155MetadataUriExample {
     pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self.uri_storage.set_token_uri(token_id, token_uri, &self.metadata_uri)
     }
+
+    #[selector(name = "setBaseURI")]
+    pub fn set_base_uri(&mut self, base_uri: String) {
+        self.uri_storage.set_base_uri(base_uri)
+    }
 }
 ----
 
@@ -57,10 +62,9 @@ contract Erc1155Example {
 
     mapping(uint256 => string) _tokenUris;
 
-    constructor(string memory uri_, string memory baseUri_) {
+    constructor(string memory uri_) {
         // ...
         _uri = uri_;
-        _baseUri = baseUri_;
         // ...
     }
 }

@@ -18,13 +18,14 @@ sol!(
     contract Erc1155MetadataUri {
         function uri(uint256 id) external view returns (string memory uri);
         function setTokenURI(uint256 tokenId, string memory tokenURI) external;
+        function setBaseURI(string memory tokenURI) external;
     }
 );
 
 sol!("../examples/erc1155-metadata-uri/src/constructor.sol");
 
 const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
-const BASE_URI: &str = "https://github.com/";
+const BASE_URI: &str = "https://github.com";
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     let reports = run_with(CacheOpt::None).await?;
@@ -63,6 +64,7 @@ pub async fn run_with(
     #[rustfmt::skip]
     let receipts = vec![
         (setTokenURICall::SIGNATURE, receipt!(contract.setTokenURI(token_id, token_uri))?),
+        (setBaseURICall::SIGNATURE, receipt!(contract.setBaseURI(BASE_URI.to_owned()))?),
         (uriCall::SIGNATURE, receipt!(contract.uri(token_id))?),
     ];
 
@@ -76,10 +78,8 @@ async fn deploy(
     account: &Account,
     cache_opt: CacheOpt,
 ) -> eyre::Result<Address> {
-    let args = Erc1155MetadataUriExample::constructorCall {
-        uri_: URI.to_owned(),
-        baseUri_: BASE_URI.to_owned(),
-    };
+    let args =
+        Erc1155MetadataUriExample::constructorCall { uri_: URI.to_owned() };
     let args = alloy::hex::encode(args.abi_encode());
     crate::deploy(account, "erc1155-metadata-uri", Some(args), cache_opt).await
 }

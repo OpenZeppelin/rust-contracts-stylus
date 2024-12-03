@@ -7,6 +7,7 @@ sol!(
         #[derive(Debug)]
         function uri(uint256 id) external view returns (string memory uri);
         function setTokenURI(uint256 tokenId, string memory tokenURI) external;
+        function setBaseURI(string memory tokenURI) external;
 
         function supportsInterface(bytes4 interfaceId) external view returns (bool);
 

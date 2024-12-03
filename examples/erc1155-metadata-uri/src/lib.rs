@@ -25,11 +25,6 @@ sol_storage! {
 #[public]
 #[inherit(Erc1155, Erc1155MetadataUri)]
 impl Erc1155MetadataUriExample {
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc1155::supports_interface(interface_id)
-            || Erc1155MetadataUri::supports_interface(interface_id)
-    }
-
     pub fn uri(&self, token_id: U256) -> String {
         self.uri_storage.uri(token_id, &self.metadata_uri)
     }
@@ -37,5 +32,15 @@ impl Erc1155MetadataUriExample {
     #[selector(name = "setTokenURI")]
     pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self.uri_storage.set_token_uri(token_id, token_uri, &self.metadata_uri)
+    }
+
+    #[selector(name = "setBaseURI")]
+    pub fn set_base_uri(&mut self, base_uri: String) {
+        self.uri_storage.set_base_uri(base_uri)
+    }
+
+    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc1155::supports_interface(interface_id)
+            || Erc1155MetadataUri::supports_interface(interface_id)
     }
 }

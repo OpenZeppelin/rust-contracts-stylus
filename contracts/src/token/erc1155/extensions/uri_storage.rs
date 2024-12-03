@@ -82,7 +82,7 @@ impl Erc1155UriStorage {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `base_uri` - New base URI.
-    pub fn _set_base_uri(&mut self, base_uri: String) {
+    pub fn set_base_uri(&mut self, base_uri: String) {
         self._base_uri.set_str(base_uri);
     }
 }
@@ -215,7 +215,7 @@ mod tests {
     #[motsu::test]
     fn test_set_base_uri(contract: Erc1155UriStorage) {
         let base_uri = "https://docs.openzeppelin.com/".to_string();
-        contract._set_base_uri(base_uri.clone());
+        contract.set_base_uri(base_uri.clone());
 
         assert_eq!(base_uri, contract._base_uri.get_string());
     }

@@ -2,7 +2,7 @@
 
 use abi::Erc1155;
 use alloy::{primitives::U256, sol};
-use e2e::{receipt, Account, EventExt, ReceiptExt};
+use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
 
 use crate::Erc1155MetadataUriExample::constructorCall;
 
@@ -13,8 +13,8 @@ sol!("src/constructor.sol");
 const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 const BASE_URI: &str = "https://github.com";
 
-fn ctr(uri: &str, base_uri: &str) -> constructorCall {
-    constructorCall { uri_: uri.to_owned(), baseUri_: base_uri.to_owned() }
+fn ctr(uri: &str) -> constructorCall {
+    constructorCall { uri_: uri.to_owned() }
 }
 
 // ============================================================================
@@ -27,7 +27,7 @@ async fn uri_returns_metadata_uri_when_token_uri_is_not_set(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI, ""))
+        .with_constructor(ctr(URI))
         .deploy()
         .await?
         .address()?;
@@ -48,7 +48,7 @@ async fn uri_returns_empty_string_when_no_uri_is_set(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr("", ""))
+        .with_constructor(ctr(""))
         .deploy()
         .await?
         .address()?;
@@ -70,7 +70,7 @@ async fn uri_returns_concatenated_base_uri_and_token_uri(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr("", BASE_URI))
+        .with_constructor(ctr(""))
         .deploy()
         .await?
         .address()?;
@@ -80,6 +80,8 @@ async fn uri_returns_concatenated_base_uri_and_token_uri(
     let token_id = U256::from(1);
     let token_uri = "/some/token/uri";
     let expected_uri = BASE_URI.to_owned() + token_uri;
+
+    let _ = watch!(contract.setBaseURI(BASE_URI.to_owned()))?;
 
     let receipt =
         receipt!(contract.setTokenURI(token_id, token_uri.to_owned()))?;
@@ -100,7 +102,7 @@ async fn uri_returns_token_uri_when_base_uri_is_empty(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr("", ""))
+        .with_constructor(ctr(""))
         .deploy()
         .await?
         .address()?;
@@ -129,7 +131,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI, BASE_URI))
+        .with_constructor(ctr(URI))
         .deploy()
         .await?
         .address()?;
@@ -139,6 +141,8 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
     let token_id = U256::from(1);
     let token_uri = "/some/token/uri";
     let expected_uri = BASE_URI.to_owned() + token_uri;
+
+    let _ = watch!(contract.setBaseURI(BASE_URI.to_owned()))?;
 
     let receipt =
         receipt!(contract.setTokenURI(token_id, token_uri.to_owned()))?;
@@ -161,7 +165,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
 async fn support_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(URI, BASE_URI))
+        .with_constructor(ctr(URI))
         .deploy()
         .await?
         .address()?;
