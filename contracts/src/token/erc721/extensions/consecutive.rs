@@ -881,16 +881,21 @@ mod tests {
     use alloy_primitives::{address, uint, Address, U256};
     use stylus_sdk::msg;
 
-    use crate::token::{
-        erc721,
-        erc721::{
-            extensions::consecutive::{
-                ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
+    use crate::{
+        token::{
+            erc721,
+            erc721::{
+                extensions::consecutive::{
+                    ERC721ExceededMaxBatchMint, Erc721Consecutive, Error,
+                    IErc721Consecutive, U96,
+                },
+                tests::random_token_id,
+                ERC721IncorrectOwner, ERC721InvalidApprover,
+                ERC721InvalidReceiver, ERC721InvalidSender,
+                ERC721NonexistentToken,
             },
-            tests::random_token_id,
-            ERC721IncorrectOwner, ERC721InvalidApprover, ERC721InvalidReceiver,
-            ERC721InvalidSender, ERC721NonexistentToken, IErc721,
         },
+        utils::introspection::erc165::IErc165,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
