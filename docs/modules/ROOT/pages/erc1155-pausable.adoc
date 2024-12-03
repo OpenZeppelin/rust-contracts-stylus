@@ -1,19 +1,19 @@
-#![cfg_attr(not(test), no_main)]
-extern crate alloc;
+= ERC-1155 Pausable
 
-use alloc::vec::Vec;
+ERC1155 token with pausable token transfers, minting, and burning.
 
-use alloy_primitives::{Address, FixedBytes, U256};
+Useful for scenarios such as preventing trades until the end of an evaluation period, or having an emergency switch for freezing all token transfers in the event of a large bug.
+
+[[usage]]
+== Usage
+
+In order to make your ERC1155 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC1155 token functions as follows:
+
+[source,rust]
+----
 use openzeppelin_stylus::{
-    token::erc1155::{
-        extensions::{Erc1155MetadataUri, IErc1155Burnable},
-        Erc1155, IErc1155,
-    },
-    utils::{introspection::erc165::IErc165, Pausable},
-};
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, public, sol_storage},
+    token::erc1155::{Erc1155, IErc1155},
+    utils::Pausable,
 };
 
 sol_storage! {
@@ -22,14 +22,12 @@ sol_storage! {
         #[borrow]
         Erc1155 erc1155;
         #[borrow]
-        Erc1155MetadataUri metadata_uri;
-        #[borrow]
         Pausable pausable;
     }
 }
 
 #[public]
-#[inherit(Erc1155, Erc1155MetadataUri, Pausable)]
+#[inherit(Erc1155, Pausable)]
 impl Erc1155Example {
     pub fn mint(
         &mut self,
@@ -38,7 +36,9 @@ impl Erc1155Example {
         amount: U256,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
+        // ...
         self.pausable.when_not_paused()?;
+        // ...
         self.erc1155._mint(to, token_id, amount, &data)?;
         Ok(())
     }
@@ -50,22 +50,10 @@ impl Erc1155Example {
         amounts: Vec<U256>,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
+        // ...
         self.pausable.when_not_paused()?;
+        // ...
         self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
-        Ok(())
-    }
-
-    pub fn set_operator_approvals(
-        &mut self,
-        owner: Address,
-        operator: Address,
-        approved: bool,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155
-            ._operator_approvals
-            .setter(owner)
-            .setter(operator)
-            .set(approved);
         Ok(())
     }
 
@@ -75,7 +63,9 @@ impl Erc1155Example {
         token_id: U256,
         value: U256,
     ) -> Result<(), Vec<u8>> {
+        // ...
         self.pausable.when_not_paused()?;
+        // ...
         self.erc1155.burn(account, token_id, value)?;
         Ok(())
     }
@@ -86,7 +76,9 @@ impl Erc1155Example {
         token_ids: Vec<U256>,
         values: Vec<U256>,
     ) -> Result<(), Vec<u8>> {
+        // ...
         self.pausable.when_not_paused()?;
+        // ...
         self.erc1155.burn_batch(account, token_ids, values)?;
         Ok(())
     }
@@ -99,7 +91,9 @@ impl Erc1155Example {
         value: U256,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
+        // ...
         self.pausable.when_not_paused()?;
+        // ...
         self.erc1155.safe_transfer_from(from, to, id, value, data)?;
         Ok(())
     }
@@ -112,13 +106,24 @@ impl Erc1155Example {
         values: Vec<U256>,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
+        // ...
         self.pausable.when_not_paused()?;
+        // ...
         self.erc1155.safe_batch_transfer_from(from, to, ids, values, data)?;
         Ok(())
     }
+}
+----
 
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc1155::supports_interface(interface_id)
-            || Erc1155MetadataUri::supports_interface(interface_id)
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc1155Example {
+    bool private _paused;
+
+    constructor() {
+        _paused = false;
     }
 }
+----

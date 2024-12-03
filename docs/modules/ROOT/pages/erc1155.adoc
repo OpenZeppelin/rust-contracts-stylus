@@ -9,3 +9,6 @@ Additionally, there are multiple custom extensions, including:
 
 * xref:erc1155-burnable.adoc[ERC-1155 Burnable]: Optional Burnable extension of the ERC-1155 standard.
 * xref:erc1155-metadata-uri.adoc[ERC-1155 Metadata URI]: Optional extension that adds a token metadata URI.
+* xref:erc1155-pausable.adoc[ERC-1155 Pausable]: A primitive to pause contract operation like token transfers, minting and burning.
+
+
