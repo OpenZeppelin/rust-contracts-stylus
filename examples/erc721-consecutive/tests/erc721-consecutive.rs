@@ -4,7 +4,7 @@ use alloy::{
     primitives::{Address, U256},
     sol,
 };
-use alloy_primitives::uint;
+use alloy_primitives::{uint, aliases::U96};
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
 
 use crate::{abi::Erc721, Erc721ConsecutiveExample::constructorCall};
@@ -24,9 +24,9 @@ fn random_token_id() -> U256 {
 fn ctr(receivers: Vec<Address>, amounts: Vec<u128>) -> constructorCall {
     constructorCall {
         receivers,
-        amounts,
-        firstConsecutiveId: FIRST_CONSECUTIVE_ID,
-        maxBatchSize: MAX_BATCH_SIZE,
+        amounts: amounts.iter().map(|v| U96::from(*v)).collect(),
+        firstConsecutiveId: U96::from(FIRST_CONSECUTIVE_ID),
+        maxBatchSize: U96::from(MAX_BATCH_SIZE),
     }
 }
 
