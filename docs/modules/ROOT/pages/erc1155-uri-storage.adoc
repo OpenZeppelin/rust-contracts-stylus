@@ -14,17 +14,14 @@ You need to create a specified contract as follows:
 [source,rust]
 ----
 use openzeppelin_stylus::token::erc1155::{
-    extensions::{Erc1155MetadataUri, Erc1155UriStorage, IErc1155Burnable},
+    extensions::{Erc1155MetadataUri, Erc1155UriStorage},
     Erc1155,
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, public, sol_storage},
-};
+use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
 sol_storage! {
     #[entrypoint]
-    struct Erc1155Example {
+    struct Erc1155MetadataUriExample {
         #[borrow]
         Erc1155 erc1155;
         #[borrow]
@@ -35,28 +32,7 @@ sol_storage! {
 
 #[public]
 #[inherit(Erc1155, Erc1155MetadataUri)]
-impl Erc1155Example {
-    pub fn mint(
-        &mut self,
-        to: Address,
-        token_id: U256,
-        amount: U256,
-        data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155._mint(to, token_id, amount, &data)?;
-        Ok(())
-    }
-
-    fn burn(
-        &mut self,
-        account: Address,
-        token_id: U256,
-        value: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155.burn(account, token_id, value)?;
-        Ok(())
-    }
-
+impl Erc1155MetadataUriExample {
     pub fn uri(&self, token_id: U256) -> String {
         self.uri_storage.uri(token_id, &self.metadata_uri)
     }
