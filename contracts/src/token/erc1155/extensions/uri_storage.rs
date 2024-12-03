@@ -66,7 +66,7 @@ impl Erc1155UriStorage {
     /// # Events
     ///
     /// Emits a [`URI`] event.
-    pub fn _set_token_uri(
+    pub fn set_token_uri(
         &mut self,
         token_id: U256,
         token_uri: String,
@@ -151,7 +151,7 @@ mod tests {
         let token_id = random_token_id();
 
         let token_uri = "https://docs.openzeppelin.com/contracts/5.x/api/token/erc1155#ERC1155URIStorage".to_string();
-        contract.uri_storage._set_token_uri(
+        contract.uri_storage.set_token_uri(
             token_id,
             token_uri.clone(),
             &contract.metadata_uri,

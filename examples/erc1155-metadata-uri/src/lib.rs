@@ -5,7 +5,10 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
-    token::erc1155::{extensions::IErc1155Burnable, Erc1155},
+    token::erc1155::{
+        extensions::{Erc1155MetadataUri, Erc1155UriStorage, IErc1155Burnable},
+        Erc1155,
+    },
     utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{
@@ -15,15 +18,18 @@ use stylus_sdk::{
 
 sol_storage! {
     #[entrypoint]
-    struct Erc1155Example {
+    struct Erc1155MetadataUriExample {
         #[borrow]
         Erc1155 erc1155;
+        #[borrow]
+        Erc1155MetadataUri metadata_uri;
+        Erc1155UriStorage uri_storage;
     }
 }
 
 #[public]
-#[inherit(Erc1155)]
-impl Erc1155Example {
+#[inherit(Erc1155, Erc1155MetadataUri)]
+impl Erc1155MetadataUriExample {
     pub fn mint(
         &mut self,
         to: Address,
@@ -32,31 +38,6 @@ impl Erc1155Example {
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
         self.erc1155._mint(to, token_id, amount, &data)?;
-        Ok(())
-    }
-
-    pub fn mint_batch(
-        &mut self,
-        to: Address,
-        token_ids: Vec<U256>,
-        amounts: Vec<U256>,
-        data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
-        Ok(())
-    }
-
-    pub fn set_operator_approvals(
-        &mut self,
-        owner: Address,
-        operator: Address,
-        approved: bool,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155
-            ._operator_approvals
-            .setter(owner)
-            .setter(operator)
-            .set(approved);
         Ok(())
     }
 
@@ -70,17 +51,17 @@ impl Erc1155Example {
         Ok(())
     }
 
-    fn burn_batch(
-        &mut self,
-        account: Address,
-        token_ids: Vec<U256>,
-        values: Vec<U256>,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155.burn_batch(account, token_ids, values)?;
-        Ok(())
-    }
-
     pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc1155::supports_interface(interface_id)
+            || Erc1155MetadataUri::supports_interface(interface_id)
+    }
+
+    pub fn uri(&self, token_id: U256) -> String {
+        self.uri_storage.uri(token_id, &self.metadata_uri)
+    }
+
+    #[selector(name = "setTokenURI")]
+    pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+        self.uri_storage.set_token_uri(token_id, token_uri, &self.metadata_uri)
     }
 }
