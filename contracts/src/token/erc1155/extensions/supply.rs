@@ -14,6 +14,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     msg,
@@ -43,17 +44,19 @@ sol_storage! {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc1155Supply {}
 
-#[public]
-impl Erc1155Supply {
+/// Required interface of a [`Erc1155Supply`] contract.
+#[interface_id]
+pub trait IErc1155Supply {
+    /// The error type associated to this trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Total value of tokens in with a given id.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `id` - Token id as a number.
-    pub fn total_supply(&self, id: U256) -> U256 {
-        self._total_supply.get(id)
-    }
+    fn total_supply(&self, id: U256) -> U256;
 
     /// Total value of tokens.
     ///
@@ -61,9 +64,7 @@ impl Erc1155Supply {
     ///
     /// * `&self` - Read access to the contract's state.
     #[selector(name = "totalSupply")]
-    pub fn total_supply_all(&self) -> U256 {
-        *self._total_supply_all
-    }
+    fn total_supply_all(&self) -> U256;
 
     /// Indicates whether any token exist with a given id, or not.
     ///
@@ -71,42 +72,86 @@ impl Erc1155Supply {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `id` - Token id as a number.
-    pub fn exists(&self, id: U256) -> bool {
-        self.total_supply(id) > U256::ZERO
-    }
+    fn exists(&self, id: U256) -> bool;
 
     /// Returns the value of tokens of type `id` owned by `account`.
     ///
     /// Re-export of [`Erc1155::balance_of`]
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `account` - Account of the token's owner.
-    /// * `id` - Token id as a number.
-    pub fn balance_of(&self, account: Address, id: U256) -> U256 {
-        self.erc1155.balance_of(account, id)
-    }
+    fn balance_of(&self, account: Address, id: U256) -> U256;
 
     /// Batched version of [`Erc1155::balance_of`].
     ///
-    /// Re-export of [`Erc1155::balance_of_batch`]
+    /// Re-export of [`Erc1155::balance_of_batch`].
+    fn balance_of_batch(
+        &self,
+        accounts: Vec<Address>,
+        ids: Vec<U256>,
+    ) -> Result<Vec<U256>, erc1155::Error>;
+
+    /// Grants or revokes permission to `operator`
+    /// to transfer the caller's tokens, according to `approved`.
     ///
-    /// # Arguments
+    /// Re-export of [`Erc1155::set_approval_for_all`].
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), erc1155::Error>;
+
+    /// Returns true if `operator` is approved to transfer `account`'s
+    /// tokens.
     ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `accounts` - All account of the tokens' owner.
-    /// * `ids` - All token identifiers.
+    /// Re-export of [`Erc1155::is_approved_for_all`].
+    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool;
+
+    /// Transfers a `value` amount of tokens of type `id` from `from` to
+    /// `to`.
     ///
-    /// # Requirements
+    /// Re-export of [`Erc1155::safe_transfer_from`].
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), erc1155::Error>;
+
+    /// Batched version of [`IErc1155Supply::safe_transfer_from`].
     ///
-    /// * `accounts` and `ids` must have the same length.
-    ///
-    /// # Errors
-    ///
-    /// * If the length of `accounts` is not equal to the length of `ids`,
-    /// then the error [`erc1155::Error::InvalidArrayLength`] is returned.
-    pub fn balance_of_batch(
+    /// Re-export of [`Erc1155::safe_batch_transfer_from`].
+    fn safe_batch_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), erc1155::Error>;
+}
+
+#[public]
+impl IErc1155Supply for Erc1155Supply {
+    type Error = erc1155::Error;
+
+    fn total_supply(&self, id: U256) -> U256 {
+        self._total_supply.get(id)
+    }
+
+    #[selector(name = "totalSupply")]
+    fn total_supply_all(&self) -> U256 {
+        *self._total_supply_all
+    }
+
+    fn exists(&self, id: U256) -> bool {
+        self.total_supply(id) > U256::ZERO
+    }
+
+    fn balance_of(&self, account: Address, id: U256) -> U256 {
+        self.erc1155.balance_of(account, id)
+    }
+
+    fn balance_of_batch(
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
@@ -114,32 +159,7 @@ impl Erc1155Supply {
         self.erc1155.balance_of_batch(accounts, ids)
     }
 
-    /// Grants or revokes permission to `operator`
-    /// to transfer the caller's tokens, according to `approved`.
-    ///
-    /// Re-export of [`Erc1155::set_approval_for_all`]
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `operator` - Account to add to the set of authorized operators.
-    /// * `approved` - Flag that determines whether or not permission will be
-    ///   granted to `operator`. If true, this means `operator` will be allowed
-    ///   to manage `msg::sender()`'s assets.
-    ///
-    /// # Errors
-    ///
-    /// * If `operator` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidOperator`] is returned.
-    ///
-    /// # Requirements
-    ///
-    /// * The `operator` cannot be the `Address::ZERO`.
-    ///
-    /// # Events
-    ///
-    /// Emits an [`erc1155::ApprovalForAll`] event.
-    pub fn set_approval_for_all(
+    fn set_approval_for_all(
         &mut self,
         operator: Address,
         approved: bool,
@@ -147,71 +167,11 @@ impl Erc1155Supply {
         self.erc1155.set_approval_for_all(operator, approved)
     }
 
-    /// Returns true if `operator` is approved to transfer `account`'s
-    /// tokens.
-    ///
-    /// Re-export of [`Erc1155::is_approved_for_all`]
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `account` - Account of the token's owner.
-    /// * `operator` - Account to be checked.
-    pub fn is_approved_for_all(
-        &self,
-        account: Address,
-        operator: Address,
-    ) -> bool {
+    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
         self.erc1155.is_approved_for_all(account, operator)
     }
 
-    /// Transfers a `value` amount of tokens of type `id` from `from` to
-    /// `to`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to transfer tokens from.
-    /// * `to` - Account of the recipient.
-    /// * `id` - Token id as a number.
-    /// * `value` - Amount of tokens to be transferred.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If `from` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidSender`] is returned.
-    /// If the `from` is not the caller (`msg::sender()`),
-    /// and the caller does not have the right to approve, then the error
-    /// [`erc1155::Error::MissingApprovalForAll`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_received`] hasn't returned
-    /// its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    ///
-    /// # Requirements
-    ///
-    /// * `to` cannot be the `Address::ZERO`.
-    /// * If the caller is not `from`, it must have been approved to spend
-    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
-    /// * `from` must have a balance of tokens of type `id` of at least `value`
-    ///   amount.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`erc1155::IERC1155Receiver::on_erc_1155_received`] and return the
-    ///   acceptance value.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event.
-    ///
-    /// # Panics
-    ///
-    /// Should not panic.
-    pub fn safe_transfer_from(
+    fn safe_transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -223,57 +183,7 @@ impl Erc1155Supply {
         self.do_safe_transfer_from(from, to, vec![id], vec![value], &data)
     }
 
-    /// Batched version of [`Erc1155::safe_transfer_from`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to transfer tokens from.
-    /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all tokens ids.
-    /// * `values` - Array of all amount of tokens to be transferred.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If `from` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidSender`] is returned.
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    /// If the `from` is not the caller (`msg::sender()`),
-    /// and the caller does not have the right to approve, then the error
-    /// [`erc1155::Error::MissingApprovalForAll`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] hasn't
-    /// returned its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    ///
-    /// # Requirements
-    ///
-    /// * `to` cannot be the `Address::ZERO`.
-    /// * If the caller is not `from`, it must have been approved to spend
-    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
-    /// * `from` must have a balance of tokens being transferred of at least
-    ///   transferred amount.
-    /// * `ids` and `values` must have the same length.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] and return
-    ///   the acceptance magic value.
-    ///
-    /// # Events
-    ///
-    /// Emits either a [`erc1155::TransferSingle`] or a
-    /// [`erc1155::TransferBatch`] event, depending on the length of the array
-    /// arguments.
-    ///
-    /// # Panics
-    ///
-    /// Should not panic.
-    pub fn safe_batch_transfer_from(
+    fn safe_batch_transfer_from(
         &mut self,
         from: Address,
         to: Address,
