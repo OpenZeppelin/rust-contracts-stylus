@@ -24,7 +24,7 @@ sol_storage! {
 #[public]
 #[inherit(Erc1155)]
 impl Erc1155Example {
-    pub fn mint(
+    fn mint(
         &mut self,
         to: Address,
         token_id: U256,
@@ -35,7 +35,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn mint_batch(
+    fn mint_batch(
         &mut self,
         to: Address,
         token_ids: Vec<U256>,
@@ -46,7 +46,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn set_operator_approvals(
+    fn set_operator_approvals(
         &mut self,
         owner: Address,
         operator: Address,
@@ -80,7 +80,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc1155::supports_interface(interface_id)
     }
 }

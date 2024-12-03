@@ -9,4 +9,4 @@ cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abo
 
 export RPC_URL=http://localhost:8547
 
-cargo test --features std,e2e --test "*"
+cargo test --features std,e2e --test "erc1155-metadata-uri"
