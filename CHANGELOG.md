@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Erc1155Supply` extension. #418
 - `VestingWallet` contract. #402
 - `Erc1155Burnable` extension. #417
+- `Erc1155MetadataUri` extension. #416
 
 ### Changed
 
