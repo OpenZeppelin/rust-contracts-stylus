@@ -3,13 +3,16 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 
-use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc721::{
-    extensions::{
-        Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
-        IErc721Burnable,
+use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus::{
+    token::erc721::{
+        extensions::{
+            Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
+            IErc721Burnable,
+        },
+        Erc721,
     },
-    Erc721,
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::prelude::{entrypoint, public, sol_storage};
 
@@ -47,5 +50,10 @@ impl Erc721MetadataExample {
     #[selector(name = "setTokenURI")]
     pub fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self.uri_storage._set_token_uri(token_id, token_uri)
+    }
+
+    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc721::supports_interface(interface_id)
+            || Metadata::supports_interface(interface_id)
     }
 }
