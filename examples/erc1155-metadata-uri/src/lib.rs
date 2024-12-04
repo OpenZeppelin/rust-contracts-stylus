@@ -23,7 +23,7 @@ sol_storage! {
 }
 
 #[public]
-#[inherit(Erc1155, Erc1155MetadataUri)]
+#[inherit(Erc1155)]
 impl Erc1155MetadataUriExample {
     fn uri(&self, token_id: U256) -> String {
         self.uri_storage.uri(token_id, &self.metadata_uri)
