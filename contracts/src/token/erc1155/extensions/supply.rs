@@ -202,7 +202,8 @@ impl IErc1155Supply for Erc1155Supply {
 }
 
 impl Erc1155Supply {
-    /// Extended version of [`Erc1155::_update`] that updates the supply of tokens.
+    /// Extended version of [`Erc1155::_update`] that updates the supply of
+    /// tokens.
     ///
     /// # Arguments
     ///
@@ -260,20 +261,20 @@ impl Erc1155Supply {
         if to.is_zero() {
             for (token_id, &value) in token_ids.into_iter().zip(values.iter()) {
                 /*
-                * SAFETY: Overflow not possible:
-               * values[i] <= balance_of(from, token_ids[i]) <= total_supply(token_ids[i])
+                 * SAFETY: Overflow not possible:
+                 * values[i] <= balance_of(from, token_ids[i]) <=
+                 * total_supply(token_ids[i])
                  */
                 self._total_supply.setter(token_id).sub_assign_unchecked(value);
             }
 
             let total_burn_value: U256 = values.into_iter().sum();
             /*
-            * SAFETY: Overflow not possible:
-           * total_burn_value = sum_i(values[i]) <= sum_i(total_supply(ids[i])) <= total_supply_all
+             * SAFETY: Overflow not possible:
+             * total_burn_value = sum_i(values[i]) <=
+             * sum_i(total_supply(ids[i])) <= total_supply_all
              */
-            let total_supply_all =
-                self._total_supply_all.get() - total_burn_value;
-            self._total_supply_all.set(total_supply_all);
+            self._total_supply_all.sub_assign_unchecked(total_burn_value);
         }
         Ok(())
     }
