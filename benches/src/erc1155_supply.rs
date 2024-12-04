@@ -16,6 +16,7 @@ use crate::{
 sol!(
     #[sol(rpc)]
     contract Erc1155Supply {
+        function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
         function totalSupply(uint256 id) external view returns (uint256);
         function totalSupply() external view returns (uint256);
         function exists(uint256 id) external view returns (bool);
@@ -40,6 +41,7 @@ pub async fn run_with(
     cache_opt: CacheOpt,
 ) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
+    let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
         .with_recommended_fillers()
@@ -51,11 +53,13 @@ pub async fn run_with(
     let contract = Erc1155Supply::new(contract_addr, &alice_wallet);
 
     let token = uint!(1_U256);
+    let value = uint!(100_U256);
 
     // IMPORTANT: Order matters!
     use Erc1155Supply::*;
     #[rustfmt::skip]
     let receipts = vec![
+        (mintCall::SIGNATURE, receipt!(contract.mint(alice_addr, token, value, vec![].into()))?),
         (existsCall::SIGNATURE, receipt!(contract.exists(token))?),
         (totalSupply_0Call::SIGNATURE, receipt!(contract.totalSupply_0(token))?),
         (totalSupply_1Call::SIGNATURE, receipt!(contract.totalSupply_1())?),
