@@ -76,12 +76,12 @@ pub trait IErc1155Supply {
 
     /// Returns the value of tokens of type `id` owned by `account`.
     ///
-    /// Re-export of [`Erc1155::balance_of`]
+    /// Re-export of [`IErc1155::balance_of`]
     fn balance_of(&self, account: Address, id: U256) -> U256;
 
-    /// Batched version of [`Erc1155::balance_of`].
+    /// Batched version of [`IErc1155Supply::balance_of`].
     ///
-    /// Re-export of [`Erc1155::balance_of_batch`].
+    /// Re-export of [`IErc1155::balance_of_batch`].
     #[allow(clippy::missing_errors_doc)]
     fn balance_of_batch(
         &self,
@@ -92,7 +92,7 @@ pub trait IErc1155Supply {
     /// Grants or revokes permission to `operator`
     /// to transfer the caller's tokens, according to `approved`.
     ///
-    /// Re-export of [`Erc1155::set_approval_for_all`].
+    /// Re-export of [`IErc1155::set_approval_for_all`].
     #[allow(clippy::missing_errors_doc)]
     fn set_approval_for_all(
         &mut self,
@@ -103,14 +103,14 @@ pub trait IErc1155Supply {
     /// Returns true if `operator` is approved to transfer `account`'s
     /// tokens.
     ///
-    /// Re-export of [`Erc1155::is_approved_for_all`].
+    /// Re-export of [`IErc1155::is_approved_for_all`].
     #[allow(clippy::missing_errors_doc)]
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool;
 
     /// Transfers a `value` amount of tokens of type `id` from `from` to
     /// `to`.
     ///
-    /// Re-export of [`Erc1155::safe_transfer_from`].
+    /// Re-export of [`IErc1155::safe_transfer_from`].
     #[allow(clippy::missing_errors_doc)]
     fn safe_transfer_from(
         &mut self,
@@ -123,7 +123,7 @@ pub trait IErc1155Supply {
 
     /// Batched version of [`IErc1155Supply::safe_transfer_from`].
     ///
-    /// Re-export of [`Erc1155::safe_batch_transfer_from`].
+    /// Re-export of [`IErc1155::safe_batch_transfer_from`].
     #[allow(clippy::missing_errors_doc)]
     fn safe_batch_transfer_from(
         &mut self,
@@ -202,10 +202,7 @@ impl IErc1155Supply for Erc1155Supply {
 }
 
 impl Erc1155Supply {
-    // Note: overriding `_update` requires reimplementing all of the functions
-    // that use it.
-
-    /// Override of [`Erc1155::_update`] that updates the supply of tokens.
+    /// Extended version of [`Erc1155::_update`] that updates the supply of tokens.
     ///
     /// # Arguments
     ///
@@ -263,16 +260,16 @@ impl Erc1155Supply {
         if to.is_zero() {
             for (token_id, &value) in token_ids.into_iter().zip(values.iter()) {
                 /*
-                SAFETY: Overflow not possible:
-                values[i] <= balance_of(from, token_ids[i]) <= total_supply(token_ids[i])
+                * SAFETY: Overflow not possible:
+               * values[i] <= balance_of(from, token_ids[i]) <= total_supply(token_ids[i])
                  */
                 self._total_supply.setter(token_id).sub_assign_unchecked(value);
             }
 
             let total_burn_value: U256 = values.into_iter().sum();
             /*
-            SAFETY: Overflow not possible:
-            total_burn_value = sum_i(values[i]) <= sum_i(total_supply(ids[i])) <= total_supply_all
+            * SAFETY: Overflow not possible:
+           * total_burn_value = sum_i(values[i]) <= sum_i(total_supply(ids[i])) <= total_supply_all
              */
             let total_supply_all =
                 self._total_supply_all.get() - total_burn_value;
