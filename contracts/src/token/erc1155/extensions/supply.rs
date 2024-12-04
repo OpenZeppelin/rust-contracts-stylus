@@ -786,6 +786,7 @@ mod tests {
                 contract.erc1155.balance_of(ALICE, token_id)
             );
             assert!(!contract.exists(token_id));
+            assert_eq!(U256::ZERO, contract.total_supply(token_id));
         }
         assert_eq!(U256::ZERO, contract.total_supply_all());
     }
