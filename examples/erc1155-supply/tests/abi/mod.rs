@@ -7,6 +7,8 @@ sol!(
         function balanceOf(address account, uint256 id) external view returns (uint256 balance);
         #[derive(Debug)]
         function balanceOfBatch(address[] accounts, uint256[] ids) external view returns (uint256[] memory balances);
+        function isApprovedForAll(address account, address operator) external view returns (bool approved);
+        function setApprovalForAll(address operator, bool approved) external;
         function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes memory data) external;
         function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
         function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
@@ -22,7 +24,7 @@ sol!(
         error ERC1155InvalidSender(address sender);
         error ERC1155InvalidReceiver(address receiver);
         error ERC1155MissingApprovalForAll(address operator, address owner);
-        error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 id);
+        error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 tokenId);
 
         #[derive(Debug, PartialEq)]
         event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
