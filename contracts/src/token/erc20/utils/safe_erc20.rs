@@ -415,10 +415,7 @@ mod tests {
 
     #[test]
     fn encodes_false_many_bytes() {
-        assert_eq!(
-            false,
-            SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        );
+        assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
