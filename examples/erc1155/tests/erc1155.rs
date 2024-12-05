@@ -2250,7 +2250,7 @@ async fn mint_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
         value,
         vec![0, 1, 2, 3].into()
     ))
-    .expect_err("should return EnforcedPause");
+    .expect_err("should return `EnforcedPause`");
 
     assert!(err.reverted_with(Erc1155::EnforcedPause {}));
 
