@@ -46,7 +46,7 @@ impl MyContract { }
 )]
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![deny(rustdoc::broken_intra_doc_links)]
-#![feature(coverage_attribute)]
+#![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 extern crate alloc;
 
 pub mod access;
