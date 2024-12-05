@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement `MethodError` for `safe_erc20::Error`. #402
 - Use `function_selector!` to calculate transfer type selector in `Erc1155`. #417
+- Implement `AddAssignUnchecked` and `SubAssignUnchecked` for `StorageUint`. #418
 
 ### Fixed
 
