@@ -34,7 +34,7 @@ async fn constructs(alice: Account) -> Result<()> {
 
     let AccessControl::hasRoleReturn { hasRole } =
         contract.hasRole(DEFAULT_ADMIN_ROLE.into(), alice_addr).call().await?;
-    assert_eq!(hasRole, true);
+    assert!(hasRole);
 
     Ok(())
 }

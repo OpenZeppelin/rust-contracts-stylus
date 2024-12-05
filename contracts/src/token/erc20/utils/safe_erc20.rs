@@ -410,7 +410,7 @@ mod tests {
 
     #[test]
     fn encodes_true_single_byte() {
-        assert_eq!(true, SafeErc20::encodes_true(&[1]));
+        assert!(SafeErc20::encodes_true(&[1]));
     }
 
     #[test]

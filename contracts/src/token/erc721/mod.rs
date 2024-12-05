@@ -1368,7 +1368,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             .transfer_from(BOB, alice, token_id)
@@ -1511,7 +1511,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             .safe_transfer_from(BOB, alice, token_id)
@@ -1664,7 +1664,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             .safe_transfer_from_with_data(
@@ -1845,7 +1845,7 @@ mod tests {
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
@@ -1960,7 +1960,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token");
 
         let authorized = contract._is_authorized(alice, alice, token_id);
-        assert_eq!(true, authorized);
+        assert!(authorized);
     }
 
     #[motsu::test]
@@ -1983,7 +1983,7 @@ mod tests {
             .expect("should approve Bob for operations on token");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(true, authorized);
+        assert!(authorized);
     }
 
     #[motsu::test]
@@ -1996,7 +1996,7 @@ mod tests {
             .expect("should approve Bob for operations on all Alice's tokens");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(true, authorized);
+        assert!(authorized);
     }
 
     #[motsu::test]
@@ -2183,7 +2183,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             ._transfer(BOB, alice, token_id)
@@ -2304,7 +2304,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             ._safe_transfer(BOB, alice, token_id, vec![0, 1, 2, 3].into())
@@ -2442,7 +2442,7 @@ mod tests {
         contract
             ._set_approval_for_all(alice, BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract._set_approval_for_all(alice, BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
