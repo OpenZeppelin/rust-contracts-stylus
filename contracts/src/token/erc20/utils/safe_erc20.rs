@@ -391,7 +391,7 @@ impl SafeErc20 {
     ///
     /// * `data` - Slice of bytes.
     fn encodes_true(data: &[u8]) -> bool {
-        data.split_last().map_or(false, |(last, rest)| {
+        data.split_last().is_some_and(|(last, rest)| {
             *last == 1 && rest.iter().all(|&byte| byte == 0)
         })
     }
