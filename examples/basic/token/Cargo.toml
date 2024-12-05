@@ -13,7 +13,6 @@ stylus-sdk.workspace = true
 
 [features]
 std = []
-export-abi = []
 
 [lib]
 crate-type = ["lib", "cdylib"]
