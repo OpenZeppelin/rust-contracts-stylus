@@ -16,7 +16,6 @@ sol_storage! {
     struct Erc1155MetadataUriExample {
         #[borrow]
         Erc1155 erc1155;
-        #[borrow]
         Erc1155MetadataUri metadata_uri;
         Erc1155UriStorage uri_storage;
     }
