@@ -56,7 +56,7 @@ pub fn to_typed_data_hash(
     preimage[..2].copy_from_slice(&TYPED_DATA_PREFIX);
     preimage[2..34].copy_from_slice(domain_separator);
     preimage[34..].copy_from_slice(struct_hash);
-    keccak256(&preimage)
+    keccak256(preimage)
 }
 
 /// EIP-712 Contract interface.
