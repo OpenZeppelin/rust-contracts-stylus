@@ -75,11 +75,13 @@ pub trait IEip712 {
         .finalize();
 
     /// Returns chain id.
+    #[must_use]
     fn chain_id() -> U256 {
         U256::from(block::chainid())
     }
 
     /// Returns the contract's address.
+    #[must_use]
     fn contract_address() -> Address {
         contract::address()
     }
