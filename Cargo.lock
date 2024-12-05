@@ -2355,8 +2355,9 @@ checksum = "57d8d8ce877200136358e0bbff3a77965875db3af755a11e1fa6b1b3e2df13ea"
 
 [[package]]
 name = "koba"
-version = "0.2.0"
-source = "git+https://github.com/OpenZeppelin/koba?branch=build%2Fbump-alloy#9f5fc33853088f7c265571c1f90728eb56c5051f"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "648bf93c7aff36defcf825c5a42d32503eb617c85f057a989f34ebfebed99f45"
 dependencies = [
  "alloy",
  "brotli2",
