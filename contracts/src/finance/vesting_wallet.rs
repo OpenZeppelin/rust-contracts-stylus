@@ -23,102 +23,64 @@
 //! intended.
 
 use alloy_primitives::{Address, U256, U64};
+use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     block,
-    call::{call, Call},
+    call::{self, call, Call},
     contract, evm, function_selector,
     storage::TopLevelStorage,
-    stylus_proc::public,
+    stylus_proc::{public, sol_storage, SolidityError},
 };
 
 use crate::{
-    access::{
-        ownable,
-        ownable::{IOwnable, Ownable},
-    },
-    token::erc20::utils::{
-        safe_erc20,
-        safe_erc20::{ISafeErc20, SafeErc20},
-    },
+    access::ownable::{self, IOwnable, Ownable},
+    token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
 };
 
-#[cfg_attr(coverage, coverage(off))]
-mod sol_defs {
-    use alloy_sol_types::sol;
-    use stylus_sdk::{
-        call,
-        stylus_proc::{sol_storage, SolidityError},
-    };
+sol! {
+    /// Emitted when `amount` of Ether has been released.
+    ///
+    /// * `amount` - Total Ether released.
+    #[allow(missing_docs)]
+    event EtherReleased(uint256 amount);
 
-    use super::{ownable, safe_erc20, Ownable, SafeErc20};
-
-    sol! {
-        /// Emitted when `amount` of Ether has been released.
-        ///
-        /// * `amount` - Total Ether released.
-        #[allow(missing_docs)]
-        event EtherReleased(uint256 amount);
-
-        /// Emitted when `amount` of ERC-20 `token` has been released.
-        ///
-        /// * `token` - Address of the token being released.
-        /// * `amount` - Number of tokens released.
-        #[allow(missing_docs)]
-        event ERC20Released(address indexed token, uint256 amount);
-    }
-
-    sol! {
-        /// Indicates an error related to the underlying Ether transfer.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ReleaseEtherFailed();
-
-        /// The token address is not valid (eg. `Address::ZERO`).
-        ///
-        /// * `token` - Address of the token being released.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error InvalidToken(address token);
-    }
-
-    /// An error that occurred in the [`VestingWallet`] contract.
-    #[derive(SolidityError, Debug)]
-    pub enum Error {
-        /// Error type from [`Ownable`] contract [`ownable::Error`].
-        Ownable(ownable::Error),
-        /// Indicates an error related to the underlying Ether transfer.
-        ReleaseEtherFailed(call::Error),
-        /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-        SafeErc20(safe_erc20::Error),
-        /// The token address is not valid. (eg. `Address::ZERO`).
-        InvalidToken(InvalidToken),
-    }
-
-    sol_storage! {
-        /// State of the [`VestingWallet`] Contract.
-        pub struct VestingWallet {
-            /// [`Ownable`] contract.
-            Ownable ownable;
-            /// Amount of Ether already released.
-            uint256 _released;
-            /// Amount of ERC-20 tokens already released.
-            mapping(address => uint256) _erc20_released;
-            /// Start timestamp.
-            uint64 _start;
-            /// Vesting duration.
-            uint64 _duration;
-            /// [`SafeErc20`] contract.
-            SafeErc20 safe_erc20;
-        }
-    }
+    /// Emitted when `amount` of ERC-20 `token` has been released.
+    ///
+    /// * `token` - Address of the token being released.
+    /// * `amount` - Number of tokens released.
+    #[allow(missing_docs)]
+    event ERC20Released(address indexed token, uint256 amount);
 }
 
-pub use sol_defs::{
-    ERC20Released, Error, EtherReleased, InvalidToken, VestingWallet,
-};
-use token::IErc20;
+sol! {
+    /// Indicates an error related to the underlying Ether transfer.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error ReleaseEtherFailed();
 
+    /// The token address is not valid (eg. `Address::ZERO`).
+    ///
+    /// * `token` - Address of the token being released.
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    error InvalidToken(address token);
+}
+
+/// An error that occurred in the [`VestingWallet`] contract.
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    /// Error type from [`Ownable`] contract [`ownable::Error`].
+    Ownable(ownable::Error),
+    /// Indicates an error related to the underlying Ether transfer.
+    ReleaseEtherFailed(call::Error),
+    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
+    SafeErc20(safe_erc20::Error),
+    /// The token address is not valid. (eg. `Address::ZERO`).
+    InvalidToken(InvalidToken),
+}
+
+pub use token::IErc20;
 #[allow(missing_docs)]
 mod token {
     stylus_sdk::stylus_proc::sol_interface! {
@@ -126,6 +88,24 @@ mod token {
         interface IErc20 {
             function balanceOf(address account) external view returns (uint256);
         }
+    }
+}
+
+sol_storage! {
+    /// State of the [`VestingWallet`] Contract.
+    pub struct VestingWallet {
+        /// [`Ownable`] contract.
+        Ownable ownable;
+        /// Amount of Ether already released.
+        uint256 _released;
+        /// Amount of ERC-20 tokens already released.
+        mapping(address => uint256) _erc20_released;
+        /// Start timestamp.
+        uint64 _start;
+        /// Vesting duration.
+        uint64 _duration;
+        /// [`SafeErc20`] contract.
+        SafeErc20 safe_erc20;
     }
 }
 
