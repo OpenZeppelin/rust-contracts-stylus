@@ -423,17 +423,11 @@ mod tests {
 
     #[test]
     fn encodes_true_many_bytes() {
-        assert_eq!(
-            true,
-            SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-        );
+        assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
     fn encodes_true_wrong_bytes() {
-        assert_eq!(
-            false,
-            SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-        );
+        assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }
