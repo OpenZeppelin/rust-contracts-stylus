@@ -176,7 +176,7 @@ impl IErc721 for Erc721Consecutive {
             from,
             to,
             token_id,
-            data,
+            &data,
         )?)
     }
 
@@ -547,7 +547,7 @@ impl Erc721Consecutive {
         &mut self,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
@@ -700,7 +700,7 @@ impl Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
@@ -1115,7 +1115,7 @@ mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
-            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(alice, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer a non-existent token");
 
         assert!(matches!(
@@ -1190,7 +1190,7 @@ mod tests {
                 alice,
                 invalid_receiver,
                 token_id,
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect_err("should not transfer the token to invalid receiver");
 
@@ -1217,7 +1217,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
         let err = contract
-            ._safe_transfer(DAVE, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(DAVE, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
@@ -1239,7 +1239,7 @@ mod tests {
             .expect("should return the balance of Alice");
 
         contract
-            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            ._safe_mint(alice, token_id, &vec![0, 1, 2, 3].into())
             .expect("should mint a token for Alice");
 
         let owner = contract
