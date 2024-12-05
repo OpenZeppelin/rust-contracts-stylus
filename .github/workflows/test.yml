@@ -124,8 +124,9 @@ jobs:
           submodules: true
 
       - name: Install rust
-        # We run in nightly to make use of the `#[coverage(off)]` attribute.
-        # See `contracts/src/lib.rs`.
+        # We run in nightly to make use of the `#[coverage(off)]` attribute (see _contracts/src/lib.rs_)
+        # We'll return to stable release after the tracking issue is merged (and the feature is stable)
+        # See: https://github.com/rust-lang/rust/issues/84605
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly
