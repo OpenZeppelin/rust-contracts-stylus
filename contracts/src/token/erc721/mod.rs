@@ -1135,7 +1135,7 @@ impl Erc721 {
             Ok(id) => id,
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
-                    if reason.len() > 0 {
+                    if !reason.is_empty() {
                         // Non-IERC721Receiver implementer.
                         return Err(Error::InvalidReceiverWithReason(e));
                     }
