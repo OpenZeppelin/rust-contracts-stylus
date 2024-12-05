@@ -1313,7 +1313,7 @@ mod tests {
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]

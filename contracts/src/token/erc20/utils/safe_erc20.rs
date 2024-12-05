@@ -400,12 +400,12 @@ mod tests {
     use super::SafeErc20;
     #[test]
     fn encodes_true_empty_slice() {
-        assert_eq!(false, SafeErc20::encodes_true(&[]));
+        assert!(!SafeErc20::encodes_true(&[]));
     }
 
     #[test]
     fn encodes_false_single_byte() {
-        assert_eq!(false, SafeErc20::encodes_true(&[0]));
+        assert!(!SafeErc20::encodes_true(&[0]));
     }
 
     #[test]

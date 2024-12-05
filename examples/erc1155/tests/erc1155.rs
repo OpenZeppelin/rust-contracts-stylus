@@ -732,7 +732,7 @@ async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
         .call()
         .await?;
 
-    assert_eq!(false, approved);
+    assert!(!approved);
 
     Ok(())
 }

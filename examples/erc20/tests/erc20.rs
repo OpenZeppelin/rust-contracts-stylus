@@ -1082,7 +1082,7 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 
     let Erc20::pausedReturn { paused } = contract.paused().call().await?;
 
-    assert_eq!(false, paused);
+    assert!(!paused);
 
     Ok(())
 }
@@ -1335,7 +1335,7 @@ async fn support_interface(alice: Account) -> Result<()> {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, false);
+    assert!(!supports_interface);
 
     let erc20_interface_id: u32 = 0x36372b07;
     let Erc20::supportsInterfaceReturn {

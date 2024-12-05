@@ -1850,7 +1850,7 @@ mod tests {
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
@@ -1950,7 +1950,7 @@ mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(false, authorized);
+        assert!(!authorized);
     }
 
     #[motsu::test]
@@ -1970,7 +1970,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(false, authorized);
+        assert!(!authorized);
     }
 
     #[motsu::test]
@@ -2447,7 +2447,7 @@ mod tests {
         contract._set_approval_for_all(alice, BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
