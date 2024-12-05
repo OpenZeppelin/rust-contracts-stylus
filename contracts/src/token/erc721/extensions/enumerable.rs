@@ -314,7 +314,7 @@ impl Erc721Enumerable {
     /// # Errors
     ///
     /// * If an `amount` is greater than `0`, then the error
-    /// [`Error::EnumerableForbiddenBatchMint`] is returned.
+    ///   [`Error::EnumerableForbiddenBatchMint`] is returned.
     pub fn _check_increase_balance(amount: u128) -> Result<(), Error> {
         if amount > 0 {
             Err(ERC721EnumerableForbiddenBatchMint {}.into())
