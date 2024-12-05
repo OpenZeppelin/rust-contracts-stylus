@@ -387,9 +387,9 @@ impl Erc721Consecutive {
         Ok(previous_owner)
     }
 
-    /// Returns the next token_id to mint using [`Self::_mint_consecutive`]. It
+    /// Returns the next token id to mint using [`Self::_mint_consecutive`]. It
     /// will return [`Erc721Consecutive::_first_consecutive_id`] if no
-    /// consecutive token_id has been minted before.
+    /// consecutive token id has been minted before.
     ///
     /// # Arguments
     ///

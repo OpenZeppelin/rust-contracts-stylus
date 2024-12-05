@@ -1,5 +1,7 @@
 //! Wrappers around ERC-20 operations that throw on failure (when the token
-//! contract returns false). Tokens that return no value (and instead revert or
+//! contract returns false).
+//!
+//! Tokens that return no value (and instead revert or
 //! throw on failure) are also supported, non-reverting calls are assumed to be
 //! successful.
 //!
