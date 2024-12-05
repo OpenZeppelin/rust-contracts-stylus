@@ -206,7 +206,7 @@ impl Erc721Enumerable {
     ///
     /// This has O(1) time complexity, but alters the order
     /// of the `self._owned_tokens` array.
-
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
