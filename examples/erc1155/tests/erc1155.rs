@@ -2291,6 +2291,7 @@ async fn mint_batch_reverts_in_paused_state(
 
         assert!(err.reverted_with(Erc1155::EnforcedPause {}));
     }
+
     Ok(())
 }
 
