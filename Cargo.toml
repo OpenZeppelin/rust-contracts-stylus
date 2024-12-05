@@ -64,6 +64,10 @@ missing_docs = "warn"
 unreachable_pub = "warn"
 rust_2021_compatibility = { level = "warn", priority = -1 }
 
+[workspace.lints.clippy]
+pedantic = "warn"
+all = "warn"
+
 [workspace.dependencies]
 # stylus-related
 stylus-sdk = "0.6.0"

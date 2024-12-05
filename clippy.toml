@@ -1,2 +1,1 @@
-warn = ["clippy::all", "clippy::pedantic"]
 doc-valid-idents = ["OpenZeppelin", ".."]
