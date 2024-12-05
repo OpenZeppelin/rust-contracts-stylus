@@ -917,11 +917,11 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20 as IErc20>::INTERFACE_ID;
-        let expected = 0x36372b07;
+        let expected = 0x3637_2b07;
         assert_eq!(actual, expected);
 
         let actual = <Erc20 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
+        let expected = 0x01ff_c9a7;
         assert_eq!(actual, expected);
     }
 }

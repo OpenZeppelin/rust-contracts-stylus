@@ -886,7 +886,7 @@ mod tests {
         const MODULUS: U64 = from_num!("1000003"); // Prime number
     }
 
-    const MODULUS: i128 = 1000003; // Prime number
+    const MODULUS: i128 = 1_000_003; // Prime number
 
     proptest! {
         #[test]

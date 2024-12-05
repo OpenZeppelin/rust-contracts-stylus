@@ -90,7 +90,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
-        let expected = 0xa219a025;
+        let expected = 0xa219_a025;
         assert_eq!(actual, expected);
     }
 }

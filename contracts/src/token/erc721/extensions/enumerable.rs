@@ -559,7 +559,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
-        let expected = 0x780e9d63;
+        let expected = 0x780e_9d63;
         assert_eq!(actual, expected);
     }
 }
