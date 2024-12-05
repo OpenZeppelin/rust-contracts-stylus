@@ -18,6 +18,7 @@ impl Deployer {
     }
 
     /// Add solidity constructor to the deployer.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn with_constructor<C: SolConstructor + Send>(
         mut self,
         constructor: C,

@@ -1,3 +1,6 @@
+//! A vesting wallet handles the vesting of Ether and ERC-20 tokens for a given
+//! beneficiary.
+//!
 //! A vesting wallet is an ownable contract that can receive native currency and
 //! [`crate::token::erc20::Erc20`] tokens, and release these assets to the
 //! wallet owner, also referred to as "beneficiary", according to a vesting

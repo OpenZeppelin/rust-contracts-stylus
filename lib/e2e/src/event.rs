@@ -1,12 +1,12 @@
 use alloy::{rpc::types::eth::TransactionReceipt, sol_types::SolEvent};
 
 /// Extension trait for asserting an event gets emitted.
-pub trait EventExt<E> {
+pub trait Ext<E> {
     /// Asserts the contract emitted the `expected` event.
     fn emits(&self, expected: E) -> bool;
 }
 
-impl<E> EventExt<E> for TransactionReceipt
+impl<E> Ext<E> for TransactionReceipt
 where
     E: SolEvent,
     E: PartialEq,

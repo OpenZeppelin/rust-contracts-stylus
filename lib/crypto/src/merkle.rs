@@ -354,7 +354,7 @@ impl core::fmt::Display for MultiProofError {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     //! NOTE: The values used as input for these tests were all generated using
-    //! https://github.com/OpenZeppelin/merkle-tree.
+    //! <https://github.com/OpenZeppelin/merkle-tree>.
     use hex_literal::hex;
     use rand::{thread_rng, RngCore};
 
