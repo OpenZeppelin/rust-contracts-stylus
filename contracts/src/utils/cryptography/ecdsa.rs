@@ -171,10 +171,8 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 ///
 /// Remove this possibility and make the signature unique.
 ///
-/// Appendix F in the Ethereum Yellow paper
-/// (https://ethereum.github.io/yellowpaper/paper.pdf),
-/// defines the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1,
-/// and for v in (302): v ∈ {27, 28}.
+/// Appendix F in the [Ethereum Yellow paper], defines the valid range for s in
+/// (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}.
 ///
 /// Most signatures from current libraries generate a unique signature
 /// with an s-value in the lower half order.
@@ -195,6 +193,8 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 ///
 /// * If the `s` value is grater than `EIP2_VALUE`, then the error
 ///   [`Error::ECDSAInvalidSignatureS`] is returned.
+///
+/// [Ethereum Yellow paper]: https://ethereum.github.io/yellowpaper/paper.pdf
 fn check_if_malleable(s: &B256) -> Result<(), Error> {
     let s_u256 = U256::from_be_slice(s.as_slice());
     if s_u256 > SIGNATURE_S_UPPER_BOUND {
