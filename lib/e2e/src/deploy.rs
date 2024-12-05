@@ -18,9 +18,10 @@ impl Deployer {
     }
 
     /// Add solidity constructor to the deployer.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn with_constructor<C: SolConstructor + Send>(
         mut self,
-        constructor: &C,
+        constructor: C,
     ) -> Deployer {
         self.ctr_args = Some(alloy::hex::encode(constructor.abi_encode()));
         self
@@ -30,7 +31,7 @@ impl Deployer {
     pub fn with_default_constructor<C: SolConstructor + Send + Default>(
         self,
     ) -> Deployer {
-        self.with_constructor(&C::default())
+        self.with_constructor(C::default())
     }
 
     /// Deploy and activate the contract implemented as `#[entrypoint]` in the
