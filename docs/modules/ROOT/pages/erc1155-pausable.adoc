@@ -1,13 +1,13 @@
 = ERC-1155 Pausable
 
-ERC1155 token with pausable token transfers, minting, and burning.
+xref:erc1155.adoc[ERC-1155] token with pausable token transfers, minting, and burning.
 
 Useful for scenarios such as preventing trades until the end of an evaluation period, or having an emergency switch for freezing all token transfers in the event of a large bug.
 
 [[usage]]
 == Usage
 
-In order to make your ERC1155 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC1155 token functions as follows:
+In order to make your xref:erc1155.adoc[ERC-1155] token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC1155 token functions as follows:
 
 [source,rust]
 ----
