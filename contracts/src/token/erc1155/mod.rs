@@ -1203,7 +1203,7 @@ mod tests {
     }
 
     pub(crate) fn random_values(size: usize) -> Vec<U256> {
-        (1..size + 1).map(U256::from).collect()
+        (1..=size).map(U256::from).collect()
     }
 
     fn init(
