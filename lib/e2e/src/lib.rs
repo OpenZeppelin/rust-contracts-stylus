@@ -13,7 +13,7 @@ pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::EventExt;
 pub use receipt::ReceiptExt;
-pub use system::{fund_account, provider, Provider, Wallet};
+pub use system::{fund_account, Wallet};
 
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.
