@@ -2318,7 +2318,7 @@ async fn mint_batch_reverts_in_paused_state(
         values.clone(),
         vec![0, 1, 2, 3].into()
     ))
-    .expect_err("should return EnforcedPause");
+    .expect_err("should return `EnforcedPause`");
 
     assert!(err.reverted_with(Erc1155::EnforcedPause {}));
 
@@ -2349,7 +2349,7 @@ async fn burn_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
     let _ = watch!(contract.pause())?;
 
     let err = send!(contract.burn(alice_addr, token_ids[0], values[0]))
-        .expect_err("should return EnforcedPause");
+        .expect_err("should return `EnforcedPause`");
 
     assert!(err.reverted_with(Erc1155::EnforcedPause {}));
 
@@ -2386,7 +2386,7 @@ async fn burn_batch_reverts_in_paused_state(
         token_ids.clone(),
         values.clone()
     ))
-    .expect_err("should return EnforcedPause");
+    .expect_err("should return `EnforcedPause`");
 
     assert!(err.reverted_with(Erc1155::EnforcedPause {}));
 
@@ -2426,7 +2426,7 @@ async fn safe_transfer_from_reverts_in_paused_state(
         value,
         vec![].into()
     ))
-    .expect_err("should return EnforcedPause");
+    .expect_err("should return `EnforcedPause`");
 
     assert!(err.reverted_with(Erc1155::EnforcedPause {}));
 
@@ -2467,7 +2467,7 @@ async fn safe_batch_transfer_from_reverts_in_paused_state(
         values.clone(),
         vec![].into()
     ))
-    .expect_err("should return EnforcedPause");
+    .expect_err("should return `EnforcedPause`");
 
     assert!(err.reverted_with(Erc1155::EnforcedPause {}));
 
