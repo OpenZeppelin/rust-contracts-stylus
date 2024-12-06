@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement `MethodError` for `safe_erc20::Error`. #402
 - Use `function_selector!` to calculate transfer type selector in `Erc1155`. #417
-- Update internal functions of `Erc721` and `Erc721Consecutive` accept reference to `Bytes`. #
+- Update internal functions of `Erc721` and `Erc721Consecutive` accept reference to `Bytes`. #437 
 
 ### Fixed
 
