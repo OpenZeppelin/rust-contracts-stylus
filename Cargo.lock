@@ -3618,7 +3618,6 @@ dependencies = [
  "keccak-const",
  "lazy_static",
  "mini-alloc",
- "regex",
  "stylus-proc",
 ]
 

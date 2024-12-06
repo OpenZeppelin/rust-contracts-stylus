@@ -19,7 +19,6 @@ e2e.workspace = true
 
 [features]
 e2e = []
-export-abi = ["stylus-sdk/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]

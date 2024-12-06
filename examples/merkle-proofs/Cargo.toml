@@ -17,7 +17,6 @@ stylus-sdk.workspace = true
 # features, because this crate is meant to be used in a `no_std` environment.
 # Currently, the std feature is only used for testing purposes.
 std = []
-export-abi = ["stylus-sdk/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]
