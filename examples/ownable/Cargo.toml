@@ -22,3 +22,4 @@ crate-type = ["lib", "cdylib"]
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi"]

@@ -17,7 +17,9 @@ educe.workspace = true
 hex-literal.workspace = true
 
 [dev-dependencies]
-crypto-bigint = { workspace = true, default-features = false, features = ["rand"] }
+crypto-bigint = { workspace = true, default-features = false, features = [
+    "rand",
+] }
 rand.workspace = true
 proptest.workspace = true
 
