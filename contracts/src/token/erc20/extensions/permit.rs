@@ -1,7 +1,7 @@
 //! Permit Contract.
 //!
 //! Extension of the ERC-20 standard allowing approvals to be made
-//! via signatures, as defined in EIP-2612.
+//! via signatures, as defined in the [ERC].
 //!
 //! Adds the `permit` method, which can be used to change an account’s
 //! ERC20 allowance (see [`crate::token::erc20::IErc20::allowance`])
@@ -9,6 +9,9 @@
 //! By not relying on [`crate::token::erc20::IErc20::approve`],
 //! the token holder account doesn’t need to send a transaction,
 //! and thus is not required to hold Ether at all.
+//!
+//! [ERC]: https://eips.ethereum.org/EIPS/eip-2612
+
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_sdk::{

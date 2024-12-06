@@ -206,7 +206,7 @@ impl Erc721Enumerable {
     ///
     /// This has O(1) time complexity, but alters the order
     /// of the `self._owned_tokens` array.
-
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -314,7 +314,7 @@ impl Erc721Enumerable {
     /// # Errors
     ///
     /// * If an `amount` is greater than `0`, then the error
-    /// [`Error::EnumerableForbiddenBatchMint`] is returned.
+    ///   [`Error::EnumerableForbiddenBatchMint`] is returned.
     pub fn _check_increase_balance(amount: u128) -> Result<(), Error> {
         if amount > 0 {
             Err(ERC721EnumerableForbiddenBatchMint {}.into())
@@ -559,7 +559,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
-        let expected = 0x780e9d63;
+        let expected = 0x780e_9d63;
         assert_eq!(actual, expected);
     }
 }

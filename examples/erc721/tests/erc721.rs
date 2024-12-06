@@ -24,7 +24,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 
     let Erc721::pausedReturn { paused } = contract.paused().call().await?;
 
-    assert_eq!(false, paused);
+    assert!(!paused);
 
     Ok(())
 }
@@ -1349,7 +1349,7 @@ async fn is_approved_for_all_invalid_operator(
         .call()
         .await?;
 
-    assert_eq!(false, approved);
+    assert!(!approved);
 
     Ok(())
 }
@@ -1387,7 +1387,7 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 
     let Erc721::pausedReturn { paused } = contract.paused().call().await?;
 
-    assert_eq!(false, paused);
+    assert!(!paused);
 
     Ok(())
 }
@@ -2087,21 +2087,21 @@ async fn support_interface(alice: Account) -> eyre::Result<()> {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, false);
+    assert!(!supports_interface);
 
     let erc721_interface_id: u32 = 0x80ac58cd;
     let Erc721::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(erc721_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     let erc165_interface_id: u32 = 0x01ffc9a7;
     let Erc721::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     let erc721_enumerable_interface_id: u32 = 0x780e9d63;
     let Erc721::supportsInterfaceReturn {
@@ -2111,7 +2111,7 @@ async fn support_interface(alice: Account) -> eyre::Result<()> {
         .call()
         .await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     Ok(())
 }

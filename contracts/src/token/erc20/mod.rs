@@ -366,11 +366,11 @@ impl Erc20 {
     /// # Errors
     ///
     /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
+    ///   [`Error::InvalidSender`] is returned.
     /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    ///   [`Error::InvalidReceiver`] is returned.
+    /// * If the `from` address doesn't have enough tokens, then the error
+    ///   [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
@@ -514,9 +514,9 @@ impl Erc20 {
     /// # Errors
     ///
     /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    ///   [`Error::InvalidSender`] is returned.
+    /// * If the `from` address doesn't have enough tokens, then the error
+    ///   [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
@@ -917,11 +917,11 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20 as IErc20>::INTERFACE_ID;
-        let expected = 0x36372b07;
+        let expected = 0x3637_2b07;
         assert_eq!(actual, expected);
 
         let actual = <Erc20 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
+        let expected = 0x01ff_c9a7;
         assert_eq!(actual, expected);
     }
 }

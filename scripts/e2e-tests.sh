@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+TEST_ARG="${1:-*}"
+
 MYDIR=$(realpath "$(dirname "$0")")
 cd "$MYDIR"
 cd ..
@@ -9,4 +11,4 @@ cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abo
 
 export RPC_URL=http://localhost:8547
 
-cargo test --features std,e2e --test "*"
+cargo test --features std,e2e --test "$TEST_ARG"

@@ -1203,7 +1203,7 @@ mod tests {
     }
 
     pub(crate) fn random_values(size: usize) -> Vec<U256> {
-        (1..size + 1).map(U256::from).collect()
+        (1..=size).map(U256::from).collect()
     }
 
     fn init(
@@ -1295,12 +1295,12 @@ mod tests {
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
@@ -2195,11 +2195,11 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155 as IErc1155>::INTERFACE_ID;
-        let expected = 0xd9b67a26;
+        let expected = 0xd9b6_7a26;
         assert_eq!(actual, expected);
 
         let actual = <Erc1155 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
+        let expected = 0x01ff_c9a7;
         assert_eq!(actual, expected);
     }
 }

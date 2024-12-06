@@ -67,11 +67,12 @@ pub unsafe extern "C" fn native_keccak256(
     hasher.finalize(output);
 }
 
-/// Reads a 32-byte value from permanent storage. Stylus's storage format is
-/// identical to that of the EVM. This means that, under the hood, this hostio
-/// is accessing the 32-byte value stored in the EVM state trie at offset
-/// `key`, which will be `0` when not previously set. The semantics, then, are
-/// equivalent to that of the EVM's [`SLOAD`] opcode.
+/// Reads a 32-byte value from permanent storage.
+///
+/// Stylus's storage format is identical to that of the EVM. This means that,
+/// under the hood, this hostio is accessing the 32-byte value stored in the EVM
+/// state trie at offset `key`, which will be `0` when not previously set. The
+/// semantics, then, are equivalent to that of the EVM's [`SLOAD`] opcode.
 ///
 /// [`SLOAD`]: https://www.evm.codes/#54
 ///
@@ -83,11 +84,12 @@ pub unsafe extern "C" fn storage_load_bytes32(key: *const u8, out: *mut u8) {
     Context::current().get_bytes_raw(key, out);
 }
 
-/// Writes a 32-byte value to the permanent storage cache. Stylus's storage
-/// format is identical to that of the EVM. This means that, under the hood,
-/// this hostio represents storing a 32-byte value into the EVM state trie at
-/// offset `key`. Refunds are tabulated exactly as in the EVM. The semantics,
-/// then, are equivalent to that of the EVM's [`SSTORE`] opcode.
+/// Writes a 32-byte value to the permanent storage cache.
+///
+/// Stylus's storage format is identical to that of the EVM. This means that,
+/// under the hood, this hostio represents storing a 32-byte value into the EVM
+/// state trie at offset `key`. Refunds are tabulated exactly as in the EVM. The
+/// semantics, then, are equivalent to that of the EVM's [`SSTORE`] opcode.
 ///
 /// Note: because the value is cached, one must call `storage_flush_cache` to
 /// persist it.
@@ -128,9 +130,10 @@ pub const CHAIN_ID: u64 = 42161;
 pub const EOA_CODEHASH: &[u8; 66] =
     b"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
 
-/// Gets the address of the account that called the program. For normal
-/// L2-to-L2 transactions the semantics are equivalent to that of the EVM's
-/// [`CALLER`] opcode, including in cases arising from [`DELEGATE_CALL`].
+/// Gets the address of the account that called the program.
+///
+/// For normal L2-to-L2 transactions the semantics are equivalent to that of the
+/// EVM's [`CALLER`] opcode, including in cases arising from [`DELEGATE_CALL`].
 ///
 /// For L1-to-L2 retryable ticket transactions, the top-level sender's address
 /// will be aliased. See [`Retryable Ticket Address Aliasing`][aliasing] for
@@ -174,10 +177,11 @@ pub unsafe extern "C" fn chainid() -> u64 {
 }
 
 /// Emits an EVM log with the given number of topics and data, the first bytes
-/// of which should be the 32-byte-aligned topic data. The semantics are
-/// equivalent to that of the EVM's [`LOG0`], [`LOG1`], [`LOG2`], [`LOG3`], and
-/// [`LOG4`] opcodes based on the number of topics specified. Requesting more
-/// than `4` topics will induce a revert.
+/// of which should be the 32-byte-aligned topic data.
+///
+/// The semantics are equivalent to that of the EVM's [`LOG0`], [`LOG1`],
+/// [`LOG2`], [`LOG3`], and [`LOG4`] opcodes based on the number of topics
+/// specified. Requesting more than `4` topics will induce a revert.
 ///
 /// [`LOG0`]: https://www.evm.codes/#a0
 /// [`LOG1`]: https://www.evm.codes/#a1
@@ -190,6 +194,7 @@ pub unsafe extern "C" fn emit_log(_: *const u8, _: usize, _: usize) {
 }
 
 /// Gets the code hash of the account at the given address.
+///
 /// The semantics are equivalent to that of the EVM's [`EXT_CODEHASH`] opcode.
 /// Note that the code hash of an account without code will be the empty hash
 /// `keccak("") =
@@ -209,8 +214,10 @@ pub unsafe extern "C" fn account_codehash(_address: *const u8, dest: *mut u8) {
 }
 
 /// Returns the length of the last EVM call or deployment return result, or `0`
-/// if neither have happened during the program's execution. The semantics are
-/// equivalent to that of the EVM's [`RETURN_DATA_SIZE`] opcode.
+/// if neither have happened during the program's execution.
+///
+/// The semantics are equivalent to that of the EVM's [`RETURN_DATA_SIZE`]
+/// opcode.
 ///
 /// [`RETURN_DATA_SIZE`]: https://www.evm.codes/#3d
 #[no_mangle]
@@ -221,10 +228,11 @@ pub unsafe extern "C" fn return_data_size() -> usize {
     0
 }
 
-/// Copies the bytes of the last EVM call or deployment return result. Does not
-/// revert if out of bounds, but rather copies the overlapping portion. The
-/// semantics are otherwise equivalent to that of the EVM's [`RETURN_DATA_COPY`]
-/// opcode.
+/// Copies the bytes of the last EVM call or deployment return result.
+///
+/// Does not revert if out of bounds, but rather copies the overlapping portion.
+/// The semantics are otherwise equivalent to that of the EVM's
+/// [`RETURN_DATA_COPY`] opcode.
 ///
 /// Returns the number of bytes written.
 ///
