@@ -2489,8 +2489,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "mini-alloc"
 version = "0.7.0-beta.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d79b46612e3fc76138ed930cd2e4bbd26ada11954a6d312e3affe4b56df0081"
+source = "git+https://github.com/qalisander/stylus-sdk-rs?branch=fix-encoding-in-sol-interface#a31d36a883f8b3d30835f05779997b793444e532"
 dependencies = [
  "cfg-if",
 ]
@@ -3715,8 +3714,7 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.7.0-beta.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8abd5d2cb3a10a36101b3d9243eda29daa58aad89b93979afe77c4be89068413"
+source = "git+https://github.com/qalisander/stylus-sdk-rs?branch=fix-encoding-in-sol-interface#a31d36a883f8b3d30835f05779997b793444e532"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3736,8 +3734,7 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.7.0-beta.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "caa33222d37101b3ba7064f1099ae38c7e388eaeac422e58260b7d00346a5267"
+source = "git+https://github.com/qalisander/stylus-sdk-rs?branch=fix-encoding-in-sol-interface#a31d36a883f8b3d30835f05779997b793444e532"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",

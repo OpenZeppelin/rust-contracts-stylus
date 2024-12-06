@@ -136,3 +136,12 @@ incremental = false
 
 [profile.dev]
 panic = "abort"
+
+# TODO#q: remove this once the fix is released
+[patch.crates-io.stylus-sdk]
+git = "https://github.com/qalisander/stylus-sdk-rs"
+branch = "fix-encoding-in-sol-interface"
+
+[patch.crates-io.stylus-proc]
+git = "https://github.com/qalisander/stylus-sdk-rs"
+branch = "fix-encoding-in-sol-interface"
