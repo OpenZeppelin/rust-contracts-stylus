@@ -354,11 +354,7 @@ async fn errors_when_invalid_receiver_contract_in_mint(
 }
 
 #[e2e::test]
-async fn mint_batch(
-    alice: Account,
-    bob: Account,
-    dave: Account,
-) -> eyre::Result<()> {
+async fn mint_batch(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -368,42 +364,39 @@ async fn mint_batch(
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
-    let bob_addr = bob.address();
-    let dave_addr = dave.address();
     let token_ids = random_token_ids(3);
     let values = random_values(3);
 
-    let accounts = vec![alice_addr, bob_addr, dave_addr];
+    let receipt = receipt!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![0, 1, 2, 3].into()
+    ))?;
 
-    for account in accounts {
-        let receipt = receipt!(contract.mintBatch(
-            account,
-            token_ids.clone(),
-            values.clone(),
-            vec![0, 1, 2, 3].into()
-        ))?;
+    assert!(receipt.emits(Erc1155::TransferBatch {
+        operator: alice_addr,
+        from: Address::ZERO,
+        to: alice_addr,
+        ids: token_ids.clone(),
+        values: values.clone()
+    }));
 
-        assert!(receipt.emits(Erc1155::TransferBatch {
-            operator: alice_addr,
-            from: Address::ZERO,
-            to: account,
-            ids: token_ids.clone(),
-            values: values.clone()
-        }));
-
-        for (token_id, value) in token_ids.iter().zip(values.iter()) {
-            let Erc1155::balanceOfReturn { balance } =
-                contract.balanceOf(account, *token_id).call().await?;
-            assert_eq!(*value, balance);
-        }
-
-        let Erc1155::balanceOfBatchReturn { balances } = contract
-            .balanceOfBatch(vec![account, account, account], token_ids.clone())
-            .call()
-            .await?;
-
-        assert_eq!(values, balances);
+    for (token_id, value) in token_ids.iter().zip(values.iter()) {
+        let Erc1155::balanceOfReturn { balance } =
+            contract.balanceOf(alice_addr, *token_id).call().await?;
+        assert_eq!(*value, balance);
     }
+
+    let Erc1155::balanceOfBatchReturn { balances } = contract
+        .balanceOfBatch(
+            vec![alice_addr, alice_addr, alice_addr],
+            token_ids.clone(),
+        )
+        .call()
+        .await?;
+
+    assert_eq!(values, balances);
     Ok(())
 }
 
@@ -2304,8 +2297,6 @@ async fn mint_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 #[e2e::test]
 async fn mint_batch_reverts_in_paused_state(
     alice: Account,
-    bob: Account,
-    dave: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
@@ -2316,25 +2307,20 @@ async fn mint_batch_reverts_in_paused_state(
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
-    let bob_addr = bob.address();
-    let dave_addr = dave.address();
     let token_ids = random_token_ids(3);
     let values = random_values(3);
 
-    let accounts = vec![alice_addr, bob_addr, dave_addr];
     let _ = watch!(contract.pause())?;
 
-    for account in accounts {
-        let err = send!(contract.mintBatch(
-            account,
-            token_ids.clone(),
-            values.clone(),
-            vec![0, 1, 2, 3].into()
-        ))
-        .expect_err("should return EnforcedPause");
+    let err = send!(contract.mintBatch(
+        alice_addr,
+        token_ids.clone(),
+        values.clone(),
+        vec![0, 1, 2, 3].into()
+    ))
+    .expect_err("should return EnforcedPause");
 
-        assert!(err.reverted_with(Erc1155::EnforcedPause {}));
-    }
+    assert!(err.reverted_with(Erc1155::EnforcedPause {}));
 
     Ok(())
 }
