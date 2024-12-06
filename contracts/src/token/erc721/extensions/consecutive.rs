@@ -65,8 +65,7 @@ sol_storage! {
         Trace<S160> _sequential_ownership;
         /// BitMap library contract for sequential burn of tokens.
         BitMap _sequential_burn;
-        /// Used to offset the first token id in
-        /// [`Erc721Consecutive::_next_consecutive_id`].
+        /// Used to offset the first token id.
         uint96 _first_consecutive_id;
         /// Maximum size of a batch of consecutive tokens. This is designed to limit
         /// stress on off-chain indexing services that have to record one entry per

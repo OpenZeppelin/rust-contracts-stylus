@@ -19,7 +19,6 @@ pub const ECRECOVER_ADDR: Address =
     address!("0000000000000000000000000000000000000001");
 
 /// Upper range for `s` value from the signature.
-/// See [`check_if_malleable`].
 pub const SIGNATURE_S_UPPER_BOUND: U256 = uint!(
     0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_U256
 );
