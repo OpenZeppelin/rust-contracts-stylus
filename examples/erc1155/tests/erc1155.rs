@@ -2,7 +2,7 @@
 
 use abi::Erc1155;
 use alloy::{
-    primitives::{fixed_bytes, uint, Address, U256},
+    primitives::{uint, Address, U256},
     sol,
 };
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
@@ -201,7 +201,7 @@ async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
         from: Address::ZERO,
         id: token_id,
         value,
-        data: fixed_bytes!("").into(),
+        data: vec![].into(),
     }));
 
     let Erc1155::balanceOfReturn { balance: receiver_balance } =
@@ -452,7 +452,7 @@ async fn mint_batch_transfer_to_receiver_contract(
         from: Address::ZERO,
         ids: token_ids.clone(),
         values: values.clone(),
-        data: fixed_bytes!("").into(),
+        data: vec![].into(),
     }));
 
     let Erc1155::balanceOfBatchReturn { balances: receiver_balances } =
@@ -903,7 +903,7 @@ async fn safe_transfer_to_receiver_contract(
         from: alice_addr,
         id: token_id,
         value,
-        data: fixed_bytes!("").into(),
+        data: vec![].into(),
     }));
 
     let Erc1155::balanceOfReturn { balance: alice_balance } =
@@ -1340,7 +1340,7 @@ async fn safe_batch_transfer_to_receiver_contract(
         from: alice_addr,
         ids: token_ids.clone(),
         values: values.clone(),
-        data: fixed_bytes!("").into(),
+        data: vec![].into(),
     }));
 
     let Erc1155::balanceOfBatchReturn { balances: alice_balances } = contract
