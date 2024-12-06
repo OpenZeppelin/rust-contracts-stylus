@@ -2205,6 +2205,27 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
+async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(contract.pause())?;
+
+    let err =
+        send!(contract.pause()).expect_err("should return `EnforcedPause`");
+
+    assert!(err.reverted_with(Erc1155::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn unpauses(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
@@ -2223,7 +2244,30 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 
     let paused = contract.paused().call().await?.paused;
 
-    assert_eq!(false, paused);
+    assert!(!paused);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let paused = contract.paused().call().await?.paused;
+
+    assert!(!paused);
+
+    let err =
+        send!(contract.unpause()).expect_err("should return `ExpectedPause`");
+
+    assert!(err.reverted_with(Erc1155::ExpectedPause {}));
 
     Ok(())
 }
