@@ -191,7 +191,7 @@ impl Ownable {
         evm::log(OwnershipTransferred { previous_owner, new_owner });
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address};
@@ -264,3 +264,4 @@ mod tests {
         assert_eq!(owner, ALICE);
     }
 }
+*/

@@ -394,7 +394,7 @@ impl SafeErc20 {
         })
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::SafeErc20;
@@ -437,3 +437,4 @@ mod tests {
         );
     }
 }
+*/

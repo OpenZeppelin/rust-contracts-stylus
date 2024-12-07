@@ -12,13 +12,8 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
     let sig = &item_fn.sig;
     let fn_name = &sig.ident;
     let fn_return_type = &sig.output;
-    let fn_block = &item_fn.block;
+    let fn_stmts = &item_fn.block.stmts;
     let fn_args = &sig.inputs;
-
-    // Currently, more than one contract per unit test is not supported.
-    if fn_args.len() > 1 {
-        error!(fn_args, "expected at most one contract in test signature");
-    }
 
     // Whether 1 or none contracts will be declared.
     let contract_declarations = fn_args.into_iter().map(|arg| {
@@ -43,9 +38,10 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
         #( #attrs )*
         #[test]
         fn #fn_name() #fn_return_type {
-            use ::motsu::prelude::DefaultStorage;
             #( #contract_declarations )*
-            let res = #fn_block;
+            let res = {
+                #( #fn_stmts )*
+            };
             ::motsu::prelude::Context::current().reset_storage();
             res
         }

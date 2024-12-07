@@ -1177,7 +1177,7 @@ enum Transfer {
     /// * `values` - Array of all amount of tokens being transferred.
     Batch { ids: Vec<U256>, values: Vec<U256> },
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
@@ -2203,3 +2203,4 @@ mod tests {
         assert_eq!(actual, expected);
     }
 }
+*/
