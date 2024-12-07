@@ -311,9 +311,10 @@ mod erc20_vesting {
         assert_in_delta(old_alice_balance + released, alice_balance);
         assert_in_delta(old_contract_balance - released, contract_balance);
 
-        assert!(
-            receipt.emits(VestingWallet::EtherReleased { amount: released })
-        );
+        assert!(receipt.emits(VestingWallet::ERC20Released {
+            token: erc20_address,
+            amount: released
+        }));
 
         Ok(())
     }
