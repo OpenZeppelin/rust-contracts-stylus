@@ -1,5 +1,4 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::vec;
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -9,6 +8,7 @@ use stylus_sdk::{
     call::{self, Call, MethodError},
     evm, msg,
     prelude::*,
+    stylus_proc::sol_interface,
 };
 
 use crate::utils::{
@@ -17,6 +17,8 @@ use crate::utils::{
 };
 
 pub mod extensions;
+
+use alloc::{vec, vec::Vec};
 
 sol! {
     /// Emitted when the `token_id` token is transferred from `from` to `to`.
@@ -160,29 +162,26 @@ impl MethodError for Error {
     }
 }
 
-pub use receiver::IERC721Receiver;
-#[allow(missing_docs)]
-mod receiver {
-    stylus_sdk::stylus_proc::sol_interface! {
-        /// [`Erc721`] token receiver interface.
+sol_interface! {
+    /// [`Erc721`] token receiver interface.
+    ///
+    /// Interface for any contract that wants to support `safe_transfers`
+    /// from [`Erc721`] asset contracts.
+    #[allow(missing_docs)]
+    interface IERC721Receiver {
+        /// Whenever an [`Erc721`] `token_id` token is transferred
+        /// to this contract via [`Erc721::safe_transfer_from`].
         ///
-        /// Interface for any contract that wants to support `safe_transfers`
-        /// from [`Erc721`] asset contracts.
-        interface IERC721Receiver {
-            /// Whenever an [`Erc721`] `token_id` token is transferred
-            /// to this contract via [`Erc721::safe_transfer_from`].
-            ///
-            /// It must return its function selector to confirm the token transfer.
-            /// If any other value is returned or the interface is not implemented
-            /// by the recipient, the transfer will be reverted.
-            #[allow(missing_docs)]
-            function onERC721Received(
-                address operator,
-                address from,
-                uint256 token_id,
-                bytes calldata data
-            ) external returns (bytes4);
-        }
+        /// It must return its function selector to confirm the token transfer.
+        /// If any other value is returned or the interface is not implemented
+        /// by the recipient, the transfer will be reverted.
+        #[allow(missing_docs)]
+        function onERC721Received(
+            address operator,
+            address from,
+            uint256 token_id,
+            bytes calldata data
+        ) external returns (bytes4);
     }
 }
 

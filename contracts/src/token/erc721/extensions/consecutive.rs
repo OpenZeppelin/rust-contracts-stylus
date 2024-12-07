@@ -22,7 +22,7 @@
 //! restriction on the [`Erc721Consecutive::_update`] function call since it is
 //! not possible to call a Rust function from the Solidity constructor.
 
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
