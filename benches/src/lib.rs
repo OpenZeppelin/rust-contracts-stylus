@@ -15,6 +15,7 @@ use serde::Deserialize;
 
 pub mod access_control;
 pub mod erc1155;
+pub mod erc1155_metadata_uri;
 pub mod erc20;
 pub mod erc721;
 pub mod merkle_proofs;

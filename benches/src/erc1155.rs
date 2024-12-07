@@ -29,8 +29,6 @@ sol!(
     }
 );
 
-sol!("../examples/erc1155/src/constructor.sol");
-
 pub async fn bench() -> eyre::Result<ContractReport> {
     let reports = run_with(CacheOpt::None).await?;
     let report = reports
@@ -96,7 +94,7 @@ pub async fn run_with(
         (isApprovedForAllCall::SIGNATURE, receipt!(contract.isApprovedForAll(alice_addr, bob_addr))?),
         (safeTransferFromCall::SIGNATURE, receipt!(contract.safeTransferFrom(alice_addr, bob_addr, token_1, value_1, data.clone()))?),
         (safeBatchTransferFromCall::SIGNATURE, receipt!(contract.safeBatchTransferFrom(alice_addr, bob_addr, ids.clone(), values.clone(), data))?),
-        // We should burn Bob's tokens on behalf of Bob not Alice.
+        // We should burn Bob's tokens on behalf of Bob, not Alice.
         (burnCall::SIGNATURE, receipt!(contract_bob.burn(bob_addr, token_1, value_1))?),
         (burnBatchCall::SIGNATURE, receipt!(contract_bob.burnBatch(bob_addr, ids, values))?),
     ];

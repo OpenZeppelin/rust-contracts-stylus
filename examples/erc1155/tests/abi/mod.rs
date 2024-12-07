@@ -16,6 +16,8 @@ sol!(
         function burn(address account, uint256 id, uint256 value) external;
         function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
 
+        function supportsInterface(bytes4 interfaceId) external view returns (bool);
+
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
         error ERC1155InvalidSender(address sender);
@@ -29,5 +31,5 @@ sol!(
         event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
         #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed account, address indexed operator, bool approved);
-    }
+}
 );
