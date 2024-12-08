@@ -165,8 +165,9 @@ impl MethodError for Error {
 }
 
 pub use receiver::IERC721Receiver;
-#[allow(missing_docs)]
 mod receiver {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
     stylus_sdk::stylus_proc::sol_interface! {
         /// [`Erc721`] token receiver interface.
         ///
