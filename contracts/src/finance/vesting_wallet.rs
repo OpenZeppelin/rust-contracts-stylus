@@ -29,14 +29,16 @@ use stylus_sdk::{
     block,
     call::{self, call, Call},
     contract, evm, function_selector,
-    storage::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
 };
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     alloy_sol_macro::sol! {
@@ -93,22 +95,21 @@ mod token {
     }
 }
 
-sol_storage! {
-    /// State of the [`VestingWallet`] Contract.
-    pub struct VestingWallet {
-        /// [`Ownable`] contract.
-        Ownable ownable;
-        /// Amount of Ether already released.
-        uint256 _released;
-        /// Amount of ERC-20 tokens already released.
-        mapping(address => uint256) _erc20_released;
-        /// Start timestamp.
-        uint64 _start;
-        /// Vesting duration.
-        uint64 _duration;
-        /// [`SafeErc20`] contract.
-        SafeErc20 safe_erc20;
-    }
+/// State of the [`VestingWallet`] Contract.
+#[storage]
+pub struct VestingWallet {
+    /// [`Ownable`] contract.
+    pub ownable: Ownable,
+    /// Amount of Ether already released.
+    pub _released: StorageU256,
+    /// Amount of ERC-20 tokens already released.
+    pub _erc20_released: StorageMap<Address, StorageU256>,
+    /// Start timestamp.
+    pub _start: StorageU64,
+    /// Vesting duration.
+    pub _duration: StorageU64,
+    /// [`SafeErc20`] contract.
+    pub safe_erc20: SafeErc20,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

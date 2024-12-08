@@ -20,7 +20,9 @@ use alloy_primitives::Address;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    storage::StorageAddress,
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::access::ownable::{
@@ -51,14 +53,13 @@ pub enum Error {
     Ownable(OwnableError),
 }
 
-sol_storage! {
-    /// State of an `Ownable2Step` contract.
-    pub struct Ownable2Step {
-        /// [`Ownable`] contract.
-        Ownable _ownable;
-        /// Pending owner of the contract.
-        address _pending_owner;
-    }
+/// State of an `Ownable2Step` contract.
+#[storage]
+pub struct Ownable2Step {
+    /// [`Ownable`] contract.
+    pub _ownable: Ownable,
+    /// Pending owner of the contract.
+    pub _pending_owner: StorageAddress,
 }
 
 /// Interface for an [`Ownable2Step`] contract.

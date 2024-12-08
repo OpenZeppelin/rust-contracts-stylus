@@ -7,7 +7,11 @@
 
 use alloy_primitives::U256;
 pub use sol::*;
-use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
+use stylus_sdk::{
+    prelude::storage,
+    storage::StorageU256,
+    stylus_proc::{public, SolidityError},
+};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -37,13 +41,12 @@ pub enum Error {
     InvalidCap(ERC20InvalidCap),
 }
 
-sol_storage! {
-    /// State of a Capped Contract.
-    #[allow(clippy::pub_underscore_fields)]
-    pub struct Capped {
-        /// A cap to the supply of tokens.
-        uint256 _cap;
-    }
+/// State of a Capped Contract.
+#[storage]
+#[allow(clippy::pub_underscore_fields)]
+pub struct Capped {
+    /// A cap to the supply of tokens.
+    pub _cap: StorageU256,
 }
 
 #[public]

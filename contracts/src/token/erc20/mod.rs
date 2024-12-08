@@ -9,7 +9,9 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    storage::{StorageMap, StorageU256},
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
@@ -115,16 +117,15 @@ impl MethodError for Error {
     }
 }
 
-sol_storage! {
-    /// State of an `Erc20` token.
-    pub struct Erc20 {
-        /// Maps users to balances.
-        mapping(address => uint256) _balances;
-        /// Maps users to a mapping of each spender's allowance.
-        mapping(address => mapping(address => uint256)) _allowances;
-        /// The total supply of the token.
-        uint256 _total_supply;
-    }
+/// State of an `Erc20` token.
+#[storage]
+pub struct Erc20 {
+    /// Maps users to balances.
+    pub _balances: StorageMap<Address, StorageU256>,
+    /// Maps users to a mapping of each spender's allowance.
+    pub _allowances: StorageMap<Address, StorageMap<Address, StorageU256>>,
+    /// The total supply of the token.
+    pub _total_supply: StorageU256,
 }
 
 /// Required interface of an [`Erc20`] compliant contract.

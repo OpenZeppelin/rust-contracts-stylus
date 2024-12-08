@@ -14,6 +14,8 @@ pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
+    prelude::storage,
+    storage::StorageAddress,
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
@@ -59,12 +61,11 @@ impl MethodError for Error {
     }
 }
 
-sol_storage! {
-    /// State of an `Ownable` contract.
-    pub struct Ownable {
-        /// The current owner of this contract.
-        address _owner;
-    }
+/// State of an `Ownable` contract.
+#[storage]
+pub struct Ownable {
+    /// The current owner of this contract.
+    pub _owner: StorageAddress,
 }
 
 /// Interface for an [`Ownable`] contract.

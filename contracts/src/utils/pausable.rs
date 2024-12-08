@@ -17,6 +17,8 @@
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
+    prelude::storage,
+    storage::StorageBool,
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
@@ -58,12 +60,11 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
-sol_storage! {
-    /// State of a Pausable Contract.
-    pub struct Pausable {
-        /// Indicates whether the contract is `Paused`.
-        bool _paused;
-    }
+/// State of a Pausable Contract.
+#[storage]
+pub struct Pausable {
+    /// Indicates whether the contract is `Paused`.
+    pub _paused: StorageBool,
 }
 
 #[public]

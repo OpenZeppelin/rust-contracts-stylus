@@ -12,12 +12,17 @@
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
+use stylus_sdk::{
+    prelude::storage,
+    storage::{StorageMap, StorageU256, StorageVec},
+    stylus_proc::{public, SolidityError},
+};
 
 use crate::{
     token::{erc721, erc721::IErc721},
     utils::introspection::erc165::IErc165,
 };
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     alloy_sol_macro::sol! {
@@ -51,19 +56,17 @@ pub enum Error {
     EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
 }
 
-sol_storage! {
-    /// State of an Enumerable extension.
-    pub struct Erc721Enumerable {
-        /// Maps owners to a mapping of indices to tokens ids.
-        mapping(address => mapping(uint256 => uint256)) _owned_tokens;
-        /// Maps tokens ids to indices in `_owned_tokens`.
-        mapping(uint256 => uint256) _owned_tokens_index;
-        /// Stores all tokens ids.
-        uint256[] _all_tokens;
-        /// Maps indices at `_all_tokens` to tokens ids.
-        mapping(uint256 => uint256) _all_tokens_index;
-    }
-
+/// State of an Enumerable extension.
+#[storage]
+pub struct Erc721Enumerable {
+    /// Maps owners to a mapping of indices to tokens ids.
+    pub _owned_tokens: StorageMap<Address, StorageMap<U256, StorageU256>>,
+    /// Maps tokens ids to indices in `_owned_tokens`.
+    pub _owned_tokens_index: StorageMap<U256, StorageU256>,
+    /// Stores all tokens ids.
+    pub _all_tokens: StorageVec<StorageU256>,
+    /// Maps indices at `_all_tokens` to tokens ids.
+    pub _all_tokens_index: StorageMap<U256, StorageU256>,
 }
 
 /// This is the interface of the optional `Enumerable` extension

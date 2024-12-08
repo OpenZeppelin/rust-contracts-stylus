@@ -13,7 +13,7 @@ use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
     block,
-    prelude::StorageType,
+    prelude::{storage, StorageType},
     storage::TopLevelStorage,
     stylus_proc::{public, sol_storage, SolidityError},
 };
@@ -66,18 +66,15 @@ pub enum Error {
     ECDSA(ecdsa::Error),
 }
 
-sol_storage! {
-    /// State of a Permit Contract.
-    pub struct Erc20Permit<T: IEip712 + StorageType>{
-        /// ERC-20 contract.
-        Erc20 erc20;
-
-        /// Nonces contract.
-        Nonces nonces;
-
-        /// EIP-712 contract. Must implement [`IEip712`] trait.
-        T eip712;
-    }
+/// State of a Permit Contract.
+#[storage]
+pub struct Erc20Permit<T: IEip712 + StorageType> {
+    /// ERC-20 contract.
+    pub erc20: Erc20,
+    /// Nonces contract.
+    pub nonces: Nonces,
+    /// EIP-712 contract. Must implement [`IEip712`] trait.
+    pub eip712: T,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

@@ -8,6 +8,7 @@ use stylus_sdk::{
     call::{self, Call, MethodError},
     evm, msg,
     prelude::*,
+    storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
 
 use crate::utils::{
@@ -189,18 +190,18 @@ mod receiver {
     }
 }
 
-sol_storage! {
-    /// State of an [`Erc721`] token.
-    pub struct Erc721 {
-        /// Maps tokens to owners.
-        mapping(uint256 => address) _owners;
-        /// Maps users to balances.
-        mapping(address => uint256) _balances;
-        /// Maps tokens to approvals.
-        mapping(uint256 => address) _token_approvals;
-        /// Maps owners to a mapping of operator approvals.
-        mapping(address => mapping(address => bool)) _operator_approvals;
-    }
+/// State of an [`Erc721`] token.
+#[storage]
+pub struct Erc721 {
+    /// Maps tokens to owners.
+    pub _owners: StorageMap<U256, StorageAddress>,
+    /// Maps users to balances.
+    pub _balances: StorageMap<Address, StorageU256>,
+    /// Maps tokens to approvals.
+    pub _token_approvals: StorageMap<U256, StorageAddress>,
+    /// Maps owners to a mapping of operator approvals.
+    pub _operator_approvals:
+        StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

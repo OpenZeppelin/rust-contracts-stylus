@@ -28,8 +28,8 @@ use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
     abi::Bytes,
     evm, msg,
-    prelude::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::{storage, TopLevelStorage},
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::{
@@ -52,25 +52,25 @@ use crate::{
 };
 
 type U96 = <S160 as Size>::Key;
+type StorageU96 = <S160 as Size>::KeyStorage;
 
-sol_storage! {
-    /// State of an [`Erc721Consecutive`] token.
-    pub struct Erc721Consecutive {
-        /// Erc721 contract storage.
-        Erc721 erc721;
-        /// Checkpoint library contract for sequential ownership.
-        Trace<S160> _sequential_ownership;
-        /// BitMap library contract for sequential burn of tokens.
-        BitMap _sequential_burn;
-        /// Used to offset the first token id in
-        /// [`Erc721Consecutive::_next_consecutive_id`].
-        uint96 _first_consecutive_id;
-        /// Maximum size of a batch of consecutive tokens. This is designed to limit
-        /// stress on off-chain indexing services that have to record one entry per
-        /// token, and have protections against "unreasonably large" batches of
-        /// tokens.
-        uint96 _max_batch_size;
-    }
+/// State of an [`Erc721Consecutive`] token.
+#[storage]
+pub struct Erc721Consecutive {
+    /// Erc721 contract storage.
+    pub erc721: Erc721,
+    /// Checkpoint library contract for sequential ownership.
+    pub _sequential_ownership: Trace<S160>,
+    /// BitMap library contract for sequential burn of tokens.
+    pub _sequential_burn: BitMap,
+    /// Used to offset the first token id in
+    /// [`Erc721Consecutive::_next_consecutive_id`].
+    pub _first_consecutive_id: StorageU96,
+    /// Maximum size of a batch of consecutive tokens. This is designed to
+    /// limit stress on off-chain indexing services that have to record one
+    /// entry per token, and have protections against "unreasonably large"
+    /// batches of tokens.
+    pub _max_batch_size: StorageU96,
 }
 
 pub use sol::*;

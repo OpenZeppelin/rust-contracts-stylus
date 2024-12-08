@@ -45,20 +45,20 @@ impl MethodError for Error {
     }
 }
 
-sol_storage! {
-    /// State of the checkpoint library contract.
-    pub struct Trace<S: Size>  {
-        /// Stores checkpoints in a dynamic array sorted by key.
-        StorageVec<Checkpoint<S>> _checkpoints;
-    }
+/// State of the checkpoint library contract.
+#[storage]
+pub struct Trace<S: Size> {
+    /// Stores checkpoints in a dynamic array sorted by key.
+    pub _checkpoints: StorageVec<Checkpoint<S>>,
+}
 
-    /// State of a single checkpoint.
-    pub struct Checkpoint<S: Size> {
-        /// The key of the checkpoint. Used as a sorting key.
-        S::KeyStorage _key;
-        /// The value corresponding to the key.
-        S::ValueStorage _value;
-    }
+/// State of a single checkpoint.
+#[storage]
+pub struct Checkpoint<S: Size> {
+    /// The key of the checkpoint. Used as a sorting key.
+    pub _key: S::KeyStorage,
+    /// The value corresponding to the key.
+    pub _value: S::ValueStorage,
 }
 
 impl<S: Size> Trace<S> {

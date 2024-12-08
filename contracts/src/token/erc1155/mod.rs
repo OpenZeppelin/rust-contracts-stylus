@@ -7,8 +7,8 @@ use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
     evm, function_selector, msg,
-    prelude::{public, sol_storage, AddressVM, SolidityError},
-    storage::TopLevelStorage,
+    prelude::{public, storage, AddressVM, SolidityError},
+    storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
 };
 
 use crate::utils::{
@@ -182,14 +182,14 @@ impl MethodError for Error {
     }
 }
 
-sol_storage! {
-    /// State of an [`Erc1155`] token.
-    pub struct Erc1155 {
-        /// Maps users to balances.
-        mapping(uint256 => mapping(address => uint256)) _balances;
-        /// Maps owners to a mapping of operator approvals.
-        mapping(address => mapping(address => bool)) _operator_approvals;
-    }
+/// State of an [`Erc1155`] token.
+#[storage]
+pub struct Erc1155 {
+    /// Maps users to balances.
+    pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
+    /// Maps owners to a mapping of operator approvals.
+    pub _operator_approvals:
+        StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

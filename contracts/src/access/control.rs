@@ -40,10 +40,12 @@
 //! accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
-use alloy_primitives::{Address, B256};
+use alloy_primitives::{Address, FixedBytes, B256};
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
+    prelude::storage,
+    storage::{StorageBool, StorageFixedBytes, StorageMap},
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
@@ -101,20 +103,20 @@ pub enum Error {
     BadConfirmation(AccessControlBadConfirmation),
 }
 
-sol_storage! {
-    /// Information about a specific role.
-    pub struct RoleData {
-        /// Whether an account is member of a certain role.
-        mapping(address => bool) has_role;
-        /// The admin role for this role.
-        bytes32 admin_role;
-    }
+/// Information about a specific role.
+#[storage]
+pub struct RoleData {
+    /// Whether an account is member of a certain role.
+    pub has_role: StorageMap<Address, StorageBool>,
+    /// The admin role for this role.
+    pub admin_role: StorageFixedBytes<32>,
+}
 
-    /// State of an `AccessControl` contract.
-    pub struct AccessControl {
-        /// Role identifier -> Role information.
-        mapping(bytes32 => RoleData) _roles;
-    }
+/// State of an `AccessControl` contract.
+#[storage]
+pub struct AccessControl {
+    /// Role identifier -> Role information.
+    pub _roles: StorageMap<FixedBytes<32>, RoleData>,
 }
 
 #[public]

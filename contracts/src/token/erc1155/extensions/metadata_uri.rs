@@ -8,7 +8,9 @@ use alloc::string::String;
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::stylus_proc::{public, sol_storage};
+use stylus_sdk::{
+    prelude::storage, storage::StorageString, stylus_proc::public,
+};
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
@@ -27,13 +29,12 @@ mod sol {
     }
 }
 
-sol_storage! {
-    /// URI Metadata of an [`crate::token::erc1155::Erc1155`] token.
-    pub struct Erc1155MetadataUri {
-        /// Used as the URI for all token types by relying on ID substitution,
-        /// e.g. https://token-cdn-domain/{id}.json.
-        string _uri;
-    }
+/// URI Metadata of an [`crate::token::erc1155::Erc1155`] token.
+#[storage]
+pub struct Erc1155MetadataUri {
+    /// Used as the URI for all token types by relying on ID substitution,
+    /// e.g. https://token-cdn-domain/{id}.json.
+    pub _uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-1155 standard.
