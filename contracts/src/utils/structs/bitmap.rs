@@ -14,17 +14,19 @@
 //!
 //! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
 use alloy_primitives::{uint, U256};
-use stylus_sdk::stylus_proc::sol_storage;
+use stylus_sdk::{
+    prelude::storage,
+    storage::{StorageMap, StorageU256},
+};
 
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);
 
-sol_storage! {
-    /// State of bit map.
-    pub struct BitMap {
-        /// Inner laying mapping.
-        mapping(uint256 => uint256) _data;
-    }
+/// State of bit map.
+#[storage]
+pub struct BitMap {
+    /// Inner laying mapping.
+    pub _data: StorageMap<U256, StorageU256>,
 }
 
 impl BitMap {

@@ -4,21 +4,22 @@ use alloc::string::{String, ToString};
 
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, sol_storage};
+use stylus_sdk::{
+    prelude::storage, storage::StorageString, stylus_proc::public,
+};
 
 use crate::{
     token::erc721::{Error, IErc721},
     utils::{introspection::erc165::IErc165, Metadata},
 };
 
-sol_storage! {
-    /// Metadata of an [`crate::token::erc721::Erc721`] token.
-    pub struct Erc721Metadata {
-        /// Common Metadata.
-        Metadata _metadata;
-        /// Base URI for tokens.
-        string _base_uri;
-    }
+/// Metadata of an [`crate::token::erc721::Erc721`] token.
+#[storage]
+pub struct Erc721Metadata {
+    /// Common Metadata.
+    pub _metadata: Metadata,
+    /// Base URI for tokens.
+    pub _base_uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
