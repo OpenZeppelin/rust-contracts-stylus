@@ -85,8 +85,9 @@ pub enum Error {
 }
 
 pub use token::IErc20;
-#[allow(missing_docs)]
 mod token {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
     stylus_sdk::stylus_proc::sol_interface! {
         /// Interface of the ERC-20 token.
         interface IErc20 {

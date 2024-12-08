@@ -66,8 +66,9 @@ impl MethodError for Error {
 }
 
 pub use token::*;
-#[allow(missing_docs)]
 mod token {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
     alloy_sol_types::sol! {
         /// Interface of the ERC-20 token.
         interface IErc20 {
