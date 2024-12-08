@@ -43,7 +43,6 @@ pub enum Error {
 
 /// State of a Capped Contract.
 #[storage]
-#[allow(clippy::pub_underscore_fields)]
 pub struct Capped {
     /// A cap to the supply of tokens.
     pub _cap: StorageU256,
