@@ -10,29 +10,31 @@
 //! [`Erc721Enumerable`].
 
 use alloy_primitives::{uint, Address, FixedBytes, U256};
-use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
+pub use sol::*;
 use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
 
 use crate::{
     token::{erc721, erc721::IErc721},
     utils::introspection::erc165::IErc165,
 };
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// Indicates an error when an `owner`'s token query
+        /// was out of bounds for `index`.
+        ///
+        /// NOTE: The owner being `Address::ZERO`
+        /// indicates a global out of bounds index.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721OutOfBoundsIndex(address owner, uint256 index);
 
-sol! {
-    /// Indicates an error when an `owner`'s token query
-    /// was out of bounds for `index`.
-    ///
-    /// NOTE: The owner being `Address::ZERO`
-    /// indicates a global out of bounds index.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721OutOfBoundsIndex(address owner, uint256 index);
-
-    /// Indicates an error related to batch minting not allowed.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721EnumerableForbiddenBatchMint();
+        /// Indicates an error related to batch minting not allowed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721EnumerableForbiddenBatchMint();
+    }
 }
 
 /// An [`Erc721Enumerable`] extension error.

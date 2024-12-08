@@ -5,7 +5,6 @@
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
 use alloy_primitives::{Address, FixedBytes, U256};
-use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
@@ -18,69 +17,73 @@ use crate::utils::introspection::erc165::{Erc165, IErc165};
 pub mod extensions;
 pub mod utils;
 
-sol! {
-    /// Emitted when `value` tokens are moved from one account (`from`) to
-    /// another (`to`).
-    ///
-    /// Note that `value` may be zero.
-    #[allow(missing_docs)]
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    /// Emitted when the allowance of a `spender` for an `owner` is set by a
-    /// call to `approve`. `value` is the new allowance.
-    #[allow(missing_docs)]
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// Emitted when `value` tokens are moved from one account (`from`) to
+        /// another (`to`).
+        ///
+        /// Note that `value` may be zero.
+        #[allow(missing_docs)]
+        event Transfer(address indexed from, address indexed to, uint256 value);
+        /// Emitted when the allowance of a `spender` for an `owner` is set by a
+        /// call to `approve`. `value` is the new allowance.
+        #[allow(missing_docs)]
+        event Approval(address indexed owner, address indexed spender, uint256 value);
+    }
 
-sol! {
-    /// Indicates an error related to the current `balance` of `sender`. Used
-    /// in transfers.
-    ///
-    /// * `sender` - Address whose tokens are being transferred.
-    /// * `balance` - Current balance for the interacting account.
-    /// * `needed` - Minimum amount required to perform a transfer.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
-    /// Indicates a failure with the token `sender`. Used in transfers.
-    ///
-    /// * `sender` - Address whose tokens are being transferred.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidSender(address sender);
-    /// Indicates a failure with the token `receiver`. Used in transfers.
-    ///
-    /// * `receiver` - Address to which the tokens are being transferred.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidReceiver(address receiver);
-    /// Indicates a failure with the `spender`’s `allowance`. Used in
-    /// transfers.
-    ///
-    /// * `spender` - Address that may be allowed to operate on tokens without
-    /// being their owner.
-    /// * `allowance` - Amount of tokens a `spender` is allowed to operate
-    /// with.
-    /// * `needed` - Minimum amount required to perform a transfer.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-    /// Indicates a failure with the `spender` to be approved. Used in
-    /// approvals.
-    ///
-    /// * `spender` - Address that may be allowed to operate on tokens without
-    /// being their owner.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidSpender(address spender);
+    alloy_sol_macro::sol! {
+        /// Indicates an error related to the current `balance` of `sender`. Used
+        /// in transfers.
+        ///
+        /// * `sender` - Address whose tokens are being transferred.
+        /// * `balance` - Current balance for the interacting account.
+        /// * `needed` - Minimum amount required to perform a transfer.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
+        /// Indicates a failure with the token `sender`. Used in transfers.
+        ///
+        /// * `sender` - Address whose tokens are being transferred.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidSender(address sender);
+        /// Indicates a failure with the token `receiver`. Used in transfers.
+        ///
+        /// * `receiver` - Address to which the tokens are being transferred.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidReceiver(address receiver);
+        /// Indicates a failure with the `spender`’s `allowance`. Used in
+        /// transfers.
+        ///
+        /// * `spender` - Address that may be allowed to operate on tokens without
+        /// being their owner.
+        /// * `allowance` - Amount of tokens a `spender` is allowed to operate
+        /// with.
+        /// * `needed` - Minimum amount required to perform a transfer.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+        /// Indicates a failure with the `spender` to be approved. Used in
+        /// approvals.
+        ///
+        /// * `spender` - Address that may be allowed to operate on tokens without
+        /// being their owner.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidSpender(address spender);
 
-    /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
-    /// approver Address initiating an approval operation.
-    ///
-    /// * `approver` - Address initiating an approval operation.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidApprover(address approver);
+        /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+        /// approver Address initiating an approval operation.
+        ///
+        /// * `approver` - Address initiating an approval operation.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidApprover(address approver);
 
+    }
 }
 
 /// An [`Erc20`] error defined as described in [ERC-6093].

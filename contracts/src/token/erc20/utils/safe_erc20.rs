@@ -8,7 +8,8 @@
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{sol, SolCall};
+use alloy_sol_types::SolCall;
+pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
@@ -21,26 +22,29 @@ use stylus_sdk::{
 
 use crate::token::erc20;
 
-sol! {
-    /// An operation with an ERC-20 token failed.
-    ///
-    /// * `token` - Address of the ERC-20 token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error SafeErc20FailedOperation(address token);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// An operation with an ERC-20 token failed.
+        ///
+        /// * `token` - Address of the ERC-20 token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error SafeErc20FailedOperation(address token);
 
-    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
-    ///
-    /// * `spender` - Address of future tokens' spender.
-    /// * `current_allowance` - Current allowance of the `spender`.
-    /// * `requested_decrease` - Requested decrease in allowance for `spender`.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error SafeErc20FailedDecreaseAllowance(
-        address spender,
-        uint256 current_allowance,
-        uint256 requested_decrease
-    );
+        /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+        ///
+        /// * `spender` - Address of future tokens' spender.
+        /// * `current_allowance` - Current allowance of the `spender`.
+        /// * `requested_decrease` - Requested decrease in allowance for `spender`.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error SafeErc20FailedDecreaseAllowance(
+            address spender,
+            uint256 current_allowance,
+            uint256 requested_decrease
+        );
+    }
 }
 
 /// A [`SafeErc20`] error.

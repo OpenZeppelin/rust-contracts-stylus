@@ -23,8 +23,8 @@
 //! intended.
 
 use alloy_primitives::{Address, U256, U64};
-use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
+pub use sol::*;
 use stylus_sdk::{
     block,
     call::{self, call, Call},
@@ -37,34 +37,36 @@ use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
 };
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// Emitted when `amount` of Ether has been released.
+        ///
+        /// * `amount` - Total Ether released.
+        #[allow(missing_docs)]
+        event EtherReleased(uint256 amount);
 
-sol! {
-    /// Emitted when `amount` of Ether has been released.
-    ///
-    /// * `amount` - Total Ether released.
-    #[allow(missing_docs)]
-    event EtherReleased(uint256 amount);
+        /// Emitted when `amount` of ERC-20 `token` has been released.
+        ///
+        /// * `token` - Address of the token being released.
+        /// * `amount` - Number of tokens released.
+        #[allow(missing_docs)]
+        event ERC20Released(address indexed token, uint256 amount);
+    }
 
-    /// Emitted when `amount` of ERC-20 `token` has been released.
-    ///
-    /// * `token` - Address of the token being released.
-    /// * `amount` - Number of tokens released.
-    #[allow(missing_docs)]
-    event ERC20Released(address indexed token, uint256 amount);
-}
+    alloy_sol_macro::sol! {
+        /// Indicates an error related to the underlying Ether transfer.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ReleaseEtherFailed();
 
-sol! {
-    /// Indicates an error related to the underlying Ether transfer.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ReleaseEtherFailed();
-
-    /// The token address is not valid (eg. `Address::ZERO`).
-    ///
-    /// * `token` - Address of the token being released.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error InvalidToken(address token);
+        /// The token address is not valid (eg. `Address::ZERO`).
+        ///
+        /// * `token` - Address of the token being released.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidToken(address token);
+    }
 }
 
 /// An error that occurred in the [`VestingWallet`] contract.

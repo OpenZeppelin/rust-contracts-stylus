@@ -3,16 +3,19 @@
 //! Nonces will only increment.
 
 use alloy_primitives::{uint, Address, U256};
-use alloy_sol_types::sol;
 use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
 
 const ONE: U256 = uint!(1_U256);
 
-sol! {
-    /// The nonce used for an `account` is not the expected current nonce.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error InvalidAccountNonce(address account, uint256 currentNonce);
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// The nonce used for an `account` is not the expected current nonce.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidAccountNonce(address account, uint256 currentNonce);
+    }
 }
 
 /// A Nonces error.

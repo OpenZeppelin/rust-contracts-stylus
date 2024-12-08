@@ -10,7 +10,7 @@
 //! the token holder account doesn’t need to send a transaction,
 //! and thus is not required to hold Ether at all.
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
-use alloy_sol_types::{sol, SolType};
+use alloy_sol_types::SolType;
 use stylus_sdk::{
     block,
     prelude::StorageType,
@@ -31,21 +31,25 @@ use crate::{
 const PERMIT_TYPEHASH: B256 =
     b256!("6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9");
 
-type StructHashTuple = sol! {
-    tuple(bytes32, address, address, uint256, uint256, uint256)
-};
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    pub(crate) type StructHashTuple = alloy_sol_macro::sol! {
+        tuple(bytes32, address, address, uint256, uint256, uint256)
+    };
 
-sol! {
-    /// Indicates an error related to the fact that
-    /// permit deadline has expired.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC2612ExpiredSignature(uint256 deadline);
+    alloy_sol_macro::sol! {
+        /// Indicates an error related to the fact that
+        /// permit deadline has expired.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC2612ExpiredSignature(uint256 deadline);
 
-    /// Indicates an error related to the issue about mismatched signature.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC2612InvalidSigner(address signer, address owner);
+        /// Indicates an error related to the issue about mismatched signature.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC2612InvalidSigner(address signer, address owner);
+    }
 }
 
 /// A Permit error.

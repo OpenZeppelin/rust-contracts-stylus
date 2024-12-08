@@ -10,8 +10,8 @@
 pub mod generic_size;
 
 use alloy_primitives::{uint, U256, U32};
-use alloy_sol_types::sol;
 pub use generic_size::{Size, S160, S208, S224};
+pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
     prelude::*,
@@ -23,10 +23,13 @@ use crate::utils::{
     structs::checkpoints::generic_size::{Accessor, Num},
 };
 
-sol! {
-    /// A value was attempted to be inserted into a past checkpoint.
-    #[derive(Debug)]
-    error CheckpointUnorderedInsertion();
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// A value was attempted to be inserted into a past checkpoint.
+        #[derive(Debug)]
+        error CheckpointUnorderedInsertion();
+    }
 }
 
 /// An error that occurred while calling the [`Trace`] checkpoint contract.

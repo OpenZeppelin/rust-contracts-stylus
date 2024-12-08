@@ -6,22 +6,25 @@
 use alloc::string::String;
 
 use alloy_primitives::{FixedBytes, U256};
-use alloy_sol_macro::sol;
 use openzeppelin_stylus_proc::interface_id;
+pub use sol::*;
 use stylus_sdk::stylus_proc::{public, sol_storage};
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
-sol! {
-    /// Emitted when the URI for token type `id` changes to `value`, if it is
-    /// a non-programmatic URI.
-    ///
-    /// If a [`URI`] event was emitted for `id`, the standard [guarantees] that
-    /// `value` will equal the value returned by [`IErc1155MetadataUri::uri`].
-    ///
-    /// [guarantees]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
-    #[allow(missing_docs)]
-    event URI(string value, uint256 indexed id);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// Emitted when the URI for token type `id` changes to `value`, if it is
+        /// a non-programmatic URI.
+        ///
+        /// If a [`URI`] event was emitted for `id`, the standard [guarantees] that
+        /// `value` will equal the value returned by [`IErc1155MetadataUri::uri`].
+        ///
+        /// [guarantees]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
+        #[allow(missing_docs)]
+        event URI(string value, uint256 indexed id);
+    }
 }
 
 sol_storage! {

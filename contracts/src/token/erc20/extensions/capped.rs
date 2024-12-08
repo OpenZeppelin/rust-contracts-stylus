@@ -6,21 +6,24 @@
 //! but only once the checks are put in place.
 
 use alloy_primitives::U256;
-use alloy_sol_types::sol;
+pub use sol::*;
 use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
 
-sol! {
-    /// Indicates an error related to the operation that failed
-    /// because `total_supply` exceeded the `_cap`.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// Indicates an error related to the operation that failed
+        /// because `total_supply` exceeded the `_cap`.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
 
-    /// Indicates an error related to the operation that failed
-    /// because the supplied `cap` is not a valid cap value.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidCap(uint256 cap);
+        /// Indicates an error related to the operation that failed
+        /// because the supplied `cap` is not a valid cap value.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidCap(uint256 cap);
+    }
 }
 
 /// A Capped error.

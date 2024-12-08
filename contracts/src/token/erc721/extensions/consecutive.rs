@@ -25,7 +25,6 @@
 use alloc::vec;
 
 use alloy_primitives::{uint, Address, U256};
-use alloy_sol_types::sol;
 use stylus_sdk::{
     abi::Bytes,
     evm, msg,
@@ -74,44 +73,48 @@ sol_storage! {
     }
 }
 
-sol! {
-    /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
-    ///
-    /// * `from_token_id` - First token being transferred.
-    /// * `to_token_id` - Last token being transferred.
-    /// * `from_address` - Address from which tokens will be transferred.
-    /// * `to_address` - Address where the tokens will be transferred to.
-    #[allow(missing_docs)]
-    event ConsecutiveTransfer(
-        uint256 indexed from_token_id,
-        uint256 to_token_id,
-        address indexed from_address,
-        address indexed to_address
-    );
-}
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
+        ///
+        /// * `from_token_id` - First token being transferred.
+        /// * `to_token_id` - Last token being transferred.
+        /// * `from_address` - Address from which tokens will be transferred.
+        /// * `to_address` - Address where the tokens will be transferred to.
+        #[allow(missing_docs)]
+        event ConsecutiveTransfer(
+            uint256 indexed from_token_id,
+            uint256 to_token_id,
+            address indexed from_address,
+            address indexed to_address
+        );
+    }
 
-sol! {
-    /// Batch mint is restricted to the constructor.
-    /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
-    /// is non ERC-721 compliant.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenBatchMint();
+    alloy_sol_macro::sol! {
+        /// Batch mint is restricted to the constructor.
+        /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
+        /// is non ERC-721 compliant.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenBatchMint();
 
-    /// Exceeds the max number of mints per batch.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ExceededMaxBatchMint(uint256 batch_size, uint256 max_batch);
+        /// Exceeds the max number of mints per batch.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ExceededMaxBatchMint(uint256 batch_size, uint256 max_batch);
 
-    /// Individual minting is not allowed.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenMint();
+        /// Individual minting is not allowed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenMint();
 
-    /// Batch burn is not supported.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenBatchBurn();
+        /// Batch burn is not supported.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenBatchBurn();
+    }
 }
 
 /// An [`Erc721Consecutive`] error.

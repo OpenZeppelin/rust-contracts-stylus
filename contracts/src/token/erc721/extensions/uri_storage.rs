@@ -4,24 +4,26 @@
 use alloc::string::String;
 
 use alloy_primitives::U256;
-use alloy_sol_types::sol;
+pub use sol::*;
 use stylus_sdk::{evm, stylus_proc::sol_storage};
 
 use crate::token::erc721::{extensions::Erc721Metadata, Error, IErc721};
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    alloy_sol_macro::sol! {
+        /// This event gets emitted when the metadata of a token is changed.
+        ///
+        /// The event comes from IERC4096.
+        #[allow(missing_docs)]
+        event MetadataUpdate(uint256 token_id);
 
-sol! {
-    /// This event gets emitted when the metadata of a token is changed.
-    ///
-    /// The event comes from IERC4096.
-    #[allow(missing_docs)]
-    event MetadataUpdate(uint256 token_id);
-
-    /// This event gets emitted when the metadata of a range of tokens
-    /// is changed.
-    ///
-    /// The event comes from IERC4096.
-    #[allow(missing_docs)]
-    event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
+        /// This event gets emitted when the metadata of a range of tokens
+        /// is changed.
+        ///
+        /// The event comes from IERC4096.
+        #[allow(missing_docs)]
+        event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
+    }
 }
 
 sol_storage! {
