@@ -4,7 +4,7 @@ use alloc::string::String;
 
 use alloy_primitives::FixedBytes;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, sol_storage, storage};
+use stylus_sdk::stylus_proc::{public, storage};
 
 use crate::utils::introspection::erc165::IErc165;
 
