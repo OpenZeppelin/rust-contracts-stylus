@@ -46,7 +46,7 @@ use stylus_sdk::{
     evm, msg,
     prelude::storage,
     storage::{StorageBool, StorageFixedBytes, StorageMap},
-    stylus_proc::{public, sol_storage, SolidityError},
+    stylus_proc::{public, SolidityError},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
