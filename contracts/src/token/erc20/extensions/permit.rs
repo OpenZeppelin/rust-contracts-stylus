@@ -15,7 +15,7 @@ use stylus_sdk::{
     block,
     prelude::{storage, StorageType},
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::{

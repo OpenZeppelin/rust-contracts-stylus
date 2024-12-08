@@ -17,7 +17,7 @@ use stylus_sdk::{
     function_selector,
     prelude::storage,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    stylus_proc::{public, SolidityError},
     types::AddressVM,
 };
 
