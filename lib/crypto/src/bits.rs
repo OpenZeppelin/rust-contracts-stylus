@@ -32,6 +32,7 @@ impl_bit_iter_be!(usize);
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use alloc::{vec, vec::Vec};
 
     use super::*;
 
