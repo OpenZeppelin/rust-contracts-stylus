@@ -2195,11 +2195,11 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155 as IErc1155>::INTERFACE_ID;
-        let expected = 0xd9b6_7a26;
+        let expected = 0xd9b67a26;
         assert_eq!(actual, expected);
 
         let actual = <Erc1155 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ff_c9a7;
+        let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
     }
 }
