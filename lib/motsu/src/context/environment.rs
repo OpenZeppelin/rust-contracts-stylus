@@ -75,4 +75,9 @@ impl Environment {
     pub(crate) fn clear_events(&mut self) {
         self.events.clear();
     }
+
+    /// Gets all emitted events.
+    pub(crate) fn events(&self) -> Vec<Vec<u8>> {
+        self.events.clone()
+    }
 }

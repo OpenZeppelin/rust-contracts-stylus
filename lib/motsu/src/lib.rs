@@ -44,7 +44,9 @@
 //!
 //! [test_attribute]: crate::test
 mod context;
+mod event;
 pub mod prelude;
 mod shims;
 
+pub use event::{clear_events, emits};
 pub use motsu_proc::test;

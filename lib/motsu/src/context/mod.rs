@@ -111,6 +111,12 @@ impl Context {
         let mut context = EVM.entry(self.thread_name).or_default();
         context.environment.clear_events();
     }
+
+    /// Gets all emitted events for a test case.
+    pub fn events(self) -> Vec<Vec<u8>> {
+        let context = EVM.entry(self.thread_name).or_default();
+        context.environment.events()
+    }
 }
 
 #[derive(Default)]

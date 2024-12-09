@@ -9,6 +9,7 @@ repository.workspace = true
 version = "0.2.0"
 
 [dependencies]
+alloy-sol-types.workspace = true
 const-hex.workspace = true
 once_cell.workspace = true
 tiny-keccak.workspace = true
