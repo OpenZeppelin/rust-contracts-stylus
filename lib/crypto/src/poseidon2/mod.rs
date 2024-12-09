@@ -17,7 +17,7 @@ use crate::{field::prime::PrimeField, poseidon2::params::PoseidonParams};
 
 /// Determines whether poseidon sponge in absorbing or squeezing state.
 /// In squeezing state, sponge can only squeeze elements.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Mode {
     Absorbing,
     Squeezing,
@@ -131,9 +131,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
 
     /// Squeeze a single element from the sponge.
     pub fn squeeze(&mut self) -> F {
-        if matches!(self.mode, Mode::Absorbing)
-            || self.index == Self::state_size()
-        {
+        if self.mode == Mode::Absorbing || self.index == Self::state_size() {
             self.permute();
             self.mode = Mode::Squeezing;
             self.index = P::CAPACITY;
