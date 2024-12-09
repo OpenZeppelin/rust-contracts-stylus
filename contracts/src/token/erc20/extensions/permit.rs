@@ -174,7 +174,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
 
         let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 
-        let signer: Address = ecdsa::recover(self, hash, v, r, s)?;
+        let signer: Address = ecdsa::recover(hash, v, r, s)?;
 
         if signer != owner {
             return Err(ERC2612InvalidSigner { signer, owner }.into());

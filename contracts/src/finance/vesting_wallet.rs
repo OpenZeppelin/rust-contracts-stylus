@@ -420,7 +420,7 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(Call::new_in(self).value(amount), owner, &[])?;
+        call(Call::new().value(amount), owner, &[])?;
 
         evm::log(EtherReleased { amount });
 

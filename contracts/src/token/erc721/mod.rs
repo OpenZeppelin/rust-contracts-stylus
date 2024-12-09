@@ -1108,7 +1108,7 @@ impl Erc721 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     pub fn _check_on_erc721_received(
-        &mut self,
+        &self,
         operator: Address,
         from: Address,
         to: Address,
@@ -1122,7 +1122,7 @@ impl Erc721 {
         }
 
         let receiver = IERC721Receiver::new(to);
-        let call = Call::new_in(self);
+        let call = Call::new();
         let result = receiver.on_erc_721_received(
             call,
             operator,

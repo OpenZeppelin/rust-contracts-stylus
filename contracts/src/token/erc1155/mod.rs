@@ -786,7 +786,7 @@ impl Erc1155 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     fn _check_on_erc1155_received(
-        &mut self,
+        &self,
         operator: Address,
         from: Address,
         to: Address,
@@ -798,7 +798,7 @@ impl Erc1155 {
         }
 
         let receiver = IERC1155Receiver::new(to);
-        let call = Call::new_in(self);
+        let call = Call::new();
         let result = match details.transfer {
             Transfer::Single { id, value } => receiver
                 .on_erc_1155_received(call, operator, from, id, value, data),
