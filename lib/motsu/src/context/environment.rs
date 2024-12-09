@@ -21,6 +21,7 @@ pub(crate) struct Environment {
     block_timestamp: u64,
     chain_id: u64,
     contract_address: [u8; 42],
+    events: Vec<Vec<u8>>,
     msg_sender: [u8; 42],
 }
 
@@ -32,6 +33,7 @@ impl Default for Environment {
             block_timestamp: BLOCK_TIMESTAMP,
             chain_id: CHAIN_ID,
             contract_address: *CONTRACT_ADDRESS,
+            events: Vec::new(),
             msg_sender: *MSG_SENDER,
         }
     }
@@ -62,5 +64,9 @@ impl Environment {
     /// Gets the address of the account that called the program.
     pub(crate) fn msg_sender(&self) -> [u8; 42] {
         self.msg_sender
+    }
+
+    pub(crate) fn store_event(&mut self, event: &[u8]) {
+        self.events.push(Vec::from(event));
     }
 }

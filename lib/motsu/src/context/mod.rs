@@ -81,6 +81,25 @@ impl Context {
         context.environment.contract_address()
     }
 
+    /// Emits an EVM log with the given number of topics and data, the first
+    /// bytes of which should be the 32-byte-aligned topic data.
+    ///
+    /// Data contains `topics` amount of topics and then encoded event in `data`
+    /// buffer.
+    pub(crate) unsafe fn emit_log(
+        self,
+        data: *const u8,
+        len: usize,
+        topics: usize,
+    ) {
+        // https://github.com/OffchainLabs/stylus-sdk-rs/blob/v0.6.0/stylus-sdk/src/evm.rs#L38-L52
+        let buffer = read_bytes(data, len);
+        let encoded_event: Vec<u8> =
+            buffer.into_iter().skip(topics * WORD_BYTES).collect();
+        let mut context = EVM.entry(self.thread_name).or_default();
+        context.environment.store_event(&encoded_event);
+    }
+
     /// Gets the address of the account that called the program.
     pub fn msg_sender(self) -> [u8; 42] {
         let context = EVM.entry(self.thread_name).or_default();
@@ -121,6 +140,13 @@ impl ThreadName {
 struct MockStorage {
     /// Contract's mock data storage.
     contract_data: HashMap<Bytes32, Bytes32>,
+}
+
+/// Read data from location pointed by `ptr`.
+unsafe fn read_bytes(ptr: *const u8, len: usize) -> Vec<u8> {
+    let mut res = Vec::with_capacity(len);
+    ptr::copy(ptr, res.as_mut_ptr(), len);
+    res
 }
 
 /// Read the word from location pointed by `ptr`.
