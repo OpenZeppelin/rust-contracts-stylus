@@ -30,7 +30,7 @@ impl_bit_iter_be!(u64);
 impl_bit_iter_be!(u128);
 impl_bit_iter_be!(usize);
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
 
     use super::*;

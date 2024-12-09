@@ -34,7 +34,7 @@ async fn constructs(alice: Account) -> Result<()> {
 
     let AccessControl::hasRoleReturn { hasRole } =
         contract.hasRole(DEFAULT_ADMIN_ROLE.into(), alice_addr).call().await?;
-    assert_eq!(hasRole, true);
+    assert!(hasRole);
 
     Ok(())
 }
@@ -124,7 +124,7 @@ async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
 
     let AccessControl::hasRoleReturn { hasRole } =
         contract.hasRole(ROLE.into(), alice_addr).call().await?;
-    assert_eq!(hasRole, false);
+    assert!(!hasRole);
 
     let receipt = receipt!(contract.revokeRole(ROLE.into(), alice_addr))?;
     assert!(!receipt.emits(RoleRevoked {

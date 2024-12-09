@@ -73,6 +73,7 @@ impl Account {
     }
 
     /// Create a configurable smart contract deployer on behalf of this account.
+    #[must_use]
     pub fn as_deployer(&self) -> Deployer {
         Deployer::new(self.url().to_string(), self.pk())
     }
