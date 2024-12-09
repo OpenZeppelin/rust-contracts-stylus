@@ -273,7 +273,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
                 }
             }
             _ => {
-                panic!()
+                panic!("not supported state size")
             }
         }
     }
