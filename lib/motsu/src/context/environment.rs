@@ -66,7 +66,13 @@ impl Environment {
         self.msg_sender
     }
 
+    /// Stores emitted event.
     pub(crate) fn store_event(&mut self, event: &[u8]) {
         self.events.push(Vec::from(event));
+    }
+
+    /// Removes all the stored events.
+    pub(crate) fn clear_events(&mut self) {
+        self.events.clear();
     }
 }

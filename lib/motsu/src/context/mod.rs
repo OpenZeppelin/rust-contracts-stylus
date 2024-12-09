@@ -105,6 +105,12 @@ impl Context {
         let context = EVM.entry(self.thread_name).or_default();
         context.environment.msg_sender()
     }
+
+    /// Removes all events for a test case.
+    pub fn clear_events(self) {
+        let mut context = EVM.entry(self.thread_name).or_default();
+        context.environment.clear_events();
+    }
 }
 
 #[derive(Default)]
