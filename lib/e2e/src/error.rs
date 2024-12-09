@@ -43,7 +43,7 @@ impl core::fmt::Display for PanicCode {
                 "Called a zero-initialized variable of internal function type"
         };
 
-        write!(f, "{}", msg)
+        write!(f, "{msg}")
     }
 }
 
