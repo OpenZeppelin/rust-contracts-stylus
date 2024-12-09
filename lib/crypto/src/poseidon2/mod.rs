@@ -109,24 +109,32 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
 
         // Run the first half of the full round.
         for round in 0..Self::partial_round_start() {
-            self.add_rc_external(round);
-            self.apply_sbox_external();
-            self.matmul_external();
+            self.external_round(round);
         }
 
         // Run the partial round.
         for round in Self::partial_round_start()..Self::partial_round_end() {
-            self.add_rc_internal(round);
-            self.apply_sbox_internal();
-            self.matmul_internal();
+            self.internal_round(round);
         }
 
         // Run the second half of the full round.
         for round in Self::partial_round_end()..Self::rounds() {
-            self.add_rc_external(round);
-            self.apply_sbox_external();
-            self.matmul_external();
+            self.external_round(round);
         }
+    }
+
+    /// Apply external round to the state.
+    fn external_round(&mut self, round: usize) {
+        self.add_rc_external(round);
+        self.apply_sbox_external();
+        self.matmul_external();
+    }
+
+    /// Apply internal round to the state.
+    fn internal_round(&mut self, round: usize) {
+        self.add_rc_internal(round);
+        self.apply_sbox_internal();
+        self.matmul_internal();
     }
 
     /// Squeeze a single element from the sponge.
