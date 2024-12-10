@@ -657,19 +657,12 @@ mod tests {
 
     use super::{Erc1155Supply, IErc1155Supply};
     use crate::token::erc1155::{
+        tests::{random_token_ids, random_values},
         ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
     };
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
     const BOB: Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
-    pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
-        (0..size).map(|_| U256::from(rand::random::<u32>())).collect()
-    }
-
-    pub(crate) fn random_values(size: usize) -> Vec<U256> {
-        (0..size).map(|_| U256::from(rand::random::<u128>())).collect()
-    }
 
     fn init(
         contract: &mut Erc1155Supply,
