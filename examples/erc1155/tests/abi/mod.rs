@@ -35,7 +35,6 @@ sol!(
         event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
         #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed account, address indexed operator, bool approved);
-        event URI(string value, uint256 indexed id);
         #[derive(Debug, PartialEq)]
         event Paused(address account);
         #[derive(Debug, PartialEq)]
