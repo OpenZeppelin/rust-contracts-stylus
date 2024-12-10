@@ -863,7 +863,7 @@ macro_rules! fp_from_hex {
     }};
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use proptest::prelude::*;
 
@@ -891,8 +891,8 @@ mod tests {
         fn add(a: i64, b: i64) {
             let res = Field64::from(a) + Field64::from(b);
             let res: i128 = res.into();
-            let a = a as i128;
-            let b = b as i128;
+            let a = i128::from(a);
+            let b = i128::from(b);
             prop_assert_eq!(res, (a + b).rem_euclid(MODULUS));
         }
 
@@ -900,7 +900,7 @@ mod tests {
         fn double(a: i64) {
             let res = Field64::from(a).double();
             let res: i128 = res.into();
-            let a = a as i128;
+            let a = i128::from(a);
             prop_assert_eq!(res, (a + a).rem_euclid(MODULUS));
         }
 
@@ -908,8 +908,8 @@ mod tests {
         fn sub(a: i64, b: i64) {
             let res = Field64::from(a) - Field64::from(b);
             let res: i128 = res.into();
-            let a = a as i128;
-            let b = b as i128;
+            let a = i128::from(a);
+            let b = i128::from(b);
             prop_assert_eq!(res, (a - b).rem_euclid(MODULUS));
         }
 
@@ -917,8 +917,8 @@ mod tests {
         fn mul(a: i64, b: i64) {
             let res = Field64::from(a) * Field64::from(b);
             let res: i128 = res.into();
-            let a = a as i128;
-            let b = b as i128;
+            let a = i128::from(a);
+            let b = i128::from(b);
             prop_assert_eq!(res, (a * b).rem_euclid(MODULUS));
         }
 
@@ -926,21 +926,21 @@ mod tests {
         fn square(a: i64) {
             let res = Field64::from(a).square();
             let res: i128 = res.into();
-            let a = a as i128;
+            let a = i128::from(a);
             prop_assert_eq!(res, (a * a).rem_euclid(MODULUS));
         }
 
         #[test]
         fn div(a: i64, b: i64) {
             // Skip if `b` is zero.
-            if (b as i128) % MODULUS == 0 {
+            if i128::from(b) % MODULUS == 0 {
                 return Ok(());
             }
 
             let res = Field64::from(a) / Field64::from(b);
             let res: i128 = res.into();
-            let a = a as i128;
-            let b = b as i128;
+            let a = i128::from(a);
+            let b = i128::from(b);
             // a / b = res mod M => res * b = a mod M
             prop_assert_eq!((res * b).rem_euclid(MODULUS), a.rem_euclid(MODULUS));
         }
@@ -954,8 +954,8 @@ mod tests {
 
             let res = Field64::from(a).pow(b);
             let res: i128 = res.into();
-            let a = a as i128;
-            let b = b as i128;
+            let a = i128::from(a);
+            let b = i128::from(b);
             prop_assert_eq!(res, dumb_pow(a, b));
         }
 
@@ -963,7 +963,7 @@ mod tests {
         fn neg(a: i64) {
             let res = -Field64::from(a);
             let res: i128 = res.into();
-            let a = a as i128;
+            let a = i128::from(a);
             prop_assert_eq!(res, (-a).rem_euclid(MODULUS));
         }
 
