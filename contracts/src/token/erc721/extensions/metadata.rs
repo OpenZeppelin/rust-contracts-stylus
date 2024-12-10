@@ -21,9 +21,6 @@ sol_storage! {
     }
 }
 
-// TODO: IErc721Metadata should be refactored to have same api as solidity
-// has:  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4764ea50750d8bda9096e833706beba86918b163/contracts/token/ERC721/extensions/IERC721Metadata.sol#L12
-
 /// Interface for the optional metadata functions from the ERC-721 standard.
 #[interface_id]
 pub trait IErc721Metadata {
