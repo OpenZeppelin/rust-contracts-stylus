@@ -16,7 +16,6 @@ alloy.workspace = true
 eyre.workspace = true
 tokio.workspace = true
 e2e.workspace = true
-rand.workspace = true
 
 [features]
 e2e = []

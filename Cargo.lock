@@ -1583,7 +1583,6 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "rand",
  "stylus-sdk",
  "tokio",
 ]
