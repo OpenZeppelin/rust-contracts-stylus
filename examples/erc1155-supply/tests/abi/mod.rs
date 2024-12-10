@@ -3,7 +3,7 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-    contract Erc1155 {
+    contract Erc1155Supply {
         function balanceOf(address account, uint256 id) external view returns (uint256 balance);
         #[derive(Debug)]
         function balanceOfBatch(address[] accounts, uint256[] ids) external view returns (uint256[] memory balances);
@@ -15,10 +15,9 @@ sol!(
         function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external;
         function burn(address account, uint256 id, uint256 value) external;
         function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external;
-        function supportsInterface(bytes4 interfaceId) external view returns (bool);
-        function paused() external view returns (bool paused);
-        function pause() external;
-        function unpause() external;
+        function totalSupply(uint256 id) external view returns (uint256);
+        function totalSupply() external view returns (uint256);
+        function exists(uint256 id) external view returns (bool);
 
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
@@ -26,8 +25,6 @@ sol!(
         error ERC1155InvalidReceiver(address receiver);
         error ERC1155MissingApprovalForAll(address operator, address owner);
         error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 tokenId);
-        error EnforcedPause();
-        error ExpectedPause();
 
         #[derive(Debug, PartialEq)]
         event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
@@ -35,9 +32,5 @@ sol!(
         event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
         #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed account, address indexed operator, bool approved);
-        #[derive(Debug, PartialEq)]
-        event Paused(address account);
-        #[derive(Debug, PartialEq)]
-        event Unpaused(address account);
     }
 );

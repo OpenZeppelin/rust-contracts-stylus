@@ -849,7 +849,7 @@ impl Erc1155 {
     /// # Errors
     ///
     /// If `to` is `Address::ZERO`, then the error
-    /// [`Error:InvalidReceiver`] is returned.
+    /// [`Error::InvalidReceiver`] is returned.
     /// If length of `ids` is not equal to length of `values`, then the
     /// error [`Error::InvalidArrayLength`] is returned.
     /// If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
@@ -1203,7 +1203,7 @@ mod tests {
     }
 
     pub(crate) fn random_values(size: usize) -> Vec<U256> {
-        (1..size + 1).map(U256::from).collect()
+        (1..=size).map(U256::from).collect()
     }
 
     fn init(
@@ -1295,12 +1295,12 @@ mod tests {
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
