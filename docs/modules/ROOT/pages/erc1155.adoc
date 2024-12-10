@@ -11,4 +11,6 @@ Additionally, there are multiple custom extensions, including:
 
 * xref:erc1155-metadata-uri.adoc[ERC-1155 Metadata URI]: Optional extension that adds a token metadata URI.
 
+* xref:erc1155-pausable.adoc[ERC-1155 Pausable]: A primitive to pause contract operation like token transfers, minting and burning.
+
 * xref:erc1155-uri-storage.adoc[ERC-1155 URI Storage]: A more flexible but more expensive way of storing URI metadata.
