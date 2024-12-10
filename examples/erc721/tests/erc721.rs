@@ -2079,7 +2079,7 @@ async fn token_by_index_after_burn_and_some_mints(
 // ============================================================================
 
 #[e2e::test]
-async fn support_interface(alice: Account) -> eyre::Result<()> {
+async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
     let invalid_interface_id: u32 = 0x_ffffffff;

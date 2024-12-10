@@ -1322,7 +1322,7 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
 // ============================================================================
 
 #[e2e::test]
-async fn support_interface(alice: Account) -> Result<()> {
+async fn supports_interface(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
