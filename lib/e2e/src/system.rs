@@ -39,6 +39,11 @@ fn env(name: &str) -> eyre::Result<String> {
 }
 
 /// Send `amount` eth to `address` in the nitro-tesnode.
+///
+/// # Errors
+///
+/// May fail if unable to find the path to the node or if funding the newly
+/// created account fails.
 pub fn fund_account(address: Address, amount: u32) -> eyre::Result<()> {
     let node_script = get_node_path()?.join("test-node.bash");
     if !node_script.exists() {

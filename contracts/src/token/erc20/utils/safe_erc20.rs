@@ -1,5 +1,7 @@
 //! Wrappers around ERC-20 operations that throw on failure (when the token
-//! contract returns false). Tokens that return no value (and instead revert or
+//! contract returns false).
+//!
+//! Tokens that return no value (and instead revert or
 //! throw on failure) are also supported, non-reverting calls are assumed to be
 //! successful.
 //!
@@ -391,7 +393,7 @@ impl SafeErc20 {
     ///
     /// * `data` - Slice of bytes.
     fn encodes_true(data: &[u8]) -> bool {
-        data.split_last().map_or(false, |(last, rest)| {
+        data.split_last().is_some_and(|(last, rest)| {
             *last == 1 && rest.iter().all(|&byte| byte == 0)
         })
     }
@@ -402,40 +404,31 @@ mod tests {
     use super::SafeErc20;
     #[test]
     fn encodes_true_empty_slice() {
-        assert_eq!(false, SafeErc20::encodes_true(&vec![]));
+        assert!(!SafeErc20::encodes_true(&[]));
     }
 
     #[test]
     fn encodes_false_single_byte() {
-        assert_eq!(false, SafeErc20::encodes_true(&vec![0]));
+        assert!(!SafeErc20::encodes_true(&[0]));
     }
 
     #[test]
     fn encodes_true_single_byte() {
-        assert_eq!(true, SafeErc20::encodes_true(&vec![1]));
+        assert!(SafeErc20::encodes_true(&[1]));
     }
 
     #[test]
     fn encodes_false_many_bytes() {
-        assert_eq!(
-            false,
-            SafeErc20::encodes_true(&vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        );
+        assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
     fn encodes_true_many_bytes() {
-        assert_eq!(
-            true,
-            SafeErc20::encodes_true(&vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-        );
+        assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
     fn encodes_true_wrong_bytes() {
-        assert_eq!(
-            false,
-            SafeErc20::encodes_true(&vec![0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-        );
+        assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }

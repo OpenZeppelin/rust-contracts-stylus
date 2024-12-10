@@ -156,15 +156,15 @@ mod tests {
     #[motsu::test]
     fn paused_works(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
     }
 
     #[motsu::test]
     fn when_not_paused_works(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         let result = contract.when_not_paused();
         assert!(result.is_ok());
@@ -173,7 +173,7 @@ mod tests {
     #[motsu::test]
     fn when_not_paused_errors_when_paused(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         let result = contract.when_not_paused();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
@@ -182,7 +182,7 @@ mod tests {
     #[motsu::test]
     fn when_paused_works(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         let result = contract.when_paused();
         assert!(result.is_ok());
@@ -191,7 +191,7 @@ mod tests {
     #[motsu::test]
     fn when_paused_errors_when_not_paused(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         let result = contract.when_paused();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
@@ -200,43 +200,43 @@ mod tests {
     #[motsu::test]
     fn pause_works(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         // Pause the contract
         let res = contract.pause();
         assert!(res.is_ok());
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
     }
 
     #[motsu::test]
     fn pause_errors_when_already_paused(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         let result = contract.pause();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
     }
 
     #[motsu::test]
     fn unpause_works(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         // Unpause the paused contract
         let res = contract.unpause();
         assert!(res.is_ok());
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
     }
 
     #[motsu::test]
     fn unpause_errors_when_already_unpaused(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         // Unpause the unpaused contract
         let result = contract.unpause();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
     }
 }

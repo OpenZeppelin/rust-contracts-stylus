@@ -368,11 +368,11 @@ impl Erc20 {
     /// # Errors
     ///
     /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
+    ///   [`Error::InvalidSender`] is returned.
     /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    ///   [`Error::InvalidReceiver`] is returned.
+    /// * If the `from` address doesn't have enough tokens, then the error
+    ///   [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
@@ -516,9 +516,9 @@ impl Erc20 {
     /// # Errors
     ///
     /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    ///   [`Error::InvalidSender`] is returned.
+    /// * If the `from` address doesn't have enough tokens, then the error
+    ///   [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
