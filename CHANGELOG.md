@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `VestingWallet` contract. #402
 - `Erc1155Burnable` extension. #417
 - `Erc1155MetadataUri` extension. #416
+- `Poseidon2` sponge hash function. #388
 
 ### Changed
 
@@ -33,10 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ERC-1155 Multi Token Standard. #275
 - `SafeErc20` Utility. #289
-- Finite Fields arithmetics. #376
+- Finite Fields arithmetic. #376
 - `Ownable2Step` contract. #352
 - `IOwnable` trait. #352
-- `Poseidon2` sponge hash function. #388
 
 ### Changed(breaking)
 
