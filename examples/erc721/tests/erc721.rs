@@ -22,7 +22,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let Erc721::pausedReturn { paused } = contract.paused().call().await?;
+    let paused = contract.paused().call().await?.paused;
 
     assert!(!paused);
 
@@ -1375,6 +1375,22 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
+async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(contract.pause())?;
+
+    let err =
+        send!(contract.pause()).expect_err("should return `EnforcedPause`");
+
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn unpauses(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
@@ -1388,6 +1404,24 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
     let Erc721::pausedReturn { paused } = contract.paused().call().await?;
 
     assert!(!paused);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let paused = contract.paused().call().await?.paused;
+
+    assert!(!paused);
+
+    let err =
+        send!(contract.unpause()).expect_err("should return `ExpectedPause`");
+
+    assert!(err.reverted_with(Erc721::ExpectedPause {}));
 
     Ok(())
 }
@@ -1407,7 +1441,7 @@ async fn error_when_burn_in_paused_state(alice: Account) -> eyre::Result<()> {
     let _ = watch!(contract.pause());
 
     let err = send!(contract.burn(token_id))
-        .expect_err("should return EnforcedPause");
+        .expect_err("should return `EnforcedPause`");
 
     assert!(err.reverted_with(Erc721::EnforcedPause {}));
 
@@ -1434,7 +1468,7 @@ async fn error_when_mint_in_paused_state(alice: Account) -> eyre::Result<()> {
     let _ = watch!(contract.pause());
 
     let err = send!(contract.mint(alice_addr, token_id))
-        .expect_err("should return EnforcedPause");
+        .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc721::EnforcedPause {}));
 
     let err = contract
@@ -1476,7 +1510,7 @@ async fn error_when_transfer_in_paused_state(
     let _ = watch!(contract.pause());
 
     let err = send!(contract.transferFrom(alice_addr, bob_addr, token_id))
-        .expect_err("should return EnforcedPause");
+        .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc721::EnforcedPause {}));
 
     let Erc721::ownerOfReturn { ownerOf } =
@@ -1518,7 +1552,7 @@ async fn error_when_safe_transfer_in_paused_state(
 
     let err =
         send!(contract.safeTransferFrom_0(alice_addr, bob_addr, token_id))
-            .expect_err("should return EnforcedPause");
+            .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc721::EnforcedPause {}));
 
     let Erc721::ownerOfReturn { ownerOf } =
@@ -1564,7 +1598,7 @@ async fn error_when_safe_transfer_with_data_in_paused_state(
         token_id,
         fixed_bytes!("deadbeef").into()
     ))
-    .expect_err("should return EnforcedPause");
+    .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc721::EnforcedPause {}));
 
     let Erc721::ownerOfReturn { ownerOf } =
@@ -2079,7 +2113,7 @@ async fn token_by_index_after_burn_and_some_mints(
 // ============================================================================
 
 #[e2e::test]
-async fn support_interface(alice: Account) -> eyre::Result<()> {
+async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
     let invalid_interface_id: u32 = 0x_ffffffff;

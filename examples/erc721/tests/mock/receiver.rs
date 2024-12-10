@@ -1,10 +1,11 @@
 #![allow(dead_code)]
 #![cfg(feature = "e2e")]
 use alloy::{
-    primitives::{fixed_bytes, Address},
+    primitives::{Address, FixedBytes, U256},
     sol,
 };
 use e2e::Wallet;
+use stylus_sdk::{abi::Bytes, function_selector};
 
 sol! {
     #[allow(missing_docs)]
@@ -55,13 +56,18 @@ sol! {
     }
 }
 
+const RET_VAL: FixedBytes<4> = FixedBytes(function_selector!(
+    "onERC721Received",
+    Address,
+    Address,
+    U256,
+    Bytes,
+));
+
 pub async fn deploy(
     wallet: &Wallet,
     error: ERC721ReceiverMock::RevertType,
 ) -> eyre::Result<Address> {
-    let retval = fixed_bytes!("150b7a02");
-
-    // Deploy the contract.
-    let contract = ERC721ReceiverMock::deploy(wallet, retval, error).await?;
+    let contract = ERC721ReceiverMock::deploy(wallet, RET_VAL, error).await?;
     Ok(*contract.address())
 }
