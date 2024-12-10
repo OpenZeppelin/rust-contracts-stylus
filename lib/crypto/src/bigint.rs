@@ -12,6 +12,7 @@ use core::{
 #[allow(clippy::module_name_repetitions)]
 pub use crypto_bigint;
 use crypto_bigint::{Integer, Limb, Uint, Word, Zero};
+use num_traits::ConstZero;
 use zeroize::Zeroize;
 
 use crate::bits::BitIteratorBE;
@@ -150,6 +151,9 @@ impl<const N: usize> BitIteratorBE for Uint<N> {
 
 /// Parse a number from a string in a given radix.
 ///
+/// This implementation can be slow on big numbers and possibly fail constant
+/// compilation by timeout.
+///
 /// I.e., convert string encoded integer `s` to base-`radix` number.
 #[must_use]
 pub const fn from_str_radix<const LIMBS: usize>(
@@ -157,6 +161,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
     radix: u32,
 ) -> Uint<LIMBS> {
     let bytes = s.as_bytes();
+    assert!(!bytes.is_empty(), "empty string");
 
     // The lowest order number is at the end of the string.
     // Begin parsing from the last index of the string.
@@ -167,14 +172,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
     let uint_radix = Uint::from_u32(radix);
 
     loop {
-        // Try to parse a digit from utf-8 byte
-        let ch = parse_utf8_byte(bytes[index]);
-        let digit = match ch.to_digit(radix) {
-            None => {
-                panic!("invalid digit");
-            }
-            Some(digit) => Uint::from_u32(digit),
-        };
+        let digit = Uint::from_u32(parse_digit(bytes[index], radix));
 
         // Add a digit multiplied by order.
         uint = add(&uint, &mul(&digit, &order));
@@ -192,9 +190,53 @@ pub const fn from_str_radix<const LIMBS: usize>(
     }
 }
 
+/// Parse a number from a hex string.
+///
+/// This implementation performs faster than [`from_str_radix`], since it
+/// assumes the radix is already `16`.
+///
+/// If the string number is shorter, then [`Uint`] can store.
+/// Returns a [`Uint`] with leading zeroes.
+#[must_use]
+pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
+    let bytes = s.as_bytes();
+    assert!(!bytes.is_empty(), "empty string");
+
+    // The lowest order number is at the end of the string.
+    // Begin parsing from the last index of the string.
+    let mut index = bytes.len() - 1;
+
+    // The lowest order limb is at the beginning of the `num` array.
+    // Begin indexing from `0`.
+    let mut num = [Word::ZERO; LIMBS];
+    let mut num_index = 0;
+
+    let digit_radix = 16;
+    let digit_size = 4; // Size of a hex digit in bits (2^4 = 16).
+    let digits_in_limb = Limb::BITS / digit_size;
+
+    loop {
+        let digit = parse_digit(bytes[index], digit_radix) as Word;
+
+        // Since a base-16 digit can be represented with the same bits, we can
+        // copy these bits.
+        let digit_mask = digit << ((num_index % digits_in_limb) * digit_size);
+        num[num_index / digits_in_limb] |= digit_mask;
+
+        // If we reached the beginning of the string, return the number.
+        if index == 0 {
+            return Uint::from_words(num);
+        }
+
+        // Move to the next digit.
+        index -= 1;
+        num_index += 1;
+    }
+}
+
 /// Multiply two numbers and panic on overflow.
 #[must_use]
-pub const fn mul<const LIMBS: usize>(
+const fn mul<const LIMBS: usize>(
     a: &Uint<LIMBS>,
     b: &Uint<LIMBS>,
 ) -> Uint<LIMBS> {
@@ -205,13 +247,24 @@ pub const fn mul<const LIMBS: usize>(
 
 /// Add two numbers and panic on overflow.
 #[must_use]
-pub const fn add<const LIMBS: usize>(
+const fn add<const LIMBS: usize>(
     a: &Uint<LIMBS>,
     b: &Uint<LIMBS>,
 ) -> Uint<LIMBS> {
     let (low, carry) = a.adc(b, Limb::ZERO);
     assert!(carry.0 == 0, "overflow on addition");
     low
+}
+
+// Try to parse a digit from utf-8 byte.
+const fn parse_digit(utf8_digit: u8, digit_radix: u32) -> u32 {
+    let ch = parse_utf8_byte(utf8_digit);
+    match ch.to_digit(digit_radix) {
+        None => {
+            panic!("invalid digit");
+        }
+        Some(digit) => digit,
+    }
 }
 
 /// Parse a single UTF-8 byte.
@@ -234,17 +287,19 @@ macro_rules! from_num {
 #[macro_export]
 macro_rules! from_hex {
     ($num:literal) => {
-        $crate::bigint::crypto_bigint::Uint::from_be_hex($num)
+        $crate::bigint::from_str_hex($num)
     };
 }
 
 #[cfg(all(test, feature = "std"))]
 mod test {
+    use proptest::proptest;
+
     use super::*;
 
     #[test]
     fn convert_from_str_radix() {
-        let uint_from_base10 = from_str_radix::<4>(
+        let uint_from_base10: Uint<4> = from_str_radix(
             "28948022309329048855892746252171976963363056481941647379679742748393362948097",
             10
         );
@@ -257,12 +312,23 @@ mod test {
         ]);
         assert_eq!(uint_from_base10, expected);
 
-        let uint_from_base10 = from_str_radix::<1>("18446744069414584321", 10);
-        let uint_from_binary = from_str_radix::<1>(
+        let uint_from_base10: Uint<1> =
+            from_str_radix("18446744069414584321", 10);
+        let uint_from_binary: Uint<1> = from_str_radix(
             "1111111111111111111111111111111100000000000000000000000000000001",
             2,
         );
         assert_eq!(uint_from_base10, uint_from_binary);
+    }
+
+    #[test]
+    fn convert_from_str_hex() {
+        // Test different implementations of hex parsing on random hex inputs.
+        proptest!(|(s in "[0-9a-fA-F]{1,64}")| {
+            let uint_from_hex: Uint<4> = from_str_hex(&s);
+            let expected: Uint<4> = from_str_radix(&s, 16);
+            assert_eq!(uint_from_hex, expected);
+        });
     }
 
     #[test]
