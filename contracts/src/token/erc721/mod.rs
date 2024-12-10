@@ -1,12 +1,12 @@
 //! Implementation of the [`Erc721`] token standard.
 use alloc::vec;
 
-use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
+use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
-    evm, msg,
+    evm, function_selector, msg,
     prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
@@ -570,6 +570,9 @@ impl IErc165 for Erc721 {
 }
 
 impl Erc721 {
+    const RECEIVER_FN_SELECTOR: [u8; 4] =
+        function_selector!("onERC721Received", Address, Address, U256, Bytes,);
+
     /// Returns the owner of the `token_id`. Does NOT revert if the token
     /// doesn't exist.
     ///
@@ -1120,8 +1123,6 @@ impl Erc721 {
         token_id: U256,
         data: &Bytes,
     ) -> Result<(), Error> {
-        const RECEIVER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("150b7a02");
-
         if !to.has_code() {
             return Ok(());
         }
@@ -1151,7 +1152,7 @@ impl Erc721 {
         };
 
         // Token rejected.
-        if id != RECEIVER_FN_SELECTOR {
+        if id != Self::RECEIVER_FN_SELECTOR {
             return Err(ERC721InvalidReceiver { receiver: to }.into());
         }
 

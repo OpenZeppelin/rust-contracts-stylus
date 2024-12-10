@@ -1,13 +1,29 @@
 #![allow(dead_code)]
 #![cfg(feature = "e2e")]
 use alloy::{
-    primitives::{fixed_bytes, Address, FixedBytes},
+    primitives::{Address, FixedBytes, U256},
     sol,
 };
 use e2e::Wallet;
+use stylus_sdk::{abi::Bytes, function_selector};
 
-const REC_RETVAL: FixedBytes<4> = fixed_bytes!("f23a6e61");
-const BAT_RETVAL: FixedBytes<4> = fixed_bytes!("bc197c81");
+const REC_RETVAL: FixedBytes<4> = FixedBytes(function_selector!(
+    "onERC1155Received",
+    Address,
+    Address,
+    U256,
+    U256,
+    Bytes
+));
+
+const BAT_RETVAL: FixedBytes<4> = FixedBytes(function_selector!(
+    "onERC1155BatchReceived",
+    Address,
+    Address,
+    Vec<U256>,
+    Vec<U256>,
+    Bytes
+));
 
 sol! {
     #[allow(missing_docs)]
