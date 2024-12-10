@@ -200,11 +200,6 @@ sol_storage! {
     }
 }
 
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc721 {}
-
 /// Required interface of an [`Erc721`] compliant contract.
 #[interface_id]
 pub trait IErc721 {
@@ -1108,7 +1103,7 @@ impl Erc721 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     pub fn _check_on_erc721_received(
-        &mut self,
+        &self,
         operator: Address,
         from: Address,
         to: Address,
@@ -1122,7 +1117,7 @@ impl Erc721 {
         }
 
         let receiver = IERC721Receiver::new(to);
-        let call = Call::new_in(self);
+        let call = Call::new();
         let result = receiver.on_erc_721_received(
             call,
             operator,

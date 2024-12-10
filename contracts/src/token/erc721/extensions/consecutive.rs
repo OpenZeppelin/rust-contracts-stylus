@@ -31,7 +31,6 @@ use alloy_sol_types::sol;
 use stylus_sdk::{
     abi::Bytes,
     evm, msg,
-    prelude::TopLevelStorage,
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
@@ -133,8 +132,6 @@ pub enum Error {
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
-
-unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 

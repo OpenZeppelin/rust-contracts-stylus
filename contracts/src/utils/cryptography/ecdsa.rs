@@ -8,7 +8,6 @@ use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_sdk::{
     call::{self, Call, MethodError},
-    storage::TopLevelStorage,
     stylus_proc::SolidityError,
 };
 
@@ -88,7 +87,6 @@ sol! {
 ///
 /// * If the `ecrecover` precompile fails to execute.
 pub fn recover(
-    storage: &mut impl TopLevelStorage,
     hash: B256,
     v: u8,
     r: B256,
@@ -96,7 +94,7 @@ pub fn recover(
 ) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    _recover(storage, hash, v, r, s)
+    _recover(hash, v, r, s)
 }
 
 /// Calls `ecrecover` EVM precompile.
@@ -123,7 +121,6 @@ pub fn recover(
 ///
 /// * If the `ecrecover` precompile fails to execute.
 fn _recover(
-    storage: &mut impl TopLevelStorage,
     hash: B256,
     v: u8,
     r: B256,
@@ -140,7 +137,7 @@ fn _recover(
     }
 
     let recovered =
-        call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &calldata)
+        call::static_call(Call::new(), ECRECOVER_ADDR, &calldata)
             .expect("should call `ecrecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);

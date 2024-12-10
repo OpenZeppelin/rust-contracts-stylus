@@ -17,7 +17,6 @@ use alloy_sol_types::{sol, SolType};
 use stylus_sdk::{
     block,
     prelude::StorageType,
-    storage::TopLevelStorage,
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
@@ -78,11 +77,6 @@ sol_storage! {
         T eip712;
     }
 }
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
 #[public]
 impl<T: IEip712 + StorageType> Erc20Permit<T> {
@@ -174,7 +168,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
 
         let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 
-        let signer: Address = ecdsa::recover(self, hash, v, r, s)?;
+        let signer: Address = ecdsa::recover(hash, v, r, s)?;
 
         if signer != owner {
             return Err(ERC2612InvalidSigner { signer, owner }.into());
