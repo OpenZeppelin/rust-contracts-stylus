@@ -2,7 +2,9 @@
 use alloy_primitives::Uint;
 use stylus_sdk::storage::StorageUint;
 
+/// Adds value and assign the result to `self`, ignoring overflow.
 pub(crate) trait AddAssignUnchecked<T> {
+    /// Adds `rhs` and assign the result to `self`, ignoring overflow.
     fn add_assign_unchecked(&mut self, rhs: T);
 }
 
@@ -15,7 +17,9 @@ impl<const B: usize, const L: usize> AddAssignUnchecked<Uint<B, L>>
     }
 }
 
+/// Subtract value and assign the result to `self`, ignoring overflow.
 pub(crate) trait SubAssignUnchecked<T> {
+    /// Subtract `rhs` and assign the result to `self`, ignoring overflow.
     fn sub_assign_unchecked(&mut self, rhs: T);
 }
 
