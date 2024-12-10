@@ -7,7 +7,9 @@ Useful for scenarios where Fungible and Non-fungible tokens have to be clearly i
 == Usage
 
 In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/token/erc1155/extensions/supply/index.html[Supply] flavour,
-you need to add the following code to your contract:
+you need to reexport all the supply-related functions.
+Make sure to apply the `#[selector(name = "totalSupply")]` attribute to the `total_supply_all` function!
+You need to create the specified contract as follows:
 
 [source,rust]
 ----
