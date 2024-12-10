@@ -1562,6 +1562,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc1155-metadata-uri-example"
+version = "0.2.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc1155-supply-example"
 version = "0.2.0-alpha.1"
 dependencies = [
