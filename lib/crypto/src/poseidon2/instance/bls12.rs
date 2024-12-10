@@ -1,8 +1,11 @@
+//! This module contains the poseidon sponge hash function parameters for
+//! [`FpBLS12`] field instance.
+
 use crate::{
     field::instance::FpBLS12, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-/// Poseidon sponge hash parameters for [`FpBLS12`] field instance.
+/// Poseidon sponge hash function parameters for [`FpBLS12`] field instance.
 pub struct BLS2Params;
 
 #[rustfmt::skip]

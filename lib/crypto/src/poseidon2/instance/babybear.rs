@@ -1,8 +1,11 @@
+//! This module contains the poseidon sponge hash function parameters for
+//! [`FpBabyBear`] field instance.
+
 use crate::{
     field::instance::FpBabyBear, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-/// Poseidon sponge hash parameters for [`FpBabyBear`] field instance.
+/// Poseidon sponge hash function parameters for [`FpBabyBear`] field instance.
 pub struct BabyBear24Params;
 
 #[rustfmt::skip]

@@ -1,8 +1,11 @@
+//! This module contains the poseidon sponge hash function parameters for
+//! [`FpVesta`] field instance.
+
 use crate::{
     field::instance::FpVesta, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-/// Poseidon sponge hash parameters for [`FpVesta`] field instance.
+/// Poseidon sponge hash function parameters for [`FpVesta`] field instance.
 pub struct VestaParams;
 
 #[rustfmt::skip]

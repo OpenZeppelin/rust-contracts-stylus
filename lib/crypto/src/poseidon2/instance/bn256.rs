@@ -1,8 +1,11 @@
+//! This module contains the poseidon sponge hash function parameters for
+//! [`FpBN256`] field instance.
+
 use crate::{
     field::instance::FpBN256, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-/// Poseidon sponge hash parameters for [`FpBN256`] field instance.
+/// Poseidon sponge hash function parameters for [`FpBN256`] field instance.
 pub struct BN256Params;
 
 #[rustfmt::skip]

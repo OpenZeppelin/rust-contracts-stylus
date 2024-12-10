@@ -1,9 +1,13 @@
+//! This module contains the poseidon sponge hash function parameters for
+//! [`FpGoldiLocks`] field instance.
+
 use crate::{
     field::instance::FpGoldiLocks, fp_from_hex,
     poseidon2::params::PoseidonParams,
 };
 
-/// Poseidon sponge hash parameters for [`FpGoldiLocks`] field instance.
+/// Poseidon sponge hash function parameters for [`FpGoldiLocks`] field
+/// instance.
 pub struct Goldilocks12Params;
 
 #[rustfmt::skip]
