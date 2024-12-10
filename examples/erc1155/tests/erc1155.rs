@@ -1,21 +1,12 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc1155;
-use alloy::{
-    primitives::{fixed_bytes, uint, Address, U256},
-    sol,
-};
+use alloy::primitives::{fixed_bytes, uint, Address, U256};
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
-use crate::Erc1155Example::constructorCall;
-
 mod abi;
 mod mock;
-
-sol!("src/constructor.sol");
-
-const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 
 fn random_token_ids(size: usize) -> Vec<U256> {
     (0..size).map(U256::from).collect()
@@ -25,32 +16,14 @@ fn random_values(size: usize) -> Vec<U256> {
     (1..size + 1).map(U256::from).collect()
 }
 
-impl Default for constructorCall {
-    fn default() -> Self {
-        ctr(URI)
-    }
-}
-
-fn ctr(uri: &str) -> constructorCall {
-    constructorCall { uri_: uri.to_owned() }
-}
-
 // ============================================================================
 // Integration Tests: ERC-1155 Token
 // ============================================================================
 
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let uri = contract.uri(U256::from(1)).call().await?.uri;
-    assert_eq!(URI, uri);
 
     let paused = contract.paused().call().await?.paused;
 
@@ -64,12 +37,7 @@ async fn invalid_array_length_error_in_balance_of_batch(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let token_ids = random_token_ids(3);
@@ -91,12 +59,7 @@ async fn invalid_array_length_error_in_balance_of_batch(
 
 #[e2e::test]
 async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
     let token_ids = random_token_ids(1);
 
@@ -114,12 +77,7 @@ async fn balance_of_batch_zero_balance(
     dave: Account,
     charlie: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
     let accounts =
         vec![alice.address(), bob.address(), dave.address(), charlie.address()];
@@ -134,12 +92,7 @@ async fn balance_of_batch_zero_balance(
 
 #[e2e::test]
 async fn mints(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -170,12 +123,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -222,12 +170,7 @@ async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
 async fn errors_when_receiver_reverts_with_reason_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -257,12 +200,7 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
 async fn errors_when_receiver_reverts_without_reason_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -296,12 +234,7 @@ async fn errors_when_receiver_reverts_without_reason_in_mint(
 async fn errors_when_receiver_panics_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address =
@@ -331,12 +264,7 @@ async fn errors_when_receiver_panics_in_mint(
 async fn errors_when_invalid_receiver_contract_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let token_id = random_token_ids(1)[0];
@@ -355,12 +283,7 @@ async fn errors_when_invalid_receiver_contract_in_mint(
 
 #[e2e::test]
 async fn mint_batch(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -404,12 +327,7 @@ async fn mint_batch(alice: Account) -> eyre::Result<()> {
 async fn mint_batch_transfer_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -478,12 +396,7 @@ async fn mint_batch_transfer_to_receiver_contract(
 async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -513,12 +426,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
 async fn errors_when_receiver_reverts_without_reason_in_batch_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -552,12 +460,7 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_mint(
 async fn errors_when_receiver_panics_in_batch_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address =
@@ -586,12 +489,7 @@ async fn errors_when_receiver_panics_in_batch_mint(
 async fn errors_when_invalid_receiver_contract_in_batch_mint(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let token_ids = random_token_ids(2);
@@ -613,12 +511,7 @@ async fn error_invalid_array_length_in_batch_mint(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
 
     let bob_addr = bob.address();
@@ -646,12 +539,7 @@ async fn set_approval_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -692,12 +580,7 @@ async fn set_approval_for_all(
 async fn error_when_invalid_operator_approval_for_all(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let invalid_operator = Address::ZERO;
@@ -714,12 +597,7 @@ async fn error_when_invalid_operator_approval_for_all(
 
 #[e2e::test]
 async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let invalid_operator = Address::ZERO;
@@ -729,19 +607,14 @@ async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
         .call()
         .await?;
 
-    assert_eq!(false, approved);
+    assert!(!approved);
 
     Ok(())
 }
 
 #[e2e::test]
 async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -792,12 +665,7 @@ async fn safe_transfer_from_with_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
@@ -851,12 +719,7 @@ async fn safe_transfer_from_with_approval(
 async fn safe_transfer_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -921,12 +784,7 @@ async fn safe_transfer_to_receiver_contract(
 async fn errors_when_receiver_reverts_with_reason(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -965,12 +823,7 @@ async fn errors_when_receiver_reverts_with_reason(
 async fn errors_when_receiver_reverts_without_reason(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -1011,12 +864,7 @@ async fn errors_when_receiver_reverts_without_reason(
 #[e2e::test]
 #[ignore]
 async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address =
@@ -1054,12 +902,7 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
 async fn errors_when_invalid_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1089,12 +932,7 @@ async fn errors_when_invalid_receiver_contract(
 async fn error_when_invalid_receiver_safe_transfer_from(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1125,12 +963,7 @@ async fn error_when_missing_approval_safe_transfer_from(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1163,12 +996,7 @@ async fn error_when_insufficient_balance_safe_transfer_from(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
@@ -1206,12 +1034,7 @@ async fn safe_batch_transfer_from(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1278,12 +1101,7 @@ async fn safe_batch_transfer_from(
 async fn safe_batch_transfer_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -1372,12 +1190,7 @@ async fn safe_batch_transfer_to_receiver_contract(
 async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -1416,12 +1229,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
 async fn errors_when_receiver_reverts_without_reason_in_batch_transfer(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address = receiver::deploy(
@@ -1464,12 +1272,7 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_transfer(
 async fn errors_when_receiver_panics_in_batch_transfer(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let receiver_address =
@@ -1507,12 +1310,7 @@ async fn errors_when_receiver_panics_in_batch_transfer(
 async fn errors_when_invalid_receiver_contract_in_batch_transfer(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1544,12 +1342,7 @@ async fn safe_batch_transfer_from_with_approval(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
@@ -1620,12 +1413,7 @@ async fn safe_batch_transfer_from_with_approval(
 async fn error_when_invalid_receiver_safe_batch_transfer_from(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1661,12 +1449,7 @@ async fn error_invalid_array_length_in_safe_batch_transfer_from(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1704,12 +1487,7 @@ async fn error_when_missing_approval_safe_batch_transfer_from(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1748,12 +1526,7 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
@@ -1796,12 +1569,7 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
 
 #[e2e::test]
 async fn burns(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1838,12 +1606,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
@@ -1883,12 +1646,7 @@ async fn error_when_missing_approval_burn(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1914,12 +1672,7 @@ async fn error_when_missing_approval_burn(
 async fn error_when_insufficient_balance_burn(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1944,12 +1697,7 @@ async fn error_when_insufficient_balance_burn(
 
 #[e2e::test]
 async fn burns_batch(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -1995,12 +1743,7 @@ async fn burns_batch_with_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155::new(contract_addr, &bob.wallet);
 
@@ -2050,12 +1793,7 @@ async fn error_when_missing_approval_burn_batch(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2085,12 +1823,7 @@ async fn error_when_missing_approval_burn_batch(
 async fn error_when_insufficient_balance_burn_batch(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2128,12 +1861,7 @@ async fn error_when_insufficient_balance_burn_batch(
 
 #[e2e::test]
 async fn support_interface(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
     let invalid_interface_id: u32 = 0xffffffff;
     let supports_interface = contract
@@ -2159,15 +1887,6 @@ async fn support_interface(alice: Account) -> eyre::Result<()> {
 
     assert!(supports_interface);
 
-    let erc1155_metadata_interface_id: u32 = 0x0e89341c;
-    let supports_interface = contract
-        .supportsInterface(erc1155_metadata_interface_id.into())
-        .call()
-        .await?
-        ._0;
-
-    assert!(supports_interface);
-
     Ok(())
 }
 
@@ -2177,12 +1896,7 @@ async fn support_interface(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn pauses(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -2199,12 +1913,7 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -2220,12 +1929,7 @@ async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn unpauses(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -2244,12 +1948,7 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -2267,12 +1966,7 @@ async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn mint_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2298,12 +1992,7 @@ async fn mint_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 async fn mint_batch_reverts_in_paused_state(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2327,12 +2016,7 @@ async fn mint_batch_reverts_in_paused_state(
 
 #[e2e::test]
 async fn burn_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2360,12 +2044,7 @@ async fn burn_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 async fn burn_batch_reverts_in_paused_state(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2398,12 +2077,7 @@ async fn safe_transfer_from_reverts_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2438,12 +2112,7 @@ async fn safe_batch_transfer_from_reverts_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -2479,12 +2148,7 @@ async fn set_approval_for_all_does_not_revert_in_paused_state(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();

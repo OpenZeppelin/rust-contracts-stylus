@@ -1381,21 +1381,21 @@ async fn support_interface(alice: Account) -> Result<()> {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, false);
+    assert!(!supports_interface);
 
     let erc20_interface_id: u32 = 0x36372b07;
     let Erc20::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(erc20_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     let erc165_interface_id: u32 = 0x01ffc9a7;
     let Erc20::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     let erc20_metadata_interface_id: u32 = 0xa219a025;
     let Erc20::supportsInterfaceReturn {
@@ -1405,7 +1405,7 @@ async fn support_interface(alice: Account) -> Result<()> {
         .call()
         .await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     Ok(())
 }

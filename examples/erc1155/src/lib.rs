@@ -5,10 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
-    token::erc1155::{
-        extensions::{Erc1155MetadataUri, IErc1155Burnable},
-        Erc1155, IErc1155,
-    },
+    token::erc1155::{extensions::IErc1155Burnable, Erc1155, IErc1155},
     utils::{introspection::erc165::IErc165, Pausable},
 };
 use stylus_sdk::{
@@ -22,16 +19,14 @@ sol_storage! {
         #[borrow]
         Erc1155 erc1155;
         #[borrow]
-        Erc1155MetadataUri metadata_uri;
-        #[borrow]
         Pausable pausable;
     }
 }
 
 #[public]
-#[inherit(Erc1155, Erc1155MetadataUri, Pausable)]
+#[inherit(Erc1155, Pausable)]
 impl Erc1155Example {
-    pub fn mint(
+    fn mint(
         &mut self,
         to: Address,
         token_id: U256,
@@ -43,7 +38,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn mint_batch(
+    fn mint_batch(
         &mut self,
         to: Address,
         token_ids: Vec<U256>,
@@ -55,7 +50,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn burn(
+    fn burn(
         &mut self,
         account: Address,
         token_id: U256,
@@ -66,7 +61,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn burn_batch(
+    fn burn_batch(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
@@ -77,7 +72,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn safe_transfer_from(
+    fn safe_transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -90,7 +85,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn safe_batch_transfer_from(
+    fn safe_batch_transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -103,16 +98,15 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc1155::supports_interface(interface_id)
-            || Erc1155MetadataUri::supports_interface(interface_id)
     }
 
-    pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+    fn pause(&mut self) -> Result<(), Vec<u8>> {
         self.pausable.pause().map_err(|e| e.into())
     }
 
-    pub fn unpause(&mut self) -> Result<(), Vec<u8>> {
+    fn unpause(&mut self) -> Result<(), Vec<u8>> {
         self.pausable.unpause().map_err(|e| e.into())
     }
 }
