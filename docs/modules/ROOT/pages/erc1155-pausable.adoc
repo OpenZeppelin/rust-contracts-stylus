@@ -29,7 +29,7 @@ sol_storage! {
 #[public]
 #[inherit(Erc1155, Pausable)]
 impl Erc1155Example {
-    pub fn mint(
+    fn mint(
         &mut self,
         to: Address,
         token_id: U256,
@@ -43,7 +43,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn mint_batch(
+    fn mint_batch(
         &mut self,
         to: Address,
         token_ids: Vec<U256>,
@@ -57,7 +57,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn burn(
+    fn burn(
         &mut self,
         account: Address,
         token_id: U256,
@@ -70,7 +70,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn burn_batch(
+    fn burn_batch(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
@@ -83,7 +83,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn safe_transfer_from(
+    fn safe_transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -98,7 +98,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn safe_batch_transfer_from(
+    fn safe_batch_transfer_from(
         &mut self,
         from: Address,
         to: Address,
