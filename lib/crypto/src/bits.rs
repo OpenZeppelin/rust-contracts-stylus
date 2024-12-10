@@ -32,7 +32,6 @@ impl_bit_iter_be!(usize);
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-
     use super::*;
 
     #[test]
