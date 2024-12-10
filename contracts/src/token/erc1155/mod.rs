@@ -761,7 +761,7 @@ impl Erc1155 {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `operator` - Generally the address that initiated the token transfer
     ///   (e.g. `msg::sender()`).
     /// * `from` - Account of the sender.

@@ -70,7 +70,6 @@ sol! {
 ///
 /// # Arguments
 ///
-/// * `storage` - Write access to storage.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -104,7 +103,6 @@ pub fn recover(
 ///
 /// # Arguments
 ///
-/// * `storage` - Write access to storage.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.

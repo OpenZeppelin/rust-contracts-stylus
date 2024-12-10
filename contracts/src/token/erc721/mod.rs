@@ -1089,7 +1089,7 @@ impl Erc721 {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
