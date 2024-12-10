@@ -162,7 +162,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
 // ============================================================================
 
 #[e2e::test]
-async fn support_interface(alice: Account) -> eyre::Result<()> {
+async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(URI))
