@@ -5,7 +5,8 @@ use crate::{
     field::instance::FpBLS12, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-/// Poseidon sponge hash function parameters for [`FpBLS12`] field instance.
+/// Poseidon sponge hash function parameters for [`FpBLS12`] field instance with
+/// state size of `2`.
 pub struct BLS2Params;
 
 #[rustfmt::skip]
@@ -279,6 +280,8 @@ impl PoseidonParams<FpBLS12> for BLS2Params {
     ];
 }
 
+/// Poseidon sponge hash function parameters for [`FpBLS12`] field instance with
+// /// state size of `3`.
 pub struct BLS3Params;
 #[rustfmt::skip]
 impl PoseidonParams<FpBLS12> for BLS3Params {
@@ -616,6 +619,8 @@ impl PoseidonParams<FpBLS12> for BLS3Params {
     ];
 }
 
+/// Poseidon sponge hash function parameters for [`FpBLS12`] field instance with
+// /// state size of `4`.
 pub struct BLS4Params;
 #[rustfmt::skip]
 impl PoseidonParams<FpBLS12> for BLS4Params {
