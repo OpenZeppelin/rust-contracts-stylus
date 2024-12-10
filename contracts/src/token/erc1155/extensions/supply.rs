@@ -19,7 +19,6 @@ use stylus_sdk::{
     abi::Bytes,
     msg,
     prelude::{public, sol_storage},
-    storage::TopLevelStorage,
 };
 
 use crate::{
@@ -39,17 +38,9 @@ sol_storage! {
     }
 }
 
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc1155Supply {}
-
 /// Required interface of a [`Erc1155Supply`] contract.
 #[interface_id]
 pub trait IErc1155Supply {
-    /// The error type associated to this trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Total value of tokens in with a given id.
     ///
     /// # Arguments
@@ -73,77 +64,13 @@ pub trait IErc1155Supply {
     /// * `&self` - Read access to the contract's state.
     /// * `id` - Token id as a number.
     fn exists(&self, id: U256) -> bool;
-
-    /// Returns the value of tokens of type `id` owned by `account`.
-    ///
-    /// Re-export of [`IErc1155::balance_of`]
-    fn balance_of(&self, account: Address, id: U256) -> U256;
-
-    /// Batched version of [`IErc1155Supply::balance_of`].
-    ///
-    /// Re-export of [`IErc1155::balance_of_batch`].
-    #[allow(clippy::missing_errors_doc)]
-    fn balance_of_batch(
-        &self,
-        accounts: Vec<Address>,
-        ids: Vec<U256>,
-    ) -> Result<Vec<U256>, erc1155::Error>;
-
-    /// Grants or revokes permission to `operator`
-    /// to transfer the caller's tokens, according to `approved`.
-    ///
-    /// Re-export of [`IErc1155::set_approval_for_all`].
-    #[allow(clippy::missing_errors_doc)]
-    fn set_approval_for_all(
-        &mut self,
-        operator: Address,
-        approved: bool,
-    ) -> Result<(), erc1155::Error>;
-
-    /// Returns true if `operator` is approved to transfer `account`'s
-    /// tokens.
-    ///
-    /// Re-export of [`IErc1155::is_approved_for_all`].
-    #[allow(clippy::missing_errors_doc)]
-    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool;
-
-    /// Transfers a `value` amount of tokens of type `id` from `from` to
-    /// `to`.
-    ///
-    /// Re-export of [`IErc1155::safe_transfer_from`].
-    #[allow(clippy::missing_errors_doc)]
-    fn safe_transfer_from(
-        &mut self,
-        from: Address,
-        to: Address,
-        id: U256,
-        value: U256,
-        data: Bytes,
-    ) -> Result<(), erc1155::Error>;
-
-    /// Batched version of [`IErc1155Supply::safe_transfer_from`].
-    ///
-    /// Re-export of [`IErc1155::safe_batch_transfer_from`].
-    #[allow(clippy::missing_errors_doc)]
-    fn safe_batch_transfer_from(
-        &mut self,
-        from: Address,
-        to: Address,
-        ids: Vec<U256>,
-        values: Vec<U256>,
-        data: Bytes,
-    ) -> Result<(), erc1155::Error>;
 }
 
-#[public]
 impl IErc1155Supply for Erc1155Supply {
-    type Error = erc1155::Error;
-
     fn total_supply(&self, id: U256) -> U256 {
         self._total_supply.get(id)
     }
 
-    #[selector(name = "totalSupply")]
     fn total_supply_all(&self) -> U256 {
         *self._total_supply_all
     }
@@ -151,6 +78,11 @@ impl IErc1155Supply for Erc1155Supply {
     fn exists(&self, id: U256) -> bool {
         self.total_supply(id) > U256::ZERO
     }
+}
+
+#[public]
+impl IErc1155 for Erc1155Supply {
+    type Error = erc1155::Error;
 
     fn balance_of(&self, account: Address, id: U256) -> U256 {
         self.erc1155.balance_of(account, id)
@@ -198,6 +130,63 @@ impl IErc1155Supply for Erc1155Supply {
     ) -> Result<(), erc1155::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
+    }
+}
+
+impl Erc1155Supply {
+    /// Creates a `value` amount of tokens of type `id`, and assigns
+    /// them to `to`.
+    ///
+    /// Re-export of [`Erc1155::_mint`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn _mint(
+        &mut self,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: &Bytes,
+    ) -> Result<(), erc1155::Error> {
+        self._do_mint(to, vec![id], vec![value], data)
+    }
+
+    /// Batched version of [`Self::_mint`].
+    ///
+    /// Re-export of [`Erc1155::_mint_batch`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn _mint_batch(
+        &mut self,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: &Bytes,
+    ) -> Result<(), erc1155::Error> {
+        self._do_mint(to, ids, values, data)
+    }
+
+    /// Destroys a `value` amount of tokens of type `id` from `from`.
+    ///
+    /// Re-export of [`Erc1155::_burn`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn _burn(
+        &mut self,
+        from: Address,
+        id: U256,
+        value: U256,
+    ) -> Result<(), erc1155::Error> {
+        self._do_burn(from, vec![id], vec![value])
+    }
+
+    /// Batched version of [`Self::_burn`].
+    ///
+    /// Re-export of [`Erc1155::_burn_batch`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn _burn_batch(
+        &mut self,
+        from: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+    ) -> Result<(), erc1155::Error> {
+        self._do_burn(from, ids, values)
     }
 }
 
@@ -279,43 +268,6 @@ impl Erc1155Supply {
         Ok(())
     }
 
-    /// Version of [`Self::_update`] that performs the token acceptance check by
-    /// calling [`erc1155::IERC1155Receiver::on_erc_1155_received`] or
-    /// [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] on the
-    /// receiver address if it contains code.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to transfer tokens from.
-    /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all token ids.
-    /// * `values` - Array of all amount of tokens to be transferred.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_received`] hasn't returned
-    /// its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] hasn't
-    /// returned its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
-    ///
-    /// # Panics
-    ///
-    /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
-    /// the `mint` operation.
     fn _update_with_acceptance_check(
         &mut self,
         from: Address,
@@ -339,190 +291,6 @@ impl Erc1155Supply {
         Ok(())
     }
 
-    /// Creates a `value` amount of tokens of type `id`, and assigns
-    /// them to `to`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `to` - Account of the recipient.
-    /// * `id` - Token id.
-    /// * `value` - Amount of tokens to be minted.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_received`] hasn't returned
-    /// its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event.
-    ///
-    /// # Panics
-    ///
-    /// If updated balance and/or supply exceeds `U256::MAX`.
-    pub fn _mint(
-        &mut self,
-        to: Address,
-        id: U256,
-        value: U256,
-        data: &Bytes,
-    ) -> Result<(), erc1155::Error> {
-        self._do_mint(to, vec![id], vec![value], data)
-    }
-
-    /// Batched version of [`Self::_mint`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all tokens ids to be minted.
-    /// * `values` - Array of all amounts of tokens to be minted.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_received`] hasn't returned
-    /// its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] hasn't
-    /// returned its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
-    ///
-    /// # Panics
-    ///
-    /// If updated balance and/or supply exceeds `U256::MAX`.
-    pub fn _mint_batch(
-        &mut self,
-        to: Address,
-        ids: Vec<U256>,
-        values: Vec<U256>,
-        data: &Bytes,
-    ) -> Result<(), erc1155::Error> {
-        self._do_mint(to, ids, values, data)
-    }
-
-    /// Destroys a `value` amount of tokens of type `id` from `from`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to burn tokens from.
-    /// * `id` - Token id to be burnt.
-    /// * `value` - Amount of tokens to be burnt.
-    ///
-    /// # Errors
-    ///
-    /// If `from` is the `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidSender`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event.
-    ///
-    /// # Panics
-    ///
-    /// Should not panic.
-    pub fn _burn(
-        &mut self,
-        from: Address,
-        id: U256,
-        value: U256,
-    ) -> Result<(), erc1155::Error> {
-        self._do_burn(from, vec![id], vec![value])
-    }
-
-    /// Batched version of [`Self::_burn`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to burn tokens from.
-    /// * `ids` - Array of all tokens ids to be burnt.
-    /// * `values` - Array of all amounts of tokens to be burnt.
-    ///
-    /// # Errors
-    ///
-    /// If `from` is the `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidSender`] is returned.
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
-    ///
-    /// # Panics
-    ///
-    /// Should not panic.
-    pub fn _burn_batch(
-        &mut self,
-        from: Address,
-        ids: Vec<U256>,
-        values: Vec<U256>,
-    ) -> Result<(), erc1155::Error> {
-        self._do_burn(from, ids, values)
-    }
-}
-
-impl Erc1155Supply {
-    /// Creates `values` of tokens specified by `ids`, and assigns
-    /// them to `to`. Performs the token acceptance check by
-    /// calling [`erc1155::IERC1155Receiver::on_erc_1155_received`] or
-    /// [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] on the `to`
-    /// address if it contains code.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all token ids to be minted.
-    /// * `values` - Array of all amounts of tokens to be minted.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_received`] hasn't returned
-    /// its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] hasn't
-    /// returned its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
-    ///
-    /// # Panics
-    ///
-    /// If updated balance and/or supply exceeds `U256::MAX`.
     fn _do_mint(
         &mut self,
         to: Address,
@@ -545,32 +313,6 @@ impl Erc1155Supply {
         Ok(())
     }
 
-    /// Destroys `values` amounts of tokens specified by `ids` from `from`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to burn tokens from.
-    /// * `ids` - Array of all token ids to be burnt.
-    /// * `values` - Array of all amount of tokens to be burnt.
-    ///
-    /// # Errors
-    ///
-    /// If `from` is the `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidSender`] is returned.
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
-    ///
-    /// # Panics
-    ///
-    /// Should not panic.
     fn _do_burn(
         &mut self,
         from: Address,
@@ -592,43 +334,6 @@ impl Erc1155Supply {
         Ok(())
     }
 
-    /// Transfers `values` of tokens specified by `ids` from `from` to `to`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to transfer tokens from.
-    /// * `to` - Account of the recipient.
-    /// * `ids` - Array of all token ids.
-    /// * `values` - Array of all amount of tokens to be transferred.
-    /// * `data` - Additional data with no specified format, sent in call to
-    ///   `to`.
-    ///
-    /// # Errors
-    ///
-    /// If `to` is the `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If `from` is the `Address::ZERO`, then the error
-    /// [`erc1155::Error::InvalidSender`] is returned.
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_received`] hasn't returned
-    /// its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    /// If [`erc1155::IERC1155Receiver::on_erc_1155_batch_received`] hasn't
-    /// returned its interface id or returned with error, then the error
-    /// [`erc1155::Error::InvalidReceiver`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
-    ///
-    /// # Panics
-    ///
-    /// If updated balance and/or supply exceeds `U256::MAX`.
     fn do_safe_transfer_from(
         &mut self,
         from: Address,

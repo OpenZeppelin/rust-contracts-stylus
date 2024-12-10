@@ -4,7 +4,9 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc1155::extensions::Erc1155Supply;
+use openzeppelin_stylus::token::erc1155::extensions::{
+    Erc1155Supply, IErc1155Supply,
+};
 use stylus_sdk::{
     abi::Bytes,
     prelude::{entrypoint, public, sol_storage},
@@ -20,6 +22,19 @@ sol_storage! {
 #[public]
 #[inherit(Erc1155Supply)]
 impl Erc1155Example {
+    fn total_supply(&self, id: U256) -> U256 {
+        self.erc1155_supply.total_supply(id)
+    }
+
+    #[selector(name = "totalSupply")]
+    fn total_supply_all(&self) -> U256 {
+        self.erc1155_supply.total_supply_all()
+    }
+
+    fn exists(&self, id: U256) -> bool {
+        self.erc1155_supply.exists(id)
+    }
+
     // Add token minting feature.
     pub fn mint(
         &mut self,
