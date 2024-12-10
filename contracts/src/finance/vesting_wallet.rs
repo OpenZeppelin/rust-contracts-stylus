@@ -32,7 +32,6 @@ use stylus_sdk::{
     block,
     call::{self, call, Call},
     contract, evm, function_selector,
-    storage::TopLevelStorage,
     stylus_proc::{public, sol_storage, SolidityError},
 };
 
@@ -111,11 +110,6 @@ sol_storage! {
         SafeErc20 safe_erc20;
     }
 }
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for VestingWallet {}
 
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]

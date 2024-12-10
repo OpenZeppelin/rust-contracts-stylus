@@ -9,7 +9,6 @@ use stylus_sdk::{
     call::{self, Call, MethodError},
     evm, function_selector, msg,
     prelude::{public, sol_storage, AddressVM, SolidityError},
-    storage::TopLevelStorage,
 };
 
 use crate::utils::{
@@ -188,11 +187,6 @@ sol_storage! {
         mapping(address => mapping(address => bool)) _operator_approvals;
     }
 }
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc1155 {}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]

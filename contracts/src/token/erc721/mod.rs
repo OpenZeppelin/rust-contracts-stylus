@@ -200,11 +200,6 @@ sol_storage! {
     }
 }
 
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc721 {}
-
 /// Required interface of an [`Erc721`] compliant contract.
 #[interface_id]
 pub trait IErc721 {
