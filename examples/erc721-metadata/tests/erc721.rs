@@ -277,7 +277,7 @@ async fn return_token_uri_after_burn_and_remint(
 // ============================================================================
 
 #[e2e::test]
-async fn support_interface(alice: Account) -> eyre::Result<()> {
+async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(
