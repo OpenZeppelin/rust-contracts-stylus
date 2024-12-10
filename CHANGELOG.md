@@ -27,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (Breaking)
 
 - Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
-- Replace all `Call:new_in` to `Call:new` to stop supporting reentrancy. #440
+- Stop supporting reentrancy, and borrow `self` immutably in `IErc721::_check_on_erc721_received` and `IErc1155::_check_on_erc1155_received`. #440
+- Remove `storage: &mut impl TopLevelStorage` parameter from `ecdsa::recover`. #440
+- Remove `TopLevelStorage` implementation from `VestingWallet`, `Erc1155`, `Erc20Permit`, `SafeErc20`, `Erc721Consecutive`, and `Erc721`. #440
 
 ### Fixed
 
