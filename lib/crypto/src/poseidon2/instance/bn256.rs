@@ -1,20 +1,18 @@
-#![allow(missing_docs)]
 use crate::{
     field::instance::FpBN256, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-type Scalar = FpBN256;
-
+/// Poseidon sponge hash parameters for [`FpBN256`] field instance.
 pub struct BN256Params;
 
 #[rustfmt::skip]
-impl PoseidonParams<Scalar> for BN256Params {
+impl PoseidonParams<FpBN256> for BN256Params {
     const T: usize = 3;
     const D: u8 = 5;
     const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 56;
-    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+    const MAT_INTERNAL_DIAG_M_1: &'static [FpBN256] = &[
         fp_from_hex!(
             "0000000000000000000000000000000000000000000000000000000000000001"
         ),
@@ -25,7 +23,7 @@ impl PoseidonParams<Scalar> for BN256Params {
             "0000000000000000000000000000000000000000000000000000000000000002"
         ),
     ];
-    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+    const ROUND_CONSTANTS: &'static [&'static [FpBN256]] = &[
         &[
             fp_from_hex!("1d066a255517b7fd8bddd3a93f7804ef7f8fcde48bb4c37a59a09a1a97052816"),
             fp_from_hex!("29daefb55f6f2dc6ac3f089cebcc6120b7c6fef31367b68eb7238547d32c1610"),

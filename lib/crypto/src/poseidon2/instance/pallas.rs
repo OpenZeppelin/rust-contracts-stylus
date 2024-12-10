@@ -1,20 +1,18 @@
-#![allow(missing_docs)]
 use crate::{
     field::instance::FpPallas, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-type Scalar = FpPallas;
-
+/// Poseidon sponge hash parameters for [`FpPallas`] field instance.
 pub struct PallasParams;
 
 #[rustfmt::skip]
-impl PoseidonParams<Scalar> for PallasParams {
+impl PoseidonParams<FpPallas> for PallasParams {
     const T: usize = 3;
     const D: u8 = 5;
     const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 56;
-    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+    const MAT_INTERNAL_DIAG_M_1: &'static [FpPallas] = &[
         fp_from_hex!(
             "0000000000000000000000000000000000000000000000000000000000000001"
         ),
@@ -25,7 +23,7 @@ impl PoseidonParams<Scalar> for PallasParams {
             "0000000000000000000000000000000000000000000000000000000000000002"
         ),
     ];
-    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+    const ROUND_CONSTANTS: &'static [&'static [FpPallas]] = &[
         &[
             fp_from_hex!("360d7470611e473d353f628f76d110f34e71162f31003b7057538c2596426303"),
             fp_from_hex!("2bab94d7ae222d135dc3c6c5febfaa314908ac2f12ebe06fbdb74213bf63188b"),

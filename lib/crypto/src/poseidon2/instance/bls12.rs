@@ -1,24 +1,22 @@
-#![allow(missing_docs)]
 use crate::{
     field::instance::FpBLS12, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-type Scalar = FpBLS12;
-
+/// Poseidon sponge hash parameters for [`FpBLS12`] field instance.
 pub struct BLS2Params;
 
 #[rustfmt::skip]
-impl PoseidonParams<Scalar> for BLS2Params {
+impl PoseidonParams<FpBLS12> for BLS2Params {
     const T: usize = 2;
     const D: u8 = 5;
     const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 56;
-    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+    const MAT_INTERNAL_DIAG_M_1: &'static [FpBLS12] = &[
         fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
         fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000002"),
     ];
-    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+    const ROUND_CONSTANTS: &'static [&'static [FpBLS12]] = &[
         &[
             fp_from_hex!("6267f5556c88257324c1c8b00d5871b2eba13cc39d72aa10dde6b69bc44c41c7"),
             fp_from_hex!("30347723511438a085118166c68bf0c4f4ab5c10a2c55adb5cf87cc9e030f60f"),
@@ -280,18 +278,18 @@ impl PoseidonParams<Scalar> for BLS2Params {
 
 pub struct BLS3Params;
 #[rustfmt::skip]
-impl PoseidonParams<Scalar> for BLS3Params {
+impl PoseidonParams<FpBLS12> for BLS3Params {
     const T: usize = 3;
     const D: u8 = 5;
     const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 56;
-    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+    const MAT_INTERNAL_DIAG_M_1: &'static [FpBLS12] = &[
         fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
         fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000001"),
         fp_from_hex!("0000000000000000000000000000000000000000000000000000000000000002"),
     ];
-    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+    const ROUND_CONSTANTS: &'static [&'static [FpBLS12]] = &[
         &[
             fp_from_hex!("6f007a551156b3a449e44936b7c093644a0ed33f33eaccc628e942e836c1a875"),
             fp_from_hex!("360d7470611e473d353f628f76d110f34e71162f31003b7057538c2596426303"),
@@ -617,19 +615,19 @@ impl PoseidonParams<Scalar> for BLS3Params {
 
 pub struct BLS4Params;
 #[rustfmt::skip]
-impl PoseidonParams<Scalar> for BLS4Params {
+impl PoseidonParams<FpBLS12> for BLS4Params {
     const T: usize = 4;
     const D: u8 = 5;
     const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 56;
-    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+    const MAT_INTERNAL_DIAG_M_1: &'static [FpBLS12] = &[
         fp_from_hex!("07564ad691bf01c8601d68757a561d224f00f313ada673ab83e6255fb4fd5b3d"),
         fp_from_hex!("6184e3be38549f7c0850cd069b32f6decbfde312dd4b8c18349b1b3776a6eaa4"),
         fp_from_hex!("419289088178ad742be6f78425c0156b6546a18fd338f0169937dea46cfb64d2"),
         fp_from_hex!("3244cdec173b71a4659e2529b499362dac10cb2fd17562860c8bb9d0fd45b787"),
     ];
-    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+    const ROUND_CONSTANTS: &'static [&'static [FpBLS12]] = &[
         &[
             fp_from_hex!("1a3bdcbfc11dabfb6ed0dd5f5a9b38191488bce9eecd811c10f9378b32db8c61"),
             fp_from_hex!("52b733e857912fdd2248dc9638dd79b1ce18b285b27792238b44c2b23c0f5d5f"),

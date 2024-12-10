@@ -1,21 +1,19 @@
-#![allow(missing_docs)]
 use crate::{
     field::instance::FpGoldiLocks, fp_from_hex,
     poseidon2::params::PoseidonParams,
 };
 
-type Scalar = FpGoldiLocks;
-
+/// Poseidon sponge hash parameters for [`FpGoldiLocks`] field instance.
 pub struct Goldilocks12Params;
 
 #[rustfmt::skip]
-impl PoseidonParams<Scalar> for Goldilocks12Params {
+impl PoseidonParams<FpGoldiLocks> for Goldilocks12Params {
     const T: usize = 12;
     const D: u8 = 7;
     const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 22;
-    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+    const MAT_INTERNAL_DIAG_M_1: &'static [FpGoldiLocks] = &[
         fp_from_hex!("c3b6c08e23ba9300"),
         fp_from_hex!("d84b5de94a324fb6"),
         fp_from_hex!("0d0c371c5b35b84f"),
@@ -29,7 +27,7 @@ impl PoseidonParams<Scalar> for Goldilocks12Params {
         fp_from_hex!("0c6388b51545e883"),
         fp_from_hex!("d27dbb6944917b60"),
     ];
-    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+    const ROUND_CONSTANTS: &'static [&'static [FpGoldiLocks]] = &[
         &[
             fp_from_hex!("13dcf33aba214f46"),
             fp_from_hex!("30b3b654a1da6d83"),

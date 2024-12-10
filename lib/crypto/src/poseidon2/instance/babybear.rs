@@ -1,20 +1,18 @@
-#![allow(missing_docs)]
 use crate::{
     field::instance::FpBabyBear, fp_from_hex, poseidon2::params::PoseidonParams,
 };
 
-type Scalar = FpBabyBear;
-
+/// Poseidon sponge hash parameters for [`FpBabyBear`] field instance.
 pub struct BabyBear24Params;
 
 #[rustfmt::skip]
-impl PoseidonParams<Scalar> for BabyBear24Params {
+impl PoseidonParams<FpBabyBear> for BabyBear24Params {
     const T: usize = 24;
     const D: u8 = 7;
     const CAPACITY: usize = 1;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 21;
-    const MAT_INTERNAL_DIAG_M_1: &'static [Scalar] = &[
+    const MAT_INTERNAL_DIAG_M_1: &'static [FpBabyBear] = &[
         fp_from_hex!("409133f0"),
         fp_from_hex!("1667a8a1"),
         fp_from_hex!("06a6c7b6"),
@@ -40,7 +38,7 @@ impl PoseidonParams<Scalar> for BabyBear24Params {
         fp_from_hex!("00d0ca4c"),
         fp_from_hex!("36c0e388"),
     ];
-    const ROUND_CONSTANTS: &'static [&'static [Scalar]] = &[
+    const ROUND_CONSTANTS: &'static [&'static [FpBabyBear]] = &[
         &[
             fp_from_hex!("0fa20c37"),
             fp_from_hex!("0795bb97"),
