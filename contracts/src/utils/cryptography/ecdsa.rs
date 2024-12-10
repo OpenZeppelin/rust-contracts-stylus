@@ -19,7 +19,6 @@ pub const ECRECOVER_ADDR: Address =
     address!("0000000000000000000000000000000000000001");
 
 /// Upper range for `s` value from the signature.
-/// See [`check_if_malleable`].
 pub const SIGNATURE_S_UPPER_BOUND: U256 = uint!(
     0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_U256
 );
@@ -85,9 +84,9 @@ impl MethodError for ecdsa::Error {
 /// # Errors
 ///
 /// * If the `s` value is grater than [`SIGNATURE_S_UPPER_BOUND`], then the
-/// error [`Error::InvalidSignatureS`] is returned.
+///   error [`Error::InvalidSignatureS`] is returned.
 /// * If the recovered address is `Address::ZERO`, then the error
-/// [`Error::InvalidSignature`] is returned.
+///   [`Error::InvalidSignature`] is returned.
 ///
 /// # Panics
 ///
@@ -120,9 +119,9 @@ pub fn recover(
 /// # Errors
 ///
 /// * If the `s` value is grater than `EIP2_VALUE`, then the error
-/// [`Error::ECDSAInvalidSignatureS`] is returned.
+///   [`Error::ECDSAInvalidSignatureS`] is returned.
 /// * If the recovered address is `Address::ZERO`, then the error
-/// [`Error::InvalidSignature`] is returned.
+///   [`Error::InvalidSignature`] is returned.
 ///
 /// # Panics
 ///
@@ -175,10 +174,8 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 ///
 /// Remove this possibility and make the signature unique.
 ///
-/// Appendix F in the Ethereum Yellow paper
-/// (https://ethereum.github.io/yellowpaper/paper.pdf),
-/// defines the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1,
-/// and for v in (302): v ∈ {27, 28}.
+/// Appendix F in the [Ethereum Yellow paper], defines the valid range for s in
+/// (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}.
 ///
 /// Most signatures from current libraries generate a unique signature
 /// with an s-value in the lower half order.
@@ -198,7 +195,9 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 /// # Errors
 ///
 /// * If the `s` value is grater than `EIP2_VALUE`, then the error
-/// [`Error::ECDSAInvalidSignatureS`] is returned.
+///   [`Error::ECDSAInvalidSignatureS`] is returned.
+///
+/// [Ethereum Yellow paper]: https://ethereum.github.io/yellowpaper/paper.pdf
 fn check_if_malleable(s: &B256) -> Result<(), Error> {
     let s_u256 = U256::from_be_slice(s.as_slice());
     if s_u256 > SIGNATURE_S_UPPER_BOUND {

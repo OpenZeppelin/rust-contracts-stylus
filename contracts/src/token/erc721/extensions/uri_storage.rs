@@ -99,10 +99,10 @@ impl Erc721UriStorage {
         }
 
         // If both are set, concatenate the `base_uri` and `token_uri`.
-        let uri = if !token_uri.is_empty() {
-            base + &token_uri
-        } else {
+        let uri = if token_uri.is_empty() {
             metadata.token_uri(token_id, erc721)?
+        } else {
+            base + &token_uri
         };
 
         Ok(uri)

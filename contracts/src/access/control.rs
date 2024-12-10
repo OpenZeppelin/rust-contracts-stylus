@@ -1,7 +1,8 @@
 //! Contract module that allows children to implement role-based access control
-//! mechanisms. This is a lightweight version that doesn't allow enumerating
-//! role members except through off-chain means by accessing the contract event
-//! logs.
+//! mechanisms.
+//!
+//! This is a lightweight version that doesn't allow enumerating role members
+//! except through off-chain means by accessing the contract event logs.
 //!
 //! Roles are referred to by their `bytes32` identifier. These should be exposed
 //! in the external API and be unique. The best way to achieve this is by using
@@ -434,7 +435,7 @@ mod tests {
         contract.grant_role(ROLE.into(), ALICE).unwrap();
         contract.grant_role(ROLE.into(), ALICE).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, true);
+        assert!(has_role);
     }
 
     #[motsu::test]
@@ -442,10 +443,10 @@ mod tests {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
 
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, false);
+        assert!(!has_role);
         contract.revoke_role(ROLE.into(), ALICE).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, false);
+        assert!(!has_role);
     }
 
     #[motsu::test]
@@ -454,10 +455,10 @@ mod tests {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
 
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, true);
+        assert!(has_role);
         contract.revoke_role(ROLE.into(), ALICE).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, false);
+        assert!(!has_role);
     }
 
     #[motsu::test]
@@ -465,7 +466,7 @@ mod tests {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
 
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, true);
+        assert!(has_role);
         let err = contract.revoke_role(ROLE.into(), ALICE).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
@@ -477,7 +478,7 @@ mod tests {
         contract.revoke_role(ROLE.into(), ALICE).unwrap();
         contract.revoke_role(ROLE.into(), ALICE).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, false);
+        assert!(!has_role);
     }
 
     #[motsu::test]
@@ -485,10 +486,10 @@ mod tests {
         _grant_role_to_msg_sender(contract, ROLE);
 
         let has_role = contract.has_role(ROLE.into(), msg::sender());
-        assert_eq!(has_role, true);
+        assert!(has_role);
         contract.renounce_role(ROLE.into(), msg::sender()).unwrap();
         let has_role = contract.has_role(ROLE.into(), msg::sender());
-        assert_eq!(has_role, false);
+        assert!(!has_role);
     }
 
     #[motsu::test]
@@ -506,7 +507,7 @@ mod tests {
         contract.renounce_role(ROLE.into(), sender).unwrap();
         contract.renounce_role(ROLE.into(), sender).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, false);
+        assert!(!has_role);
     }
 
     #[motsu::test]
@@ -525,7 +526,7 @@ mod tests {
 
         contract.grant_role(ROLE.into(), ALICE).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, true);
+        assert!(has_role);
     }
 
     #[motsu::test]
@@ -536,7 +537,7 @@ mod tests {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         contract.revoke_role(ROLE.into(), ALICE).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert_eq!(has_role, false);
+        assert!(!has_role);
     }
 
     #[motsu::test]
@@ -575,26 +576,26 @@ mod tests {
     #[motsu::test]
     fn internal_grant_role_true_if_no_role(contract: AccessControl) {
         let role_granted = contract._grant_role(ROLE.into(), ALICE);
-        assert_eq!(role_granted, true);
+        assert!(role_granted);
     }
 
     #[motsu::test]
     fn internal_grant_role_false_if_role(contract: AccessControl) {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_granted = contract._grant_role(ROLE.into(), ALICE);
-        assert_eq!(role_granted, false);
+        assert!(!role_granted);
     }
 
     #[motsu::test]
     fn internal_revoke_role_true_if_role(contract: AccessControl) {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
-        assert_eq!(role_revoked, true);
+        assert!(role_revoked);
     }
 
     #[motsu::test]
     fn internal_revoke_role_false_if_no_role(contract: AccessControl) {
         let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
-        assert_eq!(role_revoked, false);
+        assert!(!role_revoked);
     }
 }

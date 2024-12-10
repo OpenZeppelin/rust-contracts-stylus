@@ -510,7 +510,7 @@ impl IErc721 for Erc721 {
         data: Bytes,
     ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
+        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
     }
 
     fn transfer_from(
@@ -823,7 +823,7 @@ impl Erc721 {
         &mut self,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
         self._check_on_erc721_received(
@@ -969,7 +969,7 @@ impl Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
         self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
@@ -1118,7 +1118,7 @@ impl Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         const RECEIVER_FN_SELECTOR: FixedBytes<4> = fixed_bytes!("150b7a02");
 
@@ -1140,7 +1140,7 @@ impl Erc721 {
             Ok(id) => id,
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
-                    if reason.len() > 0 {
+                    if !reason.is_empty() {
                         // Non-IERC721Receiver implementer.
                         return Err(Error::InvalidReceiverWithReason(e));
                     }
@@ -1283,7 +1283,7 @@ mod tests {
             .expect("should return the balance of Alice");
 
         contract
-            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            ._safe_mint(alice, token_id, &vec![0, 1, 2, 3].into())
             .expect("should mint a token for Alice");
 
         let owner = contract
@@ -1307,7 +1307,7 @@ mod tests {
             .expect("should mint the token a first time");
 
         let err = contract
-            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            ._safe_mint(alice, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not mint a token with `token_id` twice");
 
         assert!(matches!(
@@ -1323,7 +1323,7 @@ mod tests {
         let token_id = random_token_id();
 
         let err = contract
-            ._safe_mint(invalid_receiver, token_id, vec![0, 1, 2, 3].into())
+            ._safe_mint(invalid_receiver, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not mint a token for invalid receiver");
 
         assert!(matches!(
@@ -1373,7 +1373,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             .transfer_from(BOB, alice, token_id)
@@ -1516,7 +1516,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             .safe_transfer_from(BOB, alice, token_id)
@@ -1669,7 +1669,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             .safe_transfer_from_with_data(
@@ -1850,12 +1850,12 @@ mod tests {
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
@@ -1955,7 +1955,7 @@ mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(false, authorized);
+        assert!(!authorized);
     }
 
     #[motsu::test]
@@ -1965,7 +1965,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token");
 
         let authorized = contract._is_authorized(alice, alice, token_id);
-        assert_eq!(true, authorized);
+        assert!(authorized);
     }
 
     #[motsu::test]
@@ -1975,7 +1975,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(false, authorized);
+        assert!(!authorized);
     }
 
     #[motsu::test]
@@ -1988,7 +1988,7 @@ mod tests {
             .expect("should approve Bob for operations on token");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(true, authorized);
+        assert!(authorized);
     }
 
     #[motsu::test]
@@ -2001,7 +2001,7 @@ mod tests {
             .expect("should approve Bob for operations on all Alice's tokens");
 
         let authorized = contract._is_authorized(alice, BOB, token_id);
-        assert_eq!(true, authorized);
+        assert!(authorized);
     }
 
     #[motsu::test]
@@ -2188,7 +2188,7 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
             ._transfer(BOB, alice, token_id)
@@ -2274,7 +2274,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
         contract
-            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(alice, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect("should transfer a token from Alice to Bob");
 
         let owner = contract
@@ -2291,7 +2291,7 @@ mod tests {
         contract._mint(BOB, token_id).expect("should mint token to Bob");
         contract._token_approvals.setter(token_id).set(alice);
         contract
-            ._safe_transfer(BOB, alice, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(BOB, alice, token_id, &vec![0, 1, 2, 3].into())
             .expect("should transfer Bob's token to Alice");
         let owner = contract
             .owner_of(token_id)
@@ -2309,10 +2309,10 @@ mod tests {
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
-        assert_eq!(approved_for_all, true);
+        assert!(approved_for_all);
 
         contract
-            ._safe_transfer(BOB, alice, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(BOB, alice, token_id, &vec![0, 1, 2, 3].into())
             .expect("should transfer Bob's token to Alice");
 
         let owner = contract
@@ -2334,7 +2334,7 @@ mod tests {
                 alice,
                 invalid_receiver,
                 token_id,
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect_err("should not transfer the token to invalid receiver");
 
@@ -2361,7 +2361,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
         let err = contract
-            ._safe_transfer(DAVE, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(DAVE, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
@@ -2384,7 +2384,7 @@ mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
-            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(alice, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer a non-existent token");
 
         assert!(matches!(
@@ -2447,12 +2447,12 @@ mod tests {
         contract
             ._set_approval_for_all(alice, BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract._set_approval_for_all(alice, BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]

@@ -1206,7 +1206,7 @@ mod tests {
     }
 
     pub(crate) fn random_values(size: usize) -> Vec<U256> {
-        (1..size + 1).map(U256::from).collect()
+        (1..=size).map(U256::from).collect()
     }
 
     fn init(
@@ -1298,12 +1298,12 @@ mod tests {
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]

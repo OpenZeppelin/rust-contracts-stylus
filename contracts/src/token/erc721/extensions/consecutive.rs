@@ -1,5 +1,5 @@
 //! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
-//! in https://eips.ethereum.org/EIPS/eip-2309[ERC-2309].
+//! in the [ERC].
 //!
 //! This extension allows the minting large batches of tokens, during
 //! contract construction only. For upgradeable contracts, this implies that
@@ -21,6 +21,8 @@
 //! As opposed to the Solidity implementation of Consecutive, there is no
 //! restriction on the [`Erc721Consecutive::_update`] function call since it is
 //! not possible to call a Rust function from the Solidity constructor.
+//!
+//! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
 use alloc::vec;
 
@@ -177,7 +179,7 @@ impl IErc721 for Erc721Consecutive {
             from,
             to,
             token_id,
-            data,
+            &data,
         )?)
     }
 
@@ -388,9 +390,9 @@ impl Erc721Consecutive {
         Ok(previous_owner)
     }
 
-    /// Returns the next token_id to mint using [`Self::_mint_consecutive`]. It
+    /// Returns the next token id to mint using [`Self::_mint_consecutive`]. It
     /// will return [`Erc721Consecutive::_first_consecutive_id`] if no
-    /// consecutive token_id has been minted before.
+    /// consecutive token id has been minted before.
     ///
     /// # Arguments
     ///
@@ -548,7 +550,7 @@ impl Erc721Consecutive {
         &mut self,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
@@ -701,7 +703,7 @@ impl Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
@@ -1116,7 +1118,7 @@ mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
-            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(alice, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer a non-existent token");
 
         assert!(matches!(
@@ -1191,7 +1193,7 @@ mod tests {
                 alice,
                 invalid_receiver,
                 token_id,
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect_err("should not transfer the token to invalid receiver");
 
@@ -1218,7 +1220,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
         let err = contract
-            ._safe_transfer(DAVE, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(DAVE, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
@@ -1240,7 +1242,7 @@ mod tests {
             .expect("should return the balance of Alice");
 
         contract
-            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            ._safe_mint(alice, token_id, &vec![0, 1, 2, 3].into())
             .expect("should mint a token for Alice");
 
         let owner = contract
@@ -1311,12 +1313,12 @@ mod tests {
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
