@@ -48,5 +48,5 @@ mod event;
 pub mod prelude;
 mod shims;
 
-pub use event::{clear_events, emits};
+pub use event::{clear_events, emits_event};
 pub use motsu_proc::test;

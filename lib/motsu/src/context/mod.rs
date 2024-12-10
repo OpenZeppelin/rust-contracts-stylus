@@ -95,7 +95,8 @@ impl Context {
         // https://github.com/OffchainLabs/stylus-sdk-rs/blob/v0.6.0/stylus-sdk/src/evm.rs#L38-L52
         let buffer = read_bytes(data, len);
         let encoded_event: Vec<u8> =
-            buffer.into_iter().skip(topics * WORD_BYTES).collect();
+            buffer.clone().into_iter().skip(topics * WORD_BYTES).collect();
+        panic!("Data: {:x?}, len: {:x?}, topics: {:x?}, Log: {:x?}, encoded_event: {:x?}", data, len, topics, buffer, encoded_event);
         let mut context = EVM.entry(self.thread_name).or_default();
         context.environment.store_event(&encoded_event);
     }

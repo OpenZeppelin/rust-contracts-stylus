@@ -3,12 +3,13 @@ use alloy_sol_types::SolEvent;
 use crate::context::Context;
 
 /// Asserts that the `expected` event was emitted in a test case.
-pub fn emits<E>(expected: &E) -> bool
+pub fn emits_event<E>(expected: E) -> bool
 where
     E: SolEvent,
 {
     let expected = expected.encode_data();
     let events = Context::current().events();
+    panic!("Expected: {:x?}, events: {:x?}", expected, events);
     events.into_iter().rev().any(|event| expected == event)
 }
 

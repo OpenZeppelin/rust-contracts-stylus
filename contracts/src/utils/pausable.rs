@@ -149,7 +149,9 @@ impl Pausable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use crate::utils::pausable::{Error, Pausable};
+    use stylus_sdk::msg;
+
+    use crate::utils::pausable::{Error, Pausable, Paused, Unpaused};
 
     #[motsu::test]
     fn paused_works(contract: Pausable) {
@@ -204,6 +206,10 @@ mod tests {
         let res = contract.pause();
         assert!(res.is_ok());
         assert_eq!(contract.paused(), true);
+        let expected_event = Paused { account: msg::sender() };
+        assert!(motsu::emits_event(expected_event.clone()));
+        motsu::clear_events();
+        assert!(!motsu::emits_event(expected_event));
     }
 
     #[motsu::test]
@@ -225,6 +231,8 @@ mod tests {
         let res = contract.unpause();
         assert!(res.is_ok());
         assert_eq!(contract.paused(), false);
+
+        assert!(motsu::emits_event(Unpaused { account: msg::sender() }));
     }
 
     #[motsu::test]
