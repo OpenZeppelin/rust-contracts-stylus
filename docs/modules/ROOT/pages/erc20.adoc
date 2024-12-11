@@ -84,4 +84,4 @@ Additionally, there are multiple custom extensions, including:
 
  * xref:erc20-permit.adoc[ERC-20 Permit]: gasless approval of tokens (standardized as https://eips.ethereum.org/EIPS/eip-2612[`EIP-2612`]).
 
- * xref:erc20-flashloan.adoc[ERC-20 Flashloan]: flash loans through the minting and burning of ephemeral tokens (standardized as https://eips.ethereum.org/EIPS/eip-3156[`EIP-3156`]).
+ * xref:erc20-flashmint.adoc[ERC-20 FlashMint]: token level support for flash loans through the minting and burning of ephemeral tokens (standardized as https://eips.ethereum.org/EIPS/eip-3156[`EIP-3156`]).
