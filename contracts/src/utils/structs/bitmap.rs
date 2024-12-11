@@ -102,9 +102,9 @@ mod tests {
     fn set_value() {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
-            assert_eq!(bit_map.get(value), false);
+            assert!(!bit_map.get(value));
             bit_map.set(value);
-            assert_eq!(bit_map.get(value), true);
+            assert!(bit_map.get(value));
         });
     }
 
@@ -113,9 +113,9 @@ mod tests {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set(value);
-            assert_eq!(bit_map.get(value), true);
+            assert!(bit_map.get(value));
             bit_map.unset(value);
-            assert_eq!(bit_map.get(value), false);
+            assert!(!bit_map.get(value));
         });
     }
 
@@ -124,9 +124,9 @@ mod tests {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set_to(value, true);
-            assert_eq!(bit_map.get(value), true);
+            assert!(bit_map.get(value));
             bit_map.set_to(value, false);
-            assert_eq!(bit_map.get(value), false);
+            assert!(!bit_map.get(value));
         });
     }
 }

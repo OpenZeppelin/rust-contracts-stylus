@@ -30,5 +30,6 @@ pub mod field;
 pub mod hash;
 pub mod keccak;
 pub mod merkle;
+pub mod poseidon2;
 
 pub use keccak::KeccakBuilder;
