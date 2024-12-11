@@ -1,10 +1,20 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.24;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.1.0/contracts/interfaces/IERC3156FlashBorrower.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.1.0/contracts/interfaces/IERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.1.0/contracts/utils/Address.sol";
 
+/**
+ * @dev WARNING: this IERC3156FlashBorrower mock implementation is for testing purposes ONLY.
+ * Writing a secure flash lock borrower is not an easy task, and should be done with the utmost care.
+ * This is not an example of how it should be done, and no pattern present in this mock should be considered secure.
+ * Following best practices, always have your contract properly audited before using them to manipulate important funds on
+ * live networks.
+ */
 contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
-    bytes32 internal constant _RETURN_VALUE = keccak256("ERC3156FlashBorrower.onFlashLoan");
+    bytes32 internal constant _RETURN_VALUE =
+        keccak256("ERC3156FlashBorrower.onFlashLoan");
 
     bool immutable _enableApprove;
     bool immutable _enableReturn;
@@ -26,7 +36,11 @@ contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
     ) public returns (bytes32) {
         require(msg.sender == token, "Invalid token address");
 
-        emit BalanceOf(token, address(this), IERC20(token).balanceOf(address(this)));
+        emit BalanceOf(
+            token,
+            address(this),
+            IERC20(token).balanceOf(address(this))
+        );
         emit TotalSupply(token, IERC20(token).totalSupply());
 
         if (data.length > 0) {
