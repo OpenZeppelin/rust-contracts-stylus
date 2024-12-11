@@ -33,11 +33,6 @@ pub type Wallet = FillProvider<
     Ethereum,
 >;
 
-/// Load the `name` environment variable.
-fn env(name: &str) -> eyre::Result<String> {
-    std::env::var(name).wrap_err(format!("failed to load {name}"))
-}
-
 /// Send `amount` eth to `address` in the nitro-tesnode.
 ///
 /// # Errors
