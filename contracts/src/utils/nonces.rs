@@ -14,7 +14,9 @@ const ONE: U256 = uint!(1_U256);
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// The nonce used for an `account` is not the expected current nonce.
         #[derive(Debug)]
         #[allow(missing_docs)]

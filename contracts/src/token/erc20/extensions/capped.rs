@@ -15,7 +15,9 @@ use stylus_sdk::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Indicates an error related to the operation that failed
         /// because `total_supply` exceeded the `_cap`.
         #[derive(Debug)]

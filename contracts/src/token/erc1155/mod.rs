@@ -42,7 +42,9 @@ const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when `value` amount of tokens of type `id` are
         /// transferred from `from` to `to` by `operator`.
         #[allow(missing_docs)]
@@ -75,7 +77,7 @@ mod sol {
         );
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Indicates an error related to the current `balance` of a `sender`.
         /// Used in transfers.
         ///

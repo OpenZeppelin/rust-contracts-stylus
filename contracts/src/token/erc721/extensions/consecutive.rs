@@ -78,7 +78,9 @@ pub struct Erc721Consecutive {
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
         ///
         /// * `from_token_id` - First token being transferred.
@@ -94,7 +96,7 @@ mod sol {
         );
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Batch mint is restricted to the constructor.
         /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
         /// is non ERC-721 compliant.

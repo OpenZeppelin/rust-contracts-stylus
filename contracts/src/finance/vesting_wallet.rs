@@ -44,7 +44,9 @@ use crate::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when `amount` of Ether has been released.
         ///
         /// * `amount` - Total Ether released.
@@ -59,7 +61,7 @@ mod sol {
         event ERC20Released(address indexed token, uint256 amount);
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Indicates an error related to the underlying Ether transfer.
         #[derive(Debug)]
         #[allow(missing_docs)]

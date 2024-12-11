@@ -27,7 +27,9 @@ use crate::token::erc20;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// An operation with an ERC-20 token failed.
         ///
         /// * `token` - Address of the ERC-20 token.

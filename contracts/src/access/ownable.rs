@@ -21,7 +21,9 @@ use stylus_sdk::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when ownership gets transferred between accounts.
         ///
         /// * `previous_owner` - Address of the previous owner.
@@ -30,7 +32,7 @@ mod sol {
         event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// The caller account is not authorized to perform an operation.
         ///
         /// * `account` - Account that was found to not be authorized.

@@ -52,7 +52,9 @@ use stylus_sdk::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when `new_admin_role` is set as `role`'s admin role, replacing
         /// `previous_admin_role`.
         ///
@@ -77,7 +79,7 @@ mod sol {
         event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// The `account` is missing a role.
         ///
         /// * `account` - Account that was found to not be authorized.

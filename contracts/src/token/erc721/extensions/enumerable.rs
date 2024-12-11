@@ -25,7 +25,9 @@ use crate::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Indicates an error when an `owner`'s token query
         /// was out of bounds for `index`.
         ///

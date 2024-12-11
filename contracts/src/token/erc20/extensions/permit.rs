@@ -37,11 +37,13 @@ const PERMIT_TYPEHASH: B256 =
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    pub(crate) type StructHashTuple = alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    pub(crate) type StructHashTuple = sol! {
         tuple(bytes32, address, address, uint256, uint256, uint256)
     };
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Indicates an error related to the fact that
         /// permit deadline has expired.
         #[derive(Debug)]

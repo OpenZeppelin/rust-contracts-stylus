@@ -25,7 +25,9 @@ use crate::utils::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// A value was attempted to be inserted into a past checkpoint.
         #[derive(Debug)]
         error CheckpointUnorderedInsertion();

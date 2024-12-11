@@ -21,7 +21,9 @@ pub mod extensions;
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when the `token_id` token is transferred from `from` to `to`.
         ///
         /// * `from` - Address from which the token will be transferred.
@@ -58,7 +60,7 @@ mod sol {
         event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Indicates that an address can't be an owner.
         /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
         /// Used in balance queries.

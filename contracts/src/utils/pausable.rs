@@ -24,7 +24,9 @@ use stylus_sdk::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when pause is triggered by `account`.
         #[allow(missing_docs)]
         event Paused(address account);
@@ -34,7 +36,7 @@ mod sol {
         event Unpaused(address account);
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Indicates an error related to the operation that failed
         /// because the contract is paused.
         #[derive(Debug)]

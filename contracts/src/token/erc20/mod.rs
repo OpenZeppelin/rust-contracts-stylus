@@ -22,7 +22,9 @@ pub mod utils;
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when `value` tokens are moved from one account (`from`) to
         /// another (`to`).
         ///
@@ -35,7 +37,7 @@ mod sol {
         event Approval(address indexed owner, address indexed spender, uint256 value);
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Indicates an error related to the current `balance` of `sender`. Used
         /// in transfers.
         ///

@@ -31,7 +31,9 @@ use crate::access::ownable::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when ownership transfer starts.
         ///
         /// * `previous_owner` - Address of the previous owner.

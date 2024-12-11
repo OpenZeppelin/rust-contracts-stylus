@@ -15,7 +15,9 @@ use crate::token::erc721::{extensions::Erc721Metadata, Error, IErc721};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// This event gets emitted when the metadata of a token is changed.
         ///
         /// The event comes from IERC4096.

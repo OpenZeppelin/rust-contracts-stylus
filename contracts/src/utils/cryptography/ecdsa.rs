@@ -26,7 +26,9 @@ pub const SIGNATURE_S_UPPER_BOUND: U256 = uint!(
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// The signature derives the `Address::ZERO`.
         #[derive(Debug)]
         #[allow(missing_docs)]
@@ -40,7 +42,7 @@ mod sol {
         error ECDSAInvalidSignatureS(bytes32 s);
     }
 
-    alloy_sol_macro::sol! {
+    sol! {
         /// Struct with callable data to the `ecrecover` precompile.
         #[allow(missing_docs)]
         struct EcRecoverData {

@@ -16,7 +16,9 @@ use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    alloy_sol_macro::sol! {
+    use alloy_sol_macro::sol;
+
+    sol! {
         /// Emitted when the URI for token type `id` changes to `value`, if it is
         /// a non-programmatic URI.
         ///
