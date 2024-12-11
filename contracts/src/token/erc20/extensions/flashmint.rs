@@ -192,12 +192,8 @@ impl IERC3156FlashLender for Erc20 {
             fee,
             data.to_vec().into(),
         );
-        if loan_return.is_err() {
-            return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
-                receiver,
-            }));
-        }
-        if loan_return.ok() != Some(RETURN_VALUE.into()) {
+        if loan_return.is_err() || loan_return.ok() != Some(RETURN_VALUE.into())
+        {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
