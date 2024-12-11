@@ -9,8 +9,8 @@ contract Erc20FlashMintExample {
     uint256 private _flashFeeAmount;
     address private _flashFeeReceiverAddress;
 
-    constructor(address flashFeeReceiverAddress, uint256 flashFeeAmount) {
-        _flashFeeReceiverAddress = flashFeeReceiverAddress;
-        _flashFeeAmount = flashFeeAmount;
+    constructor(address flashFeeReceiverAddress_, uint256 flashFeeAmount_) {
+        _flashFeeReceiverAddress = flashFeeReceiverAddress_;
+        _flashFeeAmount = flashFeeAmount_;
     }
 }
