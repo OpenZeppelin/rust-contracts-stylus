@@ -13,19 +13,18 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    prelude::{entrypoint, public, sol_storage},
+    prelude::{entrypoint, public, storage},
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc721Example {
-        #[borrow]
-        Erc721 erc721;
-        #[borrow]
-        Enumerable enumerable;
-        #[borrow]
-        Pausable pausable;
-    }
+#[entrypoint]
+#[storage]
+struct Erc721Example {
+    #[borrow]
+    pub erc721: Erc721,
+    #[borrow]
+    pub enumerable: Enumerable,
+    #[borrow]
+    pub pausable: Pausable,
 }
 
 #[public]
