@@ -14,6 +14,8 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
+use alloc::vec::Vec;
+
 use alloy_sol_types::sol;
 use stylus_sdk::{
     evm, msg,
