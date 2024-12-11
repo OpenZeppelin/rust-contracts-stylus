@@ -15,6 +15,7 @@ sol!(
         function mint(address account, uint256 amount) external;
 
         function maxFlashLoan(address token) external view returns (uint256 maxLoan);
+        #[derive(Debug)]
         function flashFee(address token, uint256 amount) external view returns (uint256 fee);
         function flashLoan(address receiver, address token, uint256 amount, bytes calldata data) external returns (bool);
 

@@ -99,23 +99,64 @@ async fn max_flash_loan_returns_zero_on_invalid_address(
     Ok(())
 }
 
-// #[e2e::test]
-// async fn flash_fee(alice: Account) -> Result<()> {
-//     let contract_addr = alice
-//         .as_deployer()
-//         .with_default_constructor::<constructorCall>()
-//         .deploy()
-//         .await?
-//         .address()?;
-//     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
-//     let mint_amount = uint!(10000000_U256);
-//     let supposed_fee =
-//         mint_amount.checked_mul(U256::from(1)).unwrap() / U256::from(100);
-//     let Erc20FlashMint::flashFeeReturn { fee } =
-//         contract.flashFee(contract_addr, mint_amount).call().await?;
-//     assert_eq!(fee, supposed_fee);
-//     Ok(())
-// }
+// NOTE: this behavior is assumed for our implementation, but other
+// implementations may have different behavior (e.g. return fee as a percentage
+// of the passed amount).
+#[e2e::test]
+async fn flash_fee_returns_same_value_regardless_of_amount(
+    alice: Account,
+) -> Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
+
+    let amounts = &[U256::ZERO, U256::from(1), U256::from(1000), U256::MAX];
+    for &amount in amounts {
+        let fee = contract.flashFee(contract_addr, amount).call().await?.fee;
+        assert_eq!(fee, FLASH_FEE_AMOUNT);
+    }
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn flash_fee_reverts_on_unsupported_token(alice: Account) -> Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
+
+    let unsupported_token = alice.address();
+
+    let err = contract
+        .flashFee(unsupported_token, U256::from(1))
+        .call()
+        .await
+        .expect_err("should return `UnsupportedToken`");
+
+    assert!(err.reverted_with(Erc20FlashMint::ERC3156UnsupportedToken {
+        token: unsupported_token
+    }));
+
+    let err = contract
+        .flashFee(Address::ZERO, U256::from(1))
+        .call()
+        .await
+        .expect_err("should return `UnsupportedToken`");
+
+    assert!(err.reverted_with(Erc20FlashMint::ERC3156UnsupportedToken {
+        token: Address::ZERO
+    }));
+
+    Ok(())
+}
 
 // #[e2e::test]
 // async fn flash_fee_rejects_unsupported_token(alice: Account) -> Result<()> {
