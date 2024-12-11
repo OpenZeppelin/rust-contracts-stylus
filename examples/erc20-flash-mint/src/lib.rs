@@ -19,7 +19,7 @@ sol_storage! {
         #[borrow]
         Erc20 erc20;
         #[borrow]
-        Erc20FlashMint erc20_flashmint;
+        Erc20FlashMint erc20_flash_mint;
     }
 }
 
@@ -27,11 +27,11 @@ sol_storage! {
 #[inherit(Erc20)]
 impl Erc20FlashMintExample {
     fn max_flash_loan(&self, token: Address) -> U256 {
-        self.erc20_flashmint.max_flash_loan(token, &self.erc20)
+        self.erc20_flash_mint.max_flash_loan(token, &self.erc20)
     }
 
     fn flash_fee(&self, token: Address, amount: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.erc20_flashmint.flash_fee(token, amount)?)
+        Ok(self.erc20_flash_mint.flash_fee(token, amount)?)
     }
 
     fn flash_loan(
@@ -41,7 +41,7 @@ impl Erc20FlashMintExample {
         amount: U256,
         data: Bytes,
     ) -> Result<bool, Vec<u8>> {
-        let result = self.erc20_flashmint.flash_loan(
+        let result = self.erc20_flash_mint.flash_loan(
             receiver,
             token,
             amount,

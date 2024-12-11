@@ -232,7 +232,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use crate::token::erc20::{
-        extensions::flashmint::{Error, IERC3156FlashLender},
+        extensions::flash_mint::{Error, IERC3156FlashLender},
         Erc20,
     };
 
