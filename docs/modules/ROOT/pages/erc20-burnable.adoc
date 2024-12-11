@@ -16,12 +16,11 @@ use openzeppelin_stylus::{
     },
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc20Example {
-        #[borrow]
-        Erc20 erc20;
-    }
+#[entrypoint]
+#[storage]
+struct Erc20Example {
+    #[borrow]
+    pub erc20: Erc20,
 }
 
 #[public]
