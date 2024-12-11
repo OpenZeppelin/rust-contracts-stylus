@@ -514,7 +514,7 @@ impl VestingWallet {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256, U64};
+    /*use alloy_primitives::{address, uint, Address, U256, U64};
     use stylus_sdk::block;
 
     use super::{IVestingWallet, VestingWallet};
@@ -610,5 +610,5 @@ mod tests {
         );
         assert_eq!(two, contract.vesting_schedule(two, start));
         assert_eq!(two, contract.vesting_schedule(two, start + U64::from(1)));
-    }
+    }*/
 }

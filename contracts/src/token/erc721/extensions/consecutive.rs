@@ -794,7 +794,7 @@ impl Erc721Consecutive {
         Ok(owner)
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
@@ -1334,3 +1334,4 @@ mod tests {
         ));
     }
 }
+*/

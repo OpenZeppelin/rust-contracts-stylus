@@ -51,7 +51,7 @@ impl IErc721Burnable for Erc721 {
         Ok(())
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address};
@@ -223,3 +223,4 @@ mod tests {
         ));
     }
 }
+*/

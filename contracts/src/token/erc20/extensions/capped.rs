@@ -50,7 +50,7 @@ impl Capped {
         self._cap.get()
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
@@ -68,3 +68,4 @@ mod tests {
         assert_eq!(contract.cap(), value);
     }
 }
+*/

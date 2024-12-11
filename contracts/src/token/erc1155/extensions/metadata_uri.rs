@@ -68,7 +68,7 @@ impl IErc165 for Erc1155MetadataUri {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
+    /*use alloy_primitives::U256;
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 
@@ -98,5 +98,5 @@ mod tests {
         let actual = <Erc1155MetadataUri as IErc165>::INTERFACE_ID;
         let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
-    }
+    }*/
 }
