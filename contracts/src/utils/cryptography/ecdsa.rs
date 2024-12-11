@@ -85,12 +85,7 @@ sol! {
 /// # Panics
 ///
 /// * If the `ecrecover` precompile fails to execute.
-pub fn recover(
-    hash: B256,
-    v: u8,
-    r: B256,
-    s: B256,
-) -> Result<Address, Error> {
+pub fn recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
     _recover(hash, v, r, s)
@@ -118,12 +113,7 @@ pub fn recover(
 /// # Panics
 ///
 /// * If the `ecrecover` precompile fails to execute.
-fn _recover(
-    hash: B256,
-    v: u8,
-    r: B256,
-    s: B256,
-) -> Result<Address, Error> {
+fn _recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
     let calldata = encode_calldata(hash, v, r, s);
 
     if v == 0 || v == 1 {
@@ -134,9 +124,8 @@ fn _recover(
         return Err(ECDSAInvalidSignature {}.into());
     }
 
-    let recovered =
-        call::static_call(Call::new(), ECRECOVER_ADDR, &calldata)
-            .expect("should call `ecrecover` precompile");
+    let recovered = call::static_call(Call::new(), ECRECOVER_ADDR, &calldata)
+        .expect("should call `ecrecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
 
