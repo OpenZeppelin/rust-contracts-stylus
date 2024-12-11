@@ -25,12 +25,11 @@ importing them:
 use stylus_sdk::prelude::*;
 use openzeppelin_stylus::token::erc20::Erc20;
 
-sol_storage! {
-    #[entrypoint]
-    struct MyContract {
-        #[borrow]
-        Erc20 erc20;
-    }
+#[entrypoint]
+#[storage]
+struct MyContract {
+    #[borrow]
+    pub erc20: Erc20,
 }
 
 #[public]
