@@ -1,5 +1,6 @@
 //! Simple math operations missing in `stylus_sdk::storage`.
 use alloy_primitives::Uint;
+use alloy_sol_types::sol_data::{IntBitCount, SupportedInt};
 use stylus_sdk::storage::StorageUint;
 
 /// Adds value and assign the result to `self`, ignoring overflow.
