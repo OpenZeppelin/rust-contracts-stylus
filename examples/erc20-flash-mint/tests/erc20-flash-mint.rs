@@ -73,6 +73,27 @@ async fn max_flash_loan(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
+async fn max_flash_loan_return_zero_if_no_more_tokens_to_mint(
+    alice: Account,
+) -> Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let _ = watch!(contract.mint(alice_addr, U256::MAX))?;
+
+    let max_loan = contract.maxFlashLoan(contract_addr).call().await?.maxLoan;
+    assert_eq!(U256::MIN, max_loan);
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn max_flash_loan_returns_zero_on_invalid_address(
     alice: Account,
 ) -> Result<()> {
@@ -157,26 +178,6 @@ async fn flash_fee_reverts_on_unsupported_token(alice: Account) -> Result<()> {
 
     Ok(())
 }
-
-// #[e2e::test]
-// async fn flash_fee_rejects_unsupported_token(alice: Account) -> Result<()> {
-//     let contract_addr = alice
-//         .as_deployer()
-//         .with_default_constructor::<constructorCall>()
-//         .deploy()
-//         .await?
-//         .address()?;
-//     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
-//     let invalid_token_address =
-//         address!("a6CB74633b3F981AB239ed5fe17E714184236b9C");
-
-//     let err = send!(contract.flashFee(invalid_token_address,
-// uint!(1000_U256)))         .expect_err("should fail with
-// ERC3156UnsupportedToken");     assert!(err.
-// reverted_with(Erc20FlashMint::ERC3156UnsupportedToken {         token:
-// invalid_token_address     }));
-//     Ok(())
-// }
 
 // #[e2e::test]
 // async fn flash_loan(alice: Account) -> Result<()> {
