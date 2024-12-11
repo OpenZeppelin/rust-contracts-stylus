@@ -72,7 +72,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = "0.7.0-beta.1"
+stylus-sdk = { version = "0.7.0-beta.1", default-features = false }
 
 alloy = { version = "=0.7.2", features = [
   "contract",
