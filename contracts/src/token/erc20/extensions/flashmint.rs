@@ -1,7 +1,7 @@
 //! Optional Flashloan extension of the ERC-20 standard.
 //! using the IERC3156FlashBorrower interface to borrow tokens.
 
-use alloy_primitives::{b256, Address, B256, U256};
+use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
 use stylus_sdk::{abi::Bytes, call::Call, contract, msg, prelude::*};
 
