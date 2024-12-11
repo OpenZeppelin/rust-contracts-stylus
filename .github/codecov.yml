@@ -14,10 +14,11 @@ coverage:
     patch:
       default:
         informational: true
-# Docs are not relevant to coverage.
+# Docs and examples are not relevant to coverage.
 # Motsu and e2e should be moved outside of this repo.
 ignore:
   - "docs"
+  - "examples"
   - "lib/e2e"
   - "lib/e2e-proc"
   - "lib/motsu"
