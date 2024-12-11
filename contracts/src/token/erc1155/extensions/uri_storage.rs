@@ -102,15 +102,14 @@ mod tests {
     }
 
     #[storage]
-    struct Erc1155Example {
-        pub erc1155: Erc1155,
+    struct Erc1155MetadataExample {
         pub metadata_uri: Erc1155MetadataUri,
         pub uri_storage: Erc1155UriStorage,
     }
 
     #[motsu::test]
     fn uri_returns_metadata_uri_when_token_uri_is_not_set(
-        contract: Erc1155Example,
+        contract: Erc1155MetadataExample,
     ) {
         let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
@@ -124,7 +123,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_empty_string_when_no_uri_is_set(contract: Erc1155Example) {
+    fn uri_returns_empty_string_when_no_uri_is_set(
+        contract: Erc1155MetadataExample,
+    ) {
         let token_id = random_token_id();
 
         assert!(contract
@@ -134,7 +135,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_token_uri_when_base_uri_is_empty(contract: Erc1155Example) {
+    fn uri_returns_token_uri_when_base_uri_is_empty(
+        contract: Erc1155MetadataExample,
+    ) {
         let token_id = random_token_id();
         let token_uri = "https://some.short/token/uri";
 
@@ -152,7 +155,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_returns_concatenated_base_uri_and_token_uri(
-        contract: Erc1155Example,
+        contract: Erc1155MetadataExample,
     ) {
         let token_id = random_token_id();
         let base_uri = "https://some.base.uri";
@@ -173,7 +176,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_ignores_metadata_uri_when_token_uri_is_set(
-        contract: Erc1155Example,
+        contract: Erc1155MetadataExample,
     ) {
         let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
@@ -193,7 +196,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_set_uri(contract: Erc1155Example) {
+    fn test_set_uri(contract: Erc1155MetadataExample) {
         let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();
