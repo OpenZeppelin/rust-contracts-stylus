@@ -177,14 +177,14 @@ impl IERC3156FlashLender for Erc20 {
 
         let fee = self.flash_fee(token, value)?;
         self._mint(receiver, value)?;
-        let loan_reciver = IERC3156FlashBorrower::new(receiver);
-        if Address::has_code(&loan_reciver) {
+        let loan_receiver = IERC3156FlashBorrower::new(receiver);
+        if Address::has_code(&loan_receiver) {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
         }
         let call = Call::new();
-        let loan_return = loan_reciver.on_flash_loan(
+        let loan_return = loan_receiver.on_flash_loan(
             call,
             msg::sender(),
             token,
