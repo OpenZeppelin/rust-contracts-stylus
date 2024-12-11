@@ -134,8 +134,9 @@ mod borrower {
     }
 }
 
-const RETURN_VALUE: B256 =
-    b256!("439148f0bbc682ca079e46d6e2c2f0c1e3b820f1a291b069d8882abf8cf18dd9");
+const RETURN_VALUE: [u8; 32] = keccak_const::Keccak256::new()
+    .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
+    .finalize();
 
 impl IERC3156FlashLender for Erc20 {
     type Error = Error;
@@ -196,7 +197,7 @@ impl IERC3156FlashLender for Erc20 {
                 receiver,
             }));
         }
-        if loan_return.ok() != Some(RETURN_VALUE) {
+        if loan_return.ok() != Some(RETURN_VALUE.into()) {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
