@@ -12,7 +12,7 @@ version = "0.2.0"
 const-hex.workspace = true
 once_cell.workspace = true
 tiny-keccak.workspace = true
-stylus-sdk.workspace = true
+stylus-sdk = { version = "0.7.0-beta.1", default-features = false }
 motsu-proc.workspace = true
 dashmap.workspace = true
 alloy-primitives = { workspace = true, features = ["arbitrary", "rand"] }

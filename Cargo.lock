@@ -2515,7 +2515,6 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "mini-alloc"
 version = "0.7.0-beta.1"
-source = "git+https://github.com/qalisander/stylus-sdk-rs?branch=fix-encoding-in-sol-interface#2af4d8e232fc90c464eed29d0c0396f330f183ea"
 dependencies = [
  "cfg-if",
 ]
@@ -3745,7 +3744,6 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.7.0-beta.1"
-source = "git+https://github.com/qalisander/stylus-sdk-rs?branch=fix-encoding-in-sol-interface#2af4d8e232fc90c464eed29d0c0396f330f183ea"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3765,7 +3763,6 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.7.0-beta.1"
-source = "git+https://github.com/qalisander/stylus-sdk-rs?branch=fix-encoding-in-sol-interface#2af4d8e232fc90c464eed29d0c0396f330f183ea"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",

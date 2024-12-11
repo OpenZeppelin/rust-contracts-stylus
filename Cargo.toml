@@ -148,11 +148,17 @@ default = { extend-ignore-identifiers-re = [
 ] }
 files = { extend-exclude = [] }
 
-# TODO#q: remove this once the fix is released
+## TODO#q: remove this once the fix is released
+#[patch.crates-io.stylus-sdk]
+#git = "https://github.com/qalisander/stylus-sdk-rs"
+#branch = "fix-encoding-in-sol-interface"
+#
+#[patch.crates-io.stylus-proc]
+#git = "https://github.com/qalisander/stylus-sdk-rs"
+#branch = "fix-encoding-in-sol-interface"
+
 [patch.crates-io.stylus-sdk]
-git = "https://github.com/qalisander/stylus-sdk-rs"
-branch = "fix-encoding-in-sol-interface"
+path = "../stylus-sdk-rs/stylus-sdk"
 
 [patch.crates-io.stylus-proc]
-git = "https://github.com/qalisander/stylus-sdk-rs"
-branch = "fix-encoding-in-sol-interface"
+path = "../stylus-sdk-rs/stylus-proc"

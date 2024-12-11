@@ -58,18 +58,11 @@ mod tests {
     use stylus_sdk::{
         alloy_primitives::{Address, U256},
         call::Call,
+        msg,
         prelude::{public, sol_storage, StorageType, TopLevelStorage},
     };
 
-    use crate::context::{Account, Contract, TestRouter};
-
-    /// Message sender that mocks `msg::sender()` in tests.
-    #[must_use]
-    pub fn msg_sender() -> Address {
-        crate::prelude::Context::current()
-            .get_msg_sender()
-            .expect("msg_sender should be set")
-    }
+    use crate::context::{Account, Contract};
 
     sol_storage! {
         pub struct PingContract {
@@ -81,14 +74,14 @@ mod tests {
     #[public]
     impl PingContract {
         fn ping(&mut self, to: Address, value: U256) -> Result<U256, Vec<u8>> {
-            let receiver = receiver::PongContract::new(to);
+            let receiver = IPongContract::new(to);
             let call = Call::new_in(self);
             let value =
                 receiver.pong(call, value).expect("should pong successfully");
 
             let pings_count = self._pings_count.get();
             self._pings_count.set(pings_count + uint!(1_U256));
-            self._pinged_from.set(msg_sender());
+            self._pinged_from.set(msg::sender());
             Ok(value)
         }
 
@@ -103,13 +96,10 @@ mod tests {
 
     unsafe impl TopLevelStorage for PingContract {}
 
-    mod receiver {
-        use super::alloc;
-        stylus_sdk::stylus_proc::sol_interface! {
-            interface PongContract {
-                #[allow(missing_docs)]
-                function pong(uint256 value) external returns (uint256);
-            }
+    stylus_sdk::stylus_proc::sol_interface! {
+        interface IPongContract {
+            #[allow(missing_docs)]
+            function pong(uint256 value) external returns (uint256);
         }
     }
 
@@ -125,7 +115,7 @@ mod tests {
         pub fn pong(&mut self, value: U256) -> Result<U256, Vec<u8>> {
             let pongs_count = self._pongs_count.get();
             self._pongs_count.set(pongs_count + uint!(1_U256));
-            self._ponged_from.set(msg_sender());
+            self._ponged_from.set(msg::sender());
             Ok(value + uint!(1_U256))
         }
 
@@ -143,9 +133,7 @@ mod tests {
     #[test]
     fn ping_pong_works() {
         let mut ping = Contract::<PingContract>::default();
-        let ping = &mut ping;
         let mut pong = Contract::<PongContract>::default();
-        let pong = &mut pong;
 
         let alice = Account::random();
 

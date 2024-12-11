@@ -5,9 +5,7 @@ use stylus_sdk::{alloy_primitives::Address, msg};
 /// Returns the address of the message sender.
 #[cfg(test)]
 pub fn msg_sender() -> Address {
-    motsu::prelude::Context::current()
-        .get_msg_sender()
-        .expect("msg_sender should be set")
+    msg::sender()
 }
 
 /// Returns the address of the message sender.
