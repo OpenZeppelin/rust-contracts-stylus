@@ -1,15 +1,11 @@
 //! Optional Flashloan extension of the ERC-20 standard.
 //! using the IERC3156FlashBorrower interface to borrow tokens.
 
-use alloy_primitives::{b256, Address,B256, U256, FixedBytes};
+use alloy_primitives::{b256, Address, B256, U256};
 use alloy_sol_types::sol;
-use stylus_sdk::{
-    abi::Bytes, call::Call, contract, msg, prelude::*,
-};
+use stylus_sdk::{abi::Bytes, call::Call, contract, msg, prelude::*};
 
-use crate::token::erc20::{
-    self, utils::borrower::IERC3156FlashBorrower, Erc20, IErc20,
-};
+use crate::token::erc20::{self, Erc20, IErc20};
 
 sol! {
     /// Indicate an error related to an unsupported loan token.
@@ -101,6 +97,41 @@ pub enum Error {
 
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
+}
+
+pub use borrower::IERC3156FlashBorrower;
+
+#[allow(missing_docs)]
+mod borrower {
+    use stylus_sdk::stylus_proc::sol_interface;
+
+    sol_interface! {
+        /// Interface that must be implemented by smart contracts
+        /// in order to borrow ERC-3156 flashloan .
+        interface IERC3156FlashBorrower {
+            /// Handles the receipt of a flash loan.
+            /// This function is called after the loan amount has been transferred to the borrower.
+            ///
+            /// To indicate successful handling of the flash loan, this function should return
+            /// the `keccak256` hash of "ERC3156FlashBorrower.onFlashLoan".
+            ///
+            /// # Arguments
+            ///
+            /// * `initiator` - The address which initiated the flash loan.
+            /// * `token` - The address of the token being loaned (loan currency).
+            /// * `amount` - The amount of tokens lent in the flash loan.
+            /// * `fee` - The additional fee to repay with the flash loan amount.
+            /// * `data` - Arbitrary data structure, intended to contain user-defined parameters.
+            #[allow(missing_docs)]
+            function onFlashLoan(
+                address initiator,
+                address token,
+                uint256 amount,
+                uint256 fee,
+                bytes calldata data
+            ) external returns (bytes32);
+        }
+    }
 }
 
 const RETURN_VALUE: B256 =
@@ -210,17 +241,18 @@ mod tests {
     use alloc::vec;
 
     use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk:: msg;
+    use stylus_sdk::msg;
 
     use crate::token::erc20::{
-        extensions::flashmint::{Error, IERC3156FlashLender,
-        },
+        extensions::flashmint::{Error, IERC3156FlashLender},
         Erc20,
     };
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-    const TOKEN_ADDRESS : Address = address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
-    const INVALID_TOKEN_ADDRESS : Address = address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
+    const TOKEN_ADDRESS: Address =
+        address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+    const INVALID_TOKEN_ADDRESS: Address =
+        address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
 
     #[motsu::test]
     fn max_flash_loan_token_match(contract: Erc20) {
@@ -243,13 +275,15 @@ mod tests {
 
     #[motsu::test]
     fn flash_fee(contract: Erc20) {
-        let flash_fee = contract.flash_fee(TOKEN_ADDRESS, uint!(1000_U256)).unwrap();
+        let flash_fee =
+            contract.flash_fee(TOKEN_ADDRESS, uint!(1000_U256)).unwrap();
         assert_eq!(flash_fee, U256::MIN);
     }
 
     #[motsu::test]
     fn error_flash_fee_when_invalid_token(contract: Erc20) {
-        let result = contract.flash_fee(INVALID_TOKEN_ADDRESS, uint!(1000_U256));
+        let result =
+            contract.flash_fee(INVALID_TOKEN_ADDRESS, uint!(1000_U256));
         assert!(matches!(result, Err(Error::UnsupportedToken(_))));
     }
 
@@ -269,7 +303,6 @@ mod tests {
     fn flash_loan(contract: Erc20) {
         let _ = contract._mint(msg::sender(), uint!(10000_U256));
     }
-
 
     #[motsu::test]
     fn error_flash_loan_when_zero_receiver_address(contract: Erc20) {
@@ -293,5 +326,4 @@ mod tests {
         );
         assert_eq!(result.is_err(), true);
     }
-
 }
