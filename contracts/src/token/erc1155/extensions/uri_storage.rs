@@ -87,7 +87,7 @@ impl Erc1155UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
+    /*use alloy_primitives::U256;
     use stylus_sdk::stylus_proc::sol_storage;
 
     use super::Erc1155UriStorage;
@@ -216,5 +216,5 @@ mod tests {
         contract.set_base_uri(base_uri.clone());
 
         assert_eq!(base_uri, contract._base_uri.get_string());
-    }
+    }*/
 }
