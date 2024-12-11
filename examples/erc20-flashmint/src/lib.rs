@@ -38,13 +38,13 @@ impl Erc20FlashMintExample {
         &mut self,
         receiver: Address,
         token: Address,
-        value: U256,
+        amount: U256,
         data: Bytes,
     ) -> Result<bool, Vec<u8>> {
         let result = self.erc20_flashmint.flash_loan(
             receiver,
             token,
-            value,
+            amount,
             data,
             &mut self.erc20,
         )?;

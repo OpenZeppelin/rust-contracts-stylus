@@ -11,19 +11,18 @@ sol!(
         function allowance(address owner, address spender) external view returns (uint256 allowance);
         function approve(address spender, uint256 amount) external returns (bool);
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-        
+
         function mint(address account, uint256 amount) external;
 
         function maxFlashLoan(address token) external view returns (uint256 maxLoan);
         function flashFee(address token, uint256 amount) external view returns (uint256 fee);
-        function flashLoan(address receiver,address token, uint256 amount, bytes calldata data) external returns (bool);
+        function flashLoan(address receiver, address token, uint256 amount, bytes calldata data) external returns (bool);
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
         error ERC20InvalidReceiver(address receiver);
         error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
         error ERC20InvalidSpender(address spender);
-
 
         error ERC3156UnsupportedToken(address token);
         error ERC3156ExceededMaxLoan(uint256 maxLoan);
