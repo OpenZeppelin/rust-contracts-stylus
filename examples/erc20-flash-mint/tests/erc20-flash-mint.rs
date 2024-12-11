@@ -5,7 +5,7 @@ use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use e2e::{receipt, send, Account, ReceiptExt, Revert};
+use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
 use eyre::Result;
 use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
 
@@ -51,6 +51,54 @@ async fn constructs(alice: Account) -> Result<()> {
 
     Ok(())
 }
+
+#[e2e::test]
+async fn max_flash_loan(alice: Account) -> Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let mint_amount = uint!(1_000_000_U256);
+    let _ = watch!(contract.mint(alice_addr, mint_amount))?;
+
+    let max_loan = contract.maxFlashLoan(contract_addr).call().await?.maxLoan;
+    assert_eq!(U256::MAX - mint_amount, max_loan);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn max_flash_loan_returns_zero_on_invalid_address(
+    alice: Account,
+) -> Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let mint_amount = uint!(1_000_000_U256);
+    let _ = watch!(contract.mint(alice_addr, mint_amount))?;
+
+    // non-token address
+    let max_loan = contract.maxFlashLoan(alice_addr).call().await?.maxLoan;
+    assert_eq!(U256::MIN, max_loan);
+
+    // works for zero address too
+    let max_loan = contract.maxFlashLoan(Address::ZERO).call().await?.maxLoan;
+    assert_eq!(U256::MIN, max_loan);
+
+    Ok(())
+}
+
 // #[e2e::test]
 // async fn flash_fee(alice: Account) -> Result<()> {
 //     let contract_addr = alice
@@ -86,59 +134,6 @@ async fn constructs(alice: Account) -> Result<()> {
 // ERC3156UnsupportedToken");     assert!(err.
 // reverted_with(Erc20FlashMint::ERC3156UnsupportedToken {         token:
 // invalid_token_address     }));
-//     Ok(())
-// }
-
-// #[e2e::test]
-// async fn max_flash_loan(alice: Account) -> Result<()> {
-//     let contract_addr = alice
-//         .as_deployer()
-//         .with_default_constructor::<constructorCall>()
-//         .deploy()
-//         .await?
-//         .address()?;
-//     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
-//     let alice_addr = alice.address();
-
-//     let Erc20FlashMint::maxFlashLoanReturn { maxLoan } =
-//         contract.maxFlashLoan(contract_addr).call().await?;
-//     assert_eq!(maxLoan, U256::MAX);
-//     let mint_amount = uint!(10000000_U256);
-//     let _ = receipt!(contract.mint(alice_addr, mint_amount))?;
-//     let Erc20FlashMint::balanceOfReturn { balance } =
-//         contract.balanceOf(alice_addr).call().await?;
-//     assert_eq!(balance, mint_amount);
-
-//     let Erc20FlashMint::totalSupplyReturn { totalSupply } =
-//         contract.totalSupply().call().await?;
-
-//     let Erc20FlashMint::maxFlashLoanReturn { maxLoan } =
-//         contract.maxFlashLoan(contract_addr).call().await?;
-//     Ok(())
-// }
-
-// #[e2e::test]
-// async fn max_flash_loan_invalid_address(alice: Account) -> Result<()> {
-//     let contract_addr = alice
-//         .as_deployer()
-//         .with_default_constructor::<constructorCall>()
-//         .deploy()
-//         .await?
-//         .address()?;
-//     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
-//     let random_address =
-// address!("a6CB74633b3F981AB239ed5fe17E714184236b9C");
-
-//     let Erc20FlashMint::maxFlashLoanReturn { maxLoan } =
-//         contract.maxFlashLoan(random_address).call().await?;
-//     assert_eq!(maxLoan, U256::MIN);
-//     Ok(())
-// }
-
-// #[e2e::test]
-// async fn can_deploy_mock_borrower(alice: Account) -> Result<()> {
-//     let borrower = borrower::deploy(&alice.wallet).await?;
-//     assert_eq!(borrower.is_zero(), false);
 //     Ok(())
 // }
 
