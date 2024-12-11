@@ -5,7 +5,6 @@ use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use alloy_primitives::{Address, U256};
 use e2e::{receipt, send, Account, ReceiptExt, Revert};
 use eyre::Result;
 use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
@@ -29,8 +28,8 @@ impl Default for constructorCall {
 
 fn ctr(fee_receiver: Address, fee_amount: U256) -> constructorCall {
     Erc20FlashMintExample::constructorCall {
-        flash_fee_receiver_address_: fee_receiver,
-        flash_fee_amount_: fee_amount,
+        flashFeeReceiverAddress_: fee_receiver,
+        flashFeeAmount_: fee_amount,
     }
 }
 
@@ -38,7 +37,7 @@ fn ctr(fee_receiver: Address, fee_amount: U256) -> constructorCall {
 async fn constructs(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_constructor::<constructorCall>()
+        .with_default_constructor::<constructorCall>()
         .deploy()
         .await?
         .address()?;
