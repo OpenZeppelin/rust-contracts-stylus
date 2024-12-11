@@ -5,10 +5,11 @@
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
 use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
-
 sol! {
     /// Indicates an error related to the operation that failed
     /// because `total_supply` exceeded the `_cap`.

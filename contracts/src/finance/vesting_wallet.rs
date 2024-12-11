@@ -25,6 +25,8 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{Address, U256, U64};
 use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
@@ -33,7 +35,7 @@ use stylus_sdk::{
     call::{self, call, Call},
     contract, evm, function_selector,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    stylus_proc::{public, sol_interface, sol_storage, SolidityError},
 };
 
 use crate::{
@@ -83,14 +85,11 @@ pub enum Error {
     InvalidToken(InvalidToken),
 }
 
-pub use token::IErc20;
-#[allow(missing_docs)]
-mod token {
-    stylus_sdk::stylus_proc::sol_interface! {
-        /// Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-        }
+sol_interface! {
+    /// Interface of the ERC-20 token.
+    #[allow(missing_docs)]
+    interface IErc20 {
+        function balanceOf(address account) external view returns (uint256);
     }
 }
 
