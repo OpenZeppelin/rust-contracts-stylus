@@ -1601,7 +1601,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "erc20-flashmint-examples"
+name = "erc20-flashmint-example"
 version = "0.2.0-alpha.1"
 dependencies = [
  "alloy",
