@@ -5,9 +5,9 @@ use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
-use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
+use mock::borrower;
 
 use crate::Erc20FlashMintExample::constructorCall;
 
@@ -356,15 +356,13 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
         to: borrower_addr,
         value: loan_amount,
     }));
-    assert!(receipt.emits(Erc20FlashMint::BalanceOf {
-        token: erc20_addr,
-        account: borrower_addr,
-        value: loan_amount + FLASH_FEE_AMOUNT,
-    }));
-    assert!(receipt.emits(Erc20FlashMint::TotalSupply {
-        token: erc20_addr,
-        value: loan_amount + FLASH_FEE_AMOUNT,
-    }));
+
+    let balance_of = erc20.balanceOf(borrower_addr).call().await?.balance;
+    assert_eq!(balance_of, loan_amount + FLASH_FEE_AMOUNT);
+
+    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+    assert_eq!(total_supply, loan_amount + FLASH_FEE_AMOUNT);
+
     assert!(receipt.emits(Erc20FlashMint::Approval {
         owner: borrower_addr,
         spender: erc20_addr,
