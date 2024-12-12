@@ -13,12 +13,11 @@
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2612
 
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
-use alloy_sol_types::{sol, SolType};
+use alloy_sol_types::SolType;
 use stylus_sdk::{
     block,
-    prelude::StorageType,
-    storage::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::{storage, StorageType},
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::{
@@ -34,21 +33,27 @@ use crate::{
 const PERMIT_TYPEHASH: B256 =
     b256!("6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9");
 
-type StructHashTuple = sol! {
-    tuple(bytes32, address, address, uint256, uint256, uint256)
-};
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-sol! {
-    /// Indicates an error related to the fact that
-    /// permit deadline has expired.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC2612ExpiredSignature(uint256 deadline);
+    pub(crate) type StructHashTuple = sol! {
+        tuple(bytes32, address, address, uint256, uint256, uint256)
+    };
 
-    /// Indicates an error related to the issue about mismatched signature.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC2612InvalidSigner(address signer, address owner);
+    sol! {
+        /// Indicates an error related to the fact that
+        /// permit deadline has expired.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC2612ExpiredSignature(uint256 deadline);
+
+        /// Indicates an error related to the issue about mismatched signature.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC2612InvalidSigner(address signer, address owner);
+    }
 }
 
 /// A Permit error.
@@ -65,24 +70,16 @@ pub enum Error {
     ECDSA(ecdsa::Error),
 }
 
-sol_storage! {
-    /// State of a Permit Contract.
-    pub struct Erc20Permit<T: IEip712 + StorageType>{
-        /// ERC-20 contract.
-        Erc20 erc20;
-
-        /// Nonces contract.
-        Nonces nonces;
-
-        /// EIP-712 contract. Must implement [`IEip712`] trait.
-        T eip712;
-    }
+/// State of a Permit Contract.
+#[storage]
+pub struct Erc20Permit<T: IEip712 + StorageType> {
+    /// ERC-20 contract.
+    pub erc20: Erc20,
+    /// Nonces contract.
+    pub nonces: Nonces,
+    /// EIP-712 contract. Must implement [`IEip712`] trait.
+    pub eip712: T,
 }
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
 #[public]
 impl<T: IEip712 + StorageType> Erc20Permit<T> {
@@ -174,7 +171,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
 
         let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 
-        let signer: Address = ecdsa::recover(self, hash, v, r, s)?;
+        let signer: Address = ecdsa::recover(hash, v, r, s)?;
 
         if signer != owner {
             return Err(ERC2612InvalidSigner { signer, owner }.into());

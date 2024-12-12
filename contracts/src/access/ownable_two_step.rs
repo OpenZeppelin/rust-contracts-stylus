@@ -17,27 +17,34 @@
 //! available.
 
 use alloy_primitives::Address;
-use alloy_sol_types::sol;
+pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    storage::StorageAddress,
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::access::ownable::{
     Error as OwnableError, IOwnable, Ownable, OwnableUnauthorizedAccount,
 };
 
-sol! {
-    /// Emitted when ownership transfer starts.
-    ///
-    /// * `previous_owner` - Address of the previous owner.
-    /// * `new_owner` - Address of the new owner, to which the ownership
-    ///   will be transferred.
-    event OwnershipTransferStarted(
-        address indexed previous_owner,
-        address indexed new_owner
-    );
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
+    sol! {
+        /// Emitted when ownership transfer starts.
+        ///
+        /// * `previous_owner` - Address of the previous owner.
+        /// * `new_owner` - Address of the new owner, to which the ownership
+        ///   will be transferred.
+        event OwnershipTransferStarted(
+            address indexed previous_owner,
+            address indexed new_owner
+        );
+
+    }
 }
 
 /// An error that occurred in the implementation of an [`Ownable2Step`]
@@ -48,14 +55,13 @@ pub enum Error {
     Ownable(OwnableError),
 }
 
-sol_storage! {
-    /// State of an `Ownable2Step` contract.
-    pub struct Ownable2Step {
-        /// [`Ownable`] contract.
-        Ownable _ownable;
-        /// Pending owner of the contract.
-        address _pending_owner;
-    }
+/// State of an `Ownable2Step` contract.
+#[storage]
+pub struct Ownable2Step {
+    /// [`Ownable`] contract.
+    pub _ownable: Ownable,
+    /// Pending owner of the contract.
+    pub _pending_owner: StorageAddress,
 }
 
 /// Interface for an [`Ownable2Step`] contract.
