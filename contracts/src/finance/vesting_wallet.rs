@@ -33,7 +33,7 @@ use stylus_sdk::{
     call::{self, call, Call},
     contract, evm, function_selector,
     prelude::storage,
-    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
+    storage::{StorageMap, StorageU256, StorageU64},
     stylus_proc::{public, SolidityError},
 };
 

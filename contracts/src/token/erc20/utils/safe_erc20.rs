@@ -18,7 +18,6 @@ use stylus_sdk::{
     evm::gas_left,
     function_selector,
     prelude::storage,
-    storage::TopLevelStorage,
     stylus_proc::{public, SolidityError},
     types::AddressVM,
 };
