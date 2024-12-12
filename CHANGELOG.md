@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `IERC3156FlashLender` extension. #407
+- `IErc3156FlashLender` extension. #407
 - `Erc1155Supply` extension. #418
 - `Erc1155Pausable`extension. #432
 - `Erc1155UriStorage` extension. #431

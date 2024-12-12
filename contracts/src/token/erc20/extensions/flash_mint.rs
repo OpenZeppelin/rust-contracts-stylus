@@ -1,15 +1,15 @@
 //! Implementation of the ERC-3156 Flash loans extension, as defined in
 //! [ERC-3156].
 //!
-//! Adds the [`IERC3156FlashLender::flash_loan`] method, which provides flash
+//! Adds the [`IErc3156FlashLender::flash_loan`] method, which provides flash
 //! loan support at the token level. By default there is no fee, but this can be
-//! changed by overriding [`IERC3156FlashLender::flash_loan`].
+//! changed by overriding [`IErc3156FlashLender::flash_loan`].
 //!
 //! NOTE: When this extension is used along with the
-//! [`crate::token::token::erc20::extensions::Capped`] extension,
-//! [`IERC3156FlashLender::max_flash_loan`] will not correctly reflect the
+//! [`crate::token::erc20::extensions::Capped`] extension,
+//! [`IErc3156FlashLender::max_flash_loan`] will not correctly reflect the
 //! maximum that can be flash minted. We recommend overriding
-//! [`IERC3156FlashLender::max_flash_loan`] so that it correctly reflects the
+//! [`IErc3156FlashLender::max_flash_loan`] so that it correctly reflects the
 //! supply cap.
 //!
 //! [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
@@ -84,7 +84,7 @@ mod borrower {
             /// # Arguments
             ///
             /// * `initiator` - The initiator of the flash loan.
-            /// * `token` - The loan currency.
+            /// * `token` - The token to be flash loaned.
             /// * `amount` - The amount of tokens lent.
             /// * `fee` - The additional amount of tokens to repay.
             /// * `data` - Arbitrary data structure, intended to contain user-defined parameters.
@@ -109,48 +109,70 @@ pub struct Erc20FlashMint {
     pub flash_fee_receiver_address: StorageAddress,
 }
 
-/// Extension of [`Erc20`] that allows token holders to destroy both
-/// their own tokens and those that they have an allowance for,
-/// in a way that can be recognized off-chain (via event analysis).
-pub trait IERC3156FlashLender {
-    /// The error type associated to this ERC-20 Burnable trait implementation.
+/// Interface of the ERC-3156 FlashLender, as defined in [ERC-3156].
+///
+/// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
+pub trait IErc3156FlashLender {
+    /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// Returns the maximum amount of tokens that can be borrowed from this
-    /// contract in a flash loan.
+    /// Returns the maximum amount of tokens available for loan.
     ///
-    /// For tokens that are not supported, this function returns `U256::MIN`.
+    /// NOTE: This function does not consider any form of supply cap, so in case
+    /// it's used in a token with a cap like
+    /// [`crate::token::erc20::extensions::Capped`], make sure to override this
+    /// function to integrate the cap instead of [`U256::MAX`].
     ///
-    /// * `token` - The address of the ERC-20 token that will be loaned.
-    /// * `erc20` - Read access to a contract providing [`IErc20``] interface.
+    /// # Arguments
+    ///
+    /// * `token` - The address of the token that is requested.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
 
-    /// Calculates the fee for a flash loan.
+    /// Returns the fee applied when doing flash loans.
     ///
-    /// The fee is a fixed percentage of the borrowed amount.
+    /// # Arguments
     ///
-    /// If the token is not supported, the function returns an
-    /// `UnsupportedToken` error.
+    /// * `&self` - Read access to the contract's state.
+    /// * `token` - The token to be flash loaned.
+    /// * `amount` - The amount of tokens to be loaned.
     ///
-    /// * `token` - The address of the ERC-20 token that will be loaned.
-    /// * `amount` - The amount of tokens that will be loaned.
+    /// # Errors
+    ///
+    /// If the token is not supported, then the error
+    /// [`Error::UnsupportedToken`] is returned.
     fn flash_fee(
         &self,
         token: Address,
         amount: U256,
     ) -> Result<U256, Self::Error>;
 
-    /// Executes a flash loan.
+    /// Performs a flash loan.
     ///
-    /// This function is part of the ERC-3156 (Flash Loans) standard.
+    /// New tokens are minted and sent to the `receiver`, who is required to
+    /// implement the [`IERC3156FlashBorrower`] interface. By the end of the
+    /// flash loan, the receiver is expected to own value + fee tokens and have
+    /// them approved back to the token contract itself so they can be burned.
     ///
-    /// * `receiver` - The contract that will receive the flash loan.
-    /// * `token` - The ERC-20 token that will be loaned.
-    /// * `amount` - The amount of tokens that will be loaned.
-    /// * `data` - Arbitrary data that can be passed to the receiver contract.
+    /// Returns a boolean value indicating whether the operation succeeded.
     ///
-    /// The function must return `true` if the flash loan was successful,
-    /// and revert otherwise.
+    /// # Arguments
+    ///
+    /// * `receiver` - The receiver of the flash loan. Should implement the
+    ///   [`IERC3156FlashBorrower::on_flash_loan`] interface.
+    /// * `token` - The token to be flash loaned. Only [`contract::address()`]
+    ///   is supported.
+    /// * `value` - The amount of tokens to be loaned.
+    /// * `data` - Arbitrary data that is passed to the receiver.
+    ///
+    /// # Errors
+    ///
+    /// If the `amount` is greater than the value returned by `IE`, then the
+    /// error [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the contract fails to execute the call, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the call returns value that is not `true`, then the error
+    /// [`Error::SafeErc20FailedOperation`] is returned.
     fn flash_loan(
         &mut self,
         receiver: Address,
@@ -165,7 +187,7 @@ const RETURN_VALUE: [u8; 32] = keccak_const::Keccak256::new()
     .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
     .finalize();
 
-impl IERC3156FlashLender for Erc20FlashMint {
+impl IErc3156FlashLender for Erc20FlashMint {
     type Error = Error;
 
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256 {
@@ -251,7 +273,7 @@ mod tests {
     // use stylus_sdk::msg;
 
     // use crate::token::erc20::{
-    //     extensions::flash_mint::{Error, IERC3156FlashLender},
+    //     extensions::flash_mint::{Error, IErc3156FlashLender},
     //     Erc20,
     // };
 

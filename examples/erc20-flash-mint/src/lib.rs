@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20FlashMint, IERC3156FlashLender},
+    extensions::{Erc20FlashMint, IErc3156FlashLender},
     Erc20,
 };
 use stylus_sdk::{
