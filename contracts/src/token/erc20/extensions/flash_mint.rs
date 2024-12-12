@@ -176,46 +176,49 @@ impl IERC3156FlashLender for Erc20FlashMint {
         &mut self,
         receiver: Address,
         token: Address,
-        value: U256,
+        amount: U256,
         data: Bytes,
         erc20: &mut Erc20,
     ) -> Result<bool, Self::Error> {
         let max_loan = self.max_flash_loan(token, erc20);
-        if value > max_loan {
+        if amount > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
                 max_loan,
             }));
         }
 
-        let fee = self.flash_fee(token, value)?;
-        erc20._mint(receiver, value)?;
+        let fee = self.flash_fee(token, amount)?;
+        erc20._mint(receiver, amount)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         if Address::has_code(&loan_receiver) {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
         }
-        let loan_return = loan_receiver.on_flash_loan(
-            Call::new(),
-            msg::sender(),
-            token,
-            value,
-            fee,
-            data.to_vec().into(),
-        );
-        if loan_return.is_err() || loan_return.ok() != Some(RETURN_VALUE.into())
-        {
+        let loan_return = loan_receiver
+            .on_flash_loan(
+                Call::new(),
+                msg::sender(),
+                token,
+                amount,
+                fee,
+                data.to_vec().into(),
+            )
+            .map_err(|_| {
+                Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
+            })?;
+        if loan_return != RETURN_VALUE {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
         }
 
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
-        erc20._spend_allowance(receiver, msg::sender(), value + fee)?;
+        erc20._spend_allowance(receiver, msg::sender(), amount + fee)?;
         if fee.is_zero() || flash_fee_receiver.is_zero() {
-            erc20._burn(receiver, value + fee)?;
+            erc20._burn(receiver, amount + fee)?;
         } else {
-            erc20._burn(receiver, value)?;
+            erc20._burn(receiver, amount)?;
             erc20._transfer(receiver, flash_fee_receiver, fee)?;
         }
 
