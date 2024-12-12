@@ -214,7 +214,7 @@ impl IERC3156FlashLender for Erc20FlashMint {
         }
 
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
-        erc20._spend_allowance(receiver, msg::sender(), amount + fee)?;
+        erc20._spend_allowance(receiver, contract::address(), amount + fee)?;
         if fee.is_zero() || flash_fee_receiver.is_zero() {
             erc20._burn(receiver, amount + fee)?;
         } else {
