@@ -6,31 +6,37 @@
 use alloc::string::String;
 
 use alloy_primitives::{FixedBytes, U256};
-use alloy_sol_macro::sol;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, sol_storage};
+pub use sol::*;
+use stylus_sdk::{
+    prelude::storage, storage::StorageString, stylus_proc::public,
+};
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
-sol! {
-    /// Emitted when the URI for token type `id` changes to `value`, if it is
-    /// a non-programmatic URI.
-    ///
-    /// If a [`URI`] event was emitted for `id`, the standard [guarantees] that
-    /// `value` will equal the value returned by [`IErc1155MetadataUri::uri`].
-    ///
-    /// [guarantees]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
-    #[allow(missing_docs)]
-    event URI(string value, uint256 indexed id);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
+
+    sol! {
+        /// Emitted when the URI for token type `id` changes to `value`, if it is
+        /// a non-programmatic URI.
+        ///
+        /// If a [`URI`] event was emitted for `id`, the standard [guarantees] that
+        /// `value` will equal the value returned by [`IErc1155MetadataUri::uri`].
+        ///
+        /// [guarantees]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
+        #[allow(missing_docs)]
+        event URI(string value, uint256 indexed id);
+    }
 }
 
-sol_storage! {
-    /// URI Metadata of an [`crate::token::erc1155::Erc1155`] token.
-    pub struct Erc1155MetadataUri {
-        /// Used as the URI for all token types by relying on ID substitution,
-        /// e.g. https://token-cdn-domain/{id}.json.
-        string _uri;
-    }
+/// URI Metadata of an [`crate::token::erc1155::Erc1155`] token.
+#[storage]
+pub struct Erc1155MetadataUri {
+    /// Used as the URI for all token types by relying on ID substitution,
+    /// e.g. https://token-cdn-domain/{id}.json.
+    pub _uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-1155 standard.

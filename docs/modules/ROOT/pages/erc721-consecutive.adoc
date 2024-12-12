@@ -13,12 +13,11 @@ use openzeppelin_stylus::token::erc721::extensions::consecutive::{
     Erc721Consecutive, Error,
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc721ConsecutiveExample {
-        #[borrow]
-        Erc721Consecutive erc721_consecutive;
-    }
+#[entrypoint]
+#[storage]
+struct Erc721ConsecutiveExample {
+    #[borrow]
+    pub erc721_consecutive: Erc721Consecutive,
 }
 
 #[public]

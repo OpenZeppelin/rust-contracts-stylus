@@ -5,16 +5,15 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{extensions::Erc20Metadata, Erc20};
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc20Example {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        Erc20Metadata metadata;
-    }
+#[entrypoint]
+#[storage]
+struct Erc20Example {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub metadata: Erc20Metadata,
 }
 
 #[public]

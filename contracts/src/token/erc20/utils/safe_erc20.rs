@@ -10,39 +10,46 @@
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{sol, SolCall};
+use alloy_sol_types::SolCall;
+pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
     evm::gas_left,
     function_selector,
+    prelude::storage,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    stylus_proc::{public, SolidityError},
     types::AddressVM,
 };
 
 use crate::token::erc20;
 
-sol! {
-    /// An operation with an ERC-20 token failed.
-    ///
-    /// * `token` - Address of the ERC-20 token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error SafeErc20FailedOperation(address token);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
-    ///
-    /// * `spender` - Address of future tokens' spender.
-    /// * `current_allowance` - Current allowance of the `spender`.
-    /// * `requested_decrease` - Requested decrease in allowance for `spender`.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error SafeErc20FailedDecreaseAllowance(
-        address spender,
-        uint256 current_allowance,
-        uint256 requested_decrease
-    );
+    sol! {
+        /// An operation with an ERC-20 token failed.
+        ///
+        /// * `token` - Address of the ERC-20 token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error SafeErc20FailedOperation(address token);
+
+        /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+        ///
+        /// * `spender` - Address of future tokens' spender.
+        /// * `current_allowance` - Current allowance of the `spender`.
+        /// * `requested_decrease` - Requested decrease in allowance for `spender`.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error SafeErc20FailedDecreaseAllowance(
+            address spender,
+            uint256 current_allowance,
+            uint256 requested_decrease
+        );
+    }
 }
 
 /// A [`SafeErc20`] error.
@@ -63,8 +70,9 @@ impl MethodError for Error {
 }
 
 pub use token::*;
-#[allow(missing_docs)]
 mod token {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
     alloy_sol_types::sol! {
         /// Interface of the ERC-20 token.
         interface IErc20 {
@@ -75,10 +83,10 @@ mod token {
         }
     }
 }
-sol_storage! {
-    /// State of the [`SafeErc20`] Contract.
-    pub struct SafeErc20 {}
-}
+
+/// State of the [`SafeErc20`] Contract.
+#[storage]
+pub struct SafeErc20 {}
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +

@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+#![cfg_attr(coverage_nightly, coverage(off))]
 //! Module with an interface required for smart contract
 //! in order to receive ERC-1155 token transfers.
 

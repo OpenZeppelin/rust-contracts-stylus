@@ -10,17 +10,16 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    prelude::{entrypoint, public, sol_storage},
+    prelude::{entrypoint, public, storage},
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc1155Example {
-        #[borrow]
-        Erc1155 erc1155;
-        #[borrow]
-        Pausable pausable;
-    }
+#[entrypoint]
+#[storage]
+struct Erc1155Example {
+    #[borrow]
+    pub erc1155: Erc1155,
+    #[borrow]
+    pub pausable: Pausable,
 }
 
 #[public]

@@ -4,32 +4,40 @@
 use alloc::string::String;
 
 use alloy_primitives::U256;
-use alloy_sol_types::sol;
-use stylus_sdk::{evm, stylus_proc::sol_storage};
+pub use sol::*;
+use stylus_sdk::{
+    evm,
+    prelude::storage,
+    storage::{StorageMap, StorageString},
+};
 
 use crate::token::erc721::{extensions::Erc721Metadata, Error, IErc721};
 
-sol! {
-    /// This event gets emitted when the metadata of a token is changed.
-    ///
-    /// The event comes from IERC4096.
-    #[allow(missing_docs)]
-    event MetadataUpdate(uint256 token_id);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// This event gets emitted when the metadata of a range of tokens
-    /// is changed.
-    ///
-    /// The event comes from IERC4096.
-    #[allow(missing_docs)]
-    event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
+    sol! {
+        /// This event gets emitted when the metadata of a token is changed.
+        ///
+        /// The event comes from IERC4096.
+        #[allow(missing_docs)]
+        event MetadataUpdate(uint256 token_id);
+
+        /// This event gets emitted when the metadata of a range of tokens
+        /// is changed.
+        ///
+        /// The event comes from IERC4096.
+        #[allow(missing_docs)]
+        event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
+    }
 }
 
-sol_storage! {
-    /// Uri Storage.
-    pub struct Erc721UriStorage {
-        /// Optional mapping for token URIs.
-        mapping(uint256 => string) _token_uris;
-    }
+/// Uri Storage.
+#[storage]
+pub struct Erc721UriStorage {
+    /// Optional mapping for token URIs.
+    pub _token_uris: StorageMap<U256, StorageString>,
 }
 
 impl Erc721UriStorage {
@@ -106,7 +114,7 @@ impl Erc721UriStorage {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
-    use stylus_sdk::{msg, stylus_proc::sol_storage};
+    use stylus_sdk::{msg, prelude::storage};
 
     use super::Erc721UriStorage;
     use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
@@ -116,12 +124,11 @@ mod tests {
         U256::from(num)
     }
 
-    sol_storage! {
-        struct Erc721MetadataExample {
-            Erc721 erc721;
-            Erc721Metadata metadata;
-            Erc721UriStorage uri_storage;
-        }
+    #[storage]
+    struct Erc721MetadataExample {
+        pub erc721: Erc721,
+        pub metadata: Erc721Metadata,
+        pub uri_storage: Erc721UriStorage,
     }
 
     #[motsu::test]
