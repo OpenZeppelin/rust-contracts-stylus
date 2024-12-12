@@ -551,7 +551,7 @@ impl Erc1155 {
         self._update(from, to, ids.clone(), values.clone())?;
 
         if !to.is_zero() {
-            self._check_on_erc1155_received(
+            Erc1155::_check_on_erc1155_received(
                 msg::sender(),
                 from,
                 to,
@@ -761,7 +761,6 @@ impl Erc1155 {
     ///
     /// # Arguments
     ///
-    /// * `&self` - Read access to the contract's state.
     /// * `operator` - Generally the address that initiated the token transfer
     ///   (e.g. `msg::sender()`).
     /// * `from` - Account of the sender.
@@ -780,7 +779,6 @@ impl Erc1155 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     fn _check_on_erc1155_received(
-        &self,
         operator: Address,
         from: Address,
         to: Address,
