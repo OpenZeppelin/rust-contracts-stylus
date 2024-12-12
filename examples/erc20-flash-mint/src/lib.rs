@@ -41,14 +41,13 @@ impl Erc20FlashMintExample {
         amount: U256,
         data: Bytes,
     ) -> Result<bool, Vec<u8>> {
-        let result = self.erc20_flash_mint.flash_loan(
+        Ok(self.erc20_flash_mint.flash_loan(
             receiver,
             token,
             amount,
             data,
             &mut self.erc20,
-        )?;
-        Ok(result)
+        )?)
     }
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), Vec<u8>> {
