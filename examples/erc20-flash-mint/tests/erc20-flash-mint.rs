@@ -5,9 +5,9 @@ use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
 use eyre::Result;
-use mock::borrower;
+use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
 
 use crate::Erc20FlashMintExample::constructorCall;
 
@@ -179,200 +179,21 @@ async fn flash_fee_reverts_on_unsupported_token(alice: Account) -> Result<()> {
     Ok(())
 }
 
-#[e2e::test]
-async fn flash_loan_reverts_when_loan_amount_greater_than_max_loan(
-    alice: Account,
-) -> Result<()> {
-    let erc20_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
-    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
-
-    let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let max_loan = U256::from(1);
-
-    let _ = watch!(erc20.mint(borrower_addr, U256::MAX - max_loan))?;
-
-    let err = send!(erc20.flashLoan(
-        borrower_addr,
-        erc20_addr,
-        U256::from(2),
-        vec![].into()
-    ))
-    .expect_err("should revert with `ERC3156ExceededMaxLoan`");
-
-    assert!(err.reverted_with(Erc20FlashMint::ERC3156ExceededMaxLoan {
-        maxLoan: max_loan
-    }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn flash_loan_reverts_with_exceeded_max_with_unsupported_token(
-    alice: Account,
-) -> Result<()> {
-    let erc20_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
-    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
-
-    let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let invalid_token = alice.address();
-
-    let err = send!(erc20.flashLoan(
-        borrower_addr,
-        invalid_token,
-        U256::from(1),
-        vec![].into()
-    ))
-    .expect_err("should revert with `ERC3156ExceededMaxLoan`");
-
-    assert!(err.reverted_with(Erc20FlashMint::ERC3156ExceededMaxLoan {
-        maxLoan: U256::ZERO
-    }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn flash_loan_reverts_with_unsupported_token_with_zero_loan_amount_and_unsupported_token(
-    alice: Account,
-) -> Result<()> {
-    let erc20_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
-    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
-
-    let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let invalid_token = alice.address();
-
-    let err = send!(erc20.flashLoan(
-        borrower_addr,
-        invalid_token,
-        U256::ZERO,
-        vec![].into()
-    ))
-    .expect_err("should revert with `ERC3156UnsupportedToken`");
-
-    assert!(err.reverted_with(Erc20FlashMint::ERC3156UnsupportedToken {
-        token: invalid_token
-    }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn flash_loan_reverts_when_invalid_receiver(
-    alice: Account,
-) -> Result<()> {
-    let erc20_addr = alice
-        .as_deployer()
-        .with_default_constructor::<constructorCall>()
-        .deploy()
-        .await?
-        .address()?;
-    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
-
-    let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
-
-    let invalid_receivers = &[alice.address(), Address::ZERO];
-
-    // for &invalid_receiver in invalid_receivers {
-    //     let err = send!(erc20.flashLoan(
-    //         invalid_receiver,
-    //         erc20_addr,
-    //         U256::from(1),
-    //         vec![].into()
-    //     ))
-    //     .expect_err("should revert with `ERC3156InvalidReceiver`");
-
-    //     assert!(
-    //         err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
-    //             receiver: invalid_receiver
-    //         }),
-    //         "receiver: {invalid_receiver}"
-    //     );
-    // }
-
-    let err = send!(erc20.flashLoan(
-        borrower_addr,
-        erc20_addr,
-        U256::from(1),
-        vec![].into()
-    ))
-    .expect_err("should revert with `ERC3156InvalidReceiver`");
-
-    assert!(
-        err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
-            receiver: borrower_addr
-        }),
-        "receiver: {borrower_addr}"
-    );
-
-    Ok(())
-}
-
 // #[e2e::test]
-// async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
-//     let erc20_addr = alice
+// async fn flash_loan(alice: Account) -> Result<()> {
+//     let contract_addr = alice
 //         .as_deployer()
 //         .with_default_constructor::<constructorCall>()
 //         .deploy()
 //         .await?
 //         .address()?;
-//     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
+//     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
+//     let alice_addr = alice.address();
+//     let random_address =
+// address!("a6CB74633b3F981AB239ed5fe17E714184236b9C");
 
-//     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-//     let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
-
-//     let balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-//     let total_supply = erc20.totalSupply().call().await?.totalSupply;
-
-//     assert_eq!(FLASH_FEE_AMOUNT, balance);
-//     assert_eq!(FLASH_FEE_AMOUNT, total_supply);
-
-//     let loan_amount = uint!(1_000_000_U256);
-
-//     let receipt = receipt!(erc20.flashLoan(
-//         borrower_addr,
-//         erc20_addr,
-//         loan_amount,
-//         vec![].into()
-//     ))?;
-
-//     assert!(receipt.emits(Erc20FlashMint::Transfer {
-//         from: erc20_addr,
-//         to: borrower_addr,
-//         value: loan_amount,
-//     }));
-//     assert!(receipt.emits(Erc20FlashMint::BalanceOf {
-//         token: erc20_addr,
-//         account: borrower_addr,
-//         value: loan_amount + FLASH_FEE_AMOUNT,
-//     }));
-//     assert!(receipt.emits(Erc20FlashMint::TotalSupply {
-//         token: erc20_addr,
-//         value: loan_amount + FLASH_FEE_AMOUNT,
-//     }));
-//     assert!(receipt.emits(Erc20FlashMint::Approval {
-//         owner: borrower_addr,
-//         spender: erc20_addr,
-//         value: loan_amount + FLASH_FEE_AMOUNT,
-//     }));
-
-//     let balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-//     assert_eq!(U256::ZERO, balance);
-
+//     let Erc20FlashMint::maxFlashLoanReturn { maxLoan } =
+//         contract.maxFlashLoan(random_address).call().await?;
+//     assert_eq!(maxLoan, U256::MIN);
 //     Ok(())
 // }

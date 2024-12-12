@@ -214,13 +214,13 @@ impl IERC3156FlashLender for Erc20FlashMint {
         }
 
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
-        // erc20._spend_allowance(receiver, contract::address(), amount + fee)?;
-        // if fee.is_zero() || flash_fee_receiver.is_zero() {
-        //     erc20._burn(receiver, amount + fee)?;
-        // } else {
-        //     erc20._burn(receiver, amount)?;
-        //     erc20._transfer(receiver, flash_fee_receiver, fee)?;
-        // }
+        erc20._spend_allowance(receiver, contract::address(), amount + fee)?;
+        if fee.is_zero() || flash_fee_receiver.is_zero() {
+            erc20._burn(receiver, amount + fee)?;
+        } else {
+            erc20._burn(receiver, amount)?;
+            erc20._transfer(receiver, flash_fee_receiver, fee)?;
+        }
 
         Ok(true)
     }

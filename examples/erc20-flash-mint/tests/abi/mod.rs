@@ -32,10 +32,5 @@ sol!(
         event Transfer(address indexed from, address indexed to, uint256 value);
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
-
-        #[derive(Debug, PartialEq)]
-        event BalanceOf(address token, address account, uint256 value);
-        #[derive(Debug, PartialEq)]
-        event TotalSupply(address token, uint256 value);
     }
 );
