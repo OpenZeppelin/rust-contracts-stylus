@@ -29,6 +29,10 @@ use stylus_sdk::{
 
 use crate::token::erc20::{self, Erc20, IErc20};
 
+const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
+    .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
+    .finalize();
+
 sol! {
     /// Indicate that the loan token is not supported or valid.
     ///
@@ -174,8 +178,8 @@ pub trait IErc3156FlashLender {
     /// If the `token` address is not a contract, then the error
     /// [`Error::InvalidReceiver`] is returned. If the contract fails to
     /// execute the call, then the error [`Error::InvalidReceiver`] is returned.
-    /// If the receiver does not return [`RETURN_VALUE`], then the error
-    /// [`Error::InvalidReceiver`] is returned.
+    /// If the receiver does not return [`BORROWER_CALLBACK_VALUE`], then the
+    /// error [`Error::InvalidReceiver`] is returned.
     fn flash_loan(
         &mut self,
         receiver: Address,
@@ -185,10 +189,6 @@ pub trait IErc3156FlashLender {
         erc20: &mut Erc20,
     ) -> Result<bool, Self::Error>;
 }
-
-const RETURN_VALUE: [u8; 32] = keccak_const::Keccak256::new()
-    .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
-    .finalize();
 
 impl IErc3156FlashLender for Erc20FlashMint {
     type Error = Error;
@@ -248,7 +248,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
             .map_err(|_| {
                 Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
             })?;
-        if loan_return != RETURN_VALUE {
+        if loan_return != BORROWER_CALLBACK_VALUE {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
