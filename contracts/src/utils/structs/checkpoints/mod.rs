@@ -10,8 +10,8 @@
 pub mod generic_size;
 
 use alloy_primitives::{uint, U256, U32};
-use alloy_sol_types::sol;
 pub use generic_size::{Size, S160, S208, S224};
+pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
     prelude::*,
@@ -23,10 +23,15 @@ use crate::utils::{
     structs::checkpoints::generic_size::{Accessor, Num},
 };
 
-sol! {
-    /// A value was attempted to be inserted into a past checkpoint.
-    #[derive(Debug)]
-    error CheckpointUnorderedInsertion();
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
+
+    sol! {
+        /// A value was attempted to be inserted into a past checkpoint.
+        #[derive(Debug)]
+        error CheckpointUnorderedInsertion();
+    }
 }
 
 /// An error that occurred while calling the [`Trace`] checkpoint contract.
@@ -42,20 +47,20 @@ impl MethodError for Error {
     }
 }
 
-sol_storage! {
-    /// State of the checkpoint library contract.
-    pub struct Trace<S: Size>  {
-        /// Stores checkpoints in a dynamic array sorted by key.
-        StorageVec<Checkpoint<S>> _checkpoints;
-    }
+/// State of the checkpoint library contract.
+#[storage]
+pub struct Trace<S: Size> {
+    /// Stores checkpoints in a dynamic array sorted by key.
+    pub _checkpoints: StorageVec<Checkpoint<S>>,
+}
 
-    /// State of a single checkpoint.
-    pub struct Checkpoint<S: Size> {
-        /// The key of the checkpoint. Used as a sorting key.
-        S::KeyStorage _key;
-        /// The value corresponding to the key.
-        S::ValueStorage _value;
-    }
+/// State of a single checkpoint.
+#[storage]
+pub struct Checkpoint<S: Size> {
+    /// The key of the checkpoint. Used as a sorting key.
+    pub _key: S::KeyStorage,
+    /// The value corresponding to the key.
+    pub _value: S::ValueStorage,
 }
 
 impl<S: Size> Trace<S> {

@@ -9,16 +9,16 @@ use openzeppelin_stylus::token::erc1155::extensions::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    prelude::{entrypoint, public, sol_storage},
+    prelude::{entrypoint, public, storage},
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc1155Example {
-        #[borrow]
-        Erc1155Supply erc1155_supply;
-    }
+#[entrypoint]
+#[storage]
+struct Erc1155Example {
+    #[borrow]
+    pub erc1155_supply: Erc1155Supply,
 }
+
 #[public]
 #[inherit(Erc1155Supply)]
 impl Erc1155Example {
