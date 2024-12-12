@@ -18,7 +18,6 @@ use stylus_sdk::{
     evm::gas_left,
     function_selector,
     prelude::storage,
-    storage::TopLevelStorage,
     stylus_proc::{public, SolidityError},
     types::AddressVM,
 };
@@ -87,11 +86,6 @@ mod token {
 /// State of the [`SafeErc20`] Contract.
 #[storage]
 pub struct SafeErc20 {}
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for SafeErc20 {}
 
 /// Required interface of a [`SafeErc20`] utility contract.
 pub trait ISafeErc20 {

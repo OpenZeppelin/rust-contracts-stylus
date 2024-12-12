@@ -20,7 +20,7 @@ impl ECDSAExample {
         r: B256,
         s: B256,
     ) -> Result<Address, Vec<u8>> {
-        let signer = ecdsa::recover(self, hash, v, r, s)?;
+        let signer = ecdsa::recover(hash, v, r, s)?;
         Ok(signer)
     }
 }

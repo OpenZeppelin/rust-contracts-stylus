@@ -30,7 +30,7 @@ use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
     abi::Bytes,
     evm, msg,
-    prelude::{storage, TopLevelStorage},
+    prelude::storage,
     stylus_proc::{public, SolidityError},
 };
 
@@ -139,8 +139,6 @@ pub enum Error {
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
-
-unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 

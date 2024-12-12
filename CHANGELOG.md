@@ -23,7 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `AddAssignUnchecked` and `SubAssignUnchecked` for `StorageUint`. #418
 - Implement `MethodError` for `safe_erc20::Error`. #402
 - Use `function_selector!` to calculate transfer type selector in `Erc1155`. #417
-- Update internal functions of `Erc721` and `Erc721Consecutive` accept reference to `Bytes`. #437
+
+### Changed (Breaking)
+
+- Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
+- Stop supporting reentrancy, and borrow `self` immutably in `IErc721::_check_on_erc721_received`. #440
+- Remove `&mut self` parameter from `IErc1155::_check_on_erc1155_received` and make it an associated function. #440
+- Remove `storage: &mut impl TopLevelStorage` parameter from `ecdsa::recover`. #440
+- Remove `TopLevelStorage` trait implementation from `VestingWallet`, `Erc1155`, `Erc20Permit`, `SafeErc20`, `Erc721Consecutive`, and `Erc721`. #440
 
 ### Fixed
 

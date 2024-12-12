@@ -33,7 +33,7 @@ use stylus_sdk::{
     call::{self, call, Call},
     contract, evm, function_selector,
     prelude::storage,
-    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
+    storage::{StorageMap, StorageU256, StorageU64},
     stylus_proc::{public, SolidityError},
 };
 
@@ -117,11 +117,6 @@ pub struct VestingWallet {
     /// [`SafeErc20`] contract.
     pub safe_erc20: SafeErc20,
 }
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for VestingWallet {}
 
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]
@@ -426,7 +421,7 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(Call::new_in(self).value(amount), owner, &[])?;
+        call(Call::new().value(amount), owner, &[])?;
 
         evm::log(EtherReleased { amount });
 
