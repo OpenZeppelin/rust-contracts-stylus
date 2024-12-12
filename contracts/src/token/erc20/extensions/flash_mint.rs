@@ -162,6 +162,7 @@ pub trait IErc3156FlashLender {
     ///
     /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `receiver` - The receiver of the flash loan. Should implement the
     ///   [`IERC3156FlashBorrower::on_flash_loan`] interface.
     /// * `token` - The token to be flash loaned. Only [`contract::address()`]
