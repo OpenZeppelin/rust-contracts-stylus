@@ -22,6 +22,7 @@ members = [
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
+  "examples/poseidon",
   "examples/ownable-two-step",
   "examples/safe-erc20",
   "benches",
@@ -49,6 +50,7 @@ default-members = [
   "examples/access-control",
   "examples/basic/token",
   "examples/ecdsa",
+  "examples/poseidon",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
