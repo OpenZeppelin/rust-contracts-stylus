@@ -167,12 +167,15 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// If the `amount` is greater than the value returned by `IE`, then the
-    /// error [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the call returns value that is not `true`, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// If the `amount` is greater than the value returned by
+    /// [`IErc3156FlashLender::max_flash_loan`], then the error
+    /// [`Error::ExceededMaxLoan`] is returned. If `token` is not supported,
+    /// then the error [`Error::UnsupportedToken`] is returned.
+    /// If the `token` address is not a contract, then the error
+    /// [`Error::InvalidReceiver`] is returned. If the contract fails to
+    /// execute the call, then the error [`Error::InvalidReceiver`] is returned.
+    /// If the receiver does not return [`RETURN_VALUE`], then the error
+    /// [`Error::InvalidReceiver`] is returned.
     fn flash_loan(
         &mut self,
         receiver: Address,
