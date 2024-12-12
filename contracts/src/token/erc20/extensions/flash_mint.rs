@@ -1,4 +1,5 @@
-//! Implementation of the ERC-3156 Flash loans extension, as defined in https://eips.ethereum.org/EIPS/eip-3156[ERC-3156].
+//! Implementation of the ERC-3156 Flash loans extension, as defined in
+//! [ERC-3156].
 //!
 //! Adds the [`IERC3156FlashLender::flash_loan`] method, which provides flash
 //! loan support at the token level. By default there is no fee, but this can be
@@ -10,6 +11,8 @@
 //! maximum that can be flash minted. We recommend overriding
 //! [`IERC3156FlashLender::max_flash_loan`] so that it correctly reflects the
 //! supply cap.
+//!
+//! [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
 
 // TODO: once ERC20Votes is implemented, include it in the comment above next to
 // ERC20Capped.
@@ -69,21 +72,21 @@ mod borrower {
     use stylus_sdk::stylus_proc::sol_interface;
 
     sol_interface! {
-        /// Interface that must be implemented by smart contracts
-        /// in order to borrow ERC-3156 flashloan .
+        /// Interface of the ERC-3156 FlashBorrower, as defined in [ERC-3156].
+        ///
+        /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
         interface IERC3156FlashBorrower {
-            /// Handles the receipt of a flash loan.
-            /// This function is called after the loan amount has been transferred to the borrower.
+            /// Receives a flash loan.
             ///
             /// To indicate successful handling of the flash loan, this function should return
             /// the `keccak256` hash of "ERC3156FlashBorrower.onFlashLoan".
             ///
             /// # Arguments
             ///
-            /// * `initiator` - The address which initiated the flash loan.
-            /// * `token` - The address of the token being loaned (loan currency).
-            /// * `amount` - The amount of tokens lent in the flash loan.
-            /// * `fee` - The additional fee to repay with the flash loan amount.
+            /// * `initiator` - The initiator of the flash loan.
+            /// * `token` - The loan currency.
+            /// * `amount` - The amount of tokens lent.
+            /// * `fee` - The additional amount of tokens to repay.
             /// * `data` - Arbitrary data structure, intended to contain user-defined parameters.
             #[allow(missing_docs)]
             function onFlashLoan(
