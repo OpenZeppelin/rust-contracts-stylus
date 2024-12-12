@@ -2,7 +2,7 @@
 # OpenZeppelin Contracts for Stylus
 
 A library for secure smart contract development written in Rust for
-[Arbitrum Stylus](https://docs.arbitrum.io/stylus/stylus-gentle-introduction).
+[Arbitrum Stylus](https://docs.arbitrum.io/stylus/gentle-introduction).
 This library offers common smart contract primitives and affordances that take
 advantage of the nature of Stylus.
 
