@@ -4,18 +4,21 @@
 use alloc::string::String;
 
 use alloy_primitives::U256;
-use stylus_sdk::{evm, stylus_proc::sol_storage};
+use stylus_sdk::{
+    evm,
+    prelude::storage,
+    storage::{StorageMap, StorageString},
+};
 
 use super::metadata_uri::{IErc1155MetadataUri, URI};
 
-sol_storage! {
-    /// Uri Storage.
-    pub struct Erc1155UriStorage {
-        /// Optional base URI
-        string _base_uri;
-        /// Optional mapping for token URIs.
-        mapping(uint256 => string) _token_uris;
-    }
+/// Uri Storage.
+#[storage]
+pub struct Erc1155UriStorage {
+    /// Optional base URI.
+    pub _base_uri: StorageString,
+    /// Optional mapping for token URIs.
+    pub _token_uris: StorageMap<U256, StorageString>,
 }
 
 impl Erc1155UriStorage {
@@ -88,7 +91,7 @@ impl Erc1155UriStorage {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
-    use stylus_sdk::stylus_proc::sol_storage;
+    use stylus_sdk::prelude::storage;
 
     use super::Erc1155UriStorage;
     use crate::token::erc1155::{extensions::Erc1155MetadataUri, Erc1155};
@@ -98,17 +101,15 @@ mod tests {
         U256::from(num)
     }
 
-    sol_storage! {
-        struct Erc1155Example {
-            Erc1155 erc1155;
-            Erc1155MetadataUri metadata_uri;
-            Erc1155UriStorage uri_storage;
-        }
+    #[storage]
+    struct Erc1155MetadataExample {
+        pub metadata_uri: Erc1155MetadataUri,
+        pub uri_storage: Erc1155UriStorage,
     }
 
     #[motsu::test]
     fn uri_returns_metadata_uri_when_token_uri_is_not_set(
-        contract: Erc1155Example,
+        contract: Erc1155MetadataExample,
     ) {
         let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
@@ -122,7 +123,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_empty_string_when_no_uri_is_set(contract: Erc1155Example) {
+    fn uri_returns_empty_string_when_no_uri_is_set(
+        contract: Erc1155MetadataExample,
+    ) {
         let token_id = random_token_id();
 
         assert!(contract
@@ -132,7 +135,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_token_uri_when_base_uri_is_empty(contract: Erc1155Example) {
+    fn uri_returns_token_uri_when_base_uri_is_empty(
+        contract: Erc1155MetadataExample,
+    ) {
         let token_id = random_token_id();
         let token_uri = "https://some.short/token/uri";
 
@@ -150,7 +155,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_returns_concatenated_base_uri_and_token_uri(
-        contract: Erc1155Example,
+        contract: Erc1155MetadataExample,
     ) {
         let token_id = random_token_id();
         let base_uri = "https://some.base.uri";
@@ -171,7 +176,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_ignores_metadata_uri_when_token_uri_is_set(
-        contract: Erc1155Example,
+        contract: Erc1155MetadataExample,
     ) {
         let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
@@ -191,7 +196,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_set_uri(contract: Erc1155Example) {
+    fn test_set_uri(contract: Erc1155MetadataExample) {
         let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();

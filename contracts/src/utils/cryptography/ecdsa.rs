@@ -5,7 +5,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{address, uint, Address, B256, U256};
-use alloy_sol_types::{sol, SolType};
+use alloy_sol_types::SolType;
 use stylus_sdk::{
     call::{self, Call, MethodError},
     stylus_proc::SolidityError,
@@ -22,18 +22,39 @@ pub const SIGNATURE_S_UPPER_BOUND: U256 = uint!(
     0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_U256
 );
 
-sol! {
-    /// The signature derives the `Address::ZERO`.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ECDSAInvalidSignature();
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// The signature has an `S` value that is in the upper half order.
-    ///
-    /// * `s` - Invalid `S` value.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ECDSAInvalidSignatureS(bytes32 s);
+    sol! {
+        /// The signature derives the `Address::ZERO`.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ECDSAInvalidSignature();
+
+        /// The signature has an `S` value that is in the upper half order.
+        ///
+        /// * `s` - Invalid `S` value.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ECDSAInvalidSignatureS(bytes32 s);
+    }
+
+    sol! {
+        /// Struct with callable data to the `ecrecover` precompile.
+        #[allow(missing_docs)]
+        struct EcRecoverData {
+            /// EIP-191 Hash of the message.
+            bytes32 hash;
+            /// `v` value from the signature.
+            uint8 v;
+            /// `r` value from the signature.
+            bytes32 r;
+            /// `s` value from the signature.
+            bytes32 s;
+        }
+    }
 }
 
 /// An error that occurred in the implementation of an `ECDSA` library.
@@ -48,21 +69,6 @@ pub enum Error {
 impl MethodError for ecdsa::Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
-    }
-}
-
-sol! {
-    /// Struct with callable data to the `ecrecover` precompile.
-    #[allow(missing_docs)]
-    struct EcRecoverData {
-        /// EIP-191 Hash of the message.
-        bytes32 hash;
-        /// `v` value from the signature.
-        uint8 v;
-        /// `r` value from the signature.
-        bytes32 r;
-        /// `s` value from the signature.
-        bytes32 s;
     }
 }
 

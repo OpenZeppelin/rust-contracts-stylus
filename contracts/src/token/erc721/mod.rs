@@ -5,10 +5,10 @@ use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    alloy_sol_types::sol,
     call::{self, Call, MethodError},
     evm, function_selector, msg,
     prelude::*,
+    storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
 
 use crate::utils::{
@@ -18,109 +18,115 @@ use crate::utils::{
 
 pub mod extensions;
 
-sol! {
-    /// Emitted when the `token_id` token is transferred from `from` to `to`.
-    ///
-    /// * `from` - Address from which the token will be transferred.
-    /// * `to` - Address where the token will be transferred to.
-    /// * `token_id` - Token id as a number.
-    #[allow(missing_docs)]
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 indexed token_id
-    );
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Emitted when `owner` enables `approved` to manage the `token_id` token.
-    ///
-    /// * `owner` - Address of the owner of the token.
-    /// * `approved` - Address of the approver.
-    /// * `token_id` - Token id as a number.
-    #[allow(missing_docs)]
-    event Approval(
-        address indexed owner,
-        address indexed approved,
-        uint256 indexed token_id
-    );
+    sol! {
+        /// Emitted when the `token_id` token is transferred from `from` to `to`.
+        ///
+        /// * `from` - Address from which the token will be transferred.
+        /// * `to` - Address where the token will be transferred to.
+        /// * `token_id` - Token id as a number.
+        #[allow(missing_docs)]
+        event Transfer(
+            address indexed from,
+            address indexed to,
+            uint256 indexed token_id
+        );
 
-    /// Emitted when `owner` enables or disables (`approved`) `operator`
-    /// to manage all of its assets.
-    ///
-    /// * `owner` - Address of the owner of the token.
-    /// * `operator` - Address of an operator that
-    ///   will manage operations on the token.
-    /// * `approved` - Whether or not permission has been granted. If true,
-    ///   this means `operator` will be allowed to manage `owner`'s assets.
-    #[allow(missing_docs)]
-    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
-}
+        /// Emitted when `owner` enables `approved` to manage the `token_id` token.
+        ///
+        /// * `owner` - Address of the owner of the token.
+        /// * `approved` - Address of the approver.
+        /// * `token_id` - Token id as a number.
+        #[allow(missing_docs)]
+        event Approval(
+            address indexed owner,
+            address indexed approved,
+            uint256 indexed token_id
+        );
 
-sol! {
-    /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
-    /// Used in balance queries.
-    ///
-    /// * `owner` - The address deemed to be an invalid owner.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721InvalidOwner(address owner);
+        /// Emitted when `owner` enables or disables (`approved`) `operator`
+        /// to manage all of its assets.
+        ///
+        /// * `owner` - Address of the owner of the token.
+        /// * `operator` - Address of an operator that
+        ///   will manage operations on the token.
+        /// * `approved` - Whether or not permission has been granted. If true,
+        ///   this means `operator` will be allowed to manage `owner`'s assets.
+        #[allow(missing_docs)]
+        event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+    }
 
-    /// Indicates a `token_id` whose `owner` is the zero address.
-    ///
-    /// * `token_id` - Token id as a number.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721NonexistentToken(uint256 token_id);
+    sol! {
+        /// Indicates that an address can't be an owner.
+        /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+        /// Used in balance queries.
+        ///
+        /// * `owner` - The address deemed to be an invalid owner.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721InvalidOwner(address owner);
 
-    /// Indicates an error related to the ownership over a particular token.
-    /// Used in transfers.
-    ///
-    /// * `sender` - Address whose tokens are being transferred.
-    /// * `token_id` - Token id as a number.
-    /// * `owner` - Address of the owner of the token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721IncorrectOwner(address sender, uint256 token_id, address owner);
+        /// Indicates a `token_id` whose `owner` is the zero address.
+        ///
+        /// * `token_id` - Token id as a number.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721NonexistentToken(uint256 token_id);
 
-    /// Indicates a failure with the token `sender`. Used in transfers.
-    ///
-    /// * `sender` - An address whose token is being transferred.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721InvalidSender(address sender);
+        /// Indicates an error related to the ownership over a particular token.
+        /// Used in transfers.
+        ///
+        /// * `sender` - Address whose tokens are being transferred.
+        /// * `token_id` - Token id as a number.
+        /// * `owner` - Address of the owner of the token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721IncorrectOwner(address sender, uint256 token_id, address owner);
 
-    /// Indicates a failure with the token `receiver`. Used in transfers.
-    ///
-    /// * `receiver` - Address that receives the token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721InvalidReceiver(address receiver);
+        /// Indicates a failure with the token `sender`. Used in transfers.
+        ///
+        /// * `sender` - An address whose token is being transferred.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721InvalidSender(address sender);
 
-    /// Indicates a failure with the `operator`’s approval. Used in transfers.
-    ///
-    /// * `operator` - Address that may be allowed to operate on tokens
-    ///   without being their owner.
-    /// * `token_id` - Token id as a number.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721InsufficientApproval(address operator, uint256 token_id);
+        /// Indicates a failure with the token `receiver`. Used in transfers.
+        ///
+        /// * `receiver` - Address that receives the token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721InvalidReceiver(address receiver);
 
-    /// Indicates a failure with the `approver` of a token to be approved.
-    /// Used in approvals.
-    ///
-    /// * `approver` - Address initiating an approval operation.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721InvalidApprover(address approver);
+        /// Indicates a failure with the `operator`’s approval. Used in transfers.
+        ///
+        /// * `operator` - Address that may be allowed to operate on tokens
+        ///   without being their owner.
+        /// * `token_id` - Token id as a number.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721InsufficientApproval(address operator, uint256 token_id);
 
-    /// Indicates a failure with the `operator` to be approved.
-    /// Used in approvals.
-    ///
-    /// * `operator` - Address that may be allowed to operate on tokens
-    ///   without being their owner.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721InvalidOperator(address operator);
+        /// Indicates a failure with the `approver` of a token to be approved.
+        /// Used in approvals.
+        ///
+        /// * `approver` - Address initiating an approval operation.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721InvalidApprover(address approver);
+
+        /// Indicates a failure with the `operator` to be approved.
+        /// Used in approvals.
+        ///
+        /// * `operator` - Address that may be allowed to operate on tokens
+        ///   without being their owner.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721InvalidOperator(address operator);
+    }
 }
 
 /// An [`Erc721`] error defined as described in [ERC-6093].
@@ -161,8 +167,9 @@ impl MethodError for Error {
 }
 
 pub use receiver::IERC721Receiver;
-#[allow(missing_docs)]
 mod receiver {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
     stylus_sdk::stylus_proc::sol_interface! {
         /// [`Erc721`] token receiver interface.
         ///
@@ -186,18 +193,18 @@ mod receiver {
     }
 }
 
-sol_storage! {
-    /// State of an [`Erc721`] token.
-    pub struct Erc721 {
-        /// Maps tokens to owners.
-        mapping(uint256 => address) _owners;
-        /// Maps users to balances.
-        mapping(address => uint256) _balances;
-        /// Maps tokens to approvals.
-        mapping(uint256 => address) _token_approvals;
-        /// Maps owners to a mapping of operator approvals.
-        mapping(address => mapping(address => bool)) _operator_approvals;
-    }
+/// State of an [`Erc721`] token.
+#[storage]
+pub struct Erc721 {
+    /// Maps tokens to owners.
+    pub _owners: StorageMap<U256, StorageAddress>,
+    /// Maps users to balances.
+    pub _balances: StorageMap<Address, StorageU256>,
+    /// Maps tokens to approvals.
+    pub _token_approvals: StorageMap<U256, StorageAddress>,
+    /// Maps owners to a mapping of operator approvals.
+    pub _operator_approvals:
+        StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
 /// Required interface of an [`Erc721`] compliant contract.
