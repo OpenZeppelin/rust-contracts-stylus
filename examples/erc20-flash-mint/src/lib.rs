@@ -10,17 +10,16 @@ use openzeppelin_stylus::token::erc20::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    prelude::{entrypoint, public, sol_storage},
+    prelude::{entrypoint, public, storage},
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc20FlashMintExample {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        Erc20FlashMint erc20_flash_mint;
-    }
+#[entrypoint]
+#[storage]
+struct Erc20FlashMintExample {
+    #[borrow]
+    erc20: Erc20,
+    #[borrow]
+    erc20_flash_mint: Erc20FlashMint,
 }
 
 #[public]
