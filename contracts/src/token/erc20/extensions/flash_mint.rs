@@ -1,5 +1,18 @@
-//! Optional Flashloan extension of the ERC-20 standard.
-//! using the IERC3156FlashBorrower interface to borrow tokens.
+//! Implementation of the ERC-3156 Flash loans extension, as defined in https://eips.ethereum.org/EIPS/eip-3156[ERC-3156].
+//!
+//! Adds the [`IERC3156FlashLender::flash_loan`] method, which provides flash
+//! loan support at the token level. By default there is no fee, but this can be
+//! changed by overriding [`IERC3156FlashLender::flash_loan`].
+//!
+//! NOTE: When this extension is used along with the
+//! [`crate::token::token::erc20::extensions::Capped`] extension,
+//! [`IERC3156FlashLender::max_flash_loan`] will not correctly reflect the
+//! maximum that can be flash minted. We recommend overriding
+//! [`IERC3156FlashLender::max_flash_loan`] so that it correctly reflects the
+//! supply cap.
+
+// TODO: once ERC20Votes is implemented, include it in the comment above next to
+// ERC20Capped.
 
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::sol;
@@ -14,37 +27,37 @@ use stylus_sdk::{
 use crate::token::erc20::{self, Erc20, IErc20};
 
 sol! {
-    /// Indicate an error related to an unsupported loan token.
-    /// This occurs when the specified token cannot be used for loans.
+    /// Indicate that the loan token is not supported or valid.
+    ///
+    /// * `token` - Address of the unsupported token.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC3156UnsupportedToken(address token);
 
-    /// Indicate an error related to the loan amount exceeds the maximum.
-    /// The requested amount is higher than the allowed loan for this token max_loan.
+    /// Indicate an error related to the loan amount exceeding the maximum.
+    ///
+    /// * `max_loan` - Maximum loan amount.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC3156ExceededMaxLoan(uint256 max_loan);
 
-    /// Indicate  an  error related to an invalid flash loan receiver.
-    /// The receiver does not implement the required `onFlashLoan` function.
+    /// Indicate that the receiver of a flashloan is not a valid [`IERC3156FlashBorrower::on_flash_loan`] implementer.
+    ///
+    /// * `receiver` - Address to which tokens are being transferred.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC3156InvalidReceiver(address receiver);
 }
 
-/// A FlashMint error.
+/// An [`Erc20FlashMint`] extension error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Indicate an error related to an unsupported loan token.
-    /// This occurs when the specified token cannot be used for loans.
+    /// Indicate that the loan token is not supported or valid.
     UnsupportedToken(ERC3156UnsupportedToken),
-    /// Indicate an error related to the loan amount exceeds the maximum.
-    /// The requested amount is higher than the allowed loan for this token
-    /// max_loan.
+    /// Indicate an error related to the loan amount exceeding the maximum.
     ExceededMaxLoan(ERC3156ExceededMaxLoan),
-    /// Indicate an error related to an invalid flash loan receiver.
-    /// The receiver does not implement the required `onFlashLoan` function.
+    /// Indicate that the receiver of a flashloan is not a valid
+    /// [`IERC3156FlashBorrower::on_flash_loan`] implementer.
     InvalidReceiver(ERC3156InvalidReceiver),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
