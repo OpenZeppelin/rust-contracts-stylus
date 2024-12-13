@@ -190,6 +190,11 @@ pub trait IErc3156FlashLender {
     /// If the receiver does not return [`BORROWER_CALLBACK_VALUE`], then the
     /// error [`Error::InvalidReceiver`] is returned.
     ///
+    /// # Events
+    ///
+    /// Emits an [`erc20::Transfer`] event.
+    /// Emits an [`erc20::Approval`] event.
+    ///
     /// # Panics
     ///
     /// If the new (temporary) total supply exceeds `U256::MAX`.
