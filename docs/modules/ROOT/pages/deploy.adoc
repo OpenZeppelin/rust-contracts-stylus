@@ -30,11 +30,10 @@ For a contract like this:
 
 [source,rust]
 ----
-sol_storage! {
-    #[entrypoint]
-    pub struct Counter {
-        uint256 number;
-    }
+#[entrypoint]
+#[storage]
+struct Counter {
+    pub number: StorageU256,
 }
 
 #[public]

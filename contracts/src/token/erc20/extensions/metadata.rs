@@ -4,7 +4,7 @@ use alloc::string::String;
 
 use alloy_primitives::FixedBytes;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, sol_storage};
+use stylus_sdk::stylus_proc::{public, storage};
 
 use crate::utils::introspection::erc165::IErc165;
 
@@ -14,14 +14,14 @@ pub const DEFAULT_DECIMALS: u8 = 18;
 use alloc::vec::Vec;
 
 use crate::utils::Metadata;
-sol_storage! {
-    /// Metadata of the [`super::super::Erc20`] token.
-    ///
-    /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
-    pub struct Erc20Metadata {
-        /// Common Metadata.
-        Metadata _metadata
-    }
+
+/// Metadata of the [`super::super::Erc20`] token.
+///
+/// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
+#[storage]
+pub struct Erc20Metadata {
+    /// Common Metadata.
+    pub _metadata: Metadata,
 }
 
 /// Interface for the optional metadata functions from the ERC-20 standard.

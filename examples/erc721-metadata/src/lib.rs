@@ -14,17 +14,16 @@ use openzeppelin_stylus::{
     },
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc721MetadataExample {
-        #[borrow]
-        Erc721 erc721;
-        #[borrow]
-        Metadata metadata;
-        UriStorage uri_storage;
-    }
+#[entrypoint]
+#[storage]
+struct Erc721MetadataExample {
+    #[borrow]
+    pub erc721: Erc721,
+    #[borrow]
+    pub metadata: Metadata,
+    pub uri_storage: UriStorage,
 }
 
 #[public]

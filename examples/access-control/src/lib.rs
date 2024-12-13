@@ -8,16 +8,15 @@ use openzeppelin_stylus::{
     access::control::AccessControl,
     token::erc20::{Erc20, IErc20},
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
-sol_storage! {
-    #[entrypoint]
-    struct AccessControlExample {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        AccessControl access;
-    }
+#[entrypoint]
+#[storage]
+struct AccessControlExample {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub access: AccessControl,
 }
 
 // `keccak256("TRANSFER_ROLE")`

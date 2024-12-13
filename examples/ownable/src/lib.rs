@@ -8,16 +8,15 @@ use openzeppelin_stylus::{
     access::ownable::Ownable,
     token::erc20::{Erc20, IErc20},
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
-sol_storage! {
-    #[entrypoint]
-    struct OwnableExample {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        Ownable ownable;
-    }
+#[entrypoint]
+#[storage]
+struct OwnableExample {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub ownable: Ownable,
 }
 
 #[public]

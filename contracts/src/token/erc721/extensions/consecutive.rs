@@ -27,12 +27,11 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
-use alloy_sol_types::sol;
 use stylus_sdk::{
     abi::Bytes,
     evm, msg,
-    prelude::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::{
@@ -55,64 +54,71 @@ use crate::{
 };
 
 type U96 = <S160 as Size>::Key;
+type StorageU96 = <S160 as Size>::KeyStorage;
 
-sol_storage! {
-    /// State of an [`Erc721Consecutive`] token.
-    pub struct Erc721Consecutive {
-        /// Erc721 contract storage.
-        Erc721 erc721;
-        /// Checkpoint library contract for sequential ownership.
-        Trace<S160> _sequential_ownership;
-        /// BitMap library contract for sequential burn of tokens.
-        BitMap _sequential_burn;
-        /// Used to offset the first token id.
-        uint96 _first_consecutive_id;
-        /// Maximum size of a batch of consecutive tokens. This is designed to limit
-        /// stress on off-chain indexing services that have to record one entry per
-        /// token, and have protections against "unreasonably large" batches of
-        /// tokens.
-        uint96 _max_batch_size;
+/// State of an [`Erc721Consecutive`] token.
+#[storage]
+pub struct Erc721Consecutive {
+    /// Erc721 contract storage.
+    pub erc721: Erc721,
+    /// Checkpoint library contract for sequential ownership.
+    pub _sequential_ownership: Trace<S160>,
+    /// BitMap library contract for sequential burn of tokens.
+    pub _sequential_burn: BitMap,
+    /// Used to offset the first token id in
+    /// [`Erc721Consecutive::_next_consecutive_id`].
+    pub _first_consecutive_id: StorageU96,
+    /// Maximum size of a batch of consecutive tokens. This is designed to
+    /// limit stress on off-chain indexing services that have to record one
+    /// entry per token, and have protections against "unreasonably large"
+    /// batches of tokens.
+    pub _max_batch_size: StorageU96,
+}
+
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
+
+    sol! {
+        /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
+        ///
+        /// * `from_token_id` - First token being transferred.
+        /// * `to_token_id` - Last token being transferred.
+        /// * `from_address` - Address from which tokens will be transferred.
+        /// * `to_address` - Address where the tokens will be transferred to.
+        #[allow(missing_docs)]
+        event ConsecutiveTransfer(
+            uint256 indexed from_token_id,
+            uint256 to_token_id,
+            address indexed from_address,
+            address indexed to_address
+        );
     }
-}
 
-sol! {
-    /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
-    ///
-    /// * `from_token_id` - First token being transferred.
-    /// * `to_token_id` - Last token being transferred.
-    /// * `from_address` - Address from which tokens will be transferred.
-    /// * `to_address` - Address where the tokens will be transferred to.
-    #[allow(missing_docs)]
-    event ConsecutiveTransfer(
-        uint256 indexed from_token_id,
-        uint256 to_token_id,
-        address indexed from_address,
-        address indexed to_address
-    );
-}
+    sol! {
+        /// Batch mint is restricted to the constructor.
+        /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
+        /// is non ERC-721 compliant.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenBatchMint();
 
-sol! {
-    /// Batch mint is restricted to the constructor.
-    /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
-    /// is non ERC-721 compliant.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenBatchMint();
+        /// Exceeds the max number of mints per batch.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ExceededMaxBatchMint(uint256 batch_size, uint256 max_batch);
 
-    /// Exceeds the max number of mints per batch.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ExceededMaxBatchMint(uint256 batch_size, uint256 max_batch);
+        /// Individual minting is not allowed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenMint();
 
-    /// Individual minting is not allowed.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenMint();
-
-    /// Batch burn is not supported.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenBatchBurn();
+        /// Batch burn is not supported.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenBatchBurn();
+    }
 }
 
 /// An [`Erc721Consecutive`] error.
@@ -133,8 +139,6 @@ pub enum Error {
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
-
-unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 

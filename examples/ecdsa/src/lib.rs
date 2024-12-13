@@ -5,12 +5,11 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256};
 use openzeppelin_stylus::utils::cryptography::ecdsa;
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
-sol_storage! {
-    #[entrypoint]
-    struct ECDSAExample {}
-}
+#[entrypoint]
+#[storage]
+struct ECDSAExample {}
 
 #[public]
 impl ECDSAExample {
@@ -21,7 +20,7 @@ impl ECDSAExample {
         r: B256,
         s: B256,
     ) -> Result<Address, Vec<u8>> {
-        let signer = ecdsa::recover(self, hash, v, r, s)?;
+        let signer = ecdsa::recover(hash, v, r, s)?;
         Ok(signer)
     }
 }

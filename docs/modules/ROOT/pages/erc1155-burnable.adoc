@@ -14,12 +14,11 @@ use openzeppelin_stylus::token::erc1155::{
     extensions::IErc1155Burnable, Erc1155,
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc1155Example {
-        #[borrow]
-        Erc1155 erc1155;
-    }
+#[entrypoint]
+#[storage]
+struct Erc1155Example {
+    #[borrow]
+    pub erc1155: Erc1155,
 }
 
 #[public]

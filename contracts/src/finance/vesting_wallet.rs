@@ -28,14 +28,15 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256, U64};
-use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
+pub use sol::*;
 use stylus_sdk::{
     block,
     call::{self, call, Call},
     contract, evm, function_selector,
-    storage::TopLevelStorage,
-    stylus_proc::{public, sol_interface, sol_storage, SolidityError},
+    prelude::{sol_interface, storage},
+    storage::{StorageMap, StorageU256, StorageU64},
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::{
@@ -43,33 +44,38 @@ use crate::{
     token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
 };
 
-sol! {
-    /// Emitted when `amount` of Ether has been released.
-    ///
-    /// * `amount` - Total Ether released.
-    #[allow(missing_docs)]
-    event EtherReleased(uint256 amount);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Emitted when `amount` of ERC-20 `token` has been released.
-    ///
-    /// * `token` - Address of the token being released.
-    /// * `amount` - Number of tokens released.
-    #[allow(missing_docs)]
-    event ERC20Released(address indexed token, uint256 amount);
-}
+    sol! {
+        /// Emitted when `amount` of Ether has been released.
+        ///
+        /// * `amount` - Total Ether released.
+        #[allow(missing_docs)]
+        event EtherReleased(uint256 amount);
 
-sol! {
-    /// Indicates an error related to the underlying Ether transfer.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ReleaseEtherFailed();
+        /// Emitted when `amount` of ERC-20 `token` has been released.
+        ///
+        /// * `token` - Address of the token being released.
+        /// * `amount` - Number of tokens released.
+        #[allow(missing_docs)]
+        event ERC20Released(address indexed token, uint256 amount);
+    }
 
-    /// The token address is not valid (eg. `Address::ZERO`).
-    ///
-    /// * `token` - Address of the token being released.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error InvalidToken(address token);
+    sol! {
+        /// Indicates an error related to the underlying Ether transfer.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ReleaseEtherFailed();
+
+        /// The token address is not valid (eg. `Address::ZERO`).
+        ///
+        /// * `token` - Address of the token being released.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidToken(address token);
+    }
 }
 
 /// An error that occurred in the [`VestingWallet`] contract.
@@ -93,28 +99,22 @@ sol_interface! {
     }
 }
 
-sol_storage! {
-    /// State of the [`VestingWallet`] Contract.
-    pub struct VestingWallet {
-        /// [`Ownable`] contract.
-        Ownable ownable;
-        /// Amount of Ether already released.
-        uint256 _released;
-        /// Amount of ERC-20 tokens already released.
-        mapping(address => uint256) _erc20_released;
-        /// Start timestamp.
-        uint64 _start;
-        /// Vesting duration.
-        uint64 _duration;
-        /// [`SafeErc20`] contract.
-        SafeErc20 safe_erc20;
-    }
+/// State of the [`VestingWallet`] Contract.
+#[storage]
+pub struct VestingWallet {
+    /// [`Ownable`] contract.
+    pub ownable: Ownable,
+    /// Amount of Ether already released.
+    pub _released: StorageU256,
+    /// Amount of ERC-20 tokens already released.
+    pub _erc20_released: StorageMap<Address, StorageU256>,
+    /// Start timestamp.
+    pub _start: StorageU64,
+    /// Vesting duration.
+    pub _duration: StorageU64,
+    /// [`SafeErc20`] contract.
+    pub safe_erc20: SafeErc20,
 }
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for VestingWallet {}
 
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]
@@ -419,7 +419,7 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(Call::new_in(self).value(amount), owner, &[])?;
+        call(Call::new().value(amount), owner, &[])?;
 
         evm::log(EtherReleased { amount });
 

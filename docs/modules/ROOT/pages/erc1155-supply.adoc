@@ -17,12 +17,11 @@ use openzeppelin_stylus::token::erc1155::extensions::{
     Erc1155Supply, IErc1155Supply,
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc1155Example {
-        #[borrow]
-        Erc1155Supply erc1155_supply;
-    }
+#[entrypoint]
+#[storage]
+struct Erc1155Example {
+    #[borrow]
+    pub erc1155_supply: Erc1155Supply,
 }
 
 #[public]

@@ -1,15 +1,17 @@
 //! Common Metadata Smart Contract.
 use alloc::{string::String, vec::Vec};
 
-use stylus_sdk::stylus_proc::{public, sol_storage};
-sol_storage! {
-    /// Metadata of the token.
-    pub struct Metadata {
-        /// Token name.
-        string _name;
-        /// Token symbol.
-        string _symbol;
-    }
+use stylus_sdk::{
+    prelude::storage, storage::StorageString, stylus_proc::public,
+};
+
+/// Metadata of the token.
+#[storage]
+pub struct Metadata {
+    /// Token name.
+    pub _name: StorageString,
+    /// Token symbol.
+    pub _symbol: StorageString,
 }
 
 #[public]
