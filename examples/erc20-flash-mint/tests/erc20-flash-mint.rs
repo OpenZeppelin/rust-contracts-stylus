@@ -5,7 +5,7 @@ use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{send, watch, Account, ReceiptExt, Revert};
 use eyre::Result;
 use mock::borrower;
 
@@ -297,14 +297,12 @@ async fn flash_loan_reverts_when_invalid_receiver(
         ))
         .expect_err("should revert with `ERC3156InvalidReceiver`");
 
-        assert!(
-            err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
-                receiver: invalid_receiver
-            }),
-            "receiver: {invalid_receiver}"
-        );
+        assert!(err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
+            receiver: invalid_receiver
+        }),);
     }
 
+    // Assert failure when the borrower's on_flash_loan callback reverts
     let err = send!(erc20.flashLoan(
         borrower_addr,
         erc20_addr,
@@ -313,12 +311,9 @@ async fn flash_loan_reverts_when_invalid_receiver(
     ))
     .expect_err("should revert with `ERC3156InvalidReceiver`");
 
-    assert!(
-        err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
-            receiver: borrower_addr
-        }),
-        "receiver: {borrower_addr}"
-    );
+    assert!(err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
+        receiver: borrower_addr
+    }),);
 
     Ok(())
 }
