@@ -356,20 +356,20 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
         vec![].into()
     ))?;
 
-    // assert!(receipt.emits(Erc20FlashMint::Transfer {
-    // from: erc20_addr,
-    // to: borrower_addr,
-    // value: loan_amount,
-    // }));
-    //
+    assert!(receipt.emits(Erc20FlashMint::Transfer {
+        from: Address::ZERO,
+        to: borrower_addr,
+        value: loan_amount,
+    }));
+
     // assert!(receipt.emits(ERC3156FlashBorrowerMock::BalanceOf {
     // token: erc20_addr,
     // account: borrower_addr,
     // value: loan_amount + FLASH_FEE_AMOUNT,
     // }));
     // assert!(receipt.emits(ERC3156FlashBorrowerMock::TotalSupply {
-    // token: erc20_addr,
-    // value: loan_amount + FLASH_FEE_AMOUNT,
+    //     token: erc20_addr,
+    //     value: loan_amount + FLASH_FEE_AMOUNT,
     // }));
     //
     // assert!(receipt.emits(Erc20FlashMint::Approval {
