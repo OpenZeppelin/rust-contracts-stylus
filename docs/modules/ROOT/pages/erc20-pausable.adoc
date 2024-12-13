@@ -16,14 +16,13 @@ use openzeppelin_stylus::{
     utils::Pausable,
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc20Example {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        Pausable pausable;
-    }
+#[entrypoint]
+#[storage]
+struct Erc20Example {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub pausable: Pausable,
 }
 
 #[public]

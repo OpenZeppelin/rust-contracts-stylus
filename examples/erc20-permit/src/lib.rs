@@ -7,17 +7,16 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
     token::erc20::extensions::Erc20Permit, utils::cryptography::eip712::IEip712,
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc20PermitExample {
-        #[borrow]
-        Erc20Permit<Eip712> erc20_permit;
-    }
-
-    struct Eip712 {}
+#[entrypoint]
+#[storage]
+struct Erc20PermitExample {
+    #[borrow]
+    pub erc20_permit: Erc20Permit<Eip712>,
 }
+#[storage]
+struct Eip712 {}
 
 impl IEip712 for Eip712 {
     const NAME: &'static str = "ERC-20 Permit Example";

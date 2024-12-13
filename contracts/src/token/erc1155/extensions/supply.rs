@@ -18,7 +18,8 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     msg,
-    prelude::{public, sol_storage},
+    prelude::{public, storage},
+    storage::{StorageMap, StorageU256},
 };
 
 use crate::{
@@ -26,16 +27,15 @@ use crate::{
     utils::math::storage::SubAssignUnchecked,
 };
 
-sol_storage! {
-    /// State of an [`Erc1155Supply`] token.
-    pub struct Erc1155Supply {
-        /// ERC-1155 contract storage.
-        Erc1155 erc1155;
-        /// Mapping from token id to total supply.
-        mapping(uint256 => uint256) _total_supply;
-        /// Total supply of all token ids.
-        uint256 _total_supply_all;
-    }
+/// State of an [`Erc1155Supply`] token.
+#[storage]
+pub struct Erc1155Supply {
+    /// ERC-1155 contract storage.
+    pub erc1155: Erc1155,
+    /// Mapping from token id to total supply.
+    pub _total_supply: StorageMap<U256, StorageU256>,
+    /// Total supply of all token ids.
+    pub _total_supply_all: StorageU256,
 }
 
 /// Required interface of a [`Erc1155Supply`] contract.
@@ -279,7 +279,7 @@ impl Erc1155Supply {
         self._update(from, to, ids.clone(), values.clone())?;
 
         if !to.is_zero() {
-            self.erc1155._check_on_erc1155_received(
+            Erc1155::_check_on_erc1155_received(
                 msg::sender(),
                 from,
                 to,

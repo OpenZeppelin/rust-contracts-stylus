@@ -14,10 +14,15 @@ coverage:
     patch:
       default:
         informational: true
-# Test files aren't important for coverage.
+# Docs and examples are not relevant to coverage.
+# Motsu and e2e should be moved outside of this repo.
 ignore:
-  - "tests"
   - "docs"
+  - "examples"
+  - "lib/e2e"
+  - "lib/e2e-proc"
+  - "lib/motsu"
+  - "lib/motsu-proc"
 # Make comments less noisy.
 comment:
   layout: "files"

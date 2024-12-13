@@ -15,14 +15,13 @@ use openzeppelin_stylus::token::erc721::{
     Erc721, IErc721,
 };
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc721Example {
-        #[borrow]
-        Erc721 erc721;
-        #[borrow]
-        Erc721Enumerable enumerable;
-    }
+#[entrypoint]
+#[storage]
+struct Erc721Example {
+    #[borrow]
+    pub erc721: Erc721,
+    #[borrow]
+    pub enumerable: Enumerable,
 }
 
 #[public]

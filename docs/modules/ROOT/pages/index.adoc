@@ -1,4 +1,4 @@
-:stylus: https://docs.arbitrum.io/stylus/stylus-gentle-introduction[Stylus]
+:stylus: https://docs.arbitrum.io/stylus/gentle-introduction[Stylus]
 
 = Contracts for Stylus
 
