@@ -113,7 +113,7 @@ pub struct Erc20FlashMint {
     pub flash_fee_receiver_address: StorageAddress,
 }
 
-/// Interface of the ERC-3156 FlashLender, as defined in [ERC-3156].
+/// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
 pub trait IErc3156FlashLender {
