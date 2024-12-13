@@ -305,20 +305,20 @@ async fn flash_loan_reverts_when_invalid_receiver(
         );
     }
 
-    //     let err = send!(erc20.flashLoan(
-    //         borrower_addr,
-    //         erc20_addr,
-    //         U256::from(1),
-    //         vec![].into()
-    //     ))
-    //     .expect_err("should revert with `ERC3156InvalidReceiver`");
+    let err = send!(erc20.flashLoan(
+        borrower_addr,
+        erc20_addr,
+        U256::from(1),
+        vec![1, 2].into()
+    ))
+    .expect_err("should revert with `ERC3156InvalidReceiver`");
 
-    //     assert!(
-    //         err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
-    //             receiver: borrower_addr
-    //         }),
-    //         "receiver: {borrower_addr}"
-    //     );
+    assert!(
+        err.reverted_with(Erc20FlashMint::ERC3156InvalidReceiver {
+            receiver: borrower_addr
+        }),
+        "receiver: {borrower_addr}"
+    );
 
     Ok(())
 }
