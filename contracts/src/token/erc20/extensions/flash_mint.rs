@@ -189,6 +189,12 @@ pub trait IErc3156FlashLender {
     /// execute the call, then the error [`Error::InvalidReceiver`] is returned.
     /// If the receiver does not return [`BORROWER_CALLBACK_VALUE`], then the
     /// error [`Error::InvalidReceiver`] is returned.
+    ///
+    /// # Panics
+    ///
+    /// If the new (temporary) total supply exceeds `U256::MAX`.
+    /// If the sum of the loan amount and fee exceeds the maximum value of
+    /// `U256::MAX`.
     fn flash_loan(
         &mut self,
         receiver: Address,
