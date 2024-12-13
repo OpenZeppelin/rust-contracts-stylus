@@ -18,7 +18,6 @@
 // ERC20Capped.
 
 use alloy_primitives::{Address, FixedBytes, U256};
-use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -37,27 +36,33 @@ const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
     .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
     .finalize();
 
-sol! {
-    /// Indicate that the loan token is not supported or valid.
-    ///
-    /// * `token` - Address of the unsupported token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC3156UnsupportedToken(address token);
+pub use sol::*;
+mod sol {
+    #![cfg_attr(coverage_nightly, coverage(off))]
+    use alloy_sol_macro::sol;
 
-    /// Indicate an error related to the loan amount exceeding the maximum.
-    ///
-    /// * `max_loan` - Maximum loan amount.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC3156ExceededMaxLoan(uint256 max_loan);
+    sol! {
+        /// Indicate that the loan token is not supported or valid.
+        ///
+        /// * `token` - Address of the unsupported token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC3156UnsupportedToken(address token);
 
-    /// Indicate that the receiver of a flashloan is not a valid [`IERC3156FlashBorrower::on_flash_loan`] implementer.
-    ///
-    /// * `receiver` - Address to which tokens are being transferred.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC3156InvalidReceiver(address receiver);
+        /// Indicate an error related to the loan amount exceeding the maximum.
+        ///
+        /// * `max_loan` - Maximum loan amount.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC3156ExceededMaxLoan(uint256 max_loan);
+
+        /// Indicate that the receiver of a flashloan is not a valid [`IERC3156FlashBorrower::on_flash_loan`] implementer.
+        ///
+        /// * `receiver` - Address to which tokens are being transferred.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC3156InvalidReceiver(address receiver);
+    }
 }
 
 /// An [`Erc20FlashMint`] extension error.
@@ -75,8 +80,9 @@ pub enum Error {
 }
 
 pub use borrower::IERC3156FlashBorrower;
-#[allow(missing_docs)]
 mod borrower {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
     use stylus_sdk::stylus_proc::sol_interface;
 
     sol_interface! {
@@ -240,6 +246,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
             }));
         }
         self._mint(receiver, amount)?;
+
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
