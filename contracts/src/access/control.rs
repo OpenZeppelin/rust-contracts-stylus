@@ -43,8 +43,8 @@
 //! this role.
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, B256};
-use alloy_sol_types::sol;
+use alloy_primitives::{Address, FixedBytes, B256};
+use sol::*;
 use stylus_sdk::{
     evm, msg,
     prelude::storage,
@@ -126,9 +126,6 @@ pub struct AccessControl {
 
 #[public]
 impl AccessControl {
-    /// The default admin role. `[0; 32]` by default.
-    pub const DEFAULT_ADMIN_ROLE: [u8; 32] = [0; 32];
-
     /// Returns `true` if `account` has been granted `role`.
     ///
     /// # Arguments
@@ -280,6 +277,9 @@ impl AccessControl {
 }
 
 impl AccessControl {
+    /// The default admin role. `[0; 32]` by default.
+    pub const DEFAULT_ADMIN_ROLE: [u8; 32] = [0; 32];
+
     /// Sets `admin_role` as `role`'s admin role.
     ///
     /// # Arguments

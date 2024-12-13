@@ -1,5 +1,5 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
