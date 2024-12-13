@@ -44,7 +44,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, B256};
-use sol::*;
+pub use sol::*;
 use stylus_sdk::{
     evm, msg,
     prelude::storage,
