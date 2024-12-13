@@ -16,7 +16,6 @@
 
 use alloc::vec::Vec;
 
-use alloy_sol_types::sol;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
