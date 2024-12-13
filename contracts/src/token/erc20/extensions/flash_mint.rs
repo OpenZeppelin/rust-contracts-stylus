@@ -294,98 +294,104 @@ impl IErc3156FlashLender for Erc20FlashMint {
     }
 }
 
-// TODO: uncomment once it's possible to mock contract address.
+// TODO: unignore all tests once it's possible to mock contract address.
 // NOTE: double check that the tests assert the correct and expected things.
-// #[cfg(all(test, feature = "std"))]
-// mod tests {
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{address, uint, Address, U256};
+    use stylus_sdk::msg;
 
-// use alloc::vec;
+    use super::{Erc20, Erc20FlashMint, Error, IErc3156FlashLender};
 
-// use alloy_primitives::{address, uint, Address, U256};
-// use stylus_sdk::msg;
+    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    const TOKEN_ADDRESS: Address =
+        address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+    const INVALID_TOKEN_ADDRESS: Address =
+        address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
 
-// use crate::token::erc20::{
-//     extensions::flash_mint::{Error, IErc3156FlashLender},
-//     Erc20,
-// };
+    #[motsu::test]
+    #[ignore]
+    fn max_flash_loan_token_match(contract: Erc20FlashMint) {
+        let erc20 = Erc20::default();
+        let max_flash_loan = contract.max_flash_loan(TOKEN_ADDRESS, &erc20);
+        assert_eq!(max_flash_loan, U256::MAX);
+    }
 
-// const ALICE: Address =
-// address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-// const TOKEN_ADDRESS: Address =
-//     address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
-// const INVALID_TOKEN_ADDRESS: Address =
-//     address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
+    #[motsu::test]
+    #[ignore]
+    fn max_flash_loan_token_mismatch(contract: Erc20FlashMint) {
+        let erc20 = Erc20::default();
+        let max_flash_loan =
+            contract.max_flash_loan(INVALID_TOKEN_ADDRESS, &erc20);
+        assert_eq!(max_flash_loan, U256::MIN);
+    }
 
-// #[motsu::test]
-// fn max_flash_loan_token_match(contract: Erc20) {
-//     let max_flash_loan = contract.max_flash_loan(TOKEN_ADDRESS);
-//     assert_eq!(max_flash_loan, U256::MAX);
-// }
+    #[motsu::test]
+    #[ignore]
+    fn max_flash_loan_when_token_minted(contract: Erc20FlashMint) {
+        let mut erc20 = Erc20::default();
+        erc20._mint(msg::sender(), uint!(10000_U256)).unwrap();
+        let max_flash_loan = contract.max_flash_loan(TOKEN_ADDRESS, &erc20);
+        assert_eq!(max_flash_loan, U256::MAX - uint!(10000_U256));
+    }
 
-// #[motsu::test]
-// fn max_flash_loan_token_mismatch(contract: Erc20) {
-//     let max_flash_loan = contract.max_flash_loan(INVALID_TOKEN_ADDRESS);
-//     assert_eq!(max_flash_loan, U256::MIN);
-// }
+    #[motsu::test]
+    #[ignore]
+    fn flash_fee(contract: Erc20FlashMint) {
+        let flash_fee =
+            contract.flash_fee(TOKEN_ADDRESS, uint!(1000_U256)).unwrap();
+        assert_eq!(flash_fee, U256::MIN);
+    }
 
-// #[motsu::test]
-// fn max_flash_loan_when_token_minted(contract: Erc20) {
-//     contract._mint(msg::sender(), uint!(10000_U256)).unwrap();
-//     let max_flash_loan = contract.max_flash_loan(TOKEN_ADDRESS);
-//     assert_eq!(max_flash_loan, U256::MAX - uint!(10000_U256));
-// }
+    #[motsu::test]
+    #[ignore]
+    fn error_flash_fee_when_invalid_token(contract: Erc20FlashMint) {
+        let result =
+            contract.flash_fee(INVALID_TOKEN_ADDRESS, uint!(1000_U256));
+        assert!(matches!(result, Err(Error::UnsupportedToken(_))));
+    }
 
-// #[motsu::test]
-// fn flash_fee(contract: Erc20) {
-//     let flash_fee =
-//         contract.flash_fee(TOKEN_ADDRESS, uint!(1000_U256)).unwrap();
-//     assert_eq!(flash_fee, U256::MIN);
-// }
+    #[motsu::test]
+    #[ignore]
+    fn error_flash_loan_when_exceeded_max_loan(contract: Erc20FlashMint) {
+        let mut erc20 = Erc20::default();
+        let _ = erc20._mint(msg::sender(), uint!(10000_U256));
+        let result = contract.flash_loan(
+            msg::sender(),
+            TOKEN_ADDRESS,
+            U256::MAX,
+            vec![0, 1].into(),
+            &mut erc20,
+        );
+        assert!(matches!(result, Err(Error::ExceededMaxLoan(_))));
+    }
 
-// #[motsu::test]
-// fn error_flash_fee_when_invalid_token(contract: Erc20) {
-//     let result =
-//         contract.flash_fee(INVALID_TOKEN_ADDRESS, uint!(1000_U256));
-//     assert!(matches!(result, Err(Error::UnsupportedToken(_))));
-// }
+    #[motsu::test]
+    #[ignore]
+    fn error_flash_loan_when_zero_receiver_address(contract: Erc20FlashMint) {
+        let mut erc20 = Erc20::default();
+        let invalid_reciver = Address::ZERO;
+        let result = contract.flash_loan(
+            invalid_reciver,
+            TOKEN_ADDRESS,
+            uint!(1000_U256),
+            vec![0, 1].into(),
+            &mut erc20,
+        );
+        assert_eq!(result.is_err(), true);
+    }
 
-// #[motsu::test]
-// fn error_flash_loan_when_exceeded_max_loan(contract: Erc20) {
-//     let _ = contract._mint(msg::sender(), uint!(10000_U256));
-//     let result = contract.flash_loan(
-//         msg::sender(),
-//         TOKEN_ADDRESS,
-//         U256::MAX,
-//         vec![0, 1].into(),
-//     );
-//     assert!(matches!(result, Err(Error::ExceededMaxLoan(_))));
-// }
-
-// #[motsu::test]
-// fn flash_loan(contract: Erc20) {
-//     let _ = contract._mint(msg::sender(), uint!(10000_U256));
-// }
-
-// #[motsu::test]
-// fn error_flash_loan_when_zero_receiver_address(contract: Erc20) {
-//     let invalid_reciver = Address::ZERO;
-//     let result = contract.flash_loan(
-//         invalid_reciver,
-//         TOKEN_ADDRESS,
-//         uint!(1000_U256),
-//         vec![0, 1].into(),
-//     );
-//     assert_eq!(result.is_err(), true);
-// }
-
-// #[motsu::test]
-// fn error_flash_loan_when_invalid_receiver(contract: Erc20) {
-//     let result = contract.flash_loan(
-//         ALICE,
-//         TOKEN_ADDRESS,
-//         uint!(1000_U256),
-//         vec![0, 1].into(),
-//     );
-//     assert_eq!(result.is_err(), true);
-// }
-// }
+    #[motsu::test]
+    #[ignore]
+    fn error_flash_loan_when_invalid_receiver(contract: Erc20FlashMint) {
+        let mut erc20 = Erc20::default();
+        let result = contract.flash_loan(
+            ALICE,
+            TOKEN_ADDRESS,
+            uint!(1000_U256),
+            vec![0, 1].into(),
+            &mut erc20,
+        );
+        assert_eq!(result.is_err(), true);
+    }
+}
