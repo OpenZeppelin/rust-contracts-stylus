@@ -28,6 +28,7 @@ use stylus_sdk::{
 
 use crate::token::erc20::{self, Erc20, IErc20};
 
+/// The expected value returned from [`IERC3156FlashBorrower::on_flash_loan`].
 const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
     .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
     .finalize();
