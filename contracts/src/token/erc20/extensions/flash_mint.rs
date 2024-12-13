@@ -17,8 +17,7 @@
 // TODO: once ERC20Votes is implemented, include it in the comment above next to
 // ERC20Capped.
 
-use alloy_primitives::{Address, FixedBytes, U256};
-use openzeppelin_stylus_proc::interface_id;
+use alloy_primitives::{Address, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::Call,
@@ -27,10 +26,7 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU256},
 };
 
-use crate::{
-    token::erc20::{self, Erc20, IErc20},
-    utils::introspection::erc165::{Erc165, IErc165},
-};
+use crate::token::erc20::{self, Erc20, IErc20};
 
 const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
     .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
@@ -117,8 +113,6 @@ mod borrower {
 /// State of the [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
-    /// ERC-20 contract storage.
-    pub erc20: Erc20,
     /// Fee applied when doing flash loans.
     pub flash_fee_amount: StorageU256,
     /// Receiver address of the flash fee.
@@ -128,7 +122,6 @@ pub struct Erc20FlashMint {
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
-#[interface_id]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -143,7 +136,8 @@ pub trait IErc3156FlashLender {
     /// # Arguments
     ///
     /// * `token` - The address of the token that is requested.
-    fn max_flash_loan(&self, token: Address) -> U256;
+    /// * `erc20` - Read access to an [`Erc20`] contract.
+    fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
 
     /// Returns the fee applied when doing flash loans.
     ///
@@ -199,15 +193,16 @@ pub trait IErc3156FlashLender {
         token: Address,
         amount: U256,
         data: Bytes,
+        erc20: &mut Erc20,
     ) -> Result<bool, Self::Error>;
 }
 
 impl IErc3156FlashLender for Erc20FlashMint {
     type Error = Error;
 
-    fn max_flash_loan(&self, token: Address) -> U256 {
+    fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256 {
         if token == contract::address() {
-            return U256::MAX - self.total_supply();
+            return U256::MAX - erc20.total_supply();
         }
         U256::MIN
     }
@@ -231,8 +226,9 @@ impl IErc3156FlashLender for Erc20FlashMint {
         token: Address,
         amount: U256,
         data: Bytes,
+        erc20: &mut Erc20,
     ) -> Result<bool, Self::Error> {
-        let max_loan = self.max_flash_loan(token);
+        let max_loan = self.max_flash_loan(token, erc20);
         if amount > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
                 max_loan,
@@ -245,8 +241,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
                 receiver,
             }));
         }
-        self._mint(receiver, amount)?;
-
+        erc20._mint(receiver, amount)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
@@ -267,336 +262,15 @@ impl IErc3156FlashLender for Erc20FlashMint {
         }
 
         // let flash_fee_receiver = self.flash_fee_receiver_address.get();
-        // self._spend_allowance(receiver, contract::address(), amount + fee)?;
+        // erc20._spend_allowance(receiver, contract::address(), amount + fee)?;
         // if fee.is_zero() || flash_fee_receiver.is_zero() {
-        //     self._burn(receiver, amount + fee)?;
+        //     erc20._burn(receiver, amount + fee)?;
         // } else {
-        //     self._burn(receiver, amount)?;
-        //     self._transfer(receiver, flash_fee_receiver, fee)?;
+        //     erc20._burn(receiver, amount)?;
+        //     erc20._transfer(receiver, flash_fee_receiver, fee)?;
         // }
 
         Ok(true)
-    }
-}
-
-#[public]
-impl IErc20 for Erc20FlashMint {
-    type Error = crate::token::erc20::Error;
-
-    /// Returns the number of tokens in existence.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    fn total_supply(&self) -> U256 {
-        self.erc20.total_supply()
-    }
-
-    /// Returns the number of tokens owned by `account`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `account` - Account to get balance from.
-    fn balance_of(&self, account: Address) -> U256 {
-        self.erc20.balance_of(account)
-    }
-
-    /// Moves a `value` amount of tokens from the caller's account to `to`.
-    ///
-    /// Returns a boolean value indicating whether the operation succeeded.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `to` - Account to transfer tokens to.
-    /// * `value` - Number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidReceiver`] is returned.
-    /// * If the caller doesn't have a balance of at least `value`, then the
-    /// error [`crate::token::erc20::Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`crate::token::erc20::Transfer`] event.
-    fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error> {
-        self.erc20.transfer(to, value)
-    }
-
-    /// Returns the remaining number of tokens that `spender` will be allowed
-    /// to spend on behalf of `owner` through `transfer_from`. This is zero by
-    /// default.
-    ///
-    /// This value changes when `approve` or `transfer_from` are called.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `owner` - Account that owns the tokens.
-    /// * `spender` - Account that will spend the tokens.
-    fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        self.erc20.allowance(owner, spender)
-    }
-
-    /// Sets a `value` number of tokens as the allowance of `spender` over the
-    /// caller's tokens.
-    ///
-    /// Returns a boolean value indicating whether the operation succeeded.
-    ///
-    /// WARNING: Beware that changing an allowance with this method brings the
-    /// risk that someone may use both the old and the new allowance by
-    /// unfortunate transaction ordering. One possible solution to mitigate
-    /// this race condition is to first reduce the `spender`'s allowance to 0
-    /// and set the desired value afterwards:
-    /// <https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729>
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account that owns the tokens.
-    /// * `spender` - Account that will spend the tokens.
-    /// * `value` - The number of tokens being allowed to transfer by `spender`.
-    ///
-    /// # Errors
-    ///
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidSpender`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits an [`crate::token::erc20::Approval`] event.
-    fn approve(
-        &mut self,
-        spender: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error> {
-        self.erc20.approve(spender, value)
-    }
-
-    /// Moves a `value` number of tokens from `from` to `to` using the
-    /// allowance mechanism. `value` is then deducted from the caller's
-    /// allowance.
-    ///
-    /// Returns a boolean value indicating whether the operation succeeded.
-    ///
-    /// NOTE: If `value` is the maximum `U256::MAX`, the allowance is not
-    /// updated on `transfer_from`. This is semantically equivalent to
-    /// an infinite approval.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to transfer tokens from.
-    /// * `to` - Account to transfer tokens to.
-    /// * `value` - Number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidReceiver`] is returned.
-    /// * If not enough allowance is available, then the error
-    /// [`crate::token::erc20::Error::InsufficientAllowance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`crate::token::erc20::Transfer`] event.
-    fn transfer_from(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error> {
-        self.erc20.transfer_from(from, to, value)
-    }
-}
-
-impl IErc165 for Erc20FlashMint {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || <Self as IErc3156FlashLender>::INTERFACE_ID
-                == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
-    }
-}
-
-impl Erc20FlashMint {
-    /// Sets a `value` number of tokens as the allowance of `spender` over the
-    /// caller's tokens.
-    ///
-    /// Returns a boolean value indicating whether the operation succeeded.
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account that owns the tokens.
-    /// * `spender` - Account that will spend the tokens.
-    /// * `emit_event` - Emit an [`Approval`] event flag.
-    ///
-    /// # Errors
-    ///
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSpender`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits an [`Approval`] event.
-    fn _approve(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-        emit_event: bool,
-    ) -> Result<bool, crate::token::erc20::Error> {
-        self.erc20._approve(owner, spender, value, emit_event)
-    }
-
-    /// Internal implementation of transferring tokens between two accounts.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `from` - Account to transfer tokens from.
-    /// * `to` - Account to transfer tokens to.
-    /// * `value` - The number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidReceiver`] is returned.
-    /// * If the `from` address doesn't have enough tokens, then the error
-    ///   [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    fn _transfer(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), crate::token::erc20::Error> {
-        self.erc20._transfer(from, to, value)
-    }
-
-    /// Creates a `value` amount of tokens and assigns them to `account`,
-    /// by transferring it from `Address::ZERO`.
-    ///
-    /// Relies on the `_update` mechanism.
-    ///
-    /// # Panics
-    ///
-    /// If `_total_supply` exceeds `U256::MAX`.
-    ///
-    /// # Errors
-    ///
-    /// If the `account` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    pub fn _mint(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), crate::token::erc20::Error> {
-        self.erc20._mint(account, value)
-    }
-
-    /// Transfers a `value` amount of tokens from `from` to `to`, or
-    /// alternatively mints (or burns) if `from` (or `to`) is the zero address.
-    ///
-    /// All customizations to transfers, mints, and burns should be done by
-    /// using this function.
-    ///
-    /// # Arguments
-    ///
-    /// * `from` - Owner's address.
-    /// * `to` - Recipient's address.
-    /// * `value` - Amount to be transferred.
-    ///
-    /// # Panics
-    ///
-    /// If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
-    /// operation.
-    ///
-    /// # Errors
-    ///
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    pub fn _update(
-        &mut self,
-        from: Address,
-        to: Address,
-        value: U256,
-    ) -> Result<(), crate::token::erc20::Error> {
-        self.erc20._update(from, to, value)
-    }
-
-    /// Destroys a `value` amount of tokens from `account`,
-    /// lowering the total supply.
-    ///
-    /// Relies on the `update` mechanism.
-    ///
-    /// # Arguments
-    ///
-    /// * `account` - Owner's address.
-    /// * `value` - Amount to be burnt.
-    ///
-    /// # Errors
-    ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidSender`] is returned.
-    /// * If the `from` address doesn't have enough tokens, then the error
-    ///   [`Error::InsufficientBalance`] is returned.
-    ///
-    /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
-    pub fn _burn(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), crate::token::erc20::Error> {
-        self.erc20._burn(account, value)
-    }
-
-    /// Updates `owner`'s allowance for `spender` based on spent `value`.
-    ///
-    /// Does not update the allowance value in the case of infinite allowance.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account to transfer tokens from.
-    /// * `to` - Account to transfer tokens to.
-    /// * `value` - The number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    /// If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
-    pub fn _spend_allowance(
-        &mut self,
-        owner: Address,
-        spender: Address,
-        value: U256,
-    ) -> Result<(), crate::token::erc20::Error> {
-        self.erc20._spend_allowance(owner, spender, value)
     }
 }
 
