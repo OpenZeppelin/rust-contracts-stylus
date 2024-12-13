@@ -135,6 +135,7 @@ pub trait IErc3156FlashLender {
     ///
     /// # Arguments
     ///
+    /// * `&self` - Read access to the contract's state.
     /// * `token` - The address of the token that is requested.
     /// * `erc20` - Read access to an [`Erc20`] contract.
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
@@ -175,6 +176,7 @@ pub trait IErc3156FlashLender {
     ///   is supported.
     /// * `value` - The amount of tokens to be loaned.
     /// * `data` - Arbitrary data that is passed to the receiver.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
