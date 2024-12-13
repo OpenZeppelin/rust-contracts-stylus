@@ -249,20 +249,20 @@ impl IErc3156FlashLender for Erc20FlashMint {
             .map_err(|_| {
                 Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
             })?;
-        if loan_return != BORROWER_CALLBACK_VALUE {
-            return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
-                receiver,
-            }));
-        }
-
-        let flash_fee_receiver = self.flash_fee_receiver_address.get();
-        erc20._spend_allowance(receiver, contract::address(), amount + fee)?;
-        if fee.is_zero() || flash_fee_receiver.is_zero() {
-            erc20._burn(receiver, amount + fee)?;
-        } else {
-            erc20._burn(receiver, amount)?;
-            erc20._transfer(receiver, flash_fee_receiver, fee)?;
-        }
+        // if loan_return != BORROWER_CALLBACK_VALUE {
+        // return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
+        // receiver,
+        // }));
+        // }
+        //
+        // let flash_fee_receiver = self.flash_fee_receiver_address.get();
+        // erc20._spend_allowance(receiver, contract::address(), amount + fee)?;
+        // if fee.is_zero() || flash_fee_receiver.is_zero() {
+        // erc20._burn(receiver, amount + fee)?;
+        // } else {
+        // erc20._burn(receiver, amount)?;
+        // erc20._transfer(receiver, flash_fee_receiver, fee)?;
+        // }
 
         Ok(true)
     }
