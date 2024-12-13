@@ -263,9 +263,15 @@ impl IErc3156FlashLender for Erc20FlashMint {
             }));
         }
 
+        let allowance = amount
+            .checked_add(fee)
+            .expect("allowance should not exceed `U256::MAX`");
+        erc20._spend_allowance(receiver, contract::address(), allowance)?;
+
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
-        erc20._spend_allowance(receiver, contract::address(), amount + fee)?;
+
         if fee.is_zero() || flash_fee_receiver.is_zero() {
+            // SAFETY: overflow already checked when calculating allowance
             erc20._burn(receiver, amount + fee)?;
         } else {
             erc20._burn(receiver, amount)?;
