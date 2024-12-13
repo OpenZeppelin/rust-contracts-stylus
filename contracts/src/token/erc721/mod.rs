@@ -2540,6 +2540,7 @@ mod tests {
     }
 
     unsafe impl TopLevelStorage for Erc721ReceiverMock {}
+    unsafe impl TopLevelStorage for Erc721 {}
 
     #[motsu::test]
     fn on_erc721_received(
