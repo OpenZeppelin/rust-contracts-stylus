@@ -9,7 +9,9 @@ use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
 use mock::borrower;
 
-use crate::Erc20FlashMintExample::constructorCall;
+use crate::{
+    borrower::ERC3156FlashBorrowerMock, Erc20FlashMintExample::constructorCall,
+};
 
 mod abi;
 mod mock;
