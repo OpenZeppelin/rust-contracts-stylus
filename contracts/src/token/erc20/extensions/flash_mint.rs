@@ -139,6 +139,16 @@ pub trait IErc3156FlashLender {
     /// * `&self` - Read access to the contract's state.
     /// * `token` - The address of the token that is requested.
     /// * `erc20` - Read access to an [`Erc20`] contract.
+    ///
+    /// # Examples
+    ///
+    /// In order to have [`IErc3156FlashLender::max_flash_loan`] exposed in ABI,
+    /// you need to do this manually.
+    ///
+    /// ```rust,ignore
+    /// fn max_flash_loan(&self, token: Address) -> U256 {
+    ///     self.erc20_flash_mint.max_flash_loan(token, &self.erc20)
+    /// }
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
 
     /// Returns the fee applied when doing flash loans.
@@ -153,6 +163,16 @@ pub trait IErc3156FlashLender {
     ///
     /// If the token is not supported, then the error
     /// [`Error::UnsupportedToken`] is returned.
+    ///
+    /// # Examples
+    ///
+    /// In order to have [`IErc3156FlashLender::flash_fee`] exposed in ABI, you
+    /// need to do this manually.
+    ///
+    /// ```rust,ignore
+    /// fn flash_fee(&self, token: Address, amount: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc20_flash_mint.flash_fee(token, amount)?)
+    /// }
     fn flash_fee(
         &self,
         token: Address,
@@ -201,6 +221,28 @@ pub trait IErc3156FlashLender {
     /// If the new (temporary) total supply exceeds `U256::MAX`.
     /// If the sum of the loan amount and fee exceeds the maximum value of
     /// `U256::MAX`.
+    ///
+    /// # Examples
+    ///
+    /// In order to have [`IErc3156FlashLender::flash_loan`] exposed in ABI, you
+    /// need to do this manually.
+    ///
+    /// ```rust,ignore
+    /// fn flash_loan(
+    ///     &mut self,
+    ///     receiver: Address,
+    ///     token: Address,
+    ///     amount: U256,
+    ///     data: Bytes,
+    /// ) -> Result<bool, Vec<u8>> {
+    ///     Ok(self.erc20_flash_mint.flash_loan(
+    ///         receiver,
+    ///         token,
+    ///         amount,
+    ///         data,
+    ///         &mut self.erc20,
+    ///     )?)
+    /// }
     fn flash_loan(
         &mut self,
         receiver: Address,
