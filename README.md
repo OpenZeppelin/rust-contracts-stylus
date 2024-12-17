@@ -15,7 +15,7 @@
 
 [`koba`]: https://github.com/OpenZeppelin/koba
 
-[Unit]: https://github.com/OpenZeppelin/stylus-test-helpers/Readme.md
+[Unit]: https://github.com/OpenZeppelin/stylus-test-helpers
 
 [integration]: ./lib/e2e/README.md
 
