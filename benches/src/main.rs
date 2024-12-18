@@ -1,6 +1,7 @@
 use benches::{
     access_control, erc1155, erc1155_metadata_uri, erc20, erc721,
-    merkle_proofs, ownable, poseidon, report::BenchmarkReport,
+    merkle_proofs, ownable, poseidon, poseidon_renegades,
+    report::BenchmarkReport,
 };
 use futures::FutureExt;
 use itertools::Itertools;
@@ -8,14 +9,15 @@ use itertools::Itertools;
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     let benchmarks = [
-        access_control::bench().boxed(),
-        erc20::bench().boxed(),
-        erc721::bench().boxed(),
-        merkle_proofs::bench().boxed(),
-        ownable::bench().boxed(),
-        erc1155::bench().boxed(),
-        erc1155_metadata_uri::bench().boxed(),
+        // access_control::bench().boxed(),
+        // erc20::bench().boxed(),
+        // erc721::bench().boxed(),
+        // merkle_proofs::bench().boxed(),
+        // ownable::bench().boxed(),
+        // erc1155::bench().boxed(),
+        // erc1155_metadata_uri::bench().boxed(),
         poseidon::bench().boxed(),
+        poseidon_renegades::bench().boxed(),
     ];
 
     // Run benchmarks max 3 at the same time.

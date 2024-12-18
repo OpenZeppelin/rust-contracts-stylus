@@ -5,8 +5,8 @@ use alloc::vec::Vec;
 
 use alloy_primitives::B256;
 use openzeppelin_crypto::{
-    field::instance::FpVesta,
-    hash::Hasher,
+    bigint::BigInteger,
+    field::{instance::FpVesta, prime::PrimeField},
     poseidon2::{instance::vesta::VestaParams, Poseidon2},
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
@@ -23,11 +23,16 @@ impl PoseidonExample {
     ) -> Result<B256, Vec<u8>> {
         let input = data.to_vec();
 
-        // Compute hash from bytes.
-        let mut first_hasher = Poseidon2::<VestaParams, FpVesta>::new();
-        first_hasher.update(&input);
-        let hash = first_hasher.finalize();
+        let mut hasher = Poseidon2::<VestaParams, FpVesta>::new();
 
-        Ok(B256::from(hash))
+        for i in 0..1 {
+            let fp = FpVesta::from(i);
+            hasher.absorb(&fp);
+        }
+
+        let hash = hasher.squeeze();
+        let hash = hash.into_bigint().into_bytes_le();
+
+        Ok(B256::from_slice(&hash))
     }
 }
