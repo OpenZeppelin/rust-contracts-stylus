@@ -13,7 +13,10 @@ pub mod params;
 
 use alloc::{boxed::Box, vec, vec::Vec};
 
-use crate::{field::prime::PrimeField, poseidon2::params::PoseidonParams};
+use crate::{
+    bigint::BigInteger, field::prime::PrimeField, hash::Hasher,
+    poseidon2::params::PoseidonParams,
+};
 
 /// Determines whether poseidon sponge in absorbing or squeezing state.
 /// In squeezing state, sponge can only squeeze elements.
@@ -296,5 +299,69 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     // Add a round constant to the first state element in internal round.
     fn add_rc_internal(&mut self, round: usize) {
         self.state[0] += P::ROUND_CONSTANTS[round][0];
+    }
+}
+
+impl<P: PoseidonParams<F>, F: PrimeField> Hasher for Poseidon2<P, F> {
+    type Output = [u8; 32];
+
+    fn update(&mut self, input: impl AsRef<[u8]>) {
+        for chunk in input.as_ref().chunks(F::BigInt::BYTES) {
+            // Convert chunk of bytes to a big integer.
+            let big_int = if chunk.len() == F::BigInt::BYTES {
+                F::BigInt::from_bytes_le(chunk)
+            } else {
+                // If the chunk size is actually smaller, then pad it with
+                // zeros.
+                let mut padded = vec![0; F::BigInt::BYTES];
+                padded[..chunk.len()].copy_from_slice(chunk);
+                F::BigInt::from_bytes_le(&padded)
+            };
+            let elem = F::from_bigint(big_int);
+            self.absorb(&elem);
+        }
+    }
+
+    fn finalize(mut self) -> Self::Output {
+        self.squeeze_batch(32 / F::BigInt::BYTES)
+            .into_iter()
+            .flat_map(|elem| elem.into_bigint().into_bytes_le())
+            .collect::<Vec<u8>>()
+            .try_into()
+            .expect("invalid output length")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use proptest::proptest;
+
+    use super::*;
+    use crate::{
+        field::instance::FpVesta,
+        hash::Hasher,
+        poseidon2::{instance::vesta::VestaParams, Poseidon2},
+    };
+
+    // NOTE: Value of this test mostly because it tests hash on random number of
+    //  inputs without panic, instead of checking actual consistency.
+    //  Real consistency is hard to prove on purely random inputs.
+    #[test]
+    fn consistent_hasher() {
+        proptest!(|(first_input: Vec<u8>, second_input: Vec<u8>)| {
+            let mut first_hasher = Poseidon2::<VestaParams, FpVesta>::new();
+            first_hasher.update(&first_input);
+            let first_result = first_hasher.finalize();
+
+            let mut second_hasher = Poseidon2::<VestaParams, FpVesta>::new();
+            second_hasher.update(&second_input);
+            let second_result = second_hasher.finalize();
+
+            if first_input == second_input {
+                assert_eq!(first_result, second_result);
+            } else {
+                assert_ne!(first_result, second_result);
+            }
+        });
     }
 }

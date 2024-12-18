@@ -11,7 +11,7 @@ use core::{
 
 #[allow(clippy::module_name_repetitions)]
 pub use crypto_bigint;
-use crypto_bigint::{Integer, Limb, Uint, Word, Zero};
+use crypto_bigint::{Encoding, Integer, Limb, Uint, Word, Zero};
 use num_traits::ConstZero;
 use zeroize::Zeroize;
 
@@ -54,6 +54,9 @@ pub trait BigInteger:
 {
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
+
+    /// Number of bytes in the integer.
+    const BYTES: usize = Self::NUM_LIMBS * Limb::BYTES;
 
     /// Returns true if this number is odd.
     /// # Example
@@ -117,6 +120,16 @@ pub trait BigInteger:
     /// assert!(!one.get_bit(1));
     /// ```
     fn get_bit(&self, i: usize) -> bool;
+
+    /// Create bigint from little-endian bytes.
+    ///
+    /// # Panics
+    ///
+    /// Panic if the number of bytes is not equal to `Self::BYTES`.
+    fn from_bytes_le(bytes: &[u8]) -> Self;
+
+    /// Convert bigint to little-endian bytes.
+    fn into_bytes_le(self) -> alloc::vec::Vec<u8>;
 }
 
 impl<const N: usize> BigInteger for Uint<N> {
@@ -140,6 +153,14 @@ impl<const N: usize> BigInteger for Uint<N> {
 
     fn get_bit(&self, i: usize) -> bool {
         self.bit(i).into()
+    }
+
+    fn from_bytes_le(bytes: &[u8]) -> Self {
+        Self::from_le_slice(bytes)
+    }
+
+    fn into_bytes_le(self) -> alloc::vec::Vec<u8> {
+        self.to_limbs().into_iter().flat_map(|l| l.to_le_bytes()).collect()
     }
 }
 

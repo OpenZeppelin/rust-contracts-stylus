@@ -1,5 +1,5 @@
 [package]
-name = "ecdsa-example"
+name = "poseidon-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -7,7 +7,7 @@ publish = false
 version.workspace = true
 
 [dependencies]
-openzeppelin-stylus.workspace = true
+openzeppelin-crypto.workspace = true
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 
