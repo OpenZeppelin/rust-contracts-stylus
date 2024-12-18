@@ -120,6 +120,9 @@ pub struct Erc20FlashMint {
     pub flash_fee_receiver_address: StorageAddress,
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc20FlashMint {}
 
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
