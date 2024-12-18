@@ -207,6 +207,11 @@ pub struct Erc721 {
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc721 {}
+
 /// Required interface of an [`Erc721`] compliant contract.
 #[interface_id]
 pub trait IErc721 {
@@ -1099,7 +1104,7 @@ impl Erc721 {
     ///
     /// # Arguments
     ///
-    /// * `&self` - Read access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
@@ -1113,7 +1118,7 @@ impl Erc721 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     pub fn _check_on_erc721_received(
-        &self,
+        &mut self,
         operator: Address,
         from: Address,
         to: Address,
@@ -1125,7 +1130,7 @@ impl Erc721 {
         }
 
         let receiver = IERC721Receiver::new(to);
-        let call = Call::new();
+        let call = Call::new_in(self);
         let result = receiver.on_erc_721_received(
             call,
             operator,
