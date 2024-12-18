@@ -42,16 +42,16 @@ contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
             IERC20(token).balanceOf(address(this))
         );
 
-        // emit TotalSupply(token, IERC20(token).totalSupply());
+        emit TotalSupply(token, IERC20(token).totalSupply());
 
-        // if (data.length > 0) {
-        //     // WARNING: This code is for testing purposes only! Do not use in production.
-        //     Address.functionCall(token, data);
-        // }
+        if (data.length > 0) {
+            // WARNING: This code is for testing purposes only! Do not use in production.
+            Address.functionCall(token, data);
+        }
 
-        // if (_enableApprove) {
-        //     IERC20(token).approve(token, amount + fee);
-        // }
+        if (_enableApprove) {
+            IERC20(token).approve(token, amount + fee);
+        }
 
         return _enableReturn ? _RETURN_VALUE : bytes32(0);
     }

@@ -5,9 +5,9 @@ use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use e2e::{receipt, send, watch, Account, ReceiptExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
-use mock::borrower;
+use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
 
 use crate::Erc20FlashMintExample::constructorCall;
 
@@ -318,8 +318,6 @@ async fn flash_loan_reverts_when_invalid_receiver(
     Ok(())
 }
 
-// TODO: uncomment once it's possible to call ERC20 functions from
-// within `ERC3156FlashBorrowerMock`.
 #[e2e::test]
 async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     let erc20_addr = alice
@@ -333,10 +331,13 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
     let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
 
-    let balance = erc20.balanceOf(borrower_addr).call().await?.balance;
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
+    let fee_receiver_balance =
+        erc20.balanceOf(FEE_RECEIVER).call().await?.balance;
     let total_supply = erc20.totalSupply().call().await?.totalSupply;
 
-    assert_eq!(FLASH_FEE_AMOUNT, balance);
+    assert_eq!(FLASH_FEE_AMOUNT, borrower_balance);
+    assert_eq!(U256::ZERO, fee_receiver_balance);
     assert_eq!(FLASH_FEE_AMOUNT, total_supply);
 
     let loan_amount = uint!(1_000_000_U256);
@@ -351,27 +352,36 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
         vec![].into()
     ))?;
 
-    // assert!(receipt.emits(Erc20FlashMint::Transfer {
-    //     from: Address::ZERO,
-    //     to: borrower_addr,
-    //     value: loan_amount,
-    // }));
+    assert!(receipt.emits(Erc20FlashMint::Transfer {
+        from: Address::ZERO,
+        to: borrower_addr,
+        value: loan_amount,
+    }));
 
-    // assert!(receipt.emits(ERC3156FlashBorrowerMock::BalanceOf {
-    //     token: erc20_addr,
-    //     account: borrower_addr,
-    //     value: loan_amount + FLASH_FEE_AMOUNT,
-    // }));
-    // assert!(receipt.emits(ERC3156FlashBorrowerMock::TotalSupply {
-    //     token: erc20_addr,
-    //     value: loan_amount + FLASH_FEE_AMOUNT,
-    // }));
+    assert!(receipt.emits(ERC3156FlashBorrowerMock::BalanceOf {
+        token: erc20_addr,
+        account: borrower_addr,
+        value: loan_amount + FLASH_FEE_AMOUNT,
+    }));
+    assert!(receipt.emits(ERC3156FlashBorrowerMock::TotalSupply {
+        token: erc20_addr,
+        value: loan_amount + FLASH_FEE_AMOUNT,
+    }));
 
-    // assert!(receipt.emits(Erc20FlashMint::Approval {
-    //     owner: borrower_addr,
-    //     spender: erc20_addr,
-    //     value: loan_amount + FLASH_FEE_AMOUNT,
-    // }));
+    assert!(receipt.emits(Erc20FlashMint::Approval {
+        owner: borrower_addr,
+        spender: erc20_addr,
+        value: loan_amount + FLASH_FEE_AMOUNT,
+    }));
+
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
+    let fee_receiver_balance =
+        erc20.balanceOf(FEE_RECEIVER).call().await?.balance;
+    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+
+    assert_eq!(U256::ZERO, borrower_balance);
+    assert_eq!(FLASH_FEE_AMOUNT, fee_receiver_balance);
+    assert_eq!(FLASH_FEE_AMOUNT, total_supply);
 
     Ok(())
 }
