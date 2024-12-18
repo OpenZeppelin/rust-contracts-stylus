@@ -190,6 +190,27 @@ pub trait IErc3156FlashLender {
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
+    /// In order to have [`IErc3156FlashLender::flash_loan`] exposed in ABI, you
+    /// need to do this manually.
+    ///
+    /// ```rust,ignore
+    /// fn flash_loan(
+    ///     &mut self,
+    ///     receiver: Address,
+    ///     token: Address,
+    ///     amount: U256,
+    ///     data: Bytes,
+    /// ) -> Result<bool, Vec<u8>> {
+    ///     Ok(self.erc20_flash_mint.flash_loan(
+    ///         receiver,
+    ///         token,
+    ///         amount,
+    ///         data,
+    ///         &mut self.erc20,
+    ///     )?)
+    /// }
+    /// ```
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -225,28 +246,6 @@ pub trait IErc3156FlashLender {
     /// If the new (temporary) total supply exceeds `U256::MAX`.
     /// If the sum of the loan amount and fee exceeds the maximum value of
     /// `U256::MAX`.
-    ///
-    /// # Examples
-    ///
-    /// In order to have [`IErc3156FlashLender::flash_loan`] exposed in ABI, you
-    /// need to do this manually.
-    ///
-    /// ```rust,ignore
-    /// fn flash_loan(
-    ///     &mut self,
-    ///     receiver: Address,
-    ///     token: Address,
-    ///     amount: U256,
-    ///     data: Bytes,
-    /// ) -> Result<bool, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_loan(
-    ///         receiver,
-    ///         token,
-    ///         amount,
-    ///         data,
-    ///         &mut self.erc20,
-    ///     )?)
-    /// }
     fn flash_loan(
         &mut self,
         receiver: Address,
@@ -280,6 +279,9 @@ impl IErc3156FlashLender for Erc20FlashMint {
         Ok(self.flash_fee_amount.get())
     }
 
+    // This function can reenter, but it doesn't pose a risk because it always
+    // preserves the property that the amount minted at the beginning is always
+    // recovered and burned at the end, or else the entire function will revert.
     fn flash_loan(
         &mut self,
         receiver: Address,
