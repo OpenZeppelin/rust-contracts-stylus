@@ -8,6 +8,7 @@ use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
     call::{self, Call, MethodError},
+    storage::TopLevelStorage,
     stylus_proc::SolidityError,
 };
 
@@ -76,6 +77,7 @@ impl MethodError for ecdsa::Error {
 ///
 /// # Arguments
 ///
+/// * `storage` - Write access to storage.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -91,10 +93,16 @@ impl MethodError for ecdsa::Error {
 /// # Panics
 ///
 /// * If the `ecrecover` precompile fails to execute.
-pub fn recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
+pub fn recover(
+    storage: &mut impl TopLevelStorage,
+    hash: B256,
+    v: u8,
+    r: B256,
+    s: B256,
+) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    _recover(hash, v, r, s)
+    _recover(storage, hash, v, r, s)
 }
 
 /// Calls `ecrecover` EVM precompile.
@@ -104,6 +112,7 @@ pub fn recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
 ///
 /// # Arguments
 ///
+/// * `storage` - Write access to storage.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -119,7 +128,13 @@ pub fn recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
 /// # Panics
 ///
 /// * If the `ecrecover` precompile fails to execute.
-fn _recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
+fn _recover(
+    storage: &mut impl TopLevelStorage,
+    hash: B256,
+    v: u8,
+    r: B256,
+    s: B256,
+) -> Result<Address, Error> {
     let calldata = encode_calldata(hash, v, r, s);
 
     if v == 0 || v == 1 {
@@ -130,8 +145,9 @@ fn _recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
         return Err(ECDSAInvalidSignature {}.into());
     }
 
-    let recovered = call::static_call(Call::new(), ECRECOVER_ADDR, &calldata)
-        .expect("should call `ecrecover` precompile");
+    let recovered =
+        call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &calldata)
+            .expect("should call `ecrecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
 
