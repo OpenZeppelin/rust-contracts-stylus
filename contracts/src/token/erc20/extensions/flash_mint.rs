@@ -23,7 +23,7 @@ use stylus_sdk::{
     call::Call,
     contract, msg,
     prelude::*,
-    storage::{StorageAddress, StorageU256},
+    storage::{StorageAddress, StorageU256, TopLevelStorage},
 };
 
 use crate::token::erc20::{self, Erc20, IErc20};
@@ -119,6 +119,8 @@ pub struct Erc20FlashMint {
     /// Receiver address of the flash fee.
     pub flash_fee_receiver_address: StorageAddress,
 }
+
+unsafe impl TopLevelStorage for Erc20FlashMint {}
 
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
@@ -303,7 +305,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
-                Call::new(),
+                Call::new_in(self),
                 msg::sender(),
                 token,
                 amount,
@@ -319,20 +321,20 @@ impl IErc3156FlashLender for Erc20FlashMint {
             }));
         }
 
-        let allowance = amount
-            .checked_add(fee)
-            .expect("allowance should not exceed `U256::MAX`");
-        erc20._spend_allowance(receiver, contract::address(), allowance)?;
+        // let allowance = amount
+        //     .checked_add(fee)
+        //     .expect("allowance should not exceed `U256::MAX`");
+        // erc20._spend_allowance(receiver, contract::address(), allowance)?;
 
-        let flash_fee_receiver = self.flash_fee_receiver_address.get();
+        // let flash_fee_receiver = self.flash_fee_receiver_address.get();
 
-        if fee.is_zero() || flash_fee_receiver.is_zero() {
-            // SAFETY: overflow already checked when calculating allowance
-            erc20._burn(receiver, amount + fee)?;
-        } else {
-            erc20._burn(receiver, amount)?;
-            erc20._transfer(receiver, flash_fee_receiver, fee)?;
-        }
+        // if fee.is_zero() || flash_fee_receiver.is_zero() {
+        //     // SAFETY: overflow already checked when calculating allowance
+        //     erc20._burn(receiver, amount + fee)?;
+        // } else {
+        //     erc20._burn(receiver, amount)?;
+        //     erc20._transfer(receiver, flash_fee_receiver, fee)?;
+        // }
 
         Ok(true)
     }

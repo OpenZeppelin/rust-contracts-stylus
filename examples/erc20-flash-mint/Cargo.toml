@@ -19,6 +19,7 @@ e2e.workspace = true
 
 [features]
 e2e = []
+reentrant = ["stylus-sdk/reentrant"]
 
 [lib]
 crate-type = ["lib", "cdylib"]

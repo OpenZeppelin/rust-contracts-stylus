@@ -350,13 +350,18 @@ impl SafeErc20 {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        match RawCall::new()
-            .gas(gas_left())
-            .limit_return_data(0, 32)
-            .call(token, &call.abi_encode())
-        {
-            Ok(data) if data.is_empty() || Self::encodes_true(&data) => Ok(()),
-            _ => Err(SafeErc20FailedOperation { token }.into()),
+        unsafe {
+            match RawCall::new()
+                .gas(gas_left())
+                .limit_return_data(0, 32)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+            {
+                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
+                    Ok(())
+                }
+                _ => Err(SafeErc20FailedOperation { token }.into()),
+            }
         }
     }
 
@@ -380,17 +385,20 @@ impl SafeErc20 {
         }
 
         let call = IErc20::allowanceCall { owner: address(), spender };
-        let allowance = RawCall::new()
-            .gas(gas_left())
-            .limit_return_data(0, 32)
-            .call(token, &call.abi_encode())
-            .map_err(|_| {
-                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                    token,
-                })
-            })?;
+        unsafe {
+            let allowance = RawCall::new()
+                .gas(gas_left())
+                .limit_return_data(0, 32)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+                .map_err(|_| {
+                    Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                        token,
+                    })
+                })?;
 
-        Ok(U256::from_be_slice(&allowance))
+            Ok(U256::from_be_slice(&allowance))
+        }
     }
 
     /// Returns true if a slice of bytes is an ABI encoded `true` value.

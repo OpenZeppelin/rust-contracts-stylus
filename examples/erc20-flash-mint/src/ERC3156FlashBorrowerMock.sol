@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.1.0/contracts/interfaces/IERC3156FlashBorrower.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.1.0/contracts/interfaces/IERC20.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.1.0/contracts/utils/Address.sol";
+import "../../solidity-contracts/contracts/interfaces/IERC3156FlashBorrower.sol";
+import "../../solidity-contracts/contracts/token/ERC20/IERC20.sol";
+import "../../solidity-contracts/contracts/utils/Address.sol";
 
 /**
  * @dev WARNING: this IERC3156FlashBorrower mock implementation is for testing purposes ONLY.
@@ -16,8 +16,8 @@ contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
     bytes32 internal constant _RETURN_VALUE =
         keccak256("ERC3156FlashBorrower.onFlashLoan");
 
-    bool immutable _enableApprove;
-    bool immutable _enableReturn;
+    bool _enableApprove;
+    bool _enableReturn;
 
     event BalanceOf(address token, address account, uint256 value);
     event TotalSupply(address token, uint256 value);
@@ -33,7 +33,7 @@ contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
         uint256 amount,
         uint256 fee,
         bytes calldata data
-    ) public view returns (bytes32) {
+    ) public returns (bytes32) {
         require(msg.sender == token, "Invalid token address");
 
         emit BalanceOf(
@@ -42,16 +42,16 @@ contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
             IERC20(token).balanceOf(address(this))
         );
 
-        emit TotalSupply(token, IERC20(token).totalSupply());
+        // emit TotalSupply(token, IERC20(token).totalSupply());
 
-        if (data.length > 0) {
-            // WARNING: This code is for testing purposes only! Do not use in production.
-            Address.functionCall(token, data);
-        }
+        // if (data.length > 0) {
+        //     // WARNING: This code is for testing purposes only! Do not use in production.
+        //     Address.functionCall(token, data);
+        // }
 
-        if (_enableApprove) {
-            IERC20(token).approve(token, amount + fee);
-        }
+        // if (_enableApprove) {
+        //     IERC20(token).approve(token, amount + fee);
+        // }
 
         return _enableReturn ? _RETURN_VALUE : bytes32(0);
     }

@@ -77,7 +77,7 @@ all = "warn"
 
 [workspace.dependencies]
 # stylus-related
-stylus-sdk = "0.6.0"
+stylus-sdk = { version = "0.6.0", features = ["reentrant"] }
 
 alloy = { version = "=0.1.4", features = [
   "contract",
