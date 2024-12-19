@@ -154,7 +154,7 @@ pub trait IERC4626 {
 
 sol_storage! {
     #[allow(clippy::pub_underscore_fields)]
-    pub struct ERC4626 {
+    pub struct Vault {
         Erc20  _asset;
 
         uint8  _underlying_decimals;
@@ -162,8 +162,11 @@ sol_storage! {
 }
 
 sol! {
+    
+    #[allow(missing_docs)]
     event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
 
+    #[allow(missing_docs)]
     event Withdraw(
         address indexed sender,
         address indexed receiver,
@@ -174,18 +177,26 @@ sol! {
 }
 
 sol! {
+    /// Indicates an error where a deposit operation failed
+    /// because the supplied `assets` exceeded the maximum allowed for the `receiver`.
     #[derive(Debug)]
     #[allow(missing_docs)]
      error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
 
+    /// Indicates an error where a mint operation failed
+    /// because the supplied `shares` exceeded the maximum allowed for the `receiver`.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
 
+    /// Indicates an error where a withdrawal operation failed
+    /// because the supplied `assets` exceeded the maximum allowed for the `owner`
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
 
+    /// Indicates an error where a redemption operation failed
+    /// because the supplied `shares` exceeded the maximum allowed for the `owner`.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
@@ -193,17 +204,30 @@ sol! {
 
 #[derive(SolidityError, Debug)]
 pub enum Error {
+    /// Indicates an error where a deposit operation failed
+    /// because the supplied `assets` exceeded the maximum allowed for the `receiver`.
     ExceededMaxDeposit(ERC4626ExceededMaxDeposit),
+
+    /// Indicates an error where a mint operation failed
+    /// because the supplied `shares` exceeded the maximum allowed for the `receiver`
     ExceededMaxMint(ERC4626ExceededMaxMint),
+
+    /// Indicates an error where a withdrawal operation failed
+    /// because the supplied `assets` exceeded the maximum allowed for the `owner`
     ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw),
+
+    /// Indicates an error where a redemption operation failed
+    /// because the supplied `shares` exceeded the maximum allowed for the `owner`.
     ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
+
+
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error)
 }
 
 
 #[public]
-impl IERC4626 for ERC4626 {
+impl IERC4626 for Vault {
     type Error = Error;
     fn asset(&self) -> Address {
         contract::address()
@@ -213,21 +237,16 @@ impl IERC4626 for ERC4626 {
         self._asset.balance_of(contract::address())
     }
     
+
     fn convert_to_shares(&self,assets: U256) -> U256 {
         todo!()
     }
     
+
     fn convert_to_assets(&self,shares: U256) -> U256 {
         todo!()
     }
     
-    /// Returns the maximum amount of assets that can be deposited for the given receiver.
-    /// 
-    /// # Parameters
-    /// - `receiver`: The address intended to receive the deposited assets.
-    ///
-    /// # Returns
-    /// The maximum number of assets that can be deposited, which is `U256::MAX`.
     
     fn max_deposit(&self,_receiver: Address) -> U256 {
         U256::MAX
@@ -236,7 +255,7 @@ impl IERC4626 for ERC4626 {
     fn preview_deposit(&self,assets: U256) -> U256 {
         todo!()
     }
-    
+
     fn deposit(&mut self,assets: U256, receiver: Address) -> Result<U256, Error> {
         let max_assets = self.max_deposit(receiver);
         if assets > max_assets {
@@ -252,13 +271,6 @@ impl IERC4626 for ERC4626 {
         Ok(shares)
     }
     
-    /// Returns the maximum amount of shares that can be minted for the given receiver.
-    /// 
-    /// # Parameters
-    /// - `_receiver`: The address intended to receive the minted shares.
-    ///
-    /// # Returns
-    /// The maximum number of shares that can be minted, which is `U256::MAX`.
    fn max_mint(&self, _receiver: Address) -> U256 {
         U256::MAX
    }
@@ -267,6 +279,7 @@ impl IERC4626 for ERC4626 {
         todo!()
     }
     
+
     fn mint(&mut self,shares: U256, receiver: Address) -> Result<U256, Error> {
         let  max_shares = self.max_mint(receiver);
         if shares > max_shares {
@@ -281,13 +294,6 @@ impl IERC4626 for ERC4626 {
         Ok(assets)
     }
     
-/// Returns the maximum amount of assets that can be withdrawn by the given owner.
-/// 
-/// # Parameters
-/// - `owner`: The address of the account requesting to withdraw assets.
-///
-/// # Returns
-/// The maximum number of assets that can be withdrawn, which is `U256::MAX`.
 
     fn max_withdraw(&self,owner: Address) -> U256 {
         todo!()
@@ -336,7 +342,7 @@ impl IERC4626 for ERC4626 {
 }
 
 
-impl  ERC4626 {
+impl Vault {
        fn _convert_to_shares(&self, assets: U256, rounding:bool) -> U256  {
          let confersion_factor = self._asset._total_supply.get()  + U256::from(self._decimals_offset());
          let dominitor = self.total_assets() + U256::from(1);
