@@ -15,7 +15,6 @@ pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
-    evm::gas_left,
     function_selector,
     prelude::storage,
     storage::TopLevelStorage,
@@ -352,7 +351,6 @@ impl SafeErc20 {
         }
 
         match RawCall::new()
-            .gas(gas_left())
             .limit_return_data(0, 32)
             .call_with_reentrant_handling(token, &call.abi_encode())
         {
@@ -382,7 +380,6 @@ impl SafeErc20 {
 
         let call = IErc20::allowanceCall { owner: address(), spender };
         let result = RawCall::new()
-            .gas(gas_left())
             .limit_return_data(0, 32)
             .call_with_reentrant_handling(token, &call.abi_encode())
             .map_err(|_| {
