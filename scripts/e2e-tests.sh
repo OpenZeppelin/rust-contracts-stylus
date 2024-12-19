@@ -11,4 +11,4 @@ cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abo
 
 export RPC_URL=http://localhost:8547
 
-cargo test --features std,e2e,reentrant --test "$TEST_ARG" -- flash_loan_with_fee_and_fee_receiver
+cargo test --features std,e2e --test "$TEST_ARG"
