@@ -5,6 +5,7 @@ import "../../solidity-contracts/contracts/interfaces/IERC3156FlashBorrower.sol"
 import "../../solidity-contracts/contracts/token/ERC20/IERC20.sol";
 import "../../solidity-contracts/contracts/utils/Address.sol";
 
+// Needed for benches, see [`benches/src/erc20_flash_mint.rs`]
 /**
  * @dev WARNING: this IERC3156FlashBorrower mock implementation is for testing purposes ONLY.
  * Writing a secure flash lock borrower is not an easy task, and should be done with the utmost care.
