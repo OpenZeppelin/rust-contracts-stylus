@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.2.0-alpha.2] - 2024-12-18
 
 ### Added
 
@@ -24,7 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `AddAssignUnchecked` and `SubAssignUnchecked` for `StorageUint`. #418
 - Implement `MethodError` for `safe_erc20::Error`. #402
 - Use `function_selector!` to calculate transfer type selector in `Erc1155`. #417
-- Update internal functions of `Erc721` and `Erc721Consecutive` accept reference to `Bytes`. #437
+
+### Changed (Breaking)
+
+- Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
 
 ### Fixed
 
