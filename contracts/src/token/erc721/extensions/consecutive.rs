@@ -1,5 +1,5 @@
 //! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
-//! in https://eips.ethereum.org/EIPS/eip-2309[ERC-2309].
+//! in the [ERC].
 //!
 //! This extension allows the minting large batches of tokens, during
 //! contract construction only. For upgradeable contracts, this implies that
@@ -21,16 +21,17 @@
 //! As opposed to the Solidity implementation of Consecutive, there is no
 //! restriction on the [`Erc721Consecutive::_update`] function call since it is
 //! not possible to call a Rust function from the Solidity constructor.
+//!
+//! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
 use alloc::vec;
 
 use alloy_primitives::{uint, Address, U256};
-use alloy_sol_types::sol;
 use stylus_sdk::{
     abi::Bytes,
     evm, msg,
-    prelude::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::{storage, TopLevelStorage},
+    stylus_proc::{public, SolidityError},
 };
 
 use crate::{
@@ -53,65 +54,71 @@ use crate::{
 };
 
 type U96 = <S160 as Size>::Key;
+type StorageU96 = <S160 as Size>::KeyStorage;
 
-sol_storage! {
-    /// State of an [`Erc721Consecutive`] token.
-    pub struct Erc721Consecutive {
-        /// Erc721 contract storage.
-        Erc721 erc721;
-        /// Checkpoint library contract for sequential ownership.
-        Trace<S160> _sequential_ownership;
-        /// BitMap library contract for sequential burn of tokens.
-        BitMap _sequential_burn;
-        /// Used to offset the first token id in
-        /// [`Erc721Consecutive::_next_consecutive_id`].
-        uint96 _first_consecutive_id;
-        /// Maximum size of a batch of consecutive tokens. This is designed to limit
-        /// stress on off-chain indexing services that have to record one entry per
-        /// token, and have protections against "unreasonably large" batches of
-        /// tokens.
-        uint96 _max_batch_size;
+/// State of an [`Erc721Consecutive`] token.
+#[storage]
+pub struct Erc721Consecutive {
+    /// Erc721 contract storage.
+    pub erc721: Erc721,
+    /// Checkpoint library contract for sequential ownership.
+    pub _sequential_ownership: Trace<S160>,
+    /// BitMap library contract for sequential burn of tokens.
+    pub _sequential_burn: BitMap,
+    /// Used to offset the first token id in
+    /// [`Erc721Consecutive::_next_consecutive_id`].
+    pub _first_consecutive_id: StorageU96,
+    /// Maximum size of a batch of consecutive tokens. This is designed to
+    /// limit stress on off-chain indexing services that have to record one
+    /// entry per token, and have protections against "unreasonably large"
+    /// batches of tokens.
+    pub _max_batch_size: StorageU96,
+}
+
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
+
+    sol! {
+        /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
+        ///
+        /// * `from_token_id` - First token being transferred.
+        /// * `to_token_id` - Last token being transferred.
+        /// * `from_address` - Address from which tokens will be transferred.
+        /// * `to_address` - Address where the tokens will be transferred to.
+        #[allow(missing_docs)]
+        event ConsecutiveTransfer(
+            uint256 indexed from_token_id,
+            uint256 to_token_id,
+            address indexed from_address,
+            address indexed to_address
+        );
     }
-}
 
-sol! {
-    /// Emitted when the tokens from `from_token_id` to `to_token_id` are transferred from `from_address` to `to_address`.
-    ///
-    /// * `from_token_id` - First token being transferred.
-    /// * `to_token_id` - Last token being transferred.
-    /// * `from_address` - Address from which tokens will be transferred.
-    /// * `to_address` - Address where the tokens will be transferred to.
-    #[allow(missing_docs)]
-    event ConsecutiveTransfer(
-        uint256 indexed from_token_id,
-        uint256 to_token_id,
-        address indexed from_address,
-        address indexed to_address
-    );
-}
+    sol! {
+        /// Batch mint is restricted to the constructor.
+        /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
+        /// is non ERC-721 compliant.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenBatchMint();
 
-sol! {
-    /// Batch mint is restricted to the constructor.
-    /// Any batch mint not emitting the [`Transfer`] event outside of the constructor
-    /// is non ERC-721 compliant.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenBatchMint();
+        /// Exceeds the max number of mints per batch.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ExceededMaxBatchMint(uint256 batch_size, uint256 max_batch);
 
-    /// Exceeds the max number of mints per batch.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ExceededMaxBatchMint(uint256 batch_size, uint256 max_batch);
+        /// Individual minting is not allowed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenMint();
 
-    /// Individual minting is not allowed.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenMint();
-
-    /// Batch burn is not supported.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721ForbiddenBatchBurn();
+        /// Batch burn is not supported.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721ForbiddenBatchBurn();
+    }
 }
 
 /// An [`Erc721Consecutive`] error.
@@ -174,7 +181,7 @@ impl IErc721 for Erc721Consecutive {
             from,
             to,
             token_id,
-            data,
+            &data,
         )?)
     }
 
@@ -385,9 +392,9 @@ impl Erc721Consecutive {
         Ok(previous_owner)
     }
 
-    /// Returns the next token_id to mint using [`Self::_mint_consecutive`]. It
+    /// Returns the next token id to mint using [`Self::_mint_consecutive`]. It
     /// will return [`Erc721Consecutive::_first_consecutive_id`] if no
-    /// consecutive token_id has been minted before.
+    /// consecutive token id has been minted before.
     ///
     /// # Arguments
     ///
@@ -545,7 +552,7 @@ impl Erc721Consecutive {
         &mut self,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
@@ -698,7 +705,7 @@ impl Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
@@ -1113,7 +1120,7 @@ mod tests {
         let alice = msg::sender();
         let token_id = random_token_id();
         let err = contract
-            ._safe_transfer(alice, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(alice, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer a non-existent token");
 
         assert!(matches!(
@@ -1188,7 +1195,7 @@ mod tests {
                 alice,
                 invalid_receiver,
                 token_id,
-                vec![0, 1, 2, 3].into(),
+                &vec![0, 1, 2, 3].into(),
             )
             .expect_err("should not transfer the token to invalid receiver");
 
@@ -1215,7 +1222,7 @@ mod tests {
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
         let err = contract
-            ._safe_transfer(DAVE, BOB, token_id, vec![0, 1, 2, 3].into())
+            ._safe_transfer(DAVE, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
@@ -1237,7 +1244,7 @@ mod tests {
             .expect("should return the balance of Alice");
 
         contract
-            ._safe_mint(alice, token_id, vec![0, 1, 2, 3].into())
+            ._safe_mint(alice, token_id, &vec![0, 1, 2, 3].into())
             .expect("should mint a token for Alice");
 
         let owner = contract
@@ -1308,12 +1315,12 @@ mod tests {
         contract
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert_eq!(contract.is_approved_for_all(alice, BOB), true);
+        assert!(contract.is_approved_for_all(alice, BOB));
 
         contract.set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert_eq!(contract.is_approved_for_all(alice, BOB), false);
+        assert!(!contract.is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]

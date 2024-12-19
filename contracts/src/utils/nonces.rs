@@ -3,16 +3,25 @@
 //! Nonces will only increment.
 
 use alloy_primitives::{uint, Address, U256};
-use alloy_sol_types::sol;
-use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
+use stylus_sdk::{
+    prelude::storage,
+    storage::{StorageMap, StorageU256},
+    stylus_proc::{public, SolidityError},
+};
 
 const ONE: U256 = uint!(1_U256);
 
-sol! {
-    /// The nonce used for an `account` is not the expected current nonce.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error InvalidAccountNonce(address account, uint256 currentNonce);
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
+
+    sol! {
+        /// The nonce used for an `account` is not the expected current nonce.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidAccountNonce(address account, uint256 currentNonce);
+    }
 }
 
 /// A Nonces error.
@@ -22,12 +31,11 @@ pub enum Error {
     InvalidAccountNonce(InvalidAccountNonce),
 }
 
-sol_storage! {
-    /// State of a Nonces Contract.
-    pub struct Nonces {
-        /// Mapping from address to its nonce.
-        mapping(address => uint256) _nonces;
-    }
+/// State of a Nonces Contract.
+#[storage]
+pub struct Nonces {
+    /// Mapping from address to its nonce.
+    pub _nonces: StorageMap<Address, StorageU256>,
 }
 
 #[public]
@@ -52,7 +60,7 @@ impl Nonces {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address for which to consume the nonce.
     ///
-    /// /// # Panics
+    /// # Panics
     ///
     /// This function will panic if the nonce for the given `owner` has reached
     /// the maximum value representable by `U256`, causing the `checked_add`

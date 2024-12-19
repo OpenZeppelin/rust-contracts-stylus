@@ -1,0 +1,50 @@
+= ERC-1155 Metadata URI
+
+The OpenZeppelin xref:erc1155.adoc[ERC-1155] Metadata URI extension is needed to manage and store URIs for individual tokens. This extension allows each token to have its own unique URI,
+which points to a JSON file that conforms to the https://eips.ethereum.org/EIPS/eip-1155#erc-1155-metadata-uri-json-schema[ERC-1155 Metadata URI JSON Schema].
+This is particularly useful for non-fungible tokens (NFTs) where each token is unique and may have different metadata.
+
+[[usage]]
+== Usage
+
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[Metadata URI] flavour,
+you need to add the following code to your contract:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc1155::{
+    extensions::Erc1155MetadataUri, Erc1155,
+};
+
+#[entrypoint]
+#[storage]
+struct Erc1155Example {
+    #[borrow]
+    pub erc1155: Erc1155,
+    pub metadata_uri: Erc1155MetadataUri,
+}
+
+#[public]
+#[inherit(Erc1155, Erc1155MetadataUri)]
+impl Erc1155Example {
+    // ...
+}
+----
+
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
+Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc1155Example {
+    // ...
+
+    string private _uri;
+
+    constructor(string memory uri_) {
+        // ...
+        _uri = uri_;
+        // ...
+    }
+}
+----

@@ -15,14 +15,13 @@ Here's what our GLD token might look like.
 
 [source,rust]
 ----
-sol_storage! {
-    #[entrypoint]
-    struct GLDToken {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        Erc20Metadata metadata;
-    }
+#[entrypoint]
+#[storage]
+struct GLDToken {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub metadata: Erc20Metadata,
 }
 
 #[public]

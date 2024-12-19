@@ -14,34 +14,41 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
-use alloy_sol_types::sol;
+pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    storage::StorageBool,
+    stylus_proc::{public, SolidityError},
 };
 
-sol! {
-    /// Emitted when pause is triggered by `account`.
-    #[allow(missing_docs)]
-    event Paused(address account);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Emitted when the pause is lifted by `account`.
-    #[allow(missing_docs)]
-    event Unpaused(address account);
-}
+    sol! {
+        /// Emitted when pause is triggered by `account`.
+        #[allow(missing_docs)]
+        event Paused(address account);
 
-sol! {
-    /// Indicates an error related to the operation that failed
-    /// because the contract is paused.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error EnforcedPause();
+        /// Emitted when the pause is lifted by `account`.
+        #[allow(missing_docs)]
+        event Unpaused(address account);
+    }
 
-    /// Indicates an error related to the operation that failed
-    /// because the contract is not paused.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ExpectedPause();
+    sol! {
+        /// Indicates an error related to the operation that failed
+        /// because the contract is paused.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error EnforcedPause();
+
+        /// Indicates an error related to the operation that failed
+        /// because the contract is not paused.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ExpectedPause();
+    }
 }
 
 /// A Pausable error.
@@ -55,12 +62,11 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
-sol_storage! {
-    /// State of a Pausable Contract.
-    pub struct Pausable {
-        /// Indicates whether the contract is `Paused`.
-        bool _paused;
-    }
+/// State of a Pausable Contract.
+#[storage]
+pub struct Pausable {
+    /// Indicates whether the contract is `Paused`.
+    pub _paused: StorageBool,
 }
 
 #[public]
@@ -154,15 +160,15 @@ mod tests {
     #[motsu::test]
     fn paused_works(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
     }
 
     #[motsu::test]
     fn when_not_paused_works(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         let result = contract.when_not_paused();
         assert!(result.is_ok());
@@ -171,7 +177,7 @@ mod tests {
     #[motsu::test]
     fn when_not_paused_errors_when_paused(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         let result = contract.when_not_paused();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
@@ -180,7 +186,7 @@ mod tests {
     #[motsu::test]
     fn when_paused_works(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         let result = contract.when_paused();
         assert!(result.is_ok());
@@ -189,7 +195,7 @@ mod tests {
     #[motsu::test]
     fn when_paused_errors_when_not_paused(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         let result = contract.when_paused();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
@@ -198,43 +204,43 @@ mod tests {
     #[motsu::test]
     fn pause_works(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         // Pause the contract
         let res = contract.pause();
         assert!(res.is_ok());
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
     }
 
     #[motsu::test]
     fn pause_errors_when_already_paused(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         let result = contract.pause();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
     }
 
     #[motsu::test]
     fn unpause_works(contract: Pausable) {
         contract._paused.set(true);
-        assert_eq!(contract.paused(), true);
+        assert!(contract.paused());
 
         // Unpause the paused contract
         let res = contract.unpause();
         assert!(res.is_ok());
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
     }
 
     #[motsu::test]
     fn unpause_errors_when_already_unpaused(contract: Pausable) {
         contract._paused.set(false);
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
 
         // Unpause the unpaused contract
         let result = contract.unpause();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
-        assert_eq!(contract.paused(), false);
+        assert!(!contract.paused());
     }
 }

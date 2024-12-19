@@ -44,6 +44,11 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           rustflags: ""
 
+      - name: "Install nextest"
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Cargo generate-lockfile
         # Enable this ci template to run regardless of whether the lockfile is
         # checked in or not.
@@ -52,7 +57,7 @@ jobs:
 
         # https://twitter.com/jonhoo/status/1571290371124260865
       - name: Run unit tests
-        run: cargo test --locked --features std --all-targets
+        run: cargo nextest run --locked --features std --all-targets
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
@@ -78,12 +83,17 @@ jobs:
           toolchain: stable
           rustflags: ""
 
+      - name: "Install nextest"
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
 
       - name: Run unit tests
-        run: cargo test --locked --features std --all-targets
+        run: cargo nextest run --locked --features std --all-targets
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
     # is compatible with codecov.io.
@@ -107,16 +117,19 @@ jobs:
     #
     # for lots of more discussion.
     runs-on: ubuntu-latest
-    name: ubuntu / stable / coverage
+    name: ubuntu / nightly / coverage
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Install rust
+        # We run in nightly to make use of the `#[coverage(off)]` attribute (see _contracts/src/lib.rs_)
+        # We'll return to stable release after the tracking issue is merged (and the feature is stable)
+        # See: https://github.com/rust-lang/rust/issues/84605
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           components: llvm-tools-preview
           rustflags: ""
 
@@ -134,7 +147,7 @@ jobs:
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}

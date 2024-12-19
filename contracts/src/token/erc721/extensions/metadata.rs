@@ -4,21 +4,22 @@ use alloc::string::{String, ToString};
 
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, sol_storage};
+use stylus_sdk::{
+    prelude::storage, storage::StorageString, stylus_proc::public,
+};
 
 use crate::{
     token::erc721::{Error, IErc721},
     utils::{introspection::erc165::IErc165, Metadata},
 };
 
-sol_storage! {
-    /// Metadata of an [`crate::token::erc721::Erc721`] token.
-    pub struct Erc721Metadata {
-        /// Common Metadata.
-        Metadata _metadata;
-        /// Base URI for tokens.
-        string _base_uri;
-    }
+/// Metadata of an [`crate::token::erc721::Erc721`] token.
+#[storage]
+pub struct Erc721Metadata {
+    /// Common Metadata.
+    pub _metadata: Metadata,
+    /// Base URI for tokens.
+    pub _base_uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
@@ -53,11 +54,15 @@ impl IErc721Metadata for Erc721Metadata {
     }
 }
 
+const TOKEN_URI_SELECTOR: u32 =
+    u32::from_be_bytes(stylus_sdk::function_selector!("tokenURI", U256));
+
 impl IErc165 for Erc721Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         // NOTE: interface id is calculated using additional selector
         //  [`Erc721Metadata::token_uri`]
-        0x_5b5e139f == u32::from_be_bytes(*interface_id)
+        (<Self as IErc721Metadata>::INTERFACE_ID ^ TOKEN_URI_SELECTOR)
+            == u32::from_be_bytes(*interface_id)
     }
 }
 
@@ -116,14 +121,19 @@ impl Erc721Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    // use crate::token::erc721::extensions::{Erc721Metadata, IErc721Metadata};
+    use super::{Erc721Metadata, IErc165, IErc721Metadata};
 
-    // TODO: IErc721Metadata should be refactored to have same api as solidity
-    //  has:  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4764ea50750d8bda9096e833706beba86918b163/contracts/token/ERC721/extensions/IERC721Metadata.sol#L12
-    // [motsu::test]
-    // fn interface_id() {
-    //     let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
-    //     let expected = 0x5b5e139f;
-    //     assert_eq!(actual, expected);
-    // }
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
+        let expected = 0x93254542;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(<Erc721Metadata as IErc165>::supports_interface(
+            0x5b5e139f.into()
+        ));
+    }
 }

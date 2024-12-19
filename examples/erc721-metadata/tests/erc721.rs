@@ -271,3 +271,33 @@ async fn return_token_uri_after_burn_and_remint(
     assert_eq!(base_uri.to_owned() + &token_id.to_string(), tokenURI);
     Ok(())
 }
+
+// ============================================================================
+// Integration Tests: ERC-165 Support Interface
+// ============================================================================
+
+#[e2e::test]
+async fn supports_interface(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(
+            "https://github.com/OpenZeppelin/rust-contracts-stylus",
+        ))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let erc721_metadata_interface_id: u32 = 0x5b5e139f;
+    let supports_interface = contract
+        .supportsInterface(erc721_metadata_interface_id.into())
+        .call()
+        .await?
+        ._0;
+
+    assert!(supports_interface);
+
+    // other tests verify that other ERC-721 interfaces are implemented
+
+    Ok(())
+}

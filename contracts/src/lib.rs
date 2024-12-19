@@ -2,7 +2,7 @@
 # OpenZeppelin Contracts for Stylus
 
 A library for secure smart contract development written in Rust for
-[Arbitrum Stylus](https://docs.arbitrum.io/stylus/stylus-gentle-introduction).
+[Arbitrum Stylus](https://docs.arbitrum.io/stylus/gentle-introduction).
 This library offers common smart contract primitives and affordances that take
 advantage of the nature of Stylus.
 
@@ -25,12 +25,11 @@ importing them:
 use stylus_sdk::prelude::*;
 use openzeppelin_stylus::token::erc20::Erc20;
 
-sol_storage! {
-    #[entrypoint]
-    struct MyContract {
-        #[borrow]
-        Erc20 erc20;
-    }
+#[entrypoint]
+#[storage]
+struct MyContract {
+    #[borrow]
+    pub erc20: Erc20,
 }
 
 #[public]
@@ -45,9 +44,11 @@ impl MyContract { }
     clippy::used_underscore_items
 )]
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
+#![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
 
 pub mod access;
+pub mod finance;
 pub mod token;
 pub mod utils;

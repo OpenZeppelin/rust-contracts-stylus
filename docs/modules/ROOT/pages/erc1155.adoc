@@ -1,0 +1,18 @@
+= ERC-1155
+
+ERC1155 is a novel token standard that aims to take the best from previous standards to create a xref:tokens.adoc#different-kinds-of-tokens[*fungibility-agnostic*] and *gas-efficient* xref:tokens.adoc#but_first_coffee_a_primer_on_token_contracts[token contract].
+
+[[erc1155-token-extensions]]
+== Extensions
+
+Additionally, there are multiple custom extensions, including:
+
+* xref:erc1155-burnable.adoc[ERC-1155 Burnable]: Optional Burnable extension of the ERC-1155 standard.
+
+* xref:erc1155-metadata-uri.adoc[ERC-1155 Metadata URI]: Optional extension that adds a token metadata URI.
+
+* xref:erc1155-pausable.adoc[ERC-1155 Pausable]: A primitive to pause contract operation like token transfers, minting and burning.
+
+* xref:erc1155-uri-storage.adoc[ERC-1155 URI Storage]: A more flexible but more expensive way of storing URI metadata.
+
+* xref:erc1155-supply.adoc[ERC-1155 Supply]: Extension of the ERC-1155 standard that adds tracking of total supply per token id.

@@ -1,0 +1,45 @@
+= ERC-1155 Supply
+
+The OpenZeppelin xref:erc1155.adoc[ERC-1155] Supply extension that adds tracking of total supply per token id.
+Useful for scenarios where Fungible and Non-fungible tokens have to be clearly identified.
+
+[[usage]]
+== Usage
+
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.2/openzeppelin_stylus/token/erc1155/extensions/supply/index.html[Supply] flavour,
+you need to reexport all the supply-related functions.
+Make sure to apply the `#[selector(name = "totalSupply")]` attribute to the `total_supply_all` function!
+You need to create the specified contract as follows:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc1155::extensions::{
+    Erc1155Supply, IErc1155Supply,
+};
+
+#[entrypoint]
+#[storage]
+struct Erc1155Example {
+    #[borrow]
+    pub erc1155_supply: Erc1155Supply,
+}
+
+#[public]
+#[inherit(Erc1155Supply)]
+impl Erc1155Example {
+    fn total_supply(&self, id: U256) -> U256 {
+        self.erc1155_supply.total_supply(id)
+    }
+
+    #[selector(name = "totalSupply")]
+    fn total_supply_all(&self) -> U256 {
+        self.erc1155_supply.total_supply_all()
+    }
+
+    fn exists(&self, id: U256) -> bool {
+        self.erc1155_supply.exists(id)
+    }
+
+    // ...
+}
+----

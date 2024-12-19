@@ -49,18 +49,20 @@ async fn constructs(alice: Account) -> Result<()> {
         .address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
-    let Erc20::nameReturn { name } = contract.name().call().await?;
-    let Erc20::symbolReturn { symbol } = contract.symbol().call().await?;
-    let Erc20::capReturn { cap } = contract.cap().call().await?;
-    let Erc20::decimalsReturn { decimals } = contract.decimals().call().await?;
-    let Erc20::totalSupplyReturn { totalSupply: total_supply } =
-        contract.totalSupply().call().await?;
+    let name = contract.name().call().await?.name;
+    let symbol = contract.symbol().call().await?.symbol;
+    let cap = contract.cap().call().await?.cap;
+    let decimals = contract.decimals().call().await?.decimals;
+    let total_supply = contract.totalSupply().call().await?.totalSupply;
+    let paused = contract.paused().call().await?.paused;
 
     assert_eq!(name, TOKEN_NAME.to_owned());
     assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
     assert_eq!(cap, CAP);
     assert_eq!(decimals, 10);
     assert_eq!(total_supply, U256::ZERO);
+    assert!(!paused);
+
     Ok(())
 }
 
@@ -1057,9 +1059,30 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 
     assert!(receipt.emits(Erc20::Paused { account: alice.address() }));
 
-    let Erc20::pausedReturn { paused } = contract.paused().call().await?;
+    let paused = contract.paused().call().await?.paused;
 
-    assert_eq!(true, paused);
+    assert!(paused);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc20::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(contract.pause())?;
+
+    let err =
+        send!(contract.pause()).expect_err("should return `EnforcedPause`");
+
+    assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
     Ok(())
 }
@@ -1080,9 +1103,32 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 
     assert!(receipt.emits(Erc20::Unpaused { account: alice.address() }));
 
-    let Erc20::pausedReturn { paused } = contract.paused().call().await?;
+    let paused = contract.paused().call().await?.paused;
 
-    assert_eq!(false, paused);
+    assert!(!paused);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc20::new(contract_addr, &alice.wallet);
+
+    let paused = contract.paused().call().await?.paused;
+
+    assert!(!paused);
+
+    let err =
+        send!(contract.unpause()).expect_err("should return `ExpectedPause`");
+
+    assert!(err.reverted_with(Erc20::ExpectedPause {}));
 
     Ok(())
 }
@@ -1111,7 +1157,7 @@ async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
     let _ = watch!(contract.pause())?;
 
     let err =
-        send!(contract.burn(value)).expect_err("should return EnforcedPause");
+        send!(contract.burn(value)).expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
     let Erc20::balanceOfReturn { balance } =
@@ -1162,7 +1208,7 @@ async fn error_when_burn_from_in_paused_state(
     let _ = watch!(contract_alice.pause())?;
 
     let err = send!(contract_bob.burnFrom(alice_addr, value))
-        .expect_err("should return EnforcedPause");
+        .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
     let Erc20::balanceOfReturn { balance: alice_balance } =
@@ -1204,7 +1250,7 @@ async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
     let _ = watch!(contract.pause())?;
 
     let err = send!(contract.mint(alice_addr, uint!(1_U256)))
-        .expect_err("should return EnforcedPause");
+        .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
     let Erc20::balanceOfReturn { balance } =
@@ -1246,7 +1292,7 @@ async fn error_when_transfer_in_paused_state(
     let _ = watch!(contract_alice.pause())?;
 
     let err = send!(contract_alice.transfer(bob_addr, uint!(1_U256)))
-        .expect_err("should return EnforcedPause");
+        .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
     let Erc20::balanceOfReturn { balance: alice_balance } =
@@ -1297,7 +1343,7 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
 
     let err =
         send!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(1_U256)))
-            .expect_err("should return EnforcedPause");
+            .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
     let Erc20::balanceOfReturn { balance: alice_balance } =
@@ -1322,7 +1368,7 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
 // ============================================================================
 
 #[e2e::test]
-async fn support_interface(alice: Account) -> Result<()> {
+async fn supports_interface(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -1335,21 +1381,21 @@ async fn support_interface(alice: Account) -> Result<()> {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, false);
+    assert!(!supports_interface);
 
     let erc20_interface_id: u32 = 0x36372b07;
     let Erc20::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(erc20_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     let erc165_interface_id: u32 = 0x01ffc9a7;
     let Erc20::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     let erc20_metadata_interface_id: u32 = 0xa219a025;
     let Erc20::supportsInterfaceReturn {
@@ -1359,7 +1405,7 @@ async fn support_interface(alice: Account) -> Result<()> {
         .call()
         .await?;
 
-    assert_eq!(supports_interface, true);
+    assert!(supports_interface);
 
     Ok(())
 }

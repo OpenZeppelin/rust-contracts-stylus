@@ -1,5 +1,7 @@
 //! Wrappers around ERC-20 operations that throw on failure (when the token
-//! contract returns false). Tokens that return no value (and instead revert or
+//! contract returns false).
+//!
+//! Tokens that return no value (and instead revert or
 //! throw on failure) are also supported, non-reverting calls are assumed to be
 //! successful.
 //!
@@ -8,39 +10,46 @@
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
 use alloy_primitives::{Address, U256};
-use alloy_sol_types::{sol, SolCall};
+use alloy_sol_types::SolCall;
+pub use sol::*;
 use stylus_sdk::{
-    call::RawCall,
+    call::{MethodError, RawCall},
     contract::address,
     evm::gas_left,
     function_selector,
+    prelude::storage,
     storage::TopLevelStorage,
-    stylus_proc::{public, sol_storage, SolidityError},
+    stylus_proc::{public, SolidityError},
     types::AddressVM,
 };
 
 use crate::token::erc20;
 
-sol! {
-    /// An operation with an ERC-20 token failed.
-    ///
-    /// * `token` - Address of the ERC-20 token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error SafeErc20FailedOperation(address token);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
-    ///
-    /// * `spender` - Address of future tokens' spender.
-    /// * `current_allowance` - Current allowance of the `spender`.
-    /// * `requested_decrease` - Requested decrease in allowance for `spender`.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error SafeErc20FailedDecreaseAllowance(
-        address spender,
-        uint256 current_allowance,
-        uint256 requested_decrease
-    );
+    sol! {
+        /// An operation with an ERC-20 token failed.
+        ///
+        /// * `token` - Address of the ERC-20 token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error SafeErc20FailedOperation(address token);
+
+        /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+        ///
+        /// * `spender` - Address of future tokens' spender.
+        /// * `current_allowance` - Current allowance of the `spender`.
+        /// * `requested_decrease` - Requested decrease in allowance for `spender`.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error SafeErc20FailedDecreaseAllowance(
+            address spender,
+            uint256 current_allowance,
+            uint256 requested_decrease
+        );
+    }
 }
 
 /// A [`SafeErc20`] error.
@@ -54,9 +63,16 @@ pub enum Error {
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
 pub use token::*;
-#[allow(missing_docs)]
 mod token {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
     alloy_sol_types::sol! {
         /// Interface of the ERC-20 token.
         interface IErc20 {
@@ -67,17 +83,17 @@ mod token {
         }
     }
 }
-sol_storage! {
-    /// State of the [`SafeErc20`] Contract.
-    pub struct SafeErc20 {}
-}
+
+/// State of the [`SafeErc20`] Contract.
+#[storage]
+pub struct SafeErc20 {}
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for SafeErc20 {}
 
-/// Required interface of an [`SafeErc20`] utility contract.
+/// Required interface of a [`SafeErc20`] utility contract.
 pub trait ISafeErc20 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -383,7 +399,7 @@ impl SafeErc20 {
     ///
     /// * `data` - Slice of bytes.
     fn encodes_true(data: &[u8]) -> bool {
-        data.split_last().map_or(false, |(last, rest)| {
+        data.split_last().is_some_and(|(last, rest)| {
             *last == 1 && rest.iter().all(|&byte| byte == 0)
         })
     }
@@ -394,40 +410,31 @@ mod tests {
     use super::SafeErc20;
     #[test]
     fn encodes_true_empty_slice() {
-        assert_eq!(false, SafeErc20::encodes_true(&vec![]));
+        assert!(!SafeErc20::encodes_true(&[]));
     }
 
     #[test]
     fn encodes_false_single_byte() {
-        assert_eq!(false, SafeErc20::encodes_true(&vec![0]));
+        assert!(!SafeErc20::encodes_true(&[0]));
     }
 
     #[test]
     fn encodes_true_single_byte() {
-        assert_eq!(true, SafeErc20::encodes_true(&vec![1]));
+        assert!(SafeErc20::encodes_true(&[1]));
     }
 
     #[test]
     fn encodes_false_many_bytes() {
-        assert_eq!(
-            false,
-            SafeErc20::encodes_true(&vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        );
+        assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
     fn encodes_true_many_bytes() {
-        assert_eq!(
-            true,
-            SafeErc20::encodes_true(&vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-        );
+        assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
     fn encodes_true_wrong_bytes() {
-        assert_eq!(
-            false,
-            SafeErc20::encodes_true(&vec![0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
-        );
+        assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }

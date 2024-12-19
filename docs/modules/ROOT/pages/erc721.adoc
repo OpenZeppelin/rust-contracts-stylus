@@ -21,15 +21,14 @@ Here's what a contract for tokenized items might look like:
 
 [source,rust]
 ----
-sol_storage! {
-    #[entrypoint]
-    struct GameItem {
-        #[borrow]
-        Erc721 erc721;
-        #[borrow]
-        Metadata metadata;
-        uint256 _next_token_id;
-    }
+#[entrypoint]
+#[storage]
+struct GameItem {
+    #[borrow]
+    pub erc721: Erc721,
+    #[borrow]
+    pub metadata: Metadata,
+    pub next_token_id: StorageU256,
 }
 
 #[public]
@@ -40,7 +39,7 @@ impl GameItem {
         player: Address,
     ) -> Result<U256, Vec<u8>> {
         let token_id = self._next_token_id.get() + uint!(1_U256);
-        self._next_token_id.set(token_id);
+        self.next_token_id.set(token_id);
 
         self.erc721._mint(player, token_id)?;
 

@@ -10,29 +10,38 @@
 //! [`Erc721Enumerable`].
 
 use alloy_primitives::{uint, Address, FixedBytes, U256};
-use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
+pub use sol::*;
+use stylus_sdk::{
+    prelude::storage,
+    storage::{StorageMap, StorageU256, StorageVec},
+    stylus_proc::{public, SolidityError},
+};
 
 use crate::{
     token::{erc721, erc721::IErc721},
     utils::introspection::erc165::IErc165,
 };
 
-sol! {
-    /// Indicates an error when an `owner`'s token query
-    /// was out of bounds for `index`.
-    ///
-    /// NOTE: The owner being `Address::ZERO`
-    /// indicates a global out of bounds index.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721OutOfBoundsIndex(address owner, uint256 index);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Indicates an error related to batch minting not allowed.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC721EnumerableForbiddenBatchMint();
+    sol! {
+        /// Indicates an error when an `owner`'s token query
+        /// was out of bounds for `index`.
+        ///
+        /// NOTE: The owner being `Address::ZERO`
+        /// indicates a global out of bounds index.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721OutOfBoundsIndex(address owner, uint256 index);
+
+        /// Indicates an error related to batch minting not allowed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC721EnumerableForbiddenBatchMint();
+    }
 }
 
 /// An [`Erc721Enumerable`] extension error.
@@ -49,19 +58,17 @@ pub enum Error {
     EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
 }
 
-sol_storage! {
-    /// State of an Enumerable extension.
-    pub struct Erc721Enumerable {
-        /// Maps owners to a mapping of indices to tokens ids.
-        mapping(address => mapping(uint256 => uint256)) _owned_tokens;
-        /// Maps tokens ids to indices in `_owned_tokens`.
-        mapping(uint256 => uint256) _owned_tokens_index;
-        /// Stores all tokens ids.
-        uint256[] _all_tokens;
-        /// Maps indices at `_all_tokens` to tokens ids.
-        mapping(uint256 => uint256) _all_tokens_index;
-    }
-
+/// State of an Enumerable extension.
+#[storage]
+pub struct Erc721Enumerable {
+    /// Maps owners to a mapping of indices to tokens ids.
+    pub _owned_tokens: StorageMap<Address, StorageMap<U256, StorageU256>>,
+    /// Maps tokens ids to indices in `_owned_tokens`.
+    pub _owned_tokens_index: StorageMap<U256, StorageU256>,
+    /// Stores all tokens ids.
+    pub _all_tokens: StorageVec<StorageU256>,
+    /// Maps indices at `_all_tokens` to tokens ids.
+    pub _all_tokens_index: StorageMap<U256, StorageU256>,
 }
 
 /// This is the interface of the optional `Enumerable` extension
@@ -206,7 +213,7 @@ impl Erc721Enumerable {
     ///
     /// This has O(1) time complexity, but alters the order
     /// of the `self._owned_tokens` array.
-
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -314,7 +321,7 @@ impl Erc721Enumerable {
     /// # Errors
     ///
     /// * If an `amount` is greater than `0`, then the error
-    /// [`Error::EnumerableForbiddenBatchMint`] is returned.
+    ///   [`Error::EnumerableForbiddenBatchMint`] is returned.
     pub fn _check_increase_balance(amount: u128) -> Result<(), Error> {
         if amount > 0 {
             Err(ERC721EnumerableForbiddenBatchMint {}.into())

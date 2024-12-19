@@ -13,12 +13,11 @@ OpenZeppelin Contracts for Stylus provides https://docs.rs/openzeppelin-stylus/0
 ----
 use openzeppelin_stylus::access::ownable::Ownable;
 
-sol_storage! {
-    #[entrypoint]
-    struct OwnableExample {
-        #[borrow]
-        Ownable ownable;
-    }
+#[entrypoint]
+#[storage]
+struct OwnableExample {
+    #[borrow]
+    pub ownable: Ownable,
 }
 
 #[public]
@@ -73,14 +72,13 @@ Here's a simple example of using `AccessControl` in an xref:erc20.adoc[ERC-20 to
 
 [source,rust]
 ----
-sol_storage! {
-    #[entrypoint]
-    struct Example {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        AccessControl access;
-    }
+#[entrypoint]
+#[storage]
+struct Example {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub access: AccessControl,
 }
 
 // `keccak256("MINTER_ROLE")`
@@ -113,14 +111,13 @@ Let's augment our ERC-20 token example by also defining a 'burner' role, which l
 
 [source,rust]
 ----
-sol_storage! {
-    #[entrypoint]
-    struct Example {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        AccessControl access;
-    }
+#[entrypoint]
+#[storage]
+struct Example {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub access: AccessControl,
 }
 
 // `keccak256("MINTER_ROLE")`

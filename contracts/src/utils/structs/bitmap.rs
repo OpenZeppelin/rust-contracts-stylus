@@ -14,17 +14,19 @@
 //!
 //! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
 use alloy_primitives::{uint, U256};
-use stylus_sdk::stylus_proc::sol_storage;
+use stylus_sdk::{
+    prelude::storage,
+    storage::{StorageMap, StorageU256},
+};
 
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);
 
-sol_storage! {
-    /// State of bit map.
-    pub struct BitMap {
-        /// Inner laying mapping.
-        mapping(uint256 => uint256) _data;
-    }
+/// State of bit map.
+#[storage]
+pub struct BitMap {
+    /// Inner laying mapping.
+    pub _data: StorageMap<U256, StorageU256>,
 }
 
 impl BitMap {
@@ -102,9 +104,9 @@ mod tests {
     fn set_value() {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
-            assert_eq!(bit_map.get(value), false);
+            assert!(!bit_map.get(value));
             bit_map.set(value);
-            assert_eq!(bit_map.get(value), true);
+            assert!(bit_map.get(value));
         });
     }
 
@@ -113,9 +115,9 @@ mod tests {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set(value);
-            assert_eq!(bit_map.get(value), true);
+            assert!(bit_map.get(value));
             bit_map.unset(value);
-            assert_eq!(bit_map.get(value), false);
+            assert!(!bit_map.get(value));
         });
     }
 
@@ -124,9 +126,9 @@ mod tests {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set_to(value, true);
-            assert_eq!(bit_map.get(value), true);
+            assert!(bit_map.get(value));
             bit_map.set_to(value, false);
-            assert_eq!(bit_map.get(value), false);
+            assert!(!bit_map.get(value));
         });
     }
 }

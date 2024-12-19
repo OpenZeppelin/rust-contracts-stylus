@@ -13,12 +13,16 @@ members = [
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
   "examples/erc1155",
+  "examples/erc1155-metadata-uri",
+  "examples/erc1155-supply",
   "examples/merkle-proofs",
   "examples/ownable",
+  "examples/vesting-wallet",
   "examples/access-control",
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
+  "examples/ownable-two-step",
   "examples/safe-erc20",
   "benches",
 ]
@@ -35,9 +39,13 @@ default-members = [
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
   "examples/erc1155",
+  "examples/erc1155-metadata-uri",
+  "examples/erc1155-supply",
   "examples/safe-erc20",
   "examples/merkle-proofs",
   "examples/ownable",
+  "examples/vesting-wallet",
+  "examples/ownable-two-step",
   "examples/access-control",
   "examples/basic/token",
   "examples/ecdsa",
@@ -53,12 +61,13 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.1.1"
+version = "0.2.0-alpha.2"
 
 [workspace.lints.rust]
 missing_docs = "warn"
 unreachable_pub = "warn"
 rust_2021_compatibility = { level = "warn", priority = -1 }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage_nightly)'] }
 
 [workspace.lints.clippy]
 pedantic = "warn"
@@ -98,7 +107,9 @@ tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.30"
 dashmap = "6.1.0"
-crypto-bigint = { version = "0.5.5", default-features = false, features = ["zeroize"] }
+crypto-bigint = { version = "0.5.5", default-features = false, features = [
+  "zeroize",
+] }
 num-traits = "0.2.14"
 zeroize = { version = "1.8.1", features = ["derive"] }
 proptest = "1"
@@ -132,3 +143,10 @@ incremental = false
 
 [profile.dev]
 panic = "abort"
+
+[workspace.metadata.typos]
+default = { extend-ignore-identifiers-re = [
+  # ignore hex data samples.
+  "[0-9a-fA-F][0-9a-fA-F]",
+] }
+files = { extend-exclude = [] }
