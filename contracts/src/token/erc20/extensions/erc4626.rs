@@ -62,7 +62,7 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The number of shares issued.
-    fn deposit(&self,assets: U256, receiver: Address) -> U256;
+    fn deposit(&mut self,assets: U256, receiver: Address) -> Result<U256, Self::Error>;
 
     /// Calculates the maximum number of shares that can be minted for a given receiver.
     ///
@@ -90,7 +90,7 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The amount of assets deposited.
-    fn mint(&mut self, shares: U256, receiver: Address) -> U256;
+    fn mint(&mut self, shares: U256, receiver: Address) -> Result<U256, Self::Error>;
 
     /// Calculates the maximum amount of assets that can be withdrawn by a given owner.
     ///
@@ -119,7 +119,7 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The number of shares burned.
-    fn withdraw(&self,assets: U256, receiver: Address, owner: Address) -> U256;
+    fn withdraw(&mut self,assets: U256, receiver: Address, owner: Address) -> Result<U256, Error>;
 
     /// Calculates the maximum number of shares that can be redeemed by a given owner.
     ///
@@ -148,7 +148,7 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The amount of assets transferred.
-    fn redeem(&self,shares: U256, receiver: Address, owner: Address) -> U256;
+    fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Self::Error>;
 }
 
 
@@ -237,8 +237,19 @@ impl IERC4626 for ERC4626 {
         todo!()
     }
     
-    fn deposit(&self,assets: U256, receiver: Address) -> U256 {
-        todo!()
+    fn deposit(&mut self,assets: U256, receiver: Address) -> Result<U256, Error> {
+        let max_assets = self.max_deposit(receiver);
+        if assets > max_assets {
+            return Err(Error::ExceededMaxDeposit(ERC4626ExceededMaxDeposit{ 
+                receiver, 
+                assets, 
+                max: max_assets
+            }));   
+        }
+
+        let shares = self.preview_deposit(assets);
+        self._deposit(msg::sender(), receiver, assets, shares)?;
+        Ok(shares)
     }
     
     /// Returns the maximum amount of shares that can be minted for the given receiver.
@@ -266,10 +277,18 @@ impl IERC4626 for ERC4626 {
             }));
         }
         let assets  = self.preview_mint(shares);
-        self._deposit(msg::sender(), receiver, assets, shares);
+        self._deposit(msg::sender(), receiver, assets, shares)?;
         Ok(assets)
     }
     
+/// Returns the maximum amount of assets that can be withdrawn by the given owner.
+/// 
+/// # Parameters
+/// - `owner`: The address of the account requesting to withdraw assets.
+///
+/// # Returns
+/// The maximum number of assets that can be withdrawn, which is `U256::MAX`.
+
     fn max_withdraw(&self,owner: Address) -> U256 {
         todo!()
     }
@@ -278,8 +297,19 @@ impl IERC4626 for ERC4626 {
         todo!()
     }
     
-    fn withdraw(&self,assets: U256, receiver: Address, owner: Address) -> U256 {
-        todo!()
+    fn withdraw(&mut self,assets: U256, receiver: Address, owner: Address) -> Result<U256, Error> {
+        let  max_assets = self.max_withdraw(owner);
+        if assets > max_assets {
+               return Err(Error::ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw{
+                owner,
+                assets,
+                max: max_assets
+            }));
+        }
+
+        let  shares = self.preview_redeem(assets);
+        self._withdraw(msg::sender(), receiver, owner, assets, shares)?;
+        Ok(assets)
     }
     
     fn max_redeem(&self,owner: Address) -> U256 {
@@ -290,8 +320,18 @@ impl IERC4626 for ERC4626 {
         todo!()
     }
     
-    fn redeem(&self,shares: U256, receiver: Address, owner: Address) -> U256 {
-        todo!()
+    fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Error> {
+        let  max_shares = self.max_redeem(owner);
+        if shares > max_shares {
+               return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem{ 
+                owner, shares,
+                max: max_shares
+            }));
+        }
+
+        let  assets = self.preview_redeem(shares);
+        self._withdraw(msg::sender(), receiver, owner, assets, shares)?;
+        Ok(assets)
     }
 }
 
@@ -347,4 +387,17 @@ impl  ERC4626 {
         fn _decimals_offset(&self)  -> u32 {
             0
         }
+
+        //fn _try_get_asset_decimals(asset_: Address) private view returns (bool ok, uint8 assetDecimals) {
+        // (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(
+        //     abi.encodeCall(IERC20Metadata.decimals, ())
+        // );
+        // if (success && encodedDecimals.length >= 32) {
+        //     uint256 returnedDecimals = abi.decode(encodedDecimals, (uint256));
+        //     if (returnedDecimals <= type(uint8).max) {
+        //         return (true, uint8(returnedDecimals));
+        //     }
+        // }
+        // return (false, 0);
+    //}
 }
