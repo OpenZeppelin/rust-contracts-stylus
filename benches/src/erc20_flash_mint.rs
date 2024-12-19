@@ -56,9 +56,9 @@ pub async fn run_with(
 
     let contract_addr = deploy(&alice, cache_opt.clone()).await?;
 
-    // TODO: uncomment once it's possible to call ERC20 functions from
-    // within `ERC3156FlashBorrowerMock`.
-    // let receiver_addr = deploy_receiver(&alice, cache_opt).await?;
+    // TODO: uncomment once it's possible to deploy custom Solidity contracts,
+    // or in this case `ERC3156FlashBorrowerMock`.
+    // let borrower_addr = deploy_borrower(&alice, cache_opt).await?;
 
     let contract = Erc20FlashMint::new(contract_addr, &alice_wallet);
 
@@ -70,7 +70,7 @@ pub async fn run_with(
     let receipts = vec![
         (maxFlashLoanCall::SIGNATURE, receipt!(contract.maxFlashLoan(contract_addr))?),
         (flashFeeCall::SIGNATURE, receipt!(contract.flashFee(contract_addr, amount))?),
-        // (flashLoanCall::SIGNATURE, receipt!(contract.flashLoan(receiver_addr, contract_addr, amount, vec![].into()))?),
+        // (flashLoanCall::SIGNATURE, receipt!(contract.flashLoan(borrower_addr, contract_addr, amount, vec![].into()))?),
     ];
 
     receipts
@@ -91,7 +91,7 @@ async fn deploy(
     crate::deploy(account, "erc20-flash-mint", Some(args), cache_opt).await
 }
 
-// async fn deploy_receiver(
+// async fn deploy_borrower(
 //     account: &Account,
 //     cache_opt: CacheOpt,
 // ) -> eyre::Result<Address> {
