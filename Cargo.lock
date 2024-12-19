@@ -2470,7 +2470,9 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 
 [[package]]
 name = "motsu"
-version = "0.2.0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc9f12a78b4ce861c6a73758b137200a7139b402bc3fd8baa0477e936a572605"
 dependencies = [
  "const-hex",
  "dashmap 6.1.0",
@@ -2482,14 +2484,12 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.2.0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e477b432a80b129a0ecb1da2ba257140e73655bd922f2fd02a7b13e76216374"
 dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "motsu",
  "proc-macro2",
  "quote",
- "stylus-sdk",
  "syn 2.0.68",
 ]
 
