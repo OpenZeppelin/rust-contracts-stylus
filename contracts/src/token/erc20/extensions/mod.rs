@@ -3,7 +3,7 @@ pub mod burnable;
 pub mod capped;
 pub mod metadata;
 pub mod permit;
-pub mod erc4626;
+pub mod vault;
 
 pub use burnable::IErc20Burnable;
 pub use capped::Capped;
