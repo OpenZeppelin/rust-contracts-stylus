@@ -1,3 +1,14 @@
+//! ERC-4626 Tokenized Vault Standard Implementation
+//!
+//! Extends ERC-20 for vaults, enabling minting and burning of shares
+//! in exchange for underlying assets. This contract provides standardized
+//! workflows for deposits, minting, redemption, and burning of assets.
+//! Note: The shares are minted and burned in relation to the assets via
+//! the `deposit`, `mint`, `redeem`, and `burn` methods, affecting only
+//! the shares token, not the asset token itself.
+//! 
+//! [ERC]: https://eips.ethereum.org/EIPS/eip-4626
+
 use alloy_primitives::{ keccak256, Address, B256, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
