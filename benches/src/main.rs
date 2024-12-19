@@ -1,6 +1,6 @@
 use benches::{
-    access_control, erc1155, erc1155_metadata_uri, erc20, erc721,
-    merkle_proofs, ownable, report::BenchmarkReport,
+    access_control, erc1155, erc1155_metadata_uri, erc20, erc20_flash_mint,
+    erc721, merkle_proofs, ownable, report::BenchmarkReport,
 };
 use futures::FutureExt;
 use itertools::Itertools;
@@ -10,6 +10,7 @@ async fn main() -> eyre::Result<()> {
     let benchmarks = [
         access_control::bench().boxed(),
         erc20::bench().boxed(),
+        erc20_flash_mint::bench().boxed(),
         erc721::bench().boxed(),
         merkle_proofs::bench().boxed(),
         ownable::bench().boxed(),

@@ -15,12 +15,12 @@ pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
-    evm::gas_left,
     function_selector,
     prelude::storage,
     storage::TopLevelStorage,
     stylus_proc::{public, SolidityError},
     types::AddressVM,
+    ArbResult,
 };
 
 use crate::token::erc20;
@@ -351,9 +351,8 @@ impl SafeErc20 {
         }
 
         match RawCall::new()
-            .gas(gas_left())
             .limit_return_data(0, 32)
-            .call(token, &call.abi_encode())
+            .call_with_reentrant_handling(token, &call.abi_encode())
         {
             Ok(data) if data.is_empty() || Self::encodes_true(&data) => Ok(()),
             _ => Err(SafeErc20FailedOperation { token }.into()),
@@ -380,17 +379,16 @@ impl SafeErc20 {
         }
 
         let call = IErc20::allowanceCall { owner: address(), spender };
-        let allowance = RawCall::new()
-            .gas(gas_left())
+        let result = RawCall::new()
             .limit_return_data(0, 32)
-            .call(token, &call.abi_encode())
+            .call_with_reentrant_handling(token, &call.abi_encode())
             .map_err(|_| {
                 Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
                     token,
                 })
             })?;
 
-        Ok(U256::from_be_slice(&allowance))
+        Ok(U256::from_be_slice(&result))
     }
 
     /// Returns true if a slice of bytes is an ABI encoded `true` value.
@@ -402,6 +400,32 @@ impl SafeErc20 {
         data.split_last().is_some_and(|(last, rest)| {
             *last == 1 && rest.iter().all(|&byte| byte == 0)
         })
+    }
+}
+
+// Trait to encapsulate reentrant call handling
+trait ReentrantCallHandler {
+    fn call_with_reentrant_handling(
+        self,
+        token: Address,
+        call_data: &[u8],
+    ) -> ArbResult;
+}
+
+impl ReentrantCallHandler for RawCall {
+    fn call_with_reentrant_handling(
+        self,
+        token: Address,
+        call_data: &[u8],
+    ) -> ArbResult {
+        #[cfg(feature = "reentrant")]
+        unsafe {
+            self.flush_storage_cache().call(token, call_data)
+        }
+        #[cfg(not(feature = "reentrant"))]
+        {
+            self.call(token, call_data)
+        }
     }
 }
 
