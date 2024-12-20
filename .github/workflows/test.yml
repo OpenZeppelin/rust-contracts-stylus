@@ -159,7 +159,10 @@ jobs:
       - name: Filter out examples
         id: filter_workspace
         run: |
-          filtered_members=$(cargo metadata --no-deps --format-version 1 | jq -r '.workspace_members[] | select(contains("/examples/")) | "--exclude \"" + . + "\""')
+          filtered_members=$(cargo metadata --no-deps --format-version 1 | jq -r '.workspace_members[] 
+            | select(contains("examples/")) 
+            | split("/") | last | split("#") | last | split("@") | first 
+            | "--exclude " + .')
           echo "filtered_members=$filtered_members" >> $GITHUB_ENV
 
       - name: Cargo llvm-cov
