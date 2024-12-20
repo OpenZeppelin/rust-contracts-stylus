@@ -2695,7 +2695,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ownable-two-step"
+name = "ownable-two-step-example"
 version = "0.2.0-alpha.2"
 dependencies = [
  "alloy",

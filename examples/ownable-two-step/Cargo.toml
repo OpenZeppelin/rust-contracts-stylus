@@ -1,5 +1,5 @@
 [package]
-name = "ownable-two-step"
+name = "ownable-two-step-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
