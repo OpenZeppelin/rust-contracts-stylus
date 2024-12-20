@@ -64,10 +64,8 @@ jobs:
         # This is a known problem with workspace feature unification:
         # https://github.com/rust-lang/cargo/issues/4463
         #
-        # To deal with this, we have to compile all reentrant-enabled packages separately.
-        run: |
-          cargo nextest run --locked --features std --all-targets --workspace --exclude erc20-flash-mint-example
-          cargo nextest run --locked --all-targets -p erc20-flash-mint-example
+        # To deal with this, we simply ignore `erc20-flash-mint-example` from the compilation.
+        run: cargo nextest run --locked --features std --all-targets --workspace --exclude erc20-flash-mint-example
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
@@ -110,10 +108,8 @@ jobs:
         # This is a known problem with workspace feature unification:
         # https://github.com/rust-lang/cargo/issues/4463
         #
-        # To deal with this, we have to compile all reentrant-enabled packages separately.
-        run: |
-          cargo nextest run --locked --features std --all-targets --workspace --exclude erc20-flash-mint-example
-          cargo nextest run --locked --all-targets -p erc20-flash-mint-example
+        # To deal with this, we simply ignore `erc20-flash-mint-example` from the compilation.
+        run: cargo nextest run --locked --features std --all-targets --workspace --exclude erc20-flash-mint-example
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
     # is compatible with codecov.io.
