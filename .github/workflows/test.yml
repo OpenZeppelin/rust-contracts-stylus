@@ -159,14 +159,15 @@ jobs:
       - name: Filter out examples
         id: filter_workspace
         run: |
-          filtered_members=$(cargo metadata --no-deps --format-version 1 | jq -r '.workspace_members[] 
+          members=$(cargo metadata --no-deps --format-version 1 | jq -r '.workspace_members[] 
             | select(contains("examples/")) 
             | split("/") | last | split("#") | last | split("@") | first 
             | "--exclude " + .')
-          echo "filtered_members=$filtered_members" >> $GITHUB_ENV
+          members=$(echo "$members" | paste -sd " " -)
+          echo "members=$members" >> $GITHUB_ENV
 
       - name: Cargo llvm-cov
-        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.infos --workspace ${{ env.filtered_members }}
+        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.infos --workspace ${{ env.members }}
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
