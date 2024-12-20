@@ -5,11 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.2.0-alpha.2] - 2024-12-18
+## [Unreleased]
 
 ### Added
 
 - `Erc20FlashMint` extension. #407
+
+### Changed
+
+- 
+
+### Changed (Breaking)
+
+- Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
+
+### Fixed
+
+-
+
+## [v0.2.0-alpha.2] - 2024-12-18
+
+### Added
+
 - `Erc1155Supply` extension. #418
 - `Erc1155Pausable`extension. #432
 - `Erc1155UriStorage` extension. #431
