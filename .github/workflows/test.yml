@@ -160,8 +160,14 @@ jobs:
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
 
+      - name: Filter out examples
+        id: filter_workspace
+        run: |
+          filtered_members=$(cargo metadata --no-deps --format-version 1 | jq -r '.workspace_members[] | select(contains("/examples/")) | "--exclude " + .')
+          echo "filtered_members=$filtered_members" >> $GITHUB_ENV
+
       - name: Cargo llvm-cov
-        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.info
+        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.infos --workspace ${{ env.filtered_members }}
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
