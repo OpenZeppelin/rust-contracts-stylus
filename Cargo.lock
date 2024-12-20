@@ -1601,19 +1601,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "erc20-flash-mint-example"
-version = "0.2.0-alpha.2"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
 name = "erc20-permit-example"
 version = "0.2.0-alpha.2"
 dependencies = [
