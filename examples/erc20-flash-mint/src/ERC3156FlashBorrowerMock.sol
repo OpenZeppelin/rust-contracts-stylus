@@ -18,14 +18,14 @@ contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
         keccak256("ERC3156FlashBorrower.onFlashLoan");
 
     bool _enableApprove;
-    bool _enableReturn;
+    bool _validReturn;
 
     event BalanceOf(address token, address account, uint256 value);
     event TotalSupply(address token, uint256 value);
 
-    constructor(bool enableReturn, bool enableApprove) {
+    constructor(bool validReturn, bool enableApprove) {
         _enableApprove = enableApprove;
-        _enableReturn = enableReturn;
+        _validReturn = validReturn;
     }
 
     function onFlashLoan(
@@ -54,6 +54,6 @@ contract ERC3156FlashBorrowerMock is IERC3156FlashBorrower {
             IERC20(token).approve(token, amount + fee);
         }
 
-        return _enableReturn ? _RETURN_VALUE : bytes32(0);
+        return _validReturn ? _RETURN_VALUE : bytes32(0);
     }
 }
