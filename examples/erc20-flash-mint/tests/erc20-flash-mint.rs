@@ -8,6 +8,7 @@ use alloy::{
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
 use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
+use stylus_sdk::alloy_sol_types::SolCall;
 
 use crate::Erc20FlashMintExample::constructorCall;
 
@@ -468,6 +469,128 @@ async fn flash_loan_reverts_when_receiver_doesnt_approve_allowance(
         allowance: U256::ZERO,
         needed: loan_amount + FLASH_FEE_AMOUNT
     }),);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens(
+    alice: Account,
+) -> Result<()> {
+    let erc20_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
+
+    let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
+    let loan_amount = U256::from(1);
+
+    // test when not enough to cover fees
+    let err = send!(erc20.flashLoan(
+        borrower_addr,
+        erc20_addr,
+        loan_amount,
+        vec![].into(),
+    ))
+    .expect_err("should revert with `ERC20InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc20FlashMint::ERC20InsufficientBalance {
+        sender: borrower_addr,
+        balance: U256::ZERO,
+        needed: FLASH_FEE_AMOUNT
+    }));
+
+    // test when not enough to return the loaned tokens
+    let call = Erc20FlashMint::transferCall {
+        recipient: alice.address(),
+        amount: loan_amount,
+    };
+
+    let err = send!(erc20.flashLoan(
+        borrower_addr,
+        erc20_addr,
+        loan_amount,
+        call.abi_encode().into(),
+    ))
+    .expect_err("should revert with `ERC20InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc20FlashMint::ERC20InsufficientBalance {
+        sender: borrower_addr,
+        balance: U256::ZERO,
+        needed: loan_amount,
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens_and_fee_is_zero(
+    alice: Account,
+) -> Result<()> {
+    let erc20_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(FEE_RECEIVER, U256::ZERO))
+        .deploy()
+        .await?
+        .address()?;
+    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
+
+    let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
+    let loan_amount = U256::from(1);
+
+    let call = Erc20FlashMint::transferCall {
+        recipient: alice.address(),
+        amount: loan_amount,
+    };
+
+    let err = send!(erc20.flashLoan(
+        borrower_addr,
+        erc20_addr,
+        loan_amount,
+        call.abi_encode().into(),
+    ))
+    .expect_err("should revert with `ERC20InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc20FlashMint::ERC20InsufficientBalance {
+        sender: borrower_addr,
+        balance: U256::ZERO,
+        needed: loan_amount,
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens_and_fee_receiver_is_zero(
+    alice: Account,
+) -> Result<()> {
+    let erc20_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(Address::ZERO, FLASH_FEE_AMOUNT))
+        .deploy()
+        .await?
+        .address()?;
+    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
+
+    let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
+    let loan_amount = U256::from(1);
+
+    let err = send!(erc20.flashLoan(
+        borrower_addr,
+        erc20_addr,
+        loan_amount,
+        vec![].into(),
+    ))
+    .expect_err("should revert with `ERC20InsufficientBalance`");
+
+    assert!(err.reverted_with(Erc20FlashMint::ERC20InsufficientBalance {
+        sender: borrower_addr,
+        balance: loan_amount,
+        needed: loan_amount + FLASH_FEE_AMOUNT
+    }));
 
     Ok(())
 }
