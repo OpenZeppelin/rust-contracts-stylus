@@ -58,6 +58,7 @@ pub async fn run_with(
 
     // TODO: uncomment once it's possible to deploy custom Solidity contracts,
     // or in this case `ERC3156FlashBorrowerMock`.
+    // See: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/457
     // let borrower_addr = deploy_borrower(&alice, cache_opt).await?;
 
     let contract = Erc20FlashMint::new(contract_addr, &alice_wallet);
