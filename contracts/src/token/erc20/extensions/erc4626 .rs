@@ -9,15 +9,18 @@
 //! 
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-4626
 
-use alloy_primitives::{ keccak256, Address, B256, U256};
+use alloy_primitives::{  Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
-     contract, evm, msg, stylus_proc::{public, sol_storage, SolidityError}
+     evm, prelude::*, 
+     storage::{StorageAddress, StorageMap, StorageU8}, 
+     stylus_proc::{public, SolidityError}
 };
 use crate::token::erc20::{
-    utils::SafeErc20,
-    self, Erc20, IErc20
+    self, utils::{safe_erc20, SafeErc20}, Erc20, IErc20
 };
+use crate::utils::math::alloy::Math;
+
 
 pub trait IERC4626 {
     /// Error type associated with the operations, convertible to a vector of bytes.
@@ -162,14 +165,10 @@ pub trait IERC4626 {
     fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Self::Error>;
 }
 
-
-sol_storage! {
-    #[allow(clippy::pub_underscore_fields)]
-    pub struct Vault {
-        Erc20  _asset;
-
-        uint8  _underlying_decimals;
-    }
+#[storage]
+pub struct Erc4262 {
+    pub __underlying_decimals: StorageU8,
+    pub  _asset:StorageAddress,
 }
 
 sol! {
@@ -231,14 +230,26 @@ pub enum Error {
     /// because the supplied `shares` exceeded the maximum allowed for the `owner`.
     ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
 
+    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
+    SafeErc20(safe_erc20::Error),
 
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error)
 }
 
 
+#[storage]
+pub struct Erc4626 {
+
+    pub _asset: Erc20,
+
+    pub _safe_erc20: SafeErc20,
+    
+    pub _underlying_decimals: StorageU8,
+}
+
 #[public]
-impl IERC4626 for Vault {
+impl IERC4626 for Erc4626 {
     type Error = Error;
     fn asset(&self) -> Address {
         contract::address()
@@ -290,7 +301,6 @@ impl IERC4626 for Vault {
         todo!()
     }
     
-
     fn mint(&mut self,shares: U256, receiver: Address) -> Result<U256, Error> {
         let  max_shares = self.max_mint(receiver);
         if shares > max_shares {
@@ -334,7 +344,7 @@ impl IERC4626 for Vault {
     }
     
     fn preview_redeem(&self,shares: U256) -> U256 {
-        todo!()
+        self.
     }
     
     fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Error> {
@@ -353,17 +363,13 @@ impl IERC4626 for Vault {
 }
 
 
-impl Vault {
+impl Erc4626 {
        fn _convert_to_shares(&self, assets: U256, rounding:bool) -> U256  {
-         let confersion_factor = self._asset._total_supply.get()  + U256::from(self._decimals_offset());
-         let dominitor = self.total_assets() + U256::from(1);
-         assets * confersion_factor / dominitor
+         assets.
        }
 
        fn _convert_to_assets(&self, shares: U256, rounding:bool) -> U256  { 
-         let confersion_factor = self._asset._total_supply.get()  + U256::from(self._decimals_offset());
-         let dominitor = self.total_assets() + U256::from(1);
-         shares * confersion_factor / dominitor
+          self.
        }
 
         fn _deposit(&mut self,caller:Address,receiver:Address, assets:U256, shares:U256) -> Result<(), Error> {
