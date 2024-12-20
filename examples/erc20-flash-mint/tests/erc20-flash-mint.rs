@@ -5,7 +5,10 @@ use alloy::{
     primitives::{address, uint, Address, U256},
     sol,
 };
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{
+    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
+    Revert,
+};
 use eyre::Result;
 use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
 use stylus_sdk::alloy_sol_types::SolCall;
@@ -469,6 +472,34 @@ async fn flash_loan_reverts_when_receiver_doesnt_approve_allowance(
         allowance: U256::ZERO,
         needed: loan_amount + FLASH_FEE_AMOUNT
     }),);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn flash_loan_reverts_when_allowance_overflows(
+    alice: Account,
+) -> Result<()> {
+    let erc20_addr = alice
+        .as_deployer()
+        .with_default_constructor::<constructorCall>()
+        .deploy()
+        .await?
+        .address()?;
+    let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
+
+    let borrower_addr = borrower::deploy(&alice.wallet, true, false).await?;
+    let loan_amount = U256::MAX;
+
+    let err = send!(erc20.flashLoan(
+        borrower_addr,
+        erc20_addr,
+        loan_amount,
+        vec![].into()
+    ))
+    .expect_err("should panic due to allowance overflow");
+
+    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
 
     Ok(())
 }
