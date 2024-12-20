@@ -158,6 +158,7 @@ jobs:
 
       - name: Filter out examples
         id: filter_workspace
+        # filter out examples from coverage
         run: |
           members=$(cargo metadata --no-deps --format-version 1 | jq -r '.workspace_members[] 
             | select(contains("examples/")) 
