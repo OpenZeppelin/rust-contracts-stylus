@@ -240,11 +240,8 @@ pub enum Error {
 
 #[storage]
 pub struct Erc4626 {
-
     pub _asset: Erc20,
-
     pub _safe_erc20: SafeErc20,
-    
     pub _underlying_decimals: StorageU8,
 }
 
