@@ -12,16 +12,19 @@
 use alloy_primitives::{  Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
-     evm, prelude::*, 
-     storage::{StorageAddress, StorageMap, StorageU8}, 
+     prelude::{sol_interface},
+     evm, msg, contract, prelude::*,  call::static_call,
+     storage:: StorageU8, 
      stylus_proc::{public, SolidityError}
 };
 use crate::token::erc20::{
     self, utils::{safe_erc20, SafeErc20}, Erc20, IErc20
 };
-use crate::utils::math::alloy::Math;
+
+use crate::utils::math::alloy::Rounding;
 
 
+/// ERC-4626 Tokenized Vault Standard Interface
 pub trait IERC4626 {
     /// Error type associated with the operations, convertible to a vector of bytes.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -165,17 +168,24 @@ pub trait IERC4626 {
     fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Self::Error>;
 }
 
-#[storage]
-pub struct Erc4262 {
-    pub __underlying_decimals: StorageU8,
-    pub  _asset:StorageAddress,
-}
-
 sol! {
-    
+    /// Emitted when assets are deposited into the contract.
+    /// 
+    /// * `sender` - Address of the entity initiating the deposit.
+    /// * `owner` - Address of the recipient who owns the shares.
+    /// * `assets` - Amount of assets deposited.
+    /// * `shares` - Number of shares issued to the owner.
     #[allow(missing_docs)]
     event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
 
+
+    /// Emitted when assets are withdrawn from the contract.
+    /// 
+    /// * `sender` - Address of the entity initiating the withdrawal.
+    /// * `receiver` - Address of the recipient receiving the assets.
+    /// * `owner` - Address of the entity owning the shares.
+    /// * `assets` - Amount of assets withdrawn.
+    /// * `shares` - Number of shares burned.
     #[allow(missing_docs)]
     event Withdraw(
         address indexed sender,
@@ -212,6 +222,7 @@ sol! {
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 }
 
+/// Error type from [`Erc4626`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error where a deposit operation failed
@@ -238,10 +249,16 @@ pub enum Error {
 }
 
 
+///  ERC4626 Contract.
 #[storage]
 pub struct Erc4626 {
+    /// The ERC20 token
     pub _asset: Erc20,
+
+    /// The SafeERC20 token
     pub _safe_erc20: SafeErc20,
+
+    /// The underlying asset's decimals
     pub _underlying_decimals: StorageU8,
 }
 
@@ -258,12 +275,12 @@ impl IERC4626 for Erc4626 {
     
 
     fn convert_to_shares(&self,assets: U256) -> U256 {
-        todo!()
+        self._convert_to_shares(assets, Rounding::Floor)
     }
     
 
     fn convert_to_assets(&self,shares: U256) -> U256 {
-        todo!()
+        self._convert_to_assets(shares, Rounding::Floor)
     }
     
     
@@ -272,8 +289,8 @@ impl IERC4626 for Erc4626 {
     }
     
     fn preview_deposit(&self,assets: U256) -> U256 {
-        todo!()
-    }
+        self._convert_to_shares(assets, Rounding::Floor)
+    }   
 
     fn deposit(&mut self,assets: U256, receiver: Address) -> Result<U256, Error> {
         let max_assets = self.max_deposit(receiver);
@@ -295,7 +312,7 @@ impl IERC4626 for Erc4626 {
    }
     
     fn preview_mint(&self,shares: U256) -> U256 {
-        todo!()
+         self._convert_to_assets(shares, Rounding::Floor)
     }
     
     fn mint(&mut self,shares: U256, receiver: Address) -> Result<U256, Error> {
@@ -314,11 +331,11 @@ impl IERC4626 for Erc4626 {
     
 
     fn max_withdraw(&self,owner: Address) -> U256 {
-        todo!()
+        self._convert_to_assets(self._asset.balance_of(owner), Rounding::Floor)
     }
     
     fn preview_withdraw( &self,assets: U256) -> U256 {
-        todo!()
+        self._convert_to_shares(assets,Rounding::Ceil)
     }
     
     fn withdraw(&mut self,assets: U256, receiver: Address, owner: Address) -> Result<U256, Error> {
@@ -341,7 +358,7 @@ impl IERC4626 for Erc4626 {
     }
     
     fn preview_redeem(&self,shares: U256) -> U256 {
-        self.
+        self._convert_to_assets(shares, Rounding::Ceil)
     }
     
     fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Error> {
@@ -361,38 +378,39 @@ impl IERC4626 for Erc4626 {
 
 
 impl Erc4626 {
-       fn _convert_to_shares(&self, assets: U256, rounding:bool) -> U256  {
-         assets.
+       fn _convert_to_shares(&self, assets: U256, rounding:Rounding) -> U256  {
+          todo!()
        }
 
-       fn _convert_to_assets(&self, shares: U256, rounding:bool) -> U256  { 
-          self.
+       fn _convert_to_assets(&self, shares: U256, rounding:Rounding) -> U256  { 
+            todo!()
        }
 
         fn _deposit(&mut self,caller:Address,receiver:Address, assets:U256, shares:U256) -> Result<(), Error> {
-            // _SafeERC20.safeTransferFrom(_asset, caller, address(this), assets);
+            //change address
+            //safe_erc20::ISafeErc20::safe_transfer_from(&mut self._safe_erc20, msg::sender(), caller, msg::sender(), assets);
             self._asset._mint(receiver, shares)?;
             evm::log( Deposit { sender:caller,  owner:receiver, assets, shares });
             Ok(())
         }
 
         fn _withdraw(&mut self,caller:Address,receiver:Address,owner: Address, assets: U256, shares:U256) -> Result<(), Error> {
-                if caller != owner {
-                    self._asset._spend_allowance(owner, caller, shares)?;
-                }
-
-                // If _asset is ERC-777, `transfer` can trigger a reentrancy AFTER the transfer happens through the
-                // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,
-                // calls the vault, which is assumed not malicious.
-                //
-                // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
-                // shares are burned and after the assets are transferred, which is a valid state.
-                self._asset._burn(owner, shares)?;
-                //SafeERC20.safeTransfer(_asset, receiver, assets);
-
-                evm::log(Withdraw {sender: caller, receiver, owner, assets, shares});
-                Ok(())
+            if caller != owner {
+                self._asset._spend_allowance(owner, caller, shares)?;
             }
+
+            // If _asset is ERC-777, `transfer` can trigger a reentrancy AFTER the transfer happens through the
+            // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,
+            // calls the vault, which is assumed not malicious.
+            //
+            // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
+            // shares are burned and after the assets are transferred, which is a valid state.
+            self._asset._burn(owner, shares)?;
+            //SafeERC20.safeTransfer(_asset, receiver, assets);
+
+            evm::log(Withdraw {sender: caller, receiver, owner, assets, shares});
+            Ok(())
+        }
 
         /// Offset of the decimals of the ERC-20 asset from the decimals of the Vault.
         ///
@@ -407,17 +425,4 @@ impl Erc4626 {
         fn _decimals_offset(&self)  -> u32 {
             0
         }
-
-        //fn _try_get_asset_decimals(asset_: Address) private view returns (bool ok, uint8 assetDecimals) {
-        // (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(
-        //     abi.encodeCall(IERC20Metadata.decimals, ())
-        // );
-        // if (success && encodedDecimals.length >= 32) {
-        //     uint256 returnedDecimals = abi.decode(encodedDecimals, (uint256));
-        //     if (returnedDecimals <= type(uint8).max) {
-        //         return (true, uint8(returnedDecimals));
-        //     }
-        // }
-        // return (false, 0);
-    //}
 }
