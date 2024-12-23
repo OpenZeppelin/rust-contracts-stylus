@@ -244,10 +244,7 @@ pub unsafe extern "C" fn account_codehash(address: *const u8, dest: *mut u8) {
 /// [`RETURN_DATA_SIZE`]: https://www.evm.codes/#3d
 #[no_mangle]
 pub unsafe extern "C" fn return_data_size() -> usize {
-    // TODO: #156
-    // No-op: we do not use this function in our unit-tests,
-    // but the binary does include it.
-    0
+    Context::current().get_return_data_size()
 }
 
 /// Copies the bytes of the last EVM call or deployment return result.

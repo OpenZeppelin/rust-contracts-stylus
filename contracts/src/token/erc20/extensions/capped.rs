@@ -5,22 +5,33 @@
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::U256;
-use alloy_sol_types::sol;
-use stylus_sdk::stylus_proc::{public, sol_storage, SolidityError};
+pub use sol::*;
+use stylus_sdk::{
+    prelude::storage,
+    storage::StorageU256,
+    stylus_proc::{public, SolidityError},
+};
 
-sol! {
-    /// Indicates an error related to the operation that failed
-    /// because `total_supply` exceeded the `_cap`.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Indicates an error related to the operation that failed
-    /// because the supplied `cap` is not a valid cap value.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidCap(uint256 cap);
+    sol! {
+        /// Indicates an error related to the operation that failed
+        /// because `total_supply` exceeded the `_cap`.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
+
+        /// Indicates an error related to the operation that failed
+        /// because the supplied `cap` is not a valid cap value.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidCap(uint256 cap);
+    }
 }
 
 /// A Capped error.
@@ -34,13 +45,11 @@ pub enum Error {
     InvalidCap(ERC20InvalidCap),
 }
 
-sol_storage! {
-    /// State of a Capped Contract.
-    #[allow(clippy::pub_underscore_fields)]
-    pub struct Capped {
-        /// A cap to the supply of tokens.
-        uint256 _cap;
-    }
+/// State of a Capped Contract.
+#[storage]
+pub struct Capped {
+    /// A cap to the supply of tokens.
+    pub _cap: StorageU256,
 }
 
 #[public]

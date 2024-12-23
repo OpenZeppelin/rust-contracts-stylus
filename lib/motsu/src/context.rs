@@ -185,7 +185,9 @@ impl Context {
     }
 
     fn set_return_data(&self, data: Vec<u8>) {
-        let _ = self.get_call_storage().call_output.insert(data);
+        let mut call_storage = self.get_call_storage();
+        let _ = call_storage.call_output_len.insert(data.len());
+        let _ = call_storage.call_output.insert(data);
     }
 
     pub(crate) unsafe fn read_return_data_raw(
@@ -196,6 +198,13 @@ impl Context {
         let data = self.get_return_data();
         ptr::copy(data.as_ptr(), dest, size);
         data.len()
+    }
+
+    pub(crate) fn get_return_data_size(&self) -> usize {
+        self.get_call_storage()
+            .call_output_len
+            .take()
+            .expect("call_output_len should be set")
     }
 
     fn get_return_data(&self) -> Vec<u8> {
@@ -295,6 +304,8 @@ struct CallStorage {
     contract_router: HashMap<Address, Mutex<Box<dyn TestRouter>>>,
     // Output of a contract call.
     call_output: Option<Vec<u8>>,
+    // Output length of a contract call.
+    call_output_len: Option<usize>,
 }
 
 /// A trait for routing messages to the appropriate selector in tests.

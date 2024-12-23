@@ -11,22 +11,21 @@ use openzeppelin_stylus::{
     },
     utils::{introspection::erc165::IErc165, Pausable},
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
 const DECIMALS: u8 = 10;
 
-sol_storage! {
-    #[entrypoint]
-    struct Erc20Example {
-        #[borrow]
-        Erc20 erc20;
-        #[borrow]
-        Erc20Metadata metadata;
-        #[borrow]
-        Capped capped;
-        #[borrow]
-        Pausable pausable;
-    }
+#[entrypoint]
+#[storage]
+struct Erc20Example {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub metadata: Erc20Metadata,
+    #[borrow]
+    pub capped: Capped,
+    #[borrow]
+    pub pausable: Pausable,
 }
 
 #[public]

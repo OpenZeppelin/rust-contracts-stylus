@@ -5,11 +5,10 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    alloy_sol_types::sol,
     call::{self, Call, MethodError},
     evm, function_selector, msg,
-    prelude::{public, sol_storage, AddressVM, SolidityError},
-    storage::TopLevelStorage,
+    prelude::{public, sol_interface, storage, AddressVM, SolidityError},
+    storage::{StorageBool, StorageMap, StorageU256},
 };
 
 use crate::utils::{
@@ -18,9 +17,6 @@ use crate::utils::{
 };
 
 pub mod extensions;
-
-mod receiver;
-pub use receiver::IERC1155Receiver;
 
 const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     "onERC1155Received",
@@ -40,108 +36,114 @@ const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     Bytes
 );
 
-sol! {
-    /// Emitted when `value` amount of tokens of type `id` are
-    /// transferred from `from` to `to` by `operator`.
-    #[allow(missing_docs)]
-    event TransferSingle(
-        address indexed operator,
-        address indexed from,
-        address indexed to,
-        uint256 id,
-        uint256 value
-    );
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Equivalent to multiple [`TransferSingle`] events, where `operator`
-    /// `from` and `to` are the same for all transfers.
-    #[allow(missing_docs)]
-    event TransferBatch(
-        address indexed operator,
-        address indexed from,
-        address indexed to,
-        uint256[] ids,
-        uint256[] values
-    );
+    sol! {
+        /// Emitted when `value` amount of tokens of type `id` are
+        /// transferred from `from` to `to` by `operator`.
+        #[allow(missing_docs)]
+        event TransferSingle(
+            address indexed operator,
+            address indexed from,
+            address indexed to,
+            uint256 id,
+            uint256 value
+        );
 
-    /// Emitted when `account` grants or revokes permission to `operator`
-    /// to transfer their tokens, according to `approved`.
-    #[allow(missing_docs)]
-    event ApprovalForAll(
-        address indexed account,
-        address indexed operator,
-        bool approved
-    );
-}
+        /// Equivalent to multiple [`TransferSingle`] events, where `operator`
+        /// `from` and `to` are the same for all transfers.
+        #[allow(missing_docs)]
+        event TransferBatch(
+            address indexed operator,
+            address indexed from,
+            address indexed to,
+            uint256[] ids,
+            uint256[] values
+        );
 
-sol! {
-    /// Indicates an error related to the current `balance` of a `sender`.
-    /// Used in transfers.
-    ///
-    /// * `sender` - Address whose tokens are being transferred.
-    /// * `balance` - Current balance for the interacting account.
-    /// * `needed` - Minimum amount required to perform a transfer.
-    /// * `token_id` - Identifier number of a token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC1155InsufficientBalance(
-        address sender,
-        uint256 balance,
-        uint256 needed,
-        uint256 token_id
-    );
+        /// Emitted when `account` grants or revokes permission to `operator`
+        /// to transfer their tokens, according to `approved`.
+        #[allow(missing_docs)]
+        event ApprovalForAll(
+            address indexed account,
+            address indexed operator,
+            bool approved
+        );
+    }
 
-    /// Indicates a failure with the token `sender`.
-    /// Used in transfers.
-    ///
-    /// * `sender` - Address whose tokens are being transferred.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC1155InvalidSender(address sender);
+    sol! {
+        /// Indicates an error related to the current `balance` of a `sender`.
+        /// Used in transfers.
+        ///
+        /// * `sender` - Address whose tokens are being transferred.
+        /// * `balance` - Current balance for the interacting account.
+        /// * `needed` - Minimum amount required to perform a transfer.
+        /// * `token_id` - Identifier number of a token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC1155InsufficientBalance(
+            address sender,
+            uint256 balance,
+            uint256 needed,
+            uint256 token_id
+        );
 
-    /// Indicates a failure with the token `receiver`.
-    /// Used in transfers.
-    ///
-    /// * `receiver` - Address to which tokens are being transferred.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC1155InvalidReceiver(address receiver);
+        /// Indicates a failure with the token `sender`.
+        /// Used in transfers.
+        ///
+        /// * `sender` - Address whose tokens are being transferred.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC1155InvalidSender(address sender);
 
-    /// Indicates a failure with the `operator`’s approval.
-    /// Used in transfers.
-    ///
-    /// * `operator` - Address that may be allowed to operate on tokens
-    ///   without being their owner.
-    /// * `owner` - Address of the current owner of a token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC1155MissingApprovalForAll(address operator, address owner);
+        /// Indicates a failure with the token `receiver`.
+        /// Used in transfers.
+        ///
+        /// * `receiver` - Address to which tokens are being transferred.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC1155InvalidReceiver(address receiver);
 
-    /// Indicates a failure with the `approver` of a token to be approved.
-    /// Used in approvals.
-    ///
-    /// * `approver` - Address initiating an approval operation.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC1155InvalidApprover(address approver);
+        /// Indicates a failure with the `operator`’s approval.
+        /// Used in transfers.
+        ///
+        /// * `operator` - Address that may be allowed to operate on tokens
+        ///   without being their owner.
+        /// * `owner` - Address of the current owner of a token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC1155MissingApprovalForAll(address operator, address owner);
 
-    /// Indicates a failure with the `operator` to be approved.
-    /// Used in approvals.
-    ///
-    /// * `operator` - Address that may be allowed to operate on tokens
-    /// without being their owner.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC1155InvalidOperator(address operator);
+        /// Indicates a failure with the `approver` of a token to be approved.
+        /// Used in approvals.
+        ///
+        /// * `approver` - Address initiating an approval operation.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC1155InvalidApprover(address approver);
 
-    /// Indicates an array length mismatch between token ids and values in a
-    /// [`IErc1155::safe_batch_transfer_from`] operation.
-    /// Used in batch transfers.
-    ///
-    /// * `ids_length` - Length of the array of token identifiers.
-    /// * `values_length` - Length of the array of token amounts.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC1155InvalidArrayLength(uint256 ids_length, uint256 values_length);
+        /// Indicates a failure with the `operator` to be approved.
+        /// Used in approvals.
+        ///
+        /// * `operator` - Address that may be allowed to operate on tokens
+        /// without being their owner.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC1155InvalidOperator(address operator);
+
+        /// Indicates an array length mismatch between token ids and values in a
+        /// [`IErc1155::safe_batch_transfer_from`] operation.
+        /// Used in batch transfers.
+        ///
+        /// * `ids_length` - Length of the array of token identifiers.
+        /// * `values_length` - Length of the array of token amounts.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC1155InvalidArrayLength(uint256 ids_length, uint256 values_length);
+    }
 }
 
 /// An [`Erc1155`] error defined as described in [ERC-6093].
@@ -179,20 +181,70 @@ impl MethodError for Error {
     }
 }
 
-sol_storage! {
-    /// State of an [`Erc1155`] token.
-    pub struct Erc1155 {
-        /// Maps users to balances.
-        mapping(uint256 => mapping(address => uint256)) _balances;
-        /// Maps owners to a mapping of operator approvals.
-        mapping(address => mapping(address => bool)) _operator_approvals;
+sol_interface! {
+    /// Interface that must be implemented by smart contracts
+    /// in order to receive ERC-1155 token transfers.
+    #[allow(missing_docs)]
+    interface IERC1155Receiver {
+        /// Handles the receipt of a single ERC-1155 token type.
+        /// This function is called at the end of a
+        /// [`IErc1155::safe_batch_transfer_from`]
+        /// after the balance has been updated.
+        ///
+        /// NOTE: To accept the transfer,
+        /// this must return [`SINGLE_TRANSFER_FN_SELECTOR`],
+        /// or its own function selector.
+        ///
+        /// * `operator` - The address which initiated the transfer.
+        /// * `from` - The address which previously owned the token.
+        /// * `id` - The ID of the token being transferred.
+        /// * `value` - The amount of tokens being transferred.
+        /// * `data` - Additional data with no specified format.
+        #[allow(missing_docs)]
+        function onERC1155Received(
+            address operator,
+            address from,
+            uint256 id,
+            uint256 value,
+            bytes calldata data
+        ) external returns (bytes4);
+
+        /// Handles the receipt of multiple ERC-1155 token types.
+        /// This function is called at the end of a
+        /// [`IErc1155::safe_batch_transfer_from`]
+        /// after the balances have been updated.
+        ///
+        /// NOTE: To accept the transfer(s),
+        /// this must return [`BATCH_TRANSFER_FN_SELECTOR`],
+        /// or its own function selector.
+        ///
+        /// * `operator` - The address which initiated the batch transfer.
+        /// * `from` - The address which previously owned the token.
+        /// * `ids` - An array containing ids of each token being transferred
+        ///   (order and length must match values array).
+        /// * `values` - An array containing amounts of each token
+        ///   being transferred (order and length must match ids array).
+        /// * `data` - Additional data with no specified format.
+        #[allow(missing_docs)]
+        function onERC1155BatchReceived(
+            address operator,
+            address from,
+            uint256[] calldata ids,
+            uint256[] calldata values,
+            bytes calldata data
+        ) external returns (bytes4);
     }
 }
 
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc1155 {}
+/// State of an [`Erc1155`] token.
+#[storage]
+pub struct Erc1155 {
+    /// Maps users to balances.
+    pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
+    /// Maps owners to a mapping of operator approvals.
+    pub _operator_approvals:
+        StorageMap<Address, StorageMap<Address, StorageBool>>,
+}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]
@@ -557,7 +609,7 @@ impl Erc1155 {
         self._update(from, to, ids.clone(), values.clone())?;
 
         if !to.is_zero() {
-            self._check_on_erc1155_received(
+            Erc1155::_check_on_erc1155_received(
                 msg::sender(),
                 from,
                 to,
@@ -767,7 +819,6 @@ impl Erc1155 {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - Generally the address that initiated the token transfer
     ///   (e.g. `msg::sender()`).
     /// * `from` - Account of the sender.
@@ -786,7 +837,6 @@ impl Erc1155 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     fn _check_on_erc1155_received(
-        &mut self,
         operator: Address,
         from: Address,
         to: Address,
@@ -798,7 +848,7 @@ impl Erc1155 {
         }
 
         let receiver = IERC1155Receiver::new(to);
-        let call = Call::new_in(self);
+        let call = Call::new();
         let result = match details.transfer {
             Transfer::Single { id, value } => receiver
                 .on_erc_1155_received(call, operator, from, id, value, data),

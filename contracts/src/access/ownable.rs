@@ -8,37 +8,46 @@
 //! This module is used through inheritance. It will make available the
 //! [`Ownable::only_owner`] function, which can be called to restrict operations
 //! to the owner.
+use alloc::vec::Vec;
+
 use alloy_primitives::Address;
-use alloy_sol_types::sol;
 use openzeppelin_stylus_proc::interface_id;
+pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    storage::StorageAddress,
+    stylus_proc::{public, SolidityError},
 };
 
-sol! {
-    /// Emitted when ownership gets transferred between accounts.
-    ///
-    /// * `previous_owner` - Address of the previous owner.
-    /// * `new_owner` - Address of the new owner.
-    #[allow(missing_docs)]
-    event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
-}
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-sol! {
-    /// The caller account is not authorized to perform an operation.
-    ///
-    /// * `account` - Account that was found to not be authorized.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error OwnableUnauthorizedAccount(address account);
-    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
-    ///
-    /// * `owner` - Account that's not allowed to become the owner.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error OwnableInvalidOwner(address owner);
+    sol! {
+        /// Emitted when ownership gets transferred between accounts.
+        ///
+        /// * `previous_owner` - Address of the previous owner.
+        /// * `new_owner` - Address of the new owner.
+        #[allow(missing_docs)]
+        event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
+    }
+
+    sol! {
+        /// The caller account is not authorized to perform an operation.
+        ///
+        /// * `account` - Account that was found to not be authorized.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error OwnableUnauthorizedAccount(address account);
+        /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+        ///
+        /// * `owner` - Account that's not allowed to become the owner.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error OwnableInvalidOwner(address owner);
+    }
 }
 
 /// An error that occurred in the implementation of an [`Ownable`] contract.
@@ -56,12 +65,11 @@ impl MethodError for Error {
     }
 }
 
-sol_storage! {
-    /// State of an `Ownable` contract.
-    pub struct Ownable {
-        /// The current owner of this contract.
-        address _owner;
-    }
+/// State of an `Ownable` contract.
+#[storage]
+pub struct Ownable {
+    /// The current owner of this contract.
+    pub _owner: StorageAddress,
 }
 
 /// Interface for an [`Ownable`] contract.

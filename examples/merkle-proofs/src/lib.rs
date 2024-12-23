@@ -10,7 +10,7 @@ use openzeppelin_crypto::{
 };
 use stylus_sdk::{
     alloy_sol_types::sol,
-    prelude::{entrypoint, public, sol_storage},
+    prelude::{entrypoint, public, storage},
     stylus_proc::SolidityError,
 };
 
@@ -47,10 +47,9 @@ impl core::convert::From<merkle::MultiProofError> for VerifierError {
     }
 }
 
-sol_storage! {
-    #[entrypoint]
-    struct VerifierContract { }
-}
+#[entrypoint]
+#[storage]
+struct VerifierContract {}
 
 #[public]
 impl VerifierContract {

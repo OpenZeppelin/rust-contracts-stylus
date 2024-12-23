@@ -5,10 +5,9 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{address, uint, Address, B256, U256};
-use alloy_sol_types::{sol, SolType};
+use alloy_sol_types::SolType;
 use stylus_sdk::{
     call::{self, Call, MethodError},
-    storage::TopLevelStorage,
     stylus_proc::SolidityError,
 };
 
@@ -23,18 +22,39 @@ pub const SIGNATURE_S_UPPER_BOUND: U256 = uint!(
     0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0_U256
 );
 
-sol! {
-    /// The signature derives the `Address::ZERO`.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ECDSAInvalidSignature();
+pub use sol::*;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// The signature has an `S` value that is in the upper half order.
-    ///
-    /// * `s` - Invalid `S` value.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ECDSAInvalidSignatureS(bytes32 s);
+    sol! {
+        /// The signature derives the `Address::ZERO`.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ECDSAInvalidSignature();
+
+        /// The signature has an `S` value that is in the upper half order.
+        ///
+        /// * `s` - Invalid `S` value.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ECDSAInvalidSignatureS(bytes32 s);
+    }
+
+    sol! {
+        /// Struct with callable data to the `ecrecover` precompile.
+        #[allow(missing_docs)]
+        struct EcRecoverData {
+            /// EIP-191 Hash of the message.
+            bytes32 hash;
+            /// `v` value from the signature.
+            uint8 v;
+            /// `r` value from the signature.
+            bytes32 r;
+            /// `s` value from the signature.
+            bytes32 s;
+        }
+    }
 }
 
 /// An error that occurred in the implementation of an `ECDSA` library.
@@ -52,26 +72,10 @@ impl MethodError for ecdsa::Error {
     }
 }
 
-sol! {
-    /// Struct with callable data to the `ecrecover` precompile.
-    #[allow(missing_docs)]
-    struct EcRecoverData {
-        /// EIP-191 Hash of the message.
-        bytes32 hash;
-        /// `v` value from the signature.
-        uint8 v;
-        /// `r` value from the signature.
-        bytes32 r;
-        /// `s` value from the signature.
-        bytes32 s;
-    }
-}
-
 /// Returns the address that signed a hashed message (`hash`).
 ///
 /// # Arguments
 ///
-/// * `storage` - Write access to storage.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -87,16 +91,10 @@ sol! {
 /// # Panics
 ///
 /// * If the `ecrecover` precompile fails to execute.
-pub fn recover(
-    storage: &mut impl TopLevelStorage,
-    hash: B256,
-    v: u8,
-    r: B256,
-    s: B256,
-) -> Result<Address, Error> {
+pub fn recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    _recover(storage, hash, v, r, s)
+    _recover(hash, v, r, s)
 }
 
 /// Calls `ecrecover` EVM precompile.
@@ -106,7 +104,6 @@ pub fn recover(
 ///
 /// # Arguments
 ///
-/// * `storage` - Write access to storage.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -122,13 +119,7 @@ pub fn recover(
 /// # Panics
 ///
 /// * If the `ecrecover` precompile fails to execute.
-fn _recover(
-    storage: &mut impl TopLevelStorage,
-    hash: B256,
-    v: u8,
-    r: B256,
-    s: B256,
-) -> Result<Address, Error> {
+fn _recover(hash: B256, v: u8, r: B256, s: B256) -> Result<Address, Error> {
     let calldata = encode_calldata(hash, v, r, s);
 
     if v == 0 || v == 1 {
@@ -139,9 +130,8 @@ fn _recover(
         return Err(ECDSAInvalidSignature {}.into());
     }
 
-    let recovered =
-        call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &calldata)
-            .expect("should call `ecrecover` precompile");
+    let recovered = call::static_call(Call::new(), ECRECOVER_ADDR, &calldata)
+        .expect("should call `ecrecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
 

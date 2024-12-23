@@ -14,34 +14,43 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
-use alloy_sol_types::sol;
+use alloc::vec::Vec;
+
+pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    stylus_proc::{public, sol_storage, SolidityError},
+    prelude::storage,
+    storage::StorageBool,
+    stylus_proc::{public, SolidityError},
 };
 
-sol! {
-    /// Emitted when pause is triggered by `account`.
-    #[allow(missing_docs)]
-    event Paused(address account);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-    /// Emitted when the pause is lifted by `account`.
-    #[allow(missing_docs)]
-    event Unpaused(address account);
-}
+    sol! {
+        /// Emitted when pause is triggered by `account`.
+        #[allow(missing_docs)]
+        event Paused(address account);
 
-sol! {
-    /// Indicates an error related to the operation that failed
-    /// because the contract is paused.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error EnforcedPause();
+        /// Emitted when the pause is lifted by `account`.
+        #[allow(missing_docs)]
+        event Unpaused(address account);
+    }
 
-    /// Indicates an error related to the operation that failed
-    /// because the contract is not paused.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ExpectedPause();
+    sol! {
+        /// Indicates an error related to the operation that failed
+        /// because the contract is paused.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error EnforcedPause();
+
+        /// Indicates an error related to the operation that failed
+        /// because the contract is not paused.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ExpectedPause();
+    }
 }
 
 /// A Pausable error.
@@ -55,12 +64,11 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
-sol_storage! {
-    /// State of a Pausable Contract.
-    pub struct Pausable {
-        /// Indicates whether the contract is `Paused`.
-        bool _paused;
-    }
+/// State of a Pausable Contract.
+#[storage]
+pub struct Pausable {
+    /// Indicates whether the contract is `Paused`.
+    pub _paused: StorageBool,
 }
 
 #[public]
