@@ -6,27 +6,31 @@
 //! Note: The shares are minted and burned in relation to the assets via
 //! the `deposit`, `mint`, `redeem`, and `burn` methods, affecting only
 //! the shares token, not the asset token itself.
-//! 
+//!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-4626
 
-use alloy_primitives::{  Address, U256};
+use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
-     prelude::{sol_interface},
-     evm, msg, contract, prelude::*,  call::static_call,
-     storage:: StorageU8, 
-     stylus_proc::{public, SolidityError}
-};
-use crate::token::erc20::{
-    self, utils::{safe_erc20, SafeErc20}, Erc20, IErc20
+    prelude::storage,
+    contract, evm, msg,
+    storage::StorageU8,
+    stylus_proc::{public, SolidityError},
 };
 
-use crate::utils::math::alloy::Rounding;
-
+use crate::{
+    token::erc20::{
+        self,
+        utils::{safe_erc20, SafeErc20},
+        Erc20, IErc20,
+    },
+    utils::math::alloy::Rounding,
+};
 
 /// ERC-4626 Tokenized Vault Standard Interface
 pub trait IERC4626 {
-    /// Error type associated with the operations, convertible to a vector of bytes.
+    /// Error type associated with the operations, convertible to a vector of
+    /// bytes.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the address of the underlying asset that the vault manages.
@@ -42,7 +46,7 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The corresponding amount of shares.
-    fn convert_to_shares(&self,assets: U256) -> U256;
+    fn convert_to_shares(&self, assets: U256) -> U256;
 
     /// Converts a given number of shares into the equivalent amount of assets.
     ///
@@ -51,16 +55,17 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The corresponding amount of assets.
-    fn convert_to_assets(&self,shares: U256) -> U256;
+    fn convert_to_assets(&self, shares: U256) -> U256;
 
-    /// Calculates the maximum amount of assets that can be deposited for a given receiver.
+    /// Calculates the maximum amount of assets that can be deposited for a
+    /// given receiver.
     ///
     /// # Parameters
     /// - `receiver`: The address of the entity receiving the shares.
     ///
     /// # Returns
     /// The maximum depositable amount.
-    fn max_deposit(&self,receiver: Address) -> U256;
+    fn max_deposit(&self, receiver: Address) -> U256;
 
     /// Previews the outcome of depositing a specific amount of assets.
     ///
@@ -69,9 +74,10 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The number of shares that would be issued.
-    fn preview_deposit(&self,assets: U256) -> U256;
+    fn preview_deposit(&self, assets: U256) -> U256;
 
-    /// Deposits a specific amount of assets into the vault, issuing shares to the receiver.
+    /// Deposits a specific amount of assets into the vault, issuing shares to
+    /// the receiver.
     ///
     /// # Parameters
     /// - `assets`: Amount of the underlying asset to deposit.
@@ -79,16 +85,21 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The number of shares issued.
-    fn deposit(&mut self,assets: U256, receiver: Address) -> Result<U256, Self::Error>;
+    fn deposit(
+        &mut self,
+        assets: U256,
+        receiver: Address,
+    ) -> Result<U256, Self::Error>;
 
-    /// Calculates the maximum number of shares that can be minted for a given receiver.
+    /// Calculates the maximum number of shares that can be minted for a given
+    /// receiver.
     ///
     /// # Parameters
     /// - `receiver`: The address of the entity receiving the shares.
     ///
     /// # Returns
     /// The maximum mintable number of shares.
-    fn max_mint(&self,receiver: Address) -> U256;
+    fn max_mint(&self, receiver: Address) -> U256;
 
     /// Previews the outcome of minting a specific number of shares.
     ///
@@ -97,7 +108,7 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The equivalent amount of assets required.
-    fn preview_mint(&self,shares: U256) -> U256;
+    fn preview_mint(&self, shares: U256) -> U256;
 
     /// Mints a specific number of shares for a given receiver.
     ///
@@ -107,16 +118,21 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The amount of assets deposited.
-    fn mint(&mut self, shares: U256, receiver: Address) -> Result<U256, Self::Error>;
+    fn mint(
+        &mut self,
+        shares: U256,
+        receiver: Address,
+    ) -> Result<U256, Self::Error>;
 
-    /// Calculates the maximum amount of assets that can be withdrawn by a given owner.
+    /// Calculates the maximum amount of assets that can be withdrawn by a given
+    /// owner.
     ///
     /// # Parameters
     /// - `owner`: The address of the entity owning the shares.
     ///
     /// # Returns
     /// The maximum withdrawable amount.
-    fn max_withdraw(&self,owner: Address) -> U256;
+    fn max_withdraw(&self, owner: Address) -> U256;
 
     /// Previews the outcome of withdrawing a specific amount of assets.
     ///
@@ -125,9 +141,10 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The equivalent number of shares required.
-    fn preview_withdraw( &self,assets: U256) -> U256;
+    fn preview_withdraw(&self, assets: U256) -> U256;
 
-    /// Withdraws a specific amount of assets from the vault, deducting shares from the owner.
+    /// Withdraws a specific amount of assets from the vault, deducting shares
+    /// from the owner.
     ///
     /// # Parameters
     /// - `assets`: Amount of the underlying asset to withdraw.
@@ -136,16 +153,22 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The number of shares burned.
-    fn withdraw(&mut self,assets: U256, receiver: Address, owner: Address) -> Result<U256, Error>;
+    fn withdraw(
+        &mut self,
+        assets: U256,
+        receiver: Address,
+        owner: Address,
+    ) -> Result<U256, Error>;
 
-    /// Calculates the maximum number of shares that can be redeemed by a given owner.
+    /// Calculates the maximum number of shares that can be redeemed by a given
+    /// owner.
     ///
     /// # Parameters
     /// - `owner`: The address of the entity owning the shares.
     ///
     /// # Returns
     /// The maximum redeemable number of shares.
-    fn max_redeem(&self,owner: Address) -> U256;
+    fn max_redeem(&self, owner: Address) -> U256;
 
     /// Previews the outcome of redeeming a specific number of shares.
     ///
@@ -154,9 +177,10 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The equivalent amount of assets returned.
-    fn preview_redeem(&self,shares: U256) -> U256;
+    fn preview_redeem(&self, shares: U256) -> U256;
 
-    /// Redeems a specific number of shares for the underlying assets, transferring them to the receiver.
+    /// Redeems a specific number of shares for the underlying assets,
+    /// transferring them to the receiver.
     ///
     /// # Parameters
     /// - `shares`: Number of shares to redeem.
@@ -165,12 +189,17 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The amount of assets transferred.
-    fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Self::Error>;
+    fn redeem(
+        &mut self,
+        shares: U256,
+        receiver: Address,
+        owner: Address,
+    ) -> Result<U256, Self::Error>;
 }
 
 sol! {
     /// Emitted when assets are deposited into the contract.
-    /// 
+    ///
     /// * `sender` - Address of the entity initiating the deposit.
     /// * `owner` - Address of the recipient who owns the shares.
     /// * `assets` - Amount of assets deposited.
@@ -180,7 +209,7 @@ sol! {
 
 
     /// Emitted when assets are withdrawn from the contract.
-    /// 
+    ///
     /// * `sender` - Address of the entity initiating the withdrawal.
     /// * `receiver` - Address of the recipient receiving the assets.
     /// * `owner` - Address of the entity owning the shares.
@@ -226,28 +255,31 @@ sol! {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error where a deposit operation failed
-    /// because the supplied `assets` exceeded the maximum allowed for the `receiver`.
+    /// because the supplied `assets` exceeded the maximum allowed for the
+    /// `receiver`.
     ExceededMaxDeposit(ERC4626ExceededMaxDeposit),
 
     /// Indicates an error where a mint operation failed
-    /// because the supplied `shares` exceeded the maximum allowed for the `receiver`
+    /// because the supplied `shares` exceeded the maximum allowed for the
+    /// `receiver`
     ExceededMaxMint(ERC4626ExceededMaxMint),
 
     /// Indicates an error where a withdrawal operation failed
-    /// because the supplied `assets` exceeded the maximum allowed for the `owner`
+    /// because the supplied `assets` exceeded the maximum allowed for the
+    /// `owner`
     ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw),
 
     /// Indicates an error where a redemption operation failed
-    /// because the supplied `shares` exceeded the maximum allowed for the `owner`.
+    /// because the supplied `shares` exceeded the maximum allowed for the
+    /// `owner`.
     ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
 
     /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
     SafeErc20(safe_erc20::Error),
 
     /// Error type from [`Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error)
+    Erc20(erc20::Error),
 }
-
 
 ///  ERC4626 Contract.
 #[storage]
@@ -265,164 +297,187 @@ pub struct Erc4626 {
 #[public]
 impl IERC4626 for Erc4626 {
     type Error = Error;
+
     fn asset(&self) -> Address {
         contract::address()
     }
-    
+
     fn total_assets(&self) -> U256 {
         self._asset.balance_of(contract::address())
     }
-    
 
-    fn convert_to_shares(&self,assets: U256) -> U256 {
+    fn convert_to_shares(&self, assets: U256) -> U256 {
         self._convert_to_shares(assets, Rounding::Floor)
     }
-    
 
-    fn convert_to_assets(&self,shares: U256) -> U256 {
+    fn convert_to_assets(&self, shares: U256) -> U256 {
         self._convert_to_assets(shares, Rounding::Floor)
     }
-    
-    
-    fn max_deposit(&self,_receiver: Address) -> U256 {
+
+    fn max_deposit(&self, _receiver: Address) -> U256 {
         U256::MAX
     }
-    
-    fn preview_deposit(&self,assets: U256) -> U256 {
-        self._convert_to_shares(assets, Rounding::Floor)
-    }   
 
-    fn deposit(&mut self,assets: U256, receiver: Address) -> Result<U256, Error> {
+    fn preview_deposit(&self, assets: U256) -> U256 {
+        self._convert_to_shares(assets, Rounding::Floor)
+    }
+
+    fn deposit(
+        &mut self,
+        assets: U256,
+        receiver: Address,
+    ) -> Result<U256, Error> {
         let max_assets = self.max_deposit(receiver);
         if assets > max_assets {
-            return Err(Error::ExceededMaxDeposit(ERC4626ExceededMaxDeposit{ 
-                receiver, 
-                assets, 
-                max: max_assets
-            }));   
+            return Err(Error::ExceededMaxDeposit(ERC4626ExceededMaxDeposit {
+                receiver,
+                assets,
+                max: max_assets,
+            }));
         }
 
         let shares = self.preview_deposit(assets);
         self._deposit(msg::sender(), receiver, assets, shares)?;
         Ok(shares)
     }
-    
-   fn max_mint(&self, _receiver: Address) -> U256 {
+
+    fn max_mint(&self, _receiver: Address) -> U256 {
         U256::MAX
-   }
-    
-    fn preview_mint(&self,shares: U256) -> U256 {
-         self._convert_to_assets(shares, Rounding::Floor)
     }
-    
-    fn mint(&mut self,shares: U256, receiver: Address) -> Result<U256, Error> {
-        let  max_shares = self.max_mint(receiver);
+
+    fn preview_mint(&self, shares: U256) -> U256 {
+        self._convert_to_assets(shares, Rounding::Floor)
+    }
+
+    fn mint(&mut self, shares: U256, receiver: Address) -> Result<U256, Error> {
+        let max_shares = self.max_mint(receiver);
         if shares > max_shares {
-               return Err(Error::ExceededMaxMint(ERC4626ExceededMaxMint{
+            return Err(Error::ExceededMaxMint(ERC4626ExceededMaxMint {
                 receiver,
                 shares,
-                max: max_shares
+                max: max_shares,
             }));
         }
-        let assets  = self.preview_mint(shares);
+        let assets = self.preview_mint(shares);
         self._deposit(msg::sender(), receiver, assets, shares)?;
         Ok(assets)
     }
-    
 
-    fn max_withdraw(&self,owner: Address) -> U256 {
+    fn max_withdraw(&self, owner: Address) -> U256 {
         self._convert_to_assets(self._asset.balance_of(owner), Rounding::Floor)
     }
-    
-    fn preview_withdraw( &self,assets: U256) -> U256 {
-        self._convert_to_shares(assets,Rounding::Ceil)
+
+    fn preview_withdraw(&self, assets: U256) -> U256 {
+        self._convert_to_shares(assets, Rounding::Ceil)
     }
-    
-    fn withdraw(&mut self,assets: U256, receiver: Address, owner: Address) -> Result<U256, Error> {
-        let  max_assets = self.max_withdraw(owner);
+
+    fn withdraw(
+        &mut self,
+        assets: U256,
+        receiver: Address,
+        owner: Address,
+    ) -> Result<U256, Error> {
+        let max_assets = self.max_withdraw(owner);
         if assets > max_assets {
-               return Err(Error::ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw{
-                owner,
-                assets,
-                max: max_assets
-            }));
+            return Err(Error::ExceededMaxWithdraw(
+                ERC4626ExceededMaxWithdraw { owner, assets, max: max_assets },
+            ));
         }
 
-        let  shares = self.preview_redeem(assets);
+        let shares = self.preview_redeem(assets);
         self._withdraw(msg::sender(), receiver, owner, assets, shares)?;
-        Ok(assets)
+        Ok(shares)
     }
-    
-    fn max_redeem(&self,owner: Address) -> U256 {
+
+    fn max_redeem(&self, owner: Address) -> U256 {
         self._asset.balance_of(owner)
     }
-    
-    fn preview_redeem(&self,shares: U256) -> U256 {
+
+    fn preview_redeem(&self, shares: U256) -> U256 {
         self._convert_to_assets(shares, Rounding::Ceil)
     }
-    
-    fn redeem(&mut self,shares: U256, receiver: Address, owner: Address) -> Result<U256, Error> {
-        let  max_shares = self.max_redeem(owner);
+
+    fn redeem(
+        &mut self,
+        shares: U256,
+        receiver: Address,
+        owner: Address,
+    ) -> Result<U256, Error> {
+        let max_shares = self.max_redeem(owner);
         if shares > max_shares {
-               return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem{ 
-                owner, shares,
-                max: max_shares
+            return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem {
+                owner,
+                shares,
+                max: max_shares,
             }));
         }
 
-        let  assets = self.preview_redeem(shares);
+        let assets = self.preview_redeem(shares);
         self._withdraw(msg::sender(), receiver, owner, assets, shares)?;
         Ok(assets)
     }
 }
 
-
 impl Erc4626 {
-       fn _convert_to_shares(&self, assets: U256, rounding:Rounding) -> U256  {
-          todo!()
-       }
+    fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
+        todo!()
+    }
 
-       fn _convert_to_assets(&self, shares: U256, rounding:Rounding) -> U256  { 
-            todo!()
-       }
+    fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
+        todo!()
+    }
 
-        fn _deposit(&mut self,caller:Address,receiver:Address, assets:U256, shares:U256) -> Result<(), Error> {
-            //change address
-            //safe_erc20::ISafeErc20::safe_transfer_from(&mut self._safe_erc20, msg::sender(), caller, msg::sender(), assets);
-            self._asset._mint(receiver, shares)?;
-            evm::log( Deposit { sender:caller,  owner:receiver, assets, shares });
-            Ok(())
+    fn _deposit(
+        &mut self,
+        caller: Address,
+        receiver: Address,
+        assets: U256,
+        shares: U256,
+    ) -> Result<(), Error> {
+        self._asset._mint(receiver, shares)?;
+        evm::log(Deposit { sender: caller, owner: receiver, assets, shares });
+        Ok(())
+    }
+
+    fn _withdraw(
+        &mut self,
+        caller: Address,
+        receiver: Address,
+        owner: Address,
+        assets: U256,
+        shares: U256,
+    ) -> Result<(), Error> {
+        if caller != owner {
+            self._asset._spend_allowance(owner, caller, shares)?;
         }
 
-        fn _withdraw(&mut self,caller:Address,receiver:Address,owner: Address, assets: U256, shares:U256) -> Result<(), Error> {
-            if caller != owner {
-                self._asset._spend_allowance(owner, caller, shares)?;
-            }
+        // If _asset is ERC-777, `transfer` can trigger a reentrancy AFTER the
+        // transfer happens through the `tokensReceived` hook. On the
+        // other hand, the `tokensToSend` hook, that is triggered before the
+        // transfer, calls the vault, which is assumed not malicious.
+        //
+        // Conclusion: we need to do the transfer after the burn so that any
+        // reentrancy would happen after the shares are burned and after
+        // the assets are transferred, which is a valid state.
+        self._asset._burn(owner, shares)?;
+        //SafeERC20.safeTransfer(_asset, receiver, assets);
 
-            // If _asset is ERC-777, `transfer` can trigger a reentrancy AFTER the transfer happens through the
-            // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,
-            // calls the vault, which is assumed not malicious.
-            //
-            // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
-            // shares are burned and after the assets are transferred, which is a valid state.
-            self._asset._burn(owner, shares)?;
-            //SafeERC20.safeTransfer(_asset, receiver, assets);
+        evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
+        Ok(())
+    }
 
-            evm::log(Withdraw {sender: caller, receiver, owner, assets, shares});
-            Ok(())
-        }
-
-        /// Offset of the decimals of the ERC-20 asset from the decimals of the Vault.
-        ///
-        /// This value is used to calculate the number of shares that can be minted
-        /// for a given amount of assets, and to calculate the number of assets
-        /// that can be withdrawn for a given amount of shares.
-        ///
-        /// The value is set to 0 by default, which means that the decimals of the
-        /// ERC-20 asset and the Vault are the same.
-        ///
-        /// To change this value, you must override this function in your contract.
-        fn _decimals_offset(&self)  -> u32 {
-            0
-        }
+    /// Offset of the decimals of the ERC-20 asset from the decimals of the
+    /// Vault.
+    ///
+    /// This value is used to calculate the number of shares that can be minted
+    /// for a given amount of assets, and to calculate the number of assets
+    /// that can be withdrawn for a given amount of shares.
+    ///
+    /// The value is set to 0 by default, which means that the decimals of the
+    /// ERC-20 asset and the Vault are the same.
+    ///
+    /// To change this value, you must override this function in your contract.
+    fn _decimals_offset(&self) -> u32 {
+        0
+    }
 }
