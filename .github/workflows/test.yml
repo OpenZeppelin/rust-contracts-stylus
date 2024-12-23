@@ -157,11 +157,16 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Filter out examples
-        id: filter_workspace
-        # filter out examples from coverage
+        # filter out examples from coverage:
+        # 1. List workspace members.
+        #   - they're in format "path+file:///[ROOT-DIR]/examples/[MEMBER-NAME]#[MEMBER-NAME]-example@[VERSION]"
+        # 2. Select examples.
+        # 3. Map each example to its [MEMBER-NAME].
+        # 4. Map each [MEMBER-NAME] to `--exclude [MEMBER-NAME]`.
+        # 5. Inline all of these `--exclude`s.
         run: |
           members=$(cargo metadata --no-deps --format-version 1 | jq -r '.workspace_members[] 
-            | select(contains("examples/")) 
+            | select(contains("examples/"))
             | split("/") | last | split("#") | last | split("@") | first 
             | "--exclude " + .')
           members=$(echo "$members" | paste -sd " " -)
