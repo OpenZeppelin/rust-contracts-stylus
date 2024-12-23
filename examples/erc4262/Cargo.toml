@@ -1,5 +1,5 @@
 [package]
-name = "erc20-permit-example"
+name = "erc4262-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
