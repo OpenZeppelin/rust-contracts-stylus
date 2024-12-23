@@ -2,6 +2,7 @@
 members = [
   "contracts",
   "contracts-proc",
+  "fuzz",
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
@@ -112,13 +113,16 @@ proptest = "1"
 educe = "0.6.0"
 hex-literal = "0.4.1"
 
+# fuzzing
+libfuzzer-sys = "0.4"
+
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
 # test helpers
-motsu = "0.2.1"
+motsu = { git = "https://github.com/0xNeshi/stylus-test-helpers", rev = "3617990" }
 
 # members
 openzeppelin-stylus = { path = "contracts" }
