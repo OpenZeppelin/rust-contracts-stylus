@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.2.0-alpha.2] - 2024-12-18
 
 ### Added
 
@@ -27,10 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (Breaking)
 
 - Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
-- Stop supporting reentrancy, and borrow `self` immutably in `IErc721::_check_on_erc721_received`. #440
-- Remove `&mut self` parameter from `IErc1155::_check_on_erc1155_received` and make it an associated function. #440
-- Remove `storage: &mut impl TopLevelStorage` parameter from `ecdsa::recover`. #440
-- Remove `TopLevelStorage` trait implementation from `VestingWallet`, `Erc1155`, `Erc20Permit`, `SafeErc20`, `Erc721Consecutive`, and `Erc721`. #440
 
 ### Fixed
 

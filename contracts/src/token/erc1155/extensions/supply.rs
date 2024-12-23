@@ -279,7 +279,7 @@ impl Erc1155Supply {
         self._update(from, to, ids.clone(), values.clone())?;
 
         if !to.is_zero() {
-            Erc1155::_check_on_erc1155_received(
+            self.erc1155._check_on_erc1155_received(
                 msg::sender(),
                 from,
                 to,
