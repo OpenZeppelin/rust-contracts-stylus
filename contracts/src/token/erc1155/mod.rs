@@ -7,8 +7,8 @@ use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
     evm, function_selector, msg,
-    storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
     prelude::{public, sol_interface, storage, AddressVM, SolidityError},
+    storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
 };
 
 use crate::utils::{
