@@ -14,10 +14,10 @@ use alloy_sol_macro::sol;
 use stylus_sdk::{
     prelude::storage,
     contract, evm, msg,
-    storage::StorageU8,
+    storage::{StorageU8, TopLevelStorage},
     stylus_proc::{public, SolidityError},
+    
 };
-
 use crate::{
     token::erc20::{
         self,
@@ -294,6 +294,12 @@ pub struct Erc4626 {
     pub _underlying_decimals: StorageU8,
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc4626 {}
+
+
 #[public]
 impl IERC4626 for Erc4626 {
     type Error = Error;
@@ -417,6 +423,7 @@ impl IERC4626 for Erc4626 {
         Ok(assets)
     }
 }
+
 
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {

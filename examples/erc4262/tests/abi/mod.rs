@@ -46,8 +46,11 @@ sol!(
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
+        
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
+
+
 
         #[allow(missing_docs)]
         event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
