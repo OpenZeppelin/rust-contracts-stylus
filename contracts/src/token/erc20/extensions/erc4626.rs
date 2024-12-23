@@ -21,10 +21,11 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        utils::{safe_erc20, SafeErc20},
+        utils::{safe_erc20::{self, ISafeErc20}, SafeErc20},
         Erc20, IErc20,
     },
-    utils::math::alloy::Rounding,
+
+    utils::math::alloy::{Math, Rounding},
 };
 
 /// ERC-4626 Tokenized Vault Standard Interface
@@ -427,11 +428,13 @@ impl IERC4626 for Erc4626 {
 
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
-        todo!()
+        //assets._mul_div_(  self.total_assets() + 10 **  self._decimals_offset(), self.total_assets() + 1, rounding)
+        U256::ZERO
     }
 
-    fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
-        todo!()
+     fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
+        //shares.mul_div(x, y, dominator, rounding)
+        U256::ZERO  
     }
 
     fn _deposit(
@@ -441,6 +444,15 @@ impl Erc4626 {
         assets: U256,
         shares: U256,
     ) -> Result<(), Error> {
+
+        // If _asset is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
+        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
+        // calls the vault, which is assumed not malicious.
+        //
+        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
+        // assets are transferred and before the shares are minted, which is a valid state.
+        // slither-disable-next-line reentrancy-no-eth
+
         self._asset._mint(receiver, shares)?;
         evm::log(Deposit { sender: caller, owner: receiver, assets, shares });
         Ok(())
@@ -467,7 +479,7 @@ impl Erc4626 {
         // reentrancy would happen after the shares are burned and after
         // the assets are transferred, which is a valid state.
         self._asset._burn(owner, shares)?;
-        //SafeERC20.safeTransfer(_asset, receiver, assets);
+        self._safe_erc20.safe_transfer(contract::address(), receiver, assets)?; 
 
         evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
         Ok(())
