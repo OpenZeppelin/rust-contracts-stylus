@@ -73,7 +73,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "0.7.0-beta.1", default-features = false }
+stylus-sdk = { version = "0.7.0-rc.1", default-features = false }
 
 alloy = { version = "=0.7.2", features = [
   "contract",
@@ -88,11 +88,11 @@ alloy = { version = "=0.7.2", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.13", default-features = false }
-alloy-sol-types = { version = "=0.8.13", default-features = false }
-alloy-sol-macro = { version = "=0.8.13", default-features = false }
-alloy-sol-macro-expander = { version = "=0.8.13", default-features = false }
-alloy-sol-macro-input = { version = "=0.8.13", default-features = false }
+alloy-primitives = { version = "=0.8.14", default-features = false }
+alloy-sol-types = { version = "=0.8.14", default-features = false }
+alloy-sol-macro = { version = "=0.8.14", default-features = false }
+alloy-sol-macro-expander = { version = "=0.8.14", default-features = false }
+alloy-sol-macro-input = { version = "=0.8.14", default-features = false }
 
 const-hex = { version = "1.11.1", default-features = false }
 eyre = "0.6.8"
@@ -150,16 +150,10 @@ default = { extend-ignore-identifiers-re = [
 files = { extend-exclude = [] }
 
 ## TODO#q: remove this once the fix is released
-#[patch.crates-io.stylus-sdk]
-#git = "https://github.com/qalisander/stylus-sdk-rs"
-#branch = "fix-encoding-in-sol-interface"
-#
-#[patch.crates-io.stylus-proc]
-#git = "https://github.com/qalisander/stylus-sdk-rs"
-#branch = "fix-encoding-in-sol-interface"
-
 [patch.crates-io.stylus-sdk]
-path = "../stylus-sdk-rs/stylus-sdk"
+git = "https://github.com/OffchainLabs/stylus-sdk-rs"
+branch = "rel/0.7.0-rc.1"
 
 [patch.crates-io.stylus-proc]
-path = "../stylus-sdk-rs/stylus-proc"
+git = "https://github.com/OffchainLabs/stylus-sdk-rs"
+branch = "rel/0.7.0-rc.1"
