@@ -148,7 +148,7 @@ default = { extend-ignore-identifiers-re = [
 ] }
 files = { extend-exclude = [] }
 
-# TODO#q: remove this once the fix is released
+# TODO#q: remove stylus sdk patch once the fix is released
 [patch.crates-io.stylus-sdk]
 git = "https://github.com/OffchainLabs/stylus-sdk-rs"
 branch = "rel/0.7.0-rc.1"
@@ -156,3 +156,8 @@ branch = "rel/0.7.0-rc.1"
 [patch.crates-io.stylus-proc]
 git = "https://github.com/OffchainLabs/stylus-sdk-rs"
 branch = "rel/0.7.0-rc.1"
+
+# TODO#q: remove motsu patch once update is released
+[patch.crates-io.motsu]
+git = "https://github.com/OpenZeppelin/stylus-test-helpers"
+branch = "build/stylus-v0.7.0-rc.1"

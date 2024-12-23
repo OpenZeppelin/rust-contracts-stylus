@@ -34,8 +34,8 @@ use stylus_sdk::{
     block,
     call::{self, call, Call},
     contract, evm, function_selector,
-    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
     prelude::{sol_interface, storage},
+    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
     stylus_proc::{public, SolidityError},
 };
 
