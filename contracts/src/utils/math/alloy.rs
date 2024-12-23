@@ -1,6 +1,12 @@
 //! Standard math utilities missing in `alloy_primitives`.
 use alloy_primitives::{uint, U256};
 
+pub enum Rounding {
+    Floor, // Toward negative infinity
+    Ceil, // Toward positive infinity
+    Trunc, // Toward zero
+    Expand // Away from zero
+}
 /// Trait for standard math utilities missing in `alloy_primitives`.
 pub trait Math {
     /// Returns the square root of a number. If the number is not a perfect
