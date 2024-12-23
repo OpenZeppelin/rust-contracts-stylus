@@ -7,5 +7,6 @@ pub mod erc4626;
 
 pub use burnable::IErc20Burnable;
 pub use capped::Capped;
+pub use flashmint::IERC3156FlashLender;
 pub use metadata::{Erc20Metadata, IErc20Metadata};
 pub use permit::Erc20Permit;
