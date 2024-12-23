@@ -9,11 +9,8 @@
 //! `pub const` hash digests:
 //!
 //! ```no_run
-//! // Output of `keccak256("MY_ROLE")`.
-//! pub const MY_ROLE: [u8; 32] = [151, 200, 119, 228, 14, 219, 65, 113,
-//!                                15, 11, 175, 88, 140, 135, 142, 225,
-//!                                90, 4, 73, 155, 6, 174, 140, 152, 207,
-//!                                72, 136, 117, 217, 26, 114, 19];
+//! pub const MY_ROLE: [u8; 32] =
+//!     keccak_const::Keccak256::new().update(b"MY_ROLE").finalize();
 //! ```
 //!
 //! Roles can be used to represent a set of permissions. To restrict access to a

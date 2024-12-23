@@ -18,10 +18,10 @@ const EXPIRED_DEADLINE: U256 = uint!(946_684_800_U256);
 // Wednesday, 1 January 3000 00:00:00
 const FAIR_DEADLINE: U256 = uint!(32_503_680_000_U256);
 
-// keccak256("Permit(address owner,address spender,uint256 value,uint256
-// nonce,uint256 deadline)")
-const PERMIT_TYPEHASH: B256 =
-    b256!("6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9");
+const PERMIT_TYPEHASH: [u8; 32] =
+    keccak_const::Keccak256::new()
+        .update(b"Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
+        .finalize();
 
 type PermitStructHashTuple = sol! {
     tuple(bytes32, address, address, uint256, uint256, uint256)
@@ -56,7 +56,7 @@ fn permit_struct_hash(
     deadline: U256,
 ) -> B256 {
     keccak256(PermitStructHashTuple::abi_encode(&(
-        *PERMIT_TYPEHASH,
+        PERMIT_TYPEHASH,
         owner,
         spender,
         value,
