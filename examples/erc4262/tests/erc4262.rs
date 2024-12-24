@@ -12,13 +12,11 @@ use eyre::Result;
 
 mod abi;
 
-
 #[e2e::test]
 async fn error_when_exceeded_max_deposit(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    
 }
 
 #[e2e::test]
@@ -26,7 +24,6 @@ async fn error_when_exceeded_max_mint(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    
 }
 
 #[e2e::test]
@@ -34,7 +31,6 @@ async fn error_when_exceeded_max_withdraw(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    
 }
 
 #[e2e::test]
@@ -42,7 +38,4 @@ async fn error_when_exceeded_max_redeem(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    
 }
-
-

@@ -12,19 +12,21 @@
 use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
-    prelude::storage,
     contract, evm, msg,
+    prelude::storage,
     storage::{StorageU8, TopLevelStorage},
     stylus_proc::{public, SolidityError},
-    
 };
+
 use crate::{
     token::erc20::{
         self,
-        utils::{safe_erc20::{self, ISafeErc20}, SafeErc20},
+        utils::{
+            safe_erc20::{self, ISafeErc20},
+            SafeErc20,
+        },
         Erc20, IErc20,
     },
-
     utils::math::alloy::{Math, Rounding},
 };
 
@@ -300,7 +302,6 @@ pub struct Erc4626 {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc4626 {}
 
-
 #[public]
 impl IERC4626 for Erc4626 {
     type Error = Error;
@@ -425,16 +426,16 @@ impl IERC4626 for Erc4626 {
     }
 }
 
-
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
-        //assets._mul_div_(  self.total_assets() + 10 **  self._decimals_offset(), self.total_assets() + 1, rounding)
+        //assets._mul_div_(  self.total_assets() + 10 **
+        // self._decimals_offset(), self.total_assets() + 1, rounding)
         U256::ZERO
     }
 
-     fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
+    fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
         //shares.mul_div(x, y, dominator, rounding)
-        U256::ZERO  
+        U256::ZERO
     }
 
     fn _deposit(
@@ -444,13 +445,14 @@ impl Erc4626 {
         assets: U256,
         shares: U256,
     ) -> Result<(), Error> {
-
-        // If _asset is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
-        // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
-        // calls the vault, which is assumed not malicious.
+        // If _asset is ERC-777, `transferFrom` can trigger a reentrancy BEFORE
+        // the transfer happens through the `tokensToSend` hook. On the
+        // other hand, the `tokenReceived` hook, that is triggered after the
+        // transfer, calls the vault, which is assumed not malicious.
         //
-        // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
-        // assets are transferred and before the shares are minted, which is a valid state.
+        // Conclusion: we need to do the transfer before we mint so that any
+        // reentrancy would happen before the assets are transferred and
+        // before the shares are minted, which is a valid state.
         // slither-disable-next-line reentrancy-no-eth
 
         self._asset._mint(receiver, shares)?;
@@ -479,7 +481,11 @@ impl Erc4626 {
         // reentrancy would happen after the shares are burned and after
         // the assets are transferred, which is a valid state.
         self._asset._burn(owner, shares)?;
-        self._safe_erc20.safe_transfer(contract::address(), receiver, assets)?; 
+        self._safe_erc20.safe_transfer(
+            contract::address(),
+            receiver,
+            assets,
+        )?;
 
         evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
         Ok(())
@@ -501,17 +507,22 @@ impl Erc4626 {
     }
 }
 
-
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::uint;
 
     use super::Erc4626;
 
     #[motsu::test]
-    fn  can_get_max_mint(contract: Erc4626) {
+    fn can_get_max_mint(contract: Erc4626) {
         let sender = msg::sender();
-        let max_mint =   Erc4626::max_mint(&self, sender);
+        let max_mint = Erc4626::max_mint(&self, sender);
         assert_eq!(max_mint, U256::MAX);
+    }
+
+    #[motsu::test]
+    fn can_get_max_deposit(contract: Erc4626) {
+        let sender = msg::sender();
+        let max_deposit = Erc4626::max_deposit(&self, sender);
+        assert_eq!(max_deposit, U256::MAX);
     }
 }

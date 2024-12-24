@@ -1,16 +1,14 @@
 //! Standard math utilities missing in `alloy_primitives`.
 use alloy_primitives::{uint, U256};
 
-
-
 /// Rounding modes for rounding operations.
 pub enum Rounding {
     /// Toward negative infinity
-    Floor, 
+    Floor,
     /// Toward positive infinity
     Ceil,
     /// Toward zero
-    Trunc, 
+    Trunc,
     /// Away from zero
     Expand,
 }
@@ -36,44 +34,59 @@ pub trait Math {
     #[must_use]
     fn average(self, rhs: Self) -> Self;
 
-    /// Calculates `floor(x * y / denominator)` with full precision. 
+    /// Calculates `floor(x * y / denominator)` with full precision.
     /// Reverts if the result overflows a `uint256` or if `denominator == 0`.
-    /// 
-    /// The result is calculated by performing a full-precision multiplication of `x` and `y`, followed by a division 
-    /// by `denominator`. The floor function ensures the result is rounded down to the nearest integer.
-    /// 
+    ///
+    /// The result is calculated by performing a full-precision multiplication
+    /// of `x` and `y`, followed by a division by `denominator`. The floor
+    /// function ensures the result is rounded down to the nearest integer.
+    ///
     /// Original credit: Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv),
     /// with further edits by Uniswap Labs, also under MIT license.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// - `x`: The first operand in the multiplication.
     /// - `y`: The second operand in the multiplication.
-    /// - `denominator`: The value by which the product of `x` and `y` is divided.
-    /// 
+    /// - `denominator`: The value by which the product of `x` and `y` is
+    ///   divided.
+    ///
     /// # Returns
-    /// 
-    /// - The greatest integer less than or equal to the precise result of `(x * y / denominator)`.
-    fn _mul_div_(self, x: Self, y: Self, dominator:Self) -> Self;
+    ///
+    /// - The greatest integer less than or equal to the precise result of `(x *
+    ///   y / denominator)`.
+    fn _mul_div_(self, x: Self, y: Self, dominator: Self) -> Self;
 
-    /// Multiplies `x` and `y` and then divides by `denominator`, rounding according to the `rounding` argument. 
-    /// Reverts if the result overflows a `uint256` or if `denominator == 0`.
-    /// 
-    /// The result is calculated by performing a full-precision multiplication of `x` and `y`, followed by a division 
-    /// by `denominator`, and the rounding function ensures the result is rounded according to the specified rounding mode.
-    /// 
+    /// Multiplies `x` and `y` and then divides by `denominator`, rounding
+    /// according to the `rounding` argument. Reverts if the result
+    /// overflows a `uint256` or if `denominator == 0`.
+    ///
+    /// The result is calculated by performing a full-precision multiplication
+    /// of `x` and `y`, followed by a division by `denominator`, and the
+    /// rounding function ensures the result is rounded according to the
+    /// specified rounding mode.
+    ///
     /// # Arguments
-    /// 
+    ///
     /// - `x`: The first operand in the multiplication.
     /// - `y`: The second operand in the multiplication.
-    /// - `denominator`: The value by which the product of `x` and `y` is divided.
-    /// - `rounding`: The rounding mode to apply (e.g., rounding towards zero, rounding up, etc.).
-    /// 
+    /// - `denominator`: The value by which the product of `x` and `y` is
+    ///   divided.
+    /// - `rounding`: The rounding mode to apply (e.g., rounding towards zero,
+    ///   rounding up, etc.).
+    ///
     /// # Returns
-    /// 
-    /// - The result of `(x * y / denominator)` rounded according to the specified rounding mode.
+    ///
+    /// - The result of `(x * y / denominator)` rounded according to the
+    ///   specified rounding mode.
     #[must_use]
-    fn mul_div(self, x: Self, y: Self, dominator:Self, rounding:Rounding) -> Self; 
+    fn mul_div(
+        self,
+        x: Self,
+        y: Self,
+        dominator: Self,
+        rounding: Rounding,
+    ) -> Self;
 }
 
 impl Math for U256 {
@@ -198,17 +211,22 @@ impl Math for U256 {
         (self & rhs) + ((self ^ rhs) >> 1)
     }
 
-    fn _mul_div_(self, x:Self, y:Self, denominator:Self)  -> Self {
+    fn _mul_div_(self, x: Self, y: Self, denominator: Self) -> Self {
         U256::ZERO
     }
-    
-    fn mul_div(self, x:Self, y:Self, deminator:Self, rounding:Rounding)  -> Self {
+
+    fn mul_div(
+        self,
+        x: Self,
+        y: Self,
+        deminator: Self,
+        rounding: Rounding,
+    ) -> Self {
         self._mul_div_(x, y, deminator);
 
         U256::ZERO
     }
 }
-
 
 #[cfg(all(test, feature = "std"))]
 mod tests {

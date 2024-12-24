@@ -16,14 +16,14 @@ sol!(
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
         function asset() public view  returns (address);
-        function totalAssets() public view returns (uint256); 
-        function convertToShares(uint256 assets) public view  returns (uint256); 
+        function totalAssets() public view returns (uint256);
+        function convertToShares(uint256 assets) public view  returns (uint256);
         function convertToAssets(uint256 shares) public view  returns (uint256);
         function maxMint(address) public view  returns (uint256);
         function maxDeposit(address) public view  returns (uint256);
         function maxWithdraw(address owner) public view  returns (uint256);
         function maxRedeem(address owner) public view  returns (uint256);
-        function previewDeposit(uint256 assets) public view  returns (uint256); 
+        function previewDeposit(uint256 assets) public view  returns (uint256);
         function previewMint(uint256 shares) public view  returns (uint256);
         function previewRedeem(uint256 shares) public view  returns (uint256);
         function previewWithdraw(uint256 assets) public view  returns (uint256);
@@ -37,7 +37,7 @@ sol!(
         error ERC20InvalidReceiver(address receiver);
         error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
         error ERC20InvalidSpender(address spender);
- 
+
         error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
         error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
         error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
@@ -46,7 +46,7 @@ sol!(
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
-        
+
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
 
