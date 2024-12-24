@@ -500,3 +500,18 @@ impl Erc4626 {
         0
     }
 }
+
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::uint;
+
+    use super::Erc4626;
+
+    #[motsu::test]
+    fn  can_get_max_mint(contract: Erc4626) {
+        let sender = msg::sender();
+        let max_mint =   Erc4626::max_mint(&self, sender);
+        assert_eq!(max_mint, U256::MAX);
+    }
+}
