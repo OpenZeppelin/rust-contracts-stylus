@@ -23,6 +23,7 @@ pub mod merkle_proofs;
 pub mod ownable;
 pub mod report;
 pub mod vesting_wallet;
+pub mod erc4626;
 
 #[derive(Debug, Deserialize)]
 struct ArbOtherFields {
