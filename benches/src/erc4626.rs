@@ -73,19 +73,6 @@ pub async fn run_with(
     let contract = Erc4626::new(contract_addr, &alice_wallet);
     let contract_bob = Erc4626::new(contract_addr, &bob_wallet);
 
-    let token_1 = uint!(1_U256);
-    let token_2 = uint!(2_U256);
-    let token_3 = uint!(3_U256);
-    let token_4 = uint!(4_U256);
-
-    let value_1 = uint!(100_U256);
-    let value_2 = uint!(200_U256);
-    let value_3 = uint!(300_U256);
-    let value_4 = uint!(400_U256);
-
-    let ids = vec![token_1, token_2, token_3, token_4];
-    let values = vec![value_1, value_2, value_3, value_4];
-
     let data: alloy_primitives::Bytes = vec![].into();
 
     // IMPORTANT: Order matters!
