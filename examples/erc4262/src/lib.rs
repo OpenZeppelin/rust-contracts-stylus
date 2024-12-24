@@ -9,7 +9,7 @@ use alloy_primitives::{Address, U256};
 use stylus_sdk::prelude::{entrypoint, public, storage};
 use openzeppelin_stylus::{
     token::erc20::{
-        extensions::{ Erc20Metadata,Erc4626, IERC4626},
+        extensions::{ Erc20Metadata, Erc4626, IErc20Metadata, IERC4626},
         Erc20, IErc20,
     },
     utils::{introspection::erc165::IErc165, Pausable},
@@ -31,5 +31,9 @@ struct Erc4262xample {
 #[public]
 #[inherit(Erc20, Erc20Metadata, Erc4626)]
 impl Erc4262xample {
+    fn max_deposit(&self, _receiver: Address) -> U256 {
+        //self.metadata.decimals()
+        U256::from(100)
+    }
     // Add token minting feature.
 }
