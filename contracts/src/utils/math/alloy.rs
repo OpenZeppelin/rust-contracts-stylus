@@ -1,7 +1,7 @@
 //! Standard math utilities missing in `alloy_primitives`.
 use alloy_primitives::{uint, U256};
 
-use crate::utils::structs::checkpoints::generic_size::Num;
+
 
 /// Rounding modes for rounding operations.
 pub enum Rounding {
