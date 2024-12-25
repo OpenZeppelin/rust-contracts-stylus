@@ -3,21 +3,14 @@ name = "openzeppelin-stylus-fuzz"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
 version.workspace = true
 
-[package.metadata]
-cargo-fuzz = true
-
 [dependencies]
-openzeppelin-stylus.workspace = true
-alloy-primitives.workspace = true
-libfuzzer-sys.workspace = true
+afl.workspace = true
+arbitrary.workspace = true
 motsu.workspace = true
+openzeppelin-stylus.workspace = true
 
 [[bin]]
-name = "ecdsa_recover"
-path = "fuzz_targets/ecdsa_recover.rs"
-test = false
-doc = false
-bench = false
+name = "to_typed_data_hash"
+path = "src/to_typed_data_hash.rs"
