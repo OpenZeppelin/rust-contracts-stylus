@@ -62,9 +62,11 @@ impl Nonces {
     ///
     /// # Safety
     ///
-    /// the function will experience **undefined behavior**, if the nonce for
+    /// the function will experience [undefined behavior], if the nonce for
     /// the given `owner` has reached the maximum value representable by `U256`.
     /// Extreme caution should be taken to ensure overflow cannot occur.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
 
@@ -89,7 +91,7 @@ impl Nonces {
     ///
     /// # Safety
     ///
-    /// the function will experience **undefined behavior**, if the nonce for
+    /// the function will experience [undefined behavior], if the nonce for
     /// the given `owner` has reached the maximum value representable by `U256`.
     /// Extreme caution should be taken to ensure overflow cannot occur.
     ///
@@ -97,6 +99,8 @@ impl Nonces {
     ///
     /// Returns an error if the `nonce` is not the next valid nonce for the
     /// owner.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub fn use_checked_nonce(
         &mut self,
         owner: Address,
