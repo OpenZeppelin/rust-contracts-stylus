@@ -101,6 +101,10 @@ impl Erc1155Example {
         Erc1155::supports_interface(interface_id)
     }
 
+    /// WARNING: These functions are intended for **testing purposes** only. In
+    /// **production**, ensure strict access control to prevent unauthorized
+    /// pausing or unpausing, which can disrupt contract functionality. Remove
+    /// or secure these functions before deployment.
     fn pause(&mut self) -> Result<(), Vec<u8>> {
         self.pausable.pause().map_err(|e| e.into())
     }
