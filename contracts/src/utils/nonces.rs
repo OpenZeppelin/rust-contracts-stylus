@@ -20,7 +20,7 @@ mod sol {
         /// The nonce used for an `account` is not the expected current nonce.
         #[derive(Debug)]
         #[allow(missing_docs)]
-        error InvalidAccountNonce(address account, uint256 currentNonce);
+        error InvalidAccountNonce(address account, uint256 current_nonce);
     }
 }
 
@@ -102,18 +102,14 @@ impl Nonces {
         owner: Address,
         nonce: U256,
     ) -> Result<(), Error> {
-        let current_nonce = self._nonces.get(owner);
+        let current_nonce = self.use_nonce(owner);
 
         if nonce != current_nonce {
             return Err(Error::InvalidAccountNonce(InvalidAccountNonce {
                 account: owner,
-                currentNonce: current_nonce,
+                current_nonce,
             }));
         }
-
-        self._nonces
-            .setter(owner)
-            .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
 
         Ok(())
     }
