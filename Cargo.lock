@@ -43,6 +43,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "afl"
+version = "0.15.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b784d6332a6978dd29861676de9df37aa37ed8852341db6340bd75eb82bc7a69"
+dependencies = [
+ "home",
+ "libc",
+ "rustc_version 0.4.0",
+ "xdg",
+]
+
+[[package]]
 name = "ahash"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -982,11 +994,6 @@ name = "cc"
 version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74b6a57f98764a267ff415d50a25e6e166f3831a5071af4995296ea97d210490"
-dependencies = [
- "jobserver",
- "libc",
- "once_cell",
-]
 
 [[package]]
 name = "cfg-if"
@@ -2040,6 +2047,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "home"
+version = "0.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3d1354bf6b7235cb4a0576c2619fd4ed18183f689b12b006a0ee7329eeff9a5"
+dependencies = [
+ "windows-sys 0.52.0",
+]
+
+[[package]]
 name = "http"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2260,15 +2276,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
 
 [[package]]
-name = "jobserver"
-version = "0.1.32"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48d1dbcbbeb6a7fec7e059840aa538bd62aaccf972c7346c4d9d2059312853d0"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "js-sys"
 version = "0.3.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2352,16 +2359,6 @@ name = "libc"
 version = "0.2.155"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
-
-[[package]]
-name = "libfuzzer-sys"
-version = "0.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b9569d2f74e257076d8c6bfa73fb505b46b851e51ddaecc825944aa3bed17fa"
-dependencies = [
- "arbitrary",
- "cc",
-]
 
 [[package]]
 name = "libm"
@@ -2496,7 +2493,8 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.2.1"
-source = "git+https://github.com/0xNeshi/stylus-test-helpers?rev=3617990#3617990c9ef8cbeed547fead72d34e1119abbee2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc9f12a78b4ce861c6a73758b137200a7139b402bc3fd8baa0477e936a572605"
 dependencies = [
  "const-hex",
  "dashmap 6.1.0",
@@ -2509,7 +2507,8 @@ dependencies = [
 [[package]]
 name = "motsu-proc"
 version = "0.2.1"
-source = "git+https://github.com/0xNeshi/stylus-test-helpers?rev=3617990#3617990c9ef8cbeed547fead72d34e1119abbee2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e477b432a80b129a0ecb1da2ba257140e73655bd922f2fd02a7b13e76216374"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2685,8 +2684,8 @@ dependencies = [
 name = "openzeppelin-stylus-fuzz"
 version = "0.2.0-alpha.2"
 dependencies = [
- "alloy-primitives",
- "libfuzzer-sys",
+ "afl",
+ "arbitrary",
  "motsu",
  "openzeppelin-stylus",
 ]
@@ -4636,6 +4635,12 @@ checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
 dependencies = [
  "tap",
 ]
+
+[[package]]
+name = "xdg"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213b7324336b53d2414b2db8537e56544d981803139155afa84f76eeebb7a546"
 
 [[package]]
 name = "zerocopy"
