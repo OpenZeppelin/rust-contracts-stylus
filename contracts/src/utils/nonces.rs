@@ -60,13 +60,17 @@ impl Nonces {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address for which to consume the nonce.
     ///
-    /// # Panics
+    /// # Safety
     ///
-    /// This function will panic if the nonce for the given `owner` has reached
-    /// the maximum value representable by `U256`, causing the `checked_add`
-    /// method to return `None`.
+    /// the function will experience **undefined behavior**, if the nonce for
+    /// the given `owner` has reached the maximum value representable by `U256`.
+    /// Extreme caution should be taken to ensure overflow cannot occur.
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
+
+        // For each account, the nonce has an initial value of 0, can only be
+        // incremented by one, and cannot be decremented or reset. This
+        // guarantees that the nonce never overflows.
         self._nonces
             .setter(owner)
             .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
@@ -83,11 +87,11 @@ impl Nonces {
     /// * `owner` - The address for which to consume the nonce.
     /// * `nonce` - The nonce to consume.
     ///
-    /// # Panics
+    /// # Safety
     ///
-    /// This function will panic if the nonce for the given `owner` has reached
-    /// the maximum value representable by `U256`, causing the `checked_add`
-    /// method to return `None`.
+    /// the function will experience **undefined behavior**, if the nonce for
+    /// the given `owner` has reached the maximum value representable by `U256`.
+    /// Extreme caution should be taken to ensure overflow cannot occur.
     ///
     /// # Errors
     ///
