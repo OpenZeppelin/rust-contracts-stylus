@@ -126,10 +126,13 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc20 {
     /// Maps users to balances.
+    #[allow(clippy::used_underscore_binding)]
     pub _balances: StorageMap<Address, StorageU256>,
     /// Maps users to a mapping of each spender's allowance.
+    #[allow(clippy::used_underscore_binding)]
     pub _allowances: StorageMap<Address, StorageMap<Address, StorageU256>>,
     /// The total supply of the token.
+    #[allow(clippy::used_underscore_binding)]
     pub _total_supply: StorageU256,
 }
 

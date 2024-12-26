@@ -26,6 +26,7 @@ const HEX_FF: U256 = uint!(0xff_U256);
 #[storage]
 pub struct BitMap {
     /// Inner laying mapping.
+    #[allow(clippy::used_underscore_binding)]
     pub _data: StorageMap<U256, StorageU256>,
 }
 

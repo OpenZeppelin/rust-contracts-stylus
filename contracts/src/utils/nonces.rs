@@ -35,6 +35,7 @@ pub enum Error {
 #[storage]
 pub struct Nonces {
     /// Mapping from address to its nonce.
+    #[allow(clippy::used_underscore_binding)]
     pub _nonces: StorageMap<Address, StorageU256>,
 }
 

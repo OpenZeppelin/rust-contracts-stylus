@@ -107,12 +107,16 @@ pub struct VestingWallet {
     /// [`Ownable`] contract.
     pub ownable: Ownable,
     /// Amount of Ether already released.
+    #[allow(clippy::used_underscore_binding)]
     pub _released: StorageU256,
     /// Amount of ERC-20 tokens already released.
+    #[allow(clippy::used_underscore_binding)]
     pub _erc20_released: StorageMap<Address, StorageU256>,
     /// Start timestamp.
+    #[allow(clippy::used_underscore_binding)]
     pub _start: StorageU64,
     /// Vesting duration.
+    #[allow(clippy::used_underscore_binding)]
     pub _duration: StorageU64,
     /// [`SafeErc20`] contract.
     pub safe_erc20: SafeErc20,

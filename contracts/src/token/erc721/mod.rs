@@ -197,12 +197,16 @@ mod receiver {
 #[storage]
 pub struct Erc721 {
     /// Maps tokens to owners.
+    #[allow(clippy::used_underscore_binding)]
     pub _owners: StorageMap<U256, StorageAddress>,
     /// Maps users to balances.
+    #[allow(clippy::used_underscore_binding)]
     pub _balances: StorageMap<Address, StorageU256>,
     /// Maps tokens to approvals.
+    #[allow(clippy::used_underscore_binding)]
     pub _token_approvals: StorageMap<U256, StorageAddress>,
     /// Maps owners to a mapping of operator approvals.
+    #[allow(clippy::used_underscore_binding)]
     pub _operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }

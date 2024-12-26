@@ -9,8 +9,10 @@ use stylus_sdk::{
 #[storage]
 pub struct Metadata {
     /// Token name.
+    #[allow(clippy::used_underscore_binding)]
     pub _name: StorageString,
     /// Token symbol.
+    #[allow(clippy::used_underscore_binding)]
     pub _symbol: StorageString,
 }
 
