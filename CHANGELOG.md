@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Refactor how `AddAssignUnchecked` and `SubAssignUnchecked` are used in `Erc20`, `Erc721`, and `Erc721Consecutive`. #
-- Refactor `Nonces`. #
+- Refactor how `AddAssignUnchecked` and `SubAssignUnchecked` are used in `Erc20`, `Erc721`, and `Erc721Consecutive`. #467
+- Refactor `Nonces`. #467
 
 ### Changed (Breaking)
 
