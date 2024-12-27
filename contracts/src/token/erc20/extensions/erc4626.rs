@@ -32,8 +32,7 @@ use crate::{
 
 /// ERC-4626 Tokenized Vault Standard Interface
 pub trait IERC4626 {
-    /// Error type associated with the operations, convertible to a vector of
-    /// bytes.
+    /// The error type associated to this ERC-4626 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the address of the underlying asset that the vault manages.
@@ -229,72 +228,58 @@ sol! {
 }
 
 sol! {
-    /// Indicates an error where a deposit operation failed
-    /// because the supplied `assets` exceeded the maximum allowed for the `receiver`.
+    /// Indicates an error where a deposit operation failed because the
+    /// supplied `assets` exceeded the maximum allowed for the `receiver`.
     #[derive(Debug)]
     #[allow(missing_docs)]
-     error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
-
-    /// Indicates an error where a mint operation failed
-    /// because the supplied `shares` exceeded the maximum allowed for the `receiver`.
+    error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
+    /// Indicates an error where a mint operation failed because the supplied
+    /// `shares` exceeded the maximum allowed for the `receiver`.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
-
-    /// Indicates an error where a withdrawal operation failed
-    /// because the supplied `assets` exceeded the maximum allowed for the `owner`
+    /// Indicates an error where a withdrawal operation failed because the
+    /// supplied `assets` exceeded the maximum allowed for the `owner`.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
-
-    /// Indicates an error where a redemption operation failed
-    /// because the supplied `shares` exceeded the maximum allowed for the `owner`.
+    /// Indicates an error where a redemption operation failed because the
+    /// supplied `shares` exceeded the maximum allowed for the `owner`.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 }
 
-/// Error type from [`Erc4626`] contract.
+/// An [`Erc4626`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Indicates an error where a deposit operation failed
-    /// because the supplied `assets` exceeded the maximum allowed for the
-    /// `receiver`.
-    ExceededMaxDeposit(ERC4626ExceededMaxDeposit),
-
-    /// Indicates an error where a mint operation failed
-    /// because the supplied `shares` exceeded the maximum allowed for the
-    /// `receiver`
-    ExceededMaxMint(ERC4626ExceededMaxMint),
-
-    /// Indicates an error where a withdrawal operation failed
-    /// because the supplied `assets` exceeded the maximum allowed for the
-    /// `owner`
-    ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw),
-
-    /// Indicates an error where a redemption operation failed
-    /// because the supplied `shares` exceeded the maximum allowed for the
-    /// `owner`.
-    ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
-
     /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
     SafeErc20(safe_erc20::Error),
-
+    /// Indicates an error where a deposit operation failed because the
+    /// supplied `assets` exceeded the maximum allowed for the `receiver`.
+    ExceededMaxDeposit(ERC4626ExceededMaxDeposit),
+    /// Indicates an error where a mint operation failed because the supplied
+    /// `shares` exceeded the maximum allowed for the `receiver`.
+    ExceededMaxMint(ERC4626ExceededMaxMint),
+    /// Indicates an error where a withdrawal operation failed because the
+    /// supplied `assets` exceeded the maximum allowed for the `owner`.
+    ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw),
+    /// Indicates an error where a redemption operation failed because the
+    /// supplied `shares` exceeded the maximum allowed for the `owner`.
+    ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
 }
 
-///  ERC4626 Contract.
+/// State of an [`Erc4626`] token.
 #[storage]
 pub struct Erc4626 {
-    /// The ERC20 token
+    /// ERC-20 contract storage.
     pub _asset: Erc20,
-
-    /// The SafeERC20 token
-    pub _safe_erc20: SafeErc20,
-
-    /// The underlying asset's decimals
+    /// The underlying asset's decimals.
     pub _underlying_decimals: StorageU8,
+    /// [`SafeErc20`] contract.
+    pub _safe_erc20: SafeErc20,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

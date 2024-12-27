@@ -15,11 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 
 
-### Added mulDiv to Math Util (Breaking)
-
-- Add mulDiv to Math Util  #465
-
-
 ## [v0.2.0-alpha.2] - 2024-12-18
 
 ### Added
