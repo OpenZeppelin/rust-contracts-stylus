@@ -63,7 +63,7 @@ impl Nonces {
     ///
     /// # Safety
     ///
-    /// the function will experience [undefined behavior], if the nonce for
+    /// This function will experience [undefined behavior], if the nonce for
     /// the given `owner` has reached the maximum value representable by `U256`.
     /// Extreme caution should be taken to ensure overflow cannot occur.
     ///
@@ -71,7 +71,7 @@ impl Nonces {
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
 
-        // For each account, the nonce has an initial value of 0, can only be
+        // For each account, the nonce has an initial value of `U256::ZERO`, can only be
         // incremented by one, and cannot be decremented or reset. This
         // guarantees that the nonce never overflows.
         self._nonces
@@ -92,7 +92,7 @@ impl Nonces {
     ///
     /// # Safety
     ///
-    /// the function will experience [undefined behavior], if the nonce for
+    /// This function will experience [undefined behavior], if the nonce for
     /// the given `owner` has reached the maximum value representable by `U256`.
     /// Extreme caution should be taken to ensure overflow cannot occur.
     ///
