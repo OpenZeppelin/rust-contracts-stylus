@@ -71,8 +71,8 @@ impl Nonces {
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
 
-        // For each account, the nonce has an initial value of `U256::ZERO`, can only be
-        // incremented by one, and cannot be decremented or reset. This
+        // For each account, the nonce has an initial value of `U256::ZERO`, can
+        // only be incremented by one, and cannot be decremented or reset. This
         // guarantees that the nonce never overflows.
         self._nonces
             .setter(owner)
