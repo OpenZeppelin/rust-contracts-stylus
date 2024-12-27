@@ -3,9 +3,9 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::B256;
+use alloy_primitives::U256;
 use openzeppelin_crypto::{
-    bigint::BigInteger,
+    bigint::{crypto_bigint::Uint, BigInteger},
     field::{instance::FpVesta, prime::PrimeField},
     poseidon2::{instance::vesta::VestaParams, Poseidon2},
 };
@@ -17,22 +17,19 @@ struct PoseidonExample {}
 
 #[public]
 impl PoseidonExample {
-    pub fn hash(
-        &mut self,
-        data: stylus_sdk::abi::Bytes,
-    ) -> Result<B256, Vec<u8>> {
-        let input = data.to_vec();
-
+    pub fn hash(&mut self, inputs: [U256; 2]) -> Result<U256, Vec<u8>> {
         let mut hasher = Poseidon2::<VestaParams, FpVesta>::new();
 
-        for i in 0..1 {
-            let fp = FpVesta::from(i);
+        for input in inputs.iter() {
+            let fp = FpVesta::from_bigint(Uint::from_bytes_le(
+                &input.to_le_bytes_vec(),
+            ));
             hasher.absorb(&fp);
         }
 
         let hash = hasher.squeeze();
         let hash = hash.into_bigint().into_bytes_le();
 
-        Ok(B256::from_slice(&hash))
+        Ok(U256::from_le_slice(&hash))
     }
 }

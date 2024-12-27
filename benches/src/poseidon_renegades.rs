@@ -10,7 +10,7 @@ use e2e::{receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
-    CacheOpt,
+    Opt,
 };
 
 sol!(
@@ -22,23 +22,10 @@ sol!(
 );
 
 pub async fn bench() -> eyre::Result<ContractReport> {
-    let reports = run_with(CacheOpt::None).await?;
-    let report = reports.into_iter().try_fold(
-        ContractReport::new("renegades::Poseidon"),
-        ContractReport::add,
-    )?;
-
-    let cached_reports = run_with(CacheOpt::Bid(0)).await?;
-    let report = cached_reports
-        .into_iter()
-        .try_fold(report, ContractReport::add_cached)?;
-
-    Ok(report)
+    ContractReport::generate("renegades::Poseidon", run).await
 }
 
-pub async fn run_with(
-    cache_opt: CacheOpt,
-) -> eyre::Result<Vec<FunctionReport>> {
+pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
@@ -61,9 +48,6 @@ pub async fn run_with(
         .collect::<eyre::Result<Vec<_>>>()
 }
 
-async fn deploy(
-    account: &Account,
-    cache_opt: CacheOpt,
-) -> eyre::Result<Address> {
+async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
     crate::deploy(account, "poseidon-renegades", None, cache_opt).await
 }

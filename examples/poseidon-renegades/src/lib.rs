@@ -33,7 +33,7 @@ impl PoseidonExample {
 
         let mut hasher = Poseidon2Sponge::new();
 
-        for i in 0..1 {
+        for i in 0..2 {
             let fp = ScalarField::from(i);
             hasher.absorb(&fp);
         }

@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use alloy::{
     network::{AnyNetwork, EthereumWallet},
     primitives::Address,
@@ -5,39 +7,28 @@ use alloy::{
     sol,
     sol_types::SolCall,
 };
-use alloy_primitives::bytes;
+use alloy_primitives::uint;
 use e2e::{receipt, Account};
+use futures::FutureExt;
 
 use crate::{
     report::{ContractReport, FunctionReport},
-    CacheOpt,
+    Opt,
 };
 
 sol!(
     #[sol(rpc)]
    contract PoseidonExample {
         #[derive(Debug)]
-        function hash(bytes calldata data) external view returns (bytes32 hash);
+        function hash(uint256[2] memory inputs) external view returns (uint256 hash);
     }
 );
 
 pub async fn bench() -> eyre::Result<ContractReport> {
-    let reports = run_with(CacheOpt::None).await?;
-    let report = reports
-        .into_iter()
-        .try_fold(ContractReport::new("Poseidon"), ContractReport::add)?;
-
-    let cached_reports = run_with(CacheOpt::Bid(0)).await?;
-    let report = cached_reports
-        .into_iter()
-        .try_fold(report, ContractReport::add_cached)?;
-
-    Ok(report)
+    ContractReport::generate("Poseidon", run).await
 }
 
-pub async fn run_with(
-    cache_opt: CacheOpt,
-) -> eyre::Result<Vec<FunctionReport>> {
+pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
@@ -51,7 +42,7 @@ pub async fn run_with(
 
     #[rustfmt::skip]
     let receipts = vec![
-        (PoseidonExample::hashCall::SIGNATURE, receipt!(contract.hash(bytes!("deadbeef")))?),
+        (PoseidonExample::hashCall::SIGNATURE, receipt!(contract.hash([uint!(123_U256), uint!(123456_U256)]))?),
     ];
 
     receipts
@@ -60,9 +51,6 @@ pub async fn run_with(
         .collect::<eyre::Result<Vec<_>>>()
 }
 
-async fn deploy(
-    account: &Account,
-    cache_opt: CacheOpt,
-) -> eyre::Result<Address> {
+async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
     crate::deploy(account, "poseidon", None, cache_opt).await
 }
