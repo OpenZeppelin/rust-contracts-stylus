@@ -16,7 +16,7 @@ use stylus_sdk::prelude::{entrypoint, public, storage};
 
 #[entrypoint]
 #[storage]
-struct Erc4262xample {
+struct Erc4626Example {
     #[borrow]
     pub erc20: Erc20,
     #[borrow]
@@ -27,7 +27,7 @@ struct Erc4262xample {
 
 #[public]
 #[inherit(Erc20, Erc20Metadata, Erc4626)]
-impl Erc4262xample {
+impl Erc4626Example {
     fn max_deposit(&self, _receiver: Address) -> U256 {
         //self.metadata.decimals()
         U256::from(100)

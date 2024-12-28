@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-contract Erc4262Example {
+contract Erc4626Example {
     address private immutable _asset;
     uint8 private immutable _underlyingDecimals;
     
