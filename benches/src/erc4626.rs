@@ -20,7 +20,7 @@ sol!(
         function totalAssets() public view returns (uint256);
         function convertToShares(uint256 assets) public view  returns (uint256);
         function convertToAssets(uint256 shares) public view  returns (uint256);
-        function maxMint(address) public view  returns (uint256);
+        function maxMint(address receiver) public view  returns (uint256);
         function maxDeposit(address) public view  returns (uint256);
         function maxWithdraw(address owner) public view  returns (uint256);
         function maxRedeem(address owner) public view  returns (uint256);
