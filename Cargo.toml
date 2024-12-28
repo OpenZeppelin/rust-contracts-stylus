@@ -13,7 +13,7 @@ members = [
   "examples/erc1155",
   "examples/erc1155-metadata-uri",
   "examples/erc1155-supply",
-  "examples/erc4262",  
+  "examples/erc4626",  
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/vesting-wallet",
