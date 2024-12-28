@@ -500,7 +500,7 @@ mod tests {
     #[motsu::test]
     fn can_get_max_mint(contract: Erc4626) {
         let sender = msg::sender();
-        let max_mint = Erc4626::max_mint(&self, sender);
+        let max_mint = contract.max_mint(sender);
         assert_eq!(max_mint, U256::MAX);
     }
 
