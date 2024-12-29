@@ -1,5 +1,5 @@
 use benches::{
-    access_control, erc1155, erc1155_metadata_uri, erc20, erc721, erc4626,
+    access_control, erc1155, erc1155_metadata_uri, erc20, erc4626, erc721,
     merkle_proofs, ownable, report::BenchmarkReport,
 };
 use futures::FutureExt;
@@ -11,11 +11,11 @@ async fn main() -> eyre::Result<()> {
         access_control::bench().boxed(),
         erc20::bench().boxed(),
         erc721::bench().boxed(),
-        erc4626::bench().boxed(),
         merkle_proofs::bench().boxed(),
         ownable::bench().boxed(),
         erc1155::bench().boxed(),
         erc1155_metadata_uri::bench().boxed(),
+        erc4626::bench().boxed(),
     ];
 
     // Run benchmarks max 3 at the same time.

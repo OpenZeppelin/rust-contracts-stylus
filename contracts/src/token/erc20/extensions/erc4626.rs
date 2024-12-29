@@ -113,7 +113,6 @@ pub struct Erc4626 {
     pub _safe_erc20: SafeErc20,
 }
 
-
 /// ERC-4626 Tokenized Vault Standard Interface
 pub trait IERC4626 {
     /// The error type associated to this ERC-4626 trait implementation.
