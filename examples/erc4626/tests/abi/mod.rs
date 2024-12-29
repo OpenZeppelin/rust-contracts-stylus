@@ -43,18 +43,13 @@ sol!(
         error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
         error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 
-
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
-
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
 
-
-
         #[allow(missing_docs)]
         event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
-
         #[allow(missing_docs)]
         event Withdraw(address indexed sender,address indexed receiver,ddress indexed owner,uint256 assets, uint256 shares);
     }
