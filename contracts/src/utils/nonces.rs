@@ -61,22 +61,17 @@ impl Nonces {
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address for which to consume the nonce.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// This function will experience [undefined behavior], if the nonce for
-    /// the given `owner` has reached the maximum value representable by `U256`.
-    /// Extreme caution should be taken to ensure overflow cannot occur.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    /// This function will panic if the nonce for the given `owner` has reached
+    /// the maximum value representable by `U256`, causing the `checked_add`
+    /// method to return `None`.
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
-
-        // For each account, the nonce has an initial value of `U256::ZERO`, can
-        // only be incremented by one, and cannot be decremented or reset. This
-        // guarantees that the nonce never overflows.
-        self._nonces
-            .setter(owner)
-            .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
+        let updated_nonce = nonce
+            .checked_add(ONE)
+            .expect("nonce should not exceed `U256::MAX`");
+        self._nonces.setter(owner).set(updated_nonce);
 
         nonce
     }
@@ -90,18 +85,16 @@ impl Nonces {
     /// * `owner` - The address for which to consume the nonce.
     /// * `nonce` - The nonce to consume.
     ///
-    /// # Safety
+    /// # Panics
     ///
-    /// This function will experience [undefined behavior], if the nonce for
-    /// the given `owner` has reached the maximum value representable by `U256`.
-    /// Extreme caution should be taken to ensure overflow cannot occur.
+    /// This function will panic if the nonce for the given `owner` has reached
+    /// the maximum value representable by `U256`, causing the `checked_add`
+    /// method to return `None`.
     ///
     /// # Errors
     ///
     /// Returns an error if the `nonce` is not the next valid nonce for the
     /// owner.
-    ///
-    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub fn use_checked_nonce(
         &mut self,
         owner: Address,

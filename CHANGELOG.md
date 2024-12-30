@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
--
+- `Nonce::use_nonce` now panics on exceeding `U256::MAX`. #467
 
 ### Fixed
 
