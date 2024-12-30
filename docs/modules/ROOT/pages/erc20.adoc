@@ -83,4 +83,4 @@ Additionally, there are multiple custom extensions, including:
 
  * xref:erc20-permit.adoc[ERC-20 Permit]: gasless approval of tokens (standardized as https://eips.ethereum.org/EIPS/eip-2612[`EIP-2612`]).
 
- * xref:erc4262.adoc[ERC-4262]: standard interface for tokenized vaults.
+ * xref:erc4626.adoc[ERC-4626]: standard interface for tokenized vaults.
