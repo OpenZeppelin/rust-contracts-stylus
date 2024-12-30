@@ -111,14 +111,7 @@ sol! {
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 }
 
-/// Rounding modes for rounding operations.
-#[derive(PartialEq)]
-enum Rounding {
-    /// Toward negative infinity
-    Floor,
-    /// Toward positive infinity
-    Ceil,
-}
+
 /// An [`Erc4626`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
@@ -451,6 +444,17 @@ impl IERC4626 for Erc4626 {
     }
 }
 
+
+/// Rounding modes for rounding operations.
+#[derive(PartialEq)]
+enum Rounding {
+    /// Toward negative infinity
+    Floor,
+    /// Toward positive infinity
+    Ceil,
+}
+
+
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
         if rounding == Rounding::Ceil {}
@@ -536,6 +540,15 @@ impl Erc4626 {
     fn _decimals_offset(&self) -> u32 {
         0
     }
+}
+
+/// Rounding modes for rounding operations.
+#[derive(PartialEq)]
+enum Rounding {
+    /// Toward negative infinity
+    Floor,
+    /// Toward positive infinity
+    Ceil,
 }
 
 #[cfg(all(test, feature = "std"))]
