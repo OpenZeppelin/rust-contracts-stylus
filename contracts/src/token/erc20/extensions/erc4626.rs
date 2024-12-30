@@ -30,16 +30,13 @@ use stylus_sdk::{
     stylus_proc::{public, SolidityError},
 };
 
-use crate::{
-    token::erc20::{
+use crate::token::erc20::{
         self,
         utils::{
             safe_erc20::{self, ISafeErc20},
             SafeErc20,
         },
         Erc20, IErc20,
-    },
-    utils::math::alloy::Rounding,
 };
 
 sol! {
@@ -93,6 +90,13 @@ sol! {
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 }
 
+/// Rounding modes for rounding operations.
+enum Rounding {
+    /// Toward negative infinity
+    Floor,
+    /// Toward positive infinity
+    Ceil,
+}
 /// An [`Erc4626`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
