@@ -91,6 +91,7 @@ sol! {
 }
 
 /// Rounding modes for rounding operations.
+#[derive(PartialEq)]
 enum Rounding {
     /// Toward negative infinity
     Floor,
@@ -429,12 +430,26 @@ impl IERC4626 for Erc4626 {
 
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
+        if rounding == Rounding::Ceil {
+            
+        }
+
+        if rounding == Rounding::Floor {
+            
+        }
         //assets._mul_div_(  self.total_assets() + 10 **
         // self._decimals_offset(), self.total_assets() + 1, rounding)
         U256::ZERO
     }
 
     fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
+        if rounding == Rounding::Ceil {
+            
+        }
+
+        if rounding == Rounding::Floor {
+            
+        }
         //shares.mul_div(x, y, dominator, rounding)
         U256::ZERO
     }
