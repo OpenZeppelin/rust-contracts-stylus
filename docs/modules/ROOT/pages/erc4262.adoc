@@ -210,7 +210,7 @@ use openzeppelin_stylus::{
 
 #[entrypoint]
 #[storage]
-struct Erc4262xample {
+struct Erc4262Example {
     #[borrow]
     pub erc20: Erc20,
      #[borrow]
@@ -222,7 +222,60 @@ struct Erc4262xample {
 
 #[public]
 #[inherit(Erc20, Erc20Metadata, Erc4626)]
-impl Erc4262xample {
+impl Erc4262Example {
+    fn max_deposit(&self, _receiver: Address) -> U256 {
+        //self.metadata.decimals()
+        U256::from(100)
+    }
+    // Add token minting feature.
+}
+----
+
+[[fees]]
+== Custom behavior: Adding fees to the vault
+
+In an ERC-4626 vaults, fees can be captured during the deposit/mint and/or during the withdraw/redeem steps. In both cases it is essential to remain compliant with the ERC-4626 requirements with regard to the preview functions.
+
+For example, if calling `deposit(100, receiver)`, the caller should deposit exactly 100 underlying tokens, including fees, and the receiver should receive a number of shares that matches the value returned by `previewDeposit(100)`. Similarly, `previewMint` should account for the fees that the user will have to pay on top of share's cost.
+
+As for the `Deposit` event, while this is less clear in the EIP spec itself, there seems to be consensus that it should include the number of assets paid for by the user, including the fees.
+
+On the other hand, when withdrawing assets, the number given by the user should correspond to what he receives. Any fees should be added to the quote (in shares) performed by `previewWithdraw`.
+
+The `Withdraw` event should include the number of shares the user burns (including fees) and the number of assets the user actually receives (after fees are deducted).
+
+The consequence of this design is that both the `Deposit` and `Withdraw` events will describe two exchange rates. The spread between the "Buy-in" and the "Exit" prices correspond to the fees taken by the vault.
+
+The following example describes how fees proportional to the deposited/withdrawn amount can be implemented:
+
+[source,rust]
+----
+use alloy_primitives::{Address, U256};
+use stylus_sdk::prelude::{entrypoint, public, storage};
+use openzeppelin_stylus::{
+    token::erc20::{
+        extensions::{ Erc20Metadata, Erc4626, IErc20Metadata, IERC4626},
+        Erc20, IErc20,
+    },
+    utils::{introspection::erc165::IErc165, Pausable},
+};
+
+
+#[entrypoint]
+#[storage]
+struct Erc4262FeeExample {
+    #[borrow]
+    pub erc20: Erc20,
+     #[borrow]
+    pub metadata: Erc20Metadata,
+    #[borrow]
+    pub erc4626: Erc4626,
+}
+
+
+#[public]
+#[inherit(Erc20, Erc20Metadata, Erc4626)]
+impl Erc4262FeeExample {
     fn max_deposit(&self, _receiver: Address) -> U256 {
         //self.metadata.decimals()
         U256::from(100)
