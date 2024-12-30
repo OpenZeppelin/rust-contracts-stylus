@@ -1,4 +1,4 @@
-//! ERC-4626 Tokenized Vault Standard Implementation
+//! ERC-4626 Tokenized Vault Standard Implementation.
 //!
 //! Extends ERC-20 for vaults, enabling minting and burning of "shares" (represented using the [`ERC-20`] inheritance)
 //! in exchange for underlying assets. This contract provides standardized
