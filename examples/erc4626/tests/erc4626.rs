@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use abi::Erc4262;
+use abi::Erc4626;
 use alloy::{
     primitives::{b256, keccak256, Address, B256, U256},
     sol,
