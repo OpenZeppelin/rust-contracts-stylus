@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
     extensions::{Erc20FlashMint, IErc3156FlashLender},
-    Erc20, IErc20,
+    Erc20,
 };
 use stylus_sdk::{
     abi::Bytes,
@@ -51,9 +51,5 @@ impl Erc20FlashMintExample {
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), Vec<u8>> {
         Ok(self.erc20._mint(to, value)?)
-    }
-
-    fn balance_of(&self, account: Address) -> U256 {
-        self.erc20.balance_of(account)
     }
 }
