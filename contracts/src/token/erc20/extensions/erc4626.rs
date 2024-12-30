@@ -510,14 +510,14 @@ mod tests {
     use super::Erc4626;
 
     #[motsu::test]
-    fn can_get_max_mint(contract: Erc4626) {
+    fn max_mint(contract: Erc4626) {
         let sender = msg::sender();
         let max_mint = contract.max_mint(sender);
         assert_eq!(max_mint, U256::MAX);
     }
 
     #[motsu::test]
-    fn can_get_max_deposit(contract: Erc4626) {
+    fn max_deposit(contract: Erc4626) {
         let sender = msg::sender();
         let max_deposit = Erc4626::max_deposit(&self, sender);
         assert_eq!(max_deposit, U256::MAX);
