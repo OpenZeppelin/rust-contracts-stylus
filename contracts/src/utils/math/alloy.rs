@@ -146,22 +146,6 @@ impl Math for U256 {
         // carries + carries.
         (self & rhs) + ((self ^ rhs) >> 1)
     }
-
-    fn _mul_div_(self, x: Self, y: Self, denominator: Self) -> Self {
-        U256::ZERO
-    }
-
-    fn mul_div(
-        self,
-        x: Self,
-        y: Self,
-        deminator: Self,
-        rounding: Rounding,
-    ) -> Self {
-        self._mul_div_(x, y, deminator);
-
-        U256::ZERO
-    }
 }
 
 #[cfg(all(test, feature = "std"))]
