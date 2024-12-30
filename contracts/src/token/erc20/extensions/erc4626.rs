@@ -1,6 +1,6 @@
 //! ERC-4626 Tokenized Vault Standard Implementation
 //!
-//! Extends ERC-20 for vaults, enabling minting and burning of shares
+//! Extends ERC-20 for vaults, enabling minting and burning of "shares" (represented using the [`ERC-20`] inheritance)
 //! in exchange for underlying assets. This contract provides standardized
 //! workflows for deposits, minting, redemption, and burning of assets.
 //! Note: The shares are minted and burned in relation to the assets via
