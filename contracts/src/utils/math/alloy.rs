@@ -1,7 +1,6 @@
 //! Standard math utilities missing in `alloy_primitives`.
 use alloy_primitives::{uint, U256};
 
-
 /// Trait for standard math utilities missing in `alloy_primitives`.
 pub trait Math {
     /// Returns the square root of a number. If the number is not a perfect
@@ -22,7 +21,7 @@ pub trait Math {
     /// * `self` - first value to compute average.
     /// * `rhs` - second value to compute average.
     #[must_use]
-    fn average(self, rhs: Self) -> Self; 
+    fn average(self, rhs: Self) -> Self;
 }
 
 impl Math for U256 {

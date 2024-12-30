@@ -1,11 +1,11 @@
 //! ERC-4626 Tokenized Vault Standard Implementation.
 //!
-//! Extends ERC-20 for vaults, enabling minting and burning of "shares" (represented using the [`ERC-20`] inheritance)
-//! in exchange for underlying assets. This contract provides standardized
-//! workflows for deposits, minting, redemption, and burning of assets.
-//! Note: The shares are minted and burned in relation to the assets via
-//! the `deposit`, `mint`, `redeem`, and `burn` methods, affecting only
-//! the shares token, not the asset token itself.
+//! Extends ERC-20 for vaults, enabling minting and burning of "shares"
+//! (represented using the [`ERC-20`] inheritance) in exchange for underlying
+//! assets. This contract provides standardized workflows for deposits, minting,
+//! redemption, and burning of assets. Note: The shares are minted and burned in
+//! relation to the assets via the `deposit`, `mint`, `redeem`, and `burn`
+//! methods, affecting only the shares token, not the asset token itself.
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-4626
 //!
@@ -19,7 +19,27 @@
 //! infeasible. Withdrawals may similarly be affected by slippage. Users can
 //! protect against this attack as well as unexpected slippage in general by
 //! verifying the amount received is as expected, using a wrapper that performs
-//! these checks such as https://github.com/fei-protocol/ERC4626#erc4626router-and-base[ERC4626Router].
+//! these checks such as https://github.com/fei-protocol/ERC4626#erc4626router-and-base[ERC4626Router]
+//!
+//! The `_decimalsOffset()` corresponds to an offset in the decimal
+//! representation between the underlying asset's decimals and the vault
+//! decimals. This offset also determines the rate of virtual shares to virtual
+//! assets in the vault, which itself determines the initial exchange rate.
+//! While not fully preventing the attack, analysis shows that the default
+//! offset (0) makes it non-profitable even if an attacker is able to capture
+//! value from multiple user deposits, as a result of the value being captured
+//! by the virtual shares (out of the attacker's donation) matching the
+//! attacker's expected gains. With a larger offset, the attack becomes orders
+//! of magnitude more expensive than it is profitable. More details about the
+//! underlying math can be found xref:erc4626.adoc#inflation-attack[here].
+//!
+//! The drawback of this approach is that the virtual shares do capture (a very
+//! small) part of the value being accrued to the vault. Also, if the vault
+//! experiences losses, the users try to exit the vault, the virtual shares and
+//! assets will cause the first user to exit to experience reduced losses in
+//! detriment to the last users that will experience bigger losses.
+//!
+//! To learn more, check out our xref:ROOT:erc4626.adoc[ERC-4626 guide]..
 
 use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
@@ -31,13 +51,13 @@ use stylus_sdk::{
 };
 
 use crate::token::erc20::{
-        self,
-        utils::{
-            safe_erc20::{self, ISafeErc20},
-            SafeErc20,
-        },
-        Erc20, IErc20,
-        extensions::Erc20Metadata,
+    self,
+    extensions::Erc20Metadata,
+    utils::{
+        safe_erc20::{self, ISafeErc20},
+        SafeErc20,
+    },
+    Erc20, IErc20,
 };
 
 sol! {
@@ -433,26 +453,18 @@ impl IERC4626 for Erc4626 {
 
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
-        if rounding == Rounding::Ceil {
-            
-        }
+        if rounding == Rounding::Ceil {}
 
-        if rounding == Rounding::Floor {
-            
-        }
+        if rounding == Rounding::Floor {}
         //assets._mul_div_(  self.total_assets() + 10 **
         // self._decimals_offset(), self.total_assets() + 1, rounding)
         U256::ZERO
     }
 
     fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
-        if rounding == Rounding::Ceil {
-            
-        }
+        if rounding == Rounding::Ceil {}
 
-        if rounding == Rounding::Floor {
-            
-        }
+        if rounding == Rounding::Floor {}
         //shares.mul_div(x, y, dominator, rounding)
         U256::ZERO
     }
