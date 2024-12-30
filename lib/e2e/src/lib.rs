@@ -18,7 +18,7 @@ pub use system::{fund_account, provider, Provider, Wallet};
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.
 ///
-/// See: <https://docs.rs/alloy-contract/latest/alloy_contract/struct.CallBuilder.html>
+/// See: <https://docs.rs/alloy-contract/0.8.3/alloy_contract/struct.CallBuilder.html>
 ///
 /// # Examples
 ///
@@ -43,7 +43,7 @@ macro_rules! send {
 /// This macro provides a shorthand for broadcasting the transaction
 /// to the network, and then waiting for the given number of confirmations.
 ///
-/// See: <https://docs.rs/alloy-provider/latest/alloy_provider/struct.PendingTransactionBuilder.html>
+/// See: <https://docs.rs/alloy-provider/0.8.3/alloy_provider/struct.PendingTransactionBuilder.html>
 ///
 /// # Examples
 ///
@@ -69,7 +69,7 @@ macro_rules! watch {
 /// to the network, waiting for the given number of confirmations, and then
 /// fetching the transaction receipt.
 ///
-/// See: <https://docs.rs/alloy-provider/latest/alloy_provider/struct.PendingTransactionBuilder.html>
+/// See: <https://docs.rs/alloy-provider/0.8.3/alloy_provider/struct.PendingTransactionBuilder.html>
 ///
 /// # Examples
 ///
