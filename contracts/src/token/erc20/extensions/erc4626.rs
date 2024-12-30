@@ -37,6 +37,7 @@ use crate::token::erc20::{
             SafeErc20,
         },
         Erc20, IErc20,
+        extensions::Erc20Metadata,
 };
 
 sol! {
@@ -128,6 +129,8 @@ pub struct Erc4626 {
     pub _underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     pub _safe_erc20: SafeErc20,
+    /// ERC20 metadata extenston .
+    pub _metadata: Erc20Metadata,
 }
 
 /// ERC-4626 Tokenized Vault Standard Interface
