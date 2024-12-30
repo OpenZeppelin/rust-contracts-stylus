@@ -20,10 +20,11 @@ use stylus_sdk::{
     storage::TopLevelStorage,
     stylus_proc::{public, SolidityError},
     types::AddressVM,
-    ArbResult,
 };
 
-use crate::token::erc20;
+use crate::{
+    token::erc20, utils::reentrant_call_handler::ReentrantCallHandler,
+};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -400,32 +401,6 @@ impl SafeErc20 {
         data.split_last().is_some_and(|(last, rest)| {
             *last == 1 && rest.iter().all(|&byte| byte == 0)
         })
-    }
-}
-
-// Trait to encapsulate reentrant call handling
-trait ReentrantCallHandler {
-    fn call_with_reentrant_handling(
-        self,
-        token: Address,
-        call_data: &[u8],
-    ) -> ArbResult;
-}
-
-impl ReentrantCallHandler for RawCall {
-    fn call_with_reentrant_handling(
-        self,
-        token: Address,
-        call_data: &[u8],
-    ) -> ArbResult {
-        #[cfg(feature = "reentrant")]
-        unsafe {
-            self.flush_storage_cache().call(token, call_data)
-        }
-        #[cfg(not(feature = "reentrant"))]
-        {
-            self.call(token, call_data)
-        }
     }
 }
 
