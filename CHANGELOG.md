@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Erc4262` extension. #465
+- `Erc4626` "Tokenized Vault Standard". #465
 
 ### Changed
 
