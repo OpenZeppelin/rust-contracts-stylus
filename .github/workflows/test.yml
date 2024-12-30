@@ -141,7 +141,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Cargo llvm-cov
-        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.infos -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.info -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
