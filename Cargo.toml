@@ -38,6 +38,7 @@ default-members = [
   "examples/erc1155",
   "examples/erc1155-metadata-uri",
   "examples/erc1155-supply",
+  "examples/erc4626",  
   "examples/safe-erc20",
   "examples/merkle-proofs",
   "examples/ownable",
