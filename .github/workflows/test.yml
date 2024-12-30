@@ -57,15 +57,7 @@ jobs:
 
         # https://twitter.com/jonhoo/status/1571290371124260865
       - name: Run unit tests
-        # The `erc20-flash-mint-example` package enables the `reentrant` feature
-        # on `openzeppelin-stylus`, which combined with `--all-targets` seems to
-        # cause a linker issue "error: undefined symbol: storage_flush_cache".
-        #
-        # This is a known problem with workspace feature unification:
-        # https://github.com/rust-lang/cargo/issues/4463
-        #
-        # To deal with this, we simply ignore `erc20-flash-mint-example` from the compilation.
-        run: cargo nextest run --locked --features std --all-targets --workspace --exclude erc20-flash-mint-example
+        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-cryptoro
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
@@ -101,15 +93,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Run unit tests
-        # The `erc20-flash-mint-example` package enables the `reentrant` feature
-        # on `openzeppelin-stylus`, which combined with `--all-targets` seems to
-        # cause a linker issue "error: undefined symbol: storage_flush_cache".
-        #
-        # This is a known problem with workspace feature unification:
-        # https://github.com/rust-lang/cargo/issues/4463
-        #
-        # To deal with this, we simply ignore `erc20-flash-mint-example` from the compilation.
-        run: cargo nextest run --locked --features std --all-targets --workspace --exclude erc20-flash-mint-example
+        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-cryptoro
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
     # is compatible with codecov.io.
