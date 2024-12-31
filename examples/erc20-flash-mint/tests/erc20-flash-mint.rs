@@ -22,11 +22,11 @@ sol!("src/constructor.sol");
 
 const FEE_RECEIVER: Address =
     address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-const FLASH_FEE_AMOUNT: U256 = uint!(100_U256);
+const FLASH_FEE_VALUE: U256 = uint!(100_U256);
 
 impl Default for constructorCall {
     fn default() -> Self {
-        ctr(FEE_RECEIVER, FLASH_FEE_AMOUNT)
+        ctr(FEE_RECEIVER, FLASH_FEE_VALUE)
     }
 }
 
@@ -51,7 +51,7 @@ async fn constructs(alice: Account) -> Result<()> {
     let fee = contract.flashFee(contract_addr, U256::from(1)).call().await?.fee;
 
     assert_eq!(max, U256::MAX);
-    assert_eq!(fee, FLASH_FEE_AMOUNT);
+    assert_eq!(fee, FLASH_FEE_VALUE);
 
     Ok(())
 }
@@ -142,7 +142,7 @@ async fn flash_fee_returns_same_value_regardless_of_amount(
     let amounts = &[U256::ZERO, U256::from(1), U256::from(1000), U256::MAX];
     for &amount in amounts {
         let fee = contract.flashFee(contract_addr, amount).call().await?.fee;
-        assert_eq!(fee, FLASH_FEE_AMOUNT);
+        assert_eq!(fee, FLASH_FEE_VALUE);
     }
 
     Ok(())
@@ -187,21 +187,21 @@ async fn flash_fee_reverts_on_unsupported_token(alice: Account) -> Result<()> {
 async fn flash_loan_with_fee(alice: Account) -> Result<()> {
     let erc20_addr = alice
         .as_deployer()
-        .with_constructor(ctr(Address::ZERO, FLASH_FEE_AMOUNT))
+        .with_constructor(ctr(Address::ZERO, FLASH_FEE_VALUE))
         .deploy()
         .await?
         .address()?;
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
+    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = uint!(1_000_000_U256);
 
     let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
     let total_supply = erc20.totalSupply().call().await?.totalSupply;
 
-    assert_eq!(FLASH_FEE_AMOUNT, borrower_balance);
-    assert_eq!(FLASH_FEE_AMOUNT, total_supply);
+    assert_eq!(FLASH_FEE_VALUE, borrower_balance);
+    assert_eq!(FLASH_FEE_VALUE, total_supply);
 
     let receipt = receipt!(erc20.flashLoan(
         borrower_addr,
@@ -218,16 +218,16 @@ async fn flash_loan_with_fee(alice: Account) -> Result<()> {
     assert!(receipt.emits(ERC3156FlashBorrowerMock::BalanceOf {
         token: erc20_addr,
         account: borrower_addr,
-        value: loan_amount + FLASH_FEE_AMOUNT,
+        value: loan_amount + FLASH_FEE_VALUE,
     }));
     assert!(receipt.emits(ERC3156FlashBorrowerMock::TotalSupply {
         token: erc20_addr,
-        value: loan_amount + FLASH_FEE_AMOUNT,
+        value: loan_amount + FLASH_FEE_VALUE,
     }));
     assert!(receipt.emits(Erc20FlashMint::Transfer {
         from: borrower_addr,
         to: Address::ZERO,
-        value: loan_amount + FLASH_FEE_AMOUNT,
+        value: loan_amount + FLASH_FEE_VALUE,
     }));
 
     let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
@@ -311,7 +311,7 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
+    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = uint!(1_000_000_U256);
 
     let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
@@ -319,9 +319,9 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
         erc20.balanceOf(FEE_RECEIVER).call().await?.balance;
     let total_supply = erc20.totalSupply().call().await?.totalSupply;
 
-    assert_eq!(FLASH_FEE_AMOUNT, borrower_balance);
+    assert_eq!(FLASH_FEE_VALUE, borrower_balance);
     assert_eq!(U256::ZERO, fee_receiver_balance);
-    assert_eq!(FLASH_FEE_AMOUNT, total_supply);
+    assert_eq!(FLASH_FEE_VALUE, total_supply);
 
     let receipt = receipt!(erc20.flashLoan(
         borrower_addr,
@@ -338,11 +338,11 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     assert!(receipt.emits(ERC3156FlashBorrowerMock::BalanceOf {
         token: erc20_addr,
         account: borrower_addr,
-        value: loan_amount + FLASH_FEE_AMOUNT,
+        value: loan_amount + FLASH_FEE_VALUE,
     }));
     assert!(receipt.emits(ERC3156FlashBorrowerMock::TotalSupply {
         token: erc20_addr,
-        value: loan_amount + FLASH_FEE_AMOUNT,
+        value: loan_amount + FLASH_FEE_VALUE,
     }));
     assert!(receipt.emits(Erc20FlashMint::Transfer {
         from: borrower_addr,
@@ -352,7 +352,7 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     assert!(receipt.emits(Erc20FlashMint::Transfer {
         from: borrower_addr,
         to: FEE_RECEIVER,
-        value: FLASH_FEE_AMOUNT,
+        value: FLASH_FEE_VALUE,
     }));
 
     let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
@@ -361,8 +361,8 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     let total_supply = erc20.totalSupply().call().await?.totalSupply;
 
     assert_eq!(U256::ZERO, borrower_balance);
-    assert_eq!(FLASH_FEE_AMOUNT, fee_receiver_balance);
-    assert_eq!(FLASH_FEE_AMOUNT, total_supply);
+    assert_eq!(FLASH_FEE_VALUE, fee_receiver_balance);
+    assert_eq!(FLASH_FEE_VALUE, total_supply);
 
     Ok(())
 }
@@ -475,7 +475,7 @@ async fn flash_loan_reverts_when_invalid_receiver(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
+    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let invalid_receivers = &[alice.address(), Address::ZERO];
@@ -510,7 +510,7 @@ async fn flash_loan_reverts_when_receiver_callback_reverts(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
+    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let err = send!(erc20.flashLoan(
@@ -541,7 +541,7 @@ async fn flash_loan_reverts_when_receiver_returns_invalid_callback_value(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, false, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
+    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let err = send!(erc20.flashLoan(
@@ -572,7 +572,7 @@ async fn flash_loan_reverts_when_receiver_doesnt_approve_allowance(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, false).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_AMOUNT))?;
+    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let err = send!(erc20.flashLoan(
@@ -586,7 +586,7 @@ async fn flash_loan_reverts_when_receiver_doesnt_approve_allowance(
     assert!(err.reverted_with(Erc20FlashMint::ERC20InsufficientAllowance {
         spender: erc20_addr,
         allowance: U256::ZERO,
-        needed: loan_amount + FLASH_FEE_AMOUNT
+        needed: loan_amount + FLASH_FEE_VALUE
     }),);
 
     Ok(())
@@ -647,7 +647,7 @@ async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens(
     assert!(err.reverted_with(Erc20FlashMint::ERC20InsufficientBalance {
         sender: borrower_addr,
         balance: U256::ZERO,
-        needed: FLASH_FEE_AMOUNT
+        needed: FLASH_FEE_VALUE
     }));
 
     // test when not enough to return the loaned tokens
@@ -716,7 +716,7 @@ async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens_and_fee_rece
 ) -> Result<()> {
     let erc20_addr = alice
         .as_deployer()
-        .with_constructor(ctr(Address::ZERO, FLASH_FEE_AMOUNT))
+        .with_constructor(ctr(Address::ZERO, FLASH_FEE_VALUE))
         .deploy()
         .await?
         .address()?;
@@ -736,7 +736,7 @@ async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens_and_fee_rece
     assert!(err.reverted_with(Erc20FlashMint::ERC20InsufficientBalance {
         sender: borrower_addr,
         balance: loan_amount,
-        needed: loan_amount + FLASH_FEE_AMOUNT
+        needed: loan_amount + FLASH_FEE_VALUE
     }));
 
     Ok(())

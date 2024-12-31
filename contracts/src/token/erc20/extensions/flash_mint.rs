@@ -46,9 +46,9 @@ mod sol {
         #[allow(missing_docs)]
         error ERC3156UnsupportedToken(address token);
 
-        /// Indicate an error related to the loan amount exceeding the maximum.
+        /// Indicate an error related to the loan value exceeding the maximum.
         ///
-        /// * `max_loan` - Maximum loan amount.
+        /// * `max_loan` - Maximum loan value.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC3156ExceededMaxLoan(uint256 max_loan);
@@ -67,7 +67,7 @@ mod sol {
 pub enum Error {
     /// Indicate that the loan token is not supported or valid.
     UnsupportedToken(ERC3156UnsupportedToken),
-    /// Indicate an error related to the loan amount exceeding the maximum.
+    /// Indicate an error related to the loan value exceeding the maximum.
     ExceededMaxLoan(ERC3156ExceededMaxLoan),
     /// Indicate that the receiver of a flashloan is not a valid
     /// [`IERC3156FlashBorrower::on_flash_loan`] implementer.
@@ -115,7 +115,7 @@ mod borrower {
 #[storage]
 pub struct Erc20FlashMint {
     /// Fee applied when doing flash loans.
-    pub flash_fee_amount: StorageU256,
+    pub flash_fee_value: StorageU256,
     /// Receiver address of the flash fee.
     pub flash_fee_receiver_address: StorageAddress,
 }
@@ -162,7 +162,7 @@ pub trait IErc3156FlashLender {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token` - The token to be flash loaned.
-    /// * `amount` - The amount of tokens to be loaned.
+    /// * `value` - The amount of tokens to be loaned.
     ///
     /// # Errors
     ///
@@ -175,13 +175,13 @@ pub trait IErc3156FlashLender {
     /// need to do this manually.
     ///
     /// ```rust,ignore
-    /// fn flash_fee(&self, token: Address, amount: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_fee(token, amount)?)
+    /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc20_flash_mint.flash_fee(token, value)?)
     /// }
     fn flash_fee(
         &self,
         token: Address,
-        amount: U256,
+        value: U256,
     ) -> Result<U256, Self::Error>;
 
     /// Performs a flash loan.
@@ -201,13 +201,13 @@ pub trait IErc3156FlashLender {
     ///     &mut self,
     ///     receiver: Address,
     ///     token: Address,
-    ///     amount: U256,
+    ///     value: U256,
     ///     data: Bytes,
     /// ) -> Result<bool, Vec<u8>> {
     ///     Ok(self.erc20_flash_mint.flash_loan(
     ///         receiver,
     ///         token,
-    ///         amount,
+    ///         value,
     ///         data,
     ///         &mut self.erc20,
     ///     )?)
@@ -227,7 +227,7 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// * If the `amount` is greater than the value returned by
+    /// * If the `value` is greater than the value returned by
     ///   [`IErc3156FlashLender::max_flash_loan`], then the error
     ///   [`Error::ExceededMaxLoan`] is returned.
     /// * If `token` is not supported, then the error
@@ -247,13 +247,13 @@ pub trait IErc3156FlashLender {
     /// # Panics
     ///
     /// If the new (temporary) total supply exceeds `U256::MAX`.
-    /// If the sum of the loan amount and fee exceeds the maximum value of
+    /// If the sum of the loan value and fee exceeds the maximum value of
     /// `U256::MAX`.
     fn flash_loan(
         &mut self,
         receiver: Address,
         token: Address,
-        amount: U256,
+        value: U256,
         data: Bytes,
         erc20: &mut Erc20,
     ) -> Result<bool, Self::Error>;
@@ -272,14 +272,14 @@ impl IErc3156FlashLender for Erc20FlashMint {
     fn flash_fee(
         &self,
         token: Address,
-        _amount: U256,
+        _value: U256,
     ) -> Result<U256, Self::Error> {
         if token != contract::address() {
             return Err(Error::UnsupportedToken(ERC3156UnsupportedToken {
                 token,
             }));
         }
-        Ok(self.flash_fee_amount.get())
+        Ok(self.flash_fee_value.get())
     }
 
     // This function can reenter, but it doesn't pose a risk because it always
@@ -289,31 +289,31 @@ impl IErc3156FlashLender for Erc20FlashMint {
         &mut self,
         receiver: Address,
         token: Address,
-        amount: U256,
+        value: U256,
         data: Bytes,
         erc20: &mut Erc20,
     ) -> Result<bool, Self::Error> {
         let max_loan = self.max_flash_loan(token, erc20);
-        if amount > max_loan {
+        if value > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
                 max_loan,
             }));
         }
 
-        let fee = self.flash_fee(token, amount)?;
+        let fee = self.flash_fee(token, value)?;
         if !Address::has_code(&receiver) {
             return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
                 receiver,
             }));
         }
-        erc20._mint(receiver, amount)?;
+        erc20._mint(receiver, value)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
                 Call::new_in(self),
                 msg::sender(),
                 token,
-                amount,
+                value,
                 fee,
                 data.to_vec().into(),
             )
@@ -326,7 +326,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
             }));
         }
 
-        let allowance = amount
+        let allowance = value
             .checked_add(fee)
             .expect("allowance should not exceed `U256::MAX`");
         erc20._spend_allowance(receiver, contract::address(), allowance)?;
@@ -336,7 +336,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         if fee.is_zero() || flash_fee_receiver.is_zero() {
             erc20._burn(receiver, allowance)?;
         } else {
-            erc20._burn(receiver, amount)?;
+            erc20._burn(receiver, value)?;
             erc20._transfer(receiver, flash_fee_receiver, fee)?;
         }
 

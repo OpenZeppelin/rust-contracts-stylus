@@ -29,21 +29,21 @@ impl Erc20FlashMintExample {
         self.flash_mint.max_flash_loan(token, &self.erc20)
     }
 
-    fn flash_fee(&self, token: Address, amount: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.flash_mint.flash_fee(token, amount)?)
+    fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
+        Ok(self.flash_mint.flash_fee(token, value)?)
     }
 
     fn flash_loan(
         &mut self,
         receiver: Address,
         token: Address,
-        amount: U256,
+        value: U256,
         data: Bytes,
     ) -> Result<bool, Vec<u8>> {
         Ok(self.flash_mint.flash_loan(
             receiver,
             token,
-            amount,
+            value,
             data,
             &mut self.erc20,
         )?)
