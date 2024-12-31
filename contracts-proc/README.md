@@ -17,7 +17,7 @@ This crate offers procedural macros for OpenZeppelin Stylus contracts, specifica
 
 Annotate a Rust trait with `#[interface_id]` to compute the Solidity-compatible `INTERFACE_ID`:
 
-```rust
+```rust,ignore
 use openzeppelin_stylus_proc::interface_id;
 
 #[interface_id]
@@ -35,7 +35,7 @@ This will generate an `INTERFACE_ID` constant based on the XOR of the function s
 
 Override the Solidity function selector explicitly:
 
-```rust
+```rust,ignore
 fn safe_transfer_from(
     &mut self,
     from: Address,
