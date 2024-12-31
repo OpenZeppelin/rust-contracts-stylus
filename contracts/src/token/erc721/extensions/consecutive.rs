@@ -800,10 +800,11 @@ impl Erc721Consecutive {
         Ok(owner)
     }
 }
-/*
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
+    use motsu::prelude::Contract;
     use stylus_sdk::msg;
 
     use crate::token::{
@@ -821,49 +822,57 @@ mod tests {
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
     const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
 
-    fn init(
+    const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
+    const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
+
+    fn mint_consecutive(
         contract: &mut Erc721Consecutive,
         receivers: Vec<Address>,
         batches: Vec<U96>,
-    ) -> Vec<U96> {
-        contract._first_consecutive_id.set(uint!(0_U96));
-        contract._max_batch_size.set(uint!(5000_U96));
-        receivers
-            .into_iter()
-            .zip(batches)
-            .map(|(to, batch_size)| {
-                contract
-                    ._mint_consecutive(to, batch_size)
-                    .expect("should mint consecutively")
-            })
-            .collect()
+    ) {
+        contract._first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
+        contract._max_batch_size.set(MAX_BATCH_SIZE);
+        for (to, batch_size) in receivers.into_iter().zip(batches) {
+            contract
+                ._mint_consecutive(to, batch_size)
+                .expect("should mint consecutively");
+        }
     }
 
     #[motsu::test]
-    fn mints(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn mints(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
 
         let initial_balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
         let init_tokens_count = uint!(10_U96);
-        init(contract, vec![alice], vec![init_tokens_count]);
+        contract.init(alice, |contract| {
+            mint_consecutive(contract, vec![alice], vec![init_tokens_count]);
+        });
 
         let balance1 = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
         assert_eq!(balance1, initial_balance + U256::from(init_tokens_count));
 
         // Check non-consecutive mint.
         let token_id = random_token_id();
-        contract._mint(alice, token_id).expect("should mint a token for Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token for Alice");
         let owner = contract
+            .sender(alice)
             .owner_of(token_id)
             .expect("should return the owner of the token");
         assert_eq!(owner, alice);
 
         let balance2 = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
@@ -871,13 +880,17 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_minting_token_id_twice(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn error_when_minting_token_id_twice(
+        contract: Contract<Erc721Consecutive>,
+    ) {
+        let alice = Address::random();
         let token_id = random_token_id();
         contract
+            .sender(alice)
             ._mint(alice, token_id)
             .expect("should mint the token a first time");
         let err = contract
+            .sender(alice)
             ._mint(alice, token_id)
             .expect_err("should not mint a token with `token_id` twice");
 
@@ -890,12 +903,16 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_minting_token_invalid_receiver(contract: Erc721Consecutive) {
+    fn error_when_minting_token_invalid_receiver(
+        contract: Contract<Erc721Consecutive>,
+    ) {
+        let alice = Address::random();
         let invalid_receiver = Address::ZERO;
 
         let token_id = random_token_id();
 
         let err = contract
+            .sender(alice)
             ._mint(invalid_receiver, token_id)
             .expect_err("should not mint a token for invalid receiver");
 
@@ -908,8 +925,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_to_is_zero(contract: Erc721Consecutive) {
+    fn error_when_to_is_zero(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
         let err = contract
+            .sender(alice)
             ._mint_consecutive(Address::ZERO, uint!(11_U96))
             .expect_err("should not mint consecutive");
         assert!(matches!(
@@ -921,10 +940,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_exceed_batch_size(contract: Erc721Consecutive) {
-        let alice = msg::sender();
-        let batch_size = contract._max_batch_size() + uint!(1_U96);
+    fn error_when_exceed_batch_size(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
+        let batch_size =
+            contract.sender(alice)._max_batch_size() + uint!(1_U96);
         let err = contract
+            .sender(alice)
             ._mint_consecutive(alice, batch_size)
             .expect_err("should not mint consecutive");
         assert!(matches!(
@@ -933,108 +954,128 @@ mod tests {
                 batch_size,
                 max_batch
             })
-            if batch_size == U256::from(batch_size) && max_batch == U256::from(contract._max_batch_size())
+            if batch_size == U256::from(batch_size) && max_batch == U256::from(contract.sender(alice)._max_batch_size())
         ));
     }
 
     #[motsu::test]
-    fn transfers_from(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn transfers_from(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
         let bob = BOB;
 
         // Mint batches of 1000 tokens to Alice and Bob.
-        let [first_consecutive_token_id, _] = init(
-            contract,
-            vec![alice, bob],
-            vec![uint!(1000_U96), uint!(1000_U96)],
-        )
-        .try_into()
-        .expect("should have two elements in return vec");
+        contract.init(alice, |contract| {
+            mint_consecutive(
+                contract,
+                vec![alice, bob],
+                vec![uint!(1000_U96), uint!(1000_U96)],
+            );
+        });
 
         // Transfer first consecutive token from Alice to Bob.
         contract
-            .transfer_from(alice, bob, U256::from(first_consecutive_token_id))
+            .sender(alice)
+            .transfer_from(alice, bob, U256::from(FIRST_CONSECUTIVE_TOKEN_ID))
             .expect("should transfer a token from Alice to Bob");
 
         let owner = contract
-            .owner_of(U256::from(first_consecutive_token_id))
+            .sender(alice)
+            .owner_of(U256::from(FIRST_CONSECUTIVE_TOKEN_ID))
             .expect("token should be owned");
         assert_eq!(owner, bob);
 
         // Check that balances changed.
         let alice_balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
         assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
-        let bob_balance =
-            contract.balance_of(bob).expect("should return the balance of Bob");
+        let bob_balance = contract
+            .sender(alice)
+            .balance_of(bob)
+            .expect("should return the balance of Bob");
         assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
 
         // Check non-consecutive mint.
         let token_id = random_token_id();
-        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token to Alice");
         let alice_balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
         assert_eq!(alice_balance, uint!(1000_U256));
 
         // Check transfer of the token that wasn't minted consecutive.
         contract
+            .sender(alice)
             .transfer_from(alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
         let alice_balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
         assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
     }
 
     #[motsu::test]
-    fn burns(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn burns(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
 
         // Mint batch of 1000 tokens to Alice.
-        let [first_consecutive_token_id] =
-            init(contract, vec![alice], vec![uint!(1000_U96)])
-                .try_into()
-                .expect("should have two elements in return vec");
+        contract.init(alice, |contract| {
+            mint_consecutive(contract, vec![alice], vec![uint!(1000_U96)]);
+        });
 
         // Check consecutive token burn.
         contract
-            ._burn(U256::from(first_consecutive_token_id))
+            .sender(alice)
+            ._burn(U256::from(FIRST_CONSECUTIVE_TOKEN_ID))
             .expect("should burn token");
 
         let alice_balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
         assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
 
         let err = contract
-            .owner_of(U256::from(first_consecutive_token_id))
+            .sender(alice)
+            .owner_of(U256::from(FIRST_CONSECUTIVE_TOKEN_ID))
             .expect_err("token should not exist");
 
         assert!(matches!(
             err,
             Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken { token_id }))
-            if token_id == U256::from(first_consecutive_token_id)
+            if token_id == U256::from(FIRST_CONSECUTIVE_TOKEN_ID)
         ));
 
         // Check non-consecutive token burn.
         let non_consecutive_token_id = random_token_id();
         contract
+            .sender(alice)
             ._mint(alice, non_consecutive_token_id)
             .expect("should mint a token to Alice");
         let owner = contract
+            .sender(alice)
             .owner_of(non_consecutive_token_id)
             .expect("should return owner of the token");
         assert_eq!(owner, alice);
         let alice_balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
         assert_eq!(alice_balance, uint!(1000_U256));
 
-        contract._burn(non_consecutive_token_id).expect("should burn token");
+        contract
+            .sender(alice)
+            ._burn(non_consecutive_token_id)
+            .expect("should burn token");
 
         let err = contract
+            .sender(alice)
             .owner_of(U256::from(non_consecutive_token_id))
             .expect_err("token should not exist");
 
@@ -1047,6 +1088,7 @@ mod tests {
         // After being burnt the token should not be burnt again.
         let non_existent_token = non_consecutive_token_id;
         let err = contract
+            .sender(alice)
             ._burn(non_existent_token)
             .expect_err("should return Error::NonexistentToken");
 
@@ -1059,16 +1101,21 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn safe_transfer_from(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
         let token_id = random_token_id();
-        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token to Alice");
 
         contract
+            .sender(alice)
             .safe_transfer_from(alice, BOB, token_id)
             .expect("should transfer a token from Alice to Bob");
 
         let owner = contract
+            .sender(alice)
             .owner_of(token_id)
             .expect("should return the owner of the token");
 
@@ -1076,15 +1123,25 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_approved_token(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn safe_transfers_from_approved_token(
+        contract: Contract<Erc721Consecutive>,
+    ) {
+        let alice = Address::random();
         let token_id = random_token_id();
-        contract._mint(BOB, token_id).expect("should mint token to Bob");
-        contract.erc721._token_approvals.setter(token_id).set(alice);
         contract
+            .sender(alice)
+            ._mint(BOB, token_id)
+            .expect("should mint token to Bob");
+        contract
+            .sender(BOB)
+            .approve(alice, token_id)
+            .expect("should approve Bob's token to Alice");
+        contract
+            .sender(alice)
             .safe_transfer_from(BOB, alice, token_id)
             .expect("should transfer Bob's token to Alice");
         let owner = contract
+            .sender(alice)
             .owner_of(token_id)
             .expect("should return the owner of the token");
         assert_eq!(owner, alice);
@@ -1092,14 +1149,18 @@ mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_incorrect_owner(
-        contract: Erc721Consecutive,
+        contract: Contract<Erc721Consecutive>,
     ) {
-        let alice = msg::sender();
+        let alice = Address::random();
         let token_id = random_token_id();
 
-        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token to Alice");
 
         let err = contract
+            .sender(alice)
             .safe_transfer_from(DAVE, BOB, token_id)
             .expect_err("should not transfer from incorrect owner");
 
@@ -1115,11 +1176,12 @@ mod tests {
 
     #[motsu::test]
     fn error_when_internal_safe_transfer_nonexistent_token(
-        contract: Erc721Consecutive,
+        contract: Contract<Erc721Consecutive>,
     ) {
-        let alice = msg::sender();
+        let alice = Address::random();
         let token_id = random_token_id();
         let err = contract
+            .sender(alice)
             ._safe_transfer(alice, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer a non-existent token");
 
@@ -1133,15 +1195,19 @@ mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_to_invalid_receiver(
-        contract: Erc721Consecutive,
+        contract: Contract<Erc721Consecutive>,
     ) {
-        let alice = msg::sender();
+        let alice = Address::random();
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
 
-        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token to Alice");
 
         let err = contract
+            .sender(alice)
             .safe_transfer_from(alice, invalid_receiver, token_id)
             .expect_err("should not transfer the token to invalid receiver");
 
@@ -1153,18 +1219,23 @@ mod tests {
         ));
 
         let owner = contract
+            .sender(alice)
             .owner_of(token_id)
             .expect("should return the owner of the token");
         assert_eq!(alice, owner);
     }
 
     #[motsu::test]
-    fn safe_transfers_from_with_data(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn safe_transfers_from_with_data(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
         let token_id = random_token_id();
-        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token to Alice");
 
         contract
+            .sender(alice)
             .safe_transfer_from_with_data(
                 alice,
                 BOB,
@@ -1174,6 +1245,7 @@ mod tests {
             .expect("should transfer a token from Alice to Bob");
 
         let owner = contract
+            .sender(alice)
             .owner_of(token_id)
             .expect("should return the owner of the token");
 
@@ -1182,15 +1254,19 @@ mod tests {
 
     #[motsu::test]
     fn error_when_internal_safe_transfer_to_invalid_receiver(
-        contract: Erc721Consecutive,
+        contract: Contract<Erc721Consecutive>,
     ) {
-        let alice = msg::sender();
+        let alice = Address::random();
         let token_id = random_token_id();
         let invalid_receiver = Address::ZERO;
 
-        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token to Alice");
 
         let err = contract
+            .sender(alice)
             ._safe_transfer(
                 alice,
                 invalid_receiver,
@@ -1207,6 +1283,7 @@ mod tests {
         ));
 
         let owner = contract
+            .sender(alice)
             .owner_of(token_id)
             .expect("should return the owner of the token");
         assert_eq!(alice, owner);
@@ -1214,14 +1291,18 @@ mod tests {
 
     #[motsu::test]
     fn error_when_internal_safe_transfer_from_incorrect_owner(
-        contract: Erc721Consecutive,
+        contract: Contract<Erc721Consecutive>,
     ) {
-        let alice = msg::sender();
+        let alice = Address::random();
         let token_id = random_token_id();
 
-        contract._mint(alice, token_id).expect("should mint a token to Alice");
+        contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .expect("should mint a token to Alice");
 
         let err = contract
+            .sender(alice)
             ._safe_transfer(DAVE, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
@@ -1235,24 +1316,28 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mints(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn safe_mints(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
         let token_id = random_token_id();
 
         let initial_balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
         contract
+            .sender(alice)
             ._safe_mint(alice, token_id, &vec![0, 1, 2, 3].into())
             .expect("should mint a token for Alice");
 
         let owner = contract
+            .sender(alice)
             .owner_of(token_id)
             .expect("should return the owner of the token");
         assert_eq!(owner, alice);
 
         let balance = contract
+            .sender(alice)
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
@@ -1260,20 +1345,13 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approves(contract: Erc721Consecutive) {
-        let alice = msg::sender();
-        let token_id = random_token_id();
-        contract._mint(alice, token_id).expect("should mint a token");
-        contract
-            .approve(BOB, token_id)
-            .expect("should approve Bob for operations on token");
-        assert_eq!(contract.erc721._token_approvals.get(token_id), BOB);
-    }
-
-    #[motsu::test]
-    fn error_when_approve_for_nonexistent_token(contract: Erc721Consecutive) {
+    fn error_when_approve_for_nonexistent_token(
+        contract: Contract<Erc721Consecutive>,
+    ) {
+        let alice = Address::random();
         let token_id = random_token_id();
         let err = contract
+            .sender(alice)
             .approve(BOB, token_id)
             .expect_err("should not approve for a non-existent token");
 
@@ -1286,11 +1364,18 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_by_invalid_approver(contract: Erc721Consecutive) {
+    fn error_when_approve_by_invalid_approver(
+        contract: Contract<Erc721Consecutive>,
+    ) {
+        let alice = Address::random();
         let token_id = random_token_id();
-        contract._mint(BOB, token_id).expect("should mint a token");
+        contract
+            .sender(alice)
+            ._mint(BOB, token_id)
+            .expect("should mint a token");
 
         let err = contract
+            .sender(alice)
             .approve(DAVE, token_id)
             .expect_err("should not approve when invalid approver");
 
@@ -1303,32 +1388,28 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approval_for_all(contract: Erc721Consecutive) {
-        let alice = msg::sender();
+    fn approval_for_all(contract: Contract<Erc721Consecutive>) {
+        let alice = Address::random();
         contract
-            .erc721
-            ._operator_approvals
-            .setter(alice)
-            .setter(BOB)
-            .set(false);
-
-        contract
+            .sender(alice)
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert!(contract.is_approved_for_all(alice, BOB));
+        assert!(contract.sender(alice).is_approved_for_all(alice, BOB));
 
-        contract.set_approval_for_all(BOB, false).expect(
+        contract.sender(alice).set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert!(!contract.is_approved_for_all(alice, BOB));
+        assert!(!contract.sender(alice).is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
     fn error_when_get_approved_of_nonexistent_token(
-        contract: Erc721Consecutive,
+        contract: Contract<Erc721Consecutive>,
     ) {
+        let alice = Address::random();
         let token_id = random_token_id();
         let err = contract
+            .sender(alice)
             .get_approved(token_id)
             .expect_err("should not return approved for a non-existent token");
 
@@ -1340,4 +1421,3 @@ mod tests {
         ));
     }
 }
-*/
