@@ -335,11 +335,11 @@ impl IERC4626 for Erc4626 {
     }
 
     fn convert_to_shares(&self, assets: U256) -> U256 {
-        self._convert_to_shares(assets, Rounding::Floor)
+        self._convert_to_shares(assets)
     }
 
     fn convert_to_assets(&self, shares: U256) -> U256 {
-        self._convert_to_assets(shares, Rounding::Floor)
+        self._convert_to_assets(shares)
     }
 
     fn max_deposit(&self, _receiver: Address) -> U256 {
@@ -347,7 +347,7 @@ impl IERC4626 for Erc4626 {
     }
 
     fn preview_deposit(&self, assets: U256) -> U256 {
-        self._convert_to_shares(assets, Rounding::Floor)
+        self._convert_to_shares(assets)
     }
 
     fn deposit(
@@ -374,7 +374,7 @@ impl IERC4626 for Erc4626 {
     }
 
     fn preview_mint(&self, shares: U256) -> U256 {
-        self._convert_to_assets(shares, Rounding::Floor)
+        self._convert_to_assets(shares)
     }
 
     fn mint(&mut self, shares: U256, receiver: Address) -> Result<U256, Error> {
@@ -392,11 +392,11 @@ impl IERC4626 for Erc4626 {
     }
 
     fn max_withdraw(&self, owner: Address) -> U256 {
-        self._convert_to_assets(self._asset.balance_of(owner), Rounding::Floor)
+        self._convert_to_assets(self._asset.balance_of(owner))
     }
 
     fn preview_withdraw(&self, assets: U256) -> U256 {
-        self._convert_to_shares(assets, Rounding::Ceil)
+        self._convert_to_shares(assets)
     }
 
     fn withdraw(
@@ -422,7 +422,7 @@ impl IERC4626 for Erc4626 {
     }
 
     fn preview_redeem(&self, shares: U256) -> U256 {
-        self._convert_to_assets(shares, Rounding::Ceil)
+        self._convert_to_assets(shares)
     }
 
     fn redeem(
@@ -446,57 +446,23 @@ impl IERC4626 for Erc4626 {
     }
 }
 
-/// Rounding modes for rounding operations.
-#[derive(PartialEq)]
-enum Rounding {
-    /// Toward negative infinity
-    Floor,
-    /// Toward positive infinity
-    Ceil,
-}
-
 impl Erc4626 {
-    fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
+    fn _convert_to_shares(&self, assets: U256) -> U256 {
         let adjusted_total_supply = self._asset.total_supply()
             + U256::from(10u32.pow(self._decimals_offset()));
         let adjusted_total_assets = self.total_assets() + U256::from(1);
-        self._mul_div(
-            assets,
-            adjusted_total_supply,
-            adjusted_total_assets,
-            rounding,
-        )
+        self._mul_div(assets, adjusted_total_supply, adjusted_total_assets)
     }
 
-    fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
+    fn _convert_to_assets(&self, shares: U256) -> U256 {
         let adjusted_total_supply = self._asset.total_supply()
             + U256::from(10u32.pow(self._decimals_offset()));
         let adjusted_total_assets = self.total_assets() + U256::from(1);
-        self._mul_div(
-            shares,
-            adjusted_total_assets,
-            adjusted_total_supply,
-            rounding,
-        )
+        self._mul_div(shares, adjusted_total_assets, adjusted_total_supply)
     }
 
-    fn _mul_div(
-        &self,
-        x: U256,
-        y: U256,
-        dominator: U256,
-        rounding: Rounding,
-    ) -> U256 {
-        let numerator = x.saturating_mul(y);
-        let result = match rounding {
-            Rounding::Floor => {
-                numerator.checked_sub(U256::from(1)).unwrap_or(U256::ZERO)
-            }
-            Rounding::Ceil => {
-                numerator.checked_add(U256::from(1)).unwrap_or(U256::from(1))
-            }
-        };
-        result.checked_div(dominator).unwrap_or(U256::ZERO)
+    fn _mul_div(&self, x: U256, y: U256, dominator: U256) -> U256 {
+        x.saturating_mul(y).checked_div(dominator).unwrap_or(U256::ZERO)
     }
 
     fn _deposit(
