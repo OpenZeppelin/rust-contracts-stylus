@@ -264,9 +264,10 @@ impl IErc3156FlashLender for Erc20FlashMint {
 
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256 {
         if token == contract::address() {
-            return U256::MAX - erc20.total_supply();
+            U256::MAX - erc20.total_supply()
+        } else {
+            U256::MIN
         }
-        U256::MIN
     }
 
     fn flash_fee(
