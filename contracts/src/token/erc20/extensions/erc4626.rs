@@ -51,14 +51,14 @@ use stylus_sdk::{
 };
 
 use crate::token::erc20::{
-        self,
-        extensions::Erc20Metadata,
-        utils::{
-            safe_erc20::{self, ISafeErc20},
-            SafeErc20,
-        },
-        Erc20, IErc20,
-    };
+    self,
+    extensions::Erc20Metadata,
+    utils::{
+        safe_erc20::{self, ISafeErc20},
+        SafeErc20,
+    },
+    Erc20, IErc20,
+};
 
 sol! {
     /// Emitted when assets are deposited into the contract.
@@ -89,7 +89,7 @@ sol! {
 }
 
 sol! {
-    /// Indicates an error where depostit operation  failed because 
+    /// Indicates an error where depostit operation  failed because
     /// deposited  more assets than the max amount for `receiver
     #[derive(Debug)]
     #[allow(missing_docs)]
