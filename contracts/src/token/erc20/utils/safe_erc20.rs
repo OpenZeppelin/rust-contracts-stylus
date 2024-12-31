@@ -22,9 +22,7 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::{
-    token::erc20, utils::reentrant_call_handler::ReentrantCallHandler,
-};
+use crate::{token::erc20, utils::ReentrantCallHandler};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {

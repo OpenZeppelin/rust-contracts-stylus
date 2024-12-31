@@ -10,3 +10,4 @@ pub mod structs;
 
 pub use metadata::Metadata;
 pub use pausable::Pausable;
+pub use reentrant_call_handler::ReentrantCallHandler;
