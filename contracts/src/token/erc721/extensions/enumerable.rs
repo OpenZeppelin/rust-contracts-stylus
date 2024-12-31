@@ -332,35 +332,45 @@ impl Erc721Enumerable {
         }
     }
 }
-/*
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::msg;
+    use motsu::prelude::Contract;
+    use stylus_sdk::{msg, prelude::TopLevelStorage};
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
     use crate::token::erc721::{tests::random_token_id, Erc721, IErc721};
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
+    unsafe impl TopLevelStorage for Erc721Enumerable {}
+
     #[motsu::test]
-    fn total_supply_no_tokens(contract: Erc721Enumerable) {
-        assert_eq!(U256::ZERO, contract.total_supply());
+    fn total_supply_no_tokens(contract: Contract<Erc721Enumerable>) {
+        let alice = Address::random();
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
     }
 
     #[motsu::test]
-    fn error_when_token_by_index_is_out_of_bound(contract: Erc721Enumerable) {
-        assert_eq!(U256::ZERO, contract.total_supply());
+    fn error_when_token_by_index_is_out_of_bound(
+        contract: Contract<Erc721Enumerable>,
+    ) {
+        let alice = Address::random();
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         let token_idx = uint!(2024_U256);
 
-        let err = contract.token_by_index(token_idx).unwrap_err();
+        let err = contract.sender(alice).token_by_index(token_idx).unwrap_err();
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
     #[motsu::test]
-    fn add_token_to_all_tokens_enumeration_works(contract: Erc721Enumerable) {
-        assert_eq!(U256::ZERO, contract.total_supply());
+    fn add_token_to_all_tokens_enumeration_works(
+        contract: Contract<Erc721Enumerable>,
+    ) {
+        let alice = Address::random();
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         let tokens_len = 10;
 
@@ -371,28 +381,38 @@ mod tests {
             // Store ids for test.
             tokens_ids.push(token_id);
 
-            contract._add_token_to_all_tokens_enumeration(token_id);
+            contract
+                .sender(alice)
+                ._add_token_to_all_tokens_enumeration(token_id);
         }
 
-        assert_eq!(U256::from(tokens_len), contract.total_supply());
+        assert_eq!(
+            U256::from(tokens_len),
+            contract.sender(alice).total_supply()
+        );
 
         tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
+                .sender(alice)
                 .token_by_index(U256::from(idx))
                 .expect("should return token id for");
             assert_eq!(*expected_token_id, token_id);
         });
 
-        let err = contract.token_by_index(U256::from(tokens_len)).unwrap_err();
+        let err = contract
+            .sender(alice)
+            .token_by_index(U256::from(tokens_len))
+            .unwrap_err();
 
         assert!(matches!(err, Error::OutOfBoundsIndex(_)));
     }
 
     #[motsu::test]
     fn remove_token_from_all_tokens_enumeration_works(
-        contract: Erc721Enumerable,
+        contract: Contract<Erc721Enumerable>,
     ) {
-        assert_eq!(U256::ZERO, contract.total_supply());
+        let alice = Address::random();
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         let initial_tokens_len = 10;
 
@@ -403,36 +423,56 @@ mod tests {
             // Store ids for test.
             tokens_ids.push(token_id);
 
-            contract._add_token_to_all_tokens_enumeration(token_id);
+            contract
+                .sender(alice)
+                ._add_token_to_all_tokens_enumeration(token_id);
         }
-        assert_eq!(U256::from(initial_tokens_len), contract.total_supply());
+        assert_eq!(
+            U256::from(initial_tokens_len),
+            contract.sender(alice).total_supply()
+        );
 
         // Remove the last token.
         let last_token_id = tokens_ids.swap_remove(initial_tokens_len - 1);
-        contract._remove_token_from_all_tokens_enumeration(last_token_id);
-        assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
+        contract
+            .sender(alice)
+            ._remove_token_from_all_tokens_enumeration(last_token_id);
+        assert_eq!(
+            U256::from(initial_tokens_len - 1),
+            contract.sender(alice).total_supply()
+        );
 
         // Remove the second (`idx = 1`) element
         // to check that swap_remove operation works as expected.
         let token_to_remove = tokens_ids.swap_remove(1);
-        contract._remove_token_from_all_tokens_enumeration(token_to_remove);
-        assert_eq!(U256::from(initial_tokens_len - 2), contract.total_supply());
+        contract
+            .sender(alice)
+            ._remove_token_from_all_tokens_enumeration(token_to_remove);
+        assert_eq!(
+            U256::from(initial_tokens_len - 2),
+            contract.sender(alice).total_supply()
+        );
 
         // Add a new token.
         let token_id = random_token_id();
         tokens_ids.push(token_id);
-        contract._add_token_to_all_tokens_enumeration(token_id);
-        assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
+        contract.sender(alice)._add_token_to_all_tokens_enumeration(token_id);
+        assert_eq!(
+            U256::from(initial_tokens_len - 1),
+            contract.sender(alice).total_supply()
+        );
 
         // Check proper indices of tokens.
         tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
+                .sender(alice)
                 .token_by_index(U256::from(idx))
                 .expect("should return token id");
             assert_eq!(*expected_token_id, token_id);
         });
 
         let err = contract
+            .sender(alice)
             .token_by_index(U256::from(initial_tokens_len - 1))
             .unwrap_err();
 
@@ -446,10 +486,16 @@ mod tests {
         assert!(matches!(err, Error::EnumerableForbiddenBatchMint(_)));
     }
 
+    // TODO#q: repair Erc721Enumerable and Erc721 integration tests
+
     #[motsu::test]
-    fn token_of_owner_by_index_works(contract: Erc721Enumerable) {
-        let alice = msg::sender();
-        let mut erc721 = Erc721::default();
+    fn token_of_owner_by_index_works(
+        contract: Contract<Erc721Enumerable>,
+        erc721: Contract<Erc721>,
+    ) {
+        let alice = Address::random();
+        let mut contract = contract.sender(alice);
+        let mut erc721 = erc721.sender(alice);
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(alice).expect("should return balance of ALICE")
@@ -475,10 +521,13 @@ mod tests {
 
     #[motsu::test]
     fn error_when_token_of_owner_for_index_out_of_bound(
-        contract: Erc721Enumerable,
+        contract: Contract<Erc721Enumerable>,
+        erc721: Contract<Erc721>,
     ) {
-        let alice = msg::sender();
-        let mut erc721 = Erc721::default();
+        let alice = Address::random();
+        let mut contract = contract.sender(alice);
+        let mut erc721 = erc721.sender(alice);
+
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(alice).expect("should return balance of ALICE")
@@ -502,9 +551,13 @@ mod tests {
 
     #[motsu::test]
     fn error_when_token_of_owner_does_not_own_any_token(
-        contract: Erc721Enumerable,
+        contract: Contract<Erc721Enumerable>,
+        erc721: Contract<Erc721>,
     ) {
-        let erc721 = Erc721::default();
+        let alice = Address::random();
+        let mut contract = contract.sender(alice);
+        let mut erc721 = erc721.sender(alice);
+
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(BOB).expect("should return balance of BOB")
@@ -517,10 +570,13 @@ mod tests {
 
     #[motsu::test]
     fn token_of_owner_by_index_after_transfer_works(
-        contract: Erc721Enumerable,
+        contract: Contract<Erc721Enumerable>,
+        erc721: Contract<Erc721>,
     ) {
-        let alice = msg::sender();
-        let mut erc721 = Erc721::default();
+        let alice = Address::random();
+        let mut contract = contract.sender(alice);
+        let mut erc721 = erc721.sender(alice);
+
         assert_eq!(
             U256::ZERO,
             erc721.balance_of(alice).expect("should return balance of ALICE")
@@ -572,4 +628,3 @@ mod tests {
         assert_eq!(actual, expected);
     }
 }
-*/
