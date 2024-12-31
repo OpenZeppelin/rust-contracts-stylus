@@ -59,4 +59,4 @@ This ensures compatibility with Solidity's naming conventions.
 
 ## Security
 
-Refer to our [Security Policy](../../SECURITY.md) for more details.
+Refer to our [Security Policy](../SECURITY.md) for more details.
