@@ -1,7 +1,7 @@
 //! Implementation of the [`Erc721`] token standard.
 use alloc::vec;
 
-use alloy_primitives::{Address, FixedBytes, U128, U256};
+use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -692,7 +692,7 @@ impl Erc721 {
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
     pub fn _increase_balance(&mut self, account: Address, value: U128) {
-        self._balances.setter(account).add_assign_unchecked(value);
+        self._balances.setter(account).add_assign_unchecked(U256::from(value));
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
@@ -742,11 +742,11 @@ impl Erc721 {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self._balances.setter(from).sub_assign_unchecked(1);
+            self._balances.setter(from).sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self._balances.setter(to).add_assign_unchecked(1);
+            self._balances.setter(to).add_assign_unchecked(uint!(1_U256));
         }
 
         self._owners.setter(token_id).set(to);

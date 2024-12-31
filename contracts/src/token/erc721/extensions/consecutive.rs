@@ -456,11 +456,17 @@ impl Erc721Consecutive {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self.erc721._balances.setter(from).sub_assign_unchecked(1);
+            self.erc721
+                ._balances
+                .setter(from)
+                .sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self.erc721._balances.setter(to).add_assign_unchecked(1);
+            self.erc721
+                ._balances
+                .setter(to)
+                .add_assign_unchecked(uint!(1_U256));
         }
 
         self.erc721._owners.setter(token_id).set(to);
