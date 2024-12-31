@@ -50,8 +50,7 @@ use stylus_sdk::{
     stylus_proc::{public, SolidityError},
 };
 
-use crate::{
-    token::erc20::{
+use crate::token::erc20::{
         self,
         extensions::Erc20Metadata,
         utils::{
@@ -59,9 +58,7 @@ use crate::{
             SafeErc20,
         },
         Erc20, IErc20,
-    },
-    utils::structs::checkpoints::generic_size::Num,
-};
+    };
 
 sol! {
     /// Emitted when assets are deposited into the contract.
@@ -92,21 +89,24 @@ sol! {
 }
 
 sol! {
-    /// Indicates an error where a deposit operation failed because the
-    /// supplied `assets` exceeded the maximum allowed for the `receiver`.
+    /// Indicates an error where depostit operation  failed because 
+    /// deposited  more assets than the max amount for `receiver
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
+
     /// Indicates an error where a mint operation failed because the supplied
     /// `shares` exceeded the maximum allowed for the `receiver`.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
+
     /// Indicates an error where a withdrawal operation failed because the
     /// supplied `assets` exceeded the maximum allowed for the `owner`.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
+
     /// Indicates an error where a redemption operation failed because the
     /// supplied `shares` exceeded the maximum allowed for the `owner`.
     #[derive(Debug)]
