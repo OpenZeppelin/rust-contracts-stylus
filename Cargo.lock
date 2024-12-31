@@ -2549,7 +2549,7 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.2.1"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=unit-tests%2Fmultiple-contract-deployment#feb635a55d54463aa51d1c0a81d20903a6cbe99d"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=unit-tests%2Fmultiple-contract-deployment#7bf0dd3fd281755d90f7379fdf952497e49d5212"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -2564,7 +2564,7 @@ dependencies = [
 [[package]]
 name = "motsu-proc"
 version = "0.2.1"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=unit-tests%2Fmultiple-contract-deployment#feb635a55d54463aa51d1c0a81d20903a6cbe99d"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=unit-tests%2Fmultiple-contract-deployment#7bf0dd3fd281755d90f7379fdf952497e49d5212"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -1163,7 +1163,7 @@ mod tests {
     use alloy_primitives::{
         address, fixed_bytes, uint, Address, FixedBytes, U256,
     };
-    use motsu::prelude::{Account, Contract};
+    use motsu::prelude::Contract;
     use stylus_sdk::{
         abi::Bytes,
         msg,
