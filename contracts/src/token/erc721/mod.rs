@@ -1397,7 +1397,10 @@ mod tests {
             .sender(alice)
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
-        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            .sender(BOB)
+            .approve(alice, token_id)
+            .expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             .transfer_from(BOB, alice, token_id)
@@ -1418,8 +1421,10 @@ mod tests {
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
 
-        // As we cannot change `msg::sender`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract
+            .sender(BOB)
+            .set_approval_for_all(alice, true)
+            .expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(BOB, alice);
@@ -1593,8 +1598,10 @@ mod tests {
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
 
-        // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract
+            .sender(BOB)
+            .set_approval_for_all(alice, true)
+            .expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(BOB, alice);
@@ -1754,7 +1761,10 @@ mod tests {
             .sender(alice)
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
-        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            .sender(BOB)
+            .approve(alice, token_id)
+            .expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             .safe_transfer_from_with_data(
@@ -1782,8 +1792,10 @@ mod tests {
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
 
-        // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract
+            .sender(BOB)
+            .set_approval_for_all(alice, true)
+            .expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(BOB, alice);
@@ -1934,21 +1946,6 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approves(contract: Contract<Erc721>) {
-        let alice = Address::random();
-        let token_id = random_token_id();
-        contract
-            .sender(alice)
-            ._mint(alice, token_id)
-            .expect("should mint a token");
-        contract
-            .sender(alice)
-            .approve(BOB, token_id)
-            .expect("should approve Bob for operations on token");
-        assert_eq!(contract._token_approvals.get(token_id), BOB);
-    }
-
-    #[motsu::test]
     fn error_when_approve_for_nonexistent_token(contract: Contract<Erc721>) {
         let alice = Address::random();
         let token_id = random_token_id();
@@ -1985,23 +1982,6 @@ mod tests {
                 approver
             }) if approver == msg::sender()
         ));
-    }
-
-    #[motsu::test]
-    fn approval_for_all(contract: Contract<Erc721>) {
-        let alice = Address::random();
-        contract._operator_approvals.setter(alice).setter(BOB).set(false);
-
-        contract
-            .sender(alice)
-            .set_approval_for_all(BOB, true)
-            .expect("should approve Bob for operations on all Alice's tokens");
-        assert!(contract.sender(alice).is_approved_for_all(alice, BOB));
-
-        contract.sender(alice).set_approval_for_all(BOB, false).expect(
-            "should disapprove Bob for operations on all Alice's tokens",
-        );
-        assert!(!contract.sender(alice).is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
@@ -2403,7 +2383,10 @@ mod tests {
             .sender(alice)
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
-        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            .sender(BOB)
+            .approve(alice, token_id)
+            .expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             ._transfer(BOB, alice, token_id)
@@ -2424,8 +2407,10 @@ mod tests {
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
 
-        // As we cannot change `msg::sender`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract
+            .sender(BOB)
+            .set_approval_for_all(alice, true)
+            .expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(BOB, alice);
@@ -2556,7 +2541,10 @@ mod tests {
             .sender(alice)
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
-        contract._token_approvals.setter(token_id).set(alice);
+        contract
+            .sender(BOB)
+            .approve(alice, token_id)
+            .expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             ._safe_transfer(BOB, alice, token_id, &vec![0, 1, 2, 3].into())
@@ -2577,8 +2565,10 @@ mod tests {
             ._mint(BOB, token_id)
             .expect("should mint token to Bob");
 
-        // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract
+            .sender(BOB)
+            .set_approval_for_all(alice, true)
+            .expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(BOB, alice);
@@ -2685,21 +2675,6 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approves_internal(contract: Contract<Erc721>) {
-        let alice = Address::random();
-        let token_id = random_token_id();
-        contract
-            .sender(alice)
-            ._mint(alice, token_id)
-            .expect("should mint a token");
-        contract
-            .sender(alice)
-            ._approve(BOB, token_id, alice, false)
-            .expect("should approve Bob for operations on token");
-        assert_eq!(contract._token_approvals.get(token_id), BOB);
-    }
-
-    #[motsu::test]
     fn error_when_approve_internal_for_nonexistent_token(
         contract: Contract<Erc721>,
     ) {
@@ -2740,23 +2715,6 @@ mod tests {
                 approver
             }) if approver == alice
         ));
-    }
-
-    #[motsu::test]
-    fn approval_for_all_internal(contract: Contract<Erc721>) {
-        let alice = Address::random();
-        contract._operator_approvals.setter(alice).setter(BOB).set(false);
-
-        contract
-            .sender(alice)
-            ._set_approval_for_all(alice, BOB, true)
-            .expect("should approve Bob for operations on all Alice's tokens");
-        assert!(contract.sender(alice).is_approved_for_all(alice, BOB));
-
-        contract.sender(alice)._set_approval_for_all(alice, BOB, false).expect(
-            "should disapprove Bob for operations on all Alice's tokens",
-        );
-        assert!(!contract.sender(alice).is_approved_for_all(alice, BOB));
     }
 
     #[motsu::test]
