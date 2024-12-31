@@ -50,7 +50,7 @@ use stylus_sdk::{
     stylus_proc::{public, SolidityError},
 };
 
-use crate::token::erc20::{
+use crate::{token::erc20::{
     self,
     extensions::Erc20Metadata,
     utils::{
@@ -58,7 +58,7 @@ use crate::token::erc20::{
         SafeErc20,
     },
     Erc20, IErc20,
-};
+}, utils::structs::checkpoints::generic_size::Num};
 
 sol! {
     /// Emitted when assets are deposited into the contract.
@@ -454,23 +454,26 @@ enum Rounding {
     Ceil,
 }
 
-
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
-        if rounding == Rounding::Ceil {}
-
-        if rounding == Rounding::Floor {}
-        //assets._mul_div_(  self.total_assets() + 10 **
-        // self._decimals_offset(), self.total_assets() + 1, rounding)
-        U256::ZERO
+       let adjusted_total_supply  =    self._asset.total_supply() + U256::from(10u32.pow(self._decimals_offset()));
+       let adjusted_total_assets = self.total_assets() + U256::from(1);
+       self._mul_div(assets, adjusted_total_supply, adjusted_total_assets, rounding)
     }
 
     fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
-        if rounding == Rounding::Ceil {}
+        let adjusted_total_supply = self._asset.total_supply() + U256::from(10u32.pow(self._decimals_offset()));
+        let adjusted_total_assets = self.total_assets() + U256::from(1);
+        self._mul_div(shares, adjusted_total_assets, adjusted_total_supply, rounding)
+    }
 
-        if rounding == Rounding::Floor {}
-        //shares.mul_div(x, y, dominator, rounding)
-        U256::ZERO
+    fn _mul_div(&self, x: U256, y: U256, dominator: U256, rounding: Rounding) -> U256 {
+         let numerator  =  x.saturating_mul(y);
+         let result = match rounding {
+             Rounding::Floor => numerator.checked_sub(U256::from(1)).unwrap_or(U256::ZERO),
+             Rounding::Ceil => numerator.checked_add(U256::from(1)).unwrap_or(U256::from(1)),
+         };
+        result.checked_div(dominator).unwrap_or(U256::ZERO)
     }
 
     fn _deposit(
@@ -542,14 +545,6 @@ impl Erc4626 {
     }
 }
 
-/// Rounding modes for rounding operations.
-#[derive(PartialEq)]
-enum Rounding {
-    /// Toward negative infinity
-    Floor,
-    /// Toward positive infinity
-    Ceil,
-}
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
