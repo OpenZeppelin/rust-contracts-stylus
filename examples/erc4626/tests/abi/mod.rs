@@ -29,8 +29,8 @@ sol!(
         function previewWithdraw(uint256 assets) public view  returns (uint256);
         function deposit(uint256 assets, address receiver) public  returns (uint256);
         function mint(uint256 shares, address receiver) public  returns (uint256);
-        function redeem(uint256 shares, address receiver) public  returns (uint256);
-        function withdraw(uint256 assets, address receiver) public  returns (uint256);
+        function redeem(uint256 shares, address receiver,address owner) public  returns (uint256);
+        function withdraw(uint256 assets, address receiver,address owner) public  returns (uint256);
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);

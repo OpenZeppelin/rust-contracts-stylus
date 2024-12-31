@@ -30,8 +30,8 @@ sol!(
         function previewWithdraw(uint256 assets) public view  returns (uint256);
         function deposit(uint256 assets, address receiver) public  returns (uint256);
         function mint(uint256 shares, address receiver) public  returns (uint256);
-        function redeem(uint256 shares, address receiver) public  returns (uint256);
-        function withdraw(uint256 assets, address receiver) public  returns (uint256);
+        function redeem(uint256 shares, address receiver,address owner) public  returns (uint256);
+        function withdraw(uint256 assets, address receiver,address owner) public  returns (uint256);
     }
 );
 
@@ -62,11 +62,6 @@ pub async fn run_with(
 
     let bob = Account::new().await?;
     let bob_addr = bob.address();
-    let bob_wallet = ProviderBuilder::new()
-        .network::<AnyNetwork>()
-        .with_recommended_fillers()
-        .wallet(EthereumWallet::from(bob.signer.clone()))
-        .on_http(bob.url().parse()?);
 
     let contract_addr = deploy(&alice, cache_opt).await?;
 
@@ -90,8 +85,8 @@ pub async fn run_with(
         (previewWithdrawCall::SIGNATURE, receipt!(contract.previewWithdraw(uint!(100_U256)))?),
         (depositCall::SIGNATURE, receipt!(contract.deposit(uint!(100_U256), bob_addr))?),
         (mintCall::SIGNATURE, receipt!(contract.mint(uint!(100_U256), bob_addr))?),
-        (redeemCall::SIGNATURE, receipt!(contract.redeem(uint!(100_U256), bob_addr))?),
-        (withdrawCall::SIGNATURE, receipt!(contract.withdraw(uint!(100_U256), bob_addr))?),
+        (redeemCall::SIGNATURE, receipt!(contract.redeem(uint!(100_U256), bob_addr,alice_addr))?),
+        (withdrawCall::SIGNATURE, receipt!(contract.withdraw(uint!(100_U256), bob_addr, alice_addr))?),
     ];
 
     receipts
