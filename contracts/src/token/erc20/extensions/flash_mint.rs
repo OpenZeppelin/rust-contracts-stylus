@@ -275,12 +275,11 @@ impl IErc3156FlashLender for Erc20FlashMint {
         token: Address,
         _value: U256,
     ) -> Result<U256, Self::Error> {
-        if token != contract::address() {
-            return Err(Error::UnsupportedToken(ERC3156UnsupportedToken {
-                token,
-            }));
+        if token == contract::address() {
+            Ok(self.flash_fee_value.get())
+        } else {
+            Err(Error::UnsupportedToken(ERC3156UnsupportedToken { token }))
         }
-        Ok(self.flash_fee_value.get())
     }
 
     // This function can reenter, but it doesn't pose a risk because it always
