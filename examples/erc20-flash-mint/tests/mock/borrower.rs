@@ -60,7 +60,6 @@ pub async fn deploy(
     enable_return: bool,
     enable_approve: bool,
 ) -> eyre::Result<Address> {
-    // Deploy the contract.
     let contract =
         ERC3156FlashBorrowerMock::deploy(wallet, enable_return, enable_approve)
             .await?;
