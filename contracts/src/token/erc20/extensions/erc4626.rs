@@ -50,15 +50,18 @@ use stylus_sdk::{
     stylus_proc::{public, SolidityError},
 };
 
-use crate::{token::erc20::{
-    self,
-    extensions::Erc20Metadata,
-    utils::{
-        safe_erc20::{self, ISafeErc20},
-        SafeErc20,
+use crate::{
+    token::erc20::{
+        self,
+        extensions::Erc20Metadata,
+        utils::{
+            safe_erc20::{self, ISafeErc20},
+            SafeErc20,
+        },
+        Erc20, IErc20,
     },
-    Erc20, IErc20,
-}, utils::structs::checkpoints::generic_size::Num};
+    utils::structs::checkpoints::generic_size::Num,
+};
 
 sol! {
     /// Emitted when assets are deposited into the contract.
@@ -110,7 +113,6 @@ sol! {
     #[allow(missing_docs)]
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 }
-
 
 /// An [`Erc4626`] error.
 #[derive(SolidityError, Debug)]
@@ -444,7 +446,6 @@ impl IERC4626 for Erc4626 {
     }
 }
 
-
 /// Rounding modes for rounding operations.
 #[derive(PartialEq)]
 enum Rounding {
@@ -456,23 +457,45 @@ enum Rounding {
 
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, rounding: Rounding) -> U256 {
-       let adjusted_total_supply  =    self._asset.total_supply() + U256::from(10u32.pow(self._decimals_offset()));
-       let adjusted_total_assets = self.total_assets() + U256::from(1);
-       self._mul_div(assets, adjusted_total_supply, adjusted_total_assets, rounding)
+        let adjusted_total_supply = self._asset.total_supply()
+            + U256::from(10u32.pow(self._decimals_offset()));
+        let adjusted_total_assets = self.total_assets() + U256::from(1);
+        self._mul_div(
+            assets,
+            adjusted_total_supply,
+            adjusted_total_assets,
+            rounding,
+        )
     }
 
     fn _convert_to_assets(&self, shares: U256, rounding: Rounding) -> U256 {
-        let adjusted_total_supply = self._asset.total_supply() + U256::from(10u32.pow(self._decimals_offset()));
+        let adjusted_total_supply = self._asset.total_supply()
+            + U256::from(10u32.pow(self._decimals_offset()));
         let adjusted_total_assets = self.total_assets() + U256::from(1);
-        self._mul_div(shares, adjusted_total_assets, adjusted_total_supply, rounding)
+        self._mul_div(
+            shares,
+            adjusted_total_assets,
+            adjusted_total_supply,
+            rounding,
+        )
     }
 
-    fn _mul_div(&self, x: U256, y: U256, dominator: U256, rounding: Rounding) -> U256 {
-         let numerator  =  x.saturating_mul(y);
-         let result = match rounding {
-             Rounding::Floor => numerator.checked_sub(U256::from(1)).unwrap_or(U256::ZERO),
-             Rounding::Ceil => numerator.checked_add(U256::from(1)).unwrap_or(U256::from(1)),
-         };
+    fn _mul_div(
+        &self,
+        x: U256,
+        y: U256,
+        dominator: U256,
+        rounding: Rounding,
+    ) -> U256 {
+        let numerator = x.saturating_mul(y);
+        let result = match rounding {
+            Rounding::Floor => {
+                numerator.checked_sub(U256::from(1)).unwrap_or(U256::ZERO)
+            }
+            Rounding::Ceil => {
+                numerator.checked_add(U256::from(1)).unwrap_or(U256::from(1))
+            }
+        };
         result.checked_div(dominator).unwrap_or(U256::ZERO)
     }
 
@@ -544,7 +567,6 @@ impl Erc4626 {
         0
     }
 }
-
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
