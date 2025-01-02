@@ -17,8 +17,10 @@ use crate::{
 #[storage]
 pub struct Erc721Metadata {
     /// Common Metadata.
+    #[allow(clippy::used_underscore_binding)]
     pub _metadata: Metadata,
     /// Base URI for tokens.
+    #[allow(clippy::used_underscore_binding)]
     pub _base_uri: StorageString,
 }
 

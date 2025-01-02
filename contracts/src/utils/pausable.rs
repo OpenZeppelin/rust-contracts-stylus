@@ -66,6 +66,7 @@ pub enum Error {
 #[storage]
 pub struct Pausable {
     /// Indicates whether the contract is `Paused`.
+    #[allow(clippy::used_underscore_binding)]
     pub _paused: StorageBool,
 }
 
