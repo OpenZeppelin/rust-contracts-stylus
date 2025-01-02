@@ -1,15 +1,15 @@
 # OpenZeppelin Stylus Procedural Macros
 
-Procedural macros for [OpenZeppelin Stylus](../contracts) smart contracts, providing tools to streamline trait definitions, interface ID computation, and Solidity compatibility in Rust-based Stylus contracts.
+Procedural macros for [OpenZeppelin Stylus Contracts](../contracts), providing tools to streamline trait definitions, interface ID computation, and Solidity compatibility in Rust-based Stylus Contracts.
 
 ## Overview
 
-This crate offers procedural macros for OpenZeppelin Stylus contracts, specifically targeting the computation of Solidity `interfaceId` values and enhancing trait implementations with clear and robust syntax.
+This crate offers procedural macros for OpenZeppelin Stylus Contracts, specifically targeting the computation of Solidity `interfaceId` values and enhancing trait implementations with clear and robust syntax.
 
 ### Key Features
 
 - **`#[interface_id]` Macro:** Automatically computes Solidity-compatible `INTERFACE_ID` constants for traits.
-- **`#[selector]` Attribute:** Override function names to align with Solidity method signatures.
+- **`#[selector]` Attribute:** Overrides function names to align with Solidity method signatures.
 
 ## Usage
 
