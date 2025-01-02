@@ -108,7 +108,7 @@ Then altogether, your first test case can look like this:
 sol!("src/constructor.sol")
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructs(alice: Account) -> eyre::Result<()> {
     let ctr = Example::constructorCall {
         name_: "Token".to_owned(),
         symbol_: "TKN".to_owned(),

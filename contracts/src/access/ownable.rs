@@ -67,6 +67,7 @@ impl MethodError for Error {
 #[storage]
 pub struct Ownable {
     /// The current owner of this contract.
+    #[allow(clippy::used_underscore_binding)]
     pub _owner: StorageAddress,
 }
 
