@@ -33,8 +33,10 @@ pub struct Erc1155Supply {
     /// ERC-1155 contract storage.
     pub erc1155: Erc1155,
     /// Mapping from token id to total supply.
+    #[allow(clippy::used_underscore_binding)]
     pub _total_supply: StorageMap<U256, StorageU256>,
     /// Total supply of all token ids.
+    #[allow(clippy::used_underscore_binding)]
     pub _total_supply_all: StorageU256,
 }
 

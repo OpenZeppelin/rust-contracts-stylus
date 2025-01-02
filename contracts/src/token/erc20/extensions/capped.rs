@@ -47,6 +47,7 @@ pub enum Error {
 #[storage]
 pub struct Capped {
     /// A cap to the supply of tokens.
+    #[allow(clippy::used_underscore_binding)]
     pub _cap: StorageU256,
 }
 
