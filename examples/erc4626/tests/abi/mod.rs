@@ -51,6 +51,6 @@ sol!(
         #[allow(missing_docs)]
         event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
         #[allow(missing_docs)]
-        event Withdraw(address indexed sender,address indexed receiver,ddress indexed owner,uint256 assets, uint256 shares);
+        event Withdraw(address indexed sender,address indexed receiver,address indexed owner,uint256 assets, uint256 shares);
     }
 );

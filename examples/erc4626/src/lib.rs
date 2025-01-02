@@ -1,18 +1,14 @@
 #![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
-use alloc::vec::Vec;
-use core::borrow;
 
 use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::{
-    token::erc20::{
-        extensions::{Erc20Metadata, Erc4626, IErc20Metadata, IERC4626},
-        Erc20, IErc20,
-    },
-    utils::{introspection::erc165::IErc165, Pausable},
-};
+use openzeppelin_stylus::token::erc20::{
+        extensions::{Erc20Metadata, Erc4626},
+        Erc20,
+    };
 use stylus_sdk::prelude::{entrypoint, public, storage};
+
 
 #[entrypoint]
 #[storage]

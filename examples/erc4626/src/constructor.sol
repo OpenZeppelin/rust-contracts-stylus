@@ -8,16 +8,16 @@ contract Erc4626Example {
     uint8 private immutable _underlyingDecimals;
     
 
-    constructor(IERC20 asset_) {
+    constructor(address asset_) {
         (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);
         _underlyingDecimals = success ? assetDecimals : 18;
-        _asset = asset_;
+        _asset = IERC20(asset_);
     }
 
     /**
      * @dev Attempts to fetch the asset decimals. A return value of false indicates that the attempt failed in some way.
      */
-    function _tryGetAssetDecimals(IERC20 asset_) private view returns (bool ok, uint8 assetDecimals) {
+    function _tryGetAssetDecimals(address asset_) private view returns (bool ok, uint8 assetDecimals) {
         (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(
             abi.encodeCall(IERC20Metadata.decimals, ())
         );
