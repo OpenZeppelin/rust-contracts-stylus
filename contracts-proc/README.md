@@ -4,7 +4,7 @@ Procedural macros for [OpenZeppelin Stylus Contracts](../contracts), providing t
 
 ## Overview
 
-This crate offers procedural macros for OpenZeppelin Stylus Contracts, specifically targeting the computation of Solidity `interfaceId` values and enhancing trait implementations with clear and robust syntax.
+This crate offers procedural macros for OpenZeppelin Stylus Contracts, specifically targeting the computation of Solidity `interfaceId` value and enhancing trait implementations with clear and robust syntax.
 
 ### Key Features
 
