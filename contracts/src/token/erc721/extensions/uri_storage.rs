@@ -37,6 +37,7 @@ mod sol {
 #[storage]
 pub struct Erc721UriStorage {
     /// Optional mapping for token URIs.
+    #[allow(clippy::used_underscore_binding)]
     pub _token_uris: StorageMap<U256, StorageString>,
 }
 
