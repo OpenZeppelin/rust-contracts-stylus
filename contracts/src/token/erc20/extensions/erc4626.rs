@@ -536,7 +536,9 @@ impl Erc4626 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-
+    use alloy_primitives::U256;
+    use stylus_sdk::msg;
+    use crate::token::erc20::extensions::erc4626::IERC4626;
     use super::Erc4626;
 
     #[motsu::test]
@@ -549,7 +551,7 @@ mod tests {
     #[motsu::test]
     fn max_deposit(contract: Erc4626) {
         let sender = msg::sender();
-        let max_deposit = Erc4626::max_deposit(&self, sender);
+        let max_deposit = contract.max_deposit(sender);
         assert_eq!(max_deposit, U256::MAX);
     }
 }

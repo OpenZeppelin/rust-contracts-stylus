@@ -1,7 +1,6 @@
 #![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
-
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
         extensions::{Erc20Metadata, Erc4626},
@@ -28,5 +27,4 @@ impl Erc4626Example {
         //self.metadata.decimals()
         U256::from(100)
     }
-    // Add token minting feature.
 }
