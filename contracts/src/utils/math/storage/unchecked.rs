@@ -1,4 +1,4 @@
-//! Simple math operations missing in `stylus_sdk::storage`.
+/// Module with "unchecked" math on storage values.
 use alloy_primitives::Uint;
 use stylus_sdk::storage::StorageUint;
 
