@@ -1,10 +1,12 @@
 //! Common extensions to the ERC-20 standard.
 pub mod burnable;
 pub mod capped;
+pub mod erc4626;
 pub mod metadata;
 pub mod permit;
 
 pub use burnable::IErc20Burnable;
 pub use capped::Capped;
+pub use erc4626::{Erc4626, IERC4626};
 pub use metadata::{Erc20Metadata, IErc20Metadata};
 pub use permit::Erc20Permit;
