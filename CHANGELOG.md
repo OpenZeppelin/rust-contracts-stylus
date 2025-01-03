@@ -9,15 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 
+- Add `AddAssignChecked` and `SubAssignChecked` traits for safe math operations on storage values. #474
 
 ### Changed
 
-- Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update` calculations. #467
+- Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update`. #467
 
 ### Changed (Breaking)
 
-- `Nonce::use_nonce` now panics on exceeding `U256::MAX`. #467
+- `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
 
 ### Fixed
 
