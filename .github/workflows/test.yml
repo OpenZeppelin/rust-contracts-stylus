@@ -57,7 +57,7 @@ jobs:
 
         # https://twitter.com/jonhoo/status/1571290371124260865
       - name: Run unit tests
-        run: cargo nextest run --locked --features std --all-targets
+        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
@@ -93,7 +93,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Run unit tests
-        run: cargo nextest run --locked --features std --all-targets
+        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
     # is compatible with codecov.io.
@@ -141,7 +141,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Cargo llvm-cov
-        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.info
+        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.info -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"

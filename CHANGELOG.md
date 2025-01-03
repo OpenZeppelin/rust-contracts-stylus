@@ -9,15 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 
+- `Erc20FlashMint` extension. #407
 
 ### Changed
 
-- Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update` calculations. #467
+- Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update`. #467
 
 ### Changed (Breaking)
 
-- `Nonce::use_nonce` now panics on exceeding `U256::MAX`. #467
+- Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
+- `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
 
 ### Fixed
 

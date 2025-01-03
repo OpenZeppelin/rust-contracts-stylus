@@ -144,6 +144,9 @@ pub enum Error {
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
