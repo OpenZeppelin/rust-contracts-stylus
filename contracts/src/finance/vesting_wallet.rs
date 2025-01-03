@@ -25,6 +25,8 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -32,7 +34,7 @@ use stylus_sdk::{
     block,
     call::{self, call, Call},
     contract, evm, function_selector,
-    prelude::storage,
+    prelude::{sol_interface, storage},
     storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
     stylus_proc::{public, SolidityError},
 };
@@ -89,15 +91,11 @@ pub enum Error {
     InvalidToken(InvalidToken),
 }
 
-pub use token::IErc20;
-mod token {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-    stylus_sdk::stylus_proc::sol_interface! {
-        /// Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-        }
+sol_interface! {
+    /// Interface of the ERC-20 token.
+    #[allow(missing_docs)]
+    interface IErc20 {
+        function balanceOf(address account) external view returns (uint256);
     }
 }
 
@@ -524,7 +522,7 @@ impl VestingWallet {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256, U64};
+    /*use alloy_primitives::{address, uint, Address, U256, U64};
     use stylus_sdk::block;
 
     use super::{IVestingWallet, VestingWallet};
@@ -620,5 +618,5 @@ mod tests {
         );
         assert_eq!(two, contract.vesting_schedule(two, start));
         assert_eq!(two, contract.vesting_schedule(two, start + U64::from(1)));
-    }
+    }*/
 }

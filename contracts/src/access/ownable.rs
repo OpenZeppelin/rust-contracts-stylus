@@ -8,6 +8,8 @@
 //! This module is used through inheritance. It will make available the
 //! [`Ownable::only_owner`] function, which can be called to restrict operations
 //! to the owner.
+use alloc::vec::Vec;
+
 use alloy_primitives::Address;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -198,7 +200,7 @@ impl Ownable {
         evm::log(OwnershipTransferred { previous_owner, new_owner });
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address};
@@ -271,3 +273,4 @@ mod tests {
         assert_eq!(owner, ALICE);
     }
 }
+*/

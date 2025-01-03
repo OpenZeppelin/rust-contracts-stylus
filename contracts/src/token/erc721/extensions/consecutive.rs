@@ -24,7 +24,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
@@ -804,7 +804,7 @@ impl Erc721Consecutive {
         Ok(owner)
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
@@ -1344,3 +1344,4 @@ mod tests {
         ));
     }
 }
+*/

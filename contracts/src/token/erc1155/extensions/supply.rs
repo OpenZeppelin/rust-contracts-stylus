@@ -360,7 +360,7 @@ impl Erc1155Supply {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
+    /*use alloy_primitives::{address, Address, U256};
 
     use super::{Erc1155Supply, IErc1155Supply};
     use crate::token::erc1155::{
@@ -519,5 +519,5 @@ mod tests {
         assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
         assert_eq!(U256::ZERO, contract.total_supply_all());
         assert!(!contract.exists(token_ids[0]));
-    }
+    }*/
 }

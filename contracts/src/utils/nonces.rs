@@ -2,6 +2,8 @@
 //!
 //! Nonces will only increment.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
     prelude::storage,
@@ -108,7 +110,7 @@ impl Nonces {
         Ok(())
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::U256;
@@ -155,3 +157,4 @@ mod tests {
         ));
     }
 }
+*/

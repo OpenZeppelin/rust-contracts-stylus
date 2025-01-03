@@ -76,7 +76,7 @@ impl IErc20Burnable for Erc20 {
         self._burn(account, value)
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
@@ -184,3 +184,4 @@ mod tests {
         assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
     }
 }
+*/

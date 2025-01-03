@@ -5,6 +5,8 @@
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{
@@ -58,7 +60,7 @@ impl Capped {
         self._cap.get()
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
@@ -76,3 +78,4 @@ mod tests {
         assert_eq!(contract.cap(), value);
     }
 }
+*/

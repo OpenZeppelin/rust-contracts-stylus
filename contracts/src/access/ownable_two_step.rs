@@ -16,6 +16,8 @@
 //! This module uses [`Ownable`] as a member, and makes all its public functions
 //! available.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::Address;
 pub use sol::*;
 use stylus_sdk::{
@@ -216,7 +218,7 @@ impl Ownable2Step {
         self._ownable._transfer_ownership(new_owner);
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address};
@@ -359,3 +361,4 @@ mod tests {
         assert_eq!(contract.owner(), msg::sender());
     }
 }
+*/

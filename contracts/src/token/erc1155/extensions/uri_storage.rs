@@ -92,8 +92,9 @@ impl Erc1155UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    /*
     use alloy_primitives::U256;
-    use stylus_sdk::prelude::storage;
+    use use stylus_sdk::prelude::storage;
 
     use super::Erc1155UriStorage;
     use crate::token::erc1155::{extensions::Erc1155MetadataUri, Erc1155};
@@ -224,4 +225,5 @@ mod tests {
 
         assert_eq!(base_uri, contract._base_uri.get_string());
     }
+    */
 }

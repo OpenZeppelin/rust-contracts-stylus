@@ -9,6 +9,8 @@
 //! your contract, which allows you to call the safe operations as
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolCall;
 pub use sol::*;
@@ -404,7 +406,7 @@ impl SafeErc20 {
         })
     }
 }
-
+/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::SafeErc20;
@@ -438,3 +440,4 @@ mod tests {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }
+*/

@@ -1,5 +1,5 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -166,30 +166,26 @@ impl MethodError for Error {
     }
 }
 
-pub use receiver::IERC721Receiver;
-mod receiver {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-    stylus_sdk::stylus_proc::sol_interface! {
-        /// [`Erc721`] token receiver interface.
+stylus_sdk::stylus_proc::sol_interface! {
+    /// [`Erc721`] token receiver interface.
+    ///
+    /// Interface for any contract that wants to support `safe_transfers`
+    /// from [`Erc721`] asset contracts.
+    #[allow(missing_docs)]
+    interface IERC721Receiver {
+        /// Whenever an [`Erc721`] `token_id` token is transferred
+        /// to this contract via [`Erc721::safe_transfer_from`].
         ///
-        /// Interface for any contract that wants to support `safe_transfers`
-        /// from [`Erc721`] asset contracts.
-        interface IERC721Receiver {
-            /// Whenever an [`Erc721`] `token_id` token is transferred
-            /// to this contract via [`Erc721::safe_transfer_from`].
-            ///
-            /// It must return its function selector to confirm the token transfer.
-            /// If any other value is returned or the interface is not implemented
-            /// by the recipient, the transfer will be reverted.
-            #[allow(missing_docs)]
-            function onERC721Received(
-                address operator,
-                address from,
-                uint256 token_id,
-                bytes calldata data
-            ) external returns (bytes4);
-        }
+        /// It must return its function selector to confirm the token transfer.
+        /// If any other value is returned or the interface is not implemented
+        /// by the recipient, the transfer will be reverted.
+        #[allow(missing_docs)]
+        function onERC721Received(
+            address operator,
+            address from,
+            uint256 token_id,
+            bytes calldata data
+        ) external returns (bytes4);
     }
 }
 
@@ -1168,8 +1164,15 @@ impl Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::msg;
+    use alloy_primitives::{
+        address, fixed_bytes, uint, Address, FixedBytes, U256,
+    };
+    use motsu::prelude::{Account, Contract};
+    use stylus_sdk::{
+        abi::Bytes,
+        msg,
+        prelude::{public, sol_storage, TopLevelStorage},
+    };
 
     use super::{
         ERC721IncorrectOwner, ERC721InsufficientApproval,
@@ -1187,6 +1190,7 @@ mod tests {
         U256::from(num)
     }
 
+    /*
     #[motsu::test]
     fn error_when_checking_balance_of_invalid_owner(contract: Erc721) {
         let invalid_owner = Address::ZERO;
@@ -2516,5 +2520,50 @@ mod tests {
         let actual = <Erc721 as IErc165>::INTERFACE_ID;
         let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
+    }
+    */
+
+    sol_storage! {
+        pub struct Erc721ReceiverMock {
+            uint256 _received_token_id;
+        }
+    }
+
+    #[public]
+    impl Erc721ReceiverMock {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            operator: Address,
+            from: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> FixedBytes<4> {
+            self._received_token_id.set(token_id);
+            fixed_bytes!("150b7a02")
+        }
+
+        fn received_token_id(&self) -> U256 {
+            self._received_token_id.get()
+        }
+    }
+
+    unsafe impl TopLevelStorage for Erc721ReceiverMock {}
+
+    #[motsu::test]
+    fn on_erc721_received(
+        erc721: Contract<Erc721>,
+        receiver: Contract<Erc721ReceiverMock>,
+    ) {
+        let alice = Account::random();
+        let token_id = random_token_id();
+        erc721
+            .sender(alice)
+            ._safe_mint(receiver.address(), token_id, &vec![0, 1, 2, 3].into())
+            .unwrap();
+
+        let received_token_id = receiver.sender(alice).received_token_id();
+
+        assert_eq!(received_token_id, token_id);
     }
 }

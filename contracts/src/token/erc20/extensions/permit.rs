@@ -12,6 +12,8 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2612
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
