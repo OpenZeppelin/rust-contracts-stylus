@@ -11,6 +11,8 @@ use crate::utils::introspection::erc165::IErc165;
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
 
+use alloc::vec::Vec;
+
 use crate::utils::Metadata;
 
 /// Metadata of the [`super::super::Erc20`] token.

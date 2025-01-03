@@ -9,6 +9,8 @@
 //! your contract, which allows you to call the safe operations as
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolCall;
 pub use sol::*;
