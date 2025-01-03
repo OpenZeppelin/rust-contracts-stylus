@@ -66,6 +66,11 @@ pub trait ReentrantCallHandler {
     ///
     /// * `token` - The address of the contract being called.
     /// * `call_data` - The encoded data for the contract call.
+    ///
+    /// # Errors
+    ///
+    /// * Returns [`stylus_sdk::ArbResult`] indicating the success or failure of
+    ///   the call.
     fn call_with_reentrant_handling(
         self,
         token: Address,
