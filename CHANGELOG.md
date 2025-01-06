@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `AddAssignChecked` and `SubAssignChecked` traits for safe math operations on storage values. #474
+- Implement `AddAssignChecked` for `StorageUint`. #474
 
 ### Changed
 
+- Use `AddAssignChecked` in `VestingWallet`, `Erc1155Supply`, `Erc1155`, `Erc20`, `Nonces`. #474
 - Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update`. #467
 
 ### Changed (Breaking)

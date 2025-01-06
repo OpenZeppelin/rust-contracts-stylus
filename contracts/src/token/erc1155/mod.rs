@@ -13,7 +13,7 @@ use stylus_sdk::{
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},
-    math::storage::SubAssignUnchecked,
+    math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
 pub mod extensions;
@@ -1047,11 +1047,10 @@ impl Erc1155 {
         }
 
         if !to.is_zero() {
-            let balance = self._balances.getter(token_id).get(to);
-            let new_balance = balance
-                .checked_add(value)
-                .expect("should not exceed `U256::MAX` for `_balances`");
-            self._balances.setter(token_id).setter(to).set(new_balance);
+            self._balances.setter(token_id).setter(to).add_assign_checked(
+                value,
+                "should not exceed `U256::MAX` for `_balances`",
+            );
         }
 
         Ok(())

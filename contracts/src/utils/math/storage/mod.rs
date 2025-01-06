@@ -2,5 +2,5 @@
 mod checked;
 mod unchecked;
 
-pub(crate) use checked::{AddAssignChecked, SubAssignChecked};
+pub(crate) use checked::AddAssignChecked;
 pub(crate) use unchecked::{AddAssignUnchecked, SubAssignUnchecked};
