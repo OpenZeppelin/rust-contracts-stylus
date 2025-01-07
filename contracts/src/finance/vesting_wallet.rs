@@ -91,11 +91,15 @@ pub enum Error {
     InvalidToken(InvalidToken),
 }
 
-sol_interface! {
-    /// Interface of the ERC-20 token.
-    #[allow(missing_docs)]
-    interface IErc20 {
-        function balanceOf(address account) external view returns (uint256);
+pub use token::IErc20;
+mod token {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
+    stylus_sdk::stylus_proc::sol_interface! {
+        /// Interface of the ERC-20 token.
+        interface IErc20 {
+            function balanceOf(address account) external view returns (uint256);
+        }
     }
 }
 
