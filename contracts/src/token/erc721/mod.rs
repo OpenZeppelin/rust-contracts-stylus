@@ -182,7 +182,7 @@ mod receiver {
         /// from [`super::Erc721`] asset contracts.
         interface IERC721Receiver {
             /// Whenever an [`super::Erc721`] `token_id` token is transferred
-            /// to this contract via [`super::Erc721::safe_transfer_from`].
+            /// to this contract via [`super::IErc721::safe_transfer_from`].
             ///
             /// It must return its function selector to confirm the token transfer.
             /// If any other value is returned or the interface is not implemented
