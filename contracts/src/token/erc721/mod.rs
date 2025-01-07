@@ -166,26 +166,30 @@ impl MethodError for Error {
     }
 }
 
-sol_interface! {
-    /// [`Erc721`] token receiver interface.
-    ///
-    /// Interface for any contract that wants to support `safe_transfers`
-    /// from [`Erc721`] asset contracts.
-    #[allow(missing_docs)]
-    interface IERC721Receiver {
-        /// Whenever an [`Erc721`] `token_id` token is transferred
-        /// to this contract via [`Erc721::safe_transfer_from`].
+pub use receiver::IERC721Receiver;
+mod receiver {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
+    stylus_sdk::stylus_proc::sol_interface! {
+        /// [`Erc721`] token receiver interface.
         ///
-        /// It must return its function selector to confirm the token transfer.
-        /// If any other value is returned or the interface is not implemented
-        /// by the recipient, the transfer will be reverted.
-        #[allow(missing_docs)]
-        function onERC721Received(
-            address operator,
-            address from,
-            uint256 token_id,
-            bytes calldata data
-        ) external returns (bytes4);
+        /// Interface for any contract that wants to support `safe_transfers`
+        /// from [`Erc721`] asset contracts.
+        interface IERC721Receiver {
+            /// Whenever an [`Erc721`] `token_id` token is transferred
+            /// to this contract via [`Erc721::safe_transfer_from`].
+            ///
+            /// It must return its function selector to confirm the token transfer.
+            /// If any other value is returned or the interface is not implemented
+            /// by the recipient, the transfer will be reverted.
+            #[allow(missing_docs)]
+            function onERC721Received(
+                address operator,
+                address from,
+                uint256 token_id,
+                bytes calldata data
+            ) external returns (bytes4);
+        }
     }
 }
 
