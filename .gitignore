@@ -9,3 +9,7 @@ docs/build/
 **/.DS_Store
 
 **/nitro-testnode
+
+lcov.info
+
+lcov.infos
