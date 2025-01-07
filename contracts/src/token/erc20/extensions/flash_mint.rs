@@ -139,6 +139,9 @@ pub trait IErc3156FlashLender {
     /// [`crate::token::erc20::extensions::Capped`], make sure to override this
     /// function to integrate the cap instead of [`U256::MAX`].
     ///
+    /// NOTE: In order to have [`IErc3156FlashLender::max_flash_loan`] exposed
+    /// in ABI, you need to do this manually.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -147,16 +150,17 @@ pub trait IErc3156FlashLender {
     ///
     /// # Examples
     ///
-    /// In order to have [`IErc3156FlashLender::max_flash_loan`] exposed in ABI,
-    /// you need to do this manually.
-    ///
     /// ```rust,ignore
     /// fn max_flash_loan(&self, token: Address) -> U256 {
     ///     self.erc20_flash_mint.max_flash_loan(token, &self.erc20)
     /// }
+    /// ```
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
 
     /// Returns the fee applied when doing flash loans.
+    ///
+    /// NOTE: In order to have [`IErc3156FlashLender::flash_fee`] exposed in
+    /// ABI, you need to do this manually.
     ///
     /// # Arguments
     ///
@@ -166,18 +170,16 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// If the token is not supported, then the error
-    /// [`Error::UnsupportedToken`] is returned.
+    /// * If the token is not supported, then the error
+    ///   [`Error::UnsupportedToken`] is returned.
     ///
     /// # Examples
-    ///
-    /// In order to have [`IErc3156FlashLender::flash_fee`] exposed in ABI, you
-    /// need to do this manually.
     ///
     /// ```rust,ignore
     /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
     ///     Ok(self.erc20_flash_mint.flash_fee(token, value)?)
     /// }
+    /// ```
     fn flash_fee(
         &self,
         token: Address,
@@ -193,26 +195,8 @@ pub trait IErc3156FlashLender {
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
-    /// In order to have [`IErc3156FlashLender::flash_loan`] exposed in ABI, you
-    /// need to do this manually.
-    ///
-    /// ```rust,ignore
-    /// fn flash_loan(
-    ///     &mut self,
-    ///     receiver: Address,
-    ///     token: Address,
-    ///     value: U256,
-    ///     data: Bytes,
-    /// ) -> Result<bool, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_loan(
-    ///         receiver,
-    ///         token,
-    ///         value,
-    ///         data,
-    ///         &mut self.erc20,
-    ///     )?)
-    /// }
-    /// ```
+    /// NOTE: In order to have [`IErc3156FlashLender::flash_loan`] exposed in
+    /// ABI, you need to do this manually.
     ///
     /// # Arguments
     ///
@@ -241,14 +225,34 @@ pub trait IErc3156FlashLender {
     ///
     /// # Events
     ///
-    /// Emits an [`erc20::Transfer`] event.
-    /// Emits an [`erc20::Approval`] event.
+    /// * Emits an [`erc20::Transfer`] event.
+    /// * Emits an [`erc20::Approval`] event.
     ///
     /// # Panics
     ///
-    /// If the new (temporary) total supply exceeds `U256::MAX`.
-    /// If the sum of the loan value and fee exceeds the maximum value of
-    /// `U256::MAX`.
+    /// * If the new (temporary) total supply exceeds `U256::MAX`.
+    /// * If the sum of the loan value and fee exceeds the maximum value of
+    ///   `U256::MAX`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn flash_loan(
+    ///     &mut self,
+    ///     receiver: Address,
+    ///     token: Address,
+    ///     value: U256,
+    ///     data: Bytes,
+    /// ) -> Result<bool, Vec<u8>> {
+    ///     Ok(self.erc20_flash_mint.flash_loan(
+    ///         receiver,
+    ///         token,
+    ///         value,
+    ///         data,
+    ///         &mut self.erc20,
+    ///     )?)
+    /// }
+    /// ```
     fn flash_loan(
         &mut self,
         receiver: Address,
