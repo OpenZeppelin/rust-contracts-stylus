@@ -187,8 +187,10 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc1155 {
     /// Maps users to balances.
+    #[allow(clippy::used_underscore_binding)]
     pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
     /// Maps owners to a mapping of operator approvals.
+    #[allow(clippy::used_underscore_binding)]
     pub _operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }

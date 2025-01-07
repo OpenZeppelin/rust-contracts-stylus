@@ -16,8 +16,10 @@ use super::metadata_uri::{IErc1155MetadataUri, URI};
 #[storage]
 pub struct Erc1155UriStorage {
     /// Optional base URI.
+    #[allow(clippy::used_underscore_binding)]
     pub _base_uri: StorageString,
     /// Optional mapping for token URIs.
+    #[allow(clippy::used_underscore_binding)]
     pub _token_uris: StorageMap<U256, StorageString>,
 }
 

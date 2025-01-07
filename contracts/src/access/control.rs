@@ -121,6 +121,7 @@ pub struct RoleData {
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
+    #[allow(clippy::used_underscore_binding)]
     pub _roles: StorageMap<FixedBytes<32>, RoleData>,
 }
 
