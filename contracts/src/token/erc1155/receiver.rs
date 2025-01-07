@@ -12,11 +12,11 @@ sol_interface! {
     interface IERC1155Receiver {
         /// Handles the receipt of a single ERC-1155 token type.
         /// This function is called at the end of a
-        /// [`IErc1155::safe_batch_transfer_from`]
+        /// [`super::IErc1155::safe_batch_transfer_from`]
         /// after the balance has been updated.
         ///
         /// NOTE: To accept the transfer,
-        /// this must return [`SINGLE_TRANSFER_FN_SELECTOR`],
+        /// this must return [`super::SINGLE_TRANSFER_FN_SELECTOR`],
         /// or its own function selector.
         ///
         /// * `operator` - The address which initiated the transfer.
@@ -35,11 +35,11 @@ sol_interface! {
 
         /// Handles the receipt of multiple ERC-1155 token types.
         /// This function is called at the end of a
-        /// [`IErc1155::safe_batch_transfer_from`]
+        /// [`super::IErc1155::safe_batch_transfer_from`]
         /// after the balances have been updated.
         ///
         /// NOTE: To accept the transfer(s),
-        /// this must return [`BATCH_TRANSFER_FN_SELECTOR`],
+        /// this must return [`super::BATCH_TRANSFER_FN_SELECTOR`],
         /// or its own function selector.
         ///
         /// * `operator` - The address which initiated the batch transfer.
