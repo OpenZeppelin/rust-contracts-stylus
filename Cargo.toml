@@ -71,7 +71,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = "0.7.0-rc.1"
+stylus-sdk = { version = "0.7.0", default-features = false, features = ["mini-alloc"] }
 
 alloy = { version = "=0.7.2", features = [
   "contract",
@@ -147,15 +147,6 @@ default = { extend-ignore-identifiers-re = [
   "[0-9a-fA-F][0-9a-fA-F]",
 ] }
 files = { extend-exclude = [] }
-
-# TODO#q: remove stylus sdk patch once the fix is released
-[patch.crates-io.stylus-sdk]
-git = "https://github.com/OffchainLabs/stylus-sdk-rs"
-branch = "rel/0.7.0-rc.1"
-
-[patch.crates-io.stylus-proc]
-git = "https://github.com/OffchainLabs/stylus-sdk-rs"
-branch = "rel/0.7.0-rc.1"
 
 # TODO#q: remove motsu patch once update is released
 [patch.crates-io.motsu]
