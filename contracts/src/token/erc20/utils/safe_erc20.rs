@@ -406,7 +406,7 @@ impl SafeErc20 {
         })
     }
 }
-/*
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::SafeErc20;
@@ -440,4 +440,3 @@ mod tests {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }
-*/
