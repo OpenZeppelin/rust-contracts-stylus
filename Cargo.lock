@@ -2549,8 +2549,9 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 
 [[package]]
 name = "motsu"
-version = "0.2.1"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build%2Fstylus-v0.7.0-rc.1#23e8451ca9988caddab3b878cb3b53d343ffa18c"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8dc57234641c5dd30332b269b29ea11966496ca5b6e169eb6cf90e4092e84483"
 dependencies = [
  "const-hex",
  "dashmap 6.1.0",
@@ -2562,8 +2563,9 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.2.1"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build%2Fstylus-v0.7.0-rc.1#23e8451ca9988caddab3b878cb3b53d343ffa18c"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1216edabfdae92f935e07c21df8880a494afcc18267af7c8fe60cb979ecd594e"
 dependencies = [
  "proc-macro2",
  "quote",
