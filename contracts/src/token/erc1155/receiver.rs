@@ -2,6 +2,8 @@
 #![cfg_attr(coverage_nightly, coverage(off))]
 //! Module with an interface required for smart contract
 //! in order to receive ERC-1155 token transfers.
+use alloc::vec;
+
 use stylus_sdk::stylus_proc::sol_interface;
 
 sol_interface! {

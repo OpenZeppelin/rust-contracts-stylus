@@ -7,7 +7,7 @@ use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
     evm, function_selector, msg,
-    prelude::{public, sol_interface, storage, AddressVM, SolidityError},
+    prelude::{public, storage, AddressVM, SolidityError},
     storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
 };
 
