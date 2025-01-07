@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 
+-
 
 ### Changed
 
@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Bump Stylus SDK to v0.7.0. #433
+- Bump `alloy` dependencies to v0.8.14. #433
 - `Nonce::use_nonce` now panics on exceeding `U256::MAX`. #467
 
 ### Fixed
