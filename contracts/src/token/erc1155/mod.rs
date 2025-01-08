@@ -17,11 +17,11 @@ use crate::utils::{
 };
 
 pub mod extensions;
-
 mod receiver;
 pub use receiver::IERC1155Receiver;
 
-const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+/// The expected value returned from [`IERC1155Receiver::on_erc_1155_received`].
+pub const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     "onERC1155Received",
     Address,
     Address,
@@ -30,7 +30,9 @@ const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     Bytes
 );
 
-const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+/// The expected value returned from
+/// [`IERC1155Receiver::on_erc_1155_batch_received`].
+pub const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     "onERC1155BatchReceived",
     Address,
     Address,

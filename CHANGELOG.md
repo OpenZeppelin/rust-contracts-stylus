@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Bump Stylus SDK to v0.7.0. #433
+- Bump `alloy` dependencies to v0.8.14. #433
 - Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
 - `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
 
