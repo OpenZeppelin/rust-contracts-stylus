@@ -1,6 +1,6 @@
 use benches::{
     access_control, erc1155, erc1155_metadata_uri, erc20, erc4626, erc721,
-    merkle_proofs, ownable, report::BenchmarkReport,
+    merkle_proofs, ownable, poseidon, poseidon_sol, report::BenchmarkReport,
 };
 use futures::FutureExt;
 use itertools::Itertools;
@@ -16,6 +16,8 @@ async fn main() -> eyre::Result<()> {
         erc1155::bench().boxed(),
         erc1155_metadata_uri::bench().boxed(),
         erc4626::bench().boxed(),
+        poseidon::bench().boxed(),
+        poseidon_sol::bench().boxed(),
     ];
 
     // Run benchmarks max 3 at the same time.
