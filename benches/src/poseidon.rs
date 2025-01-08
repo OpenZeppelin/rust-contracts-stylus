@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use alloy::{
     network::{AnyNetwork, EthereumWallet},
     primitives::Address,
@@ -9,7 +7,6 @@ use alloy::{
 };
 use alloy_primitives::uint;
 use e2e::{receipt, Account};
-use futures::FutureExt;
 
 use crate::{
     report::{ContractReport, FunctionReport},
