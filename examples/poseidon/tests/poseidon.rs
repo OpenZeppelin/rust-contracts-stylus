@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use alloy_primitives::{hex, uint, U256};
-use e2e::{Account, ReceiptExt, Revert};
+use e2e::{Account, ReceiptExt};
 use eyre::Result;
 
 use crate::abi::PoseidonExample;
