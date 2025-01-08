@@ -1103,9 +1103,9 @@ async fn errors_when_receiver_reverts_with_reason(
     ))
     .expect_err("should not transfer when receiver errors with reason");
 
-    assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
-        b"ERC721ReceiverMock: reverting".to_vec()
-    )));
+    assert!(err.reverted_with(Erc721::Error {
+        message: "ERC721ReceiverMock: reverting".to_string()
+    }));
 
     Ok(())
 }
