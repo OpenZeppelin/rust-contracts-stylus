@@ -114,8 +114,7 @@ educe = "0.6.0"
 hex-literal = "0.4.1"
 
 # fuzzing
-afl = "*"
-arbitrary = "*"
+libfuzzer-sys = "0.4"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }

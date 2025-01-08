@@ -1,6 +1,0 @@
-# environment variables:
-AFL_CUSTOM_INFO_PROGRAM=../target/debug/to_typed_data_hash
-AFL_CUSTOM_INFO_PROGRAM_ARGV=
-AFL_CUSTOM_INFO_OUT=out/default
-# command line:
-'/home/nenad/.local/share/afl.rs/rustc-1.83.0-nightly-4ac7bcb/afl.rs-0.15.13/afl/bin/afl-fuzz' '-c0' '-i' 'in' '-o' 'out' '-V' '5' '../target/debug/to_typed_data_hash'

@@ -3,14 +3,22 @@ name = "openzeppelin-stylus-fuzz"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+publish = false
 version.workspace = true
 
+[package.metadata]
+cargo-fuzz = true
+
 [dependencies]
-afl.workspace = true
-arbitrary.workspace = true
-motsu.workspace = true
+libfuzzer-sys.workspace = true
 openzeppelin-stylus.workspace = true
+alloy.workspace = true
+stylus-sdk.workspace = true
+alloy-primitives.workspace = true
 
 [[bin]]
-name = "to_typed_data_hash"
-path = "src/to_typed_data_hash.rs"
+name = "fuzz_target_1"
+path = "src/fuzz_target_1.rs"
+test = false
+doc = false
+bench = false
