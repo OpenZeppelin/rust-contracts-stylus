@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Implement `AddAssignChecked` for `StorageUint`. #474
 - `Erc20FlashMint` extension. #407
 
 ### Changed
 
+- Use `AddAssignChecked` in `VestingWallet`, `Erc1155Supply`, `Erc1155`, `Erc20`, `Nonces`. #474
 - Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update`. #467
 
 ### Changed (Breaking)
