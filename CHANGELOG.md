@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Erc20FlashMint` extension. #407
+
+### Changed
+
+- Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update`. #467
+
+### Changed (Breaking)
+
+- Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
+- `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
+
+### Fixed
+
+-
+
+## [v0.2.0-alpha.2] - 2024-12-18
+
+### Added
+
 - `Erc1155Supply` extension. #418
 - `Erc1155Pausable`extension. #432
 - `Erc1155UriStorage` extension. #431
@@ -27,10 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (Breaking)
 
 - Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
-- Stop supporting reentrancy, and borrow `self` immutably in `IErc721::_check_on_erc721_received`. #440
-- Remove `&mut self` parameter from `IErc1155::_check_on_erc1155_received` and make it an associated function. #440
-- Remove `storage: &mut impl TopLevelStorage` parameter from `ecdsa::recover`. #440
-- Remove `TopLevelStorage` trait implementation from `VestingWallet`, `Erc1155`, `Erc20Permit`, `SafeErc20`, `Erc721Consecutive`, and `Erc721`. #440
 
 ### Fixed
 

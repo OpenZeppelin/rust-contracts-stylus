@@ -3,12 +3,11 @@ members = [
   "contracts",
   "contracts-proc",
   "lib/crypto",
-  "lib/motsu",
-  "lib/motsu-proc",
   "lib/e2e",
   "lib/e2e-proc",
   "examples/erc20",
   "examples/erc20-permit",
+  "examples/erc20-flash-mint",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -31,11 +30,10 @@ default-members = [
   "contracts",
   "contracts-proc",
   "lib/crypto",
-  "lib/motsu",
-  "lib/motsu-proc",
   "lib/e2e-proc",
   "examples/erc20",
   "examples/erc20-permit",
+  "examples/erc20-flash-mint",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -63,7 +61,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.2.0-alpha.1"
+version = "0.2.0-alpha.2"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -123,12 +121,13 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
+# test helpers
+motsu = "0.2.1"
+
 # members
 openzeppelin-stylus = { path = "contracts" }
 openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
-motsu = { path = "lib/motsu" }
-motsu-proc = { path = "lib/motsu-proc", version = "0.2.0" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }
 

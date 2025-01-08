@@ -33,7 +33,7 @@ use stylus_sdk::{
     call::{self, call, Call},
     contract, evm, function_selector,
     prelude::storage,
-    storage::{StorageMap, StorageU256, StorageU64},
+    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
     stylus_proc::{public, SolidityError},
 };
 
@@ -107,16 +107,25 @@ pub struct VestingWallet {
     /// [`Ownable`] contract.
     pub ownable: Ownable,
     /// Amount of Ether already released.
+    #[allow(clippy::used_underscore_binding)]
     pub _released: StorageU256,
     /// Amount of ERC-20 tokens already released.
+    #[allow(clippy::used_underscore_binding)]
     pub _erc20_released: StorageMap<Address, StorageU256>,
     /// Start timestamp.
+    #[allow(clippy::used_underscore_binding)]
     pub _start: StorageU64,
     /// Vesting duration.
+    #[allow(clippy::used_underscore_binding)]
     pub _duration: StorageU64,
     /// [`SafeErc20`] contract.
     pub safe_erc20: SafeErc20,
 }
+
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for VestingWallet {}
 
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]
@@ -244,7 +253,7 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&self` - Read access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the releasable token.
     ///
     /// # Errors
@@ -257,7 +266,8 @@ pub trait IVestingWallet {
     /// If total allocation exceeds `U256::MAX`.
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
-    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
+    fn releasable_erc20(&mut self, token: Address)
+        -> Result<U256, Self::Error>;
 
     /// Release the native tokens (Ether) that have already vested.
     ///
@@ -326,7 +336,7 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&self` - Read access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the token being released.
     /// * `timestamp` - Point in time for which to check the vested amount.
     ///
@@ -341,7 +351,7 @@ pub trait IVestingWallet {
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
-        &self,
+        &mut self,
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error>;
@@ -401,7 +411,10 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "releasable")]
-    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error> {
+    fn releasable_erc20(
+        &mut self,
+        token: Address,
+    ) -> Result<U256, Self::Error> {
         let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
@@ -421,7 +434,7 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(Call::new().value(amount), owner, &[])?;
+        call(Call::new_in(self).value(amount), owner, &[])?;
 
         evm::log(EtherReleased { amount });
 
@@ -458,13 +471,13 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
-        &self,
+        &mut self,
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error> {
         let erc20 = IErc20::new(token);
         let balance = erc20
-            .balance_of(Call::new(), contract::address())
+            .balance_of(Call::new_in(self), contract::address())
             .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance

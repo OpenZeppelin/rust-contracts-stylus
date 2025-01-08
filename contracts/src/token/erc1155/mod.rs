@@ -8,7 +8,7 @@ use stylus_sdk::{
     call::{self, Call, MethodError},
     evm, function_selector, msg,
     prelude::{public, storage, AddressVM, SolidityError},
-    storage::{StorageBool, StorageMap, StorageU256},
+    storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
 };
 
 use crate::utils::{
@@ -188,11 +188,18 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc1155 {
     /// Maps users to balances.
+    #[allow(clippy::used_underscore_binding)]
     pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
     /// Maps owners to a mapping of operator approvals.
+    #[allow(clippy::used_underscore_binding)]
     pub _operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
+
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc1155 {}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]
@@ -557,7 +564,7 @@ impl Erc1155 {
         self._update(from, to, ids.clone(), values.clone())?;
 
         if !to.is_zero() {
-            Erc1155::_check_on_erc1155_received(
+            self._check_on_erc1155_received(
                 msg::sender(),
                 from,
                 to,
@@ -767,6 +774,7 @@ impl Erc1155 {
     ///
     /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - Generally the address that initiated the token transfer
     ///   (e.g. `msg::sender()`).
     /// * `from` - Account of the sender.
@@ -785,6 +793,7 @@ impl Erc1155 {
     /// interface id or returned with error, then the error
     /// [`Error::InvalidReceiver`] is returned.
     fn _check_on_erc1155_received(
+        &mut self,
         operator: Address,
         from: Address,
         to: Address,
@@ -796,7 +805,7 @@ impl Erc1155 {
         }
 
         let receiver = IERC1155Receiver::new(to);
-        let call = Call::new();
+        let call = Call::new_in(self);
         let result = match details.transfer {
             Transfer::Single { id, value } => receiver
                 .on_erc_1155_received(call, operator, from, id, value, data),

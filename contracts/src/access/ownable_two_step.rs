@@ -59,8 +59,10 @@ pub enum Error {
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.
+    #[allow(clippy::used_underscore_binding)]
     pub _ownable: Ownable,
     /// Pending owner of the contract.
+    #[allow(clippy::used_underscore_binding)]
     pub _pending_owner: StorageAddress,
 }
 
