@@ -3,53 +3,54 @@
 use std::println;
 
 use abi::Erc4626;
-use alloy::{
-    primitives::Address,
-    sol
-};
+use alloy::{primitives::Address, sol};
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
-use stylus_sdk::contract::address;
 use mock::{token, token::ERC20Mock};
+use stylus_sdk::contract::address;
 
 use crate::Erc4626Example::constructorCall;
 
 mod abi;
 mod mock;
 
-const ADDRESS : Address = Address::ZERO;
+const ADDRESS: Address = Address::ZERO;
 
 sol!("src/constructor.sol");
 
-impl Default for constructorCall {
-    fn default() -> Self {
-        ctr(ADDRESS)
-    }
+fn ctr(asset: Address , name: String, symbol: String) -> constructorCall {
+    constructorCall { asset_: asset , name_:name, symbol_:symbol }
 }
 
-fn ctr(asset: Address) -> constructorCall {
-    constructorCall {
-        asset_:asset
-    }
-}
+#[e2e::test]
+async fn constructs(alice: Account) -> eyre::Result<()> {
+    let mock_token_address =
+        token::deploy(&alice.wallet, "Test Token", "TST").await?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(mock_token_address, "Test Token Valut".to_string(), "TST Valut".to_string()))
+        .deploy().await?.address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
 
+    Ok(())
+}
 
 #[e2e::test]
 async fn error_when_exceeded_max_deposit(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let mock_token_address = token::deploy(&alice.wallet,"Test Token Valut", "TST Valut").await?;
-    println!("mock token address {}",mock_token_address);
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(mock_token_address))
-        .deploy()
-        .await?
-        .address()?;
-    let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
-    let alice_addr = alice.address();
-    let bob_addr = bob.address();
+    let mock_token_address =
+        token::deploy(&alice.wallet, "Test Token Valut", "TST Valut").await?;
+    println!("Token address: {}", mock_token_address);
+    // let contract_addr = alice
+    //     .as_deployer()
+    //     .deploy()
+    //     .await?
+    //     .address()?;
+    // let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
+    // let alice_addr = alice.address();
+    // let bob_addr = bob.address();
 
     // let balance = uint!(10_U256);
     // let value = uint!(11_U256);
