@@ -5,9 +5,9 @@ use alloy::sol;
 sol!(
     #[sol(rpc)]
     contract Erc4626 {
-        
+
         function name() external view returns (string name);
-        function symbol() external view returns (string symbol);  
+        function symbol() external view returns (string symbol);
         function totalSupply() external view returns (uint256 totalSupply);
         function balanceOf(address account) external view returns (uint256 balance);
         function transfer(address recipient, uint256 amount) external returns (bool);

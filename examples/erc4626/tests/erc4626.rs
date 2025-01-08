@@ -60,7 +60,11 @@ async fn error_when_exceeded_max_deposit(
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(mock_token_address,VALUT_NAME.to_string(),VALUT_SYMBOL.to_string()))
+        .with_constructor(ctr(
+            mock_token_address,
+            VALUT_NAME.to_string(),
+            VALUT_SYMBOL.to_string(),
+        ))
         .deploy()
         .await?
         .address()?;

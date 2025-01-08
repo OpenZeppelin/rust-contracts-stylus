@@ -79,7 +79,7 @@ contract Erc4626Example {
     uint8  private  _underlyingDecimals;
     string private _name;
     string private _symbol;
-    
+
 
     constructor(address asset_, string memory name_, string memory symbol_) {
         _underlyingDecimals = 18;

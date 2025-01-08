@@ -42,25 +42,26 @@
 //! To learn more, check out our xref:ROOT:erc4626.adoc[ERC-4626 guide]..
 
 use alloc::vec::Vec;
-use alloc::string::String;
 
 use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
     contract, evm, msg,
     prelude::storage,
-    storage::{StorageAddress, StorageU8, TopLevelStorage},
+    storage::{StorageAddress, TopLevelStorage},
     stylus_proc::{public, SolidityError},
 };
-use crate::utils::Metadata;
 
-use crate::token::erc20::{
-    self,
-    utils::{
-        safe_erc20::{self, ISafeErc20},
-        SafeErc20,
+use crate::{
+    token::erc20::{
+        self,
+        utils::{
+            safe_erc20::{self, ISafeErc20},
+            SafeErc20,
+        },
+        Erc20, IErc20,
     },
-    Erc20, IErc20,
+    utils::Metadata,
 };
 
 sol! {
@@ -144,13 +145,13 @@ pub struct Erc4626 {
     /// ERC-20 contract storage.
     pub _asset: Erc20,
     /// ERC20 metadata extenston .
-    pub _metadata:  Metadata,
+    pub _metadata: Metadata,
 
     /// Token Address of the vault
-    pub  _token_address : StorageAddress,
+    pub _token_address: StorageAddress,
 
     /// ERC-20 contract.
-    pub erc20 : Erc20,
+    pub erc20: Erc20,
 
     /// [`SafeErc20`] contract.
     pub _safe_erc20: SafeErc20,
@@ -333,6 +334,7 @@ unsafe impl TopLevelStorage for Erc4626 {}
 #[public]
 impl IERC4626 for Erc4626 {
     type Error = Error;
+
     // fn name(&self) -> String {
     //     self._metadata.name()
     // }
@@ -375,8 +377,8 @@ impl IERC4626 for Erc4626 {
     // /// * If the `to` address is `Address::ZERO`, then the error
     // /// [`crate::token::erc20::Error::InvalidReceiver`] is returned.
     // /// * If the caller doesn't have a balance of at least `value`, then the
-    // /// error [`crate::token::erc20::Error::InsufficientBalance`] is returned.
-    // ///
+    // /// error [`crate::token::erc20::Error::InsufficientBalance`] is
+    // returned. ///
     // /// # Events
     // ///
     // /// Emits a [`crate::token::erc20::Transfer`] event.
@@ -389,8 +391,8 @@ impl IERC4626 for Erc4626 {
     // }
 
     // /// Returns the remaining number of tokens that `spender` will be allowed
-    // /// to spend on behalf of `owner` through `transfer_from`. This is zero by
-    // /// default.
+    // /// to spend on behalf of `owner` through `transfer_from`. This is zero
+    // by /// default.
     // ///
     // /// This value changes when `approve` or `transfer_from` are called.
     // ///
@@ -403,16 +405,16 @@ impl IERC4626 for Erc4626 {
     //     self.erc20.allowance(owner, spender)
     // }
 
-    // /// Sets a `value` number of tokens as the allowance of `spender` over the
-    // /// caller's tokens.
+    // /// Sets a `value` number of tokens as the allowance of `spender` over
+    // the /// caller's tokens.
     // ///
     // /// Returns a boolean value indicating whether the operation succeeded.
     // ///
-    // /// WARNING: Beware that changing an allowance with this method brings the
-    // /// risk that someone may use both the old and the new allowance by
-    // /// unfortunate transaction ordering. One possible solution to mitigate
-    // /// this race condition is to first reduce the `spender`'s allowance to 0
-    // /// and set the desired value afterwards:
+    // /// WARNING: Beware that changing an allowance with this method brings
+    // the /// risk that someone may use both the old and the new allowance
+    // by /// unfortunate transaction ordering. One possible solution to
+    // mitigate /// this race condition is to first reduce the `spender`'s
+    // allowance to 0 /// and set the desired value afterwards:
     // /// <https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729>
     // ///
     // /// # Arguments
@@ -420,8 +422,8 @@ impl IERC4626 for Erc4626 {
     // /// * `&mut self` - Write access to the contract's state.
     // /// * `owner` - Account that owns the tokens.
     // /// * `spender` - Account that will spend the tokens.
-    // /// * `value` - The number of tokens being allowed to transfer by `spender`.
-    // ///
+    // /// * `value` - The number of tokens being allowed to transfer by
+    // `spender`. ///
     // /// # Errors
     // ///
     // /// If the `spender` address is `Address::ZERO`, then the error
@@ -476,11 +478,9 @@ impl IERC4626 for Erc4626 {
     //     self.erc20.transfer_from(from, to, value)
     // }
 
-
     fn asset(&self) -> Address {
         self._token_address.get()
     }
-
 
     fn total_assets(&self) -> U256 {
         self._asset.balance_of(contract::address())
