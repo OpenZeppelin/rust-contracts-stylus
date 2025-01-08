@@ -44,7 +44,7 @@ impl ContractReport {
             .into_iter()
             .try_fold(report, ContractReport::add_cached)?;
 
-        let wasm_opt_cached_reports = run(Opt::WasmOpt).await?;
+        let wasm_opt_cached_reports = run(Opt::CacheWasmOpt).await?;
         let report = wasm_opt_cached_reports
             .into_iter()
             .try_fold(report, ContractReport::add_wasm_opt_cached)?;

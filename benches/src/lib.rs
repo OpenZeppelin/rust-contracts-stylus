@@ -35,13 +35,14 @@ struct ArbOtherFields {
     l1_block_number: String,
 }
 
-/// Cache options for the contract.
-/// `Bid(0)` will likely cache the contract on the nitro test node.
+/// Optimisation options for the contract.
+///
+/// Cache or cache optimized WASM.
 #[derive(Clone)]
 pub enum Opt {
     None,
     Cache,
-    WasmOpt,
+    CacheWasmOpt,
 }
 
 type ArbTxReceipt =
@@ -57,7 +58,7 @@ async fn deploy(
         std::env::current_dir().context("should get current dir from env")?;
 
     let contract_type = match opt {
-        Opt::WasmOpt => "example_opt",
+        Opt::CacheWasmOpt => "example_opt",
         Opt::None | Opt::Cache => "example",
     };
 
@@ -103,7 +104,7 @@ async fn deploy(
         .address()?;
 
     match opt {
-        Opt::Cache | Opt::WasmOpt => {
+        Opt::Cache | Opt::CacheWasmOpt => {
             cache_contract(account, address, 0)?;
         }
         Opt::None => {}
