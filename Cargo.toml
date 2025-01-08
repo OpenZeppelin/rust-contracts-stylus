@@ -26,7 +26,6 @@ members = [
   "examples/safe-erc20",
   "benches",
   "examples/poseidon",
-  "examples/poseidon-renegades",
 ]
 default-members = [
   "contracts",
@@ -52,7 +51,6 @@ default-members = [
   "examples/basic/token",
   "examples/ecdsa",
   "examples/poseidon",
-  "examples/poseidon-renegades",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
