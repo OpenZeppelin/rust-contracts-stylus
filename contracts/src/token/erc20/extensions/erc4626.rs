@@ -41,18 +41,21 @@
 //!
 //! To learn more, check out our xref:ROOT:erc4626.adoc[ERC-4626 guide]..
 
+use alloc::vec::Vec;
+use alloc::string::String;
+
 use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
     contract, evm, msg,
     prelude::storage,
-    storage::{StorageU8, TopLevelStorage},
+    storage::{StorageAddress, StorageU8, TopLevelStorage},
     stylus_proc::{public, SolidityError},
 };
+use crate::utils::Metadata;
 
 use crate::token::erc20::{
     self,
-    extensions::Erc20Metadata,
     utils::{
         safe_erc20::{self, ISafeErc20},
         SafeErc20,
@@ -145,7 +148,10 @@ pub struct Erc4626 {
     /// [`SafeErc20`] contract.
     pub _safe_erc20: SafeErc20,
     /// ERC20 metadata extenston .
-    pub _metadata: Erc20Metadata,
+    pub _metadata:  Metadata,
+
+    /// Token Address of the vault
+    pub  _vault_address : StorageAddress
 }
 
 /// ERC-4626 Tokenized Vault Standard Interface
@@ -323,13 +329,20 @@ pub trait IERC4626 {
 unsafe impl TopLevelStorage for Erc4626 {}
 
 #[public]
-impl IERC4626 for Erc4626 {
-    type Error = Error;
-
-    fn asset(&self) -> Address {
-        Address::ZERO
+impl Erc4626 {
+    fn name(&self) -> String {
+        self._metadata.name()
     }
 
+    fn symbol(&self) -> String {
+        self._metadata.symbol()
+    }
+
+    fn asset(&self) -> Address {
+        self._vault_address.get()
+    }
+
+    
     fn total_assets(&self) -> U256 {
         self._asset.balance_of(contract::address())
     }

@@ -11,6 +11,12 @@ use stylus_sdk::contract::address;
 
 use crate::Erc4626Example::constructorCall;
 
+const TOKEN_NAME: &str = "Test Token";
+const TOKEN_SYMBOL: &str = "TTK";
+
+const VALUT_NAME: &str = "Test Token Valut";
+const VALUT_SYMBOL: &str = "TST Valut";
+
 mod abi;
 mod mock;
 
@@ -18,20 +24,30 @@ const ADDRESS: Address = Address::ZERO;
 
 sol!("src/constructor.sol");
 
-fn ctr(asset: Address , name: String, symbol: String) -> constructorCall {
-    constructorCall { asset_: asset , name_:name, symbol_:symbol }
+fn ctr(asset: Address, name: String, symbol: String) -> constructorCall {
+    constructorCall { asset_: asset, name_: name, symbol_: symbol }
 }
 
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let mock_token_address =
-        token::deploy(&alice.wallet, "Test Token", "TST").await?;
+        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(mock_token_address, "Test Token Valut".to_string(), "TST Valut".to_string()))
-        .deploy().await?.address()?;
+        .with_constructor(ctr(
+            mock_token_address,
+            VALUT_NAME.to_string(),
+            VALUT_SYMBOL.to_string(),
+        ))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc4626::new(contract_addr, &alice.wallet);
-
+    let name = contract.name().call().await?.name;
+    let symbol = contract.symbol().call().await?.symbol;
+    println!("name: {}, symbol: {}", name, symbol);
+    // assert_eq!(name, VALUT_NAME.to_owned());
+    // assert_eq!(symbol, VALUT_SYMBOL.to_owned());
     Ok(())
 }
 
@@ -41,14 +57,14 @@ async fn error_when_exceeded_max_deposit(
     bob: Account,
 ) -> Result<()> {
     let mock_token_address =
-        token::deploy(&alice.wallet, "Test Token Valut", "TST Valut").await?;
-    println!("Token address: {}", mock_token_address);
-    // let contract_addr = alice
-    //     .as_deployer()
-    //     .deploy()
-    //     .await?
-    //     .address()?;
-    // let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
+        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(mock_token_address,VALUT_NAME.to_string(),VALUT_SYMBOL.to_string()))
+        .deploy()
+        .await?
+        .address()?;
+    let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
     // let alice_addr = alice.address();
     // let bob_addr = bob.address();
 
