@@ -2,12 +2,16 @@
 //!
 //! Nonces will only increment.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
     prelude::storage,
     storage::{StorageMap, StorageU256},
     stylus_proc::{public, SolidityError},
 };
+
+use crate::utils::math::storage::AddAssignChecked;
 
 const ONE: U256 = uint!(1_U256);
 
@@ -66,10 +70,10 @@ impl Nonces {
     /// If the nonce for the given `owner` exceeds `U256::MAX`.
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
-        let updated_nonce = nonce
-            .checked_add(ONE)
-            .expect("nonce should not exceed `U256::MAX`");
-        self._nonces.setter(owner).set(updated_nonce);
+
+        self._nonces
+            .setter(owner)
+            .add_assign_checked(ONE, "nonce should not exceed `U256::MAX`");
 
         nonce
     }

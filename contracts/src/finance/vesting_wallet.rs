@@ -25,6 +25,8 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -40,6 +42,7 @@ use stylus_sdk::{
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
+    utils::math::storage::AddAssignChecked,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -93,7 +96,12 @@ pub use token::IErc20;
 mod token {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
-    stylus_sdk::stylus_proc::sol_interface! {
+
+    use alloc::vec;
+
+    use stylus_sdk::stylus_proc::sol_interface;
+
+    sol_interface! {
         /// Interface of the ERC-20 token.
         interface IErc20 {
             function balanceOf(address account) external view returns (uint256);
@@ -425,12 +433,10 @@ impl IVestingWallet for VestingWallet {
     fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
 
-        let released = self
-            ._released
-            .get()
-            .checked_add(amount)
-            .expect("total released should not exceed `U256::MAX`");
-        self._released.set(released);
+        self._released.add_assign_checked(
+            amount,
+            "total released should not exceed `U256::MAX`",
+        );
 
         let owner = self.ownable.owner();
 
@@ -446,12 +452,10 @@ impl IVestingWallet for VestingWallet {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
-        let released = self
-            ._erc20_released
-            .get(token)
-            .checked_add(amount)
-            .expect("total released should not exceed `U256::MAX`");
-        self._erc20_released.setter(token).set(released);
+        self._erc20_released.setter(token).add_assign_checked(
+            amount,
+            "total released should not exceed `U256::MAX`",
+        );
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
