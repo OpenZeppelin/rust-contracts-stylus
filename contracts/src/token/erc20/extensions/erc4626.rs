@@ -327,7 +327,7 @@ impl IERC4626 for Erc4626 {
     type Error = Error;
 
     fn asset(&self) -> Address {
-        contract::address()
+        Address::ZERO
     }
 
     fn total_assets(&self) -> U256 {
@@ -536,22 +536,36 @@ impl Erc4626 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
-    use stylus_sdk::msg;
-    use crate::token::erc20::extensions::erc4626::IERC4626;
+    use alloy_primitives::{address, U256};
+
     use super::Erc4626;
+    use crate::token::erc20::extensions::erc4626::IERC4626;
 
     #[motsu::test]
     fn max_mint(contract: Erc4626) {
-        let sender = msg::sender();
-        let max_mint = contract.max_mint(sender);
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let max_mint = contract.max_mint(bob);
         assert_eq!(max_mint, U256::MAX);
     }
 
     #[motsu::test]
     fn max_deposit(contract: Erc4626) {
-        let sender = msg::sender();
-        let max_deposit = contract.max_deposit(sender);
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let max_deposit = contract.max_deposit(bob);
         assert_eq!(max_deposit, U256::MAX);
+    }
+
+    #[motsu::test]
+    fn convert_to_shares(contract: Erc4626) {
+        let assets = U256::from(100);
+        let shares = contract.convert_to_shares(assets);
+        assert_eq!(shares, U256::from(100));
+    }
+
+    #[motsu::test]
+    fn convert_to_assets(contract: Erc4626) {
+        let shares = U256::from(100);
+        let assets = contract.convert_to_assets(shares);
+        assert_eq!(assets, U256::from(100));
     }
 }
