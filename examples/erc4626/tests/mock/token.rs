@@ -7,7 +7,6 @@ use alloy::{
 use e2e::Wallet;
 use stylus_sdk::{abi::Bytes, function_selector};
 
-
 sol! {
     #[allow(missing_docs)]
     // Built with Remix IDE; solc 0.8.24+commit.e11b9ed9
@@ -21,12 +20,15 @@ sol! {
 }
 
 pub async fn deploy(
-    wallet: &Wallet, 
+    wallet: &Wallet,
     token_name: &str,
-    token_symbol: &str
+    token_symbol: &str,
 ) -> eyre::Result<Address> {
-    let contract =
-        ERC20Mock::deploy(wallet, token_name.to_string(), token_symbol.to_string())
-            .await?;
+    let contract = ERC20Mock::deploy(
+        wallet,
+        token_name.to_string(),
+        token_symbol.to_string(),
+    )
+    .await?;
     Ok(*contract.address())
 }
