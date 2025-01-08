@@ -559,6 +559,10 @@ impl Erc20 {
     ///
     /// If not enough allowance is available, then the error
     /// [`Error::InsufficientAllowance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`Approval`] event.
     pub fn _spend_allowance(
         &mut self,
         owner: Address,
