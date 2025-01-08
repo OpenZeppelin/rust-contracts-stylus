@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use alloy_primitives::{bytes, hex, B256};
+use alloy_primitives::{hex, uint, U256};
 use e2e::{Account, ReceiptExt, Revert};
 use eyre::Result;
 
@@ -18,10 +18,10 @@ async fn poseidon_works(alice: Account) -> Result<()> {
     let contract = PoseidonExample::new(contract_addr, &alice.wallet);
 
     let PoseidonExample::hashReturn { hash } =
-        contract.hash(bytes!("deadbeef")).call().await?;
+        contract.hash([uint!(123_U256), uint!(123456_U256)]).call().await?;
 
-    let expected = B256::from(hex!(
-        "438ba31003629145d5a99d47392a014833076ab2fbd485ce446ce617cc83e03f"
+    let expected = U256::from_be_slice(&hex!(
+        "16f70722695a5829a59319fbf746df957a513fdf72b070a67bb72db08070e5de"
     ));
 
     assert_eq!(hash, expected);
