@@ -9,14 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Implement `AddAssignChecked` for `StorageUint`. #474
 - `Erc20FlashMint` extension. #407
 
 ### Changed
 
+- Use `AddAssignChecked` in `VestingWallet`, `Erc1155Supply`, `Erc1155`, `Erc20`, `Nonces`. #474
 - Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update`. #467
 
 ### Changed (Breaking)
 
+- Bump Stylus SDK to v0.7.0. #433
+- Bump `alloy` dependencies to v0.8.14. #433
 - Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
 - `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
 

@@ -4,6 +4,8 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
@@ -16,7 +18,7 @@ use stylus_sdk::{
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},
-    math::storage::{AddAssignUnchecked, SubAssignUnchecked},
+    math::storage::{AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked},
 };
 
 pub mod extensions;
@@ -473,11 +475,10 @@ impl Erc20 {
         if from.is_zero() {
             // Mint operation. Overflow check required: the rest of the code
             // assumes that `_total_supply` never overflows.
-            let total_supply = self
-                .total_supply()
-                .checked_add(value)
-                .expect("should not exceed `U256::MAX` for `_total_supply`");
-            self._total_supply.set(total_supply);
+            self._total_supply.add_assign_checked(
+                value,
+                "should not exceed `U256::MAX` for `_total_supply`",
+            );
         } else {
             let from_balance = self._balances.get(from);
             if from_balance < value {

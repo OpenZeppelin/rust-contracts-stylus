@@ -24,7 +24,7 @@ use stylus_sdk::{
 
 use crate::{
     token::erc1155::{self, Erc1155, IErc1155},
-    utils::math::storage::SubAssignUnchecked,
+    utils::math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
 /// State of an [`Erc1155Supply`] token.
@@ -234,19 +234,17 @@ impl Erc1155Supply {
 
         if from.is_zero() {
             for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
-                let total_supply =
-                    self.total_supply(token_id).checked_add(value).expect(
-                        "should not exceed `U256::MAX` for `_total_supply`",
-                    );
-                self._total_supply.setter(token_id).set(total_supply);
+                self._total_supply.setter(token_id).add_assign_checked(
+                    value,
+                    "should not exceed `U256::MAX` for `_total_supply`",
+                );
             }
 
             let total_mint_value = values.iter().sum();
-            let total_supply_all =
-                self.total_supply_all().checked_add(total_mint_value).expect(
-                    "should not exceed `U256::MAX` for `_total_supply_all`",
-                );
-            self._total_supply_all.set(total_supply_all);
+            self._total_supply_all.add_assign_checked(
+                total_mint_value,
+                "should not exceed `U256::MAX` for `_total_supply_all`",
+            );
         }
 
         if to.is_zero() {

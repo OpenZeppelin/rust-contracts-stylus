@@ -2,6 +2,7 @@
 
 use core::ops::{Add, Div, Mul, Sub};
 
+use alloy_sol_types::sol_data::{IntBitCount, SupportedInt};
 use stylus_sdk::{alloy_primitives::Uint, prelude::*};
 
 /// Trait that associates types of specific size for checkpoints key and value.
@@ -87,6 +88,8 @@ pub trait Accessor {
 
 impl<const B: usize, const L: usize> Accessor
     for stylus_sdk::storage::StorageUint<B, L>
+where
+    IntBitCount<B>: SupportedInt,
 {
     type Wraps = Uint<B, L>;
 
