@@ -80,7 +80,20 @@ impl Panic for alloy::contract::Error {
     }
 }
 
-impl<E: SolError> Revert<E> for alloy::contract::Error {
+/// A trait for types that can produce ABI-encoded revert data.
+pub trait AbiRevert {
+    /// Encodes the type into ABI revert data.
+    fn abi_revert(self) -> Vec<u8>;
+}
+
+// Implement for anything that satisfies MethodError
+impl<E: stylus_sdk::call::MethodError> AbiRevert for E {
+    fn abi_revert(self) -> Vec<u8> {
+        self.encode()
+    }
+}
+
+impl<E: AbiRevert> Revert<E> for alloy::contract::Error {
     fn reverted_with(&self, expected: E) -> bool {
         let Self::TransportError(e) = self else {
             return false;
@@ -90,8 +103,9 @@ impl<E: SolError> Revert<E> for alloy::contract::Error {
             .as_error_resp()
             .and_then(|payload| payload.data.clone())
             .expect("should extract the error");
+
         let actual = &raw_value.get().trim_matches('"')[2..];
-        let expected = alloy::hex::encode(expected.abi_encode());
+        let expected = alloy::hex::encode(expected.abi_revert());
         expected == actual
     }
 }
