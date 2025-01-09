@@ -25,9 +25,10 @@ use educe::Educe;
 use num_traits::{One, Zero};
 
 use crate::{
-    arithmetic,
+    adc, arithmetic,
     arithmetic::{BigInt, BigInteger, Limb},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
+    mac, mac_with_carry,
 };
 
 /// A trait that specifies the configuration of a prime field.
@@ -386,16 +387,16 @@ macro_rules! declare_fp {
         #[doc = "Finite field with max"]
         #[doc = stringify!($bits)]
         #[doc = "bits size element."]
-        pub type $fp<P> = crate::field::fp::Fp<
+        pub type $fp<P> = $crate::field::fp::Fp<
             P,
-            { usize::div_ceil($bits, ::crate::bigint::Word::BITS as usize) },
+            { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) },
         >;
 
         #[doc = "Number of limbs in the field with"]
         #[doc = stringify!($bits)]
         #[doc = "bits size element."]
         pub const $limbs: usize =
-            usize::div_ceil($bits, ::crate::bigint::Word::BITS as usize);
+            usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize);
     };
 }
 
@@ -464,6 +465,43 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         if carry || self.is_geq_modulus() {
             self.0.sub_with_borrow(&Self::MODULUS);
         }
+    }
+
+    const fn mul_without_cond_subtract(mut self, other: &Self) -> (bool, Self) {
+        let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
+        crate::const_for!((i in 0..N) {
+            let mut carry = 0;
+            crate::const_for!((j in 0..N) {
+                let k = i + j;
+                if k >= N {
+                    hi[k - N] = mac_with_carry!(hi[k - N], (self.0).0[i], (other.0).0[j], &mut carry);
+                } else {
+                    lo[k] = mac_with_carry!(lo[k], (self.0).0[i], (other.0).0[j], &mut carry);
+                }
+            });
+            hi[i] = carry;
+        });
+        // Montgomery reduction
+        let mut carry2 = 0;
+        crate::const_for!((i in 0..N) {
+            let tmp = lo[i].wrapping_mul(P::INV);
+            let mut carry;
+            mac!(lo[i], tmp, P::MODULUS.0[0], &mut carry);
+            crate::const_for!((j in 1..N) {
+                let k = i + j;
+                if k >= N {
+                    hi[k - N] = mac_with_carry!(hi[k - N], tmp, P::MODULUS.0[j], &mut carry);
+                }  else {
+                    lo[k] = mac_with_carry!(lo[k], tmp, P::MODULUS.0[j], &mut carry);
+                }
+            });
+            hi[i] = adc!(hi[i], carry, &mut carry2);
+        });
+
+        crate::const_for!((i in 0..N) {
+            (self.0).0[i] = hi[i];
+        });
+        (carry2 != 0, self)
     }
 }
 
@@ -615,13 +653,15 @@ macro_rules! impl_fp_from_signed_int {
     };
 }
 
-impl_fp_from_unsigned_int!(u128);
+// TODO#q: add u128 conversion
+
+// impl_fp_from_unsigned_int!(u128);
 impl_fp_from_unsigned_int!(u64);
 impl_fp_from_unsigned_int!(u32);
 impl_fp_from_unsigned_int!(u16);
 impl_fp_from_unsigned_int!(u8);
 
-impl_fp_from_signed_int!(i128);
+// impl_fp_from_signed_int!(i128);
 impl_fp_from_signed_int!(i64);
 impl_fp_from_signed_int!(i32);
 impl_fp_from_signed_int!(i16);
@@ -642,7 +682,7 @@ macro_rules! impl_int_from_fp {
         impl<P: FpParams<1>> From<Fp<P, 1>> for $int {
             fn from(other: Fp<P, 1>) -> Self {
                 let uint = other.into_bigint();
-                let words = uint.as_words();
+                let words = uint.as_limbs();
                 <$int>::try_from(words[0]).unwrap_or_else(|_| {
                     panic!("should convert to {}", stringify!($int))
                 })

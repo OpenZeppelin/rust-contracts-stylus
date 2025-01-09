@@ -42,6 +42,10 @@ impl<const N: usize> BigInt<N> {
         Self(value)
     }
 
+    pub const fn as_limbs(&self) -> &[Limb; N] {
+        &self.0
+    }
+
     pub const fn zero() -> Self {
         Self([0u64; N])
     }
@@ -457,6 +461,7 @@ impl<const N: usize> From<u8> for BigInt<N> {
     }
 }
 
+// TODO#q: remove num_bigint::BigUint conversion
 impl<const N: usize> From<BigInt<N>> for BigUint {
     #[inline]
     fn from(val: BigInt<N>) -> num_bigint::BigUint {
@@ -792,7 +797,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
 
 impl<const N: usize> BitIteratorBE for BigInt<N> {
     fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
-        self.as_words().iter().rev().flat_map(Limb::bit_be_iter)
+        self.as_limbs().iter().rev().flat_map(Limb::bit_be_iter)
     }
 }
 

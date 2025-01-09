@@ -84,12 +84,12 @@ pub trait Field:
     + for<'a> Div<&'a mut Self, Output = Self>
     + for<'a> DivAssign<&'a mut Self>
     + for<'a> Product<&'a Self>
-    + From<u128>
+    // + From<u128> // TODO#q: add u128 conversion
     + From<u64>
     + From<u32>
     + From<u16>
     + From<u8>
-    + From<i128>
+    // + From<i128>
     + From<i64>
     + From<i32>
     + From<i16>
