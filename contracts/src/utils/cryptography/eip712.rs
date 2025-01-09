@@ -17,7 +17,7 @@ use alloy_sol_types::{sol, SolType};
 use stylus_sdk::{block, contract};
 
 /// Keccak-256 hash of the EIP-712 domain separator type string.
-const TYPE_HASH: [u8; 32] = 
+const TYPE_HASH: [u8; 32] =
     keccak_const::Keccak256::new()
         .update(b"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
         .finalize();
