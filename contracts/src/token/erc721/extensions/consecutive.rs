@@ -24,7 +24,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
@@ -67,8 +67,7 @@ pub struct Erc721Consecutive {
     /// BitMap library contract for sequential burn of tokens.
     #[allow(clippy::used_underscore_binding)]
     pub _sequential_burn: BitMap,
-    /// Used to offset the first token id in
-    /// [`Erc721Consecutive::_next_consecutive_id`].
+    /// Used to offset the first token id in `next_consecutive_id` calculation.
     #[allow(clippy::used_underscore_binding)]
     pub _first_consecutive_id: StorageU96,
     /// Maximum size of a batch of consecutive tokens. This is designed to

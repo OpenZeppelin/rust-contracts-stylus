@@ -4,6 +4,8 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{

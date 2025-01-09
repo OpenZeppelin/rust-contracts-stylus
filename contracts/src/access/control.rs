@@ -41,6 +41,8 @@
 //! accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, FixedBytes, B256};
 pub use sol::*;
 use stylus_sdk::{
@@ -125,9 +127,6 @@ pub struct AccessControl {
 
 #[public]
 impl AccessControl {
-    /// The default admin role. `[0; 32]` by default.
-    pub const DEFAULT_ADMIN_ROLE: [u8; 32] = [0; 32];
-
     /// Returns `true` if `account` has been granted `role`.
     ///
     /// # Arguments
@@ -279,6 +278,9 @@ impl AccessControl {
 }
 
 impl AccessControl {
+    /// The default admin role. `[0; 32]` by default.
+    pub const DEFAULT_ADMIN_ROLE: [u8; 32] = [0; 32];
+
     /// Sets `admin_role` as `role`'s admin role.
     ///
     /// # Arguments
