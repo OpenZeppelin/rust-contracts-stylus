@@ -45,7 +45,8 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let contract = Erc4626::new(contract_addr, &alice.wallet);
     let name = contract.name().call().await?.name;
     let symbol = contract.symbol().call().await?.symbol;
-    println!("name: {}, symbol: {}", name, symbol);
+    let asset = contract.asset().call().await?.asset;
+    println!("name: {}, symbol: {} asset: {}", name, symbol, asset);
     // assert_eq!(name, VALUT_NAME.to_owned());
     // assert_eq!(symbol, VALUT_SYMBOL.to_owned());
     Ok(())

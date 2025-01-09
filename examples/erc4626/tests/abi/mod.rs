@@ -15,7 +15,7 @@ sol!(
         function approve(address spender, uint256 amount) external returns (bool);
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
-        function asset() public view  returns (address);
+        function asset() public view  returns (address asset);
         function totalAssets() public view returns (uint256);
         function convertToShares(uint256 assets) public view  returns (uint256);
         function convertToAssets(uint256 shares) public view  returns (uint256);
