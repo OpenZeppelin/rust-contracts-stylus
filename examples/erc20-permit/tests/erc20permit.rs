@@ -2,7 +2,7 @@
 
 use abi::Erc20Permit;
 use alloy::{
-    primitives::{b256, keccak256, Address, Parity, B256, U256},
+    primitives::{keccak256, Address, Parity, B256, U256},
     signers::Signature,
     sol,
     sol_types::SolType,
