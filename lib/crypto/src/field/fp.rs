@@ -426,14 +426,22 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     pub const ONE: Fp<P, N> = Fp::new_unchecked(P::R);
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
-    pub const ZERO: Fp<P, N> = unimplemented!();
+    pub const ZERO: Fp<P, N> = Fp::new_unchecked(BigInt([0; N]));
 
     /// Construct a new field element from [`Uint`] and convert it in
     /// Montgomery form.
     #[inline]
     #[must_use]
     pub const fn new(element: BigInt<N>) -> Self {
-        unimplemented!()
+        let mut r = Fp::new_unchecked(element);
+        if r.is_zero() {
+            r
+        } else if r.is_geq_modulus() {
+            panic!("element is not in the field");
+        } else {
+            r *= &Fp::new_unchecked(P::R2);
+            r
+        }
     }
 
     /// Construct a new field element from [`Uint`].
@@ -444,7 +452,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline]
     #[must_use]
     pub const fn new_unchecked(element: BigInt<N>) -> Self {
-        unimplemented!()
+        Self(element, PhantomData)
     }
 
     #[doc(hidden)]
