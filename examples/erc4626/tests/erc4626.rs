@@ -20,7 +20,6 @@ const VALUT_SYMBOL: &str = "TST Valut";
 mod abi;
 mod mock;
 
-const ADDRESS: Address = Address::ZERO;
 
 sol!("src/constructor.sol");
 
@@ -46,9 +45,9 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let name = contract.name().call().await?.name;
     let symbol = contract.symbol().call().await?.symbol;
     let asset = contract.asset().call().await?.asset;
-    println!("name: {}, symbol: {} asset: {}", name, symbol, asset);
-    // assert_eq!(name, VALUT_NAME.to_owned());
-    // assert_eq!(symbol, VALUT_SYMBOL.to_owned());
+    assert_eq!(name, VALUT_NAME.to_owned());
+    assert_eq!(symbol, VALUT_SYMBOL.to_owned());
+    assert_eq!(asset, mock_token_address);
     Ok(())
 }
 
