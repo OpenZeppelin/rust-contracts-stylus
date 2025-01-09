@@ -10,7 +10,6 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
- "keccak-const",
  "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",

@@ -19,8 +19,11 @@ struct AccessControlExample {
     pub access: AccessControl,
 }
 
-pub const TRANSFER_ROLE: [u8; 32] =
-    keccak_const::Keccak256::new().update(b"TRANSFER_ROLE").finalize();
+// `keccak256("TRANSFER_ROLE")`
+pub const TRANSFER_ROLE: [u8; 32] = [
+    133, 2, 35, 48, 150, 217, 9, 190, 251, 218, 9, 153, 187, 142, 162, 243,
+    166, 190, 60, 19, 139, 159, 191, 0, 55, 82, 164, 200, 188, 232, 111, 108,
+];
 
 #[public]
 #[inherit(Erc20, AccessControl)]
