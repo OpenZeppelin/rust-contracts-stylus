@@ -26,7 +26,7 @@ use num_traits::{One, Zero};
 
 use crate::{
     arithmetic,
-    arithmetic::{BigInt, BigInteger, Word},
+    arithmetic::{BigInt, BigInteger, Limb},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
 };
 
@@ -446,9 +446,22 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         unimplemented!()
     }
 
+    #[doc(hidden)]
+    #[inline]
+    pub fn is_geq_modulus(&self) -> bool {
+        self.0 >= P::MODULUS
+    }
+
     #[inline]
     fn subtract_modulus(&mut self) {
         if self.is_geq_modulus() {
+            self.0.sub_with_borrow(&Self::MODULUS);
+        }
+    }
+
+    #[inline]
+    fn subtract_modulus_with_carry(&mut self, carry: bool) {
+        if carry || self.is_geq_modulus() {
             self.0.sub_with_borrow(&Self::MODULUS);
         }
     }

@@ -2752,6 +2752,7 @@ version = "0.2.0-alpha.2"
 dependencies = [
  "educe",
  "hex-literal",
+ "num-bigint",
  "num-traits",
  "proptest",
  "rand",

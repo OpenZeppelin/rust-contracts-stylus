@@ -2,13 +2,16 @@
 //! functions for big integers.
 
 use core::{
-    fmt::{Debug, Display},
+    borrow::Borrow,
+    fmt::{Debug, Display, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl,
         ShlAssign, Shr, ShrAssign,
     },
 };
+use std::ops::Not;
 
+use num_bigint::BigUint;
 use num_traits::{ConstZero, Zero};
 use rand::{
     distributions::{Distribution, Standard},
@@ -18,15 +21,15 @@ use zeroize::Zeroize;
 
 use crate::{adc, bits::BitIteratorBE, const_for, const_modulo, sbb};
 
-pub type Word = u64;
+pub type Limb = u64;
 // TODO#q: Refactor types to:
 //  Fp<P, N>(Limbs<N>) - residue classes modulo prime numbers
 //  Uint<N>(Limbs<N>) - normal big integers. Make sense to implement only
 //   constant   operations necessary for hex parsing (uint.rs)
 //  Limbs<N>([Limb;N]) - Wrapper type for limbs. (limbs.rs)
 //  Odd<Uint<N>> - Odd numbers. (odd.rs)
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Zeroize)]
-pub struct BigInt<const N: usize>(pub [Word; N]);
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
+pub struct BigInt<const N: usize>(pub [Limb; N]);
 
 impl<const N: usize> Default for BigInt<N> {
     fn default() -> Self {
@@ -347,6 +350,24 @@ pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
 
 // ----------- Traits Impls -----------
 
+impl<const N: usize> UpperHex for BigInt<N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:016X}", BigUint::from(*self))
+    }
+}
+
+impl<const N: usize> Debug for BigInt<N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", BigUint::from(*self))
+    }
+}
+
+impl<const N: usize> Display for BigInt<N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", BigUint::from(*self))
+    }
+}
+
 impl<const N: usize> Ord for BigInt<N> {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
@@ -433,6 +454,177 @@ impl<const N: usize> From<u8> for BigInt<N> {
         let mut repr = Self::default();
         repr.0[0] = val.into();
         repr
+    }
+}
+
+impl<const N: usize> From<BigInt<N>> for BigUint {
+    #[inline]
+    fn from(val: BigInt<N>) -> num_bigint::BigUint {
+        BigUint::from_bytes_le(&val.into_bytes_le())
+    }
+}
+
+impl<const N: usize> From<BigInt<N>> for num_bigint::BigInt {
+    #[inline]
+    fn from(val: BigInt<N>) -> num_bigint::BigInt {
+        use num_bigint::Sign;
+        let sign = if val.is_zero() { Sign::NoSign } else { Sign::Plus };
+        num_bigint::BigInt::from_bytes_le(sign, &val.into_bytes_le())
+    }
+}
+
+impl<B: Borrow<Self>, const N: usize> BitXorAssign<B> for BigInt<N> {
+    fn bitxor_assign(&mut self, rhs: B) {
+        (0..N).for_each(|i| self.0[i] ^= rhs.borrow().0[i])
+    }
+}
+
+impl<B: Borrow<Self>, const N: usize> BitXor<B> for BigInt<N> {
+    type Output = Self;
+
+    fn bitxor(mut self, rhs: B) -> Self::Output {
+        self ^= rhs;
+        self
+    }
+}
+
+impl<B: Borrow<Self>, const N: usize> BitAndAssign<B> for BigInt<N> {
+    fn bitand_assign(&mut self, rhs: B) {
+        (0..N).for_each(|i| self.0[i] &= rhs.borrow().0[i])
+    }
+}
+
+impl<B: Borrow<Self>, const N: usize> BitAnd<B> for BigInt<N> {
+    type Output = Self;
+
+    fn bitand(mut self, rhs: B) -> Self::Output {
+        self &= rhs;
+        self
+    }
+}
+
+impl<B: Borrow<Self>, const N: usize> BitOrAssign<B> for BigInt<N> {
+    fn bitor_assign(&mut self, rhs: B) {
+        (0..N).for_each(|i| self.0[i] |= rhs.borrow().0[i])
+    }
+}
+
+impl<B: Borrow<Self>, const N: usize> BitOr<B> for BigInt<N> {
+    type Output = Self;
+
+    fn bitor(mut self, rhs: B) -> Self::Output {
+        self |= rhs;
+        self
+    }
+}
+
+impl<const N: usize> ShrAssign<u32> for BigInt<N> {
+    /// Computes the bitwise shift right operation in place.
+    ///
+    /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
+    /// operation does *not* return an underflow error if the number of bits
+    /// shifted is larger than N * 64. Instead the result will be saturated to
+    /// zero.
+    fn shr_assign(&mut self, mut rhs: u32) {
+        if rhs >= (64 * N) as u32 {
+            *self = Self::from(0u64);
+            return;
+        }
+
+        while rhs >= 64 {
+            let mut t = 0;
+            for limb in self.0.iter_mut().rev() {
+                core::mem::swap(&mut t, limb);
+            }
+            rhs -= 64;
+        }
+
+        if rhs > 0 {
+            let mut t = 0;
+            for a in self.0.iter_mut().rev() {
+                let t2 = *a << (64 - rhs);
+                *a >>= rhs;
+                *a |= t;
+                t = t2;
+            }
+        }
+    }
+}
+
+impl<const N: usize> Shr<u32> for BigInt<N> {
+    type Output = Self;
+
+    /// Computes bitwise shift right operation.
+    ///
+    /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
+    /// operation does *not* return an underflow error if the number of bits
+    /// shifted is larger than N * 64. Instead the result will be saturated to
+    /// zero.
+    fn shr(mut self, rhs: u32) -> Self::Output {
+        self >>= rhs;
+        self
+    }
+}
+
+impl<const N: usize> ShlAssign<u32> for BigInt<N> {
+    /// Computes the bitwise shift left operation in place.
+    ///
+    /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
+    /// operation does *not* return an overflow error if the number of bits
+    /// shifted is larger than N * 64. Instead, the overflow will be chopped
+    /// off.
+    fn shl_assign(&mut self, mut rhs: u32) {
+        if rhs >= (64 * N) as u32 {
+            *self = Self::from(0u64);
+            return;
+        }
+
+        while rhs >= 64 {
+            let mut t = 0;
+            for i in 0..N {
+                core::mem::swap(&mut t, &mut self.0[i]);
+            }
+            rhs -= 64;
+        }
+
+        if rhs > 0 {
+            let mut t = 0;
+            #[allow(unused)]
+            for i in 0..N {
+                let a = &mut self.0[i];
+                let t2 = *a >> (64 - rhs);
+                *a <<= rhs;
+                *a |= t;
+                t = t2;
+            }
+        }
+    }
+}
+
+impl<const N: usize> Shl<u32> for BigInt<N> {
+    type Output = Self;
+
+    /// Computes the bitwise shift left operation in place.
+    ///
+    /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
+    /// operation does *not* return an overflow error if the number of bits
+    /// shifted is larger than N * 64. Instead, the overflow will be chopped
+    /// off.
+    fn shl(mut self, rhs: u32) -> Self::Output {
+        self <<= rhs;
+        self
+    }
+}
+
+impl<const N: usize> Not for BigInt<N> {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        let mut result = Self::zero();
+        for i in 0..N {
+            result.0[i] = !self.0[i];
+        }
+        result
     }
 }
 
@@ -600,7 +792,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
 
 impl<const N: usize> BitIteratorBE for BigInt<N> {
     fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
-        self.as_words().iter().rev().flat_map(Word::bit_be_iter)
+        self.as_words().iter().rev().flat_map(Limb::bit_be_iter)
     }
 }
 
@@ -663,15 +855,15 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
 
     // The lowest order limb is at the beginning of the `num` array.
     // Begin indexing from `0`.
-    let mut num = [Word::ZERO; LIMBS];
+    let mut num = [Limb::ZERO; LIMBS];
     let mut num_index = 0;
 
     let digit_radix = 16;
     let digit_size = 4; // Size of a hex digit in bits (2^4 = 16).
-    let digits_in_limb = Word::BITS / digit_size;
+    let digits_in_limb = Limb::BITS / digit_size;
 
     loop {
-        let digit = parse_digit(bytes[index], digit_radix) as Word;
+        let digit = parse_digit(bytes[index], digit_radix) as Limb;
 
         // Since a base-16 digit can be represented with the same bits, we can
         // copy these bits.
@@ -706,7 +898,7 @@ const fn add<const LIMBS: usize>(
     a: &BigInt<LIMBS>,
     b: &BigInt<LIMBS>,
 ) -> BigInt<LIMBS> {
-    let (low, carry) = a.adc(b, Word::ZERO);
+    let (low, carry) = a.adc(b, Limb::ZERO);
     assert!(carry.0 == 0, "overflow on addition");
     low
 }
@@ -788,7 +980,7 @@ mod test {
 
     #[test]
     fn uint_bit_iterator_be() {
-        let words: [Word; 4] = [0b1100, 0, 0, 0];
+        let words: [Limb; 4] = [0b1100, 0, 0, 0];
         let num = BigInt::<4>::new(words);
         let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
 
