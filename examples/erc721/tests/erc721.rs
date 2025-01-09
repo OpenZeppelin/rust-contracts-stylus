@@ -2,7 +2,9 @@
 
 use abi::Erc721;
 use alloy::primitives::{fixed_bytes, uint, Address, Bytes, U256};
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{
+    receipt, send, watch, Account, EventExt, PanicCode, ReceiptExt, Revert,
+};
 use mock::{receiver, receiver::ERC721ReceiverMock};
 
 mod abi;
@@ -1076,8 +1078,6 @@ async fn error_when_safe_transfer_with_data_nonexistent_token(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
 async fn errors_when_receiver_reverts_with_reason(
     alice: Account,
@@ -1142,10 +1142,7 @@ async fn errors_when_receiver_reverts_without_reason(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
@@ -1166,8 +1163,8 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     ))
     .expect_err("should not transfer when receiver panics");
 
-    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
-        receiver: receiver_address
+    assert!(err.reverted_with(Erc721::Panic {
+        message: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
