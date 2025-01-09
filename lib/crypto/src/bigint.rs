@@ -9,13 +9,196 @@ use core::{
     },
 };
 
-#[allow(clippy::module_name_repetitions)]
-pub use crypto_bigint;
-use crypto_bigint::{Encoding, Integer, Limb, Uint, Word, Zero};
 use num_traits::ConstZero;
 use zeroize::Zeroize;
 
-use crate::bits::BitIteratorBE;
+use crate::{adc, bits::BitIteratorBE, const_for, const_modulo, sbb};
+
+pub type Word = u64;
+// TODO#q: Have Fp as residue integers
+// TODO#q: Uint - normal big integers
+// TODO#q: Limbs - wrapper type for [Limb; N] array
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Zeroize)]
+pub struct BigInt<const N: usize>(pub [Word; N]);
+
+impl<const N: usize> Default for BigInt<N> {
+    fn default() -> Self {
+        Self([0u64; N])
+    }
+}
+
+impl<const N: usize> BigInt<N> {
+    pub const fn new(value: [u64; N]) -> Self {
+        Self(value)
+    }
+
+    pub const fn zero() -> Self {
+        Self([0u64; N])
+    }
+
+    pub const fn one() -> Self {
+        let mut one = Self::zero();
+        one.0[0] = 1;
+        one
+    }
+
+    #[doc(hidden)]
+    pub const fn const_is_even(&self) -> bool {
+        self.0[0] % 2 == 0
+    }
+
+    #[doc(hidden)]
+    pub const fn const_is_odd(&self) -> bool {
+        self.0[0] % 2 == 1
+    }
+
+    #[doc(hidden)]
+    pub const fn mod_4(&self) -> u8 {
+        // To compute n % 4, we need to simply look at the
+        // 2 least significant bits of n, and check their value mod 4.
+        (((self.0[0] << 62) >> 62) % 4) as u8
+    }
+
+    /// Compute a right shift of `self`
+    /// This is equivalent to a (saturating) division by 2.
+    #[doc(hidden)]
+    pub const fn const_shr(&self) -> Self {
+        let mut result = *self;
+        let mut t = 0;
+        crate::const_for!((i in 0..N) {
+            let a = result.0[N - i - 1];
+            let t2 = a << 63;
+            result.0[N - i - 1] >>= 1;
+            result.0[N - i - 1] |= t;
+            t = t2;
+        });
+        result
+    }
+
+    const fn const_geq(&self, other: &Self) -> bool {
+        const_for!((i in 0..N) {
+            let a = self.0[N - i - 1];
+            let b = other.0[N - i - 1];
+            if a < b {
+                return false;
+            } else if a > b {
+                return true;
+            }
+        });
+        true
+    }
+
+    /// Compute the largest integer `s` such that `self = 2**s * t + 1` for odd
+    /// `t`.
+    #[doc(hidden)]
+    pub const fn two_adic_valuation(mut self) -> u32 {
+        assert!(self.const_is_odd());
+        let mut two_adicity = 0;
+        // Since `self` is odd, we can always subtract one
+        // without a borrow
+        self.0[0] -= 1;
+        while self.const_is_even() {
+            self = self.const_shr();
+            two_adicity += 1;
+        }
+        two_adicity
+    }
+
+    /// Compute the smallest odd integer `t` such that `self = 2**s * t + 1` for
+    /// some integer `s = self.two_adic_valuation()`.
+    #[doc(hidden)]
+    pub const fn two_adic_coefficient(mut self) -> Self {
+        assert!(self.const_is_odd());
+        // Since `self` is odd, we can always subtract one
+        // without a borrow
+        self.0[0] -= 1;
+        while self.const_is_even() {
+            self = self.const_shr();
+        }
+        assert!(self.const_is_odd());
+        self
+    }
+
+    /// Divide `self` by 2, rounding down if necessary.
+    /// That is, if `self.is_odd()`, compute `(self - 1)/2`.
+    /// Else, compute `self/2`.
+    #[doc(hidden)]
+    pub const fn divide_by_2_round_down(mut self) -> Self {
+        if self.const_is_odd() {
+            self.0[0] -= 1;
+        }
+        self.const_shr()
+    }
+
+    /// Find the number of bits in the binary decomposition of `self`.
+    #[doc(hidden)]
+    pub const fn const_num_bits(self) -> u32 {
+        ((N - 1) * 64) as u32 + (64 - self.0[N - 1].leading_zeros())
+    }
+
+    #[inline]
+    pub(crate) const fn const_sub_with_borrow(
+        mut self,
+        other: &Self,
+    ) -> (Self, bool) {
+        let mut borrow = 0;
+
+        const_for!((i in 0..N) {
+            self.0[i] = sbb!(self.0[i], other.0[i], &mut borrow);
+        });
+
+        (self, borrow != 0)
+    }
+
+    #[inline]
+    pub(crate) const fn const_add_with_carry(
+        mut self,
+        other: &Self,
+    ) -> (Self, bool) {
+        let mut carry = 0;
+
+        crate::const_for!((i in 0..N) {
+            self.0[i] = adc!(self.0[i], other.0[i], &mut carry);
+        });
+
+        (self, carry != 0)
+    }
+
+    const fn const_mul2_with_carry(mut self) -> (Self, bool) {
+        let mut last = 0;
+        crate::const_for!((i in 0..N) {
+            let a = self.0[i];
+            let tmp = a >> 63;
+            self.0[i] <<= 1;
+            self.0[i] |= last;
+            last = tmp;
+        });
+        (self, last != 0)
+    }
+
+    pub(crate) const fn const_is_zero(&self) -> bool {
+        let mut is_zero = true;
+        crate::const_for!((i in 0..N) {
+            is_zero &= self.0[i] == 0;
+        });
+        is_zero
+    }
+
+    /// Computes the Montgomery R constant modulo `self`.
+    #[doc(hidden)]
+    pub const fn montgomery_r(&self) -> Self {
+        let two_pow_n_times_64 = crate::const_helpers::RBuffer([0u64; N], 1);
+        const_modulo!(two_pow_n_times_64, self)
+    }
+
+    /// Computes the Montgomery R2 constant modulo `self`.
+    #[doc(hidden)]
+    pub const fn montgomery_r2(&self) -> Self {
+        let two_pow_n_times_64_square =
+            crate::const_helpers::R2Buffer([0u64; N], [0u64; N], 1);
+        const_modulo!(two_pow_n_times_64_square, self)
+    }
+}
 
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
@@ -132,39 +315,39 @@ pub trait BigInteger:
     fn into_bytes_le(self) -> alloc::vec::Vec<u8>;
 }
 
-impl<const N: usize> BigInteger for Uint<N> {
+impl<const N: usize> BigInteger for BigInt<N> {
     const NUM_LIMBS: usize = N;
 
     fn is_odd(&self) -> bool {
-        <Uint<N> as Integer>::is_odd(self).into()
+        unimplemented!()
     }
 
     fn is_even(&self) -> bool {
-        <Uint<N> as Integer>::is_even(self).into()
+        unimplemented!()
     }
 
     fn is_zero(&self) -> bool {
-        <Uint<N> as Zero>::is_zero(self).into()
+        unimplemented!()
     }
 
     fn num_bits(&self) -> usize {
-        self.bits()
+        unimplemented!()
     }
 
     fn get_bit(&self, i: usize) -> bool {
-        self.bit(i).into()
+        unimplemented!()
     }
 
     fn from_bytes_le(bytes: &[u8]) -> Self {
-        Self::from_le_slice(bytes)
+        unimplemented!()
     }
 
     fn into_bytes_le(self) -> alloc::vec::Vec<u8> {
-        self.to_limbs().into_iter().flat_map(|l| l.to_le_bytes()).collect()
+        unimplemented!()
     }
 }
 
-impl<const N: usize> BitIteratorBE for Uint<N> {
+impl<const N: usize> BitIteratorBE for BigInt<N> {
     fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
         self.as_words().iter().rev().flat_map(Word::bit_be_iter)
     }
@@ -180,7 +363,7 @@ impl<const N: usize> BitIteratorBE for Uint<N> {
 pub const fn from_str_radix<const LIMBS: usize>(
     s: &str,
     radix: u32,
-) -> Uint<LIMBS> {
+) -> BigInt<LIMBS> {
     let bytes = s.as_bytes();
     assert!(!bytes.is_empty(), "empty string");
 
@@ -188,12 +371,12 @@ pub const fn from_str_radix<const LIMBS: usize>(
     // Begin parsing from the last index of the string.
     let mut index = bytes.len() - 1;
 
-    let mut uint = Uint::from_u32(0);
-    let mut order = Uint::from_u32(1);
-    let uint_radix = Uint::from_u32(radix);
+    let mut uint = BigInt::from_u32(0);
+    let mut order = BigInt::from_u32(1);
+    let uint_radix = BigInt::from_u32(radix);
 
     loop {
-        let digit = Uint::from_u32(parse_digit(bytes[index], radix));
+        let digit = BigInt::from_u32(parse_digit(bytes[index], radix));
 
         // Add a digit multiplied by order.
         uint = add(&uint, &mul(&digit, &order));
@@ -219,7 +402,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
 /// If the string number is shorter, then [`Uint`] can store.
 /// Returns a [`Uint`] with leading zeroes.
 #[must_use]
-pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
+pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
     let bytes = s.as_bytes();
     assert!(!bytes.is_empty(), "empty string");
 
@@ -234,7 +417,7 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
 
     let digit_radix = 16;
     let digit_size = 4; // Size of a hex digit in bits (2^4 = 16).
-    let digits_in_limb = Limb::BITS / digit_size;
+    let digits_in_limb = Word::BITS / digit_size;
 
     loop {
         let digit = parse_digit(bytes[index], digit_radix) as Word;
@@ -246,7 +429,7 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
 
         // If we reached the beginning of the string, return the number.
         if index == 0 {
-            return Uint::from_words(num);
+            return BigInt::new(num);
         }
 
         // Move to the next digit.
@@ -258,9 +441,9 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
 /// Multiply two numbers and panic on overflow.
 #[must_use]
 const fn mul<const LIMBS: usize>(
-    a: &Uint<LIMBS>,
-    b: &Uint<LIMBS>,
-) -> Uint<LIMBS> {
+    a: &BigInt<LIMBS>,
+    b: &BigInt<LIMBS>,
+) -> BigInt<LIMBS> {
     let (low, high) = a.mul_wide(b);
     assert!(high.bits() == 0, "overflow on multiplication");
     low
@@ -269,10 +452,10 @@ const fn mul<const LIMBS: usize>(
 /// Add two numbers and panic on overflow.
 #[must_use]
 const fn add<const LIMBS: usize>(
-    a: &Uint<LIMBS>,
-    b: &Uint<LIMBS>,
-) -> Uint<LIMBS> {
-    let (low, carry) = a.adc(b, Limb::ZERO);
+    a: &BigInt<LIMBS>,
+    b: &BigInt<LIMBS>,
+) -> BigInt<LIMBS> {
+    let (low, carry) = a.adc(b, Word::ZERO);
     assert!(carry.0 == 0, "overflow on addition");
     low
 }
@@ -320,12 +503,12 @@ mod test {
 
     #[test]
     fn convert_from_str_radix() {
-        let uint_from_base10: Uint<4> = from_str_radix(
+        let uint_from_base10: BigInt<4> = from_str_radix(
             "28948022309329048855892746252171976963363056481941647379679742748393362948097",
             10
         );
         #[allow(clippy::unreadable_literal)]
-        let expected = Uint::<4>::from_words([
+        let expected = BigInt::<4>::new([
             10108024940646105089u64,
             2469829653919213789u64,
             0u64,
@@ -333,9 +516,9 @@ mod test {
         ]);
         assert_eq!(uint_from_base10, expected);
 
-        let uint_from_base10: Uint<1> =
+        let uint_from_base10: BigInt<1> =
             from_str_radix("18446744069414584321", 10);
-        let uint_from_binary: Uint<1> = from_str_radix(
+        let uint_from_binary: BigInt<1> = from_str_radix(
             "1111111111111111111111111111111100000000000000000000000000000001",
             2,
         );
@@ -346,8 +529,8 @@ mod test {
     fn convert_from_str_hex() {
         // Test different implementations of hex parsing on random hex inputs.
         proptest!(|(s in "[0-9a-fA-F]{1,64}")| {
-            let uint_from_hex: Uint<4> = from_str_hex(&s);
-            let expected: Uint<4> = from_str_radix(&s, 16);
+            let uint_from_hex: BigInt<4> = from_str_hex(&s);
+            let expected: BigInt<4> = from_str_radix(&s, 16);
             assert_eq!(uint_from_hex, expected);
         });
     }
@@ -355,7 +538,7 @@ mod test {
     #[test]
     fn uint_bit_iterator_be() {
         let words: [Word; 4] = [0b1100, 0, 0, 0];
-        let num = Uint::<4>::from_words(words);
+        let num = BigInt::<4>::new(words);
         let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
 
         assert_eq!(bits.len(), 4);

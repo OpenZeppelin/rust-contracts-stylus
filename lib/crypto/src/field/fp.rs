@@ -21,23 +21,19 @@ use core::{
     marker::PhantomData,
 };
 
-use crypto_bigint::{
-    modular::{
-        constant_mod::{Residue, ResidueParams},
-        montgomery_reduction,
-    },
-    Limb, Uint, Word,
-};
 use educe::Educe;
 use num_traits::{One, Zero};
 
-use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
+use crate::{
+    bigint::{BigInt, Word},
+    field::{group::AdditiveGroup, prime::PrimeField, Field},
+};
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.
 pub trait FpParams<const LIMBS: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
-    const MODULUS: Uint<LIMBS>;
+    const MODULUS: BigInt<LIMBS>;
 
     /// A multiplicative generator of the field.
     /// [`Self::GENERATOR`] is an element having multiplicative order
@@ -46,55 +42,52 @@ pub trait FpParams<const LIMBS: usize>: Send + Sync + 'static + Sized {
 
     /// Set `a += b`.
     fn add_assign(a: &mut Fp<Self, LIMBS>, b: &Fp<Self, LIMBS>) {
-        a.residue += b.residue;
+        unimplemented!()
     }
 
     /// Set `a -= b`.
     fn sub_assign(a: &mut Fp<Self, LIMBS>, b: &Fp<Self, LIMBS>) {
-        a.residue -= b.residue;
+        unimplemented!()
     }
 
     /// Set `a = a + a`.
     fn double_in_place(a: &mut Fp<Self, LIMBS>) {
-        a.residue += a.residue;
+        unimplemented!()
     }
 
     /// Set `a = -a`;
     fn neg_in_place(a: &mut Fp<Self, LIMBS>) {
-        a.residue = a.residue.neg();
+        unimplemented!()
     }
 
     /// Set `a *= b`.
     fn mul_assign(a: &mut Fp<Self, LIMBS>, b: &Fp<Self, LIMBS>) {
-        a.residue *= b.residue;
+        unimplemented!()
     }
 
     /// Set `a *= a`.
     fn square_in_place(a: &mut Fp<Self, LIMBS>) {
-        a.residue = a.residue.square();
+        unimplemented!()
     }
 
     /// Compute `a^{-1}` if `a` is not zero.
     #[must_use]
     fn inverse(a: &Fp<Self, LIMBS>) -> Option<Fp<Self, LIMBS>> {
-        let (residue, choice) = a.residue.invert();
-        let is_inverse: bool = choice.into();
-
-        is_inverse.then_some(Fp { residue })
+        unimplemented!()
     }
 
     /// Construct a field element from an integer.
     ///
     /// By the end element will be converted to a montgomery form and reduced.
     #[must_use]
-    fn from_bigint(r: Uint<LIMBS>) -> Fp<Self, LIMBS> {
-        Fp::new(r)
+    fn from_bigint(r: BigInt<LIMBS>) -> Fp<Self, LIMBS> {
+        unimplemented!()
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
-    fn into_bigint(a: Fp<Self, LIMBS>) -> Uint<LIMBS> {
-        a.residue.retrieve()
+    fn into_bigint(a: Fp<Self, LIMBS>) -> BigInt<LIMBS> {
+        unimplemented!()
     }
 }
 
@@ -104,12 +97,12 @@ pub trait FpParams<const LIMBS: usize>: Send + Sync + 'static + Sized {
 /// for 64-bit systems and N * 32 bits for 32-bit systems.
 #[derive(Educe)]
 #[educe(Default, Clone, Copy, PartialEq, Eq)]
-pub struct Fp<P: FpParams<LIMBS>, const LIMBS: usize> {
+pub struct Fp<P: FpParams<LIMBS>, const LIMBS: usize>(
     /// Contains the element in Montgomery form for efficient multiplication.
     /// To convert an element to a [`BigInt`], use [`FpParams::into_bigint`]
     /// or `into`.
-    residue: Residue<ResidueParam<P, LIMBS>, LIMBS>,
-}
+    BigInt<LIMBS>,
+);
 
 /// Declare [`Fp`] types for different bit sizes.
 macro_rules! declare_fp {
@@ -119,14 +112,14 @@ macro_rules! declare_fp {
         #[doc = "bits size element."]
         pub type $fp<P> = crate::field::fp::Fp<
             P,
-            { usize::div_ceil($bits, ::crypto_bigint::Word::BITS as usize) },
+            { usize::div_ceil($bits, ::crate::bigint::Word::BITS as usize) },
         >;
 
         #[doc = "Number of limbs in the field with"]
         #[doc = stringify!($bits)]
         #[doc = "bits size element."]
         pub const $limbs: usize =
-            usize::div_ceil($bits, ::crypto_bigint::Word::BITS as usize);
+            usize::div_ceil($bits, ::crate::bigint::Word::BITS as usize);
     };
 }
 
@@ -144,34 +137,6 @@ declare_fp!(Fp704, LIMBS_704, 704);
 declare_fp!(Fp768, LIMBS_768, 768);
 declare_fp!(Fp832, LIMBS_832, 832);
 
-#[derive(Educe)]
-#[educe(Clone, Copy, Debug, Default, Eq, PartialEq)]
-struct ResidueParam<P: FpParams<LIMBS>, const LIMBS: usize>(PhantomData<P>);
-
-impl<P: FpParams<LIMBS>, const LIMBS: usize> ResidueParams<LIMBS>
-    for ResidueParam<P, LIMBS>
-{
-    const LIMBS: usize = LIMBS;
-    const MODULUS: Uint<LIMBS> = {
-        let modulus = P::MODULUS;
-        // Uint represents integer in low-endian form.
-        assert!(modulus.as_limbs()[0].0 & 1 == 1, "modulus must be odd");
-        modulus
-    };
-    const MOD_NEG_INV: Limb = Limb(Word::MIN.wrapping_sub(
-        P::MODULUS.inv_mod2k_vartime(Word::BITS as usize).as_limbs()[0].0,
-    ));
-    const R: Uint<LIMBS> =
-        Uint::MAX.const_rem(&P::MODULUS).0.wrapping_add(&Uint::ONE);
-    const R2: Uint<LIMBS> =
-        Uint::const_rem_wide(Self::R.square_wide(), &P::MODULUS).0;
-    const R3: Uint<LIMBS> = montgomery_reduction(
-        &Self::R2.square_wide(),
-        &P::MODULUS,
-        Self::MOD_NEG_INV,
-    );
-}
-
 impl<P: FpParams<LIMBS>, const LIMBS: usize> Fp<P, LIMBS> {
     /// A multiplicative generator of the field.
     /// [`Self::GENERATOR`] is an element having multiplicative order
@@ -184,20 +149,20 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> Fp<P, LIMBS> {
     pub const ONE: Fp<P, LIMBS> = Fp::new_unchecked(Self::R);
     /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
     /// `R = M % MODULUS`.
-    const R: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R;
+    const R: BigInt<LIMBS> = unimplemented!();
     /// `R2 = R^2 % MODULUS`
     #[allow(dead_code)]
-    const R2: Uint<LIMBS> = ResidueParam::<P, LIMBS>::R2;
+    const R2: BigInt<LIMBS> = unimplemented!();
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
-    pub const ZERO: Fp<P, LIMBS> = Fp::new_unchecked(Uint::ZERO);
+    pub const ZERO: Fp<P, LIMBS> = unimplemented!();
 
     /// Construct a new field element from [`Uint`] and convert it in
     /// Montgomery form.
     #[inline]
     #[must_use]
-    pub const fn new(element: Uint<LIMBS>) -> Self {
-        Fp { residue: Residue::<ResidueParam<P, LIMBS>, LIMBS>::new(&element) }
+    pub const fn new(element: BigInt<LIMBS>) -> Self {
+        unimplemented!()
     }
 
     /// Construct a new field element from [`Uint`].
@@ -207,18 +172,14 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> Fp<P, LIMBS> {
     /// integer that has already been put in Montgomery form.
     #[inline]
     #[must_use]
-    pub const fn new_unchecked(element: Uint<LIMBS>) -> Self {
-        Fp {
-            residue: Residue::<ResidueParam<P, LIMBS>, LIMBS>::from_montgomery(
-                element,
-            ),
-        }
+    pub const fn new_unchecked(element: BigInt<LIMBS>) -> Self {
+        unimplemented!()
     }
 }
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> Hash for Fp<P, LIMBS> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.residue.as_montgomery().hash(state);
+        unimplemented!()
     }
 }
 
@@ -308,17 +269,17 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> Field for Fp<P, LIMBS> {
 }
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> PrimeField for Fp<P, LIMBS> {
-    type BigInt = Uint<LIMBS>;
+    type BigInt = BigInt<LIMBS>;
 
     const MODULUS: Self::BigInt = P::MODULUS;
-    const MODULUS_BIT_SIZE: usize = P::MODULUS.bits();
+    const MODULUS_BIT_SIZE: usize = unimplemented!();
 
     #[inline]
     fn from_bigint(repr: Self::BigInt) -> Self {
         P::from_bigint(repr)
     }
 
-    fn into_bigint(self) -> Uint<LIMBS> {
+    fn into_bigint(self) -> BigInt<LIMBS> {
         P::into_bigint(self)
     }
 }
@@ -343,7 +304,7 @@ macro_rules! impl_fp_from_unsigned_int {
             for Fp<P, LIMBS>
         {
             fn from(other: $int) -> Self {
-                Fp::from_bigint(Uint::from(other))
+                Fp::from_bigint(BigInt::from(other))
             }
         }
     };
@@ -414,15 +375,14 @@ impl_int_from_fp!(i32);
 impl_int_from_fp!(i16);
 impl_int_from_fp!(i8);
 
-#[cfg(test)]
-impl<P: FpParams<LIMBS>, const LIMBS: usize> crypto_bigint::Random
-    for Fp<P, LIMBS>
-{
+// TODO#q: implement random for Fp
+/*#[cfg(test)]
+impl<P: FpParams<LIMBS>, const LIMBS: usize> Random for Fp<P, LIMBS> {
     #[inline]
-    fn random(rng: &mut impl crypto_bigint::rand_core::CryptoRngCore) -> Self {
+    fn random(rng: &mut impl rand_core::CryptoRngCore) -> Self {
         Fp { residue: Residue::<ResidueParam<P, LIMBS>, LIMBS>::random(rng) }
     }
-}
+}*/
 
 /// Outputs a string containing the value of `self`,
 /// represented as a decimal without leading zeroes.
@@ -824,12 +784,12 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> zeroize::Zeroize for Fp<P, LIMBS> {
     // The phantom data does not contain element-specific data
     // and thus does not need to be zeroized.
     fn zeroize(&mut self) {
-        self.residue.zeroize();
+        self.0.zeroize();
     }
 }
 
 impl<P: FpParams<LIMBS>, const LIMBS: usize> From<Fp<P, LIMBS>>
-    for Uint<LIMBS>
+    for BigInt<LIMBS>
 {
     #[inline]
     fn from(fp: Fp<P, LIMBS>) -> Self {
@@ -837,12 +797,12 @@ impl<P: FpParams<LIMBS>, const LIMBS: usize> From<Fp<P, LIMBS>>
     }
 }
 
-impl<P: FpParams<LIMBS>, const LIMBS: usize> From<Uint<LIMBS>>
+impl<P: FpParams<LIMBS>, const LIMBS: usize> From<BigInt<LIMBS>>
     for Fp<P, LIMBS>
 {
     /// Converts `Self::BigInteger` into `Self`
     #[inline]
-    fn from(int: Uint<LIMBS>) -> Self {
+    fn from(int: BigInt<LIMBS>) -> Self {
         Self::from_bigint(int)
     }
 }
@@ -869,7 +829,6 @@ mod tests {
 
     use super::*;
     use crate::{
-        bigint::crypto_bigint::U64,
         field::{
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
@@ -881,7 +840,7 @@ mod tests {
     struct Fp64Param;
     impl FpParams<LIMBS_64> for Fp64Param {
         const GENERATOR: Fp64<Fp64Param> = fp_from_num!("3");
-        const MODULUS: U64 = from_num!("1000003"); // Prime number
+        const MODULUS: BigInt = from_num!("1000003"); // Prime number
     }
 
     const MODULUS: i128 = 1000003; // Prime number

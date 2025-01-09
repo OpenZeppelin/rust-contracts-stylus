@@ -27,6 +27,7 @@ pub mod bigint;
 pub mod bits;
 #[macro_use]
 pub mod field;
+mod const_helpers;
 pub mod hash;
 pub mod keccak;
 pub mod merkle;
