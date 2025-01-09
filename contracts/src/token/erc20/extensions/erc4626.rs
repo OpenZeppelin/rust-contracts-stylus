@@ -153,7 +153,15 @@ pub trait IERC4626 {
     fn asset(&self) -> Address;
 
     /// Returns the total amount of the underlying asset held in the vault.
-    fn total_assets(&self, asset: &mut Erc20) -> U256;
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn total_assets(&self) -> U256 {
+    ///     self.erc4626.total_assets(token, &self.erc20)
+    /// }
+    /// ```
+    fn total_assets(&self, asset: &Erc20) -> U256;
 
     /// Converts a given amount of assets into the equivalent number of shares.
     ///
@@ -162,6 +170,14 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The corresponding amount of shares.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn convert_to_shares(&self,assets: U256) -> U256 {
+    ///     self.erc4626.convert_to_shares(token, &self.erc20)
+    /// }
+    /// ```
     fn convert_to_shares(&self, assets: U256, asset: &mut Erc20) -> U256;
 
     /// Converts a given number of shares into the equivalent amount of assets.
@@ -171,6 +187,14 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The corresponding amount of assets.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn convert_to_assets(&self,shares: U256) -> U256 {
+    ///     self.erc4626.convert_to_assets(token, &self.erc20)
+    /// }
+    /// ```
     fn convert_to_assets(&self, shares: U256, asset: &mut Erc20) -> U256;
 
     /// Calculates the maximum amount of assets that can be deposited for a
@@ -181,6 +205,13 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The maximum depositable amount.
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn convert_to_assets(&self,shares: U256) -> U256 {
+    ///     self.erc4626.convert_to_assets(token, &self.erc20)
+    /// }
+    /// ```
     fn max_deposit(&self, receiver: Address) -> U256;
 
     /// Previews the outcome of depositing a specific amount of assets.
@@ -190,6 +221,14 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The number of shares that would be issued.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn preview_deposit(&self,assets: U256,asset: &mut Erc20) -> U256 {
+    ///     self.erc4626.preview_deposit(assets, &self.erc20)
+    /// }
+    /// ```
     fn preview_deposit(&self, assets: U256, asset: &mut Erc20) -> U256;
 
     /// Deposits a specific amount of assets into the vault, issuing shares to
@@ -201,6 +240,14 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The number of shares issued.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn deposit(&self,assets: U256,receiver: Address, asset: &mut Erc20) -> U256 {
+    ///     self.erc4626.deposit(assets, &self.erc20)
+    /// }
+    /// ```
     fn deposit(
         &mut self,
         assets: U256,
@@ -225,6 +272,14 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The equivalent amount of assets required.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn preview_mint(&self,shares: U256) -> U256 {
+    ///     self.erc4626.preview_mint(token, &self.erc20)
+    /// }
+    /// ```
     fn preview_mint(&self, shares: U256, asset: &mut Erc20) -> U256;
 
     /// Mints a specific number of shares for a given receiver.
@@ -235,6 +290,14 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The amount of assets deposited.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn mint(&self,shares: U256, receiver: Address,) -> U256 {
+    ///     self.erc4626.mint(shares,receiver, &self.erc20)
+    /// }
+    /// ```
     fn mint(
         &mut self,
         shares: U256,
@@ -250,6 +313,14 @@ pub trait IERC4626 {
     ///
     /// # Returns
     /// The maximum withdrawable amount.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn max_withdraw(&self,owner: Address) -> U256 {
+    ///     self.erc4626.max_withdraw(owner, &self.erc20)
+    /// }
+    /// ```
     fn max_withdraw(&self, owner: Address, asset: &mut Erc20) -> U256;
 
     /// Previews the outcome of withdrawing a specific amount of assets.
@@ -331,7 +402,7 @@ impl IERC4626 for Erc4626 {
         self.token_address.get()
     }
 
-    fn total_assets(&self, asset: &mut Erc20) -> U256 {
+    fn total_assets(&self, asset: &Erc20) -> U256 {
         asset.balance_of(contract::address())
     }
 
@@ -474,14 +545,14 @@ impl IERC4626 for Erc4626 {
 }
 
 impl Erc4626 {
-    fn _convert_to_shares(&self, assets: U256, asset: &mut Erc20) -> U256 {
+    fn _convert_to_shares(&self, assets: U256, asset: &Erc20) -> U256 {
         let adjusted_total_supply = asset.total_supply()
             + U256::from(10u32.pow(self._decimals_offset()));
         let adjusted_total_assets = self.total_assets(asset) + U256::from(1);
         self._mul_div(assets, adjusted_total_supply, adjusted_total_assets)
     }
 
-    fn _convert_to_assets(&self, shares: U256, asset: &mut Erc20) -> U256 {
+    fn _convert_to_assets(&self, shares: U256, asset: &Erc20) -> U256 {
         let adjusted_total_supply = asset.total_supply()
             + U256::from(10u32.pow(self._decimals_offset()));
         let adjusted_total_assets = self.total_assets(asset) + U256::from(1);
