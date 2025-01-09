@@ -9,7 +9,7 @@ use core::{
     },
 };
 
-use num_traits::ConstZero;
+use num_traits::{ConstZero, Zero};
 use rand::{
     distributions::{Distribution, Standard},
     Rng,
@@ -22,8 +22,9 @@ pub type Word = u64;
 // TODO#q: Refactor types to:
 //  Fp<P, N>(Limbs<N>) - residue classes modulo prime numbers
 //  Uint<N>(Limbs<N>) - normal big integers. Make sense to implement only
-// constant   operations necessary for hex parsing
-//  Wrapper type for limbs: Limbs<N>([Limb;N])
+//   constant   operations necessary for hex parsing (uint.rs)
+//  Limbs<N>([Limb;N]) - Wrapper type for limbs. (limbs.rs)
+//  Odd<Uint<N>> - Odd numbers. (odd.rs)
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Zeroize)]
 pub struct BigInt<const N: usize>(pub [Word; N]);
 
@@ -204,6 +205,7 @@ impl<const N: usize> BigInt<N> {
         is_zero
     }
 
+    // TODO#q: Montgomery constant computation from rust-crypto
     /// Computes the Montgomery R constant modulo `self`.
     #[doc(hidden)]
     pub const fn montgomery_r(&self) -> Self {
@@ -553,23 +555,38 @@ impl<const N: usize> BigInteger for BigInt<N> {
     const NUM_LIMBS: usize = N;
 
     fn is_odd(&self) -> bool {
-        unimplemented!()
+        self.0[0] & 1 == 1
     }
 
     fn is_even(&self) -> bool {
-        unimplemented!()
+        !self.is_odd()
     }
 
     fn is_zero(&self) -> bool {
-        unimplemented!()
+        self.0.iter().all(Zero::is_zero)
     }
 
     fn num_bits(&self) -> usize {
-        unimplemented!()
+        let mut ret = N as u32 * 64;
+        for i in self.0.iter().rev() {
+            let leading = i.leading_zeros();
+            ret -= leading;
+            if leading != 64 {
+                break;
+            }
+        }
+
+        ret as usize
     }
 
     fn get_bit(&self, i: usize) -> bool {
-        unimplemented!()
+        if i >= 64 * N {
+            false
+        } else {
+            let limb = i / 64;
+            let bit = i - (64 * limb);
+            (self.0[limb] & (1 << bit)) != 0
+        }
     }
 
     fn from_bytes_le(bytes: &[u8]) -> Self {
@@ -577,7 +594,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
     }
 
     fn into_bytes_le(self) -> alloc::vec::Vec<u8> {
-        unimplemented!()
+        self.0.iter().flat_map(|&limb| limb.to_le_bytes()).collect()
     }
 }
 
