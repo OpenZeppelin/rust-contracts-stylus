@@ -14,7 +14,7 @@
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{keccak256, Address, B256, U256};
+use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
     block,
@@ -31,10 +31,10 @@ use crate::{
     },
 };
 
-const PERMIT_TYPEHASH: [u8; 32] =
-    keccak_const::Keccak256::new()
-        .update(b"Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
-        .finalize();
+// keccak256("Permit(address owner,address spender,uint256 value,uint256
+// nonce,uint256 deadline)")
+const PERMIT_TYPEHASH: B256 =
+    b256!("6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9");
 
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -169,7 +169,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         }
 
         let struct_hash = keccak256(StructHashTuple::abi_encode(&(
-            PERMIT_TYPEHASH,
+            *PERMIT_TYPEHASH,
             owner,
             spender,
             value,
