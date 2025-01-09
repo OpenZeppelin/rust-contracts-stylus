@@ -8,6 +8,8 @@
 //! This module is used through inheritance. It will make available the
 //! [`Ownable::only_owner`] function, which can be called to restrict operations
 //! to the owner.
+use alloc::vec::Vec;
+
 use alloy_primitives::Address;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -67,6 +69,7 @@ impl MethodError for Error {
 #[storage]
 pub struct Ownable {
     /// The current owner of this contract.
+    #[allow(clippy::used_underscore_binding)]
     pub _owner: StorageAddress,
 }
 

@@ -1,6 +1,9 @@
 //! Optional Metadata of the ERC-721 standard.
 
-use alloc::string::{String, ToString};
+use alloc::{
+    string::{String, ToString},
+    vec::Vec,
+};
 
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -17,8 +20,10 @@ use crate::{
 #[storage]
 pub struct Erc721Metadata {
     /// Common Metadata.
+    #[allow(clippy::used_underscore_binding)]
     pub _metadata: Metadata,
     /// Base URI for tokens.
+    #[allow(clippy::used_underscore_binding)]
     pub _base_uri: StorageString,
 }
 

@@ -14,6 +14,8 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
+use alloc::vec::Vec;
+
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
@@ -66,6 +68,7 @@ pub enum Error {
 #[storage]
 pub struct Pausable {
     /// Indicates whether the contract is `Paused`.
+    #[allow(clippy::used_underscore_binding)]
     pub _paused: StorageBool,
 }
 

@@ -1,5 +1,5 @@
 //! Common Metadata Smart Contract.
-use alloc::string::String;
+use alloc::{string::String, vec::Vec};
 
 use stylus_sdk::{
     prelude::storage, storage::StorageString, stylus_proc::public,
@@ -9,8 +9,10 @@ use stylus_sdk::{
 #[storage]
 pub struct Metadata {
     /// Token name.
+    #[allow(clippy::used_underscore_binding)]
     pub _name: StorageString,
     /// Token symbol.
+    #[allow(clippy::used_underscore_binding)]
     pub _symbol: StorageString,
 }
 

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Implement `AddAssignChecked` for `StorageUint`. #474
+- `Erc20FlashMint` extension. #407
+
+### Changed
+
+- Use `AddAssignChecked` in `VestingWallet`, `Erc1155Supply`, `Erc1155`, `Erc20`, `Nonces`. #474
+- Use `AddAssignUnchecked` and `SubAssignUnchecked` in `erc20::_update`. #467
+
+### Changed (Breaking)
+
+- Bump Stylus SDK to v0.7.0. #433
+- Bump `alloy` dependencies to v0.8.14. #433
+- Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
+- `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
+
+### Fixed
+
+-
+
 ## [v0.2.0-alpha.2] - 2024-12-18
 
 ### Added

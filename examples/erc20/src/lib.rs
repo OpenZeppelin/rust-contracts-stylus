@@ -110,6 +110,10 @@ impl Erc20Example {
             || Erc20Metadata::supports_interface(interface_id)
     }
 
+    /// WARNING: These functions are intended for **testing purposes** only. In
+    /// **production**, ensure strict access control to prevent unauthorized
+    /// pausing or unpausing, which can disrupt contract functionality. Remove
+    /// or secure these functions before deployment.
     pub fn pause(&mut self) -> Result<(), Vec<u8>> {
         self.pausable.pause().map_err(|e| e.into())
     }
