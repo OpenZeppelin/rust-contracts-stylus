@@ -324,18 +324,9 @@ pub fn mac_with_carry(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
 #[allow(unused_mut)]
 #[doc(hidden)]
 pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: u8) -> u8 {
-    #[cfg(all(target_arch = "x86_64", feature = "asm"))]
-    #[allow(unsafe_code)]
-    unsafe {
-        use core::arch::x86_64::_subborrow_u64;
-        _subborrow_u64(borrow, *a, b, a)
-    }
-    #[cfg(not(all(target_arch = "x86_64", feature = "asm")))]
-    {
-        let tmp = (1u128 << 64) + (*a as u128) - (b as u128) - (borrow as u128);
-        *a = tmp as u64;
-        u8::from(tmp >> 64 == 0)
-    }
+    let tmp = (1u128 << 64) + (*a as u128) - (b as u128) - (borrow as u128);
+    *a = tmp as u64;
+    u8::from(tmp >> 64 == 0)
 }
 
 // TODO#q: adc can be unified with adc_for_add_with_carry
@@ -642,38 +633,38 @@ impl<const N: usize> Not for BigInt<N> {
 
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
-    'static
-    + Copy
-    + Clone
-    + Debug
-    + Default
-    + Display
-    + Eq
-    + Ord
-    + Send
-    + Sized
-    + Sync
-    + Zeroize
-    + From<u64>
-    + From<u32>
-    + From<u16>
-    + From<u8>
-    + BitXorAssign<Self>
-    + for<'a> BitXorAssign<&'a Self>
-    + BitXor<Self, Output = Self>
-    + for<'a> BitXor<&'a Self, Output = Self>
-    + BitAndAssign<Self>
-    + for<'a> BitAndAssign<&'a Self>
-    + BitAnd<Self, Output = Self>
-    + for<'a> BitAnd<&'a Self, Output = Self>
-    + BitOrAssign<Self>
-    + for<'a> BitOrAssign<&'a Self>
-    + BitOr<Self, Output = Self>
-    + for<'a> BitOr<&'a Self, Output = Self>
-    + Shr<u32, Output = Self> // TODO#q: use usize instead of u32
-    + ShrAssign<u32>
-    + Shl<u32, Output = Self>
-    + ShlAssign<u32>
+'static
++ Copy
++ Clone
++ Debug
++ Default
++ Display
++ Eq
++ Ord
++ Send
++ Sized
++ Sync
++ Zeroize
++ From<u64>
++ From<u32>
++ From<u16>
++ From<u8>
++ BitXorAssign<Self>
++ for<'a> BitXorAssign<&'a Self>
++ BitXor<Self, Output=Self>
++ for<'a> BitXor<&'a Self, Output=Self>
++ BitAndAssign<Self>
++ for<'a> BitAndAssign<&'a Self>
++ BitAnd<Self, Output=Self>
++ for<'a> BitAnd<&'a Self, Output=Self>
++ BitOrAssign<Self>
++ for<'a> BitOrAssign<&'a Self>
++ BitOr<Self, Output=Self>
++ for<'a> BitOr<&'a Self, Output=Self>
++ Shr<u32, Output=Self> // TODO#q: use usize instead of u32
++ ShrAssign<u32>
++ Shl<u32, Output=Self>
++ ShlAssign<u32>
 {
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
@@ -834,7 +825,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
         let digit = BigInt::from_u32(parse_digit(bytes[index], radix));
 
         // Add a digit multiplied by order.
-        uint = add(&uint, &mul(&digit, &order));
+        uint = ct_add(&uint, &ct_mul(&digit, &order));
 
         // If we reached the beginning of the string, return the number.
         if index == 0 {
@@ -842,7 +833,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
         }
 
         // Increase the order of magnitude.
-        order = mul(&uint_radix, &order);
+        order = ct_mul(&uint_radix, &order);
 
         // Move to the next digit.
         index -= 1;
@@ -897,10 +888,7 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
 
 /// Multiply two numbers and panic on overflow.
 #[must_use]
-const fn mul<const LIMBS: usize>(
-    a: &BigInt<LIMBS>,
-    b: &BigInt<LIMBS>,
-) -> BigInt<LIMBS> {
+pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
     let (low, high) = a.mul_wide(b);
     assert!(high.bits() == 0, "overflow on multiplication");
     low
@@ -908,13 +896,31 @@ const fn mul<const LIMBS: usize>(
 
 /// Add two numbers and panic on overflow.
 #[must_use]
-const fn add<const LIMBS: usize>(
-    a: &BigInt<LIMBS>,
-    b: &BigInt<LIMBS>,
-) -> BigInt<LIMBS> {
+pub const fn ct_add<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
     let (low, carry) = a.adc(b, Limb::ZERO);
     assert!(carry.0 == 0, "overflow on addition");
     low
+}
+
+pub const fn ct_ge<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> bool {
+    const_for!((i in 0..N) {
+        if a.0[i] < b.0[i] {
+            return false;
+        } else if a.0[i] > b.0[i] {
+            return true;
+        }
+    });
+    true
+}
+
+// TODO#q: compare with const_is_zero
+pub const fn ct_eq<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> bool {
+    const_for!((i in 0..N) {
+        if a.0[i] != b.0[i] {
+            return false;
+        }
+    });
+    true
 }
 
 // Try to parse a digit from utf-8 byte.
@@ -962,7 +968,7 @@ mod test {
     fn convert_from_str_radix() {
         let uint_from_base10: BigInt<4> = from_str_radix(
             "28948022309329048855892746252171976963363056481941647379679742748393362948097",
-            10
+            10,
         );
         #[allow(clippy::unreadable_literal)]
         let expected = BigInt::<4>::new([

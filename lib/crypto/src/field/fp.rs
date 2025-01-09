@@ -20,13 +20,15 @@ use core::{
     hash::{Hash, Hasher},
     marker::PhantomData,
 };
+use std::ops::Mul;
 
 use educe::Educe;
 use num_traits::{One, Zero};
 
 use crate::{
     adc, arithmetic,
-    arithmetic::{BigInt, BigInteger, Limb},
+    arithmetic::{ct_eq, ct_ge, BigInt, BigInteger, Limb},
+    const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     mac, mac_with_carry,
 };
@@ -340,7 +342,7 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
     // euler_totient(2^64) - 1 = (1 << 63) - 1 = 1111111... (63 digits).
     // We compute this powering via standard square and multiply.
     let mut inv = 1u64;
-    crate::const_for!((_i in 0..63) {
+    const_for!((_i in 0..63) {
         // Square
         inv = inv.wrapping_mul(inv);
         // Multiply
@@ -356,7 +358,7 @@ pub const fn can_use_no_carry_mul_optimization<
 >() -> bool {
     // Checking the modulus at compile time
     let mut all_remaining_bits_are_one = T::MODULUS.0[N - 1] == u64::MAX >> 1;
-    crate::const_for!((i in 1..N) {
+    const_for!((i in 1..N) {
         all_remaining_bits_are_one  &= T::MODULUS.0[N - i - 1] == u64::MAX;
     });
     modulus_has_spare_bit::<T, N>() && !all_remaining_bits_are_one
@@ -428,22 +430,6 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// such that, for all elements `f` of the field, `e + f = f`.
     pub const ZERO: Fp<P, N> = Fp::new_unchecked(BigInt([0; N]));
 
-    /// Construct a new field element from [`Uint`] and convert it in
-    /// Montgomery form.
-    #[inline]
-    #[must_use]
-    pub const fn new(element: BigInt<N>) -> Self {
-        let mut r = Fp::new_unchecked(element);
-        if r.is_zero() {
-            r
-        } else if r.is_geq_modulus() {
-            panic!("element is not in the field");
-        } else {
-            r *= &Fp::new_unchecked(P::R2);
-            r
-        }
-    }
-
     /// Construct a new field element from [`Uint`].
     ///
     /// Unlike [`Self::new`], this method does not perform Montgomery reduction.
@@ -468,6 +454,53 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         }
     }
 
+    // TODO#q: think about using it
+    /*/// Interpret a set of limbs (along with a sign) as a field element.
+    /// For *internal* use only; please use the `ark_ff::MontFp` macro instead
+    /// of this method
+    #[doc(hidden)]
+    pub const fn from_sign_and_limbs(is_positive: bool, limbs: &[u64]) -> Self {
+        let mut repr = BigInt([0; N]);
+        assert!(limbs.len() <= N);
+        crate::const_for!((i in 0..(limbs.len())) {
+            repr.0[i] = limbs[i];
+        });
+        let res = Self::new(repr);
+        if is_positive {
+            res
+        } else {
+            res.const_neg()
+        }
+    }*/
+
+    // TODO#q: rename all const_* methods to ct_*
+
+    /// Construct a new field element from its underlying
+    /// [`struct@BigInt`] data type.
+    #[inline]
+    pub const fn new(element: BigInt<N>) -> Self {
+        let mut r = Self(element, PhantomData);
+        if r.const_is_zero() {
+            r
+        } else {
+            r = r.const_mul(&Fp(P::R2, PhantomData));
+            r
+        }
+    }
+
+    const fn const_mul(self, other: &Self) -> Self {
+        let (carry, res) = self.mul_without_cond_subtract(other);
+        if P::MODULUS_HAS_SPARE_BIT {
+            res.const_subtract_modulus()
+        } else {
+            res.const_subtract_modulus_with_carry(carry)
+        }
+    }
+
+    const fn const_is_zero(&self) -> bool {
+        self.0.const_is_zero()
+    }
+
     #[inline]
     fn subtract_modulus_with_carry(&mut self, carry: bool) {
         if carry || self.is_geq_modulus() {
@@ -477,9 +510,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
 
     const fn mul_without_cond_subtract(mut self, other: &Self) -> (bool, Self) {
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
-        crate::const_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             let mut carry = 0;
-            crate::const_for!((j in 0..N) {
+            const_for!((j in 0..N) {
                 let k = i + j;
                 if k >= N {
                     hi[k - N] = mac_with_carry!(hi[k - N], (self.0).0[i], (other.0).0[j], &mut carry);
@@ -491,11 +524,11 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         });
         // Montgomery reduction
         let mut carry2 = 0;
-        crate::const_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             let tmp = lo[i].wrapping_mul(P::INV);
             let mut carry;
             mac!(lo[i], tmp, P::MODULUS.0[0], &mut carry);
-            crate::const_for!((j in 1..N) {
+            const_for!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
                     hi[k - N] = mac_with_carry!(hi[k - N], tmp, P::MODULUS.0[j], &mut carry);
@@ -506,10 +539,41 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             hi[i] = adc!(hi[i], carry, &mut carry2);
         });
 
-        crate::const_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             (self.0).0[i] = hi[i];
         });
         (carry2 != 0, self)
+    }
+
+    const fn const_is_valid(&self) -> bool {
+        const_for!((i in 0..N) {
+            if (self.0).0[N - i - 1] < P::MODULUS.0[N - i - 1] {
+                return true
+            } else if (self.0).0[N - i - 1] > P::MODULUS.0[N - i - 1] {
+                return false
+            }
+        });
+        false
+    }
+
+    #[inline]
+    const fn const_subtract_modulus(mut self) -> Self {
+        if !self.const_is_valid() {
+            self.0 = Self::sub_with_borrow(&self.0, &P::MODULUS);
+        }
+        self
+    }
+
+    #[inline]
+    const fn const_subtract_modulus_with_carry(mut self, carry: bool) -> Self {
+        if carry || !self.const_is_valid() {
+            self.0 = Self::sub_with_borrow(&self.0, &P::MODULUS);
+        }
+        self
+    }
+
+    const fn sub_with_borrow(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
+        a.const_sub_with_borrow(b).0
     }
 }
 
