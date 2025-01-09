@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::U256;
 use openzeppelin_crypto::{
-    bigint::{crypto_bigint::Uint, BigInteger},
+    arithmetic::{crypto_bigint::Uint, BigInteger},
     field::{instance::FpBN256, prime::PrimeField},
     poseidon2::{instance::bn256::BN256Params, Poseidon2},
 };

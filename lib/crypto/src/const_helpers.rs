@@ -1,3 +1,5 @@
+use core::ops::{Index, IndexMut};
+
 #[macro_export]
 macro_rules! const_for {
     (($i:ident in $start:tt..$end:tt)  $code:expr ) => {{
@@ -93,5 +95,59 @@ impl<const N: usize> R2Buffer<N> {
         } else {
             (self.0[d] >> b) & 1 == 1
         }
+    }
+}
+
+/// A buffer to hold values of size 2 * N. This is mostly
+/// a hack that's necessary until `generic_const_exprs` is stable.
+#[derive(Copy, Clone)]
+#[repr(C, align(8))]
+pub(super) struct MulBuffer<const N: usize> {
+    pub(super) b0: [u64; N],
+    pub(super) b1: [u64; N],
+}
+
+impl<const N: usize> MulBuffer<N> {
+    const fn new(b0: [u64; N], b1: [u64; N]) -> Self {
+        Self { b0, b1 }
+    }
+
+    pub(super) const fn zeroed() -> Self {
+        let b = [0u64; N];
+        Self::new(b, b)
+    }
+
+    #[inline(always)]
+    pub(super) const fn get(&self, index: usize) -> &u64 {
+        if index < N {
+            &self.b0[index]
+        } else {
+            &self.b1[index - N]
+        }
+    }
+
+    #[inline(always)]
+    pub(super) fn get_mut(&mut self, index: usize) -> &mut u64 {
+        if index < N {
+            &mut self.b0[index]
+        } else {
+            &mut self.b1[index - N]
+        }
+    }
+}
+
+impl<const N: usize> Index<usize> for MulBuffer<N> {
+    type Output = u64;
+
+    #[inline(always)]
+    fn index(&self, index: usize) -> &Self::Output {
+        self.get(index)
+    }
+}
+
+impl<const N: usize> IndexMut<usize> for MulBuffer<N> {
+    #[inline(always)]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.get_mut(index)
     }
 }

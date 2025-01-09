@@ -10,6 +10,10 @@ use core::{
 };
 
 use num_traits::ConstZero;
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
 use zeroize::Zeroize;
 
 use crate::{adc, bits::BitIteratorBE, const_for, const_modulo, sbb};
@@ -151,6 +155,20 @@ impl<const N: usize> BigInt<N> {
     }
 
     #[inline]
+    #[allow(unused)]
+    pub(crate) fn mul2(&mut self) -> bool {
+        let mut last = 0;
+        for i in 0..N {
+            let a = &mut self.0[i];
+            let tmp = *a >> 63;
+            *a <<= 1;
+            *a |= last;
+            last = tmp;
+        }
+        last != 0
+    }
+
+    #[inline]
     pub(crate) const fn const_add_with_carry(
         mut self,
         other: &Self,
@@ -197,6 +215,220 @@ impl<const N: usize> BigInt<N> {
         let two_pow_n_times_64_square =
             crate::const_helpers::R2Buffer([0u64; N], [0u64; N], 1);
         const_modulo!(two_pow_n_times_64_square, self)
+    }
+
+    pub(crate) fn sub_with_borrow(&mut self, other: &Self) -> bool {
+        let mut borrow = 0;
+
+        for i in 0..N {
+            borrow =
+                sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
+        }
+
+        borrow != 0
+    }
+
+    pub fn div2(&mut self) {
+        let mut t = 0;
+        for a in self.0.iter_mut().rev() {
+            let t2 = *a << 63;
+            *a >>= 1;
+            *a |= t;
+            t = t2;
+        }
+    }
+
+    pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
+        let mut carry = 0;
+
+        for i in 0..N {
+            carry = adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
+        }
+
+        carry != 0
+    }
+}
+
+/// Calculate a + b * c, returning the lower 64 bits of the result and setting
+/// `carry` to the upper 64 bits.
+#[inline(always)]
+#[doc(hidden)]
+pub fn mac(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
+    let tmp = (a as u128) + widening_mul(b, c);
+    *carry = (tmp >> 64) as u64;
+    tmp as u64
+}
+
+#[inline(always)]
+#[doc(hidden)]
+pub const fn widening_mul(a: u64, b: u64) -> u128 {
+    // TODO#q: check out this optimization
+    #[cfg(not(target_family = "wasm"))]
+    {
+        a as u128 * b as u128
+    }
+    #[cfg(target_family = "wasm")]
+    {
+        let a_lo = a as u32 as u64;
+        let a_hi = a >> 32;
+        let b_lo = b as u32 as u64;
+        let b_hi = b >> 32;
+
+        let lolo = (a_lo * b_lo) as u128;
+        let lohi = ((a_lo * b_hi) as u128) << 32;
+        let hilo = ((a_hi * b_lo) as u128) << 32;
+        let hihi = ((a_hi * b_hi) as u128) << 64;
+        (lolo | hihi) + (lohi + hilo)
+    }
+}
+
+/// Calculate a + b * c, discarding the lower 64 bits of the result and setting
+/// `carry` to the upper 64 bits.
+#[inline(always)]
+#[doc(hidden)]
+pub fn mac_discard(a: u64, b: u64, c: u64, carry: &mut u64) {
+    let tmp = (a as u128) + widening_mul(b, c);
+    *carry = (tmp >> 64) as u64;
+}
+
+/// Calculate a + (b * c) + carry, returning the least significant digit
+/// and setting carry to the most significant digit.
+#[inline(always)]
+#[doc(hidden)]
+pub fn mac_with_carry(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
+    let tmp = (a as u128) + widening_mul(b, c) + (*carry as u128);
+    *carry = (tmp >> 64) as u64;
+    tmp as u64
+}
+
+/// Sets a = a - b - borrow, and returns the borrow.
+#[inline(always)]
+#[allow(unused_mut)]
+#[doc(hidden)]
+pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: u8) -> u8 {
+    #[cfg(all(target_arch = "x86_64", feature = "asm"))]
+    #[allow(unsafe_code)]
+    unsafe {
+        use core::arch::x86_64::_subborrow_u64;
+        _subborrow_u64(borrow, *a, b, a)
+    }
+    #[cfg(not(all(target_arch = "x86_64", feature = "asm")))]
+    {
+        let tmp = (1u128 << 64) + (*a as u128) - (b as u128) - (borrow as u128);
+        *a = tmp as u64;
+        u8::from(tmp >> 64 == 0)
+    }
+}
+
+// TODO#q: adc can be unified with adc_for_add_with_carry
+/// Sets a = a + b + carry, and returns the new carry.
+#[inline(always)]
+#[allow(unused_mut)]
+#[doc(hidden)]
+pub fn adc(a: &mut u64, b: u64, carry: u64) -> u64 {
+    let tmp = *a as u128 + b as u128 + carry as u128;
+    *a = tmp as u64;
+    (tmp >> 64) as u64
+}
+
+/// Sets a = a + b + carry, and returns the new carry.
+#[inline(always)]
+#[allow(unused_mut)]
+#[doc(hidden)]
+pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
+    let tmp = *a as u128 + b as u128 + carry as u128;
+    *a = tmp as u64;
+    (tmp >> 64) as u8
+}
+
+// ----------- Traits Impls -----------
+
+impl<const N: usize> Ord for BigInt<N> {
+    #[inline]
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        use core::cmp::Ordering;
+        // TODO#q: check in benchmark for wasm
+        #[cfg(target_arch = "x86_64")]
+        for i in 0..N {
+            let a = &self.0[N - i - 1];
+            let b = &other.0[N - i - 1];
+            match a.cmp(b) {
+                Ordering::Equal => {}
+                order => return order,
+            };
+        }
+
+        #[cfg(not(target_arch = "x86_64"))]
+        for (a, b) in self.0.iter().rev().zip(other.0.iter().rev()) {
+            if let order @ (Ordering::Less | Ordering::Greater) = a.cmp(b) {
+                return order;
+            }
+        }
+        Ordering::Equal
+    }
+}
+
+impl<const N: usize> PartialOrd for BigInt<N> {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// TODO#q: Implement rand Distribution
+/*impl<const N: usize> Distribution<BigInt<N>> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BigInt<N> {
+        BigInt([(); N].map(|_| rng.gen()))
+    }
+}*/
+
+impl<const N: usize> AsMut<[u64]> for BigInt<N> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [u64] {
+        &mut self.0
+    }
+}
+
+impl<const N: usize> AsRef<[u64]> for BigInt<N> {
+    #[inline]
+    fn as_ref(&self) -> &[u64] {
+        &self.0
+    }
+}
+
+impl<const N: usize> From<u64> for BigInt<N> {
+    #[inline]
+    fn from(val: u64) -> BigInt<N> {
+        let mut repr = Self::default();
+        repr.0[0] = val;
+        repr
+    }
+}
+
+impl<const N: usize> From<u32> for BigInt<N> {
+    #[inline]
+    fn from(val: u32) -> BigInt<N> {
+        let mut repr = Self::default();
+        repr.0[0] = val.into();
+        repr
+    }
+}
+
+impl<const N: usize> From<u16> for BigInt<N> {
+    #[inline]
+    fn from(val: u16) -> BigInt<N> {
+        let mut repr = Self::default();
+        repr.0[0] = val.into();
+        repr
+    }
+}
+
+impl<const N: usize> From<u8> for BigInt<N> {
+    #[inline]
+    fn from(val: u8) -> BigInt<N> {
+        let mut repr = Self::default();
+        repr.0[0] = val.into();
+        repr
     }
 }
 
@@ -245,7 +477,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
     ///
     /// let mut one = U64::from(1u64);
     /// assert!(one.is_odd());
@@ -257,7 +489,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
     ///
     /// let mut two = U64::from(2u64);
     /// assert!(two.is_even());
@@ -269,7 +501,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
     ///
     /// let mut zero = U64::from(0u64);
     /// assert!(zero.is_zero());
@@ -279,7 +511,7 @@ pub trait BigInteger:
     /// Compute the minimum number of bits needed to encode this number.
     /// # Example
     /// ```
-    /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
     ///
     /// let zero = U64::from(0u64);
     /// assert_eq!(zero.num_bits(), 0);
@@ -296,7 +528,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
     ///
     /// let mut one = U64::from(1u64);
     /// assert!(one.get_bit(0));
@@ -483,7 +715,7 @@ pub(crate) const fn parse_utf8_byte(byte: u8) -> char {
 #[macro_export]
 macro_rules! from_num {
     ($num:literal) => {
-        $crate::bigint::from_str_radix($num, 10)
+        $crate::arithmetic::from_str_radix($num, 10)
     };
 }
 
@@ -491,7 +723,7 @@ macro_rules! from_num {
 #[macro_export]
 macro_rules! from_hex {
     ($num:literal) => {
-        $crate::bigint::from_str_hex($num)
+        $crate::arithmetic::from_str_hex($num)
     };
 }
 

@@ -23,7 +23,7 @@ Common cryptographic procedures for a blockchain environment.
 extern crate alloc;
 extern crate core;
 
-pub mod bigint;
+pub mod arithmetic;
 pub mod bits;
 #[macro_use]
 pub mod field;
