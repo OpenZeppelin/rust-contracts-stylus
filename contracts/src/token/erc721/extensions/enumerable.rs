@@ -9,6 +9,8 @@
 //! interfere with enumerability and should not be used together with
 //! [`Erc721Enumerable`].
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -62,12 +64,16 @@ pub enum Error {
 #[storage]
 pub struct Erc721Enumerable {
     /// Maps owners to a mapping of indices to tokens ids.
+    #[allow(clippy::used_underscore_binding)]
     pub _owned_tokens: StorageMap<Address, StorageMap<U256, StorageU256>>,
     /// Maps tokens ids to indices in `_owned_tokens`.
+    #[allow(clippy::used_underscore_binding)]
     pub _owned_tokens_index: StorageMap<U256, StorageU256>,
     /// Stores all tokens ids.
+    #[allow(clippy::used_underscore_binding)]
     pub _all_tokens: StorageVec<StorageU256>,
     /// Maps indices at `_all_tokens` to tokens ids.
+    #[allow(clippy::used_underscore_binding)]
     pub _all_tokens_index: StorageMap<U256, StorageU256>,
 }
 

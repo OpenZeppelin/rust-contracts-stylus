@@ -2,14 +2,14 @@
 
 use abi::Erc20Permit;
 use alloy::{
-    primitives::{b256, keccak256, Address, B256, U256},
+    primitives::{b256, keccak256, Address, Parity, B256, U256},
+    signers::Signature,
     sol,
     sol_types::SolType,
 };
 use alloy_primitives::uint;
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
-
 mod abi;
 
 // Saturday, 1 January 2000 00:00:00
@@ -65,6 +65,11 @@ fn permit_struct_hash(
     )))
 }
 
+fn extract_signature_v(signature: &Signature) -> u8 {
+    let parity: Parity = signature.v().into();
+    parity.y_parity_byte_non_eip155().expect("should be non-EIP155 signature")
+}
+
 // ============================================================================
 // Integration Tests: ERC-20 Permit Extension
 // ============================================================================
@@ -103,7 +108,7 @@ async fn error_when_expired_deadline_for_permit(
         bob_addr,
         balance,
         EXPIRED_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        extract_signature_v(&signature),
         signature.r().into(),
         signature.s().into()
     ))
@@ -152,7 +157,7 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        extract_signature_v(&signature),
         signature.r().into(),
         signature.s().into()
     ))?;
@@ -237,7 +242,7 @@ async fn permit_rejects_reused_signature(
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        extract_signature_v(&signature),
         signature.r().into(),
         signature.s().into()
     ))?;
@@ -247,7 +252,7 @@ async fn permit_rejects_reused_signature(
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        extract_signature_v(&signature),
         signature.r().into(),
         signature.s().into()
     ))
@@ -312,7 +317,7 @@ async fn permit_rejects_invalid_signature(
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        extract_signature_v(&signature),
         signature.r().into(),
         signature.s().into()
     ))

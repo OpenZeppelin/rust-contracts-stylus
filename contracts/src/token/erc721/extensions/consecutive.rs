@@ -24,7 +24,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
@@ -62,16 +62,19 @@ pub struct Erc721Consecutive {
     /// Erc721 contract storage.
     pub erc721: Erc721,
     /// Checkpoint library contract for sequential ownership.
+    #[allow(clippy::used_underscore_binding)]
     pub _sequential_ownership: Trace<S160>,
     /// BitMap library contract for sequential burn of tokens.
+    #[allow(clippy::used_underscore_binding)]
     pub _sequential_burn: BitMap,
-    /// Used to offset the first token id in
-    /// [`Erc721Consecutive::_next_consecutive_id`].
+    /// Used to offset the first token id in `next_consecutive_id` calculation.
+    #[allow(clippy::used_underscore_binding)]
     pub _first_consecutive_id: StorageU96,
     /// Maximum size of a batch of consecutive tokens. This is designed to
     /// limit stress on off-chain indexing services that have to record one
     /// entry per token, and have protections against "unreasonably large"
     /// batches of tokens.
+    #[allow(clippy::used_underscore_binding)]
     pub _max_batch_size: StorageU96,
 }
 
@@ -140,6 +143,9 @@ pub enum Error {
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************

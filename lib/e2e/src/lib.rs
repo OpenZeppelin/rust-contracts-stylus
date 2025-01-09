@@ -13,12 +13,12 @@ pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::Ext as EventExt;
 pub use receipt::Ext as ReceiptExt;
-pub use system::{fund_account, provider, Provider, Wallet};
+pub use system::{fund_account, Wallet};
 
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.
 ///
-/// See: <https://alloy-rs.github.io/alloy/alloy_contract/struct.CallBuilder.html>
+/// See: <https://docs.rs/alloy-contract/0.8.3/alloy_contract/struct.CallBuilder.html>
 ///
 /// # Examples
 ///
@@ -43,7 +43,7 @@ macro_rules! send {
 /// This macro provides a shorthand for broadcasting the transaction
 /// to the network, and then waiting for the given number of confirmations.
 ///
-/// See: <https://alloy-rs.github.io/alloy/alloy_provider/heart/struct.PendingTransactionBuilder.html>
+/// See: <https://docs.rs/alloy-provider/0.8.3/alloy_provider/struct.PendingTransactionBuilder.html>
 ///
 /// # Examples
 ///
@@ -69,7 +69,7 @@ macro_rules! watch {
 /// to the network, waiting for the given number of confirmations, and then
 /// fetching the transaction receipt.
 ///
-/// See: <https://alloy-rs.github.io/alloy/alloy_provider/heart/struct.PendingTransactionBuilder.html>
+/// See: <https://docs.rs/alloy-provider/0.8.3/alloy_provider/struct.PendingTransactionBuilder.html>
 ///
 /// # Examples
 ///

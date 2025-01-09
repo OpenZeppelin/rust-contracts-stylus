@@ -3,7 +3,7 @@ use std::process::Command;
 use alloy::{
     primitives::Address,
     rpc::types::{
-        serde_helpers::WithOtherFields, AnyReceiptEnvelope, Log,
+        serde_helpers::WithOtherFields, AnyReceiptEnvelope, Log, Receipt,
         TransactionReceipt,
     },
 };
@@ -21,6 +21,8 @@ pub mod erc20;
 pub mod erc721;
 pub mod merkle_proofs;
 pub mod ownable;
+pub mod poseidon;
+pub mod poseidon_sol;
 pub mod report;
 pub mod vesting_wallet;
 
@@ -33,31 +35,42 @@ struct ArbOtherFields {
     l1_block_number: String,
 }
 
-/// Cache options for the contract.
-/// `Bid(0)` will likely cache the contract on the nitro test node.
+/// Optimisation options for the contract.
+///
+/// Cache or cache optimized WASM.
 #[derive(Clone)]
-pub enum CacheOpt {
+pub enum Opt {
     None,
-    Bid(u32),
+    Cache,
+    CacheWasmOpt,
 }
 
 type ArbTxReceipt =
-    WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Log>>>;
+    WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Receipt<Log>>>>;
 
 async fn deploy(
     account: &Account,
     contract_name: &str,
     args: Option<String>,
-    cache_opt: CacheOpt,
+    opt: Opt,
 ) -> eyre::Result<Address> {
     let manifest_dir =
         std::env::current_dir().context("should get current dir from env")?;
+
+    let contract_type = match opt {
+        Opt::CacheWasmOpt => "example_opt",
+        Opt::None | Opt::Cache => "example",
+    };
 
     let wasm_path = manifest_dir
         .join("target")
         .join("wasm32-unknown-unknown")
         .join("release")
-        .join(format!("{}_example.wasm", contract_name.replace('-', "_")));
+        .join(format!(
+            "{}_{}.wasm",
+            contract_name.replace('-', "_"),
+            contract_type
+        ));
     let sol_path = args.as_ref().map(|_| {
         manifest_dir
             .join("examples")
@@ -90,8 +103,11 @@ async fn deploy(
         .expect("should deploy contract")
         .address()?;
 
-    if let CacheOpt::Bid(bid) = cache_opt {
-        cache_contract(account, address, bid)?;
+    match opt {
+        Opt::Cache | Opt::CacheWasmOpt => {
+            cache_contract(account, address, 0)?;
+        }
+        Opt::None => {}
     }
 
     Ok(address)

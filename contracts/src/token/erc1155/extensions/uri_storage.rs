@@ -16,8 +16,10 @@ use super::metadata_uri::{IErc1155MetadataUri, URI};
 #[storage]
 pub struct Erc1155UriStorage {
     /// Optional base URI.
+    #[allow(clippy::used_underscore_binding)]
     pub _base_uri: StorageString,
     /// Optional mapping for token URIs.
+    #[allow(clippy::used_underscore_binding)]
     pub _token_uris: StorageMap<U256, StorageString>,
 }
 
@@ -94,7 +96,7 @@ mod tests {
     use stylus_sdk::prelude::storage;
 
     use super::Erc1155UriStorage;
-    use crate::token::erc1155::{extensions::Erc1155MetadataUri, Erc1155};
+    use crate::token::erc1155::extensions::Erc1155MetadataUri;
 
     fn random_token_id() -> U256 {
         let num: u32 = rand::random();

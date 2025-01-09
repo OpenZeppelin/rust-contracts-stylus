@@ -13,15 +13,15 @@ use stylus_sdk::{
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},
-    math::storage::SubAssignUnchecked,
+    math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
 pub mod extensions;
-
 mod receiver;
 pub use receiver::IERC1155Receiver;
 
-const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+/// The expected value returned from [`IERC1155Receiver::on_erc_1155_received`].
+pub const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     "onERC1155Received",
     Address,
     Address,
@@ -30,7 +30,9 @@ const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     Bytes
 );
 
-const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+/// The expected value returned from
+/// [`IERC1155Receiver::on_erc_1155_batch_received`].
+pub const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     "onERC1155BatchReceived",
     Address,
     Address,
@@ -188,8 +190,10 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc1155 {
     /// Maps users to balances.
+    #[allow(clippy::used_underscore_binding)]
     pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
     /// Maps owners to a mapping of operator approvals.
+    #[allow(clippy::used_underscore_binding)]
     pub _operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
@@ -1045,11 +1049,10 @@ impl Erc1155 {
         }
 
         if !to.is_zero() {
-            let balance = self._balances.getter(token_id).get(to);
-            let new_balance = balance
-                .checked_add(value)
-                .expect("should not exceed `U256::MAX` for `_balances`");
-            self._balances.setter(token_id).setter(to).set(new_balance);
+            self._balances.setter(token_id).setter(to).add_assign_checked(
+                value,
+                "should not exceed `U256::MAX` for `_balances`",
+            );
         }
 
         Ok(())

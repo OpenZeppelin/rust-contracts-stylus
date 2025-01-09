@@ -16,6 +16,8 @@
 //! This module uses [`Ownable`] as a member, and makes all its public functions
 //! available.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::Address;
 pub use sol::*;
 use stylus_sdk::{
@@ -59,8 +61,10 @@ pub enum Error {
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.
+    #[allow(clippy::used_underscore_binding)]
     pub _ownable: Ownable,
     /// Pending owner of the contract.
+    #[allow(clippy::used_underscore_binding)]
     pub _pending_owner: StorageAddress,
 }
 
