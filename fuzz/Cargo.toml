@@ -1,24 +1,21 @@
 [package]
-name = "openzeppelin-stylus-fuzz"
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
+name = "test-fuzz-fuzz"
+version = "0.0.0"
 publish = false
-version.workspace = true
+edition = "2021"
 
 [package.metadata]
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys.workspace = true
-openzeppelin-stylus.workspace = true
-alloy.workspace = true
-stylus-sdk.workspace = true
-alloy-primitives.workspace = true
+libfuzzer-sys = "0.4"
+
+[dependencies.openzeppelin-crypto]
+path = "../lib/crypto"
 
 [[bin]]
 name = "fuzz_target_1"
-path = "src/fuzz_target_1.rs"
+path = "fuzz_targets/fuzz_target_1.rs"
 test = false
 doc = false
 bench = false

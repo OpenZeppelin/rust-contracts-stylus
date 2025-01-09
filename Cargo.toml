@@ -2,7 +2,6 @@
 members = [
   "contracts",
   "contracts-proc",
-  "fuzz",
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
@@ -51,6 +50,7 @@ default-members = [
   "examples/ecdsa",
   "examples/poseidon",
 ]
+exclude = ["fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
@@ -76,7 +76,9 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "0.7.0", default-features = false, features = ["mini-alloc"] }
+stylus-sdk = { version = "0.7.0", default-features = false, features = [
+  "mini-alloc",
+] }
 
 alloy = { version = "=0.7.3", features = [
   "contract",
@@ -116,9 +118,6 @@ zeroize = { version = "1.8.1", features = ["derive"] }
 proptest = "1"
 educe = "0.6.0"
 hex-literal = "0.4.1"
-
-# fuzzing
-libfuzzer-sys = "0.4"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }

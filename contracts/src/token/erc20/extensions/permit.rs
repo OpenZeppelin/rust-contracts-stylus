@@ -14,7 +14,7 @@
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{b256, keccak256, Address, B256, U256};
+use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
     block,
@@ -87,7 +87,7 @@ pub struct Erc20Permit<T: IEip712 + StorageType> {
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
+unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
 #[public]
 impl<T: IEip712 + StorageType> Erc20Permit<T> {
