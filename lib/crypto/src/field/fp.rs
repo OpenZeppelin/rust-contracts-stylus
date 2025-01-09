@@ -43,20 +43,21 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// `MODULUS - 1`.
     const GENERATOR: Fp<Self, N>;
 
-    const CAN_USE_NO_CARRY_MUL_OPT: bool = unimplemented!();
+    const CAN_USE_NO_CARRY_MUL_OPT: bool =
+        can_use_no_carry_mul_optimization::<Self, N>();
 
-    const MODULUS_HAS_SPARE_BIT: bool = unimplemented!();
+    const MODULUS_HAS_SPARE_BIT: bool = modulus_has_spare_bit::<Self, N>();
 
     /// INV = -MODULUS^{-1} mod 2^64
     const INV: u64 = inv::<Self, N>();
 
     /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
     /// `R = M % MODULUS`.
-    const R: BigInt<N> = unimplemented!();
+    const R: BigInt<N> = Self::MODULUS.montgomery_r();
 
     /// `R2 = R^2 % MODULUS`
     #[allow(dead_code)]
-    const R2: BigInt<N> = unimplemented!();
+    const R2: BigInt<N> = Self::MODULUS.montgomery_r2();
 
     /// Set `a += b`.
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
@@ -345,6 +346,24 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
         inv = inv.wrapping_mul(T::MODULUS.0[0]);
     });
     inv.wrapping_neg()
+}
+
+#[inline]
+pub const fn can_use_no_carry_mul_optimization<
+    T: FpParams<N>,
+    const N: usize,
+>() -> bool {
+    // Checking the modulus at compile time
+    let mut all_remaining_bits_are_one = T::MODULUS.0[N - 1] == u64::MAX >> 1;
+    crate::const_for!((i in 1..N) {
+        all_remaining_bits_are_one  &= T::MODULUS.0[N - i - 1] == u64::MAX;
+    });
+    modulus_has_spare_bit::<T, N>() && !all_remaining_bits_are_one
+}
+
+#[inline]
+pub const fn modulus_has_spare_bit<T: FpParams<N>, const N: usize>() -> bool {
+    T::MODULUS.0[N - 1] >> 63 == 0
 }
 
 /// Represents an element of the prime field `F_p`, where `p == P::MODULUS`.

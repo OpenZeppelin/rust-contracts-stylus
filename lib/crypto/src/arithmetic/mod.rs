@@ -19,9 +19,11 @@ use zeroize::Zeroize;
 use crate::{adc, bits::BitIteratorBE, const_for, const_modulo, sbb};
 
 pub type Word = u64;
-// TODO#q: Have Fp as residue integers
-// TODO#q: Uint - normal big integers
-// TODO#q: Limbs - wrapper type for [Limb; N] array
+// TODO#q: Refactor types to:
+//  Fp<P, N>(Limbs<N>) - residue classes modulo prime numbers
+//  Uint<N>(Limbs<N>) - normal big integers. Make sense to implement only
+// constant   operations necessary for hex parsing
+//  Wrapper type for limbs: Limbs<N>([Limb;N])
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Zeroize)]
 pub struct BigInt<const N: usize>(pub [Word; N]);
 
