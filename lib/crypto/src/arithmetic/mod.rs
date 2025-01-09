@@ -56,6 +56,13 @@ impl<const N: usize> BigInt<N> {
         one
     }
 
+    // TODO#q: add another conversions from u8, u16 and so on
+    pub const fn from_u32(val: u32) -> Self {
+        let mut repr = Self::zero();
+        repr.0[0] = val as u64;
+        repr
+    }
+
     #[doc(hidden)]
     pub const fn const_is_even(&self) -> bool {
         self.0[0] % 2 == 0
@@ -663,16 +670,16 @@ pub trait BigInteger:
     + for<'a> BitOrAssign<&'a Self>
     + BitOr<Self, Output = Self>
     + for<'a> BitOr<&'a Self, Output = Self>
-    + Shr<usize, Output = Self>
-    + ShrAssign<usize>
-    + Shl<usize, Output = Self>
-    + ShlAssign<usize>
+    + Shr<u32, Output = Self>
+    + ShrAssign<u32>
+    + Shl<u32, Output = Self>
+    + ShlAssign<u32>
 {
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
 
     /// Number of bytes in the integer.
-    const BYTES: usize = Self::NUM_LIMBS * Limb::BYTES;
+    const BYTES: usize = Self::NUM_LIMBS * Limb::BITS as usize / 8;
 
     /// Returns true if this number is odd.
     /// # Example
@@ -873,7 +880,7 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
         // Since a base-16 digit can be represented with the same bits, we can
         // copy these bits.
         let digit_mask = digit << ((num_index % digits_in_limb) * digit_size);
-        num[num_index / digits_in_limb] |= digit_mask;
+        num[(num_index / digits_in_limb) as usize] |= digit_mask;
 
         // If we reached the beginning of the string, return the number.
         if index == 0 {
@@ -885,6 +892,8 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
         num_index += 1;
     }
 }
+
+// TODO#q: move mul / add operations to BigInt impl
 
 /// Multiply two numbers and panic on overflow.
 #[must_use]
