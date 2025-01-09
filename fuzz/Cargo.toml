@@ -9,13 +9,31 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+motsu = "0.3.0"
+stylus-sdk = { version = "0.7.0", default-features = false, features = [
+    "mini-alloc",
+] }
+alloy-primitives = { version = "=0.8.14", default-features = false }
+
+[features]
+arbitrary = ["alloy-primitives/arbitrary"]
 
 [dependencies.openzeppelin-crypto]
 path = "../lib/crypto"
 
+[dependencies.openzeppelin-stylus]
+path = "../contracts"
+
 [[bin]]
-name = "fuzz_target_1"
-path = "fuzz_targets/fuzz_target_1.rs"
+name = "openzeppelin_crypto"
+path = "fuzz_targets/openzeppelin_crypto.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "openzeppelin_stylus_utils"
+path = "fuzz_targets/openzeppelin_stylus_utils.rs"
 test = false
 doc = false
 bench = false
