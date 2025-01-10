@@ -33,7 +33,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.3
+        run: cargo install cargo-stylus@0.5.7
 
       - name: Install solc
         run: |
