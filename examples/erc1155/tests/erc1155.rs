@@ -2,7 +2,9 @@
 
 use abi::Erc1155;
 use alloy::primitives::{uint, Address, U256};
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{
+    receipt, send, watch, Account, EventExt, PanicCode, ReceiptExt, Revert,
+};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
 mod abi;
@@ -163,10 +165,7 @@ async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_reverts_with_reason_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -182,7 +181,7 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _err = send!(contract.mint(
+    let err = send!(contract.mint(
         receiver_address,
         token_id,
         value,
@@ -190,9 +189,10 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
     ))
     .expect_err("should not mint when receiver errors with reason");
 
-    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
-    //     b"ERC1155ReceiverMock: reverting on receive".to_vec()
-    // )));
+    assert!(err.reverted_with(Erc1155::Error {
+        message: "ERC1155ReceiverMock: reverting on receive".to_string(),
+    }));
+
     Ok(())
 }
 
@@ -227,10 +227,7 @@ async fn errors_when_receiver_reverts_without_reason_in_mint(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_panics_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -241,20 +238,19 @@ async fn errors_when_receiver_panics_in_mint(
         receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
             .await?;
 
-    let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
     let err = send!(contract.mint(
-        alice_addr,
+        receiver_address,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
     ))
     .expect_err("should not mint when receiver panics");
 
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
+    assert!(err.reverted_with(Erc1155::Panic {
+        message: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
@@ -270,13 +266,17 @@ async fn errors_when_invalid_receiver_contract_in_mint(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _err = send!(contract.mint(
+    let err = send!(contract.mint(
         contract_addr,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
     ))
     .expect_err("should not mint when invalid receiver contract");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr
+    }));
 
     Ok(())
 }
@@ -389,10 +389,7 @@ async fn mint_batch_transfer_to_receiver_contract(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -408,7 +405,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let _err = watch!(contract.mintBatch(
+    let err = send!(contract.mintBatch(
         receiver_address,
         token_ids.clone(),
         values.clone(),
@@ -416,9 +413,10 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     ))
     .expect_err("should not mint batch when receiver errors with reason");
 
-    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
-    //     b"ERC1155ReceiverMock: reverting on receive".to_vec()
-    // )));
+    assert!(err.reverted_with(Erc1155::Error {
+        message: "ERC1155ReceiverMock: reverting on batch receive".to_string(),
+    }));
+
     Ok(())
 }
 
@@ -453,10 +451,7 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_mint(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_panics_in_batch_mint(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -478,8 +473,8 @@ async fn errors_when_receiver_panics_in_batch_mint(
     ))
     .expect_err("should not mint batch when receiver panics");
 
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
+    assert!(err.reverted_with(Erc1155::Panic {
+        message: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
@@ -495,13 +490,17 @@ async fn errors_when_invalid_receiver_contract_in_batch_mint(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let _err = send!(contract.mintBatch(
+    let err = send!(contract.mintBatch(
         contract_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
     ))
     .expect_err("should not mint batch when invalid receiver contract");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
 
     Ok(())
 }
@@ -777,10 +776,7 @@ async fn safe_transfer_to_receiver_contract(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_reverts_with_reason(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -804,7 +800,7 @@ async fn errors_when_receiver_reverts_with_reason(
         vec![0, 1, 2, 3].into()
     ))?;
 
-    let _err = send!(contract.safeTransferFrom(
+    let err = send!(contract.safeTransferFrom(
         alice_addr,
         receiver_address,
         token_id,
@@ -813,9 +809,10 @@ async fn errors_when_receiver_reverts_with_reason(
     ))
     .expect_err("should not transfer when receiver errors with reason");
 
-    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
-    //     b"ERC1155ReceiverMock: reverting on receive".to_vec()
-    // )));
+    assert!(err.reverted_with(Erc1155::Error {
+        message: "ERC1155ReceiverMock: reverting on receive".to_string(),
+    }));
+
     Ok(())
 }
 
@@ -859,10 +856,7 @@ async fn errors_when_receiver_reverts_without_reason(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
@@ -891,8 +885,8 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     ))
     .expect_err("should not transfer when receiver panics");
 
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
+    assert!(err.reverted_with(Erc1155::Panic {
+        message: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
@@ -916,7 +910,7 @@ async fn errors_when_invalid_receiver_contract(
         vec![0, 1, 2, 3].into()
     ))?;
 
-    let _err = send!(contract.safeTransferFrom(
+    let err = send!(contract.safeTransferFrom(
         alice_addr,
         contract_addr,
         token_id,
@@ -924,6 +918,10 @@ async fn errors_when_invalid_receiver_contract(
         vec![].into()
     ))
     .expect_err("should not transfer when invalid receiver contract");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
 
     Ok(())
 }
@@ -1183,10 +1181,7 @@ async fn safe_batch_transfer_to_receiver_contract(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -1210,7 +1205,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
         vec![].into()
     ));
 
-    let _err = send!(contract.safeBatchTransferFrom(
+    let err = send!(contract.safeBatchTransferFrom(
         alice_addr,
         receiver_address,
         token_ids,
@@ -1219,9 +1214,10 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     ))
     .expect_err("should not transfer when receiver errors with reason");
 
-    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
-    //     b"ERC1155ReceiverMock: reverting on receive".to_vec()
-    // )));
+    assert!(err.reverted_with(Erc1155::Error {
+        message: "ERC1155ReceiverMock: reverting on batch receive".to_string(),
+    }));
+
     Ok(())
 }
 
@@ -1265,10 +1261,7 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_transfer(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_panics_in_batch_transfer(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -1299,8 +1292,8 @@ async fn errors_when_receiver_panics_in_batch_transfer(
     ))
     .expect_err("should not transfer when receiver panics");
 
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
+    assert!(err.reverted_with(Erc1155::Panic {
+        message: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
@@ -1324,7 +1317,7 @@ async fn errors_when_invalid_receiver_contract_in_batch_transfer(
         vec![].into()
     ));
 
-    let _err = send!(contract.safeBatchTransferFrom(
+    let err = send!(contract.safeBatchTransferFrom(
         alice_addr,
         contract_addr,
         token_ids,
@@ -1332,6 +1325,10 @@ async fn errors_when_invalid_receiver_contract_in_batch_transfer(
         vec![].into()
     ))
     .expect_err("should not transfer when invalid receiver contract");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
 
     Ok(())
 }
