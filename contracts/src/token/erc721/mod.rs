@@ -1123,7 +1123,7 @@ impl Erc721 {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
                         // Non-IERC721Receiver implementer.
-                        return Err(Error::InvalidReceiverWithReason(e));
+                        return Err(e.into());
                     }
                 }
 
