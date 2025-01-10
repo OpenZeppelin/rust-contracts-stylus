@@ -863,9 +863,12 @@ mod tests {
         assert_eq!(balance1, initial_balance + U256::from(init_tokens_count));
 
         // Check non-consecutive mint.
-        contract._mint(alice, TOKEN_ID).expect("should mint a token for Alice");
+        let non_consecutive_token_id = uint!(10_U256);
+        contract
+            ._mint(alice, non_consecutive_token_id)
+            .expect("should mint a token for Alice");
         let owner = contract
-            .owner_of(TOKEN_ID)
+            .owner_of(non_consecutive_token_id)
             .expect("should return the owner of the token");
         assert_eq!(owner, alice);
 
@@ -974,7 +977,10 @@ mod tests {
         assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
 
         // Check non-consecutive mint.
-        contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
+        let non_consecutive_token_id = uint!(10_U256);
+        contract
+            ._mint(alice, non_consecutive_token_id)
+            .expect("should mint a token to Alice");
         let alice_balance = contract
             .balance_of(alice)
             .expect("should return the balance of Alice");
@@ -982,7 +988,7 @@ mod tests {
 
         // Check transfer of the token that wasn't minted consecutive.
         contract
-            .transfer_from(alice, BOB, TOKEN_ID)
+            .transfer_from(alice, BOB, non_consecutive_token_id)
             .expect("should transfer a token from Alice to Bob");
         let alice_balance = contract
             .balance_of(alice)
@@ -1021,7 +1027,7 @@ mod tests {
         ));
 
         // Check non-consecutive token burn.
-        let non_consecutive_token_id = uint!(1_U256);
+        let non_consecutive_token_id = uint!(10_U256);
         contract
             ._mint(alice, non_consecutive_token_id)
             .expect("should mint a token to Alice");
