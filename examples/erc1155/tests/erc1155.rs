@@ -181,7 +181,7 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _err = send!(contract.mint(
+    let err = send!(contract.mint(
         receiver_address,
         token_id,
         value,
@@ -228,7 +228,6 @@ async fn errors_when_receiver_reverts_without_reason_in_mint(
 }
 
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_panics_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -405,7 +404,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let _err = watch!(contract.mintBatch(
+    let err = watch!(contract.mintBatch(
         receiver_address,
         token_ids.clone(),
         values.clone(),
@@ -798,7 +797,7 @@ async fn errors_when_receiver_reverts_with_reason(
         vec![0, 1, 2, 3].into()
     ))?;
 
-    let _err = send!(contract.safeTransferFrom(
+    let err = send!(contract.safeTransferFrom(
         alice_addr,
         receiver_address,
         token_id,
@@ -1201,7 +1200,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
         vec![].into()
     ));
 
-    let _err = send!(contract.safeBatchTransferFrom(
+    let err = send!(contract.safeBatchTransferFrom(
         alice_addr,
         receiver_address,
         token_ids,
