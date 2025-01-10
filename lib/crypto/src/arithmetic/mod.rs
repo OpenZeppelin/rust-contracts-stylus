@@ -527,7 +527,6 @@ impl<const N: usize> Display for BigInt<N> {
 
 impl<const N: usize> Ord for BigInt<N> {
     #[inline]
-    // TODO#q: loop unroll actually faster here, and not bloat wasm
     #[cfg_attr(
         any(target_arch = "x86_64", target_family = "wasm"),
         ark_ff_macros::unroll_for_loops(12)
@@ -544,6 +543,8 @@ impl<const N: usize> Ord for BigInt<N> {
             };
         }
 
+        // TODO#q: loop unroll actually faster here, and not bloat wasm
+        //  remove it
         #[cfg(not(any(target_arch = "x86_64", target_family = "wasm")))]
         for (a, b) in self.0.iter().rev().zip(other.0.iter().rev()) {
             if let order @ (Ordering::Less | Ordering::Greater) = a.cmp(b) {
