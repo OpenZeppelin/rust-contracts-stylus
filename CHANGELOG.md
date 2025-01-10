@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Constants `TYPE_HASH`, `FIELDS`, `SALT` and `TYPED_DATA_PREFIX`, and type `DomainSeparatorTuple` declared in root of _contracts/src/utils/cryptography/eip712.rs_ are now private. #478 
+- Constants `TYPE_HASH`, `FIELDS`, `SALT` and `TYPED_DATA_PREFIX`, and type `DomainSeparatorTuple` are no longer exported from `utils::cryptography::eip712`. #478 
 - Bump Stylus SDK to v0.7.0. #433
 - Bump `alloy` dependencies to v0.8.14. #433
 - Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
