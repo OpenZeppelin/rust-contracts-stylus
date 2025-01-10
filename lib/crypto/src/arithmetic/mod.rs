@@ -258,15 +258,28 @@ impl<const N: usize> BigInt<N> {
         }
     }
 
-    // TODO#q: rename with prefix ct_*
-    pub(crate) const fn add_with_carry(&mut self, other: &Self) -> bool {
+    // TODO#q: rename to checked_add?
+    pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
+        let mut carry = 0;
+
+        for i in 0..N {
+            carry = adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
+        }
+
+        carry != 0
+    }
+
+    pub(crate) const fn ct_add_with_carry(
+        mut self,
+        other: &Self,
+    ) -> (Self, bool) {
         let mut carry = 0;
 
         const_for!((i in 0..N) {
-            carry = adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
+            (self.0[i], carry) = ct_adc_for_add_with_carry(self.0[i], other.0[i], carry);
         });
 
-        carry != 0
+        (self, carry != 0)
     }
 }
 
@@ -347,10 +360,18 @@ pub fn adc(a: &mut u64, b: u64, carry: u64) -> u64 {
 #[inline(always)]
 #[allow(unused_mut)]
 #[doc(hidden)]
-pub const fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
+pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
     let tmp = *a as u128 + b as u128 + carry as u128;
     *a = tmp as u64;
     (tmp >> 64) as u8
+}
+
+#[inline(always)]
+#[allow(unused_mut)]
+#[doc(hidden)]
+pub const fn ct_adc_for_add_with_carry(a: u64, b: u64, carry: u8) -> (u64, u8) {
+    let tmp = a as u128 + b as u128 + carry as u128;
+    (tmp as u64, (tmp >> 64) as u8)
 }
 
 // ----------- Traits Impls -----------
@@ -901,7 +922,7 @@ pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
 #[must_use]
 pub const fn ct_add<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
     let a = *a;
-    let carry = a.add_with_carry(b);
+    let (a, carry) = a.ct_add_with_carry(b);
     assert!(carry, "overflow on addition");
     a
 }
