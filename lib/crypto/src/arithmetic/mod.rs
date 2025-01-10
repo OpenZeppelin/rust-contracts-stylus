@@ -40,6 +40,9 @@ impl<const N: usize> Default for BigInt<N> {
 }
 
 impl<const N: usize> BigInt<N> {
+    pub const ONE: Self = Self::one();
+    pub const ZERO: Self = Self::zero();
+
     pub const fn new(value: [u64; N]) -> Self {
         Self(value)
     }
@@ -47,6 +50,8 @@ impl<const N: usize> BigInt<N> {
     pub const fn as_limbs(&self) -> &[Limb; N] {
         &self.0
     }
+
+    // TODO#q: remove zero() and one() in favour of const ONE and const ZERO
 
     pub const fn zero() -> Self {
         Self([0u64; N])
@@ -281,6 +286,60 @@ impl<const N: usize> BigInt<N> {
 
         (self, carry != 0)
     }
+
+    /// Compute "wide" multiplication, with a product twice the size of the
+    /// input.
+    ///
+    /// Returns a tuple containing the `(lo, hi)` components of the product.
+    ///
+    /// # Ordering note
+    ///
+    /// Releases of `crypto-bigint` prior to v0.3 used `(hi, lo)` ordering
+    /// instead. This has been changed for better consistency with the rest of
+    /// the APIs in this crate.
+    ///
+    /// For more info see: <https://github.com/RustCrypto/crypto-bigint/issues/4>
+    pub const fn ct_mul_wide<const HN: usize>(
+        &self,
+        rhs: &BigInt<HN>,
+    ) -> (Self, BigInt<HN>) {
+        let mut i = 0;
+        let mut lo = Self::ZERO;
+        let mut hi = BigInt::<HN>::ZERO;
+
+        // Schoolbook multiplication.
+        // TODO(tarcieri): use Karatsuba for better performance?
+        while i < N {
+            let mut j = 0;
+            let mut carry = Limb::ZERO;
+
+            while j < HN {
+                let k = i + j;
+
+                if k >= N {
+                    let (n, c) =
+                        ct_mac(hi.0[k - N], self.0[i], rhs.0[j], carry);
+                    hi.0[k - N] = n;
+                    carry = c;
+                } else {
+                    let (n, c) = ct_mac(lo.0[k], self.0[i], rhs.0[j], carry);
+                    lo.0[k] = n;
+                    carry = c;
+                }
+
+                j += 1;
+            }
+
+            if i + j >= N {
+                hi.0[i + j - N] = carry;
+            } else {
+                lo.0[i + j] = carry;
+            }
+            i += 1;
+        }
+
+        (lo, hi)
+    }
 }
 
 /// Calculate a + b * c, returning the lower 64 bits of the result and setting
@@ -291,6 +350,15 @@ pub fn mac(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
     let tmp = (a as u128) + widening_mul(b, c);
     *carry = (tmp >> 64) as u64;
     tmp as u64
+}
+
+pub const fn ct_mac(a: Limb, b: Limb, c: Limb, carry: Limb) -> (Limb, Limb) {
+    let a = a as WideLimb;
+    let b = b as WideLimb;
+    let c = c as WideLimb;
+    let carry = carry as WideLimb;
+    let ret = a + (b * c) + carry;
+    (ret as Limb, (ret >> Limb::BITS) as Limb)
 }
 
 #[inline(always)]
@@ -913,8 +981,8 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
 /// Multiply two numbers and panic on overflow.
 #[must_use]
 pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
-    let (low, high) = a.mul_wide(b);
-    assert!(high.bits() == 0, "overflow on multiplication");
+    let (low, high) = a.ct_mul_wide(b);
+    assert!(!ct_eq(&high, &BigInt::<N>::ZERO), "overflow on multiplication");
     low
 }
 
