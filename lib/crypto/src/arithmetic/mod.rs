@@ -24,11 +24,13 @@ pub type Limb = u64;
 pub type WideLimb = u128;
 
 // TODO#q: Refactor types to:
-//  Fp<P, N>(Limbs<N>) - residue classes modulo prime numbers
-//  Uint<N>(Limbs<N>) - normal big integers. Make sense to implement only
-//   constant   operations necessary for hex parsing (uint.rs)
-//  Limbs<N>([Limb;N]) - Wrapper type for limbs. (limbs.rs)
-//  Odd<Uint<N>> - Odd numbers. (odd.rs)
+//  - Fp<P, N>(Limbs<N>) - residue classes modulo prime numbers
+//  - Uint<N>(Limbs<N>) - normal big integers. Make sense to implement only
+//    constant   operations necessary for hex parsing (uint.rs)
+//  - Limbs<N>([Limb;N]) - Wrapper type for limbs. (limbs.rs)
+//  - Odd<Uint<N>> - Odd numbers. (odd.rs)
+//  - Rename u64 and u128 to Limb and WideLimb
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
 pub struct BigInt<const N: usize>(pub [Limb; N]);
 
@@ -467,9 +469,10 @@ pub fn mac_with_carry(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
 #[allow(unused_mut)]
 #[doc(hidden)]
 pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: u8) -> u8 {
-    let tmp = (1u128 << 64) + (*a as u128) - (b as u128) - (borrow as u128);
-    *a = tmp as u64;
-    u8::from(tmp >> 64 == 0)
+    let (sub, borrow1) = a.overflowing_sub(b);
+    let (sub, borrow2) = sub.overflowing_sub(borrow as u64);
+    *a = sub;
+    (borrow1 | borrow2) as u8
 }
 
 // TODO#q: adc can be unified with adc_for_add_with_carry
@@ -488,9 +491,10 @@ pub fn adc(a: &mut u64, b: u64, carry: u64) -> u64 {
 #[allow(unused_mut)]
 #[doc(hidden)]
 pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
-    let tmp = *a as u128 + b as u128 + carry as u128;
-    *a = tmp as u64;
-    (tmp >> 64) as u8
+    let (sum, carry1) = a.overflowing_add(b);
+    let (sum, carry2) = sum.overflowing_add(carry as u64);
+    *a = sum;
+    (carry1 | carry2) as u8
 }
 
 #[inline(always)]
