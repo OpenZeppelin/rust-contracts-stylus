@@ -1517,6 +1517,7 @@ dependencies = [
  "koba",
  "once_cell",
  "regex",
+ "stylus-sdk",
  "tokio",
  "toml",
 ]
