@@ -1165,7 +1165,7 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     .expect_err("should not transfer when receiver panics");
 
     assert!(err.reverted_with(Erc721::Panic {
-        message: U256::from(PanicCode::DivisionByZero as u8)
+        code: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
