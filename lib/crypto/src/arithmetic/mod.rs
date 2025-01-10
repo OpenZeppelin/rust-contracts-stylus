@@ -30,6 +30,7 @@ pub type WideLimb = u128;
 //  - Limbs<N>([Limb;N]) - Wrapper type for limbs. (limbs.rs)
 //  - Odd<Uint<N>> - Odd numbers. (odd.rs)
 //  - Rename u64 and u128 to Limb and WideLimb
+//  - Rename functions *_with_carry to carrying_*
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
 pub struct BigInt<const N: usize>(pub [Limb; N]);
