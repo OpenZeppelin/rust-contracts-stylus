@@ -300,6 +300,7 @@ async fn error_when_transfer_to_invalid_receiver(
     let err =
         send!(contract.transferFrom(alice_addr, invalid_receiver, token_id))
             .expect_err("should not transfer the token to invalid receiver");
+
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
         receiver: invalid_receiver
     }));

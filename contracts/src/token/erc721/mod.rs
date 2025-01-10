@@ -150,6 +150,11 @@ pub enum Error {
     InvalidReceiver(ERC721InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
+    /// This error will be encoded either as `Error(string)` or
+    /// `Panic(uint256)`, as those are the built-in errors emitted by default
+    /// by `assert`, `require`, and `revert` special functions.
+    ///
+    /// See: https://docs.soliditylang.org/en/latest/control-structures.html#error-handling-assert-require-revert-and-exceptions
     InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
