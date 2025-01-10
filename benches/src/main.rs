@@ -8,13 +8,13 @@ use itertools::Itertools;
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     let benchmarks = [
-        access_control::bench().boxed(),
-        erc20::bench().boxed(),
-        erc721::bench().boxed(),
-        merkle_proofs::bench().boxed(),
-        ownable::bench().boxed(),
-        erc1155::bench().boxed(),
-        erc1155_metadata_uri::bench().boxed(),
+        // access_control::bench().boxed(),
+        // erc20::bench().boxed(),
+        // erc721::bench().boxed(),
+        // merkle_proofs::bench().boxed(),
+        // ownable::bench().boxed(),
+        // erc1155::bench().boxed(),
+        // erc1155_metadata_uri::bench().boxed(),
         poseidon::bench().boxed(),
         poseidon_sol::bench().boxed(),
     ];
