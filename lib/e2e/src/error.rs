@@ -94,8 +94,6 @@ impl<E: MethodError> Revert<E> for alloy::contract::Error {
 
         let actual = &raw_value.get().trim_matches('"')[2..];
         let expected = alloy::hex::encode(expected.encode());
-        println!("{actual}");
-        println!("{expected}");
         expected == actual
     }
 }
