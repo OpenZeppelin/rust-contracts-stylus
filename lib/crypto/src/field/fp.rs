@@ -19,8 +19,8 @@ use core::{
     fmt::{Debug, Display, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
+    ops::Mul,
 };
-use std::ops::Mul;
 
 use educe::Educe;
 use num_traits::{One, Zero};

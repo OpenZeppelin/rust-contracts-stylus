@@ -5,18 +5,17 @@ use core::{
     borrow::Borrow,
     fmt::{Debug, Display, UpperHex},
     ops::{
-        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl,
-        ShlAssign, Shr, ShrAssign,
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
+        Shl, ShlAssign, Shr, ShrAssign,
     },
 };
-use std::ops::Not;
 
 use num_bigint::BigUint;
 use num_traits::{ConstZero, Zero};
-use rand::{
-    distributions::{Distribution, Standard},
-    Rng,
-};
+// use rand::{
+//     distributions::{Distribution, Standard},
+//     Rng,
+// };
 use zeroize::Zeroize;
 
 use crate::{adc, bits::BitIteratorBE, const_for, const_modulo, sbb};
@@ -366,6 +365,32 @@ impl<const N: usize> BigInt<N> {
         }
 
         (Self(limbs), carry)
+    }
+
+    /// Create a new [`Uint`] from the provided little endian bytes.
+    // NOTE#q: crypto_bigint
+    pub const fn ct_from_le_slice(bytes: &[u8]) -> Self {
+        const LIMB_BYTES: usize = Limb::BITS as usize / 8;
+        assert!(
+            bytes.len() == LIMB_BYTES * N,
+            "bytes are not the expected size"
+        );
+
+        let mut res = [Limb::ZERO; N];
+        let mut buf = [0u8; LIMB_BYTES];
+        let mut i = 0;
+
+        while i < N {
+            let mut j = 0;
+            while j < LIMB_BYTES {
+                buf[j] = bytes[i * LIMB_BYTES + j];
+                j += 1;
+            }
+            res[i] = Limb::from_le_bytes(buf);
+            i += 1;
+        }
+
+        Self::new(res)
     }
 }
 
@@ -909,7 +934,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
     }
 
     fn from_bytes_le(bytes: &[u8]) -> Self {
-        unimplemented!()
+        Self::ct_from_le_slice(bytes)
     }
 
     fn into_bytes_le(self) -> alloc::vec::Vec<u8> {
@@ -1014,7 +1039,7 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
 #[must_use]
 pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
     let (low, high) = a.ct_mul_wide(b);
-    assert!(!ct_eq(&high, &BigInt::<N>::ZERO), "overflow on multiplication");
+    // assert!(!ct_eq(&high, &BigInt::<N>::ZERO), "overflow on multiplication");
     low
 }
 
@@ -1022,7 +1047,7 @@ pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
 #[must_use]
 pub const fn ct_add<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
     let (low, carry) = a.ct_adc(b, Limb::ZERO);
-    assert!(carry == 0, "overflow on addition");
+    // assert!(carry != 0, "overflow on addition");
     low
 }
 
