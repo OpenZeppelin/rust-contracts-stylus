@@ -250,7 +250,7 @@ async fn errors_when_receiver_panics_in_mint(
     .expect_err("should not mint when receiver panics");
 
     assert!(err.reverted_with(Erc1155::Panic {
-        message: U256::from(PanicCode::DivisionByZero as u8)
+        code: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
@@ -474,7 +474,7 @@ async fn errors_when_receiver_panics_in_batch_mint(
     .expect_err("should not mint batch when receiver panics");
 
     assert!(err.reverted_with(Erc1155::Panic {
-        message: U256::from(PanicCode::DivisionByZero as u8)
+        code: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
@@ -886,7 +886,7 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     .expect_err("should not transfer when receiver panics");
 
     assert!(err.reverted_with(Erc1155::Panic {
-        message: U256::from(PanicCode::DivisionByZero as u8)
+        code: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
@@ -1293,7 +1293,7 @@ async fn errors_when_receiver_panics_in_batch_transfer(
     .expect_err("should not transfer when receiver panics");
 
     assert!(err.reverted_with(Erc1155::Panic {
-        message: U256::from(PanicCode::DivisionByZero as u8)
+        code: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())
