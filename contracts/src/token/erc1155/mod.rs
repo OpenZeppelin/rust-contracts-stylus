@@ -169,7 +169,7 @@ pub enum Error {
     /// `Panic(uint256)`, as those are the built-in errors emitted by default
     /// by `assert`, `require`, and `revert` special functions.
     ///
-    /// See: https://docs.soliditylang.org/en/latest/control-structures.html#error-handling-assert-require-revert-and-exceptions
+    /// See: <https://docs.soliditylang.org/en/latest/control-structures.html#error-handling-assert-require-revert-and-exceptions>
     InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     MissingApprovalForAll(ERC1155MissingApprovalForAll),
