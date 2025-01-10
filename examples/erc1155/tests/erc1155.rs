@@ -1215,7 +1215,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     .expect_err("should not transfer when receiver errors with reason");
 
     assert!(err.reverted_with(Erc1155::Error {
-        message: "ERC1155ReceiverMock: reverting on receive".to_string(),
+        message: "ERC1155ReceiverMock: reverting on batch receive".to_string(),
     }));
 
     Ok(())
