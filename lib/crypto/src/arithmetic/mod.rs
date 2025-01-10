@@ -317,12 +317,17 @@ impl<const N: usize> BigInt<N> {
                 let k = i + j;
 
                 if k >= N {
-                    let (n, c) =
-                        ct_mac(hi.0[k - N], self.0[i], rhs.0[j], carry);
+                    let (n, c) = ct_mac_with_carry(
+                        hi.0[k - N],
+                        self.0[i],
+                        rhs.0[j],
+                        carry,
+                    );
                     hi.0[k - N] = n;
                     carry = c;
                 } else {
-                    let (n, c) = ct_mac(lo.0[k], self.0[i], rhs.0[j], carry);
+                    let (n, c) =
+                        ct_mac_with_carry(lo.0[k], self.0[i], rhs.0[j], carry);
                     lo.0[k] = n;
                     carry = c;
                 }
@@ -352,7 +357,12 @@ pub fn mac(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
     tmp as u64
 }
 
-pub const fn ct_mac(a: Limb, b: Limb, c: Limb, carry: Limb) -> (Limb, Limb) {
+pub const fn ct_mac_with_carry(
+    a: Limb,
+    b: Limb,
+    c: Limb,
+    carry: Limb,
+) -> (Limb, Limb) {
     let a = a as WideLimb;
     let b = b as WideLimb;
     let c = c as WideLimb;
