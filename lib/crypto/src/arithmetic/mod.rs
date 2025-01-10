@@ -256,25 +256,25 @@ impl<const N: usize> BigInt<N> {
     // TODO#q: rename to checked_add?
     #[ark_ff_macros::unroll_for_loops(6)]
     pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
-        let mut carry = 0;
+        let mut carry = false;
 
         for i in 0..N {
             carry = adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
         }
 
-        carry != 0
+        carry
     }
 
     #[ark_ff_macros::unroll_for_loops(6)]
     pub(crate) fn sub_with_borrow(&mut self, other: &Self) -> bool {
-        let mut borrow = 0;
+        let mut borrow = false;
 
         for i in 0..N {
             borrow =
                 sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
         }
 
-        borrow != 0
+        borrow
     }
 
     pub(crate) const fn ct_add_with_carry(
@@ -468,11 +468,11 @@ pub fn mac_with_carry(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
 #[inline(always)]
 #[allow(unused_mut)]
 #[doc(hidden)]
-pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: u8) -> u8 {
+pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: bool) -> bool {
     let (sub, borrow1) = a.overflowing_sub(b);
     let (sub, borrow2) = sub.overflowing_sub(borrow as u64);
     *a = sub;
-    (borrow1 | borrow2) as u8
+    borrow1 | borrow2
 }
 
 // TODO#q: adc can be unified with adc_for_add_with_carry
@@ -490,11 +490,11 @@ pub fn adc(a: &mut u64, b: u64, carry: u64) -> u64 {
 #[inline(always)]
 #[allow(unused_mut)]
 #[doc(hidden)]
-pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
+pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: bool) -> bool {
     let (sum, carry1) = a.overflowing_add(b);
     let (sum, carry2) = sum.overflowing_add(carry as u64);
     *a = sum;
-    (carry1 | carry2) as u8
+    carry1 | carry2
 }
 
 #[inline(always)]
