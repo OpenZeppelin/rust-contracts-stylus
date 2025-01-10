@@ -22,6 +22,8 @@ use zeroize::Zeroize;
 use crate::{adc, bits::BitIteratorBE, const_for, const_modulo, sbb};
 
 pub type Limb = u64;
+pub type WideLimb = u128;
+
 // TODO#q: Refactor types to:
 //  Fp<P, N>(Limbs<N>) - residue classes modulo prime numbers
 //  Uint<N>(Limbs<N>) - normal big integers. Make sense to implement only
@@ -256,12 +258,13 @@ impl<const N: usize> BigInt<N> {
         }
     }
 
-    pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
+    // TODO#q: rename with prefix ct_*
+    pub(crate) const fn add_with_carry(&mut self, other: &Self) -> bool {
         let mut carry = 0;
 
-        for i in 0..N {
+        const_for!((i in 0..N) {
             carry = adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
-        }
+        });
 
         carry != 0
     }
@@ -344,7 +347,7 @@ pub fn adc(a: &mut u64, b: u64, carry: u64) -> u64 {
 #[inline(always)]
 #[allow(unused_mut)]
 #[doc(hidden)]
-pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
+pub const fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: u8) -> u8 {
     let tmp = *a as u128 + b as u128 + carry as u128;
     *a = tmp as u64;
     (tmp >> 64) as u8
@@ -897,9 +900,34 @@ pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
 /// Add two numbers and panic on overflow.
 #[must_use]
 pub const fn ct_add<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
-    let (low, carry) = a.adc(b, Limb::ZERO);
-    assert!(carry.0 == 0, "overflow on addition");
-    low
+    let a = *a;
+    let carry = a.add_with_carry(b);
+    assert!(carry, "overflow on addition");
+    a
+}
+
+/// Computes `lhs * rhs`, returning the low and the high limbs of the result.
+#[inline(always)]
+pub const fn ct_mul_wide(lhs: Limb, rhs: Limb) -> (Limb, Limb) {
+    let a = lhs as WideLimb;
+    let b = rhs as WideLimb;
+    let ret = a * b;
+    (ret as Limb, (ret >> Limb::BITS) as Limb)
+}
+
+// TODO#q: merge with adc function
+/// Computes `lhs + rhs + carry`, returning the result along with the new carry
+/// (0, 1, or 2).
+#[inline(always)]
+pub const fn ct_adc(lhs: Limb, rhs: Limb, carry: Limb) -> (Limb, Limb) {
+    // We could use `Word::overflowing_add()` here analogous to
+    // `overflowing_add()`, but this version seems to produce a slightly
+    // better assembly.
+    let a = lhs as WideLimb;
+    let b = rhs as WideLimb;
+    let carry = carry as WideLimb;
+    let ret = a + b + carry;
+    (ret as Limb, (ret >> Limb::BITS) as Limb)
 }
 
 pub const fn ct_ge<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> bool {

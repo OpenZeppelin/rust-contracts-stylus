@@ -27,7 +27,7 @@ use num_traits::{One, Zero};
 
 use crate::{
     adc, arithmetic,
-    arithmetic::{ct_eq, ct_ge, BigInt, BigInteger, Limb},
+    arithmetic::{BigInt, BigInteger, Limb},
     const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     mac, mac_with_carry,
