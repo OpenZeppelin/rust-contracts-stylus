@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (Breaking)
 
 - Bump cargo-stylus to v0.5.7. #484
-- Bump Rust to nightly-2025-01-09. #484
+- Bump Rust to nightly-2024-10-17. #484
 - Constants `TYPE_HASH`, `FIELDS`, `SALT` and `TYPED_DATA_PREFIX`, and type `DomainSeparatorTuple` are no longer exported from `utils::cryptography::eip712`. #478
 - Bump Stylus SDK to v0.7.0. #433
 - Bump `alloy` dependencies to v0.8.14. #433
