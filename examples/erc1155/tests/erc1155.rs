@@ -238,12 +238,11 @@ async fn errors_when_receiver_panics_in_mint(
         receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
             .await?;
 
-    let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
     let err = send!(contract.mint(
-        alice_addr,
+        receiver_address,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
@@ -267,7 +266,7 @@ async fn errors_when_invalid_receiver_contract_in_mint(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _err = send!(contract.mint(
+    let err = send!(contract.mint(
         contract_addr,
         token_id,
         value,
@@ -275,7 +274,9 @@ async fn errors_when_invalid_receiver_contract_in_mint(
     ))
     .expect_err("should not mint when invalid receiver contract");
 
-    // TODO: assert exact error
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr
+    }));
 
     Ok(())
 }
@@ -404,7 +405,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let err = watch!(contract.mintBatch(
+    let err = send!(contract.mintBatch(
         receiver_address,
         token_ids.clone(),
         values.clone(),
@@ -413,7 +414,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     .expect_err("should not mint batch when receiver errors with reason");
 
     assert!(err.reverted_with(Erc1155::Error {
-        message: "ERC1155ReceiverMock: reverting on receive".to_string(),
+        message: "ERC1155ReceiverMock: reverting on batch receive".to_string(),
     }));
 
     Ok(())
@@ -497,7 +498,9 @@ async fn errors_when_invalid_receiver_contract_in_batch_mint(
     ))
     .expect_err("should not mint batch when invalid receiver contract");
 
-    // TODO: assert exact error
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
 
     Ok(())
 }
@@ -916,7 +919,9 @@ async fn errors_when_invalid_receiver_contract(
     ))
     .expect_err("should not transfer when invalid receiver contract");
 
-    // TODO: assert exact error
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
 
     Ok(())
 }
@@ -1321,7 +1326,9 @@ async fn errors_when_invalid_receiver_contract_in_batch_transfer(
     ))
     .expect_err("should not transfer when invalid receiver contract");
 
-    // TODO: assert exact error
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
 
     Ok(())
 }
