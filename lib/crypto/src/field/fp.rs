@@ -110,6 +110,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// [here](https://hackmd.io/@gnark/modular_multiplication) if
     /// `Self::MODULUS` has (a) a non-zero MSB, and (b) at least one
     /// zero bit in the rest of the modulus.
+    #[ark_ff_macros::unroll_for_loops(6)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // No-carry optimisation applied to CIOS
         if Self::CAN_USE_NO_CARRY_MUL_OPT {
@@ -163,6 +164,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     }
 
     /// Set `a *= a`.
+    #[ark_ff_macros::unroll_for_loops(6)]
     fn square_in_place(a: &mut Fp<Self, N>) {
         if N == 1 {
             // We default to multiplying with `a` using the `Mul` impl
@@ -307,6 +309,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
+    // TODO#q: almost zero advantage of this loop unroll, and it bloats binary
+    //  size by 0.3kb
+    #[ark_ff_macros::unroll_for_loops(6)]
     fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
         let mut r = (a.0).0;
         // Montgomery Reduction

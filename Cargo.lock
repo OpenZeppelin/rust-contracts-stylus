@@ -772,6 +772,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-ff-macros"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09be120733ee33f7693ceaa202ca41accd5653b779563608f1234f78ae07c4b3"
+dependencies = [
+ "num-bigint",
+ "num-traits",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.89",
+]
+
+[[package]]
 name = "ark-serialize"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2750,6 +2763,7 @@ dependencies = [
 name = "openzeppelin-crypto"
 version = "0.2.0-alpha.2"
 dependencies = [
+ "ark-ff-macros 0.5.0",
  "educe",
  "hex-literal",
  "num-bigint",

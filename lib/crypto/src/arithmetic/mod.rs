@@ -241,17 +241,6 @@ impl<const N: usize> BigInt<N> {
         const_modulo!(two_pow_n_times_64_square, self)
     }
 
-    pub(crate) fn sub_with_borrow(&mut self, other: &Self) -> bool {
-        let mut borrow = 0;
-
-        for i in 0..N {
-            borrow =
-                sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
-        }
-
-        borrow != 0
-    }
-
     pub fn div2(&mut self) {
         let mut t = 0;
         for a in self.0.iter_mut().rev() {
@@ -263,6 +252,7 @@ impl<const N: usize> BigInt<N> {
     }
 
     // TODO#q: rename to checked_add?
+    #[ark_ff_macros::unroll_for_loops(6)]
     pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
         let mut carry = 0;
 
@@ -271,6 +261,18 @@ impl<const N: usize> BigInt<N> {
         }
 
         carry != 0
+    }
+
+    #[ark_ff_macros::unroll_for_loops(6)]
+    pub(crate) fn sub_with_borrow(&mut self, other: &Self) -> bool {
+        let mut borrow = 0;
+
+        for i in 0..N {
+            borrow =
+                sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
+        }
+
+        borrow != 0
     }
 
     pub(crate) const fn ct_add_with_carry(
@@ -521,10 +523,14 @@ impl<const N: usize> Display for BigInt<N> {
 
 impl<const N: usize> Ord for BigInt<N> {
     #[inline]
+    // TODO#q: loop unroll actually faster here, and not bloat wasm
+    #[cfg_attr(
+        any(target_arch = "x86_64", target_family = "wasm"),
+        ark_ff_macros::unroll_for_loops(12)
+    )]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         use core::cmp::Ordering;
-        // TODO#q: check in benchmark for wasm
-        #[cfg(target_arch = "x86_64")]
+        #[cfg(any(target_arch = "x86_64", target_family = "wasm"))]
         for i in 0..N {
             let a = &self.0[N - i - 1];
             let b = &other.0[N - i - 1];
@@ -534,7 +540,7 @@ impl<const N: usize> Ord for BigInt<N> {
             };
         }
 
-        #[cfg(not(target_arch = "x86_64"))]
+        #[cfg(not(any(target_arch = "x86_64", target_family = "wasm")))]
         for (a, b) in self.0.iter().rev().zip(other.0.iter().rev()) {
             if let order @ (Ordering::Less | Ordering::Greater) = a.cmp(b) {
                 return order;
