@@ -299,6 +299,7 @@ impl<const N: usize> BigInt<N> {
     /// the APIs in this crate.
     ///
     /// For more info see: <https://github.com/RustCrypto/crypto-bigint/issues/4>
+    // NOTE#q: crypto_bigint
     pub const fn ct_mul_wide<const HN: usize>(
         &self,
         rhs: &BigInt<HN>,
@@ -344,6 +345,27 @@ impl<const N: usize> BigInt<N> {
         }
 
         (lo, hi)
+    }
+
+    #[inline(always)]
+    /// Computes `a + b + carry`, returning the result along with the new carry.
+    // NOTE#q: crypto_bigint
+    pub const fn ct_adc(
+        &self,
+        rhs: &BigInt<N>,
+        mut carry: Limb,
+    ) -> (Self, Limb) {
+        let mut limbs = [Limb::ZERO; N];
+        let mut i = 0;
+
+        while i < N {
+            let (w, c) = ct_adc(self.0[i], rhs.0[i], carry);
+            limbs[i] = w;
+            carry = c;
+            i += 1;
+        }
+
+        (Self(limbs), carry)
     }
 }
 
@@ -999,10 +1021,9 @@ pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
 /// Add two numbers and panic on overflow.
 #[must_use]
 pub const fn ct_add<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
-    let a = *a;
-    let (a, carry) = a.ct_add_with_carry(b);
-    assert!(carry, "overflow on addition");
-    a
+    let (low, carry) = a.ct_adc(b, Limb::ZERO);
+    assert!(carry == 0, "overflow on addition");
+    low
 }
 
 /// Computes `lhs * rhs`, returning the low and the high limbs of the result.
@@ -1017,6 +1038,7 @@ pub const fn ct_mul_wide(lhs: Limb, rhs: Limb) -> (Limb, Limb) {
 // TODO#q: merge with adc function
 /// Computes `lhs + rhs + carry`, returning the result along with the new carry
 /// (0, 1, or 2).
+// NOTE#q: crypto_bigint
 #[inline(always)]
 pub const fn ct_adc(lhs: Limb, rhs: Limb, carry: Limb) -> (Limb, Limb) {
     // We could use `Word::overflowing_add()` here analogous to
