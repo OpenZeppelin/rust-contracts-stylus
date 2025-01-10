@@ -30,7 +30,7 @@ macro_rules! adc {
     }};
 }
 
-// TODO#q: implement const_module as a function
+// TODO#q: implement const_modulo as a function
 #[macro_export]
 macro_rules! const_modulo {
     ($a:expr, $divisor:expr) => {{
