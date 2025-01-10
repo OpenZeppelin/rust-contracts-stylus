@@ -165,9 +165,11 @@ pub enum Error {
     InvalidReceiver(ERC1155InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
-    /// This error will be encoded either as `Error(string)` or
+    ///
+    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
+    /// return data, this error will be encoded either as `Error(string)` or
     /// `Panic(uint256)`, as those are the built-in errors emitted by default
-    /// by `assert`, `require`, and `revert` special functions.
+    /// by Solidity's special functions `assert`, `require`, and `revert`.
     ///
     /// See: <https://docs.soliditylang.org/en/latest/control-structures.html#error-handling-assert-require-revert-and-exceptions>
     InvalidReceiverWithReason(call::Error),
