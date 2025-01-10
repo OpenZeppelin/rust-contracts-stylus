@@ -490,7 +490,7 @@ async fn errors_when_invalid_receiver_contract_in_batch_mint(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let _err = send!(contract.mintBatch(
+    let err = send!(contract.mintBatch(
         contract_addr,
         token_ids.clone(),
         values.clone(),
@@ -910,7 +910,7 @@ async fn errors_when_invalid_receiver_contract(
         vec![0, 1, 2, 3].into()
     ))?;
 
-    let _err = send!(contract.safeTransferFrom(
+    let err = send!(contract.safeTransferFrom(
         alice_addr,
         contract_addr,
         token_id,
@@ -1317,7 +1317,7 @@ async fn errors_when_invalid_receiver_contract_in_batch_transfer(
         vec![].into()
     ));
 
-    let _err = send!(contract.safeBatchTransferFrom(
+    let err = send!(contract.safeBatchTransferFrom(
         alice_addr,
         contract_addr,
         token_ids,
