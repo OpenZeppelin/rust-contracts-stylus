@@ -818,7 +818,6 @@ mod tests {
             extensions::consecutive::{
                 ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
             },
-            tests::random_token_id,
             ERC721IncorrectOwner, ERC721InvalidApprover, ERC721InvalidReceiver,
             ERC721InvalidSender, ERC721NonexistentToken, IErc721,
         },
@@ -826,6 +825,8 @@ mod tests {
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
     const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
+
+    const TOKEN_ID: U256 = uint!(1_U256);
 
     fn init(
         contract: &mut Erc721Consecutive,
@@ -862,7 +863,7 @@ mod tests {
         assert_eq!(balance1, initial_balance + U256::from(init_tokens_count));
 
         // Check non-consecutive mint.
-        let token_id = random_token_id();
+        let token_id = 1;
         contract._mint(alice, token_id).expect("should mint a token for Alice");
         let owner = contract
             .owner_of(token_id)
@@ -879,7 +880,7 @@ mod tests {
     #[motsu::test]
     fn error_when_minting_token_id_twice(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         contract
             ._mint(alice, token_id)
             .expect("should mint the token a first time");
@@ -899,7 +900,7 @@ mod tests {
     fn error_when_minting_token_invalid_receiver(contract: Erc721Consecutive) {
         let invalid_receiver = Address::ZERO;
 
-        let token_id = random_token_id();
+        let token_id = 1;
 
         let err = contract
             ._mint(invalid_receiver, token_id)
@@ -977,7 +978,7 @@ mod tests {
         assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
 
         // Check non-consecutive mint.
-        let token_id = random_token_id();
+        let token_id = 1;
         contract._mint(alice, token_id).expect("should mint a token to Alice");
         let alice_balance = contract
             .balance_of(alice)
@@ -1025,7 +1026,7 @@ mod tests {
         ));
 
         // Check non-consecutive token burn.
-        let non_consecutive_token_id = random_token_id();
+        let non_consecutive_token_id = 1;
         contract
             ._mint(alice, non_consecutive_token_id)
             .expect("should mint a token to Alice");
@@ -1067,7 +1068,7 @@ mod tests {
     #[motsu::test]
     fn safe_transfer_from(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
         contract
@@ -1084,7 +1085,7 @@ mod tests {
     #[motsu::test]
     fn safe_transfers_from_approved_token(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         contract._mint(BOB, token_id).expect("should mint token to Bob");
         contract.erc721._token_approvals.setter(token_id).set(alice);
         contract
@@ -1101,7 +1102,7 @@ mod tests {
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
 
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
@@ -1124,7 +1125,7 @@ mod tests {
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         let err = contract
             ._safe_transfer(alice, BOB, token_id, &vec![0, 1, 2, 3].into())
             .expect_err("should not transfer a non-existent token");
@@ -1142,7 +1143,7 @@ mod tests {
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         let invalid_receiver = Address::ZERO;
 
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1167,7 +1168,7 @@ mod tests {
     #[motsu::test]
     fn safe_transfers_from_with_data(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
         contract
@@ -1191,7 +1192,7 @@ mod tests {
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         let invalid_receiver = Address::ZERO;
 
         contract._mint(alice, token_id).expect("should mint a token to Alice");
@@ -1223,7 +1224,7 @@ mod tests {
         contract: Erc721Consecutive,
     ) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
 
         contract._mint(alice, token_id).expect("should mint a token to Alice");
 
@@ -1243,7 +1244,7 @@ mod tests {
     #[motsu::test]
     fn safe_mints(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
 
         let initial_balance = contract
             .balance_of(alice)
@@ -1268,7 +1269,7 @@ mod tests {
     #[motsu::test]
     fn approves(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let token_id = random_token_id();
+        let token_id = 1;
         contract._mint(alice, token_id).expect("should mint a token");
         contract
             .approve(BOB, token_id)
@@ -1278,7 +1279,7 @@ mod tests {
 
     #[motsu::test]
     fn error_when_approve_for_nonexistent_token(contract: Erc721Consecutive) {
-        let token_id = random_token_id();
+        let token_id = 1;
         let err = contract
             .approve(BOB, token_id)
             .expect_err("should not approve for a non-existent token");
@@ -1293,7 +1294,7 @@ mod tests {
 
     #[motsu::test]
     fn error_when_approve_by_invalid_approver(contract: Erc721Consecutive) {
-        let token_id = random_token_id();
+        let token_id = 1;
         contract._mint(BOB, token_id).expect("should mint a token");
 
         let err = contract
@@ -1333,7 +1334,7 @@ mod tests {
     fn error_when_get_approved_of_nonexistent_token(
         contract: Erc721Consecutive,
     ) {
-        let token_id = random_token_id();
+        let token_id = 1;
         let err = contract
             .get_approved(token_id)
             .expect_err("should not return approved for a non-existent token");
