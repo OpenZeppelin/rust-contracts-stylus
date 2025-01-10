@@ -425,7 +425,6 @@ pub const fn ct_mac_with_carry(
 #[inline(always)]
 #[doc(hidden)]
 pub const fn widening_mul(a: u64, b: u64) -> u128 {
-    // TODO#q: check out this optimization
     #[cfg(not(target_family = "wasm"))]
     {
         a as u128 * b as u128
