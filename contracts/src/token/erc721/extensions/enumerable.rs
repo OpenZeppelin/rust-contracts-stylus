@@ -349,8 +349,6 @@ mod tests {
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
-    const TOKEN_ID: U256 = uint!(1_U256);
-
     #[motsu::test]
     fn total_supply_no_tokens(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
