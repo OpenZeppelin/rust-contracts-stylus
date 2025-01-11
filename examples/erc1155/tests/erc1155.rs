@@ -257,6 +257,218 @@ async fn errors_when_receiver_panics_in_mint(
 }
 
 #[e2e::test]
+async fn errors_when_receiver_reverts_with_reason_in_burn(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithMessage,
+    ).await?;
+
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let err = send!(contract.burn(
+        receiver_address,
+        token_id,
+        value
+    )).expect_err("should not burn when receiver errors with reason");
+
+    assert!(err.reverted_with(Erc1155::Error {
+        message: "ERC1155ReceiverMock: reverting on receive".to_string(),
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_without_reason_in_burn(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
+    ).await?;
+
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let err = send!(contract.burn(
+        receiver_address,
+        token_id,
+        value
+    )).expect_err("should not burn when receiver reverts");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_panics_in_burn(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
+            .await?;
+
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let err = send!(contract.burn(
+        receiver_address,
+        token_id,
+        value
+    )).expect_err("should not burn when receiver panics");
+
+    assert!(err.reverted_with(Erc1155::Panic {
+        code: U256::from(PanicCode::DivisionByZero as u8)
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_invalid_receiver_contract_in_burn(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let token_id = random_token_ids(1)[0];
+    let value = random_values(1)[0];
+
+    let err = send!(contract.burn(
+        contract_addr,
+        token_id,
+        value
+    )).expect_err("should not burn when invalid receiver contract");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_with_reason_in_burn_batch(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithMessage,
+    ).await?;
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let err = send!(contract.burnBatch(
+        receiver_address,
+        token_ids.clone(),
+        values.clone()
+    )).expect_err("should not burn batch when receiver errors with reason");
+
+    assert!(err.reverted_with(Erc1155::Error {
+        message: "ERC1155ReceiverMock: reverting on batch receive".to_string(),
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_without_reason_in_burn_batch(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
+    ).await?;
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let err = send!(contract.burnBatch(
+        receiver_address,
+        token_ids.clone(),
+        values.clone()
+    )).expect_err("should not burn batch when receiver reverts");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_panics_in_burn_batch(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
+            .await?;
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let err = send!(contract.burnBatch(
+        receiver_address,
+        token_ids.clone(),
+        values.clone()
+    )).expect_err("should not burn batch when receiver panics");
+
+    assert!(err.reverted_with(Erc1155::Panic {
+        code: U256::from(PanicCode::DivisionByZero as u8)
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_invalid_receiver_contract_in_burn_batch(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155::new(contract_addr, &alice.wallet);
+
+    let token_ids = random_token_ids(2);
+    let values = random_values(2);
+
+    let err = send!(contract.burnBatch(
+        contract_addr,
+        token_ids.clone(),
+        values.clone()
+    )).expect_err("should not burn batch when invalid receiver contract");
+
+    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
+        receiver: contract_addr,
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn errors_when_invalid_receiver_contract_in_mint(
     alice: Account,
 ) -> eyre::Result<()> {
