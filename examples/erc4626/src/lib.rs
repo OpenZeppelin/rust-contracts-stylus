@@ -36,7 +36,7 @@ impl Erc4626Example {
     }
 
     fn asset(&self) -> Address {
-        self.erc4626.token_address.get()
+        self.erc4626.asset()
     }
 
     fn total_assets(&self) -> U256 {

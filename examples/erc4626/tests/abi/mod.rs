@@ -15,22 +15,22 @@ sol!(
         function approve(address spender, uint256 amount) external returns (bool);
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
-        function asset() public view  returns (address asset);
-        function totalAssets() public view returns (uint256);
-        function convertToShares(uint256 assets) public view  returns (uint256);
-        function convertToAssets(uint256 shares) public view  returns (uint256);
-        function maxMint(address) public view  returns (uint256);
-        function maxDeposit(address) public view  returns (uint256);
-        function maxWithdraw(address owner) public view  returns (uint256);
-        function maxRedeem(address owner) public view  returns (uint256);
-        function previewDeposit(uint256 assets) public view  returns (uint256);
-        function previewMint(uint256 shares) public view  returns (uint256);
-        function previewRedeem(uint256 shares) public view  returns (uint256);
-        function previewWithdraw(uint256 assets) public view  returns (uint256);
-        function deposit(uint256 assets, address receiver) public  returns (uint256);
-        function mint(uint256 shares, address receiver) public  returns (uint256);
-        function redeem(uint256 shares, address receiver,address owner) public  returns (uint256);
-        function withdraw(uint256 assets, address receiver,address owner) public  returns (uint256);
+        function asset() external view  returns (address asset);
+        function totalAssets() external view returns (uint256);
+        function convertToShares(uint256 assets) external view  returns (uint256);
+        function convertToAssets(uint256 shares) external view  returns (uint256);
+        function maxMint(address) external view  returns (uint256);
+        function maxDeposit(address) external view  returns (uint256);
+        function maxWithdraw(address owner) external view  returns (uint256);
+        function maxRedeem(address owner) external view  returns (uint256);
+        function previewDeposit(uint256 assets) external view  returns (uint256);
+        function previewMint(uint256 shares) external view  returns (uint256);
+        function previewRedeem(uint256 shares) external view  returns (uint256);
+        function previewWithdraw(uint256 assets) external view  returns (uint256);
+        function deposit(uint256 assets, address receiver) external  returns (uint256);
+        function mint(uint256 shares, address receiver) external  returns (uint256);
+        function redeem(uint256 shares, address receiver,address owner) external  returns (uint256);
+        function withdraw(uint256 assets, address receiver,address owner) external  returns (uint256);
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);

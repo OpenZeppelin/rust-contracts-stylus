@@ -138,7 +138,7 @@ pub enum Error {
 #[storage]
 pub struct Erc4626 {
     /// Token Address of the vault
-    pub token_address: StorageAddress,
+    pub asset_address: StorageAddress,
 
     /// Token decimals
     pub underlying_decimals: StorageU8,
@@ -399,7 +399,7 @@ impl IERC4626 for Erc4626 {
     type Error = Error;
 
     fn asset(&self) -> Address {
-        self.token_address.get()
+        contract::address()
     }
 
     fn total_assets(&self, asset: &Erc20) -> U256 {

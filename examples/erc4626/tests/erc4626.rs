@@ -23,8 +23,8 @@ mod mock;
 
 sol!("src/constructor.sol");
 
-fn ctr(token_address: Address, name: String, symbol: String) -> constructorCall {
-    constructorCall { token_address_: token_address, name_: name, symbol_: symbol }
+fn ctr(asset_address: Address, name: String, symbol: String) -> constructorCall {
+    constructorCall { assetAddress_: asset_address, name_: name, symbol_: symbol }
 }
 
 #[e2e::test]
@@ -44,7 +44,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let asset = contract.asset().call().await?.asset;
     assert_eq!(name, VALUT_NAME.to_owned());
     assert_eq!(symbol, VALUT_SYMBOL.to_owned());
-    //assert_eq!(asset, mock_token_address);
+    assert_eq!(asset, contract_addr);
     Ok(())
 }
 
