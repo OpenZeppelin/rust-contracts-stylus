@@ -666,6 +666,7 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
 
 impl<P: FpParams<N>, const N: usize> Ord for Fp<P, N> {
     fn cmp(&self, other: &Self) -> Ordering {
+        // TODO#q: is it optimal to convert to bigint?
         self.into_bigint().cmp(&other.into_bigint())
     }
 }
