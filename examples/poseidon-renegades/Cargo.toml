@@ -1,0 +1,27 @@
+[package]
+name = "poseidon-renegades-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[dependencies]
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+renegade-crypto = { git = "https://github.com/renegade-fi/renegade.git", package = "renegade-crypto", default-features = false }
+ark-ff = { version = "0.5" }
+ark-ec = "0.5"
+ark-bn254 = "0.5.0"
+
+[dev-dependencies]
+alloy.workspace = true
+e2e.workspace = true
+tokio.workspace = true
+eyre.workspace = true
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[features]
+e2e = []
