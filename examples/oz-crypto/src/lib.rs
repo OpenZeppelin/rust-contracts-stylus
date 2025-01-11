@@ -6,7 +6,9 @@ use alloc::vec::Vec;
 use alloy_primitives::U256;
 use openzeppelin_crypto::{
     arithmetic::{BigInt, BigInteger},
-    field::{instance::FpBN256, prime::PrimeField, Field},
+    field::{
+        group::AdditiveGroup, instance::FpBN256, prime::PrimeField, Field,
+    },
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
 
@@ -29,7 +31,8 @@ impl MathExample {
         let mut res = FpBN256::ONE;
         for _ in 0..1000 {
             for input in inputs.iter() {
-                res *= input;
+                res += input;
+                res.square_in_place();
             }
         }
 
