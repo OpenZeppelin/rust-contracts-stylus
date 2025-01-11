@@ -10,6 +10,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
+ "keccak-const",
  "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
@@ -1516,6 +1517,7 @@ dependencies = [
  "koba",
  "once_cell",
  "regex",
+ "stylus-sdk",
  "tokio",
  "toml",
 ]
@@ -1733,6 +1735,7 @@ dependencies = [
  "alloy-primitives",
  "e2e",
  "eyre",
+ "keccak-const",
  "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",

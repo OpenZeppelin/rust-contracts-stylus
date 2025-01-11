@@ -2,6 +2,7 @@ use alloy::{
     sol_types::SolError,
     transports::{RpcError, TransportErrorKind},
 };
+use stylus_sdk::call::MethodError;
 
 /// Possible panic codes for a revert.
 ///
@@ -80,7 +81,7 @@ impl Panic for alloy::contract::Error {
     }
 }
 
-impl<E: SolError> Revert<E> for alloy::contract::Error {
+impl<E: MethodError> Revert<E> for alloy::contract::Error {
     fn reverted_with(&self, expected: E) -> bool {
         let Self::TransportError(e) = self else {
             return false;
@@ -90,8 +91,9 @@ impl<E: SolError> Revert<E> for alloy::contract::Error {
             .as_error_resp()
             .and_then(|payload| payload.data.clone())
             .expect("should extract the error");
+
         let actual = &raw_value.get().trim_matches('"')[2..];
-        let expected = alloy::hex::encode(expected.abi_encode());
+        let expected = alloy::hex::encode(expected.encode());
         expected == actual
     }
 }
