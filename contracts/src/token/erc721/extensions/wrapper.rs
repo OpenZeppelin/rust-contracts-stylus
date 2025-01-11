@@ -6,21 +6,29 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
-use stylus_sdk::{contract, prelude::storage, stylus_proc::SolidityError};
+use stylus_sdk::{
+    call::Call,
+    contract,
+    prelude::storage,
+    storage::{StorageAddress, TopLevelStorage},
+    stylus_proc::SolidityError,
+};
 
 use crate::token::{
     erc721,
-    erc721::{ERC721IncorrectOwner, Erc721, IErc721},
+    erc721::{ERC721IncorrectOwner, Erc721},
 };
 
 /// State of an [`Erc721Wrapper`] token.
 #[storage]
 pub struct Erc721Wrapper {
     /// Erc721 contract storage.
-    pub _underlying: Erc721,
+    pub _underlying: StorageAddress,
     /// The ERC-721 token.
     pub erc721: Erc721,
 }
+
+unsafe impl TopLevelStorage for Erc721Wrapper {}
 
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -44,8 +52,23 @@ pub enum Error {
     ERC721UnsupportedToken(ERC721UnsupportedToken),
 }
 
+pub use token::IErc721;
+mod token {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
+    use alloc::vec;
+
+    stylus_sdk::stylus_proc::sol_interface! {
+        /// Interface of the ERC-721 token.
+        interface IErc721 {
+            function ownerOf(uint256 token_id) external view returns (address);
+        }
+    }
+}
+
 impl Erc721Wrapper {
-    /// Wraps an ERC-721 token.
+    /// Allow a user to deposit underlying tokens and mint the corresponding
+    /// tokenIds.
     pub fn deposit_for(
         &mut self,
         account: Address,
@@ -56,9 +79,21 @@ impl Erc721Wrapper {
         true
     }
 
+    /// Allow a user to burn wrapped tokens and withdraw the corresponding
+    /// tokenIds of the underlying tokens.
+    pub fn withdraw_to(
+        &mut self,
+        account: Address,
+        token_ids: Vec<U256>,
+    ) -> bool {
+        let length = token_ids.len();
+
+        true
+    }
+
     /// Returns the underlying token.
-    pub fn underlying(&self) -> &Erc721 {
-        &self._underlying
+    pub fn underlying(&self) -> Address {
+        self._underlying.get()
     }
 }
 
@@ -70,7 +105,11 @@ impl Erc721Wrapper {
         account: Address,
         token_id: U256,
     ) -> Result<U256, Error> {
-        let owner = self.underlying().owner_of(token_id)?;
+        let underlying = IErc721::new(self.underlying());
+        let owner = match underlying.owner_of(Call::new_in(self), token_id) {
+            Ok(owner) => owner,
+            Err(e) => return Err(Error::Erc721(e.into())),
+        };
         if owner != contract::address() {
             return Err(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender: contract::address(),
@@ -82,4 +121,13 @@ impl Erc721Wrapper {
         self.erc721._safe_mint(account, token_id, &vec![].into())?;
         Ok(token_id)
     }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use alloy_primitives::{address, uint, Address, U256};
+    use stylus_sdk::msg;
+
+    #[motsu::test]
+    fn recover(contract: Erc721Wrapper) {}
 }
