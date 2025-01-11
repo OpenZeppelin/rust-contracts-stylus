@@ -15,14 +15,14 @@ use crate::{
 
 sol!(
     #[sol(rpc)]
-   contract PoseidonExample {
+   contract MathExample {
         #[derive(Debug)]
-        function hash(uint256[2] memory inputs) external view returns (uint256 hash);
+        function compute(uint256[2] memory inputs) external view returns (uint256 hash);
     }
 );
 
 pub async fn bench() -> eyre::Result<ContractReport> {
-    ContractReport::generate("renegades::Poseidon", run).await
+    ContractReport::generate("ark_ff::MathExample", run).await
 }
 
 pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
@@ -35,11 +35,11 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 
     let contract_addr = deploy(&alice, cache_opt).await?;
 
-    let contract = PoseidonExample::new(contract_addr, &alice_wallet);
+    let contract = MathExample::new(contract_addr, &alice_wallet);
 
     #[rustfmt::skip]
     let receipts = vec![
-        (PoseidonExample::hashCall::SIGNATURE, receipt!(contract.hash([uint!(123_U256), uint!(123456_U256)]))?),
+        (MathExample::computeCall::SIGNATURE, receipt!(contract.compute([uint!(123456_U256), uint!(123456789_U256)]))?),
     ];
 
     receipts
@@ -49,5 +49,5 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 }
 
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    crate::deploy(account, "poseidon-renegades", None, cache_opt).await
+    crate::deploy(account, "ark-ff", None, cache_opt).await
 }

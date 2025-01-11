@@ -111,57 +111,17 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// `Self::MODULUS` has (a) a non-zero MSB, and (b) at least one
     /// zero bit in the rest of the modulus.
     #[ark_ff_macros::unroll_for_loops(6)]
+    #[inline(always)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        // No-carry optimisation applied to CIOS
-        // NOTE#q: seems no carry optimization doesn't improve poseidon
-        //  performance
-        if Self::CAN_USE_NO_CARRY_MUL_OPT {
-            let mut r = [0u64; N];
+        // Alternative implementation
+        // Implements CIOS.
+        let (carry, res) = a.mul_without_cond_subtract(b);
+        *a = res;
 
-            for i in 0..N {
-                let mut carry1 = 0u64;
-                r[0] =
-                    arithmetic::mac(r[0], (a.0).0[0], (b.0).0[i], &mut carry1);
-
-                let k = r[0].wrapping_mul(Self::INV);
-
-                let mut carry2 = 0u64;
-                arithmetic::mac_discard(
-                    r[0],
-                    k,
-                    Self::MODULUS.0[0],
-                    &mut carry2,
-                );
-
-                for j in 1..N {
-                    r[j] = arithmetic::mac_with_carry(
-                        r[j],
-                        (a.0).0[j],
-                        (b.0).0[i],
-                        &mut carry1,
-                    );
-                    r[j - 1] = arithmetic::mac_with_carry(
-                        r[j],
-                        k,
-                        Self::MODULUS.0[j],
-                        &mut carry2,
-                    );
-                }
-                r[N - 1] = carry1 + carry2;
-            }
-            (a.0).0.copy_from_slice(&r);
-            a.subtract_modulus();
+        if Self::MODULUS_HAS_SPARE_BIT {
+            a.subtract_modulus_with_carry(carry);
         } else {
-            // Alternative implementation
-            // Implements CIOS.
-            let (carry, res) = a.mul_without_cond_subtract(b);
-            *a = res;
-
-            if Self::MODULUS_HAS_SPARE_BIT {
-                a.subtract_modulus_with_carry(carry);
-            } else {
-                a.subtract_modulus();
-            }
+            a.subtract_modulus();
         }
     }
 
@@ -556,6 +516,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     #[ark_ff_macros::unroll_for_loops(6)]
+    #[inline(always)]
     fn mul_without_cond_subtract(mut self, other: &Self) -> (bool, Self) {
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
         for i in 0..N {

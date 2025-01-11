@@ -304,11 +304,11 @@ pub type FpBN256 = Fp256<MontBackend<FqConfig, 4>>;
 
 #[entrypoint]
 #[storage]
-struct PoseidonExample {}
+struct MathExample {}
 
 #[public]
-impl PoseidonExample {
-    pub fn hash(&mut self, inputs: [U256; 2]) -> Result<U256, Vec<u8>> {
+impl MathExample {
+    pub fn compute(&mut self, inputs: [U256; 2]) -> Result<U256, Vec<u8>> {
         let inputs: Vec<_> = inputs
             .iter()
             .map(|input| {
@@ -320,7 +320,6 @@ impl PoseidonExample {
         for _ in 0..1000 {
             for input in inputs.iter() {
                 res *= input;
-                res.square_in_place();
             }
         }
 

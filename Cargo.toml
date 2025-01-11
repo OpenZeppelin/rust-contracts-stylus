@@ -25,8 +25,8 @@ members = [
   "examples/ownable-two-step",
   "examples/safe-erc20",
   "benches",
-  "examples/poseidon",
-  "examples/poseidon-renegades"
+  "examples/oz-crypto",
+  "examples/ark-ff"
 ]
 default-members = [
   "contracts",
@@ -51,8 +51,8 @@ default-members = [
   "examples/access-control",
   "examples/basic/token",
   "examples/ecdsa",
-  "examples/poseidon",
-  "examples/poseidon-renegades"
+  "examples/oz-crypto",
+  "examples/ark-ff"
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages

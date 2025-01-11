@@ -809,6 +809,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-ff-example"
+version = "0.2.0-alpha.2"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "ark-bn254",
+ "ark-ec",
+ "ark-ff 0.5.0",
+ "e2e",
+ "eyre",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "ark-ff-macros"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2944,6 +2959,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
+name = "oz-crypto-example"
+version = "0.2.0-alpha.2"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-crypto",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "parity-scale-codec"
 version = "3.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3071,34 +3099,6 @@ name = "pkg-config"
 version = "0.3.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
-
-[[package]]
-name = "poseidon-example"
-version = "0.2.0-alpha.2"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-crypto",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "poseidon-renegades-example"
-version = "0.2.0-alpha.2"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "ark-bn254",
- "ark-ec",
- "ark-ff 0.5.0",
- "e2e",
- "eyre",
- "stylus-sdk",
- "tokio",
-]
 
 [[package]]
 name = "ppv-lite86"
