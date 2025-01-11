@@ -1363,7 +1363,8 @@ async fn safe_mint_to_valid_address_with_data(
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let receipt = receipt!(contract.safeMint(alice_addr, token_id, data.clone()))?;
+    let receipt =
+        receipt!(contract.safeMint(alice_addr, token_id, data.clone()))?;
 
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
@@ -1386,7 +1387,7 @@ async fn safe_mint_to_valid_address_with_data(
 #[e2e::test]
 async fn safe_mint_to_receiver_contract_with_blank_data(
     alice: Account,
-) -> eyre::Result<()>{
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -1397,7 +1398,8 @@ async fn safe_mint_to_receiver_contract_with_blank_data(
     let token_id = random_token_id();
     let data: Bytes = Bytes::new();
 
-    let receipt = receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
+    let receipt =
+        receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
 
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
@@ -1433,7 +1435,8 @@ async fn safe_mint_to_receiver_contract_with_data(
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let receipt = receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
+    let receipt =
+        receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
 
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
@@ -1458,20 +1461,18 @@ async fn safe_mint_to_receiver_contract_with_data(
 #[e2e::test]
 async fn error_when_safe_mint_to_contract_without_receiver_interface_with_data(
     alice: Account,
-    non_receiver_contract: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let non_receiver_address = non_receiver_contract.address();
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(non_receiver_address, token_id, data.clone()))
-    .expect_err("should not transfer the token to invalid receiver");
+    let err = send!(contract.safeMint(contract_addr, token_id, data.clone()))
+        .expect_err("should not transfer the token to invalid receiver");
 
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
-        receiver: non_receiver_address
+        receiver: contract_addr
     }));
 
     Ok(())
@@ -1487,12 +1488,15 @@ async fn error_when_safe_mint_to_invalid_sender_with_data(
 
     let invalid_sender = Address::ZERO;
     let token_id = random_token_id();
+
     let data: Bytes = fixed_bytes!("deadbeef").into();
     _ = watch!(contract.mint(alice.address(), token_id))?;
+
     let err = send!(contract.safeMint(bob.address(), token_id, data.clone()))
         .expect_err("should not mint with an invalid sender");
 
-    assert!(err.reverted_with(Erc721::ERC721InvalidSender { sender: invalid_sender }));
+    assert!(err
+        .reverted_with(Erc721::ERC721InvalidSender { sender: invalid_sender }));
 
     Ok(())
 }
@@ -1513,8 +1517,9 @@ async fn error_when_receiver_reverts_with_reason_on_safe_mint_with_data(
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(receiver_address, token_id, data.clone()))
-        .expect_err("should not mint when receiver errors with reason");
+    let err =
+        send!(contract.safeMint(receiver_address, token_id, data.clone()))
+            .expect_err("should not mint when receiver errors with reason");
 
     assert!(err.reverted_with(Erc721::Error {
         message: "ERC721ReceiverMock: reverting".to_string()
@@ -1539,8 +1544,9 @@ async fn error_when_receiver_reverts_without_reason_on_safe_mint_with_data(
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(receiver_address, token_id, data.clone()))
-        .expect_err("should not mint when receiver reverts without reason");
+    let err =
+        send!(contract.safeMint(receiver_address, token_id, data.clone()))
+            .expect_err("should not mint when receiver reverts without reason");
 
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
         receiver: receiver_address
@@ -1556,17 +1562,16 @@ async fn error_when_receiver_panics_on_safe_mint_with_data(
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC721ReceiverMock::RevertType::Panic,
-    )
-    .await?;
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::Panic)
+            .await?;
 
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(receiver_address, token_id, data.clone()))
-        .expect_err("should not mint when receiver panics");
+    let err =
+        send!(contract.safeMint(receiver_address, token_id, data.clone()))
+            .expect_err("should not mint when receiver panics");
 
     assert!(err.reverted_with(Erc721::Panic {
         code: U256::from(PanicCode::DivisionByZero as u8)
@@ -1853,8 +1858,12 @@ async fn error_when_safe_mint_in_paused_state(
 
     let _ = watch!(contract.pause());
 
-    let err = send!(contract.safeMint(alice_addr, token_id ,fixed_bytes!("deadbeef").into()))
-        .expect_err("should return `EnforcedPause`");
+    let err = send!(contract.safeMint(
+        alice_addr,
+        token_id,
+        fixed_bytes!("deadbeef").into()
+    ))
+    .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc721::EnforcedPause {}));
 
     let err = contract
@@ -1874,7 +1883,6 @@ async fn error_when_safe_mint_in_paused_state(
 
     Ok(())
 }
-
 
 // ============================================================================
 // Integration Tests: ERC-721 Burnable Extension
