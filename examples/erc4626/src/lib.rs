@@ -25,7 +25,7 @@ struct Erc4626Example {
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata)]
+#[inherit(Erc20)]
 impl Erc4626Example {
     fn name(&self) -> String {
         self.metadata.name()
@@ -35,16 +35,16 @@ impl Erc4626Example {
         self.metadata.symbol()
     }
 
+    fn asset(&self) -> Address {
+        self.erc4626.token_address.get()
+    }
+
     fn total_assets(&self) -> U256 {
         self.erc4626.total_assets(&self.erc20)
     }
 
     fn convert_to_shares(&mut self, assets: U256) -> U256 {
         self.erc4626.convert_to_shares(assets, &mut self.erc20)
-    }
-
-    fn asset(&self) -> Address {
-        self.erc4626.asset()
     }
 
     fn convert_to_assets(&mut self, shares: U256) -> U256 {
