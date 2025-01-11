@@ -2,7 +2,7 @@ use core::ops::{Index, IndexMut};
 
 #[macro_export]
 macro_rules! const_for {
-    (($i:ident in $start:tt..$end:tt)  $code:expr ) => {{
+    (($i:ident in $start:tt..$end:tt) $code:expr ) => {{
         let mut $i = $start;
         while $i < $end {
             $code
@@ -10,53 +10,31 @@ macro_rules! const_for {
         }
     }};
 }
+
 #[macro_export]
 macro_rules! unroll6_for {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
-            if $i < $end {
-                $code
-            } else {
-                break;
-            }
-            $i += 1;
-
-            if $i < $end {
-                $code
-            } else {
-                break;
-            }
-            $i += 1;
-
-            if $i < $end {
-                $code
-            } else {
-                break;
-            }
-            $i += 1;
-
-            if $i < $end {
-                $code
-            } else {
-                break;
-            }
-            $i += 1;
-
-            if $i < $end {
-                $code
-            } else {
-                break;
-            }
-            $i += 1;
-
-            if $i < $end {
-                $code
-            } else {
-                break;
-            }
-            $i += 1;
+            $crate::cycle!($i, $end, $code);
+            $crate::cycle!($i, $end, $code);
+            $crate::cycle!($i, $end, $code);
+            $crate::cycle!($i, $end, $code);
+            $crate::cycle!($i, $end, $code);
+            $crate::cycle!($i, $end, $code);
         }
+    }};
+}
+
+#[macro_export]
+macro_rules! cycle {
+    ($i:ident, $end:tt, $code:expr) => {{
+        if $i < $end {
+            $code
+        } else {
+            break;
+        }
+        $i += 1;
     }};
 }
 
