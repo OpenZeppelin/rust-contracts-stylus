@@ -64,6 +64,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     const R2: BigInt<N> = Self::MODULUS.montgomery_r2();
 
     /// Set `a += b`.
+    #[inline(always)]
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // This cannot exceed the backing capacity.
         let c = a.0.add_with_carry(&b.0);
@@ -76,6 +77,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     }
 
     /// Set `a -= b`.
+    #[inline(always)]
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // If `other` is larger than `self`, add the modulus to self first.
         if b.0 > a.0 {
@@ -85,6 +87,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     }
 
     /// Set `a = a + a`.
+    #[inline(always)]
     fn double_in_place(a: &mut Fp<Self, N>) {
         // This cannot exceed the backing capacity.
         let c = a.0.mul2();
@@ -97,6 +100,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     }
 
     /// Set `a = -a`;
+    #[inline(always)]
     fn neg_in_place(a: &mut Fp<Self, N>) {
         if !a.is_zero() {
             let mut tmp = Self::MODULUS;
@@ -134,6 +138,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Compute `a^{-1}` if `a` is not zero.
     #[must_use]
+    #[inline(always)]
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
         if a.is_zero() {
             return None;
@@ -143,7 +148,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         // to Cryptography
         // Algorithm 16 (BEA for Inversion in Fp)
 
-        let one = BigInt::from(1u64);
+        let one = BigInt::ONE;
 
         let mut u = a.0;
         let mut v = Self::MODULUS;
@@ -151,6 +156,8 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let mut c = Fp::zero();
 
         while u != one && v != one {
+            // TODO#q: why code here duplicated?
+            // TODO#q: Inverse consumes incredible ammount of gas
             while u.is_even() {
                 u.div2();
 
@@ -216,6 +223,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     // TODO#q: almost zero advantage of this loop unroll, and it bloats binary
     //  size by 0.3kb
     #[ark_ff_macros::unroll_for_loops(6)]
+    #[inline(always)]
     fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
         let mut r = (a.0).0;
         // Montgomery Reduction
@@ -344,19 +352,19 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// Unlike [`Self::new`], this method does not perform Montgomery reduction.
     /// This method should be used only when constructing an element from an
     /// integer that has already been put in Montgomery form.
-    #[inline]
     #[must_use]
+    #[inline(always)]
     pub const fn new_unchecked(element: BigInt<N>) -> Self {
         Self(element, PhantomData)
     }
 
     #[doc(hidden)]
-    #[inline]
+    #[inline(always)]
     pub fn is_geq_modulus(&self) -> bool {
         self.0 >= P::MODULUS
     }
 
-    #[inline]
+    #[inline(always)]
     fn subtract_modulus(&mut self) {
         if self.is_geq_modulus() {
             self.0.sub_with_borrow(&Self::MODULUS);
@@ -410,7 +418,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         self.0.const_is_zero()
     }
 
-    #[inline]
+    #[inline(always)]
     fn subtract_modulus_with_carry(&mut self, carry: bool) {
         if carry || self.is_geq_modulus() {
             self.0.sub_with_borrow(&Self::MODULUS);
@@ -652,6 +660,7 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
         P::from_bigint(repr).unwrap()
     }
 
+    #[inline]
     fn into_bigint(self) -> BigInt<N> {
         P::into_bigint(self)
     }

@@ -32,7 +32,13 @@ impl MathExample {
         for _ in 0..1000 {
             for input in inputs.iter() {
                 res += input;
-                res.square_in_place();
+                // res.inverse();
+                // res += input;
+                // res.inverse();
+                // res.double_in_place();
+                // res.inverse();
+                // res.double_in_place();
+                // res.inverse();
             }
         }
 

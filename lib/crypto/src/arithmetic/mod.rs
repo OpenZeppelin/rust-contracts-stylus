@@ -255,6 +255,7 @@ impl<const N: usize> BigInt<N> {
     }
 
     // TODO#q: rename to checked_add?
+    #[inline(always)]
     #[ark_ff_macros::unroll_for_loops(6)]
     pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
         let mut carry = false;
@@ -266,6 +267,7 @@ impl<const N: usize> BigInt<N> {
         carry
     }
 
+    #[inline(always)]
     #[ark_ff_macros::unroll_for_loops(6)]
     pub(crate) fn sub_with_borrow(&mut self, other: &Self) -> bool {
         let mut borrow = false;
