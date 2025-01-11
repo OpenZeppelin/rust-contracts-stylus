@@ -531,7 +531,6 @@ impl<const N: usize> Ord for BigInt<N> {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         use core::cmp::Ordering;
-        // #[cfg(any(target_arch = "x86_64", target_family = "wasm"))]
         unroll6_for!((i in 0..N) {
             let a = &self.0[N - i - 1];
             let b = &other.0[N - i - 1];
@@ -541,14 +540,6 @@ impl<const N: usize> Ord for BigInt<N> {
             };
         });
 
-        // TODO#q: loop unroll actually faster here, and not bloat wasm
-        //  remove it
-        // #[cfg(not(any(target_arch = "x86_64", target_family = "wasm")))]
-        // for (a, b) in self.0.iter().rev().zip(other.0.iter().rev()) {
-        //     if let order @ (Ordering::Less | Ordering::Greater) = a.cmp(b) {
-        //         return order;
-        //     }
-        // }
         Ordering::Equal
     }
 }
