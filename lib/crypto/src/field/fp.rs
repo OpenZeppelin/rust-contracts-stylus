@@ -30,7 +30,7 @@ use crate::{
     arithmetic::{BigInt, BigInteger, Limb},
     const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
-    mac, mac_with_carry,
+    mac, mac_with_carry, unroll6_for,
 };
 
 /// A trait that specifies the configuration of a prime field.
@@ -115,7 +115,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// [here](https://hackmd.io/@gnark/modular_multiplication) if
     /// `Self::MODULUS` has (a) a non-zero MSB, and (b) at least one
     /// zero bit in the rest of the modulus.
-    #[ark_ff_macros::unroll_for_loops(6)]
     #[inline(always)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // Alternative implementation
@@ -222,7 +221,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     #[must_use]
     // TODO#q: almost zero advantage of this loop unroll, and it bloats binary
     //  size by 0.3kb
-    #[ark_ff_macros::unroll_for_loops(6)]
     #[inline(always)]
     fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
         let mut r = (a.0).0;
@@ -232,14 +230,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
             let mut carry = 0;
 
             arithmetic::mac_with_carry(r[i], k, Self::MODULUS.0[0], &mut carry);
-            for j in 1..N {
+            unroll6_for!((j in 1..N) {
                 r[(j + i) % N] = arithmetic::mac_with_carry(
                     r[(j + i) % N],
                     k,
                     Self::MODULUS.0[j],
                     &mut carry,
                 );
-            }
+            });
             r[i % N] = carry;
         }
 
@@ -465,13 +463,12 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         (carry2 != 0, self)
     }
 
-    #[ark_ff_macros::unroll_for_loops(6)]
     #[inline(always)]
     fn mul_without_cond_subtract(mut self, other: &Self) -> (bool, Self) {
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
-        for i in 0..N {
+        unroll6_for!((i in 0..N) {
             let mut carry = 0;
-            for j in 0..N {
+            unroll6_for!((j in 0..N) {
                 let k = i + j;
                 if k >= N {
                     hi[k - N] = mac_with_carry!(
@@ -488,16 +485,16 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
                         &mut carry
                     );
                 }
-            }
+            });
             hi[i] = carry;
-        }
+        });
         // Montgomery reduction
         let mut carry2 = 0;
-        for i in 0..N {
+        unroll6_for!((i in 0..N) {
             let tmp = lo[i].wrapping_mul(P::INV);
             let mut carry;
             mac!(lo[i], tmp, P::MODULUS.0[0], &mut carry);
-            for j in 1..N {
+            unroll6_for!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
                     hi[k - N] = mac_with_carry!(
@@ -514,13 +511,13 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
                         &mut carry
                     );
                 }
-            }
+            });
             hi[i] = adc!(hi[i], carry, &mut carry2);
-        }
+        });
 
-        for i in 0..N {
+        unroll6_for!((i in 0..N) {
             (self.0).0[i] = hi[i];
-        }
+        });
         (carry2 != 0, self)
     }
 

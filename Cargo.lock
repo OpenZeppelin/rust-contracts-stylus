@@ -2980,7 +2980,6 @@ dependencies = [
 name = "openzeppelin-crypto"
 version = "0.2.0-alpha.2"
 dependencies = [
- "ark-ff-macros 0.5.0",
  "educe",
  "hex-literal",
  "num-bigint",

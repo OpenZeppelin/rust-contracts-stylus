@@ -10,6 +10,55 @@ macro_rules! const_for {
         }
     }};
 }
+#[macro_export]
+macro_rules! unroll6_for {
+    (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
+        let mut $i = $start;
+        loop {
+            if $i < $end {
+                $code
+            } else {
+                break;
+            }
+            $i += 1;
+
+            if $i < $end {
+                $code
+            } else {
+                break;
+            }
+            $i += 1;
+
+            if $i < $end {
+                $code
+            } else {
+                break;
+            }
+            $i += 1;
+
+            if $i < $end {
+                $code
+            } else {
+                break;
+            }
+            $i += 1;
+
+            if $i < $end {
+                $code
+            } else {
+                break;
+            }
+            $i += 1;
+
+            if $i < $end {
+                $code
+            } else {
+                break;
+            }
+            $i += 1;
+        }
+    }};
+}
 
 #[macro_export]
 macro_rules! sbb {

@@ -15,7 +15,6 @@ zeroize.workspace = true
 educe.workspace = true
 hex-literal.workspace = true
 num-bigint.workspace = true
-ark-ff-macros = "0.5.0"
 
 [dev-dependencies]
 rand.workspace = true

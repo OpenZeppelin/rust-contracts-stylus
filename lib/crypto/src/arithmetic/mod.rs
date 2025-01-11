@@ -18,7 +18,9 @@ use num_traits::{ConstZero, Zero};
 // };
 use zeroize::Zeroize;
 
-use crate::{adc, bits::BitIteratorBE, const_for, const_modulo, sbb};
+use crate::{
+    adc, bits::BitIteratorBE, const_for, const_modulo, sbb, unroll6_for,
+};
 
 pub type Limb = u64;
 pub type WideLimb = u128;
@@ -256,26 +258,24 @@ impl<const N: usize> BigInt<N> {
 
     // TODO#q: rename to checked_add?
     #[inline(always)]
-    #[ark_ff_macros::unroll_for_loops(6)]
     pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
         let mut carry = false;
 
-        for i in 0..N {
+        unroll6_for!((i in 0..N) {
             carry = adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
-        }
+        });
 
         carry
     }
 
     #[inline(always)]
-    #[ark_ff_macros::unroll_for_loops(6)]
     pub(crate) fn sub_with_borrow(&mut self, other: &Self) -> bool {
         let mut borrow = false;
 
-        for i in 0..N {
+        unroll6_for!((i in 0..N) {
             borrow =
                 sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
-        }
+        });
 
         borrow
     }
@@ -529,30 +529,26 @@ impl<const N: usize> Display for BigInt<N> {
 
 impl<const N: usize> Ord for BigInt<N> {
     #[inline]
-    #[cfg_attr(
-        any(target_arch = "x86_64", target_family = "wasm"),
-        ark_ff_macros::unroll_for_loops(12)
-    )]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         use core::cmp::Ordering;
-        #[cfg(any(target_arch = "x86_64", target_family = "wasm"))]
-        for i in 0..N {
+        // #[cfg(any(target_arch = "x86_64", target_family = "wasm"))]
+        unroll6_for!((i in 0..N) {
             let a = &self.0[N - i - 1];
             let b = &other.0[N - i - 1];
             match a.cmp(b) {
                 Ordering::Equal => {}
                 order => return order,
             };
-        }
+        });
 
         // TODO#q: loop unroll actually faster here, and not bloat wasm
         //  remove it
-        #[cfg(not(any(target_arch = "x86_64", target_family = "wasm")))]
-        for (a, b) in self.0.iter().rev().zip(other.0.iter().rev()) {
-            if let order @ (Ordering::Less | Ordering::Greater) = a.cmp(b) {
-                return order;
-            }
-        }
+        // #[cfg(not(any(target_arch = "x86_64", target_family = "wasm")))]
+        // for (a, b) in self.0.iter().rev().zip(other.0.iter().rev()) {
+        //     if let order @ (Ordering::Less | Ordering::Greater) = a.cmp(b) {
+        //         return order;
+        //     }
+        // }
         Ordering::Equal
     }
 }
