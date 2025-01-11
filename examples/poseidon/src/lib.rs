@@ -7,6 +7,7 @@ use alloy_primitives::U256;
 use openzeppelin_crypto::{
     arithmetic::{BigInt, BigInteger},
     field::{instance::FpBN256, prime::PrimeField},
+    poseidon2::{instance::bn256::BN256Params, Poseidon2},
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
 
@@ -17,24 +18,18 @@ struct PoseidonExample {}
 #[public]
 impl PoseidonExample {
     pub fn hash(&mut self, inputs: [U256; 2]) -> Result<U256, Vec<u8>> {
-        let inputs: Vec<_> = inputs
-            .iter()
-            .map(|input| {
-                FpBN256::from_bigint(BigInt::from_bytes_le(
-                    &input.to_le_bytes_vec(),
-                ))
-            })
-            .collect();
+        let mut hasher = Poseidon2::<BN256Params, FpBN256>::new();
 
-        let mut res = FpBN256::ONE;
-        for _ in 0..1000 {
-            for input in inputs.iter() {
-                res *= input
-            }
+        for input in inputs.iter() {
+            let fp = FpBN256::from_bigint(BigInt::from_bytes_le(
+                &input.to_le_bytes_vec(),
+            ));
+            hasher.absorb(&fp);
         }
 
-        let res = res.into_bigint().into_bytes_le();
+        let hash = hasher.squeeze();
+        let hash = hash.into_bigint().into_bytes_le();
 
-        Ok(U256::from_le_slice(&res))
+        Ok(U256::from_le_slice(&hash))
     }
 }
