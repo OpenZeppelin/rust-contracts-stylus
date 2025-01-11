@@ -1353,7 +1353,7 @@ async fn is_approved_for_all_invalid_operator(
 }
 
 #[e2e::test]
-async fn safe_mint_to_valid_address(
+async fn safe_mint_to_valid_address_with_data(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -1361,8 +1361,9 @@ async fn safe_mint_to_valid_address(
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let receipt = receipt!(contract.safeMint(alice_addr, token_id))?;
+    let receipt = receipt!(contract.safeMint(alice_addr, token_id, data.clone()))?;
 
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
@@ -1383,9 +1384,9 @@ async fn safe_mint_to_valid_address(
 }
 
 #[e2e::test]
-async fn safe_mint_to_receiver_contract(
+async fn safe_mint_to_receiver_contract_with_blank_data(
     alice: Account,
-) -> eyre::Result<()> {
+) -> eyre::Result<()>{
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -1394,8 +1395,9 @@ async fn safe_mint_to_receiver_contract(
             .await?;
 
     let token_id = random_token_id();
+    let data: Bytes = Bytes::new();
 
-    let receipt = receipt!(contract.safeMint(receiver_address, token_id))?;
+    let receipt = receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
 
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
@@ -1407,7 +1409,7 @@ async fn safe_mint_to_receiver_contract(
         operator: alice.address(),
         from: Address::ZERO,
         tokenId: token_id,
-        data: fixed_bytes!("").into(),
+        data,
     }));
 
     let Erc721::ownerOfReturn { ownerOf } =
@@ -1418,7 +1420,43 @@ async fn safe_mint_to_receiver_contract(
 }
 
 #[e2e::test]
-async fn error_when_safe_mint_to_contract_without_receiver_interface(
+async fn safe_mint_to_receiver_contract_with_data(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
+            .await?;
+
+    let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
+
+    let receipt = receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
+
+    assert!(receipt.emits(Erc721::Transfer {
+        from: Address::ZERO,
+        to: receiver_address,
+        tokenId: token_id,
+    }));
+
+    assert!(receipt.emits(ERC721ReceiverMock::Received {
+        operator: alice.address(),
+        from: Address::ZERO,
+        tokenId: token_id,
+        data,
+    }));
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(receiver_address, ownerOf);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_safe_mint_to_contract_without_receiver_interface_with_data(
     alice: Account,
     non_receiver_contract: Account,
 ) -> eyre::Result<()> {
@@ -1427,9 +1465,10 @@ async fn error_when_safe_mint_to_contract_without_receiver_interface(
 
     let non_receiver_address = non_receiver_contract.address();
     let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(non_receiver_address, token_id))
-        .expect_err("should not mint token to a contract without ERC721Receiver interface");
+    let err = send!(contract.safeMint(non_receiver_address, token_id, data.clone()))
+    .expect_err("should not transfer the token to invalid receiver");
 
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
         receiver: non_receiver_address
@@ -1439,16 +1478,18 @@ async fn error_when_safe_mint_to_contract_without_receiver_interface(
 }
 
 #[e2e::test]
-async fn error_when_safe_mint_to_invalid_sender(
+async fn error_when_safe_mint_to_invalid_sender_with_data(
     alice: Account,
+    bob: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let invalid_sender = Address::ZERO;
     let token_id = random_token_id();
-
-    let err = send!(contract.safeMint(invalid_sender, token_id))
+    let data: Bytes = fixed_bytes!("deadbeef").into();
+    _ = watch!(contract.mint(alice.address(), token_id))?;
+    let err = send!(contract.safeMint(bob.address(), token_id, data.clone()))
         .expect_err("should not mint with an invalid sender");
 
     assert!(err.reverted_with(Erc721::ERC721InvalidSender { sender: invalid_sender }));
@@ -1457,7 +1498,7 @@ async fn error_when_safe_mint_to_invalid_sender(
 }
 
 #[e2e::test]
-async fn errors_when_receiver_reverts_with_reason_on_safe_mint(
+async fn error_when_receiver_reverts_with_reason_on_safe_mint_with_data(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -1469,10 +1510,10 @@ async fn errors_when_receiver_reverts_with_reason_on_safe_mint(
     )
     .await?;
 
-    let alice_addr = alice.address();
     let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(receiver_address, token_id))
+    let err = send!(contract.safeMint(receiver_address, token_id, data.clone()))
         .expect_err("should not mint when receiver errors with reason");
 
     assert!(err.reverted_with(Erc721::Error {
@@ -1483,7 +1524,7 @@ async fn errors_when_receiver_reverts_with_reason_on_safe_mint(
 }
 
 #[e2e::test]
-async fn errors_when_receiver_reverts_without_reason_on_safe_mint(
+async fn error_when_receiver_reverts_without_reason_on_safe_mint_with_data(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -1495,10 +1536,10 @@ async fn errors_when_receiver_reverts_without_reason_on_safe_mint(
     )
     .await?;
 
-    let alice_addr = alice.address();
     let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(receiver_address, token_id))
+    let err = send!(contract.safeMint(receiver_address, token_id, data.clone()))
         .expect_err("should not mint when receiver reverts without reason");
 
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
@@ -1509,7 +1550,7 @@ async fn errors_when_receiver_reverts_without_reason_on_safe_mint(
 }
 
 #[e2e::test]
-async fn errors_when_receiver_panics_on_safe_mint(
+async fn error_when_receiver_panics_on_safe_mint_with_data(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -1521,10 +1562,10 @@ async fn errors_when_receiver_panics_on_safe_mint(
     )
     .await?;
 
-    let alice_addr = alice.address();
     let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let err = send!(contract.safeMint(receiver_address, token_id))
+    let err = send!(contract.safeMint(receiver_address, token_id, data.clone()))
         .expect_err("should not mint when receiver panics");
 
     assert!(err.reverted_with(Erc721::Panic {
@@ -1812,7 +1853,7 @@ async fn error_when_safe_mint_in_paused_state(
 
     let _ = watch!(contract.pause());
 
-    let err = send!(contract.safeMint(alice_addr, token_id))
+    let err = send!(contract.safeMint(alice_addr, token_id ,fixed_bytes!("deadbeef").into()))
         .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc721::EnforcedPause {}));
 
