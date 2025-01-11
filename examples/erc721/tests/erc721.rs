@@ -2,7 +2,9 @@
 
 use abi::Erc721;
 use alloy::primitives::{fixed_bytes, uint, Address, Bytes, U256};
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{
+    receipt, send, watch, Account, EventExt, PanicCode, ReceiptExt, Revert,
+};
 use mock::{receiver, receiver::ERC721ReceiverMock};
 
 mod abi;
@@ -298,6 +300,7 @@ async fn error_when_transfer_to_invalid_receiver(
     let err =
         send!(contract.transferFrom(alice_addr, invalid_receiver, token_id))
             .expect_err("should not transfer the token to invalid receiver");
+
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
         receiver: invalid_receiver
     }));
@@ -1076,10 +1079,7 @@ async fn error_when_safe_transfer_with_data_nonexistent_token(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_reverts_with_reason(
     alice: Account,
 ) -> eyre::Result<()> {
@@ -1097,16 +1097,17 @@ async fn errors_when_receiver_reverts_with_reason(
 
     let _ = watch!(contract.mint(alice_addr, token_id))?;
 
-    let _err = send!(contract.safeTransferFrom_0(
+    let err = send!(contract.safeTransferFrom_0(
         alice_addr,
         receiver_address,
         token_id
     ))
     .expect_err("should not transfer when receiver errors with reason");
 
-    // assert!(err.reverted_with(stylus_sdk::call::Error::Revert(
-    //     b"ERC721ReceiverMock: reverting".to_vec()
-    // )));
+    assert!(err.reverted_with(Erc721::Error {
+        message: "ERC721ReceiverMock: reverting".to_string()
+    }));
+
     Ok(())
 }
 
@@ -1142,10 +1143,7 @@ async fn errors_when_receiver_reverts_without_reason(
     Ok(())
 }
 
-// FIXME: Update our `reverted_with` implementation such that we can also check
-// when the error is a `stylus_sdk::call::Error`.
 #[e2e::test]
-#[ignore]
 async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
@@ -1166,8 +1164,8 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     ))
     .expect_err("should not transfer when receiver panics");
 
-    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
-        receiver: receiver_address
+    assert!(err.reverted_with(Erc721::Panic {
+        code: U256::from(PanicCode::DivisionByZero as u8)
     }));
 
     Ok(())

@@ -120,8 +120,6 @@ pub fn recover(
 ///
 /// # Errors
 ///
-/// * If the `s` value is grater than `EIP2_VALUE`, then the error
-///   [`Error::ECDSAInvalidSignatureS`] is returned.
 /// * If the recovered address is `Address::ZERO`, then the error
 ///   [`Error::InvalidSignature`] is returned.
 ///
@@ -196,8 +194,8 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 ///
 /// # Errors
 ///
-/// * If the `s` value is grater than `EIP2_VALUE`, then the error
-///   [`Error::ECDSAInvalidSignatureS`] is returned.
+/// * If the `s` value is grater than [`SIGNATURE_S_UPPER_BOUND`], then the
+///   error [`Error::InvalidSignatureS`] is returned.
 ///
 /// [Ethereum Yellow paper]: https://ethereum.github.io/yellowpaper/paper.pdf
 fn check_if_malleable(s: &B256) -> Result<(), Error> {
