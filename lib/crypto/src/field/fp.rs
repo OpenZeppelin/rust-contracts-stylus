@@ -46,6 +46,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// `MODULUS - 1`.
     const GENERATOR: Fp<Self, N>;
 
+    // TODO#q: remove CAN_USE_NO_CARRY_MUL_OPT
     const CAN_USE_NO_CARRY_MUL_OPT: bool =
         can_use_no_carry_mul_optimization::<Self, N>();
 
@@ -126,68 +127,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     }
 
     /// Set `a *= a`.
-    #[ark_ff_macros::unroll_for_loops(6)]
+    #[inline(always)]
     fn square_in_place(a: &mut Fp<Self, N>) {
-        if N == 1 {
-            // We default to multiplying with `a` using the `Mul` impl
-            // for the N == 1 case
-            *a *= *a;
-            return;
-        }
-
-        let mut r = crate::const_helpers::MulBuffer::<N>::zeroed();
-
-        let mut carry = 0;
-        for i in 0..(N - 1) {
-            for j in (i + 1)..N {
-                r[i + j] = arithmetic::mac_with_carry(
-                    r[i + j],
-                    (a.0).0[i],
-                    (a.0).0[j],
-                    &mut carry,
-                );
-            }
-            r.b1[i] = carry;
-            carry = 0;
-        }
-
-        r.b1[N - 1] = r.b1[N - 2] >> 63;
-        for i in 2..(2 * N - 1) {
-            r[2 * N - i] = (r[2 * N - i] << 1) | (r[2 * N - (i + 1)] >> 63);
-        }
-        r.b0[1] <<= 1;
-
-        for i in 0..N {
-            r[2 * i] = arithmetic::mac_with_carry(
-                r[2 * i],
-                (a.0).0[i],
-                (a.0).0[i],
-                &mut carry,
-            );
-            carry = arithmetic::adc(&mut r[2 * i + 1], 0, carry);
-        }
-        // Montgomery reduction
-        let mut carry2 = 0;
-        for i in 0..N {
-            let k = r[i].wrapping_mul(Self::INV);
-            carry = 0;
-            arithmetic::mac_discard(r[i], k, Self::MODULUS.0[0], &mut carry);
-            for j in 1..N {
-                r[j + i] = arithmetic::mac_with_carry(
-                    r[j + i],
-                    k,
-                    Self::MODULUS.0[j],
-                    &mut carry,
-                );
-            }
-            carry2 = arithmetic::adc(&mut r.b1[i], carry, carry2);
-        }
-        (a.0).0.copy_from_slice(&r.b1);
-        if Self::MODULUS_HAS_SPARE_BIT {
-            a.subtract_modulus();
-        } else {
-            a.subtract_modulus_with_carry(carry2 != 0);
-        }
+        Self::mul_assign(a, &a.clone());
     }
 
     /// Compute `a^{-1}` if `a` is not zero.
@@ -677,6 +619,7 @@ impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
         temp
     }
 
+    #[inline]
     fn square_in_place(&mut self) -> &mut Self {
         P::square_in_place(self);
         self
