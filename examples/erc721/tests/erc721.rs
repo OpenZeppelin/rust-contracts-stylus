@@ -1352,6 +1352,188 @@ async fn is_approved_for_all_invalid_operator(
     Ok(())
 }
 
+#[e2e::test]
+async fn safe_mint_to_valid_address(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let receipt = receipt!(contract.safeMint(alice_addr, token_id))?;
+
+    assert!(receipt.emits(Erc721::Transfer {
+        from: Address::ZERO,
+        to: alice_addr,
+        tokenId: token_id,
+    }));
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(alice_addr, ownerOf);
+
+    let Erc721::balanceOfReturn { balance } =
+        contract.balanceOf(alice_addr).call().await?;
+    let one = uint!(1_U256);
+    assert_eq!(balance, one);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_mint_to_receiver_contract(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
+            .await?;
+
+    let token_id = random_token_id();
+
+    let receipt = receipt!(contract.safeMint(receiver_address, token_id))?;
+
+    assert!(receipt.emits(Erc721::Transfer {
+        from: Address::ZERO,
+        to: receiver_address,
+        tokenId: token_id,
+    }));
+
+    assert!(receipt.emits(ERC721ReceiverMock::Received {
+        operator: alice.address(),
+        from: Address::ZERO,
+        tokenId: token_id,
+        data: fixed_bytes!("").into(),
+    }));
+
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(receiver_address, ownerOf);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_safe_mint_to_contract_without_receiver_interface(
+    alice: Account,
+    non_receiver_contract: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let non_receiver_address = non_receiver_contract.address();
+    let token_id = random_token_id();
+
+    let err = send!(contract.safeMint(non_receiver_address, token_id))
+        .expect_err("should not mint token to a contract without ERC721Receiver interface");
+
+    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+        receiver: non_receiver_address
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn error_when_safe_mint_to_invalid_sender(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let invalid_sender = Address::ZERO;
+    let token_id = random_token_id();
+
+    let err = send!(contract.safeMint(invalid_sender, token_id))
+        .expect_err("should not mint with an invalid sender");
+
+    assert!(err.reverted_with(Erc721::ERC721InvalidSender { sender: invalid_sender }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_with_reason_on_safe_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC721ReceiverMock::RevertType::RevertWithMessage,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let err = send!(contract.safeMint(receiver_address, token_id))
+        .expect_err("should not mint when receiver errors with reason");
+
+    assert!(err.reverted_with(Erc721::Error {
+        message: "ERC721ReceiverMock: reverting".to_string()
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_reverts_without_reason_on_safe_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC721ReceiverMock::RevertType::RevertWithoutMessage,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let err = send!(contract.safeMint(receiver_address, token_id))
+        .expect_err("should not mint when receiver reverts without reason");
+
+    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+        receiver: receiver_address
+    }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn errors_when_receiver_panics_on_safe_mint(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let receiver_address = receiver::deploy(
+        &alice.wallet,
+        ERC721ReceiverMock::RevertType::Panic,
+    )
+    .await?;
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let err = send!(contract.safeMint(receiver_address, token_id))
+        .expect_err("should not mint when receiver panics");
+
+    assert!(err.reverted_with(Erc721::Panic {
+        code: U256::from(PanicCode::DivisionByZero as u8)
+    }));
+
+    Ok(())
+}
+
 // ============================================================================
 // Integration Tests: ERC-721 Pausable Extension
 // ============================================================================
@@ -1614,6 +1796,44 @@ async fn error_when_safe_transfer_with_data_in_paused_state(
 
     Ok(())
 }
+
+#[e2e::test]
+async fn error_when_safe_mint_in_paused_state(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+    let token_id = random_token_id();
+
+    let Erc721::balanceOfReturn { balance: initial_alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    let _ = watch!(contract.pause());
+
+    let err = send!(contract.safeMint(alice_addr, token_id))
+        .expect_err("should return `EnforcedPause`");
+    assert!(err.reverted_with(Erc721::EnforcedPause {}));
+
+    let err = contract
+        .ownerOf(token_id)
+        .call()
+        .await
+        .expect_err("should return `ERC721NonexistentToken`");
+
+    assert!(
+        err.reverted_with(Erc721::ERC721NonexistentToken { tokenId: token_id })
+    );
+
+    let Erc721::balanceOfReturn { balance: alice_balance } =
+        contract.balanceOf(alice_addr).call().await?;
+
+    assert_eq!(initial_alice_balance, alice_balance);
+
+    Ok(())
+}
+
 
 // ============================================================================
 // Integration Tests: ERC-721 Burnable Extension
