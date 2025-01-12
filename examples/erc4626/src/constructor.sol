@@ -7,15 +7,15 @@ contract Erc4626Example {
     mapping(address account => mapping(address spender => uint256)) private _allowances;
     uint256 private _totalSupply;
 
-    address private _assetAddress;
+    address private _asset;
     uint8  private  _underlyingDecimals;
     string private _name;
     string private _symbol;
 
 
-    constructor(address assetAddress_, string memory name_, string memory symbol_) {
+    constructor(string memory name_, string memory symbol_, address asset_) {
         _underlyingDecimals = 18;
-        _assetAddress = assetAddress_;
+        _asset = asset_;
         _name = name_;
         _symbol = symbol_;
     }

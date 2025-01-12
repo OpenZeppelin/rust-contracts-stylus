@@ -9,7 +9,12 @@ use openzeppelin_stylus::token::erc20::{
     utils::SafeErc20,
     Erc20,
 };
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::{
+    contract,
+    prelude::{entrypoint, public, storage},
+};
+
+const DECIMALS: u8 = 18;
 
 #[entrypoint]
 #[storage]
@@ -33,6 +38,10 @@ impl Erc4626Example {
 
     fn symbol(&self) -> String {
         self.metadata.symbol()
+    }
+
+    fn decimals(&self) -> u8 {
+        DECIMALS
     }
 
     fn asset(&self) -> Address {

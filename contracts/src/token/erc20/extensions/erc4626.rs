@@ -133,15 +133,16 @@ pub enum Error {
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
 }
-
 /// State of an [`Erc4626`] token.
 #[storage]
 pub struct Erc4626 {
     /// Token Address of the vault
-    pub asset_address: StorageAddress,
+     #[allow(clippy::used_underscore_binding)]
+    pub _asset: StorageAddress,
 
     /// Token decimals
-    pub underlying_decimals: StorageU8,
+     #[allow(clippy::used_underscore_binding)]
+    pub _underlying_decimals: StorageU8,
 }
 
 /// ERC-4626 Tokenized Vault Standard Interface
@@ -399,7 +400,7 @@ impl IERC4626 for Erc4626 {
     type Error = Error;
 
     fn asset(&self) -> Address {
-        contract::address()
+        self._asset.get()
     }
 
     fn total_assets(&self, asset: &Erc20) -> U256 {
@@ -547,14 +548,14 @@ impl IERC4626 for Erc4626 {
 impl Erc4626 {
     fn _convert_to_shares(&self, assets: U256, asset: &Erc20) -> U256 {
         let adjusted_total_supply = asset.total_supply()
-            + U256::from(10u32.pow(self._decimals_offset()));
+            + U256::from(10u32.pow(self._decimals_offset() as u32));
         let adjusted_total_assets = self.total_assets(asset) + U256::from(1);
         self._mul_div(assets, adjusted_total_supply, adjusted_total_assets)
     }
 
     fn _convert_to_assets(&self, shares: U256, asset: &Erc20) -> U256 {
         let adjusted_total_supply = asset.total_supply()
-            + U256::from(10u32.pow(self._decimals_offset()));
+            + U256::from(10u32.pow(self._decimals_offset() as u32));
         let adjusted_total_assets = self.total_assets(asset) + U256::from(1);
         self._mul_div(shares, adjusted_total_assets, adjusted_total_supply)
     }
@@ -626,7 +627,7 @@ impl Erc4626 {
     /// ERC-20 asset and the Vault are the same.
     ///
     /// To change this value, you must override this function in your contract.
-    fn _decimals_offset(&self) -> u32 {
+    pub fn _decimals_offset(&self) -> u8 {
         0
     }
 }
@@ -637,6 +638,14 @@ mod tests {
 
     use super::Erc4626;
     use crate::token::erc20::extensions::erc4626::IERC4626;
+
+   // use super::{Erc20, Erc20FlashMint, Error, IErc3156FlashLender};
+
+    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    const TOKEN_ADDRESS: Address =
+        address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+    const INVALID_TOKEN_ADDRESS: Address =
+        address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
 
     #[motsu::test]
     fn max_mint(contract: Erc4626) {
