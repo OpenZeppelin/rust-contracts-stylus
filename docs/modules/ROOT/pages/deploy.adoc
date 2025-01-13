@@ -16,7 +16,7 @@ Deployment transactions in Ethereum are composed of three sections:
 * A `runtime` - The bytecode of the smart contract stored on-chain.
 * Constructor arguments - ABI-encoded arguments received by the constructor.
 
-The prelude section is a https://docs.soliditylang.org/en/latest/contracts.html#constructors[smart contract constructor] compiled to bytecode. The runtime is the rest of the smart contract. All three sections combined are called `*binary*`.
+The prelude section is a https://docs.soliditylang.org/en/v0.8.28/contracts.html#constructors[smart contract constructor] compiled to bytecode. The runtime is the rest of the smart contract. All three sections combined are called `*binary*`.
 
 Deployment transactions with an input of only compressed wasm are not yet supported in Stylus. That is, only the `runtime` is actual webassembly.
 
