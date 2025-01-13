@@ -123,9 +123,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         *a = res;
 
         if Self::MODULUS_HAS_SPARE_BIT {
-            a.subtract_modulus_with_carry(carry);
-        } else {
             a.subtract_modulus();
+        } else {
+            a.subtract_modulus_with_carry(carry);
         }
     }
 
