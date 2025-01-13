@@ -22,11 +22,11 @@ struct Erc4626Example {
     #[borrow]
     pub erc20: Erc20,
     #[borrow]
+    pub erc4626: Erc4626,
+    #[borrow]
     pub safe_erc20: SafeErc20,
     #[borrow]
     pub metadata: Erc20Metadata,
-    #[borrow]
-    pub erc4626: Erc4626,
 }
 
 #[public]

@@ -137,11 +137,11 @@ pub enum Error {
 #[storage]
 pub struct Erc4626 {
     /// Token Address of the vault
-     #[allow(clippy::used_underscore_binding)]
+    #[allow(clippy::used_underscore_binding)]
     pub _asset: StorageAddress,
 
     /// Token decimals
-     #[allow(clippy::used_underscore_binding)]
+    #[allow(clippy::used_underscore_binding)]
     pub _underlying_decimals: StorageU8,
 }
 
@@ -639,7 +639,7 @@ mod tests {
     use super::Erc4626;
     use crate::token::erc20::extensions::erc4626::IERC4626;
 
-   // use super::{Erc20, Erc20FlashMint, Error, IErc3156FlashLender};
+    // use super::{Erc20, Erc20FlashMint, Error, IErc3156FlashLender};
 
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
     const TOKEN_ADDRESS: Address =
