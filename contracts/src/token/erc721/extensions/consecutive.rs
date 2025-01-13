@@ -977,7 +977,7 @@ mod tests {
         assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
 
         // Check non-consecutive mint.
-        let non_consecutive_token_id = uint!(10_U256);
+        let non_consecutive_token_id = uint!(2000_U256);
         contract
             ._mint(alice, non_consecutive_token_id)
             .expect("should mint a token to Alice");
@@ -1027,7 +1027,7 @@ mod tests {
         ));
 
         // Check non-consecutive token burn.
-        let non_consecutive_token_id = uint!(10_U256);
+        let non_consecutive_token_id = uint!(2000_U256);
         contract
             ._mint(alice, non_consecutive_token_id)
             .expect("should mint a token to Alice");
