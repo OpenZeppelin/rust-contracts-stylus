@@ -65,7 +65,6 @@ impl Erc721Example {
         Ok(())
     }
 
-    #[selector(name = "safeMint")]
     pub fn safe_mint(
         &mut self,
         to: Address,
