@@ -1363,8 +1363,7 @@ async fn safe_mint_to_valid_address_with_data(
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let receipt =
-        receipt!(contract.safeMint(alice_addr, token_id, data.clone()))?;
+    let receipt = receipt!(contract.safeMint(alice_addr, token_id, data))?;
 
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
@@ -1459,7 +1458,7 @@ async fn safe_mint_to_receiver_contract_with_data(
 }
 
 #[e2e::test]
-async fn error_when_safe_mint_to_contract_without_receiver_interface_with_data(
+async fn error_when_safe_mint_to_invalid_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
@@ -1488,15 +1487,15 @@ async fn error_when_safe_mint_to_invalid_sender_with_data(
 
     let invalid_sender = Address::ZERO;
     let token_id = random_token_id();
-
     let data: Bytes = fixed_bytes!("deadbeef").into();
+
     _ = watch!(contract.mint(alice.address(), token_id))?;
 
     let err = send!(contract.safeMint(bob.address(), token_id, data.clone()))
-        .expect_err("should not mint with an invalid sender");
+        .expect_err("should not safe mint an existing token");
 
     assert!(err
-        .reverted_with(Erc721::ERC721InvalidSender { sender: invalid_sender }));
+        .reverted_with(Erc721::ERC721InvalidSender { sender: Address::ZERO }));
 
     Ok(())
 }
@@ -1518,8 +1517,8 @@ async fn error_when_receiver_reverts_with_reason_on_safe_mint_with_data(
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
     let err =
-        send!(contract.safeMint(receiver_address, token_id, data.clone()))
-            .expect_err("should not mint when receiver errors with reason");
+        send!(contract.safeMint(receiver_address, token_id, data))
+            .expect_err("should not safe mint when receiver errors with reason");
 
     assert!(err.reverted_with(Erc721::Error {
         message: "ERC721ReceiverMock: reverting".to_string()
@@ -1545,7 +1544,7 @@ async fn error_when_receiver_reverts_without_reason_on_safe_mint_with_data(
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
     let err =
-        send!(contract.safeMint(receiver_address, token_id, data.clone()))
+        send!(contract.safeMint(receiver_address, token_id, data))
             .expect_err("should not mint when receiver reverts without reason");
 
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
@@ -1570,8 +1569,8 @@ async fn error_when_receiver_panics_on_safe_mint_with_data(
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
     let err =
-        send!(contract.safeMint(receiver_address, token_id, data.clone()))
-            .expect_err("should not mint when receiver panics");
+        send!(contract.safeMint(receiver_address, token_id, data))
+            .expect_err("should not safe mint when receiver panics");
 
     assert!(err.reverted_with(Erc721::Panic {
         code: U256::from(PanicCode::DivisionByZero as u8)
