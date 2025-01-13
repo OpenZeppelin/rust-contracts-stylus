@@ -51,6 +51,81 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
+async fn deposit(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn withdraw(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn redeem(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn deposit(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint_inflation_attack(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn withdraw_inflation_attack(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn redeem_inflation_attack(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+#[e2e::test]
+async fn deposit_inflation_attack(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    Ok(())
+}
+
+
+
+
+#[e2e::test]
 async fn error_when_exceeded_max_deposit(
     alice: Account,
     bob: Account,
