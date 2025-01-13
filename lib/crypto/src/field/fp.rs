@@ -220,25 +220,23 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
-    // TODO#q: almost zero advantage of this loop unroll, and it bloats binary
-    //  size by 0.3kb
     #[inline(always)]
     fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
         let mut r = (a.0).0;
         // Montgomery Reduction
-        for i in 0..N {
+        for i in 1..N {
             let k = r[i].wrapping_mul(Self::INV);
             let mut carry = 0;
 
             arithmetic::mac_with_carry(r[i], k, Self::MODULUS.0[0], &mut carry);
-            unroll6_for!((j in 1..N) {
+            for j in 1..N {
                 r[(j + i) % N] = arithmetic::mac_with_carry(
                     r[(j + i) % N],
                     k,
                     Self::MODULUS.0[j],
                     &mut carry,
                 );
-            });
+            }
             r[i % N] = carry;
         }
 
