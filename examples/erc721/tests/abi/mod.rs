@@ -18,7 +18,7 @@ sol!(
         function setApprovalForAll(address operator, bool approved) external;
         function totalSupply() external view returns (uint256 totalSupply);
         function transferFrom(address from, address to, uint256 tokenId) external;
-        function safeMint(address to, uint256 tokenId , bytes calldata data) external;
+        function safeMint(address to, uint256 tokenId, bytes calldata data) external;
         function mint(address to, uint256 tokenId) external;
         function burn(uint256 tokenId) external;
 
