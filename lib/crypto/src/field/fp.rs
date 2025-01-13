@@ -46,10 +46,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// `MODULUS - 1`.
     const GENERATOR: Fp<Self, N>;
 
-    // TODO#q: remove CAN_USE_NO_CARRY_MUL_OPT
-    const CAN_USE_NO_CARRY_MUL_OPT: bool =
-        can_use_no_carry_mul_optimization::<Self, N>();
-
     const MODULUS_HAS_SPARE_BIT: bool = modulus_has_spare_bit::<Self, N>();
 
     /// INV = -MODULUS^{-1} mod 2^64
@@ -263,19 +259,6 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
         inv = inv.wrapping_mul(T::MODULUS.0[0]);
     });
     inv.wrapping_neg()
-}
-
-#[inline]
-pub const fn can_use_no_carry_mul_optimization<
-    T: FpParams<N>,
-    const N: usize,
->() -> bool {
-    // Checking the modulus at compile time
-    let mut all_remaining_bits_are_one = T::MODULUS.0[N - 1] == u64::MAX >> 1;
-    const_for!((i in 1..N) {
-        all_remaining_bits_are_one  &= T::MODULUS.0[N - i - 1] == u64::MAX;
-    });
-    modulus_has_spare_bit::<T, N>() && !all_remaining_bits_are_one
 }
 
 #[inline]
