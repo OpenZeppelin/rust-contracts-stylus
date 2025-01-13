@@ -1039,8 +1039,7 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
 #[must_use]
 pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
     let (low, high) = a.ct_mul_wide(b);
-    // TODO#q: uncomment this assertion
-    // assert!(!ct_eq(&high, &BigInt::<N>::ZERO), "overflow on multiplication");
+    assert!(ct_eq(&high, &BigInt::<N>::ZERO), "overflow on multiplication");
     low
 }
 
@@ -1048,8 +1047,7 @@ pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
 #[must_use]
 pub const fn ct_add<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
     let (low, carry) = a.ct_adc(b, Limb::ZERO);
-    // TODO#q: uncomment this assertion
-    // assert!(carry != 0, "overflow on addition");
+    assert!(carry == 0, "overflow on addition");
     low
 }
 
