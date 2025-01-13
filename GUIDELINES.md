@@ -15,7 +15,7 @@ and retry installing the stylus tool.
 
 [Docker]: https://docs.docker.com/engine/install/
 
-[Solidity Compiler]: https://docs.soliditylang.org/en/latest/installing-solidity.html#linux-packages
+[Solidity Compiler]: https://docs.soliditylang.org/en/v0.8.28/installing-solidity.html#linux-packages
 
 [rustup]: https://rustup.rs/
 
