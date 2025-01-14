@@ -440,7 +440,7 @@ pub const fn mac(a: u64, b: u64, c: u64) -> (u64, u64) {
 /// and setting carry to the most significant digit.
 #[inline(always)]
 #[doc(hidden)]
-pub const fn mac_with_carry(a: u64, b: u64, c: u64, carry: u64) -> (u64, u64) {
+pub const fn carrying_mac(a: u64, b: u64, c: u64, carry: u64) -> (u64, u64) {
     let tmp = (a as u128) + widening_mul(b, c) + (carry as u128);
     let carry = (tmp >> 64) as u64;
     (tmp as u64, carry)

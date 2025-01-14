@@ -224,7 +224,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
             let (_, mut carry) = arithmetic::mac(r[i], k, Self::MODULUS.0[0]);
             for j in 1..N {
-                (r[(j + i) % N], carry) = arithmetic::mac_with_carry(
+                (r[(j + i) % N], carry) = arithmetic::carrying_mac(
                     r[(j + i) % N],
                     k,
                     Self::MODULUS.0[j],
@@ -415,14 +415,14 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             unroll6_for!((j in 0..N) {
                 let k = i + j;
                 if k >= N {
-                    (hi[k - N], carry) = arithmetic::mac_with_carry(
+                    (hi[k - N], carry) = arithmetic::carrying_mac(
                         hi[k - N],
                         (self.0).0[i],
                         (other.0).0[j],
                         carry
                     );
                 } else {
-                    (lo[k], carry) = arithmetic::mac_with_carry(
+                    (lo[k], carry) = arithmetic::carrying_mac(
                         lo[k],
                         (self.0).0[i],
                         (other.0).0[j],
@@ -441,14 +441,14 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             unroll6_for!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
-                    (hi[k - N], carry) = arithmetic::mac_with_carry(
+                    (hi[k - N], carry) = arithmetic::carrying_mac(
                         hi[k - N],
                         tmp,
                         P::MODULUS.0[j],
                         carry
                     );
                 } else {
-                    (lo[k], carry) = arithmetic::mac_with_carry(
+                    (lo[k], carry) = arithmetic::carrying_mac(
                         lo[k],
                         tmp,
                         P::MODULUS.0[j],
