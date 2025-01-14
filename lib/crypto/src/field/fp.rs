@@ -320,9 +320,13 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     ///
     /// Every element of the field should be represented as `GENERATOR^i`
     pub const GENERATOR: Fp<P, N> = P::GENERATOR;
+    // TODO#q: remove
+    pub const INV: u64 = P::INV;
     /// Multiplicative identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
     pub const ONE: Fp<P, N> = Fp::new_unchecked(P::R);
+    // TODO#q: remove
+    pub const R: BigInt<N> = P::R;
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
     pub const ZERO: Fp<P, N> = Fp::new_unchecked(BigInt([0; N]));
@@ -1257,6 +1261,8 @@ mod tests {
 
     #[test]
     fn check_mul() {
+        dbg!(Field64::R);
+        dbg!(Field64::INV);
         let a: i64 = 1;
         let b: i64 = 1;
         let res = Field64::from(a) * Field64::from(b);
