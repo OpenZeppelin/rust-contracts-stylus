@@ -1371,6 +1371,10 @@ async fn safe_mint_to_eoa(alice: Account) -> eyre::Result<()> {
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
     assert_eq!(alice_addr, ownerOf);
+    let Erc721::balanceOfReturn { balance } =
+        contract.balanceOf(alice.address()).call().await?;
+    let one = uint!(1_U256);
+    assert_eq!(balance, one);
 
     // Test case 2: Custom data
     let token_id = random_token_id();
@@ -1424,6 +1428,10 @@ async fn safe_mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
     assert_eq!(receiver_address, ownerOf);
+    let Erc721::balanceOfReturn { balance } =
+        contract.balanceOf(receiver_address).call().await?;
+    let one = uint!(1_U256);
+    assert_eq!(balance, one);
 
     // Test case 2: Custom data
     let token_id = random_token_id();
