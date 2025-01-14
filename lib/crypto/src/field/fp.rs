@@ -206,8 +206,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let mut r = Fp::new_unchecked(r);
         if r.is_zero() {
             Some(r)
-        } else if r.is_geq_modulus() {
-            None
         } else {
             r *= &Fp::new_unchecked(Self::R2);
             Some(r)
@@ -220,7 +218,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
         let mut r = (a.0).0;
         // Montgomery Reduction
-        for i in 1..N {
+        for i in 0..N {
             let k = r[i].wrapping_mul(Self::INV);
             let mut carry = 0;
 
@@ -541,6 +539,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
 
 impl<P: FpParams<N>, const N: usize> Hash for Fp<P, N> {
     fn hash<H: Hasher>(&self, state: &mut H) {
+        // TODO#q: implement hash for Fp
         unimplemented!()
     }
 }
@@ -1257,18 +1256,5 @@ mod tests {
             let a: i128 = a.into();
             prop_assert_eq!(res, a.rem_euclid(MODULUS));
         }
-    }
-
-    #[test]
-    fn check_mul() {
-        dbg!(Field64::R);
-        dbg!(Field64::INV);
-        let a: i64 = 1;
-        let b: i64 = 1;
-        let res = Field64::from(a) * Field64::from(b);
-        let res: i128 = res.into();
-        let a = i128::from(a);
-        let b = i128::from(b);
-        assert_eq!(res, (a * b).rem_euclid(MODULUS));
     }
 }
