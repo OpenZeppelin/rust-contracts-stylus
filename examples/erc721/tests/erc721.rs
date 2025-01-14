@@ -1373,7 +1373,7 @@ async fn safe_mint_to_eoa(alice: Account) -> eyre::Result<()> {
     assert_eq!(alice_addr, owner_1);
 
     // Test case 2: Custom data
-    let mut token_id_2 = random_token_id();
+    let token_id_2 = random_token_id();
     let data_2: Bytes = fixed_bytes!("deadbeef").into();
     let receipt_2 =
         receipt!(contract.safeMint(alice_addr, token_id_2, data_2))?;
@@ -1467,7 +1467,7 @@ async fn error_when_safe_mint_to_invalid_receiver_contract(
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
     let err = send!(contract.safeMint(contract_addr, token_id, data))
-        .expect_err("should not transfer the token to invalid receiver");
+        .expect_err("should not safe mint the token to invalid receiver");
 
     assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
         receiver: contract_addr
@@ -1852,7 +1852,7 @@ async fn error_when_safe_mint_in_paused_state(
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
 
-    let _ = watch!(contract.pause());
+    let _ = watch!(contract.pause())?;
 
     let err = send!(contract.safeMint(
         alice_addr,
