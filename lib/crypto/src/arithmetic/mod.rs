@@ -809,38 +809,38 @@ impl<const N: usize> Not for BigInt<N> {
 
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
-'static
-+ Copy
-+ Clone
-+ Debug
-+ Default
-+ Display
-+ Eq
-+ Ord
-+ Send
-+ Sized
-+ Sync
-+ Zeroize
-+ From<u64>
-+ From<u32>
-+ From<u16>
-+ From<u8>
-+ BitXorAssign<Self>
-+ for<'a> BitXorAssign<&'a Self>
-+ BitXor<Self, Output=Self>
-+ for<'a> BitXor<&'a Self, Output=Self>
-+ BitAndAssign<Self>
-+ for<'a> BitAndAssign<&'a Self>
-+ BitAnd<Self, Output=Self>
-+ for<'a> BitAnd<&'a Self, Output=Self>
-+ BitOrAssign<Self>
-+ for<'a> BitOrAssign<&'a Self>
-+ BitOr<Self, Output=Self>
-+ for<'a> BitOr<&'a Self, Output=Self>
-+ Shr<u32, Output=Self> // TODO#q: use usize instead of u32
-+ ShrAssign<u32>
-+ Shl<u32, Output=Self>
-+ ShlAssign<u32>
+    'static
+    + Copy
+    + Clone
+    + Debug
+    + Default
+    + Display
+    + Eq
+    + Ord
+    + Send
+    + Sized
+    + Sync
+    + Zeroize
+    + From<u64>
+    + From<u32>
+    + From<u16>
+    + From<u8>
+    + BitXorAssign<Self>
+    + for<'a> BitXorAssign<&'a Self>
+    + BitXor<Self, Output=Self>
+    + for<'a> BitXor<&'a Self, Output=Self>
+    + BitAndAssign<Self>
+    + for<'a> BitAndAssign<&'a Self>
+    + BitAnd<Self, Output=Self>
+    + for<'a> BitAnd<&'a Self, Output=Self>
+    + BitOrAssign<Self>
+    + for<'a> BitOrAssign<&'a Self>
+    + BitOr<Self, Output=Self>
+    + for<'a> BitOr<&'a Self, Output=Self>
+    + Shr<u32, Output=Self> // TODO#q: use usize instead of u32
+    + ShrAssign<u32>
+    + Shl<u32, Output=Self>
+    + ShlAssign<u32>
 {
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
