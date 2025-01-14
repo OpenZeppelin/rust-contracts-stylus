@@ -1353,105 +1353,139 @@ async fn is_approved_for_all_invalid_operator(
 }
 
 #[e2e::test]
-async fn safe_mint_to_eoa(alice: Account) -> eyre::Result<()> {
+async fn safe_mint_to_eoa_without_data(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    // Test case 1: Blank data
     let token_id = random_token_id();
     let data = Bytes::new();
+
+    let initial_balance =
+        contract.balanceOf(alice.address()).call().await?.balance;
+
     let receipt = receipt!(contract.safeMint(alice_addr, token_id, data))?;
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: alice_addr,
         tokenId: token_id,
     }));
-    let Erc721::ownerOfReturn { ownerOf } =
-        contract.ownerOf(token_id).call().await?;
-    assert_eq!(alice_addr, ownerOf);
-    let Erc721::balanceOfReturn { balance } =
-        contract.balanceOf(alice.address()).call().await?;
-    let one = uint!(1_U256);
-    assert_eq!(balance, one);
 
-    // Test case 2: Custom data
-    let token_id = random_token_id();
-    let data: Bytes = fixed_bytes!("deadbeef").into();
-    let receipt = receipt!(contract.safeMint(alice_addr, token_id, data))?;
-    assert!(receipt.emits(Erc721::Transfer {
-        from: Address::ZERO,
-        to: alice_addr,
-        tokenId: token_id,
-    }));
-    let Erc721::ownerOfReturn { ownerOf } =
-        contract.ownerOf(token_id).call().await?;
-    assert_eq!(alice_addr, ownerOf);
+    let owner_of = contract.ownerOf(token_id).call().await?.ownerOf;
+    assert_eq!(alice_addr, owner_of);
 
-    let Erc721::balanceOfReturn { balance } =
-        contract.balanceOf(alice.address()).call().await?;
-    let two = uint!(2_U256);
-    assert_eq!(balance, two);
+    let balance = contract.balanceOf(alice.address()).call().await?.balance;
+    assert_eq!(balance, initial_balance + uint!(1_U256));
 
     Ok(())
 }
 
 #[e2e::test]
-async fn safe_mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
+async fn safe_mint_to_eoa_with_data(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let alice_addr = alice.address();
+
+    let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
+
+    let initial_balance =
+        contract.balanceOf(alice.address()).call().await?.balance;
+
+    let receipt = receipt!(contract.safeMint(alice_addr, token_id, data))?;
+    assert!(receipt.emits(Erc721::Transfer {
+        from: Address::ZERO,
+        to: alice_addr,
+        tokenId: token_id,
+    }));
+
+    let owner_of = contract.ownerOf(token_id).call().await?.ownerOf;
+    assert_eq!(alice_addr, owner_of);
+
+    let balance = contract.balanceOf(alice.address()).call().await?.balance;
+    assert_eq!(balance, initial_balance + uint!(1_U256));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_mint_to_receiver_contract_without_data(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
     let receiver_address =
         receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
             .await?;
 
-    // Test case 1: Blank data
     let token_id = random_token_id();
     let data = Bytes::new();
+
+    let initial_balance =
+        contract.balanceOf(alice.address()).call().await?.balance;
+
     let receipt =
         receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
+
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: receiver_address,
         tokenId: token_id,
     }));
+
     assert!(receipt.emits(ERC721ReceiverMock::Received {
         operator: alice.address(),
         from: Address::ZERO,
         tokenId: token_id,
         data,
     }));
-    let Erc721::ownerOfReturn { ownerOf } =
-        contract.ownerOf(token_id).call().await?;
-    assert_eq!(receiver_address, ownerOf);
-    let Erc721::balanceOfReturn { balance } =
-        contract.balanceOf(receiver_address).call().await?;
-    let one = uint!(1_U256);
-    assert_eq!(balance, one);
 
-    // Test case 2: Custom data
+    let owner_of = contract.ownerOf(token_id).call().await?.ownerOf;
+    assert_eq!(receiver_address, owner_of);
+
+    let balance = contract.balanceOf(receiver_address).call().await?.balance;
+    assert_eq!(balance, initial_balance + uint!(1_U256));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn safe_mint_to_receiver_contract_with_data(
+    alice: Account,
+) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc721::new(contract_addr, &alice.wallet);
+    let receiver_address =
+        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
+            .await?;
+
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
+
+    let initial_balance =
+        contract.balanceOf(alice.address()).call().await?.balance;
+
     let receipt =
         receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
+
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: receiver_address,
         tokenId: token_id,
     }));
+
     assert!(receipt.emits(ERC721ReceiverMock::Received {
         operator: alice.address(),
         from: Address::ZERO,
         tokenId: token_id,
         data,
     }));
-    let Erc721::ownerOfReturn { ownerOf } =
-        contract.ownerOf(token_id).call().await?;
-    assert_eq!(receiver_address, ownerOf);
 
-    let Erc721::balanceOfReturn { balance } =
-        contract.balanceOf(receiver_address).call().await?;
-    let two = uint!(2_U256);
-    assert_eq!(balance, two);
+    let owner_of = contract.ownerOf(token_id).call().await?.ownerOf;
+    assert_eq!(receiver_address, owner_of);
+
+    let balance = contract.balanceOf(receiver_address).call().await?.balance;
+    assert_eq!(balance, initial_balance + uint!(1_U256));
 
     Ok(())
 }
