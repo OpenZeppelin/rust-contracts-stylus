@@ -1355,8 +1355,8 @@ async fn is_approved_for_all_invalid_operator(
 #[e2e::test]
 async fn safe_mint_to_eoa(alice: Account) -> eyre::Result<()> {
     let test_cases = vec![
-        ("blank data", fixed_bytes!("deadbeef").into()),
-        ("custom data", Bytes::new()),
+        ("blank data", Bytes::new()),
+        ("custom data", fixed_bytes!("deadbeef").into()),
     ];
 
     for (_, data) in test_cases {
