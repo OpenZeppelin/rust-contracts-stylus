@@ -9,6 +9,7 @@ use core::{
         Shl, ShlAssign, Shr, ShrAssign,
     },
 };
+use std::num::TryFromIntError;
 
 use num_bigint::BigUint;
 use num_traits::{ConstZero, Zero};
@@ -44,6 +45,7 @@ impl<const N: usize> Default for BigInt<N> {
 }
 
 impl<const N: usize> BigInt<N> {
+    pub const BITS: u32 = (N as u32) * Limb::BITS;
     pub const ONE: Self = Self::one();
     pub const ZERO: Self = Self::zero();
 
@@ -571,6 +573,31 @@ impl<const N: usize> AsRef<[u64]> for BigInt<N> {
         &self.0
     }
 }
+
+// TODO#q: implement conversions in as similar way to
+// impl_try_from_upper_bounded!(u128 => u8, u16, u32, u64);  as in std
+/*
+impl<const N: usize> From<u128> for BigInt<N> {
+    fn from(value: u128) -> Self {
+        let result = Limb::try_from(value);
+        if u128::BITS > BigInt::BITS {
+            panic!("u128 is too large to fit in BigInt");
+        }
+    }
+}
+
+impl<const N: usize> TryFrom<u128> for BigInt<N> {
+    type Error = TryFromIntError;
+
+    fn try_from(value: u128) -> Result<Self, Self::Error> {
+        if u128::BITS > BigInt::BITS {
+            Limb::try_from(value).map(|limb| limb.into())
+        } else {
+            unimplemented!()
+        }
+    }
+}
+*/
 
 impl<const N: usize> From<u64> for BigInt<N> {
     #[inline]
