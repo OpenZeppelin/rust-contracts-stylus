@@ -23,7 +23,7 @@ use core::{
 };
 
 use educe::Educe;
-use num_traits::{One, Zero};
+use num_traits::{ConstZero, One, Zero};
 
 use crate::{
     adc, arithmetic,
@@ -1253,5 +1253,16 @@ mod tests {
             let a: i128 = a.into();
             prop_assert_eq!(res, a.rem_euclid(MODULUS));
         }
+    }
+
+    #[test]
+    fn check_mul() {
+        let a: i64 = 1;
+        let b: i64 = 1;
+        let res = Field64::from(a) * Field64::from(b);
+        let res: i128 = res.into();
+        let a = i128::from(a);
+        let b = i128::from(b);
+        assert_eq!(res, (a * b).rem_euclid(MODULUS));
     }
 }
