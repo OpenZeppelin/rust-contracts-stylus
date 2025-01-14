@@ -47,7 +47,7 @@ use stylus_sdk::{
     contract, evm, msg,
     prelude::storage,
     storage::{StorageAddress, StorageU8, TopLevelStorage},
-    stylus_proc::{public, SolidityError},
+    stylus_proc::SolidityError,
 };
 
 use crate::token::erc20::{
