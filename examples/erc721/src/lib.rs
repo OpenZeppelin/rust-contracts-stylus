@@ -65,6 +65,27 @@ impl Erc721Example {
         Ok(())
     }
 
+    pub fn safe_mint(
+        &mut self,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
+        self.pausable.when_not_paused()?;
+
+        self.erc721._safe_mint(to, token_id, &data)?;
+
+        // Update the extension's state.
+        self.enumerable._add_token_to_all_tokens_enumeration(token_id);
+        self.enumerable._add_token_to_owner_enumeration(
+            to,
+            token_id,
+            &self.erc721,
+        )?;
+
+        Ok(())
+    }
+
     pub fn safe_transfer_from(
         &mut self,
         from: Address,
