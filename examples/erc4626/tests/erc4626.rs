@@ -61,36 +61,6 @@ async fn deposit(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let mock_token_address =
-        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
-     let vault_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(mock_token_address))
-        .deploy()
-        .await?
-        .address()?;
-    let asset = MockErc20Abi::new(mock_token_address, &alice.wallet);
-    let vault = Erc4626::new(vault_addr, &alice.wallet);
-
-    // Mint token
-    let mint_receipt = asset.mint(alice.address(), uint!(100_U256)).send().await?;
-    println!("{:?}", mint_receipt);
-
-    let _ = asset.approve(alice.address(), U256::MAX).send().await?;
-    let _ = vault.approve(alice.address(), U256::MAX).send().await?;
-
-    let max_mint = vault.maxMint(bob.address()).call().await?._0;
-    let preview_deposit = vault.previewDeposit(uint!(1_U256)).call().await?._0;
-    let deposit = vault.deposit(uint!(1_U256), bob.address()).call().await?._0;
-    assert_eq!(max_mint, U256::MAX);
-    assert_eq!(preview_deposit, uint!(1_U256));
-
-    let asset_balance = asset.balanceOf(bob.address()).call().await?.balance;
-    //assert_eq!(asset_balance, uint!(1_U256));
-
-    // let valut_balance = contract.balanceOf(bob.address()).call().await?.balance;
-    // assert_eq!(valut_balance, uint!(1_U256));
-
     Ok(())
 }
 

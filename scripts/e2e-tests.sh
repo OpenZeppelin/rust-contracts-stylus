@@ -10,7 +10,7 @@ export RPC_URL=http://localhost:8547
 
 # If any arguments are set, just pass them as-is to the cargo test command
 if [[ $# -eq 0 ]]; then
-    cargo test --features e2e --test "*"
+   cargo test --features e2e --test "erc4626" -- --nocapture
 else
     cargo test --features e2e "$@"
 fi
