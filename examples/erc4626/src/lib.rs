@@ -9,12 +9,8 @@ use openzeppelin_stylus::token::erc20::{
     utils::SafeErc20,
     Erc20,
 };
-use stylus_sdk::{
-    contract,
-    prelude::{entrypoint, public, storage},
-};
+use stylus_sdk::prelude::{entrypoint, public, storage};
 
-const DECIMALS: u8 = 18;
 
 #[entrypoint]
 #[storage]
