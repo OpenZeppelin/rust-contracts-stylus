@@ -1361,8 +1361,7 @@ async fn safe_mint_to_eoa(alice: Account) -> eyre::Result<()> {
     // Test case 1: Blank data
     let token_id = random_token_id();
     let data = Bytes::new();
-    let receipt =
-        receipt!(contract.safeMint(alice_addr, token_id, data))?;
+    let receipt = receipt!(contract.safeMint(alice_addr, token_id, data))?;
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: alice_addr,
@@ -1379,8 +1378,7 @@ async fn safe_mint_to_eoa(alice: Account) -> eyre::Result<()> {
     // Test case 2: Custom data
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
-    let receipt =
-        receipt!(contract.safeMint(alice_addr, token_id, data))?;
+    let receipt = receipt!(contract.safeMint(alice_addr, token_id, data))?;
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: alice_addr,
@@ -1409,11 +1407,8 @@ async fn safe_mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
     // Test case 1: Blank data
     let token_id = random_token_id();
     let data = Bytes::new();
-    let receipt = receipt!(contract.safeMint(
-        receiver_address,
-        token_id,
-        data.clone()
-    ))?;
+    let receipt =
+        receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: receiver_address,
@@ -1423,7 +1418,7 @@ async fn safe_mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
         operator: alice.address(),
         from: Address::ZERO,
         tokenId: token_id,
-        data: data,
+        data,
     }));
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
@@ -1436,11 +1431,8 @@ async fn safe_mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
     // Test case 2: Custom data
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
-    let receipt = receipt!(contract.safeMint(
-        receiver_address,
-        token_id,
-        data.clone()
-    ))?;
+    let receipt =
+        receipt!(contract.safeMint(receiver_address, token_id, data.clone()))?;
     assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: receiver_address,
@@ -1450,7 +1442,7 @@ async fn safe_mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
         operator: alice.address(),
         from: Address::ZERO,
         tokenId: token_id,
-        data: data,
+        data,
     }));
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(token_id).call().await?;
