@@ -9,7 +9,6 @@ use core::{
         Shl, ShlAssign, Shr, ShrAssign,
     },
 };
-use std::num::TryFromIntError;
 
 use num_bigint::BigUint;
 use num_traits::{ConstZero, Zero};
