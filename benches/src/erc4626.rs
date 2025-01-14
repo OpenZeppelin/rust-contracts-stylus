@@ -10,7 +10,7 @@ use e2e::{receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
-       Opt,
+    Opt,
 };
 
 sol!(
@@ -39,9 +39,7 @@ pub async fn bench() -> eyre::Result<ContractReport> {
     ContractReport::generate("Erc1155", run).await
 }
 
-pub async fn run(
-    cache_opt: Opt,
-) -> eyre::Result<Vec<FunctionReport>> {
+pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
@@ -85,9 +83,6 @@ pub async fn run(
         .collect::<eyre::Result<Vec<_>>>()
 }
 
-async fn deploy(
-    account: &Account,
-    cache_opt: Opt,
-) -> eyre::Result<Address> {
+async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
     crate::deploy(account, "Erc4626", None, cache_opt).await
 }

@@ -24,7 +24,11 @@ sol!("src/constructor.sol");
 
 fn ctr(asset: Address) -> constructorCall {
     println!("asset: {} ", asset);
-    constructorCall { name_: VALUT_NAME.to_owned(), symbol_: VALUT_SYMBOL.to_owned(), asset_: asset }
+    constructorCall {
+        name_: VALUT_NAME.to_owned(),
+        symbol_: VALUT_SYMBOL.to_owned(),
+        asset_: asset,
+    }
 }
 
 #[e2e::test]
@@ -42,88 +46,61 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let symbol = contract.symbol().call().await?.symbol;
     let decimals = contract.decimals().call().await?.decimals;
     let asset = contract.asset().call().await?.asset;
-    println!("asset: {} name: {} symbol: {} decimals: {}", asset,name, symbol, decimals);
+    println!(
+        "asset: {} name: {} symbol: {} decimals: {}",
+        asset, name, symbol, decimals
+    );
     //assert_eq!(name, VALUT_NAME.to_owned());
-   // assert_eq!(symbol, VALUT_SYMBOL.to_owned());
+    // assert_eq!(symbol, VALUT_SYMBOL.to_owned());
     assert_eq!(decimals, 18);
     assert_eq!(asset, mock_token_address);
     Ok(())
 }
 
 #[e2e::test]
-async fn deposit(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn deposit(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn mint(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn mint(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn withdraw(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn withdraw(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn redeem(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn redeem(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn deposit(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn deposit(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn mint_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn mint_inflation_attack(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn withdraw_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn withdraw_inflation_attack(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn redeem_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn redeem_inflation_attack(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn deposit_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn deposit_inflation_attack(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
-
-
-
 
 #[e2e::test]
 async fn error_when_exceeded_max_deposit(
