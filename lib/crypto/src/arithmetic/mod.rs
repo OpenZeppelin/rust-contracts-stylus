@@ -402,30 +402,6 @@ impl<const N: usize> BigInt<N> {
     }
 }
 
-/// Calculate a + b * c, returning the lower 64 bits of the result and setting
-/// `carry` to the upper 64 bits.
-#[inline(always)]
-#[doc(hidden)]
-pub fn mac(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
-    let tmp = (a as u128) + widening_mul(b, c);
-    *carry = (tmp >> 64) as u64;
-    tmp as u64
-}
-
-pub const fn ct_mac_with_carry(
-    a: Limb,
-    b: Limb,
-    c: Limb,
-    carry: Limb,
-) -> (Limb, Limb) {
-    let a = a as WideLimb;
-    let b = b as WideLimb;
-    let c = c as WideLimb;
-    let carry = carry as WideLimb;
-    let ret = a + (b * c) + carry;
-    (ret as Limb, (ret >> Limb::BITS) as Limb)
-}
-
 #[inline(always)]
 #[doc(hidden)]
 pub const fn widening_mul(a: u64, b: u64) -> u128 {
@@ -448,6 +424,42 @@ pub const fn widening_mul(a: u64, b: u64) -> u128 {
     }
 }
 
+// TODO#q: we need carrying_mac and mac
+
+/// Calculate a + b * c, returning the lower 64 bits of the result and setting
+/// `carry` to the upper 64 bits.
+#[inline(always)]
+#[doc(hidden)]
+pub const fn mac(a: u64, b: u64, c: u64) -> (u64, u64) {
+    let tmp = (a as u128) + widening_mul(b, c);
+    let carry = (tmp >> 64) as u64;
+    (tmp as u64, carry)
+}
+
+/// Calculate a + (b * c) + carry, returning the least significant digit
+/// and setting carry to the most significant digit.
+#[inline(always)]
+#[doc(hidden)]
+pub const fn mac_with_carry(a: u64, b: u64, c: u64, carry: u64) -> (u64, u64) {
+    let tmp = (a as u128) + widening_mul(b, c) + (carry as u128);
+    let carry = (tmp >> 64) as u64;
+    (tmp as u64, carry)
+}
+
+pub const fn ct_mac_with_carry(
+    a: Limb,
+    b: Limb,
+    c: Limb,
+    carry: Limb,
+) -> (Limb, Limb) {
+    let a = a as WideLimb;
+    let b = b as WideLimb;
+    let c = c as WideLimb;
+    let carry = carry as WideLimb;
+    let ret = a + (b * c) + carry;
+    (ret as Limb, (ret >> Limb::BITS) as Limb)
+}
+
 /// Calculate a + b * c, discarding the lower 64 bits of the result and setting
 /// `carry` to the upper 64 bits.
 #[inline(always)]
@@ -455,16 +467,6 @@ pub const fn widening_mul(a: u64, b: u64) -> u128 {
 pub fn mac_discard(a: u64, b: u64, c: u64, carry: &mut u64) {
     let tmp = (a as u128) + widening_mul(b, c);
     *carry = (tmp >> 64) as u64;
-}
-
-/// Calculate a + (b * c) + carry, returning the least significant digit
-/// and setting carry to the most significant digit.
-#[inline(always)]
-#[doc(hidden)]
-pub fn mac_with_carry(a: u64, b: u64, c: u64, carry: &mut u64) -> u64 {
-    let tmp = (a as u128) + widening_mul(b, c) + (*carry as u128);
-    *carry = (tmp >> 64) as u64;
-    tmp as u64
 }
 
 /// Sets a = a - b - borrow, and returns the borrow.
