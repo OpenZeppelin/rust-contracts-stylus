@@ -436,8 +436,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         let mut carry2 = 0;
         unroll6_for!((i in 0..N) {
             let tmp = lo[i].wrapping_mul(P::INV);
-            let mut carry;
-            mac!(lo[i], tmp, P::MODULUS.0[0], &mut carry); // TODO#q: remove this mac
+
+            let (_, mut carry) = arithmetic::mac(lo[i], tmp, P::MODULUS.0[0]);
+
             unroll6_for!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
@@ -456,7 +457,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
                     );
                 }
             });
-            hi[i] = adc!(hi[i], carry, &mut carry2); // TODO#q: remove this adc
+            (hi[i], carry2) = arithmetic::adc(hi[i], carry, carry2);
         });
 
         unroll6_for!((i in 0..N) {

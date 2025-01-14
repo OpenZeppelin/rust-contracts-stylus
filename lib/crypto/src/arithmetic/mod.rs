@@ -469,26 +469,15 @@ pub fn mac_discard(a: u64, b: u64, c: u64, carry: &mut u64) {
     *carry = (tmp >> 64) as u64;
 }
 
-/// Sets a = a - b - borrow, and returns the borrow.
-#[inline(always)]
-#[allow(unused_mut)]
-#[doc(hidden)]
-pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: bool) -> bool {
-    let (sub, borrow1) = a.overflowing_sub(b);
-    let (sub, borrow2) = sub.overflowing_sub(borrow as u64);
-    *a = sub;
-    borrow1 | borrow2
-}
-
 // TODO#q: adc can be unified with adc_for_add_with_carry
 /// Sets a = a + b + carry, and returns the new carry.
 #[inline(always)]
 #[allow(unused_mut)]
 #[doc(hidden)]
-pub fn adc(a: &mut u64, b: u64, carry: u64) -> u64 {
-    let tmp = *a as u128 + b as u128 + carry as u128;
-    *a = tmp as u64;
-    (tmp >> 64) as u64
+pub const fn adc(a: u64, b: u64, carry: u64) -> (u64, u64) {
+    let tmp = a as u128 + b as u128 + carry as u128;
+    let carry = (tmp >> 64) as u64;
+    (tmp as u64, carry)
 }
 
 /// Sets a = a + b + carry, and returns the new carry.
@@ -508,6 +497,17 @@ pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: bool) -> bool {
 pub const fn ct_adc_for_add_with_carry(a: u64, b: u64, carry: u8) -> (u64, u8) {
     let tmp = a as u128 + b as u128 + carry as u128;
     (tmp as u64, (tmp >> 64) as u8)
+}
+
+/// Sets a = a - b - borrow, and returns the borrow.
+#[inline(always)]
+#[allow(unused_mut)]
+#[doc(hidden)]
+pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: bool) -> bool {
+    let (sub, borrow1) = a.overflowing_sub(b);
+    let (sub, borrow2) = sub.overflowing_sub(borrow as u64);
+    *a = sub;
+    borrow1 | borrow2
 }
 
 // ----------- Traits Impls -----------
