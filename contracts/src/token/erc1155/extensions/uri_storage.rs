@@ -92,16 +92,13 @@ impl Erc1155UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
-    use stylus_sdk::prelude::storage;
+    use stylus_sdk::{
+        alloy_primitives::{uint, U256},
+        prelude::storage,
+    };
 
     use super::Erc1155UriStorage;
     use crate::token::erc1155::extensions::Erc1155MetadataUri;
-
-    fn random_token_id() -> U256 {
-        let num: u32 = rand::random();
-        U256::from(num)
-    }
 
     #[storage]
     struct Erc1155MetadataExample {
@@ -109,18 +106,19 @@ mod tests {
         pub uri_storage: Erc1155UriStorage,
     }
 
+    const TOKEN_ID: U256 = uint!(1_U256);
+
     #[motsu::test]
     fn uri_returns_metadata_uri_when_token_uri_is_not_set(
         contract: Erc1155MetadataExample,
     ) {
-        let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
 
         contract.metadata_uri._uri.set_str(uri.to_owned());
 
         assert_eq!(
             uri,
-            contract.uri_storage.uri(token_id, &contract.metadata_uri)
+            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
         );
     }
 
@@ -128,11 +126,9 @@ mod tests {
     fn uri_returns_empty_string_when_no_uri_is_set(
         contract: Erc1155MetadataExample,
     ) {
-        let token_id = random_token_id();
-
         assert!(contract
             .uri_storage
-            .uri(token_id, &contract.metadata_uri)
+            .uri(TOKEN_ID, &contract.metadata_uri)
             .is_empty());
     }
 
@@ -140,18 +136,17 @@ mod tests {
     fn uri_returns_token_uri_when_base_uri_is_empty(
         contract: Erc1155MetadataExample,
     ) {
-        let token_id = random_token_id();
         let token_uri = "https://some.short/token/uri";
 
         contract
             .uri_storage
             ._token_uris
-            .setter(token_id)
+            .setter(TOKEN_ID)
             .set_str(token_uri.to_owned());
 
         assert_eq!(
             token_uri,
-            contract.uri_storage.uri(token_id, &contract.metadata_uri)
+            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
         );
     }
 
@@ -159,7 +154,6 @@ mod tests {
     fn uri_returns_concatenated_base_uri_and_token_uri(
         contract: Erc1155MetadataExample,
     ) {
-        let token_id = random_token_id();
         let base_uri = "https://some.base.uri";
         let token_uri = "/some/token/uri";
 
@@ -167,12 +161,12 @@ mod tests {
         contract
             .uri_storage
             ._token_uris
-            .setter(token_id)
+            .setter(TOKEN_ID)
             .set_str(token_uri.to_owned());
 
         assert_eq!(
             base_uri.to_string() + token_uri,
-            contract.uri_storage.uri(token_id, &contract.metadata_uri)
+            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
         );
     }
 
@@ -180,7 +174,6 @@ mod tests {
     fn uri_ignores_metadata_uri_when_token_uri_is_set(
         contract: Erc1155MetadataExample,
     ) {
-        let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri";
 
@@ -188,32 +181,31 @@ mod tests {
         contract
             .uri_storage
             ._token_uris
-            .setter(token_id)
+            .setter(TOKEN_ID)
             .set_str(token_uri.to_owned());
 
         assert_eq!(
             token_uri,
-            contract.uri_storage.uri(token_id, &contract.metadata_uri)
+            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
         );
     }
 
     #[motsu::test]
     fn test_set_uri(contract: Erc1155MetadataExample) {
-        let token_id = random_token_id();
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();
 
         contract.metadata_uri._uri.set_str(uri.to_owned());
 
         contract.uri_storage.set_token_uri(
-            token_id,
+            TOKEN_ID,
             token_uri.clone(),
             &contract.metadata_uri,
         );
 
         assert_eq!(
             token_uri,
-            contract.uri_storage.uri(token_id, &contract.metadata_uri)
+            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
         );
     }
 

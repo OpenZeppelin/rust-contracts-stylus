@@ -114,16 +114,14 @@ impl Erc721UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
-    use stylus_sdk::{msg, prelude::storage};
+    use stylus_sdk::{
+        alloy_primitives::{uint, U256},
+        msg,
+        prelude::storage,
+    };
 
     use super::Erc721UriStorage;
     use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
-
-    fn random_token_id() -> U256 {
-        let num: u32 = rand::random();
-        U256::from(num)
-    }
 
     #[storage]
     struct Erc721MetadataExample {
@@ -132,29 +130,29 @@ mod tests {
         pub uri_storage: Erc721UriStorage,
     }
 
+    const TOKEN_ID: U256 = uint!(1_U256);
+
     #[motsu::test]
     fn get_token_uri_works(contract: Erc721MetadataExample) {
         let alice = msg::sender();
 
-        let token_id = random_token_id();
-
         contract
             .erc721
-            ._mint(alice, token_id)
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract
             .uri_storage
             ._token_uris
-            .setter(token_id)
+            .setter(TOKEN_ID)
             .set_str(token_uri.clone());
 
         assert_eq!(
             token_uri,
             contract
                 .uri_storage
-                .token_uri(token_id, &contract.erc721, &contract.metadata)
+                .token_uri(TOKEN_ID, &contract.erc721, &contract.metadata)
                 .expect("should return token URI")
         );
     }
@@ -163,28 +161,26 @@ mod tests {
     fn set_token_uri_works(contract: Erc721MetadataExample) {
         let alice = msg::sender();
 
-        let token_id = random_token_id();
-
         contract
             .erc721
-            ._mint(alice, token_id)
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract
             .uri_storage
             ._token_uris
-            .setter(token_id)
+            .setter(TOKEN_ID)
             .set_str(initial_token_uri);
 
         let token_uri = String::from("Updated Token URI");
-        contract.uri_storage._set_token_uri(token_id, token_uri.clone());
+        contract.uri_storage._set_token_uri(TOKEN_ID, token_uri.clone());
 
         assert_eq!(
             token_uri,
             contract
                 .uri_storage
-                .token_uri(token_id, &contract.erc721, &contract.metadata)
+                .token_uri(TOKEN_ID, &contract.erc721, &contract.metadata)
                 .expect("should return token URI")
         );
     }

@@ -16,25 +16,23 @@ use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_sdk::{block, contract};
 
-/// keccak256("EIP712Domain(string name,string version,uint256 chainId,address
-/// verifyingContract)")
-pub const TYPE_HASH: [u8; 32] = [
-    0x8b, 0x73, 0xc3, 0xc6, 0x9b, 0xb8, 0xfe, 0x3d, 0x51, 0x2e, 0xcc, 0x4c,
-    0xf7, 0x59, 0xcc, 0x79, 0x23, 0x9f, 0x7b, 0x17, 0x9b, 0x0f, 0xfa, 0xca,
-    0xa9, 0xa7, 0x5d, 0x52, 0x2b, 0x39, 0x40, 0x0f,
-];
+/// Keccak-256 hash of the EIP-712 domain separator type string.
+const TYPE_HASH: [u8; 32] =
+    keccak_const::Keccak256::new()
+        .update(b"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+        .finalize();
 
 /// Field for the domain separator.
-pub const FIELDS: [u8; 1] = [0x0f];
+const FIELDS: [u8; 1] = [0x0f];
 
 /// Salt for the domain separator.
-pub const SALT: [u8; 32] = [0u8; 32];
+const SALT: [u8; 32] = [0u8; 32];
 
 /// Prefix for ERC-191 version with `0x01`.
-pub const TYPED_DATA_PREFIX: [u8; 2] = [0x19, 0x01];
+const TYPED_DATA_PREFIX: [u8; 2] = [0x19, 0x01];
 
 /// Tuple for the domain separator.
-pub type DomainSeparatorTuple = sol! {
+type DomainSeparatorTuple = sol! {
     tuple(bytes32, bytes32, bytes32, uint256, address)
 };
 

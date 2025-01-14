@@ -20,6 +20,8 @@ sol!(
         function pause() external;
         function unpause() external;
 
+        error Error(string message);
+        error Panic(uint256 code);
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
         error ERC1155InvalidSender(address sender);

@@ -165,6 +165,13 @@ pub enum Error {
     InvalidReceiver(ERC1155InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
+    ///
+    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
+    /// return data, this error will be encoded either as `Error(string)` or
+    /// `Panic(uint256)`, as those are the built-in errors emitted by default
+    /// by Solidity's special functions `assert`, `require`, and `revert`.
+    ///
+    /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
     InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     MissingApprovalForAll(ERC1155MissingApprovalForAll),
@@ -824,7 +831,7 @@ impl Erc1155 {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
                         // Non-IERC1155Receiver implementer.
-                        return Err(Error::InvalidReceiverWithReason(e));
+                        return Err(e.into());
                     }
                 }
 
