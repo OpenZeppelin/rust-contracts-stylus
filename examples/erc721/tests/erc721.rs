@@ -1359,32 +1359,32 @@ async fn safe_mint_to_eoa(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
 
     // Test case 1: Blank data
-    let token_id_1 = random_token_id();
-    let data_1 = Bytes::new();
-    let receipt_1 =
-        receipt!(contract.safeMint(alice_addr, token_id_1, data_1))?;
-    assert!(receipt_1.emits(Erc721::Transfer {
+    let token_id = random_token_id();
+    let data = Bytes::new();
+    let receipt =
+        receipt!(contract.safeMint(alice_addr, token_id, data))?;
+    assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: alice_addr,
-        tokenId: token_id_1,
+        tokenId: token_id,
     }));
-    let Erc721::ownerOfReturn { ownerOf: owner_1 } =
-        contract.ownerOf(token_id_1).call().await?;
-    assert_eq!(alice_addr, owner_1);
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(alice_addr, ownerOf);
 
     // Test case 2: Custom data
-    let token_id_2 = random_token_id();
-    let data_2: Bytes = fixed_bytes!("deadbeef").into();
-    let receipt_2 =
-        receipt!(contract.safeMint(alice_addr, token_id_2, data_2))?;
-    assert!(receipt_2.emits(Erc721::Transfer {
+    let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
+    let receipt =
+        receipt!(contract.safeMint(alice_addr, token_id, data))?;
+    assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: alice_addr,
-        tokenId: token_id_2,
+        tokenId: token_id,
     }));
-    let Erc721::ownerOfReturn { ownerOf: owner_2 } =
-        contract.ownerOf(token_id_2).call().await?;
-    assert_eq!(alice_addr, owner_2);
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(alice_addr, ownerOf);
 
     let Erc721::balanceOfReturn { balance } =
         contract.balanceOf(alice.address()).call().await?;
@@ -1403,50 +1403,50 @@ async fn safe_mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
             .await?;
 
     // Test case 1: Blank data
-    let token_id_1 = random_token_id();
-    let data_1 = Bytes::new();
-    let receipt_1 = receipt!(contract.safeMint(
+    let token_id = random_token_id();
+    let data = Bytes::new();
+    let receipt = receipt!(contract.safeMint(
         receiver_address,
-        token_id_1,
-        data_1.clone()
+        token_id,
+        data.clone()
     ))?;
-    assert!(receipt_1.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: receiver_address,
-        tokenId: token_id_1,
+        tokenId: token_id,
     }));
-    assert!(receipt_1.emits(ERC721ReceiverMock::Received {
+    assert!(receipt.emits(ERC721ReceiverMock::Received {
         operator: alice.address(),
         from: Address::ZERO,
-        tokenId: token_id_1,
-        data: data_1,
+        tokenId: token_id,
+        data: data,
     }));
-    let Erc721::ownerOfReturn { ownerOf: owner_1 } =
-        contract.ownerOf(token_id_1).call().await?;
-    assert_eq!(receiver_address, owner_1);
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(receiver_address, ownerOf);
 
     // Test case 2: Custom data
-    let token_id_2 = random_token_id();
-    let data_2: Bytes = fixed_bytes!("deadbeef").into();
-    let receipt_2 = receipt!(contract.safeMint(
+    let token_id = random_token_id();
+    let data: Bytes = fixed_bytes!("deadbeef").into();
+    let receipt = receipt!(contract.safeMint(
         receiver_address,
-        token_id_2,
-        data_2.clone()
+        token_id,
+        data.clone()
     ))?;
-    assert!(receipt_2.emits(Erc721::Transfer {
+    assert!(receipt.emits(Erc721::Transfer {
         from: Address::ZERO,
         to: receiver_address,
-        tokenId: token_id_2,
+        tokenId: token_id,
     }));
-    assert!(receipt_2.emits(ERC721ReceiverMock::Received {
+    assert!(receipt.emits(ERC721ReceiverMock::Received {
         operator: alice.address(),
         from: Address::ZERO,
-        tokenId: token_id_2,
-        data: data_2,
+        tokenId: token_id,
+        data: data,
     }));
-    let Erc721::ownerOfReturn { ownerOf: owner_2 } =
-        contract.ownerOf(token_id_2).call().await?;
-    assert_eq!(receiver_address, owner_2);
+    let Erc721::ownerOfReturn { ownerOf } =
+        contract.ownerOf(token_id).call().await?;
+    assert_eq!(receiver_address, ownerOf);
 
     let Erc721::balanceOfReturn { balance } =
         contract.balanceOf(receiver_address).call().await?;
