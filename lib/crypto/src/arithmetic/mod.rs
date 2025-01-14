@@ -18,9 +18,7 @@ use num_traits::{ConstZero, Zero};
 // };
 use zeroize::Zeroize;
 
-use crate::{
-    adc, bits::BitIteratorBE, const_for, const_modulo, sbb, unroll6_for,
-};
+use crate::{bits::BitIteratorBE, const_for, const_modulo, unroll6_for};
 
 pub type Limb = u64;
 pub type WideLimb = u128;
@@ -177,7 +175,7 @@ impl<const N: usize> BigInt<N> {
         let mut borrow = 0;
 
         const_for!((i in 0..N) {
-            self.0[i] = sbb!(self.0[i], other.0[i], &mut borrow);
+            (self.0[i], borrow) = sbb(self.0[i], other.0[i], borrow);
         });
 
         (self, borrow != 0)
@@ -205,7 +203,7 @@ impl<const N: usize> BigInt<N> {
         let mut carry = 0;
 
         crate::const_for!((i in 0..N) {
-            self.0[i] = adc!(self.0[i], other.0[i], &mut carry);
+            (self.0[i], carry) = adc(self.0[i], other.0[i], carry);
         });
 
         (self, carry != 0)
@@ -279,19 +277,6 @@ impl<const N: usize> BigInt<N> {
         });
 
         borrow
-    }
-
-    pub(crate) const fn ct_add_with_carry(
-        mut self,
-        other: &Self,
-    ) -> (Self, bool) {
-        let mut carry = 0;
-
-        const_for!((i in 0..N) {
-            (self.0[i], carry) = ct_adc_for_add_with_carry(self.0[i], other.0[i], carry);
-        });
-
-        (self, carry != 0)
     }
 
     /// Compute "wide" multiplication, with a product twice the size of the
@@ -470,7 +455,7 @@ pub fn mac_discard(a: u64, b: u64, c: u64, carry: &mut u64) {
 }
 
 // TODO#q: adc can be unified with adc_for_add_with_carry
-/// Sets a = a + b + carry, and returns the new carry.
+/// Calculate `a = a + b + carry` and return the result and carry.
 #[inline(always)]
 #[allow(unused_mut)]
 #[doc(hidden)]
@@ -491,12 +476,12 @@ pub fn adc_for_add_with_carry(a: &mut u64, b: u64, carry: bool) -> bool {
     carry1 | carry2
 }
 
-#[inline(always)]
-#[allow(unused_mut)]
-#[doc(hidden)]
-pub const fn ct_adc_for_add_with_carry(a: u64, b: u64, carry: u8) -> (u64, u8) {
-    let tmp = a as u128 + b as u128 + carry as u128;
-    (tmp as u64, (tmp >> 64) as u8)
+// TODO#q: sbb can be unified with sbb_for_sub_with_borrow
+/// Calculate `a = a - b - borrow` and return the result and borrow.
+pub const fn sbb(a: u64, b: u64, borrow: u64) -> (u64, u64) {
+    let tmp = (1u128 << 64) + (a as u128) - (b as u128) - (borrow as u128);
+    let borrow = if tmp >> 64 == 0 { 1 } else { 0 };
+    (tmp as u64, borrow)
 }
 
 /// Sets a = a - b - borrow, and returns the borrow.

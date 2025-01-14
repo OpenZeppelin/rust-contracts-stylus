@@ -26,11 +26,11 @@ use educe::Educe;
 use num_traits::{ConstZero, One, Zero};
 
 use crate::{
-    adc, arithmetic,
-    arithmetic::{BigInt, BigInteger, Limb},
+    arithmetic,
+    arithmetic::{BigInt, BigInteger},
     const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
-    mac, unroll6_for,
+    unroll6_for,
 };
 
 /// A trait that specifies the configuration of a prime field.
