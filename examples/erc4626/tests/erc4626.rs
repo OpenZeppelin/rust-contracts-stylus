@@ -7,7 +7,7 @@ use abi::Erc4626;
 use alloy::{contract,  primitives::{uint, Address}, sol};
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
-use mock::{token, token::ERC20Mock,token::MockErc20Abi};
+use mock::{token, token::ERC20Mock,token::MockErc20};
 use stylus_sdk::contract::address;
 
 use crate::Erc4626Example::constructorCall;
@@ -37,7 +37,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .deploy()
         .await?
         .address()?;
-    let token_contract = MockErc20Abi::new(mock_token_address, &alice.wallet);
+    let token_contract = MockErc20::new(mock_token_address, &alice.wallet);
     let name = token_contract.name().call().await?.name;
     let symbol = token_contract.symbol().call().await?.symbol;
     assert_eq!(name, TOKEN_NAME.to_owned());
@@ -69,12 +69,23 @@ async fn deposit(
         .deploy()
         .await?
         .address()?;
-    let asset = MockErc20Abi::new(mock_token_address, &alice.wallet);
+   
+
+    let asset = MockErc20::new(mock_token_address, &alice.wallet);
     let vault = Erc4626::new(vault_addr, &alice.wallet);
+    let alice_addr = alice.address();
+
+    let MockErc20::balanceOfReturn { balance: initial_balance } =
+        asset.balanceOf(alice_addr).call().await?;
+    let MockErc20::totalSupplyReturn { totalSupply: initial_supply } =
+        asset.totalSupply().call().await?;
+
+    assert_eq!(U256::ZERO, initial_balance);
+    assert_eq!(U256::ZERO, initial_supply);
 
     // Mint token
-    let mint_receipt = asset.mint(alice.address(), uint!(100_U256)).send().await?;
-    println!("{:?}", mint_receipt);
+    let mint_receipt = receipt!(asset.mint(alice.address(), uint!(100_U256)))?;
+    // println!("{:?}", mint_receipt);
 
     let _ = asset.approve(alice.address(), U256::MAX).send().await?;
     let _ = vault.approve(alice.address(), U256::MAX).send().await?;
