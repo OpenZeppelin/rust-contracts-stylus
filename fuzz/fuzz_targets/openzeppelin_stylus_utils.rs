@@ -15,7 +15,7 @@ fuzz_target!(|data: (B256, u8, B256, B256)| {
 
     let mut storage = Storage;
 
-    let _ = openzeppelin_stylus::utils::cryptography::ecdsa::recover(
+    _ = openzeppelin_stylus::utils::cryptography::ecdsa::recover(
         &mut storage,
         hash,
         v,
@@ -24,4 +24,4 @@ fuzz_target!(|data: (B256, u8, B256, B256)| {
     );
 });
 
-// add missing shims
+// TODO: add missing shims

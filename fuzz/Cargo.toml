@@ -25,8 +25,8 @@ path = "../lib/crypto"
 path = "../contracts"
 
 [[bin]]
-name = "openzeppelin_crypto"
-path = "fuzz_targets/openzeppelin_crypto.rs"
+name = "merkle_verify"
+path = "fuzz_targets/merkle_verify.rs"
 test = false
 doc = false
 bench = false

@@ -14,5 +14,5 @@ fuzz_target!(|data: (Vec<u8>, [u8; 32], [u8; 32])| {
         })
         .collect::<Vec<_>>();
 
-    let _ = openzeppelin_crypto::merkle::Verifier::verify(&proof, root, leaf);
+    _ = openzeppelin_crypto::merkle::Verifier::verify(&proof, root, leaf);
 });
