@@ -21,6 +21,7 @@ use zeroize::Zeroize;
 use crate::{bits::BitIteratorBE, const_for, const_modulo, unroll6_for};
 
 pub type Limb = u64;
+pub type Limbs<const N: usize> = [Limb; N];
 pub type WideLimb = u128;
 
 // TODO#q: Refactor types to:
@@ -33,15 +34,15 @@ pub type WideLimb = u128;
 //  - Rename functions *_with_carry to carrying_*
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
-pub struct BigInt<const N: usize>(pub [Limb; N]);
+pub struct Uint<const N: usize>(pub Limbs<N>);
 
-impl<const N: usize> Default for BigInt<N> {
+impl<const N: usize> Default for Uint<N> {
     fn default() -> Self {
         Self([0u64; N])
     }
 }
 
-impl<const N: usize> BigInt<N> {
+impl<const N: usize> Uint<N> {
     pub const BITS: u32 = (N as u32) * Limb::BITS;
     pub const ONE: Self = Self::one();
     pub const ZERO: Self = Self::zero();
@@ -294,11 +295,11 @@ impl<const N: usize> BigInt<N> {
     // NOTE#q: crypto_bigint
     pub const fn ct_mul_wide<const HN: usize>(
         &self,
-        rhs: &BigInt<HN>,
-    ) -> (Self, BigInt<HN>) {
+        rhs: &Uint<HN>,
+    ) -> (Self, Uint<HN>) {
         let mut i = 0;
         let mut lo = Self::ZERO;
-        let mut hi = BigInt::<HN>::ZERO;
+        let mut hi = Uint::<HN>::ZERO;
 
         // Schoolbook multiplication.
         // TODO(tarcieri): use Karatsuba for better performance?
@@ -342,11 +343,7 @@ impl<const N: usize> BigInt<N> {
     #[inline(always)]
     /// Computes `a + b + carry`, returning the result along with the new carry.
     // NOTE#q: crypto_bigint
-    pub const fn ct_adc(
-        &self,
-        rhs: &BigInt<N>,
-        mut carry: Limb,
-    ) -> (Self, Limb) {
+    pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: Limb) -> (Self, Limb) {
         let mut limbs = [Limb::ZERO; N];
         let mut i = 0;
 
@@ -497,25 +494,25 @@ pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: bool) -> bool {
 
 // ----------- Traits Impls -----------
 
-impl<const N: usize> UpperHex for BigInt<N> {
+impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:016X}", BigUint::from(*self))
     }
 }
 
-impl<const N: usize> Debug for BigInt<N> {
+impl<const N: usize> Debug for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:?}", BigUint::from(*self))
     }
 }
 
-impl<const N: usize> Display for BigInt<N> {
+impl<const N: usize> Display for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", BigUint::from(*self))
     }
 }
 
-impl<const N: usize> Ord for BigInt<N> {
+impl<const N: usize> Ord for Uint<N> {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         use core::cmp::Ordering;
@@ -532,7 +529,7 @@ impl<const N: usize> Ord for BigInt<N> {
     }
 }
 
-impl<const N: usize> PartialOrd for BigInt<N> {
+impl<const N: usize> PartialOrd for Uint<N> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
@@ -546,14 +543,14 @@ impl<const N: usize> PartialOrd for BigInt<N> {
     }
 }*/
 
-impl<const N: usize> AsMut<[u64]> for BigInt<N> {
+impl<const N: usize> AsMut<[u64]> for Uint<N> {
     #[inline]
     fn as_mut(&mut self) -> &mut [u64] {
         &mut self.0
     }
 }
 
-impl<const N: usize> AsRef<[u64]> for BigInt<N> {
+impl<const N: usize> AsRef<[u64]> for Uint<N> {
     #[inline]
     fn as_ref(&self) -> &[u64] {
         &self.0
@@ -585,36 +582,36 @@ impl<const N: usize> TryFrom<u128> for BigInt<N> {
 }
 */
 
-impl<const N: usize> From<u64> for BigInt<N> {
+impl<const N: usize> From<u64> for Uint<N> {
     #[inline]
-    fn from(val: u64) -> BigInt<N> {
+    fn from(val: u64) -> Uint<N> {
         let mut repr = Self::default();
         repr.0[0] = val;
         repr
     }
 }
 
-impl<const N: usize> From<u32> for BigInt<N> {
+impl<const N: usize> From<u32> for Uint<N> {
     #[inline]
-    fn from(val: u32) -> BigInt<N> {
+    fn from(val: u32) -> Uint<N> {
         let mut repr = Self::default();
         repr.0[0] = val.into();
         repr
     }
 }
 
-impl<const N: usize> From<u16> for BigInt<N> {
+impl<const N: usize> From<u16> for Uint<N> {
     #[inline]
-    fn from(val: u16) -> BigInt<N> {
+    fn from(val: u16) -> Uint<N> {
         let mut repr = Self::default();
         repr.0[0] = val.into();
         repr
     }
 }
 
-impl<const N: usize> From<u8> for BigInt<N> {
+impl<const N: usize> From<u8> for Uint<N> {
     #[inline]
-    fn from(val: u8) -> BigInt<N> {
+    fn from(val: u8) -> Uint<N> {
         let mut repr = Self::default();
         repr.0[0] = val.into();
         repr
@@ -622,29 +619,29 @@ impl<const N: usize> From<u8> for BigInt<N> {
 }
 
 // TODO#q: remove num_bigint::BigUint conversion
-impl<const N: usize> From<BigInt<N>> for BigUint {
+impl<const N: usize> From<Uint<N>> for BigUint {
     #[inline]
-    fn from(val: BigInt<N>) -> num_bigint::BigUint {
+    fn from(val: Uint<N>) -> num_bigint::BigUint {
         BigUint::from_bytes_le(&val.into_bytes_le())
     }
 }
 
-impl<const N: usize> From<BigInt<N>> for num_bigint::BigInt {
+impl<const N: usize> From<Uint<N>> for num_bigint::BigInt {
     #[inline]
-    fn from(val: BigInt<N>) -> num_bigint::BigInt {
+    fn from(val: Uint<N>) -> num_bigint::BigInt {
         use num_bigint::Sign;
         let sign = if val.is_zero() { Sign::NoSign } else { Sign::Plus };
         num_bigint::BigInt::from_bytes_le(sign, &val.into_bytes_le())
     }
 }
 
-impl<B: Borrow<Self>, const N: usize> BitXorAssign<B> for BigInt<N> {
+impl<B: Borrow<Self>, const N: usize> BitXorAssign<B> for Uint<N> {
     fn bitxor_assign(&mut self, rhs: B) {
         (0..N).for_each(|i| self.0[i] ^= rhs.borrow().0[i])
     }
 }
 
-impl<B: Borrow<Self>, const N: usize> BitXor<B> for BigInt<N> {
+impl<B: Borrow<Self>, const N: usize> BitXor<B> for Uint<N> {
     type Output = Self;
 
     fn bitxor(mut self, rhs: B) -> Self::Output {
@@ -653,13 +650,13 @@ impl<B: Borrow<Self>, const N: usize> BitXor<B> for BigInt<N> {
     }
 }
 
-impl<B: Borrow<Self>, const N: usize> BitAndAssign<B> for BigInt<N> {
+impl<B: Borrow<Self>, const N: usize> BitAndAssign<B> for Uint<N> {
     fn bitand_assign(&mut self, rhs: B) {
         (0..N).for_each(|i| self.0[i] &= rhs.borrow().0[i])
     }
 }
 
-impl<B: Borrow<Self>, const N: usize> BitAnd<B> for BigInt<N> {
+impl<B: Borrow<Self>, const N: usize> BitAnd<B> for Uint<N> {
     type Output = Self;
 
     fn bitand(mut self, rhs: B) -> Self::Output {
@@ -668,13 +665,13 @@ impl<B: Borrow<Self>, const N: usize> BitAnd<B> for BigInt<N> {
     }
 }
 
-impl<B: Borrow<Self>, const N: usize> BitOrAssign<B> for BigInt<N> {
+impl<B: Borrow<Self>, const N: usize> BitOrAssign<B> for Uint<N> {
     fn bitor_assign(&mut self, rhs: B) {
         (0..N).for_each(|i| self.0[i] |= rhs.borrow().0[i])
     }
 }
 
-impl<B: Borrow<Self>, const N: usize> BitOr<B> for BigInt<N> {
+impl<B: Borrow<Self>, const N: usize> BitOr<B> for Uint<N> {
     type Output = Self;
 
     fn bitor(mut self, rhs: B) -> Self::Output {
@@ -683,7 +680,7 @@ impl<B: Borrow<Self>, const N: usize> BitOr<B> for BigInt<N> {
     }
 }
 
-impl<const N: usize> ShrAssign<u32> for BigInt<N> {
+impl<const N: usize> ShrAssign<u32> for Uint<N> {
     /// Computes the bitwise shift right operation in place.
     ///
     /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
@@ -716,7 +713,7 @@ impl<const N: usize> ShrAssign<u32> for BigInt<N> {
     }
 }
 
-impl<const N: usize> Shr<u32> for BigInt<N> {
+impl<const N: usize> Shr<u32> for Uint<N> {
     type Output = Self;
 
     /// Computes bitwise shift right operation.
@@ -731,7 +728,7 @@ impl<const N: usize> Shr<u32> for BigInt<N> {
     }
 }
 
-impl<const N: usize> ShlAssign<u32> for BigInt<N> {
+impl<const N: usize> ShlAssign<u32> for Uint<N> {
     /// Computes the bitwise shift left operation in place.
     ///
     /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
@@ -766,7 +763,7 @@ impl<const N: usize> ShlAssign<u32> for BigInt<N> {
     }
 }
 
-impl<const N: usize> Shl<u32> for BigInt<N> {
+impl<const N: usize> Shl<u32> for Uint<N> {
     type Output = Self;
 
     /// Computes the bitwise shift left operation in place.
@@ -781,7 +778,7 @@ impl<const N: usize> Shl<u32> for BigInt<N> {
     }
 }
 
-impl<const N: usize> Not for BigInt<N> {
+impl<const N: usize> Not for Uint<N> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
@@ -908,7 +905,7 @@ pub trait BigInteger:
     fn into_bytes_le(self) -> alloc::vec::Vec<u8>;
 }
 
-impl<const N: usize> BigInteger for BigInt<N> {
+impl<const N: usize> BigInteger for Uint<N> {
     const NUM_LIMBS: usize = N;
 
     fn is_odd(&self) -> bool {
@@ -955,7 +952,7 @@ impl<const N: usize> BigInteger for BigInt<N> {
     }
 }
 
-impl<const N: usize> BitIteratorBE for BigInt<N> {
+impl<const N: usize> BitIteratorBE for Uint<N> {
     fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
         self.as_limbs().iter().rev().flat_map(Limb::bit_be_iter)
     }
@@ -971,7 +968,7 @@ impl<const N: usize> BitIteratorBE for BigInt<N> {
 pub const fn from_str_radix<const LIMBS: usize>(
     s: &str,
     radix: u32,
-) -> BigInt<LIMBS> {
+) -> Uint<LIMBS> {
     let bytes = s.as_bytes();
     assert!(!bytes.is_empty(), "empty string");
 
@@ -979,12 +976,12 @@ pub const fn from_str_radix<const LIMBS: usize>(
     // Begin parsing from the last index of the string.
     let mut index = bytes.len() - 1;
 
-    let mut uint = BigInt::from_u32(0);
-    let mut order = BigInt::from_u32(1);
-    let uint_radix = BigInt::from_u32(radix);
+    let mut uint = Uint::from_u32(0);
+    let mut order = Uint::from_u32(1);
+    let uint_radix = Uint::from_u32(radix);
 
     loop {
-        let digit = BigInt::from_u32(parse_digit(bytes[index], radix));
+        let digit = Uint::from_u32(parse_digit(bytes[index], radix));
 
         // Add a digit multiplied by order.
         uint = ct_add(&uint, &ct_mul(&digit, &order));
@@ -1010,7 +1007,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
 /// If the string number is shorter, then [`Uint`] can store.
 /// Returns a [`Uint`] with leading zeroes.
 #[must_use]
-pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
+pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
     let bytes = s.as_bytes();
     assert!(!bytes.is_empty(), "empty string");
 
@@ -1037,7 +1034,7 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
 
         // If we reached the beginning of the string, return the number.
         if index == 0 {
-            return BigInt::new(num);
+            return Uint::new(num);
         }
 
         // Move to the next digit.
@@ -1050,15 +1047,15 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> BigInt<LIMBS> {
 
 /// Multiply two numbers and panic on overflow.
 #[must_use]
-pub const fn ct_mul<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
+pub const fn ct_mul<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
     let (low, high) = a.ct_mul_wide(b);
-    assert!(ct_eq(&high, &BigInt::<N>::ZERO), "overflow on multiplication");
+    assert!(ct_eq(&high, &Uint::<N>::ZERO), "overflow on multiplication");
     low
 }
 
 /// Add two numbers and panic on overflow.
 #[must_use]
-pub const fn ct_add<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
+pub const fn ct_add<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
     let (low, carry) = a.ct_adc(b, Limb::ZERO);
     assert!(carry == 0, "overflow on addition");
     low
@@ -1089,7 +1086,7 @@ pub const fn ct_adc(lhs: Limb, rhs: Limb, carry: Limb) -> (Limb, Limb) {
     (ret as Limb, (ret >> Limb::BITS) as Limb)
 }
 
-pub const fn ct_ge<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> bool {
+pub const fn ct_ge<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> bool {
     const_for!((i in 0..N) {
         if a.0[i] < b.0[i] {
             return false;
@@ -1101,7 +1098,7 @@ pub const fn ct_ge<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> bool {
 }
 
 // TODO#q: compare with const_is_zero
-pub const fn ct_eq<const N: usize>(a: &BigInt<N>, b: &BigInt<N>) -> bool {
+pub const fn ct_eq<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> bool {
     const_for!((i in 0..N) {
         if a.0[i] != b.0[i] {
             return false;
@@ -1153,12 +1150,12 @@ mod test {
 
     #[test]
     fn convert_from_str_radix() {
-        let uint_from_base10: BigInt<4> = from_str_radix(
+        let uint_from_base10: Uint<4> = from_str_radix(
             "28948022309329048855892746252171976963363056481941647379679742748393362948097",
             10,
         );
         #[allow(clippy::unreadable_literal)]
-        let expected = BigInt::<4>::new([
+        let expected = Uint::<4>::new([
             10108024940646105089u64,
             2469829653919213789u64,
             0u64,
@@ -1166,9 +1163,9 @@ mod test {
         ]);
         assert_eq!(uint_from_base10, expected);
 
-        let uint_from_base10: BigInt<1> =
+        let uint_from_base10: Uint<1> =
             from_str_radix("18446744069414584321", 10);
-        let uint_from_binary: BigInt<1> = from_str_radix(
+        let uint_from_binary: Uint<1> = from_str_radix(
             "1111111111111111111111111111111100000000000000000000000000000001",
             2,
         );
@@ -1179,8 +1176,8 @@ mod test {
     fn convert_from_str_hex() {
         // Test different implementations of hex parsing on random hex inputs.
         proptest!(|(s in "[0-9a-fA-F]{1,64}")| {
-            let uint_from_hex: BigInt<4> = from_str_hex(&s);
-            let expected: BigInt<4> = from_str_radix(&s, 16);
+            let uint_from_hex: Uint<4> = from_str_hex(&s);
+            let expected: Uint<4> = from_str_radix(&s, 16);
             assert_eq!(uint_from_hex, expected);
         });
     }
@@ -1188,7 +1185,7 @@ mod test {
     #[test]
     fn uint_bit_iterator_be() {
         let words: [Limb; 4] = [0b1100, 0, 0, 0];
-        let num = BigInt::<4>::new(words);
+        let num = Uint::<4>::new(words);
         let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
 
         assert_eq!(bits.len(), 4);

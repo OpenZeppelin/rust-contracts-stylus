@@ -27,7 +27,7 @@ use num_traits::{ConstZero, One, Zero};
 
 use crate::{
     arithmetic,
-    arithmetic::{BigInt, BigInteger},
+    arithmetic::{BigInteger, Uint},
     const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     unroll6_for,
@@ -39,7 +39,7 @@ use crate::{
 // TODO#q: rename FpParams -> Params
 pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
-    const MODULUS: BigInt<N>;
+    const MODULUS: Uint<N>;
 
     /// A multiplicative generator of the field.
     /// [`Self::GENERATOR`] is an element having multiplicative order
@@ -53,11 +53,11 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
     /// `R = M % MODULUS`.
-    const R: BigInt<N> = Self::MODULUS.montgomery_r();
+    const R: Uint<N> = Self::MODULUS.montgomery_r();
 
     /// `R2 = R^2 % MODULUS`
     #[allow(dead_code)]
-    const R2: BigInt<N> = Self::MODULUS.montgomery_r2();
+    const R2: Uint<N> = Self::MODULUS.montgomery_r2();
 
     /// Set `a += b`.
     #[inline(always)]
@@ -143,7 +143,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         // to Cryptography
         // Algorithm 16 (BEA for Inversion in Fp)
 
-        let one = BigInt::ONE;
+        let one = Uint::ONE;
 
         let mut u = a.0;
         let mut v = Self::MODULUS;
@@ -202,7 +202,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// By the end element will be converted to a montgomery form and reduced.
     #[must_use]
     #[inline]
-    fn from_bigint(r: BigInt<N>) -> Option<Fp<Self, N>> {
+    fn from_bigint(r: Uint<N>) -> Option<Fp<Self, N>> {
         let mut r = Fp::new_unchecked(r);
         if r.is_zero() {
             Some(r)
@@ -215,7 +215,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
     #[inline(always)]
-    fn into_bigint(a: Fp<Self, N>) -> BigInt<N> {
+    fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
         let mut r = (a.0).0;
         // Montgomery Reduction
         for i in 0..N {
@@ -234,7 +234,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
             r[i % N] = carry;
         }
 
-        BigInt::new(r)
+        Uint::new(r)
     }
 }
 
@@ -272,9 +272,9 @@ pub const fn modulus_has_spare_bit<T: FpParams<N>, const N: usize>() -> bool {
 #[educe(Default, Clone, Copy, PartialEq, Eq)]
 pub struct Fp<P: FpParams<N>, const N: usize>(
     /// Contains the element in Montgomery form for efficient multiplication.
-    /// To convert an element to a [`BigInt`], use [`FpParams::into_bigint`]
+    /// To convert an element to a [`Uint`], use [`FpParams::into_bigint`]
     /// or `into`.
-    BigInt<N>,
+    Uint<N>,
     #[doc(hidden)] pub PhantomData<P>,
 );
 
@@ -324,10 +324,10 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// such that, for all elements `f` of the field, `e * f = f`.
     pub const ONE: Fp<P, N> = Fp::new_unchecked(P::R);
     // TODO#q: remove
-    pub const R: BigInt<N> = P::R;
+    pub const R: Uint<N> = P::R;
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
-    pub const ZERO: Fp<P, N> = Fp::new_unchecked(BigInt([0; N]));
+    pub const ZERO: Fp<P, N> = Fp::new_unchecked(Uint([0; N]));
 
     /// Construct a new field element from [`Uint`].
     ///
@@ -336,7 +336,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// integer that has already been put in Montgomery form.
     #[must_use]
     #[inline(always)]
-    pub const fn new_unchecked(element: BigInt<N>) -> Self {
+    pub const fn new_unchecked(element: Uint<N>) -> Self {
         Self(element, PhantomData)
     }
 
@@ -375,9 +375,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     // TODO#q: rename all const_* methods to ct_*
 
     /// Construct a new field element from its underlying
-    /// [`struct@BigInt`] data type.
+    /// [`struct@Uint`] data type.
     #[inline]
-    pub const fn new(element: BigInt<N>) -> Self {
+    pub const fn new(element: Uint<N>) -> Self {
         let mut r = Self(element, PhantomData);
         if r.const_is_zero() {
             r
@@ -493,7 +493,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         self
     }
 
-    const fn sub_with_borrow(a: &BigInt<N>, b: &BigInt<N>) -> BigInt<N> {
+    const fn sub_with_borrow(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
         a.const_sub_with_borrow(b).0
     }
 }
@@ -592,7 +592,7 @@ impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
 }
 
 impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
-    type BigInt = BigInt<N>;
+    type BigInt = Uint<N>;
 
     const MODULUS: Self::BigInt = P::MODULUS;
     const MODULUS_BIT_SIZE: usize = unimplemented!();
@@ -604,7 +604,7 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
     }
 
     #[inline]
-    fn into_bigint(self) -> BigInt<N> {
+    fn into_bigint(self) -> Uint<N> {
         P::into_bigint(self)
     }
 }
@@ -628,7 +628,7 @@ macro_rules! impl_fp_from_unsigned_int {
     ($int:ty) => {
         impl<P: FpParams<N>, const N: usize> From<$int> for Fp<P, N> {
             fn from(other: $int) -> Self {
-                Fp::from_bigint(BigInt::from(other))
+                Fp::from_bigint(Uint::from(other))
             }
         }
     };
@@ -1060,17 +1060,17 @@ impl<P: FpParams<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<Fp<P, N>> for BigInt<N> {
+impl<P: FpParams<N>, const N: usize> From<Fp<P, N>> for Uint<N> {
     #[inline]
     fn from(fp: Fp<P, N>) -> Self {
         fp.into_bigint()
     }
 }
 
-impl<P: FpParams<N>, const N: usize> From<BigInt<N>> for Fp<P, N> {
+impl<P: FpParams<N>, const N: usize> From<Uint<N>> for Fp<P, N> {
     /// Converts `Self::BigInteger` into `Self`
     #[inline]
-    fn from(int: BigInt<N>) -> Self {
+    fn from(int: Uint<N>) -> Self {
         Self::from_bigint(int)
     }
 }
@@ -1108,7 +1108,7 @@ mod tests {
     struct Fp64Param;
     impl FpParams<LIMBS_64> for Fp64Param {
         const GENERATOR: Fp64<Fp64Param> = fp_from_num!("3");
-        const MODULUS: BigInt<LIMBS_64> = from_num!("1000003"); // Prime number
+        const MODULUS: Uint<LIMBS_64> = from_num!("1000003"); // Prime number
     }
 
     const MODULUS: i128 = 1000003; // Prime number

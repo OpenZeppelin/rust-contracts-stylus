@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::U256;
 use openzeppelin_crypto::{
-    arithmetic::{BigInt, BigInteger},
+    arithmetic::{BigInteger, Uint},
     field::{
         group::AdditiveGroup, instance::FpBN256, prime::PrimeField, Field,
     },
@@ -22,7 +22,7 @@ impl MathExample {
         let inputs: Vec<_> = inputs
             .iter()
             .map(|input| {
-                FpBN256::from_bigint(BigInt::from_bytes_le(
+                FpBN256::from_bigint(Uint::from_bytes_le(
                     &input.to_le_bytes_vec(),
                 ))
             })
