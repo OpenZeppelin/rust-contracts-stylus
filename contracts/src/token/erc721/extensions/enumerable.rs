@@ -333,15 +333,14 @@ impl Erc721Enumerable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use motsu::prelude::Contract;
     use stylus_sdk::{
         alloy_primitives::{address, uint, Address, U256},
-        msg,
+        prelude::TopLevelStorage,
     };
-    use motsu::prelude::Contract;
-    use stylus_sdk::{msg, prelude::TopLevelStorage};
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
-    use crate::token::erc721::{Erc721, IErc721};
+    use crate::token::erc721::IErc721;
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 

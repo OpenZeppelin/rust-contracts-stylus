@@ -114,7 +114,7 @@ impl Erc721UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{Address, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::{public, storage, TopLevelStorage};
 

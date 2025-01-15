@@ -350,6 +350,8 @@ impl IErc3156FlashLender for Erc20FlashMint {
     }
 }
 
+// TODO#q: migrate flash mint tests
+/*
 // TODO: unignore all tests once it's possible to mock contract address.
 // NOTE: double check that the tests assert the correct and expected things.
 #[cfg(all(test, feature = "std"))]
@@ -451,3 +453,4 @@ mod tests {
         assert_eq!(result.is_err(), true);
     }
 }
+*/

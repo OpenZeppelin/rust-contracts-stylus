@@ -824,6 +824,7 @@ mod tests {
     const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
     const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
     const TOKEN_ID: U256 = uint!(1_U256);
+    const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
 
     fn mint_consecutive(
         contract: &mut Erc721Consecutive,
@@ -996,7 +997,7 @@ mod tests {
         // Check non-consecutive mint.
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            ._mint(alice, NON_CONSECUTIVE_TOKEN_ID)
             .expect("should mint a token to Alice");
         let alice_balance = contract
             .sender(alice)
@@ -1007,7 +1008,7 @@ mod tests {
         // Check transfer of the token that wasn't minted consecutive.
         contract
             .sender(alice)
-            .transfer_from(alice, BOB, TOKEN_ID)
+            .transfer_from(alice, BOB, NON_CONSECUTIVE_TOKEN_ID)
             .expect("should transfer a token from Alice to Bob");
         let alice_balance = contract
             .sender(alice)
@@ -1392,10 +1393,8 @@ mod tests {
         contract: Contract<Erc721Consecutive>,
     ) {
         let alice = Address::random();
-        let token_id = random_token_id();
         let err = contract
             .sender(alice)
-            .get_approved(token_id)
             .get_approved(TOKEN_ID)
             .expect_err("should not return approved for a non-existent token");
 

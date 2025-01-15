@@ -54,16 +54,19 @@ impl IErc721Burnable for Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address};
+    use alloy_primitives::{address, uint, Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::msg;
 
     use super::IErc721Burnable;
-    use crate::token::erc721::{ERC721InsufficientApproval,
-        ERC721NonexistentToken, Erc721, Error, IErc721,
+    use crate::token::erc721::{
+        ERC721InsufficientApproval, ERC721NonexistentToken, Erc721, Error,
+        IErc721,
     };
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
+
+    const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
     fn burns(contract: Contract<Erc721>) {
