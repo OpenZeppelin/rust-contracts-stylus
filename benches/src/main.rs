@@ -1,7 +1,7 @@
 use benches::{
     access_control, ark_ff, erc1155, erc1155_metadata_uri, erc20, erc721,
-    merkle_proofs, ownable, oz_crypto, poseidon, poseidon_renegades,
-    poseidon_sol, report::BenchmarkReport,
+    merkle_proofs, ownable, oz_crypto, poseidon, poseidon_asm_sol,
+    poseidon_renegades, poseidon_sol, report::BenchmarkReport,
 };
 use futures::FutureExt;
 use itertools::Itertools;
@@ -17,6 +17,7 @@ async fn main() -> eyre::Result<()> {
         // erc1155::bench().boxed(),
         // erc1155_metadata_uri::bench().boxed(),
         poseidon_sol::bench().boxed(),
+        poseidon_asm_sol::bench().boxed(),
         poseidon::bench().boxed(),
         poseidon_renegades::bench().boxed(),
         oz_crypto::bench().boxed(),

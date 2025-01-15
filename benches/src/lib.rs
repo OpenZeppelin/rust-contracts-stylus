@@ -24,6 +24,7 @@ pub mod merkle_proofs;
 pub mod ownable;
 pub mod oz_crypto;
 pub mod poseidon;
+pub mod poseidon_asm_sol;
 pub mod poseidon_renegades;
 pub mod poseidon_sol;
 pub mod report;
