@@ -1245,7 +1245,6 @@ mod tests {
     fn mints(contract: Contract<Erc721>) {
         let alice = Address::random();
 
-
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -1712,10 +1711,8 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_with_data(contract: Erc721) {
-        let alice = msg::sender();
-        contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
-
+    fn safe_transfers_from_with_data(contract: Contract<Erc721>) {
+        let alice = Address::random();
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
@@ -1740,10 +1737,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_with_data_approved_token(contract: Erc721) {
-        let alice = msg::sender();
-        contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract._token_approvals.setter(TOKEN_ID).set(alice);
+    fn safe_transfers_from_with_data_approved_token(
+        contract: Contract<Erc721>,
+    ) {
+        let alice = Address::random();
         contract
             .sender(alice)
             ._mint(BOB, TOKEN_ID)
@@ -1928,17 +1925,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approves(contract: Erc721) {
-        let alice = msg::sender();
-        contract._mint(alice, TOKEN_ID).expect("should mint a token");
-        contract
-            .approve(BOB, TOKEN_ID)
-            .expect("should approve Bob for operations on token");
-        assert_eq!(contract._token_approvals.get(TOKEN_ID), BOB);
-    }
+    fn error_when_approve_for_nonexistent_token(contract: Contract<Erc721>) {
+        let alice = Address::random();
 
-    #[motsu::test]
-    fn error_when_approve_for_nonexistent_token(contract: Erc721) {
         let err = contract
             .sender(alice)
             .approve(BOB, TOKEN_ID)
@@ -2309,7 +2298,8 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_nonexistent_token(contract: Erc721) {
+    fn error_when_burn_nonexistent_token(contract: Contract<Erc721>) {
+        let alice = Address::random();
         let err = contract
             .sender(alice)
             ._burn(TOKEN_ID)
@@ -2679,7 +2669,7 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            ._set_approval_for_all(msg::sender(), invalid_operator, true)
+            ._set_approval_for_all(alice, invalid_operator, true)
             .expect_err("should not approve for all for invalid operator");
 
         assert!(matches!(
@@ -2768,14 +2758,13 @@ mod tests {
         receiver: Contract<Erc721ReceiverMock>,
     ) {
         let alice = Address::random();
-        let token_id = random_token_id();
         erc721
             .sender(alice)
-            ._safe_mint(receiver.address(), token_id, &vec![0, 1, 2, 3].into())
+            ._safe_mint(receiver.address(), TOKEN_ID, &vec![0, 1, 2, 3].into())
             .unwrap();
 
         let received_token_id = receiver.sender(alice).received_token_id();
 
-        assert_eq!(received_token_id, token_id);
+        assert_eq!(received_token_id, TOKEN_ID);
     }
 }
