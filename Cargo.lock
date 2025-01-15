@@ -1392,6 +1392,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 [[package]]
 name = "constants"
 version = "0.1.0"
+source = "git+https://github.com/renegade-fi/renegade.git#c4816feb849b0c75b8b6e6f9ac981a3d2df520bb"
 dependencies = [
  "ark-bn254 0.4.0",
  "ark-ec 0.4.2",
@@ -3208,9 +3209,9 @@ version = "0.2.0-alpha.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
- "ark-bn254 0.5.0",
- "ark-ec 0.5.0",
- "ark-ff 0.5.0",
+ "ark-bn254 0.4.0",
+ "ark-ec 0.4.2",
+ "ark-ff 0.4.2",
  "e2e",
  "eyre",
  "renegade-crypto",
@@ -3505,9 +3506,10 @@ dependencies = [
 [[package]]
 name = "renegade-crypto"
 version = "0.1.0"
+source = "git+https://github.com/renegade-fi/renegade.git#c4816feb849b0c75b8b6e6f9ac981a3d2df520bb"
 dependencies = [
- "ark-ec 0.5.0",
- "ark-ff 0.5.0",
+ "ark-ec 0.4.2",
+ "ark-ff 0.4.2",
  "bigdecimal",
  "constants",
  "itertools 0.10.5",
