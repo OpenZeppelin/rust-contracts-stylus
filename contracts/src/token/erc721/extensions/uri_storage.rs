@@ -51,7 +51,7 @@ impl Erc721UriStorage {
     /// * `token_uri` - URI for the token.
     ///
     /// # Events
-    /// Emits a [`MetadataUpdate`] event.
+    /// * Emits a [`MetadataUpdate`] event.
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
@@ -59,6 +59,10 @@ impl Erc721UriStorage {
 
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
+    /// NOTE: In order to expose this function in the ABI, you need to annotate
+    /// it with `#[selector(name = "tokenURI")]` and ensure that the `erc721`
+    /// parameter is passed internally. This design works around Stylus's lack
+    /// of inheritance while avoiding code duplication. See the Example section.
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -68,11 +72,8 @@ impl Erc721UriStorage {
     ///
     /// # Errors
     ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
-    /// NOTE: In order to have [`Erc721UriStorage::token_uri`] exposed in ABI,
-    /// you need to do this manually.
     ///
     /// # Examples
     ///

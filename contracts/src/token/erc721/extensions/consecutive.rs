@@ -367,15 +367,15 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If token does not exist and `auth` is not `Address::ZERO`, then the
-    /// error [`erc721::Error::NonexistentToken`] is returned.
-    /// If `auth` is not `Address::ZERO` and `auth` does not have a right to
-    /// approve this token, then the error
-    /// [`erc721::Error::InsufficientApproval`] is returned.
+    /// * [`erc721::Error::NonexistentToken`] - If token does not exist and
+    ///   `auth` is not `Address::ZERO`, then the error is returned.
+    /// * [`erc721::Error::InsufficientApproval`] - If `auth` is not
+    ///   `Address::ZERO` and `auth` does not have a right to approve this
+    ///   token, then the error is returned.
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * Emits a [`Transfer`] event.
     pub fn _update(
         &mut self,
         to: Address,
@@ -489,10 +489,10 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If `token_id` already exists, then the error
-    /// [`erc721::Error::InvalidSender`] is returned.
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc721::Error::InvalidReceiver`] is returned.
+    /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists, then
+    ///   the error is returned.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then
+    ///   the error is returned.
     ///
     /// # Requirements:
     ///
@@ -501,7 +501,7 @@ impl Erc721Consecutive {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * Emits a [`Transfer`] event.
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
@@ -536,13 +536,13 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If `token_id` already exists, then the error
-    /// [`erc721::Error::InvalidSender`] is returned.
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc721::Error::InvalidReceiver`] is returned.
-    /// If [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
-    /// interface id or returned with error, then the error
-    /// [`erc721::Error::InvalidReceiver`] is returned.
+    /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists, then
+    ///   the error is returned.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then
+    ///   the error is returned.
+    /// * [`erc721::Error::InvalidReceiver`] - If
+    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or returned with error, then the error is returned.
     ///
     /// # Requirements:
     ///
@@ -553,7 +553,7 @@ impl Erc721Consecutive {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * Emits a [`Transfer`] event.
     pub fn _safe_mint(
         &mut self,
         to: Address,
@@ -583,8 +583,8 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If token does not exist, then the error
-    /// [`erc721::Error::NonexistentToken`] is returned.
+    /// * [`erc721::Error::NonexistentToken`] - If token does not exist, then
+    ///   the error is returned.
     ///
     /// # Requirements:
     ///
@@ -592,7 +592,7 @@ impl Erc721Consecutive {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * Emits a [`Transfer`] event.
     pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
@@ -619,12 +619,12 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc721::Error::InvalidReceiver`] is returned.
-    /// If `token_id` does not exist, then the error
-    /// [`erc721::Error::NonexistentToken`] is returned.
-    /// If the previous owner is not `from`, then  the error
-    /// [`erc721::Error::IncorrectOwner`] is returned.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then
+    ///   the error is returned.
+    /// * [`erc721::Error::NonexistentToken`] - If `token_id` does not exist,
+    ///   then the error is returned.
+    /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
+    ///   `from`, then the error is returned.
     ///
     /// # Requirements:
     ///
@@ -633,7 +633,7 @@ impl Erc721Consecutive {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * Emits a [`Transfer`] event.
     pub fn _transfer(
         &mut self,
         from: Address,
@@ -687,12 +687,12 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`erc721::Error::InvalidReceiver`] is returned.
-    /// If `token_id` does not exist, then the error
-    /// [`erc721::Error::NonexistentToken`] is returned.
-    /// If the previous owner is not `from`, then the error
-    /// [`erc721::Error::IncorrectOwner`] is returned.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then
+    ///   the error is returned.
+    /// * [`erc721::Error::NonexistentToken`] - If `token_id` does not exist,
+    ///   then the error is returned.
+    /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
+    ///   `from`, then the error is returned.
     ///
     /// # Requirements:
     ///
@@ -704,8 +704,7 @@ impl Erc721Consecutive {
     ///   a `safe_transfer`.
     ///
     /// # Events
-    ///
-    /// Emits a [`Transfer`] event.
+    /// * Emits a [`Transfer`] event.
     pub fn _safe_transfer(
         &mut self,
         from: Address,
@@ -740,14 +739,14 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If the token does not exist, then the error
-    /// [`erc721::Error::NonexistentToken`] is returned.
-    /// If `auth` does not have a right to approve this token, then the error
-    /// [`erc721::Error::InvalidApprover`] is returned.
+    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist,
+    ///   then the error is returned.
+    /// * [`erc721::Error::InvalidApprover`] - If `auth` does not have a right
+    ///   to approve this token, then the error is returned.
     ///
     /// # Events
     ///
-    /// Emits an [`Approval`] event.
+    /// * Emits an [`Approval`] event.
     pub fn _approve(
         &mut self,
         to: Address,
@@ -788,8 +787,8 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// If token does not exist, then the error
-    /// [`erc721::Error::NonexistentToken`] is returned.
+    /// * [`erc721::Error::NonexistentToken`] - If token does not exist, then
+    ///   the error is returned.
     ///
     /// # Arguments
     ///

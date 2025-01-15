@@ -215,12 +215,12 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`, then the error is returned.
     ///
     /// # Events
     ///
-    /// May emit a [`RoleRevoked`] event.
+    /// * May emit a [`RoleRevoked`] event.
     pub fn revoke_role(
         &mut self,
         role: B256,
@@ -251,13 +251,13 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] is not the `confirmation` address, then the error
-    /// [`Error::BadConfirmation`] is returned.
+    /// * [`Error::BadConfirmation`]  - If [`msg::sender`] is not the
+    ///   `confirmation` address, then the error is returned.
     ///
     /// # Events
     ///
-    /// If the calling account has its `role` revoked, emits a [`RoleRevoked`]
-    /// event.
+    /// * If the calling account has its `role` revoked, emits a [`RoleRevoked`]
+    ///   event.
     pub fn renounce_role(
         &mut self,
         role: B256,
@@ -288,7 +288,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// Emits a [`RoleAdminChanged`] event.
+    /// * Emits a [`RoleAdminChanged`] event.
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
         self._roles.setter(role).admin_role.set(new_admin_role);
@@ -309,8 +309,8 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`, then the error is returned.
     pub fn _check_role(
         &self,
         role: B256,
@@ -338,7 +338,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// May emit a [`RoleGranted`] event.
+    /// * May emit a [`RoleGranted`] event.
     pub fn _grant_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             false
@@ -362,7 +362,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// May emit a [`RoleRevoked`] event.
+    /// * May emit a [`RoleRevoked`] event.
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             self._roles.setter(role).has_role.insert(account, false);

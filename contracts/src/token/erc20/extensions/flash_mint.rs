@@ -172,8 +172,8 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// * If the token is not supported, then the error
-    ///   [`Error::UnsupportedToken`] is returned.
+    /// * [`Error::UnsupportedToken`] - If the token is not supported, then the
+    ///   error is returned.
     ///
     /// # Examples
     ///
@@ -213,17 +213,17 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// * If the `value` is greater than the value returned by
-    ///   [`IErc3156FlashLender::max_flash_loan`], then the error
-    ///   [`Error::ExceededMaxLoan`] is returned.
-    /// * If `token` is not supported, then the error
-    ///   [`Error::UnsupportedToken`] is returned.
-    /// * If the `token` address is not a contract, then the error
-    ///   [`Error::InvalidReceiver`] is returned.
-    /// * If the contract fails to execute the call, then the error
-    ///   [`Error::InvalidReceiver`] is returned.
-    /// * If the receiver does not return [`BORROWER_CALLBACK_VALUE`], then the
-    ///   error [`Error::InvalidReceiver`] is returned.
+    /// * [`Error::ExceededMaxLoan`] - If the `value` is greater than the value
+    ///   returned by [`IErc3156FlashLender::max_flash_loan`], then the error is
+    ///   returned.
+    /// * [`Error::UnsupportedToken`] - If `token` is not supported, then the
+    ///   error is returned.
+    /// * [`Error::InvalidReceiver`] - If the `token` address is not a contract,
+    ///   then the error is returned.
+    /// * [`Error::InvalidReceiver`] - If the contract fails to execute the
+    ///   call, then the error is returned.
+    /// * [`Error::InvalidReceiver`] - If the receiver does not return
+    ///   [`BORROWER_CALLBACK_VALUE`], then the error  is returned.
     ///
     /// # Events
     ///

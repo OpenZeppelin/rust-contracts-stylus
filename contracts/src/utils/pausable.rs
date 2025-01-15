@@ -110,8 +110,8 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// If the contract is in `Unpaused` state, then the error
-    /// [`Error::ExpectedPause`] is returned.
+    /// * [`Error::ExpectedPause`] - If the contract is in `Unpaused` state,
+    ///   then the error is returned.
     pub fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
         self._paused.set(false);
@@ -128,8 +128,8 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// If the contract is in the `Paused` state, then the error
-    /// [`Error::EnforcedPause`] is returned.
+    /// * [`Error::EnforcedPause`] - If the contract is in the `Paused` state,
+    ///   then the error is returned.
     pub fn when_not_paused(&self) -> Result<(), Error> {
         if self._paused.get() {
             return Err(Error::EnforcedPause(EnforcedPause {}));
@@ -146,8 +146,8 @@ impl Pausable {
     ///
     /// # Errors
     ///
-    /// If the contract is in `Unpaused` state, then the error
-    /// [`Error::ExpectedPause`] is returned.
+    /// * [`Error::ExpectedPause`] - If the contract is in `Unpaused` state,
+    ///   then the error is returned.
     pub fn when_paused(&self) -> Result<(), Error> {
         if !self._paused.get() {
             return Err(Error::ExpectedPause(ExpectedPause {}));

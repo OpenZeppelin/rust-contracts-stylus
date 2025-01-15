@@ -124,8 +124,9 @@ pub trait IErc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If an `owner`'s token query is out of bounds for `index`,
-    /// then the error [`Error::OutOfBoundsIndex`] is returned.
+    /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
+    ///   bounds for `index`, then the error is returned.
+
     fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
 }
 
@@ -180,8 +181,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// If owner address is `Address::ZERO`, then the error
-    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
+    /// * [`crate::token::erc721::Error::InvalidOwner`] - If owner address is
+    ///   `Address::ZERO`, then the error is returned.
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,
@@ -231,8 +232,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// If owner address is `Address::ZERO`, then the error
-    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
+    /// * [`crate::token::erc721::Error::InvalidOwner`] - If owner address is
+    ///   `Address::ZERO`, then the error is returned.
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
         from: Address,
@@ -326,8 +327,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If an `amount` is greater than `0`, then the error
-    ///   [`Error::EnumerableForbiddenBatchMint`] is returned.
+    /// * [`Error::EnumerableForbiddenBatchMint`] - If an `amount` is greater
+    ///   than `0`, then the error is returned.
     pub fn _check_increase_balance(amount: u128) -> Result<(), Error> {
         if amount > 0 {
             Err(ERC721EnumerableForbiddenBatchMint {}.into())

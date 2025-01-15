@@ -15,7 +15,7 @@ pub trait IErc20Burnable {
     /// Destroys a `value` amount of tokens from the caller, lowering the total
     /// supply.
     ///
-    /// Relies on the `update` mechanism.
+    /// NOTE: Relies on the `update` mechanism.
     ///
     /// # Arguments
     ///
@@ -23,18 +23,18 @@ pub trait IErc20Burnable {
     ///
     /// # Errors
     ///
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    /// enough tokens, then the error  is returned.
     ///
     /// # Events
     ///
-    /// Emits a [`super::super::Transfer`] event.
+    /// * Emits a [`super::super::Transfer`] event.
     fn burn(&mut self, value: U256) -> Result<(), Self::Error>;
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
     /// supply.
     ///
-    /// Relies on the `update` mechanism.
+    /// NOTE: Relies on the `update` mechanism.
     ///
     /// # Arguments
     ///
@@ -43,16 +43,16 @@ pub trait IErc20Burnable {
     ///
     /// # Errors
     ///
-    /// If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
-    /// If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available, then the error is returned.
+    /// * [`Error::InvalidSender`]  - If the `from` address is `Address::ZERO`,
+    ///   then the error is returned.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens, then the error is returned.
     ///
     /// # Events
     ///
-    /// Emits a [`super::super::Transfer`] event.
+    /// * Emits a [`super::super::Transfer`] event.
     fn burn_from(
         &mut self,
         account: Address,

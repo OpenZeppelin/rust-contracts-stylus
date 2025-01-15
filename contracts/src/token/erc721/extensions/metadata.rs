@@ -84,27 +84,29 @@ impl Erc721Metadata {
 
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
+    /// NOTE: In order to expose this function in the ABI, you need to annotate
+    /// it with `#[selector(name = "tokenURI")]` and ensure that the `erc721`
+    /// parameter is passed internally. This design works around Stylus's lack
+    /// of inheritance while avoiding code duplication. See the Example section.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - Id of a token.
+    /// * `token_id` - ID of a token.
     /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
     ///
     /// # Errors
     ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
-    /// NOTE: In order to have [`Erc721Metadata::token_uri`] exposed in ABI,
-    /// you need to do this manually.
-    ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust,ignore
     /// #[selector(name = "tokenURI")]
     /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
     ///     Ok(self.metadata.token_uri(token_id, &self.erc721)?)
     /// }
+    /// ```
     pub fn token_uri(
         &self,
         token_id: U256,

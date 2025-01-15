@@ -171,10 +171,10 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// * If the caller doesn't have a balance of at least `value`, then the
-    /// error [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`,
+    ///   then the error is returned.
+    /// * [`Error::InsufficientBalance`] - If the caller doesn't have a balance
+    ///   of at least `value`, then the error is returned.
     ///
     /// # Events
     ///
@@ -218,8 +218,8 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSpender`] is returned.
+    /// * [`Error::InvalidSpender`] - If the `spender` address is
+    ///   `Address::ZERO`, then the error is returned.
     ///
     /// # Events
     ///
@@ -249,12 +249,12 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// * If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`,
+    ///   then the error is returned.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`,
+    ///   then the error is returned.
+    /// * [`Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available, then the error is returned.
     ///
     /// # Events
     ///
@@ -379,12 +379,12 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidReceiver`] is returned.
-    /// * If the `from` address doesn't have enough tokens, then the error
-    ///   [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`,
+    ///   then the error is returned.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`,
+    ///   then the error is returned.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens, then the error is returned.
     ///
     /// # Events
     ///
@@ -422,8 +422,8 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// If the `account` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   `Address::ZERO`, then the error is returned.
     ///
     /// # Events
     ///
@@ -453,15 +453,15 @@ impl Erc20 {
     /// * `to` - Recipient's address.
     /// * `value` - Amount to be transferred.
     ///
-    /// # Panics
-    ///
-    /// If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
-    /// operation.
-    ///
     /// # Errors
     ///
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens, then the error is returned.
+    ///
+    /// # Panics
+    ///
+    /// * If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    ///   operation.
     ///
     /// # Events
     ///
@@ -524,10 +524,10 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidSender`] is returned.
-    /// * If the `from` address doesn't have enough tokens, then the error
-    ///   [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`,
+    ///   then the error is returned.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens, then the error is returned.
     ///
     /// # Events
     ///
@@ -558,8 +558,8 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
+    /// * [`Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available, then the error is returned.
     ///
     /// # Events
     ///

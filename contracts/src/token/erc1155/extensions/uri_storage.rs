@@ -26,15 +26,15 @@ pub struct Erc1155UriStorage {
 impl Erc1155UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
+    /// NOTE: In order to have [`Erc1155UriStorage::uri`] exposed in ABI,
+    /// you need to do this manually.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Id of a token.
     /// * `metadata_uri` - Read access to a contract providing
     ///   [`IErc1155MetadataUri`] interface.
-    ///
-    /// NOTE: In order to have [`Erc1155UriStorage::uri`] exposed in ABI,
-    /// you need to do this manually.
     ///
     /// # Examples
     ///
@@ -68,7 +68,7 @@ impl Erc1155UriStorage {
     ///
     /// # Events
     ///
-    /// Emits a [`URI`] event.
+    /// * Emits a [`URI`] event.
     pub fn set_token_uri(
         &mut self,
         token_id: U256,

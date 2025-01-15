@@ -103,12 +103,12 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// If called by any account other than the owner, then the error
-    /// [`OwnableError::UnauthorizedAccount`] is returned.
+    /// * [`OwnableError::UnauthorizedAccount`] - If called by any account other
+    ///   than the owner, then the error is returned.
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferStarted`] event.
+    /// * Emits a [`OwnershipTransferStarted`] event.
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -123,8 +123,8 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// If called by any account other than the pending owner, then the error
-    /// [`OwnableError::UnauthorizedAccount`] is returned.
+    /// * [`OwnableError::UnauthorizedAccount`] - If called by any account other
+    ///   than the pending owner, then the error is returned.
     ///
     /// # Events
     ///
@@ -141,12 +141,13 @@ pub trait IOwnable2Step {
     /// # Arguments
     /// # Errors
     ///
-    /// If not called by the owner, then the error
-    /// [`OwnableError::UnauthorizedAccount`] is returned.
+    /// * [`OwnableError::UnauthorizedAccount`]If not called by the owner, then
+    ///   the error
+    ///  is returned.
     ///
     /// # Events
     ///
-    /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
+    /// * Emits a [`crate::access::ownable::OwnershipTransferred`] event.
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
@@ -212,7 +213,7 @@ impl Ownable2Step {
     ///
     /// # Events
     ///
-    /// Emits a [`crate::access::ownable::OwnershipTransferred`] event.
+    /// * Emits a [`crate::access::ownable::OwnershipTransferred`] event.
     fn _transfer_ownership(&mut self, new_owner: Address) {
         self._pending_owner.set(Address::ZERO);
         self._ownable._transfer_ownership(new_owner);
