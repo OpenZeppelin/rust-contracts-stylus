@@ -7,6 +7,7 @@ members = [
   "lib/e2e-proc",
   "examples/erc20",
   "examples/erc20-permit",
+  "examples/erc20-flash-mint",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -23,6 +24,7 @@ members = [
   "examples/ownable-two-step",
   "examples/safe-erc20",
   "benches",
+  "examples/poseidon",
 ]
 default-members = [
   "contracts",
@@ -31,6 +33,7 @@ default-members = [
   "lib/e2e-proc",
   "examples/erc20",
   "examples/erc20-permit",
+  "examples/erc20-flash-mint",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -45,6 +48,7 @@ default-members = [
   "examples/access-control",
   "examples/basic/token",
   "examples/ecdsa",
+  "examples/poseidon",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages
@@ -73,7 +77,7 @@ all = "warn"
 # Stylus SDK related
 stylus-sdk = { version = "0.7.0", default-features = false, features = ["mini-alloc"] }
 
-alloy = { version = "=0.7.2", features = [
+alloy = { version = "=0.7.3", features = [
   "contract",
   "network",
   "providers",
@@ -118,7 +122,7 @@ proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
 # test helpers
-motsu = "0.2.1"
+motsu = "0.3.0"
 
 # members
 openzeppelin-stylus = { path = "contracts" }

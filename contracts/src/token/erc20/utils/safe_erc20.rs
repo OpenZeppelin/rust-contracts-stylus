@@ -17,7 +17,6 @@ pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
-    evm::gas_left,
     function_selector,
     prelude::storage,
     storage::TopLevelStorage,
@@ -25,7 +24,7 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::token::erc20;
+use crate::{token::erc20, utils::ReentrantCallHandler};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -353,9 +352,8 @@ impl SafeErc20 {
         }
 
         match RawCall::new()
-            .gas(gas_left())
             .limit_return_data(0, 32)
-            .call(token, &call.abi_encode())
+            .call_with_reentrant_handling(token, &call.abi_encode())
         {
             Ok(data) if data.is_empty() || Self::encodes_true(&data) => Ok(()),
             _ => Err(SafeErc20FailedOperation { token }.into()),
@@ -382,17 +380,16 @@ impl SafeErc20 {
         }
 
         let call = IErc20::allowanceCall { owner: address(), spender };
-        let allowance = RawCall::new()
-            .gas(gas_left())
+        let result = RawCall::new()
             .limit_return_data(0, 32)
-            .call(token, &call.abi_encode())
+            .call_with_reentrant_handling(token, &call.abi_encode())
             .map_err(|_| {
                 Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
                     token,
                 })
             })?;
 
-        Ok(U256::from_be_slice(&allowance))
+        Ok(U256::from_be_slice(&result))
     }
 
     /// Returns true if a slice of bytes is an ABI encoded `true` value.

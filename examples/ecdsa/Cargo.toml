@@ -1,5 +1,5 @@
 [package]
-name = "cryptography-example"
+name = "ecdsa-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true

@@ -59,8 +59,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::IErc721Burnable;
-    use crate::token::erc721::{
-        tests::random_token_id, ERC721InsufficientApproval,
+    use crate::token::erc721::{ERC721InsufficientApproval,
         ERC721NonexistentToken, Erc721, Error, IErc721,
     };
 
@@ -70,11 +69,10 @@ mod tests {
     fn burns(contract: Contract<Erc721>) {
         let alice = Address::random();
         let one = uint!(1_U256);
-        let token_id = random_token_id();
 
         contract
             .sender(alice)
-            ._mint(alice, token_id)
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let initial_balance = contract
@@ -82,7 +80,7 @@ mod tests {
             .balance_of(alice)
             .expect("should return the balance of Alice");
 
-        let result = contract.sender(alice).burn(token_id);
+        let result = contract.sender(alice).burn(TOKEN_ID);
         assert!(result.is_ok());
 
         let balance = contract
@@ -94,25 +92,24 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .owner_of(token_id)
+            .owner_of(TOKEN_ID)
             .expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
             Error::NonexistentToken (ERC721NonexistentToken{
                 token_id: t_id
-            }) if t_id == token_id
+            }) if t_id == TOKEN_ID
         ));
     }
 
     #[motsu::test]
     fn burns_with_approval(contract: Contract<Erc721>) {
         let alice = Address::random();
-        let token_id = random_token_id();
 
         contract
             .sender(alice)
-            ._mint(BOB, token_id)
+            ._mint(BOB, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let initial_balance = contract
@@ -122,22 +119,22 @@ mod tests {
 
         contract
             .sender(BOB)
-            .approve(alice, token_id)
+            .approve(alice, TOKEN_ID)
             .expect("should approve a token for Alice");
 
-        let result = contract.sender(alice).burn(token_id);
+        let result = contract.sender(alice).burn(TOKEN_ID);
         assert!(result.is_ok());
 
         let err = contract
             .sender(alice)
-            .owner_of(token_id)
+            .owner_of(TOKEN_ID)
             .expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
             Error::NonexistentToken (ERC721NonexistentToken{
                 token_id: t_id
-            }) if t_id == token_id
+            }) if t_id == TOKEN_ID
         ));
 
         let balance = contract
@@ -151,11 +148,10 @@ mod tests {
     #[motsu::test]
     fn burns_with_approval_for_all(contract: Contract<Erc721>) {
         let alice = Address::random();
-        let token_id = random_token_id();
 
         contract
             .sender(alice)
-            ._mint(BOB, token_id)
+            ._mint(BOB, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let initial_balance = contract
@@ -168,20 +164,20 @@ mod tests {
             .set_approval_for_all(alice, true)
             .expect("should approve all Bob's tokens for Alice");
 
-        let result = contract.sender(alice).burn(token_id);
+        let result = contract.sender(alice).burn(TOKEN_ID);
 
         assert!(result.is_ok());
 
         let err = contract
             .sender(alice)
-            .owner_of(token_id)
+            .owner_of(TOKEN_ID)
             .expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
             Error::NonexistentToken (ERC721NonexistentToken{
                 token_id: t_id
-            }) if t_id == token_id
+            }) if t_id == TOKEN_ID
         ));
 
         let balance = contract
@@ -197,48 +193,46 @@ mod tests {
         contract: Contract<Erc721>,
     ) {
         let alice = Address::random();
-        let token_id = random_token_id();
 
         contract
             .sender(alice)
-            ._mint(alice, token_id)
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
         contract
             .sender(alice)
-            .approve(BOB, token_id)
+            .approve(BOB, TOKEN_ID)
             .expect("should approve a token for Bob");
 
         contract
             .sender(alice)
-            .burn(token_id)
+            .burn(TOKEN_ID)
             .expect("should burn previously minted token");
 
         let err = contract
             .sender(alice)
-            .get_approved(token_id)
+            .get_approved(TOKEN_ID)
             .expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
             Error::NonexistentToken (ERC721NonexistentToken{
                 token_id: t_id
-            }) if t_id == token_id
+            }) if t_id == TOKEN_ID
         ));
     }
 
     #[motsu::test]
     fn error_when_burn_without_approval(contract: Contract<Erc721>) {
         let alice = Address::random();
-        let token_id = random_token_id();
 
         contract
             .sender(alice)
-            ._mint(BOB, token_id)
+            ._mint(BOB, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let err = contract
             .sender(alice)
-            .burn(token_id)
+            .burn(TOKEN_ID)
             .expect_err("should not burn unapproved token");
 
         assert!(matches!(
@@ -246,25 +240,24 @@ mod tests {
             Error::InsufficientApproval(ERC721InsufficientApproval {
                     operator,
                     token_id: t_id,
-            }) if operator == msg::sender() && t_id == token_id
+            }) if operator == msg::sender() && t_id == TOKEN_ID
         ));
     }
 
     #[motsu::test]
     fn error_when_burn_nonexistent_token(contract: Contract<Erc721>) {
         let alice = Address::random();
-        let token_id = random_token_id();
 
         let err = contract
             .sender(alice)
-            .burn(token_id)
+            .burn(TOKEN_ID)
             .expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
             Error::NonexistentToken (ERC721NonexistentToken{
                 token_id: t_id
-            }) if t_id == token_id
+            }) if t_id == TOKEN_ID
         ));
     }
 }

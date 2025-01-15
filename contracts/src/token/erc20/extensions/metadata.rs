@@ -21,6 +21,7 @@ use crate::utils::Metadata;
 #[storage]
 pub struct Erc20Metadata {
     /// Common Metadata.
+    #[allow(clippy::used_underscore_binding)]
     pub _metadata: Metadata,
 }
 

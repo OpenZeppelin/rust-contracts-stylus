@@ -11,6 +11,8 @@ use stylus_sdk::{
     stylus_proc::{public, SolidityError},
 };
 
+use crate::utils::math::storage::AddAssignChecked;
+
 const ONE: U256 = uint!(1_U256);
 
 pub use sol::*;
@@ -22,7 +24,7 @@ mod sol {
         /// The nonce used for an `account` is not the expected current nonce.
         #[derive(Debug)]
         #[allow(missing_docs)]
-        error InvalidAccountNonce(address account, uint256 currentNonce);
+        error InvalidAccountNonce(address account, uint256 current_nonce);
     }
 }
 
@@ -37,6 +39,7 @@ pub enum Error {
 #[storage]
 pub struct Nonces {
     /// Mapping from address to its nonce.
+    #[allow(clippy::used_underscore_binding)]
     pub _nonces: StorageMap<Address, StorageU256>,
 }
 
@@ -64,14 +67,13 @@ impl Nonces {
     ///
     /// # Panics
     ///
-    /// This function will panic if the nonce for the given `owner` has reached
-    /// the maximum value representable by `U256`, causing the `checked_add`
-    /// method to return `None`.
+    /// If the nonce for the given `owner` exceeds `U256::MAX`.
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
+
         self._nonces
             .setter(owner)
-            .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
+            .add_assign_checked(ONE, "nonce should not exceed `U256::MAX`");
 
         nonce
     }
@@ -85,33 +87,27 @@ impl Nonces {
     /// * `owner` - The address for which to consume the nonce.
     /// * `nonce` - The nonce to consume.
     ///
-    /// # Panics
-    ///
-    /// This function will panic if the nonce for the given `owner` has reached
-    /// the maximum value representable by `U256`, causing the `checked_add`
-    /// method to return `None`.
-    ///
     /// # Errors
     ///
     /// Returns an error if the `nonce` is not the next valid nonce for the
     /// owner.
+    ///
+    /// # Panics
+    ///
+    /// If the nonce for the given `owner` exceeds `U256::MAX`.
     pub fn use_checked_nonce(
         &mut self,
         owner: Address,
         nonce: U256,
     ) -> Result<(), Error> {
-        let current_nonce = self._nonces.get(owner);
+        let current_nonce = self.use_nonce(owner);
 
         if nonce != current_nonce {
             return Err(Error::InvalidAccountNonce(InvalidAccountNonce {
                 account: owner,
-                currentNonce: current_nonce,
+                current_nonce,
             }));
         }
-
-        self._nonces
-            .setter(owner)
-            .set(unsafe { nonce.checked_add(ONE).unwrap_unchecked() });
 
         Ok(())
     }

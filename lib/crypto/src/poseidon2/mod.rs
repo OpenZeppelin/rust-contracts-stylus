@@ -23,8 +23,8 @@ enum Mode {
     Squeezing,
 }
 
-/// Poseidon2 sponge that can absorb any number of [`F`] field elements and be
-/// squeezed to a finite number of [`F`] field elements.
+/// Poseidon2 sponge that can absorb any number of `F` field elements and be
+/// squeezed to a finite number of `F` field elements.
 #[derive(Clone, Debug)]
 pub struct Poseidon2<P: PoseidonParams<F>, F: PrimeField> {
     phantom: core::marker::PhantomData<P>,

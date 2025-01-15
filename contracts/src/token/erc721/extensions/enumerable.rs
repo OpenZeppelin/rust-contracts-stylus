@@ -9,8 +9,6 @@
 //! interfere with enumerability and should not be used together with
 //! [`Erc721Enumerable`].
 
-use alloc::vec::Vec;
-
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -335,12 +333,15 @@ impl Erc721Enumerable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use stylus_sdk::{
+        alloy_primitives::{address, uint, Address, U256},
+        msg,
+    };
     use motsu::prelude::Contract;
     use stylus_sdk::{msg, prelude::TopLevelStorage};
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
-    use crate::token::erc721::{tests::random_token_id, Erc721, IErc721};
+    use crate::token::erc721::{Erc721, IErc721};
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
@@ -375,8 +376,8 @@ mod tests {
         let tokens_len = 10;
 
         let mut tokens_ids = Vec::new();
-        for _ in 0..tokens_len {
-            let token_id = random_token_id();
+        for token_id in 0..tokens_len {
+            let token_id = U256::from(token_id);
 
             // Store ids for test.
             tokens_ids.push(token_id);
@@ -417,8 +418,8 @@ mod tests {
         let initial_tokens_len = 10;
 
         let mut tokens_ids = Vec::new();
-        for _ in 0..initial_tokens_len {
-            let token_id = random_token_id();
+        for token_id in 0..initial_tokens_len {
+            let token_id = U256::from(token_id);
 
             // Store ids for test.
             tokens_ids.push(token_id);
@@ -454,7 +455,7 @@ mod tests {
         );
 
         // Add a new token.
-        let token_id = random_token_id();
+        let token_id = U256::from(initial_tokens_len);
         tokens_ids.push(token_id);
         contract.sender(alice)._add_token_to_all_tokens_enumeration(token_id);
         assert_eq!(
@@ -496,7 +497,7 @@ mod tests {
             erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
-        let token_id = random_token_id();
+        let token_id = uint!(1_U256);
         erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
@@ -525,7 +526,7 @@ mod tests {
             erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
-        let token_id = random_token_id();
+        let token_id = uint!(1_U256);
         erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
@@ -567,7 +568,7 @@ mod tests {
             erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
-        let token_id = random_token_id();
+        let token_id = uint!(1_U256);
         erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)

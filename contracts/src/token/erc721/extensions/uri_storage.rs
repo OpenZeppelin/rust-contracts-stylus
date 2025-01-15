@@ -37,6 +37,7 @@ mod sol {
 #[storage]
 pub struct Erc721UriStorage {
     /// Optional mapping for token URIs.
+    #[allow(clippy::used_underscore_binding)]
     pub _token_uris: StorageMap<U256, StorageString>,
 }
 
@@ -120,10 +121,7 @@ mod tests {
     use super::Erc721UriStorage;
     use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
 
-    fn random_token_id() -> U256 {
-        let num: u32 = rand::random();
-        U256::from(num)
-    }
+    const TOKEN_ID: U256 = uint!(1_U256);
 
     #[storage]
     struct Erc721MetadataExample {
@@ -155,22 +153,20 @@ mod tests {
     fn token_uri_works(contract: Contract<Erc721MetadataExample>) {
         let alice = Address::random();
 
-        let token_id = random_token_id();
-
         contract
             .sender(alice)
             .erc721
-            ._mint(alice, token_id)
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
-        contract.sender(alice).set_token_uri(token_id, token_uri.clone());
+        contract.sender(alice).set_token_uri(TOKEN_ID, token_uri.clone());
 
         assert_eq!(
             token_uri,
             contract
                 .sender(alice)
-                .token_uri(token_id)
+                .token_uri(TOKEN_ID)
                 .expect("should return token URI")
         );
     }

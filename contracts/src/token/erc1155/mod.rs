@@ -7,18 +7,21 @@ use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
     evm, function_selector, msg,
-    prelude::{public, sol_interface, storage, AddressVM, SolidityError},
+    prelude::{public, storage, AddressVM, SolidityError},
     storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
 };
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},
-    math::storage::SubAssignUnchecked,
+    math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
 pub mod extensions;
+mod receiver;
+pub use receiver::IERC1155Receiver;
 
-const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+/// The expected value returned from [`IERC1155Receiver::on_erc_1155_received`].
+pub const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     "onERC1155Received",
     Address,
     Address,
@@ -27,7 +30,9 @@ const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     Bytes
 );
 
-const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
+/// The expected value returned from
+/// [`IERC1155Receiver::on_erc_1155_batch_received`].
+pub const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
     "onERC1155BatchReceived",
     Address,
     Address,
@@ -160,6 +165,13 @@ pub enum Error {
     InvalidReceiver(ERC1155InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
+    ///
+    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
+    /// return data, this error will be encoded either as `Error(string)` or
+    /// `Panic(uint256)`, as those are the built-in errors emitted by default
+    /// by Solidity's special functions `assert`, `require`, and `revert`.
+    ///
+    /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
     InvalidReceiverWithReason(call::Error),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     MissingApprovalForAll(ERC1155MissingApprovalForAll),
@@ -181,67 +193,14 @@ impl MethodError for Error {
     }
 }
 
-sol_interface! {
-    /// Interface that must be implemented by smart contracts
-    /// in order to receive ERC-1155 token transfers.
-    #[allow(missing_docs)]
-    interface IERC1155Receiver {
-        /// Handles the receipt of a single ERC-1155 token type.
-        /// This function is called at the end of a
-        /// [`IErc1155::safe_batch_transfer_from`]
-        /// after the balance has been updated.
-        ///
-        /// NOTE: To accept the transfer,
-        /// this must return [`SINGLE_TRANSFER_FN_SELECTOR`],
-        /// or its own function selector.
-        ///
-        /// * `operator` - The address which initiated the transfer.
-        /// * `from` - The address which previously owned the token.
-        /// * `id` - The ID of the token being transferred.
-        /// * `value` - The amount of tokens being transferred.
-        /// * `data` - Additional data with no specified format.
-        #[allow(missing_docs)]
-        function onERC1155Received(
-            address operator,
-            address from,
-            uint256 id,
-            uint256 value,
-            bytes calldata data
-        ) external returns (bytes4);
-
-        /// Handles the receipt of multiple ERC-1155 token types.
-        /// This function is called at the end of a
-        /// [`IErc1155::safe_batch_transfer_from`]
-        /// after the balances have been updated.
-        ///
-        /// NOTE: To accept the transfer(s),
-        /// this must return [`BATCH_TRANSFER_FN_SELECTOR`],
-        /// or its own function selector.
-        ///
-        /// * `operator` - The address which initiated the batch transfer.
-        /// * `from` - The address which previously owned the token.
-        /// * `ids` - An array containing ids of each token being transferred
-        ///   (order and length must match values array).
-        /// * `values` - An array containing amounts of each token
-        ///   being transferred (order and length must match ids array).
-        /// * `data` - Additional data with no specified format.
-        #[allow(missing_docs)]
-        function onERC1155BatchReceived(
-            address operator,
-            address from,
-            uint256[] calldata ids,
-            uint256[] calldata values,
-            bytes calldata data
-        ) external returns (bytes4);
-    }
-}
-
 /// State of an [`Erc1155`] token.
 #[storage]
 pub struct Erc1155 {
     /// Maps users to balances.
+    #[allow(clippy::used_underscore_binding)]
     pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
     /// Maps owners to a mapping of operator approvals.
+    #[allow(clippy::used_underscore_binding)]
     pub _operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
@@ -872,7 +831,7 @@ impl Erc1155 {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
                         // Non-IERC1155Receiver implementer.
-                        return Err(Error::InvalidReceiverWithReason(e));
+                        return Err(e.into());
                     }
                 }
 
@@ -1097,11 +1056,10 @@ impl Erc1155 {
         }
 
         if !to.is_zero() {
-            let balance = self._balances.getter(token_id).get(to);
-            let new_balance = balance
-                .checked_add(value)
-                .expect("should not exceed `U256::MAX` for `_balances`");
-            self._balances.setter(token_id).setter(to).set(new_balance);
+            self._balances.setter(token_id).setter(to).add_assign_checked(
+                value,
+                "should not exceed `U256::MAX` for `_balances`",
+            );
         }
 
         Ok(())

@@ -16,7 +16,10 @@ use stylus_sdk::{
     stylus_proc::{public, SolidityError},
 };
 
-use crate::utils::introspection::erc165::{Erc165, IErc165};
+use crate::utils::{
+    introspection::erc165::{Erc165, IErc165},
+    math::storage::{AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked},
+};
 
 pub mod extensions;
 pub mod utils;
@@ -125,10 +128,13 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc20 {
     /// Maps users to balances.
+    #[allow(clippy::used_underscore_binding)]
     pub _balances: StorageMap<Address, StorageU256>,
     /// Maps users to a mapping of each spender's allowance.
+    #[allow(clippy::used_underscore_binding)]
     pub _allowances: StorageMap<Address, StorageMap<Address, StorageU256>>,
     /// The total supply of the token.
+    #[allow(clippy::used_underscore_binding)]
     pub _total_supply: StorageU256,
 }
 
@@ -469,11 +475,10 @@ impl Erc20 {
         if from.is_zero() {
             // Mint operation. Overflow check required: the rest of the code
             // assumes that `_total_supply` never overflows.
-            let total_supply = self
-                .total_supply()
-                .checked_add(value)
-                .expect("should not exceed `U256::MAX` for `_total_supply`");
-            self._total_supply.set(total_supply);
+            self._total_supply.add_assign_checked(
+                value,
+                "should not exceed `U256::MAX` for `_total_supply`",
+            );
         } else {
             let from_balance = self._balances.get(from);
             if from_balance < value {
@@ -491,17 +496,15 @@ impl Erc20 {
         }
 
         if to.is_zero() {
-            let total_supply = self.total_supply();
             // Overflow not possible:
             // `value` <= `_total_supply` or
             // `value` <= `from_balance` <= `_total_supply`.
-            self._total_supply.set(total_supply - value);
+            self._total_supply.sub_assign_unchecked(value);
         } else {
-            let balance_to = self._balances.get(to);
             // Overflow not possible:
             // `balance_to` + `value` is at most `total_supply`,
             // which fits into a `U256`.
-            self._balances.setter(to).set(balance_to + value);
+            self._balances.setter(to).add_assign_unchecked(value);
         }
 
         evm::log(Transfer { from, to, value });
@@ -557,6 +560,10 @@ impl Erc20 {
     ///
     /// If not enough allowance is available, then the error
     /// [`Error::InsufficientAllowance`] is returned.
+    ///
+    /// # Events
+    ///
+    /// Emits an [`Approval`] event.
     pub fn _spend_allowance(
         &mut self,
         owner: Address,

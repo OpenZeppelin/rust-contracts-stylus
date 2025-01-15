@@ -51,6 +51,7 @@ impl MethodError for Error {
 #[storage]
 pub struct Trace<S: Size> {
     /// Stores checkpoints in a dynamic array sorted by key.
+    #[allow(clippy::used_underscore_binding)]
     pub _checkpoints: StorageVec<Checkpoint<S>>,
 }
 
@@ -58,8 +59,10 @@ pub struct Trace<S: Size> {
 #[storage]
 pub struct Checkpoint<S: Size> {
     /// The key of the checkpoint. Used as a sorting key.
+    #[allow(clippy::used_underscore_binding)]
     pub _key: S::KeyStorage,
     /// The value corresponding to the key.
+    #[allow(clippy::used_underscore_binding)]
     pub _value: S::ValueStorage,
 }
 

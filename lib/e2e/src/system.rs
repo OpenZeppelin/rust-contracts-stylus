@@ -10,7 +10,7 @@ use alloy::{
     },
     transports::http::{Client, Http},
 };
-use eyre::{bail, Context};
+use eyre::bail;
 
 use crate::environment::get_node_path;
 

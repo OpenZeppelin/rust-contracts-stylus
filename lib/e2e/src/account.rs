@@ -4,7 +4,6 @@ use alloy::{
     providers::{Provider, ProviderBuilder},
     signers::{local::PrivateKeySigner, Signature, Signer},
 };
-use eyre::Result;
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -30,7 +29,7 @@ impl Account {
     /// # Errors
     ///
     /// May fail if funding the newly created account fails.
-    pub async fn new() -> Result<Self> {
+    pub async fn new() -> eyre::Result<Self> {
         AccountFactory::create().await
     }
 

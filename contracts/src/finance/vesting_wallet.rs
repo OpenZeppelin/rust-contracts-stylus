@@ -34,7 +34,7 @@ use stylus_sdk::{
     block,
     call::{self, call, Call},
     contract, evm, function_selector,
-    prelude::{sol_interface, storage},
+    prelude::storage,
     storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
     stylus_proc::{public, SolidityError},
 };
@@ -42,6 +42,7 @@ use stylus_sdk::{
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
+    utils::math::storage::AddAssignChecked,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -91,11 +92,20 @@ pub enum Error {
     InvalidToken(InvalidToken),
 }
 
-sol_interface! {
-    /// Interface of the ERC-20 token.
-    #[allow(missing_docs)]
-    interface IErc20 {
-        function balanceOf(address account) external view returns (uint256);
+pub use token::IErc20;
+mod token {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
+
+    use alloc::vec;
+
+    use stylus_sdk::stylus_proc::sol_interface;
+
+    sol_interface! {
+        /// Interface of the ERC-20 token.
+        interface IErc20 {
+            function balanceOf(address account) external view returns (uint256);
+        }
     }
 }
 
@@ -105,12 +115,16 @@ pub struct VestingWallet {
     /// [`Ownable`] contract.
     pub ownable: Ownable,
     /// Amount of Ether already released.
+    #[allow(clippy::used_underscore_binding)]
     pub _released: StorageU256,
     /// Amount of ERC-20 tokens already released.
+    #[allow(clippy::used_underscore_binding)]
     pub _erc20_released: StorageMap<Address, StorageU256>,
     /// Start timestamp.
+    #[allow(clippy::used_underscore_binding)]
     pub _start: StorageU64,
     /// Vesting duration.
+    #[allow(clippy::used_underscore_binding)]
     pub _duration: StorageU64,
     /// [`SafeErc20`] contract.
     pub safe_erc20: SafeErc20,
@@ -247,7 +261,7 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&self` - Read access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the releasable token.
     ///
     /// # Errors
@@ -260,7 +274,8 @@ pub trait IVestingWallet {
     /// If total allocation exceeds `U256::MAX`.
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
-    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error>;
+    fn releasable_erc20(&mut self, token: Address)
+        -> Result<U256, Self::Error>;
 
     /// Release the native tokens (Ether) that have already vested.
     ///
@@ -329,7 +344,7 @@ pub trait IVestingWallet {
     ///
     /// # Arguments
     ///
-    /// * `&self` - Read access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the token being released.
     /// * `timestamp` - Point in time for which to check the vested amount.
     ///
@@ -344,7 +359,7 @@ pub trait IVestingWallet {
     /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
-        &self,
+        &mut self,
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error>;
@@ -404,7 +419,10 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "releasable")]
-    fn releasable_erc20(&self, token: Address) -> Result<U256, Self::Error> {
+    fn releasable_erc20(
+        &mut self,
+        token: Address,
+    ) -> Result<U256, Self::Error> {
         let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
@@ -415,12 +433,10 @@ impl IVestingWallet for VestingWallet {
     fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
 
-        let released = self
-            ._released
-            .get()
-            .checked_add(amount)
-            .expect("total released should not exceed `U256::MAX`");
-        self._released.set(released);
+        self._released.add_assign_checked(
+            amount,
+            "total released should not exceed `U256::MAX`",
+        );
 
         let owner = self.ownable.owner();
 
@@ -436,12 +452,10 @@ impl IVestingWallet for VestingWallet {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
-        let released = self
-            ._erc20_released
-            .get(token)
-            .checked_add(amount)
-            .expect("total released should not exceed `U256::MAX`");
-        self._erc20_released.setter(token).set(released);
+        self._erc20_released.setter(token).add_assign_checked(
+            amount,
+            "total released should not exceed `U256::MAX`",
+        );
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
@@ -461,13 +475,13 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
-        &self,
+        &mut self,
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error> {
         let erc20 = IErc20::new(token);
         let balance = erc20
-            .balance_of(Call::new(), contract::address())
+            .balance_of(Call::new_in(self), contract::address())
             .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance
@@ -518,7 +532,8 @@ impl VestingWallet {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    /*use alloy_primitives::{address, uint, Address, U256, U64};
+    /*
+    use alloy_primitives::{address, uint, Address, U256, U64};
     use stylus_sdk::block;
 
     use super::{IVestingWallet, VestingWallet};
@@ -614,5 +629,6 @@ mod tests {
         );
         assert_eq!(two, contract.vesting_schedule(two, start));
         assert_eq!(two, contract.vesting_schedule(two, start + U64::from(1)));
-    }*/
+    }
+    */
 }

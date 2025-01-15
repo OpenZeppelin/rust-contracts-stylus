@@ -81,20 +81,14 @@ struct Example {
     pub access: AccessControl,
 }
 
-// `keccak256("MINTER_ROLE")`
-pub const MINTER_ROLE: [u8; 32] = [
-    159, 45, 240, 254, 210, 199, 118, 72, 222, 88, 96, 164, 204, 80, 140, 208,
-    129, 140, 133, 184, 184, 161, 171, 76, 238, 239, 141, 152, 28, 137, 86,
-    166,
-];
+pub const MINTER_ROLE: [u8; 32] =
+    keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
-    pub const MINTER_ROLE: [u8; 32] = MINTER_ROLE;
-
     pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Vec<u8>> {
-        if self.access.has_role(Example::MINTER_ROLE, msg::sender()) {
+        if self.access.has_role(MINTER_ROLE.into(), msg::sender()) {
             return Err(Vec::new());
         }
         self.erc20._mint(to, amount)?;
@@ -120,34 +114,24 @@ struct Example {
     pub access: AccessControl,
 }
 
-// `keccak256("MINTER_ROLE")`
-pub const MINTER_ROLE: [u8; 32] = [
-    159, 45, 240, 254, 210, 199, 118, 72, 222, 88, 96, 164, 204, 80, 140, 208,
-    129, 140, 133, 184, 184, 161, 171, 76, 238, 239, 141, 152, 28, 137, 86,
-    166,
-];
+pub const MINTER_ROLE: [u8; 32] =
+    keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
-// `keccak256("BURNER_ROLE")`
-pub const BURNER_ROLE: [u8; 32] = [
-    60, 17, 209, 108, 186, 255, 208, 29, 246, 156, 225, 196, 4, 246, 52, 14,
-    224, 87, 73, 143, 95, 0, 36, 97, 144, 234, 84, 34, 5, 118, 168, 72,
-];
+pub const BURNER_ROLE: [u8; 32] =
+    keccak_const::Keccak256::new().update(b"BURNER_ROLE").finalize();
 
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
-    pub const MINTER_ROLE: [u8; 32] = MINTER_ROLE;
-    pub const BURNER_ROLE: [u8; 32] = BURNER_ROLE;
-
     pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Vec<u8>> {
-        self.access.only_role(Example::MINTER_ROLE.into())?;
+        self.access.only_role(MINTER_ROLE.into())?;
         self.erc20._mint(to, amount)?;
         Ok(())
     }
 
-    pub fn mint(&mut self, from: Address, amount: U256) -> Result<(), Vec<u8>> {
-        self.access.only_role(Example::BURNER_ROLE.into())?;
-        self.erc20._burn(to, amount)?;
+    pub fn burn(&mut self, from: Address, amount: U256) -> Result<(), Vec<u8>> {
+        self.access.only_role(BURNER_ROLE.into())?;
+        self.erc20._burn(from, amount)?;
         Ok(())
     }
 }
