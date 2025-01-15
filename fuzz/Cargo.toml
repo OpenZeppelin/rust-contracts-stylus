@@ -32,6 +32,20 @@ doc = false
 bench = false
 
 [[bin]]
+name = "keccak_doesnt_panic"
+path = "fuzz_targets/keccak/no_panics.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "keccak_memory_safety"
+path = "fuzz_targets/keccak/memory_safety.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "openzeppelin_stylus_utils"
 path = "fuzz_targets/openzeppelin_stylus_utils.rs"
 test = false
