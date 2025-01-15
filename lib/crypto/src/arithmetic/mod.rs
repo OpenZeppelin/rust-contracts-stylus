@@ -25,20 +25,43 @@ pub type Limbs<const N: usize> = [Limb; N];
 pub type WideLimb = u128;
 
 // TODO#q: Refactor types to:
-//  - Fp<P, N>(Limbs<N>) - residue classes modulo prime numbers
-//  - Uint<N>(Limbs<N>) - normal big integers. Make sense to implement only
-//    constant   operations necessary for hex parsing (uint.rs)
-//  - Limbs<N>([Limb;N]) - Wrapper type for limbs. (limbs.rs)
 //  - Odd<Uint<N>> - Odd numbers. (odd.rs)
 //  - Rename u64 and u128 to Limb and WideLimb
 //  - Rename functions *_with_carry to carrying_*
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
-pub struct Uint<const N: usize>(pub Limbs<N>);
+pub struct Uint<const N: usize> {
+    pub limbs: Limbs<N>,
+}
+
+/// Declare [`Uint`] types for different bit sizes.
+macro_rules! declare_num {
+    ($num:ident, $bits:expr) => {
+        #[doc = "Unsigned integer with "]
+        #[doc = stringify!($bits)]
+        #[doc = "bits size."]
+        pub type $num = $crate::arithmetic::Uint<
+            { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) },
+        >;
+    };
+}
+
+declare_num!(U64, 64);
+declare_num!(U128, 128);
+declare_num!(U192, 192);
+declare_num!(U256, 256);
+declare_num!(U384, 384);
+declare_num!(U448, 448);
+declare_num!(U512, 512);
+declare_num!(U576, 576);
+declare_num!(U640, 640);
+declare_num!(U704, 704);
+declare_num!(U768, 768);
+declare_num!(U832, 832);
 
 impl<const N: usize> Default for Uint<N> {
     fn default() -> Self {
-        Self([0u64; N])
+        Self { limbs: [0u64; N] }
     }
 }
 
@@ -48,47 +71,47 @@ impl<const N: usize> Uint<N> {
     pub const ZERO: Self = Self::zero();
 
     pub const fn new(value: [u64; N]) -> Self {
-        Self(value)
+        Self { limbs: value }
     }
 
     pub const fn as_limbs(&self) -> &[Limb; N] {
-        &self.0
+        &self.limbs
     }
 
     // TODO#q: remove zero() and one() in favour of const ONE and const ZERO
 
     pub const fn zero() -> Self {
-        Self([0u64; N])
+        Self { limbs: [0u64; N] }
     }
 
     pub const fn one() -> Self {
         let mut one = Self::zero();
-        one.0[0] = 1;
+        one.limbs[0] = 1;
         one
     }
 
     // TODO#q: add another conversions from u8, u16 and so on
     pub const fn from_u32(val: u32) -> Self {
         let mut repr = Self::zero();
-        repr.0[0] = val as u64;
+        repr.limbs[0] = val as u64;
         repr
     }
 
     #[doc(hidden)]
     pub const fn const_is_even(&self) -> bool {
-        self.0[0] % 2 == 0
+        self.limbs[0] % 2 == 0
     }
 
     #[doc(hidden)]
     pub const fn const_is_odd(&self) -> bool {
-        self.0[0] % 2 == 1
+        self.limbs[0] % 2 == 1
     }
 
     #[doc(hidden)]
     pub const fn mod_4(&self) -> u8 {
         // To compute n % 4, we need to simply look at the
         // 2 least significant bits of n, and check their value mod 4.
-        (((self.0[0] << 62) >> 62) % 4) as u8
+        (((self.limbs[0] << 62) >> 62) % 4) as u8
     }
 
     /// Compute a right shift of `self`
@@ -98,10 +121,10 @@ impl<const N: usize> Uint<N> {
         let mut result = *self;
         let mut t = 0;
         crate::const_for!((i in 0..N) {
-            let a = result.0[N - i - 1];
+            let a = result.limbs[N - i - 1];
             let t2 = a << 63;
-            result.0[N - i - 1] >>= 1;
-            result.0[N - i - 1] |= t;
+            result.limbs[N - i - 1] >>= 1;
+            result.limbs[N - i - 1] |= t;
             t = t2;
         });
         result
@@ -109,8 +132,8 @@ impl<const N: usize> Uint<N> {
 
     const fn const_geq(&self, other: &Self) -> bool {
         const_for!((i in 0..N) {
-            let a = self.0[N - i - 1];
-            let b = other.0[N - i - 1];
+            let a = self.limbs[N - i - 1];
+            let b = other.limbs[N - i - 1];
             if a < b {
                 return false;
             } else if a > b {
@@ -128,7 +151,7 @@ impl<const N: usize> Uint<N> {
         let mut two_adicity = 0;
         // Since `self` is odd, we can always subtract one
         // without a borrow
-        self.0[0] -= 1;
+        self.limbs[0] -= 1;
         while self.const_is_even() {
             self = self.const_shr();
             two_adicity += 1;
@@ -143,7 +166,7 @@ impl<const N: usize> Uint<N> {
         assert!(self.const_is_odd());
         // Since `self` is odd, we can always subtract one
         // without a borrow
-        self.0[0] -= 1;
+        self.limbs[0] -= 1;
         while self.const_is_even() {
             self = self.const_shr();
         }
@@ -157,7 +180,7 @@ impl<const N: usize> Uint<N> {
     #[doc(hidden)]
     pub const fn divide_by_2_round_down(mut self) -> Self {
         if self.const_is_odd() {
-            self.0[0] -= 1;
+            self.limbs[0] -= 1;
         }
         self.const_shr()
     }
@@ -165,7 +188,7 @@ impl<const N: usize> Uint<N> {
     /// Find the number of bits in the binary decomposition of `self`.
     #[doc(hidden)]
     pub const fn const_num_bits(self) -> u32 {
-        ((N - 1) * 64) as u32 + (64 - self.0[N - 1].leading_zeros())
+        ((N - 1) * 64) as u32 + (64 - self.limbs[N - 1].leading_zeros())
     }
 
     #[inline]
@@ -176,7 +199,7 @@ impl<const N: usize> Uint<N> {
         let mut borrow = 0;
 
         const_for!((i in 0..N) {
-            (self.0[i], borrow) = sbb(self.0[i], other.0[i], borrow);
+            (self.limbs[i], borrow) = sbb(self.limbs[i], other.limbs[i], borrow);
         });
 
         (self, borrow != 0)
@@ -187,7 +210,7 @@ impl<const N: usize> Uint<N> {
     pub(crate) fn mul2(&mut self) -> bool {
         let mut last = 0;
         for i in 0..N {
-            let a = &mut self.0[i];
+            let a = &mut self.limbs[i];
             let tmp = *a >> 63;
             *a <<= 1;
             *a |= last;
@@ -204,7 +227,7 @@ impl<const N: usize> Uint<N> {
         let mut carry = 0;
 
         crate::const_for!((i in 0..N) {
-            (self.0[i], carry) = adc(self.0[i], other.0[i], carry);
+            (self.limbs[i], carry) = adc(self.limbs[i], other.limbs[i], carry);
         });
 
         (self, carry != 0)
@@ -213,10 +236,10 @@ impl<const N: usize> Uint<N> {
     const fn const_mul2_with_carry(mut self) -> (Self, bool) {
         let mut last = 0;
         crate::const_for!((i in 0..N) {
-            let a = self.0[i];
+            let a = self.limbs[i];
             let tmp = a >> 63;
-            self.0[i] <<= 1;
-            self.0[i] |= last;
+            self.limbs[i] <<= 1;
+            self.limbs[i] |= last;
             last = tmp;
         });
         (self, last != 0)
@@ -225,7 +248,7 @@ impl<const N: usize> Uint<N> {
     pub(crate) const fn const_is_zero(&self) -> bool {
         let mut is_zero = true;
         crate::const_for!((i in 0..N) {
-            is_zero &= self.0[i] == 0;
+            is_zero &= self.limbs[i] == 0;
         });
         is_zero
     }
@@ -248,7 +271,7 @@ impl<const N: usize> Uint<N> {
 
     pub fn div2(&mut self) {
         let mut t = 0;
-        for a in self.0.iter_mut().rev() {
+        for a in self.limbs.iter_mut().rev() {
             let t2 = *a << 63;
             *a >>= 1;
             *a |= t;
@@ -262,7 +285,7 @@ impl<const N: usize> Uint<N> {
         let mut carry = false;
 
         unroll6_for!((i in 0..N) {
-            carry = adc_for_add_with_carry(&mut self.0[i], other.0[i], carry);
+            carry = adc_for_add_with_carry(&mut self.limbs[i], other.limbs[i], carry);
         });
 
         carry
@@ -274,7 +297,7 @@ impl<const N: usize> Uint<N> {
 
         unroll6_for!((i in 0..N) {
             borrow =
-                sbb_for_sub_with_borrow(&mut self.0[i], other.0[i], borrow);
+                sbb_for_sub_with_borrow(&mut self.limbs[i], other.limbs[i], borrow);
         });
 
         borrow
@@ -312,17 +335,21 @@ impl<const N: usize> Uint<N> {
 
                 if k >= N {
                     let (n, c) = ct_mac_with_carry(
-                        hi.0[k - N],
-                        self.0[i],
-                        rhs.0[j],
+                        hi.limbs[k - N],
+                        self.limbs[i],
+                        rhs.limbs[j],
                         carry,
                     );
-                    hi.0[k - N] = n;
+                    hi.limbs[k - N] = n;
                     carry = c;
                 } else {
-                    let (n, c) =
-                        ct_mac_with_carry(lo.0[k], self.0[i], rhs.0[j], carry);
-                    lo.0[k] = n;
+                    let (n, c) = ct_mac_with_carry(
+                        lo.limbs[k],
+                        self.limbs[i],
+                        rhs.limbs[j],
+                        carry,
+                    );
+                    lo.limbs[k] = n;
                     carry = c;
                 }
 
@@ -330,9 +357,9 @@ impl<const N: usize> Uint<N> {
             }
 
             if i + j >= N {
-                hi.0[i + j - N] = carry;
+                hi.limbs[i + j - N] = carry;
             } else {
-                lo.0[i + j] = carry;
+                lo.limbs[i + j] = carry;
             }
             i += 1;
         }
@@ -348,13 +375,13 @@ impl<const N: usize> Uint<N> {
         let mut i = 0;
 
         while i < N {
-            let (w, c) = ct_adc(self.0[i], rhs.0[i], carry);
+            let (w, c) = ct_adc(self.limbs[i], rhs.limbs[i], carry);
             limbs[i] = w;
             carry = c;
             i += 1;
         }
 
-        (Self(limbs), carry)
+        (Self { limbs }, carry)
     }
 
     /// Create a new [`Uint`] from the provided little endian bytes.
@@ -517,8 +544,8 @@ impl<const N: usize> Ord for Uint<N> {
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         use core::cmp::Ordering;
         unroll6_for!((i in 0..N) {
-            let a = &self.0[N - i - 1];
-            let b = &other.0[N - i - 1];
+            let a = &self.limbs[N - i - 1];
+            let b = &other.limbs[N - i - 1];
             match a.cmp(b) {
                 Ordering::Equal => {}
                 order => return order,
@@ -546,14 +573,14 @@ impl<const N: usize> PartialOrd for Uint<N> {
 impl<const N: usize> AsMut<[u64]> for Uint<N> {
     #[inline]
     fn as_mut(&mut self) -> &mut [u64] {
-        &mut self.0
+        &mut self.limbs
     }
 }
 
 impl<const N: usize> AsRef<[u64]> for Uint<N> {
     #[inline]
     fn as_ref(&self) -> &[u64] {
-        &self.0
+        &self.limbs
     }
 }
 
@@ -586,7 +613,7 @@ impl<const N: usize> From<u64> for Uint<N> {
     #[inline]
     fn from(val: u64) -> Uint<N> {
         let mut repr = Self::default();
-        repr.0[0] = val;
+        repr.limbs[0] = val;
         repr
     }
 }
@@ -595,7 +622,7 @@ impl<const N: usize> From<u32> for Uint<N> {
     #[inline]
     fn from(val: u32) -> Uint<N> {
         let mut repr = Self::default();
-        repr.0[0] = val.into();
+        repr.limbs[0] = val.into();
         repr
     }
 }
@@ -604,7 +631,7 @@ impl<const N: usize> From<u16> for Uint<N> {
     #[inline]
     fn from(val: u16) -> Uint<N> {
         let mut repr = Self::default();
-        repr.0[0] = val.into();
+        repr.limbs[0] = val.into();
         repr
     }
 }
@@ -613,7 +640,7 @@ impl<const N: usize> From<u8> for Uint<N> {
     #[inline]
     fn from(val: u8) -> Uint<N> {
         let mut repr = Self::default();
-        repr.0[0] = val.into();
+        repr.limbs[0] = val.into();
         repr
     }
 }
@@ -637,7 +664,7 @@ impl<const N: usize> From<Uint<N>> for num_bigint::BigInt {
 
 impl<B: Borrow<Self>, const N: usize> BitXorAssign<B> for Uint<N> {
     fn bitxor_assign(&mut self, rhs: B) {
-        (0..N).for_each(|i| self.0[i] ^= rhs.borrow().0[i])
+        (0..N).for_each(|i| self.limbs[i] ^= rhs.borrow().limbs[i])
     }
 }
 
@@ -652,7 +679,7 @@ impl<B: Borrow<Self>, const N: usize> BitXor<B> for Uint<N> {
 
 impl<B: Borrow<Self>, const N: usize> BitAndAssign<B> for Uint<N> {
     fn bitand_assign(&mut self, rhs: B) {
-        (0..N).for_each(|i| self.0[i] &= rhs.borrow().0[i])
+        (0..N).for_each(|i| self.limbs[i] &= rhs.borrow().limbs[i])
     }
 }
 
@@ -667,7 +694,7 @@ impl<B: Borrow<Self>, const N: usize> BitAnd<B> for Uint<N> {
 
 impl<B: Borrow<Self>, const N: usize> BitOrAssign<B> for Uint<N> {
     fn bitor_assign(&mut self, rhs: B) {
-        (0..N).for_each(|i| self.0[i] |= rhs.borrow().0[i])
+        (0..N).for_each(|i| self.limbs[i] |= rhs.borrow().limbs[i])
     }
 }
 
@@ -695,7 +722,7 @@ impl<const N: usize> ShrAssign<u32> for Uint<N> {
 
         while rhs >= 64 {
             let mut t = 0;
-            for limb in self.0.iter_mut().rev() {
+            for limb in self.limbs.iter_mut().rev() {
                 core::mem::swap(&mut t, limb);
             }
             rhs -= 64;
@@ -703,7 +730,7 @@ impl<const N: usize> ShrAssign<u32> for Uint<N> {
 
         if rhs > 0 {
             let mut t = 0;
-            for a in self.0.iter_mut().rev() {
+            for a in self.limbs.iter_mut().rev() {
                 let t2 = *a << (64 - rhs);
                 *a >>= rhs;
                 *a |= t;
@@ -744,7 +771,7 @@ impl<const N: usize> ShlAssign<u32> for Uint<N> {
         while rhs >= 64 {
             let mut t = 0;
             for i in 0..N {
-                core::mem::swap(&mut t, &mut self.0[i]);
+                core::mem::swap(&mut t, &mut self.limbs[i]);
             }
             rhs -= 64;
         }
@@ -753,7 +780,7 @@ impl<const N: usize> ShlAssign<u32> for Uint<N> {
             let mut t = 0;
             #[allow(unused)]
             for i in 0..N {
-                let a = &mut self.0[i];
+                let a = &mut self.limbs[i];
                 let t2 = *a >> (64 - rhs);
                 *a <<= rhs;
                 *a |= t;
@@ -784,7 +811,7 @@ impl<const N: usize> Not for Uint<N> {
     fn not(self) -> Self::Output {
         let mut result = Self::zero();
         for i in 0..N {
-            result.0[i] = !self.0[i];
+            result.limbs[i] = !self.limbs[i];
         }
         result
     }
@@ -835,7 +862,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, U64};
     ///
     /// let mut one = U64::from(1u64);
     /// assert!(one.is_odd());
@@ -847,7 +874,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, U64};
     ///
     /// let mut two = U64::from(2u64);
     /// assert!(two.is_even());
@@ -859,7 +886,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, U64};
     ///
     /// let mut zero = U64::from(0u64);
     /// assert!(zero.is_zero());
@@ -869,7 +896,7 @@ pub trait BigInteger:
     /// Compute the minimum number of bits needed to encode this number.
     /// # Example
     /// ```
-    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, U64};
     ///
     /// let zero = U64::from(0u64);
     /// assert_eq!(zero.num_bits(), 0);
@@ -886,7 +913,7 @@ pub trait BigInteger:
     /// # Example
     ///
     /// ```
-    /// use openzeppelin_crypto::arithmetic::{BigInteger, crypto_bigint::U64};
+    /// use openzeppelin_crypto::arithmetic::{BigInteger, U64};
     ///
     /// let mut one = U64::from(1u64);
     /// assert!(one.get_bit(0));
@@ -909,7 +936,7 @@ impl<const N: usize> BigInteger for Uint<N> {
     const NUM_LIMBS: usize = N;
 
     fn is_odd(&self) -> bool {
-        self.0[0] & 1 == 1
+        self.limbs[0] & 1 == 1
     }
 
     fn is_even(&self) -> bool {
@@ -917,12 +944,12 @@ impl<const N: usize> BigInteger for Uint<N> {
     }
 
     fn is_zero(&self) -> bool {
-        self.0.iter().all(Zero::is_zero)
+        self.limbs.iter().all(Zero::is_zero)
     }
 
     fn num_bits(&self) -> usize {
         let mut ret = N as u32 * 64;
-        for i in self.0.iter().rev() {
+        for i in self.limbs.iter().rev() {
             let leading = i.leading_zeros();
             ret -= leading;
             if leading != 64 {
@@ -939,7 +966,7 @@ impl<const N: usize> BigInteger for Uint<N> {
         } else {
             let limb = i / 64;
             let bit = i - (64 * limb);
-            (self.0[limb] & (1 << bit)) != 0
+            (self.limbs[limb] & (1 << bit)) != 0
         }
     }
 
@@ -948,7 +975,7 @@ impl<const N: usize> BigInteger for Uint<N> {
     }
 
     fn into_bytes_le(self) -> alloc::vec::Vec<u8> {
-        self.0.iter().flat_map(|&limb| limb.to_le_bytes()).collect()
+        self.limbs.iter().flat_map(|&limb| limb.to_le_bytes()).collect()
     }
 }
 
@@ -1088,9 +1115,9 @@ pub const fn ct_adc(lhs: Limb, rhs: Limb, carry: Limb) -> (Limb, Limb) {
 
 pub const fn ct_ge<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> bool {
     const_for!((i in 0..N) {
-        if a.0[i] < b.0[i] {
+        if a.limbs[i] < b.limbs[i] {
             return false;
-        } else if a.0[i] > b.0[i] {
+        } else if a.limbs[i] > b.limbs[i] {
             return true;
         }
     });
@@ -1100,7 +1127,7 @@ pub const fn ct_ge<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> bool {
 // TODO#q: compare with const_is_zero
 pub const fn ct_eq<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> bool {
     const_for!((i in 0..N) {
-        if a.0[i] != b.0[i] {
+        if a.limbs[i] != b.limbs[i] {
             return false;
         }
     });

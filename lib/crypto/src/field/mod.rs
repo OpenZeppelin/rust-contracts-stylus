@@ -8,7 +8,7 @@
 //! ## Example
 //! ```rust
 //! use openzeppelin_crypto::{
-//!     arithmetic::crypto_bigint::U64,
+//!     arithmetic::U64,
 //!     field::{
 //!         fp::{Fp64, FpParams, LIMBS_64},
 //!         group::AdditiveGroup,

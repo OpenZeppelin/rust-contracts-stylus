@@ -63,7 +63,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     #[inline(always)]
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // This cannot exceed the backing capacity.
-        let c = a.0.add_with_carry(&b.0);
+        let c = a.montgomery_form.add_with_carry(&b.montgomery_form);
         // However, it may need to be reduced
         if Self::MODULUS_HAS_SPARE_BIT {
             a.subtract_modulus()
@@ -76,17 +76,17 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     #[inline(always)]
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // If `other` is larger than `self`, add the modulus to self first.
-        if b.0 > a.0 {
-            a.0.add_with_carry(&Self::MODULUS);
+        if b.montgomery_form > a.montgomery_form {
+            a.montgomery_form.add_with_carry(&Self::MODULUS);
         }
-        a.0.sub_with_borrow(&b.0);
+        a.montgomery_form.sub_with_borrow(&b.montgomery_form);
     }
 
     /// Set `a = a + a`.
     #[inline(always)]
     fn double_in_place(a: &mut Fp<Self, N>) {
         // This cannot exceed the backing capacity.
-        let c = a.0.mul2();
+        let c = a.montgomery_form.mul2();
         // However, it may need to be reduced.
         if Self::MODULUS_HAS_SPARE_BIT {
             a.subtract_modulus()
@@ -100,8 +100,8 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     fn neg_in_place(a: &mut Fp<Self, N>) {
         if !a.is_zero() {
             let mut tmp = Self::MODULUS;
-            tmp.sub_with_borrow(&a.0);
-            a.0 = tmp;
+            tmp.sub_with_borrow(&a.montgomery_form);
+            a.montgomery_form = tmp;
         }
     }
 
@@ -145,24 +145,24 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
         let one = Uint::ONE;
 
-        let mut u = a.0;
+        let mut u = a.montgomery_form;
         let mut v = Self::MODULUS;
         let mut b = Fp::new_unchecked(Self::R2); // Avoids unnecessary reduction step.
         let mut c = Fp::zero();
 
         while u != one && v != one {
-            // TODO#q: why code here duplicated?
-            // TODO#q: Inverse consumes incredible ammount of gas
+            // TODO#q: Inverse consumes incredible amount of gas
             while u.is_even() {
                 u.div2();
 
-                if b.0.is_even() {
-                    b.0.div2();
+                if b.montgomery_form.is_even() {
+                    b.montgomery_form.div2();
                 } else {
-                    let carry = b.0.add_with_carry(&Self::MODULUS);
-                    b.0.div2();
+                    let carry =
+                        b.montgomery_form.add_with_carry(&Self::MODULUS);
+                    b.montgomery_form.div2();
                     if !Self::MODULUS_HAS_SPARE_BIT && carry {
-                        (b.0).0[N - 1] |= 1 << 63;
+                        b.montgomery_form.limbs[N - 1] |= 1 << 63;
                     }
                 }
             }
@@ -170,13 +170,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
             while v.is_even() {
                 v.div2();
 
-                if c.0.is_even() {
-                    c.0.div2();
+                if c.montgomery_form.is_even() {
+                    c.montgomery_form.div2();
                 } else {
-                    let carry = c.0.add_with_carry(&Self::MODULUS);
-                    c.0.div2();
+                    let carry =
+                        c.montgomery_form.add_with_carry(&Self::MODULUS);
+                    c.montgomery_form.div2();
                     if !Self::MODULUS_HAS_SPARE_BIT && carry {
-                        (c.0).0[N - 1] |= 1 << 63;
+                        c.montgomery_form.limbs[N - 1] |= 1 << 63;
                     }
                 }
             }
@@ -216,18 +217,19 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     #[must_use]
     #[inline(always)]
     fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
-        let mut r = (a.0).0;
+        let mut r = a.montgomery_form.limbs;
         // Montgomery Reduction
         for i in 0..N {
             let k = r[i].wrapping_mul(Self::INV);
             // let mut carry = 0;
 
-            let (_, mut carry) = arithmetic::mac(r[i], k, Self::MODULUS.0[0]);
+            let (_, mut carry) =
+                arithmetic::mac(r[i], k, Self::MODULUS.limbs[0]);
             for j in 1..N {
                 (r[(j + i) % N], carry) = arithmetic::carrying_mac(
                     r[(j + i) % N],
                     k,
-                    Self::MODULUS.0[j],
+                    Self::MODULUS.limbs[j],
                     carry,
                 );
             }
@@ -254,14 +256,14 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
         // Square
         inv = inv.wrapping_mul(inv);
         // Multiply
-        inv = inv.wrapping_mul(T::MODULUS.0[0]);
+        inv = inv.wrapping_mul(T::MODULUS.limbs[0]);
     });
     inv.wrapping_neg()
 }
 
 #[inline]
 pub const fn modulus_has_spare_bit<T: FpParams<N>, const N: usize>() -> bool {
-    T::MODULUS.0[N - 1] >> 63 == 0
+    T::MODULUS.limbs[N - 1] >> 63 == 0
 }
 
 /// Represents an element of the prime field `F_p`, where `p == P::MODULUS`.
@@ -270,13 +272,14 @@ pub const fn modulus_has_spare_bit<T: FpParams<N>, const N: usize>() -> bool {
 /// for 64-bit systems and N * 32 bits for 32-bit systems.
 #[derive(Educe)]
 #[educe(Default, Clone, Copy, PartialEq, Eq)]
-pub struct Fp<P: FpParams<N>, const N: usize>(
+pub struct Fp<P: FpParams<N>, const N: usize> {
     /// Contains the element in Montgomery form for efficient multiplication.
     /// To convert an element to a [`Uint`], use [`FpParams::into_bigint`]
     /// or `into`.
-    Uint<N>,
-    #[doc(hidden)] pub PhantomData<P>,
-);
+    montgomery_form: Uint<N>,
+    #[doc(hidden)]
+    phantom: PhantomData<P>,
+}
 
 /// Declare [`Fp`] types for different bit sizes.
 macro_rules! declare_fp {
@@ -327,7 +330,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     pub const R: Uint<N> = P::R;
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
-    pub const ZERO: Fp<P, N> = Fp::new_unchecked(Uint([0; N]));
+    pub const ZERO: Fp<P, N> = Fp::new_unchecked(Uint { limbs: [0; N] });
 
     /// Construct a new field element from [`Uint`].
     ///
@@ -337,19 +340,19 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[must_use]
     #[inline(always)]
     pub const fn new_unchecked(element: Uint<N>) -> Self {
-        Self(element, PhantomData)
+        Self { montgomery_form: element, phantom: PhantomData }
     }
 
     #[doc(hidden)]
     #[inline(always)]
     pub fn is_geq_modulus(&self) -> bool {
-        self.0 >= P::MODULUS
+        self.montgomery_form >= P::MODULUS
     }
 
     #[inline(always)]
     fn subtract_modulus(&mut self) {
         if self.is_geq_modulus() {
-            self.0.sub_with_borrow(&Self::MODULUS);
+            self.montgomery_form.sub_with_borrow(&Self::MODULUS);
         }
     }
 
@@ -378,11 +381,14 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// [`struct@Uint`] data type.
     #[inline]
     pub const fn new(element: Uint<N>) -> Self {
-        let mut r = Self(element, PhantomData);
+        let mut r = Self { montgomery_form: element, phantom: PhantomData };
         if r.const_is_zero() {
             r
         } else {
-            r = r.const_mul(&Fp(P::R2, PhantomData));
+            r = r.const_mul(&Fp {
+                montgomery_form: P::R2,
+                phantom: PhantomData,
+            });
             r
         }
     }
@@ -397,13 +403,13 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     const fn const_is_zero(&self) -> bool {
-        self.0.const_is_zero()
+        self.montgomery_form.const_is_zero()
     }
 
     #[inline(always)]
     fn subtract_modulus_with_carry(&mut self, carry: bool) {
         if carry || self.is_geq_modulus() {
-            self.0.sub_with_borrow(&Self::MODULUS);
+            self.montgomery_form.sub_with_borrow(&Self::MODULUS);
         }
     }
 
@@ -417,15 +423,15 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
                 if k >= N {
                     (hi[k - N], carry) = arithmetic::carrying_mac(
                         hi[k - N],
-                        (self.0).0[i],
-                        (other.0).0[j],
+                        self.montgomery_form.limbs[i],
+                        other.montgomery_form.limbs[j],
                         carry
                     );
                 } else {
                     (lo[k], carry) = arithmetic::carrying_mac(
                         lo[k],
-                        (self.0).0[i],
-                        (other.0).0[j],
+                        self.montgomery_form.limbs[i],
+                        other.montgomery_form.limbs[j],
                         carry
                     );
                 }
@@ -437,7 +443,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         unroll6_for!((i in 0..N) {
             let tmp = lo[i].wrapping_mul(P::INV);
 
-            let (_, mut carry) = arithmetic::mac(lo[i], tmp, P::MODULUS.0[0]);
+            let (_, mut carry) = arithmetic::mac(lo[i], tmp, P::MODULUS.limbs[0]);
 
             unroll6_for!((j in 1..N) {
                 let k = i + j;
@@ -445,14 +451,14 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
                     (hi[k - N], carry) = arithmetic::carrying_mac(
                         hi[k - N],
                         tmp,
-                        P::MODULUS.0[j],
+                        P::MODULUS.limbs[j],
                         carry
                     );
                 } else {
                     (lo[k], carry) = arithmetic::carrying_mac(
                         lo[k],
                         tmp,
-                        P::MODULUS.0[j],
+                        P::MODULUS.limbs[j],
                         carry
                     );
                 }
@@ -461,16 +467,16 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         });
 
         unroll6_for!((i in 0..N) {
-            (self.0).0[i] = hi[i];
+            self.montgomery_form.limbs[i] = hi[i];
         });
         (carry2 != 0, self)
     }
 
     const fn const_is_valid(&self) -> bool {
         const_for!((i in 0..N) {
-            if (self.0).0[N - i - 1] < P::MODULUS.0[N - i - 1] {
+            if self.montgomery_form.limbs[N - i - 1] < P::MODULUS.limbs[N - i - 1] {
                 return true
-            } else if (self.0).0[N - i - 1] > P::MODULUS.0[N - i - 1] {
+            } else if self.montgomery_form.limbs[N - i - 1] > P::MODULUS.limbs[N - i - 1] {
                 return false
             }
         });
@@ -480,7 +486,8 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline]
     const fn const_subtract_modulus(mut self) -> Self {
         if !self.const_is_valid() {
-            self.0 = Self::sub_with_borrow(&self.0, &P::MODULUS);
+            self.montgomery_form =
+                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
         }
         self
     }
@@ -488,7 +495,8 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline]
     const fn const_subtract_modulus_with_carry(mut self, carry: bool) -> Self {
         if carry || !self.const_is_valid() {
-            self.0 = Self::sub_with_borrow(&self.0, &P::MODULUS);
+            self.montgomery_form =
+                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
         }
         self
     }
@@ -1056,7 +1064,7 @@ impl<P: FpParams<N>, const N: usize> zeroize::Zeroize for Fp<P, N> {
     // The phantom data does not contain element-specific data
     // and thus does not need to be zeroized.
     fn zeroize(&mut self) {
-        self.0.zeroize();
+        self.montgomery_form.zeroize();
     }
 }
 
