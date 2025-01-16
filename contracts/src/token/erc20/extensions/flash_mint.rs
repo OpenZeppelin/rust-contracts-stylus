@@ -117,9 +117,9 @@ mod borrower {
 #[storage]
 pub struct Erc20FlashMint {
     /// Fee applied when doing flash loans.
-    pub flash_fee_value: StorageU256,
+    pub(crate) flash_fee_value: StorageU256,
     /// Receiver address of the flash fee.
-    pub flash_fee_receiver_address: StorageAddress,
+    pub(crate) flash_fee_receiver_address: StorageAddress,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
