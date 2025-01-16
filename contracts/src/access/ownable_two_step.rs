@@ -61,7 +61,9 @@ pub enum Error {
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.
-    pub(crate) ownable: Ownable,
+    // We leave the parent [`Ownable`] contract instance public, so that
+    // inheritting contract have access to its internal functions.
+    pub ownable: Ownable,
     /// Pending owner of the contract.
     pub(crate) pending_owner: StorageAddress,
 }
@@ -196,22 +198,6 @@ impl IOwnable2Step for Ownable2Step {
 }
 
 impl Ownable2Step {
-    /// Checks if the [`msg::sender`] is set as the owner.
-    ///
-    /// Re-export of [`Ownable::only_owner`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// If called by any account other than the owner, then the error
-    /// [`OwnableError::UnauthorizedAccount`] is returned.
-    pub fn only_owner(&self) -> Result<(), Error> {
-        Ok(self.ownable.only_owner()?)
-    }
-
     /// Transfers ownership of the contract to a new account (`new_owner`) and
     /// sets [`Self::pending_owner`] to `Address::ZERO` to avoid situations
     /// where the transfer has been completed or the current owner renounces,
