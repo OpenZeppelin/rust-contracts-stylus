@@ -1192,10 +1192,11 @@ enum Transfer {
     /// * `values` - Array of all amount of tokens being transferred.
     Batch { ids: Vec<U256>, values: Vec<U256> },
 }
-/*
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
+    use motsu::prelude::Contract;
     use stylus_sdk::msg;
 
     use super::{
@@ -1263,21 +1264,22 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_zero_balance(contract: Erc1155) {
-        let owner = msg::sender();
+    fn balance_of_zero_balance(contract: Contract<Erc1155>) {
+        let owner = ALICE;
         let token_id = random_token_ids(1)[0];
-        let balance = contract.balance_of(owner, token_id);
+        let balance = contract.sender(ALICE).balance_of(owner, token_id);
         assert_eq!(U256::ZERO, balance);
     }
 
     #[motsu::test]
-    fn error_when_array_length_mismatch(contract: Erc1155) {
+    fn error_when_array_length_mismatch(contract: Contract<Erc1155>) {
         let token_ids = random_token_ids(3);
         let accounts = vec![ALICE, BOB, DAVE, CHARLIE];
         let ids_length = U256::from(token_ids.len());
         let accounts_length = U256::from(accounts.len());
 
         let err = contract
+            .sender(ALICE)
             .balance_of_batch(accounts, token_ids)
             .expect_err("should return `Error::InvalidArrayLength`");
 
@@ -1291,10 +1293,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_batch_zero_balance(contract: Erc1155) {
+    fn balance_of_batch_zero_balance(contract: Contract<Erc1155>) {
         let token_ids = random_token_ids(4);
         let accounts = vec![ALICE, BOB, DAVE, CHARLIE];
         let balances = contract
+            .sender(ALICE)
             .balance_of_batch(accounts, token_ids)
             .expect("should return a vector of `U256::ZERO`");
 
@@ -1303,26 +1306,32 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_approval_for_all(contract: Erc1155) {
-        let alice = msg::sender();
-        contract._operator_approvals.setter(alice).setter(BOB).set(false);
+    fn set_approval_for_all(contract: Contract<Erc1155>) {
+        contract.init(ALICE, |contract| {
+            contract._operator_approvals.setter(ALICE).setter(BOB).set(false);
+        });
 
         contract
+            .sender(ALICE)
             .set_approval_for_all(BOB, true)
             .expect("should approve Bob for operations on all Alice's tokens");
-        assert!(contract.is_approved_for_all(alice, BOB));
+        assert!(contract.sender(ALICE).is_approved_for_all(ALICE, BOB));
 
-        contract.set_approval_for_all(BOB, false).expect(
+        contract.sender(ALICE).set_approval_for_all(BOB, false).expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
-        assert!(!contract.is_approved_for_all(alice, BOB));
+        assert!(!contract.sender(ALICE).is_approved_for_all(ALICE, BOB));
     }
 
     #[motsu::test]
-    fn error_when_invalid_operator_set_approval_for_all(contract: Erc1155) {
+    fn error_when_invalid_operator_set_approval_for_all(
+        contract: Contract<Erc1155>,
+    ) {
+        let alice = ALICE;
         let invalid_operator = Address::ZERO;
 
         let err = contract
+            .sender(alice)
             .set_approval_for_all(invalid_operator, true)
             .expect_err("should not approve for all for invalid operator");
 
@@ -1335,27 +1344,30 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mints(contract: Erc1155) {
-        let alice = msg::sender();
+    fn mints(contract: Contract<Erc1155>) {
+        let alice = ALICE;
         let token_id = random_token_ids(1)[0];
         let value = random_values(1)[0];
 
         contract
+            .sender(alice)
             ._mint(alice, token_id, value, &vec![0, 1, 2, 3].into())
             .expect("should mint tokens for Alice");
 
-        let balance = contract.balance_of(alice, token_id);
+        let balance = contract.sender(alice).balance_of(alice, token_id);
 
         assert_eq!(balance, value);
     }
 
     #[motsu::test]
-    fn error_when_mints_to_invalid_receiver(contract: Erc1155) {
+    fn error_when_mints_to_invalid_receiver(contract: Contract<Erc1155>) {
+        let alice = ALICE;
         let invalid_receiver = Address::ZERO;
         let token_id = random_token_ids(1)[0];
         let value = random_values(1)[0];
 
         let err = contract
+            .sender(alice)
             ._mint(invalid_receiver, token_id, value, &vec![0, 1, 2, 3].into())
             .expect_err("should not mint tokens for invalid receiver");
 
@@ -1368,13 +1380,15 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mints_batch(contract: Erc1155) {
+    fn mints_batch(contract: Contract<Erc1155>) {
+        let alice = ALICE;
         let token_ids = random_token_ids(4);
         let values = random_values(4);
 
         contract
+            .sender(alice)
             ._mint_batch(
-                ALICE,
+                alice,
                 token_ids.clone(),
                 values.clone(),
                 &vec![0, 1, 2, 3].into(),
@@ -1382,47 +1396,59 @@ mod tests {
             .expect("should batch mint tokens");
 
         token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
-            assert_eq!(value, contract.balance_of(ALICE, token_id));
+            assert_eq!(
+                value,
+                contract.sender(alice).balance_of(alice, token_id)
+            );
         });
 
         let balances = contract
-            .balance_of_batch(vec![ALICE; 4], token_ids.clone())
+            .sender(alice)
+            .balance_of_batch(vec![alice; 4], token_ids.clone())
             .expect("should return balances");
 
         assert_eq!(values, balances);
     }
 
     #[motsu::test]
-    fn mints_batch_same_token(contract: Erc1155) {
+    fn mints_batch_same_token(contract: Contract<Erc1155>) {
+        let alice = ALICE;
         let token_id = uint!(1_U256);
         let values = random_values(4);
         let expected_balance: U256 = values.iter().sum();
 
         contract
+            .sender(alice)
             ._mint_batch(
-                ALICE,
+                alice,
                 vec![token_id; 4],
                 values.clone(),
                 &vec![0, 1, 2, 3].into(),
             )
             .expect("should batch mint tokens");
 
-        assert_eq!(expected_balance, contract.balance_of(ALICE, token_id));
+        assert_eq!(
+            expected_balance,
+            contract.sender(alice).balance_of(alice, token_id)
+        );
 
         let balances = contract
-            .balance_of_batch(vec![ALICE; 4], vec![token_id; 4])
+            .sender(alice)
+            .balance_of_batch(vec![alice; 4], vec![token_id; 4])
             .expect("should return balances");
 
         assert_eq!(vec![expected_balance; 4], balances);
     }
 
     #[motsu::test]
-    fn error_when_batch_mints_to_invalid_receiver(contract: Erc1155) {
+    fn error_when_batch_mints_to_invalid_receiver(contract: Contract<Erc1155>) {
+        let alice = ALICE;
         let token_ids = random_token_ids(1);
         let values = random_values(1);
         let invalid_receiver = Address::ZERO;
 
         let err = contract
+            .sender(alice)
             ._mint_batch(
                 invalid_receiver,
                 token_ids,
@@ -1440,12 +1466,14 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_batch_mints_not_equal_arrays(contract: Erc1155) {
+    fn error_when_batch_mints_not_equal_arrays(contract: Contract<Erc1155>) {
+        let alice = ALICE;
         let token_ids = random_token_ids(3);
         let values = random_values(4);
 
         let err = contract
-            ._mint_batch(ALICE, token_ids, values, &vec![0, 1, 2, 3].into())
+            .sender(alice)
+            ._mint_batch(alice, token_ids, values, &vec![0, 1, 2, 3].into())
             .expect_err(
                 "should not batch mint tokens when not equal array lengths",
             );
@@ -1459,24 +1487,33 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 1);
+    fn burns(contract: Contract<Erc1155>) {
+        let alice = ALICE;
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
+
         let token_id = token_ids[0];
         let value = values[0];
 
-        contract._burn(ALICE, token_id, value).expect("should burn tokens");
+        contract
+            .sender(alice)
+            ._burn(alice, token_id, value)
+            .expect("should burn tokens");
 
-        let balances = contract.balance_of(ALICE, token_id);
+        let balances = contract.sender(alice).balance_of(alice, token_id);
 
         assert_eq!(U256::ZERO, balances);
     }
 
     #[motsu::test]
-    fn error_when_burns_from_invalid_sender(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 1);
+    fn error_when_burns_from_invalid_sender(contract: Contract<Erc1155>) {
+        let alice = ALICE;
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
         let invalid_sender = Address::ZERO;
 
         let err = contract
+            .sender(alice)
             ._burn(invalid_sender, token_ids[0], values[0])
             .expect_err("should not burn token for invalid sender");
 
@@ -1489,11 +1526,14 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burns_with_insufficient_balance(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 1);
+    fn error_when_burns_with_insufficient_balance(contract: Contract<Erc1155>) {
+        let alice = ALICE;
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
 
         let err = contract
-            ._burn(ALICE, token_ids[0], values[0] + uint!(1_U256))
+            .sender(alice)
+            ._burn(alice, token_ids[0], values[0] + uint!(1_U256))
             .expect_err("should not burn token when insufficient balance");
 
         assert!(matches!(
@@ -1508,32 +1548,39 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_batch(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 4);
+    fn burns_batch(contract: Contract<Erc1155>) {
+        let alice = ALICE;
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
 
         contract
-            ._burn_batch(ALICE, token_ids.clone(), values.clone())
+            .sender(alice)
+            ._burn_batch(alice, token_ids.clone(), values.clone())
             .expect("should batch burn tokens");
 
         let balances = contract
-            .balance_of_batch(vec![ALICE; 4], token_ids.clone())
+            .sender(alice)
+            .balance_of_batch(vec![alice; 4], token_ids.clone())
             .expect("should return balances");
 
         assert_eq!(vec![U256::ZERO; 4], balances);
     }
 
     #[motsu::test]
-    fn burns_batch_same_token(contract: Erc1155) {
+    fn burns_batch_same_token(contract: Contract<Erc1155>) {
+        let alice = ALICE;
         let token_id = uint!(1_U256);
         let value = uint!(80_U256);
 
         contract
-            ._mint(ALICE, token_id, value, &vec![0, 1, 2, 3].into())
+            .sender(alice)
+            ._mint(alice, token_id, value, &vec![0, 1, 2, 3].into())
             .expect("should mint token");
 
         contract
+            .sender(alice)
             ._burn_batch(
-                ALICE,
+                alice,
                 vec![token_id; 4],
                 vec![
                     uint!(20_U256),
@@ -1544,15 +1591,21 @@ mod tests {
             )
             .expect("should batch burn tokens");
 
-        assert_eq!(U256::ZERO, contract.balance_of(ALICE, token_id));
+        assert_eq!(
+            U256::ZERO,
+            contract.sender(alice).balance_of(alice, token_id)
+        );
     }
 
     #[motsu::test]
-    fn error_when_batch_burns_from_invalid_sender(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 4);
+    fn error_when_batch_burns_from_invalid_sender(contract: Contract<Erc1155>) {
+        let alice = ALICE;
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
         let invalid_sender = Address::ZERO;
 
         let err = contract
+            .sender(alice)
             ._burn_batch(invalid_sender, token_ids, values)
             .expect_err("should not batch burn tokens for invalid sender");
 
@@ -1565,8 +1618,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_batch_burns_with_insufficient_balance(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 4);
+    fn error_when_batch_burns_with_insufficient_balance(
+        contract: Contract<Erc1155>,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
 
         let err = contract
             ._burn_batch(
@@ -1590,8 +1646,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_batch_burns_not_equal_arrays(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 3);
+    fn error_when_batch_burns_not_equal_arrays(contract: Contract<Erc1155>) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 3));
 
         let err = contract
             ._burn_batch(ALICE, token_ids, append(values, 4))
@@ -1608,9 +1665,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from(contract: Erc1155) {
+    fn safe_transfer_from(contract: Contract<Erc1155>) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, BOB, 2);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, BOB, 2));
         let amount_one = values[0] - uint!(1_U256);
         let amount_two = values[1] - uint!(1_U256);
 
@@ -1643,9 +1701,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_receiver_safe_transfer_from(contract: Erc1155) {
+    fn error_when_invalid_receiver_safe_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 1);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -1667,9 +1728,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_safe_transfer_from(contract: Erc1155) {
+    fn error_when_invalid_sender_safe_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 1);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
         let invalid_sender = Address::ZERO;
 
         contract
@@ -1697,8 +1761,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_safe_transfer_from(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 1);
+    fn error_when_missing_approval_safe_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
 
         let err = contract
             .safe_transfer_from(
@@ -1720,10 +1787,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_insufficient_balance_safe_transfer_from(contract: Erc1155) {
+    fn error_when_insufficient_balance_safe_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, BOB, 1);
-
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, BOB, 1));
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
         let err = contract
@@ -1748,9 +1817,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_with_data(contract: Erc1155) {
+    fn safe_transfer_from_with_data(contract: Contract<Erc1155>) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, DAVE, 1);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, DAVE, 1));
 
         contract._operator_approvals.setter(DAVE).setter(alice).set(true);
 
@@ -1771,9 +1841,10 @@ mod tests {
 
     #[motsu::test]
     fn error_when_invalid_receiver_safe_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
-        let (token_ids, values) = init(contract, DAVE, 1);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, DAVE, 1));
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -1796,10 +1867,11 @@ mod tests {
 
     #[motsu::test]
     fn error_when_invalid_sender_safe_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 1);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
         let invalid_sender = Address::ZERO;
 
         contract
@@ -1828,9 +1900,10 @@ mod tests {
 
     #[motsu::test]
     fn error_when_missing_approval_safe_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
-        let (token_ids, values) = init(contract, ALICE, 1);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
 
         let err = contract
             .safe_transfer_from(
@@ -1853,10 +1926,11 @@ mod tests {
 
     #[motsu::test]
     fn error_when_insufficient_balance_safe_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, BOB, 1);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 1));
 
         contract._operator_approvals.setter(BOB).setter(alice).set(true);
 
@@ -1882,9 +1956,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_batch_transfer_from(contract: Erc1155) {
+    fn safe_batch_transfer_from(contract: Contract<Erc1155>) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, DAVE, 2);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, dave, 2));
         let amount_one = values[0] - uint!(1_U256);
         let amount_two = values[1] - uint!(1_U256);
 
@@ -1908,9 +1983,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_receiver_safe_batch_transfer_from(contract: Erc1155) {
+    fn error_when_invalid_receiver_safe_batch_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 4);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -1932,9 +2010,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_safe_batch_transfer_from(contract: Erc1155) {
+    fn error_when_invalid_sender_safe_batch_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 4);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
         let invalid_sender = Address::ZERO;
 
         contract
@@ -1962,8 +2043,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_safe_batch_transfer_from(contract: Erc1155) {
-        let (token_ids, values) = init(contract, ALICE, 2);
+    fn error_when_missing_approval_safe_batch_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 2));
 
         let err = contract
             .safe_batch_transfer_from(
@@ -1986,10 +2070,11 @@ mod tests {
 
     #[motsu::test]
     fn error_when_insufficient_balance_safe_batch_transfer_from(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, CHARLIE, 2);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, CHARLIE, 2));
 
         contract._operator_approvals.setter(CHARLIE).setter(alice).set(true);
 
@@ -2015,9 +2100,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_not_equal_arrays_safe_batch_transfer_from(contract: Erc1155) {
+    fn error_when_not_equal_arrays_safe_batch_transfer_from(
+        contract: Contract<Erc1155>,
+    ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 4);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
 
         contract._operator_approvals.setter(DAVE).setter(alice).set(true);
 
@@ -2042,9 +2130,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_batch_transfer_from_with_data(contract: Erc1155) {
+    fn safe_batch_transfer_from_with_data(contract: Contract<Erc1155>) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, DAVE, 2);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, DAVE, 2));
 
         contract._operator_approvals.setter(DAVE).setter(alice).set(true);
 
@@ -2067,10 +2156,11 @@ mod tests {
 
     #[motsu::test]
     fn error_when_invalid_receiver_safe_batch_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 4);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -2093,10 +2183,11 @@ mod tests {
 
     #[motsu::test]
     fn error_when_invalid_sender_safe_batch_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 4);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
         let invalid_sender = Address::ZERO;
 
         contract
@@ -2125,9 +2216,10 @@ mod tests {
 
     #[motsu::test]
     fn error_when_missing_approval_safe_batch_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
-        let (token_ids, values) = init(contract, ALICE, 2);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 2));
 
         let err = contract
             .safe_batch_transfer_from(
@@ -2150,10 +2242,11 @@ mod tests {
 
     #[motsu::test]
     fn error_when_insufficient_balance_safe_batch_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, CHARLIE, 2);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, CHARLIE, 2));
 
         contract._operator_approvals.setter(CHARLIE).setter(alice).set(true);
 
@@ -2180,10 +2273,11 @@ mod tests {
 
     #[motsu::test]
     fn error_when_not_equal_arrays_safe_batch_transfer_from_with_data(
-        contract: Erc1155,
+        contract: Contract<Erc1155>,
     ) {
         let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 4);
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
 
         contract._operator_approvals.setter(DAVE).setter(alice).set(true);
 
@@ -2218,4 +2312,3 @@ mod tests {
         assert_eq!(actual, expected);
     }
 }
-*/
