@@ -16,7 +16,7 @@
 use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
-    contract, evm, msg,
+    contract,msg,
     prelude::storage,
     storage::{StorageAddress, TopLevelStorage},
     stylus_proc::SolidityError,
@@ -45,8 +45,8 @@ sol! {
 pub enum Error {
     /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
     SafeErc20(safe_erc20::Error),
-    /// Indicates an error where a redemption operation failed because the
-    /// supplied `shares` exceeded the maximum allowed for the `owner`.
+   
+    /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
