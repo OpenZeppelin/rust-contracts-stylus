@@ -77,11 +77,13 @@ pub enum Error {
 #[storage]
 pub struct Erc20Permit<T: IEip712 + StorageType> {
     /// ERC-20 contract.
+    // We leave the parent ERC-20 contract instance public, so that inheritting
+    // contract have access to its internal functions.
     pub erc20: Erc20,
     /// Nonces contract.
-    pub nonces: Nonces,
+    pub(crate) nonces: Nonces,
     /// EIP-712 contract. Must implement [`IEip712`] trait.
-    pub eip712: T,
+    pub(crate) eip712: T,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
