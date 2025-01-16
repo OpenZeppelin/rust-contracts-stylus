@@ -23,7 +23,6 @@ const TOKEN_SYMBOL: &str = "TTK";
 const WRAPPED_TOKEN_NAME: &str = "WRAPPED Test Token";
 const WRAPPED_TOKEN_SYMBOL: &str = "WTTK";
 
-
 impl Default for constructorCall {
     fn default() -> Self {
         ctr()
@@ -33,7 +32,7 @@ impl Default for constructorCall {
 fn ctr() -> constructorCall {
     Erc20WrapperExample::constructorCall {
         name_: WRAPPED_TOKEN_NAME.to_owned(),
-        symbol_: WRAPPED_TOKEN_SYMBOL.to_owned()
+        symbol_: WRAPPED_TOKEN_SYMBOL.to_owned(),
     }
 }
 

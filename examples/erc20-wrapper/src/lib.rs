@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc20::{
-        extensions::{Erc20Wrapper,IERC20Wrapper},
+        extensions::{Erc20Wrapper, IERC20Wrapper},
         Erc20, IErc20,
     },
     utils::{introspection::erc165::IErc165, Pausable},
@@ -106,11 +106,11 @@ impl Erc20WrapperExample {
     //         || Erc20Metadata::supports_interface(interface_id)
     // }
 
-    // /// WARNING: These functions are intended for **testing purposes** only. In
-    // /// **production**, ensure strict access control to prevent unauthorized
-    // /// pausing or unpausing, which can disrupt contract functionality. Remove
-    // /// or secure these functions before deployment.
-    // pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+    // /// WARNING: These functions are intended for **testing purposes** only.
+    // In /// **production**, ensure strict access control to prevent
+    // unauthorized /// pausing or unpausing, which can disrupt contract
+    // functionality. Remove /// or secure these functions before
+    // deployment. pub fn pause(&mut self) -> Result<(), Vec<u8>> {
     //     self.pausable.pause().map_err(|e| e.into())
     // }
 
