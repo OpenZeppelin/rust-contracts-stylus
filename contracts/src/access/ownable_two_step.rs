@@ -245,7 +245,7 @@ mod tests {
 
     #[motsu::test]
     fn reads_owner(contract: Ownable2Step) {
-        contract.ownable._owner.set(msg::sender());
+        contract.ownable.owner.set(msg::sender());
         let owner = contract.owner();
         assert_eq!(owner, msg::sender());
     }
@@ -259,7 +259,7 @@ mod tests {
 
     #[motsu::test]
     fn initiates_ownership_transfer(contract: Ownable2Step) {
-        contract.ownable._owner.set(msg::sender());
+        contract.ownable.owner.set(msg::sender());
 
         contract
             .transfer_ownership(ALICE)
@@ -271,7 +271,7 @@ mod tests {
 
     #[motsu::test]
     fn prevents_non_owners_from_initiating_transfer(contract: Ownable2Step) {
-        contract.ownable._owner.set(ALICE);
+        contract.ownable.owner.set(ALICE);
 
         let err = contract.transfer_ownership(BOB).unwrap_err();
         assert!(matches!(
@@ -282,7 +282,7 @@ mod tests {
 
     #[motsu::test]
     fn accepts_ownership(contract: Ownable2Step) {
-        contract.ownable._owner.set(ALICE);
+        contract.ownable.owner.set(ALICE);
         contract.pending_owner.set(msg::sender());
 
         contract.accept_ownership().expect("should accept ownership");
@@ -292,7 +292,7 @@ mod tests {
 
     #[motsu::test]
     fn prevents_nonpending_owner_from_accepting(contract: Ownable2Step) {
-        contract.ownable._owner.set(ALICE);
+        contract.ownable.owner.set(ALICE);
         contract.pending_owner.set(BOB);
 
         let err = contract.accept_ownership().unwrap_err();
@@ -304,7 +304,7 @@ mod tests {
 
     #[motsu::test]
     fn completes_two_step_ownership_transfer(contract: Ownable2Step) {
-        contract.ownable._owner.set(msg::sender());
+        contract.ownable.owner.set(msg::sender());
 
         contract
             .transfer_ownership(ALICE)
@@ -322,7 +322,7 @@ mod tests {
 
     #[motsu::test]
     fn renounces_ownership(contract: Ownable2Step) {
-        contract.ownable._owner.set(msg::sender());
+        contract.ownable.owner.set(msg::sender());
 
         contract.renounce_ownership().expect("should renounce ownership");
         assert_eq!(contract.owner(), Address::ZERO);
@@ -330,7 +330,7 @@ mod tests {
 
     #[motsu::test]
     fn prevents_non_owners_from_renouncing(contract: Ownable2Step) {
-        contract.ownable._owner.set(ALICE);
+        contract.ownable.owner.set(ALICE);
 
         let err = contract.renounce_ownership().unwrap_err();
         assert!(matches!(
@@ -341,7 +341,7 @@ mod tests {
 
     #[motsu::test]
     fn cancels_transfer_on_renounce(contract: Ownable2Step) {
-        contract.ownable._owner.set(msg::sender());
+        contract.ownable.owner.set(msg::sender());
         contract.pending_owner.set(ALICE);
 
         contract.renounce_ownership().expect("should renounce ownership");
@@ -351,7 +351,7 @@ mod tests {
 
     #[motsu::test]
     fn allows_owner_to_cancel_transfer(contract: Ownable2Step) {
-        contract.ownable._owner.set(msg::sender());
+        contract.ownable.owner.set(msg::sender());
         contract.pending_owner.set(ALICE);
 
         contract
@@ -363,7 +363,7 @@ mod tests {
 
     #[motsu::test]
     fn allows_owner_to_overwrite_transfer(contract: Ownable2Step) {
-        contract.ownable._owner.set(msg::sender());
+        contract.ownable.owner.set(msg::sender());
 
         contract
             .transfer_ownership(ALICE)
