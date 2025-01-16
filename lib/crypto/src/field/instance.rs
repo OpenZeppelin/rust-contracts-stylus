@@ -3,7 +3,7 @@
 #![allow(missing_docs)]
 
 use crate::{
-    arithmetic::Uint,
+    arithmetic::uint::Uint,
     field::fp::{Fp256, Fp64, FpParams, LIMBS_256, LIMBS_64},
     fp_from_num, from_num,
 };

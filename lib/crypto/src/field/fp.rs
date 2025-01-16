@@ -27,7 +27,7 @@ use num_traits::{ConstZero, One, Zero};
 
 use crate::{
     arithmetic,
-    arithmetic::{BigInteger, Uint},
+    arithmetic::{uint::Uint, BigInteger},
     const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     unroll6_for,
@@ -1087,7 +1087,9 @@ impl<P: FpParams<N>, const N: usize> From<Uint<N>> for Fp<P, N> {
 #[macro_export]
 macro_rules! fp_from_num {
     ($num:literal) => {
-        $crate::field::fp::Fp::new($crate::arithmetic::from_str_radix($num, 10))
+        $crate::field::fp::Fp::new($crate::arithmetic::uint::from_str_radix(
+            $num, 10,
+        ))
     };
 }
 
@@ -1095,7 +1097,7 @@ macro_rules! fp_from_num {
 #[macro_export]
 macro_rules! fp_from_hex {
     ($num:literal) => {{
-        $crate::field::fp::Fp::new($crate::arithmetic::from_str_hex($num))
+        $crate::field::fp::Fp::new($crate::arithmetic::uint::from_str_hex($num))
     }};
 }
 

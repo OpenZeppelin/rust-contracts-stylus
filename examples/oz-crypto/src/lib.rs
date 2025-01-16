@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::U256;
 use openzeppelin_crypto::{
-    arithmetic::{BigInteger, Uint},
+    arithmetic::{uint::Uint, BigInteger},
     field::{
         group::AdditiveGroup, instance::FpBN256, prime::PrimeField, Field,
     },
