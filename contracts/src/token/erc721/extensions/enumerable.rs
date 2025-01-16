@@ -486,7 +486,7 @@ mod tests {
         assert!(matches!(err, Error::EnumerableForbiddenBatchMint(_)));
     }
 
-    // TODO#q: repair Erc721Enumerable and Erc721 integration tests
+    // TODO#q: fix Erc721Enumerable and Erc721 integration tests
     /*#[motsu::test]
     fn token_of_owner_by_index_works(contract: Erc721Enumerable) {
         let alice = msg::sender();
