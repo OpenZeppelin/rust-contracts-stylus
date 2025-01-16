@@ -61,9 +61,9 @@ pub enum Error {
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.
-    ownable: Ownable,
+    pub(crate) ownable: Ownable,
     /// Pending owner of the contract.
-    pending_owner: StorageAddress,
+    pub(crate) pending_owner: StorageAddress,
 }
 
 /// Interface for an [`Ownable2Step`] contract.

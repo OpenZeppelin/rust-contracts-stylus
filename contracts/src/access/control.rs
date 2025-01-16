@@ -118,7 +118,7 @@ pub struct RoleData {
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
-    roles: StorageMap<FixedBytes<32>, RoleData>,
+    pub(crate) roles: StorageMap<FixedBytes<32>, RoleData>,
 }
 
 #[public]
