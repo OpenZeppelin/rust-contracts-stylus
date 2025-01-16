@@ -1554,7 +1554,7 @@ mod tests {
     fn burns_batch(contract: Contract<Erc1155>) {
         let alice = ALICE;
         let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+            contract.init(alice, |contract| init(contract, alice, 4));
 
         contract
             .sender(alice)
@@ -1646,7 +1646,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == ALICE && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == alice && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
         ));
     }
 
@@ -2323,7 +2323,7 @@ mod tests {
             contract.init(alice, |contract| init(contract, alice, 2));
 
         let err = contract
-            .sender(alice)
+            .sender(bob)
             .safe_batch_transfer_from(
                 alice,
                 bob,
@@ -2338,7 +2338,7 @@ mod tests {
             Error::MissingApprovalForAll(ERC1155MissingApprovalForAll {
                 operator,
                 owner
-            }) if operator == msg::sender() && owner == alice
+            }) if operator == bob && owner == alice
         ));
     }
 
