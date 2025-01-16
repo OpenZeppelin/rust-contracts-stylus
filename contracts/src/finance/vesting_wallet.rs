@@ -113,21 +113,17 @@ mod token {
 #[storage]
 pub struct VestingWallet {
     /// [`Ownable`] contract.
-    pub ownable: Ownable,
+    pub(crate) ownable: Ownable,
     /// Amount of Ether already released.
-    #[allow(clippy::used_underscore_binding)]
-    pub _released: StorageU256,
+    pub(crate) released: StorageU256,
     /// Amount of ERC-20 tokens already released.
-    #[allow(clippy::used_underscore_binding)]
-    pub _erc20_released: StorageMap<Address, StorageU256>,
+    pub(crate) erc20_released: StorageMap<Address, StorageU256>,
     /// Start timestamp.
-    #[allow(clippy::used_underscore_binding)]
-    pub _start: StorageU64,
+    pub(crate) start: StorageU64,
     /// Vesting duration.
-    #[allow(clippy::used_underscore_binding)]
-    pub _duration: StorageU64,
+    pub(crate) duration: StorageU64,
     /// [`SafeErc20`] contract.
-    pub safe_erc20: SafeErc20,
+    pub(crate) safe_erc20: SafeErc20,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -388,11 +384,11 @@ impl IVestingWallet for VestingWallet {
     fn receive_ether(&self) {}
 
     fn start(&self) -> U256 {
-        U256::from(self._start.get())
+        U256::from(self.start.get())
     }
 
     fn duration(&self) -> U256 {
-        U256::from(self._duration.get())
+        U256::from(self.duration.get())
     }
 
     fn end(&self) -> U256 {
@@ -403,12 +399,12 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "released")]
     fn released_eth(&self) -> U256 {
-        self._released.get()
+        self.released.get()
     }
 
     #[selector(name = "released")]
     fn released_erc20(&self, token: Address) -> U256 {
-        self._erc20_released.get(token)
+        self.erc20_released.get(token)
     }
 
     #[selector(name = "releasable")]
@@ -433,7 +429,7 @@ impl IVestingWallet for VestingWallet {
     fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
 
-        self._released.add_assign_checked(
+        self.released.add_assign_checked(
             amount,
             "total released should not exceed `U256::MAX`",
         );
@@ -452,7 +448,7 @@ impl IVestingWallet for VestingWallet {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
-        self._erc20_released.setter(token).add_assign_checked(
+        self.erc20_released.setter(token).add_assign_checked(
             amount,
             "total released should not exceed `U256::MAX`",
         );
@@ -551,8 +547,8 @@ mod tests {
     ) -> (U64, U64) {
         let start = U64::from(start);
         let duration = U64::from(duration);
-        contract._start.set(start);
-        contract._duration.set(duration);
+        contract.start.set(start);
+        contract.duration.set(duration);
         (start, duration)
     }
 
@@ -583,14 +579,14 @@ mod tests {
     #[motsu::test]
     fn reads_released_eth(contract: VestingWallet) {
         let one = uint!(1_U256);
-        contract._released.set(one);
+        contract.released.set(one);
         assert_eq!(one, contract.released_eth());
     }
 
     #[motsu::test]
     fn reads_released_erc20(contract: VestingWallet) {
         let one = uint!(1_U256);
-        contract._erc20_released.setter(TOKEN).set(one);
+        contract.erc20_released.setter(TOKEN).set(one);
         assert_eq!(one, contract.released_erc20(TOKEN));
     }
 
