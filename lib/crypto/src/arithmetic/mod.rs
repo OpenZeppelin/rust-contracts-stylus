@@ -67,8 +67,12 @@ impl<const N: usize> Default for Uint<N> {
 
 impl<const N: usize> Uint<N> {
     pub const BITS: u32 = (N as u32) * Limb::BITS;
-    pub const ONE: Self = Self::one();
-    pub const ZERO: Self = Self::zero();
+    pub const ONE: Self = {
+        let mut one = Self::ZERO;
+        one.limbs[0] = 1;
+        one
+    };
+    pub const ZERO: Self = Self { limbs: [0u64; N] };
 
     pub const fn new(value: [u64; N]) -> Self {
         Self { limbs: value }
@@ -78,21 +82,9 @@ impl<const N: usize> Uint<N> {
         &self.limbs
     }
 
-    // TODO#q: remove zero() and one() in favour of const ONE and const ZERO
-
-    pub const fn zero() -> Self {
-        Self { limbs: [0u64; N] }
-    }
-
-    pub const fn one() -> Self {
-        let mut one = Self::zero();
-        one.limbs[0] = 1;
-        one
-    }
-
     // TODO#q: add another conversions from u8, u16 and so on
     pub const fn from_u32(val: u32) -> Self {
-        let mut repr = Self::zero();
+        let mut repr = Self::ZERO;
         repr.limbs[0] = val as u64;
         repr
     }
@@ -809,7 +801,7 @@ impl<const N: usize> Not for Uint<N> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        let mut result = Self::zero();
+        let mut result = Self::ZERO;
         for i in 0..N {
             result.limbs[i] = !self.limbs[i];
         }
