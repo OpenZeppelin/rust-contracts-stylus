@@ -309,6 +309,43 @@ impl<const N: usize> Uint<N> {
         (lo, hi)
     }
 
+    /// Multiply two numbers and panic on overflow.
+    #[must_use]
+    pub const fn ct_mul(&self, rhs: &Self) -> Self {
+        let (low, high) = self.ct_mul_wide(rhs);
+        assert!(high.ct_eq(&Uint::<N>::ZERO), "overflow on multiplication");
+        low
+    }
+
+    /// Add two numbers and panic on overflow.
+    #[must_use]
+    pub const fn ct_add(&self, rhs: &Self) -> Self {
+        let (low, carry) = self.ct_adc(rhs, Limb::ZERO);
+        assert!(carry == 0, "overflow on addition");
+        low
+    }
+
+    pub const fn ct_ge(&self, rhs: &Self) -> bool {
+        const_for!((i in 0..N) {
+            if self.limbs[i] < rhs.limbs[i] {
+                return false;
+            } else if self.limbs[i] > rhs.limbs[i] {
+                return true;
+            }
+        });
+        true
+    }
+
+    // TODO#q: compare with const_is_zero
+    pub const fn ct_eq(&self, rhs: &Self) -> bool {
+        const_for!((i in 0..N) {
+            if self.limbs[i] != rhs.limbs[i] {
+                return false;
+            }
+        });
+        true
+    }
+
     #[inline(always)]
     /// Computes `a + b + carry`, returning the result along with the new carry.
     // NOTE#q: crypto_bigint
@@ -696,7 +733,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
         let digit = Uint::from_u32(parse_digit(bytes[index], radix));
 
         // Add a digit multiplied by order.
-        uint = ct_add(&uint, &ct_mul(&digit, &order));
+        uint = uint.ct_add(&digit.ct_mul(&order));
 
         // If we reached the beginning of the string, return the number.
         if index == 0 {
@@ -704,7 +741,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
         }
 
         // Increase the order of magnitude.
-        order = ct_mul(&uint_radix, &order);
+        order = uint_radix.ct_mul(&order);
 
         // Move to the next digit.
         index -= 1;
@@ -753,43 +790,6 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
         index -= 1;
         num_index += 1;
     }
-}
-
-/// Multiply two numbers and panic on overflow.
-#[must_use]
-pub const fn ct_mul<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
-    let (low, high) = a.ct_mul_wide(b);
-    assert!(ct_eq(&high, &Uint::<N>::ZERO), "overflow on multiplication");
-    low
-}
-
-/// Add two numbers and panic on overflow.
-#[must_use]
-pub const fn ct_add<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
-    let (low, carry) = a.ct_adc(b, Limb::ZERO);
-    assert!(carry == 0, "overflow on addition");
-    low
-}
-
-pub const fn ct_ge<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> bool {
-    const_for!((i in 0..N) {
-        if a.limbs[i] < b.limbs[i] {
-            return false;
-        } else if a.limbs[i] > b.limbs[i] {
-            return true;
-        }
-    });
-    true
-}
-
-// TODO#q: compare with const_is_zero
-pub const fn ct_eq<const N: usize>(a: &Uint<N>, b: &Uint<N>) -> bool {
-    const_for!((i in 0..N) {
-        if a.limbs[i] != b.limbs[i] {
-            return false;
-        }
-    });
-    true
 }
 
 // Try to parse a digit from utf-8 byte.
