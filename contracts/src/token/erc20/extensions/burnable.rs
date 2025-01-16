@@ -125,7 +125,7 @@ mod tests {
 
         // Alice approves `msg::sender`.
         let one = uint!(1_U256);
-        contract._allowances.setter(alice).setter(sender).set(one);
+        contract.allowances.setter(alice).setter(sender).set(one);
 
         // Mint some tokens for Alice.
         let two = uint!(2_U256);
@@ -148,7 +148,7 @@ mod tests {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract.allowances.setter(alice).setter(msg::sender()).set(one);
         assert_eq!(zero, contract.balance_of(alice));
 
         let one = uint!(1_U256);
@@ -162,7 +162,7 @@ mod tests {
         let one = uint!(1_U256);
 
         contract
-            ._allowances
+            .allowances
             .setter(Address::ZERO)
             .setter(msg::sender())
             .set(one);

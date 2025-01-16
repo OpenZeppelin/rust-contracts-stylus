@@ -128,14 +128,12 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc20 {
     /// Maps users to balances.
-    #[allow(clippy::used_underscore_binding)]
-    pub _balances: StorageMap<Address, StorageU256>,
+    pub(crate) balances: StorageMap<Address, StorageU256>,
     /// Maps users to a mapping of each spender's allowance.
-    #[allow(clippy::used_underscore_binding)]
-    pub _allowances: StorageMap<Address, StorageMap<Address, StorageU256>>,
+    pub(crate) allowances:
+        StorageMap<Address, StorageMap<Address, StorageU256>>,
     /// The total supply of the token.
-    #[allow(clippy::used_underscore_binding)]
-    pub _total_supply: StorageU256,
+    pub(crate) total_supply: StorageU256,
 }
 
 /// Required interface of an [`Erc20`] compliant contract.
@@ -272,11 +270,11 @@ impl IErc20 for Erc20 {
     type Error = Error;
 
     fn total_supply(&self) -> U256 {
-        self._total_supply.get()
+        self.total_supply.get()
     }
 
     fn balance_of(&self, account: Address) -> U256 {
-        self._balances.get(account)
+        self.balances.get(account)
     }
 
     fn transfer(
@@ -290,7 +288,7 @@ impl IErc20 for Erc20 {
     }
 
     fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        self._allowances.get(owner).get(spender)
+        self.allowances.get(owner).get(spender)
     }
 
     fn approve(
@@ -361,7 +359,7 @@ impl Erc20 {
             }));
         }
 
-        self._allowances.setter(owner).insert(spender, value);
+        self.allowances.setter(owner).insert(spender, value);
         if emit_event {
             evm::log(Approval { owner, spender, value });
         }
@@ -418,7 +416,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// If `_total_supply` exceeds `U256::MAX`.
+    /// If `total_supply` exceeds `U256::MAX`.
     ///
     /// # Errors
     ///
@@ -455,7 +453,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    /// If `total_supply` exceeds `U256::MAX`. It may happen during `mint`
     /// operation.
     ///
     /// # Errors
@@ -474,13 +472,13 @@ impl Erc20 {
     ) -> Result<(), Error> {
         if from.is_zero() {
             // Mint operation. Overflow check required: the rest of the code
-            // assumes that `_total_supply` never overflows.
-            self._total_supply.add_assign_checked(
+            // assumes that `total_supply` never overflows.
+            self.total_supply.add_assign_checked(
                 value,
-                "should not exceed `U256::MAX` for `_total_supply`",
+                "should not exceed `U256::MAX` for `total_supply`",
             );
         } else {
-            let from_balance = self._balances.get(from);
+            let from_balance = self.balances.get(from);
             if from_balance < value {
                 return Err(Error::InsufficientBalance(
                     ERC20InsufficientBalance {
@@ -491,20 +489,20 @@ impl Erc20 {
                 ));
             }
             // Overflow not possible:
-            // `value` <= `from_balance` <= `_total_supply`.
-            self._balances.setter(from).set(from_balance - value);
+            // `value` <= `from_balance` <= `total_supply`.
+            self.balances.setter(from).set(from_balance - value);
         }
 
         if to.is_zero() {
             // Overflow not possible:
-            // `value` <= `_total_supply` or
-            // `value` <= `from_balance` <= `_total_supply`.
-            self._total_supply.sub_assign_unchecked(value);
+            // `value` <= `total_supply` or
+            // `value` <= `from_balance` <= `total_supply`.
+            self.total_supply.sub_assign_unchecked(value);
         } else {
             // Overflow not possible:
             // `balance_to` + `value` is at most `total_supply`,
             // which fits into a `U256`.
-            self._balances.setter(to).add_assign_unchecked(value);
+            self.balances.setter(to).add_assign_unchecked(value);
         }
 
         evm::log(Transfer { from, to, value });
@@ -604,7 +602,7 @@ mod tests {
 
         let owner = msg::sender();
         let one = uint!(1_U256);
-        contract._balances.setter(owner).set(one);
+        contract.balances.setter(owner).set(one);
         let balance = contract.balance_of(owner);
         assert_eq!(one, balance);
     }
@@ -628,7 +626,7 @@ mod tests {
     }
 
     #[motsu::test]
-    #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
+    #[should_panic = "should not exceed `U256::MAX` for `total_supply`"]
     fn update_mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
@@ -641,7 +639,7 @@ mod tests {
             ._update(Address::ZERO, alice, U256::MAX)
             .expect("should mint tokens");
         // Mint action should NOT work:
-        // overflow on `_total_supply`.
+        // overflow on `total_supply`.
         let _result = contract._update(Address::ZERO, alice, one);
     }
 
@@ -682,7 +680,7 @@ mod tests {
     }
 
     #[motsu::test]
-    #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
+    #[should_panic = "should not exceed `U256::MAX` for `total_supply`"]
     fn mint_errors_arithmetic_overflow(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
@@ -694,7 +692,7 @@ mod tests {
         contract
             ._update(Address::ZERO, alice, U256::MAX)
             .expect("should mint tokens");
-        // Mint action should NOT work -- overflow on `_total_supply`.
+        // Mint action should NOT work -- overflow on `total_supply`.
         let _result = contract._mint(alice, one);
     }
 
@@ -811,7 +809,7 @@ mod tests {
 
         // Alice approves `msg::sender`.
         let one = uint!(1_U256);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract.allowances.setter(alice).setter(msg::sender()).set(one);
 
         // Mint some tokens for Alice.
         let two = uint!(2_U256);
@@ -832,7 +830,7 @@ mod tests {
 
         // Alice approves `msg::sender`.
         let one = uint!(1_U256);
-        contract._allowances.setter(alice).setter(sender).set(one);
+        contract.allowances.setter(alice).setter(sender).set(one);
 
         // Mint some tokens for Alice.
         let two = uint!(2_U256);
@@ -853,7 +851,7 @@ mod tests {
 
         // Alice approves `msg::sender`.
         let one = uint!(1_U256);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract.allowances.setter(alice).setter(msg::sender()).set(one);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
 
         let one = uint!(1_U256);
@@ -866,7 +864,7 @@ mod tests {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         contract
-            ._allowances
+            .allowances
             .setter(Address::ZERO)
             .setter(msg::sender())
             .set(one);
@@ -878,7 +876,7 @@ mod tests {
     fn transfer_from_errors_when_invalid_receiver(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
-        contract._allowances.setter(alice).setter(msg::sender()).set(one);
+        contract.allowances.setter(alice).setter(msg::sender()).set(one);
         let result = contract.transfer_from(alice, Address::ZERO, one);
         assert!(matches!(result, Err(Error::InvalidReceiver(_))));
     }
@@ -906,7 +904,7 @@ mod tests {
         assert_eq!(U256::ZERO, allowance);
 
         let one = uint!(1_U256);
-        contract._allowances.setter(owner).setter(alice).set(one);
+        contract.allowances.setter(owner).setter(alice).set(one);
         let allowance = contract.allowance(owner, alice);
         assert_eq!(one, allowance);
     }
@@ -918,7 +916,7 @@ mod tests {
         // `msg::sender` approves Alice.
         let one = uint!(1_U256);
         contract.approve(alice, one).unwrap();
-        assert_eq!(one, contract._allowances.get(msg::sender()).get(alice));
+        assert_eq!(one, contract.allowances.get(msg::sender()).get(alice));
     }
 
     #[motsu::test]
