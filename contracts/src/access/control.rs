@@ -118,8 +118,7 @@ pub struct RoleData {
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
-    #[allow(clippy::used_underscore_binding)]
-    pub _roles: StorageMap<FixedBytes<32>, RoleData>,
+    roles: StorageMap<FixedBytes<32>, RoleData>,
 }
 
 #[public]
@@ -133,7 +132,7 @@ impl AccessControl {
     /// * `account` - The account to check for membership.
     #[must_use]
     pub fn has_role(&self, role: B256, account: Address) -> bool {
-        self._roles.getter(role).has_role.get(account)
+        self.roles.getter(role).has_role.get(account)
     }
 
     /// Checks if [`msg::sender`] has been granted `role`.
@@ -162,7 +161,7 @@ impl AccessControl {
     /// * `role` - The role identifier.
     #[must_use]
     pub fn get_role_admin(&self, role: B256) -> B256 {
-        *self._roles.getter(role).admin_role
+        *self.roles.getter(role).admin_role
     }
 
     /// Grants `role` to `account`.
@@ -291,7 +290,7 @@ impl AccessControl {
     /// Emits a [`RoleAdminChanged`] event.
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
-        self._roles.setter(role).admin_role.set(new_admin_role);
+        self.roles.setter(role).admin_role.set(new_admin_role);
         evm::log(RoleAdminChanged {
             role,
             previous_admin_role,
@@ -343,7 +342,7 @@ impl AccessControl {
         if self.has_role(role, account) {
             false
         } else {
-            self._roles.setter(role).has_role.insert(account, true);
+            self.roles.setter(role).has_role.insert(account, true);
             evm::log(RoleGranted { role, account, sender: msg::sender() });
             true
         }
@@ -365,7 +364,7 @@ impl AccessControl {
     /// May emit a [`RoleRevoked`] event.
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
-            self._roles.setter(role).has_role.insert(account, false);
+            self.roles.setter(role).has_role.insert(account, false);
             evm::log(RoleRevoked { role, account, sender: msg::sender() });
             true
         } else {
@@ -404,11 +403,7 @@ mod tests {
     // NOTE: Once we have support for setting `msg::sender` and constructor,
     // this function shouldn't be needed.
     fn _grant_role_to_msg_sender(contract: &mut AccessControl, role: [u8; 32]) {
-        contract
-            ._roles
-            .setter(role.into())
-            .has_role
-            .insert(msg::sender(), true);
+        contract.roles.setter(role.into()).has_role.insert(msg::sender(), true);
     }
 
     #[motsu::test]
@@ -454,7 +449,7 @@ mod tests {
     #[motsu::test]
     fn admin_can_revoke_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        contract.roles.setter(ROLE.into()).has_role.insert(ALICE, true);
 
         let has_role = contract.has_role(ROLE.into(), ALICE);
         assert!(has_role);
@@ -465,7 +460,7 @@ mod tests {
 
     #[motsu::test]
     fn non_admin_cannot_revoke_role(contract: AccessControl) {
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        contract.roles.setter(ROLE.into()).has_role.insert(ALICE, true);
 
         let has_role = contract.has_role(ROLE.into(), ALICE);
         assert!(has_role);
@@ -536,7 +531,7 @@ mod tests {
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
         _grant_role_to_msg_sender(contract, OTHER_ROLE);
 
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        contract.roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         contract.revoke_role(ROLE.into(), ALICE).unwrap();
         let has_role = contract.has_role(ROLE.into(), ALICE);
         assert!(!has_role);
@@ -583,14 +578,14 @@ mod tests {
 
     #[motsu::test]
     fn internal_grant_role_false_if_role(contract: AccessControl) {
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        contract.roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_granted = contract._grant_role(ROLE.into(), ALICE);
         assert!(!role_granted);
     }
 
     #[motsu::test]
     fn internal_revoke_role_true_if_role(contract: AccessControl) {
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+        contract.roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
         assert!(role_revoked);
     }
