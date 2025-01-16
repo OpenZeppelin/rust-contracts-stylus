@@ -11,4 +11,4 @@ pub use capped::Capped;
 pub use flash_mint::{Erc20FlashMint, IErc3156FlashLender};
 pub use metadata::{Erc20Metadata, IErc20Metadata};
 pub use permit::Erc20Permit;
-pub use wrapper::{IERC20Wrapper,Erc20Wrapper};
+pub use wrapper::{Erc20Wrapper, IERC20Wrapper};
