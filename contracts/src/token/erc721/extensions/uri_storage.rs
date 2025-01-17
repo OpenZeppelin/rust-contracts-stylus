@@ -37,8 +37,7 @@ mod sol {
 #[storage]
 pub struct Erc721UriStorage {
     /// Optional mapping for token URIs.
-    #[allow(clippy::used_underscore_binding)]
-    pub _token_uris: StorageMap<U256, StorageString>,
+    pub token_uris: StorageMap<U256, StorageString>,
 }
 
 impl Erc721UriStorage {
@@ -53,7 +52,7 @@ impl Erc721UriStorage {
     /// # Events
     /// Emits a [`MetadataUpdate`] event.
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
-        self._token_uris.setter(token_id).set_str(token_uri);
+        self.token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
 
@@ -93,7 +92,7 @@ impl Erc721UriStorage {
     ) -> Result<String, Error> {
         let _owner = erc721.owner_of(token_id)?;
 
-        let token_uri = self._token_uris.getter(token_id).get_string();
+        let token_uri = self.token_uris.getter(token_id).get_string();
         let base = metadata.base_uri();
 
         // If there is no base URI, return the token URI.
@@ -144,7 +143,7 @@ mod tests {
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract
             .uri_storage
-            ._token_uris
+            .token_uris
             .setter(TOKEN_ID)
             .set_str(token_uri.clone());
 
@@ -169,7 +168,7 @@ mod tests {
         let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract
             .uri_storage
-            ._token_uris
+            .token_uris
             .setter(TOKEN_ID)
             .set_str(initial_token_uri);
 
