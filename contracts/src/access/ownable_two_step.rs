@@ -237,7 +237,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn readspending_owner(contract: Ownable2Step) {
+    fn reads_pending_owner(contract: Ownable2Step) {
         contract.pending_owner.set(ALICE);
         let pending_owner = contract.pending_owner();
         assert_eq!(pending_owner, ALICE);
@@ -277,7 +277,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_nonpending_owner_from_accepting(contract: Ownable2Step) {
+    fn prevents_non_pending_owner_from_accepting(contract: Ownable2Step) {
         contract.ownable.owner.set(ALICE);
         contract.pending_owner.set(BOB);
 
