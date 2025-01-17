@@ -68,8 +68,7 @@ pub enum Error {
 #[storage]
 pub struct Pausable {
     /// Indicates whether the contract is `Paused`.
-    #[allow(clippy::used_underscore_binding)]
-    pub _paused: StorageBool,
+    pub(crate) paused: StorageBool,
 }
 
 #[public]
@@ -80,7 +79,7 @@ impl Pausable {
     ///
     /// * `&self` - Read access to the contract's state.
     fn paused(&self) -> bool {
-        self._paused.get()
+        self.paused.get()
     }
 }
 
@@ -97,7 +96,7 @@ impl Pausable {
     /// [`Error::EnforcedPause`] is returned.
     pub fn pause(&mut self) -> Result<(), Error> {
         self.when_not_paused()?;
-        self._paused.set(true);
+        self.paused.set(true);
         evm::log(Paused { account: msg::sender() });
         Ok(())
     }
@@ -114,7 +113,7 @@ impl Pausable {
     /// [`Error::ExpectedPause`] is returned.
     pub fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
-        self._paused.set(false);
+        self.paused.set(false);
         evm::log(Unpaused { account: msg::sender() });
         Ok(())
     }
@@ -131,7 +130,7 @@ impl Pausable {
     /// If the contract is in the `Paused` state, then the error
     /// [`Error::EnforcedPause`] is returned.
     pub fn when_not_paused(&self) -> Result<(), Error> {
-        if self._paused.get() {
+        if self.paused.get() {
             return Err(Error::EnforcedPause(EnforcedPause {}));
         }
         Ok(())
@@ -149,7 +148,7 @@ impl Pausable {
     /// If the contract is in `Unpaused` state, then the error
     /// [`Error::ExpectedPause`] is returned.
     pub fn when_paused(&self) -> Result<(), Error> {
-        if !self._paused.get() {
+        if !self.paused.get() {
             return Err(Error::ExpectedPause(ExpectedPause {}));
         }
         Ok(())
@@ -162,15 +161,15 @@ mod tests {
 
     #[motsu::test]
     fn paused_works(contract: Pausable) {
-        contract._paused.set(false);
+        contract.paused.set(false);
         assert!(!contract.paused());
-        contract._paused.set(true);
+        contract.paused.set(true);
         assert!(contract.paused());
     }
 
     #[motsu::test]
     fn when_not_paused_works(contract: Pausable) {
-        contract._paused.set(false);
+        contract.paused.set(false);
         assert!(!contract.paused());
 
         let result = contract.when_not_paused();
@@ -179,7 +178,7 @@ mod tests {
 
     #[motsu::test]
     fn when_not_paused_errors_when_paused(contract: Pausable) {
-        contract._paused.set(true);
+        contract.paused.set(true);
         assert!(contract.paused());
 
         let result = contract.when_not_paused();
@@ -188,7 +187,7 @@ mod tests {
 
     #[motsu::test]
     fn when_paused_works(contract: Pausable) {
-        contract._paused.set(true);
+        contract.paused.set(true);
         assert!(contract.paused());
 
         let result = contract.when_paused();
@@ -197,7 +196,7 @@ mod tests {
 
     #[motsu::test]
     fn when_paused_errors_when_not_paused(contract: Pausable) {
-        contract._paused.set(false);
+        contract.paused.set(false);
         assert!(!contract.paused());
 
         let result = contract.when_paused();
@@ -206,7 +205,7 @@ mod tests {
 
     #[motsu::test]
     fn pause_works(contract: Pausable) {
-        contract._paused.set(false);
+        contract.paused.set(false);
         assert!(!contract.paused());
 
         // Pause the contract
@@ -217,7 +216,7 @@ mod tests {
 
     #[motsu::test]
     fn pause_errors_when_already_paused(contract: Pausable) {
-        contract._paused.set(true);
+        contract.paused.set(true);
         assert!(contract.paused());
 
         let result = contract.pause();
@@ -227,7 +226,7 @@ mod tests {
 
     #[motsu::test]
     fn unpause_works(contract: Pausable) {
-        contract._paused.set(true);
+        contract.paused.set(true);
         assert!(contract.paused());
 
         // Unpause the paused contract
@@ -238,7 +237,7 @@ mod tests {
 
     #[motsu::test]
     fn unpause_errors_when_already_unpaused(contract: Pausable) {
-        contract._paused.set(false);
+        contract.paused.set(false);
         assert!(!contract.paused());
 
         // Unpause the unpaused contract
