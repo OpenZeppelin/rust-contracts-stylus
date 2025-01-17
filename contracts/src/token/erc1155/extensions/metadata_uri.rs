@@ -36,8 +36,7 @@ mod sol {
 pub struct Erc1155MetadataUri {
     /// Used as the URI for all token types by relying on ID substitution,
     /// e.g. https://token-cdn-domain/{id}.json.
-    #[allow(clippy::used_underscore_binding)]
-    pub _uri: StorageString,
+    pub(crate) uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-1155 standard.
@@ -61,7 +60,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
     /// Clients calling this function must replace the `id` substring with
     /// the actual token type ID.
     fn uri(&self, _id: U256) -> String {
-        self._uri.get_string()
+        self.uri.get_string()
     }
 }
 
@@ -82,7 +81,7 @@ mod tests {
     #[motsu::test]
     fn uri_ignores_token_id(contract: Erc1155MetadataUri) {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
-        contract._uri.set_str(uri.clone());
+        contract.uri.set_str(uri.clone());
 
         let token_id = uint!(1_U256);
         assert_eq!(uri, contract.uri(token_id));

@@ -197,11 +197,9 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc1155 {
     /// Maps users to balances.
-    #[allow(clippy::used_underscore_binding)]
-    pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
+    pub(crate) balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
     /// Maps owners to a mapping of operator approvals.
-    #[allow(clippy::used_underscore_binding)]
-    pub _operator_approvals:
+    pub(crate) operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
@@ -405,7 +403,7 @@ impl IErc1155 for Erc1155 {
     type Error = Error;
 
     fn balance_of(&self, account: Address, id: U256) -> U256 {
-        self._balances.get(id).get(account)
+        self.balances.get(id).get(account)
     }
 
     fn balance_of_batch(
@@ -433,7 +431,7 @@ impl IErc1155 for Erc1155 {
     }
 
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
-        self._operator_approvals.get(account).get(operator)
+        self.operator_approvals.get(account).get(operator)
     }
 
     fn safe_transfer_from(
@@ -762,7 +760,7 @@ impl Erc1155 {
                 operator,
             }));
         }
-        self._operator_approvals.setter(owner).setter(operator).set(approved);
+        self.operator_approvals.setter(owner).setter(operator).set(approved);
         evm::log(ApprovalForAll { account: owner, operator, approved });
         Ok(())
     }
@@ -1049,16 +1047,16 @@ impl Erc1155 {
                     },
                 ));
             }
-            self._balances
+            self.balances
                 .setter(token_id)
                 .setter(from)
                 .sub_assign_unchecked(value);
         }
 
         if !to.is_zero() {
-            self._balances.setter(token_id).setter(to).add_assign_checked(
+            self.balances.setter(token_id).setter(to).add_assign_checked(
                 value,
-                "should not exceed `U256::MAX` for `_balances`",
+                "should not exceed `U256::MAX` for `balances`",
             );
         }
 
@@ -1305,7 +1303,7 @@ mod tests {
     #[motsu::test]
     fn set_approval_for_all(contract: Erc1155) {
         let alice = msg::sender();
-        contract._operator_approvals.setter(alice).setter(BOB).set(false);
+        contract.operator_approvals.setter(alice).setter(BOB).set(false);
 
         contract
             .set_approval_for_all(BOB, true)
@@ -1614,7 +1612,7 @@ mod tests {
         let amount_one = values[0] - uint!(1_U256);
         let amount_two = values[1] - uint!(1_U256);
 
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         contract
             .safe_transfer_from(
@@ -1673,7 +1671,7 @@ mod tests {
         let invalid_sender = Address::ZERO;
 
         contract
-            ._operator_approvals
+            .operator_approvals
             .setter(invalid_sender)
             .setter(alice)
             .set(true);
@@ -1724,7 +1722,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let err = contract
             .safe_transfer_from(
@@ -1752,7 +1750,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, DAVE, 1);
 
-        contract._operator_approvals.setter(DAVE).setter(alice).set(true);
+        contract.operator_approvals.setter(DAVE).setter(alice).set(true);
 
         contract
             .safe_transfer_from(
@@ -1803,7 +1801,7 @@ mod tests {
         let invalid_sender = Address::ZERO;
 
         contract
-            ._operator_approvals
+            .operator_approvals
             .setter(invalid_sender)
             .setter(alice)
             .set(true);
@@ -1858,7 +1856,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let err = contract
             .safe_transfer_from(
@@ -1888,7 +1886,7 @@ mod tests {
         let amount_one = values[0] - uint!(1_U256);
         let amount_two = values[1] - uint!(1_U256);
 
-        contract._operator_approvals.setter(DAVE).setter(alice).set(true);
+        contract.operator_approvals.setter(DAVE).setter(alice).set(true);
 
         contract
             .safe_batch_transfer_from(
@@ -1938,7 +1936,7 @@ mod tests {
         let invalid_sender = Address::ZERO;
 
         contract
-            ._operator_approvals
+            .operator_approvals
             .setter(invalid_sender)
             .setter(alice)
             .set(true);
@@ -1991,7 +1989,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, CHARLIE, 2);
 
-        contract._operator_approvals.setter(CHARLIE).setter(alice).set(true);
+        contract.operator_approvals.setter(CHARLIE).setter(alice).set(true);
 
         let err = contract
             .safe_batch_transfer_from(
@@ -2019,7 +2017,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 4);
 
-        contract._operator_approvals.setter(DAVE).setter(alice).set(true);
+        contract.operator_approvals.setter(DAVE).setter(alice).set(true);
 
         let err = contract
             .safe_batch_transfer_from(
@@ -2046,7 +2044,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, DAVE, 2);
 
-        contract._operator_approvals.setter(DAVE).setter(alice).set(true);
+        contract.operator_approvals.setter(DAVE).setter(alice).set(true);
 
         contract
             .safe_batch_transfer_from(
@@ -2100,7 +2098,7 @@ mod tests {
         let invalid_sender = Address::ZERO;
 
         contract
-            ._operator_approvals
+            .operator_approvals
             .setter(invalid_sender)
             .setter(alice)
             .set(true);
@@ -2155,7 +2153,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, CHARLIE, 2);
 
-        contract._operator_approvals.setter(CHARLIE).setter(alice).set(true);
+        contract.operator_approvals.setter(CHARLIE).setter(alice).set(true);
 
         let err = contract
             .safe_batch_transfer_from(
@@ -2185,7 +2183,7 @@ mod tests {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 4);
 
-        contract._operator_approvals.setter(DAVE).setter(alice).set(true);
+        contract.operator_approvals.setter(DAVE).setter(alice).set(true);
 
         let err = contract
             .safe_batch_transfer_from(
