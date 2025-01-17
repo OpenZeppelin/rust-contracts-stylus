@@ -1079,7 +1079,7 @@ mod tests {
     fn safe_transfers_from_approved_token(contract: Erc721Consecutive) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract.erc721._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.erc721.token_approvals.setter(TOKEN_ID).set(alice);
         contract
             .safe_transfer_from(BOB, alice, TOKEN_ID)
             .expect("should transfer Bob's token to Alice");
@@ -1258,7 +1258,7 @@ mod tests {
         contract
             .approve(BOB, TOKEN_ID)
             .expect("should approve Bob for operations on token");
-        assert_eq!(contract.erc721._token_approvals.get(TOKEN_ID), BOB);
+        assert_eq!(contract.erc721.token_approvals.get(TOKEN_ID), BOB);
     }
 
     #[motsu::test]
@@ -1294,12 +1294,7 @@ mod tests {
     #[motsu::test]
     fn approval_for_all(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        contract
-            .erc721
-            ._operator_approvals
-            .setter(alice)
-            .setter(BOB)
-            .set(false);
+        contract.erc721.operator_approvals.setter(alice).setter(BOB).set(false);
 
         contract
             .set_approval_for_all(BOB, true)
