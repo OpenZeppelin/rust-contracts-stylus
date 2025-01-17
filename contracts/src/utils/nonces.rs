@@ -39,8 +39,7 @@ pub enum Error {
 #[storage]
 pub struct Nonces {
     /// Mapping from address to its nonce.
-    #[allow(clippy::used_underscore_binding)]
-    pub _nonces: StorageMap<Address, StorageU256>,
+    pub(crate) nonces: StorageMap<Address, StorageU256>,
 }
 
 #[public]
@@ -53,7 +52,7 @@ impl Nonces {
     /// * `owner` - The address for which to return the nonce.
     #[must_use]
     pub fn nonces(&self, owner: Address) -> U256 {
-        self._nonces.get(owner)
+        self.nonces.get(owner)
     }
 }
 
@@ -69,9 +68,9 @@ impl Nonces {
     ///
     /// If the nonce for the given `owner` exceeds `U256::MAX`.
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
-        let nonce = self._nonces.get(owner);
+        let nonce = self.nonces.get(owner);
 
-        self._nonces
+        self.nonces
             .setter(owner)
             .add_assign_checked(ONE, "nonce should not exceed `U256::MAX`");
 
