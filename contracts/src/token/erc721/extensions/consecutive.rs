@@ -455,19 +455,16 @@ impl Erc721Consecutive {
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
             self.erc721
-                ._balances
+                .balances
                 .setter(from)
                 .sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self.erc721
-                ._balances
-                .setter(to)
-                .add_assign_unchecked(uint!(1_U256));
+            self.erc721.balances.setter(to).add_assign_unchecked(uint!(1_U256));
         }
 
-        self.erc721._owners.setter(token_id).set(to);
+        self.erc721.owners.setter(token_id).set(to);
         evm::log(Transfer { from, to, token_id });
         Ok(from)
     }
@@ -772,7 +769,7 @@ impl Erc721Consecutive {
             }
         }
 
-        self.erc721._token_approvals.setter(token_id).set(to);
+        self.erc721.token_approvals.setter(token_id).set(to);
         Ok(())
     }
 

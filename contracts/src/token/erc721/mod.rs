@@ -178,17 +178,13 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc721 {
     /// Maps tokens to owners.
-    #[allow(clippy::used_underscore_binding)]
-    pub _owners: StorageMap<U256, StorageAddress>,
+    pub(crate) owners: StorageMap<U256, StorageAddress>,
     /// Maps users to balances.
-    #[allow(clippy::used_underscore_binding)]
-    pub _balances: StorageMap<Address, StorageU256>,
+    pub(crate) balances: StorageMap<Address, StorageU256>,
     /// Maps tokens to approvals.
-    #[allow(clippy::used_underscore_binding)]
-    pub _token_approvals: StorageMap<U256, StorageAddress>,
+    pub(crate) token_approvals: StorageMap<U256, StorageAddress>,
     /// Maps owners to a mapping of operator approvals.
-    #[allow(clippy::used_underscore_binding)]
-    pub _operator_approvals:
+    pub(crate) operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
@@ -472,7 +468,7 @@ impl IErc721 for Erc721 {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
-        Ok(self._balances.get(owner))
+        Ok(self.balances.get(owner))
     }
 
     fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
@@ -545,7 +541,7 @@ impl IErc721 for Erc721 {
     }
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
-        self._operator_approvals.get(owner).get(operator)
+        self.operator_approvals.get(owner).get(operator)
     }
 }
 
@@ -576,7 +572,7 @@ impl Erc721 {
     /// * `token_id` - Token id as a number.
     #[must_use]
     pub fn _owner_of(&self, token_id: U256) -> Address {
-        self._owners.get(token_id)
+        self.owners.get(token_id)
     }
 
     /// Returns the approved address for `token_id`.
@@ -588,7 +584,7 @@ impl Erc721 {
     /// * `token_id` - Token id as a number.
     #[must_use]
     pub fn _get_approved(&self, token_id: U256) -> Address {
-        self._token_approvals.get(token_id)
+        self.token_approvals.get(token_id)
     }
 
     /// Returns whether `spender` is allowed to manage `owner`'s tokens, or
@@ -673,7 +669,7 @@ impl Erc721 {
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
     pub fn _increase_balance(&mut self, account: Address, value: U128) {
-        self._balances.setter(account).add_assign_unchecked(U256::from(value));
+        self.balances.setter(account).add_assign_unchecked(U256::from(value));
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
@@ -723,14 +719,14 @@ impl Erc721 {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self._balances.setter(from).sub_assign_unchecked(uint!(1_U256));
+            self.balances.setter(from).sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self._balances.setter(to).add_assign_unchecked(uint!(1_U256));
+            self.balances.setter(to).add_assign_unchecked(uint!(1_U256));
         }
 
-        self._owners.setter(token_id).set(to);
+        self.owners.setter(token_id).set(to);
         evm::log(Transfer { from, to, token_id });
         Ok(from)
     }
@@ -1014,7 +1010,7 @@ impl Erc721 {
             }
         }
 
-        self._token_approvals.setter(token_id).set(to);
+        self.token_approvals.setter(token_id).set(to);
         Ok(())
     }
 
@@ -1049,7 +1045,7 @@ impl Erc721 {
             return Err(ERC721InvalidOperator { operator }.into());
         }
 
-        self._operator_approvals.setter(owner).setter(operator).set(approved);
+        self.operator_approvals.setter(owner).setter(operator).set(approved);
         evm::log(ApprovalForAll { owner, operator, approved });
         Ok(())
     }
@@ -1326,7 +1322,7 @@ mod tests {
     fn transfers_from_approved_token(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.token_approvals.setter(TOKEN_ID).set(alice);
         contract
             .transfer_from(BOB, alice, TOKEN_ID)
             .expect("should transfer Bob's token to Alice");
@@ -1342,7 +1338,7 @@ mod tests {
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
 
         // As we cannot change `msg::sender`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert!(approved_for_all);
@@ -1462,7 +1458,7 @@ mod tests {
     fn safe_transfers_from_approved_token(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.token_approvals.setter(TOKEN_ID).set(alice);
         contract
             .safe_transfer_from(BOB, alice, TOKEN_ID)
             .expect("should transfer Bob's token to Alice");
@@ -1478,7 +1474,7 @@ mod tests {
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert!(approved_for_all);
@@ -1603,7 +1599,7 @@ mod tests {
     fn safe_transfers_from_with_data_approved_token(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.token_approvals.setter(TOKEN_ID).set(alice);
         contract
             .safe_transfer_from_with_data(
                 BOB,
@@ -1624,7 +1620,7 @@ mod tests {
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert!(approved_for_all);
@@ -1760,7 +1756,7 @@ mod tests {
         contract
             .approve(BOB, TOKEN_ID)
             .expect("should approve Bob for operations on token");
-        assert_eq!(contract._token_approvals.get(TOKEN_ID), BOB);
+        assert_eq!(contract.token_approvals.get(TOKEN_ID), BOB);
     }
 
     #[motsu::test]
@@ -1796,7 +1792,7 @@ mod tests {
     #[motsu::test]
     fn approval_for_all(contract: Erc721) {
         let alice = msg::sender();
-        contract._operator_approvals.setter(alice).setter(BOB).set(false);
+        contract.operator_approvals.setter(alice).setter(BOB).set(false);
 
         contract
             .set_approval_for_all(BOB, true)
@@ -2096,7 +2092,7 @@ mod tests {
     fn transfers_approved_token(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.token_approvals.setter(TOKEN_ID).set(alice);
         contract
             ._transfer(BOB, alice, TOKEN_ID)
             .expect("should transfer Bob's token to Alice");
@@ -2112,7 +2108,7 @@ mod tests {
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
 
         // As we cannot change `msg::sender`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert!(approved_for_all);
@@ -2211,7 +2207,7 @@ mod tests {
     fn safe_transfers_internal_approved_token(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.token_approvals.setter(TOKEN_ID).set(alice);
         contract
             ._safe_transfer(BOB, alice, TOKEN_ID, &vec![0, 1, 2, 3].into())
             .expect("should transfer Bob's token to Alice");
@@ -2227,7 +2223,7 @@ mod tests {
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let approved_for_all = contract.is_approved_for_all(BOB, alice);
         assert!(approved_for_all);
@@ -2320,7 +2316,7 @@ mod tests {
         contract
             ._approve(BOB, TOKEN_ID, alice, false)
             .expect("should approve Bob for operations on token");
-        assert_eq!(contract._token_approvals.get(TOKEN_ID), BOB);
+        assert_eq!(contract.token_approvals.get(TOKEN_ID), BOB);
     }
 
     #[motsu::test]
@@ -2357,7 +2353,7 @@ mod tests {
     #[motsu::test]
     fn approval_for_all_internal(contract: Erc721) {
         let alice = msg::sender();
-        contract._operator_approvals.setter(alice).setter(BOB).set(false);
+        contract.operator_approvals.setter(alice).setter(BOB).set(false);
 
         contract
             ._set_approval_for_all(alice, BOB, true)
