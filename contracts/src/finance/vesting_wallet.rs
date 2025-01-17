@@ -113,7 +113,9 @@ mod token {
 #[storage]
 pub struct VestingWallet {
     /// [`Ownable`] contract.
-    pub(crate) ownable: Ownable,
+    // We leave the parent [`Ownable`] contract instance public, so that
+    // inheritting contract have access to its internal functions.
+    pub ownable: Ownable,
     /// Amount of Ether already released.
     pub(crate) released: StorageU256,
     /// Amount of ERC-20 tokens already released.
