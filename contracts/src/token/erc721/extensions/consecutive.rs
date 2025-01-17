@@ -253,7 +253,7 @@ impl Erc721Consecutive {
         // If token is owned by the core, or beyond consecutive range, return
         // base value.
         if !owner.is_zero()
-            || token_id < U256::from(self.first_consecutive_id())
+            || token_id < U256::from(self._first_consecutive_id())
             || token_id > U256::from(U96::MAX)
         {
             return owner;
@@ -277,7 +277,7 @@ impl Erc721Consecutive {
     /// Requirements:
     ///
     /// * `batch_size` must not be greater than
-    ///   [`Erc721Consecutive::max_batch_size`].
+    ///   [`Erc721Consecutive::_max_batch_size`].
     /// * The function is called in the constructor of the contract (directly or
     ///   indirectly).
     ///
@@ -298,7 +298,7 @@ impl Erc721Consecutive {
     ///
     /// If `to` is `Address::ZERO`, then the error
     /// [`erc721::Error::InvalidReceiver`] is returned.
-    /// If `batch_size` exceeds [`Erc721Consecutive::max_batch_size`],
+    /// If `batch_size` exceeds [`Erc721Consecutive::_max_batch_size`],
     /// then the error [`Error::ExceededMaxBatchMint`] is returned.
     ///
     /// # Events
@@ -321,10 +321,10 @@ impl Erc721Consecutive {
                 .into());
             }
 
-            if batch_size > self.max_batch_size() {
+            if batch_size > self._max_batch_size() {
                 return Err(ERC721ExceededMaxBatchMint {
                     batch_size: U256::from(batch_size),
-                    max_batch: U256::from(self.max_batch_size()),
+                    max_batch: U256::from(self._max_batch_size()),
                 }
                 .into());
             }
@@ -395,7 +395,7 @@ impl Erc721Consecutive {
     }
 
     /// Returns the next token id to mint using [`Self::_mint_consecutive`]. It
-    /// will return [`Erc721Consecutive::first_consecutive_id`] if no
+    /// will return [`Erc721Consecutive::_first_consecutive_id`] if no
     /// consecutive token id has been minted before.
     ///
     /// # Arguments
@@ -403,14 +403,14 @@ impl Erc721Consecutive {
     /// * `&self` - Read access to the contract's state.
     fn _next_consecutive_id(&self) -> U96 {
         match self.sequential_ownership.latest_checkpoint() {
-            None => self.first_consecutive_id(),
+            None => self._first_consecutive_id(),
             Some((latest_id, _)) => latest_id + uint!(1_U96),
         }
     }
 
     /// Used to offset the first token id in
     /// [`Erc721Consecutive::_next_consecutive_id`].
-    fn first_consecutive_id(&self) -> U96 {
+    fn _first_consecutive_id(&self) -> U96 {
         self.first_consecutive_id.get()
     }
 
@@ -418,7 +418,7 @@ impl Erc721Consecutive {
     /// This is designed to limit stress on off-chain indexing services that
     /// have to record one entry per token, and have protections against
     /// "unreasonably large" batches of tokens.
-    pub fn max_batch_size(&self) -> U96 {
+    pub fn _max_batch_size(&self) -> U96 {
         self.max_batch_size.get()
     }
 }
@@ -922,7 +922,7 @@ mod tests {
     #[motsu::test]
     fn error_when_exceed_batch_size(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        let batch_size = contract.max_batch_size() + uint!(1_U96);
+        let batch_size = contract._max_batch_size() + uint!(1_U96);
         let err = contract
             ._mint_consecutive(alice, batch_size)
             .expect_err("should not mint consecutive");
@@ -932,7 +932,7 @@ mod tests {
                 batch_size,
                 max_batch
             })
-            if batch_size == U256::from(batch_size) && max_batch == U256::from(contract.max_batch_size())
+            if batch_size == U256::from(batch_size) && max_batch == U256::from(contract._max_batch_size())
         ));
     }
 
