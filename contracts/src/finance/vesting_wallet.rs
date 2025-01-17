@@ -162,10 +162,10 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account other than the owner, then the error
-    ///   is returned.
-    /// * [`ownable::Error::InvalidOwner`] - If `new_owner` is the `Address::ZERO`, then the error
-    ///   is returned.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
+    ///   other than the owner, then the error is returned.
+    /// * [`ownable::Error::InvalidOwner`] - If `new_owner` is the
+    ///   `Address::ZERO`, then the error is returned.
     ///
     /// # Events
     ///
@@ -190,12 +190,12 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// *  [`ownable::Error::UnauthorizedAccount`] - If not called by the owner, then the error
-    ///    is returned.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If not called by the owner,
+    ///   then the error is returned.
     ///
     /// # Events
     ///
-    /// *  Emits an [`ownable::OwnershipTransferred`] event.
+    /// * Emits an [`ownable::OwnershipTransferred`] event.
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// The contract should be able to receive Ether.
@@ -266,8 +266,8 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] -If the `token` address is not a contract, then the error
-    ///    is returned.
+    /// * [`Error::InvalidToken`] -If the `token` address is not a contract,
+    ///   then the error is returned.
     ///
     /// # Panics
     ///
@@ -285,8 +285,8 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::ReleaseEtherFailed`] - If Ether transfer fails, then the error is
-    ///   returned.
+    /// * [`Error::ReleaseEtherFailed`] - If Ether transfer fails, then the
+    ///   error is returned.
     ///
     /// # Events
     ///
@@ -308,10 +308,10 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] -  If the `token` address is not a contract, then the error
-    ///   is returned.
-    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If the contract fails to execute the call, then the error
-    ///   is returned.
+    /// * [`Error::InvalidToken`] -  If the `token` address is not a contract,
+    ///   then the error is returned.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If the contract
+    ///   fails to execute the call, then the error is returned.
     ///
     /// # Events
     ///
@@ -350,8 +350,8 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the `token` address is not a contract, then the error
-    ///    is returned.
+    /// * [`Error::InvalidToken`] - If the `token` address is not a contract,
+    ///   then the error is returned.
     ///
     /// # Panics
     ///

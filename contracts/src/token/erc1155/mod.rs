@@ -669,10 +669,10 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the error
-    ///   is returned.
-    /// * [`Error::InsufficientBalance`]  - If `value` is greater than the balance of the `from` account,
-    ///   then the error is returned.
+    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the
+    ///   error is returned.
+    /// * [`Error::InsufficientBalance`]  - If `value` is greater than the
+    ///   balance of the `from` account, then the error is returned.
     ///
     /// # Events
     ///
@@ -701,17 +701,18 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the error
-    ///   is returned.
-    /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to length of `values`, then the
-    ///   error  is returned.
-    /// * [`Error::InsufficientBalance`] - If any of the `values` is greater than the balance of the respective
-    ///   token from `tokens` of the `from` account, then the error is returned.
+    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the
+    ///   error is returned.
+    /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
+    ///   length of `values`, then the error  is returned.
+    /// * [`Error::InsufficientBalance`] - If any of the `values` is greater
+    ///   than the balance of the respective token from `tokens` of the `from`
+    ///   account, then the error is returned.
     ///
     /// # Events
     ///
-    /// * Emits a [`TransferSingle`] event if the arrays contain one element, and
-    ///   [`TransferBatch`] otherwise.
+    /// * Emits a [`TransferSingle`] event if the arrays contain one element,
+    ///   and [`TransferBatch`] otherwise.
     ///
     /// # Panics
     ///
@@ -738,8 +739,8 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// *  [`Error::InvalidOperator`] - If `operator` is the `Address::ZERO`, then the error
-    ///    is returned.
+    /// * [`Error::InvalidOperator`] - If `operator` is the `Address::ZERO`,
+    ///   then the error is returned.
     ///
     /// # Events
     ///
@@ -788,10 +789,12 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     /// interface id or returned with error, then the error
     ///  is returned.
-    /// * [`Error::InvalidReceiver`] - If [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
     /// interface id or returned with error, then the error
     ///  is returned.
     fn _check_on_erc1155_received(
@@ -857,20 +860,25 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then the error
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then the
+    ///   error
     /// is returned.
-    /// * [`Error::InvalidReceiver`] - If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     /// interface id or returned with error, then the error
     ///  is returned.
-    /// * [`Error::InvalidReceiver`] - If [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
     /// interface id or returned with error, then the error
     ///  is returned.
-        /// *  [`Error::InvalidArrayLength`] -  If length of `ids` is not equal to length of `values`, then the
+    /// * [`Error::InvalidArrayLength`] -  If length of `ids` is not equal to
+    ///   length of `values`, then the
     /// error is returned.
     ///
     /// # Events
     ///
-    /// * Emits a [`TransferSingle`] event if the arrays contain one element, and
+    /// * Emits a [`TransferSingle`] event if the arrays contain one element,
+    ///   and
     /// [`TransferBatch`] otherwise.
     ///
     /// # Panics
@@ -909,17 +917,20 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the error
+    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the
+    ///   error
     ///  is returned.
-    /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to length of `values`, then the
+    /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
+    ///   length of `values`, then the
     /// error  is returned.
-    /// * [`Error::InsufficientBalance`] -If any of the `values` is greater than the balance of the respective
+    /// * [`Error::InsufficientBalance`] -If any of the `values` is greater than
+    ///   the balance of the respective
     /// token from `tokens` of the `from` account, then the error is returned.
     ///
     /// # Events
     ///
-    /// * Emits a [`TransferSingle`] event if the arrays contain one element, and
-    ///   [`TransferBatch`] otherwise.
+    /// * Emits a [`TransferSingle`] event if the arrays contain one element,
+    ///   and [`TransferBatch`] otherwise.
     ///
     /// # Panics
     ///
@@ -959,25 +970,31 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// *  [`Error::InvalidReceiver`] - If `to` is the `Address::ZERO`, then the error
+    /// * [`Error::InvalidReceiver`] - If `to` is the `Address::ZERO`, then the
+    ///   error
     /// is returned.
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the error
+    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the
+    ///   error
     /// is returned.
-    /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to length of `values`, then the
+    /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
+    ///   length of `values`, then the
     /// error  is returned.
-    /// * [`Error::InsufficientBalance`] - If `value` is greater than the balance of the `from` account,
+    /// * [`Error::InsufficientBalance`] - If `value` is greater than the
+    ///   balance of the `from` account,
     /// then the error is returned.
-    /// * [`Error::InvalidReceiver`] - If [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     /// interface id or returned with error, then the error
     /// is returned.
-    /// * [`Error::InvalidReceiver`] - If [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
     /// interface id or returned with error, then the error
     ///  is returned.
     ///
     /// # Events
     ///
-    /// * Emits a [`TransferSingle`] event if the arrays contain one element, and
-    ///   [`TransferBatch`] otherwise.
+    /// * Emits a [`TransferSingle`] event if the arrays contain one element,
+    ///   and [`TransferBatch`] otherwise.
     ///
     /// # Panics
     ///

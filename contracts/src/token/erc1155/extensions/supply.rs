@@ -219,7 +219,7 @@ impl Erc1155Supply {
     /// * Emits a [`erc1155::TransferSingle`] event if the arrays contain one
     ///   element, and [`erc1155::TransferBatch`] otherwise.
     ///
-        /// # Panics
+    /// # Panics
     ///
     /// * If updated balance and/or supply exceeds `U256::MAX`, may happen
     ///   during the `mint` operation.
