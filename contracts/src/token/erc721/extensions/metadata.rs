@@ -20,7 +20,7 @@ use crate::{
 #[storage]
 pub struct Erc721Metadata {
     /// Common Metadata.
-    pub metadata: Metadata,
+    pub(crate) metadata: Metadata,
     /// Base URI for tokens.
     pub(crate) base_uri: StorageString,
 }
