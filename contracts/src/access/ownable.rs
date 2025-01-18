@@ -120,12 +120,12 @@ pub trait IOwnable {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedAccount`] - If not called by the owner, then the error
-    ///    is returned.
+    /// * [`Error::UnauthorizedAccount`] - If not called by the owner, then the
+    ///   error is returned.
     ///
     /// # Events
     ///
-    /// *  Emits a [`OwnershipTransferred`] event.
+    /// * Emits a [`OwnershipTransferred`] event.
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
@@ -170,8 +170,8 @@ impl Ownable {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedAccount`] - If called by any account other than the owner, then the error
-    ///   is returned.
+    /// * [`Error::UnauthorizedAccount`] - If called by any account other than
+    ///   the owner, then the error is returned.
     pub fn only_owner(&self) -> Result<(), Error> {
         let account = msg::sender();
         if self.owner() != account {

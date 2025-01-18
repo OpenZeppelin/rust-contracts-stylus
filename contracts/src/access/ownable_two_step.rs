@@ -142,8 +142,7 @@ pub trait IOwnable2Step {
     /// # Errors
     ///
     /// * [`OwnableError::UnauthorizedAccount`]If not called by the owner, then
-    ///   the error
-    ///  is returned.
+    ///   the error is returned.
     ///
     /// # Events
     ///

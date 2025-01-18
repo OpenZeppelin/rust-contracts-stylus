@@ -24,7 +24,7 @@ pub trait IErc20Burnable {
     /// # Errors
     ///
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
-    /// enough tokens, then the error  is returned.
+    ///   enough tokens, then the error  is returned.
     ///
     /// # Events
     ///

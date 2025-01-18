@@ -69,8 +69,8 @@ pub trait ReentrantCallHandler {
     ///
     /// # Errors
     ///
-    /// * [`Error::ExpectedPause`] - Returns this indicating the success or
-    ///   failure of the call.
+    /// * Returns [`stylus_sdk::ArbResult`] indicating the success or failure of
+    ///   the call.
     fn call_with_reentrant_handling(
         self,
         token: Address,
