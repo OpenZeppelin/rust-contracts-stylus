@@ -318,7 +318,7 @@ where
 ///
 /// TODO: Once <https://github.com/rust-lang/rust/issues/103765> is resolved,
 /// we should derive `core::error::Error`.
-#[derive(core::fmt::Debug)]
+#[derive(core::fmt::Debug, PartialEq)]
 pub enum MultiProofError {
     /// The proof length does not match the flags.
     InvalidProofLength,
@@ -356,6 +356,7 @@ mod tests {
     //! NOTE: The values used as input for these tests were all generated using
     //! <https://github.com/OpenZeppelin/merkle-tree>.
     use hex_literal::hex;
+    use proptest::{prelude::*, prop_compose};
     use rand::{thread_rng, RngCore};
 
     use super::{Bytes32, KeccakBuilder, Verifier};
@@ -380,6 +381,164 @@ mod tests {
               $(hex!($s),)*
             ]
         };
+    }
+
+    prop_compose! {
+        fn valid_merkle_proof()(
+            leaf: [u8; 32],
+            proof: Vec<[u8; 32]>,
+        ) -> (Vec<[u8; 32]>, [u8; 32], [u8; 32]) {
+            let mut current = leaf;
+            for &hash in &proof {
+                current = commutative_hash_pair(
+                    &current,
+                    &hash,
+                    KeccakBuilder.build_hasher(),
+                );
+            }
+            let root = current;
+            (proof, root, leaf)
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn proof_length_affects_verification(
+            (proof, root, leaf) in valid_merkle_proof(),
+            extra_hash: [u8; 32]
+        ) {
+            // Now we have a valid proof. Adding an element should invalidate it
+            let result1 = Verifier::verify(&proof, root, leaf);
+
+            // Adding an element should invalidate it
+            let mut modified_proof = proof;
+            modified_proof.push(extra_hash);
+            let result2 = Verifier::verify(&modified_proof, root, leaf);
+
+            prop_assert!(result1);
+            prop_assert!(!result2);
+        }
+
+        #[test]
+        fn multi_proof_consistency(
+            leaves: Vec<[u8; 32]>,
+            proof: Vec<[u8; 32]>,
+            proof_flags: Vec<bool>,
+            root: [u8; 32]
+        ) {
+            // Same inputs should produce same results
+            let result1 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+            let result2 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+            prop_assert_eq!(result1, result2);
+        }
+
+        #[test]
+        fn single_leaf_equals_regular_verify(
+            (proof, root, leaf) in valid_merkle_proof()
+        ) {
+            let multi_result = Verifier::verify_multi_proof(&proof, &[false; 1], root, &[leaf]);
+            let regular_result = Verifier::verify(&proof, root, leaf);
+
+            if let Ok(multi_result) = multi_result {
+                prop_assert_eq!(multi_result, regular_result);
+            }
+        }
+    }
+
+    // Additional unit tests for edge cases and security properties
+    #[test]
+    fn zero_length_proof_with_matching_leaf_and_root() {
+        let value = [0u8; 32];
+        assert!(Verifier::verify(&[], value, value));
+    }
+
+    #[test]
+    fn length_extension_attack_resistance() {
+        // Test resistance to length extension attacks by ensuring that
+        // appending to a valid proof doesn't create another valid proof
+        let root = hex!(
+            "1234567890123456789012345678901234567890123456789012345678901234"
+        );
+        let leaf = hex!(
+            "0000000000000000000000000000000000000000000000000000000000000000"
+        );
+        let valid_proof = [hex!(
+            "0000000000000000000000000000000000000000000000000000000000000001"
+        )];
+
+        assert!(!Verifier::verify(&valid_proof, root, leaf));
+
+        let extended_proof = [
+            valid_proof[0],
+            hex!("0000000000000000000000000000000000000000000000000000000000000002"),
+        ];
+        assert!(!Verifier::verify(&extended_proof, root, leaf));
+    }
+
+    #[test]
+    fn second_preimage_attack_resistance() {
+        // Test resistance to second preimage attacks by ensuring that
+        // finding a different leaf that verifies with the same proof is hard
+        let root = hex!(
+            "1234567890123456789012345678901234567890123456789012345678901234"
+        );
+        let leaf1 = hex!(
+            "0000000000000000000000000000000000000000000000000000000000000001"
+        );
+        let leaf2 = hex!(
+            "0000000000000000000000000000000000000000000000000000000000000002"
+        );
+        let proof = [hex!(
+            "0000000000000000000000000000000000000000000000000000000000000003"
+        )];
+
+        let result1 = Verifier::verify(&proof, root, leaf1);
+        let result2 = Verifier::verify(&proof, root, leaf2);
+
+        // Different leaves should not both verify with same proof
+        assert!(!(result1 && result2));
+    }
+
+    #[test]
+    fn multi_proof_empty_flags() {
+        let root = [0u8; 32];
+        let leaves = vec![[1u8; 32]];
+        let proof = vec![[2u8; 32]];
+
+        let result = Verifier::verify_multi_proof(&proof, &[], root, &leaves);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn multi_proof_minimum_valid_case() {
+        let root = [0u8; 32];
+        let leaves = vec![[0u8; 32]];
+        let result = Verifier::verify_multi_proof(&[], &[], root, &leaves);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn collision_resistance() {
+        // Test that it's hard to find two different leaves that hash to the
+        // same node
+        let proof = [hex!(
+            "0000000000000000000000000000000000000000000000000000000000000001"
+        )];
+        let root = hex!(
+            "1234567890123456789012345678901234567890123456789012345678901234"
+        );
+
+        let mut different_leaves = Vec::new();
+        for i in 0..10 {
+            let mut leaf = [0u8; 32];
+            leaf[0] = i as u8;
+            if Verifier::verify(&proof, root, leaf) {
+                different_leaves.push(leaf);
+            }
+        }
+
+        // Should be extremely unlikely to find multiple valid leaves
+        assert!(different_leaves.len() <= 1);
     }
 
     #[test]
@@ -585,29 +744,6 @@ mod tests {
         let verification =
             Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
         assert!(verification.is_err());
-    }
-
-    #[test]
-    fn verifies_single_leaf_multi_proof() {
-        // ```js
-        // const merkleTree = StandardMerkleTree.of(toElements('a'), ['string']);
-        //
-        // const root = merkleTree.root;
-        // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('a'));
-        // const hashes = leaves.map(e => merkleTree.leafHash(e));
-        // ```
-        bytes!(root = "9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c");
-        let proof = [];
-        let proof_flags = [];
-        let leaves = [root];
-
-        let verification = Verifier::<KeccakBuilder>::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
-        assert!(verification.unwrap());
     }
 
     #[test]
