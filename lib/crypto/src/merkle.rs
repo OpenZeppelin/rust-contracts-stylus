@@ -403,20 +403,38 @@ mod tests {
 
     proptest! {
         #[test]
-        fn proof_length_affects_verification(
+        fn proof_tampering_invalidates(
             (proof, root, leaf) in valid_merkle_proof(),
+            tamper_idx in 0..32usize,
+        ) {
+            if let Some(proof_element) = proof.first() {
+                let mut tampered_proof = proof.clone();
+                let mut tampered_element = *proof_element;
+                tampered_element[tamper_idx] = tampered_element[tamper_idx].wrapping_add(1);
+                tampered_proof[0] = tampered_element;
+
+                prop_assert!(!Verifier::verify(&tampered_proof, root, leaf));
+            }
+        }
+
+        #[test]
+        fn proof_length_affects_verification(
+            (mut proof, root, leaf) in valid_merkle_proof(),
             extra_hash: [u8; 32]
         ) {
-            // Now we have a valid proof. Adding an element should invalidate it
+            proof.push(extra_hash);
+            prop_assert!(!Verifier::verify(&proof, root, leaf));
+        }
+
+        #[test]
+        fn proof_consistency(
+            proof: Vec<[u8; 32]>,
+            root: [u8; 32],
+            leaf: [u8; 32],
+        ) {
             let result1 = Verifier::verify(&proof, root, leaf);
-
-            // Adding an element should invalidate it
-            let mut modified_proof = proof;
-            modified_proof.push(extra_hash);
-            let result2 = Verifier::verify(&modified_proof, root, leaf);
-
-            prop_assert!(result1);
-            prop_assert!(!result2);
+            let result2 = Verifier::verify(&proof, root, leaf);
+            prop_assert_eq!(result1, result2);
         }
 
         #[test]
@@ -426,7 +444,6 @@ mod tests {
             proof_flags: Vec<bool>,
             root: [u8; 32]
         ) {
-            // Same inputs should produce same results
             let result1 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
             let result2 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
             prop_assert_eq!(result1, result2);
@@ -436,12 +453,12 @@ mod tests {
         fn single_leaf_equals_regular_verify(
             (proof, root, leaf) in valid_merkle_proof()
         ) {
-            let multi_result = Verifier::verify_multi_proof(&proof, &[false; 1], root, &[leaf]);
+            let proof_flags = vec![false; proof.len()];
+            let multi_result = Verifier::verify_multi_proof(&proof, &proof_flags, root, &[leaf]);
             let regular_result = Verifier::verify(&proof, root, leaf);
 
-            if let Ok(multi_result) = multi_result {
-                prop_assert_eq!(multi_result, regular_result);
-            }
+            let multi_result = multi_result.unwrap();
+            prop_assert_eq!(multi_result, regular_result);
         }
     }
 
