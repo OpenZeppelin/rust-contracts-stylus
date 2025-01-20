@@ -55,11 +55,9 @@ mod tests {
     proptest! {
         #[test]
         fn single_bit_change_affects_output(data: Vec<u8>) {
-            if data.is_empty() {
-                return Ok(());
-            }
+            prop_assume!(!data.is_empty());
+
             let mut modified = data.clone();
-            // Flip one bit
             modified[0] ^= 1;
 
             let mut hasher1 = KeccakBuilder.build_hasher();
@@ -67,7 +65,6 @@ mod tests {
             hasher1.update(&data);
             hasher2.update(&modified);
 
-            // Outputs should be different
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
         }
 
@@ -91,9 +88,7 @@ mod tests {
 
         #[test]
         fn split_updates_match_full_update(data: Vec<u8>, split_point: usize) {
-            if data.is_empty() {
-                return Ok(());
-            }
+            prop_assume!(!data.is_empty());
 
             let builder = KeccakBuilder;
             let split_at = split_point % data.len();
@@ -141,9 +136,9 @@ mod tests {
 
         #[test]
         fn update_order_dependence(data1: Vec<u8>, data2: Vec<u8>) {
-            if data1.is_empty() || data2.is_empty() || data1 == data2 {
-                return Ok(());
-            }
+            prop_assume!(!data1.is_empty());
+            prop_assume!(!data2.is_empty());
+            prop_assume!(data1 != data2);
 
             let mut hasher1 = KeccakBuilder.build_hasher();
             let mut hasher2 = KeccakBuilder.build_hasher();
@@ -173,9 +168,7 @@ mod tests {
 
         #[test]
         fn leading_zeros_affect_output(data: Vec<u8>) {
-            if data.is_empty() {
-                return Ok(());
-            }
+            prop_assume!(!data.is_empty());
 
             let mut hasher1 = KeccakBuilder.build_hasher();
             hasher1.update(&data);
@@ -193,9 +186,7 @@ mod tests {
 
         #[test]
         fn no_trivial_collisions_same_length(data: Vec<u8>) {
-            if data.is_empty() {
-                return Ok(());
-            }
+            prop_assume!(!data.is_empty());
             let mut modified = data.clone();
             modified[data.len() - 1] = modified[data.len() - 1].wrapping_add(1);
 
@@ -210,9 +201,8 @@ mod tests {
 
         #[test]
         fn length_extension_attack_resistance(data1: Vec<u8>, data2: Vec<u8>) {
-            if data1.is_empty() || data2.is_empty() {
-                return Ok(());
-            }
+            prop_assume!(!data1.is_empty());
+            prop_assume!(!data2.is_empty());
 
             let mut hasher1 = KeccakBuilder.build_hasher();
             hasher1.update(&data1);
