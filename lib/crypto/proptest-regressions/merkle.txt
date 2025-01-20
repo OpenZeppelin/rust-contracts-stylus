@@ -1,7 +1,0 @@
-# Seeds for failure cases proptest has generated in the past. It is
-# automatically read and these particular cases re-run before any
-# novel cases are generated.
-#
-# It is recommended to check this file in to source control so that
-# everyone who runs the test benefits from these saved cases.
-cc cc0b5e68a14f5e0c87c73428a322785b1e41f3c1b9830e619dbe5e9d2f892276 # shrinks to (proof, root, leaf) = ([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [123, 244, 83, 127, 123, 79, 62, 214, 221, 163, 126, 86, 202, 52, 14, 123, 203, 66, 151, 176, 245, 197, 131, 147, 242, 79, 71, 91, 96, 19, 9, 4], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), tamper_idx = 16, tamper_byte = 33
