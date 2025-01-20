@@ -54,6 +54,24 @@ mod tests {
 
     proptest! {
         #[test]
+        fn single_bit_change_affects_output(data: Vec<u8>) {
+            if data.is_empty() {
+                return Ok(());
+            }
+            let mut modified = data.clone();
+            // Flip one bit
+            modified[0] ^= 1;
+
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            let mut hasher2 = KeccakBuilder.build_hasher();
+            hasher1.update(&data);
+            hasher2.update(&modified);
+
+            // Outputs should be different
+            prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
+        }
+
+        #[test]
         fn sequential_updates_match_concatenated(data1: Vec<u8>, data2: Vec<u8>) {
             let builder = KeccakBuilder;
 
@@ -119,6 +137,55 @@ mod tests {
             hasher.update(&data);
             let result = hasher.finalize();
             assert_eq!(result.len(), 32);
+        }
+
+        #[test]
+        fn update_order_dependence(data1: Vec<u8>, data2: Vec<u8>) {
+            if data1.is_empty() || data2.is_empty() || data1 == data2 {
+                return Ok(());
+            }
+
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            let mut hasher2 = KeccakBuilder.build_hasher();
+
+            hasher1.update(&data1);
+            hasher1.update(&data2);
+
+            hasher2.update(&data2);
+            hasher2.update(&data1);
+
+            prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
+        }
+
+        #[test]
+        fn zero_padding_changes_output(data: Vec<u8>) {
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            let mut hasher2 = KeccakBuilder.build_hasher();
+
+            hasher1.update(&data);
+
+            let mut padded = data.clone();
+            padded.push(0);
+            hasher2.update(&padded);
+
+            prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
+        }
+
+        #[test]
+        fn no_trivial_collisions_same_length(data: Vec<u8>) {
+            if data.is_empty() {
+                return Ok(());
+            }
+            let mut modified = data.clone();
+            modified[data.len() - 1] = modified[data.len() - 1].wrapping_add(1);
+
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            let mut hasher2 = KeccakBuilder.build_hasher();
+
+            hasher1.update(&data);
+            hasher2.update(&modified);
+
+            prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
         }
     }
 
