@@ -153,6 +153,23 @@ mod tests {
         }
 
         #[test]
+        fn empty_input_order_independence(data: Vec<u8>) {
+            prop_assume!(!data.is_empty());
+
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            let mut hasher2 = KeccakBuilder.build_hasher();
+            let empty = vec![];
+
+            hasher1.update(&data);
+            hasher1.update(&empty);
+
+            hasher2.update(&empty);
+            hasher2.update(&data);
+
+            prop_assert_eq!(hasher1.finalize(), hasher2.finalize());
+        }
+
+        #[test]
         fn trailing_zero_affects_output(data: Vec<u8>) {
             let mut hasher1 = KeccakBuilder.build_hasher();
             let mut hasher2 = KeccakBuilder.build_hasher();
