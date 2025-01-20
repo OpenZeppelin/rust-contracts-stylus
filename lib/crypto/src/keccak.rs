@@ -158,7 +158,7 @@ mod tests {
         }
 
         #[test]
-        fn zero_padding_changes_output(data: Vec<u8>) {
+        fn trailing_zero_affects_output(data: Vec<u8>) {
             let mut hasher1 = KeccakBuilder.build_hasher();
             let mut hasher2 = KeccakBuilder.build_hasher();
 
@@ -169,6 +169,26 @@ mod tests {
             hasher2.update(&padded);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
+        }
+
+        #[test]
+        fn leading_zeros_affect_output(data: Vec<u8>) {
+            if data.is_empty() {
+                return Ok(());
+            }
+
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            hasher1.update(&data);
+            let hash1 = hasher1.finalize();
+
+            let mut padded = vec![0u8; 32];
+            padded.extend(data.iter());
+
+            let mut hasher2 = KeccakBuilder.build_hasher();
+            hasher2.update(&padded);
+            let hash2 = hasher2.finalize();
+
+            prop_assert_ne!(hash1, hash2);
         }
 
         #[test]
@@ -187,10 +207,33 @@ mod tests {
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
         }
+
+        #[test]
+        fn length_extension_attack_resistance(data1: Vec<u8>, data2: Vec<u8>) {
+            if data1.is_empty() || data2.is_empty() {
+                return Ok(());
+            }
+
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            hasher1.update(&data1);
+            let hash1 = hasher1.finalize();
+
+            let mut hasher2 = KeccakBuilder.build_hasher();
+            hasher2.update(&data1);
+            hasher2.update(&data2);
+            let hash2 = hasher2.finalize();
+
+            let mut hasher3 = KeccakBuilder.build_hasher();
+            hasher3.update(&hash1);
+            hasher3.update(&data2);
+            let hash3 = hasher3.finalize();
+
+            prop_assert_ne!(hash2, hash3);
+        }
     }
 
     #[test]
-    fn test_empty_input() {
+    fn empty_input() {
         let builder = KeccakBuilder;
         let mut hasher = builder.build_hasher();
         hasher.update(&[]);
@@ -204,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn test_known_hash() {
+    fn known_hash() {
         let builder = KeccakBuilder;
         let mut hasher = builder.build_hasher();
         hasher.update(b"hello");
