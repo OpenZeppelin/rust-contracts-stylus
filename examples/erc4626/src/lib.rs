@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20Metadata, Erc4626, IErc20Metadata, IERC4626},
+    extensions::{Erc20Metadata, Erc4626, IErc20Metadata, IErc4626},
     utils::SafeErc20,
     Erc20,
 };
@@ -93,9 +93,9 @@ impl Erc4626Example {
 
     fn withdraw(
         &mut self,
-        assets: U256,
-        receiver: Address,
-        owner: Address,
+        _assets: U256,
+        _receiver: Address,
+        _owner: Address,
     ) -> Result<U256, Vec<u8>> {
         // Ok(self.erc4626.withdraw(
         //     assets,
@@ -117,9 +117,9 @@ impl Erc4626Example {
 
     fn redeem(
         &mut self,
-        shares: U256,
-        receiver: Address,
-        owner: Address,
+        _shares: U256,
+        _receiver: Address,
+        _owner: Address,
     ) -> Result<U256, Vec<u8>> {
         // Ok(self.erc4626.redeem(
         //     shares,

@@ -1,21 +1,14 @@
 #![cfg(feature = "e2e")]
 
-use std::println;
-
 use abi::Erc4626;
 use alloy::{
-    contract,
     primitives::{uint, Address},
     sol,
 };
 use alloy_primitives::U256;
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{receipt, Account, ReceiptExt};
 use eyre::Result;
-use mock::{
-    token,
-    token::{ERC20Mock, MockErc20},
-};
-use stylus_sdk::contract::address;
+use mock::{token, token::MockErc20};
 
 use crate::Erc4626Example::constructorCall;
 
@@ -90,7 +83,7 @@ async fn deposit(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(U256::ZERO, initial_supply);
 
     // Mint token
-    let mint_receipt = receipt!(asset.mint(alice.address(), uint!(100_U256)))?;
+    let _mint_receipt = receipt!(asset.mint(alice.address(), uint!(100_U256)))?;
     // println!("{:?}", mint_receipt);
 
     let _ = asset.approve(alice.address(), U256::MAX).send().await?;
@@ -98,11 +91,11 @@ async fn deposit(alice: Account, bob: Account) -> Result<()> {
 
     let max_mint = vault.maxMint(bob.address()).call().await?._0;
     let preview_deposit = vault.previewDeposit(uint!(1_U256)).call().await?._0;
-    let deposit = vault.deposit(uint!(1_U256), bob.address()).call().await?._0;
+    let _deposit = vault.deposit(uint!(1_U256), bob.address()).call().await?._0;
     assert_eq!(max_mint, U256::MAX);
     assert_eq!(preview_deposit, uint!(1_U256));
 
-    let asset_balance = asset.balanceOf(bob.address()).call().await?.balance;
+    let _asset_balance = asset.balanceOf(bob.address()).call().await?.balance;
     //assert_eq!(asset_balance, uint!(1_U256));
 
     // let valut_balance =
@@ -113,44 +106,50 @@ async fn deposit(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mint(alice: Account, bob: Account) -> Result<()> {
+async fn mint(_alice: Account, _bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn withdraw(alice: Account, bob: Account) -> Result<()> {
+async fn withdraw(_alice: Account, _bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn redeem(alice: Account, bob: Account) -> Result<()> {
+async fn redeem(_alice: Account, _bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn deposit_inflation_attack(alice: Account, bob: Account) -> Result<()> {
+async fn deposit_inflation_attack(
+    _alice: Account,
+    _bob: Account,
+) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn mint_inflation_attack(alice: Account, bob: Account) -> Result<()> {
+async fn mint_inflation_attack(_alice: Account, _bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn withdraw_inflation_attack(alice: Account, bob: Account) -> Result<()> {
+async fn withdraw_inflation_attack(
+    _alice: Account,
+    _bob: Account,
+) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn redeem_inflation_attack(alice: Account, bob: Account) -> Result<()> {
+async fn redeem_inflation_attack(_alice: Account, _bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
 async fn error_when_exceeded_max_deposit(
     alice: Account,
-    bob: Account,
+    _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
@@ -160,14 +159,14 @@ async fn error_when_exceeded_max_deposit(
         .deploy()
         .await?
         .address()?;
-    let contract = Erc4626::new(contract_addr, &alice.wallet);
+    let _contract = Erc4626::new(contract_addr, &alice.wallet);
     Ok(())
 }
 
 #[e2e::test]
 async fn error_when_exceeded_max_mint(
     alice: Account,
-    bob: Account,
+    _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
@@ -177,14 +176,14 @@ async fn error_when_exceeded_max_mint(
         .deploy()
         .await?
         .address()?;
-    let contract = Erc4626::new(contract_addr, &alice.wallet);
+    let _contract = Erc4626::new(contract_addr, &alice.wallet);
     Ok(())
 }
 
 #[e2e::test]
 async fn error_when_exceeded_max_withdraw(
     alice: Account,
-    bob: Account,
+    _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
@@ -194,14 +193,14 @@ async fn error_when_exceeded_max_withdraw(
         .deploy()
         .await?
         .address()?;
-    let contract = Erc4626::new(contract_addr, &alice.wallet);
+    let _contract = Erc4626::new(contract_addr, &alice.wallet);
     Ok(())
 }
 
 #[e2e::test]
 async fn error_when_exceeded_max_redeem(
     alice: Account,
-    bob: Account,
+    _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
@@ -211,6 +210,6 @@ async fn error_when_exceeded_max_redeem(
         .deploy()
         .await?
         .address()?;
-    let contract = Erc4626::new(contract_addr, &alice.wallet);
+    let _contract = Erc4626::new(contract_addr, &alice.wallet);
     Ok(())
 }

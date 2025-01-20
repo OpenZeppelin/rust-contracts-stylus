@@ -112,7 +112,7 @@ pub struct Erc4626 {
 }
 
 /// ERC-4626 Tokenized Vault Standard Interface
-pub trait IERC4626 {
+pub trait IErc4626 {
     /// The error type associated to this ERC-4626 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
@@ -362,7 +362,7 @@ pub trait IERC4626 {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc4626 {}
 
-impl IERC4626 for Erc4626 {
+impl IErc4626 for Erc4626 {
     type Error = Error;
 
     fn asset(&self) -> Address {
@@ -601,43 +601,51 @@ impl Erc4626 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, U256};
+    use stylus_sdk::prelude::storage;
 
-    use super::Erc4626;
-    use crate::token::erc20::extensions::erc4626::IERC4626;
+    use super::{Erc4626, IErc4626};
+    use crate::token::erc20::Erc20;
 
-    // use super::{Erc20, Erc20FlashMint, Error, IErc3156FlashLender};
+    // const ALICE: Address =
+    // address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    // const TOKEN_ADDRESS: Address =
+    // address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
+    // const INVALID_TOKEN_ADDRESS: Address =
+    // address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
 
-    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-    const TOKEN_ADDRESS: Address =
-        address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
-    const INVALID_TOKEN_ADDRESS: Address =
-        address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
+    #[storage]
+    struct Erc4626TestExample {
+        pub erc4626: Erc4626,
+        pub erc20: Erc20,
+    }
 
     #[motsu::test]
-    fn max_mint(contract: Erc4626) {
+    fn max_mint(contract: Erc4626TestExample) {
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-        let max_mint = contract.max_mint(bob);
+        let max_mint = contract.erc4626.max_mint(bob);
         assert_eq!(max_mint, U256::MAX);
     }
 
     #[motsu::test]
-    fn max_deposit(contract: Erc4626) {
+    fn max_deposit(contract: Erc4626TestExample) {
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-        let max_deposit = contract.max_deposit(bob);
+        let max_deposit = contract.erc4626.max_deposit(bob);
         assert_eq!(max_deposit, U256::MAX);
     }
 
     #[motsu::test]
-    fn convert_to_shares(contract: Erc4626) {
+    fn convert_to_shares(contract: Erc4626TestExample) {
         let assets = U256::from(100);
-        let shares = contract.convert_to_shares(assets);
+        let shares =
+            contract.erc4626.convert_to_shares(assets, &mut contract.erc20);
         assert_eq!(shares, U256::from(100));
     }
 
     #[motsu::test]
-    fn convert_to_assets(contract: Erc4626) {
+    fn convert_to_assets(contract: Erc4626TestExample) {
         let shares = U256::from(100);
-        let assets = contract.convert_to_assets(shares);
+        let assets =
+            contract.erc4626.convert_to_assets(shares, &mut contract.erc20);
         assert_eq!(assets, U256::from(100));
     }
 }

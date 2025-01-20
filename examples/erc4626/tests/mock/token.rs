@@ -1,12 +1,8 @@
 #![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 #![cfg(feature = "e2e")]
-use alloy::{
-    primitives::{Address, FixedBytes, U256},
-    sol,
-};
+use alloy::{primitives::Address, sol};
 use e2e::Wallet;
-use stylus_sdk::{abi::Bytes, function_selector};
 
 sol!(
     #[sol(rpc)]
