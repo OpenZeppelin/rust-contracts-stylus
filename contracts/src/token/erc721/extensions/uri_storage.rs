@@ -51,7 +51,7 @@ impl Erc721UriStorage {
     /// * `token_uri` - URI for the token.
     ///
     /// # Events
-    /// * Emits a [`MetadataUpdate`] event.
+    /// * [`MetadataUpdate`]
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });

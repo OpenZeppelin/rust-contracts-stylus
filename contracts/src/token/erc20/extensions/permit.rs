@@ -132,19 +132,18 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// # Errors
     ///
     /// * [`ERC2612ExpiredSignature`] - If the `deadline` param is from the
-    ///   past, than the error is returned.
-    /// * [`ERC2612InvalidSigner`] - If signer is not an `owner`, than the error
-    ///   is returned.
+    ///   past.
+    /// * [`ERC2612InvalidSigner`] - If signer is not an `owner`.
     /// * [`ecdsa::Error::InvalidSignatureS`] - If the `s` value is grater than
-    ///   [`ecdsa::SIGNATURE_S_UPPER_BOUND`], then the error  is returned.
+    ///   [`ecdsa::SIGNATURE_S_UPPER_BOUND`].
     /// * [`ecdsa::Error::InvalidSignature`] - If the recovered address is
-    ///   `Address::ZERO`, then the error is returned.
+    ///   `Address::ZERO`.
     /// * [`erc20::Error::InvalidSpender`] - If the `spender` address is
-    ///   `Address::ZERO`, then the error is returned.
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`crate::token::erc20::Approval`] event.
+    /// * [`crate::token::erc20::Approval`]
     ///
     /// # Requirements
     ///
@@ -222,14 +221,13 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// # Errors
     ///
     /// * [`crate::token::erc20::Error::InvalidReceiver`] - If the `to` address
-    ///   is `Address::ZERO`, then the error is returned.
+    ///   is `Address::ZERO`.
     /// * [`crate::token::erc20::Error::InsufficientBalance`] - If the caller
-    ///   doesn't have a balance of at least `value`, then the error  is
-    ///   returned.
+    ///   doesn't have a balance of at least `value`.
     ///
     /// # Events
     ///
-    /// Emits a [`crate::token::erc20::Transfer`] event.
+    /// * [`crate::token::erc20::Transfer`]
     pub fn transfer(
         &mut self,
         to: Address,
@@ -275,11 +273,11 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// # Errors
     ///
     /// [`crate::token::erc20::Error::InvalidSpender`] - If the `spender`
-    /// address is `Address::ZERO`, then the error  is returned.
+    /// address is `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`crate::token::erc20::Approval`] event.
+    /// * [`crate::token::erc20::Approval`]
     pub fn approve(
         &mut self,
         spender: Address,
@@ -308,15 +306,15 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// # Errors
     ///
     /// * [`crate::token::erc20::Error::InvalidSender`] - If the `from` address
-    ///   is `Address::ZERO`, then the error is returned.
+    ///   is `Address::ZERO`.
     /// * [`crate::token::erc20::Error::InvalidReceiver`] - If the `to` address
-    ///   is `Address::ZERO`, then the error is returned.
+    ///   is `Address::ZERO`.
     /// * [`crate::token::erc20::Error::InsufficientAllowance`] - If not enough
-    ///   allowance is available, then the error is returned.
+    ///   allowance is available.
     ///
     /// # Events
     ///
-    /// * Emits a [`crate::token::erc20::Transfer`] event.
+    /// * * [`crate::token::erc20::Transfer`]
     pub fn transfer_from(
         &mut self,
         from: Address,

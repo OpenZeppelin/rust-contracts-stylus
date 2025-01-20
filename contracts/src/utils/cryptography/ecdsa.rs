@@ -86,9 +86,8 @@ impl MethodError for ecdsa::Error {
 /// # Errors
 ///
 /// * [`Error::InvalidSignatureS`] - If the `s` value is grater than
-///   [`SIGNATURE_S_UPPER_BOUND`], then the error is returned.
-/// * [`Error::InvalidSignature`] - If the recovered address is `Address::ZERO`,
-///   then the error is returned.
+///   [`SIGNATURE_S_UPPER_BOUND`].
+/// * [`Error::InvalidSignature`] - If the recovered address is `Address::ZERO`.
 ///
 /// # Panics
 ///
@@ -120,8 +119,7 @@ pub fn recover(
 ///
 /// # Errors
 ///
-/// * [`Error::InvalidSignature`] - If the recovered address is `Address::ZERO`,
-///   then the error is returned.
+/// * [`Error::InvalidSignature`] - If the recovered address is `Address::ZERO`.
 ///
 /// # Panics
 ///
@@ -195,7 +193,7 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 /// # Errors
 ///
 /// * [`Error::InvalidSignatureS`] - If the `s` value is grater than
-///   [`SIGNATURE_S_UPPER_BOUND`], then the error  is returned.
+///   [`SIGNATURE_S_UPPER_BOUND`].
 ///
 /// [Ethereum Yellow paper]: https://ethereum.github.io/yellowpaper/paper.pdf
 fn check_if_malleable(s: &B256) -> Result<(), Error> {

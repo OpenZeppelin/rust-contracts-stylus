@@ -83,9 +83,9 @@ impl<S: Size> Trace<S> {
     ///
     /// # Errors
     ///
-    /// If the `key` is lower than previously pushed checkpoint's key, the error
-    /// [`Error::CheckpointUnorderedInsertion`] is returned (necessary to
-    /// maintain sorted order).
+    /// * [`Error::CheckpointUnorderedInsertion`] - If the `key` is lower than
+    ///   previously pushed checkpoint's key (necessary to maintain sorted
+    ///   order).
     pub fn push(
         &mut self,
         key: S::Key,

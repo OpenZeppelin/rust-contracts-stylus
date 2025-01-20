@@ -212,8 +212,7 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// If owner address is `Address::ZERO`, then the error
-    /// [`Error::InvalidOwner`] is returned.
+    /// * [`Error::InvalidOwner`] - If owner address is `Address::ZERO`.
     fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
 
     /// Returns the owner of the `token_id` token.
@@ -225,8 +224,7 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Requirements
     ///
@@ -246,17 +244,14 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// If the previous owner is not `from`, then the error
-    /// [`Error::IncorrectOwner`] is returned.
-    /// If the caller does not have the right to approve, then the error
-    /// [`Error::InsufficientApproval`] is returned.
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
-    /// If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    /// interface id or returned with error, then the error
-    /// [`Error::InvalidReceiver`] is returned.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::IncorrectOwner`]  - If the previous owner is not `from`.
+    /// * [`Error::InsufficientApproval`] - If the caller does not have the
+    ///   right to approve.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its
+    /// interface id or returned with error.
     ///
     /// # Requirements
     ///
@@ -271,7 +266,7 @@ pub trait IErc721 {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     fn safe_transfer_from(
         &mut self,
         from: Address,
@@ -292,17 +287,14 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// If `to` is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// If the previous owner is not `from`, then the error
-    /// [`Error::IncorrectOwner`] is returned.
-    /// If the caller does not have the right to approve, then the error
-    /// [`Error::InsufficientApproval`] is returned.
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
-    /// If [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    /// interface id or returned with error, then the error
-    /// [`Error::InvalidReceiver`] is returned.
+    ///  * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    ///  * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
+    ///  * [`Error::InsufficientApproval`] - If the caller does not have the
+    ///    right to approve.
+    ///  * [`Error::NonexistentToken`] - If the token does not exist.
+    ///  * [`Error::InvalidReceiver`] - If
+    ///    [`IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///    interface id or returned with error.
     ///
     /// # Requirements
     ///
@@ -317,7 +309,7 @@ pub trait IErc721 {
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
         &mut self,
@@ -344,14 +336,11 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then the
-    ///   error is returned.
-    /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`, then
-    ///   the error is returned.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     /// * [`Error::InsufficientApproval`] - If the caller does not have the
-    ///   right to approve, then the error is returned.
-    /// * [`Error::NonexistentToken`] - If the token does not exist, then the
-    ///   error is returned.
+    ///   right to approve.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Requirements:
     ///
@@ -363,7 +352,7 @@ pub trait IErc721 {
     ///
     /// # Events
     ///
-    /// * Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     fn transfer_from(
         &mut self,
         from: Address,
@@ -385,11 +374,9 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist, then the
-    ///   error is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     /// * [`Error::InvalidApprover`] - If `auth` (param of [`Erc721::_approve`])
-    ///   does not have a right to approve this token, then the error is
-    ///   returned.
+    ///   does not have a right to approve this token.
     ///
     /// # Requirements:
     ///
@@ -398,7 +385,7 @@ pub trait IErc721 {
     ///
     /// # Events
     ///
-    /// * Emits an [`Approval`] event.
+    /// * [`Approval`]
     fn approve(
         &mut self,
         to: Address,
@@ -420,8 +407,7 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`, then
-    ///   the error is returned.
+    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
     ///
     /// # Requirements:
     ///
@@ -429,7 +415,7 @@ pub trait IErc721 {
     ///
     /// # Events
     ///
-    /// * Emits an [`ApprovalForAll`] event.
+    /// * [`ApprovalForAll`]
     fn set_approval_for_all(
         &mut self,
         operator: Address,
@@ -445,8 +431,7 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist, then the
-    ///   error is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Requirements:
     ///
@@ -633,10 +618,9 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist, then the
-    ///   error is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     /// * [`Error::InsufficientApproval`] - If `spender` does not have the right
-    ///   to approve, then the error is returned.
+    ///   to approve.
     pub fn _check_authorized(
         &self,
         owner: Address,
@@ -697,14 +681,13 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
-    ///   is not `Address::ZERO`, then the error is returned.
+    ///   is not `Address::ZERO`.
     /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
-    ///   `auth` does not have a right to approve this token, then the error is
-    ///   returned.
+    ///   `auth` does not have a right to approve this token.
     ///
     /// # Events
     ///
-    /// * Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     pub fn _update(
         &mut self,
         to: Address,
@@ -748,10 +731,8 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `token_id` already exists, then the
-    ///   error is returned.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then the
-    ///   error is returned.
+    /// * [`Error::InvalidSender`] - If `token_id` already exists.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
     ///
     /// # Requirements:
     ///
@@ -760,7 +741,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to.is_zero() {
             return Err(
@@ -791,13 +772,11 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `token_id` already exists, then the
-    ///   error is returned.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then the
-    ///   error is returned.
+    /// * [`Error::InvalidSender`] - If `token_id` already exists.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
-    ///   id or returned with an error, then the error is returned.
+    ///   id or returned with an error.
     ///
     /// # Requirements:
     ///
@@ -808,7 +787,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     pub fn _safe_mint(
         &mut self,
         to: Address,
@@ -838,8 +817,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist, then the
-    ///   error is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Requirements:
     ///
@@ -847,7 +825,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
@@ -871,12 +849,9 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then the
-    ///   error is returned.
-    /// * [`Error::NonexistentToken`] - If `token_id` does not exist, then the
-    ///   error is returned.
-    /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`, then
-    ///   the error is returned.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
+    /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
     /// # Requirements:
     ///
@@ -885,7 +860,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     pub fn _transfer(
         &mut self,
         from: Address,
@@ -935,12 +910,9 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`, then the
-    ///   error is returned.
-    /// * [`Error::NonexistentToken`] - If `token_id` does not exist, then the
-    ///   error is returned.
-    /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`, then
-    ///   the error is returned.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
+    /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
     /// # Requirements:
     ///
@@ -953,7 +925,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * Emits a [`Transfer`] event.
+    /// * [`Transfer`]
     pub fn _safe_transfer(
         &mut self,
         from: Address,
@@ -981,14 +953,13 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist, then the
-    ///   error is returned.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     /// * [`Error::InvalidApprover`] - If `auth` does not have a right to
-    ///   approve this token, then the error is returned.
+    ///   approve this token.
     ///
     /// # Events
     ///
-    /// * Emits an [`Approval`] event.
+    /// * [`Approval`]
     pub fn _approve(
         &mut self,
         to: Address,
@@ -1029,8 +1000,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// If `operator` is `Address::ZERO`, then the error
-    /// [`Error::InvalidOperator`] is returned.
+    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
     ///
     /// # Requirements:
     ///
@@ -1038,7 +1008,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * Emits an [`ApprovalForAll`] event.
+    /// * [`ApprovalForAll`]
     pub fn _set_approval_for_all(
         &mut self,
         owner: Address,
@@ -1062,8 +1032,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// If token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
+    /// * [`Error::NonexistentToken`] - If token does not exist.
     ///
     /// # Arguments
     ///
@@ -1101,7 +1070,7 @@ impl Erc721 {
     ///
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
-    ///   id or returned with error, then the error is returned.
+    ///   id or returned with error.
     pub fn _check_on_erc721_received(
         &mut self,
         operator: Address,

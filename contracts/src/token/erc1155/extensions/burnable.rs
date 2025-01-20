@@ -29,10 +29,9 @@ pub trait IErc1155Burnable {
     /// * [`Error::MissingApprovalForAll`] - If the caller is not `account`
     ///   address and the `account` has not been approved, then the error is
     ///   returned.
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the
-    ///   error is returned.
+    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
     /// * [`Error::InsufficientBalance`] - If `value` is greater than the
-    ///   balance of the `from` account, then the error is returned.
+    ///   balance of the `from` account.
     fn burn(
         &mut self,
         account: Address,
@@ -54,13 +53,12 @@ pub trait IErc1155Burnable {
     /// * [`Error::MissingApprovalForAll`] - If the caller is not `account`
     ///   address and the `account` has not been approved, then the error is
     ///   returned.
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`, then the
-    ///   error is returned.
+    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
-    ///   length of `values`, then the error is returned.
+    ///   length of `values`.
     /// * [`Error::InsufficientBalance`] - If any of the `values` is greater
     ///   than the balance of the respective token from `tokens` of the `from`
-    ///   account, then the error is returned.
+    ///   account.
     fn burn_batch(
         &mut self,
         account: Address,

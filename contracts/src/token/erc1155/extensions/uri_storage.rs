@@ -68,7 +68,7 @@ impl Erc1155UriStorage {
     ///
     /// # Events
     ///
-    /// * Emits a [`URI`] event.
+    /// * [`URI`]
     pub fn set_token_uri(
         &mut self,
         token_id: U256,

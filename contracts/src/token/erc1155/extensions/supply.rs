@@ -210,14 +210,16 @@ impl Erc1155Supply {
     /// # Errors
     ///
     /// * [`erc1155::Error::InvalidArrayLength`] - If length of `ids` is not
-    ///   equal to length of `values`, then the error is returned.
+    ///   equal to length of `values`.
     /// * [`erc1155::Error::InsufficientBalance`] - If `value` is greater than
-    ///   the balance of the `from` account, then the error is returned.
+    ///   the balance of the `from` account.
     ///
     /// # Events
     ///
-    /// * Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    ///   element, and [`erc1155::TransferBatch`] otherwise.
+    /// * [`erc1155::TransferSingle`] - if the arrays contain one element.
+    ///
+    /// * [`erc1155::TransferBatch`] - if the arrays contain more than one
+    ///   element.
     ///
     /// # Panics
     ///

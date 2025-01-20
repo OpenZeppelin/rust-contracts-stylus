@@ -96,12 +96,13 @@ pub trait IOwnable {
     ///
     /// # Errors
     ///
-    /// If `new_owner` is the zero address, then the error
-    /// [`OwnableInvalidOwner`] is returned.
+    /// * [`OwnableInvalidOwner`] - If `new_owner` is the zero address, then the
+    ///   error
+    ///  is returned.
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// * [`OwnershipTransferred`]
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -125,7 +126,7 @@ pub trait IOwnable {
     ///
     /// # Events
     ///
-    /// * Emits a [`OwnershipTransferred`] event.
+    /// * [`OwnershipTransferred`]
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
@@ -171,7 +172,7 @@ impl Ownable {
     /// # Errors
     ///
     /// * [`Error::UnauthorizedAccount`] - If called by any account other than
-    ///   the owner, then the error is returned.
+    ///   the owner.
     pub fn only_owner(&self) -> Result<(), Error> {
         let account = msg::sender();
         if self.owner() != account {
@@ -193,7 +194,7 @@ impl Ownable {
     ///
     /// # Events
     ///
-    /// * Emits a [`OwnershipTransferred`] event.
+    /// * [`OwnershipTransferred`]
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let previous_owner = self._owner.get();
         self._owner.set(new_owner);

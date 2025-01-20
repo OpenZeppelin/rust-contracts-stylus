@@ -172,8 +172,7 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnsupportedToken`] - If the token is not supported, then the
-    ///   error is returned.
+    /// * [`Error::UnsupportedToken`] - If the token is not supported.
     ///
     /// # Examples
     ///
@@ -214,21 +213,18 @@ pub trait IErc3156FlashLender {
     /// # Errors
     ///
     /// * [`Error::ExceededMaxLoan`] - If the `value` is greater than the value
-    ///   returned by [`IErc3156FlashLender::max_flash_loan`], then the error is
-    ///   returned.
-    /// * [`Error::UnsupportedToken`] - If `token` is not supported, then the
-    ///   error is returned.
-    /// * [`Error::InvalidReceiver`] - If the `token` address is not a contract,
-    ///   then the error is returned.
+    ///   returned by [`IErc3156FlashLender::max_flash_loan`].
+    /// * [`Error::UnsupportedToken`] - If `token` is not supported.
+    /// * [`Error::InvalidReceiver`] - If the `token` address is not a contract.
     /// * [`Error::InvalidReceiver`] - If the contract fails to execute the
-    ///   call, then the error is returned.
+    ///   call.
     /// * [`Error::InvalidReceiver`] - If the receiver does not return
-    ///   [`BORROWER_CALLBACK_VALUE`], then the error  is returned.
+    ///   [`BORROWER_CALLBACK_VALUE`].
     ///
     /// # Events
     ///
-    /// * Emits an [`erc20::Transfer`] event.
-    /// * Emits an [`erc20::Approval`] event.
+    /// * [`erc20::Transfer`]
+    /// * [`erc20::Approval`]
     ///
     /// # Panics
     ///

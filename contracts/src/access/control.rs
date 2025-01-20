@@ -216,7 +216,7 @@ impl AccessControl {
     /// # Errors
     ///
     /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
-    ///   granted `role`, then the error is returned.
+    ///   granted `role`.
     ///
     /// # Events
     ///
@@ -252,7 +252,7 @@ impl AccessControl {
     /// # Errors
     ///
     /// * [`Error::BadConfirmation`]  - If [`msg::sender`] is not the
-    ///   `confirmation` address, then the error is returned.
+    ///   `confirmation` address.
     ///
     /// # Events
     ///
@@ -288,7 +288,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// * Emits a [`RoleAdminChanged`] event.
+    /// * [`RoleAdminChanged`]
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
         self._roles.setter(role).admin_role.set(new_admin_role);
@@ -310,7 +310,7 @@ impl AccessControl {
     /// # Errors
     ///
     /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
-    ///   granted `role`, then the error is returned.
+    ///   granted `role`.
     pub fn _check_role(
         &self,
         role: B256,

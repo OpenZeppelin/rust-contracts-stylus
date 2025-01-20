@@ -21,10 +21,9 @@ pub trait IErc721Burnable {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If token does not exist, then the error
-    ///   is returned.
+    /// * [`Error::NonexistentToken`] - If token does not exist.
     /// * [`Error::InsufficientApproval`] - If the caller does not have the
-    ///   right to approve, then the error is returned.
+    ///   right to approve.
     ///
     /// # Requirements:
     ///
@@ -33,7 +32,7 @@ pub trait IErc721Burnable {
     ///
     /// # Events
     ///
-    /// * Emits a [`super::super::Transfer`] event.
+    /// * [`super::super::Transfer`]
     fn burn(&mut self, token_id: U256) -> Result<(), Self::Error>;
 }
 
