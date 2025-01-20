@@ -11,12 +11,11 @@ use openzeppelin_stylus::token::erc20::{
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
 
-
 #[entrypoint]
 #[storage]
 struct Erc4626Example {
     #[borrow]
-    pub erc20: Erc20, 
+    pub erc20: Erc20,
     #[borrow]
     pub erc4626: Erc4626,
     #[borrow]
@@ -81,7 +80,6 @@ impl Erc4626Example {
         shares: U256,
         receiver: Address,
     ) -> Result<U256, Vec<u8>> {
-        
         Ok(self.erc4626.mint(shares, receiver, &mut self.erc20)?)
     }
 
@@ -106,7 +104,7 @@ impl Erc4626Example {
         //     &mut self.erc20,
         //     &mut self.safe_erc20,
         // )?)
-       Ok(U256::from(100))
+        Ok(U256::from(100))
     }
 
     fn max_redeem(&mut self, owner: Address) -> U256 {

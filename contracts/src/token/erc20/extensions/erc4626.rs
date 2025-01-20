@@ -19,7 +19,7 @@
 //! infeasible. Withdrawals may similarly be affected by slippage. Users can
 //! protect against this attack as well as unexpected slippage in general by
 //! verifying the amount received is as expected, using a wrapper that performs
-//! these checks such as https://github.com/ERC4626-Alliance/ERC4626-Contracts#erc4626router-and-base 
+//! these checks such as https://github.com/ERC4626-Alliance/ERC4626-Contracts#erc4626router-and-base
 //!
 //! The `_decimalsOffset()` corresponds to an offset in the decimal
 //! representation between the underlying asset's decimals and the vault

@@ -1,13 +1,20 @@
 #![cfg(feature = "e2e")]
 
 use std::println;
-use alloy_primitives::U256;
 
 use abi::Erc4626;
-use alloy::{contract,  primitives::{uint, Address}, sol};
+use alloy::{
+    contract,
+    primitives::{uint, Address},
+    sol,
+};
+use alloy_primitives::U256;
 use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
-use mock::{token, token::ERC20Mock,token::MockErc20};
+use mock::{
+    token,
+    token::{ERC20Mock, MockErc20},
+};
 use stylus_sdk::contract::address;
 
 use crate::Erc4626Example::constructorCall;
@@ -24,7 +31,11 @@ mod mock;
 sol!("src/constructor.sol");
 
 fn ctr(asset: Address) -> constructorCall {
-    constructorCall { name_: VALUT_NAME.to_owned(), symbol_: VALUT_SYMBOL.to_owned(), asset_: asset }
+    constructorCall {
+        name_: VALUT_NAME.to_owned(),
+        symbol_: VALUT_SYMBOL.to_owned(),
+        asset_: asset,
+    }
 }
 
 #[e2e::test]
@@ -55,21 +66,16 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     Ok(())
 }
 
-
 #[e2e::test]
-async fn deposit(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn deposit(alice: Account, bob: Account) -> Result<()> {
     let mock_token_address =
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
-     let vault_addr = alice
+    let vault_addr = alice
         .as_deployer()
         .with_constructor(ctr(mock_token_address))
         .deploy()
         .await?
         .address()?;
-   
 
     let asset = MockErc20::new(mock_token_address, &alice.wallet);
     let vault = Erc4626::new(vault_addr, &alice.wallet);
@@ -99,71 +105,47 @@ async fn deposit(
     let asset_balance = asset.balanceOf(bob.address()).call().await?.balance;
     //assert_eq!(asset_balance, uint!(1_U256));
 
-    // let valut_balance = contract.balanceOf(bob.address()).call().await?.balance;
+    // let valut_balance =
+    // contract.balanceOf(bob.address()).call().await?.balance;
     // assert_eq!(valut_balance, uint!(1_U256));
 
     Ok(())
 }
 
-
 #[e2e::test]
-async fn mint(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn mint(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn withdraw(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn withdraw(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn redeem(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
-    Ok(())
-}
-
-
-#[e2e::test]
-async fn deposit_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn redeem(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn mint_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn deposit_inflation_attack(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn withdraw_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn mint_inflation_attack(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
 #[e2e::test]
-async fn redeem_inflation_attack(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn withdraw_inflation_attack(alice: Account, bob: Account) -> Result<()> {
     Ok(())
 }
 
-
+#[e2e::test]
+async fn redeem_inflation_attack(alice: Account, bob: Account) -> Result<()> {
+    Ok(())
+}
 
 #[e2e::test]
 async fn error_when_exceeded_max_deposit(
