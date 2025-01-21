@@ -448,6 +448,9 @@ mod tests {
             let result2 = Verifier::verify(&proof, root, leaf);
             prop_assert_eq!(result1, result2);
 
+            // ensure proof_flags length is always <= proof.len()
+            let proof_flags = proof_flags.into_iter().take(proof.len()).collect::<Vec<_>>();
+
             let result1 = Verifier::verify_multi_proof(
                 &proof,
                 &proof_flags,
