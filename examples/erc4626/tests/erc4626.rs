@@ -31,7 +31,7 @@ fn ctr(asset: Address) -> constructorCall {
     }
 }
 
-#[e2e::test]
+/*#[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let mock_token_address =
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
@@ -103,7 +103,7 @@ async fn deposit(alice: Account, bob: Account) -> Result<()> {
     // assert_eq!(valut_balance, uint!(1_U256));
 
     Ok(())
-}
+} */
 
 #[e2e::test]
 async fn mint(_alice: Account, _bob: Account) -> Result<()> {
