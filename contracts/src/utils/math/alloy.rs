@@ -24,6 +24,11 @@ pub trait Math {
     fn average(self, rhs: Self) -> Self;
 }
 
+pub enum Rounding {
+    Floor,
+    Ceil,
+}
+
 impl Math for U256 {
     fn sqrt(self) -> Self {
         let a = self;

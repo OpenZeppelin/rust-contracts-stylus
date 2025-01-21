@@ -27,6 +27,7 @@ struct Erc4626Example {
 #[public]
 #[inherit(Erc20)]
 impl Erc4626Example {
+    /*
     fn name(&self) -> String {
         self.metadata.name()
     }
@@ -130,4 +131,5 @@ impl Erc4626Example {
         // )?)
         Ok(U256::from(100))
     }
+    */
 }
