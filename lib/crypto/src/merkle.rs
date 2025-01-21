@@ -429,21 +429,17 @@ mod tests {
         #[test]
         fn proof_consistency(
             proof: Vec<[u8; 32]>,
+            proof_flags: Vec<bool>,
             root: [u8; 32],
+            // for regular proof
             leaf: [u8; 32],
+            // for multi-proof
+            leaves: Vec<[u8; 32]>,
         ) {
             let result1 = Verifier::verify(&proof, root, leaf);
             let result2 = Verifier::verify(&proof, root, leaf);
             prop_assert_eq!(result1, result2);
-        }
 
-        #[test]
-        fn multi_proof_consistency(
-            leaves: Vec<[u8; 32]>,
-            proof: Vec<[u8; 32]>,
-            proof_flags: Vec<bool>,
-            root: [u8; 32]
-        ) {
             let result1 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
             let result2 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
             prop_assert_eq!(result1, result2);
