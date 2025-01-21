@@ -381,8 +381,8 @@ pub trait IErc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] or a [`TransferBatch`] - depending on the length of
-    ///   the array arguments.
+    /// * [`TransferSingle`] - if the arrays contain one element.
+    /// * [`TransferBatch`] - if the arrays contain multiple elements.
     fn safe_batch_transfer_from(
         &mut self,
         from: Address,

@@ -169,7 +169,7 @@ pub trait IVestingWallet {
     ///
     /// # Events
     ///
-    /// * Emits an [`ownable::OwnershipTransferred`] event.
+    /// * [`ownable::OwnershipTransferred`]
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -195,7 +195,7 @@ pub trait IVestingWallet {
     ///
     /// # Events
     ///
-    /// * Emits an [`ownable::OwnershipTransferred`] event.
+    /// * [`ownable::OwnershipTransferred`]
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// The contract should be able to receive Ether.
@@ -290,7 +290,7 @@ pub trait IVestingWallet {
     ///
     /// # Events
     ///
-    /// * Emits an [`EtherReleased`] event.
+    /// * [`EtherReleased`]
     ///
     /// # Panics
     ///
@@ -315,7 +315,7 @@ pub trait IVestingWallet {
     ///
     /// # Events
     ///
-    /// * Emits an [`ERC20Released`] event.
+    /// * [`ERC20Released`]
     ///
     /// # Panics
     ///

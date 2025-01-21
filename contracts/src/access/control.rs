@@ -145,8 +145,8 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`.
     pub fn only_role(&self, role: B256) -> Result<(), Error> {
         self._check_role(role, msg::sender())
     }
@@ -182,8 +182,8 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`.
     ///
     /// # Events
     ///
@@ -256,8 +256,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// * If the calling account has its `role` revoked, emits a [`RoleRevoked`]
-    ///   event.
+    /// * [`RoleRevoked`] - If the calling account has its `role` revoked.
     pub fn renounce_role(
         &mut self,
         role: B256,
