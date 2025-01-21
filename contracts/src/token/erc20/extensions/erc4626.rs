@@ -20,8 +20,8 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        utils::{safe_erc20, IErc20, ISafeErc20, SafeErc20},
-        Erc20,
+        utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+        Erc20, IErc20,
     },
     utils::math::alloy::Rounding,
 };
@@ -453,13 +453,9 @@ pub trait IErc4626 {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address of the entity owning the shares.
-    ///
-    /// # Errors
-    ///
-    /// *
-    fn max_redeem(&mut self, owner: Address) -> Result<U256, Self::Error>;
+    fn max_redeem(&self, owner: Address) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// redeemption at the current block, given current on-chain conditions.
@@ -601,8 +597,8 @@ impl IErc4626 for Erc4626 {
     }
 
     fn max_withdraw(&mut self, owner: Address) -> Result<U256, Self::Error> {
-        let owner_balance = self.erc20_balance_of(owner)?;
-        self._convert_to_assets(owner_balance, Rounding::Floor)
+        let balance = self.erc20.balance_of(owner);
+        self._convert_to_assets(balance, Rounding::Floor)
     }
 
     fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error> {
@@ -629,8 +625,8 @@ impl IErc4626 for Erc4626 {
         Ok(shares)
     }
 
-    fn max_redeem(&mut self, owner: Address) -> Result<U256, Self::Error> {
-        self.erc20_balance_of(owner)
+    fn max_redeem(&self, owner: Address) -> U256 {
+        self.erc20.balance_of(owner)
     }
 
     fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error> {
@@ -643,7 +639,7 @@ impl IErc4626 for Erc4626 {
         receiver: Address,
         owner: Address,
     ) -> Result<U256, Self::Error> {
-        let max_shares = self.max_redeem(owner)?;
+        let max_shares = self.max_redeem(owner);
         if shares > max_shares {
             return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem {
                 owner,
@@ -661,15 +657,17 @@ impl IErc4626 for Erc4626 {
 }
 
 impl Erc4626 {
+    /// TODO: Rust docs
     fn erc20_total_supply(&mut self, token: Address) -> Result<U256, Error> {
-        let erc20 = IErc20::new(token);
+        let erc20 = IErc20Solidity::new(token);
         Ok(erc20
             .total_supply(Call::new_in(self))
             .map_err(|_| InvalidToken { token: self.asset() })?)
     }
 
+    /// TODO: Rust docs
     fn erc20_balance_of(&mut self, token: Address) -> Result<U256, Error> {
-        let erc20 = IErc20::new(token);
+        let erc20 = IErc20Solidity::new(token);
         Ok(erc20
             .balance_of(Call::new_in(self), contract::address())
             .map_err(|_| InvalidToken { token: self.asset() })?)
@@ -773,7 +771,7 @@ impl Erc4626 {
 
         self.erc20._burn(owner, shares)?;
 
-        self.safe_erc20.safe_transfer(contract::address(), receiver, assets)?;
+        self.safe_erc20.safe_transfer(self.asset(), receiver, assets)?;
 
         evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
 
