@@ -410,7 +410,8 @@ mod tests {
             if let Some(proof_element) = proof.first() {
                 let mut tampered_proof = proof.clone();
                 let mut tampered_element = *proof_element;
-                tampered_element[tamper_idx] = tampered_element[tamper_idx].wrapping_add(1);
+                tampered_element[tamper_idx] =
+                    tampered_element[tamper_idx].wrapping_add(1);
                 tampered_proof[0] = tampered_element;
 
                 prop_assert!(!Verifier::verify(&tampered_proof, root, leaf));
@@ -419,11 +420,18 @@ mod tests {
 
         #[test]
         fn proof_length_affects_verification(
-            (mut proof, root, leaf) in valid_merkle_proof(0),
+            (proof, root, leaf) in valid_merkle_proof(0),
             extra_hash: [u8; 32]
         ) {
-            proof.push(extra_hash);
-            prop_assert!(!Verifier::verify(&proof, root, leaf));
+            let longer_proof = &[proof.as_slice(), &[extra_hash]].concat();
+            prop_assert!(!Verifier::verify(longer_proof, root, leaf));
+
+            if !proof.is_empty() {
+                let shorter_proof = &proof[1..];
+                prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
+                let shorter_proof = &proof[..proof.len() - 1];
+                prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
+            }
         }
 
         #[test]
@@ -440,8 +448,18 @@ mod tests {
             let result2 = Verifier::verify(&proof, root, leaf);
             prop_assert_eq!(result1, result2);
 
-            let result1 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
-            let result2 = Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
+            let result1 = Verifier::verify_multi_proof(
+                &proof,
+                &proof_flags,
+                root,
+                &leaves,
+            );
+            let result2 = Verifier::verify_multi_proof(
+                &proof,
+                &proof_flags,
+                root,
+                &leaves,
+            );
             prop_assert_eq!(result1, result2);
         }
 
@@ -450,7 +468,12 @@ mod tests {
             (proof, root, leaf) in valid_merkle_proof(0)
         ) {
             let proof_flags = vec![false; proof.len()];
-            let multi_result = Verifier::verify_multi_proof(&proof, &proof_flags, root, &[leaf]);
+            let multi_result = Verifier::verify_multi_proof(
+                &proof,
+                &proof_flags,
+                root,
+                &[leaf],
+            );
             let regular_result = Verifier::verify(&proof, root, leaf);
 
             let multi_result = multi_result.unwrap();
