@@ -343,7 +343,6 @@ impl SafeErc20 {
     ///   the call.
     /// * [`Error::SafeErc20FailedOperation`] - If the call returns value that
     ///   is not `true`.
-
     fn call_optional_return(
         token: Address,
         call: &impl SolCall,
