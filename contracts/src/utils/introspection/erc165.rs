@@ -16,11 +16,18 @@ use openzeppelin_stylus_proc::interface_id;
 #[interface_id]
 pub trait IErc165 {
     /// Returns true if this contract implements the interface defined by
-    /// `interface_id`. See the corresponding [ERC section]
-    /// to learn more about how these ids are created.
+    /// `interface_id`. See the corresponding [ERC section] to learn more about
+    /// how these ids are created.
     ///
-    /// Method [`IErc165::supports_interface`] should be reexported with
-    /// `#[public]` macro manually like this:
+    /// NOTE: Method [`IErc165::supports_interface`] should be reexported with
+    /// `#[public]` macro manually, see the Example section.
+    ///
+    /// # Arguments
+    ///
+    /// * `interface_id` - The interface identifier, as specified in [ERC
+    ///   section].
+    ///
+    /// # Example
     ///
     /// ```rust,ignore
     /// #[public]
@@ -31,11 +38,6 @@ pub trait IErc165 {
     ///     }
     /// }
     /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `interface_id` - The interface identifier, as specified in [ERC
-    ///   section]
     ///
     /// [ERC section]: https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified
     fn supports_interface(interface_id: FixedBytes<4>) -> bool;

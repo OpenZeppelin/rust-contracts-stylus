@@ -105,6 +105,7 @@ pub fn recover(
 }
 
 /// Calls `ecrecover` EVM precompile.
+///
 /// The `ecrecover` EVM precompile allows for malleable (non-unique) signatures:
 /// this function rejects them by requiring the `s` value to be in the lower
 /// half order, and the `v` value to be either 27 or 28.
