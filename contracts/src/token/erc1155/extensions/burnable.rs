@@ -27,8 +27,7 @@ pub trait IErc1155Burnable {
     /// # Errors
     ///
     /// * [`Error::MissingApprovalForAll`] - If the caller is not `account`
-    ///   address and the `account` has not been approved, then the error is
-    ///   returned.
+    ///   address and the `account` has not been approved.
     /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
     /// * [`Error::InsufficientBalance`] - If `value` is greater than the
     ///   balance of the `from` account.
@@ -51,8 +50,7 @@ pub trait IErc1155Burnable {
     /// # Errors
     ///
     /// * [`Error::MissingApprovalForAll`] - If the caller is not `account`
-    ///   address and the `account` has not been approved, then the error is
-    ///   returned.
+    ///   address and the `account` has not been approved.
     /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.

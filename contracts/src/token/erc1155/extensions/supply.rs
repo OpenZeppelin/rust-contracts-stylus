@@ -217,7 +217,6 @@ impl Erc1155Supply {
     /// # Events
     ///
     /// * [`erc1155::TransferSingle`] - if the arrays contain one element.
-    ///
     /// * [`erc1155::TransferBatch`] - if the arrays contain more than one
     ///   element.
     ///

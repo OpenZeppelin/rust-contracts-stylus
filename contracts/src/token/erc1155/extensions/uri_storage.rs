@@ -42,6 +42,7 @@ impl Erc1155UriStorage {
     ///     pub fn uri(&self, token_id: U256) -> String {
     ///         self.uri_storage.uri(token_id, &self.metadata_uri)
     ///     }
+    /// ```
     pub fn uri(
         &self,
         token_id: U256,
@@ -68,7 +69,7 @@ impl Erc1155UriStorage {
     ///
     /// # Events
     ///
-    /// * [`URI`]
+    /// * [`URI`].
     pub fn set_token_uri(
         &mut self,
         token_id: U256,
