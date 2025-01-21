@@ -10,14 +10,21 @@
 use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
-    call::{self, call, Call},
+    call::Call,
     contract, evm, msg,
     prelude::storage,
     storage::{StorageAddress, StorageU8, TopLevelStorage},
     stylus_proc::SolidityError,
 };
 
-use crate::{token::erc20::utils::IErc20, utils::math::alloy::Rounding};
+use crate::{
+    token::erc20::{
+        self,
+        utils::{safe_erc20, IErc20, ISafeErc20, SafeErc20},
+        Erc20,
+    },
+    utils::math::alloy::Rounding,
+};
 
 sol! {
     /// Emitted when assets are deposited into the contract.
@@ -97,21 +104,25 @@ pub enum Error {
     ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
     /// The ERC-20 Token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
-    /*
-     /// Error type from [`Erc20`] contract [`erc20::Error`].
-     Erc20(erc20::Error),
-     /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-     SafeErc20(safe_erc20::Error),
-    */
+    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
+    SafeErc20(safe_erc20::Error),
+    /// Error type from [`Erc20`] contract [`erc20::Error`].
+    Erc20(erc20::Error),
 }
 
 /// State of an [`Erc4626`] token.
 #[storage]
 pub struct Erc4626 {
-    /// Token Address of the vault
+    /// Token Address of the vault.
     pub(crate) asset: StorageAddress,
 
-    /// Token decimals
+    /// [`SafeErc20`] contract.
+    pub(crate) safe_erc20: SafeErc20,
+
+    /// [`Erc20`] contract.
+    pub(crate) erc20: Erc20,
+
+    /// Token decimals.
     pub(crate) _underlying_decimals: StorageU8,
 }
 
@@ -666,6 +677,7 @@ impl Erc4626 {
 }
 
 impl Erc4626 {
+    /// TODO: Rust docs
     fn _convert_to_shares(
         &mut self,
         _assets: U256,
@@ -686,6 +698,7 @@ impl Erc4626 {
         todo!()
     }
 
+    /// TODO: Rust docs
     fn _convert_to_assets(
         &mut self,
         _shares: U256,
@@ -704,19 +717,14 @@ impl Erc4626 {
         todo!()
     }
 
-    /*
-        fn _mul_div(&self, x: U256, y: U256, dominator: U256) -> U256 {
-            x.saturating_mul(y).checked_div(dominator).unwrap_or(U256::ZERO)
-        }
-    */
+    /// TODO: Rust docs
     fn _deposit(
         &mut self,
-        _caller: Address,
-        _receiver: Address,
-        _assets: U256,
-        _shares: U256,
+        caller: Address,
+        receiver: Address,
+        assets: U256,
+        shares: U256,
     ) -> Result<(), Error> {
-        todo!();
         // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE
         // the transfer happens through the `tokensToSend` hook. On the
         // other hand, the `tokenReceived` hook, that is triggered after the
@@ -726,30 +734,35 @@ impl Erc4626 {
         // reentrancy would happen before the assets are transferred and
         // before the shares are minted, which is a valid state.
         // slither-disable-next-line reentrancy-no-eth
-        /*SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
-        _mint(receiver, shares);
 
-        emit Deposit(caller, receiver, assets, shares);
-        vm::log(Deposit { sender: caller, owner: receiver, assets, shares });
-        */
+        self.safe_erc20.safe_transfer_from(
+            self.asset(),
+            caller,
+            contract::address(),
+            assets,
+        )?;
+
+        self.erc20._mint(receiver, shares)?;
+
+        evm::log(Deposit { sender: caller, owner: receiver, assets, shares });
+
         Ok(())
     }
 
+    /// TODO: Rust docs
     fn _withdraw(
         &mut self,
-        _caller: Address,
-        _receiver: Address,
-        _owner: Address,
-        _assets: U256,
-        _shares: U256,
+        caller: Address,
+        receiver: Address,
+        owner: Address,
+        assets: U256,
+        shares: U256,
     ) -> Result<(), Error> {
-        todo!();
-        /*
         if caller != owner {
-            asset._spend_allowance(owner, caller, shares)?;
+            self.erc20._spend_allowance(owner, caller, shares)?;
         }
 
-        // If _asset is ERC-777, `transfer` can trigger a reentrancy AFTER the
+        // If asset() is ERC-777, `transfer` can trigger a reentrancy AFTER the
         // transfer happens through the `tokensReceived` hook. On the
         // other hand, the `tokensToSend` hook, that is triggered before the
         // transfer, calls the vault, which is assumed not malicious.
@@ -757,29 +770,20 @@ impl Erc4626 {
         // Conclusion: we need to do the transfer after the burn so that any
         // reentrancy would happen after the shares are burned and after
         // the assets are transferred, which is a valid state.
-        asset._burn(owner, shares)?;
-        safe_erc20.safe_transfer(contract::address(), receiver, assets)?;
+
+        self.erc20._burn(owner, shares)?;
+
+        self.safe_erc20.safe_transfer(contract::address(), receiver, assets)?;
 
         evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
-        */
+
         Ok(())
     }
-    /*
-    /// Offset of the decimals of the ERC-20 asset from the decimals of the
-    /// Vault.
-    ///
-    /// This value is used to calculate the number of shares that can be minted
-    /// for a given amount of assets, and to calculate the number of assets
-    /// that can be withdrawn for a given amount of shares.
-    ///
-    /// The value is set to 0 by default, which means that the decimals of the
-    /// ERC-20 asset and the Vault are the same.
-    ///
-    /// To change this value, you must override this function in your contract.
-    pub fn _decimals_offset(&self) -> u8 {
+
+    /// TODO: Rust docs
+    fn _decimals_offset() -> u8 {
         0
     }
-    */
 }
 
 #[cfg(all(test, feature = "std"))]
