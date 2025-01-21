@@ -170,7 +170,7 @@ impl AccessControl {
     /// If `account` had not been already granted `role`, emits a
     /// [`RoleGranted`] event.
     ///
-    /// # Requirements:
+    /// # Requirements
     ///
     /// * The caller must have `role`'s admin role.
     ///
@@ -187,7 +187,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// May emit a [`RoleGranted`] event.
+    /// * [`RoleGranted`].
     pub fn grant_role(
         &mut self,
         role: B256,
@@ -203,7 +203,7 @@ impl AccessControl {
     ///
     /// If `account` had been granted `role`, emits a [`RoleRevoked`] event.
     ///
-    /// # Requirements:
+    /// # Requirements
     ///
     /// * The caller must have `role`'s admin role.
     ///
@@ -220,7 +220,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// * May emit a [`RoleRevoked`] event.
+    /// * [`RoleRevoked`].
     pub fn revoke_role(
         &mut self,
         role: B256,
@@ -239,7 +239,7 @@ impl AccessControl {
     /// for accounts to lose their privileges if they are compromised (such as
     /// when a trusted device is misplaced).
     ///
-    /// # Requirements:
+    /// # Requirements
     ///
     /// * The caller must be `confirmation`.
     ///
@@ -287,7 +287,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// * [`RoleAdminChanged`]
+    /// * [`RoleAdminChanged`].
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
         self._roles.setter(role).admin_role.set(new_admin_role);
@@ -337,7 +337,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// * May emit a [`RoleGranted`] event.
+    /// * [`RoleGranted`].
     pub fn _grant_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             false
@@ -361,7 +361,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// * May emit a [`RoleRevoked`] event.
+    /// * [`RoleRevoked`].
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             self._roles.setter(role).has_role.insert(account, false);

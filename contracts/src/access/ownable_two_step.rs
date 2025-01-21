@@ -108,7 +108,7 @@ pub trait IOwnable2Step {
     ///
     /// # Events
     ///
-    /// * [`OwnershipTransferStarted`]
+    /// * [`OwnershipTransferStarted`].
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -128,7 +128,7 @@ pub trait IOwnable2Step {
     ///
     /// # Events
     ///
-    /// * [`crate::access::ownable::OwnershipTransferred`]
+    /// * [`crate::access::ownable::OwnershipTransferred`].
     fn accept_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
@@ -139,13 +139,16 @@ pub trait IOwnable2Step {
     /// thereby disabling any functionality that is only available to the owner.
     ///
     /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
     /// # Errors
     ///
-    /// * [`OwnableError::UnauthorizedAccount`] - If not called by the owner .
+    /// * [`OwnableError::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///
-    /// * [`crate::access::ownable::OwnershipTransferred`]
+    /// * [`crate::access::ownable::OwnershipTransferred`].
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
@@ -211,7 +214,7 @@ impl Ownable2Step {
     ///
     /// # Events
     ///
-    /// * [`crate::access::ownable::OwnershipTransferred`]
+    /// * [`crate::access::ownable::OwnershipTransferred`].
     fn _transfer_ownership(&mut self, new_owner: Address) {
         self._pending_owner.set(Address::ZERO);
         self._ownable._transfer_ownership(new_owner);
