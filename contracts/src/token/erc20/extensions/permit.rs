@@ -117,6 +117,14 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
     /// given `owner`'s signed approval.
     ///
+    /// # Requirements
+    ///
+    /// * `spender` cannot be the ``Address::ZERO``.
+    /// * `deadline` must be a timestamp in the future.
+    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner`
+    /// over the EIP712-formatted function arguments.
+    /// * the signature must use `owner`'s current nonce.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state. given address.
@@ -143,15 +151,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * [`crate::token::erc20::Approval`]
-    ///
-    /// # Requirements
-    ///
-    /// * `spender` cannot be the ``Address::ZERO``.
-    /// * `deadline` must be a timestamp in the future.
-    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner`
-    /// over the EIP712-formatted function arguments.
-    /// * the signature must use `owner`'s current nonce.
+    /// * [`crate::token::erc20::Approval`].
     #[allow(clippy::too_many_arguments)]
     pub fn permit(
         &mut self,
@@ -227,7 +227,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * [`crate::token::erc20::Transfer`]
+    /// * [`crate::token::erc20::Transfer`].
     pub fn transfer(
         &mut self,
         to: Address,
@@ -277,7 +277,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * [`crate::token::erc20::Approval`]
+    /// * [`crate::token::erc20::Approval`].
     pub fn approve(
         &mut self,
         spender: Address,
@@ -314,7 +314,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * * [`crate::token::erc20::Transfer`]
+    /// * * [`crate::token::erc20::Transfer`].
     pub fn transfer_from(
         &mut self,
         from: Address,

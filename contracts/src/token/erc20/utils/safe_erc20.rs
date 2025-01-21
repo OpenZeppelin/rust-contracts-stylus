@@ -204,7 +204,6 @@ pub trait ISafeErc20 {
     ///   the call.
     /// * [`Error::SafeErc20FailedOperation`] - If the call returns value that
     ///   is not `true`.
-
     fn safe_decrease_allowance(
         &mut self,
         token: Address,
@@ -232,7 +231,6 @@ pub trait ISafeErc20 {
     ///   the call.
     /// * [`Error::SafeErc20FailedOperation`] - If the call returns value that
     ///   is not `true`.
-
     fn force_approve(
         &mut self,
         token: Address,

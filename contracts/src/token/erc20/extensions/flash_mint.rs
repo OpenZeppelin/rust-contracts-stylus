@@ -223,8 +223,8 @@ pub trait IErc3156FlashLender {
     ///
     /// # Events
     ///
-    /// * [`erc20::Transfer`]
-    /// * [`erc20::Approval`]
+    /// * [`erc20::Transfer`].
+    /// * [`erc20::Approval`].
     ///
     /// # Panics
     ///

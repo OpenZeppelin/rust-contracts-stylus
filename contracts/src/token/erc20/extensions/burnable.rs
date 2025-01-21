@@ -28,7 +28,7 @@ pub trait IErc20Burnable {
     ///
     /// # Events
     ///
-    /// * [`super::super::Transfer`]
+    /// * [`super::super::Transfer`].
     fn burn(&mut self, value: U256) -> Result<(), Self::Error>;
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
@@ -51,7 +51,7 @@ pub trait IErc20Burnable {
     ///
     /// # Events
     ///
-    /// * [`super::super::Transfer`]
+    /// * [`super::super::Transfer`].
     fn burn_from(
         &mut self,
         account: Address,

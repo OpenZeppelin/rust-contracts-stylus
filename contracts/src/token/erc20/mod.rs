@@ -177,7 +177,7 @@ pub trait IErc20 {
     ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     fn transfer(
         &mut self,
         to: Address,
@@ -222,7 +222,7 @@ pub trait IErc20 {
     ///
     /// # Events
     ///
-    /// * [`Approval`]
+    /// * [`Approval`].
     fn approve(
         &mut self,
         spender: Address,
@@ -255,7 +255,7 @@ pub trait IErc20 {
     ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     fn transfer_from(
         &mut self,
         from: Address,
@@ -338,7 +338,7 @@ impl Erc20 {
     ///
     /// # Events
     ///
-    /// * [`Approval`]
+    /// * [`Approval`].
     fn _approve(
         &mut self,
         owner: Address,
@@ -383,7 +383,7 @@ impl Erc20 {
     ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     fn _transfer(
         &mut self,
         from: Address,
@@ -411,10 +411,6 @@ impl Erc20 {
     ///
     /// Relies on the `_update` mechanism.
     ///
-    /// # Panics
-    ///
-    /// If `_total_supply` exceeds `U256::MAX`.
-    ///
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If the `account` address is
@@ -422,7 +418,11 @@ impl Erc20 {
     ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
+    ///
+    /// # Panics
+    ///
+    /// * If `_total_supply` exceeds `U256::MAX`.
     pub fn _mint(
         &mut self,
         account: Address,
@@ -453,14 +453,14 @@ impl Erc20 {
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     ///
+    /// # Events
+    ///
+    /// * [`Transfer`].
+    ///
     /// # Panics
     ///
     /// * If `_total_supply` exceeds `U256::MAX`. It may happen during `mint`
     ///   operation.
-    ///
-    /// # Events
-    ///
-    /// * [`Transfer`]
     pub fn _update(
         &mut self,
         from: Address,
@@ -525,7 +525,7 @@ impl Erc20 {
     ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     pub fn _burn(
         &mut self,
         account: Address,
@@ -557,7 +557,7 @@ impl Erc20 {
     ///
     /// # Events
     ///
-    /// * [`Approval`]
+    /// * [`Approval`].
     pub fn _spend_allowance(
         &mut self,
         owner: Address,
