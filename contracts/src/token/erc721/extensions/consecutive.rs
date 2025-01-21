@@ -278,19 +278,19 @@ impl Erc721Consecutive {
     /// `batch_size` is 0, returns the number of consecutive ids minted so
     /// far.
     ///
-    /// # Requirements
-    ///
-    /// * `batch_size` must not be greater than
-    ///   [`Erc721Consecutive::_max_batch_size`].
-    /// * The function is called in the constructor of the contract (directly or
-    ///   indirectly).
-    ///
     /// CAUTION: Does not emit a [Transfer] event. This is ERC-721 compliant as
     /// long as it is done inside of the constructor, which is enforced by this
     /// function.
     ///
     /// CAUTION: Does not invoke
     /// [`erc721::IERC721Receiver::on_erc_721_received`] on the receiver.
+    ///
+    /// # Requirements
+    ///
+    /// * `batch_size` must not be greater than
+    ///   [`Erc721Consecutive::_max_batch_size`].
+    /// * The function is called in the constructor of the contract (directly or
+    ///   indirectly).
     ///
     /// # Arguments
     ///
