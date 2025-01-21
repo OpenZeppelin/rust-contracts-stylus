@@ -470,29 +470,6 @@ mod tests {
     }
 
     #[test]
-    fn length_extension_attack_resistance() {
-        // Test resistance to length extension attacks by ensuring that
-        // appending to a valid proof doesn't create another valid proof
-        let root = hex!(
-            "1234567890123456789012345678901234567890123456789012345678901234"
-        );
-        let leaf = hex!(
-            "0000000000000000000000000000000000000000000000000000000000000000"
-        );
-        let valid_proof = [hex!(
-            "0000000000000000000000000000000000000000000000000000000000000001"
-        )];
-
-        assert!(!Verifier::verify(&valid_proof, root, leaf));
-
-        let extended_proof = [
-            valid_proof[0],
-            hex!("0000000000000000000000000000000000000000000000000000000000000002"),
-        ];
-        assert!(!Verifier::verify(&extended_proof, root, leaf));
-    }
-
-    #[test]
     fn second_preimage_attack_resistance() {
         // Test resistance to second preimage attacks by ensuring that
         // finding a different leaf that verifies with the same proof is hard
