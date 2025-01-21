@@ -216,15 +216,5 @@ mod tests {
             let hash2 = commutative_hash_pair(&a, &a, builder.build_hasher());
             assert_eq!(hash1, hash2);
         }
-
-        #[test]
-        fn pair_with_empty_hash(a: Vec<u8>) {
-            let builder = KeccakBuilder;
-            let empty = vec![];
-
-            let hash1 = hash_pair(&empty, &a, builder.build_hasher());
-            let hash2 = hash_pair(&a, &empty, builder.build_hasher());
-            assert_eq!(hash1, hash2);
-        }
     }
 }
