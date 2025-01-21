@@ -241,6 +241,19 @@ Then you will be able to run e2e tests:
 ./scripts/e2e-tests.sh
 ```
 
+### Running fuzz tests
+
+To run fuzz tests, you need to have [cargo-fuzz] installed. 
+Then from the root of the project you can use `cargo fuzz list` to view the list of all existing fuzz targets:
+
+    cargo fuzz list
+
+Finally you need to run:
+
+    cargo fuzz run <fuzz target name>
+
+[cargo-fuzz]: https://rust-fuzz.github.io/book/cargo-fuzz/setup.html
+
 ### Checking the docs
 
 If you make documentation changes, you may want to check whether there are any
