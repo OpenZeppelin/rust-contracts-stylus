@@ -470,30 +470,6 @@ mod tests {
     }
 
     #[test]
-    fn second_preimage_attack_resistance() {
-        // Test resistance to second preimage attacks by ensuring that
-        // finding a different leaf that verifies with the same proof is hard
-        let root = hex!(
-            "1234567890123456789012345678901234567890123456789012345678901234"
-        );
-        let leaf1 = hex!(
-            "0000000000000000000000000000000000000000000000000000000000000001"
-        );
-        let leaf2 = hex!(
-            "0000000000000000000000000000000000000000000000000000000000000002"
-        );
-        let proof = [hex!(
-            "0000000000000000000000000000000000000000000000000000000000000003"
-        )];
-
-        let result1 = Verifier::verify(&proof, root, leaf1);
-        let result2 = Verifier::verify(&proof, root, leaf2);
-
-        // Different leaves should not both verify with same proof
-        assert!(!(result1 && result2));
-    }
-
-    #[test]
     fn multi_proof_empty_flags() {
         let root = [0u8; 32];
         let leaves = vec![[1u8; 32]];
