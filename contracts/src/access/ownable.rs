@@ -119,8 +119,7 @@ pub trait IOwnable {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedAccount`] - If the function is not called by the
-    ///   owner.
+    /// * [`Error::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///

@@ -163,13 +163,13 @@ pub trait IVestingWallet {
     /// # Errors
     ///
     /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
-    ///   other than the owner, then the error is returned.
+    ///   other than the owner.
     /// * [`ownable::Error::InvalidOwner`] - If `new_owner` is the
-    ///   `Address::ZERO`, then the error is returned.
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// * [`ownable::OwnershipTransferred`]
+    /// * [`ownable::OwnershipTransferred`].
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -190,12 +190,11 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`ownable::Error::UnauthorizedAccount`] - If not called by the owner,
-    ///   then the error is returned.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///
-    /// * [`ownable::OwnershipTransferred`]
+    /// * [`ownable::OwnershipTransferred`].
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// The contract should be able to receive Ether.
@@ -266,8 +265,7 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] -If the `token` address is not a contract,
-    ///   then the error is returned.
+    /// * [`Error::InvalidToken`] - If the `token` address is not a contract.
     ///
     /// # Panics
     ///
@@ -285,12 +283,11 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::ReleaseEtherFailed`] - If Ether transfer fails, then the
-    ///   error is returned.
+    /// * [`Error::ReleaseEtherFailed`] - If Ether transfer fails.
     ///
     /// # Events
     ///
-    /// * [`EtherReleased`]
+    /// * [`EtherReleased`].
     ///
     /// # Panics
     ///
@@ -308,14 +305,13 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] -  If the `token` address is not a contract,
-    ///   then the error is returned.
+    /// * [`Error::InvalidToken`] -  If the `token` address is not a contract.
     /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If the contract
-    ///   fails to execute the call, then the error is returned.
+    ///   fails to execute the call.
     ///
     /// # Events
     ///
-    /// * [`ERC20Released`]
+    /// * [`ERC20Released`].
     ///
     /// # Panics
     ///
@@ -350,8 +346,7 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the `token` address is not a contract,
-    ///   then the error is returned.
+    /// * [`Error::InvalidToken`] - If the `token` address is not a contract.
     ///
     /// # Panics
     ///
@@ -505,7 +500,7 @@ impl VestingWallet {
     ///
     /// # Panics
     ///
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         let timestamp = U256::from(timestamp);
 
