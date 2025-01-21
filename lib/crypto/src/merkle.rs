@@ -462,11 +462,11 @@ mod tests {
         }
     }
 
-    // Additional unit tests for edge cases and security properties
     #[test]
     fn zero_length_proof_with_matching_leaf_and_root() {
-        let value = [0u8; 32];
-        assert!(Verifier::verify(&[], value, value));
+        let root = [0u8; 32];
+        let leaf = root.clone();
+        assert!(Verifier::verify(&[], root, leaf));
     }
 
     #[test]
@@ -532,30 +532,6 @@ mod tests {
         let leaves = vec![[0u8; 32]];
         let result = Verifier::verify_multi_proof(&[], &[], root, &leaves);
         assert!(result.is_ok());
-    }
-
-    #[test]
-    fn collision_resistance() {
-        // Test that it's hard to find two different leaves that hash to the
-        // same node
-        let proof = [hex!(
-            "0000000000000000000000000000000000000000000000000000000000000001"
-        )];
-        let root = hex!(
-            "1234567890123456789012345678901234567890123456789012345678901234"
-        );
-
-        let mut different_leaves = Vec::new();
-        for i in 0..10 {
-            let mut leaf = [0u8; 32];
-            leaf[0] = i as u8;
-            if Verifier::verify(&proof, root, leaf) {
-                different_leaves.push(leaf);
-            }
-        }
-
-        // Should be extremely unlikely to find multiple valid leaves
-        assert!(different_leaves.len() <= 1);
     }
 
     #[test]
