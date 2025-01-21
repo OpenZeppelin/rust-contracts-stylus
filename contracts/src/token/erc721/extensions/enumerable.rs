@@ -94,6 +94,8 @@ pub trait IErc721Enumerable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Address of token's owner.
+    /// * `index` - Index of the token at `owner`'s tokens list.
     ///
     /// # Errors
     ///
@@ -121,12 +123,12 @@ pub trait IErc721Enumerable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    /// * `index` - Index of the token in all tokens list.
     ///
     /// # Errors
     ///
     /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
     ///   bounds for `index`.
-
     fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
 }
 

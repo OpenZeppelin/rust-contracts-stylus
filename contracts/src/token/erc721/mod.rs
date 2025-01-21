@@ -217,6 +217,10 @@ pub trait IErc721 {
 
     /// Returns the owner of the `token_id` token.
     ///
+    /// # Requirements
+    ///
+    /// * `token_id` must exist.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -225,15 +229,22 @@ pub trait IErc721 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    ///
-    /// # Requirements
-    ///
-    /// * `token_id` must exist.
     fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first
     /// that contract recipients are aware of the [`Erc721`] protocol to
     /// prevent tokens from being forever locked.
+    ///
+    /// # Requirements
+    ///
+    /// * `from` cannot be the `Address::ZERO`.
+    /// * `to` cannot be the `Address::ZERO`.
+    /// * The `token_id` token must exist and be owned by `from`.
+    /// * If the caller is not `from`, it must have been allowed to move this
+    ///   token by either [`Self::approve`] or [`Self::set_approval_for_all`].
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
+    ///   `safe_transfer`.
     ///
     /// # Arguments
     ///
@@ -253,20 +264,9 @@ pub trait IErc721 {
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its
     /// interface id or returned with error.
     ///
-    /// # Requirements
-    ///
-    /// * `from` cannot be the zero address.
-    /// * `to` cannot be the zero address.
-    /// * The `token_id` token must exist and be owned by `from`.
-    /// * If the caller is not `from`, it must have been allowed to move this
-    ///   token by either [`Self::approve`] or [`Self::set_approval_for_all`].
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
-    ///   `safe_transfer`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     fn safe_transfer_from(
         &mut self,
         from: Address,
@@ -275,6 +275,17 @@ pub trait IErc721 {
     ) -> Result<(), Self::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`.
+    ///
+    /// # Requirements
+    ///
+    /// * `from` cannot be the `Address::ZERO`.
+    /// * `to` cannot be the `Address::ZERO`.
+    /// * The `token_id` token must exist and be owned by `from`.
+    /// * If the caller is not `from`, it must be approved to move this token by
+    ///   either [`Erc721::_approve`] or [`Self::set_approval_for_all`].
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
+    ///   `safe_transfer`.
     ///
     /// # Arguments
     ///
@@ -296,20 +307,9 @@ pub trait IErc721 {
     ///    [`IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///    interface id or returned with error.
     ///
-    /// # Requirements
-    ///
-    /// * `from` cannot be the zero address.
-    /// * `to` cannot be the zero address.
-    /// * The `token_id` token must exist and be owned by `from`.
-    /// * If the caller is not `from`, it must be approved to move this token by
-    ///   either [`Erc721::_approve`] or [`Self::set_approval_for_all`].
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
-    ///   `safe_transfer`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
         &mut self,
@@ -327,6 +327,14 @@ pub trait IErc721 {
     /// though the caller must understand this adds an external call which
     /// potentially creates a reentrancy vulnerability, unless it is disabled.
     ///
+    /// # Requirements
+    ///
+    /// * `from` cannot be the `Address::ZERO`.
+    /// * `to` cannot be the `Address::ZERO`.
+    /// * The `token_id` token must be owned by `from`.
+    /// * If the caller is not `from`, it must be approved to move this token by
+    ///   either [`Self::approve`] or [`Self::set_approval_for_all`].
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -342,17 +350,9 @@ pub trait IErc721 {
     ///   right to approve.
     /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
-    /// # Requirements:
-    ///
-    /// * `from` cannot be the zero address.
-    /// * `to` cannot be the zero address.
-    /// * The `token_id` token must be owned by `from`.
-    /// * If the caller is not `from`, it must be approved to move this token by
-    ///   either [`Self::approve`] or [`Self::set_approval_for_all`].
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     fn transfer_from(
         &mut self,
         from: Address,
@@ -366,6 +366,11 @@ pub trait IErc721 {
     /// Only a single account can be approved at a time,
     /// so approving the `Address::ZERO` clears previous approvals.
     ///
+    /// # Requirements
+    ///
+    /// * The caller must own the token or be an approved operator.
+    /// * `token_id` must exist.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -378,14 +383,9 @@ pub trait IErc721 {
     /// * [`Error::InvalidApprover`] - If `auth` (param of [`Erc721::_approve`])
     ///   does not have a right to approve this token.
     ///
-    /// # Requirements:
-    ///
-    /// * The caller must own the token or be an approved operator.
-    /// * `token_id` must exist.
-    ///
     /// # Events
     ///
-    /// * [`Approval`]
+    /// * [`Approval`].
     fn approve(
         &mut self,
         to: Address,
@@ -396,6 +396,10 @@ pub trait IErc721 {
     ///
     /// Operators can call [`Self::transfer_from`] or
     /// [`Self::safe_transfer_from`] for any token owned by the caller.
+    ///
+    /// # Requirements
+    ///
+    /// * The `operator` cannot be the `Address::ZERO`.
     ///
     /// # Arguments
     ///
@@ -409,13 +413,9 @@ pub trait IErc721 {
     ///
     /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
     ///
-    /// # Requirements:
-    ///
-    /// * The `operator` cannot be the `Address::ZERO`.
-    ///
     /// # Events
     ///
-    /// * [`ApprovalForAll`]
+    /// * [`ApprovalForAll`].
     fn set_approval_for_all(
         &mut self,
         operator: Address,
@@ -423,6 +423,10 @@ pub trait IErc721 {
     ) -> Result<(), Self::Error>;
 
     /// Returns the account approved for `token_id` token.
+    ///
+    /// # Requirements
+    ///
+    /// * `token_id` must exist.
     ///
     /// # Arguments
     ///
@@ -432,10 +436,6 @@ pub trait IErc721 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must exist.
     fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error>;
 
     /// Returns whether the `operator` is allowed to manage all the assets of
@@ -687,7 +687,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     pub fn _update(
         &mut self,
         to: Address,
@@ -723,6 +723,11 @@ impl Erc721 {
     /// WARNING: Usage of this method is discouraged, use [`Self::_safe_mint`]
     /// whenever possible.
     ///
+    /// # Requirements
+    ///
+    /// * `token_id` must not exist.
+    /// * `to` cannot be the `Address::ZERO`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -734,14 +739,9 @@ impl Erc721 {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must not exist.
-    /// * `to` cannot be the zero address.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to.is_zero() {
             return Err(
@@ -762,6 +762,13 @@ impl Erc721 {
     /// An additional `data` parameter is forwarded to
     /// [`IERC721Receiver::on_erc_721_received`] to contract recipients.
     ///
+    /// # Requirements
+    ///
+    /// * `token_id` must not exist.
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
+    ///   `safe_transfer`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -778,16 +785,9 @@ impl Erc721 {
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
     ///   id or returned with an error.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must not exist.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
-    ///   `safe_transfer`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     pub fn _safe_mint(
         &mut self,
         to: Address,
@@ -810,6 +810,10 @@ impl Erc721 {
     /// internal function that does not check if the sender is authorized
     /// to operate on the token.
     ///
+    /// # Requirements
+    ///
+    /// * `token_id` must exist.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -819,13 +823,9 @@ impl Erc721 {
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must exist.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
@@ -840,6 +840,11 @@ impl Erc721 {
     /// As opposed to [`Self::transfer_from`], this imposes no restrictions on
     /// `msg::sender`.
     ///
+    /// # Requirements
+    ///
+    /// * `to` cannot be the `Address::ZERO`.
+    /// * The `token_id` token must be owned by `from`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -853,14 +858,9 @@ impl Erc721 {
     /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
-    /// # Requirements:
-    ///
-    /// * `to` cannot be the zero address.
-    /// * The `token_id` token must be owned by `from`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     pub fn _transfer(
         &mut self,
         from: Address,
@@ -899,6 +899,15 @@ impl Erc721 {
     /// and can be used to e.g. implement alternative mechanisms to perform
     /// token transfer, such as signature-based.
     ///
+    /// # Requirements
+    ///
+    /// * The `token_id` token must exist and be owned by `from`.
+    /// * `to` cannot be the `Address::ZERO`.
+    /// * `from` cannot be the `Address::ZERO`.
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
+    ///   `safe_transfer`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -914,18 +923,9 @@ impl Erc721 {
     /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
-    /// # Requirements:
-    ///
-    /// * The `token_id` token must exist and be owned by `from`.
-    /// * `to` cannot be the zero address.
-    /// * `from` cannot be the zero address.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC721Receiver::on_erc_721_received`], which is called upon a
-    ///   `safe_transfer`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
+    /// * [`Transfer`].
     pub fn _safe_transfer(
         &mut self,
         from: Address,
@@ -959,7 +959,7 @@ impl Erc721 {
     ///
     /// # Events
     ///
-    /// * [`Approval`]
+    /// * [`Approval`].
     pub fn _approve(
         &mut self,
         to: Address,
@@ -991,6 +991,10 @@ impl Erc721 {
 
     /// Approve `operator` to operate on all of `owner`'s tokens.
     ///
+    /// # Requirements
+    ///
+    /// * `operator` can't be the `Address::ZERO`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -1002,13 +1006,9 @@ impl Erc721 {
     ///
     /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
     ///
-    /// # Requirements:
-    ///
-    /// * `operator` can't be the address zero.
-    ///
     /// # Events
     ///
-    /// * [`ApprovalForAll`]
+    /// * [`ApprovalForAll`].
     pub fn _set_approval_for_all(
         &mut self,
         owner: Address,
@@ -1030,14 +1030,14 @@ impl Erc721 {
     /// Overrides to ownership logic should be done to
     /// [`Self::_owner_of`].
     ///
-    /// # Errors
-    ///
-    /// * [`Error::NonexistentToken`] - If token does not exist.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::NonexistentToken`] - If token does not exist.
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self._owner_of(token_id);
         if owner.is_zero() {

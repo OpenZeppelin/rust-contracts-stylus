@@ -42,7 +42,7 @@ pub struct Erc721UriStorage {
 }
 
 impl Erc721UriStorage {
-    /// Sets `token_uri` as the tokenURI of `token_id`.
+    /// Sets `token_uri` as the token URI of `token_id`.
     ///
     /// # Arguments
     ///
@@ -51,7 +51,8 @@ impl Erc721UriStorage {
     /// * `token_uri` - URI for the token.
     ///
     /// # Events
-    /// * [`MetadataUpdate`]
+    ///
+    /// * [`MetadataUpdate`].
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
@@ -63,6 +64,7 @@ impl Erc721UriStorage {
     /// it with `#[selector(name = "tokenURI")]` and ensure that the `erc721`
     /// parameter is passed internally. This design works around Stylus's lack
     /// of inheritance while avoiding code duplication. See the Example section.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -73,7 +75,6 @@ impl Erc721UriStorage {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    ///
     ///
     /// # Examples
     ///

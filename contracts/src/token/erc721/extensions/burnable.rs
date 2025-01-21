@@ -15,6 +15,11 @@ pub trait IErc721Burnable {
     /// The approval is cleared when the token is burned. Relies on the `_burn`
     /// mechanism.
     ///
+    /// # Requirements:
+    ///
+    /// * `token_id` must exist.
+    /// * The caller must own `token_id` or be an approved operator.
+    ///
     /// # Arguments
     ///
     /// * `value` - Amount to be burnt.
@@ -25,14 +30,9 @@ pub trait IErc721Burnable {
     /// * [`Error::InsufficientApproval`] - If the caller does not have the
     ///   right to approve.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must exist.
-    /// * The caller must own `token_id` or be an approved operator.
-    ///
     /// # Events
     ///
-    /// * [`super::super::Transfer`]
+    /// * [`super::super::Transfer`].
     fn burn(&mut self, token_id: U256) -> Result<(), Self::Error>;
 }
 

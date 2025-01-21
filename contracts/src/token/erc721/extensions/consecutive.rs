@@ -278,17 +278,16 @@ impl Erc721Consecutive {
     /// `batch_size` is 0, returns the number of consecutive ids minted so
     /// far.
     ///
-    /// Requirements:
+    /// # Requirements
     ///
     /// * `batch_size` must not be greater than
     ///   [`Erc721Consecutive::_max_batch_size`].
     /// * The function is called in the constructor of the contract (directly or
     ///   indirectly).
     ///
-    /// CAUTION: Does not emit a [Transfer] event.
-    /// This is ERC-721 compliant as
-    /// long as it is done inside of the constructor, which is enforced by
-    /// this function.
+    /// CAUTION: Does not emit a [Transfer] event. This is ERC-721 compliant as
+    /// long as it is done inside of the constructor, which is enforced by this
+    /// function.
     ///
     /// CAUTION: Does not invoke
     /// [`erc721::IERC721Receiver::on_erc_721_received`] on the receiver.
@@ -306,7 +305,7 @@ impl Erc721Consecutive {
     ///
     /// # Events
     ///
-    /// * [`ConsecutiveTransfer`]
+    /// * [`ConsecutiveTransfer`].
     #[cfg(all(test, feature = "std"))]
     fn _mint_consecutive(
         &mut self,
@@ -374,8 +373,7 @@ impl Erc721Consecutive {
     ///
     /// # Events
     ///
-    /// * [`Transfer`]
-
+    /// * [`Transfer`].
     pub fn _update(
         &mut self,
         to: Address,
@@ -414,6 +412,10 @@ impl Erc721Consecutive {
 
     /// Used to offset the first token id in
     /// [`Erc721Consecutive::_next_consecutive_id`].
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn _first_consecutive_id(&self) -> U96 {
         self._first_consecutive_id.get()
     }
@@ -422,6 +424,10 @@ impl Erc721Consecutive {
     /// This is designed to limit stress on off-chain indexing services that
     /// have to record one entry per token, and have protections against
     /// "unreasonably large" batches of tokens.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn _max_batch_size(&self) -> U96 {
         self._max_batch_size.get()
     }
@@ -481,6 +487,11 @@ impl Erc721Consecutive {
     /// WARNING: Usage of this method is discouraged, use [`Self::_safe_mint`]
     /// whenever possible.
     ///
+    /// # Requirements
+    ///
+    /// * `token_id` must not exist.
+    /// * `to` cannot be `Address::ZERO`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -492,15 +503,9 @@ impl Erc721Consecutive {
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
     /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must not exist.
-    /// * `to` cannot be `Address::ZERO`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
-
+    /// * [`Transfer`].
     pub fn _mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
@@ -519,11 +524,18 @@ impl Erc721Consecutive {
         Ok(())
     }
 
-    /// Mints `token_id`, transfers it to `to`,
-    /// and checks for `to`'s acceptance.
+    /// Mints `token_id`, transfers it to `to`, and checks for `to`'s
+    /// acceptance.
     ///
     /// An additional `data` parameter is forwarded to
     /// [`erc721::IERC721Receiver::on_erc_721_received`] to contract recipients.
+    ///
+    /// # Requirements
+    ///
+    /// * `token_id` must not exist.
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`erc721::IERC721Receiver::on_erc_721_received`], which is called upon
+    ///   a `safe_transfer`.
     ///
     /// # Arguments
     ///
@@ -541,17 +553,9 @@ impl Erc721Consecutive {
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must not exist.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`], which is called upon
-    ///   a `safe_transfer`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
-
+    /// * [`Transfer`].
     pub fn _safe_mint(
         &mut self,
         to: Address,
@@ -574,6 +578,10 @@ impl Erc721Consecutive {
     /// internal function that does not check if the sender is authorized
     /// to operate on the token.
     ///
+    /// # Requirements
+    ///
+    /// * `token_id` must exist.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -583,14 +591,9 @@ impl Erc721Consecutive {
     ///
     /// * [`erc721::Error::NonexistentToken`] - If token does not exist.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must exist.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
-
+    /// * [`Transfer`].
     pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
             self._update(Address::ZERO, token_id, Address::ZERO)?;
@@ -608,6 +611,11 @@ impl Erc721Consecutive {
     /// As opposed to [`Self::transfer_from`], this imposes no restrictions on
     /// `msg::sender`.
     ///
+    /// # Requirements
+    ///
+    /// * `to` cannot be `Address::ZERO`.
+    /// * The `token_id` token must be owned by `from`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -622,15 +630,9 @@ impl Erc721Consecutive {
     /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
     ///   `from`.
     ///
-    /// # Requirements:
-    ///
-    /// * `to` cannot be `Address::ZERO`.
-    /// * The `token_id` token must be owned by `from`.
-    ///
     /// # Events
     ///
-    /// * [`Transfer`]
-
+    /// * [`Transfer`].
     pub fn _transfer(
         &mut self,
         from: Address,
@@ -673,6 +675,16 @@ impl Erc721Consecutive {
     /// receiver, and can be used to e.g. implement alternative mechanisms
     /// to perform token transfer, such as signature-based.
     ///
+    ///
+    /// # Requirements
+    ///
+    /// * The `token_id` token must exist and be owned by `from`.
+    /// * `to` cannot be `Address::ZERO`.
+    /// * `from` cannot be `Address::ZERO`.
+    /// * If `to` refers to a smart contract, it must implement
+    ///   [`erc721::IERC721Receiver::on_erc_721_received`], which is called upon
+    ///   a `safe_transfer`.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -689,18 +701,9 @@ impl Erc721Consecutive {
     /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
     ///   `from`.
     ///
-    /// # Requirements:
-    ///
-    /// * The `token_id` token must exist and be owned by `from`.
-    /// * `to` cannot be `Address::ZERO`.
-    /// * `from` cannot be `Address::ZERO`.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`], which is called upon
-    ///   a `safe_transfer`.
-    ///
     /// # Events
-    /// * [`Transfer`]
-
+    ///
+    /// * [`Transfer`].
     pub fn _safe_transfer(
         &mut self,
         from: Address,
@@ -741,7 +744,7 @@ impl Erc721Consecutive {
     ///
     /// # Events
     ///
-    /// * [`Approval`]
+    /// * [`Approval`].
     pub fn _approve(
         &mut self,
         to: Address,
@@ -779,15 +782,15 @@ impl Erc721Consecutive {
     ///
     /// Overrides to ownership logic should be done to
     /// [`Self::_owner_of`].
-    ///
-    /// # Errors
-    ///
-    /// * [`erc721::Error::NonexistentToken`] - If token does not exist.
-    ///
+    //
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token_id` - Token id as a number.
+    ///
+    /// # Errors
+    ///
+    /// * [`erc721::Error::NonexistentToken`] - If token does not exist.
     pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
         let owner = self._owner_of(token_id);
         if owner.is_zero() {
