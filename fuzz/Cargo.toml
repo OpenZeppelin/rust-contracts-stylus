@@ -32,8 +32,8 @@ doc = false
 bench = false
 
 [[bin]]
-name = "keccak_doesnt_panic"
-path = "fuzz_targets/keccak/no_panics.rs"
+name = "keccak_does_not_panic"
+path = "fuzz_targets/keccak/does_not_panic.rs"
 test = false
 doc = false
 bench = false
