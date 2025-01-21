@@ -384,9 +384,9 @@ mod tests {
     }
 
     prop_compose! {
-        fn valid_merkle_proof()(
+        fn valid_merkle_proof(min_proof_len: usize)(
             leaf: [u8; 32],
-            proof: Vec<[u8; 32]>,
+            proof in prop::collection::vec(any::<[u8; 32]>(), min_proof_len..ProptestConfig::default().max_default_size_range),
         ) -> (Vec<[u8; 32]>, [u8; 32], [u8; 32]) {
             let mut current = leaf;
             for &hash in &proof {
@@ -404,7 +404,7 @@ mod tests {
     proptest! {
         #[test]
         fn proof_tampering_invalidates(
-            (proof, root, leaf) in valid_merkle_proof(),
+            (proof, root, leaf) in valid_merkle_proof(0),
             tamper_idx in 0..32usize,
         ) {
             if let Some(proof_element) = proof.first() {
@@ -419,7 +419,7 @@ mod tests {
 
         #[test]
         fn proof_length_affects_verification(
-            (mut proof, root, leaf) in valid_merkle_proof(),
+            (mut proof, root, leaf) in valid_merkle_proof(0),
             extra_hash: [u8; 32]
         ) {
             proof.push(extra_hash);
@@ -447,7 +447,7 @@ mod tests {
 
         #[test]
         fn single_leaf_equals_regular_verify(
-            (proof, root, leaf) in valid_merkle_proof()
+            (proof, root, leaf) in valid_merkle_proof(0)
         ) {
             let proof_flags = vec![false; proof.len()];
             let multi_result = Verifier::verify_multi_proof(&proof, &proof_flags, root, &[leaf]);
