@@ -25,5 +25,5 @@ fuzz_target!(|data: (B256, u8, B256, B256)| {
 });
 
 // TODO: fuzzing code from [`openzeppelin_stylus`] will be possible once the
-// Stylus team refactors the interation with Host.
+// Stylus team refactors the interaction with Host.
 // See: https://github.com/OffchainLabs/stylus-sdk-rs/pull/195
