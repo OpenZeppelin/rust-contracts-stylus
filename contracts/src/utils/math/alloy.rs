@@ -22,10 +22,24 @@ pub trait Math {
     /// * `rhs` - second value to compute average.
     #[must_use]
     fn average(self, rhs: Self) -> Self;
+
+    /// TODO: Rust docs
+    ///
+    /// # Arguments
+    ///
+    /// * `self` -
+    /// * `y` -
+    /// * `denominator` -
+    /// * `rounding` -
+    #[must_use]
+    fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self;
 }
 
+/// TODO: Rust docs
 pub enum Rounding {
+    /// TODO: Rust docs
     Floor,
+    /// TODO: Rust docs
     Ceil,
 }
 
@@ -149,6 +163,15 @@ impl Math for U256 {
         // out the carries, so `2 * (a & b) + (a ^ b) == a + b`. Sum with no
         // carries + carries.
         (self & rhs) + ((self ^ rhs) >> 1)
+    }
+
+    fn mul_div(
+        self,
+        _y: Self,
+        _denominator: Self,
+        _rounding: Rounding,
+    ) -> Self {
+        todo!()
     }
 }
 

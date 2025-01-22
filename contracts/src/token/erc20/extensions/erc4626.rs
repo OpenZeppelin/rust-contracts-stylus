@@ -23,7 +23,7 @@ use crate::{
         utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
-    utils::math::alloy::Rounding,
+    utils::math::alloy::{Math, Rounding},
 };
 
 sol! {
@@ -678,41 +678,41 @@ impl Erc4626 {
     /// TODO: Rust docs
     fn _convert_to_shares(
         &mut self,
-        _assets: U256,
-        _rounding: Rounding,
+        assets: U256,
+        rounding: Rounding,
     ) -> Result<U256, Error> {
-        let _total_supply = self.erc20_total_supply(self.asset())?;
-        // return assets.mulDiv(
-        // total_Supply + 10 * *_decimalsOffset(),
-        // totalAssets() + 1,
-        // rounding,
-        // );
+        let total_supply = self.erc20_total_supply(self.asset())?;
 
-        // let adjusted_total_supply = self.erc20_total_supply(asset)?
-        // + U256::from(10u32.pow(self.decimals_offset() as u32));
-        // let adjusted_total_assets = self.total_assets(asset) + U256::from(1);
-        // self._mul_div(assets, adjusted_total_supply, adjusted_total_assets)
-        //
-        todo!()
+        let shares = assets.mul_div(
+            total_supply
+                + U256::from(10)
+                    .checked_pow(U256::from(Self::_decimals_offset()))
+                    .expect("overflow in `Erc4626::_convert_to_shares`"),
+            self.total_assets()? + U256::from(1),
+            rounding,
+        );
+
+        Ok(shares)
     }
 
     /// TODO: Rust docs
     fn _convert_to_assets(
         &mut self,
-        _shares: U256,
-        _rounding: Rounding,
+        shares: U256,
+        rounding: Rounding,
     ) -> Result<U256, Error> {
-        // return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 **
-        // _decimalsOffset(), rounding);
+        let total_supply = self.erc20_total_supply(self.asset())?;
 
-        let _total_supply = self.erc20_total_supply(self.asset())?;
+        let assets = shares.mul_div(
+            self.total_assets()? + U256::from(1),
+            total_supply
+                + U256::from(10)
+                    .checked_pow(U256::from(Self::_decimals_offset()))
+                    .expect("overflow in `Erc4626::_convert_to_assets`"),
+            rounding,
+        );
 
-        // let adjusted_total_supply = asset.total_supply()
-        // + U256::from(10u32.pow(self._decimals_offset() as u32));
-        // let adjusted_total_assets = self.total_assets(asset) + U256::from(1);
-        // self._mul_div(shares, adjusted_total_assets, adjusted_total_supply)
-
-        todo!()
+        Ok(assets)
     }
 
     /// TODO: Rust docs
