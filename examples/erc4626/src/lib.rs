@@ -3,9 +3,8 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20Metadata, Erc4626, IErc20Metadata, IErc4626},
+    extensions::{Erc20Metadata, Erc4626},
     utils::SafeErc20,
     Erc20,
 };
