@@ -5,7 +5,7 @@ use stylus_sdk::{
     prelude::storage, storage::StorageString, stylus_proc::public,
 };
 
-/// Metadata of the token.
+/// [`Metadata`] of the token.
 #[storage]
 pub struct Metadata {
     /// Token name.

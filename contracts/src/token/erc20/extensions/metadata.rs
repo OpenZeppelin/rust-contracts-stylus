@@ -15,7 +15,7 @@ use alloc::vec::Vec;
 
 use crate::utils::Metadata;
 
-/// Metadata of the [`super::super::Erc20`] token.
+/// [`Erc20Metadata`] of the [`super::super::Erc20`] token.
 ///
 /// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
 #[storage]

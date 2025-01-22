@@ -16,7 +16,7 @@ use crate::{
     utils::{introspection::erc165::IErc165, Metadata},
 };
 
-/// Metadata of an [`crate::token::erc721::Erc721`] token.
+/// [`Erc721Metadata`] of an [`crate::token::erc721::Erc721`] token.
 #[storage]
 pub struct Erc721Metadata {
     /// Common Metadata.

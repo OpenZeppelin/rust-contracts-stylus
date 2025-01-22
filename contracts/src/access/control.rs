@@ -105,7 +105,7 @@ pub enum Error {
     BadConfirmation(AccessControlBadConfirmation),
 }
 
-/// Information about a specific role.
+/// Information about a specific [`RoleData`].
 #[storage]
 pub struct RoleData {
     /// Whether an account is member of a certain role.
