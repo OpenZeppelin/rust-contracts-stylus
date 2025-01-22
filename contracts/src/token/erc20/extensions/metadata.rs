@@ -90,7 +90,7 @@ mod tests {
     use crate::token::erc20::extensions::{Erc20Metadata, IErc20Metadata};
 
     #[motsu::test]
-    fn interface_id() {
+    fn interface_id_success() {
         let actual = <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
         let expected = 0xa219a025;
         assert_eq!(actual, expected);

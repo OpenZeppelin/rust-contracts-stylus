@@ -557,45 +557,45 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_start(contract: VestingWallet) {
+    fn start_read_success(contract: VestingWallet) {
         let (start, _) = init(contract, start(), 0);
         assert_eq!(U256::from(start), contract.start());
     }
 
     #[motsu::test]
-    fn reads_duration(contract: VestingWallet) {
+    fn duration_read_success(contract: VestingWallet) {
         let (_, duration) = init(contract, 0, DURATION);
         assert_eq!(U256::from(duration), contract.duration());
     }
 
     #[motsu::test]
-    fn reads_end(contract: VestingWallet) {
+    fn end_read_success(contract: VestingWallet) {
         let (start, duration) = init(contract, start(), DURATION);
         assert_eq!(U256::from(start + duration), contract.end());
     }
 
     #[motsu::test]
-    fn reads_max_end(contract: VestingWallet) {
+    fn end_read_success_with_max_values(contract: VestingWallet) {
         init(contract, u64::MAX, u64::MAX);
         assert_eq!(U256::from(U64::MAX) + U256::from(U64::MAX), contract.end());
     }
 
     #[motsu::test]
-    fn reads_released_eth(contract: VestingWallet) {
+    fn released_eth_read_success(contract: VestingWallet) {
         let one = uint!(1_U256);
         contract._released.set(one);
         assert_eq!(one, contract.released_eth());
     }
 
     #[motsu::test]
-    fn reads_released_erc20(contract: VestingWallet) {
+    fn released_erc20_read_success(contract: VestingWallet) {
         let one = uint!(1_U256);
         contract._erc20_released.setter(TOKEN).set(one);
         assert_eq!(one, contract.released_erc20(TOKEN));
     }
 
     #[motsu::test]
-    fn gets_vesting_schedule(contract: VestingWallet) {
+    fn vesting_schedule_success(contract: VestingWallet) {
         let (start, duration) = init(contract, start(), DURATION);
 
         let one = uint!(1_U256);
@@ -617,7 +617,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn gets_vesting_schedule_zero_duration(contract: VestingWallet) {
+    fn vesting_schedule_success_with_zero_duration(contract: VestingWallet) {
         let (start, _) = init(contract, start(), 0);
 
         let two = uint!(2_U256);

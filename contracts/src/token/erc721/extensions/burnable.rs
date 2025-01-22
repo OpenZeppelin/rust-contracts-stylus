@@ -68,7 +68,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn burns(contract: Erc721) {
+    fn burn_success(contract: Erc721) {
         let alice = msg::sender();
         let one = uint!(1_U256);
 
@@ -100,7 +100,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval(contract: Erc721) {
+    fn burn_success_with_approval(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(BOB, TOKEN_ID).expect("should mint a token for Bob");
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval_for_all(contract: Erc721) {
+    fn burn_success_with_approval_for_all(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(BOB, TOKEN_ID).expect("should mint a token for Bob");
@@ -164,7 +164,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_get_approved_of_previous_approval_burned(contract: Erc721) {
+    fn get_approved_reverts_when_token_burned(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(alice, TOKEN_ID).expect("should mint a token for Alice");
@@ -187,7 +187,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_without_approval(contract: Erc721) {
+    fn burn_reverts_when_approval_missing(contract: Erc721) {
         contract._mint(BOB, TOKEN_ID).expect("should mint a token for Bob");
 
         let err = contract
@@ -204,7 +204,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_nonexistent_token(contract: Erc721) {
+    fn burn_reverts_when_token_nonexistent(contract: Erc721) {
         let err = contract
             .burn(TOKEN_ID)
             .expect_err("should return Error::NonexistentToken");

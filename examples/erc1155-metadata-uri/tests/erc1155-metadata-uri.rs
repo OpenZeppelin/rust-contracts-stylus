@@ -22,7 +22,7 @@ fn ctr(uri: &str) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn uri_returns_metadata_uri_when_token_uri_is_not_set(
+async fn uri_success_with_metadata_uri_only(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
@@ -43,9 +43,7 @@ async fn uri_returns_metadata_uri_when_token_uri_is_not_set(
 }
 
 #[e2e::test]
-async fn uri_returns_empty_string_when_no_uri_is_set(
-    alice: Account,
-) -> eyre::Result<()> {
+async fn uri_success_with_no_uri_set(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(""))
@@ -65,7 +63,7 @@ async fn uri_returns_empty_string_when_no_uri_is_set(
 }
 
 #[e2e::test]
-async fn uri_returns_concatenated_base_uri_and_token_uri(
+async fn uri_success_with_base_and_token_uri(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
@@ -97,9 +95,7 @@ async fn uri_returns_concatenated_base_uri_and_token_uri(
 }
 
 #[e2e::test]
-async fn uri_returns_token_uri_when_base_uri_is_empty(
-    alice: Account,
-) -> eyre::Result<()> {
+async fn uri_success_with_token_uri_only(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(""))
@@ -126,7 +122,7 @@ async fn uri_returns_token_uri_when_base_uri_is_empty(
 }
 
 #[e2e::test]
-async fn uri_ignores_metadata_uri_when_token_uri_is_set(
+async fn uri_success_when_token_uri_overrides_metadata(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
@@ -162,7 +158,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
 // ============================================================================
 
 #[e2e::test]
-async fn supports_interface(alice: Account) -> eyre::Result<()> {
+async fn supports_interface_success(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(URI))

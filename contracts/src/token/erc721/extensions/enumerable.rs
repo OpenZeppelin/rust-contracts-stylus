@@ -350,12 +350,14 @@ mod tests {
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     #[motsu::test]
-    fn total_supply_no_tokens(contract: Erc721Enumerable) {
+    fn total_supply_success_with_no_tokens(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
     }
 
     #[motsu::test]
-    fn error_when_token_by_index_is_out_of_bound(contract: Erc721Enumerable) {
+    fn token_by_index_reverts_when_index_out_of_bounds(
+        contract: Erc721Enumerable,
+    ) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
         let token_idx = uint!(2024_U256);
@@ -365,7 +367,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn add_token_to_all_tokens_enumeration_works(contract: Erc721Enumerable) {
+    fn token_enumeration_success_with_add_token(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
         let tokens_len = 10;
@@ -395,9 +397,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn remove_token_from_all_tokens_enumeration_works(
-        contract: Erc721Enumerable,
-    ) {
+    fn token_enumeration_success_with_remove_token(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
         let initial_tokens_len = 10;
@@ -446,14 +446,14 @@ mod tests {
     }
 
     #[motsu::test]
-    fn check_increase_balance() {
+    fn check_increase_balance_success() {
         assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
         let err = Erc721Enumerable::_check_increase_balance(1).unwrap_err();
         assert!(matches!(err, Error::EnumerableForbiddenBatchMint(_)));
     }
 
     #[motsu::test]
-    fn token_of_owner_by_index_works(contract: Erc721Enumerable) {
+    fn token_of_owner_by_index_success(contract: Erc721Enumerable) {
         let alice = msg::sender();
         let mut erc721 = Erc721::default();
         assert_eq!(
@@ -480,7 +480,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_token_of_owner_for_index_out_of_bound(
+    fn token_of_owner_by_index_reverts_when_index_out_of_bounds(
         contract: Erc721Enumerable,
     ) {
         let alice = msg::sender();
@@ -507,7 +507,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_token_of_owner_does_not_own_any_token(
+    fn token_of_owner_by_index_reverts_when_no_tokens(
         contract: Erc721Enumerable,
     ) {
         let erc721 = Erc721::default();
@@ -522,7 +522,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_of_owner_by_index_after_transfer_works(
+    fn token_of_owner_by_index_success_after_transfer(
         contract: Erc721Enumerable,
     ) {
         let alice = msg::sender();
@@ -572,7 +572,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn interface_id() {
+    fn interface_id_success() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
         let expected = 0x780e9d63;
         assert_eq!(actual, expected);

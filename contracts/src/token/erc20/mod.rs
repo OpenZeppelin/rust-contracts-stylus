@@ -598,7 +598,7 @@ mod tests {
     use crate::utils::introspection::erc165::IErc165;
 
     #[motsu::test]
-    fn reads_balance(contract: Erc20) {
+    fn balance_of_success(contract: Erc20) {
         let balance = contract.balance_of(Address::ZERO);
         assert_eq!(U256::ZERO, balance);
 
@@ -610,7 +610,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_mint(contract: Erc20) {
+    fn mint_success_with_update(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
 
@@ -629,7 +629,7 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
-    fn update_mint_errors_arithmetic_overflow(contract: Erc20) {
+    fn mint_reverts_when_supply_overflows(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
@@ -646,7 +646,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_works(contract: Erc20) {
+    fn mint_success(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
 
@@ -664,7 +664,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_errors_invalid_receiver(contract: Erc20) {
+    fn mint_reverts_when_receiver_invalid(contract: Erc20) {
         let receiver = Address::ZERO;
         let one = uint!(1_U256);
 
@@ -683,7 +683,7 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
-    fn mint_errors_arithmetic_overflow(contract: Erc20) {
+    fn mint_reverts_when_supply_overflows(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         assert_eq!(U256::ZERO, contract.balance_of(alice));
@@ -699,7 +699,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_burn(contract: Erc20) {
+    fn burn_success_with_update(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         let two = uint!(2_U256);
@@ -724,7 +724,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_burn_errors_insufficient_balance(contract: Erc20) {
+    fn burn_reverts_when_balance_insufficient(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         let two = uint!(2_U256);
@@ -749,7 +749,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_transfer(contract: Erc20) {
+    fn transfer_success_with_update(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let one = uint!(1_U256);
@@ -777,7 +777,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_transfer_errors_insufficient_balance(contract: Erc20) {
+    fn transfer_reverts_when_balance_insufficient(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let one = uint!(1_U256);
@@ -805,7 +805,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfers(contract: Erc20) {
+    fn transfer_success(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -825,7 +825,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfers_from(contract: Erc20) {
+    fn transfer_from_success(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let sender = msg::sender();
@@ -847,7 +847,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_errors_when_insufficient_balance(contract: Erc20) {
+    fn transfer_from_reverts_when_balance_insufficient(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -862,7 +862,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_errors_when_invalid_approver(contract: Erc20) {
+    fn transfer_from_reverts_when_approver_invalid(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         contract
@@ -875,7 +875,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_errors_when_invalid_receiver(contract: Erc20) {
+    fn transfer_from_reverts_when_receiver_invalid(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         contract._allowances.setter(alice).setter(msg::sender()).set(one);
@@ -884,7 +884,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_errors_when_insufficient_allowance(contract: Erc20) {
+    fn transfer_from_reverts_when_allowance_insufficient(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -898,7 +898,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_allowance(contract: Erc20) {
+    fn allowance_read_success(contract: Erc20) {
         let owner = msg::sender();
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
@@ -912,7 +912,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approves(contract: Erc20) {
+    fn approve_success(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // `msg::sender` approves Alice.
@@ -922,7 +922,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_errors_when_invalid_spender(contract: Erc20) {
+    fn approve_reverts_when_spender_invalid(contract: Erc20) {
         // `msg::sender` approves `Address::ZERO`.
         let one = uint!(1_U256);
         let result = contract.approve(Address::ZERO, one);
@@ -930,7 +930,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn interface_id() {
+    fn interface_id_success() {
         let actual = <Erc20 as IErc20>::INTERFACE_ID;
         let expected = 0x36372b07;
         assert_eq!(actual, expected);

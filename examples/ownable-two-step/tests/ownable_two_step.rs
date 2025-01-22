@@ -23,7 +23,7 @@ fn ctr(owner: Address) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_success(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let receipt =
         alice.as_deployer().with_constructor(ctr(alice_addr)).deploy().await?;
@@ -45,9 +45,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn construct_reverts_when_owner_is_zero_address(
-    alice: Account,
-) -> Result<()> {
+async fn constructor_reverts_when_owner_zero(alice: Account) -> Result<()> {
     let err = alice
         .as_deployer()
         .with_constructor(ctr(Address::ZERO))
@@ -63,7 +61,7 @@ async fn construct_reverts_when_owner_is_zero_address(
 }
 
 #[e2e::test]
-async fn transfer_ownership_initiates_transfer(
+async fn transfer_ownership_success(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -122,7 +120,7 @@ async fn transfer_ownership_reverts_when_not_owner(
 }
 
 #[e2e::test]
-async fn accept_ownership(alice: Account, bob: Account) -> Result<()> {
+async fn accept_ownership_success(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -154,7 +152,7 @@ async fn accept_ownership(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_ownership_cancel_transfer(
+async fn transfer_ownership_success_with_cancel(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -184,7 +182,7 @@ async fn transfer_ownership_cancel_transfer(
 }
 
 #[e2e::test]
-async fn overwrite_previous_transfer_ownership(
+async fn transfer_ownership_success_with_overwrite(
     alice: Account,
     bob: Account,
     charlie: Account,
@@ -275,7 +273,7 @@ async fn accept_ownership_reverts_when_not_pending_owner(
 }
 
 #[e2e::test]
-async fn renounce_ownership(alice: Account) -> Result<()> {
+async fn renounce_ownership_success(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice
         .as_deployer()

@@ -75,7 +75,7 @@ fn extract_signature_v(signature: &Signature) -> u8 {
 // ============================================================================
 
 #[e2e::test]
-async fn error_when_expired_deadline_for_permit(
+async fn permit_reverts_when_deadline_expired(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -121,7 +121,10 @@ async fn error_when_expired_deadline_for_permit(
 }
 
 #[e2e::test]
-async fn permit_works(alice: Account, bob: Account) -> Result<()> {
+async fn permit_success_with_transfer(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -209,7 +212,7 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn permit_rejects_reused_signature(
+async fn permit_reverts_when_signature_reused(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -284,7 +287,7 @@ async fn permit_rejects_reused_signature(
 }
 
 #[e2e::test]
-async fn permit_rejects_invalid_signature(
+async fn permit_reverts_when_signature_invalid(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -336,7 +339,7 @@ async fn permit_rejects_invalid_signature(
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_success(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
 
@@ -348,7 +351,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mints(alice: Account) -> Result<()> {
+async fn mint_success(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -380,7 +383,7 @@ async fn mints(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
+async fn mint_reverts_when_receiver_invalid(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let invalid_receiver = Address::ZERO;
@@ -408,7 +411,7 @@ async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfers(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_success(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -449,7 +452,7 @@ async fn transfers(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_rejects_insufficient_balance(
+async fn transfer_reverts_when_balance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -493,7 +496,7 @@ async fn transfer_rejects_insufficient_balance(
 }
 
 #[e2e::test]
-async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
+async fn transfer_reverts_when_receiver_invalid(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -532,7 +535,7 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn approves(alice: Account, bob: Account) -> Result<()> {
+async fn approve_success(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -599,7 +602,7 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
+async fn approve_reverts_when_spender_invalid(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -651,7 +654,7 @@ async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_from_success(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);
@@ -703,7 +706,7 @@ async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_from_reverts_insufficient_balance(
+async fn transfer_from_reverts_when_balance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -758,7 +761,7 @@ async fn transfer_from_reverts_insufficient_balance(
 }
 
 #[e2e::test]
-async fn transfer_from_rejects_insufficient_allowance(
+async fn transfer_from_reverts_when_allowance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -813,7 +816,7 @@ async fn transfer_from_rejects_insufficient_allowance(
 }
 
 #[e2e::test]
-async fn transfer_from_rejects_invalid_receiver(
+async fn transfer_from_reverts_when_receiver_invalid(
     alice: Account,
     bob: Account,
 ) -> Result<()> {

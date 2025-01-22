@@ -367,7 +367,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn max_flash_loan_token_match(contract: Erc20FlashMint) {
+    fn max_flash_loan_success_with_matching_token(contract: Erc20FlashMint) {
         let erc20 = Erc20::default();
         let max_flash_loan = contract.max_flash_loan(TOKEN_ADDRESS, &erc20);
         assert_eq!(max_flash_loan, U256::MAX);
@@ -375,7 +375,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn max_flash_loan_token_mismatch(contract: Erc20FlashMint) {
+    fn max_flash_loan_success_with_mismatched_token(contract: Erc20FlashMint) {
         let erc20 = Erc20::default();
         let max_flash_loan =
             contract.max_flash_loan(INVALID_TOKEN_ADDRESS, &erc20);
@@ -384,7 +384,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn max_flash_loan_when_token_minted(contract: Erc20FlashMint) {
+    fn max_flash_loan_success_with_minted_tokens(contract: Erc20FlashMint) {
         let mut erc20 = Erc20::default();
         erc20._mint(msg::sender(), uint!(10000_U256)).unwrap();
         let max_flash_loan = contract.max_flash_loan(TOKEN_ADDRESS, &erc20);
@@ -393,7 +393,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn flash_fee(contract: Erc20FlashMint) {
+    fn flash_fee_success(contract: Erc20FlashMint) {
         let flash_fee =
             contract.flash_fee(TOKEN_ADDRESS, uint!(1000_U256)).unwrap();
         assert_eq!(flash_fee, U256::MIN);
@@ -401,7 +401,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn error_flash_fee_when_invalid_token(contract: Erc20FlashMint) {
+    fn flash_fee_reverts_when_token_invalid(contract: Erc20FlashMint) {
         let result =
             contract.flash_fee(INVALID_TOKEN_ADDRESS, uint!(1000_U256));
         assert!(matches!(result, Err(Error::UnsupportedToken(_))));
@@ -409,7 +409,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn error_flash_loan_when_exceeded_max_loan(contract: Erc20FlashMint) {
+    fn flash_loan_reverts_when_max_loan_exceeded(contract: Erc20FlashMint) {
         let mut erc20 = Erc20::default();
         let _ = erc20._mint(msg::sender(), uint!(10000_U256));
         let result = contract.flash_loan(
@@ -424,7 +424,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn error_flash_loan_when_zero_receiver_address(contract: Erc20FlashMint) {
+    fn flash_loan_reverts_when_receiver_zero(contract: Erc20FlashMint) {
         let mut erc20 = Erc20::default();
         let invalid_reciver = Address::ZERO;
         let result = contract.flash_loan(
@@ -439,7 +439,7 @@ mod tests {
 
     #[motsu::test]
     #[ignore]
-    fn error_flash_loan_when_invalid_receiver(contract: Erc20FlashMint) {
+    fn flash_loan_reverts_when_receiver_invalid(contract: Erc20FlashMint) {
         let mut erc20 = Erc20::default();
         let result = contract.flash_loan(
             ALICE,

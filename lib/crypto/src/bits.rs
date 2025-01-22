@@ -35,7 +35,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn u64_bit_iterator_be() {
+    fn bit_iterator_be_success_with_u64() {
         let num: u64 = 0b1100;
         let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
 

@@ -142,7 +142,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Erc1155) {
+    fn burn_success(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 1);
 
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval(contract: Erc1155) {
+    fn burn_success_with_approval(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
@@ -176,7 +176,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_burns(contract: Erc1155) {
+    fn burn_reverts_when_approval_missing(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
@@ -194,7 +194,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_burns(contract: Erc1155) {
+    fn burn_reverts_when_sender_invalid(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 1);
         let invalid_sender = Address::ZERO;
@@ -218,7 +218,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_insufficient_balance_burn(contract: Erc1155) {
+    fn burn_reverts_when_balance_insufficient(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 1);
 
@@ -242,7 +242,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_batch(contract: Erc1155) {
+    fn burn_batch_success(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 4);
 
@@ -262,7 +262,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_batch_with_approval(contract: Erc1155) {
+    fn burn_batch_success_with_approval(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 4);
 
@@ -284,7 +284,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_burn_batch(contract: Erc1155) {
+    fn burn_batch_reverts_when_approval_missing(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 2);
 
@@ -302,7 +302,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_burn_batch(contract: Erc1155) {
+    fn burn_batch_reverts_when_sender_invalid(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 5);
         let invalid_sender = Address::ZERO;
@@ -328,7 +328,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_insufficient_balance_burn_batch(contract: Erc1155) {
+    fn burn_batch_reverts_when_balance_insufficient(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 5);
         let to_burn: Vec<U256> =

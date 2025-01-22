@@ -161,7 +161,7 @@ mod tests {
     use crate::utils::pausable::{Error, Pausable};
 
     #[motsu::test]
-    fn paused_works(contract: Pausable) {
+    fn paused_read_success(contract: Pausable) {
         contract._paused.set(false);
         assert!(!contract.paused());
         contract._paused.set(true);
@@ -169,7 +169,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_not_paused_works(contract: Pausable) {
+    fn when_not_paused_success(contract: Pausable) {
         contract._paused.set(false);
         assert!(!contract.paused());
 
@@ -178,7 +178,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_not_paused_errors_when_paused(contract: Pausable) {
+    fn when_not_paused_reverts_when_paused(contract: Pausable) {
         contract._paused.set(true);
         assert!(contract.paused());
 
@@ -187,7 +187,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_paused_works(contract: Pausable) {
+    fn when_paused_success(contract: Pausable) {
         contract._paused.set(true);
         assert!(contract.paused());
 
@@ -196,7 +196,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_paused_errors_when_not_paused(contract: Pausable) {
+    fn when_paused_reverts_when_not_paused(contract: Pausable) {
         contract._paused.set(false);
         assert!(!contract.paused());
 
@@ -205,7 +205,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn pause_works(contract: Pausable) {
+    fn pause_success(contract: Pausable) {
         contract._paused.set(false);
         assert!(!contract.paused());
 
@@ -216,7 +216,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn pause_errors_when_already_paused(contract: Pausable) {
+    fn pause_reverts_when_already_paused(contract: Pausable) {
         contract._paused.set(true);
         assert!(contract.paused());
 
@@ -226,7 +226,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn unpause_works(contract: Pausable) {
+    fn unpause_success(contract: Pausable) {
         contract._paused.set(true);
         assert!(contract.paused());
 
@@ -237,7 +237,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn unpause_errors_when_already_unpaused(contract: Pausable) {
+    fn unpause_reverts_when_already_unpaused(contract: Pausable) {
         contract._paused.set(false);
         assert!(!contract.paused());
 

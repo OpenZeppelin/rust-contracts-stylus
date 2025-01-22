@@ -21,7 +21,7 @@ const NEW_ADMIN_ROLE: [u8; 32] =
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_success(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let receipt = alice.as_deployer().deploy().await?;
     let contract = AccessControl::new(receipt.address()?, &alice.wallet);
@@ -40,9 +40,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn other_roles_admin_is_the_default_admin_role(
-    alice: Account,
-) -> Result<()> {
+async fn role_admin_success_with_default_admin(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -54,7 +52,7 @@ async fn other_roles_admin_is_the_default_admin_role(
 }
 
 #[e2e::test]
-async fn default_role_is_default_admin(alice: Account) -> Result<()> {
+async fn default_admin_role_success(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -70,7 +68,7 @@ async fn default_role_is_default_admin(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_non_admin_grants_role(
+async fn grant_role_reverts_when_not_admin(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -90,7 +88,7 @@ async fn error_when_non_admin_grants_role(
 }
 
 #[e2e::test]
-async fn accounts_can_be_granted_roles_multiple_times(
+async fn grant_role_success_with_multiple_grants(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -117,7 +115,7 @@ async fn accounts_can_be_granted_roles_multiple_times(
 }
 
 #[e2e::test]
-async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
+async fn revoke_role_success_with_ungranted_role(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
@@ -137,7 +135,7 @@ async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
+async fn revoke_role_success(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -157,7 +155,7 @@ async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_non_admin_revokes_role(
+async fn revoke_role_reverts_when_not_admin(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -181,7 +179,7 @@ async fn error_when_non_admin_revokes_role(
 }
 
 #[e2e::test]
-async fn roles_can_be_revoked_multiple_times(
+async fn revoke_role_success_with_multiple_revokes(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -203,7 +201,9 @@ async fn roles_can_be_revoked_multiple_times(
 }
 
 #[e2e::test]
-async fn not_granted_roles_can_be_renounced(alice: Account) -> Result<()> {
+async fn renounce_role_success_with_ungranted_role(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
@@ -219,7 +219,7 @@ async fn not_granted_roles_can_be_renounced(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
+async fn renounce_role_success(alice: Account, bob: Account) -> Result<()> {
     let bob_addr = bob.address();
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
@@ -238,7 +238,7 @@ async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_the_one_renouncing_is_not_the_sender(
+async fn renounce_role_reverts_when_not_sender(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -259,7 +259,9 @@ async fn error_when_the_one_renouncing_is_not_the_sender(
 }
 
 #[e2e::test]
-async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
+async fn renounce_role_success_with_multiple_renounces(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
@@ -276,7 +278,7 @@ async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn a_roles_admin_role_can_change(alice: Account) -> Result<()> {
+async fn set_role_admin_success(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -296,7 +298,7 @@ async fn a_roles_admin_role_can_change(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn the_new_admin_can_grant_roles(
+async fn role_admin_change_success_with_new_grant(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -328,7 +330,7 @@ async fn the_new_admin_can_grant_roles(
 }
 
 #[e2e::test]
-async fn the_new_admin_can_revoke_roles(
+async fn role_admin_change_success_with_new_revoke(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -361,7 +363,7 @@ async fn the_new_admin_can_revoke_roles(
 }
 
 #[e2e::test]
-async fn error_when_previous_admin_grants_roles(
+async fn role_admin_change_reverts_when_old_admin_grants(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -390,7 +392,7 @@ async fn error_when_previous_admin_grants_roles(
 }
 
 #[e2e::test]
-async fn error_when_previous_admin_revokes_roles(
+async fn role_admin_change_reverts_when_old_admin_revokes(
     alice: Account,
     bob: Account,
 ) -> Result<()> {

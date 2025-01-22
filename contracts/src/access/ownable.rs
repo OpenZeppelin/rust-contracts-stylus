@@ -211,14 +211,14 @@ mod tests {
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
     #[motsu::test]
-    fn reads_owner(contract: Ownable) {
+    fn owner_read_success(contract: Ownable) {
         contract._owner.set(msg::sender());
         let owner = contract.owner();
         assert_eq!(owner, msg::sender());
     }
 
     #[motsu::test]
-    fn transfers_ownership(contract: Ownable) {
+    fn transfer_ownership_success(contract: Ownable) {
         contract._owner.set(msg::sender());
 
         contract.transfer_ownership(ALICE).expect("should transfer ownership");
@@ -227,7 +227,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_onwers_from_transferring(contract: Ownable) {
+    fn transfer_ownership_reverts_when_not_owner(contract: Ownable) {
         // Alice must be set as owner, because we can't set the
         // `msg::sender` yet.
         contract._owner.set(ALICE);
@@ -238,7 +238,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_reaching_stuck_state(contract: Ownable) {
+    fn transfer_ownership_reverts_when_zero_address(contract: Ownable) {
         contract._owner.set(msg::sender());
 
         let err = contract.transfer_ownership(Address::ZERO).unwrap_err();
@@ -246,7 +246,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn loses_ownership_after_renouncing(contract: Ownable) {
+    fn renounce_ownership_success(contract: Ownable) {
         contract._owner.set(msg::sender());
 
         let _ = contract.renounce_ownership();
@@ -255,7 +255,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_renouncing(contract: Ownable) {
+    fn renounce_ownership_reverts_when_not_owner(contract: Ownable) {
         // Alice must be set as owner, because we can't set the
         // `msg::sender` yet.
         contract._owner.set(ALICE);
@@ -265,7 +265,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn recovers_access_using_internal_transfer(contract: Ownable) {
+    fn internal_transfer_ownership_success(contract: Ownable) {
         contract._owner.set(ALICE);
 
         contract._transfer_ownership(ALICE);
