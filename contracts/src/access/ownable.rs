@@ -65,7 +65,7 @@ impl MethodError for Error {
     }
 }
 
-/// State of an `Ownable` contract.
+/// State of an [`Ownable`] contract.
 #[storage]
 pub struct Ownable {
     /// The current owner of this contract.

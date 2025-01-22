@@ -35,7 +35,7 @@ pub enum Error {
     InvalidAccountNonce(InvalidAccountNonce),
 }
 
-/// State of a Nonces Contract.
+/// State of a [`Nonces`] Contract.
 #[storage]
 pub struct Nonces {
     /// Mapping from address to its nonce.

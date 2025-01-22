@@ -114,7 +114,7 @@ pub struct RoleData {
     pub admin_role: StorageFixedBytes<32>,
 }
 
-/// State of an `AccessControl` contract.
+/// State of an [`AccessControl`] contract.
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
