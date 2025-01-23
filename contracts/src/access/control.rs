@@ -187,7 +187,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// * [`RoleGranted`].
+    /// * [`RoleGranted`]
     pub fn grant_role(
         &mut self,
         role: B256,

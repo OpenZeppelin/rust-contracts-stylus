@@ -26,8 +26,11 @@ pub struct Erc1155UriStorage {
 impl Erc1155UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
-    /// NOTE: In order to have [`Erc1155UriStorage::uri`] exposed in ABI,
-    /// you need to do this manually.
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `token_id`
+    /// parameter. The `metadata_uri` reference should come from your contract's
+    /// state. The implementation should forward the call to your internal
+    /// storage instance along with the metadata reference.
     ///
     /// # Arguments
     ///

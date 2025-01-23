@@ -28,7 +28,7 @@ pub trait IErc20Burnable {
     ///
     /// # Events
     ///
-    /// * [`super::super::Transfer`].
+    /// * [`erc20::Transfer`].
     fn burn(&mut self, value: U256) -> Result<(), Self::Error>;
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
@@ -45,7 +45,7 @@ pub trait IErc20Burnable {
     ///
     /// * [`Error::InsufficientAllowance`] - If not enough allowance is
     ///   available.
-    /// * [`Error::InvalidSender`]  - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     ///

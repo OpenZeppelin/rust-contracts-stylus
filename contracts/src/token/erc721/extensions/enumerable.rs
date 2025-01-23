@@ -183,8 +183,7 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * [`crate::token::erc721::Error::InvalidOwner`] - If owner address is
-    ///   `Address::ZERO`.
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is `Address::ZERO`.
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,

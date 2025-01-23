@@ -84,10 +84,13 @@ impl Erc721Metadata {
 
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
-    /// NOTE: In order to expose this function in the ABI, you need to annotate
-    /// it with `#[selector(name = "tokenURI")]` and ensure that the `erc721`
-    /// parameter is passed internally. This design works around Stylus's lack
-    /// of inheritance while avoiding code duplication. See the Example section.
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `token_id`
+    /// parameter. The `erc721` reference should come from your contract's
+    /// state. The implementation should use `#[selector(name = "tokenURI")]` to
+    /// match Solidity's camelCase naming convention and it should forward the
+    /// call to your internal storage instance along with the `erc721`
+    /// reference.
     ///
     /// # Arguments
     ///

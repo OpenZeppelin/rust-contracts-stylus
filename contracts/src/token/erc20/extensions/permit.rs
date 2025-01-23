@@ -121,9 +121,9 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// * `spender` cannot be the ``Address::ZERO``.
     /// * `deadline` must be a timestamp in the future.
-    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner`
-    /// over the EIP712-formatted function arguments.
-    /// * the signature must use `owner`'s current nonce.
+    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner` over
+    ///   the EIP712-formatted function arguments.
+    /// * The signature must use `owner`'s current nonce.
     ///
     /// # Arguments
     ///
@@ -151,7 +151,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * [`crate::token::erc20::Approval`].
+    /// * [`erc20::Approval`].
     #[allow(clippy::too_many_arguments)]
     pub fn permit(
         &mut self,
@@ -314,7 +314,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * * [`crate::token::erc20::Transfer`].
+    /// * [`erc20::Transfer`].
     pub fn transfer_from(
         &mut self,
         from: Address,

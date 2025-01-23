@@ -32,7 +32,7 @@ pub trait IErc721Burnable {
     ///
     /// # Events
     ///
-    /// * [`super::super::Transfer`].
+    /// * [`erc721::Transfer`].
     fn burn(&mut self, token_id: U256) -> Result<(), Self::Error>;
 }
 

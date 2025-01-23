@@ -278,9 +278,9 @@ impl Erc721Consecutive {
     /// `batch_size` is 0, returns the number of consecutive ids minted so
     /// far.
     ///
-    /// CAUTION: Does not emit a [Transfer] event. This is ERC-721 compliant as
-    /// long as it is done inside of the constructor, which is enforced by this
-    /// function.
+    /// CAUTION: Does not emit a [`Transfer`] event. This is ERC-721 compliant
+    /// as long as it is done inside of the constructor, which is enforced by
+    /// this function.
     ///
     /// CAUTION: Does not invoke
     /// [`erc721::IERC721Receiver::on_erc_721_received`] on the receiver.
@@ -782,7 +782,7 @@ impl Erc721Consecutive {
     ///
     /// Overrides to ownership logic should be done to
     /// [`Self::_owner_of`].
-    //
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.

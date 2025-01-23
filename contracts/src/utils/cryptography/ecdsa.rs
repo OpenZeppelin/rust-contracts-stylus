@@ -193,7 +193,7 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 ///
 /// # Errors
 ///
-/// * [`Error::InvalidSignatureS`] - If the `s` value is grater than
+/// * [`Error::InvalidSignatureS`] - If the `s` value is greater than
 ///   [`SIGNATURE_S_UPPER_BOUND`].
 ///
 /// [Ethereum Yellow paper]: https://ethereum.github.io/yellowpaper/paper.pdf
