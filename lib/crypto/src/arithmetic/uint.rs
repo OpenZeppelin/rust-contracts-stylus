@@ -1,3 +1,5 @@
+//  TODO#q: Odd<Uint<N>> - Odd numbers. (odd.rs)
+
 use core::{
     borrow::Borrow,
     fmt::{Debug, Display, UpperHex},
@@ -12,10 +14,13 @@ use num_traits::{ConstZero, Zero};
 use zeroize::Zeroize;
 
 use crate::{
-    arithmetic,
     arithmetic::{
-        adc, adc_for_add_with_carry, sbb, sbb_for_sub_with_borrow, BigInteger,
-        Limb, Limbs,
+        limb,
+        limb::{
+            adc, adc_for_add_with_carry, sbb, sbb_for_sub_with_borrow, Limb,
+            Limbs,
+        },
+        BigInteger,
     },
     bits::BitIteratorBE,
     const_for, const_modulo, unroll6_for,
@@ -276,7 +281,7 @@ impl<const N: usize> Uint<N> {
                 let k = i + j;
 
                 if k >= N {
-                    let (n, c) = arithmetic::ct_mac_with_carry(
+                    let (n, c) = limb::ct_mac_with_carry(
                         hi.limbs[k - N],
                         self.limbs[i],
                         rhs.limbs[j],
@@ -285,7 +290,7 @@ impl<const N: usize> Uint<N> {
                     hi.limbs[k - N] = n;
                     carry = c;
                 } else {
-                    let (n, c) = arithmetic::ct_mac_with_carry(
+                    let (n, c) = limb::ct_mac_with_carry(
                         lo.limbs[k],
                         self.limbs[i],
                         rhs.limbs[j],
@@ -354,7 +359,7 @@ impl<const N: usize> Uint<N> {
         let mut i = 0;
 
         while i < N {
-            let (w, c) = arithmetic::ct_adc(self.limbs[i], rhs.limbs[i], carry);
+            let (w, c) = limb::ct_adc(self.limbs[i], rhs.limbs[i], carry);
             limbs[i] = w;
             carry = c;
             i += 1;
@@ -389,6 +394,8 @@ impl<const N: usize> Uint<N> {
         Self::new(res)
     }
 }
+
+// ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -481,6 +488,38 @@ impl<const N: usize> From<u8> for Uint<N> {
         repr
     }
 }
+
+// TODO#q: implement conversions in as similar way to
+// impl_try_from_upper_bounded!(u128 => u8, u16, u32, u64);  as in std
+/*
+impl<const N: usize> From<u128> for BigInt<N> {
+    fn from(value: u128) -> Self {
+        let result = Limb::try_from(value);
+        if u128::BITS > BigInt::BITS {
+            panic!("u128 is too large to fit in BigInt");
+        }
+    }
+}
+
+impl<const N: usize> TryFrom<u128> for BigInt<N> {
+    type Error = TryFromIntError;
+
+    fn try_from(value: u128) -> Result<Self, Self::Error> {
+        if u128::BITS > BigInt::BITS {
+            Limb::try_from(value).map(|limb| limb.into())
+        } else {
+            unimplemented!()
+        }
+    }
+}
+*/
+
+// TODO#q: Implement rand Distribution
+/*impl<const N: usize> Distribution<BigInt<N>> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BigInt<N> {
+        BigInt([(); N].map(|_| rng.gen()))
+    }
+}*/
 
 // TODO#q: remove num_bigint::BigUint conversion
 impl<const N: usize> From<Uint<N>> for BigUint {

@@ -27,7 +27,7 @@ use num_traits::{ConstZero, One, Zero};
 
 use crate::{
     arithmetic,
-    arithmetic::{uint::Uint, BigInteger},
+    arithmetic::{limb, uint::Uint, BigInteger},
     const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     unroll6_for,
@@ -223,10 +223,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
             let k = r[i].wrapping_mul(Self::INV);
             // let mut carry = 0;
 
-            let (_, mut carry) =
-                arithmetic::mac(r[i], k, Self::MODULUS.limbs[0]);
+            let (_, mut carry) = limb::mac(r[i], k, Self::MODULUS.limbs[0]);
             for j in 1..N {
-                (r[(j + i) % N], carry) = arithmetic::carrying_mac(
+                (r[(j + i) % N], carry) = limb::carrying_mac(
                     r[(j + i) % N],
                     k,
                     Self::MODULUS.limbs[j],
@@ -289,14 +288,21 @@ macro_rules! declare_fp {
         #[doc = "bits size element."]
         pub type $fp<P> = $crate::field::fp::Fp<
             P,
-            { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) },
+            {
+                usize::div_ceil(
+                    $bits,
+                    $crate::arithmetic::limb::Limb::BITS as usize,
+                )
+            },
         >;
 
         #[doc = "Number of limbs in the field with"]
         #[doc = stringify!($bits)]
         #[doc = "bits size element."]
-        pub const $limbs: usize =
-            usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize);
+        pub const $limbs: usize = usize::div_ceil(
+            $bits,
+            $crate::arithmetic::limb::Limb::BITS as usize,
+        );
     };
 }
 
@@ -421,14 +427,14 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             unroll6_for!((j in 0..N) {
                 let k = i + j;
                 if k >= N {
-                    (hi[k - N], carry) = arithmetic::carrying_mac(
+                    (hi[k - N], carry) = arithmetic::limb::carrying_mac(
                         hi[k - N],
                         self.montgomery_form.limbs[i],
                         other.montgomery_form.limbs[j],
                         carry
                     );
                 } else {
-                    (lo[k], carry) = arithmetic::carrying_mac(
+                    (lo[k], carry) = arithmetic::limb::carrying_mac(
                         lo[k],
                         self.montgomery_form.limbs[i],
                         other.montgomery_form.limbs[j],
@@ -443,19 +449,19 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         unroll6_for!((i in 0..N) {
             let tmp = lo[i].wrapping_mul(P::INV);
 
-            let (_, mut carry) = arithmetic::mac(lo[i], tmp, P::MODULUS.limbs[0]);
+            let (_, mut carry) = arithmetic::limb::mac(lo[i], tmp, P::MODULUS.limbs[0]);
 
             unroll6_for!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
-                    (hi[k - N], carry) = arithmetic::carrying_mac(
+                    (hi[k - N], carry) = arithmetic::limb::carrying_mac(
                         hi[k - N],
                         tmp,
                         P::MODULUS.limbs[j],
                         carry
                     );
                 } else {
-                    (lo[k], carry) = arithmetic::carrying_mac(
+                    (lo[k], carry) = arithmetic::limb::carrying_mac(
                         lo[k],
                         tmp,
                         P::MODULUS.limbs[j],
@@ -463,7 +469,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
                     );
                 }
             });
-            (hi[i], carry2) = arithmetic::adc(hi[i], carry, carry2);
+            (hi[i], carry2) = arithmetic::limb::adc(hi[i], carry, carry2);
         });
 
         unroll6_for!((i in 0..N) {
