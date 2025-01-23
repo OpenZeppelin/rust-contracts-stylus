@@ -125,9 +125,9 @@ pub struct Erc4626 {
     /// Token Address of the vault.
     pub(crate) asset: StorageAddress,
     /// Token decimals.
-    pub(crate) _underlying_decimals: StorageU8,
+    pub(crate) underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
-    pub(crate) safe_erc20: SafeErc20,
+    safe_erc20: SafeErc20,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
