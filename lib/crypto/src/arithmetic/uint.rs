@@ -3,10 +3,10 @@
 use core::{
     borrow::Borrow,
     fmt::{Debug, Display, UpperHex},
-};
-use std::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl,
-    ShlAssign, Shr, ShrAssign,
+    ops::{
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
+        Shl, ShlAssign, Shr, ShrAssign,
+    },
 };
 
 use num_bigint::BigUint;
