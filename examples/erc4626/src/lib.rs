@@ -3,7 +3,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus::token::erc20::{
     extensions::{Erc4626, IErc4626},
     Erc20,
@@ -22,6 +22,10 @@ struct Erc4626Example {
 #[public]
 #[inherit(Erc20)]
 impl Erc4626Example {
+    fn decimals(&self) -> U8 {
+        self.erc4626.decimals()
+    }
+
     fn asset(&self) -> Address {
         self.erc4626.asset()
     }

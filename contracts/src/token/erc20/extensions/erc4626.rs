@@ -7,7 +7,7 @@
 //! would affect the "shares" token represented by this contract and not the
 //! "assets" token which is an independent contract.
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
     call::Call,
@@ -729,6 +729,22 @@ impl Erc4626 {
 
 impl Erc4626 {
     /// TODO: Rust docs
+    ///
+    /// # Arguments
+    ///
+    /// * &self -
+    ///
+    /// # Panics
+    ///
+    /// * If ...
+    pub fn decimals(&self) -> U8 {
+        self.underlying_decimals
+            .get()
+            .checked_add(Self::_decimals_offset())
+            .expect("Decimals should not be grater than U8::MAX")
+    }
+
+    /// TODO: Rust docs
     fn _convert_to_shares(
         &mut self,
         assets: U256,
@@ -834,17 +850,16 @@ impl Erc4626 {
     }
 
     /// TODO: Rust docs
-    fn _decimals_offset() -> u8 {
-        0
+    fn _decimals_offset() -> U8 {
+        U8::ZERO
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, U256};
     use stylus_sdk::prelude::storage;
 
-    use super::{Erc4626, IErc4626};
+    use super::Erc4626;
     use crate::token::erc20::Erc20;
 
     // const ALICE: Address =
@@ -856,8 +871,8 @@ mod tests {
 
     #[storage]
     struct Erc4626TestExample {
-        pub erc4626: Erc4626,
-        pub erc20: Erc20,
+        _erc4626: Erc4626,
+        _erc20: Erc20,
     }
 
     /*
