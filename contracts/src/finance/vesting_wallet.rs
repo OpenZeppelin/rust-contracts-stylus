@@ -125,7 +125,7 @@ pub struct VestingWallet {
     /// Vesting duration.
     pub(crate) duration: StorageU64,
     /// [`SafeErc20`] contract.
-    pub(crate) safe_erc20: SafeErc20,
+    safe_erc20: SafeErc20,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
