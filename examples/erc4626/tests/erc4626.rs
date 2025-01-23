@@ -12,8 +12,11 @@ use mock::{token, token::MockErc20};
 
 use crate::Erc4626Example::constructorCall;
 
-const TOKEN_NAME: &str = "Test Token";
-const TOKEN_SYMBOL: &str = "TTK";
+const ASSET_NAME: &str = "Asset Test Token";
+const ASSET_SYMBOL: &str = "ATK";
+
+const ERC4626_NAME: &str = "Erc4626 Token";
+const ERC4626_SYMBOL: &str = "ETT";
 
 mod abi;
 mod mock;
@@ -21,7 +24,11 @@ mod mock;
 sol!("src/constructor.sol");
 
 fn ctr(asset: Address) -> constructorCall {
-    constructorCall { asset_: asset }
+    constructorCall {
+        asset_: asset,
+        name_: ERC4626_NAME.to_owned(),
+        symbol_: ERC4626_SYMBOL.to_owned(),
+    }
 }
 
 /*#[e2e::test]
@@ -145,7 +152,7 @@ async fn error_when_exceeded_max_deposit(
     _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
-        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
+        token::deploy(&alice.wallet, ASSET_NAME, ASSET_SYMBOL).await?;
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(mock_token_address))
@@ -162,7 +169,7 @@ async fn error_when_exceeded_max_mint(
     _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
-        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
+        token::deploy(&alice.wallet, ASSET_NAME, ASSET_SYMBOL).await?;
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(mock_token_address))
@@ -179,7 +186,7 @@ async fn error_when_exceeded_max_withdraw(
     _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
-        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
+        token::deploy(&alice.wallet, ASSET_NAME, ASSET_SYMBOL).await?;
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(mock_token_address))
@@ -196,7 +203,7 @@ async fn error_when_exceeded_max_redeem(
     _bob: Account,
 ) -> Result<()> {
     let mock_token_address =
-        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
+        token::deploy(&alice.wallet, ASSET_NAME, ASSET_SYMBOL).await?;
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(mock_token_address))

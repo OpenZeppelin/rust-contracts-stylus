@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc4626, IErc4626},
+    extensions::{Erc20Metadata, Erc4626, IErc4626},
     Erc20,
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
@@ -14,13 +14,15 @@ use stylus_sdk::prelude::{entrypoint, public, storage};
 #[storage]
 struct Erc4626Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub erc4626: Erc4626,
+    metadata: Erc20Metadata,
+    #[borrow]
+    erc4626: Erc4626,
 }
 
 #[public]
-#[inherit(Erc20)]
+#[inherit(Erc20, Erc20Metadata)]
 impl Erc4626Example {
     fn decimals(&self) -> U8 {
         self.erc4626.decimals()
