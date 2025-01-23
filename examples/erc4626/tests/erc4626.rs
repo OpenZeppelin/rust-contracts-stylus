@@ -31,7 +31,6 @@ fn ctr(asset: Address) -> constructorCall {
     }
 }
 
-
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let mock_token_address =
