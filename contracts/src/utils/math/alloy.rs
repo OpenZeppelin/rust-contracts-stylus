@@ -23,7 +23,12 @@ pub trait Math {
     #[must_use]
     fn average(self, rhs: Self) -> Self;
 
-    /// TODO: Rust docs
+    /// Calculates floor(`self` * `y` / `denominator`) with full precision,
+    /// following the selected `rounding` direction. Throws if result
+    /// overflows a `U256` or `denominator` is zero.
+    ///
+    /// Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv) with further edits by
+    /// Uniswap Labs also under MIT license.
     ///
     /// # Arguments
     ///
@@ -33,14 +38,28 @@ pub trait Math {
     /// * `rounding` -
     #[must_use]
     fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self;
+
+    #[must_use]
+    fn mul_mod(self, y: Self, m: Self) -> Self;
 }
 
-/// TODO: Rust docs
+/// Enum representing many rounding techniques.
 pub enum Rounding {
-    /// TODO: Rust docs
+    /// Rounding toward negative infinity.
     Floor,
-    /// TODO: Rust docs
+    /// Rounding toward positive infinity.
     Ceil,
+    /// Rounding toward zero.
+    Trunc,
+    /// Rounding away from zero.
+    Expand,
+}
+
+impl Rounding {
+    fn unsigned_rounds_up(self) -> bool {
+        // Cast the enum variant index to an integer and check if it's odd
+        (self as u8) % 2 == 1
+    }
 }
 
 impl Math for U256 {
@@ -165,13 +184,139 @@ impl Math for U256 {
         (self & rhs) + ((self ^ rhs) >> 1)
     }
 
-    fn mul_div(
-        self,
-        _y: Self,
-        _denominator: Self,
-        _rounding: Rounding,
-    ) -> Self {
-        todo!()
+    fn mul_mod(self, y: Self, m: Self) -> Self {
+        let x = self;
+        // Ensure m is not zero to avoid division by zero
+        if m.is_zero() {
+            panic!("Modulus cannot be zero");
+        }
+
+        let mut result = U256::ZERO;
+
+        // x % m and y % m ensure that both inputs are reduced before any
+        // computations, preventing unnecessary overhead.
+        let mut base = x % m; // Reduce x modulo m
+        let mut multiplier = y % m; // Reduce y modulo m
+
+        // Modular Multiplication Loop:
+        // * Add Base: If the current bit of the multiplier (y) is 1, add the
+        //   base to the result modulo m.
+        // * Double Base: Shift the base left (equivalent to multiplying by 2)
+        //   and take modulo m to prevent overflow.
+        // * Shift Multiplier: Right-shift the multiplier to process the next
+        //   bit.
+        while !multiplier.is_zero() {
+            // If the least significant bit of the multiplier is set, add base
+            // to the result.
+            if multiplier & U256::from(1) != U256::ZERO {
+                result = (result + base) % m;
+            }
+
+            // Double the base modulo m.
+            base = (base << 1) % m;
+
+            // Shift the multiplier to the right by 1 (equivalent to integer
+            // division by 2).
+            multiplier >>= 1;
+        }
+
+        result
+    }
+
+    fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self {
+        let one = U256::from(1);
+        let two = U256::from(2);
+        let three = U256::from(3);
+
+        if denominator.is_zero() {
+            panic!("Division by U256::ZERO in `Math::mul_div`")
+        }
+
+        let x = self;
+
+        // 512-bit multiply [prod1 prod0] = x * y. Compute the product mod 2²⁵⁶
+        // and mod 2²⁵⁶ - 1, then use the Chinese Remainder Theorem to
+        // reconstruct the 512 bit result. The result is stored in two 256
+        // variables such that product = prod1 * 2²⁵⁶ + prod0.
+
+        // Least significant 256 bits of the product.
+        let mut prod0: U256 = x * y;
+        // Most significant 256 bits of the product.
+        let mut prod1: U256 = {
+            let mm: U256 = x.wrapping_mul(y);
+            mm.wrapping_sub(prod0).wrapping_sub(U256::from((mm < prod0) as u8))
+        };
+        // Handle non-overflow cases, 256 by 256 division.
+        if prod1.is_zero() {
+            // Should not panic - denominator is not `U256::ZERO`.
+            return prod0 / denominator;
+        }
+
+        // Make sure the result is less than 2²⁵⁶.
+        if denominator <= prod1 {
+            panic!("Under overflow in `Math::mul_div`");
+        }
+
+        ///////////////////////////////////////////////
+        // 512 by 256 division.
+        ///////////////////////////////////////////////
+
+        // Make division exact by subtracting the remainder from [prod1 prod0].
+        // Compute remainder using mulmod.
+        let remainder: U256 = x.mul_mod(y, denominator);
+
+        // Subtract 256 bit number from 512 bit number.
+        if remainder > prod0 {
+            prod1 = prod1 - one;
+        }
+        prod0 = prod0 - remainder;
+
+        // Factor powers of two out of denominator and compute largest power of
+        // two divisor of denominator. Always >= 1. See https://cs.stackexchange.com/q/138556/92363.
+        let mut twos: U256 = denominator & (!denominator + one);
+        // Divide denominator by twos.
+        let denominator = denominator / twos;
+        // Divide [prod1 prod0] by twos.
+        prod0 = prod0 / twos;
+        // Flip twos such that it is 2²⁵⁶ / twos. If twos is zero, then it
+        // becomes one.
+        twos =
+            if twos == U256::ZERO { one } else { ((!twos + one) / twos) + one };
+
+        // Shift in bits from prod1 into prod0.
+        prod0 |= prod1 * twos;
+
+        // Invert denominator mod 2²⁵⁶. Now that denominator is an odd number,
+        // it has an inverse modulo 2²⁵⁶ such that denominator * inv ≡ 1
+        // mod 2²⁵⁶. Compute the inverse by starting with a seed that is correct
+        // for four bits. That is, denominator * inv ≡ 1 mod 2⁴.
+        let mut inverse: U256 = (three * denominator) ^ two;
+
+        // Use the Newton-Raphson iteration to improve the precision. Thanks to
+        // Hensel's lifting lemma, this also works in modular
+        // arithmetic, doubling the correct bits in each step.
+        inverse = inverse * two - denominator * inverse; // inverse mod 2⁸
+        inverse = inverse * two - denominator * inverse; // inverse mod 2¹⁶
+        inverse = inverse * two - denominator * inverse; // inverse mod 2³²
+        inverse = inverse * two - denominator * inverse; // inverse mod 2⁶⁴
+        inverse = inverse * two - denominator * inverse; // inverse mod 2¹²⁸
+        inverse = inverse * two - denominator * inverse; // inverse mod 2²⁵⁶
+
+        // Because the division is now exact we can divide by multiplying with
+        // the modular inverse of denominator. This will give us the
+        // correct result modulo 2²⁵⁶. Since the preconditions guarantee that
+        // the outcome is less than 2²⁵⁶, this is the final result. We
+        // don't need to compute the high bits of the result and prod1
+        // is no longer required.
+        let mut result = prod0 * inverse;
+
+        if rounding.unsigned_rounds_up()
+            && x.mul_mod(y, denominator) > U256::ZERO
+        {
+            result = result + one;
+        }
+
+        result
     }
 }
 
