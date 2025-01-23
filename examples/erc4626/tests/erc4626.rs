@@ -31,10 +31,11 @@ fn ctr(asset: Address) -> constructorCall {
     }
 }
 
-/*#[e2e::test]
+
+#[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let mock_token_address =
-        token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
+        token::deploy(&alice.wallet, ASSET_NAME, ASSET_SYMBOL).await?;
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(mock_token_address))
@@ -44,22 +45,22 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let token_contract = MockErc20::new(mock_token_address, &alice.wallet);
     let name = token_contract.name().call().await?.name;
     let symbol = token_contract.symbol().call().await?.symbol;
-    assert_eq!(name, TOKEN_NAME.to_owned());
-    assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
+    assert_eq!(name, ASSET_NAME.to_owned());
+    assert_eq!(symbol, ASSET_SYMBOL.to_owned());
 
     let contract = Erc4626::new(contract_addr, &alice.wallet);
     let name = contract.name().call().await?.name;
     let symbol = contract.symbol().call().await?.symbol;
     let decimals = contract.decimals().call().await?.decimals;
     let asset = contract.asset().call().await?.asset;
-    assert_eq!(name, VALUT_NAME.to_owned());
-    assert_eq!(symbol, VALUT_SYMBOL.to_owned());
+    assert_eq!(name, ERC4626_NAME.to_owned());
+    assert_eq!(symbol, ERC4626_SYMBOL.to_owned());
     assert_eq!(decimals, 18);
     assert_eq!(asset, mock_token_address);
     Ok(())
 }
 
-#[e2e::test]
+/*#[e2e::test]
 async fn deposit(alice: Account, bob: Account) -> Result<()> {
     let mock_token_address =
         token::deploy(&alice.wallet, TOKEN_NAME, TOKEN_SYMBOL).await?;
