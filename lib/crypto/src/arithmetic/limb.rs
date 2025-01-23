@@ -13,6 +13,7 @@ pub const fn widening_mul(a: u64, b: u64) -> u128 {
     {
         a as u128 * b as u128
     }
+    // TODO#q: check widening_mul for wasm in unit tests
     #[cfg(target_family = "wasm")]
     {
         let a_lo = a as u32 as u64;
