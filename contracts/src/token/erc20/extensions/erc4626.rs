@@ -27,24 +27,14 @@ use crate::{
     },
     utils::math::alloy::{Math, Rounding},
 };
+
 sol! {
     /// Emitted when assets are deposited into the contract.
-    ///
-    /// * `sender` - Address of the entity initiating the deposit.
-    /// * `owner` - Address of the recipient who owns the shares.
-    /// * `assets` - Amount of assets deposited.
-    /// * `shares` - Number of shares issued to the owner.
     #[allow(missing_docs)]
     event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
 
 
     /// Emitted when assets are withdrawn from the contract.
-    ///
-    /// * `sender` - Address of the entity initiating the withdrawal.
-    /// * `receiver` - Address of the recipient receiving the assets.
-    /// * `owner` - Address of the entity owning the shares.
-    /// * `assets` - Amount of assets withdrawn.
-    /// * `shares` - Number of shares burned.
     #[allow(missing_docs)]
     event Withdraw(
         address indexed sender,
@@ -56,26 +46,42 @@ sol! {
 }
 
 sol! {
-    /// Indicates an error where depostit operation  failed because
-    /// deposited  more assets than the max amount for `receiver
+    /// Indicates an attempt to deposit more assets than the max amount for
+    /// `receiver`.
+    ///
+    /// * `receiver` - Address of the recipient of the assets.
+    /// * `assets` - Amount of assets deposited.
+    /// * `max` - Maximum amount of assets that can be deposited.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
 
-    /// Indicates an error where a mint operation failed because the supplied
-    /// `shares` exceeded the maximum allowed for the `receiver`.
+    /// Indicates an attempt to mint more shares than the max amount for
+    /// `receiver`.
+    ///
+    /// * `receiver` - Address of the recipient of the shares.
+    /// * `shares` - Amount of shares to mint.
+    /// * `max` - Maximum amount of shares that can be minted.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
 
-    /// Indicates an error where a withdrawal operation failed because the
-    /// supplied `assets` exceeded the maximum allowed for the `owner`.
+    /// Indicates an attempt to withdraw more assets than the max amount for
+    /// `owner`.
+    ///
+    /// * `owner` - Address of the owner of the assets.
+    /// * `assets` - Amount of assets to withdraw.
+    /// * `max` - Maximum amount of assets that can be withdrawn.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
 
-    /// Indicates an error where a redemption operation failed because the
-    /// supplied `shares` exceeded the maximum allowed for the `owner`.
+    /// Indicates an attempt to redeem more shares than the max amount for
+    /// `owner`.
+    ///
+    /// * `owner` - Address of the owner of the shares.
+    /// * `shares` - Amount of shares to redeem.
+    /// * `max` - Maximum amount of shares that can be redeemed.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
