@@ -10,7 +10,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use alloy_sol_macro::sol;
+pub use sol::*;
 use stylus_sdk::{
     call::Call,
     contract, evm, msg,
@@ -28,70 +28,75 @@ use crate::{
     utils::math::alloy::{Math, Rounding},
 };
 
-sol! {
-    /// Emitted when assets are deposited into the contract.
-    #[allow(missing_docs)]
-    event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
+
+    sol! {
+        /// Emitted when assets are deposited into the contract.
+        #[allow(missing_docs)]
+        event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
 
 
-    /// Emitted when assets are withdrawn from the contract.
-    #[allow(missing_docs)]
-    event Withdraw(
-        address indexed sender,
-        address indexed receiver,
-        address indexed owner,
-        uint256 assets,
-        uint256 shares
-    );
-}
+        /// Emitted when assets are withdrawn from the contract.
+        #[allow(missing_docs)]
+        event Withdraw(
+            address indexed sender,
+            address indexed receiver,
+            address indexed owner,
+            uint256 assets,
+            uint256 shares
+        );
+    }
 
-sol! {
-    /// Indicates an attempt to deposit more assets than the max amount for
-    /// `receiver`.
-    ///
-    /// * `receiver` - Address of the recipient of the assets.
-    /// * `assets` - Amount of assets deposited.
-    /// * `max` - Maximum amount of assets that can be deposited.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
+    sol! {
+        /// Indicates an attempt to deposit more assets than the max amount for
+        /// `receiver`.
+        ///
+        /// * `receiver` - Address of the recipient of the assets.
+        /// * `assets` - Amount of assets deposited.
+        /// * `max` - Maximum amount of assets that can be deposited.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
 
-    /// Indicates an attempt to mint more shares than the max amount for
-    /// `receiver`.
-    ///
-    /// * `receiver` - Address of the recipient of the shares.
-    /// * `shares` - Amount of shares to mint.
-    /// * `max` - Maximum amount of shares that can be minted.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
+        /// Indicates an attempt to mint more shares than the max amount for
+        /// `receiver`.
+        ///
+        /// * `receiver` - Address of the recipient of the shares.
+        /// * `shares` - Amount of shares to mint.
+        /// * `max` - Maximum amount of shares that can be minted.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
 
-    /// Indicates an attempt to withdraw more assets than the max amount for
-    /// `owner`.
-    ///
-    /// * `owner` - Address of the owner of the assets.
-    /// * `assets` - Amount of assets to withdraw.
-    /// * `max` - Maximum amount of assets that can be withdrawn.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
+        /// Indicates an attempt to withdraw more assets than the max amount for
+        /// `owner`.
+        ///
+        /// * `owner` - Address of the owner of the assets.
+        /// * `assets` - Amount of assets to withdraw.
+        /// * `max` - Maximum amount of assets that can be withdrawn.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
 
-    /// Indicates an attempt to redeem more shares than the max amount for
-    /// `owner`.
-    ///
-    /// * `owner` - Address of the owner of the shares.
-    /// * `shares` - Amount of shares to redeem.
-    /// * `max` - Maximum amount of shares that can be redeemed.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
+        /// Indicates an attempt to redeem more shares than the max amount for
+        /// `owner`.
+        ///
+        /// * `owner` - Address of the owner of the shares.
+        /// * `shares` - Amount of shares to redeem.
+        /// * `max` - Maximum amount of shares that can be redeemed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 
-    /// The ERC-20 Token address is not valid (eg. `Address::ZERO`).
-    ///
-    /// * `token` - Address of the ERC-20 token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error InvalidToken(address token);
+        /// The ERC-20 Token address is not valid (eg. `Address::ZERO`).
+        ///
+        /// * `token` - Address of the ERC-20 token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidToken(address token);
+    }
 }
 
 /// An [`Erc4626`] error.
