@@ -27,8 +27,8 @@ pub trait Math {
     /// following the selected `rounding` direction. Throws if result
     /// overflows a `U256` or `denominator` is zero.
     ///
-    /// Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv) with further edits by
-    /// Uniswap Labs also under MIT license.
+    /// Original credit to Remco Bloemen under MIT license (<https://xn--2-umb.com/21/muldiv>)
+    /// with further edits by Uniswap Labs also under MIT license.
     ///
     /// # Arguments
     ///
@@ -40,6 +40,13 @@ pub trait Math {
     fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self;
 
     #[must_use]
+    /// Multiplies `self` * `y` and calculates modulo `m`.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` -
+    /// * `y` -
+    /// * `m` -
     fn mul_mod(self, y: Self, m: Self) -> Self;
 }
 
@@ -187,9 +194,7 @@ impl Math for U256 {
     fn mul_mod(self, y: Self, m: Self) -> Self {
         let x = self;
         // Ensure m is not zero to avoid division by zero
-        if m.is_zero() {
-            panic!("Modulus cannot be zero");
-        }
+        assert!(!m.is_zero(), "Modulus cannot be zero in `Math::mul_mod`");
 
         let mut result = U256::ZERO;
 
@@ -228,9 +233,10 @@ impl Math for U256 {
         let two = U256::from(2);
         let three = U256::from(3);
 
-        if denominator.is_zero() {
-            panic!("Division by U256::ZERO in `Math::mul_div`")
-        }
+        assert!(
+            !denominator.is_zero(),
+            "Division by U256::ZERO in `Math::mul_div`"
+        );
 
         let x = self;
 
@@ -244,7 +250,8 @@ impl Math for U256 {
         // Most significant 256 bits of the product.
         let mut prod1: U256 = {
             let mm: U256 = x.wrapping_mul(y);
-            mm.wrapping_sub(prod0).wrapping_sub(U256::from((mm < prod0) as u8))
+            mm.wrapping_sub(prod0)
+                .wrapping_sub(U256::from(u8::from(mm < prod0)))
         };
         // Handle non-overflow cases, 256 by 256 division.
         if prod1.is_zero() {
@@ -253,9 +260,7 @@ impl Math for U256 {
         }
 
         // Make sure the result is less than 2²⁵⁶.
-        if denominator <= prod1 {
-            panic!("Under overflow in `Math::mul_div`");
-        }
+        assert!((denominator > prod1), "Under overflow in `Math::mul_div`");
 
         ///////////////////////////////////////////////
         // 512 by 256 division.
@@ -267,9 +272,9 @@ impl Math for U256 {
 
         // Subtract 256 bit number from 512 bit number.
         if remainder > prod0 {
-            prod1 = prod1 - one;
+            prod1 -= one;
         }
-        prod0 = prod0 - remainder;
+        prod0 -= remainder;
 
         // Factor powers of two out of denominator and compute largest power of
         // two divisor of denominator. Always >= 1. See https://cs.stackexchange.com/q/138556/92363.
@@ -277,7 +282,7 @@ impl Math for U256 {
         // Divide denominator by twos.
         let denominator = denominator / twos;
         // Divide [prod1 prod0] by twos.
-        prod0 = prod0 / twos;
+        prod0 /= twos;
         // Flip twos such that it is 2²⁵⁶ / twos. If twos is zero, then it
         // becomes one.
         twos =
@@ -313,7 +318,7 @@ impl Math for U256 {
         if rounding.unsigned_rounds_up()
             && x.mul_mod(y, denominator) > U256::ZERO
         {
-            result = result + one;
+            result += one;
         }
 
         result

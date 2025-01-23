@@ -3,132 +3,16 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20Metadata, Erc4626},
-    utils::SafeErc20,
-    Erc20,
-};
+use openzeppelin_stylus::token::erc20::extensions::Erc4626;
 use stylus_sdk::prelude::{entrypoint, public, storage};
 
 #[entrypoint]
 #[storage]
 struct Erc4626Example {
     #[borrow]
-    pub erc20: Erc20,
-    #[borrow]
     pub erc4626: Erc4626,
-    #[borrow]
-    pub metadata: Erc20Metadata,
-    #[borrow]
-    pub safe_erc20: SafeErc20,
 }
 
 #[public]
-#[inherit(Erc20)]
-impl Erc4626Example {
-    /*
-    fn name(&self) -> String {
-        self.metadata.name()
-    }
-
-    fn symbol(&self) -> String {
-        self.metadata.symbol()
-    }
-
-    fn decimals(&self) -> u8 {
-        self.erc4626._underlying_decimals.get().to()
-    }
-
-    fn max_mint(&self, _receiver: Address) -> U256 {
-        self.erc4626.max_mint(_receiver)
-    }
-
-    fn asset(&self) -> Address {
-        self.erc4626.asset()
-    }
-
-    fn total_assets(&self) -> U256 {
-        self.erc4626.total_assets(&self.erc20)
-    }
-
-    fn convert_to_shares(&mut self, assets: U256) -> U256 {
-        self.erc4626.convert_to_shares(assets, &mut self.erc20)
-    }
-
-    fn convert_to_assets(&mut self, shares: U256) -> U256 {
-        self.erc4626.convert_to_assets(shares, &mut self.erc20)
-    }
-
-    fn preview_deposit(&mut self, assets: U256) -> U256 {
-        self.erc4626.preview_deposit(assets, &mut self.erc20)
-    }
-
-    fn deposit(
-        &mut self,
-        assets: U256,
-        receiver: Address,
-    ) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.deposit(assets, receiver, &mut self.erc20)?)
-    }
-
-    fn preview_mint(&mut self, shares: U256) -> U256 {
-        self.erc4626.preview_mint(shares, &mut self.erc20)
-    }
-
-    fn mint(
-        &mut self,
-        shares: U256,
-        receiver: Address,
-    ) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.mint(shares, receiver, &mut self.erc20)?)
-    }
-
-    fn max_withdraw(&mut self, owner: Address) -> U256 {
-        self.erc4626.max_withdraw(owner, &mut self.erc20)
-    }
-
-    fn preview_withdraw(&mut self, assets: U256) -> U256 {
-        self.erc4626.preview_withdraw(assets, &mut self.erc20)
-    }
-
-    fn withdraw(
-        &mut self,
-        _assets: U256,
-        _receiver: Address,
-        _owner: Address,
-    ) -> Result<U256, Vec<u8>> {
-        // Ok(self.erc4626.withdraw(
-        //     assets,
-        //     receiver,
-        //     owner,
-        //     &mut self.erc20,
-        //     &mut self.safe_erc20,
-        // )?)
-        Ok(U256::from(100))
-    }
-
-    fn max_redeem(&mut self, owner: Address) -> U256 {
-        self.erc4626.max_redeem(owner, &mut self.erc20)
-    }
-
-    fn preview_redeem(&mut self, shares: U256) -> U256 {
-        self.erc4626.preview_redeem(shares, &mut self.erc20)
-    }
-
-    fn redeem(
-        &mut self,
-        _shares: U256,
-        _receiver: Address,
-        _owner: Address,
-    ) -> Result<U256, Vec<u8>> {
-        // Ok(self.erc4626.redeem(
-        //     shares,
-        //     receiver,
-        //     owner,
-        //     &mut self.erc20,
-        //     &mut self.safe_erc20,
-        // )?)
-        Ok(U256::from(100))
-    }
-    */
-}
+#[inherit(Erc4626)]
+impl Erc4626Example {}

@@ -12,7 +12,7 @@ use alloy_sol_macro::sol;
 use stylus_sdk::{
     call::Call,
     contract, evm, msg,
-    prelude::storage,
+    prelude::{public, storage},
     storage::{StorageAddress, StorageU8, TopLevelStorage},
     stylus_proc::SolidityError,
 };
@@ -283,6 +283,10 @@ pub trait IErc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset to deposit.
     /// * `receiver` - The address receiving the shares.
+    ///
+    /// # Errors
+    ///
+    /// *
     fn deposit(
         &mut self,
         assets: U256,
@@ -522,6 +526,7 @@ pub trait IErc4626 {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc4626 {}
 
+#[public]
 impl IErc4626 for Erc4626 {
     type Error = Error;
 
