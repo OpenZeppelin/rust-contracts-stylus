@@ -15,20 +15,13 @@ use crate::Erc4626Example::constructorCall;
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 
-const VALUT_NAME: &str = "Test Token Valut";
-const VALUT_SYMBOL: &str = "TST Valut";
-
 mod abi;
 mod mock;
 
 sol!("src/constructor.sol");
 
 fn ctr(asset: Address) -> constructorCall {
-    constructorCall {
-        name_: VALUT_NAME.to_owned(),
-        symbol_: VALUT_SYMBOL.to_owned(),
-        asset_: asset,
-    }
+    constructorCall { asset_: asset }
 }
 
 /*#[e2e::test]

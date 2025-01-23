@@ -7,6 +7,8 @@
 //! would affect the "shares" token represented by this contract and not the
 //! "assets" token which is an independent contract.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
@@ -25,7 +27,6 @@ use crate::{
     },
     utils::math::alloy::{Math, Rounding},
 };
-
 sol! {
     /// Emitted when assets are deposited into the contract.
     ///
@@ -116,14 +117,14 @@ pub struct Erc4626 {
     /// Token Address of the vault.
     pub(crate) asset: StorageAddress,
 
-    /// [`SafeErc20`] contract.
-    pub(crate) safe_erc20: SafeErc20,
-
     /// [`Erc20`] contract.
     pub(crate) erc20: Erc20,
 
     /// Token decimals.
     pub(crate) _underlying_decimals: StorageU8,
+
+    /// [`SafeErc20`] contract.
+    pub(crate) safe_erc20: SafeErc20,
 }
 
 /// ERC-4626 Tokenized Vault Standard Interface
