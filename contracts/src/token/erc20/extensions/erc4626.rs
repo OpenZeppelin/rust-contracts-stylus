@@ -7,14 +7,12 @@
 //! would affect the "shares" token represented by this contract and not the
 //! "assets" token which is an independent contract.
 
-use alloc::vec::Vec;
-
 use alloy_primitives::{Address, U256};
 pub use sol::*;
 use stylus_sdk::{
     call::Call,
     contract, evm, msg,
-    prelude::{public, storage},
+    prelude::storage,
     storage::{StorageAddress, StorageU8, TopLevelStorage},
     stylus_proc::SolidityError,
 };
@@ -36,7 +34,6 @@ mod sol {
         /// Emitted when assets are deposited into the contract.
         #[allow(missing_docs)]
         event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
-
 
         /// Emitted when assets are withdrawn from the contract.
         #[allow(missing_docs)]
@@ -102,17 +99,17 @@ mod sol {
 /// An [`Erc4626`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Indicates an error where a deposit operation failed because the
-    /// supplied `assets` exceeded the maximum allowed for the `receiver`.
+    /// Indicates an attempt to deposit more assets than the max amount for
+    /// `receiver`.
     ExceededMaxDeposit(ERC4626ExceededMaxDeposit),
-    /// Indicates an error where a mint operation failed because the supplied
-    /// `shares` exceeded the maximum allowed for the `receiver`.
+    /// Indicates an attempt to mint more shares than the max amount for
+    /// `receiver`.
     ExceededMaxMint(ERC4626ExceededMaxMint),
-    /// Indicates an error where a withdrawal operation failed because the
-    /// supplied `assets` exceeded the maximum allowed for the `owner`.
+    /// Indicates an attempt to withdraw more assets than the max amount for
+    /// `owner`.
     ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw),
-    /// Indicates an error where a redemption operation failed because the
-    /// supplied `shares` exceeded the maximum allowed for the `owner`.
+    /// Indicates an attempt to redeem more shares than the max amount for
+    /// `owner`.
     ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
     /// The ERC-20 Token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
@@ -127,16 +124,16 @@ pub enum Error {
 pub struct Erc4626 {
     /// Token Address of the vault.
     pub(crate) asset: StorageAddress,
-
-    /// [`Erc20`] contract.
-    pub(crate) erc20: Erc20,
-
     /// Token decimals.
     pub(crate) _underlying_decimals: StorageU8,
-
     /// [`SafeErc20`] contract.
     pub(crate) safe_erc20: SafeErc20,
 }
+
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
 pub trait IErc4626 {
@@ -277,8 +274,11 @@ pub trait IErc4626 {
     /// Mints shares Vault shares to receiver by depositing exactly amount of
     /// underlying tokens.
     ///
-    /// NOTE: Most implementations will require pre-approval of the Vault with
-    /// the Vault’s underlying asset token.
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `assets` and
+    /// `receiver` parameters. The `erc20` reference should come from your
+    /// contract's state. The implementation should forward the call to your
+    /// internal storage instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -295,14 +295,32 @@ pub trait IErc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset to deposit.
     /// * `receiver` - The address receiving the shares.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
     /// *
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn deposit(
+    ///     &mut self,
+    ///    assets: U256,
+    ///    receiver: Address,
+    /// ) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.deposit(
+    ///         assets,
+    ///         receiver,
+    ///         &mut self.erc20,
+    ///     )?)
+    /// }
+    /// ```
     fn deposit(
         &mut self,
         assets: U256,
         receiver: Address,
+        erc20: &mut Erc20,
     ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the Vault shares that can be minted for
@@ -370,6 +388,7 @@ pub trait IErc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares to mint.
     /// * `receiver` - The address receiving the shares.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -378,6 +397,7 @@ pub trait IErc4626 {
         &mut self,
         shares: U256,
         receiver: Address,
+        erc20: &mut Erc20,
     ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be withdrawn
@@ -392,11 +412,16 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address of the entity owning the shares.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
     /// *
-    fn max_withdraw(&mut self, owner: Address) -> Result<U256, Self::Error>;
+    fn max_withdraw(
+        &mut self,
+        owner: Address,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// withdrawal at the current block, given current on-chain conditions.
@@ -446,6 +471,7 @@ pub trait IErc4626 {
     /// * `assets` - Amount of the underlying asset to withdraw.
     /// * `receiver` - The address receiving the withdrawn assets.
     /// * `owner` - The address owning the shares to be deducted.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -455,7 +481,8 @@ pub trait IErc4626 {
         assets: U256,
         receiver: Address,
         owner: Address,
-    ) -> Result<U256, Error>;
+        erc20: &mut Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of Vault shares that can be redeemed from the
     /// owner balance in the Vault, through a redeem call.
@@ -471,7 +498,8 @@ pub trait IErc4626 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address of the entity owning the shares.
-    fn max_redeem(&self, owner: Address) -> U256;
+    /// * `erc20` - Read access to an [`Erc20`] contract.
+    fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// redeemption at the current block, given current on-chain conditions.
@@ -521,6 +549,7 @@ pub trait IErc4626 {
     /// * `shares` - Number of shares to redeem.
     /// * `receiver` - The address receiving the underlying assets.
     /// * `owner` - The address owning the shares to be redeemed.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -530,15 +559,10 @@ pub trait IErc4626 {
         shares: U256,
         receiver: Address,
         owner: Address,
+        erc20: &mut Erc20,
     ) -> Result<U256, Self::Error>;
 }
 
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc4626 {}
-
-#[public]
 impl IErc4626 for Erc4626 {
     type Error = Error;
 
@@ -570,6 +594,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         assets: U256,
         receiver: Address,
+        erc20: &mut Erc20,
     ) -> Result<U256, Self::Error> {
         let max_assets = self.max_deposit(receiver);
 
@@ -583,7 +608,7 @@ impl IErc4626 for Erc4626 {
 
         let shares = self.preview_deposit(assets)?;
 
-        self._deposit(msg::sender(), receiver, assets, shares)?;
+        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
 
         Ok(shares)
     }
@@ -596,7 +621,12 @@ impl IErc4626 for Erc4626 {
         self._convert_to_assets(shares, Rounding::Ceil)
     }
 
-    fn mint(&mut self, shares: U256, receiver: Address) -> Result<U256, Error> {
+    fn mint(
+        &mut self,
+        shares: U256,
+        receiver: Address,
+        erc20: &mut Erc20,
+    ) -> Result<U256, Error> {
         let max_shares = self.max_mint(receiver);
 
         if shares > max_shares {
@@ -608,13 +638,17 @@ impl IErc4626 for Erc4626 {
         }
 
         let assets = self.preview_mint(shares)?;
-        self._deposit(msg::sender(), receiver, assets, shares)?;
+        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
 
         Ok(assets)
     }
 
-    fn max_withdraw(&mut self, owner: Address) -> Result<U256, Self::Error> {
-        let balance = self.erc20.balance_of(owner);
+    fn max_withdraw(
+        &mut self,
+        owner: Address,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        let balance = erc20.balance_of(owner);
         self._convert_to_assets(balance, Rounding::Floor)
     }
 
@@ -627,8 +661,9 @@ impl IErc4626 for Erc4626 {
         assets: U256,
         receiver: Address,
         owner: Address,
+        erc20: &mut Erc20,
     ) -> Result<U256, Error> {
-        let max_assets = self.max_withdraw(owner)?;
+        let max_assets = self.max_withdraw(owner, &erc20)?;
 
         if assets > max_assets {
             return Err(Error::ExceededMaxWithdraw(
@@ -637,13 +672,13 @@ impl IErc4626 for Erc4626 {
         }
 
         let shares = self.preview_redeem(assets)?;
-        self._withdraw(msg::sender(), receiver, owner, assets, shares)?;
+        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(shares)
     }
 
-    fn max_redeem(&self, owner: Address) -> U256 {
-        self.erc20.balance_of(owner)
+    fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256 {
+        erc20.balance_of(owner)
     }
 
     fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error> {
@@ -655,8 +690,9 @@ impl IErc4626 for Erc4626 {
         shares: U256,
         receiver: Address,
         owner: Address,
+        erc20: &mut Erc20,
     ) -> Result<U256, Self::Error> {
-        let max_shares = self.max_redeem(owner);
+        let max_shares = self.max_redeem(owner, &erc20);
         if shares > max_shares {
             return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem {
                 owner,
@@ -667,7 +703,7 @@ impl IErc4626 for Erc4626 {
 
         let assets = self.preview_redeem(shares)?;
 
-        self._withdraw(msg::sender(), receiver, owner, assets, shares)?;
+        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(assets)
     }
@@ -739,6 +775,7 @@ impl Erc4626 {
         receiver: Address,
         assets: U256,
         shares: U256,
+        erc20: &mut Erc20,
     ) -> Result<(), Error> {
         // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE
         // the transfer happens through the `tokensToSend` hook. On the
@@ -757,7 +794,7 @@ impl Erc4626 {
             assets,
         )?;
 
-        self.erc20._mint(receiver, shares)?;
+        erc20._mint(receiver, shares)?;
 
         evm::log(Deposit { sender: caller, owner: receiver, assets, shares });
 
@@ -772,9 +809,10 @@ impl Erc4626 {
         owner: Address,
         assets: U256,
         shares: U256,
+        erc20: &mut Erc20,
     ) -> Result<(), Error> {
         if caller != owner {
-            self.erc20._spend_allowance(owner, caller, shares)?;
+            erc20._spend_allowance(owner, caller, shares)?;
         }
 
         // If asset() is ERC-777, `transfer` can trigger a reentrancy AFTER the
@@ -786,7 +824,7 @@ impl Erc4626 {
         // reentrancy would happen after the shares are burned and after
         // the assets are transferred, which is a valid state.
 
-        self.erc20._burn(owner, shares)?;
+        erc20._burn(owner, shares)?;
 
         self.safe_erc20.safe_transfer(self.asset(), receiver, assets)?;
 
