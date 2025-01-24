@@ -52,7 +52,8 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
     /// `R = M % MODULUS`.
-    const R: Uint<N> = Self::MODULUS.montgomery_r();
+    const R: Uint<N> =
+        Uint::<N>::MAX.ct_rem(&Self::MODULUS).ct_wrapping_add(&Uint::ONE);
 
     /// `R2 = R^2 % MODULUS`
     #[allow(dead_code)]

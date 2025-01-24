@@ -1,4 +1,5 @@
-//  TODO#q: Odd<Uint<N>> - Odd numbers. (odd.rs)
+//  TODO#q: Odd<Uint<N>> - Odd numbers.
+//  TODO#q: NonZero<Uint<N>> - Non zero numbers for division.
 
 use core::{
     borrow::Borrow,
@@ -64,6 +65,7 @@ declare_num!(U832, 832);
 
 impl<const N: usize> Uint<N> {
     pub const BITS: u32 = (N as u32) * Limb::BITS;
+    pub const MAX: Self = Self { limbs: [u64::MAX; N] };
     pub const ONE: Self = {
         let mut one = Self::ZERO;
         one.limbs[0] = 1;
@@ -132,10 +134,23 @@ impl<const N: usize> Uint<N> {
         true
     }
 
+    // TODO#q: merge num_bits and ct_get_bit with BigInteger abstraction
+
     /// Find the number of bits in the binary decomposition of `self`.
     #[doc(hidden)]
     pub const fn ct_num_bits(self) -> u32 {
         ((N - 1) * 64) as u32 + (64 - self.limbs[N - 1].leading_zeros())
+    }
+
+    /// Compute the `i`-th bit of `self`.
+    pub const fn ct_get_bit(&self, i: usize) -> bool {
+        if i >= 64 * N {
+            false
+        } else {
+            let limb = i / 64;
+            let bit = i - (64 * limb);
+            (self.limbs[limb] & (1 << bit)) != 0
+        }
     }
 
     #[inline]
@@ -205,7 +220,21 @@ impl<const N: usize> Uint<N> {
     #[doc(hidden)]
     pub const fn montgomery_r(&self) -> Self {
         let two_pow_n_times_64 = crate::const_helpers::RBuffer([0u64; N], 1);
-        const_modulo!(two_pow_n_times_64, self)
+        assert!(!self.ct_is_zero());
+        let mut remainder = Self::new([0u64; N]);
+        let mut i = (two_pow_n_times_64.num_bits() - 1) as isize;
+        let mut carry;
+        while i >= 0 {
+            (remainder, carry) = remainder.ct_mul2_with_carry();
+            remainder.limbs[0] |= two_pow_n_times_64.get_bit(i as usize) as u64;
+            if remainder.ct_geq(self) || carry {
+                let (r, borrow) = remainder.ct_sub_with_borrow(self);
+                remainder = r;
+                assert!(borrow == carry);
+            }
+            i -= 1;
+        }
+        remainder
     }
 
     /// Computes the Montgomery R2 constant modulo `self`.
@@ -214,6 +243,28 @@ impl<const N: usize> Uint<N> {
         let two_pow_n_times_64_square =
             crate::const_helpers::R2Buffer([0u64; N], [0u64; N], 1);
         const_modulo!(two_pow_n_times_64_square, self)
+    }
+
+    pub const fn ct_rem(&self, rhs: &Self) -> Self {
+        assert!(!self.ct_is_zero(), "should not divide by zero");
+
+        let mut remainder = Self::ZERO;
+        let mut index = self.ct_num_bits() as usize - 1; // TODO#q: ct_num_bits should return usize
+        let mut carry = false;
+        loop {
+            (remainder, carry) = remainder.ct_mul2_with_carry();
+            remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
+            if remainder.ct_geq(rhs) || carry {
+                let (r, borrow) = remainder.ct_sub_with_borrow(rhs);
+                remainder = r;
+                assert!(borrow == carry); // TODO#q: add doc comment
+            }
+
+            if index == 0 {
+                break remainder;
+            }
+            index -= 1;
+        }
     }
 
     pub fn div2(&mut self) {
@@ -327,6 +378,13 @@ impl<const N: usize> Uint<N> {
     pub const fn ct_add(&self, rhs: &Self) -> Self {
         let (low, carry) = self.ct_adc(rhs, Limb::ZERO);
         assert!(carry == 0, "overflow on addition");
+        low
+    }
+
+    /// Add two numbers wrapping around upper boundery.
+    #[must_use]
+    pub const fn ct_wrapping_add(&self, rhs: &Self) -> Self {
+        let (low, _) = self.ct_adc(rhs, Limb::ZERO);
         low
     }
 
