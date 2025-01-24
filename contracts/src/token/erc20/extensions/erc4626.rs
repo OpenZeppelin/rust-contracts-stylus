@@ -167,7 +167,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not a ERC-20
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not a ERC-20
     ///   Token address.
     fn total_assets(&mut self) -> Result<U256, Self::Error>;
 
@@ -186,7 +186,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
@@ -205,7 +205,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
@@ -233,7 +233,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn preview_deposit(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
@@ -255,7 +255,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     ///
     /// # Examples
@@ -303,7 +303,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
@@ -322,7 +322,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn mint(
         &mut self,
@@ -342,7 +342,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn max_withdraw(
         &mut self,
@@ -360,7 +360,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
@@ -381,7 +381,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn withdraw(
         &mut self,
@@ -415,7 +415,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
@@ -432,7 +432,7 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     fn redeem(
         &mut self,
@@ -635,7 +635,7 @@ impl Erc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the token address is not a valid ERC-20
+    /// * [`Error::InvalidAsset`] - If the token address is not a valid ERC-20
     ///   token.
     fn _convert_to_shares(
         &mut self,
@@ -667,7 +667,7 @@ impl Erc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the token address is not a valid ERC-20
+    /// * [`Error::InvalidAsset`] - If the token address is not a valid ERC-20
     ///   token.
     fn _convert_to_assets(
         &mut self,
