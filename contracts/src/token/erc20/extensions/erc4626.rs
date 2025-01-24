@@ -167,8 +167,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
-    ///   ERC-20 Token address.
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not a ERC-20
+    ///   Token address.
     fn total_assets(&mut self) -> Result<U256, Self::Error>;
 
     /// Returns the amount of shares that the Vault would exchange for the
@@ -186,7 +186,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
@@ -204,7 +205,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be deposited
@@ -231,7 +233,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn preview_deposit(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Mints shares Vault shares to receiver by depositing exactly amount of
@@ -252,7 +255,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     ///
     /// # Examples
     ///
@@ -299,7 +303,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Mints exactly shares Vault shares to receiver by depositing amount of
@@ -317,7 +322,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn mint(
         &mut self,
         shares: U256,
@@ -336,7 +342,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn max_withdraw(
         &mut self,
         owner: Address,
@@ -353,7 +360,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Burns shares from owner and sends exactly assets of underlying tokens to
@@ -373,7 +381,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn withdraw(
         &mut self,
         assets: U256,
@@ -406,7 +415,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Burns exactly shares from owner and sends assets of underlying tokens to
@@ -422,7 +432,8 @@ pub trait IErc4626 {
     ///
     /// # Errors
     ///
-    /// *
+    /// * [`Error::InvalidToken`] - If the [`IErc4626::asset()`] is not an
+    ///   ERC-20 Token address.
     fn redeem(
         &mut self,
         shares: U256,

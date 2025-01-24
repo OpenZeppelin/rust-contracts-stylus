@@ -1,8 +1,14 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc4626;
-use alloy::{primitives::Address, sol, uint};
-use e2e::{/* receipt, */ watch, Account, /* EventExt, */ ReceiptExt, Revert,};
+use alloy::{
+    primitives::{uint, Address, U256},
+    sol,
+};
+use e2e::{
+    send, /* receipt, */ watch, Account, /* EventExt, */ ReceiptExt,
+    Revert,
+};
 use eyre::Result;
 use mock::{erc20, erc20::ERC20Mock};
 
@@ -79,10 +85,10 @@ async fn total_assets_success(alice: Account) -> Result<()> {
 async fn total_assets_reverts_when_asset_is_not_erc20(
     alice: Account,
 ) -> Result<()> {
-    let invalid_token = alice.address();
+    let invalid_asset = alice.address();
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(invalid_token))
+        .with_constructor(ctr(invalid_asset))
         .deploy()
         .await?
         .address()?;
@@ -93,10 +99,332 @@ async fn total_assets_reverts_when_asset_is_not_erc20(
         .totalAssets()
         .call()
         .await
-        .expect_err("should return `InvalidToken`");
+        .expect_err("should return `InvalidAsset`");
 
-    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_token }));
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
 
+    Ok(())
+}
+
+#[e2e::test]
+async fn convert_to_shares_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .convertToShares(uint!(10_U256))
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn convert_to_assets_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .convertToAssets(uint!(10_U256))
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn max_deposit_success(alice: Account) -> eyre::Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let max_deposit =
+        contract.maxDeposit(alice.address()).call().await?.maxDeposit;
+    assert_eq!(max_deposit, U256::MAX);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn preview_deposit_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .previewDeposit(uint!(10_U256))
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn deposit_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> eyre::Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = send!(contract.deposit(uint!(10_U256), alice.address()))
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+    Ok(())
+}
+
+#[e2e::test]
+async fn max_mint_success(alice: Account) -> eyre::Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let max_mint = contract.maxMint(alice.address()).call().await?.maxMint;
+    assert_eq!(max_mint, U256::MAX);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn preview_mint_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .previewMint(uint!(10_U256))
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> eyre::Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = send!(contract.mint(uint!(10_U256), alice.address()))
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+    Ok(())
+}
+
+#[e2e::test]
+async fn max_withdraw_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .maxWithdraw(alice.address())
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn preview_withdraw_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .previewWithdraw(uint!(10_U256))
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn withdraw_reverts_when_exceeded_max_redeem(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = send!(contract.withdraw(
+        uint!(10_U256),
+        alice.address(),
+        bob.address()
+    ))
+    .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+    Ok(())
+}
+
+#[e2e::test]
+async fn max_redeem_zero_balance_success(alice: Account) -> eyre::Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let max_redeem =
+        contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+    assert_eq!(max_redeem, U256::ZERO);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn preview_redeem_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .previewRedeem(uint!(10_U256))
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn redeem_reverts_when_exceeded_max_redeem_zero_balance(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
+    let invalid_asset = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_asset))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let shares = uint!(10_U256);
+    let err = send!(contract.redeem(shares, bob.address(), alice.address()))
+        .expect_err("should return `ERC4626ExceededMaxRedeem`");
+
+    assert!(err.reverted_with(Erc4626::ERC4626ExceededMaxRedeem {
+        owner: alice.address(),
+        shares,
+        max: U256::ZERO,
+    }));
     Ok(())
 }
 
@@ -147,21 +475,6 @@ async fn deposit(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mint(_alice: Account, _bob: Account) -> Result<()> {
-    Ok(())
-}
-
-#[e2e::test]
-async fn withdraw(_alice: Account, _bob: Account) -> Result<()> {
-    Ok(())
-}
-
-#[e2e::test]
-async fn redeem(_alice: Account, _bob: Account) -> Result<()> {
-    Ok(())
-}
-
-#[e2e::test]
 async fn deposit_inflation_attack(
     _alice: Account,
     _bob: Account,
@@ -184,70 +497,6 @@ async fn withdraw_inflation_attack(
 
 #[e2e::test]
 async fn redeem_inflation_attack(_alice: Account, _bob: Account) -> Result<()> {
-    Ok(())
-}
-
-#[e2e::test]
-async fn error_when_exceeded_max_deposit(
-    alice: Account,
-    _bob: Account,
-) -> Result<()> {
-    let asset_address = erc20::deploy(&alice.wallet).await?;
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(asset_address))
-        .deploy()
-        .await?
-        .address()?;
-    let _contract = Erc4626::new(contract_addr, &alice.wallet);
-    Ok(())
-}
-
-#[e2e::test]
-async fn error_when_exceeded_max_mint(
-    alice: Account,
-    _bob: Account,
-) -> Result<()> {
-    let asset_address = erc20::deploy(&alice.wallet).await?;
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(asset_address))
-        .deploy()
-        .await?
-        .address()?;
-    let _contract = Erc4626::new(contract_addr, &alice.wallet);
-    Ok(())
-}
-
-#[e2e::test]
-async fn error_when_exceeded_max_withdraw(
-    alice: Account,
-    _bob: Account,
-) -> Result<()> {
-    let asset_address = erc20::deploy(&alice.wallet).await?;
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(asset_address))
-        .deploy()
-        .await?
-        .address()?;
-    let _contract = Erc4626::new(contract_addr, &alice.wallet);
-    Ok(())
-}
-
-#[e2e::test]
-async fn error_when_exceeded_max_redeem(
-    alice: Account,
-    _bob: Account,
-) -> Result<()> {
-    let asset_address = erc20::deploy(&alice.wallet).await?;
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(asset_address))
-        .deploy()
-        .await?
-        .address()?;
-    let _contract = Erc4626::new(contract_addr, &alice.wallet);
     Ok(())
 }
 */

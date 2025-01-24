@@ -19,15 +19,25 @@ sol!(
         function asset() external view  returns (address asset);
         #[derive(Debug)]
         function totalAssets() external view returns (uint256 totalAssets);
+        #[derive(Debug)]
         function convertToShares(uint256 assets) external view  returns (uint256 shares);
+        #[derive(Debug)]
         function convertToAssets(uint256 shares) external view  returns (uint256 assets);
+        #[derive(Debug)]
         function maxMint(address) external view  returns (uint256 maxMint);
+        #[derive(Debug)]
         function maxDeposit(address) external view  returns (uint256 maxDeposit);
+        #[derive(Debug) ]
         function maxWithdraw(address owner) external view  returns (uint256 maxWithdraw);
+        #[derive(Debug)]
         function maxRedeem(address owner) external view  returns (uint256 maxRedeem);
+        #[derive(Debug)]
         function previewDeposit(uint256 assets) external view  returns (uint256);
+        #[derive(Debug)]
         function previewMint(uint256 shares) external view  returns (uint256);
+        #[derive(Debug)]
         function previewRedeem(uint256 shares) external view  returns (uint256);
+        #[derive(Debug)]
         function previewWithdraw(uint256 assets) external view  returns (uint256);
         function deposit(uint256 assets, address receiver) external  returns (uint256);
         function mint(uint256 shares, address receiver) external  returns (uint256);
