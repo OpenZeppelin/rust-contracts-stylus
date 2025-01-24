@@ -532,7 +532,7 @@ impl IErc4626 for Erc4626 {
         owner: Address,
         erc20: &mut Erc20,
     ) -> Result<U256, Error> {
-        let max_assets = self.max_withdraw(owner, &erc20)?;
+        let max_assets = self.max_withdraw(owner, erc20)?;
 
         if assets > max_assets {
             return Err(Error::ExceededMaxWithdraw(
@@ -561,7 +561,7 @@ impl IErc4626 for Erc4626 {
         owner: Address,
         erc20: &mut Erc20,
     ) -> Result<U256, Self::Error> {
-        let max_shares = self.max_redeem(owner, &erc20);
+        let max_shares = self.max_redeem(owner, erc20);
         if shares > max_shares {
             return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem {
                 owner,
@@ -748,10 +748,11 @@ impl Erc4626 {
     }
 }
 
+// TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256, U8};
-    use stylus_sdk::prelude::storage;
+    use alloy_primitives::{address, U256, U8};
+    use stylus_sdk::{msg, prelude::storage};
 
     use super::{Erc4626, IErc4626};
     use crate::token::erc20::Erc20;
@@ -759,7 +760,21 @@ mod tests {
     #[storage]
     struct Erc4626TestExample {
         erc4626: Erc4626,
-        _erc20: Erc20,
+        erc20: Erc20,
+    }
+
+    #[motsu::test]
+    fn asset_works(contract: Erc4626TestExample) {
+        let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
+        contract.erc4626.asset.set(asset);
+        assert_eq!(contract.erc4626.asset(), asset);
+    }
+
+    #[motsu::test]
+    fn max_deposit(contract: Erc4626TestExample) {
+        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+        let max_deposit = contract.erc4626.max_deposit(bob);
+        assert_eq!(max_deposit, U256::MAX);
     }
 
     #[motsu::test]
@@ -770,10 +785,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn max_deposit(contract: Erc4626TestExample) {
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-        let max_deposit = contract.erc4626.max_deposit(bob);
-        assert_eq!(max_deposit, U256::MAX);
+    fn max_redeem_works(contract: Erc4626TestExample) {
+        let assets = U256::from(1000);
+        let alice = msg::sender();
+        contract.erc20._mint(alice, assets).expect("should mint assets");
+        let max_redeem = contract.erc4626.max_redeem(alice, &contract.erc20);
+        assert_eq!(assets, max_redeem);
     }
 
     #[motsu::test]
@@ -788,12 +805,5 @@ mod tests {
         contract.erc4626.underlying_decimals.set(underlying_decimals);
         let decimals = contract.erc4626.decimals();
         assert_eq!(decimals, underlying_decimals + Erc4626::_decimals_offset());
-    }
-
-    #[motsu::test]
-    fn asset(contract: Erc4626TestExample) {
-        let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
-        contract.erc4626.asset.set(asset);
-        assert_eq!(contract.erc4626.asset(), asset);
     }
 }
