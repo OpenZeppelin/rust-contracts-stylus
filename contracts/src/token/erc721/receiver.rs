@@ -17,9 +17,9 @@ sol_interface! {
         /// It must return its function selector to confirm the token transfer.
         /// If any other value is returned or the interface is not implemented
         /// by the recipient, the transfer will be reverted.
-        /// 
-        /// # Arguments 
-        /// 
+        ///
+        /// # Arguments
+        ///
         /// * `operator` - Account of the operator.
         /// * `from` - Account of the sender.
         /// * `token_id` - Token id as a number.
