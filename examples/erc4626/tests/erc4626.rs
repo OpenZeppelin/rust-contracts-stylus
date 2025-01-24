@@ -1,10 +1,10 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc4626;
-use alloy::{primitives::Address, sol};
-use e2e::{/* receipt, */ Account, ReceiptExt};
+use alloy::{primitives::Address, sol, uint};
+use e2e::{/* receipt, */ watch, Account, /* EventExt, */ ReceiptExt, Revert,};
 use eyre::Result;
-use mock::{erc20 /* , erc20::ERC20Mock */};
+use mock::{erc20, erc20::ERC20Mock};
 
 use crate::Erc4626Example::constructorCall;
 
@@ -47,6 +47,55 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 
     let asset = contract.asset().call().await?.asset;
     assert_eq!(asset, asset_address);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn total_assets_success(alice: Account) -> Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let initial_total_assets = contract.totalAssets().call().await?.totalAssets;
+
+    let assets = uint!(69_U256);
+    let _ = watch!(erc20_alice.mint(contract_addr, assets))?;
+
+    let total_assets = contract.totalAssets().call().await?.totalAssets;
+    assert_eq!(total_assets, initial_total_assets + assets);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn total_assets_reverts_when_asset_is_not_erc20(
+    alice: Account,
+) -> Result<()> {
+    let invalid_token = alice.address();
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(invalid_token))
+        .deploy()
+        .await?
+        .address()?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .totalAssets()
+        .call()
+        .await
+        .expect_err("should return `InvalidToken`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_token }));
 
     Ok(())
 }
@@ -137,7 +186,7 @@ async fn withdraw_inflation_attack(
 async fn redeem_inflation_attack(_alice: Account, _bob: Account) -> Result<()> {
     Ok(())
 }
-*/
+
 #[e2e::test]
 async fn error_when_exceeded_max_deposit(
     alice: Account,
@@ -201,3 +250,4 @@ async fn error_when_exceeded_max_redeem(
     let _contract = Erc4626::new(contract_addr, &alice.wallet);
     Ok(())
 }
+*/

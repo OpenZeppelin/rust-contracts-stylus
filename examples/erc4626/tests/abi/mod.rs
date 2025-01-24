@@ -17,21 +17,22 @@ sol!(
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
         function asset() external view  returns (address asset);
-        function totalAssets() external view returns (uint256);
-        function convertToShares(uint256 assets) external view  returns (uint256);
-        function convertToAssets(uint256 shares) external view  returns (uint256);
-        function maxMint(address) external view  returns (uint256);
-        function maxDeposit(address) external view  returns (uint256);
-        function maxWithdraw(address owner) external view  returns (uint256);
-        function maxRedeem(address owner) external view  returns (uint256);
+        #[derive(Debug)]
+        function totalAssets() external view returns (uint256 totalAssets);
+        function convertToShares(uint256 assets) external view  returns (uint256 shares);
+        function convertToAssets(uint256 shares) external view  returns (uint256 assets);
+        function maxMint(address) external view  returns (uint256 maxMint);
+        function maxDeposit(address) external view  returns (uint256 maxDeposit);
+        function maxWithdraw(address owner) external view  returns (uint256 maxWithdraw);
+        function maxRedeem(address owner) external view  returns (uint256 maxRedeem);
         function previewDeposit(uint256 assets) external view  returns (uint256);
         function previewMint(uint256 shares) external view  returns (uint256);
         function previewRedeem(uint256 shares) external view  returns (uint256);
         function previewWithdraw(uint256 assets) external view  returns (uint256);
         function deposit(uint256 assets, address receiver) external  returns (uint256);
         function mint(uint256 shares, address receiver) external  returns (uint256);
-        function redeem(uint256 shares, address receiver,address owner) external  returns (uint256);
-        function withdraw(uint256 assets, address receiver,address owner) external  returns (uint256);
+        function redeem(uint256 shares, address receiver,address owner) external returns (uint256);
+        function withdraw(uint256 assets, address receiver,address owner) external returns (uint256);
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
@@ -43,6 +44,7 @@ sol!(
         error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);
         error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
         error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
+        error InvalidAsset(address asset);
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);

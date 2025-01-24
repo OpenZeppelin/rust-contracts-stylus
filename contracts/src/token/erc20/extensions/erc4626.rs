@@ -87,12 +87,12 @@ mod sol {
         #[allow(missing_docs)]
         error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 
-        /// The ERC-20 Token address is not valid (eg. `Address::ZERO`).
+        /// The address is not a valid ERC-20 token.
         ///
-        /// * `token` - Address of the ERC-20 token.
+        /// * `asset` - Address of the invalid ERC-20 token.
         #[derive(Debug)]
         #[allow(missing_docs)]
-        error InvalidToken(address token);
+        error InvalidAsset(address asset);
     }
 }
 
@@ -111,8 +111,8 @@ pub enum Error {
     /// Indicates an attempt to redeem more shares than the max amount for
     /// `owner`.
     ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
-    /// The ERC-20 Token address is not valid. (eg. `Address::ZERO`).
-    InvalidToken(InvalidToken),
+    /// The address is not a valid ERC-20 token.
+    InvalidAsset(InvalidAsset),
     /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
     SafeErc20(safe_erc20::Error),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
@@ -440,7 +440,7 @@ impl IErc4626 for Erc4626 {
     }
 
     fn total_assets(&mut self) -> Result<U256, Self::Error> {
-        self.asset_balance_of(self.asset())
+        self.asset_balance_of(contract::address())
     }
 
     fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error> {
@@ -580,19 +580,19 @@ impl IErc4626 for Erc4626 {
 
 impl Erc4626 {
     /// TODO: Rust docs
-    fn asset_total_supply(&mut self, token: Address) -> Result<U256, Error> {
-        let erc20 = IErc20Solidity::new(token);
+    fn asset_total_supply(&mut self) -> Result<U256, Error> {
+        let erc20 = IErc20Solidity::new(self.asset());
         Ok(erc20
             .total_supply(Call::new_in(self))
-            .map_err(|_| InvalidToken { token: self.asset() })?)
+            .map_err(|_| InvalidAsset { asset: self.asset() })?)
     }
 
     /// TODO: Rust docs
-    fn asset_balance_of(&mut self, token: Address) -> Result<U256, Error> {
-        let erc20 = IErc20Solidity::new(token);
+    fn asset_balance_of(&mut self, address: Address) -> Result<U256, Error> {
+        let erc20 = IErc20Solidity::new(self.asset());
         Ok(erc20
-            .balance_of(Call::new_in(self), contract::address())
-            .map_err(|_| InvalidToken { token: self.asset() })?)
+            .balance_of(Call::new_in(self), address)
+            .map_err(|_| InvalidAsset { asset: self.asset() })?)
     }
 }
 
@@ -631,7 +631,7 @@ impl Erc4626 {
         assets: U256,
         rounding: Rounding,
     ) -> Result<U256, Error> {
-        let total_supply = self.asset_total_supply(self.asset())?;
+        let total_supply = self.asset_total_supply()?;
 
         let shares = assets.mul_div(
             total_supply
@@ -663,7 +663,7 @@ impl Erc4626 {
         shares: U256,
         rounding: Rounding,
     ) -> Result<U256, Error> {
-        let total_supply = self.asset_total_supply(self.asset())?;
+        let total_supply = self.asset_total_supply()?;
 
         let assets = shares.mul_div(
             self.total_assets()? + U256::from(1),
