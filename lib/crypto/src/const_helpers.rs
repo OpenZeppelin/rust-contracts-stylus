@@ -82,15 +82,15 @@ macro_rules! const_modulo {
     ($a:expr, $divisor:expr) => {{
         // Stupid slow base-2 long division taken from
         // https://en.wikipedia.org/wiki/Division_algorithm
-        assert!(!$divisor.const_is_zero());
+        assert!(!$divisor.ct_is_zero());
         let mut remainder = Self::new([0u64; N]);
         let mut i = ($a.num_bits() - 1) as isize;
         let mut carry;
         while i >= 0 {
-            (remainder, carry) = remainder.const_mul2_with_carry();
+            (remainder, carry) = remainder.ct_mul2_with_carry();
             remainder.limbs[0] |= $a.get_bit(i as usize) as u64;
-            if remainder.const_geq($divisor) || carry {
-                let (r, borrow) = remainder.const_sub_with_borrow($divisor);
+            if remainder.ct_geq($divisor) || carry {
+                let (r, borrow) = remainder.ct_sub_with_borrow($divisor);
                 remainder = r;
                 assert!(borrow == carry);
             }
