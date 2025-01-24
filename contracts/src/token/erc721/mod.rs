@@ -562,7 +562,6 @@ impl IErc165 for Erc721 {
 }
 
 impl Erc721 {
-
     /// Returns the owner of the `token_id`. Does NOT revert if the token
     /// doesn't exist.
     ///
