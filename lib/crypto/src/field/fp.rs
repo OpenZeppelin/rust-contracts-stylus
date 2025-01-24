@@ -27,7 +27,11 @@ use num_traits::{ConstZero, One, Zero};
 
 use crate::{
     arithmetic,
-    arithmetic::{limb, uint::Uint, BigInteger},
+    arithmetic::{
+        limb,
+        uint::{Uint, WideUint},
+        BigInteger,
+    },
     const_for,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     unroll6_for,
@@ -52,12 +56,15 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
     /// `R = M % MODULUS`.
-    const R: Uint<N> =
-        Uint::<N>::MAX.ct_rem(&Self::MODULUS).ct_wrapping_add(&Uint::ONE);
+    const R: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::ZERO)
+        .ct_rem(&Self::MODULUS)
+        .ct_wrapping_add(&Uint::ONE);
 
     /// `R2 = R^2 % MODULUS`
     #[allow(dead_code)]
-    const R2: Uint<N> = Self::MODULUS.montgomery_r2();
+    const R2: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::MAX)
+        .ct_rem(&Self::MODULUS)
+        .ct_wrapping_add(&Uint::ONE);
 
     /// Set `a += b`.
     #[inline(always)]

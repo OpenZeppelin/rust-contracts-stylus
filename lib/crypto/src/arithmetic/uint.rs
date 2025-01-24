@@ -139,6 +139,7 @@ impl<const N: usize> Uint<N> {
     /// Find the number of bits in the binary decomposition of `self`.
     #[doc(hidden)]
     pub const fn ct_num_bits(self) -> u32 {
+        // TODO#q: what if last limb is zero and next to last has leading zeros?
         ((N - 1) * 64) as u32 + (64 - self.limbs[N - 1].leading_zeros())
     }
 
@@ -452,7 +453,59 @@ impl<const N: usize> Uint<N> {
         Self::new(res)
     }
 }
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
+pub struct WideUint<const N: usize> {
+    low: Uint<N>,
+    high: Uint<N>,
+}
 
+impl<const N: usize> WideUint<N> {
+    pub const fn new(low: Uint<N>, high: Uint<N>) -> Self {
+        Self { low, high }
+    }
+
+    pub const fn ct_rem(&self, rhs: &Uint<N>) -> Uint<N> {
+        assert!(!rhs.ct_is_zero(), "should not divide by zero");
+
+        let mut remainder = Uint::<N>::ZERO;
+        let mut index = self.ct_num_bits() as usize - 1; // TODO#q: ct_num_bits should return usize
+        let mut carry = false;
+        loop {
+            (remainder, carry) = remainder.ct_mul2_with_carry();
+            remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
+            if remainder.ct_geq(rhs) || carry {
+                let (r, borrow) = remainder.ct_sub_with_borrow(rhs);
+                remainder = r;
+                assert!(borrow == carry); // TODO#q: add doc comment
+            }
+
+            if index == 0 {
+                break remainder;
+            }
+            index -= 1;
+        }
+    }
+
+    /// Find the number of bits in the binary decomposition of `self`.
+    #[doc(hidden)]
+    pub const fn ct_num_bits(&self) -> u32 {
+        let high_num_bits = self.high.ct_num_bits();
+        if high_num_bits == 0 {
+            self.low.ct_num_bits()
+        } else {
+            high_num_bits + Uint::<N>::BITS
+        }
+    }
+
+    /// Compute the `i`-th bit of `self`.
+    pub const fn ct_get_bit(&self, i: usize) -> bool {
+        if i >= Uint::<N>::BITS as usize {
+            self.high.ct_get_bit(i - (Uint::<N>::BITS as usize))
+        } else {
+            self.low.ct_get_bit(i)
+        }
+    }
+}
 // ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
