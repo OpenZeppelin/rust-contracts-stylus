@@ -87,12 +87,12 @@ impl<const N: usize> Uint<N> {
     }
 
     #[doc(hidden)]
-    pub const fn const_is_even(&self) -> bool {
+    pub const fn ct_is_even(&self) -> bool {
         self.limbs[0] % 2 == 0
     }
 
     #[doc(hidden)]
-    pub const fn const_is_odd(&self) -> bool {
+    pub const fn ct_is_odd(&self) -> bool {
         self.limbs[0] % 2 == 1
     }
 
@@ -106,7 +106,7 @@ impl<const N: usize> Uint<N> {
     /// Compute a right shift of `self`
     /// This is equivalent to a (saturating) division by 2.
     #[doc(hidden)]
-    pub const fn const_shr(&self) -> Self {
+    pub const fn ct_shr(&self) -> Self {
         let mut result = *self;
         let mut t = 0;
         crate::const_for!((i in 0..N) {
@@ -119,7 +119,7 @@ impl<const N: usize> Uint<N> {
         result
     }
 
-    const fn const_geq(&self, other: &Self) -> bool {
+    const fn ct_geq(&self, other: &Self) -> bool {
         const_for!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = other.limbs[N - i - 1];
@@ -134,12 +134,12 @@ impl<const N: usize> Uint<N> {
 
     /// Find the number of bits in the binary decomposition of `self`.
     #[doc(hidden)]
-    pub const fn const_num_bits(self) -> u32 {
+    pub const fn ct_num_bits(self) -> u32 {
         ((N - 1) * 64) as u32 + (64 - self.limbs[N - 1].leading_zeros())
     }
 
     #[inline]
-    pub(crate) const fn const_sub_with_borrow(
+    pub(crate) const fn ct_sub_with_borrow(
         mut self,
         other: &Self,
     ) -> (Self, bool) {
@@ -167,7 +167,7 @@ impl<const N: usize> Uint<N> {
     }
 
     #[inline]
-    pub(crate) const fn const_add_with_carry(
+    pub(crate) const fn ct_add_with_carry(
         mut self,
         other: &Self,
     ) -> (Self, bool) {
@@ -180,7 +180,7 @@ impl<const N: usize> Uint<N> {
         (self, carry != 0)
     }
 
-    const fn const_mul2_with_carry(mut self) -> (Self, bool) {
+    const fn ct_mul2_with_carry(mut self) -> (Self, bool) {
         let mut last = 0;
         crate::const_for!((i in 0..N) {
             let a = self.limbs[i];
@@ -192,7 +192,7 @@ impl<const N: usize> Uint<N> {
         (self, last != 0)
     }
 
-    pub(crate) const fn const_is_zero(&self) -> bool {
+    pub(crate) const fn ct_is_zero(&self) -> bool {
         let mut is_zero = true;
         crate::const_for!((i in 0..N) {
             is_zero &= self.limbs[i] == 0;
@@ -341,7 +341,7 @@ impl<const N: usize> Uint<N> {
         true
     }
 
-    // TODO#q: compare with const_is_zero
+    // TODO#q: unify ct_eq with ct_is_zero
     pub const fn ct_eq(&self, rhs: &Self) -> bool {
         const_for!((i in 0..N) {
             if self.limbs[i] != rhs.limbs[i] {

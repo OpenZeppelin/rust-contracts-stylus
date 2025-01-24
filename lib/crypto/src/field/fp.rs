@@ -35,7 +35,6 @@ use crate::{
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.
-// TODO#q: rename N -> L
 // TODO#q: rename FpParams -> Params
 pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
@@ -105,17 +104,15 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         }
     }
 
+    /// Set `a *= b`.
+    ///
     /// This modular multiplication algorithm uses Montgomery
-    /// reduction for efficient implementation. It also additionally
-    /// uses the "no-carry optimization" outlined
-    /// [here](https://hackmd.io/@gnark/modular_multiplication) if
-    /// `Self::MODULUS` has (a) a non-zero MSB, and (b) at least one
-    /// zero bit in the rest of the modulus.
+    /// reduction for efficient implementation.
     #[inline(always)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // Alternative implementation
         // Implements CIOS.
-        let (carry, res) = a.mul_without_cond_subtract(b);
+        let (carry, res) = a.ct_mul_without_cond_subtract(b);
         *a = res;
 
         if Self::MODULUS_HAS_SPARE_BIT {
@@ -327,13 +324,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     ///
     /// Every element of the field should be represented as `GENERATOR^i`
     pub const GENERATOR: Fp<P, N> = P::GENERATOR;
-    // TODO#q: remove
-    pub const INV: u64 = P::INV;
     /// Multiplicative identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e * f = f`.
     pub const ONE: Fp<P, N> = Fp::new_unchecked(P::R);
-    // TODO#q: remove
-    pub const R: Uint<N> = P::R;
     /// Additive identity of the field, i.e., the element `e`
     /// such that, for all elements `f` of the field, `e + f = f`.
     pub const ZERO: Fp<P, N> = Fp::new_unchecked(Uint { limbs: [0; N] });
@@ -362,54 +355,30 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         }
     }
 
-    // TODO#q: think about using it
-    /*/// Interpret a set of limbs (along with a sign) as a field element.
-    /// For *internal* use only; please use the `ark_ff::MontFp` macro instead
-    /// of this method
-    #[doc(hidden)]
-    pub const fn from_sign_and_limbs(is_positive: bool, limbs: &[u64]) -> Self {
-        let mut repr = BigInt([0; N]);
-        assert!(limbs.len() <= N);
-        crate::const_for!((i in 0..(limbs.len())) {
-            repr.0[i] = limbs[i];
-        });
-        let res = Self::new(repr);
-        if is_positive {
-            res
-        } else {
-            res.const_neg()
-        }
-    }*/
-
-    // TODO#q: rename all const_* methods to ct_*
-
     /// Construct a new field element from its underlying
     /// [`struct@Uint`] data type.
     #[inline]
     pub const fn new(element: Uint<N>) -> Self {
         let mut r = Self { montgomery_form: element, phantom: PhantomData };
-        if r.const_is_zero() {
+        if r.ct_is_zero() {
             r
         } else {
-            r = r.const_mul(&Fp {
-                montgomery_form: P::R2,
-                phantom: PhantomData,
-            });
+            r = r.ct_mul(&Fp { montgomery_form: P::R2, phantom: PhantomData });
             r
         }
     }
 
-    const fn const_mul(self, other: &Self) -> Self {
-        let (carry, res) = self.mul_without_cond_subtract(other);
+    const fn ct_mul(self, other: &Self) -> Self {
+        let (carry, res) = self.ct_mul_without_cond_subtract(other);
         if P::MODULUS_HAS_SPARE_BIT {
-            res.const_subtract_modulus()
+            res.ct_subtract_modulus()
         } else {
-            res.const_subtract_modulus_with_carry(carry)
+            res.ct_subtract_modulus_with_carry(carry)
         }
     }
 
-    const fn const_is_zero(&self) -> bool {
-        self.montgomery_form.const_is_zero()
+    const fn ct_is_zero(&self) -> bool {
+        self.montgomery_form.ct_is_zero()
     }
 
     #[inline(always)]
@@ -420,7 +389,10 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     #[inline(always)]
-    const fn mul_without_cond_subtract(mut self, other: &Self) -> (bool, Self) {
+    const fn ct_mul_without_cond_subtract(
+        mut self,
+        other: &Self,
+    ) -> (bool, Self) {
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
         unroll6_for!((i in 0..N) {
             let mut carry = 0;
@@ -478,7 +450,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         (carry2 != 0, self)
     }
 
-    const fn const_is_valid(&self) -> bool {
+    const fn ct_is_valid(&self) -> bool {
         const_for!((i in 0..N) {
             if self.montgomery_form.limbs[N - i - 1] < P::MODULUS.limbs[N - i - 1] {
                 return true
@@ -490,8 +462,8 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     #[inline]
-    const fn const_subtract_modulus(mut self) -> Self {
-        if !self.const_is_valid() {
+    const fn ct_subtract_modulus(mut self) -> Self {
+        if !self.ct_is_valid() {
             self.montgomery_form =
                 Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
         }
@@ -499,8 +471,8 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     #[inline]
-    const fn const_subtract_modulus_with_carry(mut self, carry: bool) -> Self {
-        if carry || !self.const_is_valid() {
+    const fn ct_subtract_modulus_with_carry(mut self, carry: bool) -> Self {
+        if carry || !self.ct_is_valid() {
             self.montgomery_form =
                 Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
         }
@@ -508,7 +480,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     const fn sub_with_borrow(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
-        a.const_sub_with_borrow(b).0
+        a.ct_sub_with_borrow(b).0
     }
 }
 
