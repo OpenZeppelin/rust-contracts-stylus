@@ -179,14 +179,6 @@ pub trait IErc4626 {
     /// and instead should reflect the “average-user’s” price-per-share, meaning
     /// what the average user should expect to see when exchanging to and from.
     ///
-    /// # Requirements
-    ///
-    /// * MUST NOT be inclusive of any fees that are charged against assets in
-    ///   the Vault.
-    /// * MUST NOT show any variations depending on the caller.
-    /// * MUST NOT reflect slippage or other on-chain conditions, when
-    ///   performing the actual exchange.
-    ///
     ///  # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -205,14 +197,6 @@ pub trait IErc4626 {
     /// and instead should reflect the “average-user’s” price-per-share, meaning
     /// what the average user should expect to see when exchanging to and from.
     ///
-    /// # Requirements
-    ///
-    /// * MUST NOT be inclusive of any fees that are charged against assets in
-    ///   the Vault.
-    /// * MUST NOT show any variations depending on the caller.
-    /// * MUST NOT reflect slippage or other on-chain conditions, when
-    ///   performing the actual exchange.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -225,14 +209,6 @@ pub trait IErc4626 {
 
     /// Returns the maximum amount of the underlying asset that can be deposited
     /// into the Vault for the receiver, through a deposit call.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if receiver is subject to some deposit
-    ///   limit.
-    /// * MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of
-    ///   assets that may be deposited.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -247,19 +223,6 @@ pub trait IErc4626 {
     /// previewDeposit SHOULD be considered slippage in share price or some
     /// other type of condition, meaning the depositor will lose assets by
     /// depositing.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no more than the exact amount of Vault
-    ///   shares that would be minted in a deposit call in the same transaction.
-    ///   I.e. deposit should return the same or more shares as previewDeposit
-    ///   if called in the same transaction.
-    /// * MUST NOT account for deposit limits like those returned from
-    ///   maxDeposit and should always act as though the deposit would be
-    ///   accepted, regardless if the user has enough tokens approved, etc.
-    /// * MUST be inclusive of deposit fees. Integrators should be aware of the
-    ///   existence of deposit fees.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -279,16 +242,6 @@ pub trait IErc4626 {
     /// `receiver` parameters. The `erc20` reference should come from your
     /// contract's state. The implementation should forward the call to your
     /// internal storage instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the Deposit event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the deposit execution, and are
-    ///   accounted for during deposit.
-    /// * MUST revert if all of assets cannot be deposited (due to deposit limit
-    ///   being reached, slippage, the user not approving enough underlying
-    ///   tokens to the Vault contract, etc).
     ///
     /// # Arguments
     ///
@@ -326,12 +279,6 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the Vault shares that can be minted for
     /// the receiver, through a mint call.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if receiver is subject to some mint limit.
-    /// * MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of
-    ///   shares that may be minted.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -344,18 +291,6 @@ pub trait IErc4626 {
     /// NOTE: Any unfavorable discrepancy between convertToAssets and
     /// previewMint SHOULD be considered slippage in share price or some other
     /// type of condition, meaning the depositor will lose assets by minting.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no fewer than the exact amount of assets
-    ///   that would be deposited in a mint call in the same transaction. I.e.
-    ///   mint should return the same or fewer assets as previewMint if called
-    ///   in the same transaction.
-    /// * MUST NOT account for mint limits like those returned from maxMint and
-    ///   should always act as though the mint would be accepted, regardless if
-    ///   the user has enough tokens approved, etc.
-    /// * MUST be inclusive of deposit fees. Integrators should be aware of the
-    ///   existence of deposit fees.
     ///
     /// # Arguments
     ///
@@ -372,16 +307,6 @@ pub trait IErc4626 {
     ///
     /// NOTE: Most implementations will require pre-approval of the Vault with
     /// the Vault’s underlying asset token.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the [`Deposit`] event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the mint execution, and are
-    ///   accounted for during mint.
-    /// * MUST revert if all of shares cannot be minted (due to deposit limit
-    ///   being reached, slippage, the user not approving enough underlying
-    ///   tokens to the Vault contract, etc).
     ///
     /// # Arguments
     ///
@@ -403,11 +328,6 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the underlying asset that can be withdrawn
     /// from the owner balance in the Vault, through a withdraw call.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if owner is subject to some withdrawal
-    ///   limit or timelock.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -426,18 +346,6 @@ pub trait IErc4626 {
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// withdrawal at the current block, given current on-chain conditions.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no fewer than the exact amount of Vault
-    ///   shares that would be burned in a withdraw call in the same
-    ///   transaction. I.e. withdraw should return the same or fewer shares as
-    ///   previewWithdraw if called in the same transaction.
-    /// * MUST NOT account for withdrawal limits like those returned from
-    ///   maxWithdraw and should always act as though the withdrawal would be
-    ///   accepted, regardless if the user has enough shares, etc.
-    /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
-    ///   the existence of withdrawal fees.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -454,16 +362,6 @@ pub trait IErc4626 {
     /// Note that some implementations will require pre-requesting to the Vault
     /// before a withdrawal may be performed. Those methods should be performed
     /// separately.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the [`Withdraw`] event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the withdraw execution, and are
-    ///   accounted for during withdraw.
-    /// * MUST revert if all of assets cannot be withdrawn (due to withdrawal
-    ///   limit being reached, slippage, the owner not having enough shares,
-    ///   etc).
     ///
     /// # Arguments
     ///
@@ -487,13 +385,6 @@ pub trait IErc4626 {
     /// Returns the maximum amount of Vault shares that can be redeemed from the
     /// owner balance in the Vault, through a redeem call.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if owner is subject to some withdrawal
-    ///   limit or timelock.
-    /// * MUST return balanceOf(owner) if owner is not subject to any withdrawal
-    ///   limit or timelock.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -508,18 +399,6 @@ pub trait IErc4626 {
     /// previewRedeem SHOULD be considered slippage in share price or some other
     /// type of condition, meaning the depositor will lose assets by redeeming.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no more than the exact amount of assets
-    ///   that would be withdrawn in a redeem call in the same transaction. I.e.
-    ///   redeem should return the same or more assets as previewRedeem if
-    ///   called in the same transaction.
-    /// * MUST NOT account for redemption limits like those returned from
-    ///   maxRedeem and should always act as though the redemption would be
-    ///   accepted, regardless if the user has enough shares, etc.
-    /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
-    ///   the existence of withdrawal fees.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -532,16 +411,6 @@ pub trait IErc4626 {
 
     /// Burns exactly shares from owner and sends assets of underlying tokens to
     /// receiver.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the [`Withdraw`] event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the redeem execution, and are
-    ///   accounted for during redeem.
-    /// * MUST revert if all of shares cannot be redeemed (due to withdrawal
-    ///   limit being reached, slippage, the owner not having enough shares,
-    ///   etc).
     ///
     /// # Arguments
     ///
@@ -571,7 +440,7 @@ impl IErc4626 for Erc4626 {
     }
 
     fn total_assets(&mut self) -> Result<U256, Self::Error> {
-        self.erc20_balance_of(self.asset())
+        self.asset_balance_of(self.asset())
     }
 
     fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error> {
@@ -711,7 +580,7 @@ impl IErc4626 for Erc4626 {
 
 impl Erc4626 {
     /// TODO: Rust docs
-    fn erc20_total_supply(&mut self, token: Address) -> Result<U256, Error> {
+    fn asset_total_supply(&mut self, token: Address) -> Result<U256, Error> {
         let erc20 = IErc20Solidity::new(token);
         Ok(erc20
             .total_supply(Call::new_in(self))
@@ -719,7 +588,7 @@ impl Erc4626 {
     }
 
     /// TODO: Rust docs
-    fn erc20_balance_of(&mut self, token: Address) -> Result<U256, Error> {
+    fn asset_balance_of(&mut self, token: Address) -> Result<U256, Error> {
         let erc20 = IErc20Solidity::new(token);
         Ok(erc20
             .balance_of(Call::new_in(self), contract::address())
@@ -732,11 +601,11 @@ impl Erc4626 {
     ///
     /// # Arguments
     ///
-    /// * &self -
+    /// * `&self` - Read access to the contract's state.
     ///
     /// # Panics
     ///
-    /// * If ...
+    /// * If the decimals are greater than `U8::MAX`.
     pub fn decimals(&self) -> U8 {
         self.underlying_decimals
             .get()
@@ -744,13 +613,25 @@ impl Erc4626 {
             .expect("Decimals should not be grater than U8::MAX")
     }
 
-    /// TODO: Rust docs
+    /// Converts a given amount of assets to shares using the specified
+    /// `rounding` mode.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `assets` - The amount of assets to convert.
+    /// * `rounding` - The [`Rounding`] mode to use for the conversion.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidToken`] - If the token address is not a valid ERC-20
+    ///   token.
     fn _convert_to_shares(
         &mut self,
         assets: U256,
         rounding: Rounding,
     ) -> Result<U256, Error> {
-        let total_supply = self.erc20_total_supply(self.asset())?;
+        let total_supply = self.asset_total_supply(self.asset())?;
 
         let shares = assets.mul_div(
             total_supply
@@ -764,13 +645,25 @@ impl Erc4626 {
         Ok(shares)
     }
 
-    /// TODO: Rust docs
+    /// Converts a given amount of shares to assets using the specified
+    /// `rounding` mode.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `shares` - The amount of shares to convert.
+    /// * `rounding` - The [`Rounding`] mode to use for the conversion.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidToken`] - If the token address is not a valid ERC-20
+    ///   token.
     fn _convert_to_assets(
         &mut self,
         shares: U256,
         rounding: Rounding,
     ) -> Result<U256, Error> {
-        let total_supply = self.erc20_total_supply(self.asset())?;
+        let total_supply = self.asset_total_supply(self.asset())?;
 
         let assets = shares.mul_div(
             self.total_assets()? + U256::from(1),
@@ -857,25 +750,18 @@ impl Erc4626 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use alloy_primitives::{address, Address, U256, U8};
     use stylus_sdk::prelude::storage;
 
-    use super::Erc4626;
+    use super::{Erc4626, IErc4626};
     use crate::token::erc20::Erc20;
-
-    // const ALICE: Address =
-    // address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-    // const TOKEN_ADDRESS: Address =
-    // address!("dce82b5f92c98f27f116f70491a487effdb6a2a9");
-    // const INVALID_TOKEN_ADDRESS: Address =
-    // address!("dce82b5f92c98f27f116f70491a487effdb6a2aa");
 
     #[storage]
     struct Erc4626TestExample {
-        _erc4626: Erc4626,
+        erc4626: Erc4626,
         _erc20: Erc20,
     }
 
-    /*
     #[motsu::test]
     fn max_mint(contract: Erc4626TestExample) {
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
@@ -891,19 +777,23 @@ mod tests {
     }
 
     #[motsu::test]
-    fn convert_to_shares(contract: Erc4626TestExample) {
-        let assets = U256::from(100);
-        let shares =
-            contract.erc4626.convert_to_shares(assets, &mut contract.erc20);
-        assert_eq!(shares, U256::from(100));
+    fn decimals_offset() {
+        let decimals_offset = Erc4626::_decimals_offset();
+        assert_eq!(decimals_offset, U8::ZERO);
     }
 
     #[motsu::test]
-    fn convert_to_assets(contract: Erc4626TestExample) {
-        let shares = U256::from(100);
-        let assets =
-            contract.erc4626.convert_to_assets(shares, &mut contract.erc20);
-        assert_eq!(assets, U256::from(100));
+    fn decimals(contract: Erc4626TestExample) {
+        let underlying_decimals = U8::from(17);
+        contract.erc4626.underlying_decimals.set(underlying_decimals);
+        let decimals = contract.erc4626.decimals();
+        assert_eq!(decimals, underlying_decimals + Erc4626::_decimals_offset());
     }
-    */
+
+    #[motsu::test]
+    fn asset(contract: Erc4626TestExample) {
+        let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
+        contract.erc4626.asset.set(asset);
+        assert_eq!(contract.erc4626.asset(), asset);
+    }
 }
