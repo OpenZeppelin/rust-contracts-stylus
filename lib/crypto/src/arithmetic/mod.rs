@@ -15,13 +15,11 @@ use core::{
 
 use limb::Limb;
 use num_traits::{ConstZero, Zero};
-// use rand::{
-//     distributions::{Distribution, Standard},
-//     Rng,
-// };
 use zeroize::Zeroize;
 
 use crate::bits::BitIteratorBE;
+
+// TODO#q: move mul / add operations to BigInt impl
 
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
@@ -137,5 +135,3 @@ pub trait BigInteger:
     /// Convert bigint to little-endian bytes.
     fn into_bytes_le(self) -> alloc::vec::Vec<u8>;
 }
-
-// TODO#q: move mul / add operations to BigInt impl
