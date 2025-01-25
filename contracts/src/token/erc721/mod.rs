@@ -255,14 +255,13 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
     /// * [`Error::IncorrectOwner`]  - If the previous owner is not `from`.
     /// * [`Error::InsufficientApproval`] - If the caller does not have the
     ///   right to approve.
     /// * [`Error::NonexistentToken`] - If the token does not exist.
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    /// interface id or returned with error.
+    /// interface id or returned with error, `to` is `Address::ZERO`.
     ///
     /// # Events
     ///
@@ -298,14 +297,13 @@ pub trait IErc721 {
     ///
     /// # Errors
     ///
-    ///  * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
     ///  * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///  * [`Error::InsufficientApproval`] - If the caller does not have the
     ///    right to approve.
     ///  * [`Error::NonexistentToken`] - If the token does not exist.
     ///  * [`Error::InvalidReceiver`] - If
     ///    [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///    interface id or returned with error.
+    ///    interface id or returned with error, or `to` is `Address::ZERO`.
     ///
     /// # Events
     ///

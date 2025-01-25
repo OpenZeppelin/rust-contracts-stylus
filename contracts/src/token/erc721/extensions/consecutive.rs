@@ -548,10 +548,7 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
-    /// * [`erc721::Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///   interface id or returned with error.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`, or [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its interface id or returned with error.
     ///
     /// # Events
     ///

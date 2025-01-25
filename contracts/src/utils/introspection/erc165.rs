@@ -26,7 +26,7 @@ pub trait IErc165 {
     ///
     /// * `interface_id` - The interface identifier, as specified in the [ERC].
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust,ignore
     /// #[public]

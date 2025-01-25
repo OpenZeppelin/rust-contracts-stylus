@@ -6,7 +6,7 @@
 //! Adds the `permit` method, which can be used to change an account’s
 //! ERC20 allowance (see [`crate::token::erc20::IErc20::allowance`])
 //! by presenting a message signed by the account.
-//! By not relying on [`crate::token::erc20::IErc20::approve`],
+//! By not relying on [`erc20::IErc20::approve`],
 //! the token holder account doesn’t need to send a transaction,
 //! and thus is not required to hold Ether at all.
 //!
@@ -117,14 +117,6 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
     /// given `owner`'s signed approval.
     ///
-    /// # Requirements
-    ///
-    /// * `spender` cannot be the ``Address::ZERO``.
-    /// * `deadline` must be a timestamp in the future.
-    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner` over
-    ///   the EIP712-formatted function arguments.
-    /// * The signature must use `owner`'s current nonce.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state. given address.
@@ -151,7 +143,15 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * [`erc20::Approval`].
+    /// * [`erc20::Approval`] 
+    ///
+    /// # Requirements
+    ///
+    /// * `spender` cannot be the ``Address::ZERO``.
+    /// * `deadline` must be a timestamp in the future.
+    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner`
+    /// over the EIP712-formatted function arguments.
+    /// * the signature must use `owner`'s current nonce.
     #[allow(clippy::too_many_arguments)]
     pub fn permit(
         &mut self,
@@ -220,14 +220,14 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// * [`crate::token::erc20::Error::InvalidReceiver`] - If the `to` address
+    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address
     ///   is `Address::ZERO`.
-    /// * [`crate::token::erc20::Error::InsufficientBalance`] - If the caller
+    /// * [`erc20::Error::InsufficientBalance`] - If the caller
     ///   doesn't have a balance of at least `value`.
     ///
     /// # Events
     ///
-    /// * [`crate::token::erc20::Transfer`].
+    /// * [`erc20::Transfer`]
     pub fn transfer(
         &mut self,
         to: Address,
@@ -272,12 +272,12 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// [`crate::token::erc20::Error::InvalidSpender`] - If the `spender`
+    /// [`erc20::Error::InvalidSpender`] - If the `spender`
     /// address is `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// * [`crate::token::erc20::Approval`].
+    /// * [`erc20::Approval`] 
     pub fn approve(
         &mut self,
         spender: Address,
@@ -305,16 +305,16 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// * [`crate::token::erc20::Error::InvalidSender`] - If the `from` address
+    /// * [`erc20::Error::InvalidSender`] - If the `from` address
     ///   is `Address::ZERO`.
-    /// * [`crate::token::erc20::Error::InvalidReceiver`] - If the `to` address
+    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address
     ///   is `Address::ZERO`.
-    /// * [`crate::token::erc20::Error::InsufficientAllowance`] - If not enough
+    /// * [`erc20::Error::InsufficientAllowance`] - If not enough
     ///   allowance is available.
     ///
     /// # Events
     ///
-    /// * [`erc20::Transfer`].
+    /// * [`erc20::Transfer`]
     pub fn transfer_from(
         &mut self,
         from: Address,

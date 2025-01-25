@@ -3,7 +3,7 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::token::erc721::{Erc721, Error};
+use crate::token::erc721::{self, Erc721, Error};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {

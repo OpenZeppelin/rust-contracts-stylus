@@ -312,7 +312,7 @@ pub trait IErc1155 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - Returned when `to` is `Address::ZERO` or
-    ///   when `IERC1155Receiver::on_erc_1155_received` hasn't returned its
+    ///   when [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
     /// * [`Error::InvalidSender`] - Returned when `from` is `Address::ZERO`.
     /// * [`Error::MissingApprovalForAll`] - Returned when `from` is not the
@@ -327,7 +327,7 @@ pub trait IErc1155 {
     ///
     /// # Panics
     ///
-    /// * Should not panic.
+    /// Should not panic.
     fn safe_transfer_from(
         &mut self,
         from: Address,
@@ -364,7 +364,7 @@ pub trait IErc1155 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - Returned when `to` is `Address::ZERO` or
-    ///   when `IERC1155Receiver::on_erc_1155_batch_received` hasn't returned
+    ///   when [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned
     ///   its interface id or returned with error.
     /// * [`Error::InvalidSender`] - Returned when `from` is `Address::ZERO`.
     /// * [`Error::InvalidArrayLength`] - Returned when the length of `ids` is
@@ -377,12 +377,12 @@ pub trait IErc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the arrays contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the arrays contain multiple elements.
     ///
     /// # Panics
     ///
-    /// * Should not panic.
+    /// Should not panic.
     fn safe_batch_transfer_from(
         &mut self,
         from: Address,
@@ -486,8 +486,8 @@ impl Erc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the arrays contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the arrays contain multiple elements.
     ///
     /// # Panics
     ///
@@ -541,16 +541,13 @@ impl Erc1155 {
     /// * [`Error::InsufficientBalance`] - Returned when `value` is greater than
     ///   the balance of the `from` account.
     /// * [`Error::InvalidReceiver`] - Returned
-    ///   when`IERC1155Receiver::on_erc_1155_received` hasn't returned its
-    ///   interface id or returned with error.
-    /// * [`Error::InvalidReceiver`] - Returned when
-    ///   `IERC1155Receiver::on_erc_1155_batch_received` hasn't returned its
+    ///   when [`IERC1155Receiver::on_erc_1155_received`] or [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the arrays contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the arrays contain multiple elements.
     ///
     /// # Panics
     ///
@@ -639,8 +636,8 @@ impl Erc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the arrays contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the arrays contain multiple elements.
     ///
     /// # Panics
     ///
@@ -676,7 +673,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * Should not panic.
+    /// Should not panic.
     pub fn _burn(
         &mut self,
         from: Address,
@@ -706,12 +703,12 @@ impl Erc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the arrays contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the arrays contain multiple elements.
     ///
     /// # Panics
     ///
-    /// * Should not panic.
+    /// Should not panic.
     pub fn _burn_batch(
         &mut self,
         from: Address,
@@ -864,8 +861,8 @@ impl Erc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the array contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the array contain multiple elements.
     ///
     /// # Panics
     ///
@@ -912,12 +909,12 @@ impl Erc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the arrays contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the arrays contain multiple elements.
     ///
     /// # Panics
     ///
-    /// * Should not panic.
+    /// Should not panic.
     fn _do_burn(
         &mut self,
         from: Address,
@@ -968,8 +965,8 @@ impl Erc1155 {
     ///
     /// # Events
     ///
-    /// * [`TransferSingle`] - if the arrays contain one element.
-    /// * [`TransferBatch`] - if the arrays contain multiple elements.
+    /// * [`TransferSingle`] - If the arrays contain one element.
+    /// * [`TransferBatch`] - If the arrays contain multiple elements.
     ///
     /// # Panics
     ///

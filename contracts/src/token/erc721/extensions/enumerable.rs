@@ -233,7 +233,7 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * [`crate::token::erc721::Error::InvalidOwner`] - If owner address is
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is
     ///   `Address::ZERO`.
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
@@ -317,7 +317,7 @@ impl Erc721Enumerable {
         self._all_tokens.pop();
     }
 
-    /// See [`crate::token::erc721::Erc721::_increase_balance`].
+    /// See [`erc721::Erc721::_increase_balance`].
     /// Check if tokens can be minted in batch.
     ///
     /// Mechanism to be consistent with [Solidity version](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.0/contracts/token/ERC721/extensions/ERC721Enumerable.sol#L163-L171)

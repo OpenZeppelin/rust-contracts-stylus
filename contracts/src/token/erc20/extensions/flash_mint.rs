@@ -215,11 +215,7 @@ pub trait IErc3156FlashLender {
     /// * [`Error::ExceededMaxLoan`] - If the `value` is greater than the value
     ///   returned by [`IErc3156FlashLender::max_flash_loan`].
     /// * [`Error::UnsupportedToken`] - If `token` is not supported.
-    /// * [`Error::InvalidReceiver`] - If the `token` address is not a contract.
-    /// * [`Error::InvalidReceiver`] - If the contract fails to execute the
-    ///   call.
-    /// * [`Error::InvalidReceiver`] - If the receiver does not return
-    ///   [`BORROWER_CALLBACK_VALUE`].
+    /// * [`Error::InvalidReceiver`] - If the `token` address is not a contract , the contract fails to execute the call, or the receiver does not return [`BORROWER_CALLBACK_VALUE`].
     ///
     /// # Events
     ///

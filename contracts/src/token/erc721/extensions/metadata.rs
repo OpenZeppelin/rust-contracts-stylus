@@ -102,7 +102,7 @@ impl Erc721Metadata {
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust,ignore
     /// #[selector(name = "tokenURI")]

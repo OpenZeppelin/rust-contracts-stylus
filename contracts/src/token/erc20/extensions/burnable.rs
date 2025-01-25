@@ -3,7 +3,7 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::token::erc20::{Erc20, Error};
+use crate::token::erc20::{self, Erc20, Error};
 
 /// Extension of [`Erc20`] that allows token holders to destroy both
 /// their own tokens and those that they have an allowance for,
@@ -51,7 +51,7 @@ pub trait IErc20Burnable {
     ///
     /// # Events
     ///
-    /// * [`super::super::Transfer`].
+    /// * [`erc20::Transfer`].
     fn burn_from(
         &mut self,
         account: Address,
