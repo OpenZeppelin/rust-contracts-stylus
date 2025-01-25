@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20Wrapper, IERC20Wrapper},
+    extensions::{Erc20Wrapper, Erc20Metadata},
     Erc20,
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
@@ -17,11 +17,13 @@ struct Erc20WrapperExample {
     #[borrow]
     pub erc20: Erc20,
     #[borrow]
+    pub metadata: Erc20Metadata,
+    #[borrow]
     pub wrapper: Erc20Wrapper,
 }
 
 #[public]
-#[inherit(Erc20)]
+#[inherit(Erc20,)]
 impl Erc20WrapperExample {
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.
     //

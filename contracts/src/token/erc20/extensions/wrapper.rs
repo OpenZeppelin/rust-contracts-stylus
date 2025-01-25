@@ -51,7 +51,7 @@ pub enum Error {
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
 }
-/// State of an [`Erc4626`] token.
+/// State of an [`Erc20Wrapper`] token.
 #[storage]
 pub struct Erc20Wrapper {
     /// Token Address of the vault
