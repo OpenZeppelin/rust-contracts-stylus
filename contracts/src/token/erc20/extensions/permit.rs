@@ -143,7 +143,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * [`erc20::Approval`] 
+    /// * [`erc20::Approval`]
     ///
     /// # Requirements
     ///
@@ -220,10 +220,10 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address
-    ///   is `Address::ZERO`.
-    /// * [`erc20::Error::InsufficientBalance`] - If the caller
-    ///   doesn't have a balance of at least `value`.
+    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientBalance`] - If the caller doesn't have a
+    ///   balance of at least `value`.
     ///
     /// # Events
     ///
@@ -277,7 +277,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Events
     ///
-    /// * [`erc20::Approval`] 
+    /// * [`erc20::Approval`]
     pub fn approve(
         &mut self,
         spender: Address,
@@ -305,12 +305,12 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// * [`erc20::Error::InvalidSender`] - If the `from` address
-    ///   is `Address::ZERO`.
-    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address
-    ///   is `Address::ZERO`.
-    /// * [`erc20::Error::InsufficientAllowance`] - If not enough
-    ///   allowance is available.
+    /// * [`erc20::Error::InvalidSender`] - If the `from` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available.
     ///
     /// # Events
     ///

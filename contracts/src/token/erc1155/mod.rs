@@ -540,8 +540,9 @@ impl Erc1155 {
     ///   equal to length of `values`.
     /// * [`Error::InsufficientBalance`] - Returned when `value` is greater than
     ///   the balance of the `from` account.
-    /// * [`Error::InvalidReceiver`] - Returned
-    ///   when [`IERC1155Receiver::on_erc_1155_received`] or [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - Returned when
+    ///   [`IERC1155Receiver::on_erc_1155_received`] or
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
