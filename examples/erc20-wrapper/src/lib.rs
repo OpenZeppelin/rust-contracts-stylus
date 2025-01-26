@@ -3,13 +3,14 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20Metadata, Erc20Wrapper},
-    Erc20,
+use openzeppelin_stylus::token::{
+    erc20::{
+        extensions::{Erc20Metadata, Erc20Wrapper},
+        Erc20,
+    },
+    erc721::extensions::Erc721Metadata,
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
-
-const DECIMALS: u8 = 10;
 
 #[entrypoint]
 #[storage]
@@ -23,7 +24,7 @@ struct Erc20WrapperExample {
 }
 
 #[public]
-#[inherit(Erc20)]
+#[inherit(Erc20, Erc721Metadata)]
 impl Erc20WrapperExample {
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.
     //
