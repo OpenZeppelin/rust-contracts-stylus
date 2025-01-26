@@ -5,9 +5,9 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
-        extensions::{Erc20Metadata, Erc20Wrapper,IERC20Wrapper},
-        Erc20,
-    };
+    extensions::{Erc20Metadata, Erc20Wrapper, IERC20Wrapper},
+    Erc20,
+};
 use stylus_sdk::prelude::{entrypoint, public, storage};
 
 #[entrypoint]
@@ -25,13 +25,13 @@ struct Erc20WrapperExample {
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc20WrapperExample {
     fn underlying(&self) -> Address {
-         self.wrapper.underlying()
+        self.wrapper.underlying()
     }
 
     fn deposit_to(
         &mut self,
         account: Address,
-        value: U256
+        value: U256,
     ) -> Result<bool, Vec<u8>> {
         Ok(self.wrapper.deposit_to(account, value, &mut self.erc20)?)
     }
@@ -39,7 +39,7 @@ impl Erc20WrapperExample {
     fn withdraw_to(
         &mut self,
         account: Address,
-        value: U256
+        value: U256,
     ) -> Result<bool, Vec<u8>> {
         Ok(self.wrapper.withdraw_to(account, value, &mut self.erc20)?)
     }
