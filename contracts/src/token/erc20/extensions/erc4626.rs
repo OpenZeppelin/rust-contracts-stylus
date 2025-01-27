@@ -199,6 +199,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Panics
+    ///
+    /// If updated balance exceeds `U256::MAX`, may happen during `mint`
+    /// operation.
     fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
@@ -770,7 +775,7 @@ impl Erc4626 {
         self.underlying_decimals
             .get()
             .checked_add(Self::_decimals_offset())
-            .expect("Decimals should not be grater than U8::MAX")
+            .expect("Decimals should not be greater than U8::MAX")
     }
 
     /// Converts a given amount of assets to shares using the specified
