@@ -447,10 +447,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
-    /// * [`Error::ExceededMaxMint`] - If mint amount exceeds maximum allowed.
+    /// * [`Error::ExceededMaxMint`] - If requested shares amount exceeds
+    ///   maximum mintable amount for `receiver`.
     /// * [`erc20::Error::InvalidReceiver`] - If the `receiver` address is
     ///   `Address::ZERO`.
-    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If depositor lacks
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If minter lacks
     ///   sufficient balance or hasn't approved enough tokens to the Vault
     ///   contract.
     ///
@@ -548,9 +549,15 @@ pub trait IErc4626 {
     /// Burns shares from owner and sends exactly assets of underlying tokens to
     /// receiver.
     ///
-    /// Note that some implementations will require pre-requesting to the Vault
-    /// before a withdrawal may be performed. Those methods should be performed
-    /// separately.
+    /// NOTE:
+    /// - Some implementations will require pre-requesting to the Vault before a
+    ///   withdrawal may be performed. Those methods should be performed
+    ///   separately.
+    /// - To expose this function in your contract's ABI, implement it as shown
+    ///   in the Examples section below, accepting only the `assets`, `receiver`
+    ///   and `owner` parameters. The `erc20` reference should come from your
+    ///   contract's state. The implementation should forward the call to your
+    ///   internal storage instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -574,6 +581,43 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    /// * [`Error::ExceededMaxWithdraw`] - If requested assets amount exceeds
+    ///   maximum withdrawable amount for owner.
+    /// * [`erc20::Error::InsufficientAllowance`] - If caller is not owner and
+    ///   lacks sufficient allowance for shares.
+    /// * [`erc20::Error::InvalidSender`] - If owner address is zero when
+    ///   burning shares.
+    /// * [`erc20::Error::InsufficientBalance`] - If owner lacks sufficient
+    ///   share balance.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If underlying token
+    ///   transfer fails or returns false.
+    ///
+    /// # Events
+    ///
+    /// * [`Withdraw`]
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn withdraw(
+    ///     &mut self,
+    ///    assets: U256,
+    ///    receiver: Address,
+    ///    owner: Address,
+    /// ) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.withdraw(
+    ///         assets,
+    ///         receiver,
+    ///         owner,
+    ///         &mut self.erc20,
+    ///     )?)
+    /// }
+    /// ```
     fn withdraw(
         &mut self,
         assets: U256,
