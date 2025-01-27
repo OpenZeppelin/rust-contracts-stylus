@@ -329,7 +329,7 @@ pub trait IErc4626 {
     ///   allowed.
     /// * [`erc20::Error::InvalidReceiver`] - If the `receiver` address is
     ///   `Address::ZERO`.
-    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If depositor lacks
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If caller lacks
     ///   sufficient balance or hasn't approved enough tokens to the Vault
     ///   contract.
     ///
@@ -455,7 +455,7 @@ pub trait IErc4626 {
     ///   maximum mintable amount for `receiver`.
     /// * [`erc20::Error::InvalidReceiver`] - If the `receiver` address is
     ///   `Address::ZERO`.
-    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If minter lacks
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If caller lacks
     ///   sufficient balance or hasn't approved enough tokens to the Vault
     ///   contract.
     ///
@@ -693,6 +693,12 @@ pub trait IErc4626 {
     /// Burns exactly shares from owner and sends assets of underlying tokens to
     /// receiver.
     ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `shares`,
+    /// `receiver` and `owner` parameters. The `erc20` reference should come
+    /// from your contract's state. The implementation should forward the call
+    /// to your internal storage instance along with the `erc20` reference.
+    ///
     /// # Requirements
     ///
     /// * MUST emit the [`Withdraw`] event.
@@ -734,6 +740,24 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn redeem(
+    ///     &mut self,
+    ///    shares: U256,
+    ///    receiver: Address,
+    ///    owner: Address,
+    /// ) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.redeem(
+    ///         shares,
+    ///         receiver,
+    ///         owner,
+    ///         &mut self.erc20,
+    ///     )?)
+    /// }
+    /// ```
     fn redeem(
         &mut self,
         shares: U256,
