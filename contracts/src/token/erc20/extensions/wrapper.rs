@@ -2,9 +2,7 @@
 //!
 //! Users can deposit and withdraw "underlying tokens" and receive a matching
 //! number of "wrapped tokens". This is useful in conjunction with other
-//! modules. For example, combining this wrapping mechanism with {ERC20Votes}
-//! will allow the wrapping of an existing "basic" ERC-20 into a governance
-//! token.
+//! modules.
 //!
 //! WARNING: Any mechanism in which the underlying token changes the {balanceOf}
 //! of an account without an explicit transfer may desynchronize this contract's
@@ -57,6 +55,7 @@ sol! {
     #[allow(missing_docs)]
     error ERC20InvalidUnderlying(address token);
 
+
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidSender(address sender);
@@ -106,9 +105,9 @@ pub struct Erc20Wrapper {
     safe_erc20: SafeErc20,
 }
 
-/// ERC-4626 Tokenized Vault Standard Interface
+/// ERC-20 Wrapper Standard Interface
 pub trait IERC20Wrapper {
-    /// The error type associated to this ERC20Wrapper trait implementation.
+    /// The error type associated to this `ERC20Wrapper` trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the address of the underlying token that is been wrapped.
@@ -122,6 +121,13 @@ pub trait IERC20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
     /// * `value` - The amount of tokens to deposit.
+    ///  
+    /// # Errors
+    ///
+    /// * If the sender address is `contract:address()` or invalid, 
+    ///   [`Error::InvalidSender`] is returned.
+    /// * If the receiver address is `contract:address()` or invalid, 
+    ///   [`Error::InvalidReceiver`] is returned.
     fn deposit_to(
         &mut self,
         account: Address,
@@ -138,6 +144,11 @@ pub trait IERC20Wrapper {
     /// * `account` - The account to withdraw tokens to.
     /// * `value` - The amount of tokens to withdraw.
     /// * `erc20` - A mutable reference to the Erc20 contract.
+    /// 
+    /// # Errors
+    ///
+    /// * If the receiver address is `contract:address()` or invalid, 
+    ///   [`Error::InvalidReceiver`] is returned.
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -167,14 +178,14 @@ impl IERC20Wrapper for Erc20Wrapper {
         let underlined_token = self.underlying.get();
         let sender = msg::sender();
         if account == contract::address() {
-            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
-                token: contract::address(),
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: contract::address(),
             }));
         }
 
         if sender == contract::address() {
-            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
-                token: account,
+            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
+                receiver: account,
             }));
         }
         self.safe_erc20.safe_transfer_from(
@@ -195,8 +206,8 @@ impl IERC20Wrapper for Erc20Wrapper {
     ) -> Result<bool, Error> {
         let underlined_token = self.underlying.get();
         if account == contract::address() {
-            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
-                token: contract::address(),
+            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
+                receiver: account,
             }));
         }
         erc20._burn(account, value)?;
@@ -217,6 +228,11 @@ impl Erc20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to mint tokens to.
     /// * `erc20` - A mutable reference to the Erc20 contract.
+    /// 
+    /// # Errors
+    ///
+    /// If the external call for balance of fails , then the error
+    /// [`Error::InvalidAsset`] is returned.
     pub fn _recover(
         &mut self,
         account: Address,
