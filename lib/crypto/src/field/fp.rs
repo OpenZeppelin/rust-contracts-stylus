@@ -51,16 +51,18 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     const MODULUS_HAS_SPARE_BIT: bool = modulus_has_spare_bit::<Self, N>();
 
-    /// INV = -MODULUS^{-1} mod 2^64
+    /// `INV = -MODULUS^{-1} mod 2^64`
     const INV: u64 = inv::<Self, N>();
 
-    /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS_BITS`]. Then
-    /// `R = M % MODULUS`.
+    /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS`] size.
+    /// Then `R = M % MODULUS` or `R = (M - 1) % MODULUS + 1` for convenience of
+    /// multiplication.
     const R: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::ZERO)
         .ct_rem(&Self::MODULUS)
         .ct_wrapping_add(&Uint::ONE);
 
-    /// `R2 = R^2 % MODULUS`
+    /// `R2 = R^2 % MODULUS` or `R2 = (R^2 - 1) % MODULUS + 1` for convenience
+    /// of multiplication.
     #[allow(dead_code)]
     const R2: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::MAX)
         .ct_rem(&Self::MODULUS)

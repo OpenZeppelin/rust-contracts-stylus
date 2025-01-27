@@ -24,7 +24,7 @@ use crate::{
         BigInteger,
     },
     bits::BitIteratorBE,
-    const_for, const_modulo, unroll6_for,
+    const_for, unroll6_for,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
@@ -216,58 +216,6 @@ impl<const N: usize> Uint<N> {
         is_zero
     }
 
-    // TODO#q: Montgomery constant computation from rust-crypto
-    /// Computes the Montgomery R constant modulo `self`.
-    #[doc(hidden)]
-    pub const fn montgomery_r(&self) -> Self {
-        let two_pow_n_times_64 = crate::const_helpers::RBuffer([0u64; N], 1);
-        assert!(!self.ct_is_zero());
-        let mut remainder = Self::new([0u64; N]);
-        let mut i = (two_pow_n_times_64.num_bits() - 1) as isize;
-        let mut carry;
-        while i >= 0 {
-            (remainder, carry) = remainder.ct_mul2_with_carry();
-            remainder.limbs[0] |= two_pow_n_times_64.get_bit(i as usize) as u64;
-            if remainder.ct_geq(self) || carry {
-                let (r, borrow) = remainder.ct_sub_with_borrow(self);
-                remainder = r;
-                assert!(borrow == carry);
-            }
-            i -= 1;
-        }
-        remainder
-    }
-
-    /// Computes the Montgomery R2 constant modulo `self`.
-    #[doc(hidden)]
-    pub const fn montgomery_r2(&self) -> Self {
-        let two_pow_n_times_64_square =
-            crate::const_helpers::R2Buffer([0u64; N], [0u64; N], 1);
-        const_modulo!(two_pow_n_times_64_square, self)
-    }
-
-    pub const fn ct_rem(&self, rhs: &Self) -> Self {
-        assert!(!self.ct_is_zero(), "should not divide by zero");
-
-        let mut remainder = Self::ZERO;
-        let mut index = self.ct_num_bits() as usize - 1; // TODO#q: ct_num_bits should return usize
-        let mut carry = false;
-        loop {
-            (remainder, carry) = remainder.ct_mul2_with_carry();
-            remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
-            if remainder.ct_geq(rhs) || carry {
-                let (r, borrow) = remainder.ct_sub_with_borrow(rhs);
-                remainder = r;
-                assert!(borrow == carry); // TODO#q: add doc comment
-            }
-
-            if index == 0 {
-                break remainder;
-            }
-            index -= 1;
-        }
-    }
-
     pub fn div2(&mut self) {
         let mut t = 0;
         for a in self.limbs.iter_mut().rev() {
@@ -453,59 +401,7 @@ impl<const N: usize> Uint<N> {
         Self::new(res)
     }
 }
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
-pub struct WideUint<const N: usize> {
-    low: Uint<N>,
-    high: Uint<N>,
-}
 
-impl<const N: usize> WideUint<N> {
-    pub const fn new(low: Uint<N>, high: Uint<N>) -> Self {
-        Self { low, high }
-    }
-
-    pub const fn ct_rem(&self, rhs: &Uint<N>) -> Uint<N> {
-        assert!(!rhs.ct_is_zero(), "should not divide by zero");
-
-        let mut remainder = Uint::<N>::ZERO;
-        let mut index = self.ct_num_bits() as usize - 1; // TODO#q: ct_num_bits should return usize
-        let mut carry = false;
-        loop {
-            (remainder, carry) = remainder.ct_mul2_with_carry();
-            remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
-            if remainder.ct_geq(rhs) || carry {
-                let (r, borrow) = remainder.ct_sub_with_borrow(rhs);
-                remainder = r;
-                assert!(borrow == carry); // TODO#q: add doc comment
-            }
-
-            if index == 0 {
-                break remainder;
-            }
-            index -= 1;
-        }
-    }
-
-    /// Find the number of bits in the binary decomposition of `self`.
-    #[doc(hidden)]
-    pub const fn ct_num_bits(&self) -> u32 {
-        let high_num_bits = self.high.ct_num_bits();
-        if high_num_bits == 0 {
-            self.low.ct_num_bits()
-        } else {
-            high_num_bits + Uint::<N>::BITS
-        }
-    }
-
-    /// Compute the `i`-th bit of `self`.
-    pub const fn ct_get_bit(&self, i: usize) -> bool {
-        if i >= Uint::<N>::BITS as usize {
-            self.high.ct_get_bit(i - (Uint::<N>::BITS as usize))
-        } else {
-            self.low.ct_get_bit(i)
-        }
-    }
-}
 // ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
@@ -975,6 +871,62 @@ macro_rules! from_hex {
     ($num:literal) => {
         $crate::arithmetic::uint::from_str_hex($num)
     };
+}
+
+/// Integer that uses twice more limbs than `Uint` for the same `N` parameter.
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
+pub struct WideUint<const N: usize> {
+    low: Uint<N>,
+    high: Uint<N>,
+}
+
+impl<const N: usize> WideUint<N> {
+    pub const fn new(low: Uint<N>, high: Uint<N>) -> Self {
+        Self { low, high }
+    }
+
+    /// Compute reminder of division of `self` by `rhs`.
+    pub const fn ct_rem(&self, rhs: &Uint<N>) -> Uint<N> {
+        assert!(!rhs.ct_is_zero(), "should not divide by zero");
+
+        let mut remainder = Uint::<N>::ZERO;
+        let mut index = self.ct_num_bits() as usize - 1; // TODO#q: ct_num_bits should return usize
+        let mut carry = false;
+        loop {
+            (remainder, carry) = remainder.ct_mul2_with_carry();
+            remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
+            if remainder.ct_geq(rhs) || carry {
+                let (r, borrow) = remainder.ct_sub_with_borrow(rhs);
+                remainder = r;
+                assert!(borrow == carry); // TODO#q: add doc comment
+            }
+
+            if index == 0 {
+                break remainder;
+            }
+            index -= 1;
+        }
+    }
+
+    /// Find the number of bits in the binary decomposition of `self`.
+    #[doc(hidden)]
+    pub const fn ct_num_bits(&self) -> u32 {
+        let high_num_bits = self.high.ct_num_bits();
+        if high_num_bits == 0 {
+            self.low.ct_num_bits()
+        } else {
+            high_num_bits + Uint::<N>::BITS
+        }
+    }
+
+    /// Compute the `i`-th bit of `self`.
+    pub const fn ct_get_bit(&self, i: usize) -> bool {
+        if i >= Uint::<N>::BITS as usize {
+            self.high.ct_get_bit(i - (Uint::<N>::BITS as usize))
+        } else {
+            self.low.ct_get_bit(i)
+        }
+    }
 }
 
 #[cfg(all(test, feature = "std"))]
