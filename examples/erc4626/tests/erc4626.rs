@@ -300,6 +300,68 @@ async fn preview_deposit_reverts_when_asset_is_not_erc20(
 }
 
 #[e2e::test]
+async fn preview_deposit_reverts_when_result_overflows(
+    alice: Account,
+) -> Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(erc20_alice.mint(contract_addr, U256::MAX))?;
+
+    let err = contract
+        .previewDeposit(U256::MAX)
+        .call()
+        .await
+        .expect_err("should panics due to `Overflow`");
+
+    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+    Ok(())
+}
+
+#[e2e::test]
+async fn preview_deposit_works(alice: Account) -> Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let tokens = uint!(10_U256);
+    let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
+
+    let total_supply = contract.totalSupply().call().await?.totalSupply;
+    let assets = uint!(69_U256);
+    let decimals_offset = U256::ZERO;
+
+    let expected_deposit = assets.mul_div(
+        total_supply
+            + U256::from(10)
+                .checked_pow(decimals_offset)
+                .expect("should not overflow"),
+        tokens + U256::from(1),
+        Rounding::Floor,
+    );
+
+    let preview_deposit = contract.previewDeposit(assets).call().await?.deposit;
+
+    assert_eq!(preview_deposit, expected_deposit);
+    Ok(())
+}
+
+#[e2e::test]
 async fn deposit_reverts_when_asset_is_not_erc20(
     alice: Account,
 ) -> eyre::Result<()> {

@@ -32,7 +32,7 @@ sol!(
         #[derive(Debug)]
         function maxRedeem(address owner) external view  returns (uint256 maxRedeem);
         #[derive(Debug)]
-        function previewDeposit(uint256 assets) external view  returns (uint256);
+        function previewDeposit(uint256 assets) external view  returns (uint256 deposit);
         #[derive(Debug)]
         function previewMint(uint256 shares) external view  returns (uint256);
         #[derive(Debug)]
