@@ -17,6 +17,10 @@ sol_interface! {
         /// It must return its function selector to confirm the token transfer.
         /// If any other value is returned or the interface is not implemented
         /// by the recipient, the transfer will be reverted.
+        /// 
+        /// NOTE: To accept the transfer, 
+        /// this must return [`super::RECEIVER_FN_SELECTOR`],
+        /// or its own function selector.
         ///
         /// # Arguments
         ///
