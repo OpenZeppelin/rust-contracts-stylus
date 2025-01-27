@@ -177,9 +177,16 @@ pub trait IErc4626 {
     /// amount of assets provided, in an ideal scenario where all the conditions
     /// are met.
     ///
-    /// NOTE: This calculation MAY NOT reflect the “per-user” price-per-share,
-    /// and instead should reflect the “average-user’s” price-per-share, meaning
-    /// what the average user should expect to see when exchanging to and from.
+    /// NOTE:
+    /// - This calculation MAY NOT reflect the “per-user” price-per-share, and
+    ///   instead should reflect the “average-user’s” price-per-share, meaning
+    ///   what the average user should expect to see when exchanging to and
+    ///   from.
+    /// - To expose this function in your contract's ABI, implement it as shown
+    ///   in the Examples section below, accepting only the `assets` parameter.
+    ///   The `erc20` reference should come from your contract's state. The
+    ///   implementation should forward the call to your internal storage
+    ///   instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -194,6 +201,7 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -204,15 +212,34 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow.
-    fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error>;
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.convert_to_shares(assets, &self.erc20)?)
+    /// }
+    /// ```
+    fn convert_to_shares(
+        &mut self,
+        assets: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
     /// amount of shares provided, in an ideal scenario where all the conditions
     /// are met.
     ///
-    /// NOTE: This calculation MAY NOT reflect the “per-user” price-per-share,
-    /// and instead should reflect the “average-user’s” price-per-share, meaning
-    /// what the average user should expect to see when exchanging to and from.
+    /// NOTE:
+    /// - This calculation MAY NOT reflect the “per-user” price-per-share, and
+    ///   instead should reflect the “average-user’s” price-per-share, meaning
+    ///   what the average user should expect to see when exchanging to and
+    ///   from.
+    /// - To expose this function in your contract's ABI, implement it as shown
+    ///   in the Examples section below, accepting only the `shares` parameter.
+    ///   The `erc20` reference should come from your contract's state. The
+    ///   implementation should forward the call to your internal storage
+    ///   instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -227,6 +254,7 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -237,7 +265,19 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow.
-    fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Self::Error>;
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.convert_to_assets(shares, &self.erc20)?)
+    /// }
+    /// ```
+    fn convert_to_assets(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be deposited
     /// into the Vault for the receiver, through a deposit call.
@@ -259,10 +299,16 @@ pub trait IErc4626 {
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// deposit at the current block, given current on-chain conditions.
     ///
-    /// NOTE: Any unfavorable discrepancy between
-    /// [`IErc4626::convert_to_shares`] and [`IErc4626::preview_deposit`] SHOULD
-    /// be considered slippage in share price or some other type of condition,
-    /// meaning the depositor will lose assets by depositing.
+    /// NOTE:
+    /// - Any unfavorable discrepancy between [`IErc4626::convert_to_shares`]
+    ///   and [`IErc4626::preview_deposit`] SHOULD be considered slippage in
+    ///   share price or some other type of condition, meaning the depositor
+    ///   will lose assets by depositing.
+    /// - To expose this function in your contract's ABI, implement it as shown
+    ///   in the Examples section below, accepting only the `assets` parameter.
+    ///   The `erc20` reference should come from your contract's state. The
+    ///   implementation should forward the call to your internal storage
+    ///   instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -283,6 +329,7 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset to deposit.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -293,7 +340,19 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_deposit(&mut self, assets: U256) -> Result<U256, Self::Error>;
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn preview_deposit(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.preview_deposit(assets, &self.erc20)?)
+    /// }
+    /// ```
+    fn preview_deposit(
+        &mut self,
+        assets: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Deposits exactly `assets` amount of underlying tokens into the Vault and
     /// mints corresponding Vault shares to `receiver`.
@@ -385,10 +444,16 @@ pub trait IErc4626 {
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// mint at the current block, given current on-chain conditions.
     ///
-    /// NOTE: Any unfavorable discrepancy between
-    /// [`IErc4626::convert_to_assets`] and [`IErc4626::preview_mint`] SHOULD be
-    /// considered slippage in share price or some other type of condition,
-    /// meaning the depositor will lose assets by minting.
+    /// NOTE:
+    /// - Any unfavorable discrepancy between [`IErc4626::convert_to_assets`]
+    ///   and [`IErc4626::preview_mint`] SHOULD be considered slippage in share
+    ///   price or some other type of condition, meaning the depositor will lose
+    ///   assets by minting.
+    /// - To expose this function in your contract's ABI, implement it as shown
+    ///   in the Examples section below, accepting only the `shares` parameter.
+    ///   The `erc20` reference should come from your contract's state. The
+    ///   implementation should forward the call to your internal storage
+    ///   instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -408,6 +473,7 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares to mint.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -418,7 +484,19 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error>;
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn preview_mint(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.preview_mint(shares, &self.erc20)?)
+    /// }
+    /// ```
+    fn preview_mint(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Mints the specified number of shares to `receiver` by pulling the
     /// required amount of underlying tokens from caller.
@@ -497,6 +575,12 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the underlying asset that can be withdrawn
     /// from the owner balance in the Vault, through a withdraw call.
     ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `owner`
+    /// parameter. The `erc20` reference should come from your contract's state.
+    /// The implementation should forward the call to your internal storage
+    /// instance along with the `erc20` reference.
+    ///
     /// # Requirements
     ///
     /// * MUST return a limited value if owner is subject to some withdrawal
@@ -518,6 +602,14 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn max_withdraw(&mut self, owner: Address) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.max_withdraw(owner, &self.erc20)?)
+    /// }
+    /// ```
     fn max_withdraw(
         &mut self,
         owner: Address,
@@ -526,6 +618,12 @@ pub trait IErc4626 {
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// withdrawal at the current block, given current on-chain conditions.
+    ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `assets`
+    /// parameter. The `erc20` reference should come from your contract's state.
+    /// The implementation should forward the call to your internal storage
+    /// instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -546,6 +644,7 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset to withdraw.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -556,7 +655,19 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error>;
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.preview_withdraw(assets, &self.erc20)?)
+    /// }
+    /// ```
+    fn preview_withdraw(
+        &mut self,
+        assets: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Withdraws the specified amount of underlying tokens to `receiver` by
     /// burning the required number of shares from `owner`.
@@ -643,6 +754,12 @@ pub trait IErc4626 {
     /// Returns the maximum amount of Vault shares that can be redeemed from the
     /// owner balance in the Vault, through a redeem call.
     ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `owner`
+    /// parameter. The `erc20` reference should come from your contract's state.
+    /// The implementation should forward the call to your internal storage
+    /// instance along with the `erc20` reference.
+    ///
     /// # Requirements
     ///
     /// * MUST return a limited value if owner is subject to some withdrawal
@@ -656,10 +773,24 @@ pub trait IErc4626 {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address of the entity owning the shares.
     /// * `erc20` - Read access to an [`Erc20`] contract.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn max_redeem(&mut self, owner: Address) -> U256 {
+    ///     Ok(self.erc4626.max_redeem(owner, &self.erc20)?)
+    /// }
+    /// ```
     fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// redeemption at the current block, given current on-chain conditions.
+    ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `shares`
+    /// parameter. The `erc20` reference should come from your contract's state.
+    /// The implementation should forward the call to your internal storage
+    /// instance along with the `erc20` reference.
     ///
     /// NOTE: Any unfavorable discrepancy between
     /// [`IErc4626::convert_to_assets`] and [`IErc4626::preview_redeem`] SHOULD
@@ -684,6 +815,7 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares to redeem.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -694,7 +826,19 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error>;
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn preview_redeem(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.preview_redeem(shares, &self.erc20)?)
+    /// }
+    /// ```
+    fn preview_redeem(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error>;
 
     /// Burns the specified number of shares from `owner` and sends the
     /// corresponding amount of underlying tokens to `receiver`.
@@ -783,23 +927,39 @@ impl IErc4626 for Erc4626 {
     }
 
     fn total_assets(&mut self) -> Result<U256, Self::Error> {
-        self.asset_balance_of(contract::address())
+        let erc20 = IErc20Solidity::new(self.asset());
+        let call = Call::new_in(self);
+        Ok(erc20
+            .balance_of(call, contract::address())
+            .map_err(|_| InvalidAsset { asset: self.asset() })?)
     }
 
-    fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error> {
-        self._convert_to_shares(assets, Rounding::Floor)
+    fn convert_to_shares(
+        &mut self,
+        assets: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_shares(assets, Rounding::Floor, erc20)
     }
 
-    fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Self::Error> {
-        self._convert_to_assets(shares, Rounding::Floor)
+    fn convert_to_assets(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
     fn max_deposit(&self, _receiver: Address) -> U256 {
         U256::MAX
     }
 
-    fn preview_deposit(&mut self, assets: U256) -> Result<U256, Self::Error> {
-        self._convert_to_shares(assets, Rounding::Floor)
+    fn preview_deposit(
+        &mut self,
+        assets: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_shares(assets, Rounding::Floor, erc20)
     }
 
     fn deposit(
@@ -818,7 +978,7 @@ impl IErc4626 for Erc4626 {
             }));
         }
 
-        let shares = self.preview_deposit(assets)?;
+        let shares = self.preview_deposit(assets, erc20)?;
 
         self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
 
@@ -829,8 +989,12 @@ impl IErc4626 for Erc4626 {
         U256::MAX
     }
 
-    fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error> {
-        self._convert_to_assets(shares, Rounding::Ceil)
+    fn preview_mint(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_assets(shares, Rounding::Ceil, erc20)
     }
 
     fn mint(
@@ -849,7 +1013,7 @@ impl IErc4626 for Erc4626 {
             }));
         }
 
-        let assets = self.preview_mint(shares)?;
+        let assets = self.preview_mint(shares, erc20)?;
         self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
 
         Ok(assets)
@@ -861,11 +1025,15 @@ impl IErc4626 for Erc4626 {
         erc20: &Erc20,
     ) -> Result<U256, Self::Error> {
         let balance = erc20.balance_of(owner);
-        self._convert_to_assets(balance, Rounding::Floor)
+        self._convert_to_assets(balance, Rounding::Floor, erc20)
     }
 
-    fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error> {
-        self._convert_to_shares(assets, Rounding::Ceil)
+    fn preview_withdraw(
+        &mut self,
+        assets: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_shares(assets, Rounding::Ceil, erc20)
     }
 
     fn withdraw(
@@ -883,7 +1051,7 @@ impl IErc4626 for Erc4626 {
             ));
         }
 
-        let shares = self.preview_withdraw(assets)?;
+        let shares = self.preview_withdraw(assets, erc20)?;
         self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(shares)
@@ -893,8 +1061,12 @@ impl IErc4626 for Erc4626 {
         erc20.balance_of(owner)
     }
 
-    fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error> {
-        self._convert_to_assets(shares, Rounding::Floor)
+    fn preview_redeem(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
     fn redeem(
@@ -913,29 +1085,11 @@ impl IErc4626 for Erc4626 {
             }));
         }
 
-        let assets = self.preview_redeem(shares)?;
+        let assets = self.preview_redeem(shares, erc20)?;
 
         self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(assets)
-    }
-}
-
-impl Erc4626 {
-    /// TODO: Rust docs
-    fn asset_total_supply(&mut self) -> Result<U256, Error> {
-        let erc20 = IErc20Solidity::new(self.asset());
-        Ok(erc20
-            .total_supply(Call::new_in(self))
-            .map_err(|_| InvalidAsset { asset: self.asset() })?)
-    }
-
-    /// TODO: Rust docs
-    fn asset_balance_of(&mut self, address: Address) -> Result<U256, Error> {
-        let erc20 = IErc20Solidity::new(self.asset());
-        Ok(erc20
-            .balance_of(Call::new_in(self), address)
-            .map_err(|_| InvalidAsset { asset: self.asset() })?)
     }
 }
 
@@ -978,8 +1132,9 @@ impl Erc4626 {
         &mut self,
         assets: U256,
         rounding: Rounding,
+        erc20: &Erc20,
     ) -> Result<U256, Error> {
-        let total_supply = self.asset_total_supply()?;
+        let total_supply = erc20.total_supply();
 
         let shares = assets.mul_div(
             total_supply
@@ -1015,8 +1170,9 @@ impl Erc4626 {
         &mut self,
         shares: U256,
         rounding: Rounding,
+        erc20: &Erc20,
     ) -> Result<U256, Error> {
-        let total_supply = self.asset_total_supply()?;
+        let total_supply = erc20.total_supply();
 
         let assets = shares.mul_div(
             self.total_assets()? + U256::from(1),

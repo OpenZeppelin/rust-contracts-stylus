@@ -37,11 +37,11 @@ impl Erc4626Example {
     }
 
     fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.convert_to_shares(assets)?)
+        Ok(self.erc4626.convert_to_shares(assets, &self.erc20)?)
     }
 
     fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.convert_to_assets(shares)?)
+        Ok(self.erc4626.convert_to_assets(shares, &self.erc20)?)
     }
 
     fn max_deposit(&self, receiver: Address) -> U256 {
@@ -49,7 +49,7 @@ impl Erc4626Example {
     }
 
     fn preview_deposit(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.preview_deposit(assets)?)
+        Ok(self.erc4626.preview_deposit(assets, &self.erc20)?)
     }
 
     fn deposit(
@@ -65,7 +65,7 @@ impl Erc4626Example {
     }
 
     fn preview_mint(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.preview_mint(shares)?)
+        Ok(self.erc4626.preview_mint(shares, &self.erc20)?)
     }
 
     fn mint(
@@ -81,7 +81,7 @@ impl Erc4626Example {
     }
 
     fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.preview_withdraw(assets)?)
+        Ok(self.erc4626.preview_withdraw(assets, &self.erc20)?)
     }
 
     fn withdraw(
@@ -98,7 +98,7 @@ impl Erc4626Example {
     }
 
     fn preview_redeem(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
-        Ok(self.erc4626.preview_redeem(shares)?)
+        Ok(self.erc4626.preview_redeem(shares, &self.erc20)?)
     }
 
     fn redeem(
