@@ -14,7 +14,6 @@ use koba::config::{Deploy, Generate, PrivateKey};
 use serde::Deserialize;
 
 pub mod access_control;
-pub mod ark_ff;
 pub mod erc1155;
 pub mod erc1155_metadata_uri;
 pub mod erc1155_supply;
@@ -25,7 +24,6 @@ pub mod ownable;
 pub mod oz_crypto;
 pub mod poseidon;
 pub mod poseidon_asm_sol;
-pub mod poseidon_renegades;
 pub mod poseidon_sol;
 pub mod report;
 pub mod vesting_wallet;
