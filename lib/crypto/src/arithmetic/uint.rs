@@ -66,15 +66,15 @@ impl<const N: usize> Uint<N> {
         Self { limbs: value }
     }
 
-    pub const fn as_limbs(&self) -> &[Limb; N] {
-        &self.limbs
-    }
-
     // TODO#q: add another conversions from u8, u16 and so on
     pub const fn from_u32(val: u32) -> Self {
         let mut repr = Self::ZERO;
         repr.limbs[0] = val as u64;
         repr
+    }
+
+    pub const fn as_limbs(&self) -> &[Limb; N] {
+        &self.limbs
     }
 
     #[doc(hidden)]
@@ -87,11 +87,41 @@ impl<const N: usize> Uint<N> {
         self.limbs[0] % 2 == 1
     }
 
-    #[doc(hidden)]
-    pub const fn mod_4(&self) -> u8 {
-        // To compute n % 4, we need to simply look at the
-        // 2 least significant bits of n, and check their value mod 4.
-        (((self.limbs[0] << 62) >> 62) % 4) as u8
+    const fn ct_geq(&self, other: &Self) -> bool {
+        const_for!((i in 0..N) {
+            let a = self.limbs[N - i - 1];
+            let b = other.limbs[N - i - 1];
+            if a < b {
+                return false;
+            } else if a > b {
+                return true;
+            }
+        });
+        true
+    }
+
+    pub const fn ct_ge(&self, rhs: &Self) -> bool {
+        const_for!((i in 0..N) {
+            if self.limbs[i] < rhs.limbs[i] {
+                return false;
+            } else if self.limbs[i] > rhs.limbs[i] {
+                return true;
+            }
+        });
+        true
+    }
+
+    pub const fn ct_is_zero(&self) -> bool {
+        self.ct_eq(&Self::ZERO)
+    }
+
+    pub const fn ct_eq(&self, rhs: &Self) -> bool {
+        const_for!((i in 0..N) {
+            if self.limbs[i] != rhs.limbs[i] {
+                return false;
+            }
+        });
+        true
     }
 
     /// Compute a right shift of `self`
@@ -108,19 +138,6 @@ impl<const N: usize> Uint<N> {
             t = t2;
         });
         result
-    }
-
-    const fn ct_geq(&self, other: &Self) -> bool {
-        const_for!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = other.limbs[N - i - 1];
-            if a < b {
-                return false;
-            } else if a > b {
-                return true;
-            }
-        });
-        true
     }
 
     /// Return the minimum number of bits needed to encode this number.
@@ -166,18 +183,11 @@ impl<const N: usize> Uint<N> {
         (self.limbs[limb] & mask) != 0
     }
 
-    #[inline]
-    pub(crate) const fn ct_sub_with_borrow(
-        mut self,
-        other: &Self,
-    ) -> (Self, bool) {
-        let mut borrow = 0;
-
-        const_for!((i in 0..N) {
-            (self.limbs[i], borrow) = limb::sbb(self.limbs[i], other.limbs[i], borrow);
-        });
-
-        (self, borrow != 0)
+    #[doc(hidden)]
+    pub const fn mod_4(&self) -> u8 {
+        // To compute n % 4, we need to simply look at the
+        // 2 least significant bits of n, and check their value mod 4.
+        (((self.limbs[0] << 62) >> 62) % 4) as u8
     }
 
     #[inline]
@@ -194,20 +204,6 @@ impl<const N: usize> Uint<N> {
         last != 0
     }
 
-    #[inline]
-    pub(crate) const fn ct_add_with_carry(
-        mut self,
-        other: &Self,
-    ) -> (Self, bool) {
-        let mut carry = 0;
-
-        const_for!((i in 0..N) {
-            (self.limbs[i], carry) = limb::adc(self.limbs[i], other.limbs[i], carry);
-        });
-
-        (self, carry != 0)
-    }
-
     const fn ct_mul2_with_carry(mut self) -> (Self, bool) {
         let mut last = 0;
         const_for!((i in 0..N) {
@@ -220,14 +216,6 @@ impl<const N: usize> Uint<N> {
         (self, last != 0)
     }
 
-    pub(crate) const fn ct_is_zero(&self) -> bool {
-        let mut is_zero = true;
-        const_for!((i in 0..N) {
-            is_zero &= self.limbs[i] == 0;
-        });
-        is_zero
-    }
-
     pub fn div2(&mut self) {
         let mut t = 0;
         for a in self.limbs.iter_mut().rev() {
@@ -236,6 +224,34 @@ impl<const N: usize> Uint<N> {
             *a |= t;
             t = t2;
         }
+    }
+
+    #[inline]
+    pub(crate) const fn ct_sub_with_borrow(
+        mut self,
+        other: &Self,
+    ) -> (Self, bool) {
+        let mut borrow = 0;
+
+        const_for!((i in 0..N) {
+            (self.limbs[i], borrow) = limb::sbb(self.limbs[i], other.limbs[i], borrow);
+        });
+
+        (self, borrow != 0)
+    }
+
+    #[inline]
+    pub(crate) const fn ct_add_with_carry(
+        mut self,
+        other: &Self,
+    ) -> (Self, bool) {
+        let mut carry = 0;
+
+        const_for!((i in 0..N) {
+            (self.limbs[i], carry) = limb::adc(self.limbs[i], other.limbs[i], carry);
+        });
+
+        (self, carry != 0)
     }
 
     // TODO#q: rename to checked_add?
@@ -317,27 +333,6 @@ impl<const N: usize> Uint<N> {
     pub const fn ct_wrapping_add(&self, rhs: &Self) -> Self {
         let (low, _) = self.ct_adc(rhs, Limb::ZERO);
         low
-    }
-
-    pub const fn ct_ge(&self, rhs: &Self) -> bool {
-        const_for!((i in 0..N) {
-            if self.limbs[i] < rhs.limbs[i] {
-                return false;
-            } else if self.limbs[i] > rhs.limbs[i] {
-                return true;
-            }
-        });
-        true
-    }
-
-    // TODO#q: unify ct_eq with ct_is_zero
-    pub const fn ct_eq(&self, rhs: &Self) -> bool {
-        const_for!((i in 0..N) {
-            if self.limbs[i] != rhs.limbs[i] {
-                return false;
-            }
-        });
-        true
     }
 
     #[inline(always)]
