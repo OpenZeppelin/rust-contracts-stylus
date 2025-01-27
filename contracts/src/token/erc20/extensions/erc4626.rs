@@ -590,12 +590,12 @@ pub trait IErc4626 {
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
     /// * [`Error::ExceededMaxWithdraw`] - If requested assets amount exceeds
-    ///   maximum withdrawable amount for owner.
-    /// * [`erc20::Error::InsufficientAllowance`] - If caller is not owner and
+    ///   maximum withdrawable amount for `owner`.
+    /// * [`erc20::Error::InsufficientAllowance`] - If caller is not `owner` and
     ///   lacks sufficient allowance for shares.
-    /// * [`erc20::Error::InvalidSender`] - If owner address is zero when
-    ///   burning shares.
-    /// * [`erc20::Error::InsufficientBalance`] - If owner lacks sufficient
+    /// * [`erc20::Error::InvalidSender`] - If `owner` address is
+    ///   `Address::ZERO` when burning shares.
+    /// * [`erc20::Error::InsufficientBalance`] - If `owner` lacks sufficient
     ///   share balance.
     /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If underlying token
     ///   transfer fails or returns false.
@@ -715,10 +715,25 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    /// * [`Error::ExceededMaxRedeem`] - If requested shares amount exceeds
+    ///   maximum redeemable amount for owner.
+    /// * [`erc20::Error::InsufficientAllowance`] - If caller is not `owner` and
+    ///   lacks sufficient allowance for shares.
+    /// * [`erc20::Error::InvalidSender`] - If `owner` address is
+    ///   `Address::ZERO` when burning shares.
+    /// * [`erc20::Error::InsufficientBalance`] - If `owner` lacks sufficient
+    ///   share balance.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If underlying token
+    ///   transfer fails or returns false.
     ///
     /// # Events
     ///
     /// * [`Withdraw`]
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
     fn redeem(
         &mut self,
         shares: U256,
