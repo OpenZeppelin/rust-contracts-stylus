@@ -342,43 +342,29 @@ impl<const N: usize> Uint<N> {
 
     #[inline(always)]
     /// Computes `a + b + carry`, returning the result along with the new carry.
-    // NOTE#q: crypto_bigint
     pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: Limb) -> (Self, Limb) {
         let mut limbs = [Limb::ZERO; N];
-        let mut i = 0;
 
-        while i < N {
-            let (w, c) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
-            limbs[i] = w;
-            carry = c;
-            i += 1;
-        }
+        const_for!((i in 0..N) {
+            (limbs[i], carry) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
+        });
 
         (Self { limbs }, carry)
     }
 
     /// Create a new [`Uint`] from the provided little endian bytes.
-    // NOTE#q: crypto_bigint
     pub const fn ct_from_le_slice(bytes: &[u8]) -> Self {
-        const LIMB_BYTES: usize = Limb::BITS as usize / 8;
-        assert!(
-            bytes.len() == LIMB_BYTES * N,
-            "bytes are not the expected size"
-        );
+        assert!(bytes.len() == Self::BYTES, "bytes are not the expected size");
 
         let mut res = [Limb::ZERO; N];
-        let mut buf = [0u8; LIMB_BYTES];
-        let mut i = 0;
+        let mut buf = [0u8; Self::LIMB_BYTES];
 
-        while i < N {
-            let mut j = 0;
-            while j < LIMB_BYTES {
-                buf[j] = bytes[i * LIMB_BYTES + j];
-                j += 1;
-            }
+        const_for!((i in 0..N) {
+            const_for!((j in 0..{Self::LIMB_BYTES}) {
+                buf[j] = bytes[i * Self::LIMB_BYTES + j];
+            });
             res[i] = Limb::from_le_bytes(buf);
-            i += 1;
-        }
+        });
 
         Self::new(res)
     }
@@ -685,7 +671,7 @@ impl<const N: usize> Not for Uint<N> {
 }
 
 impl<const N: usize> BigInteger for Uint<N> {
-    const BITS: usize = Self::NUM_LIMBS * (Limb::BITS as usize);
+    const LIMB_BITS: usize = Limb::BITS as usize;
     const MAX: Self = Self { limbs: [u64::MAX; N] };
     const NUM_LIMBS: usize = N;
     const ONE: Self = {

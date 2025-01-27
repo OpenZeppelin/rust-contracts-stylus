@@ -228,6 +228,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         // Montgomery Reduction
         for i in 0..N {
             let k = r[i].wrapping_mul(Self::INV);
+            // TODO#q: move montgomery reduction to the separate function
             // let mut carry = 0;
 
             let (_, mut carry) = limb::mac(r[i], k, Self::MODULUS.limbs[0]);
