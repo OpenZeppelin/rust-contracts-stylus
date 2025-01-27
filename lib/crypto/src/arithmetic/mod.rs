@@ -60,7 +60,19 @@ pub trait BigInteger:
     const NUM_LIMBS: usize;
 
     /// Number of bytes in the integer.
-    const BYTES: usize = Self::NUM_LIMBS * Limb::BITS as usize / 8;
+    const BYTES: usize = Self::BITS / 8;
+
+    /// Number of bits in the integer.
+    const BITS: usize;
+
+    /// The largest value that can be represented by this integer type.
+    const MAX: Self;
+
+    /// The multiplicative identity element of Self, 1.
+    const ONE: Self;
+
+    /// The additive identity element of Self, 0.
+    const ZERO: Self;
 
     /// Returns true if this number is odd.
     /// # Example

@@ -64,15 +64,6 @@ declare_num!(U768, 768);
 declare_num!(U832, 832);
 
 impl<const N: usize> Uint<N> {
-    pub const BITS: u32 = (N as u32) * Limb::BITS;
-    pub const MAX: Self = Self { limbs: [u64::MAX; N] };
-    pub const ONE: Self = {
-        let mut one = Self::ZERO;
-        one.limbs[0] = 1;
-        one
-    };
-    pub const ZERO: Self = Self { limbs: [0u64; N] };
-
     pub const fn new(value: [u64; N]) -> Self {
         Self { limbs: value }
     }
@@ -111,7 +102,7 @@ impl<const N: usize> Uint<N> {
     pub const fn ct_shr(&self) -> Self {
         let mut result = *self;
         let mut t = 0;
-        crate::const_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             let a = result.limbs[N - i - 1];
             let t2 = a << 63;
             result.limbs[N - i - 1] >>= 1;
@@ -138,9 +129,9 @@ impl<const N: usize> Uint<N> {
 
     /// Find the number of bits in the binary decomposition of `self`.
     #[doc(hidden)]
-    pub const fn ct_num_bits(self) -> u32 {
+    pub const fn ct_num_bits(self) -> usize {
         // TODO#q: what if last limb is zero and next to last has leading zeros?
-        ((N - 1) * 64) as u32 + (64 - self.limbs[N - 1].leading_zeros())
+        (N - 1) * 64 + (64 - self.limbs[N - 1].leading_zeros() as usize)
     }
 
     /// Compute the `i`-th bit of `self`.
@@ -189,7 +180,7 @@ impl<const N: usize> Uint<N> {
     ) -> (Self, bool) {
         let mut carry = 0;
 
-        crate::const_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             (self.limbs[i], carry) = adc(self.limbs[i], other.limbs[i], carry);
         });
 
@@ -198,7 +189,7 @@ impl<const N: usize> Uint<N> {
 
     const fn ct_mul2_with_carry(mut self) -> (Self, bool) {
         let mut last = 0;
-        crate::const_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             let a = self.limbs[i];
             let tmp = a >> 63;
             self.limbs[i] <<= 1;
@@ -210,7 +201,7 @@ impl<const N: usize> Uint<N> {
 
     pub(crate) const fn ct_is_zero(&self) -> bool {
         let mut is_zero = true;
-        crate::const_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             is_zero &= self.limbs[i] == 0;
         });
         is_zero
@@ -701,7 +692,15 @@ impl<const N: usize> Not for Uint<N> {
 }
 
 impl<const N: usize> BigInteger for Uint<N> {
+    const BITS: usize = Self::NUM_LIMBS * (Limb::BITS as usize);
+    const MAX: Self = Self { limbs: [u64::MAX; N] };
     const NUM_LIMBS: usize = N;
+    const ONE: Self = {
+        let mut one = Self::ZERO;
+        one.limbs[0] = 1;
+        one
+    };
+    const ZERO: Self = Self { limbs: [0u64; N] };
 
     fn is_odd(&self) -> bool {
         self.limbs[0] & 1 == 1
@@ -890,7 +889,7 @@ impl<const N: usize> WideUint<N> {
         assert!(!rhs.ct_is_zero(), "should not divide by zero");
 
         let mut remainder = Uint::<N>::ZERO;
-        let mut index = self.ct_num_bits() as usize - 1; // TODO#q: ct_num_bits should return usize
+        let mut index = self.ct_num_bits() - 1;
         let mut carry = false;
         loop {
             (remainder, carry) = remainder.ct_mul2_with_carry();
@@ -898,7 +897,8 @@ impl<const N: usize> WideUint<N> {
             if remainder.ct_geq(rhs) || carry {
                 let (r, borrow) = remainder.ct_sub_with_borrow(rhs);
                 remainder = r;
-                assert!(borrow == carry); // TODO#q: add doc comment
+                // TODO#q: add doc comment and describe ct_rem
+                assert!(borrow == carry);
             }
 
             if index == 0 {
@@ -910,7 +910,7 @@ impl<const N: usize> WideUint<N> {
 
     /// Find the number of bits in the binary decomposition of `self`.
     #[doc(hidden)]
-    pub const fn ct_num_bits(&self) -> u32 {
+    pub const fn ct_num_bits(&self) -> usize {
         let high_num_bits = self.high.ct_num_bits();
         if high_num_bits == 0 {
             self.low.ct_num_bits()
@@ -921,8 +921,8 @@ impl<const N: usize> WideUint<N> {
 
     /// Compute the `i`-th bit of `self`.
     pub const fn ct_get_bit(&self, i: usize) -> bool {
-        if i >= Uint::<N>::BITS as usize {
-            self.high.ct_get_bit(i - (Uint::<N>::BITS as usize))
+        if i >= Uint::<N>::BITS {
+            self.high.ct_get_bit(i - Uint::<N>::BITS)
         } else {
             self.low.ct_get_bit(i)
         }
