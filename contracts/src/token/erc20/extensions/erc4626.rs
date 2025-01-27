@@ -202,8 +202,8 @@ pub trait IErc4626 {
     ///
     /// # Panics
     ///
-    /// If updated balance exceeds `U256::MAX`, may happen during `mint`
-    /// operation.
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow.
     fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
@@ -232,6 +232,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow.
     fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be deposited
@@ -283,6 +288,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
     fn preview_deposit(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Mints shares Vault shares to receiver by depositing exactly amount of
@@ -315,6 +325,13 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    /// * [`Error::ExceededMaxDeposit`] - If deposit amount exceeds maximum
+    ///   allowed.
+    /// * [`erc20::Error::InvalidReceiver`] - If the `receiver` address is
+    ///   `Address::ZERO`.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If depositor lacks
+    ///   sufficient balance or hasn't approved enough tokens to the Vault
+    ///   contract.
     ///
     /// # Examples
     ///
@@ -385,6 +402,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
     fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Mints exactly shares Vault shares to receiver by depositing amount of
@@ -473,6 +495,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
     fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Burns shares from owner and sends exactly assets of underlying tokens to
@@ -561,6 +588,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
     fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Burns exactly shares from owner and sends assets of underlying tokens to
@@ -775,7 +807,7 @@ impl Erc4626 {
         self.underlying_decimals
             .get()
             .checked_add(Self::_decimals_offset())
-            .expect("Decimals should not be greater than U8::MAX")
+            .expect("Decimals should not be greater than `U8::MAX`")
     }
 
     /// Converts a given amount of assets to shares using the specified
@@ -791,6 +823,11 @@ impl Erc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the token address is not a valid ERC-20
     ///   token.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows in the power operation.
+    /// * If multiplication or division operations overflow during conversion.
     fn _convert_to_shares(
         &mut self,
         assets: U256,
@@ -823,6 +860,11 @@ impl Erc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the token address is not a valid ERC-20
     ///   token.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow.
     fn _convert_to_assets(
         &mut self,
         shares: U256,
