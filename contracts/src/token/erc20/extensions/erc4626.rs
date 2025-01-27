@@ -411,11 +411,7 @@ pub trait IErc4626 {
     ///    assets: U256,
     ///    receiver: Address,
     /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.deposit(
-    ///         assets,
-    ///         receiver,
-    ///         &mut self.erc20,
-    ///     )?)
+    ///     Ok(self.erc4626.deposit(assets, receiver, &mut self.erc20)?)
     /// }
     /// ```
     fn deposit(
@@ -558,11 +554,7 @@ pub trait IErc4626 {
     ///    shares: U256,
     ///    receiver: Address,
     /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.mint(
-    ///         shares,
-    ///         receiver,
-    ///         &mut self.erc20,
-    ///     )?)
+    ///     Ok(self.erc4626.mint(shares, receiver, &mut self.erc20)?)
     /// }
     /// ```
     fn mint(
@@ -735,12 +727,7 @@ pub trait IErc4626 {
     ///    receiver: Address,
     ///    owner: Address,
     /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.withdraw(
-    ///         assets,
-    ///         receiver,
-    ///         owner,
-    ///         &mut self.erc20,
-    ///     )?)
+    ///     Ok(self.erc4626.withdraw(assets, receiver, owner, &mut self.erc20)?)
     /// }
     /// ```
     fn withdraw(
@@ -902,12 +889,7 @@ pub trait IErc4626 {
     ///    receiver: Address,
     ///    owner: Address,
     /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.redeem(
-    ///         shares,
-    ///         receiver,
-    ///         owner,
-    ///         &mut self.erc20,
-    ///     )?)
+    ///     Ok(self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)?)
     /// }
     /// ```
     fn redeem(
