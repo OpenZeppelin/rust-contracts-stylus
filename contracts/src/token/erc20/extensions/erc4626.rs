@@ -295,8 +295,10 @@ pub trait IErc4626 {
     /// * If multiplication or division operations overflow during conversion.
     fn preview_deposit(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
-    /// Mints shares Vault shares to receiver by depositing exactly amount of
-    /// underlying tokens.
+    /// Deposits exactly `assets` amount of underlying tokens into the Vault and
+    /// mints corresponding Vault shares to `receiver`.
+    ///
+    /// Returns the amount of shares minted.
     ///
     /// NOTE: To expose this function in your contract's ABI, implement it as
     /// shown in the Examples section below, accepting only the `assets` and
@@ -418,8 +420,10 @@ pub trait IErc4626 {
     /// * If multiplication or division operations overflow during conversion.
     fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
-    /// Mints exactly shares Vault shares to receiver by depositing amount of
-    /// underlying tokens.
+    /// Mints the specified number of shares to `receiver` by pulling the
+    /// required amount of underlying tokens from caller.
+    ///
+    /// Returns amount of tokens deposited.
     ///
     /// NOTE:
     /// - Most implementations will require pre-approval of the Vault with the
@@ -554,8 +558,10 @@ pub trait IErc4626 {
     /// * If multiplication or division operations overflow during conversion.
     fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
-    /// Burns shares from owner and sends exactly assets of underlying tokens to
-    /// receiver.
+    /// Withdraws the specified amount of underlying tokens to `receiver` by
+    /// burning the required number of shares from `owner`.
+    ///
+    /// Returns number of shares burned.
     ///
     /// NOTE:
     /// - Some implementations will require pre-requesting to the Vault before a
@@ -690,8 +696,10 @@ pub trait IErc4626 {
     /// * If multiplication or division operations overflow during conversion.
     fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
-    /// Burns exactly shares from owner and sends assets of underlying tokens to
-    /// receiver.
+    /// Burns the specified number of shares from `owner` and sends the
+    /// corresponding amount of underlying tokens to `receiver`.
+    ///
+    /// Returns amount of tokens transferred.
     ///
     /// NOTE: To expose this function in your contract's ABI, implement it as
     /// shown in the Examples section below, accepting only the `shares`,
