@@ -249,20 +249,22 @@ pub trait IErc4626 {
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// deposit at the current block, given current on-chain conditions.
     ///
-    /// NOTE: Any unfavorable discrepancy between convertToShares and
-    /// previewDeposit SHOULD be considered slippage in share price or some
-    /// other type of condition, meaning the depositor will lose assets by
-    /// depositing.
+    /// NOTE: Any unfavorable discrepancy between
+    /// [`IErc4626::convert_to_shares`] and [`IErc4626::preview_deposit`] SHOULD
+    /// be considered slippage in share price or some other type of condition,
+    /// meaning the depositor will lose assets by depositing.
     ///
     /// # Requirements
     ///
     /// * MUST return as close to and no more than the exact amount of Vault
-    ///   shares that would be minted in a deposit call in the same transaction.
-    ///   I.e. deposit should return the same or more shares as previewDeposit
-    ///   if called in the same transaction.
+    ///   shares that would be minted in a [`IErc4626::deposit`] call in the
+    ///   same transaction. I.e. [`IErc4626::deposit`] should return the same or
+    ///   more shares as [`IErc4626::preview_deposit`] if called in the same
+    ///   transaction.
     /// * MUST NOT account for deposit limits like those returned from
-    ///   maxDeposit and should always act as though the deposit would be
-    ///   accepted, regardless if the user has enough tokens approved, etc.
+    ///   [`IErc4626::max_deposit`] and should always act as though the deposit
+    ///   would be accepted, regardless if the user has enough tokens approved,
+    ///   etc.
     /// * MUST be inclusive of deposit fees. Integrators should be aware of the
     ///   existence of deposit fees.
     /// * MUST NOT revert.
@@ -289,7 +291,7 @@ pub trait IErc4626 {
     ///
     /// # Requirements
     ///
-    /// * MUST emit the Deposit event.
+    /// * MUST emit the [`Deposit`] event.
     /// * MAY support an additional flow in which the underlying tokens are
     ///   owned by the Vault contract before the deposit execution, and are
     ///   accounted for during deposit.
@@ -350,19 +352,21 @@ pub trait IErc4626 {
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// mint at the current block, given current on-chain conditions.
     ///
-    /// NOTE: Any unfavorable discrepancy between convertToAssets and
-    /// previewMint SHOULD be considered slippage in share price or some other
-    /// type of condition, meaning the depositor will lose assets by minting.
+    /// NOTE: Any unfavorable discrepancy between
+    /// [`IErc4626::convert_to_assets`] and [`IErc4626::preview_mint`] SHOULD be
+    /// considered slippage in share price or some other type of condition,
+    /// meaning the depositor will lose assets by minting.
     ///
     /// # Requirements
     ///
     /// * MUST return as close to and no fewer than the exact amount of assets
-    ///   that would be deposited in a mint call in the same transaction. I.e.
-    ///   mint should return the same or fewer assets as previewMint if called
-    ///   in the same transaction.
-    /// * MUST NOT account for mint limits like those returned from maxMint and
-    ///   should always act as though the mint would be accepted, regardless if
-    ///   the user has enough tokens approved, etc.
+    ///   that would be deposited in a [`IErc4626::mint`] call in the same
+    ///   transaction. I.e. [`IErc4626::mint`] should return the same or fewer
+    ///   assets as [`IErc4626::preview_mint`] if called in the same
+    ///   transaction.
+    /// * MUST NOT account for mint limits like those returned from
+    ///   [`IErc4626::max_mint`] and should always act as though the mint would
+    ///   be accepted, regardless if the user has enough tokens approved, etc.
     /// * MUST be inclusive of deposit fees. Integrators should be aware of the
     ///   existence of deposit fees.
     /// * MUST NOT revert.
@@ -386,7 +390,7 @@ pub trait IErc4626 {
     ///
     /// # Requirements
     ///
-    /// * MUST emit the Deposit event.
+    /// * MUST emit the [`Deposit`] event.
     /// * MAY support an additional flow in which the underlying tokens are
     ///   owned by the Vault contract before the mint execution, and are
     ///   accounted for during mint.
@@ -443,12 +447,14 @@ pub trait IErc4626 {
     /// # Requirements
     ///
     /// * MUST return as close to and no fewer than the exact amount of Vault
-    ///   shares that would be burned in a withdraw call in the same
-    ///   transaction. I.e. withdraw should return the same or fewer shares as
-    ///   previewWithdraw if called in the same transaction.
+    ///   shares that would be burned in a [`IErc4626::withdraw`] call in the
+    ///   same transaction. I.e. [`IErc4626::withdraw`] should return the same
+    ///   or fewer shares as [`IErc4626::preview_withdraw`] if called in the
+    ///   same transaction.
     /// * MUST NOT account for withdrawal limits like those returned from
-    ///   maxWithdraw and should always act as though the withdrawal would be
-    ///   accepted, regardless if the user has enough shares, etc.
+    ///   [`IErc4626::max_withdraw`] and should always act as though the
+    ///   withdrawal would be accepted, regardless if the user has enough
+    ///   shares, etc.
     /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
     ///   the existence of withdrawal fees.
     /// * MUST NOT revert.
@@ -473,7 +479,7 @@ pub trait IErc4626 {
     ///
     /// # Requirements
     ///
-    /// * MUST emit the Withdraw event.
+    /// * MUST emit the [`Withdraw`] event.
     /// * MAY support an additional flow in which the underlying tokens are
     ///   owned by the Vault contract before the withdraw execution, and are
     ///   accounted for during withdraw.
@@ -508,8 +514,8 @@ pub trait IErc4626 {
     ///
     /// * MUST return a limited value if owner is subject to some withdrawal
     ///   limit or timelock.
-    /// * MUST return balanceOf(owner) if owner is not subject to any withdrawal
-    ///   limit or timelock.
+    /// * MUST return [`IErc20::balance_of(owner)`](IErc20::balance_of) if owner
+    ///   is not subject to any withdrawal limit or timelock.
     /// * MUST NOT revert.
     ///
     /// # Arguments
@@ -522,19 +528,21 @@ pub trait IErc4626 {
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// redeemption at the current block, given current on-chain conditions.
     ///
-    /// NOTE: Any unfavorable discrepancy between convertToAssets and
-    /// previewRedeem SHOULD be considered slippage in share price or some other
-    /// type of condition, meaning the depositor will lose assets by redeeming.
+    /// NOTE: Any unfavorable discrepancy between
+    /// [`IErc4626::convert_to_assets`] and [`IErc4626::preview_redeem`] SHOULD
+    /// be considered slippage in share price or some other type of condition,
+    /// meaning the depositor will lose assets by redeeming.
     ///
     /// # Requirements
     ///
     /// * MUST return as close to and no more than the exact amount of assets
     ///   that would be withdrawn in a redeem call in the same transaction. I.e.
-    ///   redeem should return the same or more assets as previewRedeem if
-    ///   called in the same transaction.
+    ///   [`IErc4626::redeem`] should return the same or more assets as
+    ///   [`IErc4626::preview_redeem`] if called in the same transaction.
     /// * MUST NOT account for redemption limits like those returned from
-    ///   maxRedeem and should always act as though the redemption would be
-    ///   accepted, regardless if the user has enough shares, etc.
+    ///   [`IErc4626::max_redeem`] and should always act as though the
+    ///   redemption would be accepted, regardless if the user has enough
+    ///   shares, etc.
     /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
     ///   the existence of withdrawal fees.
     /// * MUST NOT revert.
@@ -555,7 +563,7 @@ pub trait IErc4626 {
     ///
     /// # Requirements
     ///
-    /// * MUST emit the Withdraw event.
+    /// * MUST emit the [`Withdraw`] event.
     /// * MAY support an additional flow in which the underlying tokens are
     ///   owned by the Vault contract before the redeem execution, and are
     ///   accounted for during redeem.
