@@ -1,7 +1,3 @@
-// TODO#q: we need carrying_mac and mac
-// TODO#q: Rename u64 and u128 to Limb and WideLimb
-// TODO#q: Rename functions *_with_carry to carrying_*
-
 use num_traits::ConstOne;
 
 pub type Limb = u64;
@@ -18,15 +14,15 @@ pub const fn widening_mul(a: Limb, b: Limb) -> WideLimb {
     // TODO#q: check widening_mul for wasm in unit tests
     #[cfg(target_family = "wasm")]
     {
-        let a_lo = a as u32 as u64;
+        let a_lo = a as u32 as Limb;
         let a_hi = a >> 32;
-        let b_lo = b as u32 as u64;
+        let b_lo = b as u32 as Limb;
         let b_hi = b >> 32;
 
-        let lolo = (a_lo * b_lo) as u128;
-        let lohi = ((a_lo * b_hi) as u128) << 32;
-        let hilo = ((a_hi * b_lo) as u128) << 32;
-        let hihi = ((a_hi * b_hi) as u128) << 64;
+        let lolo = (a_lo * b_lo) as WideLimb;
+        let lohi = ((a_lo * b_hi) as WideLimb) << 32;
+        let hilo = ((a_hi * b_lo) as WideLimb) << 32;
+        let hihi = ((a_hi * b_hi) as WideLimb) << 64;
         (lolo | hihi) + (lohi + hilo)
     }
 }

@@ -1,5 +1,6 @@
 //  TODO#q: Odd<Uint<N>> - Odd numbers.
 //  TODO#q: NonZero<Uint<N>> - Non zero numbers for division.
+//  TODO#q: Rename functions *_with_carry to carrying_*
 
 use core::{
     borrow::Borrow,
