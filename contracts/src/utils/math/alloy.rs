@@ -1,5 +1,5 @@
 //! Standard math utilities missing in `alloy_primitives`.
-use alloy_primitives::{uint, U256};
+use alloy_primitives::{uint, U256, U512};
 
 /// Trait for standard math utilities missing in `alloy_primitives`.
 pub trait Math {
@@ -38,16 +38,6 @@ pub trait Math {
     /// * `rounding` -
     #[must_use]
     fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self;
-
-    #[must_use]
-    /// Multiplies `self` * `y` and calculates modulo `m`.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` -
-    /// * `y` -
-    /// * `m` -
-    fn mul_mod(self, y: Self, m: Self) -> Self;
 }
 
 /// Enum representing many rounding techniques.
@@ -56,17 +46,6 @@ pub enum Rounding {
     Floor,
     /// Rounding toward positive infinity.
     Ceil,
-    /// Rounding toward zero.
-    Trunc,
-    /// Rounding away from zero.
-    Expand,
-}
-
-impl Rounding {
-    fn unsigned_rounds_up(self) -> bool {
-        // Cast the enum variant index to an integer and check if it's odd
-        (self as u8) % 2 == 1
-    }
 }
 
 impl Math for U256 {
@@ -191,145 +170,44 @@ impl Math for U256 {
         (self & rhs) + ((self ^ rhs) >> 1)
     }
 
-    fn mul_mod(self, y: Self, m: Self) -> Self {
-        let x = self;
-        // Ensure m is not zero to avoid division by zero
-        assert!(!m.is_zero(), "Modulus cannot be zero in `Math::mul_mod`");
-
-        let mut result = U256::ZERO;
-
-        // x % m and y % m ensure that both inputs are reduced before any
-        // computations, preventing unnecessary overhead.
-        let mut base = x % m; // Reduce x modulo m
-        let mut multiplier = y % m; // Reduce y modulo m
-
-        // Modular Multiplication Loop:
-        // * Add Base: If the current bit of the multiplier (y) is 1, add the
-        //   base to the result modulo m.
-        // * Double Base: Shift the base left (equivalent to multiplying by 2)
-        //   and take modulo m to prevent overflow.
-        // * Shift Multiplier: Right-shift the multiplier to process the next
-        //   bit.
-        while !multiplier.is_zero() {
-            // If the least significant bit of the multiplier is set, add base
-            // to the result.
-            if multiplier & U256::from(1) != U256::ZERO {
-                result = (result + base) % m;
-            }
-
-            // Double the base modulo m.
-            base = (base << 1) % m;
-
-            // Shift the multiplier to the right by 1 (equivalent to integer
-            // division by 2).
-            multiplier >>= 1;
-        }
-
-        result
-    }
-
     fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self {
-        let one = U256::from(1);
-        let two = U256::from(2);
-        let three = U256::from(3);
-
         assert!(
             !denominator.is_zero(),
-            "Division by U256::ZERO in `Math::mul_div`"
+            "division by U256::ZERO in `Math::mul_div`"
         );
 
-        let x = self;
+        let prod = U512::from(self)
+            .checked_mul(U512::from(y))
+            .expect("should not panic with `U256` * `U256`");
 
-        // 512-bit multiply [prod1 prod0] = x * y. Compute the product mod 2²⁵⁶
-        // and mod 2²⁵⁶ - 1, then use the Chinese Remainder Theorem to
-        // reconstruct the 512 bit result. The result is stored in two 256
-        // variables such that product = prod1 * 2²⁵⁶ + prod0.
-
-        // Least significant 256 bits of the product.
-        let mut prod0: U256 = x * y;
-        // Most significant 256 bits of the product.
-        let mut prod1: U256 = {
-            let mm: U256 = x.wrapping_mul(y);
-            mm.wrapping_sub(prod0)
-                .wrapping_sub(U256::from(u8::from(mm < prod0)))
+        // Adjust for rounding if needed.
+        let adjusted = match rounding {
+            Rounding::Floor => prod, // No adjustment for Rounding::Floor
+            Rounding::Ceil => prod
+                .checked_add(U512::from(denominator) - U512::from(1))
+                .expect("should not exceed `U512`"),
         };
-        // Handle non-overflow cases, 256 by 256 division.
-        if prod1.is_zero() {
-            // Should not panic - denominator is not `U256::ZERO`.
-            return prod0 / denominator;
+
+        let result = adjusted
+            .checked_div(U512::from(denominator))
+            .expect("should not panic with `U512` / `U512`");
+
+        if result > U512::from(U256::MAX) {
+            panic!("should fit into `U256` in `Math::mul_div`");
+        } else {
+            U256::from(result)
         }
-
-        // Make sure the result is less than 2²⁵⁶.
-        assert!((denominator > prod1), "Under overflow in `Math::mul_div`");
-
-        ///////////////////////////////////////////////
-        // 512 by 256 division.
-        ///////////////////////////////////////////////
-
-        // Make division exact by subtracting the remainder from [prod1 prod0].
-        // Compute remainder using mulmod.
-        let remainder: U256 = x.mul_mod(y, denominator);
-
-        // Subtract 256 bit number from 512 bit number.
-        if remainder > prod0 {
-            prod1 -= one;
-        }
-        prod0 -= remainder;
-
-        // Factor powers of two out of denominator and compute largest power of
-        // two divisor of denominator. Always >= 1. See https://cs.stackexchange.com/q/138556/92363.
-        let mut twos: U256 = denominator & (!denominator + one);
-        // Divide denominator by twos.
-        let denominator = denominator / twos;
-        // Divide [prod1 prod0] by twos.
-        prod0 /= twos;
-        // Flip twos such that it is 2²⁵⁶ / twos. If twos is zero, then it
-        // becomes one.
-        twos =
-            if twos == U256::ZERO { one } else { ((!twos + one) / twos) + one };
-
-        // Shift in bits from prod1 into prod0.
-        prod0 |= prod1 * twos;
-
-        // Invert denominator mod 2²⁵⁶. Now that denominator is an odd number,
-        // it has an inverse modulo 2²⁵⁶ such that denominator * inv ≡ 1
-        // mod 2²⁵⁶. Compute the inverse by starting with a seed that is correct
-        // for four bits. That is, denominator * inv ≡ 1 mod 2⁴.
-        let mut inverse: U256 = (three * denominator) ^ two;
-
-        // Use the Newton-Raphson iteration to improve the precision. Thanks to
-        // Hensel's lifting lemma, this also works in modular
-        // arithmetic, doubling the correct bits in each step.
-        inverse = inverse * two - denominator * inverse; // inverse mod 2⁸
-        inverse = inverse * two - denominator * inverse; // inverse mod 2¹⁶
-        inverse = inverse * two - denominator * inverse; // inverse mod 2³²
-        inverse = inverse * two - denominator * inverse; // inverse mod 2⁶⁴
-        inverse = inverse * two - denominator * inverse; // inverse mod 2¹²⁸
-        inverse = inverse * two - denominator * inverse; // inverse mod 2²⁵⁶
-
-        // Because the division is now exact we can divide by multiplying with
-        // the modular inverse of denominator. This will give us the
-        // correct result modulo 2²⁵⁶. Since the preconditions guarantee that
-        // the outcome is less than 2²⁵⁶, this is the final result. We
-        // don't need to compute the high bits of the result and prod1
-        // is no longer required.
-        let mut result = prod0 * inverse;
-
-        if rounding.unsigned_rounds_up()
-            && x.mul_mod(y, denominator) > U256::ZERO
-        {
-            result += one;
-        }
-
-        result
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{private::proptest::proptest, uint, U256, U512};
+    use alloy_primitives::{
+        private::proptest::{prop_assume, proptest},
+        uint, U256, U512,
+    };
 
-    use crate::utils::math::alloy::Math;
+    use crate::utils::math::alloy::{Math, Rounding};
 
     #[test]
     fn check_sqrt() {
@@ -346,5 +224,48 @@ mod tests {
             let expected = (U512::from(left) + U512::from(right)) / uint!(2_U512);
             assert_eq!(left.average(right), U256::from(expected));
         });
+    }
+
+    #[test]
+    fn check_mul_div_rounding_floor() {
+        proptest!(|(x: U256, y: U256, denominator: U256)| {
+            prop_assume!(denominator != U256::ZERO, "division by U256::ZERO in `Math::mul_div`.");
+            prop_assume!(denominator > y, "result should fit into `U256` in `Math::mul_div`.");
+            let value = x.mul_div(y, denominator, Rounding::Floor);
+            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`");
+            let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
+            assert_eq!(U512::from(value), expected);
+        })
+    }
+
+    #[test]
+    fn check_mul_div_rounding_ceil() {
+        proptest!(|(x: U256, y: U256, denominator: U256)| {
+            prop_assume!(denominator != U256::ZERO, "division by U256::ZERO in `Math::mul_div`.");
+            prop_assume!(denominator > y, "result should fit into `U256` in `Math::mul_div`.");
+            let value = x.mul_div(y, denominator, Rounding::Ceil);
+            let denominator = U512::from(denominator);
+            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::from(1)).expect("should not exceed `U512`");
+            let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
+            assert_eq!(U512::from(value), expected);
+        })
+    }
+
+    #[test]
+    #[should_panic = "division by U256::ZERO in `Math::mul_div`"]
+    fn check_mul_div_panics_when_denominator_is_zero() {
+        proptest!(|(x: U256, y: U256)| {
+            let _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
+        })
+    }
+
+    #[test]
+    #[should_panic = "should fit into `U256` in `Math::mul_div`"]
+    fn check_mul_div_panics_when_result_overflows() {
+        proptest!(|(x: U256, y: U256)| {
+            prop_assume!(x != U256::ZERO, "Guaranteed `x` for overflow.");
+            prop_assume!(y > U256::MAX / x, "Guaranteed `y` for overflow.");
+            let _ = x.mul_div(y, U256::from(1), Rounding::Floor);
+        })
     }
 }
