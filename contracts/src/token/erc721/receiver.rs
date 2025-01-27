@@ -23,7 +23,7 @@ sol_interface! {
         /// * `operator` - Account of the operator.
         /// * `from` - Account of the sender.
         /// * `token_id` - Token id as a number.
-        /// * `data` - Additional data with no specified format, sent in call to
+        /// * `data` - Additional data with no specified format, sent in call.
         #[allow(missing_docs)]
         function onERC721Received(
             address operator,
