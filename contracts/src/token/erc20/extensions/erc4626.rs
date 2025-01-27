@@ -333,6 +333,11 @@ pub trait IErc4626 {
     ///   sufficient balance or hasn't approved enough tokens to the Vault
     ///   contract.
     ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
+    ///
     /// # Examples
     ///
     /// ```rust,ignore
@@ -412,8 +417,14 @@ pub trait IErc4626 {
     /// Mints exactly shares Vault shares to receiver by depositing amount of
     /// underlying tokens.
     ///
-    /// NOTE: Most implementations will require pre-approval of the Vault with
-    /// the Vault’s underlying asset token.
+    /// NOTE:
+    /// - Most implementations will require pre-approval of the Vault with the
+    ///   Vault’s underlying asset token.
+    /// - To expose this function in your contract's ABI, implement it as shown
+    ///   in the Examples section below, accepting only the `shares` and
+    ///   `receiver` parameters. The `erc20` reference should come from your
+    ///   contract's state. The implementation should forward the call to your
+    ///   internal storage instance along with the `erc20` reference.
     ///
     /// # Requirements
     ///
@@ -436,6 +447,33 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    /// * [`Error::ExceededMaxMint`] - If mint amount exceeds maximum allowed.
+    /// * [`erc20::Error::InvalidReceiver`] - If the `receiver` address is
+    ///   `Address::ZERO`.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If depositor lacks
+    ///   sufficient balance or hasn't approved enough tokens to the Vault
+    ///   contract.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn mint(
+    ///     &mut self,
+    ///    shares: U256,
+    ///    receiver: Address,
+    /// ) -> Result<U256, Vec<u8>> {
+    ///     Ok(self.erc4626.mint(
+    ///         shares,
+    ///         receiver,
+    ///         &mut self.erc20,
+    ///     )?)
+    /// }
+    /// ```
     fn mint(
         &mut self,
         shares: U256,
@@ -462,6 +500,11 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Panics
+    ///
+    /// * If decimal offset calculation overflows.
+    /// * If multiplication or division operations overflow during conversion.
     fn max_withdraw(
         &mut self,
         owner: Address,
