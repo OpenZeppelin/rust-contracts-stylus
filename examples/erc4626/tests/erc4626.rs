@@ -221,6 +221,41 @@ async fn convert_to_assets_reverts_when_asset_is_not_erc20(
 }
 
 #[e2e::test]
+async fn convert_to_assets_works(alice: Account) -> Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let tokens = uint!(10_U256);
+    let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
+
+    let total_supply = contract.totalSupply().call().await?.totalSupply;
+    let shares = uint!(69_U256);
+    let decimals_offset = U256::ZERO;
+
+    let assets = contract.convertToAssets(shares).call().await?.assets;
+
+    let expected_assets = shares.mul_div(
+        tokens.checked_add(uint!(1_U256)).expect("should not overflow"),
+        total_supply
+            + U256::from(10)
+                .checked_pow(decimals_offset)
+                .expect("should not overflow"),
+        Rounding::Floor,
+    );
+
+    assert_eq!(assets, expected_assets);
+    Ok(())
+}
+
+#[e2e::test]
 async fn max_deposit_success(alice: Account) -> eyre::Result<()> {
     let asset_address = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
