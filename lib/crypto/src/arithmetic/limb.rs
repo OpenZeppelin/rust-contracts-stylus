@@ -8,10 +8,10 @@ pub type WideLimb = u128;
 
 #[inline(always)]
 #[doc(hidden)]
-pub const fn widening_mul(a: u64, b: u64) -> u128 {
+pub const fn widening_mul(a: Limb, b: Limb) -> WideLimb {
     #[cfg(not(target_family = "wasm"))]
     {
-        a as u128 * b as u128
+        a as WideLimb * b as WideLimb
     }
     // TODO#q: check widening_mul for wasm in unit tests
     #[cfg(target_family = "wasm")]
@@ -29,47 +29,38 @@ pub const fn widening_mul(a: u64, b: u64) -> u128 {
     }
 }
 
-/// Calculate a + b * c, returning the lower 64 bits of the result and setting
+/// Calculate `a + b * c`, returning the lower 64 bits of the result and setting
 /// `carry` to the upper 64 bits.
 #[inline(always)]
 #[doc(hidden)]
-pub const fn mac(a: u64, b: u64, c: u64) -> (u64, u64) {
-    let tmp = (a as u128) + widening_mul(b, c);
-    let carry = (tmp >> 64) as u64;
-    (tmp as u64, carry)
+pub const fn mac(a: Limb, b: Limb, c: Limb) -> (Limb, Limb) {
+    let tmp = (a as WideLimb) + widening_mul(b, c);
+    let carry = (tmp >> Limb::BITS) as Limb;
+    (tmp as Limb, carry)
 }
 
-/// Calculate a + (b * c) + carry, returning the least significant digit
+/// Calculate `a + (b * c) + carry`, returning the least significant digit
 /// and setting carry to the most significant digit.
 #[inline(always)]
 #[doc(hidden)]
-pub const fn carrying_mac(a: u64, b: u64, c: u64, carry: u64) -> (u64, u64) {
-    let tmp = (a as u128) + widening_mul(b, c) + (carry as u128);
-    let carry = (tmp >> 64) as u64;
-    (tmp as u64, carry)
-}
-
-pub const fn ct_mac_with_carry(
+pub const fn carrying_mac(
     a: Limb,
     b: Limb,
     c: Limb,
     carry: Limb,
 ) -> (Limb, Limb) {
-    let a = a as WideLimb;
-    let b = b as WideLimb;
-    let c = c as WideLimb;
-    let carry = carry as WideLimb;
-    let ret = a + (b * c) + carry;
-    (ret as Limb, (ret >> Limb::BITS) as Limb)
+    let tmp = (a as WideLimb) + widening_mul(b, c) + (carry as WideLimb);
+    let carry = (tmp >> Limb::BITS) as Limb;
+    (tmp as Limb, carry)
 }
 
 /// Calculate a + b * c, discarding the lower 64 bits of the result and setting
 /// `carry` to the upper 64 bits.
 #[inline(always)]
 #[doc(hidden)]
-pub fn mac_discard(a: u64, b: u64, c: u64, carry: &mut u64) {
-    let tmp = (a as u128) + widening_mul(b, c);
-    *carry = (tmp >> 64) as u64;
+pub fn mac_discard(a: Limb, b: Limb, c: Limb, carry: &mut Limb) {
+    let tmp = (a as WideLimb) + widening_mul(b, c);
+    *carry = (tmp >> Limb::BITS) as Limb;
 }
 
 // TODO#q: adc can be unified with adc_for_add_with_carry
@@ -111,15 +102,6 @@ pub fn sbb_for_sub_with_borrow(a: &mut u64, b: u64, borrow: bool) -> bool {
     let (sub, borrow2) = sub.overflowing_sub(borrow as u64);
     *a = sub;
     borrow1 | borrow2
-}
-
-/// Computes `lhs * rhs`, returning the low and the high limbs of the result.
-#[inline(always)]
-pub const fn ct_mul_wide(lhs: Limb, rhs: Limb) -> (Limb, Limb) {
-    let a = lhs as WideLimb;
-    let b = rhs as WideLimb;
-    let ret = a * b;
-    (ret as Limb, (ret >> Limb::BITS) as Limb)
 }
 
 // TODO#q: merge with adc function

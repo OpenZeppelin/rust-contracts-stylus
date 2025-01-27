@@ -403,59 +403,40 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         mut self,
         other: &Self,
     ) -> (bool, Self) {
-        let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
-        unroll6_for!((i in 0..N) {
-            let mut carry = 0;
-            unroll6_for!((j in 0..N) {
-                let k = i + j;
-                if k >= N {
-                    (hi[k - N], carry) = arithmetic::limb::carrying_mac(
-                        hi[k - N],
-                        self.montgomery_form.limbs[i],
-                        other.montgomery_form.limbs[j],
-                        carry
-                    );
-                } else {
-                    (lo[k], carry) = arithmetic::limb::carrying_mac(
-                        lo[k],
-                        self.montgomery_form.limbs[i],
-                        other.montgomery_form.limbs[j],
-                        carry
-                    );
-                }
-            });
-            hi[i] = carry;
-        });
+        let (mut lo, mut hi) =
+            self.montgomery_form.ct_mul_wide(&other.montgomery_form);
+
+        // TODO#q: move montgomery reduction to the separate function
         // Montgomery reduction
         let mut carry2 = 0;
         unroll6_for!((i in 0..N) {
-            let tmp = lo[i].wrapping_mul(P::INV);
+            let tmp = lo.limbs[i].wrapping_mul(P::INV);
 
-            let (_, mut carry) = arithmetic::limb::mac(lo[i], tmp, P::MODULUS.limbs[0]);
+            let (_, mut carry) = arithmetic::limb::mac(lo.limbs[i], tmp, P::MODULUS.limbs[0]);
 
             unroll6_for!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
-                    (hi[k - N], carry) = arithmetic::limb::carrying_mac(
-                        hi[k - N],
+                    (hi.limbs[k - N], carry) = arithmetic::limb::carrying_mac(
+                        hi.limbs[k - N],
                         tmp,
                         P::MODULUS.limbs[j],
                         carry
                     );
                 } else {
-                    (lo[k], carry) = arithmetic::limb::carrying_mac(
-                        lo[k],
+                    (lo.limbs[k], carry) = arithmetic::limb::carrying_mac(
+                        lo.limbs[k],
                         tmp,
                         P::MODULUS.limbs[j],
                         carry
                     );
                 }
             });
-            (hi[i], carry2) = arithmetic::limb::adc(hi[i], carry, carry2);
+            (hi.limbs[i], carry2) = arithmetic::limb::adc(hi.limbs[i], carry, carry2);
         });
 
         unroll6_for!((i in 0..N) {
-            self.montgomery_form.limbs[i] = hi[i];
+            self.montgomery_form.limbs[i] = hi.limbs[i];
         });
         (carry2 != 0, self)
     }

@@ -29,7 +29,7 @@ use crate::{
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
 pub struct Uint<const N: usize> {
-    pub limbs: Limbs<N>,
+    pub(crate) limbs: Limbs<N>,
 }
 
 impl<const N: usize> Default for Uint<N> {
@@ -268,64 +268,34 @@ impl<const N: usize> Uint<N> {
     /// input.
     ///
     /// Returns a tuple containing the `(lo, hi)` components of the product.
-    ///
-    /// # Ordering note
-    ///
-    /// Releases of `crypto-bigint` prior to v0.3 used `(hi, lo)` ordering
-    /// instead. This has been changed for better consistency with the rest of
-    /// the APIs in this crate.
-    ///
-    /// For more info see: <https://github.com/RustCrypto/crypto-bigint/issues/4>
-    // NOTE#q: crypto_bigint
-    pub const fn ct_mul_wide<const HN: usize>(
-        &self,
-        rhs: &Uint<HN>,
-    ) -> (Self, Uint<HN>) {
-        let mut i = 0;
-        let mut lo = Self::ZERO;
-        let mut hi = Uint::<HN>::ZERO;
-
-        // Schoolbook multiplication.
-        // TODO(tarcieri): use Karatsuba for better performance?
-        while i < N {
-            let mut j = 0;
-            let mut carry = Limb::ZERO;
-
-            while j < HN {
+    #[inline(always)]
+    pub const fn ct_mul_wide(&self, rhs: &Self) -> (Self, Self) {
+        // TODO#q: document implementation
+        let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
+        unroll6_for!((i in 0..N) {
+            let mut carry = 0;
+            unroll6_for!((j in 0..N) {
                 let k = i + j;
-
                 if k >= N {
-                    let (n, c) = limb::ct_mac_with_carry(
-                        hi.limbs[k - N],
+                    (hi[k - N], carry) = limb::carrying_mac(
+                        hi[k - N],
                         self.limbs[i],
                         rhs.limbs[j],
-                        carry,
+                        carry
                     );
-                    hi.limbs[k - N] = n;
-                    carry = c;
                 } else {
-                    let (n, c) = limb::ct_mac_with_carry(
-                        lo.limbs[k],
+                    (lo[k], carry) = limb::carrying_mac(
+                        lo[k],
                         self.limbs[i],
                         rhs.limbs[j],
-                        carry,
+                        carry
                     );
-                    lo.limbs[k] = n;
-                    carry = c;
                 }
+            });
+            hi[i] = carry;
+        });
 
-                j += 1;
-            }
-
-            if i + j >= N {
-                hi.limbs[i + j - N] = carry;
-            } else {
-                lo.limbs[i + j] = carry;
-            }
-            i += 1;
-        }
-
-        (lo, hi)
+        (Self::new(lo), Self::new(hi))
     }
 
     /// Multiply two numbers and panic on overflow.
@@ -603,6 +573,8 @@ impl<B: Borrow<Self>, const N: usize> BitOr<B> for Uint<N> {
         self
     }
 }
+
+// TODO#q: Document ShrAssign and ShlAssign implementations
 
 impl<const N: usize> ShrAssign<u32> for Uint<N> {
     /// Computes the bitwise shift right operation in place.
