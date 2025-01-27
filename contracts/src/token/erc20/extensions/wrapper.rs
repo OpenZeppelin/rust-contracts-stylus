@@ -124,9 +124,9 @@ pub trait IERC20Wrapper {
     ///  
     /// # Errors
     ///
-    /// * If the sender address is `contract:address()` or invalid, 
+    /// * If the sender address is `contract:address()` or invalid,
     ///   [`Error::InvalidSender`] is returned.
-    /// * If the receiver address is `contract:address()` or invalid, 
+    /// * If the receiver address is `contract:address()` or invalid,
     ///   [`Error::InvalidReceiver`] is returned.
     fn deposit_to(
         &mut self,
@@ -144,10 +144,10 @@ pub trait IERC20Wrapper {
     /// * `account` - The account to withdraw tokens to.
     /// * `value` - The amount of tokens to withdraw.
     /// * `erc20` - A mutable reference to the Erc20 contract.
-    /// 
+    ///
     /// # Errors
     ///
-    /// * If the receiver address is `contract:address()` or invalid, 
+    /// * If the receiver address is `contract:address()` or invalid,
     ///   [`Error::InvalidReceiver`] is returned.
     fn withdraw_to(
         &mut self,
@@ -228,7 +228,7 @@ impl Erc20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to mint tokens to.
     /// * `erc20` - A mutable reference to the Erc20 contract.
-    /// 
+    ///
     /// # Errors
     ///
     /// If the external call for balance of fails , then the error
