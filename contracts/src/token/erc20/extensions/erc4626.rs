@@ -333,6 +333,10 @@ pub trait IErc4626 {
     ///   sufficient balance or hasn't approved enough tokens to the Vault
     ///   contract.
     ///
+    /// # Events
+    ///
+    /// * [`Deposit`]
+    ///
     /// # Panics
     ///
     /// * If decimal offset calculation overflows.
@@ -454,6 +458,10 @@ pub trait IErc4626 {
     /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If minter lacks
     ///   sufficient balance or hasn't approved enough tokens to the Vault
     ///   contract.
+    ///
+    /// # Events
+    ///
+    /// * [`Deposit`]
     ///
     /// # Panics
     ///
@@ -707,6 +715,10 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not an
     ///   ERC-20 Token address.
+    ///
+    /// # Events
+    ///
+    /// * [`Withdraw`]
     fn redeem(
         &mut self,
         shares: U256,
