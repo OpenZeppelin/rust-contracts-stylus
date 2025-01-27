@@ -885,7 +885,7 @@ pub trait IErc4626 {
     /// ```rust,ignore
     /// fn redeem(
     ///     &mut self,
-    ///    shares: U256,
+    ///     shares: U256,
     ///    receiver: Address,
     ///    owner: Address,
     /// ) -> Result<U256, Vec<u8>> {
@@ -1076,7 +1076,12 @@ impl IErc4626 for Erc4626 {
 }
 
 impl Erc4626 {
-    /// TODO: Rust docs
+    /// Returns the number of decimals used in representing vault shares. Adds
+    /// the decimals offset to the underlying token's decimals.
+    ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below. The implementation should forward
+    /// the call to your internal storage instance.
     ///
     /// # Arguments
     ///
@@ -1085,6 +1090,14 @@ impl Erc4626 {
     /// # Panics
     ///
     /// * If the decimals are greater than `U8::MAX`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    ///     fn decimals(&self) -> U8 {
+    ///         self.erc4626.decimals()
+    ///     }
+    /// ```
     pub fn decimals(&self) -> U8 {
         self.underlying_decimals
             .get()
@@ -1100,6 +1113,7 @@ impl Erc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - The amount of assets to convert.
     /// * `rounding` - The [`Rounding`] mode to use for the conversion.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -1138,6 +1152,7 @@ impl Erc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - The amount of shares to convert.
     /// * `rounding` - The [`Rounding`] mode to use for the conversion.
+    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -1168,7 +1183,25 @@ impl Erc4626 {
         Ok(assets)
     }
 
-    /// TODO: Rust docs
+    /// Deposit/mint common workflow.
+    ///
+    /// # Arguments
+    ///
+    /// * `caller` - Address initiating the deposit.
+    /// * `receiver` - Address receiving the minted shares.
+    /// * `assets` - Amount of underlying tokens to transfer.
+    /// * `shares` - Amount of shares to mint.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If token transfer
+    ///   fails.
+    /// * [`erc20::Error::InvalidReceiver`] - If `receiver` is `Address::ZERO`.
+    ///
+    /// # Events
+    ///
+    /// * [`Deposit`]
     fn _deposit(
         &mut self,
         caller: Address,
@@ -1177,15 +1210,14 @@ impl Erc4626 {
         shares: U256,
         erc20: &mut Erc20,
     ) -> Result<(), Error> {
-        // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE
-        // the transfer happens through the `tokensToSend` hook. On the
-        // other hand, the `tokenReceived` hook, that is triggered after the
+        // If asset() is ERC-777, `transfer_from` can trigger a reentrancy
+        // BEFORE the transfer happens through the `tokens_to_send` hook. On the
+        // other hand, the `token_received` hook, that is triggered after the
         // transfer, calls the vault, which is assumed not malicious.
         //
         // Conclusion: we need to do the transfer before we mint so that any
-        // reentrancy would happen before the assets are transferred and
-        // before the shares are minted, which is a valid state.
-        // slither-disable-next-line reentrancy-no-eth
+        // reentrancy would happen before the assets are transferred and before
+        // the shares are minted, which is a valid state.
 
         self.safe_erc20.safe_transfer_from(
             self.asset(),
@@ -1201,7 +1233,27 @@ impl Erc4626 {
         Ok(())
     }
 
-    /// TODO: Rust docs
+    /// Withdraw/redeem common workflow.
+    ///
+    /// # Arguments
+    ///
+    /// * `caller` - Address initiating the withdrawal.
+    /// * `receiver` - Address receiving the assets.
+    /// * `owner` - Address owning the shares.
+    /// * `assets` - Amount of underlying tokens to transfer.
+    /// * `shares` - Amount of shares to burn.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`erc20::Error::InsufficientAllowance`] - If caller needs allowance.
+    /// * [`erc20::Error::InvalidSender`] - If owner is `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientBalance`] - If owner lacks shares.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If transfer fails.
+    ///
+    /// # Events
+    ///
+    /// * [`Withdraw`]
     fn _withdraw(
         &mut self,
         caller: Address,
@@ -1216,13 +1268,13 @@ impl Erc4626 {
         }
 
         // If asset() is ERC-777, `transfer` can trigger a reentrancy AFTER the
-        // transfer happens through the `tokensReceived` hook. On the
-        // other hand, the `tokensToSend` hook, that is triggered before the
+        // transfer happens through the `tokens_received` hook. On the other
+        // hand, the `tokens_to_send` hook, that is triggered before the
         // transfer, calls the vault, which is assumed not malicious.
         //
         // Conclusion: we need to do the transfer after the burn so that any
-        // reentrancy would happen after the shares are burned and after
-        // the assets are transferred, which is a valid state.
+        // reentrancy would happen after the shares are burned and after the
+        // assets are transferred, which is a valid state.
 
         erc20._burn(owner, shares)?;
 
@@ -1233,7 +1285,8 @@ impl Erc4626 {
         Ok(())
     }
 
-    /// TODO: Rust docs
+    /// Returns the decimals offset between the underlying asset and vault
+    /// shares. Currently always returns `U8::ZERO`.
     fn _decimals_offset() -> U8 {
         U8::ZERO
     }
