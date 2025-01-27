@@ -146,6 +146,7 @@ pub trait IErc4626 {
     /// # Requirements
     ///
     /// * MUST be an ERC-20 token.
+    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -160,6 +161,7 @@ pub trait IErc4626 {
     /// * SHOULD include any compounding that occurs from yield.
     /// * MUST be inclusive of any fees that are charged against assets in the
     ///   Vault.
+    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -179,7 +181,16 @@ pub trait IErc4626 {
     /// and instead should reflect the “average-user’s” price-per-share, meaning
     /// what the average user should expect to see when exchanging to and from.
     ///
-    ///  # Arguments
+    /// # Requirements
+    ///
+    /// * MUST NOT be inclusive of any fees that are charged against assets in
+    ///   the Vault.
+    /// * MUST NOT show any variations depending on the caller.
+    /// * MUST NOT reflect slippage or other on-chain conditions, when
+    ///   performing the actual exchange.
+    /// * MUST NOT revert.
+    ///
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset.
@@ -198,6 +209,15 @@ pub trait IErc4626 {
     /// and instead should reflect the “average-user’s” price-per-share, meaning
     /// what the average user should expect to see when exchanging to and from.
     ///
+    /// # Requirements
+    ///
+    /// * MUST NOT be inclusive of any fees that are charged against assets in
+    ///   the Vault.
+    /// * MUST NOT show any variations depending on the caller.
+    /// * MUST NOT reflect slippage or other on-chain conditions, when
+    ///   performing the actual exchange.
+    /// * MUST NOT revert.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -212,6 +232,14 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the underlying asset that can be deposited
     /// into the Vault for the receiver, through a deposit call.
     ///
+    /// # Requirements
+    ///
+    /// * MUST return a limited value if receiver is subject to some deposit
+    ///   limit.
+    /// * MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of
+    ///   assets that may be deposited.
+    /// * MUST NOT revert.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -225,6 +253,19 @@ pub trait IErc4626 {
     /// previewDeposit SHOULD be considered slippage in share price or some
     /// other type of condition, meaning the depositor will lose assets by
     /// depositing.
+    ///
+    /// # Requirements
+    ///
+    /// * MUST return as close to and no more than the exact amount of Vault
+    ///   shares that would be minted in a deposit call in the same transaction.
+    ///   I.e. deposit should return the same or more shares as previewDeposit
+    ///   if called in the same transaction.
+    /// * MUST NOT account for deposit limits like those returned from
+    ///   maxDeposit and should always act as though the deposit would be
+    ///   accepted, regardless if the user has enough tokens approved, etc.
+    /// * MUST be inclusive of deposit fees. Integrators should be aware of the
+    ///   existence of deposit fees.
+    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -245,6 +286,16 @@ pub trait IErc4626 {
     /// `receiver` parameters. The `erc20` reference should come from your
     /// contract's state. The implementation should forward the call to your
     /// internal storage instance along with the `erc20` reference.
+    ///
+    /// # Requirements
+    ///
+    /// * MUST emit the Deposit event.
+    /// * MAY support an additional flow in which the underlying tokens are
+    ///   owned by the Vault contract before the deposit execution, and are
+    ///   accounted for during deposit.
+    /// * MUST revert if all of assets cannot be deposited (due to deposit limit
+    ///   being reached, slippage, the user not approving enough underlying
+    ///   tokens to the Vault contract, etc).
     ///
     /// # Arguments
     ///
@@ -283,6 +334,13 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the Vault shares that can be minted for
     /// the receiver, through a mint call.
     ///
+    /// # Requirements
+    ///
+    /// * MUST return a limited value if receiver is subject to some mint limit.
+    /// * MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of
+    ///   shares that may be minted.
+    /// * MUST NOT revert.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -295,6 +353,19 @@ pub trait IErc4626 {
     /// NOTE: Any unfavorable discrepancy between convertToAssets and
     /// previewMint SHOULD be considered slippage in share price or some other
     /// type of condition, meaning the depositor will lose assets by minting.
+    ///
+    /// # Requirements
+    ///
+    /// * MUST return as close to and no fewer than the exact amount of assets
+    ///   that would be deposited in a mint call in the same transaction. I.e.
+    ///   mint should return the same or fewer assets as previewMint if called
+    ///   in the same transaction.
+    /// * MUST NOT account for mint limits like those returned from maxMint and
+    ///   should always act as though the mint would be accepted, regardless if
+    ///   the user has enough tokens approved, etc.
+    /// * MUST be inclusive of deposit fees. Integrators should be aware of the
+    ///   existence of deposit fees.
+    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -312,6 +383,16 @@ pub trait IErc4626 {
     ///
     /// NOTE: Most implementations will require pre-approval of the Vault with
     /// the Vault’s underlying asset token.
+    ///
+    /// # Requirements
+    ///
+    /// * MUST emit the Deposit event.
+    /// * MAY support an additional flow in which the underlying tokens are
+    ///   owned by the Vault contract before the mint execution, and are
+    ///   accounted for during mint.
+    /// * MUST revert if all of shares cannot be minted (due to deposit limit
+    ///   being reached, slippage, the user not approving enough underlying
+    ///   tokens to the Vault contract, etc).
     ///
     /// # Arguments
     ///
@@ -334,6 +415,12 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the underlying asset that can be withdrawn
     /// from the owner balance in the Vault, through a withdraw call.
     ///
+    /// # Requirements
+    ///
+    /// * MUST return a limited value if owner is subject to some withdrawal
+    ///   limit or timelock.
+    /// * MUST NOT revert.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -353,6 +440,19 @@ pub trait IErc4626 {
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// withdrawal at the current block, given current on-chain conditions.
     ///
+    /// # Requirements
+    ///
+    /// * MUST return as close to and no fewer than the exact amount of Vault
+    ///   shares that would be burned in a withdraw call in the same
+    ///   transaction. I.e. withdraw should return the same or fewer shares as
+    ///   previewWithdraw if called in the same transaction.
+    /// * MUST NOT account for withdrawal limits like those returned from
+    ///   maxWithdraw and should always act as though the withdrawal would be
+    ///   accepted, regardless if the user has enough shares, etc.
+    /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
+    ///   the existence of withdrawal fees.
+    /// * MUST NOT revert.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -370,6 +470,16 @@ pub trait IErc4626 {
     /// Note that some implementations will require pre-requesting to the Vault
     /// before a withdrawal may be performed. Those methods should be performed
     /// separately.
+    ///
+    /// # Requirements
+    ///
+    /// * MUST emit the Withdraw event.
+    /// * MAY support an additional flow in which the underlying tokens are
+    ///   owned by the Vault contract before the withdraw execution, and are
+    ///   accounted for during withdraw.
+    /// * MUST revert if all of assets cannot be withdrawn (due to withdrawal
+    ///   limit being reached, slippage, the owner not having enough shares,
+    ///   etc).
     ///
     /// # Arguments
     ///
@@ -394,6 +504,14 @@ pub trait IErc4626 {
     /// Returns the maximum amount of Vault shares that can be redeemed from the
     /// owner balance in the Vault, through a redeem call.
     ///
+    /// # Requirements
+    ///
+    /// * MUST return a limited value if owner is subject to some withdrawal
+    ///   limit or timelock.
+    /// * MUST return balanceOf(owner) if owner is not subject to any withdrawal
+    ///   limit or timelock.
+    /// * MUST NOT revert.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -408,6 +526,19 @@ pub trait IErc4626 {
     /// previewRedeem SHOULD be considered slippage in share price or some other
     /// type of condition, meaning the depositor will lose assets by redeeming.
     ///
+    /// # Requirements
+    ///
+    /// * MUST return as close to and no more than the exact amount of assets
+    ///   that would be withdrawn in a redeem call in the same transaction. I.e.
+    ///   redeem should return the same or more assets as previewRedeem if
+    ///   called in the same transaction.
+    /// * MUST NOT account for redemption limits like those returned from
+    ///   maxRedeem and should always act as though the redemption would be
+    ///   accepted, regardless if the user has enough shares, etc.
+    /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
+    ///   the existence of withdrawal fees.
+    /// * MUST NOT revert.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -421,6 +552,16 @@ pub trait IErc4626 {
 
     /// Burns exactly shares from owner and sends assets of underlying tokens to
     /// receiver.
+    ///
+    /// # Requirements
+    ///
+    /// * MUST emit the Withdraw event.
+    /// * MAY support an additional flow in which the underlying tokens are
+    ///   owned by the Vault contract before the redeem execution, and are
+    ///   accounted for during redeem.
+    /// * MUST revert if all of shares cannot be redeemed (due to withdrawal
+    ///   limit being reached, slippage, the owner not having enough shares,
+    ///   etc).
     ///
     /// # Arguments
     ///
