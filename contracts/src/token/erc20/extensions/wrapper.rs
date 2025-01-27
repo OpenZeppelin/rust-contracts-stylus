@@ -100,7 +100,7 @@ pub enum Error {
 pub struct Erc20Wrapper {
     /// Token Address of the  underline token
     #[allow(clippy::used_underscore_binding)]
-    pub(crate) _underlying: StorageAddress,
+    pub(crate) underlying: StorageAddress,
 
     /// [`SafeErc20`] contract
     safe_erc20: SafeErc20,
@@ -155,7 +155,7 @@ impl IERC20Wrapper for Erc20Wrapper {
     type Error = Error;
 
     fn underlying(&self) -> Address {
-        self._underlying.get()
+        self.underlying.get()
     }
 
     fn deposit_to(
@@ -164,7 +164,7 @@ impl IERC20Wrapper for Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let underlined_token = self._underlying.get();
+        let underlined_token = self.underlying.get();
         let sender = msg::sender();
         if account == contract::address() {
             return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
@@ -193,7 +193,7 @@ impl IERC20Wrapper for Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let underlined_token = self._underlying.get();
+        let underlined_token = self.underlying.get();
         if account == contract::address() {
             return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
                 token: contract::address(),
