@@ -824,7 +824,7 @@ impl IErc4626 for Erc4626 {
             ));
         }
 
-        let shares = self.preview_redeem(assets)?;
+        let shares = self.preview_withdraw(assets)?;
         self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(shares)
