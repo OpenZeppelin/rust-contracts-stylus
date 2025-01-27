@@ -49,14 +49,13 @@ async fn constructs(alice: Account) -> Result<()> {
         .await?
         .address()?;
     let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-
     let name = contract.name().call().await?.name;
     let symbol = contract.symbol().call().await?.symbol;
     let decimals = contract.decimals().call().await?.decimals;
 
     assert_eq!(name, WRAPPED_TOKEN_NAME.to_owned());
     assert_eq!(symbol, WRAPPED_TOKEN_SYMBOL.to_owned());
-    assert_eq!(decimals, 10);
+    assert_eq!(decimals, 18);
 
     Ok(())
 }
