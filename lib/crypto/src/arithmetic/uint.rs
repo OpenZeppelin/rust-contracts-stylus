@@ -17,10 +17,7 @@ use zeroize::Zeroize;
 use crate::{
     arithmetic::{
         limb,
-        limb::{
-            adc, adc_for_add_with_carry, sbb, sbb_for_sub_with_borrow, Limb,
-            Limbs,
-        },
+        limb::{Limb, Limbs},
         BigInteger,
     },
     bits::BitIteratorBE,
@@ -176,7 +173,7 @@ impl<const N: usize> Uint<N> {
         let mut borrow = 0;
 
         const_for!((i in 0..N) {
-            (self.limbs[i], borrow) = sbb(self.limbs[i], other.limbs[i], borrow);
+            (self.limbs[i], borrow) = limb::sbb(self.limbs[i], other.limbs[i], borrow);
         });
 
         (self, borrow != 0)
@@ -204,7 +201,7 @@ impl<const N: usize> Uint<N> {
         let mut carry = 0;
 
         const_for!((i in 0..N) {
-            (self.limbs[i], carry) = adc(self.limbs[i], other.limbs[i], carry);
+            (self.limbs[i], carry) = limb::adc(self.limbs[i], other.limbs[i], carry);
         });
 
         (self, carry != 0)
@@ -246,7 +243,7 @@ impl<const N: usize> Uint<N> {
         let mut carry = false;
 
         unroll6_for!((i in 0..N) {
-            carry = adc_for_add_with_carry(&mut self.limbs[i], other.limbs[i], carry);
+            carry = limb::adc_assign(&mut self.limbs[i], other.limbs[i], carry);
         });
 
         carry
@@ -258,7 +255,7 @@ impl<const N: usize> Uint<N> {
 
         unroll6_for!((i in 0..N) {
             borrow =
-                sbb_for_sub_with_borrow(&mut self.limbs[i], other.limbs[i], borrow);
+                limb::sbb_assign(&mut self.limbs[i], other.limbs[i], borrow);
         });
 
         borrow
@@ -350,7 +347,7 @@ impl<const N: usize> Uint<N> {
         let mut i = 0;
 
         while i < N {
-            let (w, c) = limb::ct_adc(self.limbs[i], rhs.limbs[i], carry);
+            let (w, c) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
             limbs[i] = w;
             carry = c;
             i += 1;
