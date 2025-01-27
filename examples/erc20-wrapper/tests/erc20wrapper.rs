@@ -37,7 +37,7 @@ fn ctr() -> constructorCall {
 }
 
 // ============================================================================
-// Integration Tests: ERC-20 Token + Metadata Extension
+// Integration Tests: ERC-20 Token + Metadata Extension + ERC-20 Wrapper
 // ============================================================================
 
 #[e2e::test]
@@ -53,7 +53,7 @@ async fn constructs(alice: Account) -> Result<()> {
     let symbol = contract.symbol().call().await?.symbol;
     let decimals = contract.decimals().call().await?.decimals;
 
-    assert_eq!(name, WRAPPED_TOKEN_NAME.to_owned());
+    assert_eq!(name, WRAPPED_TOKEN_NAME.to_owned());     
     assert_eq!(symbol, WRAPPED_TOKEN_SYMBOL.to_owned());
     assert_eq!(decimals, 18);
 
