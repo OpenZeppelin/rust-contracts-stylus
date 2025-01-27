@@ -19,8 +19,6 @@ use zeroize::Zeroize;
 
 use crate::bits::BitIteratorBE;
 
-// TODO#q: move mul / add operations to BigInt impl
-
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
     'static
@@ -109,7 +107,7 @@ pub trait BigInteger:
     /// ```
     fn is_zero(&self) -> bool;
 
-    /// Compute the minimum number of bits needed to encode this number.
+    /// Return the minimum number of bits needed to encode this number.
     /// # Example
     /// ```
     /// use openzeppelin_crypto::arithmetic::{BigInteger, uint::U64};
@@ -125,7 +123,7 @@ pub trait BigInteger:
     /// ```
     fn num_bits(&self) -> usize;
 
-    /// Compute the `i`-th bit of `self`.
+    /// Find the `i`-th bit of `self`.
     /// # Example
     ///
     /// ```

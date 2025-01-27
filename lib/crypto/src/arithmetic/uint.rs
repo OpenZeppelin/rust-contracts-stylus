@@ -125,24 +125,47 @@ impl<const N: usize> Uint<N> {
         true
     }
 
-    // TODO#q: merge num_bits and ct_get_bit with BigInteger abstraction
-
-    /// Find the number of bits in the binary decomposition of `self`.
+    /// Return the minimum number of bits needed to encode this number.
     #[doc(hidden)]
     pub const fn ct_num_bits(self) -> usize {
-        // TODO#q: what if last limb is zero and next to last has leading zeros?
-        (N - 1) * 64 + (64 - self.limbs[N - 1].leading_zeros() as usize)
+        // Total number of bits.
+        let mut num_bits = Self::BITS;
+
+        // Start with the last (highest) limb.
+        let mut index = N - 1;
+        loop {
+            // Subtract leading zeroes, from the total number of limbs.
+            let leading = self.limbs[index].leading_zeros() as usize;
+            num_bits -= leading;
+
+            // If the limb is not empty, stop processing other limbs,
+            if leading != 64 {
+                break;
+            }
+
+            if index == 0 {
+                break;
+            }
+            index -= 1;
+        }
+
+        // And return the result.
+        num_bits
     }
 
-    /// Compute the `i`-th bit of `self`.
+    /// Find the `i`-th bit of `self`.
     pub const fn ct_get_bit(&self, i: usize) -> bool {
-        if i >= 64 * N {
-            false
-        } else {
-            let limb = i / 64;
-            let bit = i - (64 * limb);
-            (self.limbs[limb] & (1 << bit)) != 0
+        // If `i` is more than total bits, return `false`.
+        if i >= Self::BITS {
+            return false;
         }
+
+        // Otherwise find `limb` and `bit` indices and get the bit.
+        let bits_in_limb = Limb::BITS as usize;
+        let limb = i / bits_in_limb;
+        let bit = i - bits_in_limb * limb;
+        let mask = 1 << bit;
+        (self.limbs[limb] & mask) != 0
     }
 
     #[inline]
@@ -715,26 +738,11 @@ impl<const N: usize> BigInteger for Uint<N> {
     }
 
     fn num_bits(&self) -> usize {
-        let mut ret = N as u32 * 64;
-        for i in self.limbs.iter().rev() {
-            let leading = i.leading_zeros();
-            ret -= leading;
-            if leading != 64 {
-                break;
-            }
-        }
-
-        ret as usize
+        self.ct_num_bits()
     }
 
     fn get_bit(&self, i: usize) -> bool {
-        if i >= 64 * N {
-            false
-        } else {
-            let limb = i / 64;
-            let bit = i - (64 * limb);
-            (self.limbs[limb] & (1 << bit)) != 0
-        }
+        self.ct_get_bit(i)
     }
 
     fn from_bytes_le(bytes: &[u8]) -> Self {
@@ -980,5 +988,20 @@ mod test {
 
         assert_eq!(bits.len(), 4);
         assert_eq!(bits, vec![true, true, false, false]);
+    }
+
+    #[test]
+    fn num_bits() {
+        let words: [Limb; 4] = [0b1100, 0, 0, 0];
+        let num = Uint::<4>::new(words);
+        assert_eq!(num.num_bits(), 4);
+
+        let words: [Limb; 4] = [0, 0b1100, 0, 0];
+        let num = Uint::<4>::new(words);
+        assert_eq!(num.num_bits(), 64 + 4);
+
+        let words: [Limb; 4] = [0b11, 0b11, 0b11, 0b11];
+        let num = Uint::<4>::new(words);
+        assert_eq!(num.num_bits(), 64 + 64 + 64 + 2);
     }
 }
