@@ -15,6 +15,7 @@ sol! {
             return super.approve(spender, value);
         }
 
+        // WARNING: This code is for testing purposes only! Do not use in production.
         function regular_approve(address owner, address spender, uint256 amount) public {
             super._approve(owner, spender, amount);
         }
