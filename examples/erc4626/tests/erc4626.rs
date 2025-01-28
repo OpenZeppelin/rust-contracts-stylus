@@ -732,17 +732,116 @@ mod mint {
         Ok(())
     }
 
-    // TODO: mint ExceededMaxMint E2E test
+    #[e2e::test]
+    async fn creates_zero_shares_for_zero_assets(alice: Account) -> Result<()> {
+        let (contract_addr, asset_addr) =
+            deploy(&alice, uint!(1000_U256)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
-    // TODO: mint InvalidReceiver E2E test
+        let alice_address = alice.address();
+        let shares = U256::ZERO;
+        let alice_assets = U256::ZERO;
+        let receipt = receipt!(contract.mint(shares, alice_address))?;
 
-    // TODO: mint SafeErc20FailedOperation E2E test
+        assert!(receipt.emits(Erc4626::Deposit {
+            sender: alice_address,
+            owner: alice_address,
+            assets: alice_assets,
+            shares,
+        }));
 
-    // TODO: mint ERC20InsufficientBalance E2E test
+        let alice_balance =
+            contract.balanceOf(alice_address).call().await?.balance;
+        assert_eq!(alice_balance, shares);
 
-    // TODO: mint overflows E2E test
+        let alice_assets_balance =
+            asset.balanceOf(alice_address).call().await?._0;
+        assert_eq!(alice_assets_balance, alice_assets);
 
-    // TODO: mint success E2E test
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn requires_more_assets_than_expected_when_no_shares_were_ever_minted(
+        alice: Account,
+    ) -> Result<()> {
+        let tokens = uint!(100_U256);
+
+        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let alice_address = alice.address();
+        let shares = uint!(69_U256);
+        let assets = uint!(6969_U256);
+
+        _ = watch!(asset.mint(alice.address(), assets))?;
+        _ = watch!(asset.regular_approve(
+            alice_address,
+            contract_addr,
+            assets
+        ))?;
+
+        let initial_alice_assets =
+            asset.balanceOf(alice_address).call().await?._0;
+        let initial_alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+
+        let receipt = receipt!(contract.mint(shares, alice_address))?;
+
+        assert!(receipt.emits(Erc4626::Deposit {
+            sender: alice_address,
+            owner: alice_address,
+            assets,
+            shares,
+        }));
+
+        let alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+        assert_eq!(alice_shares, shares + initial_alice_shares);
+
+        let alice_assets = asset.balanceOf(alice_address).call().await?._0;
+        assert_eq!(alice_assets, initial_alice_assets - assets);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_no_approval_on_assets(alice: Account) -> Result<()> {
+        let tokens = uint!(100_U256);
+
+        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let alice_address = alice.address();
+        let shares = uint!(69_U256);
+        let assets = uint!(6969_U256);
+
+        _ = watch!(asset.mint(alice.address(), assets))?;
+
+        let err = send!(contract.mint(shares, alice_address))
+            .expect_err("should return `InvalidAsset`");
+
+        assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
+            token: asset_addr
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_overflows(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.mint(U256::MAX, alice.address()))
+            .expect_err("should return `Overflow`");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
 }
 
 mod max_withdraw {

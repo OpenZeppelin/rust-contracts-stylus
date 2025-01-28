@@ -44,11 +44,6 @@ sol!(
         function redeem(uint256 shares, address receiver,address owner) external returns (uint256);
         function withdraw(uint256 assets, address receiver,address owner) external returns (uint256);
 
-        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
-        error ERC20InvalidSender(address sender);
-        error ERC20InvalidReceiver(address receiver);
-        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-        error ERC20InvalidSpender(address spender);
         error SafeErc20FailedOperation(address token);
 
         error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
@@ -56,11 +51,6 @@ sol!(
         error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
         error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
         error InvalidAsset(address asset);
-
-        #[derive(Debug, PartialEq)]
-        event Transfer(address indexed from, address indexed to, uint256 value);
-        #[derive(Debug, PartialEq)]
-        event Approval(address indexed owner, address indexed spender, uint256 value);
 
         #[derive(Debug, PartialEq)]
         event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
