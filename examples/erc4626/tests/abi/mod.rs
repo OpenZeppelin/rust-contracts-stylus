@@ -34,7 +34,7 @@ sol!(
         #[derive(Debug)]
         function previewDeposit(uint256 assets) external view  returns (uint256 deposit);
         #[derive(Debug)]
-        function previewMint(uint256 shares) external view  returns (uint256 mint);
+        function previewMint(uint256 shares) external view  returns (uint256 assets);
         #[derive(Debug)]
         function previewRedeem(uint256 shares) external view  returns (uint256 redeem);
         #[derive(Debug)]
