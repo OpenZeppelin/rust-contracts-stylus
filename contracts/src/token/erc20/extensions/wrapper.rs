@@ -52,7 +52,7 @@ use token::IErc20 as IErc20Solidity;
 
 sol! {
     /// Indicates that he address is not a valid ERC-20 token.
-    /// 
+    ///
     /// * `address` - Address of the invalid underling ERC-20 token.
     #[derive(Debug)]
     #[allow(missing_docs)]
