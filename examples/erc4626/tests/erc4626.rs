@@ -49,20 +49,6 @@ macro_rules! calculate_shares {
     }};
 }
 
-macro_rules! calculate_assets {
-    ($contract:expr, $shares:expr, $tokens:expr, $rounding:expr) => {{
-        let total_supply = total_supply!($contract);
-        $shares.mul_div(
-            $tokens.checked_add(uint!(1_U256)).expect("should not overflow"),
-            total_supply
-                + U256::from(10)
-                    .checked_pow(decimals_offset!())
-                    .expect("should not overflow"),
-            $rounding,
-        )
-    }};
-}
-
 fn ctr(asset: Address) -> constructorCall {
     constructorCall {
         asset_: asset,
