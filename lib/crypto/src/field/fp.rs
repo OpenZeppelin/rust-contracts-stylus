@@ -209,14 +209,13 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     ///
     /// By the end element will be converted to a montgomery form and reduced.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     fn from_bigint(r: Uint<N>) -> Fp<Self, N> {
         let mut r = Fp::new_unchecked(r);
         if r.is_zero() {
             r
         } else {
-            r *= &Fp::new_unchecked(Self::R2);
-            r
+            r * Fp::new_unchecked(Self::R2)
         }
     }
 
@@ -906,6 +905,7 @@ impl<P: FpParams<N>, const N: usize> core::ops::SubAssign<&mut Self>
 }
 
 impl<P: FpParams<N>, const N: usize> core::ops::MulAssign<&Self> for Fp<P, N> {
+    #[inline]
     fn mul_assign(&mut self, other: &Self) {
         P::mul_assign(self, other);
     }
