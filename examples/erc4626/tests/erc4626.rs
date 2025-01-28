@@ -6,8 +6,8 @@ use alloy::{
     sol,
 };
 use e2e::{
-    send, /* receipt, */ watch, Account, Panic, PanicCode,
-    /* EventExt, */ ReceiptExt, Revert,
+    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
+    Revert,
 };
 use eyre::Result;
 use mock::{erc20, erc20::ERC20Mock};
@@ -22,6 +22,46 @@ mod abi;
 mod mock;
 
 sol!("src/constructor.sol");
+
+macro_rules! total_supply {
+    ($contract:expr) => {
+        $contract.totalSupply().call().await?.totalSupply
+    };
+}
+
+macro_rules! decimals_offset {
+    () => {
+        U256::ZERO
+    };
+}
+
+macro_rules! calculate_shares {
+    ($contract:expr, $assets:expr, $tokens:expr) => {{
+        let total_supply = total_supply!($contract);
+        $assets.mul_div(
+            total_supply
+                + U256::from(10)
+                    .checked_pow(decimals_offset!())
+                    .expect("should not overflow"),
+            $tokens + U256::from(1),
+            Rounding::Floor,
+        )
+    }};
+}
+
+macro_rules! calculate_assets {
+    ($contract:expr, $shares:expr, $tokens:expr) => {{
+        let total_supply = total_supply!($contract);
+        $shares.mul_div(
+            $tokens.checked_add(uint!(1_U256)).expect("should not overflow"),
+            total_supply
+                + U256::from(10)
+                    .checked_pow(decimals_offset!())
+                    .expect("should not overflow"),
+            Rounding::Floor,
+        )
+    }};
+}
 
 fn ctr(asset: Address) -> constructorCall {
     constructorCall {
@@ -172,22 +212,11 @@ async fn convert_to_shares_works(alice: Account) -> Result<()> {
         .address()?;
     let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-    let tokens = uint!(10_U256);
+    let tokens = uint!(100_U256);
     let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
-
-    let total_supply = contract.totalSupply().call().await?.totalSupply;
     let assets = uint!(69_U256);
-    let decimals_offset = U256::ZERO;
 
-    let expected_shares = assets.mul_div(
-        total_supply
-            + U256::from(10)
-                .checked_pow(decimals_offset)
-                .expect("should not overflow"),
-        tokens + U256::from(1),
-        Rounding::Floor,
-    );
-
+    let expected_shares = calculate_shares!(contract, assets, tokens);
     let shares = contract.convertToShares(assets).call().await?.shares;
 
     assert_eq!(shares, expected_shares);
@@ -233,23 +262,12 @@ async fn convert_to_assets_works(alice: Account) -> Result<()> {
         .address()?;
     let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-    let tokens = uint!(10_U256);
+    let tokens = uint!(100_U256);
     let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
 
-    let total_supply = contract.totalSupply().call().await?.totalSupply;
     let shares = uint!(69_U256);
-    let decimals_offset = U256::ZERO;
-
     let assets = contract.convertToAssets(shares).call().await?.assets;
-
-    let expected_assets = shares.mul_div(
-        tokens.checked_add(uint!(1_U256)).expect("should not overflow"),
-        total_supply
-            + U256::from(10)
-                .checked_pow(decimals_offset)
-                .expect("should not overflow"),
-        Rounding::Floor,
-    );
+    let expected_assets = calculate_assets!(contract, shares, tokens);
 
     assert_eq!(assets, expected_assets);
     Ok(())
@@ -339,22 +357,12 @@ async fn preview_deposit_works(alice: Account) -> Result<()> {
         .address()?;
     let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-    let tokens = uint!(10_U256);
+    let tokens = uint!(100_U256);
     let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
 
-    let total_supply = contract.totalSupply().call().await?.totalSupply;
     let assets = uint!(69_U256);
-    let decimals_offset = U256::ZERO;
 
-    let expected_deposit = assets.mul_div(
-        total_supply
-            + U256::from(10)
-                .checked_pow(decimals_offset)
-                .expect("should not overflow"),
-        tokens + U256::from(1),
-        Rounding::Floor,
-    );
-
+    let expected_deposit = calculate_shares!(contract, assets, tokens);
     let preview_deposit = contract.previewDeposit(assets).call().await?.deposit;
 
     assert_eq!(preview_deposit, expected_deposit);
@@ -378,6 +386,93 @@ async fn deposit_reverts_when_asset_is_not_erc20(
         .expect_err("should return `InvalidAsset`");
 
     assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+    Ok(())
+}
+
+#[e2e::test]
+async fn deposit_reverts_when_result_overflows(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let _ = watch!(erc20_alice.mint(contract_addr, U256::MAX))?;
+
+    let err = send!(contract.deposit(U256::MAX, bob.address()))
+        .expect_err("should panics due to `Overflow`");
+
+    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+    Ok(())
+}
+
+#[e2e::test]
+async fn deposit_works(alice: Account, bob: Account) -> Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let alice_address = alice.address();
+    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let tokens = uint!(100_U256);
+    let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
+    let _ = watch!(erc20_alice.mint(alice_address, tokens))?;
+
+    let assets = uint!(69_U256);
+    let expected_deposit = calculate_shares!(contract, assets, tokens);
+
+    let initial_alice_token_balance =
+        erc20_alice.balanceOf(alice_address).call().await?._0;
+
+    let initial_vault_token_balance =
+        erc20_alice.balanceOf(contract_addr).call().await?._0;
+
+    let initial_bob_shares_balance =
+        contract.balanceOf(bob.address()).call().await?.balance;
+
+    let initial_supply = contract.totalSupply().call().await?.totalSupply;
+
+    let receipt = receipt!(contract.deposit(assets, bob.address()))?;
+
+    assert!(receipt.emits(Erc4626::Deposit {
+        sender: alice_address,
+        owner: bob.address(),
+        assets,
+        shares: expected_deposit
+    }));
+
+    let bob_shares_balance =
+        contract.balanceOf(bob.address()).call().await?.balance;
+    assert_eq!(
+        initial_bob_shares_balance + expected_deposit,
+        bob_shares_balance
+    );
+
+    let supply = contract.totalSupply().call().await?.totalSupply;
+    assert_eq!(initial_supply + expected_deposit, supply);
+
+    let alice_token_balance =
+        erc20_alice.balanceOf(alice_address).call().await?._0;
+    assert_eq!(initial_alice_token_balance - assets, alice_token_balance);
+
+    let vault_token_balance =
+        erc20_alice.balanceOf(contract_addr).call().await?._0;
+    assert_eq!(initial_vault_token_balance + assets, vault_token_balance);
+
     Ok(())
 }
 

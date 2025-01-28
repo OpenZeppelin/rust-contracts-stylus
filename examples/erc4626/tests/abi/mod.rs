@@ -61,9 +61,9 @@ sol!(
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
 
-        #[allow(missing_docs)]
+        #[derive(Debug, PartialEq)]
         event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
-        #[allow(missing_docs)]
+        #[derive(Debug, PartialEq)]
         event Withdraw(address indexed sender,address indexed receiver,address indexed owner,uint256 assets, uint256 shares);
     }
 );
