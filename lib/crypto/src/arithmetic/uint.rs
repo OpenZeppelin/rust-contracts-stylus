@@ -277,7 +277,7 @@ impl<const N: usize> Uint<N> {
     /// Returns a tuple containing the `(lo, hi)` components of the product.
     #[inline(always)]
     pub const fn ct_mul_wide(&self, rhs: &Self) -> (Self, Self) {
-        // TODO#q: document implementation
+        // TODO#q: document wide multiplication
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
         unroll6_for!((i in 0..N) {
             let mut carry = 0;

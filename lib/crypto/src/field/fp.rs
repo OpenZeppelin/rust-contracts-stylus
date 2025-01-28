@@ -385,6 +385,8 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         (carry, Self::new_unchecked(res))
     }
 
+    // TODO#q: document montgomery reduction
+
     #[inline(always)]
     const fn montgomery_reduction_wide(
         mut lo: Uint<N>,
