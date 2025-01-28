@@ -439,14 +439,17 @@ mod convert_to_assets {
 
 mod max_deposit {
     use super::*;
+
     #[e2e::test]
-    async fn success(alice: Account) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
+    async fn returns_max_uint256_for_any_address(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max_deposit =
-            contract.maxDeposit(alice.address()).call().await?.maxDeposit;
-        assert_eq!(max_deposit, U256::MAX);
+        let max = contract.maxDeposit(alice.address()).call().await?.maxDeposit;
+        assert_eq!(U256::MAX, max);
+
+        let max = contract.maxDeposit(Address::ZERO).call().await?.maxDeposit;
+        assert_eq!(U256::MAX, max);
 
         Ok(())
     }
