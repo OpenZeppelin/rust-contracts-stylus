@@ -107,7 +107,7 @@ pub enum Error {
 pub struct Erc20Wrapper {
     /// Token Address of the  underline token
     #[allow(clippy::used_underscore_binding)]
-    pub(crate) underlying: StorageAddress,
+    pub(crate) underlying_address: StorageAddress,
 
     /// [`SafeErc20`] contract
     safe_erc20: SafeErc20,
@@ -174,7 +174,7 @@ impl IERC20Wrapper for Erc20Wrapper {
     type Error = Error;
 
     fn underlying(&self) -> Address {
-        self.underlying.get()
+        self.underlying_address.get()
     }
 
     fn deposit_to(
@@ -183,7 +183,7 @@ impl IERC20Wrapper for Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let underlined_token = self.underlying.get();
+        let underlined_token = self.underlying_address.get();
         let sender = msg::sender();
         if account == contract::address() {
             return Err(Error::InvalidSender(ERC20InvalidSender {
@@ -212,7 +212,7 @@ impl IERC20Wrapper for Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let underlined_token = self.underlying.get();
+        let underlined_token = self.underlying_address.get();
         if account == contract::address() {
             return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
                 receiver: account,
@@ -252,5 +252,22 @@ impl Erc20Wrapper {
             .map_err(|_| InvalidAsset { asset: contract::address() })?;
         erc20._mint(account, value)?;
         Ok(U256::from(value))
+    }
+}
+
+// TODO: Add missing tests once `motsu` supports calling external contracts.
+#[cfg(all(test, feature = "std"))]
+mod tests {
+
+    use alloy_primitives::{address, U256, U8};
+    use stylus_sdk::{msg, prelude::storage};
+
+    use super::Erc20Wrapper;
+
+    #[motsu::test]
+    fn underlying_works(contract: Erc20WrapperExample) {
+        let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
+        contract.underlying_address.set(asset);
+        assert_eq!(contract.underlying(), asset);
     }
 }
