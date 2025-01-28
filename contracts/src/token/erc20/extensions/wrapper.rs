@@ -60,7 +60,7 @@ sol! {
 
     /// Indicates that the address is not an Invalid Sender address.
     ///
-    /// * `sender` - Address  is an ivalid sender.
+    /// * `sender` - Address  is an invalid sender.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidSender(address sender);
