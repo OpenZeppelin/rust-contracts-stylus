@@ -39,7 +39,6 @@ use crate::{
 
 /// A trait that specifies the configuration of a prime field.
 /// Also specifies how to perform arithmetic on field elements.
-// TODO#q: rename FpParams -> Params
 pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// The modulus of the field.
     const MODULUS: Uint<N>;
@@ -49,12 +48,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// `MODULUS - 1`.
     const GENERATOR: Fp<Self, N>;
 
-    const MODULUS_HAS_SPARE_BIT: bool = modulus_has_spare_bit::<Self, N>();
+    /// `MODULUS` has a spare bit in the most significant limb.
+    const HAS_MODULUS_SPARE_BIT: bool = Self::MODULUS.limbs[N - 1] >> 63 == 0;
 
     /// `INV = -MODULUS^{-1} mod 2^64`
     const INV: u64 = inv::<Self, N>();
 
     /// Let `M` be the power of 2^64 nearest to [`Self::MODULUS`] size.
+    ///
     /// Then `R = M % MODULUS` or `R = (M - 1) % MODULUS + 1` for convenience of
     /// multiplication.
     const R: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::ZERO)
@@ -74,7 +75,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         // This cannot exceed the backing capacity.
         let c = a.montgomery_form.add_with_carry(&b.montgomery_form);
         // However, it may need to be reduced
-        if Self::MODULUS_HAS_SPARE_BIT {
+        if Self::HAS_MODULUS_SPARE_BIT {
             a.subtract_modulus()
         } else {
             a.subtract_modulus_with_carry(c)
@@ -97,7 +98,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         // This cannot exceed the backing capacity.
         let c = a.montgomery_form.mul2();
         // However, it may need to be reduced.
-        if Self::MODULUS_HAS_SPARE_BIT {
+        if Self::HAS_MODULUS_SPARE_BIT {
             a.subtract_modulus()
         } else {
             a.subtract_modulus_with_carry(c)
@@ -124,7 +125,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let (carry, res) = a.ct_mul_without_cond_subtract(b);
         *a = res;
 
-        if Self::MODULUS_HAS_SPARE_BIT {
+        if Self::HAS_MODULUS_SPARE_BIT {
             a.subtract_modulus();
         } else {
             a.subtract_modulus_with_carry(carry);
@@ -167,7 +168,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
                     let carry =
                         b.montgomery_form.add_with_carry(&Self::MODULUS);
                     b.montgomery_form.div2();
-                    if !Self::MODULUS_HAS_SPARE_BIT && carry {
+                    if !Self::HAS_MODULUS_SPARE_BIT && carry {
                         b.montgomery_form.limbs[N - 1] |= 1 << 63;
                     }
                 }
@@ -182,7 +183,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
                     let carry =
                         c.montgomery_form.add_with_carry(&Self::MODULUS);
                     c.montgomery_form.div2();
-                    if !Self::MODULUS_HAS_SPARE_BIT && carry {
+                    if !Self::HAS_MODULUS_SPARE_BIT && carry {
                         c.montgomery_form.limbs[N - 1] |= 1 << 63;
                     }
                 }
@@ -222,27 +223,8 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
     #[inline(always)]
-    fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
-        let mut r = a.montgomery_form.limbs;
-        // Montgomery Reduction
-        for i in 0..N {
-            let k = r[i].wrapping_mul(Self::INV);
-            // TODO#q: move montgomery reduction to the separate function
-            // let mut carry = 0;
-
-            let (_, mut carry) = limb::mac(r[i], k, Self::MODULUS.limbs[0]);
-            for j in 1..N {
-                (r[(j + i) % N], carry) = limb::carrying_mac(
-                    r[(j + i) % N],
-                    k,
-                    Self::MODULUS.limbs[j],
-                    carry,
-                );
-            }
-            r[i % N] = carry;
-        }
-
-        Uint::new(r)
+    fn into_bigint(mut a: Fp<Self, N>) -> Uint<N> {
+        a.montgomery_reduction()
     }
 }
 
@@ -265,11 +247,6 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
         inv = inv.wrapping_mul(T::MODULUS.limbs[0]);
     });
     inv.wrapping_neg()
-}
-
-#[inline]
-pub const fn modulus_has_spare_bit<T: FpParams<N>, const N: usize>() -> bool {
-    T::MODULUS.limbs[N - 1] >> 63 == 0
 }
 
 /// Represents an element of the prime field `F_p`, where `p == P::MODULUS`.
@@ -380,7 +357,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
 
     const fn ct_mul(self, other: &Self) -> Self {
         let (carry, res) = self.ct_mul_without_cond_subtract(other);
-        if P::MODULUS_HAS_SPARE_BIT {
+        if P::HAS_MODULUS_SPARE_BIT {
             res.ct_subtract_modulus()
         } else {
             res.ct_subtract_modulus_with_carry(carry)
@@ -405,12 +382,12 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     ) -> (bool, Self) {
         let (lo, hi) = self.montgomery_form.ct_mul_wide(&other.montgomery_form);
 
-        let (carry, res) = Self::montgomery_reduction(lo, hi);
+        let (carry, res) = Self::montgomery_reduction_wide(lo, hi);
         (carry, Self::new_unchecked(res))
     }
 
     #[inline(always)]
-    const fn montgomery_reduction(
+    const fn montgomery_reduction_wide(
         mut lo: Uint<N>,
         mut hi: Uint<N>,
     ) -> (bool, Uint<N>) {
@@ -442,6 +419,26 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         });
 
         (carry2 != 0, hi)
+    }
+
+    #[inline(always)]
+    fn montgomery_reduction(self) -> Uint<N> {
+        let mut limbs = self.montgomery_form.limbs;
+        for i in 0..N {
+            let k = limbs[i].wrapping_mul(P::INV);
+
+            let (_, mut carry) = limb::mac(limbs[i], k, Self::MODULUS.limbs[0]);
+            for j in 1..N {
+                (limbs[(j + i) % N], carry) = limb::carrying_mac(
+                    limbs[(j + i) % N],
+                    k,
+                    Self::MODULUS.limbs[j],
+                    carry,
+                );
+            }
+            limbs[i % N] = carry;
+        }
+        Uint::new(limbs)
     }
 
     const fn ct_is_valid(&self) -> bool {
@@ -575,7 +572,7 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
     type BigInt = Uint<N>;
 
     const MODULUS: Self::BigInt = P::MODULUS;
-    const MODULUS_BIT_SIZE: usize = unimplemented!();
+    const MODULUS_BIT_SIZE: usize = <Uint<N> as BigInteger>::BITS;
 
     #[inline]
     fn from_bigint(repr: Self::BigInt) -> Self {
