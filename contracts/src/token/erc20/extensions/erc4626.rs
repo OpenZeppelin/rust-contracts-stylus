@@ -7,7 +7,7 @@
 //! would affect the "shares" token represented by this contract and not the
 //! "assets" token which is an independent contract.
 
-use alloy_primitives::{Address, U256, U8};
+use alloy_primitives::{uint, Address, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
     call::Call,
@@ -25,6 +25,9 @@ use crate::{
     },
     utils::math::alloy::{Math, Rounding},
 };
+
+const ONE: U256 = uint!(1_U256);
+const TEN: U256 = uint!(10_U256);
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -1134,17 +1137,17 @@ impl Erc4626 {
         let total_supply = erc20.total_supply();
 
         let multiplier = total_supply
-                .checked_add(
-                    U256::from(10)
-                        .checked_pow(U256::from(Self::_decimals_offset()))
-                        .expect("decimal offset overflow in `Erc4626::_convert_to_shares`"),
-                )
-                .expect("multiplier overflow in `Erc4626::_convert_to_assets`");
+            .checked_add(
+                TEN.checked_pow(U256::from(Self::_decimals_offset())).expect(
+                    "decimal offset overflow in `Erc4626::_convert_to_shares`",
+                ),
+            )
+            .expect("multiplier overflow in `Erc4626::_convert_to_shares`");
 
         let denominator = self
             .total_assets()?
-            .checked_add(U256::from(1))
-            .expect("denominator overflow in `Erc4626::_convert_to_assets`");
+            .checked_add(ONE)
+            .expect("denominator overflow in `Erc4626::_convert_to_shares`");
 
         let shares = assets.mul_div(multiplier, denominator, rounding);
 
@@ -1176,20 +1179,18 @@ impl Erc4626 {
         rounding: Rounding,
         erc20: &Erc20,
     ) -> Result<U256, Error> {
-        let total_supply = erc20.total_supply();
-
         let multiplier = self
             .total_assets()?
-            .checked_add(U256::from(1))
+            .checked_add(ONE)
             .expect("multiplier overflow in `Erc4626::_convert_to_assets`");
+
+        let total_supply = erc20.total_supply();
 
         let denominator = total_supply
             .checked_add(
-                U256::from(10)
-                    .checked_pow(U256::from(Self::_decimals_offset()))
-                    .expect(
-                        "decimal offset overflow in `Erc4626::_convert_to_assets`",
-                    ),
+                TEN.checked_pow(U256::from(Self::_decimals_offset())).expect(
+                    "decimal offset overflow in `Erc4626::_convert_to_assets`",
+                ),
             )
             .expect("denominator overflow in `Erc4626::_convert_to_assets`");
 
