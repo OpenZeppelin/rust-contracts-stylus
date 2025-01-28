@@ -250,6 +250,71 @@ async fn total_assets_reflects_balance_after_withdrawal(
 }
 
 #[e2e::test]
+async fn convert_to_shares_converts_zero_assets_to_zero_shares(
+    alice: Account,
+) -> Result<()> {
+    let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let shares = contract.convertToShares(U256::ZERO).call().await?.shares;
+    assert_eq!(U256::ZERO, shares);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn convert_to_shares_returns_zero_shares_for_asset_amount_less_then_vault_assets(
+    alice: Account,
+) -> Result<()> {
+    let initial_assets = uint!(1000_U256);
+    let assets_to_convert = uint!(100_U256);
+    let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let shares =
+        contract.convertToShares(assets_to_convert).call().await?.shares;
+
+    assert_eq!(U256::ZERO, shares);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn convert_to_shares_returns_shares_proportional_to_deposit_when_vault_is_empty(
+    alice: Account,
+) -> Result<()> {
+    let assets_to_convert = uint!(101_U256);
+    let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let shares =
+        contract.convertToShares(assets_to_convert).call().await?.shares;
+
+    assert_eq!(assets_to_convert, shares);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn convert_to_shares_returns_shares_proportional_to_deposit_when_vault_has_assets(
+    alice: Account,
+) -> Result<()> {
+    let initial_assets = uint!(100_U256);
+    let assets_to_convert = uint!(101_U256);
+    let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let expected_shares = uint!(1_U256);
+    let shares =
+        contract.convertToShares(assets_to_convert).call().await?.shares;
+
+    // Should receive same amount of shares due to 1:1 ratio
+    assert_eq!(expected_shares, shares);
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn convert_to_shares_reverts_when_invalid_asset(
     alice: Account,
 ) -> Result<()> {
