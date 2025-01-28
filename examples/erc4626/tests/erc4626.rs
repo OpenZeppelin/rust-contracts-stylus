@@ -98,40 +98,99 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     Ok(())
 }
 
-#[e2e::test]
-async fn total_assets_success(alice: Account) -> Result<()> {
-    let asset_address = erc20::deploy(&alice.wallet).await?;
-    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+async fn deploy(
+    account: &Account,
+    initial_tokens: U256,
+) -> Result<(Address, Address)> {
+    let asset_addr = erc20::deploy(&account.wallet).await?;
 
-    let contract_addr = alice
+    let contract_addr = account
         .as_deployer()
-        .with_constructor(ctr(asset_address))
+        .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
         .address()?;
+
+    // Mint initial tokens to the vault
+    if initial_tokens > U256::ZERO {
+        let asset = ERC20Mock::new(asset_addr, &account.wallet);
+        _ = watch!(asset.mint(contract_addr, initial_tokens))?;
+    }
+
+    Ok((contract_addr, asset_addr))
+}
+
+#[e2e::test]
+async fn total_assets_reports_zero_total_assets_when_empty(
+    alice: Account,
+) -> Result<()> {
+    let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
     let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-    let initial_total_assets = contract.totalAssets().call().await?.totalAssets;
-
-    let assets = uint!(69_U256);
-    let _ = watch!(erc20_alice.mint(contract_addr, assets))?;
-
-    let total_assets = contract.totalAssets().call().await?.totalAssets;
-    assert_eq!(total_assets, initial_total_assets + assets);
+    let total = contract.totalAssets().call().await?.totalAssets;
+    assert_eq!(U256::ZERO, total);
 
     Ok(())
 }
 
 #[e2e::test]
-async fn total_assets_reverts_when_invalid_asset(alice: Account) -> Result<()> {
-    let invalid_asset = alice.address();
+async fn total_assets_reports_correct_total_assets_after_deposit(
+    alice: Account,
+) -> Result<()> {
+    let initial_deposit = uint!(1000_U256);
+    let (contract_addr, _) = deploy(&alice, initial_deposit).await?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let total = contract.totalAssets().call().await?.totalAssets;
+    assert_eq!(initial_deposit, total);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn total_assets_updates_after_external_transfer(
+    alice: Account,
+) -> Result<()> {
+    let initial_deposit = uint!(1000_U256);
+    let additional_amount = uint!(500_U256);
+    let (contract_addr, asset_addr) = deploy(&alice, initial_deposit).await?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+    let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+    // Transfer additional tokens directly to the vault
+    _ = watch!(asset.mint(contract_addr, additional_amount))?;
+
+    let total = contract.totalAssets().call().await?.totalAssets;
+    assert_eq!(initial_deposit + additional_amount, total);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn total_assets_handles_max_uint256_balance(
+    alice: Account,
+) -> Result<()> {
+    let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let total = contract.totalAssets().call().await?.totalAssets;
+    assert_eq!(U256::MAX, total);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn total_assets_reverts_for_zero_address_asset(
+    alice: Account,
+) -> Result<()> {
+    // Deploy with zero address as asset
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(invalid_asset))
+        .with_constructor(ctr(Address::ZERO))
         .deploy()
         .await?
         .address()?;
-
     let contract = Erc4626::new(contract_addr, &alice.wallet);
 
     let err = contract
@@ -140,7 +199,52 @@ async fn total_assets_reverts_when_invalid_asset(alice: Account) -> Result<()> {
         .await
         .expect_err("should return `InvalidAsset`");
 
-    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: Address::ZERO }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn total_assets_reverts_for_invalid_asset(alice: Account) -> Result<()> {
+    // Deploy with zero address as asset
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(alice.address()))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let err = contract
+        .totalAssets()
+        .call()
+        .await
+        .expect_err("should return `InvalidAsset`");
+
+    assert!(err.reverted_with(Erc4626::InvalidAsset { asset: alice.address() }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn total_assets_reflects_balance_after_withdrawal(
+    alice: Account,
+) -> Result<()> {
+    let initial_deposit = uint!(1000_U256);
+    let withdrawal = uint!(400_U256);
+    let (contract_addr, asset_addr) = deploy(&alice, initial_deposit).await?;
+
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+    let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+    let alice_addr = alice.address();
+
+    // Simulate withdrawal by transferring tokens out
+    _ = watch!(asset.regular_approve(contract_addr, alice_addr, withdrawal))?;
+    _ = watch!(asset.transferFrom(contract_addr, alice_addr, withdrawal))?;
+
+    let total = contract.totalAssets().call().await?.totalAssets;
+    assert_eq!(initial_deposit - withdrawal, total);
 
     Ok(())
 }
