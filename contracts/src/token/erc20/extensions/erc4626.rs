@@ -1089,7 +1089,8 @@ impl Erc4626 {
     ///
     /// # Panics
     ///
-    /// * If the decimals are greater than `U8::MAX`.
+    /// * When adding the offset decimals to the underlying token's decimals
+    ///   would exceed `U8::MAX`.
     ///
     /// # Examples
     ///
