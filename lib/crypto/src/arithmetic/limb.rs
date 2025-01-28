@@ -1,4 +1,4 @@
-use num_traits::ConstOne;
+use num_traits::{ConstOne, ConstZero};
 
 pub type Limb = u64;
 pub type Limbs<const N: usize> = [Limb; N];
@@ -40,7 +40,8 @@ const fn widening_mul_wasm(a: Limb, b: Limb) -> WideLimb {
 /// `carry` to the upper 64 bits.
 #[inline(always)]
 pub const fn mac(a: Limb, b: Limb, c: Limb) -> (Limb, Limb) {
-    let tmp = (a as WideLimb) + widening_mul(b, c);
+    let a = a as WideLimb;
+    let tmp = a + widening_mul(b, c);
     let carry = (tmp >> Limb::BITS) as Limb;
     (tmp as Limb, carry)
 }
@@ -54,7 +55,9 @@ pub const fn carrying_mac(
     c: Limb,
     carry: Limb,
 ) -> (Limb, Limb) {
-    let tmp = (a as WideLimb) + widening_mul(b, c) + (carry as WideLimb);
+    let a = a as WideLimb;
+    let carry = carry as WideLimb;
+    let tmp = a + widening_mul(b, c) + carry;
     let carry = (tmp >> Limb::BITS) as Limb;
     (tmp as Limb, carry)
 }
@@ -62,7 +65,10 @@ pub const fn carrying_mac(
 /// Calculate `a = a + b + carry` and return the result and carry.
 #[inline(always)]
 pub const fn adc(a: Limb, b: Limb, carry: Limb) -> (Limb, Limb) {
-    let tmp = a as WideLimb + b as WideLimb + carry as WideLimb;
+    let a = a as WideLimb;
+    let b = b as WideLimb;
+    let carry = carry as WideLimb;
+    let tmp = a + b + carry;
     let carry = (tmp >> Limb::BITS) as Limb;
     (tmp as Limb, carry)
 }
@@ -79,10 +85,11 @@ pub fn adc_assign(a: &mut Limb, b: Limb, carry: bool) -> bool {
 /// Calculate `a = a - b - borrow` and return the result and borrow.
 #[inline(always)]
 pub const fn sbb(a: Limb, b: Limb, borrow: Limb) -> (Limb, Limb) {
-    let tmp = (WideLimb::ONE << Limb::BITS) + (a as WideLimb)
-        - (b as WideLimb)
-        - (borrow as WideLimb);
-    let borrow = if tmp >> Limb::BITS == 0 { 1 } else { 0 };
+    let a = a as WideLimb;
+    let b = b as WideLimb;
+    let borrow = borrow as WideLimb;
+    let tmp = (WideLimb::ONE << Limb::BITS) + a - b - borrow;
+    let borrow = if tmp >> Limb::BITS == 0 { Limb::ONE } else { Limb::ZERO };
     (tmp as Limb, borrow)
 }
 
@@ -111,6 +118,4 @@ mod tests {
             assert_eq!(std_mul_result, wasm_mul_result);
         }
     }
-
-    // TODO#q: add unit tests for limb.rs
 }
