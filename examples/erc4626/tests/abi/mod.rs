@@ -49,6 +49,7 @@ sol!(
         error ERC20InvalidReceiver(address receiver);
         error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
         error ERC20InvalidSpender(address spender);
+        error SafeErc20FailedOperation(address token);
 
         error ERC4626ExceededMaxMint(address receiver, uint256 shares, uint256 max);
         error ERC4626ExceededMaxDeposit(address receiver, uint256 assets, uint256 max);

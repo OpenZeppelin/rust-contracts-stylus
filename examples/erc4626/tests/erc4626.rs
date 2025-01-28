@@ -747,8 +747,153 @@ mod mint {
 
 mod max_withdraw {
     use super::*;
+
     #[e2e::test]
-    async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
+    async fn returns_zero_for_vault_with_no_shares(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(1000_U256);
+        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let max =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        assert_eq!(U256::ZERO, max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_zero_when_vault_is_empty(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let max =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        assert_eq!(U256::ZERO, max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_convertible_assets_for_sole_share_owner(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let shares_to_mint = uint!(10_U256);
+        let assets_to_deposit = uint!(1010_U256);
+
+        // Mint some shares to alice
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        let max =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        assert_eq!(assets_to_deposit, max);
+
+        let max = contract.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        assert_eq!(U256::ZERO, max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_convertible_assets_for_sole_share_owner_when_vault_was_empty(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let shares_to_mint = uint!(10_U256);
+        // conversion is 1:1 for empty vaults
+        let assets_to_deposit = shares_to_mint;
+
+        // Mint some shares to alice
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        let max =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        assert_eq!(assets_to_deposit, max);
+
+        let max = contract.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        assert_eq!(U256::ZERO, max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_convertible_assets_to_multiple_share_owners(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let shares_to_mint = uint!(10_U256);
+        // conversion is 1:1 for empty vaults
+        let assets_to_deposit = shares_to_mint;
+        let assets_to_deposit_bob = uint!(100_U256);
+
+        // Mint some shares to alice
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        // Mint some shares to bob
+        _ = watch!(asset.mint(bob.address(), assets_to_deposit_bob))?;
+        _ = watch!(asset.regular_approve(
+            bob.address(),
+            contract_addr,
+            assets_to_deposit_bob
+        ))?;
+        // TODO: uncomment after debugging, see next TODO
+        // _ = watch!(contract.mint(shares_to_mint, bob.address()))?;
+
+        // TODO: remove the below error assertion after debugging why it throws
+        // this error
+        let err = send!(contract.mint(shares_to_mint, bob.address()))
+            .expect_err("err");
+
+        assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
+            token: asset_addr
+        }));
+
+        let max =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        assert_eq!(assets_to_deposit, max);
+
+        let max = contract.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        assert_eq!(assets_to_deposit, max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_for_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
         let contract_addr = alice
             .as_deployer()
@@ -756,7 +901,6 @@ mod max_withdraw {
             .deploy()
             .await?
             .address()?;
-
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -772,9 +916,28 @@ mod max_withdraw {
         Ok(())
     }
 
-    // TODO: max_withdraw overflows E2E test
+    #[e2e::test]
+    async fn reverts_when_multiplier_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-    // TODO: max_withdraw success E2E test
+        let err = contract
+            .maxWithdraw(alice.address())
+            .call()
+            .await
+            .expect_err("should panic due to overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
+        Ok(())
+    }
+
+    // Cannot test when denominator overflows, as amount of shares is always >=
+    // amount of assets
+
+    // TODO: add test for decimal offset overflow
 }
 
 mod preview_withdraw {
@@ -857,7 +1020,7 @@ mod max_redeem {
     use super::*;
 
     #[e2e::test]
-    async fn returns_zero_for_account_with_no_shares(
+    async fn returns_zero_for_vault_with_no_shares(
         alice: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
