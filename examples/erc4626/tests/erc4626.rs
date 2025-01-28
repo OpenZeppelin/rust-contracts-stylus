@@ -367,6 +367,36 @@ mod convert_to_assets {
     use super::*;
 
     #[e2e::test]
+    async fn converts_zero_shares_to_zero_assets(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let assets = contract.convertToAssets(U256::ZERO).call().await?.assets;
+        assert_eq!(U256::ZERO, assets);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_zero_assets_when_no_shares_were_ever_minted(
+        alice: Account,
+    ) -> Result<()> {
+        let tokens = uint!(100_U256);
+
+        let (contract_addr, _asset_addr) = deploy(&alice, tokens).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let shares = uint!(69_U256);
+        let expected_assets = uint!(6969_U256);
+
+        let assets = contract.convertToAssets(shares).call().await?.assets;
+
+        assert_eq!(assets, expected_assets);
+
+        Ok(())
+    }
+
+    #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
         let contract_addr = alice
@@ -392,22 +422,6 @@ mod convert_to_assets {
     }
 
     // TODO: convert_to_assets overflows E2E test
-
-    #[e2e::test]
-    async fn success(alice: Account) -> Result<()> {
-        let tokens = uint!(100_U256);
-
-        let (contract_addr, _asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
-
-        let shares = uint!(69_U256);
-        let assets = contract.convertToAssets(shares).call().await?.assets;
-        let expected_assets =
-            calculate_assets!(contract, shares, tokens, Rounding::Floor);
-
-        assert_eq!(assets, expected_assets);
-        Ok(())
-    }
 }
 
 mod max_deposit {
