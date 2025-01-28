@@ -120,7 +120,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// reduction for efficient implementation.
     #[inline(always)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        // Alternative implementation
         // Implements CIOS.
         let (carry, res) = a.ct_mul_without_cond_subtract(b);
         *a = res;
@@ -404,11 +403,17 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         mut self,
         other: &Self,
     ) -> (bool, Self) {
-        let (mut lo, mut hi) =
-            self.montgomery_form.ct_mul_wide(&other.montgomery_form);
+        let (lo, hi) = self.montgomery_form.ct_mul_wide(&other.montgomery_form);
 
-        // TODO#q: move montgomery reduction to the separate function
-        // Montgomery reduction
+        let (carry, res) = Self::montgomery_reduction(lo, hi);
+        (carry, Self::new_unchecked(res))
+    }
+
+    #[inline(always)]
+    const fn montgomery_reduction(
+        mut lo: Uint<N>,
+        mut hi: Uint<N>,
+    ) -> (bool, Uint<N>) {
         let mut carry2 = 0;
         unroll6_for!((i in 0..N) {
             let tmp = lo.limbs[i].wrapping_mul(P::INV);
@@ -436,10 +441,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             (hi.limbs[i], carry2) = arithmetic::limb::adc(hi.limbs[i], carry, carry2);
         });
 
-        unroll6_for!((i in 0..N) {
-            self.montgomery_form.limbs[i] = hi.limbs[i];
-        });
-        (carry2 != 0, self)
+        (carry2 != 0, hi)
     }
 
     const fn ct_is_valid(&self) -> bool {

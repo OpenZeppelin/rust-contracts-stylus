@@ -183,13 +183,6 @@ impl<const N: usize> Uint<N> {
         (self.limbs[limb] & mask) != 0
     }
 
-    #[doc(hidden)]
-    pub const fn mod_4(&self) -> u8 {
-        // To compute n % 4, we need to simply look at the
-        // 2 least significant bits of n, and check their value mod 4.
-        (((self.limbs[0] << 62) >> 62) % 4) as u8
-    }
-
     #[inline]
     #[allow(unused)]
     pub(crate) fn mul2(&mut self) -> bool {
