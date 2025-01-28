@@ -664,13 +664,17 @@ mod deposit {
 }
 mod max_mint {
     use super::*;
+
     #[e2e::test]
-    async fn success(alice: Account) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
+    async fn returns_max_uint256_for_any_address(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max_mint = contract.maxMint(alice.address()).call().await?.maxMint;
-        assert_eq!(max_mint, U256::MAX);
+        let max = contract.maxMint(alice.address()).call().await?.maxMint;
+        assert_eq!(U256::MAX, max);
+
+        let max = contract.maxMint(Address::ZERO).call().await?.maxMint;
+        assert_eq!(U256::MAX, max);
 
         Ok(())
     }
