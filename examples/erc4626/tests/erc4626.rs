@@ -457,6 +457,69 @@ mod max_deposit {
 
 mod preview_deposit {
     use super::*;
+
+    #[e2e::test]
+    async fn returns_zero_assets_for_zero_shares(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let shares = contract.previewDeposit(U256::ZERO).call().await?.deposit;
+        assert_eq!(U256::ZERO, shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_zero_shares_for_asset_amount_less_then_vault_assets(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(1000_U256);
+        let assets_to_convert = uint!(100_U256);
+        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let deposit =
+            contract.previewDeposit(assets_to_convert).call().await?.deposit;
+
+        assert_eq!(U256::ZERO, deposit);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_shares_equal_to_deposit_when_vault_is_empty(
+        alice: Account,
+    ) -> Result<()> {
+        let assets_to_convert = uint!(101_U256);
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let deposit =
+            contract.previewDeposit(assets_to_convert).call().await?.deposit;
+
+        assert_eq!(assets_to_convert, deposit);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_shares_proportional_to_deposit_when_vault_has_assets(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let assets_to_convert = uint!(101_U256);
+        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let expected_deposit = uint!(1_U256);
+        let deposit =
+            contract.previewDeposit(assets_to_convert).call().await?.deposit;
+
+        assert_eq!(expected_deposit, deposit);
+
+        Ok(())
+    }
+
     #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
@@ -494,24 +557,6 @@ mod preview_deposit {
             .expect_err("should panics due to `Overflow`");
 
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
-        Ok(())
-    }
-
-    #[e2e::test]
-    async fn success(alice: Account) -> Result<()> {
-        let tokens = uint!(100_U256);
-
-        let (contract_addr, _asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
-
-        let assets = uint!(69_U256);
-
-        let expected_deposit =
-            calculate_shares!(contract, assets, tokens, Rounding::Floor);
-        let preview_deposit =
-            contract.previewDeposit(assets).call().await?.deposit;
-
-        assert_eq!(preview_deposit, expected_deposit);
         Ok(())
     }
 }
