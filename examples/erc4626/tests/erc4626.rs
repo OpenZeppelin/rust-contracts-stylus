@@ -261,9 +261,7 @@ mod convert_to_shares {
     use super::*;
 
     #[e2e::test]
-    async fn convert_to_shares_converts_zero_assets_to_zero_shares(
-        alice: Account,
-    ) -> Result<()> {
+    async fn converts_zero_assets_to_zero_shares(alice: Account) -> Result<()> {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -274,7 +272,7 @@ mod convert_to_shares {
     }
 
     #[e2e::test]
-    async fn convert_to_shares_returns_zero_shares_for_asset_amount_less_then_vault_assets(
+    async fn returns_zero_shares_for_asset_amount_less_then_vault_assets(
         alice: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
@@ -291,7 +289,7 @@ mod convert_to_shares {
     }
 
     #[e2e::test]
-    async fn convert_to_shares_returns_shares_equal_to_deposit_when_vault_is_empty(
+    async fn returns_shares_equal_to_deposit_when_vault_is_empty(
         alice: Account,
     ) -> Result<()> {
         let assets_to_convert = uint!(101_U256);
@@ -307,7 +305,7 @@ mod convert_to_shares {
     }
 
     #[e2e::test]
-    async fn convert_to_shares_returns_shares_proportional_to_deposit_when_vault_has_assets(
+    async fn returns_shares_proportional_to_deposit_when_vault_has_assets(
         alice: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
@@ -367,6 +365,7 @@ mod convert_to_shares {
 
 mod convert_to_assets {
     use super::*;
+
     #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
