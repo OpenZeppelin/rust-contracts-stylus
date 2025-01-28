@@ -259,13 +259,12 @@ impl Erc20Wrapper {
 #[cfg(all(test, feature = "std"))]
 mod tests {
 
-    use alloy_primitives::{address, U256, U8};
-    use stylus_sdk::{msg, prelude::storage};
+    use alloy_primitives::address;
 
     use super::Erc20Wrapper;
 
     #[motsu::test]
-    fn underlying_works(contract: Erc20WrapperExample) {
+    fn underlying_works(contract: Erc20Wrapper) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
         contract.underlying_address.set(asset);
         assert_eq!(contract.underlying(), asset);
