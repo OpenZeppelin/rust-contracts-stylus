@@ -421,7 +421,20 @@ mod convert_to_assets {
         Ok(())
     }
 
-    // TODO: convert_to_assets overflows E2E test
+    #[e2e::test]
+    async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
+        let (contract_addr, _asset_addr) = deploy(&alice, U256::MAX).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .convertToShares(U256::MAX)
+            .call()
+            .await
+            .expect_err("should panics due to `Overflow`");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
 }
 
 mod max_deposit {
