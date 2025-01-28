@@ -67,6 +67,9 @@ sol! {
     #[allow(missing_docs)]
     error InvalidAsset(address asset);
 
+    /// The address is not a valid ERC-20 token.
+    ///
+    /// * `asset` - Address of the invalid ERC-20 token.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidReceiver(address receiver);
