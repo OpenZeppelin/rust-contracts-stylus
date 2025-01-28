@@ -254,7 +254,7 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
 /// This type can represent elements in any field of size at most N * 64 bits
 /// for 64-bit systems and N * 32 bits for 32-bit systems.
 #[derive(Educe)]
-#[educe(Default, Clone, Copy, PartialEq, Eq)]
+#[educe(Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Fp<P: FpParams<N>, const N: usize> {
     /// Contains the element in Montgomery form for efficient multiplication.
     /// To convert an element to a [`Uint`], use [`FpParams::into_bigint`]
@@ -472,13 +472,6 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
 
     const fn sub_with_borrow(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
         a.ct_sub_with_borrow(b).0
-    }
-}
-
-impl<P: FpParams<N>, const N: usize> Hash for Fp<P, N> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        // TODO#q: implement hash for Fp
-        unimplemented!()
     }
 }
 
