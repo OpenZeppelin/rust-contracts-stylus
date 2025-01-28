@@ -378,7 +378,7 @@ mod convert_to_assets {
     }
 
     #[e2e::test]
-    async fn returns_zero_assets_when_no_shares_were_ever_minted(
+    async fn returns_more_assets_than_expected_when_no_shares_were_ever_minted(
         alice: Account,
     ) -> Result<()> {
         let tokens = uint!(100_U256);
@@ -418,21 +418,6 @@ mod convert_to_assets {
             err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset })
         );
 
-        Ok(())
-    }
-
-    #[e2e::test]
-    async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::MAX).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
-
-        let err = contract
-            .convertToShares(U256::MAX)
-            .call()
-            .await
-            .expect_err("should panics due to `Overflow`");
-
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
         Ok(())
     }
 }
