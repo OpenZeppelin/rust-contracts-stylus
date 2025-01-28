@@ -936,12 +936,53 @@ impl IErc4626 for Erc4626 {
         U256::MAX
     }
 
+    fn max_mint(&self, _receiver: Address) -> U256 {
+        U256::MAX
+    }
+
+    fn max_withdraw(
+        &mut self,
+        owner: Address,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        let balance = erc20.balance_of(owner);
+        self._convert_to_assets(balance, Rounding::Floor, erc20)
+    }
+
+    fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256 {
+        erc20.balance_of(owner)
+    }
+
     fn preview_deposit(
         &mut self,
         assets: U256,
         erc20: &Erc20,
     ) -> Result<U256, Self::Error> {
         self._convert_to_shares(assets, Rounding::Floor, erc20)
+    }
+
+    fn preview_mint(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_assets(shares, Rounding::Ceil, erc20)
+    }
+
+    fn preview_withdraw(
+        &mut self,
+        assets: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_shares(assets, Rounding::Ceil, erc20)
+    }
+
+    fn preview_redeem(
+        &mut self,
+        shares: U256,
+        erc20: &Erc20,
+    ) -> Result<U256, Self::Error> {
+        self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
     fn deposit(
@@ -967,18 +1008,6 @@ impl IErc4626 for Erc4626 {
         Ok(shares)
     }
 
-    fn max_mint(&self, _receiver: Address) -> U256 {
-        U256::MAX
-    }
-
-    fn preview_mint(
-        &mut self,
-        shares: U256,
-        erc20: &Erc20,
-    ) -> Result<U256, Self::Error> {
-        self._convert_to_assets(shares, Rounding::Ceil, erc20)
-    }
-
     fn mint(
         &mut self,
         shares: U256,
@@ -1001,23 +1030,6 @@ impl IErc4626 for Erc4626 {
         Ok(assets)
     }
 
-    fn max_withdraw(
-        &mut self,
-        owner: Address,
-        erc20: &Erc20,
-    ) -> Result<U256, Self::Error> {
-        let balance = erc20.balance_of(owner);
-        self._convert_to_assets(balance, Rounding::Floor, erc20)
-    }
-
-    fn preview_withdraw(
-        &mut self,
-        assets: U256,
-        erc20: &Erc20,
-    ) -> Result<U256, Self::Error> {
-        self._convert_to_shares(assets, Rounding::Ceil, erc20)
-    }
-
     fn withdraw(
         &mut self,
         assets: U256,
@@ -1037,18 +1049,6 @@ impl IErc4626 for Erc4626 {
         self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(shares)
-    }
-
-    fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256 {
-        erc20.balance_of(owner)
-    }
-
-    fn preview_redeem(
-        &mut self,
-        shares: U256,
-        erc20: &Erc20,
-    ) -> Result<U256, Self::Error> {
-        self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
     fn redeem(
