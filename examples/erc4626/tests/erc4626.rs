@@ -36,7 +36,7 @@ macro_rules! decimals_offset {
 }
 
 macro_rules! calculate_shares {
-    ($contract:expr, $assets:expr, $tokens:expr) => {{
+    ($contract:expr, $assets:expr, $tokens:expr, $rounding:expr) => {{
         let total_supply = total_supply!($contract);
         $assets.mul_div(
             total_supply
@@ -44,13 +44,13 @@ macro_rules! calculate_shares {
                     .checked_pow(decimals_offset!())
                     .expect("should not overflow"),
             $tokens + U256::from(1),
-            Rounding::Floor,
+            $rounding,
         )
     }};
 }
 
 macro_rules! calculate_assets {
-    ($contract:expr, $shares:expr, $tokens:expr) => {{
+    ($contract:expr, $shares:expr, $tokens:expr, $rounding:expr) => {{
         let total_supply = total_supply!($contract);
         $shares.mul_div(
             $tokens.checked_add(uint!(1_U256)).expect("should not overflow"),
@@ -58,7 +58,7 @@ macro_rules! calculate_assets {
                 + U256::from(10)
                     .checked_pow(decimals_offset!())
                     .expect("should not overflow"),
-            Rounding::Floor,
+            $rounding,
         )
     }};
 }
@@ -123,9 +123,7 @@ async fn total_assets_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn total_assets_reverts_when_asset_is_not_erc20(
-    alice: Account,
-) -> Result<()> {
+async fn total_assets_reverts_when_invalid_asset(alice: Account) -> Result<()> {
     let invalid_asset = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -148,7 +146,7 @@ async fn total_assets_reverts_when_asset_is_not_erc20(
 }
 
 #[e2e::test]
-async fn convert_to_shares_reverts_when_asset_is_not_erc20(
+async fn convert_to_shares_reverts_when_invalid_asset(
     alice: Account,
 ) -> Result<()> {
     let invalid_asset = alice.address();
@@ -216,7 +214,8 @@ async fn convert_to_shares_works(alice: Account) -> Result<()> {
     let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
     let assets = uint!(69_U256);
 
-    let expected_shares = calculate_shares!(contract, assets, tokens);
+    let expected_shares =
+        calculate_shares!(contract, assets, tokens, Rounding::Floor);
     let shares = contract.convertToShares(assets).call().await?.shares;
 
     assert_eq!(shares, expected_shares);
@@ -225,7 +224,7 @@ async fn convert_to_shares_works(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn convert_to_assets_reverts_when_asset_is_not_erc20(
+async fn convert_to_assets_reverts_when_invalid_asset(
     alice: Account,
 ) -> Result<()> {
     let invalid_asset = alice.address();
@@ -249,6 +248,8 @@ async fn convert_to_assets_reverts_when_asset_is_not_erc20(
     Ok(())
 }
 
+// TODO: convert_to_assets overflows E2E test
+
 #[e2e::test]
 async fn convert_to_assets_works(alice: Account) -> Result<()> {
     let asset_address = erc20::deploy(&alice.wallet).await?;
@@ -267,7 +268,8 @@ async fn convert_to_assets_works(alice: Account) -> Result<()> {
 
     let shares = uint!(69_U256);
     let assets = contract.convertToAssets(shares).call().await?.assets;
-    let expected_assets = calculate_assets!(contract, shares, tokens);
+    let expected_assets =
+        calculate_assets!(contract, shares, tokens, Rounding::Floor);
 
     assert_eq!(assets, expected_assets);
     Ok(())
@@ -293,7 +295,7 @@ async fn max_deposit_success(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn preview_deposit_reverts_when_asset_is_not_erc20(
+async fn preview_deposit_reverts_when_invalid_asset(
     alice: Account,
 ) -> Result<()> {
     let invalid_asset = alice.address();
@@ -362,7 +364,8 @@ async fn preview_deposit_works(alice: Account) -> Result<()> {
 
     let assets = uint!(69_U256);
 
-    let expected_deposit = calculate_shares!(contract, assets, tokens);
+    let expected_deposit =
+        calculate_shares!(contract, assets, tokens, Rounding::Floor);
     let preview_deposit = contract.previewDeposit(assets).call().await?.deposit;
 
     assert_eq!(preview_deposit, expected_deposit);
@@ -370,7 +373,7 @@ async fn preview_deposit_works(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn deposit_reverts_when_asset_is_not_erc20(
+async fn deposit_reverts_when_invalid_asset(
     alice: Account,
 ) -> eyre::Result<()> {
     let invalid_asset = alice.address();
@@ -388,6 +391,12 @@ async fn deposit_reverts_when_asset_is_not_erc20(
     assert!(err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset }));
     Ok(())
 }
+
+// TODO: deposit ExceededMaxDeposit E2E test
+
+// TODO: deposit InvalidReceiver E2E test
+
+// TODO: deposit SafeErc20FailedOperation E2E test
 
 #[e2e::test]
 async fn deposit_reverts_when_result_overflows(
@@ -433,7 +442,8 @@ async fn deposit_works(alice: Account, bob: Account) -> Result<()> {
     let _ = watch!(erc20_alice.mint(alice_address, tokens))?;
 
     let assets = uint!(69_U256);
-    let expected_deposit = calculate_shares!(contract, assets, tokens);
+    let expected_deposit =
+        calculate_shares!(contract, assets, tokens, Rounding::Floor);
 
     let initial_alice_token_balance =
         erc20_alice.balanceOf(alice_address).call().await?._0;
@@ -497,9 +507,7 @@ async fn max_mint_success(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn preview_mint_reverts_when_asset_is_not_erc20(
-    alice: Account,
-) -> Result<()> {
+async fn preview_mint_reverts_when_invalid_asset(alice: Account) -> Result<()> {
     let invalid_asset = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -521,10 +529,36 @@ async fn preview_mint_reverts_when_asset_is_not_erc20(
     Ok(())
 }
 
+// TODO: preview_mint overflows E2E test
+
 #[e2e::test]
-async fn mint_reverts_when_asset_is_not_erc20(
-    alice: Account,
-) -> eyre::Result<()> {
+async fn preview_mint_success(alice: Account) -> Result<()> {
+    let asset_address = erc20::deploy(&alice.wallet).await?;
+    let erc20_alice = ERC20Mock::new(asset_address, &alice.wallet);
+
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(ctr(asset_address))
+        .deploy()
+        .await?
+        .address()?;
+    let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+    let tokens = uint!(100_U256);
+    let _ = watch!(erc20_alice.mint(contract_addr, tokens))?;
+
+    let shares = uint!(69_U256);
+    let expected_mint =
+        calculate_assets!(contract, shares, tokens, Rounding::Ceil);
+
+    let mint = contract.previewMint(shares).call().await?.mint;
+
+    assert_eq!(mint, expected_mint);
+    Ok(())
+}
+
+#[e2e::test]
+async fn mint_reverts_when_invalid_asset(alice: Account) -> eyre::Result<()> {
     let invalid_asset = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -541,10 +575,20 @@ async fn mint_reverts_when_asset_is_not_erc20(
     Ok(())
 }
 
+// TODO: mint ExceededMaxMint E2E test
+
+// TODO: mint InvalidReceiver E2E test
+
+// TODO: mint SafeErc20FailedOperation E2E test
+
+// TODO: mint ERC20InsufficientBalance E2E test
+
+// TODO: mint overflows E2E test
+
+// TODO: mint success E2E test
+
 #[e2e::test]
-async fn max_withdraw_reverts_when_asset_is_not_erc20(
-    alice: Account,
-) -> Result<()> {
+async fn max_withdraw_reverts_when_invalid_asset(alice: Account) -> Result<()> {
     let invalid_asset = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -566,8 +610,12 @@ async fn max_withdraw_reverts_when_asset_is_not_erc20(
     Ok(())
 }
 
+// TODO: max_withdraw overflows E2E test
+
+// TODO: max_withdraw success E2E test
+
 #[e2e::test]
-async fn preview_withdraw_reverts_when_asset_is_not_erc20(
+async fn preview_withdraw_reverts_when_invalid_asset(
     alice: Account,
 ) -> Result<()> {
     let invalid_asset = alice.address();
@@ -591,8 +639,12 @@ async fn preview_withdraw_reverts_when_asset_is_not_erc20(
     Ok(())
 }
 
+// TODO: preview_withdraw overflows E2E test
+
+// TODO: preview_withdraw success E2E test
+
 #[e2e::test]
-async fn withdraw_reverts_when_exceeded_max_redeem(
+async fn withdraw_reverts_when_invalid_asset(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -616,6 +668,20 @@ async fn withdraw_reverts_when_exceeded_max_redeem(
     Ok(())
 }
 
+// TODO: withdraw ExceededMaxWithdraw E2E test
+
+// TODO: withdraw InsufficientAllowance E2E test
+
+// TODO: withdraw InvalidSender E2E test
+
+// TODO: withdraw InsufficientBalance E2E test
+
+// TODO: withdraw SafeErc20FailedOperation E2E test
+
+// TODO: withdraw overflows E2E test
+
+// TODO: withdraw success E2E test
+
 #[e2e::test]
 async fn max_redeem_zero_balance_success(alice: Account) -> eyre::Result<()> {
     let asset_address = erc20::deploy(&alice.wallet).await?;
@@ -635,8 +701,10 @@ async fn max_redeem_zero_balance_success(alice: Account) -> eyre::Result<()> {
     Ok(())
 }
 
+// TODO: max_redeem balance higher than U256::ZERO E2E test
+
 #[e2e::test]
-async fn preview_redeem_reverts_when_asset_is_not_erc20(
+async fn preview_redeem_reverts_when_invalid_asset(
     alice: Account,
 ) -> Result<()> {
     let invalid_asset = alice.address();
@@ -659,6 +727,10 @@ async fn preview_redeem_reverts_when_asset_is_not_erc20(
 
     Ok(())
 }
+
+// TODO: preview_redeem overflows E2E test
+
+// TODO: preview_redeem success E2E test
 
 #[e2e::test]
 async fn redeem_reverts_when_exceeded_max_redeem_zero_balance(
@@ -686,75 +758,18 @@ async fn redeem_reverts_when_exceeded_max_redeem_zero_balance(
     Ok(())
 }
 
-/*#[e2e::test]
-async fn deposit(alice: Account, bob: Account) -> Result<()> {
-    let asset_address =
-        erc20::deploy(&alice.wallet).await?;
-    let vault_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(asset_address))
-        .deploy()
-        .await?
-        .address()?;
+// TODO: redeem InvaidAsset E2E test
 
-    let asset = MockErc20::new(asset_address, &alice.wallet);
-    let vault = Erc4626::new(vault_addr, &alice.wallet);
-    let alice_addr = alice.address();
+// TODO: redeem ExceededMaxRedeem E2E test
 
-    let MockErc20::balanceOfReturn { balance: initial_balance } =
-        asset.balanceOf(alice_addr).call().await?;
-    let MockErc20::totalSupplyReturn { totalSupply: initial_supply } =
-        asset.totalSupply().call().await?;
+// TODO: redeem InsufficientAllowance E2E test
 
-    assert_eq!(U256::ZERO, initial_balance);
-    assert_eq!(U256::ZERO, initial_supply);
+// TODO: redeem InvalidSender E2E test
 
-    // Mint token
-    let _mint_receipt = receipt!(asset.mint(alice.address(), uint!(100_U256)))?;
-    // println!("{:?}", mint_receipt);
+// TODO: redeem InsufficientBalance E2E test
 
-    let _ = asset.approve(alice.address(), U256::MAX).send().await?;
-    let _ = vault.approve(alice.address(), U256::MAX).send().await?;
+// TODO: redeem SafeErc20FailedOperation E2E test
 
-    let max_mint = vault.maxMint(bob.address()).call().await?._0;
-    let preview_deposit = vault.previewDeposit(uint!(1_U256)).call().await?._0;
-    let _deposit = vault.deposit(uint!(1_U256), bob.address()).call().await?._0;
-    assert_eq!(max_mint, U256::MAX);
-    assert_eq!(preview_deposit, uint!(1_U256));
+// TODO: redeem overflows E2E test
 
-    let _asset_balance = asset.balanceOf(bob.address()).call().await?.balance;
-    //assert_eq!(asset_balance, uint!(1_U256));
-
-    // let valut_balance =
-    // contract.balanceOf(bob.address()).call().await?.balance;
-    // assert_eq!(valut_balance, uint!(1_U256));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn deposit_inflation_attack(
-    _alice: Account,
-    _bob: Account,
-) -> Result<()> {
-    Ok(())
-}
-
-#[e2e::test]
-async fn mint_inflation_attack(_alice: Account, _bob: Account) -> Result<()> {
-    Ok(())
-}
-
-#[e2e::test]
-async fn withdraw_inflation_attack(
-    _alice: Account,
-    _bob: Account,
-) -> Result<()> {
-    Ok(())
-}
-
-#[e2e::test]
-async fn redeem_inflation_attack(_alice: Account, _bob: Account) -> Result<()> {
-    Ok(())
-}
-*/
+// TODO: redeem success E2E test

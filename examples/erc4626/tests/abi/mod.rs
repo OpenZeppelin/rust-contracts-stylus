@@ -34,11 +34,11 @@ sol!(
         #[derive(Debug)]
         function previewDeposit(uint256 assets) external view  returns (uint256 deposit);
         #[derive(Debug)]
-        function previewMint(uint256 shares) external view  returns (uint256);
+        function previewMint(uint256 shares) external view  returns (uint256 mint);
         #[derive(Debug)]
-        function previewRedeem(uint256 shares) external view  returns (uint256);
+        function previewRedeem(uint256 shares) external view  returns (uint256 redeem);
         #[derive(Debug)]
-        function previewWithdraw(uint256 assets) external view  returns (uint256);
+        function previewWithdraw(uint256 assets) external view  returns (uint256 withdraw);
         function deposit(uint256 assets, address receiver) external  returns (uint256);
         function mint(uint256 shares, address receiver) external  returns (uint256);
         function redeem(uint256 shares, address receiver,address owner) external returns (uint256);
