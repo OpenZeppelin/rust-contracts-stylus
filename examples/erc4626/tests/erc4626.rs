@@ -847,6 +847,7 @@ mod max_withdraw {
     ) -> Result<()> {
         let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let contract_bob = Erc4626::new(contract_addr, &bob.wallet);
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         let shares_to_mint = uint!(10_U256);
@@ -870,17 +871,8 @@ mod max_withdraw {
             contract_addr,
             assets_to_deposit_bob
         ))?;
-        // TODO: uncomment after debugging, see next TODO
-        // _ = watch!(contract.mint(shares_to_mint, bob.address()))?;
 
-        // TODO: remove the below error assertion after debugging why it throws
-        // this error
-        let err = send!(contract.mint(shares_to_mint, bob.address()))
-            .expect_err("err");
-
-        assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
-            token: asset_addr
-        }));
+        _ = watch!(contract_bob.mint(shares_to_mint, bob.address()))?;
 
         let max =
             contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
