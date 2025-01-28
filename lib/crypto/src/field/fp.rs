@@ -379,16 +379,17 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         mut self,
         other: &Self,
     ) -> (bool, Self) {
-        let (lo, hi) = self.montgomery_form.ct_mul_wide(&other.montgomery_form);
+        let (lo, hi) =
+            self.montgomery_form.ct_widening_mul(&other.montgomery_form);
 
-        let (carry, res) = Self::montgomery_reduction_wide(lo, hi);
+        let (carry, res) = Self::widening_montgomery_reduction(lo, hi);
         (carry, Self::new_unchecked(res))
     }
 
     // TODO#q: document montgomery reduction
 
     #[inline(always)]
-    const fn montgomery_reduction_wide(
+    const fn widening_montgomery_reduction(
         mut lo: Uint<N>,
         mut hi: Uint<N>,
     ) -> (bool, Uint<N>) {

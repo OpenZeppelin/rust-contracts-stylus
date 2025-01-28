@@ -4,33 +4,41 @@ pub type Limb = u64;
 pub type Limbs<const N: usize> = [Limb; N];
 pub type WideLimb = u128;
 
+/// Multiply two [`Limb`]'s and return widened result.
 #[inline(always)]
-#[doc(hidden)]
 pub const fn widening_mul(a: Limb, b: Limb) -> WideLimb {
     #[cfg(not(target_family = "wasm"))]
     {
         a as WideLimb * b as WideLimb
     }
-    // TODO#q: check widening_mul for wasm in unit tests
     #[cfg(target_family = "wasm")]
     {
-        let a_lo = a as u32 as Limb;
-        let a_hi = a >> 32;
-        let b_lo = b as u32 as Limb;
-        let b_hi = b >> 32;
-
-        let lolo = (a_lo * b_lo) as WideLimb;
-        let lohi = ((a_lo * b_hi) as WideLimb) << 32;
-        let hilo = ((a_hi * b_lo) as WideLimb) << 32;
-        let hihi = ((a_hi * b_hi) as WideLimb) << 64;
-        (lolo | hihi) + (lohi + hilo)
+        widening_mul_wasm(a, b)
     }
+}
+
+/// Multiply two [`Limb`]'s and return widened result.
+///
+/// This function is optimized for wasm target, due to inefficiency of
+/// 128-bit multiplication in WebAssembly.
+#[inline(always)]
+#[doc(hidden)]
+const fn widening_mul_wasm(a: Limb, b: Limb) -> WideLimb {
+    let a_lo = a as u32 as Limb;
+    let a_hi = a >> 32;
+    let b_lo = b as u32 as Limb;
+    let b_hi = b >> 32;
+
+    let lolo = (a_lo * b_lo) as WideLimb;
+    let lohi = ((a_lo * b_hi) as WideLimb) << 32;
+    let hilo = ((a_hi * b_lo) as WideLimb) << 32;
+    let hihi = ((a_hi * b_hi) as WideLimb) << 64;
+    (lolo | hihi) + (lohi + hilo)
 }
 
 /// Calculate `a + b * c`, returning the lower 64 bits of the result and setting
 /// `carry` to the upper 64 bits.
 #[inline(always)]
-#[doc(hidden)]
 pub const fn mac(a: Limb, b: Limb, c: Limb) -> (Limb, Limb) {
     let tmp = (a as WideLimb) + widening_mul(b, c);
     let carry = (tmp >> Limb::BITS) as Limb;
@@ -40,7 +48,6 @@ pub const fn mac(a: Limb, b: Limb, c: Limb) -> (Limb, Limb) {
 /// Calculate `a + (b * c) + carry`, returning the least significant digit
 /// and setting carry to the most significant digit.
 #[inline(always)]
-#[doc(hidden)]
 pub const fn carrying_mac(
     a: Limb,
     b: Limb,
@@ -54,8 +61,6 @@ pub const fn carrying_mac(
 
 /// Calculate `a = a + b + carry` and return the result and carry.
 #[inline(always)]
-#[allow(unused_mut)]
-#[doc(hidden)]
 pub const fn adc(a: Limb, b: Limb, carry: Limb) -> (Limb, Limb) {
     let tmp = a as WideLimb + b as WideLimb + carry as WideLimb;
     let carry = (tmp >> Limb::BITS) as Limb;
@@ -64,8 +69,6 @@ pub const fn adc(a: Limb, b: Limb, carry: Limb) -> (Limb, Limb) {
 
 /// Sets a = a + b + carry, and returns the new carry.
 #[inline(always)]
-#[allow(unused_mut)]
-#[doc(hidden)]
 pub fn adc_assign(a: &mut Limb, b: Limb, carry: bool) -> bool {
     let (sum, carry1) = a.overflowing_add(b);
     let (sum, carry2) = sum.overflowing_add(carry as Limb);
@@ -74,6 +77,7 @@ pub fn adc_assign(a: &mut Limb, b: Limb, carry: bool) -> bool {
 }
 
 /// Calculate `a = a - b - borrow` and return the result and borrow.
+#[inline(always)]
 pub const fn sbb(a: Limb, b: Limb, borrow: Limb) -> (Limb, Limb) {
     let tmp = (WideLimb::ONE << Limb::BITS) + (a as WideLimb)
         - (b as WideLimb)
@@ -85,7 +89,6 @@ pub const fn sbb(a: Limb, b: Limb, borrow: Limb) -> (Limb, Limb) {
 /// Sets a = a - b - borrow, and returns the borrow.
 #[inline(always)]
 #[allow(unused_mut)]
-#[doc(hidden)]
 pub fn sbb_assign(a: &mut Limb, b: Limb, borrow: bool) -> bool {
     let (sub, borrow1) = a.overflowing_sub(b);
     let (sub, borrow2) = sub.overflowing_sub(borrow as Limb);
@@ -93,4 +96,21 @@ pub fn sbb_assign(a: &mut Limb, b: Limb, borrow: bool) -> bool {
     borrow1 | borrow2
 }
 
-// TODO#q: add unit tests for limb.rs
+#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
+mod tests {
+    use proptest::prelude::*;
+
+    use super::*;
+
+    proptest! {
+        #[test]
+        fn check_widening_mul(a: Limb, b: Limb) {
+            let std_mul_result = widening_mul(a, b);
+            let wasm_mul_result = widening_mul_wasm(a, b);
+            assert_eq!(std_mul_result, wasm_mul_result);
+        }
+    }
+
+    // TODO#q: add unit tests for limb.rs
+}

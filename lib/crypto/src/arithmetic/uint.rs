@@ -276,7 +276,7 @@ impl<const N: usize> Uint<N> {
     ///
     /// Returns a tuple containing the `(lo, hi)` components of the product.
     #[inline(always)]
-    pub const fn ct_mul_wide(&self, rhs: &Self) -> (Self, Self) {
+    pub const fn ct_widening_mul(&self, rhs: &Self) -> (Self, Self) {
         // TODO#q: document wide multiplication
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
         unroll6_for!((i in 0..N) {
@@ -308,7 +308,7 @@ impl<const N: usize> Uint<N> {
     /// Multiply two numbers and panic on overflow.
     #[must_use]
     pub const fn ct_mul(&self, rhs: &Self) -> Self {
-        let (low, high) = self.ct_mul_wide(rhs);
+        let (low, high) = self.ct_widening_mul(rhs);
         assert!(high.ct_eq(&Uint::<N>::ZERO), "overflow on multiplication");
         low
     }
