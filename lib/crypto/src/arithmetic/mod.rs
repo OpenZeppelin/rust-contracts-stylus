@@ -99,7 +99,9 @@ pub trait BigInteger:
     /// let mut two = U64::from(2u64);
     /// assert!(two.is_even());
     /// ```
-    fn is_even(&self) -> bool;
+    fn is_even(&self) -> bool{
+        !self.is_odd()
+    }
 
     /// Returns true if this number is zero.
     ///

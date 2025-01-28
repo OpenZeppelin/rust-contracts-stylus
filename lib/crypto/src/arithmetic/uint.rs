@@ -78,13 +78,13 @@ impl<const N: usize> Uint<N> {
     }
 
     #[doc(hidden)]
-    pub const fn ct_is_even(&self) -> bool {
-        self.limbs[0] % 2 == 0
+    pub const fn ct_is_odd(&self) -> bool {
+        self.limbs[0] & 1 == 1
     }
 
     #[doc(hidden)]
-    pub const fn ct_is_odd(&self) -> bool {
-        self.limbs[0] % 2 == 1
+    pub const fn ct_is_even(&self) -> bool {
+        !self.ct_is_odd()
     }
 
     const fn ct_geq(&self, other: &Self) -> bool {
@@ -677,15 +677,11 @@ impl<const N: usize> BigInteger for Uint<N> {
     const ZERO: Self = Self { limbs: [0u64; N] };
 
     fn is_odd(&self) -> bool {
-        self.limbs[0] & 1 == 1
-    }
-
-    fn is_even(&self) -> bool {
-        !self.is_odd()
+        self.ct_is_odd()
     }
 
     fn is_zero(&self) -> bool {
-        self.limbs.iter().all(Zero::is_zero)
+        self.ct_is_zero()
     }
 
     fn num_bits(&self) -> usize {
