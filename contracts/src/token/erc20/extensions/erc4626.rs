@@ -1133,14 +1133,20 @@ impl Erc4626 {
     ) -> Result<U256, Error> {
         let total_supply = erc20.total_supply();
 
-        let shares = assets.mul_div(
-            total_supply
-                + U256::from(10)
-                    .checked_pow(U256::from(Self::_decimals_offset()))
-                    .expect("overflow in `Erc4626::_convert_to_shares`"),
-            self.total_assets()? + U256::from(1),
-            rounding,
-        );
+        let multiplier = total_supply
+                .checked_add(
+                    U256::from(10)
+                        .checked_pow(U256::from(Self::_decimals_offset()))
+                        .expect("decimal offset overflow in `Erc4626::_convert_to_shares`"),
+                )
+                .expect("multiplier overflow in `Erc4626::_convert_to_assets`");
+
+        let denominator = self
+            .total_assets()?
+            .checked_add(U256::from(1))
+            .expect("denominator overflow in `Erc4626::_convert_to_assets`");
+
+        let shares = assets.mul_div(multiplier, denominator, rounding);
 
         Ok(shares)
     }
@@ -1172,14 +1178,22 @@ impl Erc4626 {
     ) -> Result<U256, Error> {
         let total_supply = erc20.total_supply();
 
-        let assets = shares.mul_div(
-            self.total_assets()? + U256::from(1),
-            total_supply
-                + U256::from(10)
+        let multiplier = self
+            .total_assets()?
+            .checked_add(U256::from(1))
+            .expect("multiplier overflow in `Erc4626::_convert_to_assets`");
+
+        let denominator = total_supply
+            .checked_add(
+                U256::from(10)
                     .checked_pow(U256::from(Self::_decimals_offset()))
-                    .expect("overflow in `Erc4626::_convert_to_assets`"),
-            rounding,
-        );
+                    .expect(
+                        "decimal offset overflow in `Erc4626::_convert_to_assets`",
+                    ),
+            )
+            .expect("denominator overflow in `Erc4626::_convert_to_assets`");
+
+        let assets = shares.mul_div(multiplier, denominator, rounding);
 
         Ok(assets)
     }
