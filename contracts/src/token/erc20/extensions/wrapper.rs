@@ -51,25 +51,30 @@ mod token {
 use token::IErc20 as IErc20Solidity;
 
 sol! {
+    /// Indicates that he address is not a valid ERC-20 token.
+    /// 
+    /// * `address` - Address of the invalid underling ERC-20 token.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidUnderlying(address token);
 
-
+    /// Indicates that the address is not an Invalid Sender address.
+    ///
+    /// * `sender` - Address  is an ivalid sender.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidSender(address sender);
 
-    /// The address is not a valid ERC-20 token.
+    /// Indicates that The address is not a valid Invalid Asset.
     ///
-    /// * `asset` - Address of the invalid ERC-20 token.
+    /// * `asset` - Address of the invalid  address of the token.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error InvalidAsset(address asset);
 
-    /// The address is not a valid ERC-20 token.
+    /// Indicates thata the address is not an invalid receiver addresss.
     ///
-    /// * `asset` - Address of the invalid ERC-20 token.
+    /// * `receiver` - Address of the invalid receiver.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidReceiver(address receiver);
