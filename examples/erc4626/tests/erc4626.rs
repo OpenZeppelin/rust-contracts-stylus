@@ -855,19 +855,138 @@ mod withdraw {
 
 mod max_redeem {
     use super::*;
+
     #[e2e::test]
-    async fn zero_balance_success(alice: Account) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
+    async fn returns_zero_for_account_with_no_shares(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(1000_U256);
+        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max_redeem =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
-        assert_eq!(max_redeem, U256::ZERO);
+        let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(U256::ZERO, max);
 
         Ok(())
     }
 
-    // TODO: max_redeem balance higher than U256::ZERO E2E test
+    #[e2e::test]
+    async fn returns_zero_when_vault_is_empty(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(U256::ZERO, max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_full_share_balance_for_owner(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let assets_to_deposit = uint!(6969_U256);
+        let shares_to_mint = uint!(69_U256);
+
+        // Mint some shares to alice
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(shares_to_mint, max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_balance_after_partial_transfer(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let assets_to_deposit = uint!(8080_U256);
+        let shares_to_mint = uint!(80_U256);
+        let transfer_amount = uint!(40_U256);
+
+        // Mint shares to alice
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        // Transfer some shares to bob
+        _ = watch!(contract.transfer(bob.address(), transfer_amount))?;
+
+        let alice_max =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        let bob_max = contract.maxRedeem(bob.address()).call().await?.maxRedeem;
+
+        assert_eq!(shares_to_mint - transfer_amount, alice_max);
+        assert_eq!(transfer_amount, bob_max);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_updated_balance_after_mint(alice: Account) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let first_mint = uint!(10_U256);
+        let second_mint = uint!(50_U256);
+        let assets_for_first_mint = uint!(1010_U256);
+        let assets_for_second_mint = uint!(5050_U256);
+
+        // First mint
+        _ = watch!(asset.mint(alice.address(), assets_for_first_mint))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_for_first_mint
+        ))?;
+        _ = watch!(contract.mint(first_mint, alice.address()))?;
+
+        let max_after_first =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(first_mint, max_after_first);
+
+        // Second mint
+        _ = watch!(asset.mint(alice.address(), assets_for_second_mint))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_for_second_mint
+        ))?;
+        _ = watch!(contract.mint(second_mint, alice.address()))?;
+
+        let max_after_second =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(first_mint + second_mint, max_after_second);
+
+        Ok(())
+    }
 }
 
 mod preview_redeem {
