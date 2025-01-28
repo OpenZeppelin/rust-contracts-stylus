@@ -210,20 +210,20 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// By the end element will be converted to a montgomery form and reduced.
     #[must_use]
     #[inline]
-    fn from_bigint(r: Uint<N>) -> Option<Fp<Self, N>> {
+    fn from_bigint(r: Uint<N>) -> Fp<Self, N> {
         let mut r = Fp::new_unchecked(r);
         if r.is_zero() {
-            Some(r)
+            r
         } else {
             r *= &Fp::new_unchecked(Self::R2);
-            Some(r)
+            r
         }
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
     #[inline(always)]
-    fn into_bigint(mut a: Fp<Self, N>) -> Uint<N> {
+    fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
         a.montgomery_reduction()
     }
 }
@@ -576,8 +576,7 @@ impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
 
     #[inline]
     fn from_bigint(repr: Self::BigInt) -> Self {
-        // TODO#q: convert it from bigint of any size without `unwrap`
-        P::from_bigint(repr).unwrap()
+        P::from_bigint(repr)
     }
 
     #[inline]
