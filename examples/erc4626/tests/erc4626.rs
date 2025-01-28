@@ -446,6 +446,8 @@ async fn deposit_works(alice: Account, bob: Account) -> Result<()> {
 
     let initial_supply = contract.totalSupply().call().await?.totalSupply;
 
+    let _ = watch!(erc20_alice.approve(contract_addr, assets))?;
+
     let receipt = receipt!(contract.deposit(assets, bob.address()))?;
 
     assert!(receipt.emits(Erc4626::Deposit {
