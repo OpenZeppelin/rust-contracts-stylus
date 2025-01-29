@@ -65,13 +65,6 @@ impl<const N: usize> Uint<N> {
         Self { limbs: value }
     }
 
-    // TODO#q: add another conversions from u8, u16 and so on
-    pub const fn from_u32(val: u32) -> Self {
-        let mut repr = Self::ZERO;
-        repr.limbs[0] = val as Limb;
-        repr
-    }
-
     pub const fn as_limbs(&self) -> &[Limb; N] {
         &self.limbs
     }
@@ -349,6 +342,53 @@ impl<const N: usize> Uint<N> {
         });
 
         Self::new(res)
+    }
+}
+
+macro_rules! impl_ct_from {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> Uint<N> {
+            #[doc = "Create a [`Uint`] from `"]
+            #[doc = stringify!($int)]
+            #[doc = "` integer."]
+            pub const fn $func_name(val: $int) -> Self {
+                assert!(N >= 1, "number of limbs must be greater than zero");
+                let mut repr = Self::ZERO;
+                repr.limbs[0] = val as Limb;
+                repr
+            }
+        }
+    };
+}
+impl_ct_from!(u8, from_u8);
+impl_ct_from!(u16, from_u16);
+impl_ct_from!(u32, from_u32);
+impl_ct_from!(u64, from_u64);
+impl_ct_from!(usize, from_usize);
+
+impl<const N: usize> Uint<N> {
+    /// Create a [`Uint`] from a `u128` integer.
+    pub const fn from_u128(val: u128) -> Self {
+        assert!(N >= 1, "number of limbs must be greater than zero");
+
+        let lo = val as Limb;
+        let hi = (val >> 64) as Limb;
+        // If there are at least 2 limbs
+        if N >= 2 {
+            // we can fit `lo` and `hi`,
+            let mut res = Self::ZERO;
+            res.limbs[0] = lo;
+            res.limbs[1] = hi;
+            res
+        } else if hi == Limb::ZERO {
+            // or if `hi` is zero, we can fit `lo`
+            let mut res = Self::ZERO;
+            res.limbs[0] = lo;
+            res
+        } else {
+            // otherwise, we panic.
+            panic!("u128 is too large to fit");
+        }
     }
 }
 
