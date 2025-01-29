@@ -882,7 +882,6 @@ mod test {
             *,
         },
         bits::BitIteratorBE,
-        fp_from_num,
     };
 
     #[test]

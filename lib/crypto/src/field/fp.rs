@@ -140,16 +140,19 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     }
 
     /// Compute `a^{-1}` if `a` is not zero.
+    ///
+    /// Guajardo, Kumar, Paar, Pelzl.
+    /// Efficient Software-Implementation of Finite Fields with Applications to
+    /// Cryptography [reference].
+    /// Algorithm 16 (BEA for Inversion in Fp).
+    ///
+    /// [reference]: https://www.sandeep.de/my/papers/2006_ActaApplMath_EfficientSoftFiniteF.pdf
     #[must_use]
     #[inline(always)]
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
         if a.is_zero() {
             return None;
         }
-        // Guajardo Kumar Paar Pelzl
-        // Efficient Software-Implementation of Finite Fields with Applications
-        // to Cryptography
-        // Algorithm 16 (BEA for Inversion in Fp)
 
         let one = Uint::ONE;
 
@@ -228,7 +231,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     }
 }
 
-/// Compute -M^{-1} mod 2^64.
+/// Compute `-M^{-1} mod 2^64`.
 pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
     // We compute this as follows.
     // First, MODULUS mod 2^64 is just the lower 64 bits of MODULUS.
@@ -251,8 +254,7 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
 
 /// Represents an element of the prime field `F_p`, where `p == P::MODULUS`.
 ///
-/// This type can represent elements in any field of size at most N * 64 bits
-/// for 64-bit systems and N * 32 bits for 32-bit systems.
+/// This type can represent elements in any field of size at most N * 64 bits.
 #[derive(Educe)]
 #[educe(Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Fp<P: FpParams<N>, const N: usize> {
@@ -355,8 +357,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         }
     }
 
-    const fn ct_mul(self, other: &Self) -> Self {
-        let (carry, res) = self.ct_mul_without_cond_subtract(other);
+    /// Multiply `self` to `rhs` and return the result (constant).
+    const fn ct_mul(&self, rhs: &Self) -> Self {
+        let (carry, res) = self.ct_mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
             res.ct_subtract_modulus()
         } else {
@@ -364,10 +367,12 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         }
     }
 
+    //// Returns true if this number is zero (constant).
     const fn ct_is_zero(&self) -> bool {
         self.montgomery_form.ct_is_zero()
     }
 
+    /// Subtract modulus from `self` with carry.
     #[inline(always)]
     fn carrying_sub_modulus(&mut self, carry: bool) {
         if carry || self.is_geq_modulus() {
@@ -384,8 +389,13 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         (carry, Self::new_unchecked(res))
     }
 
-    // TODO#q: document montgomery reduction
-
+    /// Apply the Montgomery reduction to composite number represented as `lo`
+    /// and `hi`.
+    /// Returns `carry` and the result of the reduction.
+    ///
+    /// Algorithm 14.32 in Handbook of Applied Cryptography [reference].
+    ///
+    /// [reference]: https://cacr.uwaterloo.ca/hac/about/chap14.pdf
     #[inline(always)]
     const fn widening_montgomery_reduction(
         mut lo: Uint<N>,
@@ -421,6 +431,15 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         (carry2 != 0, hi)
     }
 
+    /// Apply the Montgomery reduction to `self`.
+    /// Returns the result of the reduction (carry not needed).
+    /// Compare to [`Self::widening_montgomery_reduction`] doesn't use loop
+    /// "unroll" optimization, since it is assumed to be called just to
+    /// convert back to normal representation.
+    ///
+    /// Algorithm 14.32 in Handbook of Applied Cryptography [reference].
+    ///
+    /// [reference]: https://cacr.uwaterloo.ca/hac/about/chap14.pdf
     #[inline(always)]
     fn montgomery_reduction(self) -> Uint<N> {
         let mut limbs = self.montgomery_form.limbs;
