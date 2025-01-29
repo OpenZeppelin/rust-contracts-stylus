@@ -7,8 +7,8 @@ pub mod uint;
 use core::{
     fmt::{Debug, Display},
     ops::{
-        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
-        Shl, ShlAssign, Shr, ShrAssign,
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl,
+        ShlAssign, Shr, ShrAssign,
     },
 };
 
