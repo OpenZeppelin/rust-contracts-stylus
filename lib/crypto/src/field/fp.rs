@@ -354,8 +354,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         if r.ct_is_zero() {
             r
         } else {
-            r = r.ct_mul(&Fp { montgomery_form: P::R2, phantom: PhantomData });
-            r
+            r.ct_mul(&Fp { montgomery_form: P::R2, phantom: PhantomData })
         }
     }
 

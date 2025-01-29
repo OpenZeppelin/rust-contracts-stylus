@@ -141,7 +141,7 @@ pub trait BigInteger:
     ///
     /// # Panics
     ///
-    /// Panic if the number of bytes is not equal to `Self::BYTES`.
+    /// * If the number of bytes is not equal to `Self::BYTES`.
     fn from_bytes_le(bytes: &[u8]) -> Self;
 
     /// Convert bigint to little-endian bytes.
