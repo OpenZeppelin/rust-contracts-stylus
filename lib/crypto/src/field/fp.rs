@@ -77,9 +77,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let c = a.montgomery_form.checked_add_assign(&b.montgomery_form);
         // However, it may need to be reduced
         if Self::HAS_MODULUS_SPARE_BIT {
-            a.subtract_modulus()
+            a.subtract_modulus();
         } else {
-            a.carrying_sub_modulus(c)
+            a.carrying_sub_modulus(c);
         }
     }
 
@@ -100,9 +100,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let c = a.montgomery_form.checked_mul2_assign();
         // However, it may need to be reduced.
         if Self::HAS_MODULUS_SPARE_BIT {
-            a.subtract_modulus()
+            a.subtract_modulus();
         } else {
-            a.carrying_sub_modulus(c)
+            a.carrying_sub_modulus(c);
         }
     }
 
