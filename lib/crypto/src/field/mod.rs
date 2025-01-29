@@ -5,7 +5,8 @@
 //! Here is an example operations over a prime finite field (aka Fp) with a
 //! prime modulus `17` and generator element `3`.
 //!
-//! ## Example
+//! # Examples
+//!
 //! ```rust
 //! use openzeppelin_crypto::{
 //!     arithmetic::uint::U64,

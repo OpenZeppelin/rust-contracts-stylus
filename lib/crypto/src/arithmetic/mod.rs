@@ -70,7 +70,8 @@ pub trait BigInteger:
     const ZERO: Self;
 
     /// Returns true if this number is odd.
-    /// # Example
+    ///
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::arithmetic::{BigInteger, uint::U64};
@@ -82,7 +83,7 @@ pub trait BigInteger:
 
     /// Returns true if this number is even.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::arithmetic::{BigInteger, uint::U64};
@@ -96,7 +97,7 @@ pub trait BigInteger:
 
     /// Returns true if this number is zero.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::arithmetic::{BigInteger, uint::U64};
@@ -107,7 +108,8 @@ pub trait BigInteger:
     fn is_zero(&self) -> bool;
 
     /// Return the minimum number of bits needed to encode this number.
-    /// # Example
+    ///
+    /// # Examples
     /// ```
     /// use openzeppelin_crypto::arithmetic::{BigInteger, uint::U64};
     ///
@@ -123,7 +125,8 @@ pub trait BigInteger:
     fn num_bits(&self) -> usize;
 
     /// Find the `i`-th bit of `self`.
-    /// # Example
+    ///
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::arithmetic::{BigInteger, uint::U64};
