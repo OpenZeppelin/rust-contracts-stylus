@@ -391,8 +391,6 @@ pub trait IErc4626 {
     ///   ERC-20 Token address.
     /// * [`Error::ExceededMaxDeposit`] - If deposit amount exceeds maximum
     ///   allowed.
-    /// * [`erc20::Error::InvalidReceiver`] - If the `receiver` address is
-    ///   `Address::ZERO`.
     /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If caller lacks
     ///   sufficient balance or hasn't approved enough tokens to the Vault
     ///   contract.

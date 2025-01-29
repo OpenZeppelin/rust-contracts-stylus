@@ -11,7 +11,6 @@ use e2e::{
 };
 use eyre::Result;
 use mock::{erc20, erc20::ERC20Mock};
-use openzeppelin_stylus::utils::math::alloy::{Math, Rounding};
 
 use crate::Erc4626Example::constructorCall;
 
@@ -22,32 +21,6 @@ mod abi;
 mod mock;
 
 sol!("src/constructor.sol");
-
-macro_rules! total_supply {
-    ($contract:expr) => {
-        $contract.totalSupply().call().await?.totalSupply
-    };
-}
-
-macro_rules! decimals_offset {
-    () => {
-        U256::ZERO
-    };
-}
-
-macro_rules! calculate_shares {
-    ($contract:expr, $assets:expr, $tokens:expr, $rounding:expr) => {{
-        let total_supply = total_supply!($contract);
-        $assets.mul_div(
-            total_supply
-                + U256::from(10)
-                    .checked_pow(decimals_offset!())
-                    .expect("should not overflow"),
-            $tokens + U256::from(1),
-            $rounding,
-        )
-    }};
-}
 
 fn ctr(asset: Address) -> constructorCall {
     constructorCall {
@@ -554,11 +527,197 @@ mod deposit {
         Ok(())
     }
 
-    // TODO: deposit ExceededMaxDeposit E2E test
+    #[e2e::test]
+    async fn mints_zero_shares_for_zero_assets(alice: Account) -> Result<()> {
+        let (contract_addr, asset_addr) =
+            deploy(&alice, uint!(1000_U256)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        let alice_address = alice.address();
 
-    // TODO: deposit InvalidReceiver E2E test
+        let _ = watch!(erc20_alice.mint(alice_address, uint!(1000_U256)))?;
 
-    // TODO: deposit SafeErc20FailedOperation E2E test
+        let initial_alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let initial_alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+
+        let receipt = receipt!(contract.deposit(U256::ZERO, alice.address()))?;
+        assert!(receipt.emits(Erc4626::Deposit {
+            sender: alice_address,
+            owner: alice_address,
+            assets: U256::ZERO,
+            shares: U256::ZERO,
+        }));
+
+        let alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        assert_eq!(initial_alice_balance, alice_balance);
+
+        let alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+        assert_eq!(initial_alice_shares, alice_shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn mints_zero_shares_for_asset_amount_less_then_vault_assets(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(1000_U256);
+        let assets_to_convert = uint!(100_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        let alice_address = alice.address();
+
+        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+
+        let initial_alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let initial_alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+
+        _ = watch!(erc20_alice.regular_approve(
+            alice_address,
+            contract_addr,
+            assets_to_convert
+        ))?;
+
+        let receipt =
+            receipt!(contract.deposit(assets_to_convert, alice.address()))?;
+
+        assert!(receipt.emits(Erc4626::Deposit {
+            sender: alice_address,
+            owner: alice_address,
+            assets: assets_to_convert,
+            shares: U256::ZERO,
+        }));
+
+        let alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        assert_eq!(initial_alice_balance - assets_to_convert, alice_balance);
+
+        let alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+        assert_eq!(initial_alice_shares, alice_shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn mints_shares_equal_to_deposit_when_vault_is_empty(
+        alice: Account,
+    ) -> Result<()> {
+        let assets_to_convert = uint!(101_U256);
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        let alice_address = alice.address();
+
+        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+
+        let initial_alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let initial_alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+
+        _ = watch!(erc20_alice.regular_approve(
+            alice_address,
+            contract_addr,
+            assets_to_convert
+        ))?;
+
+        let receipt =
+            receipt!(contract.deposit(assets_to_convert, alice.address()))?;
+
+        assert!(receipt.emits(Erc4626::Deposit {
+            sender: alice_address,
+            owner: alice_address,
+            assets: assets_to_convert,
+            shares: assets_to_convert,
+        }));
+
+        let alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        assert_eq!(initial_alice_balance - assets_to_convert, alice_balance);
+
+        let alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+        assert_eq!(initial_alice_shares + assets_to_convert, alice_shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn mints_shares_proportional_to_deposit_when_vault_has_assets(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let assets_to_convert = uint!(101_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        let alice_address = alice.address();
+
+        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+
+        let initial_alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let initial_alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+
+        _ = watch!(erc20_alice.regular_approve(
+            alice_address,
+            contract_addr,
+            assets_to_convert
+        ))?;
+
+        let receipt =
+            receipt!(contract.deposit(assets_to_convert, alice.address()))?;
+
+        let expected_shares = uint!(1_U256);
+
+        assert!(receipt.emits(Erc4626::Deposit {
+            sender: alice_address,
+            owner: alice_address,
+            assets: assets_to_convert,
+            shares: expected_shares,
+        }));
+
+        let alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        assert_eq!(initial_alice_balance - assets_to_convert, alice_balance);
+
+        let alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
+        assert_eq!(initial_alice_shares + expected_shares, alice_shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_no_approval_on_assets(alice: Account) -> Result<()> {
+        let assets_to_convert = uint!(101_U256);
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        let alice_address = alice.address();
+
+        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+
+        let err = send!(contract.deposit(assets_to_convert, alice_address))
+            .expect_err("should return `SafeErc20FailedOperation`");
+
+        assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
+            token: asset_addr
+        }));
+
+        Ok(())
+    }
 
     #[e2e::test]
     async fn reverts_when_result_overflows(
@@ -572,64 +731,6 @@ mod deposit {
             .expect_err("should panics due to `Overflow`");
 
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
-        Ok(())
-    }
-
-    #[e2e::test]
-    async fn success(alice: Account, bob: Account) -> Result<()> {
-        let alice_address = alice.address();
-        let tokens = uint!(100_U256);
-
-        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
-        let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
-
-        let _ = watch!(erc20_alice.mint(alice_address, tokens))?;
-
-        let assets = uint!(69_U256);
-        let expected_deposit =
-            calculate_shares!(contract, assets, tokens, Rounding::Floor);
-
-        let initial_alice_token_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
-
-        let initial_vault_token_balance =
-            erc20_alice.balanceOf(contract_addr).call().await?._0;
-
-        let initial_bob_shares_balance =
-            contract.balanceOf(bob.address()).call().await?.balance;
-
-        let initial_supply = contract.totalSupply().call().await?.totalSupply;
-
-        let _ = watch!(erc20_alice.approve(contract_addr, assets))?;
-
-        let receipt = receipt!(contract.deposit(assets, bob.address()))?;
-
-        assert!(receipt.emits(Erc4626::Deposit {
-            sender: alice_address,
-            owner: bob.address(),
-            assets,
-            shares: expected_deposit
-        }));
-
-        let bob_shares_balance =
-            contract.balanceOf(bob.address()).call().await?.balance;
-        assert_eq!(
-            initial_bob_shares_balance + expected_deposit,
-            bob_shares_balance
-        );
-
-        let supply = contract.totalSupply().call().await?.totalSupply;
-        assert_eq!(initial_supply + expected_deposit, supply);
-
-        let alice_token_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
-        assert_eq!(initial_alice_token_balance - assets, alice_token_balance);
-
-        let vault_token_balance =
-            erc20_alice.balanceOf(contract_addr).call().await?._0;
-        assert_eq!(initial_vault_token_balance + assets, vault_token_balance);
-
         Ok(())
     }
 }
@@ -706,6 +807,21 @@ mod preview_mint {
             err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset })
         );
 
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_overflows(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .previewMint(U256::MAX)
+            .call()
+            .await
+            .expect_err("should return `Overflow`");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
         Ok(())
     }
 }
@@ -822,7 +938,7 @@ mod mint {
         _ = watch!(asset.mint(alice.address(), assets))?;
 
         let err = send!(contract.mint(shares, alice_address))
-            .expect_err("should return `InvalidAsset`");
+            .expect_err("should return `SafeErc20FailedOperation`");
 
         assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
             token: asset_addr
