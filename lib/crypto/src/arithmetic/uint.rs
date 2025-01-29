@@ -80,7 +80,7 @@ impl<const N: usize> Uint<N> {
     #[inline]
     #[must_use]
     pub const fn ct_is_even(&self) -> bool {
-        !self.ct_is_odd()
+        self.limbs[0] & 1 == 0
     }
 
     const fn ct_geq(&self, rhs: &Self) -> bool {
@@ -626,7 +626,6 @@ impl<const N: usize> ShlAssign<usize> for Uint<N> {
 
         if rhs > 0 {
             let mut t = 0;
-            #[allow(unused)]
             for i in 0..N {
                 let a = &mut self.limbs[i];
                 let t2 = *a >> (64 - rhs);
@@ -678,6 +677,10 @@ impl<const N: usize> BigInteger for Uint<N> {
 
     fn is_odd(&self) -> bool {
         self.ct_is_odd()
+    }
+
+    fn is_even(&self) -> bool {
+        self.ct_is_even()
     }
 
     fn is_zero(&self) -> bool {
