@@ -222,6 +222,7 @@ impl<const N: usize> Uint<N> {
     }
 
     #[inline]
+    #[allow(dead_code)]
     pub(crate) const fn ct_checked_add(mut self, other: &Self) -> (Self, bool) {
         let mut carry = 0;
 
@@ -326,14 +327,18 @@ impl<const N: usize> Uint<N> {
 
     /// Create a new [`Uint`] from the provided little endian bytes.
     pub const fn ct_from_le_slice(bytes: &[u8]) -> Self {
-        assert!(bytes.len() == Self::BYTES, "bytes are not the expected size");
+        const LIMB_BYTES: usize = Limb::BITS as usize / 8;
+        assert!(
+            bytes.len() == LIMB_BYTES * N,
+            "bytes are not the expected size"
+        );
 
         let mut res = [Limb::ZERO; N];
-        let mut buf = [0u8; Self::LIMB_BYTES];
+        let mut buf = [0u8; LIMB_BYTES];
 
         ct_for!((i in 0..N) {
-            ct_for!((j in 0..{Self::LIMB_BYTES}) {
-                buf[j] = bytes[i * Self::LIMB_BYTES + j];
+            ct_for!((j in 0..LIMB_BYTES) {
+                buf[j] = bytes[i * LIMB_BYTES + j];
             });
             res[i] = Limb::from_le_bytes(buf);
         });
@@ -862,9 +867,12 @@ impl<const N: usize> WideUint<N> {
 mod test {
     use proptest::prelude::*;
 
-    use crate::arithmetic::{
-        uint::{from_str_hex, from_str_radix, Uint},
-        *,
+    use crate::{
+        arithmetic::{
+            uint::{from_str_hex, from_str_radix, Uint},
+            *,
+        },
+        bits::BitIteratorBE,
     };
 
     #[test]

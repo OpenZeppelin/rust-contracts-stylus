@@ -54,12 +54,6 @@ pub trait BigInteger:
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
 
-    /// Number of bytes in the integer.
-    const BYTES: usize = Self::LIMB_BYTES * Self::NUM_LIMBS;
-
-    /// Number of bytes in a limb.
-    const LIMB_BYTES: usize = Self::LIMB_BITS / 8;
-
     /// Number of bits in the integer.
     const BITS: usize = Self::LIMB_BITS * Self::NUM_LIMBS;
 
