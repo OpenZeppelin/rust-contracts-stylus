@@ -1,6 +1,7 @@
+use alloc::{format, string::String};
 use core::{
     borrow::Borrow,
-    fmt::{Debug, Display, UpperHex},
+    fmt::{Debug, Display, Result, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
         Shl, ShlAssign, Shr, ShrAssign,
@@ -348,9 +349,9 @@ impl<const N: usize> Uint<N> {
 macro_rules! impl_ct_from_primitive {
     ($int:ty, $func_name:ident) => {
         impl<const N: usize> Uint<N> {
-            #[doc = "Create a [`Uint`] from `"]
+            #[doc = "Create a [`Uint`] from"]
             #[doc = stringify!($int)]
-            #[doc = "` integer (constant)."]
+            #[doc = "integer (constant)."]
             pub const fn $func_name(val: $int) -> Self {
                 assert!(N >= 1, "number of limbs must be greater than zero");
                 let mut repr = Self::ZERO;
@@ -418,23 +419,29 @@ impl_from_primitive!(u128, from_u128);
 
 // ----------- Traits Impls -----------
 
-// TODO#q: add hex display logic and proptests
-
 impl<const N: usize> UpperHex for Uint<N> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:016X}", BigUint::from(*self))
-    }
-}
-
-impl<const N: usize> Debug for Uint<N> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", BigUint::from(*self))
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
+        // Hex parse the limbs in reverse order.
+        let hex = self
+            .limbs
+            .iter()
+            .rev()
+            .map(|&limb| format!("{:016X}", limb))
+            .collect::<String>();
+        write!(f, "{hex}")
     }
 }
 
 impl<const N: usize> Display for Uint<N> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", BigUint::from(*self))
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
+        // Use upper hex by default.
+        write!(f, "{:X}", self)
+    }
+}
+
+impl<const N: usize> Debug for Uint<N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
+        write!(f, "{}", self)
     }
 }
 
@@ -905,10 +912,20 @@ mod test {
     #[test]
     fn convert_from_str_hex() {
         // Test different implementations of hex parsing on random hex inputs.
-        proptest!(|(s in "[0-9a-fA-F]{1,64}")| {
-            let uint_from_hex: Uint<4> = from_str_hex(&s);
-            let expected: Uint<4> = from_str_radix(&s, 16);
+        proptest!(|(hex in "[0-9a-fA-F]{1,64}")| {
+            let uint_from_hex: Uint<4> = from_str_hex(&hex);
+            let expected: Uint<4> = from_str_radix(&hex, 16);
             prop_assert_eq!(uint_from_hex, expected);
+        });
+    }
+
+    #[test]
+    fn parse_and_display_hex() {
+        // Test parsing from upper hex against displaying in upper hex.
+        proptest!(|(upper_hex in "[0-9A-F]{64}")| {
+            let uint_from_hex: Uint<4> = from_str_hex(&upper_hex);
+            let hex_from_uint = format!("{:X}", uint_from_hex);
+            prop_assert_eq!(hex_from_uint, upper_hex);
         });
     }
 
