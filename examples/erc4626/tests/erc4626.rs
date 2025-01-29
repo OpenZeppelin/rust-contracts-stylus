@@ -1174,9 +1174,82 @@ mod preview_withdraw {
         Ok(())
     }
 
-    // TODO: preview_withdraw overflows E2E test
+    #[e2e::test]
+    async fn returns_zero_assets_for_zero_shares(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-    // TODO: preview_withdraw success E2E test
+        let shares = contract.previewWithdraw(U256::ZERO).call().await?.shares;
+        assert_eq!(U256::ZERO, shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_one_share_for_asset_amount_less_then_vault_assets(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(1000_U256);
+        let assets_to_convert = uint!(100_U256);
+        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let shares =
+            contract.previewWithdraw(assets_to_convert).call().await?.shares;
+
+        assert_eq!(uint!(1_U256), shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_shares_equal_to_deposit_when_vault_is_empty(
+        alice: Account,
+    ) -> Result<()> {
+        let assets_to_convert = uint!(101_U256);
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let shares =
+            contract.previewWithdraw(assets_to_convert).call().await?.shares;
+
+        assert_eq!(assets_to_convert, shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_shares_proportional_to_deposit_when_vault_has_assets(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let assets_to_convert = uint!(101_U256);
+        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let expected_shares = uint!(1_U256);
+        let shares =
+            contract.previewWithdraw(assets_to_convert).call().await?.shares;
+
+        assert_eq!(expected_shares, shares);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
+        let (contract_addr, _asset_addr) = deploy(&alice, U256::MAX).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .previewDeposit(U256::MAX)
+            .call()
+            .await
+            .expect_err("should panics due to `Overflow`");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
 }
 
 mod withdraw {
