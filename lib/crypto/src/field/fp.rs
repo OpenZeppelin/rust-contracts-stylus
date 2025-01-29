@@ -231,6 +231,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 }
 
 /// Compute `-M^{-1} mod 2^64`.
+#[must_use]
 pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
     // We compute this as follows.
     // First, MODULUS mod 2^64 is just the lower 64 bits of MODULUS.
