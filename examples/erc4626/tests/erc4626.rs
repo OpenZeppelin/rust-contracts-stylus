@@ -1837,6 +1837,95 @@ mod withdraw {
 
         Ok(())
     }
+
+    #[e2e::test]
+    async fn maintains_share_price_ratio(alice: Account) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Setup deposits
+        _ = watch!(asset.mint(alice.address(), uint!(2000_U256)))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            uint!(2000_U256)
+        ))?;
+        _ = watch!(contract.mint(uint!(10_U256), alice.address()))?;
+
+        // Record initial conversion rate
+        let initial_rate =
+            contract.convertToAssets(uint!(1_U256)).call().await?.assets;
+
+        // Perform partial withdrawal
+        _ = watch!(contract.withdraw(
+            uint!(500_U256),
+            alice.address(),
+            alice.address()
+        ))?;
+
+        // Verify conversion rate remains the same
+        let final_rate =
+            contract.convertToAssets(uint!(1_U256)).call().await?.assets;
+        assert_eq!(initial_rate, final_rate);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn maintains_state_consistency_after_failed_withdrawal(
+        alice: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let shares_to_mint = uint!(10_U256);
+        let assets_to_deposit = uint!(1010_U256);
+        let excessive_assets_to_withdraw = uint!(1011_U256);
+
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Setup initial state
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        // Record state before failed withdrawal
+        let pre_total_assets = contract.totalAssets().call().await?.totalAssets;
+        let pre_max_withdraw =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let pre_max_redeem =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+
+        // Attempt excessive withdrawal
+        let _ = send!(contract.withdraw(
+            excessive_assets_to_withdraw,
+            alice.address(),
+            alice.address()
+        ))
+        .expect_err("should fail due to exceeding max withdraw");
+
+        // Verify state remains unchanged
+        let post_total_assets =
+            contract.totalAssets().call().await?.totalAssets;
+        let post_max_withdraw =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let post_max_redeem =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+
+        assert_eq!(pre_total_assets, post_total_assets);
+        assert_eq!(pre_max_withdraw, post_max_withdraw);
+        assert_eq!(pre_max_redeem, post_max_redeem);
+
+        Ok(())
+    }
 }
 
 mod withdraw2 {
