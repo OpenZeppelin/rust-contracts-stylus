@@ -13,6 +13,7 @@ pub type WideLimb = u128;
 
 /// Multiply two [`Limb`]'s and return widened result.
 #[inline(always)]
+#[must_use]
 pub const fn widening_mul(a: Limb, b: Limb) -> WideLimb {
     #[cfg(not(target_family = "wasm"))]
     {
@@ -71,6 +72,7 @@ pub const fn carrying_mac(
 
 /// Calculate `a = a + b + carry` and return the result and carry.
 #[inline(always)]
+#[must_use]
 pub const fn adc(a: Limb, b: Limb, carry: Limb) -> (Limb, Limb) {
     let a = a as WideLimb;
     let b = b as WideLimb;
