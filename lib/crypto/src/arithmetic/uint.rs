@@ -442,7 +442,9 @@ impl_from_primitive!(u128, from_u128);
 
 impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
-        // Hex parse the limbs in reverse order.
+        // Concatenate hex representation of limbs in reversed order without
+        // allocations.
+        // By the end, it will produce actual hex of `Uint`.
         let hex =
             self.limbs.iter().rev().fold(String::new(), |mut output, &limb| {
                 let _ = write!(output, "{limb:016X}");

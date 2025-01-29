@@ -710,7 +710,6 @@ impl<P: FpParams<N>, const N: usize> Add<&Fp<P, N>> for Fp<P, N> {
 
     #[inline]
     fn add(mut self, other: &Self) -> Self {
-        use AddAssign;
         self.add_assign(other);
         self
     }
@@ -721,7 +720,6 @@ impl<P: FpParams<N>, const N: usize> Sub<&Fp<P, N>> for Fp<P, N> {
 
     #[inline]
     fn sub(mut self, other: &Self) -> Self {
-        use SubAssign;
         self.sub_assign(other);
         self
     }
@@ -732,7 +730,6 @@ impl<P: FpParams<N>, const N: usize> Mul<&Fp<P, N>> for Fp<P, N> {
 
     #[inline]
     fn mul(mut self, other: &Self) -> Self {
-        use MulAssign;
         self.mul_assign(other);
         self
     }
@@ -745,7 +742,6 @@ impl<P: FpParams<N>, const N: usize> Div<&Fp<P, N>> for Fp<P, N> {
     /// panics otherwise.
     #[inline]
     fn div(mut self, other: &Self) -> Self {
-        use MulAssign;
         self.mul_assign(&other.inverse().unwrap());
         self
     }
@@ -756,7 +752,6 @@ impl<P: FpParams<N>, const N: usize> Add<&Fp<P, N>> for &Fp<P, N> {
 
     #[inline]
     fn add(self, other: &Fp<P, N>) -> Fp<P, N> {
-        use AddAssign;
         let mut result = *self;
         result.add_assign(other);
         result
@@ -768,7 +763,6 @@ impl<P: FpParams<N>, const N: usize> Sub<&Fp<P, N>> for &Fp<P, N> {
 
     #[inline]
     fn sub(self, other: &Fp<P, N>) -> Fp<P, N> {
-        use SubAssign;
         let mut result = *self;
         result.sub_assign(other);
         result
@@ -780,7 +774,6 @@ impl<P: FpParams<N>, const N: usize> Mul<&Fp<P, N>> for &Fp<P, N> {
 
     #[inline]
     fn mul(self, other: &Fp<P, N>) -> Fp<P, N> {
-        use MulAssign;
         let mut result = *self;
         result.mul_assign(other);
         result
@@ -792,7 +785,6 @@ impl<P: FpParams<N>, const N: usize> Div<&Fp<P, N>> for &Fp<P, N> {
 
     #[inline]
     fn div(self, other: &Fp<P, N>) -> Fp<P, N> {
-        use DivAssign;
         let mut result = *self;
         result.div_assign(other);
         result
