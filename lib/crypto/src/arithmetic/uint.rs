@@ -21,7 +21,7 @@ use crate::{
         BigInteger,
     },
     bits::BitIteratorBE,
-    const_for, unroll6_for,
+    ct_for, ct_for_unroll6,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
@@ -89,7 +89,7 @@ impl<const N: usize> Uint<N> {
     }
 
     const fn ct_geq(&self, other: &Self) -> bool {
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = other.limbs[N - i - 1];
             if a < b {
@@ -102,7 +102,7 @@ impl<const N: usize> Uint<N> {
     }
 
     pub const fn ct_ge(&self, rhs: &Self) -> bool {
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             if self.limbs[i] < rhs.limbs[i] {
                 return false;
             } else if self.limbs[i] > rhs.limbs[i] {
@@ -117,7 +117,7 @@ impl<const N: usize> Uint<N> {
     }
 
     pub const fn ct_eq(&self, rhs: &Self) -> bool {
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             if self.limbs[i] != rhs.limbs[i] {
                 return false;
             }
@@ -131,7 +131,7 @@ impl<const N: usize> Uint<N> {
     pub const fn ct_shr(&self) -> Self {
         let mut result = *self;
         let mut t = 0;
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             let a = result.limbs[N - i - 1];
             let t2 = a << 63;
             result.limbs[N - i - 1] >>= 1;
@@ -200,7 +200,7 @@ impl<const N: usize> Uint<N> {
 
     const fn ct_checked_mul2(mut self) -> (Self, bool) {
         let mut last = 0;
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             let a = self.limbs[i];
             let tmp = a >> 63;
             self.limbs[i] <<= 1;
@@ -224,7 +224,7 @@ impl<const N: usize> Uint<N> {
     pub(crate) const fn ct_checked_sub(mut self, other: &Self) -> (Self, bool) {
         let mut borrow = 0;
 
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             (self.limbs[i], borrow) = limb::sbb(self.limbs[i], other.limbs[i], borrow);
         });
 
@@ -235,7 +235,7 @@ impl<const N: usize> Uint<N> {
     pub(crate) const fn ct_checked_add(mut self, other: &Self) -> (Self, bool) {
         let mut carry = 0;
 
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             (self.limbs[i], carry) = limb::adc(self.limbs[i], other.limbs[i], carry);
         });
 
@@ -246,7 +246,7 @@ impl<const N: usize> Uint<N> {
     pub(crate) fn checked_add_assign(&mut self, other: &Self) -> bool {
         let mut carry = false;
 
-        unroll6_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             carry = limb::adc_assign(&mut self.limbs[i], other.limbs[i], carry);
         });
 
@@ -257,7 +257,7 @@ impl<const N: usize> Uint<N> {
     pub(crate) fn checked_sub_assign(&mut self, other: &Self) -> bool {
         let mut borrow = false;
 
-        unroll6_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             borrow =
                 limb::sbb_assign(&mut self.limbs[i], other.limbs[i], borrow);
         });
@@ -273,9 +273,9 @@ impl<const N: usize> Uint<N> {
     pub const fn ct_widening_mul(&self, rhs: &Self) -> (Self, Self) {
         // TODO#q: document wide multiplication
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
-        unroll6_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             let mut carry = 0;
-            unroll6_for!((j in 0..N) {
+            ct_for_unroll6!((j in 0..N) {
                 let k = i + j;
                 if k >= N {
                     (hi[k - N], carry) = limb::carrying_mac(
@@ -327,7 +327,7 @@ impl<const N: usize> Uint<N> {
     pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: Limb) -> (Self, Limb) {
         let mut limbs = [Limb::ZERO; N];
 
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             (limbs[i], carry) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
         });
 
@@ -341,8 +341,8 @@ impl<const N: usize> Uint<N> {
         let mut res = [Limb::ZERO; N];
         let mut buf = [0u8; Self::LIMB_BYTES];
 
-        const_for!((i in 0..N) {
-            const_for!((j in 0..{Self::LIMB_BYTES}) {
+        ct_for!((i in 0..N) {
+            ct_for!((j in 0..{Self::LIMB_BYTES}) {
                 buf[j] = bytes[i * Self::LIMB_BYTES + j];
             });
             res[i] = Limb::from_le_bytes(buf);
@@ -376,7 +376,7 @@ impl<const N: usize> Ord for Uint<N> {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         use core::cmp::Ordering;
-        unroll6_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             let a = &self.limbs[N - i - 1];
             let b = &other.limbs[N - i - 1];
             match a.cmp(b) {

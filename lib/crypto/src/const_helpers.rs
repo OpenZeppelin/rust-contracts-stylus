@@ -1,6 +1,6 @@
 /// Allows writing `for` cycle in constant context.
 #[macro_export]
-macro_rules! const_for {
+macro_rules! ct_for {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -12,7 +12,7 @@ macro_rules! const_for {
 /// Allows writing `for` cycle in constant context, with 2 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! unroll2_for {
+macro_rules! ct_for_unroll2 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -25,7 +25,7 @@ macro_rules! unroll2_for {
 /// Allows writing `for` cycle in constant context, with 4 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! unroll4_for {
+macro_rules! ct_for_unroll4 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -40,7 +40,7 @@ macro_rules! unroll4_for {
 /// Allows writing `for` cycle in constant context, with 6 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! unroll6_for {
+macro_rules! ct_for_unroll6 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -57,7 +57,7 @@ macro_rules! unroll6_for {
 /// Allows writing `for` cycle in constant context, with 8 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! unroll8_for {
+macro_rules! ct_for_unroll8 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {

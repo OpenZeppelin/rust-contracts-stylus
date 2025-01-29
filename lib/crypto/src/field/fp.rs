@@ -32,9 +32,8 @@ use crate::{
         uint::{Uint, WideUint},
         BigInteger,
     },
-    const_for,
+    ct_for, ct_for_unroll6,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
-    unroll6_for,
 };
 
 /// A trait that specifies the configuration of a prime field.
@@ -239,7 +238,7 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
     // euler_totient(2^64) - 1 = (1 << 63) - 1 = 1111111... (63 digits).
     // We compute this powering via standard square and multiply.
     let mut inv = 1u64;
-    const_for!((_i in 0..63) {
+    ct_for!((_i in 0..63) {
         // Square
         inv = inv.wrapping_mul(inv);
         // Multiply
@@ -394,12 +393,12 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         mut hi: Uint<N>,
     ) -> (bool, Uint<N>) {
         let mut carry2 = 0;
-        unroll6_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             let tmp = lo.limbs[i].wrapping_mul(P::INV);
 
             let (_, mut carry) = arithmetic::limb::mac(lo.limbs[i], tmp, P::MODULUS.limbs[0]);
 
-            unroll6_for!((j in 1..N) {
+            ct_for_unroll6!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
                     (hi.limbs[k - N], carry) = arithmetic::limb::carrying_mac(
@@ -444,7 +443,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     const fn ct_is_valid(&self) -> bool {
-        const_for!((i in 0..N) {
+        ct_for!((i in 0..N) {
             if self.montgomery_form.limbs[N - i - 1] < P::MODULUS.limbs[N - i - 1] {
                 return true
             } else if self.montgomery_form.limbs[N - i - 1] > P::MODULUS.limbs[N - i - 1] {
