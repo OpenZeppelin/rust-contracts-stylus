@@ -24,18 +24,14 @@ pub trait Math {
     fn average(self, rhs: Self) -> Self;
 
     /// Calculates floor(`self` * `y` / `denominator`) with full precision,
-    /// following the selected `rounding` direction. Throws if result
-    /// overflows a `U256` or `denominator` is zero.
-    ///
-    /// Original credit to Remco Bloemen under MIT license (<https://xn--2-umb.com/21/muldiv>)
-    /// with further edits by Uniswap Labs also under MIT license.
+    /// following the selected `rounding` direction.
     ///
     /// # Arguments
     ///
-    /// * `self` -
-    /// * `y` -
-    /// * `denominator` -
-    /// * `rounding` -
+    /// * `self` - first value to compute the result.
+    /// * `y` - second value to compute the result.
+    /// * `denominator` - denominator of the division.
+    /// * `rounding` - rounding technique to use in calculation.
     #[must_use]
     fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self;
 }
