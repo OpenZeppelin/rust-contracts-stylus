@@ -110,12 +110,12 @@ mod tests {
 
     use super::*;
 
-    proptest! {
-        #[test]
-        fn check_widening_mul(a: Limb, b: Limb) {
+    #[test]
+    fn check_widening_mul() {
+        proptest!(|(a: Limb, b: Limb)|{
             let std_mul_result = widening_mul(a, b);
             let wasm_mul_result = widening_mul_wasm(a, b);
-            assert_eq!(std_mul_result, wasm_mul_result);
-        }
+            prop_assert_eq!(std_mul_result, wasm_mul_result);
+        });
     }
 }

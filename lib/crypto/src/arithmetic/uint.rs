@@ -1,6 +1,5 @@
 //  TODO#q: Odd<Uint<N>> - Odd numbers.
 //  TODO#q: NonZero<Uint<N>> - Non zero numbers for division.
-//  TODO#q: Rename functions *_with_carry to carrying_*
 
 use core::{
     borrow::Borrow,
@@ -78,11 +77,13 @@ impl<const N: usize> Uint<N> {
     }
 
     #[doc(hidden)]
+    #[inline]
     pub const fn ct_is_odd(&self) -> bool {
         self.limbs[0] & 1 == 1
     }
 
     #[doc(hidden)]
+    #[inline]
     pub const fn ct_is_even(&self) -> bool {
         !self.ct_is_odd()
     }
@@ -185,7 +186,7 @@ impl<const N: usize> Uint<N> {
 
     #[inline]
     #[allow(unused)]
-    pub(crate) fn mul2(&mut self) -> bool {
+    pub(crate) fn checked_mul2_assign(&mut self) -> bool {
         let mut last = 0;
         for i in 0..N {
             let a = &mut self.limbs[i];
@@ -197,7 +198,7 @@ impl<const N: usize> Uint<N> {
         last != 0
     }
 
-    const fn ct_mul2_with_carry(mut self) -> (Self, bool) {
+    const fn ct_checked_mul2(mut self) -> (Self, bool) {
         let mut last = 0;
         const_for!((i in 0..N) {
             let a = self.limbs[i];
@@ -220,10 +221,7 @@ impl<const N: usize> Uint<N> {
     }
 
     #[inline]
-    pub(crate) const fn ct_sub_with_borrow(
-        mut self,
-        other: &Self,
-    ) -> (Self, bool) {
+    pub(crate) const fn ct_checked_sub(mut self, other: &Self) -> (Self, bool) {
         let mut borrow = 0;
 
         const_for!((i in 0..N) {
@@ -234,10 +232,7 @@ impl<const N: usize> Uint<N> {
     }
 
     #[inline]
-    pub(crate) const fn ct_add_with_carry(
-        mut self,
-        other: &Self,
-    ) -> (Self, bool) {
+    pub(crate) const fn ct_checked_add(mut self, other: &Self) -> (Self, bool) {
         let mut carry = 0;
 
         const_for!((i in 0..N) {
@@ -247,9 +242,8 @@ impl<const N: usize> Uint<N> {
         (self, carry != 0)
     }
 
-    // TODO#q: rename to checked_add?
     #[inline(always)]
-    pub(crate) fn add_with_carry(&mut self, other: &Self) -> bool {
+    pub(crate) fn checked_add_assign(&mut self, other: &Self) -> bool {
         let mut carry = false;
 
         unroll6_for!((i in 0..N) {
@@ -260,7 +254,7 @@ impl<const N: usize> Uint<N> {
     }
 
     #[inline(always)]
-    pub(crate) fn sub_with_borrow(&mut self, other: &Self) -> bool {
+    pub(crate) fn checked_sub_assign(&mut self, other: &Self) -> bool {
         let mut borrow = false;
 
         unroll6_for!((i in 0..N) {
@@ -328,8 +322,8 @@ impl<const N: usize> Uint<N> {
         low
     }
 
-    #[inline(always)]
     /// Computes `a + b + carry`, returning the result along with the new carry.
+    #[inline(always)]
     pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: Limb) -> (Self, Limb) {
         let mut limbs = [Limb::ZERO; N];
 
@@ -840,10 +834,10 @@ impl<const N: usize> WideUint<N> {
         let mut index = self.ct_num_bits() - 1;
         let mut carry = false;
         loop {
-            (remainder, carry) = remainder.ct_mul2_with_carry();
+            (remainder, carry) = remainder.ct_checked_mul2();
             remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
             if remainder.ct_geq(rhs) || carry {
-                let (r, borrow) = remainder.ct_sub_with_borrow(rhs);
+                let (r, borrow) = remainder.ct_checked_sub(rhs);
                 remainder = r;
                 // TODO#q: add doc comment and describe ct_rem
                 assert!(borrow == carry);

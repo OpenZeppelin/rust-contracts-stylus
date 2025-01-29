@@ -73,12 +73,12 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     #[inline(always)]
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // This cannot exceed the backing capacity.
-        let c = a.montgomery_form.add_with_carry(&b.montgomery_form);
+        let c = a.montgomery_form.checked_add_assign(&b.montgomery_form);
         // However, it may need to be reduced
         if Self::HAS_MODULUS_SPARE_BIT {
             a.subtract_modulus()
         } else {
-            a.subtract_modulus_with_carry(c)
+            a.carrying_sub_modulus(c)
         }
     }
 
@@ -87,21 +87,21 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         // If `other` is larger than `self`, add the modulus to self first.
         if b.montgomery_form > a.montgomery_form {
-            a.montgomery_form.add_with_carry(&Self::MODULUS);
+            a.montgomery_form.checked_add_assign(&Self::MODULUS);
         }
-        a.montgomery_form.sub_with_borrow(&b.montgomery_form);
+        a.montgomery_form.checked_sub_assign(&b.montgomery_form);
     }
 
     /// Set `a = a + a`.
     #[inline(always)]
     fn double_in_place(a: &mut Fp<Self, N>) {
         // This cannot exceed the backing capacity.
-        let c = a.montgomery_form.mul2();
+        let c = a.montgomery_form.checked_mul2_assign();
         // However, it may need to be reduced.
         if Self::HAS_MODULUS_SPARE_BIT {
             a.subtract_modulus()
         } else {
-            a.subtract_modulus_with_carry(c)
+            a.carrying_sub_modulus(c)
         }
     }
 
@@ -110,7 +110,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     fn neg_in_place(a: &mut Fp<Self, N>) {
         if !a.is_zero() {
             let mut tmp = Self::MODULUS;
-            tmp.sub_with_borrow(&a.montgomery_form);
+            tmp.checked_sub_assign(&a.montgomery_form);
             a.montgomery_form = tmp;
         }
     }
@@ -128,7 +128,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         if Self::HAS_MODULUS_SPARE_BIT {
             a.subtract_modulus();
         } else {
-            a.subtract_modulus_with_carry(carry);
+            a.carrying_sub_modulus(carry);
         }
     }
 
@@ -166,7 +166,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
                     b.montgomery_form.div2();
                 } else {
                     let carry =
-                        b.montgomery_form.add_with_carry(&Self::MODULUS);
+                        b.montgomery_form.checked_add_assign(&Self::MODULUS);
                     b.montgomery_form.div2();
                     if !Self::HAS_MODULUS_SPARE_BIT && carry {
                         b.montgomery_form.limbs[N - 1] |= 1 << 63;
@@ -181,7 +181,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
                     c.montgomery_form.div2();
                 } else {
                     let carry =
-                        c.montgomery_form.add_with_carry(&Self::MODULUS);
+                        c.montgomery_form.checked_add_assign(&Self::MODULUS);
                     c.montgomery_form.div2();
                     if !Self::HAS_MODULUS_SPARE_BIT && carry {
                         c.montgomery_form.limbs[N - 1] |= 1 << 63;
@@ -190,10 +190,10 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
             }
 
             if v < u {
-                u.sub_with_borrow(&v);
+                u.checked_sub_assign(&v);
                 b -= &c;
             } else {
-                v.sub_with_borrow(&u);
+                v.checked_sub_assign(&u);
                 c -= &b;
             }
         }
@@ -337,7 +337,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline(always)]
     fn subtract_modulus(&mut self) {
         if self.is_geq_modulus() {
-            self.montgomery_form.sub_with_borrow(&Self::MODULUS);
+            self.montgomery_form.checked_sub_assign(&Self::MODULUS);
         }
     }
 
@@ -359,7 +359,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         if P::HAS_MODULUS_SPARE_BIT {
             res.ct_subtract_modulus()
         } else {
-            res.ct_subtract_modulus_with_carry(carry)
+            res.ct_carrying_sub_modulus(carry)
         }
     }
 
@@ -368,9 +368,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     #[inline(always)]
-    fn subtract_modulus_with_carry(&mut self, carry: bool) {
+    fn carrying_sub_modulus(&mut self, carry: bool) {
         if carry || self.is_geq_modulus() {
-            self.montgomery_form.sub_with_borrow(&Self::MODULUS);
+            self.montgomery_form.checked_sub_assign(&Self::MODULUS);
         }
     }
 
@@ -464,7 +464,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     #[inline]
-    const fn ct_subtract_modulus_with_carry(mut self, carry: bool) -> Self {
+    const fn ct_carrying_sub_modulus(mut self, carry: bool) -> Self {
         if carry || !self.ct_is_valid() {
             self.montgomery_form =
                 Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
@@ -473,7 +473,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     const fn sub_with_borrow(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
-        a.ct_sub_with_borrow(b).0
+        a.ct_checked_sub(b).0
     }
 }
 
