@@ -10,7 +10,10 @@ use e2e::{
     Revert,
 };
 use eyre::Result;
-use mock::{erc20, erc20::ERC20Mock};
+use mock::{
+    erc20, erc20::ERC20Mock, erc20_failing_transfer,
+    erc20_failing_transfer::ERC20FailingTransferMock,
+};
 
 use crate::Erc4626Example::constructorCall;
 
@@ -1086,7 +1089,6 @@ mod max_withdraw {
             contract_addr,
             assets_to_deposit_bob
         ))?;
-
         _ = watch!(contract_bob.mint(shares_to_mint, bob.address()))?;
 
         let max =
@@ -1123,6 +1125,8 @@ mod max_withdraw {
         Ok(())
     }
 
+    // Cannot test when denominator overflows, as amount of shares is always >=
+    // amount of assets
     #[e2e::test]
     async fn reverts_when_multiplier_overflows_during_conversion(
         alice: Account,
@@ -1140,9 +1144,6 @@ mod max_withdraw {
 
         Ok(())
     }
-
-    // Cannot test when denominator overflows, as amount of shares is always >=
-    // amount of assets
 
     // TODO: add test for decimal offset overflow
 }
@@ -1254,6 +1255,171 @@ mod preview_withdraw {
 
 mod withdraw {
     use super::*;
+
+    #[e2e::test]
+    async fn reverts_when_exceeds_max_withdraw(alice: Account) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let shares_to_mint = uint!(10_U256);
+        let assets_to_deposit = uint!(1010_U256);
+        let assets_to_withdraw = uint!(1011_U256); // More than deposited
+
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Mint shares
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        let max_withdraw =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+
+        let err = send!(contract.withdraw(
+            assets_to_withdraw,
+            alice.address(),
+            alice.address()
+        ))
+        .expect_err("should fail due to exceeding max withdraw");
+
+        assert!(err.reverted_with(Erc4626::ERC4626ExceededMaxWithdraw {
+            owner: alice.address(),
+            assets: assets_to_withdraw,
+            max: max_withdraw
+        }));
+        assert_eq!(assets_to_deposit, max_withdraw);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_caller_lacks_allowance(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let shares_to_mint = uint!(10_U256);
+        let assets_to_deposit = uint!(1010_U256);
+        let shares_to_redeem = uint!(1_U256);
+        let assets_to_withdraw = uint!(101_U256);
+
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let bob_contract = Erc4626::new(contract_addr, &bob.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Mint shares to alice
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        // Bob tries to withdraw without allowance
+        let err = send!(bob_contract.withdraw(
+            assets_to_withdraw,
+            bob.address(),
+            alice.address()
+        ))
+        .expect_err("should fail due to insufficient allowance");
+
+        assert!(err.reverted_with(Erc4626::ERC20InsufficientAllowance {
+            spender: bob.address(),
+            allowance: U256::ZERO,
+            needed: shares_to_redeem
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_withdrawing_from_zero_address(
+        alice: Account,
+    ) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.withdraw(
+            U256::ZERO,
+            alice.address(),
+            Address::ZERO
+        ))
+        .expect_err("should fail due to invalid approver");
+
+        assert!(err.reverted_with(Erc4626::ERC20InvalidApprover {
+            approver: Address::ZERO
+        }));
+
+        let err = send!(contract.withdraw(
+            uint!(1_U256),
+            alice.address(),
+            Address::ZERO
+        ))
+        .expect_err("should fail due to exceeding max withdraw");
+
+        assert!(err.reverted_with(Erc4626::ERC4626ExceededMaxWithdraw {
+            owner: Address::ZERO,
+            assets: uint!(1_U256),
+            max: U256::ZERO
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_transfer_fails(alice: Account) -> Result<()> {
+        let shares_to_mint = uint!(10_U256);
+        let assets_to_deposit = shares_to_mint;
+        let assets_to_withdraw = uint!(1_U256);
+
+        // Deploy failing ERC20
+        let failing_asset_addr =
+            erc20_failing_transfer::deploy(&alice.wallet).await?;
+        let failing_asset =
+            ERC20FailingTransferMock::new(failing_asset_addr, &alice.wallet);
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(failing_asset_addr))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        // Setup failing asset
+        _ = watch!(failing_asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(failing_asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        let err = send!(contract.withdraw(
+            assets_to_withdraw,
+            alice.address(),
+            alice.address()
+        ))
+        .expect_err("should fail due to failed transfer");
+
+        assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
+            token: failing_asset_addr
+        }));
+
+        Ok(())
+    }
+}
+
+mod withdraw2 {
+    use super::*;
     #[e2e::test]
     async fn reverts_when_invalid_asset(
         alice: Account,
@@ -1286,8 +1452,6 @@ mod withdraw {
     // TODO: withdraw InsufficientAllowance E2E test
 
     // TODO: withdraw InvalidSender E2E test
-
-    // TODO: withdraw InsufficientBalance E2E test
 
     // TODO: withdraw SafeErc20FailedOperation E2E test
 
