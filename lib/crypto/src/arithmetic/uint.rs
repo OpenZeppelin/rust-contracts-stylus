@@ -434,8 +434,6 @@ impl_from_primitive!(u64, from_u64);
 impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
 
-// TODO#q: add conversion into u8..u64
-
 // ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
