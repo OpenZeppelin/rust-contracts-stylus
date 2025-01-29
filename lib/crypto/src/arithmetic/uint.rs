@@ -371,6 +371,7 @@ macro_rules! impl_ct_from_primitive {
             #[doc = stringify!($int)]
             #[doc = "integer (constant)."]
             #[must_use]
+            #[allow(clippy::cast_lossless)]
             pub const fn $func_name(val: $int) -> Self {
                 assert!(N >= 1, "number of limbs must be greater than zero");
                 let mut repr = Self::ZERO;
@@ -391,6 +392,8 @@ impl_ct_from_primitive!(usize, from_usize);
 impl<const N: usize> Uint<N> {
     /// Create a [`Uint`] from a `u128` integer (constant).
     #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_lossless)]
     pub const fn from_u128(val: u128) -> Self {
         assert!(N >= 1, "number of limbs must be greater than zero");
 

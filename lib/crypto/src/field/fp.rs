@@ -350,7 +350,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline]
     #[must_use]
     pub const fn new(element: Uint<N>) -> Self {
-        let mut r = Self { montgomery_form: element, phantom: PhantomData };
+        let r = Self { montgomery_form: element, phantom: PhantomData };
         if r.ct_is_zero() {
             r
         } else {
@@ -360,11 +360,11 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
 
     /// Multiply `self` to `rhs` and return the result (constant).
     const fn ct_mul(&self, rhs: &Self) -> Self {
-        let (carry, res) = self.ct_mul_without_cond_subtract(rhs);
+        let (carry, result) = self.ct_mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
-            res.ct_subtract_modulus()
+            result.ct_subtract_modulus()
         } else {
-            res.ct_carrying_sub_modulus(carry)
+            result.ct_carrying_sub_modulus(carry)
         }
     }
 
