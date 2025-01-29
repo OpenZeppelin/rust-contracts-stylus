@@ -703,8 +703,6 @@ pub trait IErc4626 {
     ///   lacks sufficient allowance for shares.
     /// * [`erc20::Error::InvalidSender`] - If `owner` address is
     ///   `Address::ZERO` when burning shares.
-    /// * [`erc20::Error::InsufficientBalance`] - If `owner` lacks sufficient
-    ///   share balance.
     /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If underlying token
     ///   transfer fails or returns false.
     ///
@@ -1254,9 +1252,9 @@ impl Erc4626 {
     ///
     /// # Errors
     ///
-    /// * [`erc20::Error::InsufficientAllowance`] - If caller needs allowance.
-    /// * [`erc20::Error::InvalidSender`] - If owner is `Address::ZERO`.
-    /// * [`erc20::Error::InsufficientBalance`] - If owner lacks shares.
+    /// * [`erc20::Error::InsufficientAllowance`] - If `caller` needs allowance.
+    /// * [`erc20::Error::InvalidSender`] - If `owner` is `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientBalance`] - If `owner` lacks shares.
     /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If transfer fails.
     ///
     /// # Events
