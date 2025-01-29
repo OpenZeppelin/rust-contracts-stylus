@@ -8,7 +8,6 @@ use core::{
     },
 };
 
-use num_bigint::BigUint;
 use num_traits::{ConstZero, Zero};
 use zeroize::Zeroize;
 
@@ -480,23 +479,6 @@ impl<const N: usize> AsRef<[u64]> for Uint<N> {
     #[inline]
     fn as_ref(&self) -> &[u64] {
         &self.limbs
-    }
-}
-
-// TODO#q: remove num_bigint::BigUint conversion
-impl<const N: usize> From<Uint<N>> for BigUint {
-    #[inline]
-    fn from(val: Uint<N>) -> num_bigint::BigUint {
-        BigUint::from_bytes_le(&val.into_bytes_le())
-    }
-}
-
-impl<const N: usize> From<Uint<N>> for num_bigint::BigInt {
-    #[inline]
-    fn from(val: Uint<N>) -> num_bigint::BigInt {
-        use num_bigint::Sign;
-        let sign = if val.is_zero() { Sign::NoSign } else { Sign::Plus };
-        num_bigint::BigInt::from_bytes_le(sign, &val.into_bytes_le())
     }
 }
 

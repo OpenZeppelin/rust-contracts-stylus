@@ -14,9 +14,6 @@ num-traits.workspace = true
 zeroize.workspace = true
 educe.workspace = true
 hex-literal.workspace = true
-# TODO#q: have num-bigint dependency optional
-num-bigint.workspace = true
-# TODO#q: add an optional dependency ruint with conversions
 
 [dev-dependencies]
 rand.workspace = true
