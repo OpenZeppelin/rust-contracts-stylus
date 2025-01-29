@@ -1416,6 +1416,254 @@ mod withdraw {
 
         Ok(())
     }
+
+    #[e2e::test]
+    async fn reverts_when_calculation_overflows(alice: Account) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Mint maximum shares
+        _ = watch!(asset.mint(alice.address(), U256::MAX))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            U256::MAX
+        ))?;
+        _ = watch!(contract.mint(U256::MAX, alice.address()))?;
+
+        let err = send!(contract.withdraw(
+            U256::MAX,
+            alice.address(),
+            alice.address()
+        ))
+        .expect_err("should panic due to overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn succeeds_with_no_initial_assets(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let shares_to_mint = uint!(10_U256);
+        let assets_to_deposit = shares_to_mint;
+        let assets_to_withdraw = uint!(5_U256);
+
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Initial state check
+        let initial_max_withdraw =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        assert_eq!(U256::ZERO, initial_max_withdraw);
+
+        // Mint shares
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        assert_eq!(U256::ZERO, alice_balance);
+        assert_eq!(U256::ZERO, bob_balance);
+
+        // Perform withdrawal
+        let receipt = receipt!(contract.withdraw(
+            assets_to_withdraw,
+            alice.address(),
+            alice.address()
+        ))?;
+
+        // Verify event
+        assert!(receipt.emits(Erc4626::Withdraw {
+            sender: alice.address(),
+            receiver: alice.address(),
+            owner: alice.address(),
+            assets: assets_to_withdraw,
+            shares: assets_to_withdraw, // 1:1 ratio expected
+        }));
+
+        // Verify updated state
+        let final_max_withdraw =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let final_max_redeem =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(assets_to_deposit - assets_to_withdraw, final_max_withdraw);
+        assert_eq!(shares_to_mint - assets_to_withdraw, final_max_redeem);
+
+        // Perform withdrawal to a different recipient
+        let receipt = receipt!(contract.withdraw(
+            assets_to_withdraw,
+            bob.address(),
+            alice.address()
+        ))?;
+
+        // Verify event
+        assert!(receipt.emits(Erc4626::Withdraw {
+            sender: alice.address(),
+            receiver: bob.address(),
+            owner: alice.address(),
+            assets: assets_to_withdraw,
+            shares: assets_to_withdraw, // 1:1 ratio expected
+        }));
+
+        // Verify final state
+        let final_max_withdraw =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let final_max_redeem =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(U256::ZERO, final_max_withdraw);
+        assert_eq!(U256::ZERO, final_max_redeem);
+
+        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        assert_eq!(assets_to_withdraw, alice_balance);
+        assert_eq!(assets_to_withdraw, bob_balance);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn succeeds_with_initial_assets(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let shares_to_mint = uint!(10_U256);
+        let assets_to_deposit = uint!(1010_U256);
+        let shares_to_redeem = uint!(1_U256);
+        let assets_to_withdraw = uint!(101_U256);
+
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Initial state check
+        let initial_total_assets =
+            contract.totalAssets().call().await?.totalAssets;
+        assert_eq!(initial_assets, initial_total_assets);
+
+        // Mint shares
+        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets_to_deposit
+        ))?;
+        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+
+        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        assert_eq!(U256::ZERO, alice_balance);
+        assert_eq!(U256::ZERO, bob_balance);
+
+        let pre_withdraw_assets =
+            contract.totalAssets().call().await?.totalAssets;
+
+        // Perform withdrawal
+        let receipt = receipt!(contract.withdraw(
+            assets_to_withdraw,
+            alice.address(),
+            alice.address()
+        ))?;
+
+        // Verify event
+        assert!(receipt.emits(Erc4626::Withdraw {
+            sender: alice.address(),
+            receiver: alice.address(),
+            owner: alice.address(),
+            assets: assets_to_withdraw,
+            shares: shares_to_redeem,
+        }));
+
+        let post_withdraw_assets =
+            contract.totalAssets().call().await?.totalAssets;
+        assert_eq!(
+            pre_withdraw_assets - assets_to_withdraw,
+            post_withdraw_assets
+        );
+
+        let pre_withdraw_assets = post_withdraw_assets;
+
+        // Perform withdrawal to different recipient
+        let receipt = receipt!(contract.withdraw(
+            assets_to_withdraw,
+            bob.address(),
+            alice.address()
+        ))?;
+
+        // Verify event
+        assert!(receipt.emits(Erc4626::Withdraw {
+            sender: alice.address(),
+            receiver: bob.address(),
+            owner: alice.address(),
+            assets: assets_to_withdraw,
+            shares: shares_to_redeem,
+        }));
+
+        // Verify final state
+        let post_withdraw_assets =
+            contract.totalAssets().call().await?.totalAssets;
+        assert_eq!(
+            pre_withdraw_assets - assets_to_withdraw,
+            post_withdraw_assets
+        );
+
+        let final_max_withdraw =
+            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let final_max_redeem =
+            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        assert_eq!(
+            assets_to_deposit - assets_to_withdraw - assets_to_withdraw,
+            final_max_withdraw
+        );
+        assert_eq!(
+            shares_to_mint - shares_to_redeem - shares_to_redeem,
+            final_max_redeem
+        );
+
+        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        assert_eq!(assets_to_withdraw, alice_balance);
+        assert_eq!(assets_to_withdraw, bob_balance);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_for_invalid_asset(alice: Account) -> Result<()> {
+        let invalid_asset = alice.address();
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctr(invalid_asset))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.withdraw(
+            uint!(100_U256),
+            alice.address(),
+            alice.address()
+        ))
+        .expect_err("should return `InvalidAsset`");
+
+        assert!(
+            err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset })
+        );
+
+        Ok(())
+    }
 }
 
 mod withdraw2 {
