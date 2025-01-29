@@ -667,15 +667,6 @@ impl_int_from_fp!(i32);
 impl_int_from_fp!(i16);
 impl_int_from_fp!(i8);
 
-// TODO#q: implement random for Fp
-/*#[cfg(test)]
-impl<P: FpParams<N>, const N: usize> Random for Fp<P, N> {
-    #[inline]
-    fn random(rng: &mut impl rand_core::CryptoRngCore) -> Self {
-        Fp { residue: Residue::<ResidueParam<P, N>, N>::random(rng) }
-    }
-}*/
-
 /// Outputs a string containing the value of `self`,
 /// represented as a decimal without leading zeroes.
 impl<P: FpParams<N>, const N: usize> Display for Fp<P, N> {

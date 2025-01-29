@@ -1,6 +1,3 @@
-//  TODO#q: Odd<Uint<N>> - Odd numbers.
-//  TODO#q: NonZero<Uint<N>> - Non zero numbers for division.
-
 use core::{
     borrow::Borrow,
     fmt::{Debug, Display, UpperHex},
@@ -417,6 +414,8 @@ impl_from_primitive!(u64, from_u64);
 impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
 
+// TODO#q: add conversion into u8..u64
+
 // ----------- Traits Impls -----------
 
 // TODO#q: add hex display logic and proptests
@@ -476,13 +475,6 @@ impl<const N: usize> AsRef<[u64]> for Uint<N> {
         &self.limbs
     }
 }
-
-// TODO#q: Implement rand Distribution
-/*impl<const N: usize> Distribution<BigInt<N>> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BigInt<N> {
-        BigInt([(); N].map(|_| rng.gen()))
-    }
-}*/
 
 // TODO#q: remove num_bigint::BigUint conversion
 impl<const N: usize> From<Uint<N>> for BigUint {
