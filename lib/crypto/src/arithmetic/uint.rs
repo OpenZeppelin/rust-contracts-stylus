@@ -814,25 +814,35 @@ pub struct WideUint<const N: usize> {
 }
 
 impl<const N: usize> WideUint<N> {
+    /// Construct new [`WideUint`] from `low` and `high` parts.
     pub const fn new(low: Uint<N>, high: Uint<N>) -> Self {
         Self { low, high }
     }
 
-    /// Compute reminder of division of `self` by `rhs`.
+    /// Compute a reminder of division `self` by `rhs` (constant).
+    ///
+    /// Basic division algorithm based on [wiki].
+    /// Fine to be used for constant evaluation, but slow in runtime.
+    ///
+    /// [wiki]: https://en.wikipedia.org/wiki/Division_algorithm
     pub const fn ct_rem(&self, rhs: &Uint<N>) -> Uint<N> {
         assert!(!rhs.ct_is_zero(), "should not divide by zero");
 
         let mut remainder = Uint::<N>::ZERO;
+
+        // Start with the last bit.
         let mut index = self.ct_num_bits() - 1;
-        let mut carry = false;
         loop {
-            (remainder, carry) = remainder.ct_checked_mul2();
+            // Shift the remainder to the left by 1,
+            let (res, carry) = remainder.ct_checked_mul2();
+            remainder = res;
+
+            // and set the first bit to reminder from the dividend.
             remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
+
+            // If the remainder overflows, subtract the divisor.
             if remainder.ct_geq(rhs) || carry {
-                let (r, borrow) = remainder.ct_checked_sub(rhs);
-                remainder = r;
-                // TODO#q: add doc comment and describe ct_rem
-                assert!(borrow == carry);
+                (remainder, _) = remainder.ct_checked_sub(rhs);
             }
 
             if index == 0 {
@@ -843,7 +853,6 @@ impl<const N: usize> WideUint<N> {
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
-    #[doc(hidden)]
     pub const fn ct_num_bits(&self) -> usize {
         let high_num_bits = self.high.ct_num_bits();
         if high_num_bits == 0 {
@@ -869,10 +878,11 @@ mod test {
 
     use crate::{
         arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint},
+            uint::{from_str_hex, from_str_radix, Uint, WideUint},
             *,
         },
         bits::BitIteratorBE,
+        fp_from_num,
     };
 
     #[test]
@@ -942,5 +952,14 @@ mod test {
         let words: [Limb; 4] = [0b11, 0b11, 0b11, 0b11];
         let num = Uint::<4>::new(words);
         assert_eq!(num.num_bits(), 64 + 64 + 64 + 2);
+    }
+
+    #[test]
+    fn ct_rem() {
+        let dividend = from_num!("43129923721897334698312931");
+        let divisor = from_num!("375923422");
+        let result =
+            WideUint::<4>::new(dividend, Uint::<4>::ZERO).ct_rem(&divisor);
+        assert_eq!(result, from_num!("216456157"));
     }
 }
