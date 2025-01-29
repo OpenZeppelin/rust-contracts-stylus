@@ -1298,6 +1298,29 @@ mod withdraw {
     }
 
     #[e2e::test]
+    async fn reverts_when_withdrawing_from_empty_vault(
+        alice: Account,
+    ) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.withdraw(
+            uint!(100_U256),
+            alice.address(),
+            alice.address()
+        ))
+        .expect_err("should fail due to empty vault");
+
+        assert!(err.reverted_with(Erc4626::ERC4626ExceededMaxWithdraw {
+            owner: alice.address(),
+            assets: uint!(100_U256),
+            max: U256::ZERO
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
     async fn reverts_when_caller_lacks_allowance(
         alice: Account,
         bob: Account,
@@ -1661,6 +1684,156 @@ mod withdraw {
         assert!(
             err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset })
         );
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn succeeds_with_multiple_holders_no_initial_assets(
+        alice: Account,
+        bob: Account,
+        charlie: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
+        let contract_bob = Erc4626::new(contract_addr, &bob.wallet);
+        let contract_charlie = Erc4626::new(contract_addr, &charlie.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Mint and approve for all users
+        for user in [&alice, &bob, &charlie] {
+            _ = watch!(asset.mint(user.address(), uint!(1000_U256)))?;
+            _ = watch!(asset.regular_approve(
+                user.address(),
+                contract_addr,
+                uint!(1000_U256)
+            ))?;
+        }
+
+        // Each user deposits different amounts
+        _ = watch!(contract_alice.mint(uint!(100_U256), alice.address()))?;
+        _ = watch!(contract_bob.mint(uint!(200_U256), bob.address()))?;
+        _ = watch!(contract_charlie.mint(uint!(300_U256), charlie.address()))?;
+
+        // Each user withdraws different percentages
+        _ = watch!(contract_alice.withdraw(
+            uint!(50_U256),
+            alice.address(),
+            alice.address()
+        ))?; // 50% for alice
+        _ = watch!(contract_bob.withdraw(
+            uint!(100_U256),
+            bob.address(),
+            bob.address()
+        ))?; // 50% for bob
+        _ = watch!(contract_charlie.withdraw(
+            uint!(300_U256),
+            charlie.address(),
+            charlie.address()
+        ))?; // 100% for charlie
+
+        // Verify final balances
+        assert_eq!(
+            uint!(50_U256),
+            contract_alice
+                .maxWithdraw(alice.address())
+                .call()
+                .await?
+                .maxWithdraw
+        );
+        assert_eq!(
+            uint!(100_U256),
+            contract_alice.maxWithdraw(bob.address()).call().await?.maxWithdraw
+        );
+        assert_eq!(
+            U256::ZERO,
+            contract_alice
+                .maxWithdraw(charlie.address())
+                .call()
+                .await?
+                .maxWithdraw
+        );
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn succeeds_with_multiple_holders_with_initial_assets(
+        alice: Account,
+        bob: Account,
+        charlie: Account,
+    ) -> Result<()> {
+        let initial_assets = uint!(100_U256);
+        let (contract_addr, asset_addr) =
+            deploy(&alice, initial_assets).await?;
+        let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
+        let contract_bob = Erc4626::new(contract_addr, &bob.wallet);
+        let contract_charlie = Erc4626::new(contract_addr, &charlie.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        // Record initial total assets
+        let initial_total =
+            contract_alice.totalAssets().call().await?.totalAssets;
+
+        // Mint and approve for all users
+        for user in [&alice, &bob, &charlie] {
+            _ = watch!(asset.mint(user.address(), uint!(10000_U256)))?;
+            _ = watch!(asset.regular_approve(
+                user.address(),
+                contract_addr,
+                uint!(10000_U256)
+            ))?;
+        }
+
+        // Each user deposits different amounts
+        _ = watch!(contract_alice.mint(uint!(10_U256), alice.address()))?;
+        _ = watch!(contract_bob.mint(uint!(20_U256), bob.address()))?;
+        _ = watch!(contract_charlie.mint(uint!(30_U256), charlie.address()))?;
+
+        // Verify share distribution considers initial assets
+        let alice_assets_before = contract_alice
+            .maxWithdraw(alice.address())
+            .call()
+            .await?
+            .maxWithdraw;
+        let bob_assets_before =
+            contract_alice.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        let charlie_assets_before = contract_alice
+            .maxWithdraw(charlie.address())
+            .call()
+            .await?
+            .maxWithdraw;
+
+        // Each user withdraws
+        _ = watch!(contract_alice.withdraw(
+            alice_assets_before,
+            alice.address(),
+            alice.address()
+        ))?; // 100%
+        _ = watch!(contract_bob.withdraw(
+            uint!(1010_U256),
+            bob.address(),
+            bob.address()
+        ))?; // 50%
+        _ = watch!(contract_charlie.withdraw(
+            charlie_assets_before,
+            charlie.address(),
+            charlie.address()
+        ))?; // 100%
+
+        // Verify proportional distribution of initial assets was maintained
+        let remaining_bob =
+            contract_alice.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        assert_eq!(bob_assets_before - uint!(1010_U256), remaining_bob);
+
+        // Verify total assets consistency
+        let final_total =
+            contract_alice.totalAssets().call().await?.totalAssets;
+        let expected_remaining = initial_total + uint!(6060_U256)
+            - alice_assets_before
+            - uint!(1010_U256)
+            - charlie_assets_before;
+        assert_eq!(expected_remaining, final_total);
 
         Ok(())
     }
