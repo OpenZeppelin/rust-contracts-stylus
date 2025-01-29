@@ -407,7 +407,7 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares = contract.previewDeposit(U256::ZERO).call().await?.deposit;
+        let shares = contract.previewDeposit(U256::ZERO).call().await?.shares;
         assert_eq!(U256::ZERO, shares);
 
         Ok(())
@@ -422,10 +422,10 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let deposit =
-            contract.previewDeposit(assets_to_convert).call().await?.deposit;
+        let shares =
+            contract.previewDeposit(assets_to_convert).call().await?.shares;
 
-        assert_eq!(U256::ZERO, deposit);
+        assert_eq!(U256::ZERO, shares);
 
         Ok(())
     }
@@ -438,10 +438,10 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let deposit =
-            contract.previewDeposit(assets_to_convert).call().await?.deposit;
+        let shares =
+            contract.previewDeposit(assets_to_convert).call().await?.shares;
 
-        assert_eq!(assets_to_convert, deposit);
+        assert_eq!(assets_to_convert, shares);
 
         Ok(())
     }
@@ -455,11 +455,11 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let expected_deposit = uint!(1_U256);
-        let deposit =
-            contract.previewDeposit(assets_to_convert).call().await?.deposit;
+        let expected_shares = uint!(1_U256);
+        let shares =
+            contract.previewDeposit(assets_to_convert).call().await?.shares;
 
-        assert_eq!(expected_deposit, deposit);
+        assert_eq!(expected_shares, shares);
 
         Ok(())
     }
@@ -1385,10 +1385,50 @@ mod preview_redeem {
 
         Ok(())
     }
+    #[e2e::test]
+    async fn returns_zero_shares_to_zero_assets(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-    // TODO: preview_redeem overflows E2E test
+        let assets = contract.previewRedeem(U256::ZERO).call().await?.assets;
+        assert_eq!(U256::ZERO, assets);
 
-    // TODO: preview_redeem success E2E test
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_more_assets_than_expected_when_no_shares_were_ever_minted(
+        alice: Account,
+    ) -> Result<()> {
+        let tokens = uint!(100_U256);
+
+        let (contract_addr, _asset_addr) = deploy(&alice, tokens).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let shares = uint!(69_U256);
+        let expected_assets = uint!(6969_U256);
+
+        let assets = contract.previewRedeem(shares).call().await?.assets;
+
+        assert_eq!(assets, expected_assets);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_overflows(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .previewRedeem(U256::MAX)
+            .call()
+            .await
+            .expect_err("should return `Overflow`");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
 }
 
 mod redeem {
