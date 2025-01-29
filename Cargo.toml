@@ -25,7 +25,6 @@ members = [
   "examples/ownable-two-step",
   "examples/safe-erc20",
   "benches",
-  "examples/oz-crypto",
   "examples/poseidon",
 ]
 default-members = [
@@ -51,7 +50,6 @@ default-members = [
   "examples/access-control",
   "examples/basic/token",
   "examples/ecdsa",
-  "examples/oz-crypto",
   "examples/poseidon",
 ]
 

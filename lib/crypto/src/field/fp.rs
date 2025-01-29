@@ -162,7 +162,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let mut c = Fp::zero();
 
         while u != one && v != one {
-            // TODO#q: Inverse consumes incredible amount of gas
             while u.is_even() {
                 u.div2_assign();
 
