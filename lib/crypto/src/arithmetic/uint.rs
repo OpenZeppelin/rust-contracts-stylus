@@ -477,32 +477,6 @@ impl<const N: usize> AsRef<[u64]> for Uint<N> {
     }
 }
 
-// TODO#q: implement conversions in as similar way to or use constant from_u32
-//  functions
-// impl_try_from_upper_bounded!(u128 => u8, u16, u32, u64);  as in std
-/*
-impl<const N: usize> From<u128> for BigInt<N> {
-    fn from(value: u128) -> Self {
-        let result = Limb::try_from(value);
-        if u128::BITS > BigInt::BITS {
-            panic!("u128 is too large to fit in BigInt");
-        }
-    }
-}
-
-impl<const N: usize> TryFrom<u128> for BigInt<N> {
-    type Error = TryFromIntError;
-
-    fn try_from(value: u128) -> Result<Self, Self::Error> {
-        if u128::BITS > BigInt::BITS {
-            Limb::try_from(value).map(|limb| limb.into())
-        } else {
-            unimplemented!()
-        }
-    }
-}
-*/
-
 // TODO#q: Implement rand Distribution
 /*impl<const N: usize> Distribution<BigInt<N>> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BigInt<N> {
