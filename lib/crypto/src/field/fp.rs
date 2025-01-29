@@ -813,69 +813,58 @@ impl<P: FpParams<N>, const N: usize> SubAssign<&Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Add<Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
     fn add(mut self, other: Self) -> Self {
-        use AddAssign;
         self.add_assign(&other);
         self
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Add<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
     fn add(mut self, other: &mut Self) -> Self {
-        use AddAssign;
         self.add_assign(&*other);
         self
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Sub<Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
     fn sub(mut self, other: Self) -> Self {
-        use SubAssign;
         self.sub_assign(&other);
         self
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Sub<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
     fn sub(mut self, other: &mut Self) -> Self {
-        use SubAssign;
         self.sub_assign(&*other);
         self
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Sum<Self> for Fp<P, N> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
     }
 }
 
-#[allow(unused_qualifications)]
 impl<'a, P: FpParams<N>, const N: usize> Sum<&'a Self> for Fp<P, N> {
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> AddAssign<Self> for Fp<P, N> {
     #[inline]
     fn add_assign(&mut self, other: Self) {
@@ -883,7 +872,6 @@ impl<P: FpParams<N>, const N: usize> AddAssign<Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> SubAssign<Self> for Fp<P, N> {
     #[inline]
     fn sub_assign(&mut self, other: Self) {
@@ -891,7 +879,6 @@ impl<P: FpParams<N>, const N: usize> SubAssign<Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> AddAssign<&mut Self> for Fp<P, N> {
     #[inline]
     fn add_assign(&mut self, other: &mut Self) {
@@ -899,7 +886,6 @@ impl<P: FpParams<N>, const N: usize> AddAssign<&mut Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> SubAssign<&mut Self> for Fp<P, N> {
     #[inline]
     fn sub_assign(&mut self, other: &mut Self) {
@@ -919,24 +905,20 @@ impl<P: FpParams<N>, const N: usize> MulAssign<&Self> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> DivAssign<&Self> for Fp<P, N> {
     #[inline]
     fn div_assign(&mut self, other: &Self) {
-        use MulAssign;
         self.mul_assign(&other.inverse().expect("should not divide by zero"));
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Mul<Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
     fn mul(mut self, other: Self) -> Self {
-        use MulAssign;
         self.mul_assign(&other);
         self
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Div<Self> for Fp<P, N> {
     type Output = Self;
 
@@ -948,45 +930,38 @@ impl<P: FpParams<N>, const N: usize> Div<Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Mul<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
     fn mul(mut self, other: &mut Self) -> Self {
-        use MulAssign;
         self.mul_assign(&*other);
         self
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Div<&mut Self> for Fp<P, N> {
     type Output = Self;
 
     #[inline]
     fn div(mut self, other: &mut Self) -> Self {
-        use DivAssign;
         self.div_assign(&*other);
         self
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> Product<Self> for Fp<P, N> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::one(), Mul::mul)
     }
 }
 
-#[allow(unused_qualifications)]
 impl<'a, P: FpParams<N>, const N: usize> Product<&'a Self> for Fp<P, N> {
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::one(), Mul::mul)
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> MulAssign<Self> for Fp<P, N> {
     #[inline]
     fn mul_assign(&mut self, other: Self) {
@@ -994,7 +969,6 @@ impl<P: FpParams<N>, const N: usize> MulAssign<Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> DivAssign<&mut Self> for Fp<P, N> {
     #[inline]
     fn div_assign(&mut self, other: &mut Self) {
@@ -1002,7 +976,6 @@ impl<P: FpParams<N>, const N: usize> DivAssign<&mut Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> MulAssign<&mut Self> for Fp<P, N> {
     #[inline]
     fn mul_assign(&mut self, other: &mut Self) {
@@ -1010,7 +983,6 @@ impl<P: FpParams<N>, const N: usize> MulAssign<&mut Self> for Fp<P, N> {
     }
 }
 
-#[allow(unused_qualifications)]
 impl<P: FpParams<N>, const N: usize> DivAssign<Self> for Fp<P, N> {
     #[inline]
     fn div_assign(&mut self, other: Self) {
