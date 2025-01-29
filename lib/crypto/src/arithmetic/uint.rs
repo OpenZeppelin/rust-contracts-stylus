@@ -860,8 +860,8 @@ impl<const N: usize> WideUint<N> {
         let mut index = self.ct_num_bits() - 1;
         loop {
             // Shift the remainder to the left by 1,
-            let (res, carry) = remainder.ct_checked_mul2();
-            remainder = res;
+            let (result, carry) = remainder.ct_checked_mul2();
+            remainder = result;
 
             // and set the first bit to reminder from the dividend.
             remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
