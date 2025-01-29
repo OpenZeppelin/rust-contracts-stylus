@@ -1,8 +1,8 @@
-use alloc::{format, string::String};
+use alloc::string::String;
 use core::{
     borrow::Borrow,
     cmp::Ordering,
-    fmt::{Debug, Display, Result, UpperHex},
+    fmt::{Debug, Display, Result, UpperHex, Write},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
         Shl, ShlAssign, Shr, ShrAssign,
@@ -59,16 +59,19 @@ declare_num!(U768, 768);
 declare_num!(U832, 832);
 
 impl<const N: usize> Uint<N> {
+    #[must_use]
     pub const fn new(value: [Limb; N]) -> Self {
         Self { limbs: value }
     }
 
+    #[must_use]
     pub const fn as_limbs(&self) -> &[Limb; N] {
         &self.limbs
     }
 
     #[doc(hidden)]
     #[inline]
+    #[must_use]
     pub const fn ct_is_odd(&self) -> bool {
         self.limbs[0] & 1 == 1
     }
@@ -92,6 +95,7 @@ impl<const N: usize> Uint<N> {
         true
     }
 
+    #[must_use]
     pub const fn ct_ge(&self, rhs: &Self) -> bool {
         ct_for!((i in 0..N) {
             if self.limbs[i] < rhs.limbs[i] {
@@ -103,10 +107,12 @@ impl<const N: usize> Uint<N> {
         true
     }
 
+    #[must_use]
     pub const fn ct_is_zero(&self) -> bool {
         self.ct_eq(&Self::ZERO)
     }
 
+    #[must_use]
     pub const fn ct_eq(&self, rhs: &Self) -> bool {
         ct_for!((i in 0..N) {
             if self.limbs[i] != rhs.limbs[i] {
@@ -119,6 +125,7 @@ impl<const N: usize> Uint<N> {
     /// Compute a right shift of `self`
     /// This is equivalent to a (saturating) division by 2.
     #[doc(hidden)]
+    #[must_use]
     pub const fn ct_shr(&self) -> Self {
         let mut result = *self;
         let mut t = 0;
@@ -134,6 +141,7 @@ impl<const N: usize> Uint<N> {
 
     /// Return the minimum number of bits needed to encode this number.
     #[doc(hidden)]
+    #[must_use]
     pub const fn ct_num_bits(self) -> usize {
         // Total number of bits.
         let mut num_bits = Self::BITS;
@@ -161,6 +169,7 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Find the `i`-th bit of `self`.
+    #[must_use]
     pub const fn ct_get_bit(&self, i: usize) -> bool {
         // If `i` is more than total bits, return `false`.
         if i >= Self::BITS {
@@ -201,7 +210,7 @@ impl<const N: usize> Uint<N> {
         (self, last != 0)
     }
 
-    pub fn div2_assign(&mut self) {
+    pub(crate) fn div2_assign(&mut self) {
         let mut t = 0;
         for a in self.limbs.iter_mut().rev() {
             let t2 = *a << 63;
@@ -262,6 +271,7 @@ impl<const N: usize> Uint<N> {
     ///
     /// Returns a tuple containing the `(lo, hi)` components of the product.
     #[inline(always)]
+    #[must_use]
     pub const fn ct_widening_mul(&self, rhs: &Self) -> (Self, Self) {
         // TODO#q: document wide multiplication
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
@@ -316,6 +326,7 @@ impl<const N: usize> Uint<N> {
 
     /// Computes `a + b + carry`, returning the result along with the new carry.
     #[inline(always)]
+    #[must_use]
     pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: Limb) -> (Self, Limb) {
         let mut limbs = [Limb::ZERO; N];
 
@@ -327,6 +338,7 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Create a new [`Uint`] from the provided little endian bytes.
+    #[must_use]
     pub const fn ct_from_le_slice(bytes: &[u8]) -> Self {
         const LIMB_BYTES: usize = Limb::BITS as usize / 8;
         assert!(
@@ -357,6 +369,7 @@ macro_rules! impl_ct_from_primitive {
             #[doc = "Create a [`Uint`] from"]
             #[doc = stringify!($int)]
             #[doc = "integer (constant)."]
+            #[must_use]
             pub const fn $func_name(val: $int) -> Self {
                 assert!(N >= 1, "number of limbs must be greater than zero");
                 let mut repr = Self::ZERO;
@@ -376,6 +389,7 @@ impl_ct_from_primitive!(usize, from_usize);
 // the `Limb`.
 impl<const N: usize> Uint<N> {
     /// Create a [`Uint`] from a `u128` integer (constant).
+    #[must_use]
     pub const fn from_u128(val: u128) -> Self {
         assert!(N >= 1, "number of limbs must be greater than zero");
 
@@ -427,12 +441,11 @@ impl_from_primitive!(u128, from_u128);
 impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
         // Hex parse the limbs in reverse order.
-        let hex = self
-            .limbs
-            .iter()
-            .rev()
-            .map(|&limb| format!("{:016X}", limb))
-            .collect::<String>();
+        let hex =
+            self.limbs.iter().rev().fold(String::new(), |mut output, &limb| {
+                let _ = write!(output, "{:016X}", limb);
+                output
+            });
         write!(f, "{hex}")
     }
 }
@@ -440,13 +453,13 @@ impl<const N: usize> UpperHex for Uint<N> {
 impl<const N: usize> Display for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
         // Use upper hex by default.
-        write!(f, "{:X}", self)
+        write!(f, "{self:X}")
     }
 }
 
 impl<const N: usize> Debug for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
-        write!(f, "{}", self)
+        write!(f, "{self}")
     }
 }
 
@@ -489,7 +502,9 @@ impl<const N: usize> AsRef<[u64]> for Uint<N> {
 
 impl<B: Borrow<Self>, const N: usize> BitXorAssign<B> for Uint<N> {
     fn bitxor_assign(&mut self, rhs: B) {
-        (0..N).for_each(|i| self.limbs[i] ^= rhs.borrow().limbs[i])
+        for i in 0..N {
+            self.limbs[i] ^= rhs.borrow().limbs[i];
+        }
     }
 }
 
@@ -519,7 +534,9 @@ impl<B: Borrow<Self>, const N: usize> BitAnd<B> for Uint<N> {
 
 impl<B: Borrow<Self>, const N: usize> BitOrAssign<B> for Uint<N> {
     fn bitor_assign(&mut self, rhs: B) {
-        (0..N).for_each(|i| self.limbs[i] |= rhs.borrow().limbs[i])
+        for i in 0..N {
+            self.limbs[i] |= rhs.borrow().limbs[i];
+        }
     }
 }
 
@@ -815,6 +832,7 @@ pub struct WideUint<const N: usize> {
 
 impl<const N: usize> WideUint<N> {
     /// Construct new [`WideUint`] from `low` and `high` parts.
+    #[must_use]
     pub const fn new(low: Uint<N>, high: Uint<N>) -> Self {
         Self { low, high }
     }
@@ -825,6 +843,7 @@ impl<const N: usize> WideUint<N> {
     /// Fine to be used for constant evaluation, but slow in runtime.
     ///
     /// [wiki]: https://en.wikipedia.org/wiki/Division_algorithm
+    #[must_use]
     pub const fn ct_rem(&self, rhs: &Uint<N>) -> Uint<N> {
         assert!(!rhs.ct_is_zero(), "should not divide by zero");
 
@@ -853,6 +872,7 @@ impl<const N: usize> WideUint<N> {
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
+    #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
         let high_num_bits = self.high.ct_num_bits();
         if high_num_bits == 0 {
@@ -863,6 +883,7 @@ impl<const N: usize> WideUint<N> {
     }
 
     /// Compute the `i`-th bit of `self`.
+    #[must_use]
     pub const fn ct_get_bit(&self, i: usize) -> bool {
         if i >= Uint::<N>::BITS {
             self.high.ct_get_bit(i - Uint::<N>::BITS)

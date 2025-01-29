@@ -333,6 +333,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
 
     #[doc(hidden)]
     #[inline(always)]
+    #[must_use]
     pub fn is_geq_modulus(&self) -> bool {
         self.montgomery_form >= P::MODULUS
     }
@@ -347,6 +348,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// Construct a new field element from its underlying
     /// [`struct@Uint`] data type.
     #[inline]
+    #[must_use]
     pub const fn new(element: Uint<N>) -> Self {
         let mut r = Self { montgomery_form: element, phantom: PhantomData };
         if r.ct_is_zero() {
@@ -1064,6 +1066,7 @@ mod tests {
 
     use super::*;
     use crate::{
+        arithmetic::uint::U64,
         field::{
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
@@ -1075,7 +1078,7 @@ mod tests {
     struct Fp64Param;
     impl FpParams<LIMBS_64> for Fp64Param {
         const GENERATOR: Fp64<Fp64Param> = fp_from_num!("3");
-        const MODULUS: Uint<LIMBS_64> = from_num!("1000003"); // Prime number
+        const MODULUS: U64 = from_num!("1000003"); // Prime number
     }
 
     const MODULUS: i128 = 1000003; // Prime number
