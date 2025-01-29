@@ -1,6 +1,7 @@
 use alloc::{format, string::String};
 use core::{
     borrow::Borrow,
+    cmp::Ordering,
     fmt::{Debug, Display, Result, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
@@ -78,10 +79,10 @@ impl<const N: usize> Uint<N> {
         !self.ct_is_odd()
     }
 
-    const fn ct_geq(&self, other: &Self) -> bool {
+    const fn ct_geq(&self, rhs: &Self) -> bool {
         ct_for!((i in 0..N) {
             let a = self.limbs[N - i - 1];
-            let b = other.limbs[N - i - 1];
+            let b = rhs.limbs[N - i - 1];
             if a < b {
                 return false;
             } else if a > b {
@@ -211,11 +212,11 @@ impl<const N: usize> Uint<N> {
     }
 
     #[inline]
-    pub(crate) const fn ct_checked_sub(mut self, other: &Self) -> (Self, bool) {
+    pub(crate) const fn ct_checked_sub(mut self, rhs: &Self) -> (Self, bool) {
         let mut borrow = 0;
 
         ct_for!((i in 0..N) {
-            (self.limbs[i], borrow) = limb::sbb(self.limbs[i], other.limbs[i], borrow);
+            (self.limbs[i], borrow) = limb::sbb(self.limbs[i], rhs.limbs[i], borrow);
         });
 
         (self, borrow != 0)
@@ -223,34 +224,34 @@ impl<const N: usize> Uint<N> {
 
     #[inline]
     #[allow(dead_code)]
-    pub(crate) const fn ct_checked_add(mut self, other: &Self) -> (Self, bool) {
+    pub(crate) const fn ct_checked_add(mut self, rhs: &Self) -> (Self, bool) {
         let mut carry = 0;
 
         ct_for!((i in 0..N) {
-            (self.limbs[i], carry) = limb::adc(self.limbs[i], other.limbs[i], carry);
+            (self.limbs[i], carry) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
         });
 
         (self, carry != 0)
     }
 
     #[inline(always)]
-    pub(crate) fn checked_add_assign(&mut self, other: &Self) -> bool {
+    pub(crate) fn checked_add_assign(&mut self, rhs: &Self) -> bool {
         let mut carry = false;
 
         ct_for_unroll6!((i in 0..N) {
-            carry = limb::adc_assign(&mut self.limbs[i], other.limbs[i], carry);
+            carry = limb::adc_assign(&mut self.limbs[i], rhs.limbs[i], carry);
         });
 
         carry
     }
 
     #[inline(always)]
-    pub(crate) fn checked_sub_assign(&mut self, other: &Self) -> bool {
+    pub(crate) fn checked_sub_assign(&mut self, rhs: &Self) -> bool {
         let mut borrow = false;
 
         ct_for_unroll6!((i in 0..N) {
             borrow =
-                limb::sbb_assign(&mut self.limbs[i], other.limbs[i], borrow);
+                limb::sbb_assign(&mut self.limbs[i], rhs.limbs[i], borrow);
         });
 
         borrow
@@ -451,11 +452,10 @@ impl<const N: usize> Debug for Uint<N> {
 
 impl<const N: usize> Ord for Uint<N> {
     #[inline]
-    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        use core::cmp::Ordering;
+    fn cmp(&self, rhs: &Self) -> Ordering {
         ct_for_unroll6!((i in 0..N) {
             let a = &self.limbs[N - i - 1];
-            let b = &other.limbs[N - i - 1];
+            let b = &rhs.limbs[N - i - 1];
             match a.cmp(b) {
                 Ordering::Equal => {}
                 order => return order,
@@ -468,8 +468,8 @@ impl<const N: usize> Ord for Uint<N> {
 
 impl<const N: usize> PartialOrd for Uint<N> {
     #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        Some(self.cmp(other))
+    fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
+        Some(self.cmp(rhs))
     }
 }
 
