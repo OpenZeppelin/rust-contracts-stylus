@@ -23,7 +23,7 @@ use core::{
 };
 
 use educe::Educe;
-use num_traits::{ConstZero, One, Zero};
+use num_traits::{One, Zero};
 
 use crate::{
     arithmetic,
@@ -209,20 +209,20 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// By the end element will be converted to a montgomery form and reduced.
     #[must_use]
     #[inline(always)]
-    fn from_bigint(r: Uint<N>) -> Fp<Self, N> {
-        let mut r = Fp::new_unchecked(r);
-        if r.is_zero() {
-            r
+    fn from_bigint(num: Uint<N>) -> Fp<Self, N> {
+        let elem = Fp::new_unchecked(num);
+        if elem.is_zero() {
+            elem
         } else {
-            r * Fp::new_unchecked(Self::R2)
+            elem * Fp::new_unchecked(Self::R2)
         }
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
     #[inline(always)]
-    fn into_bigint(a: Fp<Self, N>) -> Uint<N> {
-        a.montgomery_reduction()
+    fn into_bigint(elem: Fp<Self, N>) -> Uint<N> {
+        elem.montgomery_reduction()
     }
 }
 
@@ -374,10 +374,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     #[inline(always)]
-    const fn ct_mul_without_cond_subtract(
-        mut self,
-        other: &Self,
-    ) -> (bool, Self) {
+    const fn ct_mul_without_cond_subtract(&self, other: &Self) -> (bool, Self) {
         let (lo, hi) =
             self.montgomery_form.ct_widening_mul(&other.montgomery_form);
 

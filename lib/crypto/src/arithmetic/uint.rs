@@ -8,7 +8,7 @@ use core::{
     },
 };
 
-use num_traits::{ConstZero, Zero};
+use num_traits::ConstZero;
 use zeroize::Zeroize;
 
 use crate::{
@@ -529,15 +529,15 @@ impl<B: Borrow<Self>, const N: usize> BitOr<B> for Uint<N> {
 
 // TODO#q: Document ShrAssign and ShlAssign implementations
 
-impl<const N: usize> ShrAssign<u32> for Uint<N> {
+impl<const N: usize> ShrAssign<usize> for Uint<N> {
     /// Computes the bitwise shift right operation in place.
     ///
     /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
     /// operation does *not* return an underflow error if the number of bits
     /// shifted is larger than N * 64. Instead the result will be saturated to
     /// zero.
-    fn shr_assign(&mut self, mut rhs: u32) {
-        if rhs >= (64 * N) as u32 {
+    fn shr_assign(&mut self, mut rhs: usize) {
+        if rhs >= 64 * N {
             *self = Self::from(0u64);
             return;
         }
@@ -562,7 +562,7 @@ impl<const N: usize> ShrAssign<u32> for Uint<N> {
     }
 }
 
-impl<const N: usize> Shr<u32> for Uint<N> {
+impl<const N: usize> Shr<usize> for Uint<N> {
     type Output = Self;
 
     /// Computes bitwise shift right operation.
@@ -571,21 +571,21 @@ impl<const N: usize> Shr<u32> for Uint<N> {
     /// operation does *not* return an underflow error if the number of bits
     /// shifted is larger than N * 64. Instead the result will be saturated to
     /// zero.
-    fn shr(mut self, rhs: u32) -> Self::Output {
+    fn shr(mut self, rhs: usize) -> Self::Output {
         self >>= rhs;
         self
     }
 }
 
-impl<const N: usize> ShlAssign<u32> for Uint<N> {
+impl<const N: usize> ShlAssign<usize> for Uint<N> {
     /// Computes the bitwise shift left operation in place.
     ///
     /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
     /// operation does *not* return an overflow error if the number of bits
     /// shifted is larger than N * 64. Instead, the overflow will be chopped
     /// off.
-    fn shl_assign(&mut self, mut rhs: u32) {
-        if rhs >= (64 * N) as u32 {
+    fn shl_assign(&mut self, mut rhs: usize) {
+        if rhs >= 64 * N {
             *self = Self::from(0u64);
             return;
         }
@@ -612,7 +612,7 @@ impl<const N: usize> ShlAssign<u32> for Uint<N> {
     }
 }
 
-impl<const N: usize> Shl<u32> for Uint<N> {
+impl<const N: usize> Shl<usize> for Uint<N> {
     type Output = Self;
 
     /// Computes the bitwise shift left operation in place.
@@ -621,7 +621,7 @@ impl<const N: usize> Shl<u32> for Uint<N> {
     /// operation does *not* return an overflow error if the number of bits
     /// shifted is larger than N * 64. Instead, the overflow will be chopped
     /// off.
-    fn shl(mut self, rhs: u32) -> Self::Output {
+    fn shl(mut self, rhs: usize) -> Self::Output {
         self <<= rhs;
         self
     }

@@ -5,8 +5,7 @@ pub mod limb;
 pub mod uint;
 
 use core::{
-    borrow::Borrow,
-    fmt::{Debug, Display, UpperHex},
+    fmt::{Debug, Display},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
         Shl, ShlAssign, Shr, ShrAssign,
@@ -14,10 +13,7 @@ use core::{
 };
 
 use limb::Limb;
-use num_traits::{ConstZero, Zero};
 use zeroize::Zeroize;
-
-use crate::bits::BitIteratorBE;
 
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
@@ -33,26 +29,27 @@ pub trait BigInteger:
     + Sized
     + Sync
     + Zeroize
+    + From<u128>
     + From<u64>
     + From<u32>
     + From<u16>
     + From<u8>
     + BitXorAssign<Self>
     + for<'a> BitXorAssign<&'a Self>
-    + BitXor<Self, Output=Self>
-    + for<'a> BitXor<&'a Self, Output=Self>
+    + BitXor<Self, Output = Self>
+    + for<'a> BitXor<&'a Self, Output = Self>
     + BitAndAssign<Self>
     + for<'a> BitAndAssign<&'a Self>
-    + BitAnd<Self, Output=Self>
-    + for<'a> BitAnd<&'a Self, Output=Self>
+    + BitAnd<Self, Output = Self>
+    + for<'a> BitAnd<&'a Self, Output = Self>
     + BitOrAssign<Self>
     + for<'a> BitOrAssign<&'a Self>
-    + BitOr<Self, Output=Self>
-    + for<'a> BitOr<&'a Self, Output=Self>
-    + Shr<u32, Output=Self> // TODO#q: use usize instead of u32
-    + ShrAssign<u32>
-    + Shl<u32, Output=Self>
-    + ShlAssign<u32>
+    + BitOr<Self, Output = Self>
+    + for<'a> BitOr<&'a Self, Output = Self>
+    + Shr<usize, Output = Self>
+    + ShrAssign<usize>
+    + Shl<usize, Output = Self>
+    + ShlAssign<usize>
 {
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
@@ -99,7 +96,7 @@ pub trait BigInteger:
     /// let mut two = U64::from(2u64);
     /// assert!(two.is_even());
     /// ```
-    fn is_even(&self) -> bool{
+    fn is_even(&self) -> bool {
         !self.is_odd()
     }
 
