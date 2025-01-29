@@ -78,6 +78,7 @@ impl<const N: usize> Uint<N> {
 
     #[doc(hidden)]
     #[inline]
+    #[must_use]
     pub const fn ct_is_even(&self) -> bool {
         !self.ct_is_odd()
     }
@@ -441,7 +442,7 @@ impl<const N: usize> UpperHex for Uint<N> {
         // Hex parse the limbs in reverse order.
         let hex =
             self.limbs.iter().rev().fold(String::new(), |mut output, &limb| {
-                let _ = write!(output, "{:016X}", limb);
+                let _ = write!(output, "{limb:016X}");
                 output
             });
         write!(f, "{hex}")
@@ -517,7 +518,9 @@ impl<B: Borrow<Self>, const N: usize> BitXor<B> for Uint<N> {
 
 impl<B: Borrow<Self>, const N: usize> BitAndAssign<B> for Uint<N> {
     fn bitand_assign(&mut self, rhs: B) {
-        (0..N).for_each(|i| self.limbs[i] &= rhs.borrow().limbs[i])
+        for i in 0..N {
+            self.limbs[i] &= rhs.borrow().limbs[i];
+        }
     }
 }
 
