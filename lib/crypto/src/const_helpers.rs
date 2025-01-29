@@ -1,3 +1,14 @@
+//! This module contains helpers for functions with constant context, like
+//! [`ct_for`] - constant time `for` cycle, as well as it's optimized versions
+//! like [`ct_for_unroll6`], that performs [loop unroll] optimization and can be
+//! used both from compile time and runtime.
+//!
+//! Beware of using an optimized version everywhere, since it can bloat
+//! binary (WASM) size easily.
+//! Measure impact first.
+//!
+//! [loop unroll]: https://en.wikipedia.org/wiki/Loop_unrolling
+
 /// Allows writing `for` cycle in constant context.
 #[macro_export]
 macro_rules! ct_for {

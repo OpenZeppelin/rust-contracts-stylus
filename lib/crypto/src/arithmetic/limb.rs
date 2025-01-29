@@ -1,3 +1,6 @@
+//! This module contains low-level arithmetic functions for
+//! big integer's limbs.
+
 // Actually cast truncations are a part of the logic here.
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_lossless)]

@@ -1,3 +1,7 @@
+//! This module contains the [`Uint`] unsigned big integer used for
+//! cryptographic applications, altogether with its exact implementations
+//! [`U64`] for 64 bits, [`U128`] for 128 bits, and so on.
+
 use alloc::string::String;
 use core::{
     borrow::Borrow,
@@ -22,6 +26,9 @@ use crate::{
     ct_for, ct_for_unroll6,
 };
 
+/// Stack-allocated big unsigned integer.
+///
+/// Generic over number [`N`] of [`Limb`]s.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
 pub struct Uint<const N: usize> {
     pub(crate) limbs: Limbs<N>,
@@ -59,16 +66,19 @@ declare_num!(U768, 768);
 declare_num!(U832, 832);
 
 impl<const N: usize> Uint<N> {
+    /// Create a new [`Uint`] from the provided `limbs` (constant).
     #[must_use]
-    pub const fn new(value: [Limb; N]) -> Self {
-        Self { limbs: value }
+    pub const fn new(limbs: [Limb; N]) -> Self {
+        Self { limbs }
     }
 
+    /// Returns reference to the inner [`Limbs`] array (constant).
     #[must_use]
-    pub const fn as_limbs(&self) -> &[Limb; N] {
+    pub const fn as_limbs(&self) -> &Limbs<N> {
         &self.limbs
     }
 
+    /// Returns true if this number is odd (constant).
     #[doc(hidden)]
     #[inline]
     #[must_use]
@@ -76,6 +86,7 @@ impl<const N: usize> Uint<N> {
         self.limbs[0] & 1 == 1
     }
 
+    /// Returns true if this number is even (constant).
     #[doc(hidden)]
     #[inline]
     #[must_use]
@@ -83,7 +94,8 @@ impl<const N: usize> Uint<N> {
         self.limbs[0] & 1 == 0
     }
 
-    const fn ct_geq(&self, rhs: &Self) -> bool {
+    /// Checks `self` is greater or equal to `rhs` (constant).
+    const fn ct_ge(&self, rhs: &Self) -> bool {
         ct_for!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = rhs.limbs[N - i - 1];
@@ -96,23 +108,13 @@ impl<const N: usize> Uint<N> {
         true
     }
 
-    #[must_use]
-    pub const fn ct_ge(&self, rhs: &Self) -> bool {
-        ct_for!((i in 0..N) {
-            if self.limbs[i] < rhs.limbs[i] {
-                return false;
-            } else if self.limbs[i] > rhs.limbs[i] {
-                return true;
-            }
-        });
-        true
-    }
-
+    /// Checks `self` is zero (constant).
     #[must_use]
     pub const fn ct_is_zero(&self) -> bool {
         self.ct_eq(&Self::ZERO)
     }
 
+    /// Checks if `self` is equal to `rhs` (constant).
     #[must_use]
     pub const fn ct_eq(&self, rhs: &Self) -> bool {
         ct_for!((i in 0..N) {
@@ -185,6 +187,8 @@ impl<const N: usize> Uint<N> {
         (self.limbs[limb] & mask) != 0
     }
 
+    /// Multiply `self` by `2`, assign the result to `self` and return
+    /// `overflow`.
     #[inline]
     #[allow(unused)]
     pub(crate) fn checked_mul2_assign(&mut self) -> bool {
@@ -199,6 +203,7 @@ impl<const N: usize> Uint<N> {
         last != 0
     }
 
+    /// Multiply `self` by `2` and return `result` with `overflow`.
     const fn ct_checked_mul2(mut self) -> (Self, bool) {
         let mut last = 0;
         ct_for!((i in 0..N) {
@@ -211,6 +216,7 @@ impl<const N: usize> Uint<N> {
         (self, last != 0)
     }
 
+    /// Divide `self` by `2` and assign result to `self`.
     pub(crate) fn div2_assign(&mut self) {
         let mut t = 0;
         for a in self.limbs.iter_mut().rev() {
@@ -562,7 +568,7 @@ impl<const N: usize> ShrAssign<usize> for Uint<N> {
     ///
     /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
     /// operation does *not* return an underflow error if the number of bits
-    /// shifted is larger than N * 64. Instead the result will be saturated to
+    /// shifted is larger than N * 64. Instead, the result will be saturated to
     /// zero.
     fn shr_assign(&mut self, mut rhs: usize) {
         if rhs >= 64 * N {
@@ -597,7 +603,7 @@ impl<const N: usize> Shr<usize> for Uint<N> {
     ///
     /// Differently from the built-in numeric types (u8, u32, u64, etc.) this
     /// operation does *not* return an underflow error if the number of bits
-    /// shifted is larger than N * 64. Instead the result will be saturated to
+    /// shifted is larger than N * 64. Instead, the result will be saturated to
     /// zero.
     fn shr(mut self, rhs: usize) -> Self::Output {
         self >>= rhs;
@@ -869,7 +875,7 @@ impl<const N: usize> WideUint<N> {
             remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
 
             // If the remainder overflows, subtract the divisor.
-            if remainder.ct_geq(rhs) || carry {
+            if remainder.ct_ge(rhs) || carry {
                 (remainder, _) = remainder.ct_checked_sub(rhs);
             }
 
@@ -990,5 +996,16 @@ mod test {
         let result =
             WideUint::<4>::new(dividend, Uint::<4>::ZERO).ct_rem(&divisor);
         assert_eq!(result, from_num!("216456157"));
+    }
+
+    #[test]
+    fn ct_ge() {
+        let a: Uint<4> = Uint::new([0, 0, 0, 5]);
+        let b: Uint<4> = Uint::new([4, 0, 0, 0]);
+        assert!(a.ct_ge(&b));
+
+        let a: Uint<4> = Uint::new([0, 0, 0, 5]);
+        let b: Uint<4> = Uint::new([0, 0, 0, 6]);
+        assert!(!a.ct_ge(&b));
     }
 }

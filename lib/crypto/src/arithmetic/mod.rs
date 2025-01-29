@@ -1,5 +1,5 @@
-//! This module provides a generic interface and constant
-//! functions for big integers.
+//! This module provides a generic interface, constant functions and common
+//! arithmetics for big integers.
 
 pub mod limb;
 pub mod uint;
