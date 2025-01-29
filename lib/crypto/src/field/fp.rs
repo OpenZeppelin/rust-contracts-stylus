@@ -159,14 +159,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         while u != one && v != one {
             // TODO#q: Inverse consumes incredible amount of gas
             while u.is_even() {
-                u.div2();
+                u.div2_assign();
 
                 if b.montgomery_form.is_even() {
-                    b.montgomery_form.div2();
+                    b.montgomery_form.div2_assign();
                 } else {
                     let carry =
                         b.montgomery_form.checked_add_assign(&Self::MODULUS);
-                    b.montgomery_form.div2();
+                    b.montgomery_form.div2_assign();
                     if !Self::HAS_MODULUS_SPARE_BIT && carry {
                         b.montgomery_form.limbs[N - 1] |= 1 << 63;
                     }
@@ -174,14 +174,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
             }
 
             while v.is_even() {
-                v.div2();
+                v.div2_assign();
 
                 if c.montgomery_form.is_even() {
-                    c.montgomery_form.div2();
+                    c.montgomery_form.div2_assign();
                 } else {
                     let carry =
                         c.montgomery_form.checked_add_assign(&Self::MODULUS);
-                    c.montgomery_form.div2();
+                    c.montgomery_form.div2_assign();
                     if !Self::HAS_MODULUS_SPARE_BIT && carry {
                         c.montgomery_form.limbs[N - 1] |= 1 << 63;
                     }

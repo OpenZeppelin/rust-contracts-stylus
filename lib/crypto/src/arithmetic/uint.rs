@@ -31,7 +31,7 @@ pub struct Uint<const N: usize> {
 
 impl<const N: usize> Default for Uint<N> {
     fn default() -> Self {
-        Self { limbs: [0u64; N] }
+        Self { limbs: [Limb::ZERO; N] }
     }
 }
 
@@ -61,14 +61,14 @@ declare_num!(U768, 768);
 declare_num!(U832, 832);
 
 impl<const N: usize> Uint<N> {
-    pub const fn new(value: [u64; N]) -> Self {
+    pub const fn new(value: [Limb; N]) -> Self {
         Self { limbs: value }
     }
 
     // TODO#q: add another conversions from u8, u16 and so on
     pub const fn from_u32(val: u32) -> Self {
         let mut repr = Self::ZERO;
-        repr.limbs[0] = val as u64;
+        repr.limbs[0] = val as Limb;
         repr
     }
 
@@ -210,7 +210,7 @@ impl<const N: usize> Uint<N> {
         (self, last != 0)
     }
 
-    pub fn div2(&mut self) {
+    pub fn div2_assign(&mut self) {
         let mut t = 0;
         for a in self.limbs.iter_mut().rev() {
             let t2 = *a << 63;
@@ -354,6 +354,8 @@ impl<const N: usize> Uint<N> {
 
 // ----------- Traits Impls -----------
 
+// TODO#q: add hex display logic and proptests
+
 impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:016X}", BigUint::from(*self))
@@ -446,7 +448,8 @@ impl<const N: usize> From<u8> for Uint<N> {
     }
 }
 
-// TODO#q: implement conversions in as similar way to
+// TODO#q: implement conversions in as similar way to or use constant from_u32
+//  functions
 // impl_try_from_upper_bounded!(u128 => u8, u16, u32, u64);  as in std
 /*
 impl<const N: usize> From<u128> for BigInt<N> {
@@ -873,7 +876,7 @@ impl<const N: usize> WideUint<N> {
 
 #[cfg(all(test, feature = "std"))]
 mod test {
-    use proptest::proptest;
+    use proptest::prelude::*;
 
     use crate::arithmetic::{
         uint::{from_str_hex, from_str_radix, Uint},
@@ -910,7 +913,7 @@ mod test {
         proptest!(|(s in "[0-9a-fA-F]{1,64}")| {
             let uint_from_hex: Uint<4> = from_str_hex(&s);
             let expected: Uint<4> = from_str_radix(&s, 16);
-            assert_eq!(uint_from_hex, expected);
+            prop_assert_eq!(uint_from_hex, expected);
         });
     }
 
