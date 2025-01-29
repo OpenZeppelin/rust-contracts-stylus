@@ -345,12 +345,15 @@ impl<const N: usize> Uint<N> {
     }
 }
 
-macro_rules! impl_ct_from {
+// ----------- From Impls -----------
+
+/// Constant implementation from primitives.
+macro_rules! impl_ct_from_primitive {
     ($int:ty, $func_name:ident) => {
         impl<const N: usize> Uint<N> {
             #[doc = "Create a [`Uint`] from `"]
             #[doc = stringify!($int)]
-            #[doc = "` integer."]
+            #[doc = "` integer (constant)."]
             pub const fn $func_name(val: $int) -> Self {
                 assert!(N >= 1, "number of limbs must be greater than zero");
                 let mut repr = Self::ZERO;
@@ -360,20 +363,23 @@ macro_rules! impl_ct_from {
         }
     };
 }
-impl_ct_from!(u8, from_u8);
-impl_ct_from!(u16, from_u16);
-impl_ct_from!(u32, from_u32);
-impl_ct_from!(u64, from_u64);
-impl_ct_from!(usize, from_usize);
+impl_ct_from_primitive!(u8, from_u8);
+impl_ct_from_primitive!(u16, from_u16);
+impl_ct_from_primitive!(u32, from_u32);
+impl_ct_from_primitive!(u64, from_u64);
+impl_ct_from_primitive!(usize, from_usize);
 
+// Logic for `u128` conversion is different from `u8`..`u64`, due to the size of
+// the `Limb`.
 impl<const N: usize> Uint<N> {
-    /// Create a [`Uint`] from a `u128` integer.
+    /// Create a [`Uint`] from a `u128` integer (constant).
     pub const fn from_u128(val: u128) -> Self {
         assert!(N >= 1, "number of limbs must be greater than zero");
 
         let lo = val as Limb;
         let hi = (val >> 64) as Limb;
-        // If there are at least 2 limbs
+
+        // If there are at least 2 limbs,
         if N >= 2 {
             // we can fit `lo` and `hi`,
             let mut res = Self::ZERO;
@@ -391,6 +397,25 @@ impl<const N: usize> Uint<N> {
         }
     }
 }
+
+/// From traits implementation for primitives.
+macro_rules! impl_from_primitive {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> From<$int> for Uint<N> {
+            #[inline]
+            fn from(val: $int) -> Uint<N> {
+                Uint::<N>::$func_name(val)
+            }
+        }
+    };
+}
+
+impl_from_primitive!(u8, from_u8);
+impl_from_primitive!(u16, from_u16);
+impl_from_primitive!(u32, from_u32);
+impl_from_primitive!(u64, from_u64);
+impl_from_primitive!(usize, from_usize);
+impl_from_primitive!(u128, from_u128);
 
 // ----------- Traits Impls -----------
 
@@ -449,42 +474,6 @@ impl<const N: usize> AsRef<[u64]> for Uint<N> {
     #[inline]
     fn as_ref(&self) -> &[u64] {
         &self.limbs
-    }
-}
-
-impl<const N: usize> From<u64> for Uint<N> {
-    #[inline]
-    fn from(val: u64) -> Uint<N> {
-        let mut repr = Self::default();
-        repr.limbs[0] = val;
-        repr
-    }
-}
-
-impl<const N: usize> From<u32> for Uint<N> {
-    #[inline]
-    fn from(val: u32) -> Uint<N> {
-        let mut repr = Self::default();
-        repr.limbs[0] = val.into();
-        repr
-    }
-}
-
-impl<const N: usize> From<u16> for Uint<N> {
-    #[inline]
-    fn from(val: u16) -> Uint<N> {
-        let mut repr = Self::default();
-        repr.limbs[0] = val.into();
-        repr
-    }
-}
-
-impl<const N: usize> From<u8> for Uint<N> {
-    #[inline]
-    fn from(val: u8) -> Uint<N> {
-        let mut repr = Self::default();
-        repr.limbs[0] = val.into();
-        repr
     }
 }
 

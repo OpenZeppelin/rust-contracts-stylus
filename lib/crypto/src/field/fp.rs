@@ -620,15 +620,13 @@ macro_rules! impl_fp_from_signed_int {
     };
 }
 
-// TODO#q: add u128 conversion
-
-// impl_fp_from_unsigned_int!(u128);
+impl_fp_from_unsigned_int!(u128);
 impl_fp_from_unsigned_int!(u64);
 impl_fp_from_unsigned_int!(u32);
 impl_fp_from_unsigned_int!(u16);
 impl_fp_from_unsigned_int!(u8);
 
-// impl_fp_from_signed_int!(i128);
+impl_fp_from_signed_int!(i128);
 impl_fp_from_signed_int!(i64);
 impl_fp_from_signed_int!(i32);
 impl_fp_from_signed_int!(i16);

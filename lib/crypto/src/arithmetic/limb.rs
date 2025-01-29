@@ -1,7 +1,14 @@
 use num_traits::{ConstOne, ConstZero};
 
+/// A single limb of a big integer represented by 64-bits.
 pub type Limb = u64;
+
+/// Array of [`Limb`]s.
 pub type Limbs<const N: usize> = [Limb; N];
+
+/// A wide limb represented by 128-bits.
+///
+/// Twice larger than [`Limb`].
 pub type WideLimb = u128;
 
 /// Multiply two [`Limb`]'s and return widened result.
