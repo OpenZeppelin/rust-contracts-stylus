@@ -19,6 +19,7 @@ use crate::Erc4626Example::constructorCall;
 
 const ERC4626_NAME: &str = "Erc4626 Token";
 const ERC4626_SYMBOL: &str = "ETT";
+const DECIMALS_OFFSET: u8 = 0;
 
 mod abi;
 mod mock;
@@ -30,6 +31,7 @@ fn ctr(asset: Address) -> constructorCall {
         asset_: asset,
         name_: ERC4626_NAME.to_owned(),
         symbol_: ERC4626_SYMBOL.to_owned(),
+        decimalsOffset_: DECIMALS_OFFSET,
     }
 }
 
@@ -1144,12 +1146,42 @@ mod max_withdraw {
 
         Ok(())
     }
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset_addr = erc20::deploy(&alice.wallet).await?;
 
-    // TODO: add test for decimal offset overflow
+        let ctor = constructorCall {
+            asset_: asset_addr,
+            name_: ERC4626_NAME.to_owned(),
+            symbol_: ERC4626_SYMBOL.to_owned(),
+            decimalsOffset_: 78, // minimum needed to induce overflow
+        };
+
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(ctor)
+            .deploy()
+            .await?
+            .address()?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .maxWithdraw(alice.address())
+            .call()
+            .await
+            .expect_err("should panic due to overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
+        Ok(())
+    }
 }
 
 mod preview_withdraw {
     use super::*;
+
     #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
