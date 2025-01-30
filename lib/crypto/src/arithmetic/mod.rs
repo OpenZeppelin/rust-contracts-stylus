@@ -46,10 +46,6 @@ pub trait BigInteger:
     + for<'a> BitOrAssign<&'a Self>
     + BitOr<Self, Output = Self>
     + for<'a> BitOr<&'a Self, Output = Self>
-    + Shr<usize, Output = Self>
-    + ShrAssign<usize>
-    + Shl<usize, Output = Self>
-    + ShlAssign<usize>
 {
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
