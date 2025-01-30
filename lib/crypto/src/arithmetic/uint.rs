@@ -111,12 +111,15 @@ impl<const N: usize> Uint<N> {
 
     /// Checks `self` is greater then `rhs` (constant).
     #[must_use]
+    #[inline(always)]
     pub const fn ct_gt(&self, rhs: &Self) -> bool {
-        ct_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = rhs.limbs[N - i - 1];
-            if a != b {
-                return a > b;
+            if a > b {
+                return true;
+            } else if a < b {
+                return false;
             }
         });
         false
@@ -124,12 +127,15 @@ impl<const N: usize> Uint<N> {
 
     /// Checks `self` is less or equal then `rhs` (constant).
     #[must_use]
+    #[inline(always)]
     pub const fn ct_le(&self, rhs: &Self) -> bool {
-        ct_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = rhs.limbs[N - i - 1];
-            if a != b {
-                return a < b;
+            if a < b {
+                return true;
+            } else if a > b {
+                return false;
             }
         });
         true
@@ -138,11 +144,13 @@ impl<const N: usize> Uint<N> {
     /// Checks `self` is less then `rhs` (constant).
     #[must_use]
     pub const fn ct_lt(&self, rhs: &Self) -> bool {
-        ct_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = rhs.limbs[N - i - 1];
-            if a != b {
-                return a < b;
+            if a < b {
+                return true;
+            } else if a > b {
+                return false;
             }
         });
         false
