@@ -129,6 +129,8 @@ pub struct Erc4626 {
     pub(crate) asset: StorageAddress,
     /// Token decimals.
     pub(crate) underlying_decimals: StorageU8,
+    /// Decimals offset.
+    pub(crate) decimals_offset: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
@@ -1096,7 +1098,7 @@ impl Erc4626 {
     pub fn decimals(&self) -> U8 {
         self.underlying_decimals
             .get()
-            .checked_add(Self::_decimals_offset())
+            .checked_add(self._decimals_offset())
             .expect("Decimals should not be greater than `U8::MAX`")
     }
 
@@ -1129,7 +1131,7 @@ impl Erc4626 {
 
         let multiplier = total_supply
             .checked_add(
-                TEN.checked_pow(U256::from(Self::_decimals_offset())).expect(
+                TEN.checked_pow(U256::from(self._decimals_offset())).expect(
                     "decimal offset overflow in `Erc4626::_convert_to_shares`",
                 ),
             )
@@ -1179,7 +1181,7 @@ impl Erc4626 {
 
         let denominator = total_supply
             .checked_add(
-                TEN.checked_pow(U256::from(Self::_decimals_offset())).expect(
+                TEN.checked_pow(U256::from(self._decimals_offset())).expect(
                     "decimal offset overflow in `Erc4626::_convert_to_assets`",
                 ),
             )
@@ -1295,8 +1297,8 @@ impl Erc4626 {
     /// Returns the decimals offset between the underlying asset and vault
     /// shares.
     /// Currently, always returns `U8::ZERO`.
-    fn _decimals_offset() -> U8 {
-        U8::ZERO
+    fn _decimals_offset(&self) -> U8 {
+        self.decimals_offset.get()
     }
 }
 

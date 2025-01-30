@@ -141,6 +141,7 @@ contract Erc4626Example {
     // Erc4626 Storage
     address private _asset;
     uint8 private _underlyingDecimals;
+    uint8 private _decimalsOffset;
 
     constructor(string memory name_, string memory symbol_, address asset_) {
         _name = name_;
