@@ -2,6 +2,7 @@
 //! cryptographic applications, altogether with its exact implementations
 //! [`U64`] for 64 bits, [`U128`] for 128 bits, and so on.
 
+use alloc::vec::Vec;
 use core::{
     borrow::Borrow,
     cmp::Ordering,
@@ -92,18 +93,56 @@ impl<const N: usize> Uint<N> {
         self.limbs[0] & 1 == 0
     }
 
-    /// Checks `self` is greater or equal to `rhs` (constant).
-    const fn ct_ge(&self, rhs: &Self) -> bool {
+    /// Checks `self` is greater or equal then `rhs` (constant).
+    #[must_use]
+    pub const fn ct_ge(&self, rhs: &Self) -> bool {
         ct_for!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = rhs.limbs[N - i - 1];
-            if a < b {
-                return false;
-            } else if a > b {
-                return true;
+            if a != b {
+                return a > b;
             }
         });
         true
+    }
+
+    /// Checks `self` is greater then `rhs` (constant).
+    #[must_use]
+    pub const fn ct_gt(&self, rhs: &Self) -> bool {
+        ct_for!((i in 0..N) {
+            let a = self.limbs[N - i - 1];
+            let b = rhs.limbs[N - i - 1];
+            if a != b {
+                return a > b;
+            }
+        });
+        false
+    }
+
+    /// Checks `self` is less or equal then `rhs` (constant).
+    #[must_use]
+    pub const fn ct_le(&self, rhs: &Self) -> bool {
+        ct_for!((i in 0..N) {
+            let a = self.limbs[N - i - 1];
+            let b = rhs.limbs[N - i - 1];
+            if a != b {
+                return a < b;
+            }
+        });
+        true
+    }
+
+    /// Checks `self` is less then `rhs` (constant).
+    #[must_use]
+    pub const fn ct_lt(&self, rhs: &Self) -> bool {
+        ct_for!((i in 0..N) {
+            let a = self.limbs[N - i - 1];
+            let b = rhs.limbs[N - i - 1];
+            if a != b {
+                return a < b;
+            }
+        });
+        false
     }
 
     /// Checks `self` is zero (constant).
@@ -121,6 +160,13 @@ impl<const N: usize> Uint<N> {
             }
         });
         true
+    }
+
+    /// Checks if `self` is not equal to `rhs` (constant).
+    #[must_use]
+    #[inline(always)]
+    pub const fn ct_ne(&self, rhs: &Self) -> bool {
+        !self.ct_eq(rhs)
     }
 
     /// Return the minimum number of bits needed to encode this number.
@@ -281,10 +327,10 @@ impl<const N: usize> Uint<N> {
             let mut carry = 0;
             // perform multiplication of each digit from the second.
             ct_for_unroll6!((j in 0..N) {
-                // And considering if the multiplication result is high enough,
+                // And if the multiplication result is too big,
                 let k = i + j;
                 if k >= N {
-                    // It will go to the high (hi) part.
+                    // it should go to the high (hi) part.
                     (hi[k - N], carry) = limb::carrying_mac(
                         hi[k - N],
                         self.limbs[i],
@@ -897,13 +943,32 @@ mod test {
     }
 
     #[test]
-    fn ct_ge() {
+    fn ct_ge_le_gt_lt_eq_ne() {
         let a: Uint<4> = Uint::new([0, 0, 0, 5]);
         let b: Uint<4> = Uint::new([4, 0, 0, 0]);
         assert!(a.ct_ge(&b));
+        assert!(a.ct_gt(&b));
+        assert!(!a.ct_le(&b));
+        assert!(!a.ct_lt(&b));
+        assert!(!a.ct_eq(&b));
+        assert!(a.ct_ne(&b));
 
         let a: Uint<4> = Uint::new([0, 0, 0, 5]);
         let b: Uint<4> = Uint::new([0, 0, 0, 6]);
         assert!(!a.ct_ge(&b));
+        assert!(!a.ct_gt(&b));
+        assert!(a.ct_le(&b));
+        assert!(a.ct_lt(&b));
+        assert!(!a.ct_eq(&b));
+        assert!(a.ct_ne(&b));
+
+        let a: Uint<4> = Uint::new([0, 0, 1, 2]);
+        let b: Uint<4> = Uint::new([0, 0, 1, 2]);
+        assert!(a.ct_ge(&b));
+        assert!(!a.ct_gt(&b));
+        assert!(a.ct_le(&b));
+        assert!(!a.ct_lt(&b));
+        assert!(a.ct_eq(&b));
+        assert!(!a.ct_ne(&b));
     }
 }
