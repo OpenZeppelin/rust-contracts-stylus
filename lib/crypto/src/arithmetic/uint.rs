@@ -8,7 +8,6 @@ use core::{
     fmt::{Debug, Display, Result, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
-        Shl, ShlAssign, Shr, ShrAssign,
     },
 };
 
