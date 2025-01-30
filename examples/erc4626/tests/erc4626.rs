@@ -1659,13 +1659,13 @@ mod withdraw {
         let assets_to_withdraw = uint!(1_U256);
 
         // Deploy failing ERC20
-        let failing_ = erc20_failing_transfer::deploy(&alice.wallet).await?;
+        let failing = erc20_failing_transfer::deploy(&alice.wallet).await?;
         let failing_asset =
-            ERC20FailingTransferMock::new(failing_, &alice.wallet);
+            ERC20FailingTransferMock::new(failing, &alice.wallet);
 
         let contract_addr = alice
             .as_deployer()
-            .with_constructor(ctr(failing_))
+            .with_constructor(ctr(failing))
             .deploy()
             .await?
             .address()?;
@@ -1688,7 +1688,7 @@ mod withdraw {
         .expect_err("should fail due to failed transfer");
 
         assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
-            token: failing_
+            token: failing
         }));
 
         Ok(())
