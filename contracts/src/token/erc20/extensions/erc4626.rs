@@ -1189,9 +1189,15 @@ mod tests {
     }
 
     #[motsu::test]
-    fn decimals_offset() {
-        let decimals_offset = Erc4626::_decimals_offset();
+    fn decimals_offset(contract: Erc4626TestExample) {
+        let decimals_offset = contract.erc4626._decimals_offset();
         assert_eq!(decimals_offset, U8::ZERO);
+
+        let new_decimal_offset = U8::from(10);
+        contract.erc4626.decimals_offset.set(new_decimal_offset);
+
+        let decimals_offset = contract.erc4626._decimals_offset();
+        assert_eq!(decimals_offset, new_decimal_offset);
     }
 
     #[motsu::test]
@@ -1199,6 +1205,12 @@ mod tests {
         let underlying_decimals = U8::from(17);
         contract.erc4626.underlying_decimals.set(underlying_decimals);
         let decimals = contract.erc4626.decimals();
-        assert_eq!(decimals, underlying_decimals + Erc4626::_decimals_offset());
+        assert_eq!(decimals, underlying_decimals);
+
+        let new_decimal_offset = U8::from(10);
+        contract.erc4626.decimals_offset.set(new_decimal_offset);
+
+        let decimals = contract.erc4626.decimals();
+        assert_eq!(decimals, underlying_decimals + new_decimal_offset);
     }
 }
