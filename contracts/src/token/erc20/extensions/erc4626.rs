@@ -148,11 +148,6 @@ pub trait IErc4626 {
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
     ///
-    /// # Requirements
-    ///
-    /// * MUST be an ERC-20 token.
-    /// * MUST NOT revert.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -160,13 +155,6 @@ pub trait IErc4626 {
 
     /// Returns the total amount of the underlying asset that is “managed” by
     /// Vault.
-    ///
-    /// # Requirements
-    ///
-    /// * SHOULD include any compounding that occurs from yield.
-    /// * MUST be inclusive of any fees that are charged against assets in the
-    ///   Vault.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -192,15 +180,6 @@ pub trait IErc4626 {
     ///   The `erc20` reference should come from your contract's state. The
     ///   implementation should forward the call to your internal storage
     ///   instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST NOT be inclusive of any fees that are charged against assets in
-    ///   the Vault.
-    /// * MUST NOT show any variations depending on the caller.
-    /// * MUST NOT reflect slippage or other on-chain conditions, when
-    ///   performing the actual exchange.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -246,15 +225,6 @@ pub trait IErc4626 {
     ///   implementation should forward the call to your internal storage
     ///   instance along with the `erc20` reference.
     ///
-    /// # Requirements
-    ///
-    /// * MUST NOT be inclusive of any fees that are charged against assets in
-    ///   the Vault.
-    /// * MUST NOT show any variations depending on the caller.
-    /// * MUST NOT reflect slippage or other on-chain conditions, when
-    ///   performing the actual exchange.
-    /// * MUST NOT revert.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -287,14 +257,6 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the underlying asset that can be deposited
     /// into the Vault for the receiver, through a deposit call.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if the receiver is subject to some deposit
-    ///   limit.
-    /// * MUST return `2 ** 256 - 1` if there is no limit on the maximum amount
-    ///   of assets that may be deposited.
-    /// * MUST NOT revert.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -314,21 +276,6 @@ pub trait IErc4626 {
     ///   The `erc20` reference should come from your contract's state. The
     ///   implementation should forward the call to your internal storage
     ///   instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no more than the exact amount of Vault
-    ///   shares that would be minted in a [`IErc4626::deposit`] call in the
-    ///   same transaction. I.e. [`IErc4626::deposit`] should return the same or
-    ///   more shares as [`IErc4626::preview_deposit`] if called in the same
-    ///   transaction.
-    /// * MUST NOT account for deposit limits like those returned from
-    ///   [`IErc4626::max_deposit`] and should always act as though the deposit
-    ///   would be accepted, regardless if the user has enough tokens approved,
-    ///   etc.
-    /// * MUST be inclusive of deposit fees. Integrators should be aware of the
-    ///   existence of deposit fees.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -369,16 +316,6 @@ pub trait IErc4626 {
     /// `receiver` parameters. The `erc20` reference should come from your
     /// contract's state. The implementation should forward the call to your
     /// internal storage instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the [`Deposit`] event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the deposit execution, and are
-    ///   accounted for during deposit.
-    /// * MUST revert if all of assets cannot be deposited (due to deposit limit
-    ///   being reached, slippage, the user not approving enough underlying
-    ///   tokens to the Vault contract, etc).
     ///
     /// # Arguments
     ///
@@ -427,14 +364,6 @@ pub trait IErc4626 {
     /// Returns the maximum amount of the Vault shares that can be minted for
     /// the receiver, through a mint call.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if the receiver is subject to some mint
-    ///   limit.
-    /// * MUST return `2 ** 256 - 1` if there is no limit on the maximum amount
-    ///   of shares that may be minted.
-    /// * MUST NOT revert.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -454,20 +383,6 @@ pub trait IErc4626 {
     ///   The `erc20` reference should come from your contract's state. The
     ///   implementation should forward the call to your internal storage
     ///   instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no fewer than the exact amount of assets
-    ///   that would be deposited in a [`IErc4626::mint`] call in the same
-    ///   transaction. I.e. [`IErc4626::mint`] should return the same or fewer
-    ///   assets as [`IErc4626::preview_mint`] if called in the same
-    ///   transaction.
-    /// * MUST NOT account for mint limits like those returned from
-    ///   [`IErc4626::max_mint`] and should always act as though the mint would
-    ///   be accepted, regardless if the user has enough tokens approved, etc.
-    /// * MUST be inclusive of deposit fees. Integrators should be aware of the
-    ///   existence of deposit fees.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -511,16 +426,6 @@ pub trait IErc4626 {
     ///   `receiver` parameters. The `erc20` reference should come from your
     ///   contract's state. The implementation should forward the call to your
     ///   internal storage instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the [`Deposit`] event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the mint execution, and are
-    ///   accounted for during mint.
-    /// * MUST revert if all of shares cannot be minted (due to deposit limit
-    ///   being reached, slippage, the user not approving enough underlying
-    ///   tokens to the Vault contract, etc).
     ///
     /// # Arguments
     ///
@@ -575,12 +480,6 @@ pub trait IErc4626 {
     /// The implementation should forward the call to your internal storage
     /// instance along with the `erc20` reference.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if owner is subject to some withdrawal
-    ///   limit or timelock.
-    /// * MUST NOT revert.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -618,21 +517,6 @@ pub trait IErc4626 {
     /// parameter. The `erc20` reference should come from your contract's state.
     /// The implementation should forward the call to your internal storage
     /// instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no fewer than the exact amount of Vault
-    ///   shares that would be burned in a [`IErc4626::withdraw`] call in the
-    ///   same transaction. I.e. [`IErc4626::withdraw`] should return the same
-    ///   or fewer shares as [`IErc4626::preview_withdraw`] if called in the
-    ///   same transaction.
-    /// * MUST NOT account for withdrawal limits like those returned from
-    ///   [`IErc4626::max_withdraw`] and should always act as though the
-    ///   withdrawal would be accepted, regardless if the user has enough
-    ///   shares, etc.
-    /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
-    ///   the existence of withdrawal fees.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -677,16 +561,6 @@ pub trait IErc4626 {
     ///   and `owner` parameters. The `erc20` reference should come from your
     ///   contract's state. The implementation should forward the call to your
     ///   internal storage instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the [`Withdraw`] event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the withdraw execution, and are
-    ///   accounted for during withdraw.
-    /// * MUST revert if all of assets cannot be withdrawn (due to withdrawal
-    ///   limit being reached, slippage, the owner not having enough shares,
-    ///   etc).
     ///
     /// # Arguments
     ///
@@ -747,14 +621,6 @@ pub trait IErc4626 {
     /// The implementation should forward the call to your internal storage
     /// instance along with the `erc20` reference.
     ///
-    /// # Requirements
-    ///
-    /// * MUST return a limited value if owner is subject to some withdrawal
-    ///   limit or timelock.
-    /// * MUST return [`IErc20::balance_of(owner)`](IErc20::balance_of) if owner
-    ///   is not subject to any withdrawal limit or timelock.
-    /// * MUST NOT revert.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -783,20 +649,6 @@ pub trait IErc4626 {
     /// [`IErc4626::convert_to_assets`] and [`IErc4626::preview_redeem`] SHOULD
     /// be considered slippage in share price or some other type of condition,
     /// meaning the depositor will lose assets by redeeming.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST return as close to and no more than the exact amount of assets
-    ///   that would be withdrawn in a redeem call in the same transaction. I.e.
-    ///   [`IErc4626::redeem`] should return the same or more assets as
-    ///   [`IErc4626::preview_redeem`] if called in the same transaction.
-    /// * MUST NOT account for redemption limits like those returned from
-    ///   [`IErc4626::max_redeem`] and should always act as though the
-    ///   redemption would be accepted, regardless if the user has enough
-    ///   shares, etc.
-    /// * MUST be inclusive of withdrawal fees. Integrators should be aware of
-    ///   the existence of withdrawal fees.
-    /// * MUST NOT revert.
     ///
     /// # Arguments
     ///
@@ -837,16 +689,6 @@ pub trait IErc4626 {
     /// `receiver` and `owner` parameters. The `erc20` reference should come
     /// from your contract's state. The implementation should forward the call
     /// to your internal storage instance along with the `erc20` reference.
-    ///
-    /// # Requirements
-    ///
-    /// * MUST emit the [`Withdraw`] event.
-    /// * MAY support an additional flow in which the underlying tokens are
-    ///   owned by the Vault contract before the redeem execution, and are
-    ///   accounted for during redeem.
-    /// * MUST revert if all of shares cannot be redeemed (due to withdrawal
-    ///   limit being reached, slippage, the owner not having enough shares,
-    ///   etc).
     ///
     /// # Arguments
     ///
