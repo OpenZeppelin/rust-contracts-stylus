@@ -16,10 +16,10 @@ contract Erc4626Example {
     address private _asset;
     uint8 private _underlyingDecimals;
 
-    constructor(string memory name_, string memory symbol_, address asset_, uint8 underlyingDecimals_) {
+    constructor(string memory name_, string memory symbol_, address asset_) {
         _name = name_;
         _symbol = symbol_;
         _asset = asset_;
-        _underlyingDecimals = underlyingDecimals_;
+        _underlyingDecimals = 18;
     }
 }
