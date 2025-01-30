@@ -19,6 +19,7 @@ use crate::Erc4626Example::constructorCall;
 
 const ERC4626_NAME: &str = "Erc4626 Token";
 const ERC4626_SYMBOL: &str = "ETT";
+const UNDERLYING_DECIMALS: u8 = 18;
 
 mod abi;
 mod mock;
@@ -30,6 +31,7 @@ fn ctr(asset: Address) -> constructorCall {
         asset_: asset,
         name_: ERC4626_NAME.to_owned(),
         symbol_: ERC4626_SYMBOL.to_owned(),
+        underlyingDecimals_: UNDERLYING_DECIMALS,
     }
 }
 
@@ -59,14 +61,7 @@ mod constructor {
     use super::*;
     #[e2e::test]
     async fn success(alice: Account) -> Result<()> {
-        let asset_address = erc20::deploy(&alice.wallet).await?;
-        let contract_addr = alice
-            .as_deployer()
-            .with_constructor(ctr(asset_address))
-            .deploy()
-            .await?
-            .address()?;
-
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let name = contract.name().call().await?.name;
@@ -76,10 +71,10 @@ mod constructor {
         assert_eq!(symbol, ERC4626_SYMBOL.to_owned());
 
         let decimals = contract.decimals().call().await?.decimals;
-        assert_eq!(decimals, 18);
+        assert_eq!(decimals, UNDERLYING_DECIMALS);
 
         let asset = contract.asset().call().await?.asset;
-        assert_eq!(asset, asset_address);
+        assert_eq!(asset, asset_addr);
 
         Ok(())
     }
