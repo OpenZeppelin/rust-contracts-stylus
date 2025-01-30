@@ -123,23 +123,6 @@ impl<const N: usize> Uint<N> {
         true
     }
 
-    /// Compute a right shift of `self`.
-    /// This is equivalent to a (saturating) division by 2.
-    #[doc(hidden)]
-    #[must_use]
-    pub const fn ct_shr(&self) -> Self {
-        let mut result = *self;
-        let mut t = 0;
-        ct_for!((i in 0..N) {
-            let a = result.limbs[N - i - 1];
-            let t2 = a << 63;
-            result.limbs[N - i - 1] >>= 1;
-            result.limbs[N - i - 1] |= t;
-            t = t2;
-        });
-        result
-    }
-
     /// Return the minimum number of bits needed to encode this number.
     #[doc(hidden)]
     #[must_use]
@@ -188,7 +171,7 @@ impl<const N: usize> Uint<N> {
     /// Multiplies `self` by `2` in-place, returning whether overflow occurred.
     #[inline]
     #[allow(unused)]
-    pub(crate) fn checked_mul2_assign(&mut self) -> bool {
+    pub fn checked_mul2_assign(&mut self) -> bool {
         let mut last = 0;
         for i in 0..N {
             let a = &mut self.limbs[i];
@@ -215,7 +198,7 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Divide `self` by `2` in-place.
-    pub(crate) fn div2_assign(&mut self) {
+    pub fn div2_assign(&mut self) {
         let mut t = 0;
         for a in self.limbs.iter_mut().rev() {
             let t2 = *a << 63;
@@ -228,7 +211,8 @@ impl<const N: usize> Uint<N> {
     /// Subtract `rhs` from `self`, returning the result and whether overflow
     /// occurred (constant).
     #[inline]
-    pub(crate) const fn ct_checked_sub(mut self, rhs: &Self) -> (Self, bool) {
+    #[must_use]
+    pub const fn ct_checked_sub(mut self, rhs: &Self) -> (Self, bool) {
         let mut borrow = 0;
 
         ct_for!((i in 0..N) {
@@ -241,8 +225,8 @@ impl<const N: usize> Uint<N> {
     /// Add `rhs` to `self`, returning the result and whether overflow occurred
     /// (constant).
     #[inline]
-    #[allow(dead_code)]
-    pub(crate) const fn ct_checked_add(mut self, rhs: &Self) -> (Self, bool) {
+    #[must_use]
+    pub const fn ct_checked_add(mut self, rhs: &Self) -> (Self, bool) {
         let mut carry = 0;
 
         ct_for!((i in 0..N) {
@@ -254,7 +238,7 @@ impl<const N: usize> Uint<N> {
 
     /// Add `rhs` to `self` in-place, returning whether overflow occurred.
     #[inline(always)]
-    pub(crate) fn checked_add_assign(&mut self, rhs: &Self) -> bool {
+    pub fn checked_add_assign(&mut self, rhs: &Self) -> bool {
         let mut carry = false;
 
         ct_for_unroll6!((i in 0..N) {
@@ -267,7 +251,7 @@ impl<const N: usize> Uint<N> {
     /// Subtract `rhs` from `self` in-place, returning whether overflow
     /// occurred.
     #[inline(always)]
-    pub(crate) fn checked_sub_assign(&mut self, rhs: &Self) -> bool {
+    pub fn checked_sub_assign(&mut self, rhs: &Self) -> bool {
         let mut borrow = false;
 
         ct_for_unroll6!((i in 0..N) {
@@ -621,7 +605,7 @@ impl<const N: usize> BigInteger for Uint<N> {
         Self::ct_from_le_slice(bytes)
     }
 
-    fn into_bytes_le(self) -> alloc::vec::Vec<u8> {
+    fn into_bytes_le(self) -> Vec<u8> {
         self.limbs.iter().flat_map(|&limb| limb.to_le_bytes()).collect()
     }
 }

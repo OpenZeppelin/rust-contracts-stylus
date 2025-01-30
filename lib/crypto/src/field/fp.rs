@@ -28,7 +28,6 @@ use educe::Educe;
 use num_traits::{One, Zero};
 
 use crate::{
-    arithmetic,
     arithmetic::{
         limb,
         uint::{Uint, WideUint},
@@ -65,7 +64,6 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
 
     /// `R2 = R^2 % MODULUS` or `R2 = (R^2 - 1) % MODULUS + 1` for convenience
     /// of multiplication.
-    #[allow(dead_code)]
     const R2: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::MAX)
         .ct_rem(&Self::MODULUS)
         .ct_wrapping_add(&Uint::ONE);
@@ -406,19 +404,19 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         ct_for_unroll6!((i in 0..N) {
             let tmp = lo.limbs[i].wrapping_mul(P::INV);
 
-            let (_, mut carry) = arithmetic::limb::mac(lo.limbs[i], tmp, P::MODULUS.limbs[0]);
+            let (_, mut carry) = limb::mac(lo.limbs[i], tmp, P::MODULUS.limbs[0]);
 
             ct_for_unroll6!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
-                    (hi.limbs[k - N], carry) = arithmetic::limb::carrying_mac(
+                    (hi.limbs[k - N], carry) = limb::carrying_mac(
                         hi.limbs[k - N],
                         tmp,
                         P::MODULUS.limbs[j],
                         carry
                     );
                 } else {
-                    (lo.limbs[k], carry) = arithmetic::limb::carrying_mac(
+                    (lo.limbs[k], carry) = limb::carrying_mac(
                         lo.limbs[k],
                         tmp,
                         P::MODULUS.limbs[j],
@@ -426,7 +424,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
                     );
                 }
             });
-            (hi.limbs[i], carry2) = arithmetic::limb::adc(hi.limbs[i], carry, carry2);
+            (hi.limbs[i], carry2) = limb::adc(hi.limbs[i], carry, carry2);
         });
 
         (carry2 != 0, hi)
@@ -998,7 +996,6 @@ impl<P: FpParams<N>, const N: usize> From<Fp<P, N>> for Uint<N> {
 }
 
 impl<P: FpParams<N>, const N: usize> From<Uint<N>> for Fp<P, N> {
-    /// Converts `Self::BigInteger` into `Self`
     #[inline]
     fn from(int: Uint<N>) -> Self {
         Self::from_bigint(int)
