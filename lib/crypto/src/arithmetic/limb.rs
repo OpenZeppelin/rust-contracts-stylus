@@ -96,10 +96,10 @@ pub const fn adc(a: Limb, b: Limb, carry: Limb) -> (Limb, Limb) {
 /// Sets a = a + b + carry, and returns the new carry.
 #[inline(always)]
 pub fn adc_assign(a: &mut Limb, b: Limb, carry: bool) -> bool {
-    let (sum, carry1) = a.overflowing_add(b);
-    let (sum, carry2) = sum.overflowing_add(carry as Limb);
-    *a = sum;
-    carry1 | carry2
+    let tmp = *a as WideLimb + b as WideLimb + carry as WideLimb;
+    *a = tmp as Limb;
+    let carry = tmp >> Limb::BITS;
+    carry != 0
 }
 
 /// Calculate `a = a - b - borrow` and return the result and borrow.
@@ -109,8 +109,11 @@ pub const fn sbb(a: Limb, b: Limb, borrow: Limb) -> (Limb, Limb) {
     let a = a as WideLimb;
     let b = b as WideLimb;
     let borrow = borrow as WideLimb;
-    let tmp = (WideLimb::ONE << Limb::BITS) + a - b - borrow;
+    // Protects from overflow, when `a < b + borrow`.
+    let overflow_protection = WideLimb::ONE << Limb::BITS;
+    let tmp = overflow_protection + a - b - borrow;
     let borrow = if tmp >> Limb::BITS == 0 { Limb::ONE } else { Limb::ZERO };
+    // overflow_protection will be truncated on cast.
     (tmp as Limb, borrow)
 }
 

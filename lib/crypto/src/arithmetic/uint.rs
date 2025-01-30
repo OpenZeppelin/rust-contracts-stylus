@@ -95,12 +95,15 @@ impl<const N: usize> Uint<N> {
 
     /// Checks `self` is greater or equal then `rhs` (constant).
     #[must_use]
+    #[inline(always)]
     pub const fn ct_ge(&self, rhs: &Self) -> bool {
-        ct_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[N - i - 1];
             let b = rhs.limbs[N - i - 1];
-            if a != b {
-                return a > b;
+            if a > b {
+                return true;
+            } else if a < b {
+                return false;
             }
         });
         true
@@ -215,17 +218,17 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Multiplies `self` by `2` in-place, returning whether overflow occurred.
-    #[inline]
+    #[inline(always)]
     #[allow(unused)]
     pub fn checked_mul2_assign(&mut self) -> bool {
         let mut last = 0;
-        for i in 0..N {
+        ct_for_unroll6!((i in 0..N) {
             let a = &mut self.limbs[i];
             let tmp = *a >> 63;
             *a <<= 1;
             *a |= last;
             last = tmp;
-        }
+        });
         last != 0
     }
 
@@ -266,6 +269,14 @@ impl<const N: usize> Uint<N> {
         });
 
         (self, borrow != 0)
+    }
+
+    /// Subtract `rhs` from `self`, returning the result wrapping around the
+    /// lower boundary (constant).
+    #[inline(always)]
+    #[must_use]
+    pub const fn ct_wrapping_sub(&self, rhs: &Self) -> Self {
+        self.ct_checked_sub(rhs).0
     }
 
     /// Add `rhs` to `self`, returning the result and whether overflow occurred

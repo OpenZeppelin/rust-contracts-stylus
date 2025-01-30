@@ -75,9 +75,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let c = a.montgomery_form.checked_add_assign(&b.montgomery_form);
         // However, it may need to be reduced
         if Self::HAS_MODULUS_SPARE_BIT {
-            a.subtract_modulus();
+            *a = a.ct_subtract_modulus();
         } else {
-            a.carrying_sub_modulus(c);
+            *a = a.ct_carrying_sub_modulus(c);
         }
     }
 
@@ -98,9 +98,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let c = a.montgomery_form.checked_mul2_assign();
         // However, it may need to be reduced.
         if Self::HAS_MODULUS_SPARE_BIT {
-            a.subtract_modulus();
+            *a = a.ct_subtract_modulus();
         } else {
-            a.carrying_sub_modulus(c);
+            *a = a.ct_carrying_sub_modulus(c);
         }
     }
 
@@ -120,21 +120,13 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// reduction for efficient implementation.
     #[inline(always)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        // Implements CIOS.
-        let (carry, res) = a.ct_mul_without_cond_subtract(b);
-        *a = res;
-
-        if Self::HAS_MODULUS_SPARE_BIT {
-            a.subtract_modulus();
-        } else {
-            a.carrying_sub_modulus(carry);
-        }
+        *a = a.ct_mul(b);
     }
 
     /// Set `a *= a`.
     #[inline(always)]
     fn square_in_place(a: &mut Fp<Self, N>) {
-        Self::mul_assign(a, &a.clone());
+        *a = a.ct_mul(a);
     }
 
     /// Compute `a^{-1}` if `a` is not zero.
@@ -332,22 +324,15 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[doc(hidden)]
     #[inline(always)]
     #[must_use]
-    pub fn is_geq_modulus(&self) -> bool {
-        self.montgomery_form >= P::MODULUS
-    }
-
-    #[inline(always)]
-    fn subtract_modulus(&mut self) {
-        if self.is_geq_modulus() {
-            self.montgomery_form.checked_sub_assign(&Self::MODULUS);
-        }
+    pub const fn is_ge_modulus(&self) -> bool {
+        self.montgomery_form.ct_ge(&P::MODULUS)
     }
 
     #[inline(always)]
     const fn ct_subtract_modulus(mut self) -> Self {
-        if !self.ct_is_valid() {
+        if self.is_ge_modulus() {
             self.montgomery_form =
-                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
+                self.montgomery_form.ct_wrapping_sub(&P::MODULUS);
         }
         self
     }
@@ -368,6 +353,8 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// Multiply `self` to `rhs` and return the result (constant).
     #[inline(always)]
     const fn ct_mul(&self, rhs: &Self) -> Self {
+        // Implements CIOS.
+        // TODO#q: add docs
         let (carry, result) = self.ct_mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
             result.ct_subtract_modulus()
@@ -381,38 +368,14 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         self.montgomery_form.ct_is_zero()
     }
 
-    /// Subtract modulus from `self` with carry.
-    #[inline(always)]
-    fn carrying_sub_modulus(&mut self, carry: bool) {
-        if carry || self.is_geq_modulus() {
-            self.montgomery_form.checked_sub_assign(&Self::MODULUS);
-        }
-    }
-
+    /// Subtract modulus from `self` with carry and return the result.
     #[inline(always)]
     const fn ct_carrying_sub_modulus(mut self, carry: bool) -> Self {
-        if carry || !self.ct_is_valid() {
+        if carry || self.is_ge_modulus() {
             self.montgomery_form =
-                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
+                self.montgomery_form.ct_wrapping_sub(&P::MODULUS);
         }
         self
-    }
-
-    #[inline(always)]
-    const fn ct_is_valid(&self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            if self.montgomery_form.limbs[N - i - 1] < P::MODULUS.limbs[N - i - 1] {
-                return true
-            } else if self.montgomery_form.limbs[N - i - 1] > P::MODULUS.limbs[N - i - 1] {
-                return false
-            }
-        });
-        false
-    }
-
-    #[inline(always)]
-    const fn sub_with_borrow(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
-        a.ct_checked_sub(b).0
     }
 
     #[inline(always)]
