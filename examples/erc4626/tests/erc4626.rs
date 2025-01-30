@@ -398,6 +398,34 @@ mod convert_to_assets {
     }
 
     #[e2e::test]
+    async fn returns_assets_proportional_to_shares(
+        alice: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+        let shares = uint!(10_U256);
+        // conversion is 1:1 for empty vaults
+        let expected_assets = shares;
+
+        // Mint shares
+        _ = watch!(asset.mint(alice.address(), expected_assets))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            expected_assets
+        ))?;
+        _ = watch!(contract.mint(shares, alice.address()))?;
+
+        let assets = contract.convertToAssets(shares).call().await?.assets;
+
+        assert_eq!(assets, expected_assets);
+
+        Ok(())
+    }
+
+    #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
         let contract_addr = alice
@@ -418,6 +446,31 @@ mod convert_to_assets {
         assert!(
             err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset })
         );
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .convertToAssets(uint!(10_U256))
+            .call()
+            .await
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
 
         Ok(())
     }
