@@ -873,7 +873,6 @@ pub trait IErc4626 {
     ///
     /// # Panics
     ///
-    /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
     ///
     /// # Examples
