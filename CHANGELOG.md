@@ -29,11 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optimised implementation of bigintegers `Uint<_>` for finite fields. #495
 - `Erc4626` "Tokenized Vault Standard". #465
 - Implement `mul_div` for `U256`. #465
 - Implement `AddAssignChecked` for `StorageUint`. #474
 - `Erc20FlashMint` extension. #407
-- Optimised implementation of bigintegers `Uint<_>` for finite fields. #495
 
 ### Changed
 
