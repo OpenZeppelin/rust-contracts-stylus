@@ -37,6 +37,15 @@ fn ctr(asset: Address) -> constructorCall {
     }
 }
 
+fn dec_offset_overflow_ctr(asset: Address) -> constructorCall {
+    constructorCall {
+        asset_: asset,
+        name_: ERC4626_NAME.to_owned(),
+        symbol_: ERC4626_SYMBOL.to_owned(),
+        decimalsOffset_: MIN_OVERFLOW_DECIMAL_OFFSET,
+    }
+}
+
 async fn deploy(
     account: &Account,
     initial_tokens: U256,
@@ -91,6 +100,7 @@ mod constructor {
 
 mod total_assets {
     use super::*;
+
     #[e2e::test]
     async fn reports_zero_total_assets_when_empty(
         alice: Account,
@@ -325,6 +335,30 @@ mod convert_to_shares {
             .expect_err("should panics due to `Overflow`");
 
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .convertToShares(uint!(10_U256))
+            .call()
+            .await
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
         Ok(())
     }
 }
