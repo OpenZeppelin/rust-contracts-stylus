@@ -86,7 +86,7 @@ mod tests {
     use crate::token::erc20::{Erc20, Error, IErc20};
 
     #[motsu::test]
-    fn burns(contract: Erc20) {
+    fn burn_success(contract: Erc20) {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 
@@ -107,7 +107,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_errors_when_insufficient_balance(contract: Erc20) {
+    fn burn_reverts_when_balance_insufficient(contract: Erc20) {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
         let sender = msg::sender();
@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_from(contract: Erc20) {
+    fn burn_from_success(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let sender = msg::sender();
 
@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_from_errors_when_insufficient_balance(contract: Erc20) {
+    fn burn_from_reverts_when_balance_insufficient(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // Alice approves `msg::sender`.
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_from_errors_when_invalid_approver(contract: Erc20) {
+    fn burn_from_reverts_when_approver_invalid(contract: Erc20) {
         let one = uint!(1_U256);
 
         contract
@@ -172,7 +172,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_from_errors_when_insufficient_allowance(contract: Erc20) {
+    fn burn_from_reverts_when_allowance_insufficient(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // Mint some tokens for Alice.

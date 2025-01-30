@@ -165,7 +165,7 @@ mod tests {
     }
 
     #[test]
-    fn hashes_pairs() {
+    fn hash_pair_success() {
         let builder = KeccakBuilder;
         let a = [1u8].as_slice();
         let b = [2u8].as_slice();
@@ -179,7 +179,7 @@ mod tests {
     }
 
     #[test]
-    fn commutatively_hashes_pairs() {
+    fn commutative_hash_pair_success() {
         let builder = KeccakBuilder;
         let a = [1u8].as_slice();
         let b = [2u8].as_slice();

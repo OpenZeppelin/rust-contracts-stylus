@@ -102,7 +102,7 @@ mod tests {
     use crate::utils::structs::bitmap::BitMap;
 
     #[motsu::test]
-    fn set_value() {
+    fn set_success() {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             assert!(!bit_map.get(value));
@@ -112,7 +112,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn unset_value() {
+    fn unset_success() {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set(value);
@@ -123,7 +123,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_to_value() {
+    fn set_to_success() {
         proptest!(|(value: U256)| {
             let mut bit_map = BitMap::default();
             bit_map.set_to(value, true);

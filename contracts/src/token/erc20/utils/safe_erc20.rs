@@ -408,32 +408,32 @@ impl SafeErc20 {
 mod tests {
     use super::SafeErc20;
     #[test]
-    fn encodes_true_empty_slice() {
+    fn encodes_true_reverts_when_slice_empty() {
         assert!(!SafeErc20::encodes_true(&[]));
     }
 
     #[test]
-    fn encodes_false_single_byte() {
+    fn encodes_true_reverts_when_single_byte_zero() {
         assert!(!SafeErc20::encodes_true(&[0]));
     }
 
     #[test]
-    fn encodes_true_single_byte() {
+    fn encodes_true_success_with_single_byte() {
         assert!(SafeErc20::encodes_true(&[1]));
     }
 
     #[test]
-    fn encodes_false_many_bytes() {
+    fn encodes_true_reverts_when_all_bytes_zero() {
         assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
-    fn encodes_true_many_bytes() {
+    fn encodes_true_success_with_many_bytes() {
         assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
-    fn encodes_true_wrong_bytes() {
+    fn encodes_true_reverts_when_bytes_invalid() {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }

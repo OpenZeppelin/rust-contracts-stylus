@@ -224,14 +224,14 @@ mod tests {
     );
 
     #[test]
-    fn prepares_calldata() {
+    fn encode_calldata_success() {
         let expected = alloy_primitives::bytes!("a1de988600a42c4b4ab089b619297c17d53cffae5d5120d82d8a92d0bb3b78f2000000000000000000000000000000000000000000000000000000000000001c65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee823eb5a6982b540f185703492dab77b863a88ce01f27e21ade8b2879c10fc9e653");
         let calldata = encode_calldata(MSG_HASH, V, R, S);
         assert_eq!(expected, calldata);
     }
 
     #[test]
-    fn rejects_invalid_s() {
+    fn check_if_malleable_reverts_when_s_invalid() {
         let invalid_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);
         let invalid_s = B256::from_slice(&invalid_s.to_be_bytes_vec());
         let err = check_if_malleable(&invalid_s)
@@ -245,7 +245,7 @@ mod tests {
     }
 
     #[test]
-    fn validates_s() {
+    fn check_if_malleable_success_with_valid_s() {
         let valid_s = SIGNATURE_S_UPPER_BOUND - uint!(1_U256);
         let invalid_s = B256::from_slice(&valid_s.to_be_bytes_vec());
         let result = check_if_malleable(&invalid_s);

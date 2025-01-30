@@ -888,7 +888,7 @@ mod tests {
 
     proptest! {
         #[test]
-        fn add(a: i64, b: i64) {
+        fn add_success(a: i64, b: i64) {
             let res = Field64::from(a) + Field64::from(b);
             let res: i128 = res.into();
             let a = i128::from(a);
@@ -897,7 +897,7 @@ mod tests {
         }
 
         #[test]
-        fn double(a: i64) {
+        fn double_success(a: i64) {
             let res = Field64::from(a).double();
             let res: i128 = res.into();
             let a = i128::from(a);
@@ -905,7 +905,7 @@ mod tests {
         }
 
         #[test]
-        fn sub(a: i64, b: i64) {
+        fn sub_success(a: i64, b: i64) {
             let res = Field64::from(a) - Field64::from(b);
             let res: i128 = res.into();
             let a = i128::from(a);
@@ -914,7 +914,7 @@ mod tests {
         }
 
         #[test]
-        fn mul(a: i64, b: i64) {
+        fn mul_success(a: i64, b: i64) {
             let res = Field64::from(a) * Field64::from(b);
             let res: i128 = res.into();
             let a = i128::from(a);
@@ -923,7 +923,7 @@ mod tests {
         }
 
         #[test]
-        fn square(a: i64) {
+        fn square_success(a: i64) {
             let res = Field64::from(a).square();
             let res: i128 = res.into();
             let a = i128::from(a);
@@ -931,7 +931,7 @@ mod tests {
         }
 
         #[test]
-        fn div(a: i64, b: i64) {
+        fn div_success_when_denominator_nonzero(a: i64, b: i64) {
             // Skip if `b` is zero.
             if i128::from(b) % MODULUS == 0 {
                 return Ok(());
@@ -946,7 +946,7 @@ mod tests {
         }
 
         #[test]
-        fn pow(a: i64, b in 0_u32..1000) {
+        fn pow_success(a: i64, b in 0_u32..1000) {
             /// Compute a^b in an expensive and iterative way.
             fn dumb_pow(a: i128, b: i128) -> i128 {
                 (0..b).fold(1, |acc, _| (acc * a).rem_euclid(MODULUS))
@@ -960,7 +960,7 @@ mod tests {
         }
 
         #[test]
-        fn neg(a: i64) {
+        fn neg_success(a: i64) {
             let res = -Field64::from(a);
             let res: i128 = res.into();
             let a = i128::from(a);
@@ -968,7 +968,7 @@ mod tests {
         }
 
         #[test]
-        fn one(a: i64) {
+        fn one_success(a: i64) {
             let res = Field64::one();
             let res: i128 = res.into();
             prop_assert_eq!(res, 1);
@@ -980,7 +980,7 @@ mod tests {
         }
 
         #[test]
-        fn zero(a: i64) {
+        fn zero_success(a: i64) {
             let res = Field64::zero();
             let res: i128 = res.into();
             prop_assert_eq!(res, 0);

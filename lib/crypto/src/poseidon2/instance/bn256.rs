@@ -362,7 +362,7 @@ mod tests {
     type Scalar = FpBN256;
 
     #[test]
-    fn smoke() {
+    fn poseidon2_hash_success() {
         let mut poseidon2 = Poseidon2::<BN256Params, _>::new();
         for i in 1..BN256Params::T {
             poseidon2.absorb(&Scalar::from(i as u64));

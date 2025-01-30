@@ -109,9 +109,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn uri_returns_metadata_uri_when_token_uri_is_not_set(
-        contract: Erc1155MetadataExample,
-    ) {
+    fn uri_success_with_metadata_uri_only(contract: Erc1155MetadataExample) {
         let uri = "https://some.metadata/token/uri";
 
         contract.metadata_uri._uri.set_str(uri.to_owned());
@@ -123,9 +121,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_empty_string_when_no_uri_is_set(
-        contract: Erc1155MetadataExample,
-    ) {
+    fn uri_success_with_no_uri_set(contract: Erc1155MetadataExample) {
         assert!(contract
             .uri_storage
             .uri(TOKEN_ID, &contract.metadata_uri)
@@ -133,9 +129,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_token_uri_when_base_uri_is_empty(
-        contract: Erc1155MetadataExample,
-    ) {
+    fn uri_success_with_token_uri_only(contract: Erc1155MetadataExample) {
         let token_uri = "https://some.short/token/uri";
 
         contract
@@ -151,9 +145,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_concatenated_base_uri_and_token_uri(
-        contract: Erc1155MetadataExample,
-    ) {
+    fn uri_success_with_base_and_token_uri(contract: Erc1155MetadataExample) {
         let base_uri = "https://some.base.uri";
         let token_uri = "/some/token/uri";
 
@@ -171,7 +163,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_ignores_metadata_uri_when_token_uri_is_set(
+    fn uri_success_when_token_uri_overrides_metadata(
         contract: Erc1155MetadataExample,
     ) {
         let uri = "https://some.metadata/token/uri";
@@ -191,7 +183,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_set_uri(contract: Erc1155MetadataExample) {
+    fn set_token_uri_success(contract: Erc1155MetadataExample) {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();
 
@@ -210,7 +202,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_set_base_uri(contract: Erc1155UriStorage) {
+    fn set_base_uri_success(contract: Erc1155UriStorage) {
         let base_uri = "https://docs.openzeppelin.com/".to_string();
         contract.set_base_uri(base_uri.clone());
 

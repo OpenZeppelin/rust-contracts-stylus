@@ -20,7 +20,7 @@ fn ctr(owner: Address) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_success(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let receipt =
         alice.as_deployer().with_constructor(ctr(alice_addr)).deploy().await?;
@@ -37,7 +37,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
+async fn constructor_reverts_when_owner_zero(alice: Account) -> Result<()> {
     let err = alice
         .as_deployer()
         .with_constructor(ctr(Address::ZERO))
@@ -51,7 +51,10 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfers_ownership(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_ownership_success(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -76,7 +79,7 @@ async fn transfers_ownership(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn prevents_non_owners_from_transferring(
+async fn transfer_ownership_reverts_when_not_owner(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -101,7 +104,9 @@ async fn prevents_non_owners_from_transferring(
 }
 
 #[e2e::test]
-async fn guards_against_stuck_state(alice: Account) -> Result<()> {
+async fn transfer_ownership_reverts_when_zero_address(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -122,7 +127,7 @@ async fn guards_against_stuck_state(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn loses_ownership_after_renouncement(alice: Account) -> Result<()> {
+async fn renounce_ownership_success(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -145,7 +150,7 @@ async fn loses_ownership_after_renouncement(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn prevents_non_owners_from_renouncement(
+async fn renounce_ownership_reverts_when_not_owner(
     alice: Account,
     bob: Account,
 ) -> Result<()> {

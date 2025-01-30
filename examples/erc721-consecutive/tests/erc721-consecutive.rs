@@ -31,7 +31,7 @@ fn ctr(receivers: Vec<Address>, amounts: Vec<u128>) -> constructorCall {
 }
 
 #[e2e::test]
-async fn constructs(alice: Account) -> eyre::Result<()> {
+async fn constructor_success(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let receivers = vec![alice_addr];
     let amounts = vec![10_u128];
@@ -48,7 +48,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn mints(alice: Account) -> eyre::Result<()> {
+async fn mint_success_with_consecutive(alice: Account) -> eyre::Result<()> {
     let batch_size = 10_u128;
     let receivers = vec![alice.address()];
     let amounts = vec![batch_size];
@@ -81,7 +81,9 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
+async fn mint_consecutive_reverts_when_receiver_zero(
+    alice: Account,
+) -> eyre::Result<()> {
     let receivers = vec![Address::ZERO];
     let amounts = vec![10_u128];
     let err = alice
@@ -98,7 +100,9 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
+async fn mint_consecutive_reverts_when_batch_size_exceeded(
+    alice: Account,
+) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
     let amounts = vec![MAX_BATCH_SIZE + 1];
     let err = alice
@@ -116,7 +120,10 @@ async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn transfer_from_success_with_consecutive(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let receivers = vec![alice.address(), bob.address()];
     let amounts = vec![1000_u128, 1000_u128];
     // Deploy and mint batches of 1000 tokens to Alice and Bob.
@@ -168,7 +175,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn burns(alice: Account) -> eyre::Result<()> {
+async fn burn_success_with_consecutive(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
     let amounts = vec![1000_u128];
     // Mint batch of 1000 tokens to Alice.

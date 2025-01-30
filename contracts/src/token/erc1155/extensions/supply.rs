@@ -389,7 +389,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn before_mint(contract: Erc1155Supply) {
+    fn total_supply_success_before_mint(contract: Erc1155Supply) {
         let token_id = random_token_ids(1)[0];
         assert_eq!(U256::ZERO, contract.total_supply(token_id));
         assert_eq!(U256::ZERO, contract.total_supply_all());
@@ -397,7 +397,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_mint_single(contract: Erc1155Supply) {
+    fn total_supply_success_after_single_mint(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 1);
         assert_eq!(values[0], contract.balance_of(ALICE, token_ids[0]));
         assert_eq!(values[0], contract.total_supply(token_ids[0]));
@@ -406,7 +406,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_mint_batch(contract: Erc1155Supply) {
+    fn total_supply_success_after_batch_mint(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 4);
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
             assert_eq!(value, contract.balance_of(ALICE, token_id));
@@ -418,7 +418,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_reverts_on_invalid_receiver(contract: Erc1155Supply) {
+    fn mint_reverts_when_receiver_invalid(contract: Erc1155Supply) {
         let token_id = random_token_ids(1)[0];
         let two = U256::from(2);
         let invalid_receiver = Address::ZERO;
@@ -437,7 +437,7 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
-    fn mint_panics_on_total_supply_overflow(contract: Erc1155Supply) {
+    fn mint_reverts_when_total_supply_overflows(contract: Erc1155Supply) {
         let token_id = random_token_ids(1)[0];
         let two = U256::from(2);
         let three = U256::from(3);
@@ -452,7 +452,7 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply_all`"]
-    fn mint_panics_on_total_supply_all_overflow(contract: Erc1155Supply) {
+    fn mint_reverts_when_total_supply_all_overflows(contract: Erc1155Supply) {
         let token_ids = random_token_ids(2);
         contract
             ._mint(ALICE, token_ids[0], U256::MAX, &vec![].into())
@@ -462,7 +462,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_burn_single(contract: Erc1155Supply) {
+    fn total_supply_success_after_single_burn(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 1);
         contract._burn(ALICE, token_ids[0], values[0]).expect("should burn");
 
@@ -472,7 +472,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_burn_batch(contract: Erc1155Supply) {
+    fn total_supply_success_after_batch_burn(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 4);
         contract
             ._burn_batch(ALICE, token_ids.clone(), values.clone())
@@ -490,7 +490,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_reverts_when_invalid_sender(contract: Erc1155Supply) {
+    fn burn_reverts_when_sender_invalid(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 1);
         let invalid_sender = Address::ZERO;
 
@@ -507,7 +507,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supply_unaffected_by_no_op(contract: Erc1155Supply) {
+    fn total_supply_success_with_no_op(contract: Erc1155Supply) {
         let token_ids = random_token_ids(1);
         let values = random_values(1);
 

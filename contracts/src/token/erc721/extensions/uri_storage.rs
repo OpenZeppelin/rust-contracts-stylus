@@ -133,7 +133,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn get_token_uri_works(contract: Erc721MetadataExample) {
+    fn token_uri_read_success(contract: Erc721MetadataExample) {
         let alice = msg::sender();
 
         contract
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_token_uri_works(contract: Erc721MetadataExample) {
+    fn set_token_uri_success(contract: Erc721MetadataExample) {
         let alice = msg::sender();
 
         contract

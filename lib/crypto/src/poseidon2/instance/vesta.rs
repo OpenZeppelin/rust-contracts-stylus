@@ -363,7 +363,7 @@ mod tests {
     type Scalar = FpVesta;
 
     #[test]
-    fn smoke() {
+    fn poseidon2_hash_success() {
         let mut poseidon2 = Poseidon2::<VestaParams, _>::new();
         for i in 1..VestaParams::T {
             poseidon2.absorb(&Scalar::from(i as u64));

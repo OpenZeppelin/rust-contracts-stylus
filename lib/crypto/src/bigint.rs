@@ -319,7 +319,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn convert_from_str_radix() {
+    fn convert_from_str_radix_success() {
         let uint_from_base10: Uint<4> = from_str_radix(
             "28948022309329048855892746252171976963363056481941647379679742748393362948097",
             10
@@ -343,7 +343,7 @@ mod test {
     }
 
     #[test]
-    fn convert_from_str_hex() {
+    fn convert_from_str_hex_success() {
         // Test different implementations of hex parsing on random hex inputs.
         proptest!(|(s in "[0-9a-fA-F]{1,64}")| {
             let uint_from_hex: Uint<4> = from_str_hex(&s);
@@ -353,7 +353,7 @@ mod test {
     }
 
     #[test]
-    fn uint_bit_iterator_be() {
+    fn uint_bit_iterator_be_success() {
         let words: [Word; 4] = [0b1100, 0, 0, 0];
         let num = Uint::<4>::from_words(words);
         let bits: Vec<bool> = num.bit_be_trimmed_iter().collect();
