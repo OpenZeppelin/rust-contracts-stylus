@@ -351,10 +351,12 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     /// Multiply `self` to `rhs` and return the result (constant).
+    ///
+    /// Implements the Montgomery multiplication algorithm [reference].
+    ///
+    /// [reference]: https://en.wikipedia.org/wiki/Montgomery_modular_multiplication
     #[inline(always)]
     const fn ct_mul(&self, rhs: &Self) -> Self {
-        // Implements CIOS.
-        // TODO#q: add docs
         let (carry, result) = self.ct_mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
             result.ct_subtract_modulus()
