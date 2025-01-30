@@ -256,12 +256,12 @@ impl<const N: usize> Uint<N> {
 
     /// Subtract `rhs` from `self`, returning the result and whether overflow
     /// occurred (constant).
-    #[inline]
+    #[inline(always)]
     #[must_use]
     pub const fn ct_checked_sub(mut self, rhs: &Self) -> (Self, bool) {
         let mut borrow = 0;
 
-        ct_for!((i in 0..N) {
+        ct_for_unroll6!((i in 0..N) {
             (self.limbs[i], borrow) = limb::sbb(self.limbs[i], rhs.limbs[i], borrow);
         });
 

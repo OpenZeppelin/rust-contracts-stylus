@@ -343,6 +343,15 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         }
     }
 
+    #[inline(always)]
+    const fn ct_subtract_modulus(mut self) -> Self {
+        if !self.ct_is_valid() {
+            self.montgomery_form =
+                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
+        }
+        self
+    }
+
     /// Construct a new field element from its underlying
     /// [`struct@Uint`] data type.
     #[inline]
@@ -357,6 +366,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     }
 
     /// Multiply `self` to `rhs` and return the result (constant).
+    #[inline(always)]
     const fn ct_mul(&self, rhs: &Self) -> Self {
         let (carry, result) = self.ct_mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
@@ -377,6 +387,32 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         if carry || self.is_geq_modulus() {
             self.montgomery_form.checked_sub_assign(&Self::MODULUS);
         }
+    }
+
+    #[inline(always)]
+    const fn ct_carrying_sub_modulus(mut self, carry: bool) -> Self {
+        if carry || !self.ct_is_valid() {
+            self.montgomery_form =
+                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
+        }
+        self
+    }
+
+    #[inline(always)]
+    const fn ct_is_valid(&self) -> bool {
+        ct_for_unroll6!((i in 0..N) {
+            if self.montgomery_form.limbs[N - i - 1] < P::MODULUS.limbs[N - i - 1] {
+                return true
+            } else if self.montgomery_form.limbs[N - i - 1] > P::MODULUS.limbs[N - i - 1] {
+                return false
+            }
+        });
+        false
+    }
+
+    #[inline(always)]
+    const fn sub_with_borrow(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
+        a.ct_checked_sub(b).0
     }
 
     #[inline(always)]
@@ -457,39 +493,6 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             limbs[i % N] = carry;
         }
         Uint::new(limbs)
-    }
-
-    const fn ct_is_valid(&self) -> bool {
-        ct_for!((i in 0..N) {
-            if self.montgomery_form.limbs[N - i - 1] < P::MODULUS.limbs[N - i - 1] {
-                return true
-            } else if self.montgomery_form.limbs[N - i - 1] > P::MODULUS.limbs[N - i - 1] {
-                return false
-            }
-        });
-        false
-    }
-
-    #[inline]
-    const fn ct_subtract_modulus(mut self) -> Self {
-        if !self.ct_is_valid() {
-            self.montgomery_form =
-                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
-        }
-        self
-    }
-
-    #[inline]
-    const fn ct_carrying_sub_modulus(mut self, carry: bool) -> Self {
-        if carry || !self.ct_is_valid() {
-            self.montgomery_form =
-                Self::sub_with_borrow(&self.montgomery_form, &P::MODULUS);
-        }
-        self
-    }
-
-    const fn sub_with_borrow(a: &Uint<N>, b: &Uint<N>) -> Uint<N> {
-        a.ct_checked_sub(b).0
     }
 }
 
