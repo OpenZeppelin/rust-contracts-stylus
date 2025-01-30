@@ -1634,7 +1634,7 @@ mod withdraw {
             shares: shares_to_redeem,
         }));
 
-        // Verify final state
+        // Verify the final state
         let post_withdraw_assets =
             contract.totalAssets().call().await?.totalAssets;
         assert_eq!(

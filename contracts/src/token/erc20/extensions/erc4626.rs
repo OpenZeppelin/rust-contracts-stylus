@@ -53,7 +53,7 @@ mod sol {
         /// Indicates an attempt to deposit more assets than the max amount for
         /// `receiver`.
         ///
-        /// * `receiver` - Address of the recipient of the assets.
+        /// * `receiver` - Address of the asset's recipient.
         /// * `assets` - Amount of assets deposited.
         /// * `max` - Maximum amount of assets that can be deposited.
         #[derive(Debug)]
@@ -63,7 +63,7 @@ mod sol {
         /// Indicates an attempt to mint more shares than the max amount for
         /// `receiver`.
         ///
-        /// * `receiver` - Address of the recipient of the shares.
+        /// * `receiver` - Address of share's recipient.
         /// * `shares` - Amount of shares to mint.
         /// * `max` - Maximum amount of shares that can be minted.
         #[derive(Debug)]
@@ -73,7 +73,7 @@ mod sol {
         /// Indicates an attempt to withdraw more assets than the max amount for
         /// `owner`.
         ///
-        /// * `owner` - Address of the owner of the assets.
+        /// * `owner` - Address of the asset's owner.
         /// * `assets` - Amount of assets to withdraw.
         /// * `max` - Maximum amount of assets that can be withdrawn.
         #[derive(Debug)]
@@ -83,7 +83,7 @@ mod sol {
         /// Indicates an attempt to redeem more shares than the max amount for
         /// `owner`.
         ///
-        /// * `owner` - Address of the owner of the shares.
+        /// * `owner` - Address of the share's owner.
         /// * `shares` - Amount of shares to redeem.
         /// * `max` - Maximum amount of shares that can be redeemed.
         #[derive(Debug)]
@@ -287,10 +287,10 @@ pub trait IErc4626 {
     ///
     /// # Requirements
     ///
-    /// * MUST return a limited value if receiver is subject to some deposit
+    /// * MUST return a limited value if the receiver is subject to some deposit
     ///   limit.
-    /// * MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of
-    ///   assets that may be deposited.
+    /// * MUST return `2 ** 256 - 1` if there is no limit on the maximum amount
+    ///   of assets that may be deposited.
     /// * MUST NOT revert.
     ///
     /// # Arguments
@@ -427,9 +427,10 @@ pub trait IErc4626 {
     ///
     /// # Requirements
     ///
-    /// * MUST return a limited value if receiver is subject to some mint limit.
-    /// * MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of
-    ///   shares that may be minted.
+    /// * MUST return a limited value if the receiver is subject to some mint
+    ///   limit.
+    /// * MUST return `2 ** 256 - 1` if there is no limit on the maximum amount
+    ///   of shares that may be minted.
     /// * MUST NOT revert.
     ///
     /// # Arguments
@@ -768,7 +769,7 @@ pub trait IErc4626 {
     fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
-    /// redeemption at the current block, given current on-chain conditions.
+    /// redemption at the current block, given current on-chain conditions.
     ///
     /// NOTE: To expose this function in your contract's ABI, implement it as
     /// shown in the Examples section below, accepting only the `shares`
@@ -1292,7 +1293,8 @@ impl Erc4626 {
     }
 
     /// Returns the decimals offset between the underlying asset and vault
-    /// shares. Currently always returns `U8::ZERO`.
+    /// shares.
+    /// Currently, always returns `U8::ZERO`.
     fn _decimals_offset() -> U8 {
         U8::ZERO
     }
