@@ -56,6 +56,7 @@ pub async fn deploy(account: &Account) -> eyre::Result<Address> {
     Ok(*contract.address())
 }
 
+// https://github.com/chancehudson/poseidon-solidity/blob/main/contracts/PoseidonT3.sol
 sol! {
     #[allow(missing_docs)]
     // Built with Remix IDE; solc 0.8.24+commit.e11b9ed9
