@@ -2,11 +2,10 @@
 //! cryptographic applications, altogether with its exact implementations
 //! [`U64`] for 64 bits, [`U128`] for 128 bits, and so on.
 
-use alloc::string::String;
 use core::{
     borrow::Borrow,
     cmp::Ordering,
-    fmt::{Debug, Display, Result, UpperHex, Write},
+    fmt::{Debug, Display, Result, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
         Shl, ShlAssign, Shr, ShrAssign,
@@ -458,12 +457,10 @@ impl<const N: usize> UpperHex for Uint<N> {
         // Concatenate hex representation of limbs in reversed order without
         // allocations.
         // By the end, it will produce actual hex of `Uint`.
-        let hex =
-            self.limbs.iter().rev().fold(String::new(), |mut output, &limb| {
-                let _ = write!(output, "{limb:016X}");
-                output
-            });
-        write!(f, "{hex}")
+        for limb in self.limbs.iter().rev() {
+            write!(f, "{limb:016X}")?;
+        }
+        Ok(())
     }
 }
 
