@@ -598,10 +598,36 @@ mod preview_deposit {
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
         Ok(())
     }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .previewDeposit(uint!(10_U256))
+            .call()
+            .await
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
+        Ok(())
+    }
 }
 
 mod deposit {
     use super::*;
+
     #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
@@ -630,7 +656,7 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        let _ = watch!(erc20_alice.mint(alice_address, uint!(1000_U256)))?;
+        _ = watch!(erc20_alice.mint(alice_address, uint!(1000_U256)))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_address).call().await?._0;
@@ -668,7 +694,7 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_address).call().await?._0;
@@ -712,7 +738,7 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_address).call().await?._0;
@@ -758,18 +784,17 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
-
-        let initial_alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
-        let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
-
+        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
         _ = watch!(erc20_alice.regular_approve(
             alice_address,
             contract_addr,
             assets_to_convert
         ))?;
+
+        let initial_alice_balance =
+            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let initial_alice_shares =
+            contract.balanceOf(alice_address).call().await?.balance;
 
         let receipt =
             receipt!(contract.deposit(assets_to_convert, alice.address()))?;
@@ -802,7 +827,7 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        let _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let err = send!(contract.deposit(assets_to_convert, alice_address))
             .expect_err("should return `SafeErc20FailedOperation`");
@@ -826,6 +851,37 @@ mod deposit {
             .expect_err("should panics due to `Overflow`");
 
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset, &alice.wallet);
+
+        let assets = uint!(10_U256);
+
+        _ = watch!(asset.mint(alice.address(), assets))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets
+        ))?;
+
+        let err = send!(contract.deposit(assets, alice.address()))
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
         Ok(())
     }
 }
@@ -919,10 +975,36 @@ mod preview_mint {
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
         Ok(())
     }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .previewMint(uint!(10_U256))
+            .call()
+            .await
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
+        Ok(())
+    }
 }
 
 mod mint {
     use super::*;
+
     #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
@@ -1051,6 +1133,38 @@ mod mint {
             .expect_err("should return `Overflow`");
 
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let asset = ERC20Mock::new(asset, &alice.wallet);
+
+        let shares = uint!(10_U256);
+        let assets = shares; // expected 1:1
+
+        _ = watch!(asset.mint(alice.address(), assets))?;
+        _ = watch!(asset.regular_approve(
+            alice.address(),
+            contract_addr,
+            assets
+        ))?;
+
+        let err = send!(contract.mint(shares, alice.address()))
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
         Ok(())
     }
 }
@@ -1365,6 +1479,31 @@ mod preview_withdraw {
             .expect_err("should panics due to `Overflow`");
 
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .previewWithdraw(uint!(10_U256))
+            .call()
+            .await
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
         Ok(())
     }
 }
@@ -1961,14 +2100,17 @@ mod withdraw {
         let contract = Erc4626::new(contract_addr, &alice.wallet);
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
+        let shares = uint!(10_U256);
+        let assets = uint!(2000_U256);
+
         // Setup deposits
-        _ = watch!(asset.mint(alice.address(), uint!(2000_U256)))?;
+        _ = watch!(asset.mint(alice.address(), assets))?;
         _ = watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
-            uint!(2000_U256)
+            assets
         ))?;
-        _ = watch!(contract.mint(uint!(10_U256), alice.address()))?;
+        _ = watch!(contract.mint(shares, alice.address()))?;
 
         // Record initial conversion rate
         let initial_rate =
@@ -1976,7 +2118,7 @@ mod withdraw {
 
         // Perform partial withdrawal
         _ = watch!(contract.withdraw(
-            uint!(500_U256),
+            assets / uint!(2_U256),
             alice.address(),
             alice.address()
         ))?;
@@ -2020,7 +2162,7 @@ mod withdraw {
             contract.maxRedeem(alice.address()).call().await?.maxRedeem;
 
         // Attempt excessive withdrawal
-        let _ = send!(contract.withdraw(
+        _ = send!(contract.withdraw(
             excessive_assets_to_withdraw,
             alice.address(),
             alice.address()
@@ -2038,6 +2180,31 @@ mod withdraw {
         assert_eq!(pre_total_assets, post_total_assets);
         assert_eq!(pre_max_withdraw, post_max_withdraw);
         assert_eq!(pre_max_redeem, post_max_redeem);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = send!(contract.withdraw(
+            uint!(10_U256),
+            alice.address(),
+            alice.address()
+        ))
+        .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
 
         Ok(())
     }
@@ -2181,6 +2348,7 @@ mod max_redeem {
 
 mod preview_redeem {
     use super::*;
+
     #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
@@ -2250,10 +2418,36 @@ mod preview_redeem {
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
         Ok(())
     }
+
+    #[e2e::test]
+    async fn reverts_when_decimals_offset_overflows_during_conversion(
+        alice: Account,
+    ) -> Result<()> {
+        let asset = erc20::deploy(&alice.wallet).await?;
+        let contract_addr = alice
+            .as_deployer()
+            .with_constructor(dec_offset_overflow_ctr(asset))
+            .deploy()
+            .await?
+            .address()?;
+
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .previewRedeem(uint!(10_U256))
+            .call()
+            .await
+            .expect_err("should panic due to decimal offset overflow");
+
+        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+
+        Ok(())
+    }
 }
 
 mod redeem {
     use super::*;
+
     #[e2e::test]
     async fn reverts_when_exceeded_max_redeem_zero_balance(
         alice: Account,
