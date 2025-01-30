@@ -1928,48 +1928,6 @@ mod withdraw {
     }
 }
 
-mod withdraw2 {
-    use super::*;
-    #[e2e::test]
-    async fn reverts_when_invalid_asset(
-        alice: Account,
-        bob: Account,
-    ) -> Result<()> {
-        let invalid_asset = alice.address();
-        let contract_addr = alice
-            .as_deployer()
-            .with_constructor(ctr(invalid_asset))
-            .deploy()
-            .await?
-            .address()?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
-
-        let err = send!(contract.withdraw(
-            uint!(10_U256),
-            alice.address(),
-            bob.address()
-        ))
-        .expect_err("should return `InvalidAsset`");
-
-        assert!(
-            err.reverted_with(Erc4626::InvalidAsset { asset: invalid_asset })
-        );
-        Ok(())
-    }
-
-    // TODO: withdraw ExceededMaxWithdraw E2E test
-
-    // TODO: withdraw InsufficientAllowance E2E test
-
-    // TODO: withdraw InvalidSender E2E test
-
-    // TODO: withdraw SafeErc20FailedOperation E2E test
-
-    // TODO: withdraw overflows E2E test
-
-    // TODO: withdraw success E2E test
-}
-
 mod max_redeem {
     use super::*;
 
