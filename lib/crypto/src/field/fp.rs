@@ -86,7 +86,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// Set `a -= b`.
     #[inline(always)]
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        // If `other` is larger than `self`, add the modulus to self first.
+        // If `other` is larger than `self`, add the modulus to `self` first.
         if b.montgomery_form > a.montgomery_form {
             a.montgomery_form.checked_add_assign(&Self::MODULUS);
         }
@@ -738,11 +738,11 @@ impl<P: FpParams<N>, const N: usize> Mul<&Fp<P, N>> for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> Div<&Fp<P, N>> for Fp<P, N> {
     type Output = Self;
 
-    /// Returns `self * other.inverse()` if `other.inverse()` is `Some`, and
-    /// panics otherwise.
     #[inline]
     fn div(mut self, other: &Self) -> Self {
-        self.mul_assign(&other.inverse().unwrap());
+        // Returns `self * other.inverse()` if `other.inverse()` is `Some`, and
+        // panics otherwise.
+        self.mul_assign(&other.inverse().expect("should not divide by zero"));
         self
     }
 }
@@ -892,11 +892,11 @@ impl<P: FpParams<N>, const N: usize> MulAssign<&Self> for Fp<P, N> {
     }
 }
 
-/// Computes `self *= other.inverse()` if `other.inverse()` is `Some`, and
-/// panics otherwise.
 impl<P: FpParams<N>, const N: usize> DivAssign<&Self> for Fp<P, N> {
     #[inline]
     fn div_assign(&mut self, other: &Self) {
+        // Returns `self * other.inverse()` if `other.inverse()` is `Some`, and
+        // panics otherwise.
         self.mul_assign(&other.inverse().expect("should not divide by zero"));
     }
 }
