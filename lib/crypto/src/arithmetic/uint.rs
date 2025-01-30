@@ -125,7 +125,7 @@ impl<const N: usize> Uint<N> {
         true
     }
 
-    /// Compute a right shift of `self`
+    /// Compute a right shift of `self`.
     /// This is equivalent to a (saturating) division by 2.
     #[doc(hidden)]
     #[must_use]
@@ -145,7 +145,7 @@ impl<const N: usize> Uint<N> {
     /// Return the minimum number of bits needed to encode this number.
     #[doc(hidden)]
     #[must_use]
-    pub const fn ct_num_bits(self) -> usize {
+    pub const fn ct_num_bits(&self) -> usize {
         // Total number of bits.
         let mut num_bits = Self::BITS;
 
@@ -156,7 +156,7 @@ impl<const N: usize> Uint<N> {
             let leading = self.limbs[index].leading_zeros() as usize;
             num_bits -= leading;
 
-            // If the limb is not empty, stop processing other limbs,
+            // If the limb is not empty, stop processing other limbs.
             if leading != 64 {
                 break;
             }
@@ -187,8 +187,7 @@ impl<const N: usize> Uint<N> {
         (self.limbs[limb] & mask) != 0
     }
 
-    /// Multiply `self` by `2`, assign the result to `self` and return
-    /// `overflow`.
+    /// Multiplies `self` by `2` in-place, returning whether overflow occurred.
     #[inline]
     #[allow(unused)]
     pub(crate) fn checked_mul2_assign(&mut self) -> bool {
@@ -203,7 +202,8 @@ impl<const N: usize> Uint<N> {
         last != 0
     }
 
-    /// Multiply `self` by `2` and return `result` with `overflow`.
+    /// Multiplies `self` by `2`, returning the result and whether overflow
+    /// occurred (constant).
     const fn ct_checked_mul2(mut self) -> (Self, bool) {
         let mut last = 0;
         ct_for!((i in 0..N) {
@@ -216,7 +216,7 @@ impl<const N: usize> Uint<N> {
         (self, last != 0)
     }
 
-    /// Divide `self` by `2` and assign result to `self`.
+    /// Divide `self` by `2` in-place.
     pub(crate) fn div2_assign(&mut self) {
         let mut t = 0;
         for a in self.limbs.iter_mut().rev() {
@@ -227,6 +227,8 @@ impl<const N: usize> Uint<N> {
         }
     }
 
+    /// Subtract `rhs` from `self`, returning the result and whether overflow
+    /// occurred (constant).
     #[inline]
     pub(crate) const fn ct_checked_sub(mut self, rhs: &Self) -> (Self, bool) {
         let mut borrow = 0;
@@ -238,6 +240,8 @@ impl<const N: usize> Uint<N> {
         (self, borrow != 0)
     }
 
+    /// Add `rhs` to `self`, returning the result and whether overflow occurred
+    /// (constant).
     #[inline]
     #[allow(dead_code)]
     pub(crate) const fn ct_checked_add(mut self, rhs: &Self) -> (Self, bool) {
@@ -250,6 +254,7 @@ impl<const N: usize> Uint<N> {
         (self, carry != 0)
     }
 
+    /// Add `rhs` to `self` in-place, returning whether overflow occurred.
     #[inline(always)]
     pub(crate) fn checked_add_assign(&mut self, rhs: &Self) -> bool {
         let mut carry = false;
@@ -261,6 +266,8 @@ impl<const N: usize> Uint<N> {
         carry
     }
 
+    /// Subtract `rhs` from `self` in-place, returning whether overflow
+    /// occurred.
     #[inline(always)]
     pub(crate) fn checked_sub_assign(&mut self, rhs: &Self) -> bool {
         let mut borrow = false;
@@ -324,7 +331,7 @@ impl<const N: usize> Uint<N> {
         low
     }
 
-    /// Add two numbers wrapping around upper boundery.
+    /// Add two numbers wrapping around the upper boundary.
     #[must_use]
     pub const fn ct_wrapping_add(&self, rhs: &Self) -> Self {
         let (low, _) = self.ct_adc(rhs, Limb::ZERO);
@@ -959,7 +966,7 @@ mod test {
         // Test parsing from upper hex against displaying in upper hex.
         proptest!(|(upper_hex in "[0-9A-F]{64}")| {
             let uint_from_hex: Uint<4> = from_str_hex(&upper_hex);
-            let hex_from_uint = format!("{:X}", uint_from_hex);
+            let hex_from_uint = format!("{uint_from_hex:X}");
             prop_assert_eq!(hex_from_uint, upper_hex);
         });
     }

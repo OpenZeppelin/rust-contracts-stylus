@@ -1,5 +1,5 @@
 //! This module contains helpers for functions with constant context, like
-//! [`ct_for`] - constant time `for` cycle, as well as it's optimized versions
+//! [`ct_for`] - constant time `for` cycle, as well as its optimized versions
 //! like [`ct_for_unroll6`], that performs [loop unroll] optimization and can be
 //! used both from compile time and runtime.
 //!
