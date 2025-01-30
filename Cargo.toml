@@ -63,7 +63,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -77,7 +77,9 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "0.7.0", default-features = false, features = ["mini-alloc"] }
+stylus-sdk = { version = "0.7.0", default-features = false, features = [
+  "mini-alloc",
+] }
 
 alloy = { version = "=0.7.3", features = [
   "contract",
