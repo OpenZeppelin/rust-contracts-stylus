@@ -283,16 +283,25 @@ impl<const N: usize> Uint<N> {
     /// input.
     ///
     /// Returns a tuple containing the `(lo, hi)` components of the product.
+    ///
+    /// Basic multiplication algorithm described in [wiki].
+    /// It is fast enough for runtime use when optimized with loop "unrolls",
+    /// like [`ct_for_unroll6`].
+    ///
+    /// [wiki]: https://en.wikipedia.org/wiki/Multiplication_algorithm
     #[inline(always)]
     #[must_use]
     pub const fn ct_widening_mul(&self, rhs: &Self) -> (Self, Self) {
-        // TODO#q: document wide multiplication
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
+        // For each digit of the first number,
         ct_for_unroll6!((i in 0..N) {
             let mut carry = 0;
+            // perform multiplication of each digit from the second.
             ct_for_unroll6!((j in 0..N) {
+                // And considering if the multiplication result is high enough,
                 let k = i + j;
                 if k >= N {
+                    // It will go to the high (hi) part.
                     (hi[k - N], carry) = limb::carrying_mac(
                         hi[k - N],
                         self.limbs[i],
@@ -308,6 +317,7 @@ impl<const N: usize> Uint<N> {
                     );
                 }
             });
+            // Set the last carry to the next limb.
             hi[i] = carry;
         });
 
