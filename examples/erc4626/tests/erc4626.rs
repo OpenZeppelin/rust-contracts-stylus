@@ -2118,7 +2118,7 @@ mod withdraw {
 
         // Perform partial withdrawal
         _ = watch!(contract.withdraw(
-            assets / uint!(2_U256),
+            uint!(500_U256),
             alice.address(),
             alice.address()
         ))?;
