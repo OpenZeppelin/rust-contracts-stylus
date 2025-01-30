@@ -2750,7 +2750,6 @@ dependencies = [
 name = "openzeppelin-crypto"
 version = "0.2.0-alpha.3"
 dependencies = [
- "crypto-bigint",
  "educe",
  "hex-literal",
  "num-traits",
