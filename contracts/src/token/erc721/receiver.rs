@@ -1,6 +1,7 @@
+//! Module with an interface required for smart contract in order to receive
+//! ERC-721 token transfers.
 #![allow(missing_docs)]
 #![cfg_attr(coverage_nightly, coverage(off))]
-
 use alloc::vec;
 
 use stylus_sdk::stylus_proc::sol_interface;
@@ -8,26 +9,26 @@ use stylus_sdk::stylus_proc::sol_interface;
 sol_interface! {
     /// [`super::Erc721`] token receiver interface.
     ///
-    /// Interface for any contract that wants to support `safe_transfers`
-    /// from [`super::Erc721`] asset contracts.
+    /// Interface for any contract that wants to support safe transfers from
+    /// [`super::Erc721`] asset contracts.
     interface IERC721Receiver {
-        /// Whenever an [`super::Erc721`] `token_id` token is transferred
-        /// to this contract via [`super::IErc721::safe_transfer_from`].
+        /// This function is called whenever an [`super::Erc721`] `token_id`
+        /// token is transferred to this contract via
+        /// [`super::IErc721::safe_transfer_from`].
         ///
         /// It must return its function selector to confirm the token transfer.
         /// If any other value is returned or the interface is not implemented
         /// by the recipient, the transfer will be reverted.
         ///
-        /// NOTE: To accept the transfer,
-        /// this must return [`super::RECEIVER_FN_SELECTOR`],
-        /// or its own function selector.
+        /// NOTE: To accept the transfer, this must return
+        /// [`super::RECEIVER_FN_SELECTOR`], or its own function selector.
         ///
         /// # Arguments
         ///
         /// * `operator` - Account of the operator.
         /// * `from` - Account of the sender.
         /// * `token_id` - Token id as a number.
-        /// * `data` - Additional data with no specified format, sent in call.
+        /// * `data` - Additional data with no specified format.
         #[allow(missing_docs)]
         function onERC721Received(
             address operator,
