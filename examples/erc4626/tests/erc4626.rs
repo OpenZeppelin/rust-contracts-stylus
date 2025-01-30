@@ -349,6 +349,7 @@ mod convert_to_shares {
             .deploy()
             .await?
             .address()?;
+
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -1187,28 +1188,21 @@ mod max_withdraw {
     async fn reverts_when_decimals_offset_overflows_during_conversion(
         alice: Account,
     ) -> Result<()> {
-        let asset_addr = erc20::deploy(&alice.wallet).await?;
-
-        let ctor = constructorCall {
-            asset_: asset_addr,
-            name_: ERC4626_NAME.to_owned(),
-            symbol_: ERC4626_SYMBOL.to_owned(),
-            decimalsOffset_: MIN_OVERFLOW_DECIMAL_OFFSET,
-        };
-
+        let asset = erc20::deploy(&alice.wallet).await?;
         let contract_addr = alice
             .as_deployer()
-            .with_constructor(ctor)
+            .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
             .address()?;
+
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
             .maxWithdraw(alice.address())
             .call()
             .await
-            .expect_err("should panic due to overflow");
+            .expect_err("should panic due to decimal offset overflow");
 
         assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
 
