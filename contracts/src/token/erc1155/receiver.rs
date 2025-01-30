@@ -7,14 +7,14 @@ use alloc::vec;
 use stylus_sdk::stylus_proc::sol_interface;
 
 sol_interface! {
-    /// Interface that must be implemented by smart contracts in order to
-    /// receive ERC-1155 token transfers.
+    /// [`super::Erc1155`] token receiver interface.
+    ///
+    /// Interface for any contract that wants to support safe transfers from
+    /// [`super::Erc1155`] asset contracts.
     interface IERC1155Receiver {
-        /// Handles the receipt of a single ERC-1155 token type.
-        ///
-        /// This function is called at the end of a
-        /// [`super::IErc1155::safe_batch_transfer_from`] after the balance has
-        /// been updated.
+        /// Handles the receipt of a single ERC-1155 token type. This function
+        /// is called at the end of [`super::IErc1155::safe_transfer_from`]
+        /// after the balance has been updated.
         ///
         /// NOTE: To accept the transfer, this must return
         /// [`super::SINGLE_TRANSFER_FN_SELECTOR`], or its own function
@@ -36,9 +36,8 @@ sol_interface! {
             bytes calldata data
         ) external returns (bytes4);
 
-        /// Handles the receipt of multiple ERC-1155 token types.
-        ///
-        /// This function is called at the end of a
+        /// Handles the receipt of multiple ERC-1155 token types. This function
+        /// is called at the end of
         /// [`super::IErc1155::safe_batch_transfer_from`] after the balances
         /// have been updated.
         ///
