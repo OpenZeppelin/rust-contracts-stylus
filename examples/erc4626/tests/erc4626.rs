@@ -20,6 +20,8 @@ use crate::Erc4626Example::constructorCall;
 const ERC4626_NAME: &str = "Erc4626 Token";
 const ERC4626_SYMBOL: &str = "ETT";
 const DECIMALS_OFFSET: u8 = 0;
+/// The minimum decimal offset needed to induce overflow
+const MIN_OVERFLOW_DECIMAL_OFFSET: u8 = 78;
 
 mod abi;
 mod mock;
@@ -1146,6 +1148,7 @@ mod max_withdraw {
 
         Ok(())
     }
+
     #[e2e::test]
     async fn reverts_when_decimals_offset_overflows_during_conversion(
         alice: Account,
@@ -1156,7 +1159,7 @@ mod max_withdraw {
             asset_: asset_addr,
             name_: ERC4626_NAME.to_owned(),
             symbol_: ERC4626_SYMBOL.to_owned(),
-            decimalsOffset_: 78, // minimum needed to induce overflow
+            decimalsOffset_: MIN_OVERFLOW_DECIMAL_OFFSET,
         };
 
         let contract_addr = alice
