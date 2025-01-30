@@ -325,7 +325,7 @@ mod convert_to_shares {
 
     #[e2e::test]
     async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::MAX).await?;
+        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -384,7 +384,7 @@ mod convert_to_assets {
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, _asset_addr) = deploy(&alice, tokens).await?;
+        let (contract_addr, _) = deploy(&alice, tokens).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(69_U256);
@@ -586,7 +586,7 @@ mod preview_deposit {
 
     #[e2e::test]
     async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::MAX).await?;
+        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -819,7 +819,7 @@ mod deposit {
         alice: Account,
         bob: Account,
     ) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::MAX).await?;
+        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.deposit(U256::MAX, bob.address()))
@@ -867,7 +867,7 @@ mod preview_mint {
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, _asset_addr) = deploy(&alice, tokens).await?;
+        let (contract_addr, _) = deploy(&alice, tokens).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(69_U256);
@@ -1355,7 +1355,7 @@ mod preview_withdraw {
 
     #[e2e::test]
     async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::MAX).await?;
+        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -1520,14 +1520,13 @@ mod withdraw {
         let assets_to_withdraw = uint!(1_U256);
 
         // Deploy failing ERC20
-        let failing_asset_addr =
-            erc20_failing_transfer::deploy(&alice.wallet).await?;
+        let failing_ = erc20_failing_transfer::deploy(&alice.wallet).await?;
         let failing_asset =
-            ERC20FailingTransferMock::new(failing_asset_addr, &alice.wallet);
+            ERC20FailingTransferMock::new(failing_, &alice.wallet);
 
         let contract_addr = alice
             .as_deployer()
-            .with_constructor(ctr(failing_asset_addr))
+            .with_constructor(ctr(failing_))
             .deploy()
             .await?
             .address()?;
@@ -1550,7 +1549,7 @@ mod withdraw {
         .expect_err("should fail due to failed transfer");
 
         assert!(err.reverted_with(Erc4626::SafeErc20FailedOperation {
-            token: failing_asset_addr
+            token: failing_
         }));
 
         Ok(())
@@ -2224,7 +2223,7 @@ mod preview_redeem {
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, _asset_addr) = deploy(&alice, tokens).await?;
+        let (contract_addr, _) = deploy(&alice, tokens).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(69_U256);
@@ -2260,7 +2259,7 @@ mod redeem {
         alice: Account,
         bob: Account,
     ) -> Result<()> {
-        let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(10_U256);
