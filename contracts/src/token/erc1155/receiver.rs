@@ -44,7 +44,6 @@ sol_interface! {
         /// this must return [`super::BATCH_TRANSFER_FN_SELECTOR`],
         /// or its own function selector.
         ///
-        ///
         /// # Arguments
         ///
         /// * `operator` - The address which initiated the batch transfer.
