@@ -4,7 +4,7 @@ An ERC-20 token contract keeps track of xref:tokens.adoc#different-kinds-of-toke
 This makes ERC-20 tokens useful for things like a *medium of exchange currency*, *voting rights*, *staking*, and more.
 
 OpenZeppelin Contracts provide many ERC20-related contracts for Arbitrum Stylus.
-On the https://docs.rs/openzeppelin-stylus/0.1.1/openzeppelin_stylus/token/erc20/struct.Erc20.html[`API reference`] you'll find detailed information on their properties and usage.
+On the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/struct.Erc20.html[`API reference`] you'll find detailed information on their properties and usage.
 
 [[constructing-an-erc20-token-contract]]
 == Constructing an ERC-20 Token Contract
@@ -29,7 +29,7 @@ struct GLDToken {
 impl GLDToken {}
 ----
 
-Our contracts are often used via stylus-sdk https://docs.arbitrum.io/stylus/reference/rust-sdk-guide#inheritance-inherit-and-borrow[inheritance], and here we're reusing https://docs.rs/openzeppelin-stylus/0.1.1/openzeppelin_stylus/token/erc20/struct.Erc20.html[`ERC20`] for both the basic standard implementation and with optional extensions.
+Our contracts are often used via stylus-sdk https://docs.arbitrum.io/stylus/reference/rust-sdk-guide#inheritance-inherit-and-borrow[inheritance], and here we're reusing https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/struct.Erc20.html[`ERC20`] for both the basic standard implementation and with optional extensions.
 
 [[a-note-on-decimals]]
 == A Note on `decimals`
@@ -38,7 +38,7 @@ Often, you'll want to be able to divide your tokens into arbitrary amounts: say,
 Unfortunately, Solidity and the EVM do not support this behavior: only integer (whole) numbers can be used, which poses an issue.
 You may send `1` or `2` tokens, but not `1.5`.
 
-To work around this, ERC20 provides a https://docs.rs/openzeppelin-stylus/0.1.1/openzeppelin_stylus/token/erc20/extensions/metadata/trait.IErc20Metadata.html#tymethod.decimals[`decimals`] field, which is used to specify how many decimal places a token has.
+To work around this, ERC20 provides a https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/extensions/metadata/trait.IErc20Metadata.html#tymethod.decimals[`decimals`] field, which is used to specify how many decimal places a token has.
 To be able to transfer `1.5 GLD`, `decimals` must be at least `1`, since that number has a single decimal place.
 
 How can this be achieved?
@@ -82,6 +82,8 @@ Additionally, there are multiple custom extensions, including:
  * xref:erc20-pausable.adoc[ERC-20 Pausable]: ability to pause token transfers.
 
  * xref:erc20-permit.adoc[ERC-20 Permit]: gasless approval of tokens (standardized as https://eips.ethereum.org/EIPS/eip-2612[`EIP-2612`]).
+
+ * xref:erc4626.adoc[ERC-4626]: tokenized vault that manages shares (represented as ERC-20) that are backed by assets (another ERC-20).
 
  * xref:erc20-flash-mint.adoc[ERC-20 Flash-Mint]: token level support for flash loans through the minting and burning of ephemeral tokens (standardized as https://eips.ethereum.org/EIPS/eip-3156[`EIP-3156`]).
 

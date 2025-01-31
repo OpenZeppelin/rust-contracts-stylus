@@ -10,6 +10,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+-
+
+### Changed
+
+-
+
+### Changed (Breaking)
+
+-
+
+### Fixed
+
+-
+
+
+## [v0.2.0-alpha.3] - 2025-01-30
+
+### Added
+
+- Optimised implementation of bigintegers `Uint<_>` for finite fields. #495
+- `Erc4626` "Tokenized Vault Standard". #465
+- Implement `mul_div` for `U256`. #465
 - Implement `AddAssignChecked` for `StorageUint`. #474
 - `Erc20FlashMint` extension. #407
 - `Erc20Wrapper` "Token Wrapping contract". #498
@@ -29,9 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
 - `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
 
-### Fixed
-
--
 
 ## [v0.2.0-alpha.2] - 2024-12-18
 
@@ -56,9 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
 
-### Fixed
-
--
 
 ## [v0.2.0-alpha.1] - 2024-11-15
 
