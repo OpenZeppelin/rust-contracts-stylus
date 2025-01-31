@@ -92,10 +92,11 @@ impl Erc1155UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    /*
+    // TODO#q: rewrite Erc1155UriStorage tests
+    /*use motsu::prelude::Contract;
     use stylus_sdk::{
         alloy_primitives::{uint, U256},
-        prelude::storage,
+        prelude::{public, storage, TopLevelStorage},
     };
 
     use super::Erc1155UriStorage;
@@ -103,15 +104,22 @@ mod tests {
 
     #[storage]
     struct Erc1155MetadataExample {
+        #[borrow]
         pub metadata_uri: Erc1155MetadataUri,
         pub uri_storage: Erc1155UriStorage,
     }
+
+    #[public]
+    #[inherit(Erc1155MetadataUri)]
+    impl Erc1155MetadataExample {}
+
+    unsafe impl TopLevelStorage for Erc1155MetadataExample {}
 
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
     fn uri_returns_metadata_uri_when_token_uri_is_not_set(
-        contract: Erc1155MetadataExample,
+        contract: Contract<Erc1155MetadataExample>,
     ) {
         let uri = "https://some.metadata/token/uri";
 
@@ -125,7 +133,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_returns_empty_string_when_no_uri_is_set(
-        contract: Erc1155MetadataExample,
+        contract: Contract<Erc1155MetadataExample>,
     ) {
         assert!(contract
             .uri_storage
@@ -135,7 +143,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_returns_token_uri_when_base_uri_is_empty(
-        contract: Erc1155MetadataExample,
+        contract: Contract<Erc1155MetadataExample>,
     ) {
         let token_uri = "https://some.short/token/uri";
 
@@ -153,7 +161,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_returns_concatenated_base_uri_and_token_uri(
-        contract: Erc1155MetadataExample,
+        contract: Contract<Erc1155MetadataExample>,
     ) {
         let base_uri = "https://some.base.uri";
         let token_uri = "/some/token/uri";
@@ -173,7 +181,7 @@ mod tests {
 
     #[motsu::test]
     fn uri_ignores_metadata_uri_when_token_uri_is_set(
-        contract: Erc1155MetadataExample,
+        contract: Contract<Erc1155MetadataExample>,
     ) {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri";
@@ -192,7 +200,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn test_set_uri(contract: Erc1155MetadataExample) {
+    fn test_set_uri(contract: Contract<Erc1155MetadataExample>) {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();
 
@@ -210,12 +218,13 @@ mod tests {
         );
     }
 
+    unsafe impl TopLevelStorage for Erc1155UriStorage {}
+
     #[motsu::test]
-    fn test_set_base_uri(contract: Erc1155UriStorage) {
+    fn test_set_base_uri(contract: Contract<Erc1155UriStorage>) {
         let base_uri = "https://docs.openzeppelin.com/".to_string();
         contract.set_base_uri(base_uri.clone());
 
         assert_eq!(base_uri, contract._base_uri.get_string());
-    }
-    */
+    }*/
 }

@@ -1760,7 +1760,7 @@ mod tests {
         ));
     }
 
-    // TODO#q: fix test error_when_invalid_sender_safe_transfer_from
+    // TODO#q: rewrite test error_when_invalid_sender_safe_transfer_from
     /*#[motsu::test]
     fn error_when_invalid_sender_safe_transfer_from(
         contract: Contract<Erc1155>,
@@ -1919,7 +1919,8 @@ mod tests {
         ));
     }
 
-    // TODO#q: fix test error_when_invalid_sender_safe_transfer_from_with_data
+    // TODO#q: rewrite test
+    // error_when_invalid_sender_safe_transfer_from_with_data
     /*#[motsu::test]
     fn error_when_invalid_sender_safe_transfer_from_with_data(
         contract: Contract<Erc1155>,
@@ -2084,7 +2085,7 @@ mod tests {
         ));
     }
 
-    // TODO#q: fix test error_when_invalid_sender_safe_batch_transfer_from
+    // TODO#q: rewrite test error_when_invalid_sender_safe_batch_transfer_from
     /*#[motsu::test]
     fn error_when_invalid_sender_safe_batch_transfer_from(
         contract: Contract<Erc1155>,
@@ -2283,7 +2284,7 @@ mod tests {
         ));
     }
 
-    // TODO#q: fix test
+    // TODO#q: rewrite test
     // error_when_invalid_sender_safe_batch_transfer_from_with_data
     /*#[motsu::test]
     fn error_when_invalid_sender_safe_batch_transfer_from_with_data(

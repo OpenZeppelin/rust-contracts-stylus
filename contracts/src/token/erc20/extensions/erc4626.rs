@@ -1146,7 +1146,7 @@ impl Erc4626 {
 // TODO#q: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    // TODO#q: fix erc4626 tests
+    // TODO#q: rewrite erc4626 tests
     /*
     use alloy_primitives::{address, U256, U8};
     use stylus_sdk::{msg, prelude::storage};
