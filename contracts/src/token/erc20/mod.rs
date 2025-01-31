@@ -593,7 +593,7 @@ impl Erc20 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
@@ -603,8 +603,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20 {}
 
     #[motsu::test]
-    fn update_mint(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    fn update_mint(contract: Contract<Erc20>, alice: Address) {
         let one = uint!(1_U256);
 
         // Store initial balance & supply.
@@ -625,8 +624,10 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
-    fn update_mint_errors_arithmetic_overflow(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    fn update_mint_errors_arithmetic_overflow(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
         let one = uint!(1_U256);
         assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice));
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
@@ -643,8 +644,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_works(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    fn mint_works(contract: Contract<Erc20>, alice: Address) {
         let one = uint!(1_U256);
 
         // Store initial balance & supply.
@@ -664,8 +664,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_errors_invalid_receiver(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    fn mint_errors_invalid_receiver(contract: Contract<Erc20>, alice: Address) {
         let receiver = Address::ZERO;
         let one = uint!(1_U256);
 
@@ -687,8 +686,10 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
-    fn mint_errors_arithmetic_overflow(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    fn mint_errors_arithmetic_overflow(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
         let one = uint!(1_U256);
         assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice));
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
@@ -704,8 +705,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_burn(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    fn update_burn(contract: Contract<Erc20>, alice: Address) {
         let one = uint!(1_U256);
         let two = uint!(2_U256);
 
@@ -733,8 +733,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_burn_errors_insufficient_balance(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    fn update_burn_errors_insufficient_balance(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
         let one = uint!(1_U256);
         let two = uint!(2_U256);
 
@@ -759,9 +761,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_transfer(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+    fn update_transfer(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
         let one = uint!(1_U256);
 
         // Initialize state for the test case:
@@ -797,9 +801,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn update_transfer_errors_insufficient_balance(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+    fn update_transfer_errors_insufficient_balance(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
         let one = uint!(1_U256);
 
         // Initialize state for the test case:
@@ -832,10 +838,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfers(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
+    fn transfers(contract: Contract<Erc20>, alice: Address, bob: Address) {
         // Mint some tokens for Alice.
         let two = uint!(2_U256);
         contract.sender(alice)._update(Address::ZERO, alice, two).unwrap();
@@ -849,10 +852,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
+    fn transfer_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
         // Alice approves Bob.
         let one = uint!(1_U256);
         contract.sender(alice).approve(bob, one).unwrap();
@@ -872,10 +872,9 @@ mod tests {
     #[motsu::test]
     fn error_when_transfer_with_insufficient_balance(
         contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
     ) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
         // Alice approves Bob.
         let one = uint!(1_U256);
         contract.sender(alice).approve(bob, one).unwrap();
@@ -885,10 +884,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_transfer_to_invalid_receiver(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
+    fn error_when_transfer_to_invalid_receiver(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
         // Alice approves Bob.
         let one = uint!(1_U256);
         contract.sender(alice).approve(bob, one).unwrap();
@@ -901,10 +901,9 @@ mod tests {
     #[motsu::test]
     fn errors_when_transfer_with_insufficient_allowance(
         contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
     ) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
         // Mint some tokens for Alice.
         let one = uint!(1_U256);
         contract.sender(alice)._update(Address::ZERO, alice, one).unwrap();
@@ -915,10 +914,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approves_and_reads_allowance(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
+    fn approves_and_reads_allowance(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
         let allowance = contract.sender(alice).allowance(alice, bob);
         assert_eq!(U256::ZERO, allowance);
 
@@ -929,19 +929,22 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_for_invalid_spender(contract: Contract<Erc20>) {
+    fn error_when_approve_for_invalid_spender(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
         // alice approves `Address::ZERO`
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         let result = contract.sender(alice).approve(Address::ZERO, one);
         assert!(matches!(result, Err(Error::InvalidSpender(_))));
     }
 
     #[motsu::test]
-    fn error_when_invalid_approver(contract: Contract<Erc20>) {
-        let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-
+    fn error_when_invalid_approver(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
         let one = uint!(1_U256);
         let result =
             contract.sender(alice)._approve(Address::ZERO, bob, one, false);

@@ -72,9 +72,7 @@ mod tests {
     unsafe impl TopLevelStorage for Capped {}
 
     #[motsu::test]
-    fn cap_works(contract: Contract<Capped>) {
-        let alice = Address::random();
-
+    fn cap_works(contract: Contract<Capped>, alice: Address) {
         let value = uint!(2024_U256);
         contract.init(alice, |contract| contract._cap.set(value));
         assert_eq!(contract.sender(alice).cap(), value);

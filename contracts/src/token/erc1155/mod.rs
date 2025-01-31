@@ -1197,7 +1197,6 @@ enum Transfer {
 mod tests {
     use alloy_primitives::{address, uint, Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::msg;
 
     use super::{
         ERC1155InsufficientBalance, ERC1155InvalidArrayLength,

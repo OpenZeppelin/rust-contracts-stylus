@@ -86,15 +86,13 @@ mod tests {
     use crate::token::erc20::{Erc20, Error, IErc20};
 
     #[motsu::test]
-    fn burns(contract: Contract<Erc20>) {
-        let alice = Address::random();
-        let bob = Address::random();
+    fn burns(contract: Contract<Erc20>, alice: Address) {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 
         assert_eq!(zero, contract.sender(alice).total_supply());
 
-        // Mint some tokens for msg::sender().
+        // Mint some tokens for Alice.
 
         let two = uint!(2_U256);
         contract.sender(alice)._update(Address::ZERO, alice, two).unwrap();
@@ -108,10 +106,12 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_errors_when_insufficient_balance(contract: Contract<Erc20>) {
+    fn burns_errors_when_insufficient_balance(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
-        let alice = Address::random();
 
         assert_eq!(zero, contract.sender(alice).balance_of(alice));
 
@@ -120,10 +120,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_from(contract: Contract<Erc20>) {
-        let alice = Address::random();
-        let bob = Address::random();
-
+    fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
         // Alice approves `msg::sender`.
         let one = uint!(1_U256);
         contract.sender(alice).approve(bob, one).unwrap();
@@ -142,10 +139,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_from_errors_when_insufficient_balance(contract: Contract<Erc20>) {
-        let alice = Address::random();
-        let bob = Address::random();
-
+    fn burns_from_errors_when_insufficient_balance(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
         // Alice approves `msg::sender`.
         let zero = U256::ZERO;
         let one = uint!(1_U256);
@@ -162,9 +160,8 @@ mod tests {
     #[motsu::test]
     fn burns_from_errors_when_insufficient_allowance(
         contract: Contract<Erc20>,
+        alice: Address,
     ) {
-        let alice = Address::random();
-
         // Mint some tokens for Alice.
         let one = uint!(1_U256);
         contract.sender(alice)._update(Address::ZERO, alice, one).unwrap();
