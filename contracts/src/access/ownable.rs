@@ -200,6 +200,8 @@ impl Ownable {
         evm::log(OwnershipTransferred { previous_owner, new_owner });
     }
 }
+
+// TODO#q: migrate Ownable tests
 /*
 #[cfg(all(test, feature = "std"))]
 mod tests {

@@ -218,6 +218,8 @@ impl Ownable2Step {
         self._ownable._transfer_ownership(new_owner);
     }
 }
+
+// TODO#q: migrate Ownable2Step tests
 /*
 #[cfg(all(test, feature = "std"))]
 mod tests {
