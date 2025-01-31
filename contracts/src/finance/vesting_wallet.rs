@@ -41,7 +41,10 @@ use stylus_sdk::{
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
-    token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
+    token::erc20::utils::{
+        safe_erc20::{self, ISafeErc20, SafeErc20},
+        IErc20,
+    },
     utils::math::storage::AddAssignChecked,
 };
 
@@ -90,23 +93,6 @@ pub enum Error {
     SafeErc20(safe_erc20::Error),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
-}
-
-pub use token::IErc20;
-mod token {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-
-    use alloc::vec;
-
-    use stylus_sdk::stylus_proc::sol_interface;
-
-    sol_interface! {
-        /// Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-        }
-    }
 }
 
 /// State of the [`VestingWallet`] Contract.
