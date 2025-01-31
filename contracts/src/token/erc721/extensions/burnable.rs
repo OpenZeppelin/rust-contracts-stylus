@@ -54,7 +54,7 @@ impl IErc721Burnable for Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::msg;
 
@@ -64,13 +64,10 @@ mod tests {
         IErc721,
     };
 
-    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn burns(contract: Contract<Erc721>) {
-        let alice = Address::random();
+    fn burns(contract: Contract<Erc721>, alice: Address) {
         let one = uint!(1_U256);
 
         contract
@@ -107,21 +104,23 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval(contract: Contract<Erc721>) {
-        let alice = Address::random();
-
+    fn burns_with_approval(
+        contract: Contract<Erc721>,
+        alice: Address,
+        bob: Address,
+    ) {
         contract
             .sender(alice)
-            ._mint(BOB, TOKEN_ID)
+            ._mint(bob, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let initial_balance = contract
             .sender(alice)
-            .balance_of(BOB)
+            .balance_of(bob)
             .expect("should return the balance of Bob");
 
         contract
-            .sender(BOB)
+            .sender(bob)
             .approve(alice, TOKEN_ID)
             .expect("should approve a token for Alice");
 
@@ -142,28 +141,30 @@ mod tests {
 
         let balance = contract
             .sender(alice)
-            .balance_of(BOB)
+            .balance_of(bob)
             .expect("should return the balance of Bob");
 
         assert_eq!(initial_balance - uint!(1_U256), balance);
     }
 
     #[motsu::test]
-    fn burns_with_approval_for_all(contract: Contract<Erc721>) {
-        let alice = Address::random();
-
+    fn burns_with_approval_for_all(
+        contract: Contract<Erc721>,
+        alice: Address,
+        bob: Address,
+    ) {
         contract
             .sender(alice)
-            ._mint(BOB, TOKEN_ID)
+            ._mint(bob, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let initial_balance = contract
             .sender(alice)
-            .balance_of(BOB)
+            .balance_of(bob)
             .expect("should return the balance of Bob");
 
         contract
-            .sender(BOB)
+            .sender(bob)
             .set_approval_for_all(alice, true)
             .expect("should approve all Bob's tokens for Alice");
 
@@ -185,7 +186,7 @@ mod tests {
 
         let balance = contract
             .sender(alice)
-            .balance_of(BOB)
+            .balance_of(bob)
             .expect("should return the balance of Bob");
 
         assert_eq!(initial_balance - uint!(1_U256), balance);
@@ -194,16 +195,16 @@ mod tests {
     #[motsu::test]
     fn error_when_get_approved_of_previous_approval_burned(
         contract: Contract<Erc721>,
+        alice: Address,
+        bob: Address,
     ) {
-        let alice = Address::random();
-
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
         contract
             .sender(alice)
-            .approve(BOB, TOKEN_ID)
+            .approve(bob, TOKEN_ID)
             .expect("should approve a token for Bob");
 
         contract
@@ -225,12 +226,14 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_without_approval(contract: Contract<Erc721>) {
-        let alice = Address::random();
-
+    fn error_when_burn_without_approval(
+        contract: Contract<Erc721>,
+        alice: Address,
+        bob: Address,
+    ) {
         contract
             .sender(alice)
-            ._mint(BOB, TOKEN_ID)
+            ._mint(bob, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let err = contract
@@ -248,9 +251,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_nonexistent_token(contract: Contract<Erc721>) {
-        let alice = Address::random();
-
+    fn error_when_burn_nonexistent_token(
+        contract: Contract<Erc721>,
+        alice: Address,
+    ) {
         let err = contract
             .sender(alice)
             .burn(TOKEN_ID)

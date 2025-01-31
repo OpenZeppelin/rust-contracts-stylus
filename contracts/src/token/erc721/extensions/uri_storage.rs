@@ -150,9 +150,10 @@ mod tests {
     unsafe impl TopLevelStorage for Erc721MetadataExample {}
 
     #[motsu::test]
-    fn token_uri_works(contract: Contract<Erc721MetadataExample>) {
-        let alice = Address::random();
-
+    fn token_uri_works(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
         contract
             .sender(alice)
             .erc721

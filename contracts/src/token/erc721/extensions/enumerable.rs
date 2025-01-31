@@ -335,28 +335,28 @@ impl Erc721Enumerable {
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
-        alloy_primitives::{address, uint, Address, U256},
+        alloy_primitives::{uint, Address, U256},
         prelude::TopLevelStorage,
     };
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
     use crate::token::erc721::IErc721;
 
-    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
-
     unsafe impl TopLevelStorage for Erc721Enumerable {}
 
     #[motsu::test]
-    fn total_supply_no_tokens(contract: Contract<Erc721Enumerable>) {
-        let alice = Address::random();
+    fn total_supply_no_tokens(
+        contract: Contract<Erc721Enumerable>,
+        alice: Address,
+    ) {
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
     }
 
     #[motsu::test]
     fn error_when_token_by_index_is_out_of_bound(
         contract: Contract<Erc721Enumerable>,
+        alice: Address,
     ) {
-        let alice = Address::random();
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         let token_idx = uint!(2024_U256);
@@ -368,8 +368,8 @@ mod tests {
     #[motsu::test]
     fn add_token_to_all_tokens_enumeration_works(
         contract: Contract<Erc721Enumerable>,
+        alice: Address,
     ) {
-        let alice = Address::random();
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         let tokens_len = 10;
@@ -410,8 +410,8 @@ mod tests {
     #[motsu::test]
     fn remove_token_from_all_tokens_enumeration_works(
         contract: Contract<Erc721Enumerable>,
+        alice: Address,
     ) {
-        let alice = Address::random();
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         let initial_tokens_len = 10;
