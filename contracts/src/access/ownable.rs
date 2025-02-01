@@ -201,78 +201,103 @@ impl Ownable {
     }
 }
 
-// TODO#q: migrate Ownable tests
-/*
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address};
-    use stylus_sdk::msg;
+    use alloy_primitives::Address;
+    use motsu::prelude::Contract;
+    use stylus_sdk::{msg, prelude::TopLevelStorage};
 
     use super::{Error, IOwnable, Ownable};
 
-    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    unsafe impl TopLevelStorage for Ownable {}
 
     #[motsu::test]
-    fn reads_owner(contract: Ownable) {
-        contract._owner.set(msg::sender());
-        let owner = contract.owner();
+    fn reads_owner(contract: Contract<Ownable>, alice: Address) {
+        contract.init(alice, |contract| contract._owner.set(alice));
+        let owner = contract.sender(alice).owner();
         assert_eq!(owner, msg::sender());
     }
 
     #[motsu::test]
-    fn transfers_ownership(contract: Ownable) {
-        contract._owner.set(msg::sender());
+    fn transfers_ownership(
+        contract: Contract<Ownable>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.init(alice, |contract| contract._owner.set(alice));
 
-        contract.transfer_ownership(ALICE).expect("should transfer ownership");
-        let owner = contract._owner.get();
-        assert_eq!(owner, ALICE);
+        contract
+            .sender(alice)
+            .transfer_ownership(bob)
+            .expect("should transfer ownership");
+        let owner = contract.sender(alice).owner();
+        assert_eq!(owner, bob);
     }
 
     #[motsu::test]
-    fn prevents_non_onwers_from_transferring(contract: Ownable) {
+    fn prevents_non_onwers_from_transferring(
+        contract: Contract<Ownable>,
+        alice: Address,
+        bob: Address,
+    ) {
         // Alice must be set as owner, because we can't set the
         // `msg::sender` yet.
-        contract._owner.set(ALICE);
+        contract.init(alice, |contract| contract._owner.set(bob));
 
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-        let err = contract.transfer_ownership(bob).unwrap_err();
+        let err = contract.sender(alice).transfer_ownership(bob).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
     #[motsu::test]
-    fn prevents_reaching_stuck_state(contract: Ownable) {
-        contract._owner.set(msg::sender());
+    fn prevents_reaching_stuck_state(
+        contract: Contract<Ownable>,
+        alice: Address,
+    ) {
+        contract.init(alice, |contract| contract._owner.set(alice));
 
-        let err = contract.transfer_ownership(Address::ZERO).unwrap_err();
+        let err = contract
+            .sender(alice)
+            .transfer_ownership(Address::ZERO)
+            .unwrap_err();
         assert!(matches!(err, Error::InvalidOwner(_)));
     }
 
     #[motsu::test]
-    fn loses_ownership_after_renouncing(contract: Ownable) {
-        contract._owner.set(msg::sender());
+    fn loses_ownership_after_renouncing(
+        contract: Contract<Ownable>,
+        alice: Address,
+    ) {
+        contract.init(alice, |contract| contract._owner.set(alice));
 
-        let _ = contract.renounce_ownership();
-        let owner = contract._owner.get();
+        let _ = contract.sender(alice).renounce_ownership();
+        let owner = contract.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_renouncing(contract: Ownable) {
+    fn prevents_non_owners_from_renouncing(
+        contract: Contract<Ownable>,
+        alice: Address,
+        bob: Address,
+    ) {
         // Alice must be set as owner, because we can't set the
         // `msg::sender` yet.
-        contract._owner.set(ALICE);
+        contract.init(alice, |contract| contract._owner.set(bob));
 
-        let err = contract.renounce_ownership().unwrap_err();
+        let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
     #[motsu::test]
-    fn recovers_access_using_internal_transfer(contract: Ownable) {
-        contract._owner.set(ALICE);
+    fn recovers_access_using_internal_transfer(
+        contract: Contract<Ownable>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.init(alice, |contract| contract._owner.set(bob));
 
-        contract._transfer_ownership(ALICE);
-        let owner = contract._owner.get();
-        assert_eq!(owner, ALICE);
+        contract.sender(alice)._transfer_ownership(bob);
+        let owner = contract.sender(alice).owner();
+        assert_eq!(owner, bob);
     }
 }
-*/
