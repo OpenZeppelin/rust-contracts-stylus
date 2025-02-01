@@ -378,7 +378,7 @@ impl AccessControl {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::{msg, prelude::TopLevelStorage};
+    use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{AccessControl, Error};
 

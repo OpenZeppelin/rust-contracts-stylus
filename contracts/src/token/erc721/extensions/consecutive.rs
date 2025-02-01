@@ -24,7 +24,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{

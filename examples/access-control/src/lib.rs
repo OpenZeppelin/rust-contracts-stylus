@@ -48,7 +48,3 @@ impl AccessControlExample {
         self.access._set_role_admin(role, new_admin_role)
     }
 }
-
-impl AccessControlExample {
-    pub const TRANSFER_ROLE: [u8; 32] = TRANSFER_ROLE;
-}
