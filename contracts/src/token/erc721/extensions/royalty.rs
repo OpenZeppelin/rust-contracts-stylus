@@ -38,19 +38,26 @@ mod sol {
     use alloy_sol_macro::sol;
 
     sol! {
-        // TODO: Add docs for errors
+        /// Indicates an error for Invalid Default Royalty. Occurs when
+        /// fee_numerator > denominator.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC2981InvalidDefaultRoyalty(uint256 numerator, uint256 denominator);
 
+        /// Indicates an error relating to default royalty receiver being invalid.
+        /// The zero address is considered invalid.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC2981InvalidDefaultRoyaltyReceiver(address receiver);
 
+        /// Indicates an error for Invalid Token Royalty. Occurs when
+        /// fee_numerator > denominator
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC2981InvalidTokenRoyalty(uint256 tokenId, uint256 numerator, uint256 denominator);
 
+        /// Indicates an error relating to token royalty receiver being invalid.
+        /// The zero address is considered invalid.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC2981InvalidTokenRoyaltyReceiver(uint256 tokenId, address receiver);
@@ -275,23 +282,21 @@ impl Erc721Royalty {
     ///
     /// * `&mut self` - Write access to the contract's state.
     pub fn _reset_token_royalty(&mut self, token_id: U256) {
+        //*  Should reset to default royalty on reset */
         self._token_royalty_info.delete(token_id);
     }
 }
 
 #[cfg(all(test))] //* feature = "std"
 mod tests {
-    use stylus_sdk::{
-        alloy_primitives::{address, uint, Address, U256},
-        contract,
-        storage::StorageAddress,
-    };
+    use stylus_sdk::alloy_primitives::{address, uint, Address, U256};
 
     use super::{Erc721Royalty, Error, IErc721Royalty};
     use crate::utils::structs::checkpoints::{Size, S160};
 
     type U96 = <S160 as Size>::Key;
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
+    const DAVE: Address = address!("0BB78F7e7132d1651B4Fd884B7624394e92156F1");
     const ZERO_ADDRESS: Address = Address::ZERO;
     const FEE_NUMERATOR: U96 = uint!(9000_U96);
     const TOKEN_ID: U256 = uint!(1_U256);
@@ -300,29 +305,8 @@ mod tests {
     /// DEFAULT ROYALTY
 
     #[motsu::test]
-    fn check_whether_set_default_royalty_works(contract: Erc721Royalty) {
-        contract
-            ._set_default_royalty(BOB, FEE_NUMERATOR)
-            .expect("Error in setting default royalty");
-
-        let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
-
-        assert_eq!(BOB, received_address);
-        assert_eq!(
-            U256::from(FEE_NUMERATOR) * SALE_PRICE / U256::from(contract._fee_denominator()),
-            received_royalty_fraction
-        );
-    }
-
-    //? Is this test needed??
-    #[motsu::test]
     fn check_whether_update_default_royalty_works(contract: Erc721Royalty) {
         let new_fraction = uint!(8000_U96);
-
-        contract
-            ._set_default_royalty(BOB, FEE_NUMERATOR)
-            .expect("Error in setting default royalty");
 
         contract
             ._set_default_royalty(BOB, new_fraction)
@@ -333,13 +317,16 @@ mod tests {
 
         assert_eq!(BOB, received_address);
         assert_eq!(
-            U256::from(new_fraction) * SALE_PRICE / U256::from(contract._fee_denominator()),
+            U256::from(new_fraction) * SALE_PRICE
+                / U256::from(contract._fee_denominator()),
             received_royalty_fraction
         );
     }
 
     #[motsu::test]
-    fn check_whether_default_royalty_is_same_for_all_tokens(contract: Erc721Royalty) {
+    fn check_whether_default_royalty_is_same_for_all_tokens(
+        contract: Erc721Royalty,
+    ) {
         let token_id_2 = uint!(2_U256);
 
         contract
@@ -353,10 +340,7 @@ mod tests {
             contract.royalty_info(token_id_2, SALE_PRICE);
 
         assert_eq!(received_address, received_address_2);
-        assert_eq!(
-            received_royalty_fraction,
-            received_royalty_fraction_2
-        );
+        assert_eq!(received_royalty_fraction, received_royalty_fraction_2);
     }
 
     #[motsu::test]
@@ -371,43 +355,128 @@ mod tests {
             contract.royalty_info(TOKEN_ID, SALE_PRICE);
 
         assert_eq!(ZERO_ADDRESS, received_address);
-        assert_eq!(
-            uint!(0_U256),
-            received_royalty_fraction
-        );
+        assert_eq!(uint!(0_U256), received_royalty_fraction);
+    }
+
+    #[motsu::test]
+    fn check_whether_reverts_if_invalid_parameters(contract: Erc721Royalty) {
+        let err = contract
+            ._set_default_royalty(Address::ZERO, FEE_NUMERATOR)
+            .unwrap_err();
+
+        assert!(matches!(err, Error::InvalidDefaultRoyaltyReceiver(_)));
+
+        let new_fee_numerator = uint!(11000_U96);
+
+        let err =
+            contract._set_default_royalty(BOB, new_fee_numerator).unwrap_err();
+
+        assert!(matches!(err, Error::InvalidDefaultRoyalty(_)));
     }
 
     // TOKEN ROYALTY
 
-    // #[motsu::test]
-    // fn check_whether_set_token_royalty_works(contract: Erc721Royalty) {
-    //     contract
-    //         ._set_token_royalty(TOKEN_ID, BOB, FEE_NUMERATOR)
-    //         .expect("Error in setting token royalty");
+    #[motsu::test]
+    fn check_whether_update_token_royalty_works(contract: Erc721Royalty) {
+        let new_fraction = uint!(8000_U96);
 
-    //     assert_eq!(
-    //         BOB,
-    //         contract._token_royalty_info.get(TOKEN_ID).receiver.get()
-    //     );
-    //     assert_eq!(
-    //         FEE_NUMERATOR / contract._fee_denominator(),
-    //         contract._token_royalty_info.get(TOKEN_ID).royalty_fraction.get()
-    //     );
-    // }
+        contract
+            ._set_token_royalty(TOKEN_ID, BOB, new_fraction)
+            .expect("Error in updating token royalty");
 
-    // #[motsu::test]
-    // fn check_whether_reset_token_royalty_works(contract: Erc721Royalty) {
-    //     contract
-    //         ._set_token_royalty(TOKEN_ID, BOB, FEE_NUMERATOR)
-    //         .expect("Error in setting token royalty");
-    // }
+        let (received_address, received_royalty_fraction) =
+            contract.royalty_info(TOKEN_ID, SALE_PRICE);
 
-    // #[motsu::test]
-    // fn check_whether_token_royalty_supersedes_default_royalty() {}
+        assert_eq!(BOB, received_address);
+        assert_eq!(
+            U256::from(new_fraction) * SALE_PRICE
+                / U256::from(contract._fee_denominator()),
+            received_royalty_fraction
+        );
+    }
 
-    // #[motsu::test]
-    // fn check_whether_errors_are_returned_correctly() {}
+    #[motsu::test]
+    fn check_whether_token_royalty_is_different_for_different_tokens(
+        contract: Erc721Royalty,
+    ) {
+        let token_id_2 = uint!(2_U256);
+        let new_fraction = uint!(8000_U96);
 
-    // #[motsu::test]
-    // fn check_whether_royalty_info_works() {}
+        contract
+            ._set_token_royalty(TOKEN_ID, BOB, FEE_NUMERATOR)
+            .expect("Error in updating token royalty");
+
+        contract
+            ._set_token_royalty(token_id_2, DAVE, new_fraction)
+            .expect("Error in updating token royalty");
+
+        let (received_address, received_royalty_fraction) =
+            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+
+        let (received_address_2, received_royalty_fraction_2) =
+            contract.royalty_info(token_id_2, SALE_PRICE);
+
+        assert_ne!(received_address, received_address_2);
+        assert_ne!(received_royalty_fraction, received_royalty_fraction_2);
+    }
+
+    #[motsu::test]
+    fn check_whether_reset_token_royalty_works(contract: Erc721Royalty) {
+        let new_fraction = uint!(8000_U96);
+
+        contract
+            ._set_token_royalty(TOKEN_ID, BOB, FEE_NUMERATOR)
+            .expect("Error in setting token royalty");
+
+        contract._reset_token_royalty(TOKEN_ID);
+
+        let (received_address, received_royalty_fraction) =
+            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+
+        assert_eq!(ZERO_ADDRESS, received_address);
+        assert_eq!(uint!(0_U256), received_royalty_fraction);
+
+        contract
+            ._set_default_royalty(BOB, FEE_NUMERATOR)
+            .expect("Error in setting default royalty");
+
+        contract
+            ._set_token_royalty(TOKEN_ID, DAVE, new_fraction)
+            .expect("Error in setting token royalty");
+
+        contract._reset_token_royalty(TOKEN_ID);
+
+        let (received_address, received_royalty_fraction) =
+            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+
+        assert_eq!(BOB, received_address);
+        assert_eq!(U256::from(FEE_NUMERATOR), received_royalty_fraction);
+    }
+
+    #[motsu::test]
+    fn check_whether_token_royalty_reverts_if_invalid_parameters(
+        contract: Erc721Royalty,
+    ) {
+        let err = contract
+            ._set_token_royalty(TOKEN_ID, Address::ZERO, FEE_NUMERATOR)
+            .unwrap_err();
+
+        assert!(matches!(err, Error::InvalidTokenRoyaltyReceiver(_)));
+
+        let new_fee_numerator = uint!(11000_U96);
+
+        let err = contract
+            ._set_token_royalty(TOKEN_ID, BOB, new_fee_numerator)
+            .unwrap_err();
+
+        assert!(matches!(err, Error::InvalidTokenRoyalty(_)));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc721Royalty as IErc721Royalty>::INTERFACE_ID;
+        // Interface ID for ERC2981
+        let expected = 0x2a55205a;
+        assert_eq!(actual, expected);
+    }
 }
