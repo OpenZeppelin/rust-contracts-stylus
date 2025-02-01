@@ -240,8 +240,6 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        // Alice must be set as owner, because we can't set the
-        // `msg::sender` yet.
         contract.init(alice, |contract| contract._owner.set(bob));
 
         let err = contract.sender(alice).transfer_ownership(bob).unwrap_err();
@@ -280,8 +278,6 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        // Alice must be set as owner, because we can't set the
-        // `msg::sender` yet.
         contract.init(alice, |contract| contract._owner.set(bob));
 
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
