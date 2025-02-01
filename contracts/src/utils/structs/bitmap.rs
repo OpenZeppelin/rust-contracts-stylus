@@ -97,7 +97,10 @@ impl BitMap {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{private::proptest::proptest, Address, U256};
+    use alloy_primitives::{
+        private::proptest::{prop_assert, proptest},
+        Address, U256,
+    };
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::{public, TopLevelStorage};
 
@@ -113,9 +116,9 @@ mod tests {
         proptest!(|(value: U256, alice: Address)| {
             let bit_map = Contract::<BitMap>::new();
             let mut bit_map = bit_map.sender(alice);
-            assert!(!bit_map.get(value));
+            prop_assert!(!bit_map.get(value));
             bit_map.set(value);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
         });
     }
 
@@ -125,9 +128,9 @@ mod tests {
             let bit_map = Contract::<BitMap>::new();
             let mut bit_map = bit_map.sender(alice);
             bit_map.set(value);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
             bit_map.unset(value);
-            assert!(!bit_map.get(value));
+            prop_assert!(!bit_map.get(value));
         });
     }
 
@@ -137,9 +140,9 @@ mod tests {
             let bit_map = Contract::<BitMap>::new();
             let mut bit_map = bit_map.sender(alice);
             bit_map.set_to(value, true);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
             bit_map.set_to(value, false);
-            assert!(!bit_map.get(value));
+            prop_assert!(!bit_map.get(value));
         });
     }
 }
