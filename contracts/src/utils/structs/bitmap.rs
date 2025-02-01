@@ -94,6 +94,8 @@ impl BitMap {
         index >> 8
     }
 }
+
+// TODO#q: migrate bitmap prop tests
 /*
 #[cfg(all(test, feature = "std"))]
 mod tests {
