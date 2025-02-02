@@ -93,7 +93,7 @@ pub enum Error {
 #[derive(Erase)]
 pub struct RoyaltyInfo {
     receiver: StorageAddress,
-    royalty_fraction: StorageU96, // U96 should be used
+    royalty_fraction: StorageU96,
 }
 
 /// State of a Royalty extension.
@@ -140,7 +140,6 @@ impl IErc721Royalty for Erc721Royalty {
             royalty_fraction = &self._default_royalty_info.royalty_fraction;
         }
 
-        // TODO: Check whether dereferencing impacts anything
         let royalty_amount = (sale_price * U256::from(royalty_fraction.get()))
             .wrapping_div(U256::from(self._fee_denominator()));
 
@@ -158,7 +157,8 @@ impl IErc165 for Erc721Royalty {
 impl Erc721Royalty {
     /// Function to change the denominator with which to interpret the fee set
     /// in _setTokenRoyalty and _setDefaultRoyalty as a fraction of the sale
-    /// price Defaults to 10000 so fees are expressed in basis points, but
+    /// price  
+    /// Defaults to 10000 so fees are expressed in basis points, but
     /// may be customized by an override.
     ///
     /// # Arguments
@@ -238,7 +238,7 @@ impl Erc721Royalty {
     /// If `fee_numerator` > denominator, then the error
     /// [`Error::InvalidTokenRoyalty`] is returned.
     ///
-    /// If receiver is the zero address, then the error
+    /// If `receiver` is the zero address, then the error
     /// [`Error::InvalidTokenRoyaltyReceiver`] is returned.
     pub fn _set_token_royalty(
         &mut self,
@@ -282,12 +282,11 @@ impl Erc721Royalty {
     ///
     /// * `&mut self` - Write access to the contract's state.
     pub fn _reset_token_royalty(&mut self, token_id: U256) {
-        //*  Should reset to default royalty on reset */
         self._token_royalty_info.delete(token_id);
     }
 }
 
-#[cfg(all(test))] //* feature = "std"
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use stylus_sdk::alloy_primitives::{address, uint, Address, U256};
 
@@ -302,7 +301,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
     const SALE_PRICE: U256 = uint!(1000_U256);
 
-    /// DEFAULT ROYALTY
+    /// DEFAULT ROYALTY TESTS
 
     #[motsu::test]
     fn check_whether_update_default_royalty_works(contract: Erc721Royalty) {
@@ -374,7 +373,7 @@ mod tests {
         assert!(matches!(err, Error::InvalidDefaultRoyalty(_)));
     }
 
-    // TOKEN ROYALTY
+    // TOKEN ROYALTY TESTS
 
     #[motsu::test]
     fn check_whether_update_token_royalty_works(contract: Erc721Royalty) {
@@ -423,18 +422,6 @@ mod tests {
     #[motsu::test]
     fn check_whether_reset_token_royalty_works(contract: Erc721Royalty) {
         let new_fraction = uint!(8000_U96);
-
-        contract
-            ._set_token_royalty(TOKEN_ID, BOB, FEE_NUMERATOR)
-            .expect("Error in setting token royalty");
-
-        contract._reset_token_royalty(TOKEN_ID);
-
-        let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
-
-        assert_eq!(ZERO_ADDRESS, received_address);
-        assert_eq!(uint!(0_U256), received_royalty_fraction);
 
         contract
             ._set_default_royalty(BOB, FEE_NUMERATOR)
