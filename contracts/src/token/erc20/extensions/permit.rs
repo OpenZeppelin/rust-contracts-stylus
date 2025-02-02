@@ -135,7 +135,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// [`ERC2612ExpiredSignature`] is returned.
     /// If signer is not an `owner`, than the error
     /// [`ERC2612InvalidSigner`] is returned.
-    /// * If the `s` value is grater than [`ecdsa::SIGNATURE_S_UPPER_BOUND`],
+    /// * If the `s` value is greater than [`ecdsa::SIGNATURE_S_UPPER_BOUND`],
     /// then the error [`ecdsa::Error::InvalidSignatureS`] is returned.
     /// * If the recovered address is `Address::ZERO`, then the error
     /// [`ecdsa::Error::InvalidSignature`] is returned.

@@ -42,6 +42,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Default for Poseidon2<P, F> {
 impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     /// Create a new Poseidon sponge.
     #[must_use]
+    #[inline]
     pub fn new() -> Self {
         Self {
             phantom: core::marker::PhantomData,
@@ -81,6 +82,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     /// # Panics
     ///
     /// May panic if absorbing while squeezing.
+    #[inline]
     pub fn absorb(&mut self, elem: &F) {
         if let Mode::Squeezing = self.mode {
             panic!("cannot absorb while squeezing");
@@ -96,6 +98,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Absorb batch of elements into the sponge.
+    #[inline]
     pub fn absorb_batch(&mut self, elems: &[F]) {
         for elem in elems {
             self.absorb(elem);
@@ -103,6 +106,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Permute elements in the sponge.
+    #[inline]
     pub fn permute(&mut self) {
         // Linear layer at the beginning.
         self.matmul_external();
@@ -124,6 +128,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply external round to the state.
+    #[inline]
     fn external_round(&mut self, round: usize) {
         self.add_rc_external(round);
         self.apply_sbox_external();
@@ -131,6 +136,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply internal round to the state.
+    #[inline]
     fn internal_round(&mut self, round: usize) {
         self.add_rc_internal(round);
         self.apply_sbox_internal();
@@ -138,6 +144,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Squeeze a single element from the sponge.
+    #[inline]
     pub fn squeeze(&mut self) -> F {
         if self.mode == Mode::Absorbing || self.index == Self::state_size() {
             self.permute();
@@ -151,11 +158,13 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Squeeze a batch of elements from the sponge.
+    #[inline]
     pub fn squeeze_batch(&mut self, n: usize) -> Vec<F> {
         (0..n).map(|_| self.squeeze()).collect()
     }
 
     /// Apply sbox to the entire state in the external round.
+    #[inline]
     fn apply_sbox_external(&mut self) {
         for elem in &mut self.state {
             *elem = elem.pow(P::D);
@@ -163,12 +172,14 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply sbox to the first element in the internal round.
+    #[inline]
     fn apply_sbox_internal(&mut self) {
         self.state[0] = self.state[0].pow(P::D);
     }
 
     /// Apply the external MDS matrix `M_E` to the state.
     #[allow(clippy::needless_range_loop)]
+    #[inline(always)]
     fn matmul_external(&mut self) {
         let t = Self::state_size();
         match t {
@@ -211,6 +222,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply the cheap 4x4 MDS matrix to each 4-element part of the state.
+    #[inline(always)]
     fn matmul_m4(&mut self) {
         let state = &mut self.state;
         let t = Self::state_size();
@@ -247,6 +259,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply the internal MDS matrix `M_I` to the state.
+    #[inline(always)]
     fn matmul_internal(&mut self) {
         let t = Self::state_size();
 
@@ -285,6 +298,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Add a round constant to the entire state in external round.
+    #[inline]
     fn add_rc_external(&mut self, round: usize) {
         for (a, b) in
             self.state.iter_mut().zip(P::ROUND_CONSTANTS[round].iter())
@@ -294,6 +308,7 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     // Add a round constant to the first state element in internal round.
+    #[inline]
     fn add_rc_internal(&mut self, round: usize) {
         self.state[0] += P::ROUND_CONSTANTS[round][0];
     }

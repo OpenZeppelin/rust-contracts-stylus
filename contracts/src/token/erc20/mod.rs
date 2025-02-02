@@ -255,6 +255,8 @@ pub trait IErc20 {
     /// [`Error::InvalidReceiver`] is returned.
     /// * If not enough allowance is available, then the error
     /// [`Error::InsufficientAllowance`] is returned.
+    /// * If the `from` address doesn't have enough tokens, then the error
+    /// [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events
     ///
@@ -524,9 +526,9 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
+    /// * If the `account` address is `Address::ZERO`, then the error
     ///   [`Error::InvalidSender`] is returned.
-    /// * If the `from` address doesn't have enough tokens, then the error
+    /// * If the `account` address doesn't have enough tokens, then the error
     ///   [`Error::InsufficientBalance`] is returned.
     ///
     /// # Events

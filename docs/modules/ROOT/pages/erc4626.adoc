@@ -1,0 +1,154 @@
+= ERC-4626
+:stem: latexmath
+
+Implementation of the ERC-4626 "Tokenized Vault Standard" as defined in https://eips.ethereum.org/EIPS/eip-4626[ERC-4626].
+
+This extension allows the minting and burning of "shares" (represented using the ERC-20 inheritance) in exchange for underlying "assets" through standardized `deposit`, `mint`, `redeem` and `burn` workflows. This contract extends the ERC-20 standard. Any additional extensions included along it would affect the "shares" token represented by this contract and not the "assets" token which is an independent contract.
+
+[[inflation-attack]]
+== Security concern: Inflation attack
+To read more about the security concerns associated with the ERC-4626, check the https://docs.openzeppelin.com/contracts/5.x/erc4626#inflation-attack[Inflation attack] description.
+
+[[usage]]
+== Usage
+
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/extensions/erc4626/index.html[`ERC-4626`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc20::{
+    extensions::{Erc20Metadata, Erc4626, IErc4626},
+    Erc20,
+};
+
+#[entrypoint]
+#[storage]
+struct Erc4626Example {
+    #[borrow]
+    erc20: Erc20,
+    #[borrow]
+    metadata: Erc20Metadata,
+    #[borrow]
+    erc4626: Erc4626,
+}
+
+#[public]
+#[inherit(Erc20, Erc20Metadata)]
+impl Erc4626Example {
+    fn decimals(&self) -> U8 {
+        self.erc4626.decimals()
+    }
+
+    fn asset(&self) -> Address {
+        self.erc4626.asset()
+    }
+
+    fn total_assets(&mut self) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.total_assets()?)
+    }
+
+    fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.convert_to_shares(assets, &self.erc20)?)
+    }
+
+    fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.convert_to_assets(shares, &self.erc20)?)
+    }
+
+    fn max_deposit(&self, receiver: Address) -> U256 {
+        self.erc4626.max_deposit(receiver)
+    }
+
+    fn preview_deposit(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.preview_deposit(assets, &self.erc20)?)
+    }
+
+    fn deposit(
+        &mut self,
+        assets: U256,
+        receiver: Address,
+    ) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.deposit(assets, receiver, &mut self.erc20)?)
+    }
+
+    fn max_mint(&self, receiver: Address) -> U256 {
+        self.erc4626.max_mint(receiver)
+    }
+
+    fn preview_mint(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.preview_mint(shares, &self.erc20)?)
+    }
+
+    fn mint(
+        &mut self,
+        shares: U256,
+        receiver: Address,
+    ) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.mint(shares, receiver, &mut self.erc20)?)
+    }
+
+    fn max_withdraw(&mut self, owner: Address) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.max_withdraw(owner, &self.erc20)?)
+    }
+
+    fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.preview_withdraw(assets, &self.erc20)?)
+    }
+
+    fn withdraw(
+        &mut self,
+        assets: U256,
+        receiver: Address,
+        owner: Address,
+    ) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.withdraw(assets, receiver, owner, &mut self.erc20)?)
+    }
+
+    fn max_redeem(&self, owner: Address) -> U256 {
+        self.erc4626.max_redeem(owner, &self.erc20)
+    }
+
+    fn preview_redeem(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.preview_redeem(shares, &self.erc20)?)
+    }
+
+    fn redeem(
+        &mut self,
+        shares: U256,
+        receiver: Address,
+        owner: Address,
+    ) -> Result<U256, Vec<u8>> {
+        Ok(self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)?)
+    }
+}
+----
+
+Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
+
+[source,solidity]
+----
+contract Erc4626Example {
+    // Erc20 Token Storage
+    mapping(address account => uint256) private _balances;
+    mapping(address account => mapping(address spender => uint256))
+        private _allowances;
+    uint256 private _totalSupply;
+
+    // Erc20 Metadata Storage
+    string private _name;
+    string private _symbol;
+
+    // Erc4626 Storage
+    address private _asset;
+    uint8 private _underlyingDecimals;
+    uint8 private _decimalsOffset;
+
+    constructor(string memory name_, string memory symbol_, address asset_, uint8 decimalsOffset_) {
+        _name = name_;
+        _symbol = symbol_;
+        _asset = asset_;
+        _decimalsOffset = decimalsOffset_;
+        _underlyingDecimals = 18;
+    }
+}
+----

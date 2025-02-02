@@ -758,9 +758,6 @@ impl Erc721Consecutive {
         // Avoid reading the owner unless necessary.
         if emit_event || !auth.is_zero() {
             let owner = self._require_owned(token_id)?;
-
-            // We do not use [`Self::_is_authorized`] because single-token
-            // approvals should not be able to call `approve`.
             if !auth.is_zero()
                 && owner != auth
                 && !self.is_approved_for_all(owner, auth)

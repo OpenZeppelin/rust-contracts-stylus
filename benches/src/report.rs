@@ -210,9 +210,11 @@ impl Display for BenchmarkReport {
     }
 }
 
+const BASE_GAS_FEE: u128 = 21_000;
+
 fn get_l2_gas_used(receipt: &ArbTxReceipt) -> eyre::Result<u128> {
     let l2_gas = receipt.gas_used;
     let arb_fields: ArbOtherFields = receipt.other.deserialize_as()?;
     let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();
-    Ok(l2_gas - l1_gas)
+    Ok(l2_gas - l1_gas - BASE_GAS_FEE)
 }
