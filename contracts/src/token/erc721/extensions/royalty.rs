@@ -437,7 +437,11 @@ mod tests {
             contract.royalty_info(TOKEN_ID, SALE_PRICE);
 
         assert_eq!(BOB, received_address);
-        assert_eq!(U256::from(FEE_NUMERATOR), received_royalty_fraction);
+        assert_eq!(
+            U256::from(FEE_NUMERATOR) * SALE_PRICE
+                / U256::from(contract._fee_denominator()),
+            received_royalty_fraction
+        );
     }
 
     #[motsu::test]
