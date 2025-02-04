@@ -141,9 +141,6 @@ pub trait IErc3156FlashLender {
     /// [`crate::token::erc20::extensions::Capped`], make sure to override this
     /// function to integrate the cap instead of [`U256::MAX`].
     ///
-    /// NOTE: In order to have [`IErc3156FlashLender::max_flash_loan`] exposed
-    /// in ABI, you need to do this manually.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -160,9 +157,6 @@ pub trait IErc3156FlashLender {
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
 
     /// Returns the fee applied when doing flash loans.
-    ///
-    /// NOTE: In order to have [`IErc3156FlashLender::flash_fee`] exposed in
-    /// ABI, you need to do this manually.
     ///
     /// # Arguments
     ///
@@ -195,9 +189,6 @@ pub trait IErc3156FlashLender {
     /// them approved back to the token contract itself so they can be burned.
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
-    ///
-    /// NOTE: In order to have [`IErc3156FlashLender::flash_loan`] exposed in
-    /// ABI, you need to do this manually.
     ///
     /// # Arguments
     ///
