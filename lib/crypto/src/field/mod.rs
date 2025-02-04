@@ -6,9 +6,10 @@
 //! prime modulus `17` and generator element `3`.
 //!
 //! # Examples
+//!
 //! ```rust
 //! use openzeppelin_crypto::{
-//!     bigint::crypto_bigint::U64,
+//!     arithmetic::uint::U64,
 //!     field::{
 //!         fp::{Fp64, FpParams, LIMBS_64},
 //!         group::AdditiveGroup,

@@ -19,6 +19,11 @@ use crate::utils::{
 pub mod extensions;
 mod receiver;
 pub use receiver::IERC721Receiver;
+
+/// The expected value returned from [`IERC721Receiver::on_erc_721_received`].
+pub const RECEIVER_FN_SELECTOR: [u8; 4] =
+    function_selector!("onERC721Received", Address, Address, U256, Bytes,);
+
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -540,9 +545,6 @@ impl IErc165 for Erc721 {
 }
 
 impl Erc721 {
-    const RECEIVER_FN_SELECTOR: [u8; 4] =
-        function_selector!("onERC721Received", Address, Address, U256, Bytes,);
-
     /// Returns the owner of the `token_id`. Does NOT revert if the token
     /// doesn't exist.
     ///
@@ -1106,7 +1108,7 @@ impl Erc721 {
         };
 
         // Token rejected.
-        if id != Self::RECEIVER_FN_SELECTOR {
+        if id != RECEIVER_FN_SELECTOR {
             return Err(ERC721InvalidReceiver { receiver: to }.into());
         }
 
