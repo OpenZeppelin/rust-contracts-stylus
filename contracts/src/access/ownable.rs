@@ -161,6 +161,25 @@ impl IOwnable for Ownable {
     }
 }
 
+// TODO: uncomment once multiple public attributes are supported
+// NOTE: cannot include constructor in the above #[public], as constructor is
+// not part of the `IOwnable2Step` trait
+// #[public]
+// impl Ownable {
+//     /// Constructor
+//     #[constructor]
+//     pub fn constructor(&mut self, initial_owner: Address) -> Result<(),
+// Error> {         if initial_owner.is_zero() {
+//             return Err(OwnableError::InvalidOwner(OwnableInvalidOwner {
+//                 owner: Address::ZERO,
+//             })
+//             .into());
+//         }
+//         self._transfer_ownership(initial_owner);
+//         Ok(())
+//     }
+// }
+
 impl Ownable {
     /// Checks if the [`msg::sender`] is set as the owner.
     ///
