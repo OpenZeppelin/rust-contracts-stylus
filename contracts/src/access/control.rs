@@ -124,6 +124,12 @@ pub struct AccessControl {
 
 #[public]
 impl AccessControl {
+    /// Constructor
+    #[constructor]
+    pub fn constructor(&mut self) {
+        self._grant_role(Self::DEFAULT_ADMIN_ROLE.into(), msg::sender());
+    }
+
     /// Returns `true` if `account` has been granted `role`.
     ///
     /// # Arguments

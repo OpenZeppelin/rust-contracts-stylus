@@ -12,7 +12,7 @@ dependencies = [
  "eyre",
  "keccak-const",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -907,7 +907,7 @@ version = "0.2.0-alpha.3"
 dependencies = [
  "alloy-primitives",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
 ]
 
 [[package]]
@@ -1517,7 +1517,7 @@ dependencies = [
  "koba",
  "once_cell",
  "regex",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
  "toml",
 ]
@@ -1554,7 +1554,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1671,7 +1671,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1684,7 +1684,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1697,7 +1697,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1710,7 +1710,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1723,7 +1723,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1737,7 +1737,7 @@ dependencies = [
  "eyre",
  "keccak-const",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1750,7 +1750,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1765,7 +1765,7 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1779,7 +1779,7 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -1793,7 +1793,7 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -2532,7 +2532,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "openzeppelin-crypto",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
 ]
 
 [[package]]
@@ -2544,8 +2544,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "mini-alloc"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3d986fb074078dcc9a560cc3afe9edf2dcf1f577b854fb65e366c331d8c7753"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors#9ecdcbdfbbfc7bd23cb7896b06e25f0efb6cfc2d"
 dependencies = [
  "cfg-if",
 ]
@@ -2586,7 +2585,7 @@ dependencies = [
  "dashmap 6.1.0",
  "motsu-proc",
  "once_cell",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tiny-keccak",
 ]
 
@@ -2771,7 +2770,7 @@ dependencies = [
  "keccak-const",
  "motsu",
  "openzeppelin-stylus-proc",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
 ]
 
 [[package]]
@@ -2793,7 +2792,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -2806,7 +2805,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -2954,7 +2953,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -3460,7 +3459,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
@@ -3800,6 +3799,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "stylus-proc"
+version = "0.7.0"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors#9ecdcbdfbbfc7bd23cb7896b06e25f0efb6cfc2d"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "cfg-if",
+ "convert_case",
+ "lazy_static",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "sha3",
+ "syn 2.0.89",
+ "syn-solidity",
+ "trybuild",
+]
+
+[[package]]
 name = "stylus-sdk"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3812,8 +3831,24 @@ dependencies = [
  "hex",
  "keccak-const",
  "lazy_static",
+ "stylus-proc 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "stylus-sdk"
+version = "0.7.0"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors#9ecdcbdfbbfc7bd23cb7896b06e25f0efb6cfc2d"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "cfg-if",
+ "clap",
+ "derivative",
+ "hex",
+ "keccak-const",
+ "lazy_static",
  "mini-alloc",
- "stylus-proc",
+ "stylus-proc 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
 ]
 
 [[package]]
@@ -4292,7 +4327,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk",
+ "stylus-sdk 0.7.0 (git+https://github.com/OffchainLabs/stylus-sdk-rs.git?branch=gligneul%2Fconstructors)",
  "tokio",
 ]
 
