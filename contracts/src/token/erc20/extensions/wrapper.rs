@@ -258,15 +258,20 @@ impl Erc20Wrapper {
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-
     use alloy_primitives::address;
+    use stylus_sdk::prelude::storage;
 
-    use super::Erc20Wrapper;
+    use super::{Erc20Wrapper, IERC20Wrapper};
+
+    #[storage]
+    struct Erc20WrapperTestExample {
+        wrapper: Erc20Wrapper,
+    }
 
     #[motsu::test]
-    fn underlying_works(contract: Erc20Wrapper) {
+    fn underlying_works(contract:Erc20WrapperTestExample ) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
-        contract.underlying_address.set(asset);
-        assert_eq!(contract.underlying(), asset);
+        contract.wrapper.underlying_address.set(asset);
+        assert_eq!(contract.wrapper.underlying(), asset);
     }
 }
