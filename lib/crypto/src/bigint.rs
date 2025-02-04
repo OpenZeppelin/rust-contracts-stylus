@@ -59,7 +59,8 @@ pub trait BigInteger:
     const BYTES: usize = Self::NUM_LIMBS * Limb::BYTES;
 
     /// Returns true if this number is odd.
-    /// # Example
+    ///
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
@@ -71,7 +72,7 @@ pub trait BigInteger:
 
     /// Returns true if this number is even.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
@@ -83,7 +84,7 @@ pub trait BigInteger:
 
     /// Returns true if this number is zero.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
@@ -94,7 +95,8 @@ pub trait BigInteger:
     fn is_zero(&self) -> bool;
 
     /// Compute the minimum number of bits needed to encode this number.
-    /// # Example
+    ///
+    /// # Examples
     /// ```
     /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
     ///
@@ -110,7 +112,8 @@ pub trait BigInteger:
     fn num_bits(&self) -> usize;
 
     /// Compute the `i`-th bit of `self`.
-    /// # Example
+    ///
+    /// # Examples
     ///
     /// ```
     /// use openzeppelin_crypto::bigint::{BigInteger, crypto_bigint::U64};
@@ -125,7 +128,7 @@ pub trait BigInteger:
     ///
     /// # Panics
     ///
-    /// Panic if the number of bytes is not equal to `Self::BYTES`.
+    /// * If the number of bytes is not equal to `Self::BYTES`.
     fn from_bytes_le(bytes: &[u8]) -> Self;
 
     /// Convert bigint to little-endian bytes.
