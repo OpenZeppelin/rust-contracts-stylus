@@ -15,8 +15,6 @@ pub trait IErc20Burnable {
     /// Destroys a `value` amount of tokens from the caller, lowering the total
     /// supply.
     ///
-    /// NOTE: Relies on the `update` mechanism.
-    ///
     /// # Arguments
     ///
     /// * `value` - Amount to be burnt.
@@ -33,8 +31,6 @@ pub trait IErc20Burnable {
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
     /// supply.
-    ///
-    /// NOTE: Relies on the `update` mechanism.
     ///
     /// # Arguments
     ///

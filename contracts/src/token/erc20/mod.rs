@@ -412,8 +412,6 @@ impl Erc20 {
     /// Creates a `value` amount of tokens and assigns them to `account`,
     /// by transferring it from `Address::ZERO`.
     ///
-    /// Relies on the `_update` mechanism.
-    ///
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If the `account` address is
@@ -512,8 +510,6 @@ impl Erc20 {
 
     /// Destroys a `value` amount of tokens from `account`,
     /// lowering the total supply.
-    ///
-    /// Relies on the `update` mechanism.
     ///
     /// # Arguments
     ///

@@ -11,9 +11,7 @@ pub trait IErc721Burnable {
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Burns `token_id`.
-    ///
-    /// The approval is cleared when the token is burned. Relies on the `_burn`
-    /// mechanism.
+    /// The approval is cleared when the token is burned.
     ///
     /// # Arguments
     ///
