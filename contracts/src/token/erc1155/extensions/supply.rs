@@ -196,6 +196,9 @@ impl Erc1155Supply {
     /// Extended version of [`Erc1155::_update`] that updates the supply of
     /// tokens.
     ///
+    /// NOTE: The ERC-1155 acceptance check is not performed in this function.
+    /// See [`Self::_update_with_acceptance_check`] instead.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -206,23 +209,21 @@ impl Erc1155Supply {
     ///
     /// # Errors
     ///
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    ///
-    /// NOTE: The ERC-1155 acceptance check is not performed in this function.
-    /// See [`Self::_update_with_acceptance_check`] instead.
+    /// * [`erc1155::Error::InvalidArrayLength`] - If length of `ids` is not
+    ///   equal to length of `values`.
+    /// * [`erc1155::Error::InsufficientBalance`] - If `value` is greater than
+    ///   the balance of the `from` account.
     ///
     /// # Events
     ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
+    /// * [`erc1155::TransferSingle`] - If the arrays contain one element.
+    /// * [`erc1155::TransferBatch`] - If the arrays contain more than one
+    ///   element.
     ///
     /// # Panics
     ///
-    /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
-    /// the `mint` operation.
+    /// * If updated balance and/or supply exceeds `U256::MAX`, may happen
+    ///   during the `mint` operation.
     fn _update(
         &mut self,
         from: Address,
