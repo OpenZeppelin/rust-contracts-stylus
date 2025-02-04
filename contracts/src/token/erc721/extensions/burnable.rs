@@ -108,7 +108,7 @@ mod tests {
         let initial_balance =
             contract.balance_of(BOB).expect("should return the balance of Bob");
 
-        contract._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.token_approvals.setter(TOKEN_ID).set(alice);
 
         let result = contract.burn(TOKEN_ID);
         assert!(result.is_ok());
@@ -140,7 +140,7 @@ mod tests {
             contract.balance_of(BOB).expect("should return the balance of Bob");
 
         // As we cannot change `msg::sender()`, we need to use this workaround.
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         let result = contract.burn(TOKEN_ID);
 

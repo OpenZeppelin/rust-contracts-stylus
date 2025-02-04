@@ -147,7 +147,7 @@ mod tests {
         address!("000000000000000000000000000000000000dEaD");
 
     #[derive(Default)]
-    struct TestEIP712 {}
+    struct TestEIP712;
 
     impl IEip712 for TestEIP712 {
         const NAME: &'static str = "A Name";

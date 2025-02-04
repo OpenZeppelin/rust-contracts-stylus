@@ -1,7 +1,7 @@
 //! Extension of ERC-1155 that adds tracking of total supply per token id.
 //!
 //! Useful for scenarios where Fungible and Non-fungible tokens have to be
-//! clearly identified. Note: While a `_total_supply` of 1 might mean the
+//! clearly identified. Note: While a `total_supply` of 1 might mean the
 //! corresponding is an NFT, there are no guarantees that no other tokens
 //! with the same id are not going to be minted.
 //!
@@ -33,11 +33,9 @@ pub struct Erc1155Supply {
     /// ERC-1155 contract storage.
     pub erc1155: Erc1155,
     /// Mapping from token id to total supply.
-    #[allow(clippy::used_underscore_binding)]
-    pub _total_supply: StorageMap<U256, StorageU256>,
+    pub(crate) total_supply: StorageMap<U256, StorageU256>,
     /// Total supply of all token ids.
-    #[allow(clippy::used_underscore_binding)]
-    pub _total_supply_all: StorageU256,
+    pub(crate) total_supply_all: StorageU256,
 }
 
 /// Required interface of a [`Erc1155Supply`] contract.
@@ -70,11 +68,11 @@ pub trait IErc1155Supply {
 
 impl IErc1155Supply for Erc1155Supply {
     fn total_supply(&self, id: U256) -> U256 {
-        self._total_supply.get(id)
+        self.total_supply.get(id)
     }
 
     fn total_supply_all(&self) -> U256 {
-        *self._total_supply_all
+        *self.total_supply_all
     }
 
     fn exists(&self, id: U256) -> bool {
@@ -234,16 +232,16 @@ impl Erc1155Supply {
 
         if from.is_zero() {
             for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
-                self._total_supply.setter(token_id).add_assign_checked(
+                self.total_supply.setter(token_id).add_assign_checked(
                     value,
-                    "should not exceed `U256::MAX` for `_total_supply`",
+                    "should not exceed `U256::MAX` for `total_supply`",
                 );
             }
 
             let total_mint_value = values.iter().sum();
-            self._total_supply_all.add_assign_checked(
+            self.total_supply_all.add_assign_checked(
                 total_mint_value,
-                "should not exceed `U256::MAX` for `_total_supply_all`",
+                "should not exceed `U256::MAX` for `total_supply_all`",
             );
         }
 
@@ -254,7 +252,7 @@ impl Erc1155Supply {
                  * values[i] <= balance_of(from, token_ids[i]) <=
                  * total_supply(token_ids[i])
                  */
-                self._total_supply.setter(token_id).sub_assign_unchecked(value);
+                self.total_supply.setter(token_id).sub_assign_unchecked(value);
             }
 
             let total_burn_value: U256 = values.into_iter().sum();
@@ -263,7 +261,7 @@ impl Erc1155Supply {
              * total_burn_value = sum_i(values[i]) <=
              * sum_i(total_supply(ids[i])) <= total_supply_all
              */
-            self._total_supply_all.sub_assign_unchecked(total_burn_value);
+            self.total_supply_all.sub_assign_unchecked(total_burn_value);
         }
         Ok(())
     }
@@ -436,7 +434,7 @@ mod tests {
     }
 
     #[motsu::test]
-    #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
+    #[should_panic = "should not exceed `U256::MAX` for `total_supply`"]
     fn mint_panics_on_total_supply_overflow(contract: Erc1155Supply) {
         let token_id = random_token_ids(1)[0];
         let two = U256::from(2);
@@ -451,7 +449,7 @@ mod tests {
     }
 
     #[motsu::test]
-    #[should_panic = "should not exceed `U256::MAX` for `_total_supply_all`"]
+    #[should_panic = "should not exceed `U256::MAX` for `total_supply_all`"]
     fn mint_panics_on_total_supply_all_overflow(contract: Erc1155Supply) {
         let token_ids = random_token_ids(2);
         contract

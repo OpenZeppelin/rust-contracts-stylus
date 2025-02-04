@@ -11,8 +11,8 @@
 //! contract construction. This ability is regained after construction. During
 //! construction, only batch minting is allowed.
 //!
-//! Fields `_first_consecutive_id` (used to offset first token id) and
-//! `_max_batch_size` (used to restrict maximum batch size) can be assigned
+//! Fields `first_consecutive_id` (used to offset first token id) and
+//! `max_batch_size` (used to restrict maximum batch size) can be assigned
 //! during construction with `koba` (stylus construction tooling) within
 //! solidity constructor file.
 //!
@@ -62,20 +62,16 @@ pub struct Erc721Consecutive {
     /// Erc721 contract storage.
     pub erc721: Erc721,
     /// Checkpoint library contract for sequential ownership.
-    #[allow(clippy::used_underscore_binding)]
-    pub _sequential_ownership: Trace<S160>,
+    pub(crate) sequential_ownership: Trace<S160>,
     /// BitMap library contract for sequential burn of tokens.
-    #[allow(clippy::used_underscore_binding)]
-    pub _sequential_burn: BitMap,
+    pub(crate) sequential_burn: BitMap,
     /// Used to offset the first token id in `next_consecutive_id` calculation.
-    #[allow(clippy::used_underscore_binding)]
-    pub _first_consecutive_id: StorageU96,
+    pub(crate) first_consecutive_id: StorageU96,
     /// Maximum size of a batch of consecutive tokens. This is designed to
     /// limit stress on off-chain indexing services that have to record one
     /// entry per token, and have protections against "unreasonably large"
     /// batches of tokens.
-    #[allow(clippy::used_underscore_binding)]
-    pub _max_batch_size: StorageU96,
+    pub(crate) max_batch_size: StorageU96,
 }
 
 pub use sol::*;
@@ -265,11 +261,11 @@ impl Erc721Consecutive {
 
         // Otherwise, check the token was not burned, and fetch ownership from
         // the anchors.
-        if self._sequential_burn.get(token_id) {
+        if self.sequential_burn.get(token_id) {
             Address::ZERO
         } else {
             // NOTE: Bounds already checked. No need for safe cast of token_id
-            self._sequential_ownership.lower_lookup(U96::from(token_id)).into()
+            self.sequential_ownership.lower_lookup(U96::from(token_id)).into()
         }
     }
 
@@ -335,7 +331,7 @@ impl Erc721Consecutive {
 
             // Push an ownership checkpoint & emit event.
             let last = next + batch_size - uint!(1_U96);
-            self._sequential_ownership.push(last, to.into())?;
+            self.sequential_ownership.push(last, to.into())?;
 
             // The invariant required by this function is preserved because the
             // new sequential_ownership checkpoint is attributing
@@ -389,10 +385,10 @@ impl Erc721Consecutive {
             // and the token_id was minted in a batch
             && token_id < U256::from(self._next_consecutive_id())
             // and the token was never marked as burnt
-            && !self._sequential_burn.get(token_id)
+            && !self.sequential_burn.get(token_id)
         {
             // record burn
-            self._sequential_burn.set(token_id);
+            self.sequential_burn.set(token_id);
         }
 
         Ok(previous_owner)
@@ -406,7 +402,7 @@ impl Erc721Consecutive {
     ///
     /// * `&self` - Read access to the contract's state.
     fn _next_consecutive_id(&self) -> U96 {
-        match self._sequential_ownership.latest_checkpoint() {
+        match self.sequential_ownership.latest_checkpoint() {
             None => self._first_consecutive_id(),
             Some((latest_id, _)) => latest_id + uint!(1_U96),
         }
@@ -415,15 +411,15 @@ impl Erc721Consecutive {
     /// Used to offset the first token id in
     /// [`Erc721Consecutive::_next_consecutive_id`].
     fn _first_consecutive_id(&self) -> U96 {
-        self._first_consecutive_id.get()
+        self.first_consecutive_id.get()
     }
 
     /// Maximum size of consecutive token's batch.
     /// This is designed to limit stress on off-chain indexing services that
     /// have to record one entry per token, and have protections against
     /// "unreasonably large" batches of tokens.
-    fn _max_batch_size(&self) -> U96 {
-        self._max_batch_size.get()
+    pub fn _max_batch_size(&self) -> U96 {
+        self.max_batch_size.get()
     }
 }
 
@@ -459,19 +455,16 @@ impl Erc721Consecutive {
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
             self.erc721
-                ._balances
+                .balances
                 .setter(from)
                 .sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self.erc721
-                ._balances
-                .setter(to)
-                .add_assign_unchecked(uint!(1_U256));
+            self.erc721.balances.setter(to).add_assign_unchecked(uint!(1_U256));
         }
 
-        self.erc721._owners.setter(token_id).set(to);
+        self.erc721.owners.setter(token_id).set(to);
         evm::log(Transfer { from, to, token_id });
         Ok(from)
     }
@@ -773,7 +766,7 @@ impl Erc721Consecutive {
             }
         }
 
-        self.erc721._token_approvals.setter(token_id).set(to);
+        self.erc721.token_approvals.setter(token_id).set(to);
         Ok(())
     }
 
@@ -830,8 +823,8 @@ mod tests {
         receivers: Vec<Address>,
         batches: Vec<U96>,
     ) -> Vec<U96> {
-        contract._first_consecutive_id.set(uint!(0_U96));
-        contract._max_batch_size.set(uint!(5000_U96));
+        contract.first_consecutive_id.set(uint!(0_U96));
+        contract.max_batch_size.set(uint!(5000_U96));
         receivers
             .into_iter()
             .zip(batches)
@@ -1083,7 +1076,7 @@ mod tests {
     fn safe_transfers_from_approved_token(contract: Erc721Consecutive) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
-        contract.erc721._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.erc721.token_approvals.setter(TOKEN_ID).set(alice);
         contract
             .safe_transfer_from(BOB, alice, TOKEN_ID)
             .expect("should transfer Bob's token to Alice");
@@ -1262,7 +1255,7 @@ mod tests {
         contract
             .approve(BOB, TOKEN_ID)
             .expect("should approve Bob for operations on token");
-        assert_eq!(contract.erc721._token_approvals.get(TOKEN_ID), BOB);
+        assert_eq!(contract.erc721.token_approvals.get(TOKEN_ID), BOB);
     }
 
     #[motsu::test]
@@ -1298,12 +1291,7 @@ mod tests {
     #[motsu::test]
     fn approval_for_all(contract: Erc721Consecutive) {
         let alice = msg::sender();
-        contract
-            .erc721
-            ._operator_approvals
-            .setter(alice)
-            .setter(BOB)
-            .set(false);
+        contract.erc721.operator_approvals.setter(alice).setter(BOB).set(false);
 
         contract
             .set_approval_for_all(BOB, true)

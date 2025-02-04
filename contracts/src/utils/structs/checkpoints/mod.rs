@@ -51,19 +51,16 @@ impl MethodError for Error {
 #[storage]
 pub struct Trace<S: Size> {
     /// Stores checkpoints in a dynamic array sorted by key.
-    #[allow(clippy::used_underscore_binding)]
-    pub _checkpoints: StorageVec<Checkpoint<S>>,
+    pub(crate) checkpoints: StorageVec<Checkpoint<S>>,
 }
 
 /// State of a single checkpoint.
 #[storage]
 pub struct Checkpoint<S: Size> {
     /// The key of the checkpoint. Used as a sorting key.
-    #[allow(clippy::used_underscore_binding)]
-    pub _key: S::KeyStorage,
+    pub(crate) key: S::KeyStorage,
     /// The value corresponding to the key.
-    #[allow(clippy::used_underscore_binding)]
-    pub _value: S::ValueStorage,
+    pub(crate) value: S::ValueStorage,
 }
 
 impl<S: Size> Trace<S> {
@@ -107,7 +104,7 @@ impl<S: Size> Trace<S> {
         if pos == len {
             S::Value::ZERO
         } else {
-            self._index(pos)._value.get()
+            self._index(pos).value.get()
         }
     }
 
@@ -125,7 +122,7 @@ impl<S: Size> Trace<S> {
         if pos == U256::ZERO {
             S::Value::ZERO
         } else {
-            self._index(pos - uint!(1_U256))._value.get()
+            self._index(pos - uint!(1_U256)).value.get()
         }
     }
 
@@ -147,7 +144,7 @@ impl<S: Size> Trace<S> {
 
         if len > uint!(5_U256) {
             let mid = len - len.sqrt();
-            if key < self._index(mid)._key.get() {
+            if key < self._index(mid).key.get() {
                 high = mid;
             } else {
                 low = mid + uint!(1_U256);
@@ -159,7 +156,7 @@ impl<S: Size> Trace<S> {
         if pos == U256::ZERO {
             S::Value::ZERO
         } else {
-            self._index(pos - uint!(1_U256))._value.get()
+            self._index(pos - uint!(1_U256)).value.get()
         }
     }
 
@@ -174,7 +171,7 @@ impl<S: Size> Trace<S> {
         if pos == U256::ZERO {
             S::Value::ZERO
         } else {
-            self._index(pos - uint!(1_U256))._value.get()
+            self._index(pos - uint!(1_U256)).value.get()
         }
     }
 
@@ -191,7 +188,7 @@ impl<S: Size> Trace<S> {
             None
         } else {
             let checkpoint = self._index(pos - uint!(1_U256));
-            Some((checkpoint._key.get(), checkpoint._value.get()))
+            Some((checkpoint.key.get(), checkpoint.value.get()))
         }
     }
 
@@ -201,7 +198,7 @@ impl<S: Size> Trace<S> {
     ///
     /// * `&self` - Read access to the checkpoint's state.
     pub fn length(&self) -> U256 {
-        U256::from(self._checkpoints.len())
+        U256::from(self.checkpoints.len())
     }
 
     /// Returns checkpoint at given position.
@@ -215,10 +212,10 @@ impl<S: Size> Trace<S> {
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
     pub fn at(&self, pos: U32) -> (S::Key, S::Value) {
-        let guard = self._checkpoints.get(pos).unwrap_or_else(|| {
+        let guard = self.checkpoints.get(pos).unwrap_or_else(|| {
             panic!("should get checkpoint at index `{pos}`")
         });
-        (guard._key.get(), guard._value.get())
+        (guard.key.get(), guard.value.get())
     }
 
     /// Pushes a (`key`, `value`) pair into an ordered list of checkpoints,
@@ -244,8 +241,8 @@ impl<S: Size> Trace<S> {
         let pos = self.length();
         if pos > U256::ZERO {
             let last = self._index(pos - uint!(1_U256));
-            let last_key = last._key.get();
-            let last_value = last._value.get();
+            let last_key = last.key.get();
+            let last_value = last.value.get();
 
             // Checkpoint keys must be non-decreasing.
             if last_key > key {
@@ -254,7 +251,7 @@ impl<S: Size> Trace<S> {
 
             // Update or push new checkpoint
             if last_key == key {
-                self._index_mut(pos - uint!(1_U256))._value.set(value);
+                self._index_mut(pos - uint!(1_U256)).value.set(value);
             } else {
                 self._unchecked_push(key, value);
             }
@@ -287,7 +284,7 @@ impl<S: Size> Trace<S> {
     ) -> U256 {
         while low < high {
             let mid = low.average(high);
-            if self._index(mid)._key.get() > key {
+            if self._index(mid).key.get() > key {
                 high = mid;
             } else {
                 low = mid + uint!(1_U256);
@@ -318,7 +315,7 @@ impl<S: Size> Trace<S> {
     ) -> U256 {
         while low < high {
             let mid = low.average(high);
-            if self._index(mid)._key.get() < key {
+            if self._index(mid).key.get() < key {
                 low = mid + uint!(1_U256);
             } else {
                 high = mid;
@@ -339,7 +336,7 @@ impl<S: Size> Trace<S> {
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
     fn _index(&self, pos: U256) -> StorageGuard<Checkpoint<S>> {
-        self._checkpoints
+        self.checkpoints
             .get(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
     }
@@ -356,7 +353,7 @@ impl<S: Size> Trace<S> {
     /// * `&mut self` - Write access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
     fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint<S>> {
-        self._checkpoints
+        self.checkpoints
             .setter(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
     }
@@ -369,9 +366,9 @@ impl<S: Size> Trace<S> {
     /// * `key` - Checkpoint key to insert.
     /// * `value` - Checkpoint value corresponding to insertion `key`.
     fn _unchecked_push(&mut self, key: S::Key, value: S::Value) {
-        let mut new_checkpoint = self._checkpoints.grow();
-        new_checkpoint._key.set(key);
-        new_checkpoint._value.set(value);
+        let mut new_checkpoint = self.checkpoints.grow();
+        new_checkpoint.key.set(key);
+        new_checkpoint.value.set(value);
     }
 }
 

@@ -26,8 +26,7 @@ const HEX_FF: U256 = uint!(0xff_U256);
 #[storage]
 pub struct BitMap {
     /// Inner laying mapping.
-    #[allow(clippy::used_underscore_binding)]
-    pub _data: StorageMap<U256, StorageU256>,
+    pub(crate) data: StorageMap<U256, StorageU256>,
 }
 
 impl BitMap {
@@ -40,7 +39,7 @@ impl BitMap {
     pub fn get(&self, index: U256) -> bool {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
-        let value = self._data.get(bucket);
+        let value = self.data.get(bucket);
         (value & mask) != U256::ZERO
     }
 
@@ -66,7 +65,7 @@ impl BitMap {
     pub fn set(&mut self, index: U256) {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
-        let mut value = self._data.setter(bucket);
+        let mut value = self.data.setter(bucket);
         let prev = value.get();
         value.set(prev | mask);
     }
@@ -79,7 +78,7 @@ impl BitMap {
     pub fn unset(&mut self, index: U256) {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
-        let mut value = self._data.setter(bucket);
+        let mut value = self.data.setter(bucket);
         let prev = value.get();
         value.set(prev & !mask);
     }

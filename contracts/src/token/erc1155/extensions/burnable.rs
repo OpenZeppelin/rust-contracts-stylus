@@ -165,7 +165,7 @@ mod tests {
         let initial_balance = contract.balance_of(BOB, token_ids[0]);
         assert_eq!(values[0], initial_balance);
 
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         contract
             .burn(BOB, token_ids[0], values[0])
@@ -200,7 +200,7 @@ mod tests {
         let invalid_sender = Address::ZERO;
 
         contract
-            ._operator_approvals
+            .operator_approvals
             .setter(invalid_sender)
             .setter(alice)
             .set(true);
@@ -271,7 +271,7 @@ mod tests {
             assert_eq!(value, balance);
         }
 
-        contract._operator_approvals.setter(BOB).setter(alice).set(true);
+        contract.operator_approvals.setter(BOB).setter(alice).set(true);
 
         contract
             .burn_batch(BOB, token_ids.clone(), values.clone())
@@ -308,7 +308,7 @@ mod tests {
         let invalid_sender = Address::ZERO;
 
         contract
-            ._operator_approvals
+            .operator_approvals
             .setter(invalid_sender)
             .setter(alice)
             .set(true);
