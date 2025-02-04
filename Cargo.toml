@@ -154,4 +154,4 @@ files = { extend-exclude = [] }
 # TODO#q: remove motsu patch once update is released
 [patch.crates-io.motsu]
 git = "https://github.com/OpenZeppelin/stylus-test-helpers"
-branch = "main"
+branch = "mock-msg-value-and-balance"
