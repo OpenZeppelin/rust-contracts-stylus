@@ -21,8 +21,8 @@ pub trait IErc20Burnable {
     ///
     /// # Errors
     ///
-    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
-    ///   enough tokens.
+    /// * [`erc20::Error::InsufficientBalance`] - If the `from` address doesn't
+    ///   have enough tokens.
     ///
     /// # Events
     ///
@@ -39,11 +39,12 @@ pub trait IErc20Burnable {
     ///
     /// # Errors
     ///
-    /// * [`Error::InsufficientAllowance`] - If not enough allowance is
+    /// * [`erc20::Error::InsufficientAllowance`] - If not enough allowance is
     ///   available.
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
-    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
-    ///   enough tokens.
+    /// * [`erc20::Error::InvalidSender`] - If the `from` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientBalance`] - If the `from` address doesn't
+    ///   have enough tokens.
     ///
     /// # Events
     ///

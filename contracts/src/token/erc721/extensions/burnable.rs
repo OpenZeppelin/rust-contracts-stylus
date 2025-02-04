@@ -19,9 +19,9 @@ pub trait IErc721Burnable {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If token does not exist.
-    /// * [`Error::InsufficientApproval`] - If the caller does not have the
-    ///   right to approve.
+    /// * [`erc721::Error::NonexistentToken`] - If token does not exist.
+    /// * [`erc721::Error::InsufficientApproval`] - If the caller does not have
+    ///   the right to approve.
     ///
     /// # Events
     ///
