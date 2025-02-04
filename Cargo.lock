@@ -2579,7 +2579,7 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.3.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#a6f825168dd9b2a671853df4d57c6337ef01c5be"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#410c775f422c51da5d6b70c88fc92393fec0023e"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -2594,7 +2594,7 @@ dependencies = [
 [[package]]
 name = "motsu-proc"
 version = "0.3.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#a6f825168dd9b2a671853df4d57c6337ef01c5be"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#410c775f422c51da5d6b70c88fc92393fec0023e"
 dependencies = [
  "proc-macro2",
  "quote",
