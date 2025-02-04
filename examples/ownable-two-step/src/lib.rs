@@ -23,8 +23,12 @@ struct Ownable2StepExample {
 #[inherit(Erc20, Ownable2Step)]
 impl Ownable2StepExample {
     #[constructor]
-    pub fn constructor(&mut self, _initial_owner: Address) {
-        // self.ownable.constructor(initial_owner);
+    pub fn constructor(
+        &mut self,
+        _initial_owner: Address,
+    ) -> Result<(), Vec<u8>> {
+        todo!()
+        // Ok(self.ownable.constructor(initial_owner)?)
     }
 
     pub fn transfer(
