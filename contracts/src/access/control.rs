@@ -170,10 +170,6 @@ impl AccessControl {
     /// If `account` had not been already granted `role`, emits a
     /// [`RoleGranted`] event.
     ///
-    /// # Requirements
-    ///
-    /// * The caller must have `role`'s admin role.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -202,10 +198,6 @@ impl AccessControl {
     /// Revokes `role` from `account`.
     ///
     /// If `account` had been granted `role`, emits a [`RoleRevoked`] event.
-    ///
-    /// # Requirements
-    ///
-    /// * The caller must have `role`'s admin role.
     ///
     /// # Arguments
     ///
@@ -238,10 +230,6 @@ impl AccessControl {
     /// [`Self::revoke_role`]: this function's purpose is to provide a mechanism
     /// for accounts to lose their privileges if they are compromised (such as
     /// when a trusted device is misplaced).
-    ///
-    /// # Requirements
-    ///
-    /// * The caller must be `confirmation`.
     ///
     /// # Arguments
     ///

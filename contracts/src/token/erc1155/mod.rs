@@ -233,10 +233,6 @@ pub trait IErc1155 {
     /// * `accounts` - All account of the tokens' owner.
     /// * `ids` - All token identifiers.
     ///
-    /// # Requirements
-    ///
-    /// * `accounts` and `ids` must have the same length.
-    ///
     /// # Errors
     ///
     /// * [`Error::InvalidArrayLength`] -  If the length of `accounts` is not
@@ -249,10 +245,6 @@ pub trait IErc1155 {
 
     /// Grants or revokes permission to `operator`
     /// to transfer the caller's tokens, according to `approved`.
-    ///
-    /// # Requirements
-    ///
-    /// * The `operator` cannot be the `Address::ZERO`.
     ///
     /// # Arguments
     ///
@@ -287,17 +279,6 @@ pub trait IErc1155 {
 
     /// Transfers a `value` amount of tokens of type `id` from `from` to
     /// `to`.
-    ///
-    /// # Requirements
-    ///
-    /// * `to` cannot be the `Address::ZERO`.
-    /// * If the caller is not `from`, it must have been approved to spend
-    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
-    /// * `from` must have a balance of tokens of type `id` of at least `value`
-    ///   amount.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC1155Receiver::on_erc_1155_received`] and return the acceptance
-    ///   value.
     ///
     /// # Arguments
     ///
@@ -335,18 +316,6 @@ pub trait IErc1155 {
     ) -> Result<(), Self::Error>;
 
     /// Batched version of [`IErc1155::safe_transfer_from`].
-    ///
-    /// # Requirements
-    ///
-    /// * `to` cannot be the `Address::ZERO`.
-    /// * If the caller is not `from`, it must have been approved to spend
-    ///   `from`'s tokens via [`IErc1155::set_approval_for_all`].
-    /// * `from` must have a balance of tokens being transferred of at least
-    ///   transferred amount.
-    /// * `ids` and `values` must have the same length.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] and return the
-    ///   acceptance magic value.
     ///
     /// # Arguments
     ///

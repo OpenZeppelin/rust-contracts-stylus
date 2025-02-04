@@ -282,13 +282,6 @@ impl Erc721Consecutive {
     /// CAUTION: Does not invoke
     /// [`erc721::IERC721Receiver::on_erc_721_received`] on the receiver.
     ///
-    /// # Requirements
-    ///
-    /// * `batch_size` must not be greater than
-    ///   [`Erc721Consecutive::_max_batch_size`].
-    /// * The function is called in the constructor of the contract (directly or
-    ///   indirectly).
-    ///
     /// # Arguments
     ///
     /// * `&self` - Write access to the contract's state.
@@ -484,11 +477,6 @@ impl Erc721Consecutive {
     /// WARNING: Usage of this method is discouraged, use [`Self::_safe_mint`]
     /// whenever possible.
     ///
-    /// # Requirements
-    ///
-    /// * `token_id` must not exist.
-    /// * `to` cannot be `Address::ZERO`.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -526,13 +514,6 @@ impl Erc721Consecutive {
     ///
     /// An additional `data` parameter is forwarded to
     /// [`erc721::IERC721Receiver::on_erc_721_received`] to contract recipients.
-    ///
-    /// # Requirements
-    ///
-    /// * `token_id` must not exist.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`], which is called upon
-    ///   a `safe_transfer`.
     ///
     /// # Arguments
     ///
@@ -574,10 +555,6 @@ impl Erc721Consecutive {
     /// internal function that does not check if the sender is authorized
     /// to operate on the token.
     ///
-    /// # Requirements
-    ///
-    /// * `token_id` must exist.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -606,11 +583,6 @@ impl Erc721Consecutive {
     ///
     /// As opposed to [`Self::transfer_from`], this imposes no restrictions on
     /// `msg::sender`.
-    ///
-    /// # Requirements
-    ///
-    /// * `to` cannot be `Address::ZERO`.
-    /// * The `token_id` token must be owned by `from`.
     ///
     /// # Arguments
     ///
@@ -671,15 +643,6 @@ impl Erc721Consecutive {
     /// receiver, and can be used to e.g. implement alternative mechanisms
     /// to perform token transfer, such as signature-based.
     ///
-    ///
-    /// # Requirements
-    ///
-    /// * The `token_id` token must exist and be owned by `from`.
-    /// * `to` cannot be `Address::ZERO`.
-    /// * `from` cannot be `Address::ZERO`.
-    /// * If `to` refers to a smart contract, it must implement
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`], which is called upon
-    ///   a `safe_transfer`.
     ///
     /// # Arguments
     ///

@@ -15,11 +15,6 @@ pub trait IErc721Burnable {
     /// The approval is cleared when the token is burned. Relies on the `_burn`
     /// mechanism.
     ///
-    /// # Requirements:
-    ///
-    /// * `token_id` must exist.
-    /// * The caller must own `token_id` or be an approved operator.
-    ///
     /// # Arguments
     ///
     /// * `value` - Amount to be burnt.
