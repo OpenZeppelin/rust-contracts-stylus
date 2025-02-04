@@ -6,7 +6,7 @@ use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
 use crate::token::erc1155::{
-    ERC1155MissingApprovalForAll, Erc1155, Error, IErc1155,
+    self, ERC1155MissingApprovalForAll, Erc1155, IErc1155,
 };
 
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
@@ -66,7 +66,7 @@ pub trait IErc1155Burnable {
 }
 
 impl IErc1155Burnable for Erc1155 {
-    type Error = Error;
+    type Error = erc1155::Error;
 
     fn burn(
         &mut self,
@@ -90,10 +90,13 @@ impl IErc1155Burnable for Erc1155 {
 }
 
 impl Erc1155 {
-    fn ensure_approved_or_owner(&self, account: Address) -> Result<(), Error> {
+    fn ensure_approved_or_owner(
+        &self,
+        account: Address,
+    ) -> Result<(), erc1155::Error> {
         let sender = msg::sender();
         if account != sender && !self.is_approved_for_all(account, sender) {
-            return Err(Error::MissingApprovalForAll(
+            return Err(erc1155::Error::MissingApprovalForAll(
                 ERC1155MissingApprovalForAll {
                     owner: account,
                     operator: sender,

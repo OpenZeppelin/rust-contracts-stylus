@@ -35,13 +35,10 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::{
-        erc721,
-        erc721::{
-            Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
-            ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-            Erc721, IErc721, Transfer,
-        },
+    token::erc721::{
+        self, Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
+        ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
+        Erc721, IErc721, Transfer,
     },
     utils::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},

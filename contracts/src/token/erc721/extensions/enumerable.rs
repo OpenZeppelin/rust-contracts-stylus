@@ -21,7 +21,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::{erc721, erc721::IErc721},
+    token::erc721::{self, IErc721},
     utils::introspection::erc165::IErc165,
 };
 

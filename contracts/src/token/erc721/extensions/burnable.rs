@@ -3,7 +3,7 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::token::erc721::{self, Erc721, Error};
+use crate::token::erc721::{self, Erc721};
 
 /// An [`Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {
@@ -37,7 +37,7 @@ pub trait IErc721Burnable {
 }
 
 impl IErc721Burnable for Erc721 {
-    type Error = Error;
+    type Error = erc721::Error;
 
     fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
         // Setting an "auth" arguments enables the
