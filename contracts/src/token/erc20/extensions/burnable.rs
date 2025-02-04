@@ -3,7 +3,7 @@
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::token::erc20::{Erc20, Error};
+use crate::token::erc20::{self, Erc20};
 
 /// Extension of [`Erc20`] that allows token holders to destroy both
 /// their own tokens and those that they have an allowance for,
@@ -15,26 +15,22 @@ pub trait IErc20Burnable {
     /// Destroys a `value` amount of tokens from the caller, lowering the total
     /// supply.
     ///
-    /// Relies on the `update` mechanism.
-    ///
     /// # Arguments
     ///
     /// * `value` - Amount to be burnt.
     ///
     /// # Errors
     ///
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    /// * [`erc20::Error::InsufficientBalance`] - If the `from` address doesn't
+    ///   have enough tokens.
     ///
     /// # Events
     ///
-    /// Emits a [`super::super::Transfer`] event.
+    /// * [`erc20::Transfer`].
     fn burn(&mut self, value: U256) -> Result<(), Self::Error>;
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
     /// supply.
-    ///
-    /// Relies on the `update` mechanism.
     ///
     /// # Arguments
     ///
@@ -43,16 +39,16 @@ pub trait IErc20Burnable {
     ///
     /// # Errors
     ///
-    /// If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
-    /// If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    /// * [`erc20::Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available.
+    /// * [`erc20::Error::InvalidSender`] - If the `from` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientBalance`] - If the `from` address doesn't
+    ///   have enough tokens.
     ///
     /// # Events
     ///
-    /// Emits a [`super::super::Transfer`] event.
+    /// * [`erc20::Transfer`].
     fn burn_from(
         &mut self,
         account: Address,
@@ -61,7 +57,7 @@ pub trait IErc20Burnable {
 }
 
 impl IErc20Burnable for Erc20 {
-    type Error = Error;
+    type Error = erc20::Error;
 
     fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
         self._burn(msg::sender(), value)
