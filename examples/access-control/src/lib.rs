@@ -25,7 +25,6 @@ pub const TRANSFER_ROLE: [u8; 32] =
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
-    /// Constructor
     #[constructor]
     pub fn constructor(&mut self) {
         self.access.constructor();
