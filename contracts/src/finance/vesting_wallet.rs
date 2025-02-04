@@ -41,7 +41,10 @@ use stylus_sdk::{
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
-    token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
+    token::erc20::utils::{
+        safe_erc20::{self, ISafeErc20, SafeErc20},
+        IErc20,
+    },
     utils::math::storage::AddAssignChecked,
 };
 
@@ -90,23 +93,6 @@ pub enum Error {
     SafeErc20(safe_erc20::Error),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
-}
-
-pub use token::IErc20;
-mod token {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-
-    use alloc::vec;
-
-    use stylus_sdk::stylus_proc::sol_interface;
-
-    sol_interface! {
-        /// Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-        }
-    }
 }
 
 /// State of the [`VestingWallet`] Contract.
@@ -162,14 +148,14 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If called by any account other than the owner, then the error
-    /// [`ownable::Error::UnauthorizedAccount`] is returned.
-    /// If `new_owner` is the `Address::ZERO`, then the error
-    /// [`ownable::Error::InvalidOwner`] is returned.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
+    ///   other than the owner.
+    /// * [`ownable::Error::InvalidOwner`] - If `new_owner` is the
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`ownable::OwnershipTransferred`] event.
+    /// * [`ownable::OwnershipTransferred`].
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -190,12 +176,11 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If not called by the owner, then the error
-    /// [`ownable::Error::UnauthorizedAccount`] is returned.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///
-    /// Emits an [`ownable::OwnershipTransferred`] event.
+    /// * [`ownable::OwnershipTransferred`].
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// The contract should be able to receive Ether.
@@ -251,8 +236,8 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
@@ -266,13 +251,12 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::InvalidToken`] is returned.
+    /// * [`Error::InvalidToken`] - If the `token` address is not a contract.
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address)
         -> Result<U256, Self::Error>;
@@ -285,17 +269,16 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If Ether transfer fails, then the error [`Error::ReleaseEtherFailed`] is
-    /// returned.
+    /// * [`Error::ReleaseEtherFailed`] - If Ether transfer fails.
     ///
     /// # Events
     ///
-    /// Emits an [`EtherReleased`] event.
+    /// * [`EtherReleased`].
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error>;
 
@@ -308,19 +291,18 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::InvalidToken`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`safe_erc20::Error::SafeErc20FailedOperation`] is returned.
+    /// * [`Error::InvalidToken`] -  If the `token` address is not a contract.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If the contract
+    ///   fails to execute the call.
     ///
     /// # Events
     ///
-    /// Emits an [`ERC20Released`] event.
+    /// * [`ERC20Released`].
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
@@ -334,8 +316,8 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
@@ -350,13 +332,12 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::InvalidToken`] is returned.
+    /// * [`Error::InvalidToken`] - If the `token` address is not a contract.
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &mut self,
@@ -505,7 +486,7 @@ impl VestingWallet {
     ///
     /// # Panics
     ///
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         let timestamp = U256::from(timestamp);
 

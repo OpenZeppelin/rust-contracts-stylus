@@ -22,6 +22,7 @@ pub mod erc721;
 pub mod merkle_proofs;
 pub mod ownable;
 pub mod poseidon;
+pub mod poseidon_asm_sol;
 pub mod poseidon_sol;
 pub mod report;
 pub mod vesting_wallet;
