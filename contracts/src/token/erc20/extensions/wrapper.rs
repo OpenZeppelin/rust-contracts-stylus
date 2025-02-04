@@ -269,7 +269,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn underlying_works(contract:Erc20WrapperTestExample ) {
+    fn underlying_works(contract: Erc20WrapperTestExample) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
         contract.wrapper.underlying_address.set(asset);
         assert_eq!(contract.wrapper.underlying(), asset);
