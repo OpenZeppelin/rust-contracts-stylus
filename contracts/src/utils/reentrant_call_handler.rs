@@ -54,7 +54,7 @@ pub trait ReentrantCallHandler {
     /// result.
     ///
     /// This method performs a raw call to another contract using the provided
-    /// `token` and `call_data`. The method behavior changes based on the
+    /// `contract` and `call_data`. The method behavior changes based on the
     /// `reentrant` feature:
     ///
     /// - With the `reentrant` feature enabled, it flushes any cached storage
@@ -64,7 +64,7 @@ pub trait ReentrantCallHandler {
     ///
     /// # Arguments
     ///
-    /// * `token` - The address of the contract being called.
+    /// * `contract` - The address of the contract being called.
     /// * `call_data` - The encoded data for the contract call.
     ///
     /// # Errors
@@ -73,7 +73,7 @@ pub trait ReentrantCallHandler {
     ///   the call.
     fn call_with_reentrant_handling(
         self,
-        token: Address,
+        contract: Address,
         call_data: &[u8],
     ) -> ArbResult;
 }
@@ -81,16 +81,16 @@ pub trait ReentrantCallHandler {
 impl ReentrantCallHandler for RawCall {
     fn call_with_reentrant_handling(
         self,
-        token: Address,
+        contract: Address,
         call_data: &[u8],
     ) -> ArbResult {
         #[cfg(feature = "reentrant")]
         unsafe {
-            self.flush_storage_cache().call(token, call_data)
+            self.flush_storage_cache().call(contract, call_data)
         }
         #[cfg(not(feature = "reentrant"))]
         {
-            self.call(token, call_data)
+            self.call(contract, call_data)
         }
     }
 }

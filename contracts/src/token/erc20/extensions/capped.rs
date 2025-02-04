@@ -55,6 +55,16 @@ pub struct Capped {
 
 #[public]
 impl Capped {
+    /// Constructor
+    #[constructor]
+    pub fn constructor(&mut self, cap: U256) -> Result<(), Error> {
+        if cap.is_zero() {
+            return Err(Error::InvalidCap(ERC20InvalidCap { cap }));
+        }
+        self._cap.set(cap);
+        Ok(())
+    }
+
     /// Returns the cap on the token's total supply.
     pub fn cap(&self) -> U256 {
         self._cap.get()

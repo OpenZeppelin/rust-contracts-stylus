@@ -22,7 +22,7 @@ impl VestingWalletExample {
         _start_timestamp: U64,
         _duration_seconds: U64,
     ) -> Result<(), Vec<u8>> {
-        todo!()
+        todo!("uncomment once multiple public attributes are supported")
         // Ok(self.vesting_wallet.constructor(initial_owner)?)
     }
 }

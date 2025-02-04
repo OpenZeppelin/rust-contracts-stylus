@@ -24,6 +24,19 @@ struct Erc4626Example {
 #[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc4626Example {
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        _name: String,
+        _symbol: String,
+        _asset: Address,
+        _decimals_offset: U8,
+    ) {
+        todo!("uncomment once multiple public attributes are supported")
+        // self.metadata.constructor(name, symbol);
+        // self.erc4626.constructor(asset, decimals_offset);
+    }
+
     fn decimals(&self) -> U8 {
         self.erc4626.decimals()
     }

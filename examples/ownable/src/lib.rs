@@ -27,7 +27,7 @@ impl OwnableExample {
         &mut self,
         _initial_owner: Address,
     ) -> Result<(), Vec<u8>> {
-        todo!()
+        todo!("uncomment once multiple public attributes are supported")
         // Ok(self.ownable.constructor(initial_owner)?)
     }
 
