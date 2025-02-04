@@ -28,12 +28,12 @@ impl Erc20WrapperExample {
         self.wrapper.underlying()
     }
 
-    fn deposit_to(
+    fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
     ) -> Result<bool, Vec<u8>> {
-        Ok(self.wrapper.deposit_to(account, value, &mut self.erc20)?)
+        Ok(self.wrapper.deposit_for(account, value, &mut self.erc20)?)
     }
 
     fn withdraw_to(

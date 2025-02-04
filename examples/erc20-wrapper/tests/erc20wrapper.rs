@@ -86,22 +86,48 @@ mod constructor {
 
 mod deposit_to {
 
+    use std::println;
+
     use super::*;
 
     #[e2e::test]
-    async fn success(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+    async fn executes_with_approval(alice: Account) -> Result<()> {
+        let (contract_addr, asset) = deploy(&alice, U256::ZERO).await?;
+        let asset = ERC20Mock::new(asset, &alice.wallet);
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+
         Ok(())
     }
 
     #[e2e::test]
     async fn reverts_for_invalid_receiver(alice: Account) -> Result<()> {
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+        let err = contract
+            .depositFor(contract_addr, uint!(1000_U256))
+            .call()
+            .await
+            .expect_err("should return `InvalidSender`");
+        println!("err: {}", err);
+        assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidSender {
+            sender: contract_addr
+        }));
         Ok(())
     }
 
     #[e2e::test]
     async fn reverts_for_invalid_sender(alice: Account) -> Result<()> {
+        let alice_addr: Address = alice.address();
+        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+        // let err = contract
+        //     .depositFor(alice.address(), uint!(1000_U256))
+        //     .call()
+        //     .await
+        //     .expect_err("should return `InvalidReceiver`");
+        // assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidSender {
+        //     sender: alice_addr
+        // }));
         Ok(())
     }
 

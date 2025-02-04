@@ -136,7 +136,7 @@ pub trait IERC20Wrapper {
     ///   [`Error::InvalidSender`] is returned.
     /// * If the receiver address is `contract:address()` or invalid,
     ///   [`Error::InvalidReceiver`] is returned.
-    fn deposit_to(
+    fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
@@ -177,7 +177,7 @@ impl IERC20Wrapper for Erc20Wrapper {
         self.underlying_address.get()
     }
 
-    fn deposit_to(
+    fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
@@ -185,17 +185,19 @@ impl IERC20Wrapper for Erc20Wrapper {
     ) -> Result<bool, Error> {
         let underlined_token = self.underlying_address.get();
         let sender = msg::sender();
-        if account == contract::address() {
-            return Err(Error::InvalidSender(ERC20InvalidSender {
-                sender: contract::address(),
-            }));
-        }
 
         if sender == contract::address() {
             return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
                 receiver: account,
             }));
         }
+
+        if account == contract::address() {
+            return Err(Error::InvalidSender(ERC20InvalidSender {
+                sender: contract::address(),
+            }));
+        }
+
         self.safe_erc20.safe_transfer_from(
             underlined_token,
             sender,

@@ -14,9 +14,13 @@ sol!(
         function approve(address spender, uint256 amount) external returns (bool);
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
+        #[derive(Debug)]
         function decimals() external view returns (uint8 decimals);
+        #[derive(Debug)]
         function underlying() external view returns (address underlying);
+        #[derive(Debug)]
         function depositFor(address account, uint256 value) external  returns (bool);
+        #[derive(Debug)]
         function withdrawTo(address account, uint256 value) external  returns (bool);
 
         error ERC20InvalidUnderlying(address token);
