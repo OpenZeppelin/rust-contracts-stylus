@@ -13,4 +13,4 @@ pub use erc4626::{Erc4626, IErc4626};
 pub use flash_mint::{Erc20FlashMint, IErc3156FlashLender};
 pub use metadata::{Erc20Metadata, IErc20Metadata};
 pub use permit::Erc20Permit;
-pub use wrapper::{Erc20Wrapper, IERC20Wrapper};
+pub use wrapper::{Erc20Wrapper, IErc20Wrapper};
