@@ -12,7 +12,7 @@ use stylus_sdk::{
 
 use super::metadata_uri::{IErc1155MetadataUri, URI};
 
-/// [`Erc1155UriStorage`] Storage.
+/// State of an [`Erc1155UriStorage`] contract.
 #[storage]
 pub struct Erc1155UriStorage {
     /// Optional base URI.

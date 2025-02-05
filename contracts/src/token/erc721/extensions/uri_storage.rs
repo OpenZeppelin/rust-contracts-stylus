@@ -33,7 +33,7 @@ mod sol {
     }
 }
 
-/// [`Erc721UriStorage`] Storage.
+/// State of an [`Erc721UriStorage`] contract.
 #[storage]
 pub struct Erc721UriStorage {
     /// Optional mapping for token URIs.

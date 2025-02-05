@@ -60,7 +60,7 @@ pub enum Error {
     EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
 }
 
-/// State of an [`Enumerable`] extension.
+/// State of an [`Erc721Enumerable`] contract.
 #[storage]
 pub struct Erc721Enumerable {
     /// Maps owners to a mapping of indices to tokens ids.
