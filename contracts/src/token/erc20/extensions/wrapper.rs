@@ -160,7 +160,6 @@ impl IErc20Wrapper for Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let underlined_token = self.underlying_address.get();
         let sender = msg::sender();
 
         if sender == contract::address() {
