@@ -36,22 +36,23 @@ mod tests {
 
     use super::*;
 
-    proptest! {
-        #[test]
-        fn trimmed_iter_starts_with_one(value: u64) {
-            prop_assume!(value != 0);
+    #[test]
+    fn trimmed_iter_starts_with_one() {
+        proptest!(|(value in 1u64..)| {
             let bits: Vec<bool> = value.bit_be_trimmed_iter().collect();
             prop_assert!(!bits.is_empty());
             prop_assert!(bits[0]);
-        }
+        })
+    }
 
-        #[test]
-        fn trimmed_is_subset_of_full(value: u64) {
+    #[test]
+    fn trimmed_is_subset_of_full() {
+        proptest!(|(value: u64)| {
             let full: Vec<bool> = value.bit_be_iter().collect();
             let trimmed: Vec<bool> = value.bit_be_trimmed_iter().collect();
             let start_idx = value.leading_zeros() as usize;
             prop_assert_eq!(&full[start_idx..], trimmed);
-        }
+        })
     }
 
     #[test]
