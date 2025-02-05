@@ -1695,26 +1695,25 @@ mod tests {
         ));
     }
 
-    // TODO#q: rewrite test error_when_invalid_sender_safe_transfer_from
-    /*#[motsu::test]
+    #[motsu::test]
     fn error_when_invalid_sender_safe_transfer_from(
         contract: Contract<Erc1155>,
+        alice: Address,
     ) {
-        let alice = msg::sender();
         let (token_ids, values) =
             contract.init(alice, |contract| init(contract, alice, 1));
         let invalid_sender = Address::ZERO;
 
         contract
-            .sender(alice)
-            ._set_approval_for_all(invalid_sender, alice, true)
-            .expect("should approve Bob's tokens to Alice");
+            .sender(invalid_sender)
+            .set_approval_for_all(alice, true)
+            .unwrap();
 
         let err = contract
             .sender(alice)
             .safe_transfer_from(
                 invalid_sender,
-                bob,
+                alice,
                 token_ids[0],
                 values[0],
                 vec![].into(),
@@ -1727,7 +1726,7 @@ mod tests {
                 sender
             }) if sender == invalid_sender
         ));
-    }*/
+    }
 
     #[motsu::test]
     fn error_when_missing_approval_safe_transfer_from(
@@ -1854,13 +1853,11 @@ mod tests {
         ));
     }
 
-    // TODO#q: rewrite test
-    // error_when_invalid_sender_safe_transfer_from_with_data
-    /*#[motsu::test]
+    #[motsu::test]
     fn error_when_invalid_sender_safe_transfer_from_with_data(
         contract: Contract<Erc1155>,
+        alice: Address,
     ) {
-        let alice = msg::sender();
         let (token_ids, values) =
             contract.init(alice, |contract| init(contract, alice, 1));
         let invalid_sender = Address::ZERO;
@@ -1874,7 +1871,7 @@ mod tests {
             .sender(alice)
             .safe_transfer_from(
                 invalid_sender,
-                charlie,
+                alice,
                 token_ids[0],
                 values[0],
                 vec![0, 1, 2, 3].into(),
@@ -1887,7 +1884,7 @@ mod tests {
                 sender
             }) if sender == invalid_sender
         ));
-    }*/
+    }
 
     #[motsu::test]
     fn error_when_missing_approval_safe_transfer_from_with_data(
@@ -2020,12 +2017,11 @@ mod tests {
         ));
     }
 
-    // TODO#q: rewrite test error_when_invalid_sender_safe_batch_transfer_from
-    /*#[motsu::test]
+    #[motsu::test]
     fn error_when_invalid_sender_safe_batch_transfer_from(
         contract: Contract<Erc1155>,
+        alice: Address,
     ) {
-
         let (token_ids, values) =
             contract.init(alice, |contract| init(contract, alice, 4));
         let invalid_sender = Address::ZERO;
@@ -2039,7 +2035,7 @@ mod tests {
             .sender(alice)
             .safe_batch_transfer_from(
                 invalid_sender,
-                charlie,
+                alice,
                 token_ids.clone(),
                 values.clone(),
                 vec![].into(),
@@ -2052,7 +2048,7 @@ mod tests {
                 sender
             }) if sender == invalid_sender
         ));
-    }*/
+    }
 
     #[motsu::test]
     fn error_when_missing_approval_safe_batch_transfer_from(
@@ -2219,15 +2215,11 @@ mod tests {
         ));
     }
 
-    // TODO#q: rewrite test
-    // error_when_invalid_sender_safe_batch_transfer_from_with_data
-    /*#[motsu::test]
+    #[motsu::test]
     fn error_when_invalid_sender_safe_batch_transfer_from_with_data(
         contract: Contract<Erc1155>,
+        alice: Address,
     ) {
-
-        let charlie = charlie;
-
         let (token_ids, values) =
             contract.init(alice, |contract| init(contract, alice, 4));
         let invalid_sender = Address::ZERO;
@@ -2241,7 +2233,7 @@ mod tests {
             .sender(alice)
             .safe_batch_transfer_from(
                 invalid_sender,
-                charlie,
+                alice,
                 token_ids.clone(),
                 values.clone(),
                 vec![0, 1, 2, 3].into(),
@@ -2254,7 +2246,7 @@ mod tests {
                 sender
             }) if sender == invalid_sender
         ));
-    }*/
+    }
 
     #[motsu::test]
     fn error_when_missing_approval_safe_batch_transfer_from_with_data(
