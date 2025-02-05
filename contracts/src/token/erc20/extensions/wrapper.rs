@@ -23,32 +23,10 @@ use stylus_sdk::{
 
 use crate::token::erc20::{
     self,
-    utils::{
-        safe_erc20::{self, ISafeErc20},
-        SafeErc20,
-    },
-    Erc20,
+    utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+    Erc20, IErc20,
 };
 
-mod token {
-
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-
-    use alloc::vec;
-
-    use stylus_sdk::stylus_proc::sol_interface;
-
-    sol_interface! {
-        /// Solidity Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-            function totalSupply() external view returns (uint256);
-        }
-    }
-}
-
-use token::IErc20 as IErc20Solidity;
 
 sol! {
     /// Indicates that he address is not a valid ERC-20 token.
@@ -170,7 +148,7 @@ pub trait IErc20Wrapper {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc20Wrapper {}
 
-impl IERC20Wrapper for Erc20Wrapper {
+impl IErc20Wrapper for Erc20Wrapper {
     type Error = Error;
 
     fn underlying(&self) -> Address {
@@ -248,8 +226,8 @@ impl Erc20Wrapper {
         account: Address,
         erc20: &mut Erc20,
     ) -> Result<U256, Error> {
-        let token = IErc20Solidity::new(self.underlying());
-        let value = token
+        let underline_token = IErc20Solidity::new(self.underlying());
+        let value = underline_token
             .balance_of(Call::new_in(self), contract::address())
             .map_err(|_| InvalidAsset { asset: contract::address() })?;
         erc20._mint(account, value)?;

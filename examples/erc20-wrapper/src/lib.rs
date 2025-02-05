@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20Metadata, Erc20Wrapper, IERC20Wrapper},
+    extensions::{Erc20Metadata, Erc20Wrapper, IErc20Wrapper},
     Erc20,
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};

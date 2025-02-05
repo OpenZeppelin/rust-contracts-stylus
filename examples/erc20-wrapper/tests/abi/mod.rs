@@ -23,6 +23,8 @@ sol!(
         #[derive(Debug)]
         function withdrawTo(address account, uint256 value) external  returns (bool);
 
+        error SafeErc20FailedOperation(address token);
+        
         error ERC20InvalidUnderlying(address token);
 
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
