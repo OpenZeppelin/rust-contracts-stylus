@@ -113,7 +113,7 @@ mod borrower {
     }
 }
 
-/// State of the [`Erc20FlashMint`] Contract.
+/// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
     /// Fee applied when doing flash loans.

@@ -57,7 +57,7 @@ pub enum Error {
     Ownable(OwnableError),
 }
 
-/// State of an `Ownable2Step` contract.
+/// State of an [`Ownable2Step`] contract.
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.

@@ -124,7 +124,7 @@ impl MethodError for Error {
     }
 }
 
-/// State of an `Erc20` token.
+/// State of an [`Erc20`] token.
 #[storage]
 pub struct Erc20 {
     /// Maps users to balances.

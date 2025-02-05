@@ -85,7 +85,7 @@ mod token {
     }
 }
 
-/// State of the [`SafeErc20`] Contract.
+/// State of a [`SafeErc20`] Contract.
 #[storage]
 pub struct SafeErc20 {}
 

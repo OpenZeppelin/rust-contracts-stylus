@@ -56,11 +56,13 @@ type StorageU96 = <S160 as Size>::KeyStorage;
 /// State of an [`Erc721Consecutive`] token.
 #[storage]
 pub struct Erc721Consecutive {
-    /// Erc721 contract storage.
+    /// [`Erc721`] contract.
     pub erc721: Erc721,
-    /// Checkpoint library contract for sequential ownership.
+    /// [`Trace`] contract for sequential ownership.
+    #[allow(clippy::used_underscore_binding)]
     pub _sequential_ownership: Trace<S160>,
-    /// BitMap library contract for sequential burn of tokens.
+    /// [`BitMap`] contract for sequential burn of tokens.
+    #[allow(clippy::used_underscore_binding)]
     pub _sequential_burn: BitMap,
     /// Used to offset the first token id in
     /// [`Erc721Consecutive::_next_consecutive_id`].

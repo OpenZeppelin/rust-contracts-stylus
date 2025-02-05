@@ -27,10 +27,10 @@ use crate::{
     utils::math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
-/// State of an [`Erc1155Supply`] token.
+/// State of an [`Erc1155Supply`] contract.
 #[storage]
 pub struct Erc1155Supply {
-    /// ERC-1155 contract storage.
+    /// [`Erc1155`] contract.
     pub erc1155: Erc1155,
     /// Mapping from token id to total supply.
     #[allow(clippy::used_underscore_binding)]

@@ -15,12 +15,10 @@ use alloc::vec::Vec;
 
 use crate::utils::Metadata;
 
-/// Metadata of the [`super::super::Erc20`] token.
-///
-/// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
+/// State of an [`Erc20Metadata`] contract.
 #[storage]
 pub struct Erc20Metadata {
-    /// Common Metadata.
+    /// [`Metadata`] contract.
     #[allow(clippy::used_underscore_binding)]
     pub _metadata: Metadata,
 }

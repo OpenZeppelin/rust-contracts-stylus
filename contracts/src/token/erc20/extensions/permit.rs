@@ -73,14 +73,14 @@ pub enum Error {
     ECDSA(ecdsa::Error),
 }
 
-/// State of a Permit Contract.
+/// State of an [`Erc20Permit`] Contract.
 #[storage]
 pub struct Erc20Permit<T: IEip712 + StorageType> {
-    /// ERC-20 contract.
+    /// [`Erc20`] contract.
     pub erc20: Erc20,
-    /// Nonces contract.
+    /// [`Nonces`] contract.
     pub nonces: Nonces,
-    /// EIP-712 contract. Must implement [`IEip712`] trait.
+    /// Contract implementing [`IEip712`] trait.
     pub eip712: T,
 }
 
