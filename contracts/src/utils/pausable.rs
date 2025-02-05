@@ -64,7 +64,7 @@ pub enum Error {
     ExpectedPause(ExpectedPause),
 }
 
-/// State of a Pausable Contract.
+/// State of a [`Pausable`] Contract.
 #[storage]
 pub struct Pausable {
     /// Indicates whether the contract is `Paused`.
