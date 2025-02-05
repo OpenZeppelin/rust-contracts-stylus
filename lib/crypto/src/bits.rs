@@ -32,93 +32,10 @@ impl_bit_iter_be!(usize);
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use num_traits::ConstOne;
     use proptest::prelude::*;
 
     use super::*;
-
-    #[test]
-    fn trimmed_iter_starts_with_one() {
-        proptest!(|(value in 1u64..)| {
-            let bits: Vec<bool> = value.bit_be_trimmed_iter().collect();
-            prop_assert!(!bits.is_empty());
-            prop_assert!(bits[0]);
-        })
-    }
-
-    #[test]
-    fn trimmed_is_subset_of_full() {
-        proptest!(|(value: u64)| {
-            let full: Vec<bool> = value.bit_be_iter().collect();
-            let trimmed: Vec<bool> = value.bit_be_trimmed_iter().collect();
-            let start_idx = value.leading_zeros() as usize;
-            prop_assert_eq!(&full[start_idx..], trimmed);
-        })
-    }
-
-    #[test]
-    fn bit_be_iter_has_full_width_for_minimum_values() {
-        assert_eq!(u8::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u16::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u32::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u64::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u128::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(usize::MIN.bit_be_trimmed_iter().count(), 0);
-    }
-
-    #[test]
-    fn bit_be_iter_has_full_width_for_maximum_values() {
-        assert_eq!(u8::MAX.bit_be_trimmed_iter().count(), 8);
-        assert_eq!(u16::MAX.bit_be_trimmed_iter().count(), 16);
-        assert_eq!(u32::MAX.bit_be_trimmed_iter().count(), 32);
-        assert_eq!(u64::MAX.bit_be_trimmed_iter().count(), 64);
-        assert_eq!(u128::MAX.bit_be_trimmed_iter().count(), 128);
-        assert_eq!(
-            usize::MAX.bit_be_trimmed_iter().count(),
-            usize::BITS as usize
-        );
-    }
-
-    #[test]
-    fn bit_be_trimmed_iter_is_empty_for_minimum_values() {
-        assert_eq!(u8::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u16::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u32::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u64::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(u128::MIN.bit_be_trimmed_iter().count(), 0);
-        assert_eq!(usize::MIN.bit_be_trimmed_iter().count(), 0);
-    }
-
-    #[test]
-    fn bit_be_trimmed_iter_has_full_width_for_maximum_values() {
-        assert_eq!(u8::MAX.bit_be_trimmed_iter().count(), 8);
-        assert_eq!(u16::MAX.bit_be_trimmed_iter().count(), 16);
-        assert_eq!(u32::MAX.bit_be_trimmed_iter().count(), 32);
-        assert_eq!(u64::MAX.bit_be_trimmed_iter().count(), 64);
-        assert_eq!(u128::MAX.bit_be_trimmed_iter().count(), 128);
-        assert_eq!(
-            usize::MAX.bit_be_trimmed_iter().count(),
-            usize::BITS as usize
-        );
-    }
-
-    #[test]
-    fn zero_value() {
-        let zero = 0u64;
-        assert!(zero.bit_be_iter().all(|b| !b));
-        assert_eq!(zero.bit_be_iter().count(), 64);
-        assert_eq!(zero.bit_be_trimmed_iter().count(), 0);
-    }
-
-    #[test]
-    fn one_value() {
-        let one = 1u64;
-        let full: Vec<_> = one.bit_be_iter().collect();
-        assert_eq!(full.len(), 64);
-        assert_eq!(full.iter().filter(|&&b| b).count(), 1);
-        assert!(full.last().copied().unwrap());
-
-        assert_eq!(one.bit_be_trimmed_iter().collect::<Vec<_>>(), vec![true]);
-    }
 
     #[test]
     fn known_pattern() {
@@ -136,12 +53,47 @@ mod tests {
         assert_eq!(trimmed, expected);
     }
 
+    macro_rules! trimmed_is_subset_of_full {
+        ($ty:ident) => {{
+            proptest!(|(value: $ty)| {
+                let full: Vec<bool> = value.bit_be_iter().collect();
+                let trimmed: Vec<bool> = value.bit_be_trimmed_iter().collect();
+                let start_idx = value.leading_zeros() as usize;
+                prop_assert_eq!(&full[start_idx..], trimmed);
+            });
+        }};
+    }
+
     #[test]
-    fn max_value() {
-        let max = u64::MAX;
-        assert!(max.bit_be_iter().all(|b| b));
-        assert!(max.bit_be_trimmed_iter().all(|b| b));
-        assert_eq!(max.bit_be_iter().count(), 64);
-        assert_eq!(max.bit_be_trimmed_iter().count(), 64);
+    fn trimmed_is_subset_of_full() {
+        trimmed_is_subset_of_full!(u8);
+        trimmed_is_subset_of_full!(u16);
+        trimmed_is_subset_of_full!(u32);
+        trimmed_is_subset_of_full!(u64);
+        trimmed_is_subset_of_full!(u128);
+        trimmed_is_subset_of_full!(usize);
+    }
+
+    macro_rules! edge_case {
+        ($ty:ident) => {{
+            assert_eq!($ty::MIN.bit_be_trimmed_iter().count(), 0);
+            assert_eq!($ty::MIN.bit_be_iter().count(), $ty::BITS as usize);
+            assert_eq!(
+                $ty::MAX.bit_be_trimmed_iter().count(),
+                $ty::BITS as usize
+            );
+            assert_eq!($ty::MAX.bit_be_iter().count(), $ty::BITS as usize);
+            assert_eq!($ty::ONE.bit_be_trimmed_iter().count(), usize::ONE);
+        }};
+    }
+
+    #[test]
+    fn edge_cases() {
+        edge_case!(u8);
+        edge_case!(u16);
+        edge_case!(u32);
+        edge_case!(u64);
+        edge_case!(u128);
+        edge_case!(usize);
     }
 }
