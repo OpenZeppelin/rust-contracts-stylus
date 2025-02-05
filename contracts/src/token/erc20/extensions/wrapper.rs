@@ -27,7 +27,6 @@ use crate::token::erc20::{
     Erc20, IErc20,
 };
 
-
 sol! {
     /// Indicates that he address is not a valid ERC-20 token.
     ///
