@@ -21,7 +21,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::{erc721, erc721::IErc721},
+    token::erc721::{self, IErc721},
     utils::introspection::erc165::IErc165,
 };
 
@@ -60,7 +60,7 @@ pub enum Error {
     EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
 }
 
-/// State of an Enumerable extension.
+/// State of an [`Erc721Enumerable`] contract.
 #[storage]
 pub struct Erc721Enumerable {
     /// Maps owners to a mapping of indices to tokens ids.
@@ -94,11 +94,13 @@ pub trait IErc721Enumerable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Address of token's owner.
+    /// * `index` - Index of the token at `owner`'s tokens list.
     ///
     /// # Errors
     ///
-    /// * If an `owner`'s token query is out of bounds for `index`, then the
-    /// error [`Error::OutOfBoundsIndex`] is returned.
+    /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
+    ///   bounds for `index`.
     fn token_of_owner_by_index(
         &self,
         owner: Address,
@@ -121,11 +123,12 @@ pub trait IErc721Enumerable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    /// * `index` - Index of the token in all tokens list.
     ///
     /// # Errors
     ///
-    /// * If an `owner`'s token query is out of bounds for `index`,
-    /// then the error [`Error::OutOfBoundsIndex`] is returned.
+    /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
+    ///   bounds for `index`.
     fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
 }
 
@@ -180,8 +183,7 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// If owner address is `Address::ZERO`, then the error
-    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is `Address::ZERO`.
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,
@@ -231,8 +233,7 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// If owner address is `Address::ZERO`, then the error
-    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is `Address::ZERO`.
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
         from: Address,
@@ -315,7 +316,7 @@ impl Erc721Enumerable {
         self._all_tokens.pop();
     }
 
-    /// See [`crate::token::erc721::Erc721::_increase_balance`].
+    /// See [`erc721::Erc721::_increase_balance`].
     /// Check if tokens can be minted in batch.
     ///
     /// Mechanism to be consistent with [Solidity version](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.0/contracts/token/ERC721/extensions/ERC721Enumerable.sol#L163-L171)
@@ -326,8 +327,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If an `amount` is greater than `0`, then the error
-    ///   [`Error::EnumerableForbiddenBatchMint`] is returned.
+    /// * [`Error::EnumerableForbiddenBatchMint`] - If an `amount` is greater
+    ///   than `0`.
     pub fn _check_increase_balance(amount: u128) -> Result<(), Error> {
         if amount > 0 {
             Err(ERC721EnumerableForbiddenBatchMint {}.into())

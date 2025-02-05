@@ -47,7 +47,7 @@ impl MethodError for Error {
     }
 }
 
-/// State of the checkpoint library contract.
+/// State of a [`Trace`] contract.
 #[storage]
 pub struct Trace<S: Size> {
     /// Stores checkpoints in a dynamic array sorted by key.
@@ -55,7 +55,7 @@ pub struct Trace<S: Size> {
     pub _checkpoints: StorageVec<Checkpoint<S>>,
 }
 
-/// State of a single checkpoint.
+/// State of a [`Checkpoint`] contract.
 #[storage]
 pub struct Checkpoint<S: Size> {
     /// The key of the checkpoint. Used as a sorting key.
@@ -83,9 +83,9 @@ impl<S: Size> Trace<S> {
     ///
     /// # Errors
     ///
-    /// If the `key` is lower than previously pushed checkpoint's key, the error
-    /// [`Error::CheckpointUnorderedInsertion`] is returned (necessary to
-    /// maintain sorted order).
+    /// * [`Error::CheckpointUnorderedInsertion`] - If the `key` is lower than
+    ///   previously pushed checkpoint's key (necessary to maintain sorted
+    ///   order).
     pub fn push(
         &mut self,
         key: S::Key,
@@ -233,9 +233,8 @@ impl<S: Size> Trace<S> {
     ///
     /// # Errors
     ///
-    /// To maintain the sorted order if the `key` is lower than the previously
-    /// inserted one, the error [`Error::CheckpointUnorderedInsertion`] is
-    /// returned.
+    /// * [`Error::CheckpointUnorderedInsertion`] - If the `key` is lower than
+    ///   the previously inserted one.
     fn _insert(
         &mut self,
         key: S::Key,
@@ -330,14 +329,14 @@ impl<S: Size> Trace<S> {
     /// Immutable access on an element of the checkpoint's array. The position
     /// is assumed to be within bounds.
     ///
-    /// # Panics
-    ///
-    /// If `pos` exceeds [`Self::length`].
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
+    ///
+    /// # Panics
+    ///
+    /// * If `pos` exceeds [`Self::length`].
     fn _index(&self, pos: U256) -> StorageGuard<Checkpoint<S>> {
         self._checkpoints
             .get(pos)
@@ -347,14 +346,14 @@ impl<S: Size> Trace<S> {
     /// Mutable access on an element of the checkpoint's array. The position is
     /// assumed to be within bounds.
     ///
-    /// # Panics
-    ///
-    /// If `pos` exceeds [`Self::length`].
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
+    ///
+    /// # Panics
+    ///
+    /// * If `pos` exceeds [`Self::length`].
     fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint<S>> {
         self._checkpoints
             .setter(pos)

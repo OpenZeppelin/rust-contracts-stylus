@@ -45,7 +45,7 @@ pub enum Error {
     InvalidCap(ERC20InvalidCap),
 }
 
-/// State of a Capped Contract.
+/// State of a [`Capped`] Contract.
 #[storage]
 pub struct Capped {
     /// A cap to the supply of tokens.

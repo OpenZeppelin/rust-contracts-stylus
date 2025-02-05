@@ -22,7 +22,7 @@ use stylus_sdk::{
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);
 
-/// State of bit map.
+/// State of a [`BitMap`] contract.
 #[storage]
 pub struct BitMap {
     /// Inner laying mapping.

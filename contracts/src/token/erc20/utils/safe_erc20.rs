@@ -85,7 +85,7 @@ mod token {
     }
 }
 
-/// State of the [`SafeErc20`] Contract.
+/// State of a [`SafeErc20`] Contract.
 #[storage]
 pub struct SafeErc20 {}
 
@@ -112,12 +112,9 @@ pub trait ISafeErc20 {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the call returns value that is not `true`, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///    contract , the contract fails to execute the call or the call returns
+    ///    value that is not `true`.
     fn safe_transfer(
         &mut self,
         token: Address,
@@ -139,12 +136,9 @@ pub trait ISafeErc20 {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the call returns value that is not `true`, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///    contract , the contract fails to execute the call or the call returns
+    ///    value that is not `true`.
     fn safe_transfer_from(
         &mut self,
         token: Address,
@@ -166,16 +160,13 @@ pub trait ISafeErc20 {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the call returns value that is not `true`, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///   contract, the contract fails to execute the call or the call returns
+    ///   value that is not `true`.
     ///
     /// # Panics
     ///
-    /// If increased allowance exceeds `U256::MAX`.
+    /// * If increased allowance exceeds `U256::MAX`.
     fn safe_increase_allowance(
         &mut self,
         token: Address,
@@ -196,14 +187,11 @@ pub trait ISafeErc20 {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the current allowance is less than `requested_decrease`, then the
-    /// error [`Error::SafeErc20FailedDecreaseAllowance`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the call returns value that is not `true`, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///   contract, the contract fails to execute the call or the call returns
+    ///   value that is not `true`.
+    /// * [`Error::SafeErc20FailedDecreaseAllowance`] - If the current allowance
+    ///   is less than `requested_decrease`.
     fn safe_decrease_allowance(
         &mut self,
         token: Address,
@@ -225,12 +213,9 @@ pub trait ISafeErc20 {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the call returns value that is not `true`, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///   contract, the contract fails to execute the call or the call returns
+    ///   value that is not `true`.
     fn force_approve(
         &mut self,
         token: Address,
@@ -337,12 +322,9 @@ impl SafeErc20 {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the call returns value that is not `true`, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///   contract, the contract fails to execute the call or the call returns
+    ///   value that is not `true`.
     fn call_optional_return(
         token: Address,
         call: &impl SolCall,
@@ -370,10 +352,10 @@ impl SafeErc20 {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
-    /// If the contract fails to read `spender`'s allowance, then the error
-    /// [`Error::SafeErc20FailedOperation`] is returned.
+    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///   contract.
+    /// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
+    ///   `spender`'s allowance.
     fn allowance(token: Address, spender: Address) -> Result<U256, Error> {
         if !Address::has_code(&token) {
             return Err(SafeErc20FailedOperation { token }.into());

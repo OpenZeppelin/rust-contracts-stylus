@@ -27,7 +27,7 @@ use crate::{
 
 /// Stack-allocated big unsigned integer.
 ///
-/// Generic over number [`N`] of [`Limb`]s.
+/// Generic over number `N` of [`Limb`]s.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Zeroize)]
 pub struct Uint<const N: usize> {
     pub(crate) limbs: Limbs<N>,

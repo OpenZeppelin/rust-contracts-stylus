@@ -6,7 +6,7 @@ use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
 use crate::token::erc1155::{
-    ERC1155MissingApprovalForAll, Erc1155, Error, IErc1155,
+    self, ERC1155MissingApprovalForAll, Erc1155, IErc1155,
 };
 
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
@@ -26,13 +26,11 @@ pub trait IErc1155Burnable {
     ///
     /// # Errors
     ///
-    /// If the caller is not `account` address and the `account` has not been
-    /// approved, then the error [`Error::MissingApprovalForAll`] is
-    /// returned.
-    /// If `from` is the `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`Error::InsufficientBalance`] is returned.
+    /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
+    ///   `account` address and the `account` has not been approved.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InsufficientBalance`] - If `value` is greater than
+    ///   the balance of the `from` account.
     fn burn(
         &mut self,
         account: Address,
@@ -51,16 +49,14 @@ pub trait IErc1155Burnable {
     ///
     /// # Errors
     ///
-    /// If the caller is not `account` address and the `account` has not been
-    /// approved, then the error [`Error::MissingApprovalForAll`] is
-    /// returned.
-    /// If `from` is the `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`Error::InvalidArrayLength`] is returned.
-    /// If any of the `values` is greater than the balance of the respective
-    /// token from `tokens` of the `from` account, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
+    ///   `account` address and the `account` has not been approved.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InvalidArrayLength`] - If length of `ids` is not
+    ///   equal to length of `values`.
+    /// * [`erc1155::Error::InsufficientBalance`] - If any of the `values` is
+    ///   greater than the balance of the respective token from `tokens` of the
+    ///   `from` account.
     fn burn_batch(
         &mut self,
         account: Address,
@@ -70,7 +66,7 @@ pub trait IErc1155Burnable {
 }
 
 impl IErc1155Burnable for Erc1155 {
-    type Error = Error;
+    type Error = erc1155::Error;
 
     fn burn(
         &mut self,
@@ -94,10 +90,13 @@ impl IErc1155Burnable for Erc1155 {
 }
 
 impl Erc1155 {
-    fn ensure_approved_or_owner(&self, account: Address) -> Result<(), Error> {
+    fn ensure_approved_or_owner(
+        &self,
+        account: Address,
+    ) -> Result<(), erc1155::Error> {
         let sender = msg::sender();
         if account != sender && !self.is_approved_for_all(account, sender) {
-            return Err(Error::MissingApprovalForAll(
+            return Err(erc1155::Error::MissingApprovalForAll(
                 ERC1155MissingApprovalForAll {
                     owner: account,
                     operator: sender,

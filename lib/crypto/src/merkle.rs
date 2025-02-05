@@ -100,11 +100,11 @@ impl Verifier<KeccakBuilder> {
     ///
     /// # Errors
     ///
-    /// Will return `Err` if the arguments are well-formed, but invalid.
+    /// * [`MultiProofError`] - If the arguments are well-formed, but invalid.
     ///
     /// # Panics
     ///
-    /// Will panic with an out-of-bounds error if the proof is malicious. See
+    /// * Will panic with an out-of-bounds error if the proof is malicious. See
     /// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
     ///
     /// # Examples
@@ -235,7 +235,7 @@ where
     ///
     /// # Errors
     ///
-    /// Will return `Err` if the arguments are well-formed, but invalid.
+    /// * [`MultiProofError`] - If the arguments are well-formed, but invalid.
     ///
     /// # Examples
     ///

@@ -6,7 +6,7 @@
 //! Adds the `permit` method, which can be used to change an account’s
 //! ERC20 allowance (see [`crate::token::erc20::IErc20::allowance`])
 //! by presenting a message signed by the account.
-//! By not relying on [`crate::token::erc20::IErc20::approve`],
+//! By not relying on [`erc20::IErc20::approve`],
 //! the token holder account doesn’t need to send a transaction,
 //! and thus is not required to hold Ether at all.
 //!
@@ -73,14 +73,14 @@ pub enum Error {
     ECDSA(ecdsa::Error),
 }
 
-/// State of a Permit Contract.
+/// State of an [`Erc20Permit`] Contract.
 #[storage]
 pub struct Erc20Permit<T: IEip712 + StorageType> {
-    /// ERC-20 contract.
+    /// [`Erc20`] contract.
     pub erc20: Erc20,
-    /// Nonces contract.
+    /// [`Nonces`] contract.
     pub nonces: Nonces,
-    /// EIP-712 contract. Must implement [`IEip712`] trait.
+    /// Contract implementing [`IEip712`] trait.
     pub eip712: T,
 }
 
@@ -131,28 +131,19 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// If the `deadline` param is from the past, than the error
-    /// [`ERC2612ExpiredSignature`] is returned.
-    /// If signer is not an `owner`, than the error
-    /// [`ERC2612InvalidSigner`] is returned.
-    /// * If the `s` value is greater than [`ecdsa::SIGNATURE_S_UPPER_BOUND`],
-    /// then the error [`ecdsa::Error::InvalidSignatureS`] is returned.
-    /// * If the recovered address is `Address::ZERO`, then the error
-    /// [`ecdsa::Error::InvalidSignature`] is returned.
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`erc20::Error::InvalidSpender`] is returned.
+    /// * [`ERC2612ExpiredSignature`] - If the `deadline` param is from the
+    ///   past.
+    /// * [`ERC2612InvalidSigner`] - If signer is not an `owner`.
+    /// * [`ecdsa::Error::InvalidSignatureS`] - If the `s` value is grater than
+    ///   [`ecdsa::SIGNATURE_S_UPPER_BOUND`].
+    /// * [`ecdsa::Error::InvalidSignature`] - If the recovered address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InvalidSpender`] - If the `spender` address is
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`crate::token::erc20::Approval`] event.
-    ///
-    /// # Requirements
-    ///
-    /// * `spender` cannot be the ``Address::ZERO``.
-    /// * `deadline` must be a timestamp in the future.
-    /// * `v`, `r` and `s` must be a valid secp256k1 signature from `owner`
-    /// over the EIP712-formatted function arguments.
-    /// * the signature must use `owner`'s current nonce.
+    /// * [`erc20::Approval`]
     #[allow(clippy::too_many_arguments)]
     pub fn permit(
         &mut self,
@@ -221,14 +212,14 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidReceiver`] is returned.
-    /// * If the caller doesn't have a balance of at least `value`, then the
-    /// error [`crate::token::erc20::Error::InsufficientBalance`] is returned.
+    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientBalance`] - If the caller doesn't have a
+    ///   balance of at least `value`.
     ///
     /// # Events
     ///
-    /// Emits a [`crate::token::erc20::Transfer`] event.
+    /// * [`erc20::Transfer`]
     pub fn transfer(
         &mut self,
         to: Address,
@@ -273,12 +264,12 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidSpender`] is returned.
+    /// [`erc20::Error::InvalidSpender`] - If the `spender`
+    /// address is `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`crate::token::erc20::Approval`] event.
+    /// * [`erc20::Approval`]
     pub fn approve(
         &mut self,
         spender: Address,
@@ -306,16 +297,16 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`crate::token::erc20::Error::InvalidReceiver`] is returned.
-    /// * If not enough allowance is available, then the error
-    /// [`crate::token::erc20::Error::InsufficientAllowance`] is returned.
+    /// * [`erc20::Error::InvalidSender`] - If the `from` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InvalidReceiver`] - If the `to` address is
+    ///   `Address::ZERO`.
+    /// * [`erc20::Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available.
     ///
     /// # Events
     ///
-    /// Emits a [`crate::token::erc20::Transfer`] event.
+    /// * [`erc20::Transfer`]
     pub fn transfer_from(
         &mut self,
         from: Address,
