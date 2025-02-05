@@ -212,11 +212,15 @@ Some other examples of automation are:
 
 Always check your code with the linter (`clippy`), by running:
 
-    $ cargo clippy --tests --all-features
+```shell
+    cargo clippy --tests --all-features
+```
 
 And make sure your code is formatted with, using:
 
-    $ cargo +nightly fmt
+```shell
+    cargo +nightly fmt
+```
 
 Finally, ensure there is no trailing whitespace anywhere.
 
@@ -224,7 +228,9 @@ Finally, ensure there is no trailing whitespace anywhere.
 
 Make sure all tests are passing with:
 
-    $ cargo test --all-features
+```shell
+    cargo test --all-features
+```
 
 ### Running end-to-end tests
 
@@ -241,12 +247,31 @@ Then you will be able to run e2e tests:
 ./scripts/e2e-tests.sh
 ```
 
+### Running fuzz tests
+
+To run fuzz tests, you need to have [cargo-fuzz] installed. 
+Then from the root of the project you can use `cargo fuzz list` to view the list of all existing fuzz targets:
+
+```shell
+    cargo fuzz list
+```
+
+Finally you need to run:
+
+```shell
+    cargo fuzz run <fuzz target name>
+```
+
+[cargo-fuzz]: https://rust-fuzz.github.io/book/cargo-fuzz/setup.html
+
 ### Checking the docs
 
 If you make documentation changes, you may want to check whether there are any
 warnings or errors:
 
-    $ cargo doc --all-features
+```shell
+    cargo doc --all-features
+```
 
 ## Pull requests
 

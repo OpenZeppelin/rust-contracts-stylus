@@ -95,7 +95,7 @@ pub enum Error {
     InvalidToken(InvalidToken),
 }
 
-/// State of the [`VestingWallet`] Contract.
+/// State of a [`VestingWallet`] Contract.
 #[storage]
 pub struct VestingWallet {
     /// [`Ownable`] contract.

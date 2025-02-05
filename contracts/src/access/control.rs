@@ -105,7 +105,9 @@ pub enum Error {
     BadConfirmation(AccessControlBadConfirmation),
 }
 
-/// Information about a specific role.
+/// State of a [`RoleData`] contract.
+///
+/// Stores information about a specific role.
 #[storage]
 pub struct RoleData {
     /// Whether an account is member of a certain role.
@@ -114,7 +116,7 @@ pub struct RoleData {
     pub admin_role: StorageFixedBytes<32>,
 }
 
-/// State of an `AccessControl` contract.
+/// State of an [`AccessControl`] contract.
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.

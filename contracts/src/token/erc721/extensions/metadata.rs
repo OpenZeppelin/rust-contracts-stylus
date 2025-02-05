@@ -16,10 +16,10 @@ use crate::{
     utils::{introspection::erc165::IErc165, Metadata},
 };
 
-/// Metadata of an [`crate::token::erc721::Erc721`] token.
+/// State of an [`Erc721Metadata`] contract.
 #[storage]
 pub struct Erc721Metadata {
-    /// Common Metadata.
+    /// [`Metadata`] contract.
     #[allow(clippy::used_underscore_binding)]
     pub _metadata: Metadata,
     /// Base URI for tokens.
