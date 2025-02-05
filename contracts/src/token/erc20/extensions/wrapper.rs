@@ -190,7 +190,6 @@ impl IErc20Wrapper for Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let underlined_token = self.underlying_address.get();
         if account == contract::address() {
             return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
                 receiver: account,
