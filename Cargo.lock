@@ -2579,7 +2579,7 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.3.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#0b48d1c962e07e20d8b4a01890b418ef5677a649"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#155327b54a121a2a93945cbda77f9bfeb55c4a3a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -2594,7 +2594,7 @@ dependencies = [
 [[package]]
 name = "motsu-proc"
 version = "0.3.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#0b48d1c962e07e20d8b4a01890b418ef5677a649"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=mock-msg-value-and-balance#155327b54a121a2a93945cbda77f9bfeb55c4a3a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4624,7 +4624,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
