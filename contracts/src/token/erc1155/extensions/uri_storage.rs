@@ -42,7 +42,7 @@ impl Erc1155UriStorage {
     /// # Examples
     ///
     /// ```rust,ignore
-    ///     pub fn uri(&self, token_id: U256) -> String {
+    ///     fn uri(&self, token_id: U256) -> String {
     ///         self.uri_storage.uri(token_id, &self.metadata_uri)
     ///     }
     /// ```
@@ -96,12 +96,9 @@ impl Erc1155UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    // TODO#q: rewrite Erc1155UriStorage tests
-    /*use motsu::prelude::Contract;
-    use stylus_sdk::{
-        alloy_primitives::{uint, U256},
-        prelude::{public, storage, TopLevelStorage},
-    };
+    use alloy_primitives::{uint, Address, U256};
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::*;
 
     use super::Erc1155UriStorage;
     use crate::token::erc1155::extensions::Erc1155MetadataUri;
@@ -114,8 +111,11 @@ mod tests {
     }
 
     #[public]
-    #[inherit(Erc1155MetadataUri)]
-    impl Erc1155MetadataExample {}
+    impl Erc1155MetadataExample {
+        fn uri(&self, token_id: U256) -> String {
+            self.uri_storage.uri(token_id, &self.metadata_uri)
+        }
+    }
 
     unsafe impl TopLevelStorage for Erc1155MetadataExample {}
 
@@ -124,111 +124,116 @@ mod tests {
     #[motsu::test]
     fn uri_returns_metadata_uri_when_token_uri_is_not_set(
         contract: Contract<Erc1155MetadataExample>,
+        alice: Address,
     ) {
         let uri = "https://some.metadata/token/uri";
 
-        contract.metadata_uri._uri.set_str(uri.to_owned());
+        contract.init(alice, |contract| {
+            contract.metadata_uri._uri.set_str(uri.to_owned());
+        });
 
-        assert_eq!(
-            uri,
-            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
-        );
+        assert_eq!(uri, contract.sender(alice).uri(TOKEN_ID));
     }
 
-    #[motsu::test]
     fn uri_returns_empty_string_when_no_uri_is_set(
         contract: Contract<Erc1155MetadataExample>,
+        alice: Address,
     ) {
-        assert!(contract
-            .uri_storage
-            .uri(TOKEN_ID, &contract.metadata_uri)
-            .is_empty());
+        assert!(contract.sender(alice).uri(TOKEN_ID).is_empty());
     }
 
     #[motsu::test]
     fn uri_returns_token_uri_when_base_uri_is_empty(
         contract: Contract<Erc1155MetadataExample>,
+        alice: Address,
     ) {
         let token_uri = "https://some.short/token/uri";
 
-        contract
-            .uri_storage
-            ._token_uris
-            .setter(TOKEN_ID)
-            .set_str(token_uri.to_owned());
+        contract.init(alice, |contract| {
+            contract
+                .uri_storage
+                ._token_uris
+                .setter(TOKEN_ID)
+                .set_str(token_uri.to_owned());
+        });
 
-        assert_eq!(
-            token_uri,
-            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
-        );
+        assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
 
     #[motsu::test]
     fn uri_returns_concatenated_base_uri_and_token_uri(
         contract: Contract<Erc1155MetadataExample>,
+        alice: Address,
     ) {
         let base_uri = "https://some.base.uri";
         let token_uri = "/some/token/uri";
 
-        contract.uri_storage._base_uri.set_str(base_uri.to_owned());
-        contract
-            .uri_storage
-            ._token_uris
-            .setter(TOKEN_ID)
-            .set_str(token_uri.to_owned());
+        contract.init(alice, |contract| {
+            contract.uri_storage._base_uri.set_str(base_uri.to_owned());
+            contract
+                .uri_storage
+                ._token_uris
+                .setter(TOKEN_ID)
+                .set_str(token_uri.to_owned());
+        });
 
         assert_eq!(
             base_uri.to_string() + token_uri,
-            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
+            contract.sender(alice).uri(TOKEN_ID)
         );
     }
 
     #[motsu::test]
     fn uri_ignores_metadata_uri_when_token_uri_is_set(
         contract: Contract<Erc1155MetadataExample>,
+        alice: Address,
     ) {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri";
 
-        contract.metadata_uri._uri.set_str(uri.to_owned());
-        contract
-            .uri_storage
-            ._token_uris
-            .setter(TOKEN_ID)
-            .set_str(token_uri.to_owned());
+        contract.init(alice, |contract| {
+            contract.metadata_uri._uri.set_str(uri.to_owned());
+            contract
+                .uri_storage
+                ._token_uris
+                .setter(TOKEN_ID)
+                .set_str(token_uri.to_owned());
+        });
 
-        assert_eq!(
-            token_uri,
-            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
-        );
+        assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
-
     #[motsu::test]
-    fn test_set_uri(contract: Contract<Erc1155MetadataExample>) {
+    fn test_set_uri(
+        contract: Contract<Erc1155MetadataExample>,
+        alice: Address,
+    ) {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();
 
-        contract.metadata_uri._uri.set_str(uri.to_owned());
+        contract.init(alice, |contract| {
+            contract.metadata_uri._uri.set_str(uri.to_owned());
+            contract.uri_storage.set_token_uri(
+                TOKEN_ID,
+                token_uri.clone(),
+                &contract.metadata_uri,
+            );
+        });
 
-        contract.uri_storage.set_token_uri(
-            TOKEN_ID,
-            token_uri.clone(),
-            &contract.metadata_uri,
-        );
+        assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
+    }
+    #[motsu::test]
+    fn test_set_base_uri(
+        contract: Contract<Erc1155MetadataExample>,
+        alice: Address,
+    ) {
+        let base_uri = "https://docs.openzeppelin.com/".to_string();
+        contract.init(alice, |contract| {
+            contract.uri_storage.set_base_uri(base_uri.clone());
+        });
 
         assert_eq!(
-            token_uri,
-            contract.uri_storage.uri(TOKEN_ID, &contract.metadata_uri)
+            base_uri,
+            contract.sender(alice).uri_storage._base_uri.get_string()
         );
     }
-
-    unsafe impl TopLevelStorage for Erc1155UriStorage {}
-
-    #[motsu::test]
-    fn test_set_base_uri(contract: Contract<Erc1155UriStorage>) {
-        let base_uri = "https://docs.openzeppelin.com/".to_string();
-        contract.set_base_uri(base_uri.clone());
-
-        assert_eq!(base_uri, contract._base_uri.get_string());
-    }*/
 }
