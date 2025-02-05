@@ -33,7 +33,7 @@ mod sol {
     }
 }
 
-/// Uri Storage.
+/// State of an [`Erc721UriStorage`] contract.
 #[storage]
 pub struct Erc721UriStorage {
     /// Optional mapping for token URIs.
@@ -42,7 +42,7 @@ pub struct Erc721UriStorage {
 }
 
 impl Erc721UriStorage {
-    /// Sets `token_uri` as the tokenURI of `token_id`.
+    /// Sets `token_uri` as the token URI of `token_id`.
     ///
     /// # Arguments
     ///
@@ -51,13 +51,22 @@ impl Erc721UriStorage {
     /// * `token_uri` - URI for the token.
     ///
     /// # Events
-    /// Emits a [`MetadataUpdate`] event.
+    ///
+    /// * [`MetadataUpdate`].
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
 
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
+    ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `token_id`
+    /// parameter. Both the `erc721` and `metadata` references should come from
+    /// your contract's state. The implementation should use
+    /// `#[selector(name = "tokenURI")]` to match Solidity's camelCase naming
+    /// convention and it should forward the call to your internal storage
+    /// instance along with both references.
     ///
     /// # Arguments
     ///
@@ -68,11 +77,7 @@ impl Erc721UriStorage {
     ///
     /// # Errors
     ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
-    ///
-    /// NOTE: In order to have [`Erc721UriStorage::token_uri`] exposed in ABI,
-    /// you need to do this manually.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Examples
     ///

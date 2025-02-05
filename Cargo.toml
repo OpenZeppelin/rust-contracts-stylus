@@ -14,6 +14,7 @@ members = [
   "examples/erc1155",
   "examples/erc1155-metadata-uri",
   "examples/erc1155-supply",
+  "examples/erc4626",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/vesting-wallet",
@@ -40,6 +41,7 @@ default-members = [
   "examples/erc1155",
   "examples/erc1155-metadata-uri",
   "examples/erc1155-supply",
+  "examples/erc4626",
   "examples/safe-erc20",
   "examples/merkle-proofs",
   "examples/ownable",
@@ -62,7 +64,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -99,7 +101,6 @@ alloy-sol-macro = { version = "=0.8.14", default-features = false }
 alloy-sol-macro-expander = { version = "=0.8.14", default-features = false }
 alloy-sol-macro-input = { version = "=0.8.14", default-features = false }
 
-const-hex = { version = "1.11.1", default-features = false }
 eyre = "0.6.8"
 keccak-const = "0.2.0"
 koba = "0.3.0"
@@ -109,10 +110,6 @@ regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
 futures = "0.3.30"
-dashmap = "6.1.0"
-crypto-bigint = { version = "0.5.5", default-features = false, features = [
-  "zeroize",
-] }
 num-traits = "0.2.14"
 zeroize = { version = "1.8.1", features = ["derive"] }
 proptest = "1"
