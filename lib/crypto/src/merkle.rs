@@ -355,7 +355,9 @@ impl core::fmt::Display for MultiProofError {
 mod tests {
     //! NOTE: The values used as input for these tests were all generated using
     //! <https://github.com/OpenZeppelin/merkle-tree>.
+    use ethers_core::types::Bytes;
     use hex_literal::hex;
+    use merkle_tree_rs::core::process_proof;
     use rand::{thread_rng, RngCore};
 
     use super::{Bytes32, KeccakBuilder, Verifier};
@@ -660,5 +662,37 @@ mod tests {
             &malicious_leaves,
         );
         assert!(verification.is_err());
+    }
+
+    #[test]
+    fn test_differential_verifies_valid_proof() {
+        bytes! {
+           root = "9012f1e18a87790d2e01faace75aaaca38e53df437cdce2c0552464dda4af49c";
+           leaf = "0b42b6393c1f53060fe3ddbfcd7aadcca894465a5a438f69c87d790b2299b9b2";
+        }
+        let proof = bytes_array! {
+            "f1918e8562236eb17adc8502332f4c9c82bc14e19bfc0aa10ab674ff75b3d2f3",
+            "805b21d846b189efaeb0377d6bb0d201b3872a363e607c25088f025b0c6ae1f8",
+            "f0b49bb4b0d9396e0315755ceafaa280707b32e75e6c9053f5cdf2679dcd5c6a",
+        };
+
+        let leaf_bytes = Bytes::from(leaf);
+        let proof_vec: Vec<Bytes> =
+            proof.iter().map(|&p| Bytes::from(p)).collect();
+
+        let rebuilt_root_bytes = process_proof(leaf_bytes.clone(), &proof_vec);
+
+        let rebuilt_root: [u8; 32] = rebuilt_root_bytes
+            .as_ref()
+            .try_into()
+            .expect("Rebuilt root must be 32 bytes");
+
+        let verification = Verifier::verify(&proof, root, leaf);
+
+        assert_eq!(
+            rebuilt_root, root,
+            "Rebuilt root does not match expected root"
+        );
+        assert!(verification, "Verifier::verify returned false");
     }
 }
