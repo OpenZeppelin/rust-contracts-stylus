@@ -221,7 +221,7 @@ impl IERC20Wrapper for Erc20Wrapper {
             }));
         }
         erc20._burn(account, value)?;
-        self.safe_erc20.safe_transfer(underlined_token, account, value)?;
+        self.safe_erc20.safe_transfer(self.underlying(), account, value)?;
         Ok(true)
     }
 }
