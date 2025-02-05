@@ -176,7 +176,7 @@ impl IErc20Wrapper for Erc20Wrapper {
         }
 
         self.safe_erc20.safe_transfer_from(
-            underlined_token,
+            self.underlying(),
             sender,
             contract::address(),
             value,
