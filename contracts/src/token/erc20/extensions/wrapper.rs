@@ -241,7 +241,7 @@ mod tests {
     use alloy_primitives::address;
     use stylus_sdk::prelude::storage;
 
-    use super::{Erc20Wrapper, IERC20Wrapper};
+    use super::{Erc20Wrapper, IErc20Wrapper};
 
     #[storage]
     struct Erc20WrapperTestExample {
