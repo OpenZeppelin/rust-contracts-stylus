@@ -114,7 +114,7 @@ pub struct Erc20Wrapper {
 }
 
 /// ERC-20 Wrapper Standard Interface
-pub trait IERC20Wrapper {
+pub trait IErc20Wrapper {
     /// The error type associated to this `ERC20Wrapper` trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
