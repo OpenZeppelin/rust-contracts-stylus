@@ -1011,52 +1011,62 @@ mod tests {
 
     const MODULUS: i128 = 1000003; // Prime number
 
-    proptest! {
-        #[test]
-        fn add(a: i64, b: i64) {
+    #[test]
+    fn add() {
+        proptest!(|(a: i64, b: i64)| {
             let res = Field64::from(a) + Field64::from(b);
             let res: i128 = res.into();
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, (a + b).rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn double(a: i64) {
+    #[test]
+    fn double() {
+        proptest!(|(a: i64)| {
             let res = Field64::from(a).double();
             let res: i128 = res.into();
             let a = i128::from(a);
             prop_assert_eq!(res, (a + a).rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn sub(a: i64, b: i64) {
+    #[test]
+    fn sub() {
+        proptest!(|(a: i64, b: i64)| {
             let res = Field64::from(a) - Field64::from(b);
             let res: i128 = res.into();
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, (a - b).rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn mul(a: i64, b: i64) {
+    #[test]
+    fn mul() {
+        proptest!(|(a: i64, b: i64)| {
             let res = Field64::from(a) * Field64::from(b);
             let res: i128 = res.into();
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, (a * b).rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn square(a: i64) {
+    #[test]
+    fn square() {
+        proptest!(|(a: i64)| {
             let res = Field64::from(a).square();
             let res: i128 = res.into();
             let a = i128::from(a);
             prop_assert_eq!(res, (a * a).rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn div(a: i64, b: i64) {
+    #[test]
+    fn div() {
+        proptest!(|(a: i64, b: i64)| {
             // Skip if `b` is zero.
             if i128::from(b) % MODULUS == 0 {
                 return Ok(());
@@ -1068,10 +1078,12 @@ mod tests {
             let b = i128::from(b);
             // a / b = res mod M => res * b = a mod M
             prop_assert_eq!((res * b).rem_euclid(MODULUS), a.rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn pow(a: i64, b in 0_u32..1000) {
+    #[test]
+    fn pow() {
+        proptest!(|(a: i64, b in 0_u32..1000)| {
             /// Compute a^b in an expensive and iterative way.
             fn dumb_pow(a: i128, b: i128) -> i128 {
                 (0..b).fold(1, |acc, _| (acc * a).rem_euclid(MODULUS))
@@ -1082,18 +1094,22 @@ mod tests {
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, dumb_pow(a, b));
-        }
+        })
+    }
 
-        #[test]
-        fn neg(a: i64) {
+    #[test]
+    fn neg() {
+        proptest!(|(a: i64)| {
             let res = -Field64::from(a);
             let res: i128 = res.into();
             let a = i128::from(a);
             prop_assert_eq!(res, (-a).rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn one(a: i64) {
+    #[test]
+    fn one() {
+        proptest!(|(a: i64)| {
             let res = Field64::one();
             let res: i128 = res.into();
             prop_assert_eq!(res, 1);
@@ -1102,10 +1118,12 @@ mod tests {
             let res: i128 = res.into();
             let a: i128 = a.into();
             prop_assert_eq!(res, a.rem_euclid(MODULUS));
-        }
+        })
+    }
 
-        #[test]
-        fn zero(a: i64) {
+    #[test]
+    fn zero() {
+        proptest!(|(a: i64)| {
             let res = Field64::zero();
             let res: i128 = res.into();
             prop_assert_eq!(res, 0);
@@ -1114,6 +1132,6 @@ mod tests {
             let res: i128 = res.into();
             let a: i128 = a.into();
             prop_assert_eq!(res, a.rem_euclid(MODULUS));
-        }
+        })
     }
 }
