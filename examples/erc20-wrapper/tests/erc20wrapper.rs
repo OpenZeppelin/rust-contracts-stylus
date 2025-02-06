@@ -100,7 +100,7 @@ mod deposit_to {
             contract_addr,
             uint!(1000_U256),
         );
-        ///_ = watch!(contract.depositFor(alice_address, uint!(1000_U256)))?;
+        _ = watch!(contract.depositFor(alice_address, uint!(1000_U256)))?;
         Ok(())
     }
 
@@ -124,14 +124,14 @@ mod deposit_to {
         let alice_addr: Address = alice.address();
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-        // let err = contract
-        //     .depositFor(alice.address(), uint!(1000_U256))
-        //     .call()
-        //     .await
-        //     .expect_err("should return `InvalidReceiver`");
-        // assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidSender {
-        //     sender: alice_addr
-        // }));
+        let err = contract
+            .depositFor(alice.address(), uint!(1000_U256))
+            .call()
+            .await
+            .expect_err("should return `InvalidReceiver`");
+        assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidSender {
+            sender: alice_addr
+        }));
         Ok(())
     }
 
@@ -161,16 +161,19 @@ mod deposit_to {
             .call()
             .await
             .expect_err("should return `ERC20InsufficientBalance`");
-        // assert!(err.reverted_with(Erc20Wrapper::ERC20InsufficientBalance {
-        //     sender: alice_address,
-        //     balance: uint!(0_U256)
-        //     needed: uint!(1000_U256)
-        // }));
+        assert!(err.reverted_with(Erc20Wrapper::ERC20InsufficientBalance {
+            sender: alice_address,
+            balance: uint!(0_U256),
+            needed: uint!(1000_U256)
+        }));
         Ok(())
     }
 
     #[e2e::test]
     async fn reflects_balance_after_deposit_for(alice: Account) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let alice_address = alice.address();
+        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         Ok(())
     }
 }
@@ -201,7 +204,10 @@ mod withdraw_to {
     }
 
     #[e2e::test]
-    async fn reflects_balance_after_deposit_for(alice: Account) -> Result<()> {
+    async fn reflects_balance_after_withdraw_to(alice: Account, bob: Account) -> Result<()> {
+         let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let alice_address = alice.address();
+        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         Ok(())
     }
 }
