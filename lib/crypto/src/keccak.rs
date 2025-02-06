@@ -51,12 +51,11 @@ mod tests {
     use proptest::prelude::*;
 
     use super::*;
+    use crate::test_helpers::non_empty_u8_vec_strategy;
 
     #[test]
     fn single_bit_change_affects_output() {
-        proptest!(|(data: Vec<u8>)| {
-            prop_assume!(!data.is_empty());
-
+        proptest!(|(data in non_empty_u8_vec_strategy())| {
             let mut modified = data.clone();
             modified[0] ^= 1;
 
@@ -91,9 +90,7 @@ mod tests {
 
     #[test]
     fn split_updates_match_full_update() {
-        proptest!(|(data: Vec<u8>, split_point: usize)| {
-            prop_assume!(!data.is_empty());
-
+        proptest!(|(data in non_empty_u8_vec_strategy(), split_point: usize)| {
             let builder = KeccakBuilder;
             let split_at = split_point % data.len();
 
@@ -142,17 +139,15 @@ mod tests {
 
     #[test]
     fn update_order_dependence() {
-        proptest!(|(data1: Vec<u8>, data2: Vec<u8>)| {
-            prop_assume!(!data1.is_empty());
-            prop_assume!(!data2.is_empty());
+        proptest!(|(data1 in non_empty_u8_vec_strategy(),
+                    data2 in non_empty_u8_vec_strategy())| {
             prop_assume!(data1 != data2);
 
             let mut hasher1 = KeccakBuilder.build_hasher();
-            let mut hasher2 = KeccakBuilder.build_hasher();
-
             hasher1.update(&data1);
             hasher1.update(&data2);
 
+            let mut hasher2 = KeccakBuilder.build_hasher();
             hasher2.update(&data2);
             hasher2.update(&data1);
 
@@ -162,16 +157,14 @@ mod tests {
 
     #[test]
     fn empty_input_order_independence() {
-        proptest!(|(data: Vec<u8>)| {
-            prop_assume!(!data.is_empty());
-
-            let mut hasher1 = KeccakBuilder.build_hasher();
-            let mut hasher2 = KeccakBuilder.build_hasher();
+        proptest!(|(data in non_empty_u8_vec_strategy())| {
             let empty = vec![];
 
+            let mut hasher1 = KeccakBuilder.build_hasher();
             hasher1.update(&data);
             hasher1.update(&empty);
 
+            let mut hasher2 = KeccakBuilder.build_hasher();
             hasher2.update(&empty);
             hasher2.update(&data);
 
@@ -183,12 +176,12 @@ mod tests {
     fn trailing_zero_affects_output() {
         proptest!(|(data: Vec<u8>)| {
             let mut hasher1 = KeccakBuilder.build_hasher();
-            let mut hasher2 = KeccakBuilder.build_hasher();
-
             hasher1.update(&data);
 
             let mut padded = data.clone();
             padded.push(0);
+
+            let mut hasher2 = KeccakBuilder.build_hasher();
             hasher2.update(&padded);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
@@ -197,9 +190,7 @@ mod tests {
 
     #[test]
     fn leading_zeros_affect_output() {
-        proptest!(|(data: Vec<u8>)| {
-            prop_assume!(!data.is_empty());
-
+        proptest!(|(data in non_empty_u8_vec_strategy())| {
             let mut hasher1 = KeccakBuilder.build_hasher();
             hasher1.update(&data);
             let hash1 = hasher1.finalize();
@@ -217,15 +208,14 @@ mod tests {
 
     #[test]
     fn no_trivial_collisions_same_length() {
-        proptest!(|(data: Vec<u8>)| {
-            prop_assume!(!data.is_empty());
+        proptest!(|(data in non_empty_u8_vec_strategy())| {
+            let mut hasher1 = KeccakBuilder.build_hasher();
+            hasher1.update(&data);
+
             let mut modified = data.clone();
             modified[data.len() - 1] = modified[data.len() - 1].wrapping_add(1);
 
-            let mut hasher1 = KeccakBuilder.build_hasher();
             let mut hasher2 = KeccakBuilder.build_hasher();
-
-            hasher1.update(&data);
             hasher2.update(&modified);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
@@ -234,10 +224,7 @@ mod tests {
 
     #[test]
     fn length_extension_attack_resistance() {
-        proptest!(|(data1: Vec<u8>, data2: Vec<u8>)| {
-            prop_assume!(!data1.is_empty());
-            prop_assume!(!data2.is_empty());
-
+        proptest!(|(data1 in non_empty_u8_vec_strategy(), data2 in non_empty_u8_vec_strategy())| {
             let mut hasher1 = KeccakBuilder.build_hasher();
             hasher1.update(&data1);
             let hash1 = hasher1.finalize();
