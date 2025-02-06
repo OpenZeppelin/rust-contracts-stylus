@@ -40,6 +40,7 @@
 //! this role.
 use alloc::vec::Vec;
 
+use openzeppelin_stylus_proc::interface_id;
 use alloy_primitives::{Address, FixedBytes, B256};
 pub use sol::*;
 use stylus_sdk::{
@@ -121,9 +122,34 @@ pub struct AccessControl {
     #[allow(clippy::used_underscore_binding)]
     pub _roles: StorageMap<FixedBytes<32>, RoleData>,
 }
+/// Required interface for role-based access control
+#[interface_id]
+pub trait IAccessControl {
+    /// The error type associated with this interface implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
+    /// Returns `true` if `account` has been granted `role`.
+    fn has_role(&self, role: B256, account: Address) -> bool;
+
+    /// Checks if `msg::sender()` has been granted `role`.
+    fn only_role(&self, role: B256) -> Result<(), Self::Error>;
+
+    /// Returns the admin role that controls `role`.
+    fn get_role_admin(&self, role: B256) -> B256;
+
+    /// Grants `role` to `account`.
+    fn grant_role(&mut self, role: B256, account: Address) -> Result<(), Self::Error>;
+
+    /// Revokes `role` from `account`.
+    fn revoke_role(&mut self, role: B256, account: Address) -> Result<(), Self::Error>;
+
+    /// Renounces `role` for the calling account.
+    fn renounce_role(&mut self, role: B256, confirmation: Address) -> Result<(), Self::Error>;
+}
 
 #[public]
-impl AccessControl {
+impl IAccessControl for AccessControl {
+    type Error = Error;
     /// Returns `true` if `account` has been granted `role`.
     ///
     /// # Arguments
