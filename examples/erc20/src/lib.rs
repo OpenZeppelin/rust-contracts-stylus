@@ -34,14 +34,13 @@ impl Erc20Example {
     #[constructor]
     pub fn constructor(
         &mut self,
-        _name: String,
-        _symbol: String,
-        _cap: U256,
+        name: String,
+        symbol: String,
+        cap: U256,
     ) -> Result<(), Vec<u8>> {
-        todo!("uncomment once multiple public attributes are supported")
-        // self.metadata.constructor(name, symbol);
-        // self.capped.constructor(cap)?;
-        // Ok(())
+        self.metadata.constructor(name, symbol);
+        self.capped.constructor(cap)?;
+        Ok(())
     }
 
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.

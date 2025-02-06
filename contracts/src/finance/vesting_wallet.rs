@@ -475,27 +475,27 @@ impl IVestingWallet for VestingWallet {
 
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
-// impl VestingWallet {
-//     /// Constructor
-//     #[constructor]
-//     pub fn constructor(
-//         &mut self,
-//         beneficiary: Address,
-//         start_timestamp: U64,
-//         duration_seconds: U64,
-//     ) -> Result<(), Error> {
-//         if beneficiary.is_zero() {
-//             return Err(ownable::Error::InvalidOwner(
-//                 ownable::OwnableInvalidOwner { owner: Address::ZERO },
-//             )
-//             .into());
-//         }
-//         self.ownable.constructor(beneficiary);
-//         self._start.set(start_timestamp);
-//         self._duration.set(duration_seconds);
-//         Ok(())
-//     }
-// }
+impl VestingWallet {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(
+        &mut self,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
+    ) -> Result<(), Error> {
+        if beneficiary.is_zero() {
+            return Err(ownable::Error::InvalidOwner(
+                ownable::OwnableInvalidOwner { owner: Address::ZERO },
+            )
+            .into());
+        }
+        self.ownable.constructor(beneficiary)?;
+        self._start.set(start_timestamp);
+        self._duration.set(duration_seconds);
+        Ok(())
+    }
+}
 
 impl VestingWallet {
     /// Virtual implementation of the vesting formula. This returns the amount

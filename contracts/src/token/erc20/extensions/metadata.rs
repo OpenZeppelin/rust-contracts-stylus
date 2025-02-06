@@ -78,14 +78,14 @@ impl IErc20Metadata for Erc20Metadata {
 
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
-// impl Erc20Metadata {
-//     /// Constructor
-//     #[constructor]
-//     pub fn constructor(&mut self, name: String, symbol: String) {
-//         self._metadata._name.set_str(name);
-//         self._metadata._symbol.set_str(symbol);
-//     }
-// }
+impl Erc20Metadata {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self._metadata._name.set_str(name);
+        self._metadata._symbol.set_str(symbol);
+    }
+}
 
 impl IErc165 for Erc20Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {

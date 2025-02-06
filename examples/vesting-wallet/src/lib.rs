@@ -18,11 +18,14 @@ impl VestingWalletExample {
     #[constructor]
     pub fn constructor(
         &mut self,
-        _beneficiary: Address,
-        _start_timestamp: U64,
-        _duration_seconds: U64,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
     ) -> Result<(), Vec<u8>> {
-        todo!("uncomment once multiple public attributes are supported")
-        // Ok(self.vesting_wallet.constructor(initial_owner)?)
+        Ok(self.vesting_wallet.constructor(
+            beneficiary,
+            start_timestamp,
+            duration_seconds,
+        )?)
     }
 }

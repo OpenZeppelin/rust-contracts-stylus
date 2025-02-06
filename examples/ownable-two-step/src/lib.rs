@@ -25,10 +25,9 @@ impl Ownable2StepExample {
     #[constructor]
     pub fn constructor(
         &mut self,
-        _initial_owner: Address,
+        initial_owner: Address,
     ) -> Result<(), Vec<u8>> {
-        todo!("uncomment once multiple public attributes are supported")
-        // Ok(self.ownable.constructor(initial_owner)?)
+        Ok(self.ownable.constructor(initial_owner)?)
     }
 
     pub fn transfer(

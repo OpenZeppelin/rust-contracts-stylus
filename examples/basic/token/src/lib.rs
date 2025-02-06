@@ -20,14 +20,8 @@ struct Erc20Example {
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc20Example {
     #[constructor]
-    pub fn constructor(
-        &mut self,
-        _name: String,
-        _symbol: String,
-    ) -> Result<(), Vec<u8>> {
-        todo!("uncomment once multiple public attributes are supported")
-        // self.metadata.constructor(name, symbol);
-        // Ok(())
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
     }
 
     pub fn mint(

@@ -27,14 +27,13 @@ impl Erc4626Example {
     #[constructor]
     pub fn constructor(
         &mut self,
-        _name: String,
-        _symbol: String,
-        _asset: Address,
-        _decimals_offset: U8,
+        name: String,
+        symbol: String,
+        asset: Address,
+        decimals_offset: U8,
     ) {
-        todo!("uncomment once multiple public attributes are supported")
-        // self.metadata.constructor(name, symbol);
-        // self.erc4626.constructor(asset, decimals_offset);
+        self.metadata.constructor(name, symbol);
+        self.erc4626.constructor(asset, decimals_offset);
     }
 
     fn decimals(&self) -> U8 {

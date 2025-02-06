@@ -8,7 +8,7 @@
 //! "assets" token which is an independent contract.
 
 use alloy_primitives::{uint, Address, U256, U8};
-use alloy_sol_types::{SolCall, SolType};
+use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
     call::{self, Call},
@@ -918,37 +918,33 @@ impl IErc4626 for Erc4626 {
 
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
-// impl Erc4626 {
-//     /// Constructor
-//     // TODO: remove `decimals_offset` once function overriding is possible
-//     #[constructor]
-//     pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
-//         let underlying_decimals =
-//             self.try_get_asset_decimals(asset).unwrap_or(18);
+impl Erc4626 {
+    /// Constructor
+    // TODO: remove `decimals_offset` once function overriding is possible
+    // #[constructor]
+    pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
+        let underlying_decimals =
+            self.try_get_asset_decimals(asset).unwrap_or(18);
 
-//         self.underlying_decimals.set(U8::from(underlying_decimals));
-//         self.asset.set(asset);
-//         self.decimals_offset.set(decimals_offset);
-//     }
+        self.underlying_decimals.set(U8::from(underlying_decimals));
+        self.asset.set(asset);
+        self.decimals_offset.set(decimals_offset);
+    }
 
-//     /// Attempts to fetch the asset decimals. Returns None if the attempt
-// failed     /// in any way. This follows Rust's idiomatic Option pattern
-// rather than     /// Solidity's boolean tuple return.
-//     fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
-//         let call = IERC20Metadata::decimalsCall {};
+    /// Attempts to fetch the asset decimals. Returns None if the attempt failed
+    /// in any way. This follows Rust's idiomatic Option pattern rather than
+    /// Solidity's boolean tuple return.
+    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
+        let call = IERC20Metadata::decimalsCall {};
 
-//         // Perform the static call
-//         // Note: Stylus provides a safe wrapper for static calls
-//         let decimals = call::static_call(
-//             Call::new_in(self),
-//             asset,
-//             &call.abi_encode(), // No value transfer in static call
-//         )
-//         .ok()?;
+        // Perform the static call
+        let decimals =
+            call::static_call(Call::new_in(self), asset, &call.abi_encode())
+                .ok()?;
 
-//         decimals.first().copied()
-//     }
-// }
+        decimals.first().copied()
+    }
+}
 
 impl Erc4626 {
     /// Returns the number of decimals used in representing vault shares. Adds
