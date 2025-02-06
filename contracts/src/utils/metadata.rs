@@ -18,6 +18,13 @@ pub struct Metadata {
 
 #[public]
 impl Metadata {
+    /// Constructor
+    #[constructor]
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self._name.set_str(name);
+        self._symbol.set_str(symbol);
+    }
+
     /// Returns the name of the token.
     ///
     /// # Arguments

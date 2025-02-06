@@ -82,8 +82,7 @@ impl Erc20Metadata {
     /// Constructor
     // #[constructor]
     pub fn constructor(&mut self, name: String, symbol: String) {
-        self._metadata._name.set_str(name);
-        self._metadata._symbol.set_str(symbol);
+        self._metadata.constructor(name, symbol);
     }
 }
 
