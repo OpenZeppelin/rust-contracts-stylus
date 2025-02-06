@@ -85,7 +85,7 @@ async fn error_when_expired_deadline_for_permit(
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+    _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
     let struct_hash = permit_struct_hash(
         alice_addr,
@@ -128,7 +128,7 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+    _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
     let struct_hash = permit_struct_hash(
         alice_addr,
@@ -219,7 +219,7 @@ async fn permit_rejects_reused_signature(
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+    _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
     let struct_hash = permit_struct_hash(
         alice_addr,
@@ -237,7 +237,7 @@ async fn permit_rejects_reused_signature(
         ))
         .await;
 
-    let _ = watch!(contract_alice.permit(
+    _ = watch!(contract_alice.permit(
         alice_addr,
         bob_addr,
         balance,
@@ -294,7 +294,7 @@ async fn permit_rejects_invalid_signature(
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let _ = watch!(contract_alice.mint(alice_addr, balance))?;
+    _ = watch!(contract_alice.mint(alice_addr, balance))?;
 
     let struct_hash = permit_struct_hash(
         alice_addr,
@@ -417,7 +417,7 @@ async fn transfers(alice: Account, bob: Account) -> Result<()> {
     let balance = uint!(10_U256);
     let value = uint!(1_U256);
 
-    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+    _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -461,7 +461,7 @@ async fn transfer_rejects_insufficient_balance(
     let balance = uint!(10_U256);
     let value = uint!(11_U256);
 
-    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+    _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -502,7 +502,7 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
     let balance = uint!(10_U256);
     let value = uint!(1_U256);
 
-    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+    _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -662,7 +662,7 @@ async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
     let balance = uint!(10_U256);
     let value = uint!(1_U256);
 
-    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+    _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -671,7 +671,7 @@ async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
     let Erc20Permit::totalSupplyReturn { totalSupply: initial_supply } =
         contract_alice.totalSupply().call().await?;
 
-    let _ = watch!(contract_alice.approve(bob_addr, balance))?;
+    _ = watch!(contract_alice.approve(bob_addr, balance))?;
 
     let Erc20Permit::allowanceReturn { allowance: initial_allowance } =
         contract_alice.allowance(alice_addr, bob_addr).call().await?;
@@ -717,7 +717,7 @@ async fn transfer_from_reverts_insufficient_balance(
     let balance = uint!(1_U256);
     let value = uint!(10_U256);
 
-    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+    _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -726,7 +726,7 @@ async fn transfer_from_reverts_insufficient_balance(
     let Erc20Permit::totalSupplyReturn { totalSupply: initial_supply } =
         contract_alice.totalSupply().call().await?;
 
-    let _ = watch!(contract_alice.approve(bob_addr, value))?;
+    _ = watch!(contract_alice.approve(bob_addr, value))?;
 
     let Erc20Permit::allowanceReturn { allowance: initial_allowance } =
         contract_alice.allowance(alice_addr, bob_addr).call().await?;
@@ -772,7 +772,7 @@ async fn transfer_from_rejects_insufficient_allowance(
     let balance = uint!(10_U256);
     let value = uint!(1_U256);
 
-    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+    _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -828,7 +828,7 @@ async fn transfer_from_rejects_invalid_receiver(
     let balance = uint!(10_U256);
     let value = uint!(1_U256);
 
-    let _ = watch!(contract_alice.mint(alice.address(), balance))?;
+    _ = watch!(contract_alice.mint(alice.address(), balance))?;
 
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -837,7 +837,7 @@ async fn transfer_from_rejects_invalid_receiver(
     let Erc20Permit::totalSupplyReturn { totalSupply: initial_supply } =
         contract_alice.totalSupply().call().await?;
 
-    let _ = watch!(contract_alice.approve(bob_addr, balance))?;
+    _ = watch!(contract_alice.approve(bob_addr, balance))?;
 
     let Erc20Permit::allowanceReturn { allowance: initial_allowance } =
         contract_alice.allowance(alice_addr, bob_addr).call().await?;

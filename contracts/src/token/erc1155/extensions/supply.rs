@@ -476,8 +476,7 @@ mod tests {
             .sender(alice)
             ._mint(dave, token_id, U256::MAX / two, &vec![].into())
             .expect("should mint to dave");
-        let _ =
-            contract.sender(alice)._mint(bob, token_id, three, &vec![].into());
+        _ = contract.sender(alice)._mint(bob, token_id, three, &vec![].into());
     }
 
     #[motsu::test]
@@ -492,7 +491,7 @@ mod tests {
             .sender(alice)
             ._mint(bob, token_ids[0], U256::MAX, &vec![].into())
             .expect("should mint");
-        let _ = contract.sender(alice)._mint(
+        _ = contract.sender(alice)._mint(
             bob,
             token_ids[1],
             U256::from(1),

@@ -30,7 +30,7 @@ mod transfers {
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-        let _ = watch!(erc20_alice.mint(safe_erc20_addr, balance));
+        _ = watch!(erc20_alice.mint(safe_erc20_addr, balance))?;
 
         let initial_safe_erc20_balance =
             erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
@@ -117,8 +117,8 @@ mod transfers {
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-        let _ = watch!(erc20_alice.mint(alice_addr, balance));
-        let _ = watch!(erc20_alice.approve(safe_erc20_addr, value));
+        _ = watch!(erc20_alice.mint(alice_addr, balance))?;
+        _ = watch!(erc20_alice.approve(safe_erc20_addr, value))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_addr).call().await?._0;
@@ -164,7 +164,7 @@ mod transfers {
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-        let _ = watch!(erc20_alice.approve(safe_erc20_addr, value));
+        _ = watch!(erc20_alice.approve(safe_erc20_addr, value))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_addr).call().await?._0;
@@ -210,11 +210,11 @@ mod approvals {
             let erc20_address = erc20::deploy(&alice.wallet).await?;
             let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 U256::ZERO
-            ));
+            ))?;
 
             let value = uint!(100_U256);
 
@@ -253,11 +253,11 @@ mod approvals {
             let erc20_address = erc20::deploy(&alice.wallet).await?;
             let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 U256::ZERO
-            ));
+            ))?;
 
             let receipt = receipt!(safe_erc20_alice.forceApprove(
                 erc20_address,
@@ -294,11 +294,11 @@ mod approvals {
             let erc20_address = erc20::deploy(&alice.wallet).await?;
             let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 U256::ZERO
-            ));
+            ))?;
 
             let value = uint!(10_U256);
 
@@ -337,11 +337,11 @@ mod approvals {
             let erc20_address = erc20::deploy(&alice.wallet).await?;
             let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 U256::MAX
-            ));
+            ))?;
 
             let value = uint!(1_U256);
 
@@ -370,11 +370,11 @@ mod approvals {
             let erc20_address = erc20::deploy(&alice.wallet).await?;
             let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 U256::ZERO
-            ));
+            ))?;
 
             let value = uint!(10_U256);
 
@@ -414,11 +414,11 @@ mod approvals {
 
             let allowance = uint!(100_U256);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 allowance
-            ));
+            ))?;
 
             let value = uint!(20_U256);
 
@@ -459,11 +459,11 @@ mod approvals {
 
             let allowance = uint!(100_U256);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 allowance
-            ));
+            ))?;
 
             let receipt = receipt!(safe_erc20_alice.forceApprove(
                 erc20_address,
@@ -502,11 +502,11 @@ mod approvals {
 
             let allowance = uint!(100_U256);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 allowance
-            ));
+            ))?;
 
             let value = uint!(10_U256);
 
@@ -547,11 +547,11 @@ mod approvals {
 
             let allowance = uint!(100_U256);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 allowance
-            ));
+            ))?;
 
             let value = uint!(50_U256);
 
@@ -592,11 +592,11 @@ mod approvals {
 
             let allowance = uint!(100_U256);
 
-            let _ = watch!(erc20_alice.regular_approve(
+            _ = watch!(erc20_alice.regular_approve(
                 safe_erc20_addr,
                 spender_addr,
                 allowance
-            ));
+            ))?;
 
             let value = uint!(200_U256);
 

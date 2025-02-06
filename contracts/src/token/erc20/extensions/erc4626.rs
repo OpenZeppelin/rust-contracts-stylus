@@ -1148,7 +1148,7 @@ impl Erc4626 {
 mod tests {
     use alloy_primitives::{address, Address, U256, U8};
     use motsu::prelude::Contract;
-    use stylus_sdk::{msg, prelude::*};
+    use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
     use crate::token::erc20::Erc20;

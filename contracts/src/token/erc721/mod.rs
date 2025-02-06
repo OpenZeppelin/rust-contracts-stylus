@@ -2692,10 +2692,10 @@ mod tests {
         #[selector(name = "onERC721Received")]
         fn on_erc721_received(
             &mut self,
-            operator: Address,
-            from: Address,
+            _operator: Address,
+            _from: Address,
             token_id: U256,
-            data: Bytes,
+            _data: Bytes,
         ) -> FixedBytes<4> {
             self._received_token_id.set(token_id);
             fixed_bytes!("150b7a02")

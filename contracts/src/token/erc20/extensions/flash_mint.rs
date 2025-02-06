@@ -337,8 +337,8 @@ impl IErc3156FlashLender for Erc20FlashMint {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
-    use motsu::prelude::{Account, Contract};
+    use alloy_primitives::{uint, Address, U256};
+    use motsu::prelude::Contract;
     use stylus_sdk::{abi::Bytes, msg, prelude::*};
 
     use super::{

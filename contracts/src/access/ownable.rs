@@ -265,7 +265,7 @@ mod tests {
     ) {
         contract.init(alice, |contract| contract._owner.set(alice));
 
-        let _ = contract.sender(alice).renounce_ownership();
+        _ = contract.sender(alice).renounce_ownership();
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
     }

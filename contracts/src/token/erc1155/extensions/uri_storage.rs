@@ -135,6 +135,7 @@ mod tests {
         assert_eq!(uri, contract.sender(alice).uri(TOKEN_ID));
     }
 
+    #[motsu::test]
     fn uri_returns_empty_string_when_no_uri_is_set(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,

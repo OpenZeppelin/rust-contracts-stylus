@@ -144,7 +144,7 @@ async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let _ = watch!(contract.grantRole(ROLE.into(), bob_addr))?;
+    _ = watch!(contract.grantRole(ROLE.into(), bob_addr))?;
 
     let receipt = receipt!(contract.revokeRole(ROLE.into(), bob_addr))?;
     assert!(receipt.emits(RoleRevoked {
@@ -167,7 +167,7 @@ async fn error_when_non_admin_revokes_role(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let _ = watch!(contract.grantRole(ROLE.into(), alice_addr))?;
+    _ = watch!(contract.grantRole(ROLE.into(), alice_addr))?;
 
     let contract = AccessControl::new(contract_addr, &bob.wallet);
     let err = send!(contract.revokeRole(ROLE.into(), alice_addr))
@@ -191,7 +191,7 @@ async fn roles_can_be_revoked_multiple_times(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let _ = watch!(contract.revokeRole(ROLE.into(), bob_addr))?;
+    _ = watch!(contract.revokeRole(ROLE.into(), bob_addr))?;
     let receipt = receipt!(contract.revokeRole(ROLE.into(), bob_addr))?;
     assert!(!receipt.emits(RoleRevoked {
         role: ROLE.into(),
@@ -224,7 +224,7 @@ async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
-    let _ = watch!(contract.grantRole(ROLE.into(), bob_addr))?;
+    _ = watch!(contract.grantRole(ROLE.into(), bob_addr))?;
 
     let contract = AccessControl::new(contract_addr, &bob.wallet);
     let receipt = receipt!(contract.renounceRole(ROLE.into(), bob_addr))?;
@@ -248,7 +248,7 @@ async fn error_when_the_one_renouncing_is_not_the_sender(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let _ = watch!(contract.grantRole(ROLE.into(), bob_addr))?;
+    _ = watch!(contract.grantRole(ROLE.into(), bob_addr))?;
 
     let contract = AccessControl::new(contract_addr, &bob.wallet);
     let err = send!(contract.renounceRole(ROLE.into(), alice_addr))
@@ -264,7 +264,7 @@ async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
-    let _ = watch!(contract.renounceRole(ROLE.into(), alice_addr))?;
+    _ = watch!(contract.renounceRole(ROLE.into(), alice_addr))?;
     let receipt = receipt!(contract.renounceRole(ROLE.into(), alice_addr))?;
     assert!(!receipt.emits(RoleRevoked {
         role: ROLE.into(),
@@ -314,7 +314,7 @@ async fn the_new_admin_can_grant_roles(
         newAdminRole: NEW_ADMIN_ROLE.into()
     }));
 
-    let _ = watch!(contract.grantRole(NEW_ADMIN_ROLE.into(), bob_addr))?;
+    _ = watch!(contract.grantRole(NEW_ADMIN_ROLE.into(), bob_addr))?;
 
     let contract = AccessControl::new(contract_addr, &bob.wallet);
     let receipt = receipt!(contract.grantRole(ROLE.into(), alice_addr))?;
@@ -346,10 +346,10 @@ async fn the_new_admin_can_revoke_roles(
         newAdminRole: NEW_ADMIN_ROLE.into()
     }));
 
-    let _ = watch!(contract.grantRole(NEW_ADMIN_ROLE.into(), bob_addr))?;
+    _ = watch!(contract.grantRole(NEW_ADMIN_ROLE.into(), bob_addr))?;
 
     let contract = AccessControl::new(contract_addr, &bob.wallet);
-    let _ = watch!(contract.grantRole(ROLE.into(), alice_addr))?;
+    _ = watch!(contract.grantRole(ROLE.into(), alice_addr))?;
     let receipt = receipt!(contract.revokeRole(ROLE.into(), alice_addr))?;
     assert!(receipt.emits(RoleRevoked {
         role: ROLE.into(),

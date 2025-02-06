@@ -117,7 +117,7 @@ async fn error_when_minting_token_id_twice(alice: Account) -> eyre::Result<()> {
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.mint(alice_addr, token_id))
         .expect_err("should not mint a token id twice");
@@ -154,7 +154,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -201,8 +201,8 @@ async fn transfers_from_approved_token(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.approve(bob_addr, token_id))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.approve(bob_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -249,8 +249,8 @@ async fn transfers_from_approved_for_all(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -295,7 +295,7 @@ async fn error_when_transfer_to_invalid_receiver(
     let invalid_receiver = Address::ZERO;
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err =
         send!(contract.transferFrom(alice_addr, invalid_receiver, token_id))
@@ -327,7 +327,7 @@ async fn error_when_transfer_from_incorrect_owner(
 
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.transferFrom(dave_addr, bob_addr, token_id))
         .expect_err("should not transfer the token from incorrect owner");
@@ -356,7 +356,7 @@ async fn error_when_transfer_with_insufficient_approval(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.wallet);
     let err = send!(contract.transferFrom(alice_addr, bob_addr, token_id))
@@ -412,7 +412,7 @@ async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -460,7 +460,7 @@ async fn safe_transfers_to_receiver_contract(
     let alice_addr = alice.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -517,8 +517,8 @@ async fn safe_transfers_from_approved_token(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.approve(bob_addr, token_id))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.approve(bob_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -566,8 +566,8 @@ async fn safe_transfers_from_approved_for_all(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -613,7 +613,7 @@ async fn error_when_safe_transfer_to_invalid_receiver(
     let invalid_receiver = Address::ZERO;
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.safeTransferFrom_0(
         alice_addr,
@@ -647,7 +647,7 @@ async fn error_when_safe_transfer_from_incorrect_owner(
 
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.safeTransferFrom_0(dave_addr, bob_addr, token_id))
         .expect_err("should not transfer the token from incorrect owner");
@@ -676,7 +676,7 @@ async fn error_when_safe_transfer_with_insufficient_approval(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.wallet);
 
@@ -738,7 +738,7 @@ async fn safe_transfers_from_with_data(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -791,7 +791,7 @@ async fn safe_transfers_with_data_to_receiver_contract(
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -849,8 +849,8 @@ async fn safe_transfers_from_with_data_approved_token(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.approve(bob_addr, token_id))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.approve(bob_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -901,8 +901,8 @@ async fn safe_transfers_from_with_data_approved_for_all(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -951,7 +951,7 @@ async fn error_when_safe_transfer_with_data_to_invalid_receiver(
     let invalid_receiver = Address::ZERO;
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.safeTransferFrom_1(
         alice_addr,
@@ -986,7 +986,7 @@ async fn error_when_safe_transfer_with_data_from_incorrect_owner(
 
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.safeTransferFrom_1(
         dave_addr,
@@ -1020,7 +1020,7 @@ async fn error_when_safe_transfer_with_data_with_insufficient_approval(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let contract = Erc721::new(contract_addr, &bob.wallet);
 
@@ -1095,7 +1095,7 @@ async fn errors_when_receiver_reverts_with_reason(
     let alice_addr = alice.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.safeTransferFrom_0(
         alice_addr,
@@ -1127,7 +1127,7 @@ async fn errors_when_receiver_reverts_without_reason(
     let alice_addr = alice.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.safeTransferFrom_0(
         alice_addr,
@@ -1155,7 +1155,7 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let err = send!(contract.safeTransferFrom_0(
         alice_addr,
@@ -1180,7 +1180,7 @@ async fn approves(alice: Account, bob: Account) -> eyre::Result<()> {
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::getApprovedReturn { approved } =
         contract.getApproved(token_id).call().await?;
@@ -1235,7 +1235,7 @@ async fn error_when_approve_by_invalid_approver(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
 
     let err = send!(contract_bob.approve(bob_addr, token_id))
         .expect_err("should not approve when invalid approver");
@@ -1636,7 +1636,7 @@ async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let _ = watch!(contract.pause())?;
+    _ = watch!(contract.pause())?;
 
     let err =
         send!(contract.pause()).expect_err("should return `EnforcedPause`");
@@ -1651,7 +1651,7 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let _ = watch!(contract.pause())?;
+    _ = watch!(contract.pause())?;
 
     let receipt = receipt!(contract.unpause())?;
 
@@ -1689,12 +1689,12 @@ async fn error_when_burn_in_paused_state(alice: Account) -> eyre::Result<()> {
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(alice_addr).call().await?;
 
-    let _ = watch!(contract.pause());
+    _ = watch!(contract.pause());
 
     let err = send!(contract.burn(token_id))
         .expect_err("should return `EnforcedPause`");
@@ -1721,7 +1721,7 @@ async fn error_when_mint_in_paused_state(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract.pause());
+    _ = watch!(contract.pause())?;
 
     let err = send!(contract.mint(alice_addr, token_id))
         .expect_err("should return `EnforcedPause`");
@@ -1755,7 +1755,7 @@ async fn error_when_transfer_in_paused_state(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -1763,7 +1763,7 @@ async fn error_when_transfer_in_paused_state(
     let Erc721::balanceOfReturn { balance: initial_bob_balance } =
         contract.balanceOf(bob_addr).call().await?;
 
-    let _ = watch!(contract.pause());
+    _ = watch!(contract.pause())?;
 
     let err = send!(contract.transferFrom(alice_addr, bob_addr, token_id))
         .expect_err("should return `EnforcedPause`");
@@ -1796,7 +1796,7 @@ async fn error_when_safe_transfer_in_paused_state(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -1804,7 +1804,7 @@ async fn error_when_safe_transfer_in_paused_state(
     let Erc721::balanceOfReturn { balance: initial_bob_balance } =
         contract.balanceOf(bob_addr).call().await?;
 
-    let _ = watch!(contract.pause());
+    _ = watch!(contract.pause())?;
 
     let err =
         send!(contract.safeTransferFrom_0(alice_addr, bob_addr, token_id))
@@ -1838,7 +1838,7 @@ async fn error_when_safe_transfer_with_data_in_paused_state(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -1846,7 +1846,7 @@ async fn error_when_safe_transfer_with_data_in_paused_state(
     let Erc721::balanceOfReturn { balance: initial_bob_balance } =
         contract.balanceOf(bob_addr).call().await?;
 
-    let _ = watch!(contract.pause());
+    _ = watch!(contract.pause())?;
 
     let err = send!(contract.safeTransferFrom_1(
         alice_addr,
@@ -1886,7 +1886,7 @@ async fn error_when_safe_mint_in_paused_state(
     let Erc721::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr).call().await?;
 
-    let _ = watch!(contract.pause())?;
+    _ = watch!(contract.pause())?;
 
     let err = send!(contract.safeMint(
         alice_addr,
@@ -1925,7 +1925,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -1969,8 +1969,8 @@ async fn burns_approved_token(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.approve(bob_addr, token_id))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.approve(bob_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -2014,8 +2014,8 @@ async fn burns_approved_for_all(
     let bob_addr = bob.address();
     let token_id = random_token_id();
 
-    let _ = watch!(contract_alice.mint(alice_addr, token_id))?;
-    let _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
+    _ = watch!(contract_alice.mint(alice_addr, token_id))?;
+    _ = watch!(contract_alice.setApprovalForAll(bob_addr, true))?;
 
     let Erc721::balanceOfReturn { balance: initial_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
@@ -2057,7 +2057,7 @@ async fn error_when_burn_with_insufficient_approval(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_id))?;
+    _ = watch!(contract.mint(alice_addr, token_id))?;
 
     let Erc721::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(alice_addr).call().await?;
@@ -2106,10 +2106,10 @@ async fn totally_supply_works(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
 
     let token_1 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_1))?;
+    _ = watch!(contract.mint(alice_addr, token_1))?;
 
     let token_2 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_2))?;
+    _ = watch!(contract.mint(alice_addr, token_2))?;
 
     let Erc721::totalSupplyReturn { totalSupply } =
         contract.totalSupply().call().await?;
@@ -2128,8 +2128,8 @@ async fn error_when_checking_token_of_owner_by_index_out_of_bound(
 
     let alice_addr = alice.address();
 
-    let _ = watch!(contract.mint(alice_addr, random_token_id()))?;
-    let _ = watch!(contract.mint(alice_addr, random_token_id()))?;
+    _ = watch!(contract.mint(alice_addr, random_token_id()))?;
+    _ = watch!(contract.mint(alice_addr, random_token_id()))?;
 
     let index_out_of_bound = uint!(2_U256);
 
@@ -2180,10 +2180,10 @@ async fn token_of_owner_by_index_works(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
 
     let token_0 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_0))?;
+    _ = watch!(contract.mint(alice_addr, token_0))?;
 
     let token_1 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_1))?;
+    _ = watch!(contract.mint(alice_addr, token_1))?;
 
     let Erc721::tokenOfOwnerByIndexReturn { tokenId } =
         contract.tokenOfOwnerByIndex(alice_addr, uint!(0_U256)).call().await?;
@@ -2208,13 +2208,13 @@ async fn token_of_owner_by_index_after_transfer_to_another_account(
     let bob_addr = bob.address();
 
     let token_0 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_0))?;
+    _ = watch!(contract.mint(alice_addr, token_0))?;
 
     let token_1 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_1))?;
+    _ = watch!(contract.mint(alice_addr, token_1))?;
 
-    let _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_1))?;
-    let _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_0))?;
+    _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_1))?;
+    _ = watch!(contract.transferFrom(alice_addr, bob_addr, token_0))?;
 
     // should be in reverse order
     let index = uint!(0_U256);
@@ -2285,8 +2285,8 @@ async fn error_when_checking_token_by_index_out_of_bound(
 
     let alice_addr = alice.address();
 
-    let _ = watch!(contract.mint(alice_addr, random_token_id()))?;
-    let _ = watch!(contract.mint(alice_addr, random_token_id()))?;
+    _ = watch!(contract.mint(alice_addr, random_token_id()))?;
+    _ = watch!(contract.mint(alice_addr, random_token_id()))?;
 
     let index_out_of_bound = uint!(2_U256);
 
@@ -2312,10 +2312,10 @@ async fn token_by_index_works(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
 
     let token_0 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_0))?;
+    _ = watch!(contract.mint(alice_addr, token_0))?;
 
     let token_1 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_1))?;
+    _ = watch!(contract.mint(alice_addr, token_1))?;
 
     let Erc721::tokenByIndexReturn { tokenId } =
         contract.tokenByIndex(uint!(0_U256)).call().await?;
@@ -2336,12 +2336,12 @@ async fn token_by_index_after_burn(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
 
     let token_0 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_0))?;
+    _ = watch!(contract.mint(alice_addr, token_0))?;
 
     let token_1 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_1))?;
+    _ = watch!(contract.mint(alice_addr, token_1))?;
 
-    let _ = watch!(contract.burn(token_1))?;
+    _ = watch!(contract.burn(token_1))?;
 
     let Erc721::tokenByIndexReturn { tokenId } =
         contract.tokenByIndex(uint!(0_U256)).call().await?;
@@ -2377,18 +2377,18 @@ async fn token_by_index_after_burn_and_some_mints(
     let alice_addr = alice.address();
 
     let token_0 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_0))?;
+    _ = watch!(contract.mint(alice_addr, token_0))?;
 
     let token_1 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_1))?;
+    _ = watch!(contract.mint(alice_addr, token_1))?;
 
-    let _ = watch!(contract.burn(token_1))?;
+    _ = watch!(contract.burn(token_1))?;
 
     let token_2 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_2))?;
+    _ = watch!(contract.mint(alice_addr, token_2))?;
 
     let token_3 = random_token_id();
-    let _ = watch!(contract.mint(alice_addr, token_3))?;
+    _ = watch!(contract.mint(alice_addr, token_3))?;
 
     let Erc721::tokenByIndexReturn { tokenId } =
         contract.tokenByIndex(uint!(0_U256)).call().await?;

@@ -68,7 +68,7 @@ async fn max_flash_loan(alice: Account) -> Result<()> {
 
     let alice_addr = alice.address();
     let mint_amount = uint!(1_000_000_U256);
-    let _ = watch!(contract.mint(alice_addr, mint_amount))?;
+    _ = watch!(contract.mint(alice_addr, mint_amount))?;
 
     let max_loan = contract.maxFlashLoan(contract_addr).call().await?.maxLoan;
     assert_eq!(U256::MAX - mint_amount, max_loan);
@@ -89,7 +89,7 @@ async fn max_flash_loan_return_zero_if_no_more_tokens_to_mint(
     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
-    let _ = watch!(contract.mint(alice_addr, U256::MAX))?;
+    _ = watch!(contract.mint(alice_addr, U256::MAX))?;
 
     let max_loan = contract.maxFlashLoan(contract_addr).call().await?.maxLoan;
     assert_eq!(U256::MIN, max_loan);
@@ -111,7 +111,7 @@ async fn max_flash_loan_returns_zero_on_invalid_address(
 
     let alice_addr = alice.address();
     let mint_amount = uint!(1_000_000_U256);
-    let _ = watch!(contract.mint(alice_addr, mint_amount))?;
+    _ = watch!(contract.mint(alice_addr, mint_amount))?;
 
     // non-token address
     let max_loan = contract.maxFlashLoan(alice_addr).call().await?.maxLoan;
@@ -194,7 +194,7 @@ async fn flash_loan_with_fee(alice: Account) -> Result<()> {
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
+    _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = uint!(1_000_000_U256);
 
     let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
@@ -311,7 +311,7 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
+    _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = uint!(1_000_000_U256);
 
     let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
@@ -383,7 +383,7 @@ async fn flash_loan_reverts_when_loan_amount_greater_than_max_loan(
     let max_loan = U256::from(1);
     let loan_amount = U256::from(2);
 
-    let _ = watch!(erc20.mint(borrower_addr, U256::MAX - max_loan))?;
+    _ = watch!(erc20.mint(borrower_addr, U256::MAX - max_loan))?;
 
     let err = send!(erc20.flashLoan(
         borrower_addr,
@@ -475,7 +475,7 @@ async fn flash_loan_reverts_when_invalid_receiver(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
+    _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let invalid_receivers = &[alice.address(), Address::ZERO];
@@ -510,7 +510,7 @@ async fn flash_loan_reverts_when_receiver_callback_reverts(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
+    _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let err = send!(erc20.flashLoan(
@@ -541,7 +541,7 @@ async fn flash_loan_reverts_when_receiver_returns_invalid_callback_value(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, false, true).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
+    _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let err = send!(erc20.flashLoan(
@@ -572,7 +572,7 @@ async fn flash_loan_reverts_when_receiver_doesnt_approve_allowance(
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, false).await?;
-    let _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
+    _ = watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = U256::from(1);
 
     let err = send!(erc20.flashLoan(

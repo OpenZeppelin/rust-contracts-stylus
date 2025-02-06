@@ -66,8 +66,8 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let contract = VestingWallet::new(contract_addr, &alice_wallet);
     let erc20 = Erc20::new(erc20_addr, &alice_wallet);
 
-    let _ = receipt!(contract.receiveEther().value(uint!(1000_U256)))?;
-    let _ = receipt!(erc20.mint(contract_addr, uint!(1000_U256)))?;
+    _ = receipt!(contract.receiveEther().value(uint!(1000_U256)))?;
+    _ = receipt!(erc20.mint(contract_addr, uint!(1000_U256)))?;
 
     // IMPORTANT: Order matters!
     use VestingWallet::*;
