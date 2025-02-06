@@ -1011,18 +1011,6 @@ mod tests {
 
     const MODULUS: i128 = 1000003; // Prime number
 
-    prop_compose! {
-        fn non_zero_modulo_i64()(
-            b in 1..i64::MAX
-        ) -> i64 {
-            if i128::from(b) % MODULUS == 0 {
-                b + 1
-            } else {
-                b
-            }
-        }
-    }
-
     #[test]
     fn add() {
         proptest!(|(a: i64, b: i64)| {
@@ -1074,6 +1062,18 @@ mod tests {
             let a = i128::from(a);
             prop_assert_eq!(res, (a * a).rem_euclid(MODULUS));
         })
+    }
+
+    prop_compose! {
+        fn non_zero_modulo_i64()(
+            b in 1..i64::MAX
+        ) -> i64 {
+            if i128::from(b) % MODULUS == 0 {
+                b + 1
+            } else {
+                b
+            }
+        }
     }
 
     #[test]
