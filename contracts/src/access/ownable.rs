@@ -65,7 +65,7 @@ impl MethodError for Error {
     }
 }
 
-/// State of an `Ownable` contract.
+/// State of an [`Ownable`] contract.
 #[storage]
 pub struct Ownable {
     /// The current owner of this contract.
@@ -96,12 +96,11 @@ pub trait IOwnable {
     ///
     /// # Errors
     ///
-    /// If `new_owner` is the zero address, then the error
-    /// [`OwnableInvalidOwner`] is returned.
+    /// * [`OwnableInvalidOwner`] - If `new_owner` is the `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// * [`OwnershipTransferred`].
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -120,12 +119,11 @@ pub trait IOwnable {
     ///
     /// # Errors
     ///
-    /// If not called by the owner, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// * [`OwnershipTransferred`].
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
@@ -170,8 +168,8 @@ impl Ownable {
     ///
     /// # Errors
     ///
-    /// If called by any account other than the owner, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If called by any account other than
+    ///   the owner.
     pub fn only_owner(&self) -> Result<(), Error> {
         let account = msg::sender();
         if self.owner() != account {
@@ -193,7 +191,7 @@ impl Ownable {
     ///
     /// # Events
     ///
-    /// Emits a [`OwnershipTransferred`] event.
+    /// * [`OwnershipTransferred`].
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let previous_owner = self._owner.get();
         self._owner.set(new_owner);

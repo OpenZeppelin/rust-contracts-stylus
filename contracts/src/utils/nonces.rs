@@ -35,7 +35,7 @@ pub enum Error {
     InvalidAccountNonce(InvalidAccountNonce),
 }
 
-/// State of a Nonces Contract.
+/// State of a [`Nonces`] Contract.
 #[storage]
 pub struct Nonces {
     /// Mapping from address to its nonce.
@@ -67,7 +67,7 @@ impl Nonces {
     ///
     /// # Panics
     ///
-    /// If the nonce for the given `owner` exceeds `U256::MAX`.
+    /// * If the nonce for the given `owner` exceeds `U256::MAX`.
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self._nonces.get(owner);
 
@@ -89,12 +89,12 @@ impl Nonces {
     ///
     /// # Errors
     ///
-    /// Returns an error if the `nonce` is not the next valid nonce for the
-    /// owner.
+    /// * [`Error::InvalidAccountNonce`] - Returns an error if the `nonce` is
+    ///   not the next valid nonce for the owner.
     ///
     /// # Panics
     ///
-    /// If the nonce for the given `owner` exceeds `U256::MAX`.
+    /// * If the nonce for the given `owner` exceeds `U256::MAX`.
     pub fn use_checked_nonce(
         &mut self,
         owner: Address,

@@ -5,10 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
 
 ### Added
 
+-
+
+### Changed
+
+-
+
+### Changed (Breaking)
+
+-
+
+### Fixed
+
+-
+
+
+## [v0.2.0-alpha.3] - 2025-01-30
+
+### Added
+
+- Optimised implementation of bigintegers `Uint<_>` for finite fields. #495
+- `Erc4626` "Tokenized Vault Standard". #465
+- Implement `mul_div` for `U256`. #465
 - Implement `AddAssignChecked` for `StorageUint`. #474
 - `Erc20FlashMint` extension. #407
 
@@ -20,16 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Bump cargo-stylus to v0.5.7. #484
+- Bump cargo-stylus to v0.5.8. #493
 - Constants `TYPE_HASH`, `FIELDS`, `SALT` and `TYPED_DATA_PREFIX`, and type `DomainSeparatorTuple` are no longer exported from `utils::cryptography::eip712`. #478
 - Bump Stylus SDK to v0.7.0. #433
 - Bump `alloy` dependencies to v0.8.14. #433
 - Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
 - `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
 
-### Fixed
-
--
 
 ## [v0.2.0-alpha.2] - 2024-12-18
 
@@ -54,9 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
 
-### Fixed
-
--
 
 ## [v0.2.0-alpha.1] - 2024-11-15
 

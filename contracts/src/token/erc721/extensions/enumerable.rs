@@ -21,7 +21,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::{erc721, erc721::IErc721},
+    token::erc721::{self, IErc721},
     utils::introspection::erc165::IErc165,
 };
 
@@ -60,7 +60,7 @@ pub enum Error {
     EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
 }
 
-/// State of an Enumerable extension.
+/// State of an [`Erc721Enumerable`] contract.
 #[storage]
 pub struct Erc721Enumerable {
     /// Maps owners to a mapping of indices to tokens ids.
@@ -94,11 +94,13 @@ pub trait IErc721Enumerable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    /// * `owner` - Address of token's owner.
+    /// * `index` - Index of the token at `owner`'s tokens list.
     ///
     /// # Errors
     ///
-    /// * If an `owner`'s token query is out of bounds for `index`, then the
-    /// error [`Error::OutOfBoundsIndex`] is returned.
+    /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
+    ///   bounds for `index`.
     fn token_of_owner_by_index(
         &self,
         owner: Address,
@@ -121,11 +123,12 @@ pub trait IErc721Enumerable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    /// * `index` - Index of the token in all tokens list.
     ///
     /// # Errors
     ///
-    /// * If an `owner`'s token query is out of bounds for `index`,
-    /// then the error [`Error::OutOfBoundsIndex`] is returned.
+    /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
+    ///   bounds for `index`.
     fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
 }
 
@@ -180,8 +183,7 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// If owner address is `Address::ZERO`, then the error
-    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is `Address::ZERO`.
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,
@@ -231,8 +233,7 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// If owner address is `Address::ZERO`, then the error
-    /// [`crate::token::erc721::Error::InvalidOwner`] is returned.
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is `Address::ZERO`.
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
         from: Address,
@@ -315,7 +316,7 @@ impl Erc721Enumerable {
         self._all_tokens.pop();
     }
 
-    /// See [`crate::token::erc721::Erc721::_increase_balance`].
+    /// See [`erc721::Erc721::_increase_balance`].
     /// Check if tokens can be minted in batch.
     ///
     /// Mechanism to be consistent with [Solidity version](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.0/contracts/token/ERC721/extensions/ERC721Enumerable.sol#L163-L171)
@@ -326,8 +327,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * If an `amount` is greater than `0`, then the error
-    ///   [`Error::EnumerableForbiddenBatchMint`] is returned.
+    /// * [`Error::EnumerableForbiddenBatchMint`] - If an `amount` is greater
+    ///   than `0`.
     pub fn _check_increase_balance(amount: u128) -> Result<(), Error> {
         if amount > 0 {
             Err(ERC721EnumerableForbiddenBatchMint {}.into())
@@ -339,11 +340,13 @@ impl Erc721Enumerable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::msg;
+    use stylus_sdk::{
+        alloy_primitives::{address, uint, Address, U256},
+        msg,
+    };
 
     use super::{Erc721Enumerable, Error, IErc721Enumerable};
-    use crate::token::erc721::{tests::random_token_id, Erc721, IErc721};
+    use crate::token::erc721::{Erc721, IErc721};
 
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
@@ -369,8 +372,8 @@ mod tests {
         let tokens_len = 10;
 
         let mut tokens_ids = Vec::new();
-        for _ in 0..tokens_len {
-            let token_id = random_token_id();
+        for token_id in 0..tokens_len {
+            let token_id = U256::from(token_id);
 
             // Store ids for test.
             tokens_ids.push(token_id);
@@ -401,8 +404,8 @@ mod tests {
         let initial_tokens_len = 10;
 
         let mut tokens_ids = Vec::new();
-        for _ in 0..initial_tokens_len {
-            let token_id = random_token_id();
+        for token_id in 0..initial_tokens_len {
+            let token_id = U256::from(token_id);
 
             // Store ids for test.
             tokens_ids.push(token_id);
@@ -423,7 +426,7 @@ mod tests {
         assert_eq!(U256::from(initial_tokens_len - 2), contract.total_supply());
 
         // Add a new token.
-        let token_id = random_token_id();
+        let token_id = U256::from(initial_tokens_len);
         tokens_ids.push(token_id);
         contract._add_token_to_all_tokens_enumeration(token_id);
         assert_eq!(U256::from(initial_tokens_len - 1), contract.total_supply());
@@ -459,7 +462,7 @@ mod tests {
             erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
-        let token_id = random_token_id();
+        let token_id = uint!(1_U256);
         erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
@@ -488,7 +491,7 @@ mod tests {
             erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
-        let token_id = random_token_id();
+        let token_id = uint!(1_U256);
         erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)
@@ -530,7 +533,7 @@ mod tests {
             erc721.balance_of(alice).expect("should return balance of ALICE")
         );
 
-        let token_id = random_token_id();
+        let token_id = uint!(1_U256);
         erc721._mint(alice, token_id).expect("should mint a token for ALICE");
         let owner = erc721
             .owner_of(token_id)

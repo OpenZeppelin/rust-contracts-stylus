@@ -33,7 +33,7 @@ mod sol {
     }
 }
 
-/// Uri Storage.
+/// State of an [`Erc721UriStorage`] contract.
 #[storage]
 pub struct Erc721UriStorage {
     /// Optional mapping for token URIs.
@@ -42,7 +42,7 @@ pub struct Erc721UriStorage {
 }
 
 impl Erc721UriStorage {
-    /// Sets `token_uri` as the tokenURI of `token_id`.
+    /// Sets `token_uri` as the token URI of `token_id`.
     ///
     /// # Arguments
     ///
@@ -51,13 +51,22 @@ impl Erc721UriStorage {
     /// * `token_uri` - URI for the token.
     ///
     /// # Events
-    /// Emits a [`MetadataUpdate`] event.
+    ///
+    /// * [`MetadataUpdate`].
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self._token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
 
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
+    ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `token_id`
+    /// parameter. Both the `erc721` and `metadata` references should come from
+    /// your contract's state. The implementation should use
+    /// `#[selector(name = "tokenURI")]` to match Solidity's camelCase naming
+    /// convention and it should forward the call to your internal storage
+    /// instance along with both references.
     ///
     /// # Arguments
     ///
@@ -68,11 +77,7 @@ impl Erc721UriStorage {
     ///
     /// # Errors
     ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
-    ///
-    /// NOTE: In order to have [`Erc721UriStorage::token_uri`] exposed in ABI,
-    /// you need to do this manually.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Examples
     ///
@@ -114,16 +119,14 @@ impl Erc721UriStorage {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
-    use stylus_sdk::{msg, prelude::storage};
+    use stylus_sdk::{
+        alloy_primitives::{uint, U256},
+        msg,
+        prelude::storage,
+    };
 
     use super::Erc721UriStorage;
     use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
-
-    fn random_token_id() -> U256 {
-        let num: u32 = rand::random();
-        U256::from(num)
-    }
 
     #[storage]
     struct Erc721MetadataExample {
@@ -132,29 +135,29 @@ mod tests {
         pub uri_storage: Erc721UriStorage,
     }
 
+    const TOKEN_ID: U256 = uint!(1_U256);
+
     #[motsu::test]
     fn get_token_uri_works(contract: Erc721MetadataExample) {
         let alice = msg::sender();
 
-        let token_id = random_token_id();
-
         contract
             .erc721
-            ._mint(alice, token_id)
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract
             .uri_storage
             ._token_uris
-            .setter(token_id)
+            .setter(TOKEN_ID)
             .set_str(token_uri.clone());
 
         assert_eq!(
             token_uri,
             contract
                 .uri_storage
-                .token_uri(token_id, &contract.erc721, &contract.metadata)
+                .token_uri(TOKEN_ID, &contract.erc721, &contract.metadata)
                 .expect("should return token URI")
         );
     }
@@ -163,28 +166,26 @@ mod tests {
     fn set_token_uri_works(contract: Erc721MetadataExample) {
         let alice = msg::sender();
 
-        let token_id = random_token_id();
-
         contract
             .erc721
-            ._mint(alice, token_id)
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let initial_token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract
             .uri_storage
             ._token_uris
-            .setter(token_id)
+            .setter(TOKEN_ID)
             .set_str(initial_token_uri);
 
         let token_uri = String::from("Updated Token URI");
-        contract.uri_storage._set_token_uri(token_id, token_uri.clone());
+        contract.uri_storage._set_token_uri(TOKEN_ID, token_uri.clone());
 
         assert_eq!(
             token_uri,
             contract
                 .uri_storage
-                .token_uri(token_id, &contract.erc721, &contract.metadata)
+                .token_uri(TOKEN_ID, &contract.erc721, &contract.metadata)
                 .expect("should return token URI")
         );
     }
