@@ -167,54 +167,55 @@ mod tests {
         }
     }
 
-    proptest! {
-        #[test]
-        fn commutative_hash_is_order_independent(
-            a: Vec<u8>,
-            b: Vec<u8>
-        ) {
+    #[test]
+    fn commutative_hash_is_order_independent() {
+        proptest!(|(a: Vec<u8>, b: Vec<u8>)| {
             let builder = KeccakBuilder;
             let hash1 = commutative_hash_pair(&a, &b, builder.build_hasher());
             let hash2 = commutative_hash_pair(&b, &a, builder.build_hasher());
             prop_assert_eq!(hash1, hash2);
-        }
+        })
+    }
 
-        #[test]
-        fn regular_hash_is_order_dependent(
-            a: Vec<u8>,
-            b: Vec<u8>
-        ) {
-            prop_assume!(!a.is_empty());
-            prop_assume!(!b.is_empty());
+    #[test]
+    fn regular_hash_is_order_dependent() {
+        proptest!(|(a in prop::collection::vec(any::<u8>(), 1..ProptestConfig::default().max_default_size_range),
+                    b in prop::collection::vec(any::<u8>(), 1..ProptestConfig::default().max_default_size_range))| {
             prop_assume!(a != b);
             let builder = KeccakBuilder;
             let hash1 = hash_pair(&a, &b, builder.build_hasher());
             let hash2 = hash_pair(&b, &a, builder.build_hasher());
             prop_assert_ne!(hash1, hash2);
-        }
+        })
+    }
 
-        #[test]
-        fn hash_pair_deterministic(a: Vec<u8>, b: Vec<u8>) {
+    #[test]
+    fn hash_pair_deterministic() {
+        proptest!(|(a: Vec<u8>, b: Vec<u8>)| {
             let builder = KeccakBuilder;
             let hash1 = hash_pair(&a, &b, builder.build_hasher());
             let hash2 = hash_pair(&a, &b, builder.build_hasher());
             prop_assert_eq!(hash1, hash2);
-        }
+        })
+    }
 
-        #[test]
-        fn commutative_hash_pair_deterministic(a: Vec<u8>, b: Vec<u8>) {
+    #[test]
+    fn commutative_hash_pair_deterministic() {
+        proptest!(|(a: Vec<u8>, b: Vec<u8>)| {
             let builder = KeccakBuilder;
             let hash1 = commutative_hash_pair(&a, &b, builder.build_hasher());
             let hash2 = commutative_hash_pair(&a, &b, builder.build_hasher());
             prop_assert_eq!(hash1, hash2);
-        }
+        })
+    }
 
-        #[test]
-        fn identical_pairs_hash(a: Vec<u8>) {
+    #[test]
+    fn identical_pairs_hash() {
+        proptest!(|(a: Vec<u8>)| {
             let builder = KeccakBuilder;
             let hash1 = hash_pair(&a, &a, builder.build_hasher());
             let hash2 = commutative_hash_pair(&a, &a, builder.build_hasher());
             assert_eq!(hash1, hash2);
-        }
+        })
     }
 }
