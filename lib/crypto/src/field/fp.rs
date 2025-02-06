@@ -1088,14 +1088,14 @@ mod tests {
         })
     }
 
+    /// Compute a^b in an expensive and iterative way.
+    fn dumb_pow(a: i128, b: i128) -> i128 {
+        (0..b).fold(1, |acc, _| (acc * a).rem_euclid(MODULUS))
+    }
+
     #[test]
     fn pow() {
         proptest!(|(a: i64, b in 0_u32..1000)| {
-            /// Compute a^b in an expensive and iterative way.
-            fn dumb_pow(a: i128, b: i128) -> i128 {
-                (0..b).fold(1, |acc, _| (acc * a).rem_euclid(MODULUS))
-            }
-
             let res = Field64::from(a).pow(b);
             let res: i128 = res.into();
             let a = i128::from(a);
