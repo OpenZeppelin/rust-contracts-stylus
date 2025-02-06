@@ -158,7 +158,7 @@ mod tests {
     use proptest::prelude::*;
 
     use super::*;
-    use crate::KeccakBuilder;
+    use crate::{test_helpers::non_empty_u8_vec_strategy, KeccakBuilder};
 
     // Helper impl for testing
     impl Hash for Vec<u8> {
@@ -179,8 +179,8 @@ mod tests {
 
     #[test]
     fn regular_hash_is_order_dependent() {
-        proptest!(|(a in prop::collection::vec(any::<u8>(), 1..ProptestConfig::default().max_default_size_range),
-                    b in prop::collection::vec(any::<u8>(), 1..ProptestConfig::default().max_default_size_range))| {
+        proptest!(|(a in non_empty_u8_vec_strategy(),
+                    b in non_empty_u8_vec_strategy())| {
             prop_assume!(a != b);
             let builder = KeccakBuilder;
             let hash1 = hash_pair(&a, &b, builder.build_hasher());
