@@ -1011,6 +1011,18 @@ mod tests {
 
     const MODULUS: i128 = 1000003; // Prime number
 
+    prop_compose! {
+        fn non_zero_modulo_i64()(
+            b in 1..i64::MAX
+        ) -> i64 {
+            if i128::from(b) % MODULUS == 0 {
+                b + 1
+            } else {
+                b
+            }
+        }
+    }
+
     #[test]
     fn add() {
         proptest!(|(a: i64, b: i64)| {
@@ -1066,12 +1078,7 @@ mod tests {
 
     #[test]
     fn div() {
-        proptest!(|(a: i64, b: i64)| {
-            // Skip if `b` is zero.
-            if i128::from(b) % MODULUS == 0 {
-                return Ok(());
-            }
-
+        proptest!(|(a: i64, b in non_zero_modulo_i64())| {
             let res = Field64::from(a) / Field64::from(b);
             let res: i128 = res.into();
             let a = i128::from(a);
