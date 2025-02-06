@@ -52,9 +52,9 @@ mod tests {
 
     use super::*;
 
-    proptest! {
-        #[test]
-        fn single_bit_change_affects_output(data: Vec<u8>) {
+    #[test]
+    fn single_bit_change_affects_output() {
+        proptest!(|(data: Vec<u8>)| {
             prop_assume!(!data.is_empty());
 
             let mut modified = data.clone();
@@ -66,10 +66,12 @@ mod tests {
             hasher2.update(&modified);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        }
+        })
+    }
 
-        #[test]
-        fn sequential_updates_match_concatenated(data1: Vec<u8>, data2: Vec<u8>) {
+    #[test]
+    fn sequential_updates_match_concatenated() {
+        proptest!(|(data1: Vec<u8>, data2: Vec<u8>)| {
             let builder = KeccakBuilder;
 
             let mut hasher1 = builder.build_hasher();
@@ -84,10 +86,12 @@ mod tests {
             let result2 = hasher2.finalize();
 
             prop_assert_eq!(result1, result2);
-        }
+        })
+    }
 
-        #[test]
-        fn split_updates_match_full_update(data: Vec<u8>, split_point: usize) {
+    #[test]
+    fn split_updates_match_full_update() {
+        proptest!(|(data: Vec<u8>, split_point: usize)| {
             prop_assume!(!data.is_empty());
 
             let builder = KeccakBuilder;
@@ -103,13 +107,12 @@ mod tests {
             let result2 = hasher2.finalize();
 
             prop_assert_eq!(result1, result2);
-        }
+        })
+    }
 
-        #[test]
-        fn multiple_hasher_instances_are_consistent(
-            data1: Vec<u8>,
-            data2: Vec<u8>,
-        ) {
+    #[test]
+    fn multiple_hasher_instances_are_consistent() {
+        proptest!(|(data1: Vec<u8>, data2: Vec<u8>)| {
             let builder = KeccakBuilder;
 
             let mut hasher1 = builder.build_hasher();
@@ -123,19 +126,23 @@ mod tests {
             let result2 = hasher2.finalize();
 
             prop_assert_eq!(result1, result2);
-        }
+        })
+    }
 
-        #[test]
-        fn output_is_always_32_bytes(data: Vec<u8>) {
+    #[test]
+    fn output_is_always_32_bytes() {
+        proptest!(|(data: Vec<u8>)| {
             let builder = KeccakBuilder;
             let mut hasher = builder.build_hasher();
             hasher.update(&data);
             let result = hasher.finalize();
             assert_eq!(result.len(), 32);
-        }
+        })
+    }
 
-        #[test]
-        fn update_order_dependence(data1: Vec<u8>, data2: Vec<u8>) {
+    #[test]
+    fn update_order_dependence() {
+        proptest!(|(data1: Vec<u8>, data2: Vec<u8>)| {
             prop_assume!(!data1.is_empty());
             prop_assume!(!data2.is_empty());
             prop_assume!(data1 != data2);
@@ -150,10 +157,12 @@ mod tests {
             hasher2.update(&data1);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        }
+        })
+    }
 
-        #[test]
-        fn empty_input_order_independence(data: Vec<u8>) {
+    #[test]
+    fn empty_input_order_independence() {
+        proptest!(|(data: Vec<u8>)| {
             prop_assume!(!data.is_empty());
 
             let mut hasher1 = KeccakBuilder.build_hasher();
@@ -167,10 +176,12 @@ mod tests {
             hasher2.update(&data);
 
             prop_assert_eq!(hasher1.finalize(), hasher2.finalize());
-        }
+        })
+    }
 
-        #[test]
-        fn trailing_zero_affects_output(data: Vec<u8>) {
+    #[test]
+    fn trailing_zero_affects_output() {
+        proptest!(|(data: Vec<u8>)| {
             let mut hasher1 = KeccakBuilder.build_hasher();
             let mut hasher2 = KeccakBuilder.build_hasher();
 
@@ -181,10 +192,12 @@ mod tests {
             hasher2.update(&padded);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        }
+        })
+    }
 
-        #[test]
-        fn leading_zeros_affect_output(data: Vec<u8>) {
+    #[test]
+    fn leading_zeros_affect_output() {
+        proptest!(|(data: Vec<u8>)| {
             prop_assume!(!data.is_empty());
 
             let mut hasher1 = KeccakBuilder.build_hasher();
@@ -199,10 +212,12 @@ mod tests {
             let hash2 = hasher2.finalize();
 
             prop_assert_ne!(hash1, hash2);
-        }
+        })
+    }
 
-        #[test]
-        fn no_trivial_collisions_same_length(data: Vec<u8>) {
+    #[test]
+    fn no_trivial_collisions_same_length() {
+        proptest!(|(data: Vec<u8>)| {
             prop_assume!(!data.is_empty());
             let mut modified = data.clone();
             modified[data.len() - 1] = modified[data.len() - 1].wrapping_add(1);
@@ -214,10 +229,12 @@ mod tests {
             hasher2.update(&modified);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        }
+        })
+    }
 
-        #[test]
-        fn length_extension_attack_resistance(data1: Vec<u8>, data2: Vec<u8>) {
+    #[test]
+    fn length_extension_attack_resistance() {
+        proptest!(|(data1: Vec<u8>, data2: Vec<u8>)| {
             prop_assume!(!data1.is_empty());
             prop_assume!(!data2.is_empty());
 
@@ -236,7 +253,7 @@ mod tests {
             let hash3 = hasher3.finalize();
 
             prop_assert_ne!(hash2, hash3);
-        }
+        })
     }
 
     #[test]
