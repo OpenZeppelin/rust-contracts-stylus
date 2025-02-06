@@ -386,11 +386,7 @@ mod tests {
     unsafe impl TopLevelStorage for Trace<S160> {}
 
     #[public]
-    impl Trace<S160> {
-        fn dummy(&self) -> u8 {
-            0
-        }
-    }
+    impl Trace<S160> {}
 
     use motsu::prelude::Contract;
 
