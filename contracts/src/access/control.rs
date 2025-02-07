@@ -40,7 +40,6 @@
 //! this role.
 use alloc::vec::Vec;
 
-use openzeppelin_stylus_proc::interface_id;
 use alloy_primitives::{Address, FixedBytes, B256};
 pub use sol::*;
 use stylus_sdk::{
