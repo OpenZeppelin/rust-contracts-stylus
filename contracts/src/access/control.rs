@@ -14,7 +14,7 @@
 //! ```
 //!
 //! Roles can be used to represent a set of permissions. To restrict access to a
-//! function call, use [`AccessControl::has_role`]:
+//! function call, use [`IAccessControl::has_role`]:
 //!
 //! ```rust,ignore
 //! pub fn foo() {
@@ -23,24 +23,26 @@
 //! }
 //! ```
 //!
-//! Roles can be granted and revoked dynamically via the `grant_role` and
-//! `revoke_role` functions. Each role has an associated admin role, and only
-//! accounts that have a `role`'s `admin_role` can call `grant_role` and
-//! `revoke_role`.
+//! Roles can be granted and revoked dynamically via the
+//! [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`]
+//! functions. Each role has an associated admin role, and only accounts that
+//! have a `role`'s `admin_role` can call [`IAccessControl::grant_role`] and
+//! [`IAccessControl::revoke_role`].
 //!
-//! By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which
-//! means that only accounts with this role will be able to grant or revoke
-//! other roles. More complex role relationships can be created by using
-//! `_set_role_admin`.
+//! By default, the admin role for all roles is
+//! [`AccessControl::DEFAULT_ADMIN_ROLE`], which means that only accounts with
+//! this role will be able to grant or revoke other roles. More complex role
+//! relationships can be created by using [`AccessControl::_set_role_admin`].
 //!
-//! WARNING: The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission
-//! to grant and revoke this role. Extra precautions should be taken to secure
-//! accounts that have been granted it. We recommend using
+//! WARNING: The [`AccessControl::DEFAULT_ADMIN_ROLE`] is also its own admin: it
+//! has permission to grant and revoke this role. Extra precautions should be
+//! taken to secure accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, B256};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
@@ -123,7 +125,8 @@ pub struct AccessControl {
     #[allow(clippy::used_underscore_binding)]
     pub _roles: StorageMap<FixedBytes<32>, RoleData>,
 }
-/// Required interface for role-based access control
+/// Interface for an [`AccessControl`] contract.
+#[interface_id]
 pub trait IAccessControl {
     /// The error type associated with this interface implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -150,10 +153,10 @@ pub trait IAccessControl {
     ///   granted `role`.
     fn only_role(&self, role: B256) -> Result<(), Self::Error>;
 
-    /// Returns the admin role that controls `role`. See [`Self::grant_role`]
-    /// and [`Self::revoke_role`].
+    /// Returns the admin role that controls `role`. See
+    /// [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`].
     ///
-    /// To change a role's admin, use [`Self::_set_role_admin`].
+    /// To change a role's admin, use [`AccessControl::_set_role_admin`].
     ///
     /// # Arguments
     ///
@@ -180,7 +183,11 @@ pub trait IAccessControl {
     /// # Events
     ///
     /// * [`RoleGranted`]
-    fn grant_role(&mut self, role: B256, account: Address) -> Result<(), Self::Error>;
+    fn grant_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from `account`.
     ///
@@ -200,7 +207,11 @@ pub trait IAccessControl {
     /// # Events
     ///
     /// * [`RoleRevoked`].
-    fn revoke_role(&mut self, role: B256, account: Address) -> Result<(), Self::Error>;
+    fn revoke_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from the calling account.
     ///
@@ -223,31 +234,32 @@ pub trait IAccessControl {
     /// # Events
     ///
     /// * [`RoleRevoked`] - If the calling account has its `role` revoked.
-    fn renounce_role(&mut self, role: B256, confirmation: Address) -> Result<(), Self::Error>;
+    fn renounce_role(
+        &mut self,
+        role: B256,
+        confirmation: Address,
+    ) -> Result<(), Self::Error>;
 }
 
 #[public]
 impl IAccessControl for AccessControl {
     type Error = Error;
-    
+
     #[must_use]
-    pub fn has_role(&self, role: B256, account: Address) -> bool {
+    fn has_role(&self, role: B256, account: Address) -> bool {
         self._roles.getter(role).has_role.get(account)
     }
 
-    
-    pub fn only_role(&self, role: B256) -> Result<(), Self::Error> {
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
         self._check_role(role, msg::sender())
     }
 
-    
     #[must_use]
-    pub fn get_role_admin(&self, role: B256) -> B256 {
+    fn get_role_admin(&self, role: B256) -> B256 {
         *self._roles.getter(role).admin_role
     }
 
-    
-    pub fn grant_role(
+    fn grant_role(
         &mut self,
         role: B256,
         account: Address,
@@ -258,8 +270,7 @@ impl IAccessControl for AccessControl {
         Ok(())
     }
 
-    
-    pub fn revoke_role(
+    fn revoke_role(
         &mut self,
         role: B256,
         account: Address,
@@ -270,8 +281,7 @@ impl IAccessControl for AccessControl {
         Ok(())
     }
 
-    
-    pub fn renounce_role(
+    fn renounce_role(
         &mut self,
         role: B256,
         confirmation: Address,
@@ -392,7 +402,7 @@ mod tests {
     use alloy_primitives::{address, Address};
     use stylus_sdk::msg;
 
-    use super::{AccessControl, Error};
+    use super::{AccessControl, Error, IAccessControl};
 
     /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice;
