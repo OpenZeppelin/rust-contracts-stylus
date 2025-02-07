@@ -125,7 +125,6 @@ pub struct AccessControl {
     pub _roles: StorageMap<FixedBytes<32>, RoleData>,
 }
 /// Required interface for role-based access control
-#[interface_id]
 pub trait IAccessControl {
     /// The error type associated with this interface implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
