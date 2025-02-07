@@ -2,6 +2,7 @@
 set -e
 
 source scripts/utils.sh
+
 mydir=$(dirname "$0")
 cd "$mydir" || exit
 cd ..
