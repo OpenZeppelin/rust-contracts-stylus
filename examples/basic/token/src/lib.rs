@@ -19,6 +19,11 @@ struct Erc20Example {
 #[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc20Example {
+    #[constructor]
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+
     pub fn mint(
         &mut self,
         account: Address,

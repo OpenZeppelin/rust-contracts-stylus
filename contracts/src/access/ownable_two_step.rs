@@ -28,7 +28,8 @@ use stylus_sdk::{
 };
 
 use crate::access::ownable::{
-    Error as OwnableError, IOwnable, Ownable, OwnableUnauthorizedAccount,
+    Error as OwnableError, IOwnable, Ownable, OwnableInvalidOwner,
+    OwnableUnauthorizedAccount,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -195,6 +196,25 @@ impl IOwnable2Step for Ownable2Step {
     fn renounce_ownership(&mut self) -> Result<(), Error> {
         self._ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
+        Ok(())
+    }
+}
+
+// TODO: uncomment once multiple public attributes are supported
+// NOTE: cannot include constructor in the above #[public], as constructor is
+// not part of the `IOwnable2Step` trait
+// #[public]
+impl Ownable2Step {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
+        if initial_owner.is_zero() {
+            return Err(OwnableError::InvalidOwner(OwnableInvalidOwner {
+                owner: Address::ZERO,
+            })
+            .into());
+        }
+        self._transfer_ownership(initial_owner);
         Ok(())
     }
 }
