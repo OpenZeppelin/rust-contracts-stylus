@@ -16,9 +16,9 @@ fuzz_target!(|data: &[u8]| {
         hasher.update(&data[..i]);
         let mut new_hasher = KeccakBuilder.build_hasher();
         new_hasher.update(&data[i..]);
-        let _ = new_hasher.finalize();
+        _ = new_hasher.finalize();
     }
 
     // Finalize the original hasher
-    let _ = hasher.finalize();
+    _ = hasher.finalize();
 });
