@@ -71,7 +71,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     assert_eq!(balance1, U256::from(batch_size));
 
     let token_id = random_token_id();
-    _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let Erc721::balanceOfReturn { balance: balance2 } =
         contract.balanceOf(alice.address()).call().await?;
@@ -130,7 +130,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 
     // Transfer first consecutive token from Alice to Bob.
-    _ = watch!(contract.transferFrom(
+    watch!(contract.transferFrom(
         alice.address(),
         bob.address(),
         first_consecutive_token_id
@@ -150,17 +150,13 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 
     // Test non-consecutive mint.
     let token_id = random_token_id();
-    _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
     let Erc721::balanceOfReturn { balance: alice_balance } =
         contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256));
 
     // Test transfer of the token that wasn't minted consecutive.
-    _ = watch!(contract.transferFrom(
-        alice.address(),
-        bob.address(),
-        token_id
-    ))?;
+    watch!(contract.transferFrom(alice.address(), bob.address(), token_id))?;
     let Erc721::balanceOfReturn { balance: alice_balance } =
         contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
@@ -206,7 +202,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 
     // Check non-consecutive token burn.
     let non_consecutive_token_id = random_token_id();
-    _ = watch!(contract.mint(alice.address(), non_consecutive_token_id))?;
+    watch!(contract.mint(alice.address(), non_consecutive_token_id))?;
     let Erc721::ownerOfReturn { ownerOf } =
         contract.ownerOf(non_consecutive_token_id).call().await?;
     assert_eq!(ownerOf, alice.address());

@@ -339,7 +339,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::{abi::Bytes, msg, prelude::*};
+    use stylus_sdk::{abi::Bytes, prelude::*};
 
     use super::{
         ERC3156ExceededMaxLoan, ERC3156InvalidReceiver,
@@ -413,7 +413,10 @@ mod tests {
         let initial_supply = uint!(10000_U256);
 
         contract.init(alice, |contract| {
-            _ = contract.erc20._mint(alice, initial_supply).unwrap();
+            contract
+                .erc20
+                ._mint(alice, initial_supply)
+                .expect("should mint {{initial_supply}} tokens for {{alice}}");
         });
 
         let max_flash_loan =
@@ -467,7 +470,10 @@ mod tests {
         let initial_supply = uint!(10000_U256);
 
         contract.init(alice, |contract| {
-            _ = contract.erc20._mint(msg::sender(), initial_supply).unwrap();
+            contract
+                .erc20
+                ._mint(alice, initial_supply)
+                .expect("should mint {{initial_supply}} tokens for {{alice}}");
         });
 
         let err = contract

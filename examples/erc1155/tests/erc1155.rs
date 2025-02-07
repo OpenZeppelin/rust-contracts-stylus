@@ -620,7 +620,7 @@ async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let bob_addr = bob.address();
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
-    _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
@@ -673,14 +673,14 @@ async fn safe_transfer_from_with_approval(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract_bob.mint(
+    watch!(contract_bob.mint(
         bob_addr,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
     ))?;
 
-    _ = watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let Erc1155::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr, token_id).call().await?;
@@ -729,7 +729,7 @@ async fn safe_transfer_to_receiver_contract(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
@@ -793,7 +793,7 @@ async fn errors_when_receiver_reverts_with_reason(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
@@ -833,7 +833,7 @@ async fn errors_when_receiver_reverts_without_reason(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
@@ -869,7 +869,7 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
@@ -903,7 +903,7 @@ async fn errors_when_invalid_receiver_contract(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
@@ -937,7 +937,7 @@ async fn error_when_invalid_receiver_safe_transfer_from(
     let invalid_receiver = Address::ZERO;
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
-    _ = watch!(contract.mint(alice_addr, token_id, value, vec![].into()))?;
+    watch!(contract.mint(alice_addr, token_id, value, vec![].into()))?;
 
     let err = send!(contract.safeTransferFrom(
         alice_addr,
@@ -969,7 +969,7 @@ async fn error_when_missing_approval_safe_transfer_from(
     let dave_addr = dave.address();
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
-    _ = watch!(contract.mint(bob_addr, token_id, value, vec![].into()))?;
+    watch!(contract.mint(bob_addr, token_id, value, vec![].into()))?;
 
     let err = send!(contract.safeTransferFrom(
         bob_addr,
@@ -1004,8 +1004,8 @@ async fn error_when_insufficient_balance_safe_transfer_from(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract_alice.mint(bob_addr, token_id, value, vec![].into()))?;
-    _ = watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
+    watch!(contract_alice.mint(bob_addr, token_id, value, vec![].into()))?;
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let err = send!(contract_alice.safeTransferFrom(
         bob_addr,
@@ -1039,7 +1039,7 @@ async fn safe_batch_transfer_from(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract_alice.mintBatch(
+    watch!(contract_alice.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1109,7 +1109,7 @@ async fn safe_batch_transfer_to_receiver_contract(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1197,7 +1197,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1237,7 +1237,7 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_transfer(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1275,7 +1275,7 @@ async fn errors_when_receiver_panics_in_batch_transfer(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1309,7 +1309,7 @@ async fn errors_when_invalid_receiver_contract_in_batch_transfer(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1348,14 +1348,14 @@ async fn safe_batch_transfer_from_with_approval(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract_alice.mintBatch(
+    watch!(contract_alice.mintBatch(
         bob_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
     ))?;
 
-    _ = watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let Erc1155::balanceOfBatchReturn { balances: initial_dave_balances } =
         contract_alice
@@ -1417,7 +1417,7 @@ async fn error_when_invalid_receiver_safe_batch_transfer_from(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1453,7 +1453,7 @@ async fn error_invalid_array_length_in_safe_batch_transfer_from(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract_alice.mintBatch(
+    watch!(contract_alice.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1492,7 +1492,7 @@ async fn error_when_missing_approval_safe_batch_transfer_from(
     let token_ids = random_token_ids(4);
     let values = random_values(4);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         bob_addr,
         token_ids.clone(),
         values.clone(),
@@ -1532,13 +1532,13 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract_alice.mintBatch(
+    watch!(contract_alice.mintBatch(
         bob_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
     ))?;
-    _ = watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let err = send!(contract_alice.safeBatchTransferFrom(
         bob_addr,
@@ -1572,12 +1572,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     let token_ids = random_token_ids(1);
     let values = random_values(1);
 
-    _ = watch!(contract.mint(
-        alice_addr,
-        token_ids[0],
-        values[0],
-        vec![].into()
-    ))?;
+    watch!(contract.mint(alice_addr, token_ids[0], values[0], vec![].into()))?;
 
     let initial_balance =
         contract.balanceOf(alice_addr, token_ids[0]).call().await?.balance;
@@ -1611,18 +1606,13 @@ async fn burns_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
     let token_ids = random_token_ids(1);
     let values = random_values(1);
 
-    _ = watch!(contract.mint(
-        bob_addr,
-        token_ids[0],
-        values[0],
-        vec![].into()
-    ))?;
+    watch!(contract.mint(bob_addr, token_ids[0], values[0], vec![].into()))?;
 
     let initial_balance =
         contract.balanceOf(bob_addr, token_ids[0]).call().await?.balance;
     assert_eq!(values[0], initial_balance);
 
-    _ = watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let receipt = receipt!(contract.burn(bob_addr, token_ids[0], values[0]))?;
 
@@ -1654,12 +1644,7 @@ async fn error_when_missing_approval_burn(
     let token_ids = random_token_ids(1);
     let values = random_values(1);
 
-    _ = watch!(contract.mint(
-        bob_addr,
-        token_ids[0],
-        values[0],
-        vec![].into()
-    ))?;
+    watch!(contract.mint(bob_addr, token_ids[0], values[0], vec![].into()))?;
 
     let err = send!(contract.burn(bob_addr, token_ids[0], values[0]))
         .expect_err("should return `ERC1155MissingApprovalForAll`");
@@ -1684,7 +1669,7 @@ async fn error_when_insufficient_balance_burn(
     let value = random_values(1)[0];
     let to_burn = value + uint!(1_U256);
 
-    _ = watch!(contract.mint(alice_addr, token_id, value, vec![].into()))?;
+    watch!(contract.mint(alice_addr, token_id, value, vec![].into()))?;
 
     let err = send!(contract.burn(alice_addr, token_id, to_burn))
         .expect_err("should return `ERC1155InsufficientBalance`");
@@ -1708,7 +1693,7 @@ async fn burns_batch(alice: Account) -> eyre::Result<()> {
     let token_ids = random_token_ids(4);
     let values = random_values(4);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1756,7 +1741,7 @@ async fn burns_batch_with_approval(
     let token_ids = random_token_ids(4);
     let values = random_values(4);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         bob_addr,
         token_ids.clone(),
         values.clone(),
@@ -1768,7 +1753,7 @@ async fn burns_batch_with_approval(
         assert_eq!(value, balance);
     }
 
-    _ = watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let receipt = receipt!(contract.burnBatch(
         bob_addr,
@@ -1805,7 +1790,7 @@ async fn error_when_missing_approval_burn_batch(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         bob_addr,
         token_ids.clone(),
         values.clone(),
@@ -1835,7 +1820,7 @@ async fn error_when_insufficient_balance_burn_batch(
     let values = random_values(2);
     let to_burn: Vec<U256> = values.iter().map(|v| v + uint!(1_U256)).collect();
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
@@ -1921,7 +1906,7 @@ async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let err =
         send!(contract.pause()).expect_err("should return `EnforcedPause`");
@@ -1937,7 +1922,7 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let receipt = receipt!(contract.unpause())?;
 
@@ -1977,7 +1962,7 @@ async fn mint_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let err = send!(contract.mint(
         alice_addr,
@@ -2003,7 +1988,7 @@ async fn mint_batch_reverts_in_paused_state(
     let token_ids = random_token_ids(3);
     let values = random_values(3);
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let err = send!(contract.mintBatch(
         alice_addr,
@@ -2027,14 +2012,9 @@ async fn burn_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
     let token_ids = random_token_ids(1);
     let values = random_values(1);
 
-    _ = watch!(contract.mint(
-        alice_addr,
-        token_ids[0],
-        values[0],
-        vec![].into()
-    ))?;
+    watch!(contract.mint(alice_addr, token_ids[0], values[0], vec![].into()))?;
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let err = send!(contract.burn(alice_addr, token_ids[0], values[0]))
         .expect_err("should return `EnforcedPause`");
@@ -2055,14 +2035,14 @@ async fn burn_batch_reverts_in_paused_state(
     let token_ids = random_token_ids(4);
     let values = random_values(4);
 
-    _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
     ))?;
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let err = send!(contract.burnBatch(
         alice_addr,
@@ -2088,14 +2068,14 @@ async fn safe_transfer_from_reverts_in_paused_state(
     let bob_addr = bob.address();
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
-    _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
     ))?;
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let err = send!(contract.safeTransferFrom(
         alice_addr,
@@ -2124,14 +2104,14 @@ async fn safe_batch_transfer_from_reverts_in_paused_state(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    _ = watch!(contract_alice.mintBatch(
+    watch!(contract_alice.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
     ))?;
 
-    _ = watch!(contract_alice.pause())?;
+    watch!(contract_alice.pause())?;
 
     let err = send!(contract_alice.safeBatchTransferFrom(
         alice_addr,
@@ -2158,7 +2138,7 @@ async fn set_approval_for_all_does_not_revert_in_paused_state(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    _ = watch!(contract.pause())?;
+    watch!(contract.pause())?;
 
     let approved_value = true;
     let receipt =

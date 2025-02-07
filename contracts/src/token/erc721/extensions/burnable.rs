@@ -48,7 +48,6 @@ impl IErc721Burnable for Erc721 {
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::msg;
 
     use super::IErc721Burnable;
     use crate::token::erc721::{
@@ -238,7 +237,7 @@ mod tests {
             Error::InsufficientApproval(ERC721InsufficientApproval {
                     operator,
                     token_id: t_id,
-            }) if operator == msg::sender() && t_id == TOKEN_ID
+            }) if operator == alice && t_id == TOKEN_ID
         ));
     }
 

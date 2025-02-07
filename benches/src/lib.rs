@@ -125,7 +125,7 @@ fn cache_contract(
 ) -> eyre::Result<()> {
     // We don't need a status code.
     // Since it is not zero when the contract is already cached.
-    _ = Command::new("cargo")
+    Command::new("cargo")
         .args(["stylus", "cache", "bid"])
         .args(["-e", &env("RPC_URL")?])
         .args(["--private-key", &format!("0x{}", account.pk())])

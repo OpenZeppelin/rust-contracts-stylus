@@ -1041,7 +1041,6 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
         abi::Bytes,
-        msg,
         prelude::{public, sol_storage, TopLevelStorage},
     };
 
@@ -1856,7 +1855,7 @@ mod tests {
             err,
             Error::InvalidApprover(ERC721InvalidApprover {
                 approver
-            }) if approver == msg::sender()
+            }) if approver == alice
         ));
     }
 
@@ -2577,7 +2576,7 @@ mod tests {
     ) {
         let err = contract
             .sender(alice)
-            ._approve(bob, TOKEN_ID, msg::sender(), false)
+            ._approve(bob, TOKEN_ID, alice, false)
             .expect_err("should not approve for a non-existent token");
 
         assert!(matches!(

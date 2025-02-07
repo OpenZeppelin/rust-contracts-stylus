@@ -759,7 +759,6 @@ impl Erc721Consecutive {
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::msg;
 
     use crate::token::{
         erc721,
@@ -1332,7 +1331,7 @@ mod tests {
             err,
             Error::Erc721(erc721::Error::InvalidApprover(ERC721InvalidApprover {
                 approver
-            })) if approver == msg::sender()
+            })) if approver == alice
         ));
     }
 

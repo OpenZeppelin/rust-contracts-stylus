@@ -203,7 +203,7 @@ impl Ownable {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::{msg, prelude::TopLevelStorage};
+    use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{Error, IOwnable, Ownable};
 
@@ -213,7 +213,7 @@ mod tests {
     fn reads_owner(contract: Contract<Ownable>, alice: Address) {
         contract.init(alice, |contract| contract._owner.set(alice));
         let owner = contract.sender(alice).owner();
-        assert_eq!(owner, msg::sender());
+        assert_eq!(owner, alice);
     }
 
     #[motsu::test]
@@ -265,7 +265,10 @@ mod tests {
     ) {
         contract.init(alice, |contract| contract._owner.set(alice));
 
-        _ = contract.sender(alice).renounce_ownership();
+        contract
+            .sender(alice)
+            .renounce_ownership()
+            .expect("should renounce ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
     }

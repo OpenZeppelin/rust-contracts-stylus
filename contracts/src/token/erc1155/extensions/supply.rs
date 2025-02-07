@@ -476,6 +476,7 @@ mod tests {
             .sender(alice)
             ._mint(dave, token_id, U256::MAX / two, &vec![].into())
             .expect("should mint to dave");
+        // This should panic.
         _ = contract.sender(alice)._mint(bob, token_id, three, &vec![].into());
     }
 
@@ -491,6 +492,7 @@ mod tests {
             .sender(alice)
             ._mint(bob, token_ids[0], U256::MAX, &vec![].into())
             .expect("should mint");
+        // This should panic.
         _ = contract.sender(alice)._mint(
             bob,
             token_ids[1],

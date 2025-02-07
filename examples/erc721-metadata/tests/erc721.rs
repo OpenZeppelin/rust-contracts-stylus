@@ -100,7 +100,7 @@ async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
 
     let token_id = random_token_id();
 
-    _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let Erc721::tokenURIReturn { tokenURI } =
         contract.tokenURI(token_id).call().await?;
@@ -127,7 +127,7 @@ async fn return_token_uri_with_base_uri_and_without_token_uri(
 
     let token_id = random_token_id();
 
-    _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let Erc721::tokenURIReturn { tokenURI } =
         contract.tokenURI(token_id).call().await?;
@@ -153,7 +153,7 @@ async fn return_token_uri_with_base_uri_and_token_uri(
 
     let token_id = random_token_id();
 
-    _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let token_uri = String::from(
         "blob/main/contracts/src/token/erc721/extensions/uri_storage.rs",
@@ -204,7 +204,7 @@ async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
 
     assert!(receipt.emits(Erc721::MetadataUpdate { tokenId: token_id }));
 
-    _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let Erc721::tokenURIReturn { tokenURI } =
         contract.tokenURI(token_id).call().await?;
@@ -233,7 +233,7 @@ async fn return_token_uri_after_burn_and_remint(
 
     let token_id = random_token_id();
 
-    _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let receipt = receipt!(contract.burn(token_id))?;
 
