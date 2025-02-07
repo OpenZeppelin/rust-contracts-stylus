@@ -24,7 +24,7 @@ use stylus_sdk::{
 use crate::token::erc20::{
     self,
     utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
-    Erc20
+    Erc20,
 };
 
 sol! {

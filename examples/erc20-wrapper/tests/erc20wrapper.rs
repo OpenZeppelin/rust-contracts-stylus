@@ -204,8 +204,11 @@ mod withdraw_to {
     }
 
     #[e2e::test]
-    async fn reflects_balance_after_withdraw_to(alice: Account, bob: Account) -> Result<()> {
-         let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+    async fn reflects_balance_after_withdraw_to(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
         let alice_address = alice.address();
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         Ok(())
