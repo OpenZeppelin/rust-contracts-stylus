@@ -203,7 +203,7 @@ pub trait IVestingWallet {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn receive_ether(&self);
+    fn receive_ether(&self) -> Result<(), Vec<u8>>;
 
     /// Getter for the start timestamp.
     ///
@@ -384,8 +384,10 @@ impl IVestingWallet for VestingWallet {
         Ok(self.ownable.renounce_ownership()?)
     }
 
-    #[payable]
-    fn receive_ether(&self) {}
+    #[receive]
+    fn receive_ether(&self) -> Result<(), Vec<u8>> {
+        Ok(())
+    }
 
     fn start(&self) -> U256 {
         U256::from(self._start.get())
