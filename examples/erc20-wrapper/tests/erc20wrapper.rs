@@ -94,12 +94,11 @@ mod deposit_to {
         let alice_address = alice.address();
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-        _ = watch!(asset.mint(alice.address(), uint!(1000_U256)))?;
-        _ = asset.regular_approve(
-            alice_address,
-            contract_addr,
-            uint!(1000_U256),
-        );
+
+        //     _ = watch!(asset.mint(alice.address(), uint!(1000_U256)))?;
+
+        _ = asset.approve(alice_address, uint!(1000_U256));
+
         _ = watch!(contract.depositFor(alice_address, uint!(1000_U256)))?;
         Ok(())
     }

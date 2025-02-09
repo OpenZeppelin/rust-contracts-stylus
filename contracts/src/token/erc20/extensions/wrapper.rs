@@ -181,6 +181,7 @@ impl IErc20Wrapper for Erc20Wrapper {
             value,
         )?;
         erc20._mint(account, value)?;
+
         Ok(true)
     }
 
