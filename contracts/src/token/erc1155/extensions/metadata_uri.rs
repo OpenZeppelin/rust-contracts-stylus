@@ -31,7 +31,7 @@ mod sol {
     }
 }
 
-/// URI Metadata of an [`crate::token::erc1155::Erc1155`] token.
+/// State of an [`Erc1155MetadataUri`] contract.
 #[storage]
 pub struct Erc1155MetadataUri {
     /// Used as the URI for all token types by relying on ID substitution,
@@ -75,24 +75,19 @@ impl IErc165 for Erc1155MetadataUri {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
+    use stylus_sdk::alloy_primitives::uint;
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
-
-    fn random_token_id() -> U256 {
-        let num: u32 = rand::random();
-        U256::from(num)
-    }
 
     #[motsu::test]
     fn uri_ignores_token_id(contract: Erc1155MetadataUri) {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
         contract._uri.set_str(uri.clone());
 
-        let token_id = random_token_id();
+        let token_id = uint!(1_U256);
         assert_eq!(uri, contract.uri(token_id));
 
-        let token_id = random_token_id();
+        let token_id = uint!(2_U256);
         assert_eq!(uri, contract.uri(token_id));
     }
 

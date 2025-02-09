@@ -113,7 +113,7 @@ mod borrower {
     }
 }
 
-/// State of the [`Erc20FlashMint`] Contract.
+/// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
     /// Fee applied when doing flash loans.
@@ -141,9 +141,6 @@ pub trait IErc3156FlashLender {
     /// [`crate::token::erc20::extensions::Capped`], make sure to override this
     /// function to integrate the cap instead of [`U256::MAX`].
     ///
-    /// NOTE: In order to have [`IErc3156FlashLender::max_flash_loan`] exposed
-    /// in ABI, you need to do this manually.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -161,9 +158,6 @@ pub trait IErc3156FlashLender {
 
     /// Returns the fee applied when doing flash loans.
     ///
-    /// NOTE: In order to have [`IErc3156FlashLender::flash_fee`] exposed in
-    /// ABI, you need to do this manually.
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -172,8 +166,7 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// * If the token is not supported, then the error
-    ///   [`Error::UnsupportedToken`] is returned.
+    /// * [`Error::UnsupportedToken`] - If the token is not supported.
     ///
     /// # Examples
     ///
@@ -197,9 +190,6 @@ pub trait IErc3156FlashLender {
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
-    /// NOTE: In order to have [`IErc3156FlashLender::flash_loan`] exposed in
-    /// ABI, you need to do this manually.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -213,22 +203,17 @@ pub trait IErc3156FlashLender {
     ///
     /// # Errors
     ///
-    /// * If the `value` is greater than the value returned by
-    ///   [`IErc3156FlashLender::max_flash_loan`], then the error
-    ///   [`Error::ExceededMaxLoan`] is returned.
-    /// * If `token` is not supported, then the error
-    ///   [`Error::UnsupportedToken`] is returned.
-    /// * If the `token` address is not a contract, then the error
-    ///   [`Error::InvalidReceiver`] is returned.
-    /// * If the contract fails to execute the call, then the error
-    ///   [`Error::InvalidReceiver`] is returned.
-    /// * If the receiver does not return [`BORROWER_CALLBACK_VALUE`], then the
-    ///   error [`Error::InvalidReceiver`] is returned.
+    /// * [`Error::ExceededMaxLoan`] - If the `value` is greater than the value
+    ///   returned by [`IErc3156FlashLender::max_flash_loan`].
+    /// * [`Error::UnsupportedToken`] - If `token` is not supported.
+    /// * [`Error::InvalidReceiver`] - If the `token` address is not a contract
+    ///   , the contract fails to execute the call, or the receiver does not
+    ///   return [`BORROWER_CALLBACK_VALUE`].
     ///
     /// # Events
     ///
-    /// * Emits an [`erc20::Transfer`] event.
-    /// * Emits an [`erc20::Approval`] event.
+    /// * [`erc20::Transfer`].
+    /// * [`erc20::Approval`].
     ///
     /// # Panics
     ///
