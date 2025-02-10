@@ -105,7 +105,9 @@ pub enum Error {
     BadConfirmation(AccessControlBadConfirmation),
 }
 
-/// Information about a specific role.
+/// State of a [`RoleData`] contract.
+///
+/// Stores information about a specific role.
 #[storage]
 pub struct RoleData {
     /// Whether an account is member of a certain role.
@@ -114,7 +116,7 @@ pub struct RoleData {
     pub admin_role: StorageFixedBytes<32>,
 }
 
-/// State of an `AccessControl` contract.
+/// State of an [`AccessControl`] contract.
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
@@ -144,8 +146,8 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`.
     pub fn only_role(&self, role: B256) -> Result<(), Error> {
         self._check_role(role, msg::sender())
     }
@@ -169,10 +171,6 @@ impl AccessControl {
     /// If `account` had not been already granted `role`, emits a
     /// [`RoleGranted`] event.
     ///
-    /// # Requirements:
-    ///
-    /// * The caller must have `role`'s admin role.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -181,12 +179,12 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`.
     ///
     /// # Events
     ///
-    /// May emit a [`RoleGranted`] event.
+    /// * [`RoleGranted`]
     pub fn grant_role(
         &mut self,
         role: B256,
@@ -202,10 +200,6 @@ impl AccessControl {
     ///
     /// If `account` had been granted `role`, emits a [`RoleRevoked`] event.
     ///
-    /// # Requirements:
-    ///
-    /// * The caller must have `role`'s admin role.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -214,12 +208,12 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`.
     ///
     /// # Events
     ///
-    /// May emit a [`RoleRevoked`] event.
+    /// * [`RoleRevoked`].
     pub fn revoke_role(
         &mut self,
         role: B256,
@@ -238,10 +232,6 @@ impl AccessControl {
     /// for accounts to lose their privileges if they are compromised (such as
     /// when a trusted device is misplaced).
     ///
-    /// # Requirements:
-    ///
-    /// * The caller must be `confirmation`.
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -250,13 +240,12 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] is not the `confirmation` address, then the error
-    /// [`Error::BadConfirmation`] is returned.
+    /// * [`Error::BadConfirmation`]  - If [`msg::sender`] is not the
+    ///   `confirmation` address.
     ///
     /// # Events
     ///
-    /// If the calling account has its `role` revoked, emits a [`RoleRevoked`]
-    /// event.
+    /// * [`RoleRevoked`] - If the calling account has its `role` revoked.
     pub fn renounce_role(
         &mut self,
         role: B256,
@@ -287,7 +276,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// Emits a [`RoleAdminChanged`] event.
+    /// * [`RoleAdminChanged`].
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
         self.roles.setter(role).admin_role.set(new_admin_role);
@@ -308,8 +297,8 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// If [`msg::sender`] has not been granted `role`, then the error
-    /// [`Error::UnauthorizedAccount`] is returned.
+    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    ///   granted `role`.
     pub fn _check_role(
         &self,
         role: B256,
@@ -337,7 +326,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// May emit a [`RoleGranted`] event.
+    /// * [`RoleGranted`].
     pub fn _grant_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             false
@@ -361,7 +350,7 @@ impl AccessControl {
     ///
     /// # Events
     ///
-    /// May emit a [`RoleRevoked`] event.
+    /// * [`RoleRevoked`].
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             self.roles.setter(role).has_role.insert(account, false);

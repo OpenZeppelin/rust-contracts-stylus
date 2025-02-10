@@ -1,9 +1,9 @@
 //! This module contains the field instances for some popular curves.
 
 #![allow(missing_docs)]
-use crypto_bigint::{U256, U64};
 
 use crate::{
+    arithmetic::uint::{U256, U64},
     field::fp::{Fp256, Fp64, FpParams, LIMBS_256, LIMBS_64},
     fp_from_num, from_num,
 };

@@ -124,7 +124,7 @@ impl MethodError for Error {
     }
 }
 
-/// State of an `Erc20` token.
+/// State of an [`Erc20`] token.
 #[storage]
 pub struct Erc20 {
     /// Maps users to balances.
@@ -169,14 +169,13 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// * If the caller doesn't have a balance of at least `value`, then the
-    /// error [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InsufficientBalance`] - If the caller doesn't have a balance
+    ///   of at least `value`.
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`].
     fn transfer(
         &mut self,
         to: Address,
@@ -216,12 +215,12 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSpender`] is returned.
+    /// * [`Error::InvalidSpender`] - If the `spender` address is
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`Approval`] event.
+    /// * [`Approval`].
     fn approve(
         &mut self,
         spender: Address,
@@ -247,16 +246,17 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
-    /// * If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens, then the error
+    ///  is returned.
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`].
     fn transfer_from(
         &mut self,
         from: Address,
@@ -334,12 +334,12 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// If the `spender` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidSpender`] is returned.
+    /// * [`Error::InvalidSpender`] - If the `spender` address is
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`Approval`] event.
+    /// * [`Approval`].
     fn _approve(
         &mut self,
         owner: Address,
@@ -377,16 +377,14 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidSender`] is returned.
-    /// * If the `to` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidReceiver`] is returned.
-    /// * If the `from` address doesn't have enough tokens, then the error
-    ///   [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens.
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`].
     fn _transfer(
         &mut self,
         from: Address,
@@ -412,20 +410,18 @@ impl Erc20 {
     /// Creates a `value` amount of tokens and assigns them to `account`,
     /// by transferring it from `Address::ZERO`.
     ///
-    /// Relies on the `_update` mechanism.
-    ///
-    /// # Panics
-    ///
-    /// If `total_supply` exceeds `U256::MAX`.
-    ///
     /// # Errors
     ///
-    /// If the `account` address is `Address::ZERO`, then the error
-    /// [`Error::InvalidReceiver`] is returned.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`].
+    ///
+    /// # Panics
+    ///
+    /// * If `total_supply` exceeds `U256::MAX`.
     pub fn _mint(
         &mut self,
         account: Address,
@@ -451,19 +447,19 @@ impl Erc20 {
     /// * `to` - Recipient's address.
     /// * `value` - Amount to be transferred.
     ///
-    /// # Panics
-    ///
-    /// If `total_supply` exceeds `U256::MAX`. It may happen during `mint`
-    /// operation.
-    ///
     /// # Errors
     ///
-    /// If the `from` address doesn't have enough tokens, then the error
-    /// [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens.
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`].
+    ///
+    /// # Panics
+    ///
+    /// * If `total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    ///   operation.
     pub fn _update(
         &mut self,
         from: Address,
@@ -513,8 +509,6 @@ impl Erc20 {
     /// Destroys a `value` amount of tokens from `account`,
     /// lowering the total supply.
     ///
-    /// Relies on the `update` mechanism.
-    ///
     /// # Arguments
     ///
     /// * `account` - Owner's address.
@@ -522,14 +516,13 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * If the `from` address is `Address::ZERO`, then the error
-    ///   [`Error::InvalidSender`] is returned.
-    /// * If the `from` address doesn't have enough tokens, then the error
-    ///   [`Error::InsufficientBalance`] is returned.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens.
     ///
     /// # Events
     ///
-    /// Emits a [`Transfer`] event.
+    /// * [`Transfer`].
     pub fn _burn(
         &mut self,
         account: Address,
@@ -556,12 +549,12 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// If not enough allowance is available, then the error
-    /// [`Error::InsufficientAllowance`] is returned.
+    /// * [`Error::InsufficientAllowance`] - If not enough allowance is
+    ///   available.
     ///
     /// # Events
     ///
-    /// Emits an [`Approval`] event.
+    /// * [`Approval`].
     pub fn _spend_allowance(
         &mut self,
         owner: Address,

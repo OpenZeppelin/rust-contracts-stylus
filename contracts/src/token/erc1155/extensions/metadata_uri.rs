@@ -31,7 +31,7 @@ mod sol {
     }
 }
 
-/// URI Metadata of an [`crate::token::erc1155::Erc1155`] token.
+/// State of an [`Erc1155MetadataUri`] contract.
 #[storage]
 pub struct Erc1155MetadataUri {
     /// Used as the URI for all token types by relying on ID substitution,

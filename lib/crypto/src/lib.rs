@@ -19,17 +19,23 @@ Common cryptographic procedures for a blockchain environment.
 */
 
 #![allow(clippy::module_name_repetitions)]
+#![allow(clippy::inline_always)]
+#![allow(clippy::unreadable_literal)]
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 extern crate alloc;
 extern crate core;
 
-pub mod bigint;
+pub mod arithmetic;
 pub mod bits;
 #[macro_use]
 pub mod field;
+mod const_helpers;
 pub mod hash;
 pub mod keccak;
 pub mod merkle;
 pub mod poseidon2;
 
 pub use keccak::KeccakBuilder;
+
+#[cfg(all(test, feature = "std"))]
+mod test_helpers;
