@@ -23,6 +23,11 @@ struct Erc1155MetadataUriExample {
 #[public]
 #[inherit(Erc1155)]
 impl Erc1155MetadataUriExample {
+    #[constructor]
+    fn constructor(&mut self, uri: String) {
+        self.metadata_uri.constructor(uri);
+    }
+
     fn uri(&self, token_id: U256) -> String {
         self.uri_storage.uri(token_id, &self.metadata_uri)
     }

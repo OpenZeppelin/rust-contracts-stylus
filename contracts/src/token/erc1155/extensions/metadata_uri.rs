@@ -65,6 +65,16 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
     }
 }
 
+// TODO: uncomment once multiple public attributes are supported
+// #[public]
+impl Erc1155MetadataUri {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(&mut self, uri: String) {
+        self._uri.set_str(uri);
+    }
+}
+
 impl IErc165 for Erc1155MetadataUri {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155MetadataUri>::INTERFACE_ID
