@@ -14,7 +14,6 @@ use alloy_primitives::Address;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
     evm, msg,
     prelude::storage,
     storage::StorageAddress,
@@ -57,12 +56,6 @@ pub enum Error {
     UnauthorizedAccount(OwnableUnauthorizedAccount),
     /// The owner is not a valid owner account. (eg. `Address::ZERO`)
     InvalidOwner(OwnableInvalidOwner),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 /// State of an [`Ownable`] contract.
