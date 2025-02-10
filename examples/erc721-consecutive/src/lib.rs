@@ -22,9 +22,15 @@ impl Erc721ConsecutiveExample {
         &mut self,
         receivers: Vec<Address>,
         amounts: Vec<U96>,
-        firstConsecutiveId: U96,
-        maxBatchSize: U96,
-    ) {
+        first_consecutive_id: U96,
+        max_batch_size: U96,
+    ) -> Result<(), Vec<u8>> {
+        self.erc721_consecutive._first_consecutive_id.set(first_consecutive_id);
+        self.erc721_consecutive._max_batch_size.set(max_batch_size);
+        for (&receiver, &amount) in receivers.iter().zip(amounts.iter()) {
+            self.erc721_consecutive._mint_consecutive(receiver, amount)?;
+        }
+        Ok(())
     }
 
     pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
