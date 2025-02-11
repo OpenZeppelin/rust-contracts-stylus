@@ -37,6 +37,9 @@ jobs:
           solc-select install 0.8.24
           solc-select use 0.8.24
 
+      - uses: docker-practice/actions-setup-docker@master
+        timeout-minutes: 12
+
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
       - name: run benches
