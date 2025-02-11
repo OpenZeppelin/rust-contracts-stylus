@@ -14,7 +14,7 @@
 //! ```
 //!
 //! Roles can be used to represent a set of permissions. To restrict access to a
-//! function call, use [`AccessControl::has_role`]:
+//! function call, use [`IAccessControl::has_role`]:
 //!
 //! ```rust,ignore
 //! pub fn foo() {
@@ -23,24 +23,26 @@
 //! }
 //! ```
 //!
-//! Roles can be granted and revoked dynamically via the `grant_role` and
-//! `revoke_role` functions. Each role has an associated admin role, and only
-//! accounts that have a `role`'s `admin_role` can call `grant_role` and
-//! `revoke_role`.
+//! Roles can be granted and revoked dynamically via the
+//! [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`]
+//! functions. Each role has an associated admin role, and only accounts that
+//! have a `role`'s `admin_role` can call [`IAccessControl::grant_role`] and
+//! [`IAccessControl::revoke_role`].
 //!
-//! By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which
-//! means that only accounts with this role will be able to grant or revoke
-//! other roles. More complex role relationships can be created by using
-//! `_set_role_admin`.
+//! By default, the admin role for all roles is
+//! [`AccessControl::DEFAULT_ADMIN_ROLE`], which means that only accounts with
+//! this role will be able to grant or revoke other roles. More complex role
+//! relationships can be created by using [`AccessControl::_set_role_admin`].
 //!
-//! WARNING: The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission
-//! to grant and revoke this role. Extra precautions should be taken to secure
-//! accounts that have been granted it. We recommend using
+//! WARNING: The [`AccessControl::DEFAULT_ADMIN_ROLE`] is also its own admin: it
+//! has permission to grant and revoke this role. Extra precautions should be
+//! taken to secure accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, B256};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
@@ -122,9 +124,12 @@ pub struct AccessControl {
     /// Role identifier -> Role information.
     pub(crate) roles: StorageMap<FixedBytes<32>, RoleData>,
 }
+/// Interface for an [`AccessControl`] contract.
+#[interface_id]
+pub trait IAccessControl {
+    /// The error type associated with this interface implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
 
-#[public]
-impl AccessControl {
     /// Returns `true` if `account` has been granted `role`.
     ///
     /// # Arguments
@@ -132,10 +137,7 @@ impl AccessControl {
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
     /// * `account` - The account to check for membership.
-    #[must_use]
-    pub fn has_role(&self, role: B256, account: Address) -> bool {
-        self.roles.getter(role).has_role.get(account)
-    }
+    fn has_role(&self, role: B256, account: Address) -> bool;
 
     /// Checks if [`msg::sender`] has been granted `role`.
     ///
@@ -148,23 +150,18 @@ impl AccessControl {
     ///
     /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
     ///   granted `role`.
-    pub fn only_role(&self, role: B256) -> Result<(), Error> {
-        self._check_role(role, msg::sender())
-    }
+    fn only_role(&self, role: B256) -> Result<(), Self::Error>;
 
-    /// Returns the admin role that controls `role`. See [`Self::grant_role`]
-    /// and [`Self::revoke_role`].
+    /// Returns the admin role that controls `role`. See
+    /// [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`].
     ///
-    /// To change a role's admin, use [`Self::_set_role_admin`].
+    /// To change a role's admin, use [`AccessControl::_set_role_admin`].
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
-    #[must_use]
-    pub fn get_role_admin(&self, role: B256) -> B256 {
-        *self.roles.getter(role).admin_role
-    }
+    fn get_role_admin(&self, role: B256) -> B256;
 
     /// Grants `role` to `account`.
     ///
@@ -185,16 +182,11 @@ impl AccessControl {
     /// # Events
     ///
     /// * [`RoleGranted`]
-    pub fn grant_role(
+    fn grant_role(
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), Error> {
-        let admin_role = self.get_role_admin(role);
-        self.only_role(admin_role)?;
-        self._grant_role(role, account);
-        Ok(())
-    }
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from `account`.
     ///
@@ -214,16 +206,11 @@ impl AccessControl {
     /// # Events
     ///
     /// * [`RoleRevoked`].
-    pub fn revoke_role(
+    fn revoke_role(
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), Error> {
-        let admin_role = self.get_role_admin(role);
-        self.only_role(admin_role)?;
-        self._revoke_role(role, account);
-        Ok(())
-    }
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from the calling account.
     ///
@@ -246,11 +233,58 @@ impl AccessControl {
     /// # Events
     ///
     /// * [`RoleRevoked`] - If the calling account has its `role` revoked.
-    pub fn renounce_role(
+    fn renounce_role(
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error>;
+}
+
+#[public]
+impl IAccessControl for AccessControl {
+    type Error = Error;
+
+    #[must_use]
+    fn has_role(&self, role: B256, account: Address) -> bool {
+        self.roles.getter(role).has_role.get(account)
+    }
+
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
+        self._check_role(role, msg::sender())
+    }
+
+    #[must_use]
+    fn get_role_admin(&self, role: B256) -> B256 {
+        *self.roles.getter(role).admin_role
+    }
+
+    fn grant_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self._grant_role(role, account);
+        Ok(())
+    }
+
+    fn revoke_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self._revoke_role(role, account);
+        Ok(())
+    }
+
+    fn renounce_role(
+        &mut self,
+        role: B256,
+        confirmation: Address,
+    ) -> Result<(), Self::Error> {
         if msg::sender() != confirmation {
             return Err(Error::BadConfirmation(
                 AccessControlBadConfirmation {},
@@ -368,7 +402,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{AccessControl, Error};
+    use super::{AccessControl, Error, IAccessControl};
 
     /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice;
