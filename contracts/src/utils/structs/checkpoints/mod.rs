@@ -47,7 +47,7 @@ impl MethodError for Error {
     }
 }
 
-/// State of the checkpoint library contract.
+/// State of a [`Trace`] contract.
 #[storage]
 pub struct Trace<S: Size> {
     /// Stores checkpoints in a dynamic array sorted by key.
@@ -55,7 +55,7 @@ pub struct Trace<S: Size> {
     pub _checkpoints: StorageVec<Checkpoint<S>>,
 }
 
-/// State of a single checkpoint.
+/// State of a [`Checkpoint`] contract.
 #[storage]
 pub struct Checkpoint<S: Size> {
     /// The key of the checkpoint. Used as a sorting key.
@@ -83,9 +83,9 @@ impl<S: Size> Trace<S> {
     ///
     /// # Errors
     ///
-    /// If the `key` is lower than previously pushed checkpoint's key, the error
-    /// [`Error::CheckpointUnorderedInsertion`] is returned (necessary to
-    /// maintain sorted order).
+    /// * [`Error::CheckpointUnorderedInsertion`] - If the `key` is lower than
+    ///   previously pushed checkpoint's key (necessary to maintain sorted
+    ///   order).
     pub fn push(
         &mut self,
         key: S::Key,
@@ -233,9 +233,8 @@ impl<S: Size> Trace<S> {
     ///
     /// # Errors
     ///
-    /// To maintain the sorted order if the `key` is lower than the previously
-    /// inserted one, the error [`Error::CheckpointUnorderedInsertion`] is
-    /// returned.
+    /// * [`Error::CheckpointUnorderedInsertion`] - If the `key` is lower than
+    ///   the previously inserted one.
     fn _insert(
         &mut self,
         key: S::Key,
@@ -330,14 +329,14 @@ impl<S: Size> Trace<S> {
     /// Immutable access on an element of the checkpoint's array. The position
     /// is assumed to be within bounds.
     ///
-    /// # Panics
-    ///
-    /// If `pos` exceeds [`Self::length`].
-    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
+    ///
+    /// # Panics
+    ///
+    /// * If `pos` exceeds [`Self::length`].
     fn _index(&self, pos: U256) -> StorageGuard<Checkpoint<S>> {
         self._checkpoints
             .get(pos)
@@ -347,14 +346,14 @@ impl<S: Size> Trace<S> {
     /// Mutable access on an element of the checkpoint's array. The position is
     /// assumed to be within bounds.
     ///
-    /// # Panics
-    ///
-    /// If `pos` exceeds [`Self::length`].
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the checkpoint's state.
     /// * `pos` - Index of the checkpoint.
+    ///
+    /// # Panics
+    ///
+    /// * If `pos` exceeds [`Self::length`].
     fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint<S>> {
         self._checkpoints
             .setter(pos)
@@ -377,14 +376,22 @@ impl<S: Size> Trace<S> {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::uint;
+    use alloy_primitives::{uint, Address};
+    use stylus_sdk::prelude::*;
 
     use crate::utils::structs::checkpoints::{
         generic_size::S160, CheckpointUnorderedInsertion, Error, Trace,
     };
 
+    unsafe impl TopLevelStorage for Trace<S160> {}
+
+    #[public]
+    impl Trace<S160> {}
+
+    use motsu::prelude::Contract;
+
     #[motsu::test]
-    fn push(checkpoint: Trace<S160>) {
+    fn push(checkpoint: Contract<Trace<S160>>, alice: Address) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -394,19 +401,37 @@ mod tests {
         let third_key = uint!(3_U96);
         let third_value = uint!(33_U160);
 
-        checkpoint.push(first_key, first_value).expect("push first");
-        checkpoint.push(second_key, second_value).expect("push second");
-        checkpoint.push(third_key, third_value).expect("push third");
+        checkpoint
+            .sender(alice)
+            .push(first_key, first_value)
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(second_key, second_value)
+            .expect("push second");
+        checkpoint
+            .sender(alice)
+            .push(third_key, third_value)
+            .expect("push third");
 
-        assert_eq!(checkpoint.length(), uint!(3_U256));
+        assert_eq!(checkpoint.sender(alice).length(), uint!(3_U256));
 
-        assert_eq!(checkpoint.at(uint!(0_U32)), (first_key, first_value));
-        assert_eq!(checkpoint.at(uint!(1_U32)), (second_key, second_value));
-        assert_eq!(checkpoint.at(uint!(2_U32)), (third_key, third_value));
+        assert_eq!(
+            checkpoint.sender(alice).at(uint!(0_U32)),
+            (first_key, first_value)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).at(uint!(1_U32)),
+            (second_key, second_value)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).at(uint!(2_U32)),
+            (third_key, third_value)
+        );
     }
 
     #[motsu::test]
-    fn push_same_value(checkpoint: Trace<S160>) {
+    fn push_same_value(checkpoint: Contract<Trace<S160>>, alice: Address) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -416,114 +441,219 @@ mod tests {
         let third_key = uint!(2_U96);
         let third_value = uint!(222_U160);
 
-        checkpoint.push(first_key, first_value).expect("push first");
-        checkpoint.push(second_key, second_value).expect("push second");
-        checkpoint.push(third_key, third_value).expect("push third");
+        checkpoint
+            .sender(alice)
+            .push(first_key, first_value)
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(second_key, second_value)
+            .expect("push second");
+        checkpoint
+            .sender(alice)
+            .push(third_key, third_value)
+            .expect("push third");
 
         assert_eq!(
-            checkpoint.length(),
+            checkpoint.sender(alice).length(),
             uint!(2_U256),
             "two checkpoints should be stored since third_value overrides second_value"
         );
 
-        assert_eq!(checkpoint.at(uint!(0_U32)), (first_key, first_value));
-        assert_eq!(checkpoint.at(uint!(1_U32)), (third_key, third_value));
+        assert_eq!(
+            checkpoint.sender(alice).at(uint!(0_U32)),
+            (first_key, first_value)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).at(uint!(1_U32)),
+            (third_key, third_value)
+        );
+    }
+    #[motsu::test]
+    fn lower_lookup(checkpoint: Contract<Trace<S160>>, alice: Address) {
+        checkpoint
+            .sender(alice)
+            .push(uint!(1_U96), uint!(11_U160))
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(uint!(3_U96), uint!(33_U160))
+            .expect("push second");
+        checkpoint
+            .sender(alice)
+            .push(uint!(5_U96), uint!(55_U160))
+            .expect("push third");
+
+        assert_eq!(
+            checkpoint.sender(alice).lower_lookup(uint!(2_U96)),
+            uint!(33_U160)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).lower_lookup(uint!(3_U96)),
+            uint!(33_U160)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).lower_lookup(uint!(4_U96)),
+            uint!(55_U160)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).lower_lookup(uint!(6_U96)),
+            uint!(0_U160)
+        );
     }
 
     #[motsu::test]
-    fn lower_lookup(checkpoint: Trace<S160>) {
-        checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
-        checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
-        checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
+    fn upper_lookup(checkpoint: Contract<Trace<S160>>, alice: Address) {
+        checkpoint
+            .sender(alice)
+            .push(uint!(1_U96), uint!(11_U160))
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(uint!(3_U96), uint!(33_U160))
+            .expect("push second");
+        checkpoint
+            .sender(alice)
+            .push(uint!(5_U96), uint!(55_U160))
+            .expect("push third");
 
-        assert_eq!(checkpoint.lower_lookup(uint!(2_U96)), uint!(33_U160));
-        assert_eq!(checkpoint.lower_lookup(uint!(3_U96)), uint!(33_U160));
-        assert_eq!(checkpoint.lower_lookup(uint!(4_U96)), uint!(55_U160));
-        assert_eq!(checkpoint.lower_lookup(uint!(6_U96)), uint!(0_U160));
+        assert_eq!(
+            checkpoint.sender(alice).upper_lookup(uint!(2_U96)),
+            uint!(11_U160)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).upper_lookup(uint!(1_U96)),
+            uint!(11_U160)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).upper_lookup(uint!(4_U96)),
+            uint!(33_U160)
+        );
+        assert_eq!(
+            checkpoint.sender(alice).upper_lookup(uint!(0_U96)),
+            uint!(0_U160)
+        );
     }
 
     #[motsu::test]
-    fn upper_lookup(checkpoint: Trace<S160>) {
-        checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
-        checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
-        checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
-
-        assert_eq!(checkpoint.upper_lookup(uint!(2_U96)), uint!(11_U160));
-        assert_eq!(checkpoint.upper_lookup(uint!(1_U96)), uint!(11_U160));
-        assert_eq!(checkpoint.upper_lookup(uint!(4_U96)), uint!(33_U160));
-        assert_eq!(checkpoint.upper_lookup(uint!(0_U96)), uint!(0_U160));
-    }
-
-    #[motsu::test]
-    fn upper_lookup_recent(checkpoint: Trace<S160>) {
+    fn upper_lookup_recent(checkpoint: Contract<Trace<S160>>, alice: Address) {
         // `upper_lookup_recent` has different optimizations for "short" (<=5)
         // and "long" (>5) checkpoint arrays.
         //
         // Validate the first approach for a short checkpoint array.
-        checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
-        checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
-        checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
+        checkpoint
+            .sender(alice)
+            .push(uint!(1_U96), uint!(11_U160))
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(uint!(3_U96), uint!(33_U160))
+            .expect("push second");
+        checkpoint
+            .sender(alice)
+            .push(uint!(5_U96), uint!(55_U160))
+            .expect("push third");
 
         assert_eq!(
-            checkpoint.upper_lookup_recent(uint!(2_U96)),
+            checkpoint.sender(alice).upper_lookup_recent(uint!(2_U96)),
             uint!(11_U160)
         );
         assert_eq!(
-            checkpoint.upper_lookup_recent(uint!(1_U96)),
+            checkpoint.sender(alice).upper_lookup_recent(uint!(1_U96)),
             uint!(11_U160)
         );
         assert_eq!(
-            checkpoint.upper_lookup_recent(uint!(4_U96)),
+            checkpoint.sender(alice).upper_lookup_recent(uint!(4_U96)),
             uint!(33_U160)
         );
 
         // Validate the second approach for a long checkpoint array.
-        checkpoint.push(uint!(7_U96), uint!(77_U160)).expect("push fourth");
-        checkpoint.push(uint!(9_U96), uint!(99_U160)).expect("push fifth");
-        checkpoint.push(uint!(11_U96), uint!(111_U160)).expect("push sixth");
+        checkpoint
+            .sender(alice)
+            .push(uint!(7_U96), uint!(77_U160))
+            .expect("push fourth");
+        checkpoint
+            .sender(alice)
+            .push(uint!(9_U96), uint!(99_U160))
+            .expect("push fifth");
+        checkpoint
+            .sender(alice)
+            .push(uint!(11_U96), uint!(111_U160))
+            .expect("push sixth");
 
         assert_eq!(
-            checkpoint.upper_lookup_recent(uint!(7_U96)),
+            checkpoint.sender(alice).upper_lookup_recent(uint!(7_U96)),
             uint!(77_U160)
         );
         assert_eq!(
-            checkpoint.upper_lookup_recent(uint!(9_U96)),
+            checkpoint.sender(alice).upper_lookup_recent(uint!(9_U96)),
             uint!(99_U160)
         );
         assert_eq!(
-            checkpoint.upper_lookup_recent(uint!(11_U96)),
+            checkpoint.sender(alice).upper_lookup_recent(uint!(11_U96)),
             uint!(111_U160)
         );
 
-        assert_eq!(checkpoint.upper_lookup_recent(uint!(0_U96)), uint!(0_U160));
-    }
-
-    #[motsu::test]
-    fn latest(checkpoint: Trace<S160>) {
-        assert_eq!(checkpoint.latest(), uint!(0_U160));
-        checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
-        checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
-        checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
-        assert_eq!(checkpoint.latest(), uint!(55_U160));
-    }
-
-    #[motsu::test]
-    fn latest_checkpoint(checkpoint: Trace<S160>) {
-        assert_eq!(checkpoint.latest_checkpoint(), None);
-        checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
-        checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
-        checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
         assert_eq!(
-            checkpoint.latest_checkpoint(),
+            checkpoint.sender(alice).upper_lookup_recent(uint!(0_U96)),
+            uint!(0_U160)
+        );
+    }
+
+    #[motsu::test]
+    fn latest(checkpoint: Contract<Trace<S160>>, alice: Address) {
+        assert_eq!(checkpoint.sender(alice).latest(), uint!(0_U160));
+        checkpoint
+            .sender(alice)
+            .push(uint!(1_U96), uint!(11_U160))
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(uint!(3_U96), uint!(33_U160))
+            .expect("push second");
+        checkpoint
+            .sender(alice)
+            .push(uint!(5_U96), uint!(55_U160))
+            .expect("push third");
+        assert_eq!(checkpoint.sender(alice).latest(), uint!(55_U160));
+    }
+
+    #[motsu::test]
+    fn latest_checkpoint(checkpoint: Contract<Trace<S160>>, alice: Address) {
+        assert_eq!(checkpoint.sender(alice).latest_checkpoint(), None);
+        checkpoint
+            .sender(alice)
+            .push(uint!(1_U96), uint!(11_U160))
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(uint!(3_U96), uint!(33_U160))
+            .expect("push second");
+        checkpoint
+            .sender(alice)
+            .push(uint!(5_U96), uint!(55_U160))
+            .expect("push third");
+        assert_eq!(
+            checkpoint.sender(alice).latest_checkpoint(),
             Some((uint!(5_U96), uint!(55_U160)))
         );
     }
 
     #[motsu::test]
-    fn error_when_unordered_insertion(checkpoint: Trace<S160>) {
-        checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
-        checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
+    fn error_when_unordered_insertion(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
+        checkpoint
+            .sender(alice)
+            .push(uint!(1_U96), uint!(11_U160))
+            .expect("push first");
+        checkpoint
+            .sender(alice)
+            .push(uint!(3_U96), uint!(33_U160))
+            .expect("push second");
         let err = checkpoint
+            .sender(alice)
             .push(uint!(2_U96), uint!(22_U160))
             .expect_err("should not push value lower then last one");
         assert!(matches!(

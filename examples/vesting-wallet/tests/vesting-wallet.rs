@@ -121,7 +121,7 @@ mod ether_vesting {
             .address()?;
         let contract = VestingWallet::new(contract_addr, &account.wallet);
 
-        let _ = watch!(contract.receiveEther().value(U256::from(allocation)))?;
+        watch!(contract.receiveEther().value(U256::from(allocation)))?;
 
         Ok(contract_addr)
     }
@@ -248,7 +248,7 @@ mod erc20_vesting {
     ) -> eyre::Result<Address> {
         let erc20_address = erc20::deploy(&account.wallet).await?;
         let erc20 = ERC20Mock::new(erc20_address, &account.wallet);
-        let _ = watch!(erc20.mint(mint_to, allocation))?;
+        watch!(erc20.mint(mint_to, allocation))?;
         Ok(erc20_address)
     }
 
@@ -263,7 +263,7 @@ mod erc20_vesting {
 
         let erc20_address = erc20_return_false::deploy(&account.wallet).await?;
         let erc20 = ERC20ReturnFalseMock::new(erc20_address, &account.wallet);
-        let _ = watch!(erc20.mint(mint_to, U256::from(allocation)))?;
+        watch!(erc20.mint(mint_to, U256::from(allocation)))?;
         Ok(erc20_address)
     }
 

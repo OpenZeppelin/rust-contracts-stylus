@@ -16,10 +16,10 @@ use crate::{
     utils::{introspection::erc165::IErc165, Metadata},
 };
 
-/// Metadata of an [`crate::token::erc721::Erc721`] token.
+/// State of an [`Erc721Metadata`] contract.
 #[storage]
 pub struct Erc721Metadata {
-    /// Common Metadata.
+    /// [`Metadata`] contract.
     #[allow(clippy::used_underscore_binding)]
     pub _metadata: Metadata,
     /// Base URI for tokens.
@@ -84,19 +84,23 @@ impl Erc721Metadata {
 
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
+    /// NOTE: To expose this function in your contract's ABI, implement it as
+    /// shown in the Examples section below, accepting only the `token_id`
+    /// parameter. The `erc721` reference should come from your contract's
+    /// state. The implementation should use `#[selector(name = "tokenURI")]` to
+    /// match Solidity's camelCase naming convention and it should forward the
+    /// call to your internal storage instance along with the `erc721`
+    /// reference.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - Id of a token.
+    /// * `token_id` - ID of a token.
     /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
     ///
     /// # Errors
     ///
-    /// If the token does not exist, then the error
-    /// [`Error::NonexistentToken`] is returned.
-    ///
-    /// NOTE: In order to have [`Erc721Metadata::token_uri`] exposed in ABI,
-    /// you need to do this manually.
+    /// * [`Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Examples
     ///
@@ -105,6 +109,7 @@ impl Erc721Metadata {
     /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
     ///     Ok(self.metadata.token_uri(token_id, &self.erc721)?)
     /// }
+    /// ```
     pub fn token_uri(
         &self,
         token_id: U256,

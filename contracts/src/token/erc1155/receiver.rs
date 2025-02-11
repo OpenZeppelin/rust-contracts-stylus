@@ -22,6 +22,8 @@ sol_interface! {
         ///
         /// # Arguments
         ///
+        /// # Arguments
+        ///
         /// * `operator` - The address which initiated the transfer.
         /// * `from` - The address which previously owned the token.
         /// * `id` - The ID of the token being transferred.
@@ -43,6 +45,8 @@ sol_interface! {
         ///
         /// NOTE: To accept the transfer(s), this must return
         /// [`super::BATCH_TRANSFER_FN_SELECTOR`], or its own function selector.
+        ///
+        /// # Arguments
         ///
         /// # Arguments
         ///

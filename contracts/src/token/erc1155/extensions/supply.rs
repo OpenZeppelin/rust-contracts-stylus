@@ -27,10 +27,10 @@ use crate::{
     utils::math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
-/// State of an [`Erc1155Supply`] token.
+/// State of an [`Erc1155Supply`] contract.
 #[storage]
 pub struct Erc1155Supply {
-    /// ERC-1155 contract storage.
+    /// [`Erc1155`] contract.
     pub erc1155: Erc1155,
     /// Mapping from token id to total supply.
     #[allow(clippy::used_underscore_binding)]
@@ -196,6 +196,9 @@ impl Erc1155Supply {
     /// Extended version of [`Erc1155::_update`] that updates the supply of
     /// tokens.
     ///
+    /// NOTE: The ERC-1155 acceptance check is not performed in this function.
+    /// See [`Self::_update_with_acceptance_check`] instead.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
@@ -206,23 +209,21 @@ impl Erc1155Supply {
     ///
     /// # Errors
     ///
-    /// If length of `ids` is not equal to length of `values`, then the
-    /// error [`erc1155::Error::InvalidArrayLength`] is returned.
-    /// If `value` is greater than the balance of the `from` account,
-    /// then the error [`erc1155::Error::InsufficientBalance`] is returned.
-    ///
-    /// NOTE: The ERC-1155 acceptance check is not performed in this function.
-    /// See [`Self::_update_with_acceptance_check`] instead.
+    /// * [`erc1155::Error::InvalidArrayLength`] - If length of `ids` is not
+    ///   equal to length of `values`.
+    /// * [`erc1155::Error::InsufficientBalance`] - If `value` is greater than
+    ///   the balance of the `from` account.
     ///
     /// # Events
     ///
-    /// Emits a [`erc1155::TransferSingle`] event if the arrays contain one
-    /// element, and [`erc1155::TransferBatch`] otherwise.
+    /// * [`erc1155::TransferSingle`] - If the arrays contain one element.
+    /// * [`erc1155::TransferBatch`] - If the arrays contain more than one
+    ///   element.
     ///
     /// # Panics
     ///
-    /// If updated balance and/or supply exceeds `U256::MAX`, may happen during
-    /// the `mint` operation.
+    /// * If updated balance and/or supply exceeds `U256::MAX`, may happen
+    ///   during the `mint` operation.
     fn _update(
         &mut self,
         from: Address,
@@ -358,7 +359,9 @@ impl Erc1155Supply {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
+    use alloy_primitives::{Address, U256};
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{Erc1155Supply, IErc1155Supply};
     use crate::token::erc1155::{
@@ -366,8 +369,7 @@ mod tests {
         ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
     };
 
-    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
-    const BOB: Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
+    unsafe impl TopLevelStorage for Erc1155Supply {}
 
     fn init(
         contract: &mut Erc1155Supply,
@@ -389,41 +391,61 @@ mod tests {
     }
 
     #[motsu::test]
-    fn before_mint(contract: Erc1155Supply) {
+    fn before_mint(contract: Contract<Erc1155Supply>, alice: Address) {
         let token_id = random_token_ids(1)[0];
-        assert_eq!(U256::ZERO, contract.total_supply(token_id));
-        assert_eq!(U256::ZERO, contract.total_supply_all());
-        assert!(!contract.exists(token_id));
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply(token_id));
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
+        assert!(!contract.sender(alice).exists(token_id));
     }
 
     #[motsu::test]
-    fn after_mint_single(contract: Erc1155Supply) {
-        let (token_ids, values) = init(contract, ALICE, 1);
-        assert_eq!(values[0], contract.balance_of(ALICE, token_ids[0]));
-        assert_eq!(values[0], contract.total_supply(token_ids[0]));
-        assert_eq!(values[0], contract.total_supply_all());
-        assert!(contract.exists(token_ids[0]));
+    fn after_mint_single(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 1));
+        assert_eq!(
+            values[0],
+            contract.sender(alice).balance_of(bob, token_ids[0])
+        );
+        assert_eq!(
+            values[0],
+            contract.sender(alice).total_supply(token_ids[0])
+        );
+        assert_eq!(values[0], contract.sender(alice).total_supply_all());
+        assert!(contract.sender(alice).exists(token_ids[0]));
     }
 
     #[motsu::test]
-    fn after_mint_batch(contract: Erc1155Supply) {
-        let (token_ids, values) = init(contract, ALICE, 4);
+    fn after_mint_batch(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 4));
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
-            assert_eq!(value, contract.balance_of(ALICE, token_id));
-            assert_eq!(value, contract.total_supply(token_id));
-            assert!(contract.exists(token_id));
+            assert_eq!(value, contract.sender(alice).balance_of(bob, token_id));
+            assert_eq!(value, contract.sender(alice).total_supply(token_id));
+            assert!(contract.sender(alice).exists(token_id));
         }
         let total_supply_all: U256 = values.iter().sum();
-        assert_eq!(total_supply_all, contract.total_supply_all());
+        assert_eq!(total_supply_all, contract.sender(alice).total_supply_all());
     }
 
     #[motsu::test]
-    fn mint_reverts_on_invalid_receiver(contract: Erc1155Supply) {
+    fn mint_reverts_on_invalid_receiver(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+    ) {
         let token_id = random_token_ids(1)[0];
         let two = U256::from(2);
         let invalid_receiver = Address::ZERO;
 
         let err = contract
+            .sender(alice)
             ._mint(invalid_receiver, token_id, two, &vec![].into())
             .expect_err("should revert with `InvalidReceiver`");
 
@@ -437,64 +459,108 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply`"]
-    fn mint_panics_on_total_supply_overflow(contract: Erc1155Supply) {
+    fn mint_panics_on_total_supply_overflow(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+        dave: Address,
+    ) {
         let token_id = random_token_ids(1)[0];
         let two = U256::from(2);
         let three = U256::from(3);
         contract
-            ._mint(ALICE, token_id, U256::MAX / two, &vec![].into())
-            .expect("should mint to ALICE");
+            .sender(alice)
+            ._mint(bob, token_id, U256::MAX / two, &vec![].into())
+            .expect("should mint to bob");
         contract
-            ._mint(BOB, token_id, U256::MAX / two, &vec![].into())
-            .expect("should mint to BOB");
-        let _ = contract._mint(ALICE, token_id, three, &vec![].into());
+            .sender(alice)
+            ._mint(dave, token_id, U256::MAX / two, &vec![].into())
+            .expect("should mint to dave");
+        // This should panic.
+        _ = contract.sender(alice)._mint(bob, token_id, three, &vec![].into());
     }
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `_total_supply_all`"]
-    fn mint_panics_on_total_supply_all_overflow(contract: Erc1155Supply) {
+    fn mint_panics_on_total_supply_all_overflow(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
         let token_ids = random_token_ids(2);
         contract
-            ._mint(ALICE, token_ids[0], U256::MAX, &vec![].into())
+            .sender(alice)
+            ._mint(bob, token_ids[0], U256::MAX, &vec![].into())
             .expect("should mint");
-        let _ =
-            contract._mint(ALICE, token_ids[1], U256::from(1), &vec![].into());
+        // This should panic.
+        _ = contract.sender(alice)._mint(
+            bob,
+            token_ids[1],
+            U256::from(1),
+            &vec![].into(),
+        );
     }
 
     #[motsu::test]
-    fn after_burn_single(contract: Erc1155Supply) {
-        let (token_ids, values) = init(contract, ALICE, 1);
-        contract._burn(ALICE, token_ids[0], values[0]).expect("should burn");
-
-        assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
-        assert_eq!(U256::ZERO, contract.total_supply_all());
-        assert!(!contract.exists(token_ids[0]));
-    }
-
-    #[motsu::test]
-    fn after_burn_batch(contract: Erc1155Supply) {
-        let (token_ids, values) = init(contract, ALICE, 4);
+    fn after_burn_single(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 1));
         contract
-            ._burn_batch(ALICE, token_ids.clone(), values.clone())
+            .sender(alice)
+            ._burn(bob, token_ids[0], values[0])
+            .expect("should burn");
+
+        assert_eq!(
+            U256::ZERO,
+            contract.sender(alice).total_supply(token_ids[0])
+        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
+        assert!(!contract.sender(alice).exists(token_ids[0]));
+    }
+
+    #[motsu::test]
+    fn after_burn_batch(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 4));
+        contract
+            .sender(alice)
+            ._burn_batch(bob, token_ids.clone(), values.clone())
             .expect("should burn batch");
 
         for &token_id in &token_ids {
             assert_eq!(
                 U256::ZERO,
-                contract.erc1155.balance_of(ALICE, token_id)
+                contract.sender(alice).erc1155.balance_of(bob, token_id)
             );
-            assert!(!contract.exists(token_id));
-            assert_eq!(U256::ZERO, contract.total_supply(token_id));
+            assert!(!contract.sender(alice).exists(token_id));
+            assert_eq!(
+                U256::ZERO,
+                contract.sender(alice).total_supply(token_id)
+            );
         }
-        assert_eq!(U256::ZERO, contract.total_supply_all());
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
     }
 
     #[motsu::test]
-    fn burn_reverts_when_invalid_sender(contract: Erc1155Supply) {
-        let (token_ids, values) = init(contract, ALICE, 1);
+    fn burn_reverts_when_invalid_sender(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 1));
         let invalid_sender = Address::ZERO;
 
         let err = contract
+            .sender(alice)
             ._burn(invalid_sender, token_ids[0], values[0])
             .expect_err("should not burn token for invalid sender");
 
@@ -507,15 +573,22 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supply_unaffected_by_no_op(contract: Erc1155Supply) {
+    fn supply_unaffected_by_no_op(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+    ) {
         let token_ids = random_token_ids(1);
         let values = random_values(1);
 
         contract
+            .sender(alice)
             ._update(Address::ZERO, Address::ZERO, token_ids.clone(), values)
             .expect("should supply");
-        assert_eq!(U256::ZERO, contract.total_supply(token_ids[0]));
-        assert_eq!(U256::ZERO, contract.total_supply_all());
-        assert!(!contract.exists(token_ids[0]));
+        assert_eq!(
+            U256::ZERO,
+            contract.sender(alice).total_supply(token_ids[0])
+        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
+        assert!(!contract.sender(alice).exists(token_ids[0]));
     }
 }

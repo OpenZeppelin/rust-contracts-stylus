@@ -45,7 +45,7 @@ pub enum Error {
     InvalidCap(ERC20InvalidCap),
 }
 
-/// State of a Capped Contract.
+/// State of a [`Capped`] Contract.
 #[storage]
 pub struct Capped {
     /// A cap to the supply of tokens.
@@ -63,18 +63,22 @@ impl Capped {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::uint;
+    use alloy_primitives::{uint, Address};
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::TopLevelStorage;
 
     use super::Capped;
 
+    unsafe impl TopLevelStorage for Capped {}
+
     #[motsu::test]
-    fn cap_works(contract: Capped) {
+    fn cap_works(contract: Contract<Capped>, alice: Address) {
         let value = uint!(2024_U256);
-        contract._cap.set(value);
-        assert_eq!(contract.cap(), value);
+        contract.init(alice, |contract| contract._cap.set(value));
+        assert_eq!(contract.sender(alice).cap(), value);
 
         let value = uint!(1_U256);
-        contract._cap.set(value);
-        assert_eq!(contract.cap(), value);
+        contract.init(alice, |contract| contract._cap.set(value));
+        assert_eq!(contract.sender(alice).cap(), value);
     }
 }
