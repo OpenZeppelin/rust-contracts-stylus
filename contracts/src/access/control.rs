@@ -252,7 +252,10 @@ impl IAccessControl for AccessControl {
         self.roles.getter(role).has_role.get(account)
     }
 
-    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
+    fn only_role(
+        &self,
+        role: B256,
+    ) -> Result<(), <Self as IAccessControl>::Error> {
         self._check_role(role, msg::sender())
     }
 
