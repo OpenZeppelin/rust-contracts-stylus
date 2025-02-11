@@ -33,10 +33,9 @@ jobs:
 
       - name: Install solc
         run: |
-          brew update
-          brew upgrade
-          brew tap ethereum/ethereum
-          brew install solidity@0.8.24
+          brew install solc-select
+          solc-select install 0.8.24
+          solc-select use 0.8.24
 
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
