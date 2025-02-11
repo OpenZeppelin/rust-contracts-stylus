@@ -287,7 +287,7 @@ impl Erc721Consecutive {
     ///
     /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
     /// * [`Error::ExceededMaxBatchMint`] - If `batch_size` exceeds
-    ///   [`Erc721Consecutive::_max_batch_size`].
+    ///   `max_batch_size` of the contract.
     ///
     /// # Events
     ///
