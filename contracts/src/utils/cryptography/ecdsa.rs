@@ -12,8 +12,6 @@ use stylus_sdk::{
     stylus_proc::SolidityError,
 };
 
-use crate::utils::cryptography::ecdsa;
-
 /// Address of the `ecrecover` EVM precompile.
 pub const ECRECOVER_ADDR: Address =
     address!("0000000000000000000000000000000000000001");
