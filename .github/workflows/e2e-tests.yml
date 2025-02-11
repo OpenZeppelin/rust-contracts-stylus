@@ -43,7 +43,6 @@ jobs:
 
       - name: Setup Docker on macOS
         run: |
-          brew install docker
           brew install orbstack
           orb
 
