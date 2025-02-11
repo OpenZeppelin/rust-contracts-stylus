@@ -401,75 +401,80 @@ mod tests {
         }
     }
 
-    proptest! {
-        #[test]
-        fn proof_tampering_invalidates(
-            (proof, root, leaf) in valid_merkle_proof(0),
-            tamper_idx in 0..32usize,
-        ) {
-            if let Some(proof_element) = proof.first() {
-                let mut tampered_proof = proof.clone();
-                let mut tampered_element = *proof_element;
-                tampered_element[tamper_idx] =
-                    tampered_element[tamper_idx].wrapping_add(1);
-                tampered_proof[0] = tampered_element;
+    #[test]
+    fn proof_tampering_invalidates() {
+        proptest!(
+            |((proof, root, leaf) in valid_merkle_proof(0),
+             tamper_idx in 0..32usize)| {
+                if let Some(proof_element) = proof.first() {
+                    let mut tampered_proof = proof.clone();
+                    let mut tampered_element = *proof_element;
+                    tampered_element[tamper_idx] =
+                        tampered_element[tamper_idx].wrapping_add(1);
+                    tampered_proof[0] = tampered_element;
 
-                prop_assert!(!Verifier::verify(&tampered_proof, root, leaf));
+                    prop_assert!(!Verifier::verify(&tampered_proof, root, leaf));
+                }
             }
-        }
+        )
+    }
 
-        #[test]
-        fn proof_length_affects_verification(
-            (proof, root, leaf) in valid_merkle_proof(0),
-            extra_hash: [u8; 32]
-        ) {
-            let longer_proof = &[proof.as_slice(), &[extra_hash]].concat();
-            prop_assert!(!Verifier::verify(longer_proof, root, leaf));
+    #[test]
+    fn proof_length_affects_verification() {
+        proptest!(
+            |((proof, root, leaf) in valid_merkle_proof(0),
+             extra_hash: [u8; 32])| {
+                let longer_proof = &[proof.as_slice(), &[extra_hash]].concat();
+                prop_assert!(!Verifier::verify(longer_proof, root, leaf));
 
-            if !proof.is_empty() {
-                let shorter_proof = &proof[1..];
-                prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
-                let shorter_proof = &proof[..proof.len() - 1];
-                prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
+                if !proof.is_empty() {
+                    let shorter_proof = &proof[1..];
+                    prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
+                    let shorter_proof = &proof[..proof.len() - 1];
+                    prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
+                }
             }
-        }
+        )
+    }
 
-        #[test]
-        fn proof_consistency(
-            proof: Vec<[u8; 32]>,
-            proof_flags: Vec<bool>,
-            root: [u8; 32],
-            // for regular proof
-            leaf: [u8; 32],
-            // for multi-proof
-            leaves: Vec<[u8; 32]>,
-        ) {
-            let result1 = Verifier::verify(&proof, root, leaf);
-            let result2 = Verifier::verify(&proof, root, leaf);
-            prop_assert_eq!(result1, result2);
+    #[test]
+    fn proof_consistency() {
+        proptest!(
+            |(proof: Vec<[u8; 32]>,
+             proof_flags: Vec<bool>,
+             root: [u8; 32],
+             // for regular proof
+             leaf: [u8; 32],
+             // for multi-proof
+             leaves: Vec<[u8; 32]>,)| {
+                let result1 = Verifier::verify(&proof, root, leaf);
+                let result2 = Verifier::verify(&proof, root, leaf);
+                prop_assert_eq!(result1, result2);
 
-            // ensure proof_flags length is always <= proof.len()
-            let proof_flags = proof_flags.into_iter().take(proof.len()).collect::<Vec<_>>();
+                // ensure proof_flags length is always <= proof.len()
+                let proof_flags =
+                proof_flags.into_iter().take(proof.len()).collect::<Vec<_>>();
 
-            let result1 = Verifier::verify_multi_proof(
-                &proof,
-                &proof_flags,
-                root,
-                &leaves,
-            );
-            let result2 = Verifier::verify_multi_proof(
-                &proof,
-                &proof_flags,
-                root,
-                &leaves,
-            );
-            prop_assert_eq!(result1, result2);
-        }
+                let result1 = Verifier::verify_multi_proof(
+                    &proof,
+                    &proof_flags,
+                    root,
+                    &leaves,
+                );
+                let result2 = Verifier::verify_multi_proof(
+                    &proof,
+                    &proof_flags,
+                    root,
+                    &leaves,
+                );
+                prop_assert_eq!(result1, result2);
+            }
+        )
+    }
 
-        #[test]
-        fn single_leaf_equals_regular_verify(
-            (proof, root, leaf) in valid_merkle_proof(0)
-        ) {
+    #[test]
+    fn single_leaf_equals_regular_verify() {
+        proptest!(|((proof, root, leaf) in valid_merkle_proof(0))| {
             let proof_flags = vec![false; proof.len()];
             let multi_result = Verifier::verify_multi_proof(
                 &proof,
@@ -481,7 +486,7 @@ mod tests {
 
             let multi_result = multi_result.unwrap();
             prop_assert_eq!(multi_result, regular_result);
-        }
+        })
     }
 
     #[test]
