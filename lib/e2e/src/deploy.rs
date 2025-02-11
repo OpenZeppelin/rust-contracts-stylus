@@ -1,7 +1,23 @@
-use std::path::Path;
+use std::{
+    path::Path,
+    process::Command,
+    str::{from_utf8, FromStr},
+};
 
-use alloy::{rpc::types::TransactionReceipt, sol_types::SolConstructor};
+use alloy::{
+    primitives::TxHash,
+    providers::ProviderBuilder,
+    rpc::{
+        client::RpcClient,
+        types::{request, TransactionReceipt},
+    },
+    signers::k256::{self, ecdsa::SigningKey, Secp256k1},
+    sol_types::SolConstructor,
+    transports::{http::reqwest, RpcError, TransportErrorKind},
+};
+use eyre::{Context, ContextCompat};
 use koba::config::Deploy;
+use regex::Regex;
 
 use crate::project::Crate;
 
@@ -68,6 +84,62 @@ impl Deployer {
             deploy_only: false,
             quiet: false,
         };
-        koba::deploy(&config).await
+
+        // koba::deploy(&config).await
+        let signer = config.auth.wallet()?;
+        let output = Command::new("cargo")
+            .args(["stylus", "deploy"])
+            .args(["-e", &self.rpc_url])
+            .args(["--private-key", &self.private_key])
+            .args(["--args", &self.ctr_args.unwrap()])
+            .output()
+            .context("failed to execute `cargo stylus cache bid` command")?;
+
+        // output.
+        get_receipt(output, self.rpc_url, signer).await
     }
+}
+
+async fn get_receipt(
+    output: std::process::Output,
+    rpc_url: String,
+    signer: alloy::signers::local::LocalSigner<SigningKey<Secp256k1>>,
+) -> eyre::Result<TransactionReceipt> {
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .wallet(EthereumWallet::from(signer))
+        .on_http(rpc_url);
+
+    // // Convert output to string
+    // let output_str = from_utf8(&output.stdout)
+    //     .context("Failed to convert output to UTF-8")?;
+
+    // // Extract transaction hash using regex
+    // // The pattern matches a 0x followed by 64 hex characters
+    // let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
+    //     .context("Failed to create regex")?;
+
+    // let tx_hash = tx_hash_regex
+    //     .find(output_str)
+    //     .context("No transaction hash found in output")?
+    //     .as_str();
+
+    // // Convert string to TxHash
+    // let tx_hash = TxHash::from_str(tx_hash)
+    //     .context("Failed to parse transaction hash")?;
+
+    // // Create RPC client
+    // let client =
+    //     RpcClient::new_http(reqwest::Url::parse(&self.rpc_url).unwrap());
+
+    // // Get transaction receipt
+    // let receipt = client
+    //     .request("eth_getTransactionReceipt", [tx_hash])
+    //     .await
+    //     .map_err(|e: RpcError<TransportErrorKind>| {
+    //         eyre::eyre!("RPC error: {}", e)
+    //     })?
+    //     .ok_or_else(|| eyre::eyre!("Transaction receipt not found"))?;
+
+    // Ok(receipt)
 }
