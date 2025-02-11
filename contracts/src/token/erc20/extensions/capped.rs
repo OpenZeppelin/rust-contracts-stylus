@@ -21,7 +21,7 @@ mod sol {
 
     sol! {
         /// Indicates an error related to the operation that failed
-        /// because `total_supply` exceeded the `_cap`.
+        /// because `total_supply` exceeded the `cap`.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC20ExceededCap(uint256 increased_supply, uint256 cap);
@@ -38,7 +38,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error related to the operation that failed
-    /// because `total_supply` exceeded the `_cap`.
+    /// because `total_supply` exceeded the `cap`.
     ExceededCap(ERC20ExceededCap),
     /// Indicates an error related to the operation that failed
     /// because the supplied `cap` is not a valid cap value.
@@ -49,15 +49,14 @@ pub enum Error {
 #[storage]
 pub struct Capped {
     /// A cap to the supply of tokens.
-    #[allow(clippy::used_underscore_binding)]
-    pub _cap: StorageU256,
+    pub(crate) cap: StorageU256,
 }
 
 #[public]
 impl Capped {
     /// Returns the cap on the token's total supply.
     pub fn cap(&self) -> U256 {
-        self._cap.get()
+        self.cap.get()
     }
 }
 
@@ -74,11 +73,11 @@ mod tests {
     #[motsu::test]
     fn cap_works(contract: Contract<Capped>, alice: Address) {
         let value = uint!(2024_U256);
-        contract.init(alice, |contract| contract._cap.set(value));
+        contract.init(alice, |contract| contract.cap.set(value));
         assert_eq!(contract.sender(alice).cap(), value);
 
         let value = uint!(1_U256);
-        contract.init(alice, |contract| contract._cap.set(value));
+        contract.init(alice, |contract| contract.cap.set(value));
         assert_eq!(contract.sender(alice).cap(), value);
     }
 }

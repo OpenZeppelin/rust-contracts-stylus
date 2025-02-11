@@ -183,17 +183,13 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc721 {
     /// Maps tokens to owners.
-    #[allow(clippy::used_underscore_binding)]
-    pub _owners: StorageMap<U256, StorageAddress>,
+    pub(crate) owners: StorageMap<U256, StorageAddress>,
     /// Maps users to balances.
-    #[allow(clippy::used_underscore_binding)]
-    pub _balances: StorageMap<Address, StorageU256>,
+    pub(crate) balances: StorageMap<Address, StorageU256>,
     /// Maps tokens to approvals.
-    #[allow(clippy::used_underscore_binding)]
-    pub _token_approvals: StorageMap<U256, StorageAddress>,
+    pub(crate) token_approvals: StorageMap<U256, StorageAddress>,
     /// Maps owners to a mapping of operator approvals.
-    #[allow(clippy::used_underscore_binding)]
-    pub _operator_approvals:
+    pub(crate) operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
@@ -413,7 +409,7 @@ impl IErc721 for Erc721 {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
-        Ok(self._balances.get(owner))
+        Ok(self.balances.get(owner))
     }
 
     fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
@@ -486,7 +482,7 @@ impl IErc721 for Erc721 {
     }
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
-        self._operator_approvals.get(owner).get(operator)
+        self.operator_approvals.get(owner).get(operator)
     }
 }
 
@@ -514,7 +510,7 @@ impl Erc721 {
     /// * `token_id` - Token id as a number.
     #[must_use]
     pub fn _owner_of(&self, token_id: U256) -> Address {
-        self._owners.get(token_id)
+        self.owners.get(token_id)
     }
 
     /// Returns the approved address for `token_id`.
@@ -526,7 +522,7 @@ impl Erc721 {
     /// * `token_id` - Token id as a number.
     #[must_use]
     pub fn _get_approved(&self, token_id: U256) -> Address {
-        self._token_approvals.get(token_id)
+        self.token_approvals.get(token_id)
     }
 
     /// Returns whether `spender` is allowed to manage `owner`'s tokens, or
@@ -610,7 +606,7 @@ impl Erc721 {
     /// * `account` - Account to increase balance.
     /// * `value` - The number of tokens to increase balance.
     pub fn _increase_balance(&mut self, account: Address, value: U128) {
-        self._balances.setter(account).add_assign_unchecked(U256::from(value));
+        self.balances.setter(account).add_assign_unchecked(U256::from(value));
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
@@ -659,14 +655,14 @@ impl Erc721 {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self._balances.setter(from).sub_assign_unchecked(uint!(1_U256));
+            self.balances.setter(from).sub_assign_unchecked(uint!(1_U256));
         }
 
         if !to.is_zero() {
-            self._balances.setter(to).add_assign_unchecked(uint!(1_U256));
+            self.balances.setter(to).add_assign_unchecked(uint!(1_U256));
         }
 
-        self._owners.setter(token_id).set(to);
+        self.owners.setter(token_id).set(to);
         evm::log(Transfer { from, to, token_id });
         Ok(from)
     }
@@ -908,7 +904,7 @@ impl Erc721 {
             }
         }
 
-        self._token_approvals.setter(token_id).set(to);
+        self.token_approvals.setter(token_id).set(to);
         Ok(())
     }
 
@@ -938,7 +934,7 @@ impl Erc721 {
             return Err(ERC721InvalidOperator { operator }.into());
         }
 
-        self._operator_approvals.setter(owner).setter(operator).set(approved);
+        self.operator_approvals.setter(owner).setter(operator).set(approved);
         evm::log(ApprovalForAll { owner, operator, approved });
         Ok(())
     }
@@ -1445,7 +1441,7 @@ mod tests {
             .sender(alice)
             ._mint(bob, TOKEN_ID)
             .expect("should mint token to Bob");
-        contract.sender(alice)._token_approvals.setter(TOKEN_ID).set(alice);
+        contract.sender(alice).token_approvals.setter(TOKEN_ID).set(alice);
         contract
             .sender(alice)
             .safe_transfer_from(bob, alice, TOKEN_ID)

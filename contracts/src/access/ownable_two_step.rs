@@ -61,11 +61,11 @@ pub enum Error {
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.
-    #[allow(clippy::used_underscore_binding)]
-    pub _ownable: Ownable,
+    // We leave the parent [`Ownable`] contract instance public, so that
+    // inheritting contract have access to its internal functions.
+    pub ownable: Ownable,
     /// Pending owner of the contract.
-    #[allow(clippy::used_underscore_binding)]
-    pub _pending_owner: StorageAddress,
+    pub(crate) pending_owner: StorageAddress,
 }
 
 /// Interface for an [`Ownable2Step`] contract.
@@ -157,19 +157,19 @@ impl IOwnable2Step for Ownable2Step {
     type Error = Error;
 
     fn owner(&self) -> Address {
-        self._ownable.owner()
+        self.ownable.owner()
     }
 
     fn pending_owner(&self) -> Address {
-        self._pending_owner.get()
+        self.pending_owner.get()
     }
 
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
     ) -> Result<(), Self::Error> {
-        self._ownable.only_owner()?;
-        self._pending_owner.set(new_owner);
+        self.ownable.only_owner()?;
+        self.pending_owner.set(new_owner);
 
         let current_owner = self.owner();
         evm::log(OwnershipTransferStarted {
@@ -193,7 +193,7 @@ impl IOwnable2Step for Ownable2Step {
     }
 
     fn renounce_ownership(&mut self) -> Result<(), Error> {
-        self._ownable.only_owner()?;
+        self.ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
     }
@@ -216,8 +216,8 @@ impl Ownable2Step {
     ///
     /// * [`crate::access::ownable::OwnershipTransferred`].
     fn _transfer_ownership(&mut self, new_owner: Address) {
-        self._pending_owner.set(Address::ZERO);
-        self._ownable._transfer_ownership(new_owner);
+        self.pending_owner.set(Address::ZERO);
+        self.ownable._transfer_ownership(new_owner);
     }
 }
 
@@ -234,7 +234,7 @@ mod tests {
     #[motsu::test]
     fn reads_owner(contract: Contract<Ownable2Step>, alice: Address) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(alice);
+            contract.ownable.owner.set(alice);
         });
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
@@ -247,7 +247,7 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._pending_owner.set(bob);
+            contract.pending_owner.set(bob);
         });
 
         let pending_owner = contract.sender(alice).pending_owner();
@@ -261,7 +261,7 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(alice);
+            contract.ownable.owner.set(alice);
         });
 
         contract
@@ -280,7 +280,7 @@ mod tests {
         dave: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(bob);
+            contract.ownable.owner.set(bob);
         });
 
         let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
@@ -297,8 +297,8 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(bob);
-            contract._pending_owner.set(alice);
+            contract.ownable.owner.set(bob);
+            contract.pending_owner.set(alice);
         });
 
         contract
@@ -317,8 +317,8 @@ mod tests {
         dave: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(bob);
-            contract._pending_owner.set(dave);
+            contract.ownable.owner.set(bob);
+            contract.pending_owner.set(dave);
         });
 
         let err = contract.sender(alice).accept_ownership().unwrap_err();
@@ -335,7 +335,7 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(alice);
+            contract.ownable.owner.set(alice);
         });
 
         contract
@@ -356,7 +356,7 @@ mod tests {
     #[motsu::test]
     fn renounces_ownership(contract: Contract<Ownable2Step>, alice: Address) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(alice);
+            contract.ownable.owner.set(alice);
         });
 
         contract
@@ -373,7 +373,7 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(bob);
+            contract.ownable.owner.set(bob);
         });
 
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
@@ -390,8 +390,8 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(alice);
-            contract._pending_owner.set(bob);
+            contract.ownable.owner.set(alice);
+            contract.pending_owner.set(bob);
         });
 
         contract
@@ -409,8 +409,8 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(alice);
-            contract._pending_owner.set(bob);
+            contract.ownable.owner.set(alice);
+            contract.pending_owner.set(bob);
         });
 
         contract
@@ -429,7 +429,7 @@ mod tests {
         dave: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._ownable._owner.set(alice);
+            contract.ownable.owner.set(alice);
         });
 
         contract
