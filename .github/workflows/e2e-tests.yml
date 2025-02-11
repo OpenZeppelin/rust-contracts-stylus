@@ -42,7 +42,7 @@ jobs:
           solc-select use 0.8.24
 
       - name: Setup Docker on macOS
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
+        run: brew install docker
 
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
