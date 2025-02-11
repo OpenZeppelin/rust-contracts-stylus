@@ -62,7 +62,7 @@ async fn deploy(
     // Mint initial tokens to the vault
     if initial_tokens > U256::ZERO {
         let asset = ERC20Mock::new(asset_addr, &account.wallet);
-        _ = watch!(asset.mint(contract_addr, initial_tokens))?;
+        watch!(asset.mint(contract_addr, initial_tokens))?;
     }
 
     Ok((contract_addr, asset_addr))
@@ -139,7 +139,7 @@ mod total_assets {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Transfer additional tokens directly to the vault
-        _ = watch!(asset.mint(contract_addr, additional_amount))?;
+        watch!(asset.mint(contract_addr, additional_amount))?;
 
         let total = contract.totalAssets().call().await?.totalAssets;
         assert_eq!(initial_deposit + additional_amount, total);
@@ -219,12 +219,8 @@ mod total_assets {
         let alice_addr = alice.address();
 
         // Simulate withdrawal by transferring tokens out
-        _ = watch!(asset.regular_approve(
-            contract_addr,
-            alice_addr,
-            withdrawal
-        ))?;
-        _ = watch!(asset.transferFrom(contract_addr, alice_addr, withdrawal))?;
+        watch!(asset.regular_approve(contract_addr, alice_addr, withdrawal))?;
+        watch!(asset.transferFrom(contract_addr, alice_addr, withdrawal))?;
 
         let total = contract.totalAssets().call().await?.totalAssets;
         assert_eq!(initial_deposit - withdrawal, total);
@@ -410,13 +406,13 @@ mod convert_to_assets {
         let expected_assets = shares;
 
         // Mint shares
-        _ = watch!(asset.mint(alice.address(), expected_assets))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), expected_assets))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             expected_assets
         ))?;
-        _ = watch!(contract.mint(shares, alice.address()))?;
+        watch!(contract.mint(shares, alice.address()))?;
 
         let assets = contract.convertToAssets(shares).call().await?.assets;
 
@@ -656,7 +652,7 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        _ = watch!(erc20_alice.mint(alice_address, uint!(1000_U256)))?;
+        watch!(erc20_alice.mint(alice_address, uint!(1000_U256)))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_address).call().await?._0;
@@ -694,14 +690,14 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+        watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_address).call().await?._0;
         let initial_alice_shares =
             contract.balanceOf(alice_address).call().await?.balance;
 
-        _ = watch!(erc20_alice.regular_approve(
+        watch!(erc20_alice.regular_approve(
             alice_address,
             contract_addr,
             assets_to_convert
@@ -738,14 +734,14 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+        watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let initial_alice_balance =
             erc20_alice.balanceOf(alice_address).call().await?._0;
         let initial_alice_shares =
             contract.balanceOf(alice_address).call().await?.balance;
 
-        _ = watch!(erc20_alice.regular_approve(
+        watch!(erc20_alice.regular_approve(
             alice_address,
             contract_addr,
             assets_to_convert
@@ -784,8 +780,8 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
-        _ = watch!(erc20_alice.regular_approve(
+        watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+        watch!(erc20_alice.regular_approve(
             alice_address,
             contract_addr,
             assets_to_convert
@@ -827,7 +823,7 @@ mod deposit {
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
         let alice_address = alice.address();
 
-        _ = watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
+        watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let err = send!(contract.deposit(assets_to_convert, alice_address))
             .expect_err("should return `SafeErc20FailedOperation`");
@@ -870,12 +866,8 @@ mod deposit {
 
         let assets = uint!(10_U256);
 
-        _ = watch!(asset.mint(alice.address(), assets))?;
-        _ = watch!(asset.regular_approve(
-            alice.address(),
-            contract_addr,
-            assets
-        ))?;
+        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.regular_approve(alice.address(), contract_addr, assets))?;
 
         let err = send!(contract.deposit(assets, alice.address()))
             .expect_err("should panic due to decimal offset overflow");
@@ -1069,12 +1061,8 @@ mod mint {
         let shares = uint!(69_U256);
         let assets = uint!(6969_U256);
 
-        _ = watch!(asset.mint(alice.address(), assets))?;
-        _ = watch!(asset.regular_approve(
-            alice_address,
-            contract_addr,
-            assets
-        ))?;
+        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.regular_approve(alice_address, contract_addr, assets))?;
 
         let initial_alice_assets =
             asset.balanceOf(alice_address).call().await?._0;
@@ -1112,7 +1100,7 @@ mod mint {
         let shares = uint!(69_U256);
         let assets = uint!(6969_U256);
 
-        _ = watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.mint(alice.address(), assets))?;
 
         let err = send!(contract.mint(shares, alice_address))
             .expect_err("should return `SafeErc20FailedOperation`");
@@ -1153,12 +1141,8 @@ mod mint {
         let shares = uint!(10_U256);
         let assets = shares; // expected 1:1
 
-        _ = watch!(asset.mint(alice.address(), assets))?;
-        _ = watch!(asset.regular_approve(
-            alice.address(),
-            contract_addr,
-            assets
-        ))?;
+        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.regular_approve(alice.address(), contract_addr, assets))?;
 
         let err = send!(contract.mint(shares, alice.address()))
             .expect_err("should panic due to decimal offset overflow");
@@ -1214,13 +1198,13 @@ mod max_withdraw {
         let assets_to_deposit = uint!(1010_U256);
 
         // Mint some shares to alice
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         let max =
             contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
@@ -1246,13 +1230,13 @@ mod max_withdraw {
         let assets_to_deposit = shares_to_mint;
 
         // Mint some shares to alice
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         let max =
             contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
@@ -1280,22 +1264,22 @@ mod max_withdraw {
         let assets_to_deposit_bob = uint!(100_U256);
 
         // Mint some shares to alice
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         // Mint some shares to bob
-        _ = watch!(asset.mint(bob.address(), assets_to_deposit_bob))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(bob.address(), assets_to_deposit_bob))?;
+        watch!(asset.regular_approve(
             bob.address(),
             contract_addr,
             assets_to_deposit_bob
         ))?;
-        _ = watch!(contract_bob.mint(shares_to_mint, bob.address()))?;
+        watch!(contract_bob.mint(shares_to_mint, bob.address()))?;
 
         let max =
             contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
@@ -1524,13 +1508,13 @@ mod withdraw {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Mint shares
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         let max_withdraw =
             contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
@@ -1593,13 +1577,13 @@ mod withdraw {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Mint shares to alice
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         // Bob tries to withdraw without allowance
         let err = send!(bob_contract.withdraw(
@@ -1672,13 +1656,13 @@ mod withdraw {
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         // Setup failing asset
-        _ = watch!(failing_asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(failing_asset.regular_approve(
+        watch!(failing_asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(failing_asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         let err = send!(contract.withdraw(
             assets_to_withdraw,
@@ -1701,13 +1685,13 @@ mod withdraw {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Mint maximum shares
-        _ = watch!(asset.mint(alice.address(), U256::MAX))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), U256::MAX))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             U256::MAX
         ))?;
-        _ = watch!(contract.mint(U256::MAX, alice.address()))?;
+        watch!(contract.mint(U256::MAX, alice.address()))?;
 
         let err = send!(contract.withdraw(
             U256::MAX,
@@ -1740,13 +1724,13 @@ mod withdraw {
         assert_eq!(U256::ZERO, initial_max_withdraw);
 
         // Mint shares
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
         let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
@@ -1831,13 +1815,13 @@ mod withdraw {
         assert_eq!(initial_assets, initial_total_assets);
 
         // Mint shares
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
         let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
@@ -1956,8 +1940,8 @@ mod withdraw {
 
         // Mint and approve for all users
         for user in [&alice, &bob, &charlie] {
-            _ = watch!(asset.mint(user.address(), uint!(1000_U256)))?;
-            _ = watch!(asset.regular_approve(
+            watch!(asset.mint(user.address(), uint!(1000_U256)))?;
+            watch!(asset.regular_approve(
                 user.address(),
                 contract_addr,
                 uint!(1000_U256)
@@ -1965,22 +1949,22 @@ mod withdraw {
         }
 
         // Each user deposits different amounts
-        _ = watch!(contract_alice.mint(uint!(100_U256), alice.address()))?;
-        _ = watch!(contract_bob.mint(uint!(200_U256), bob.address()))?;
-        _ = watch!(contract_charlie.mint(uint!(300_U256), charlie.address()))?;
+        watch!(contract_alice.mint(uint!(100_U256), alice.address()))?;
+        watch!(contract_bob.mint(uint!(200_U256), bob.address()))?;
+        watch!(contract_charlie.mint(uint!(300_U256), charlie.address()))?;
 
         // Each user withdraws different percentages
-        _ = watch!(contract_alice.withdraw(
+        watch!(contract_alice.withdraw(
             uint!(50_U256),
             alice.address(),
             alice.address()
         ))?; // 50% for alice
-        _ = watch!(contract_bob.withdraw(
+        watch!(contract_bob.withdraw(
             uint!(100_U256),
             bob.address(),
             bob.address()
         ))?; // 50% for bob
-        _ = watch!(contract_charlie.withdraw(
+        watch!(contract_charlie.withdraw(
             uint!(300_U256),
             charlie.address(),
             charlie.address()
@@ -2031,8 +2015,8 @@ mod withdraw {
 
         // Mint and approve for all users
         for user in [&alice, &bob, &charlie] {
-            _ = watch!(asset.mint(user.address(), uint!(10000_U256)))?;
-            _ = watch!(asset.regular_approve(
+            watch!(asset.mint(user.address(), uint!(10000_U256)))?;
+            watch!(asset.regular_approve(
                 user.address(),
                 contract_addr,
                 uint!(10000_U256)
@@ -2040,9 +2024,9 @@ mod withdraw {
         }
 
         // Each user deposits different amounts
-        _ = watch!(contract_alice.mint(uint!(10_U256), alice.address()))?;
-        _ = watch!(contract_bob.mint(uint!(20_U256), bob.address()))?;
-        _ = watch!(contract_charlie.mint(uint!(30_U256), charlie.address()))?;
+        watch!(contract_alice.mint(uint!(10_U256), alice.address()))?;
+        watch!(contract_bob.mint(uint!(20_U256), bob.address()))?;
+        watch!(contract_charlie.mint(uint!(30_U256), charlie.address()))?;
 
         // Verify share distribution considers initial assets
         let alice_assets_before = contract_alice
@@ -2059,17 +2043,17 @@ mod withdraw {
             .maxWithdraw;
 
         // Each user withdraws
-        _ = watch!(contract_alice.withdraw(
+        watch!(contract_alice.withdraw(
             alice_assets_before,
             alice.address(),
             alice.address()
         ))?; // 100%
-        _ = watch!(contract_bob.withdraw(
+        watch!(contract_bob.withdraw(
             uint!(1010_U256),
             bob.address(),
             bob.address()
         ))?; // 50%
-        _ = watch!(contract_charlie.withdraw(
+        watch!(contract_charlie.withdraw(
             charlie_assets_before,
             charlie.address(),
             charlie.address()
@@ -2104,20 +2088,16 @@ mod withdraw {
         let assets = uint!(2000_U256);
 
         // Setup deposits
-        _ = watch!(asset.mint(alice.address(), assets))?;
-        _ = watch!(asset.regular_approve(
-            alice.address(),
-            contract_addr,
-            assets
-        ))?;
-        _ = watch!(contract.mint(shares, alice.address()))?;
+        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.regular_approve(alice.address(), contract_addr, assets))?;
+        watch!(contract.mint(shares, alice.address()))?;
 
         // Record initial conversion rate
         let initial_rate =
             contract.convertToAssets(uint!(1_U256)).call().await?.assets;
 
         // Perform partial withdrawal
-        _ = watch!(contract.withdraw(
+        watch!(contract.withdraw(
             uint!(500_U256),
             alice.address(),
             alice.address()
@@ -2146,13 +2126,13 @@ mod withdraw {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Setup initial state
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         // Record state before failed withdrawal
         let pre_total_assets = contract.totalAssets().call().await?.totalAssets;
@@ -2162,7 +2142,7 @@ mod withdraw {
             contract.maxRedeem(alice.address()).call().await?.maxRedeem;
 
         // Attempt excessive withdrawal
-        _ = send!(contract.withdraw(
+        send!(contract.withdraw(
             excessive_assets_to_withdraw,
             alice.address(),
             alice.address()
@@ -2252,13 +2232,13 @@ mod max_redeem {
         let shares_to_mint = uint!(69_U256);
 
         // Mint some shares to alice
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
         assert_eq!(shares_to_mint, max);
@@ -2282,16 +2262,16 @@ mod max_redeem {
         let transfer_amount = uint!(40_U256);
 
         // Mint shares to alice
-        _ = watch!(asset.mint(alice.address(), assets_to_deposit))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_to_deposit))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_to_deposit
         ))?;
-        _ = watch!(contract.mint(shares_to_mint, alice.address()))?;
+        watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         // Transfer some shares to bob
-        _ = watch!(contract.transfer(bob.address(), transfer_amount))?;
+        watch!(contract.transfer(bob.address(), transfer_amount))?;
 
         let alice_max =
             contract.maxRedeem(alice.address()).call().await?.maxRedeem;
@@ -2317,26 +2297,26 @@ mod max_redeem {
         let assets_for_second_mint = uint!(5050_U256);
 
         // First mint
-        _ = watch!(asset.mint(alice.address(), assets_for_first_mint))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_for_first_mint))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_for_first_mint
         ))?;
-        _ = watch!(contract.mint(first_mint, alice.address()))?;
+        watch!(contract.mint(first_mint, alice.address()))?;
 
         let max_after_first =
             contract.maxRedeem(alice.address()).call().await?.maxRedeem;
         assert_eq!(first_mint, max_after_first);
 
         // Second mint
-        _ = watch!(asset.mint(alice.address(), assets_for_second_mint))?;
-        _ = watch!(asset.regular_approve(
+        watch!(asset.mint(alice.address(), assets_for_second_mint))?;
+        watch!(asset.regular_approve(
             alice.address(),
             contract_addr,
             assets_for_second_mint
         ))?;
-        _ = watch!(contract.mint(second_mint, alice.address()))?;
+        watch!(contract.mint(second_mint, alice.address()))?;
 
         let max_after_second =
             contract.maxRedeem(alice.address()).call().await?.maxRedeem;
@@ -2519,13 +2499,9 @@ mod redeem {
         let shares = uint!(69_U256);
 
         // Mint some shares to alice
-        _ = watch!(asset.mint(alice.address(), assets))?;
-        _ = watch!(asset.regular_approve(
-            alice.address(),
-            contract_addr,
-            assets
-        ))?;
-        _ = watch!(contract.mint(shares, alice.address()))?;
+        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.regular_approve(alice.address(), contract_addr, assets))?;
+        watch!(contract.mint(shares, alice.address()))?;
 
         let initial_alice_assets =
             asset.balanceOf(alice_address).call().await?._0;
@@ -2570,13 +2546,9 @@ mod redeem {
         let shares = uint!(69_U256);
 
         // Mint some shares to alice
-        _ = watch!(asset.mint(alice.address(), assets))?;
-        _ = watch!(asset.regular_approve(
-            alice.address(),
-            contract_addr,
-            assets
-        ))?;
-        _ = watch!(contract.mint(shares, alice.address()))?;
+        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.regular_approve(alice.address(), contract_addr, assets))?;
+        watch!(contract.mint(shares, alice.address()))?;
 
         let err =
             send!(contract_bob.redeem(shares, alice_address, alice_address))
@@ -2604,13 +2576,9 @@ mod redeem {
         let shares = uint!(69_U256);
 
         // Mint some shares to alice
-        _ = watch!(asset.mint(alice.address(), assets))?;
-        _ = watch!(asset.regular_approve(
-            alice.address(),
-            contract_addr,
-            assets
-        ))?;
-        _ = watch!(contract.mint(shares, alice.address()))?;
+        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.regular_approve(alice.address(), contract_addr, assets))?;
+        watch!(contract.mint(shares, alice.address()))?;
 
         let err = send!(contract.redeem(
             shares + uint!(1_U256),

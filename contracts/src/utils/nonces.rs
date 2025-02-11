@@ -115,44 +115,46 @@ impl Nonces {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::U256;
-    use stylus_sdk::msg;
+    use alloy_primitives::{Address, U256};
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::TopLevelStorage;
 
     use super::ONE;
     use crate::utils::nonces::{Error, Nonces};
 
+    unsafe impl TopLevelStorage for Nonces {}
+
     #[motsu::test]
-    fn initiate_nonce(contract: Nonces) {
-        assert_eq!(contract.nonces(msg::sender()), U256::ZERO);
+    fn initiate_nonce(contract: Contract<Nonces>, alice: Address) {
+        assert_eq!(contract.sender(alice).nonces(alice), U256::ZERO);
     }
 
     #[motsu::test]
-    fn use_nonce(contract: Nonces) {
-        let owner = msg::sender();
-
-        let use_nonce = contract.use_nonce(owner);
+    fn use_nonce(contract: Contract<Nonces>, alice: Address) {
+        let use_nonce = contract.sender(alice).use_nonce(alice);
         assert_eq!(use_nonce, U256::ZERO);
 
-        let nonce = contract.nonces(owner);
+        let nonce = contract.sender(alice).nonces(alice);
         assert_eq!(nonce, ONE);
     }
 
     #[motsu::test]
-    fn use_checked_nonce(contract: Nonces) {
-        let owner = msg::sender();
-
-        let use_checked_nonce = contract.use_checked_nonce(owner, U256::ZERO);
+    fn use_checked_nonce(contract: Contract<Nonces>, alice: Address) {
+        let use_checked_nonce =
+            contract.sender(alice).use_checked_nonce(alice, U256::ZERO);
         assert!(use_checked_nonce.is_ok());
 
-        let nonce = contract.nonces(owner);
+        let nonce = contract.sender(alice).nonces(alice);
         assert_eq!(nonce, ONE);
     }
 
     #[motsu::test]
-    fn use_checked_nonce_invalid_nonce(contract: Nonces) {
-        let owner = msg::sender();
-
-        let use_checked_nonce = contract.use_checked_nonce(owner, ONE);
+    fn use_checked_nonce_invalid_nonce(
+        contract: Contract<Nonces>,
+        alice: Address,
+    ) {
+        let use_checked_nonce =
+            contract.sender(alice).use_checked_nonce(alice, ONE);
         assert!(matches!(
             use_checked_nonce,
             Err(Error::InvalidAccountNonce(_))

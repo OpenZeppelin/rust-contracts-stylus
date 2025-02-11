@@ -97,39 +97,52 @@ impl BitMap {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{private::proptest::proptest, U256};
+    use alloy_primitives::{
+        private::proptest::{prop_assert, proptest},
+        Address, U256,
+    };
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::{public, TopLevelStorage};
 
     use crate::utils::structs::bitmap::BitMap;
 
+    unsafe impl TopLevelStorage for BitMap {}
+
+    #[public]
+    impl BitMap {}
+
     #[motsu::test]
     fn set_value() {
-        proptest!(|(value: U256)| {
-            let mut bit_map = BitMap::default();
-            assert!(!bit_map.get(value));
+        proptest!(|(value: U256, alice: Address)| {
+            let bit_map = Contract::<BitMap>::new();
+            let mut bit_map = bit_map.sender(alice);
+            prop_assert!(!bit_map.get(value));
             bit_map.set(value);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
         });
     }
 
     #[motsu::test]
     fn unset_value() {
-        proptest!(|(value: U256)| {
-            let mut bit_map = BitMap::default();
+        proptest!(|(value: U256, alice: Address)| {
+            let bit_map = Contract::<BitMap>::new();
+            let mut bit_map = bit_map.sender(alice);
             bit_map.set(value);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
             bit_map.unset(value);
-            assert!(!bit_map.get(value));
+            prop_assert!(!bit_map.get(value));
         });
     }
 
     #[motsu::test]
     fn set_to_value() {
-        proptest!(|(value: U256)| {
-            let mut bit_map = BitMap::default();
+        proptest!(|(value: U256, alice: Address)| {
+            let bit_map = Contract::<BitMap>::new();
+            let mut bit_map = bit_map.sender(alice);
             bit_map.set_to(value, true);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
             bit_map.set_to(value, false);
-            assert!(!bit_map.get(value));
+            prop_assert!(!bit_map.get(value));
         });
     }
 }

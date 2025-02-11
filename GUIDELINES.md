@@ -249,7 +249,7 @@ Then you will be able to run e2e tests:
 
 ### Running fuzz tests
 
-To run fuzz tests, you need to have [cargo-fuzz] installed. 
+To run fuzz tests, you need to have [cargo-fuzz] installed.
 Then from the root of the project you can use `cargo fuzz list` to view the list of all existing fuzz targets:
 
 ```shell
