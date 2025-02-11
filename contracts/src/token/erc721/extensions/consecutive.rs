@@ -292,8 +292,7 @@ impl Erc721Consecutive {
     /// # Events
     ///
     /// * [`ConsecutiveTransfer`].
-    #[cfg(all(test, feature = "std"))]
-    fn _mint_consecutive(
+    pub fn _mint_consecutive(
         &mut self,
         to: Address,
         batch_size: U96,
