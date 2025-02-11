@@ -3,6 +3,7 @@ pub mod burnable;
 pub mod consecutive;
 pub mod enumerable;
 pub mod metadata;
+pub mod royalty;
 pub mod uri_storage;
 
 pub use burnable::IErc721Burnable;
