@@ -154,92 +154,117 @@ impl Pausable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use alloy_primitives::Address;
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::TopLevelStorage;
+
     use crate::utils::pausable::{Error, Pausable};
 
-    #[motsu::test]
-    fn paused_works(contract: Pausable) {
-        contract._paused.set(false);
-        assert!(!contract.paused());
+    unsafe impl TopLevelStorage for Pausable {}
+
+    fn construct_paused(contract: &mut Pausable) {
         contract._paused.set(true);
-        assert!(contract.paused());
+    }
+    fn construct_unpaused(contract: &mut Pausable) {
+        contract._paused.set(false);
     }
 
     #[motsu::test]
-    fn when_not_paused_works(contract: Pausable) {
-        contract._paused.set(false);
-        assert!(!contract.paused());
+    fn paused_works(contract: Contract<Pausable>, alice: Address) {
+        contract.init(alice, construct_paused);
+        assert!(contract.sender(alice).paused());
 
-        let result = contract.when_not_paused();
+        contract.init(alice, construct_unpaused);
+        assert!(!contract.sender(alice).paused());
+    }
+
+    #[motsu::test]
+    fn when_not_paused_works(contract: Contract<Pausable>, alice: Address) {
+        contract.init(alice, construct_unpaused);
+
+        let result = contract.sender(alice).when_not_paused();
         assert!(result.is_ok());
     }
 
     #[motsu::test]
-    fn when_not_paused_errors_when_paused(contract: Pausable) {
-        contract._paused.set(true);
-        assert!(contract.paused());
+    fn when_not_paused_errors_when_paused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
+        contract.init(alice, construct_paused);
+        assert!(contract.sender(alice).paused());
 
-        let result = contract.when_not_paused();
+        let result = contract.sender(alice).when_not_paused();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
     }
 
     #[motsu::test]
-    fn when_paused_works(contract: Pausable) {
-        contract._paused.set(true);
-        assert!(contract.paused());
+    fn when_paused_works(contract: Contract<Pausable>, alice: Address) {
+        contract.sender(alice).pause().unwrap();
+        assert!(contract.sender(alice).paused());
 
-        let result = contract.when_paused();
+        let result = contract.sender(alice).when_paused();
         assert!(result.is_ok());
     }
 
     #[motsu::test]
-    fn when_paused_errors_when_not_paused(contract: Pausable) {
-        contract._paused.set(false);
-        assert!(!contract.paused());
+    fn when_paused_errors_when_not_paused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
+        contract.init(alice, construct_unpaused);
+        assert!(!contract.sender(alice).paused());
 
-        let result = contract.when_paused();
+        let result = contract.sender(alice).when_paused();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
     }
 
     #[motsu::test]
-    fn pause_works(contract: Pausable) {
-        contract._paused.set(false);
-        assert!(!contract.paused());
+    fn pause_works(contract: Contract<Pausable>, alice: Address) {
+        contract.init(alice, construct_unpaused);
+        assert!(!contract.sender(alice).paused());
 
         // Pause the contract
-        let res = contract.pause();
+        let res = contract.sender(alice).pause();
         assert!(res.is_ok());
-        assert!(contract.paused());
+        assert!(contract.sender(alice).paused());
     }
 
     #[motsu::test]
-    fn pause_errors_when_already_paused(contract: Pausable) {
-        contract._paused.set(true);
-        assert!(contract.paused());
+    fn pause_errors_when_already_paused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
+        contract.init(alice, construct_paused);
+        assert!(contract.sender(alice).paused());
 
-        let result = contract.pause();
+        let result = contract.sender(alice).pause();
         assert!(matches!(result, Err(Error::EnforcedPause(_))));
-        assert!(contract.paused());
+        assert!(contract.sender(alice).paused());
     }
 
     #[motsu::test]
-    fn unpause_works(contract: Pausable) {
-        contract._paused.set(true);
-        assert!(contract.paused());
+    fn unpause_works(contract: Contract<Pausable>, alice: Address) {
+        contract.init(alice, construct_paused);
+        assert!(contract.sender(alice).paused());
 
         // Unpause the paused contract
-        let res = contract.unpause();
+        let res = contract.sender(alice).unpause();
         assert!(res.is_ok());
-        assert!(!contract.paused());
+        assert!(!contract.sender(alice).paused());
     }
 
     #[motsu::test]
-    fn unpause_errors_when_already_unpaused(contract: Pausable) {
-        contract._paused.set(false);
-        assert!(!contract.paused());
+    fn unpause_errors_when_already_unpaused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
+        contract.init(alice, construct_unpaused);
+        assert!(!contract.sender(alice).paused());
 
         // Unpause the unpaused contract
-        let result = contract.unpause();
+        let result = contract.sender(alice).unpause();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
-        assert!(!contract.paused());
+        assert!(!contract.sender(alice).paused());
     }
 }

@@ -23,11 +23,11 @@ async fn safe_increase_allowance_works(
     let init_approval = uint!(100_U256);
     let value = uint!(10_U256);
 
-    let _ = watch!(erc20_alice.regular_approve(
+    watch!(erc20_alice.regular_approve(
         safe_erc20_addr,
         bob_addr,
         init_approval
-    ));
+    ))?;
 
     let initial_bob_allowance =
         erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
@@ -67,11 +67,11 @@ async fn safe_decrease_allowance_works(
     let init_approval = uint!(100_U256);
     let value = uint!(10_U256);
 
-    let _ = watch!(erc20_alice.regular_approve(
+    watch!(erc20_alice.regular_approve(
         safe_erc20_addr,
         bob_addr,
         init_approval
-    ));
+    ))?;
 
     let initial_bob_allowance =
         erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
@@ -108,11 +108,11 @@ async fn force_approve_works(alice: Account, bob: Account) -> eyre::Result<()> {
     let init_approval = uint!(100_U256);
     let updated_approval = uint!(10_U256);
 
-    let _ = watch!(erc20_alice.regular_approve(
+    watch!(erc20_alice.regular_approve(
         safe_erc20_addr,
         bob_addr,
         init_approval
-    ));
+    ))?;
 
     let initial_bob_allowance =
         erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
