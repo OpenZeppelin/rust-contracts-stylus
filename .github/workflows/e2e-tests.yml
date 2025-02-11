@@ -42,7 +42,9 @@ jobs:
           solc-select use 0.8.24
 
       - name: Setup Docker on macOS
-        run: brew install docker
+        run: |
+          brew install colima
+          colima start
 
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
