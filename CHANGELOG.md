@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 
 ### Added
@@ -18,12 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
--
+- Extract `IAccessControl` trait from `AccessControl` contract. #527
 
 ### Fixed
 
 -
-
 
 ## [v0.2.0-alpha.3] - 2025-01-30
 
@@ -50,7 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
 - `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
 
-
 ## [v0.2.0-alpha.2] - 2024-12-18
 
 ### Added
@@ -73,7 +70,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (Breaking)
 
 - Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
-
 
 ## [v0.2.0-alpha.1] - 2024-11-15
 
