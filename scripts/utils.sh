@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 # Retrieve all alphanumeric contract's crate names in `./examples` directory.
 get_example_crate_names () {
   # shellcheck disable=SC2038
