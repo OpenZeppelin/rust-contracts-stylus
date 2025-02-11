@@ -37,8 +37,8 @@ jobs:
           solc-select install 0.8.24
           solc-select use 0.8.24
 
-      - name: Set up docker with QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Setup Docker on macOS
+        uses: douglascamata/setup-docker-macos-action@v1-alpha
 
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
