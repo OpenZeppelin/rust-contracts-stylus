@@ -62,18 +62,22 @@ impl Capped {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::uint;
+    use alloy_primitives::{uint, Address};
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::TopLevelStorage;
 
     use super::Capped;
 
+    unsafe impl TopLevelStorage for Capped {}
+
     #[motsu::test]
-    fn cap_works(contract: Capped) {
+    fn cap_works(contract: Contract<Capped>, alice: Address) {
         let value = uint!(2024_U256);
-        contract.cap.set(value);
-        assert_eq!(contract.cap(), value);
+        contract.init(alice, |contract| contract.cap.set(value));
+        assert_eq!(contract.sender(alice).cap(), value);
 
         let value = uint!(1_U256);
-        contract.cap.set(value);
-        assert_eq!(contract.cap(), value);
+        contract.init(alice, |contract| contract.cap.set(value));
+        assert_eq!(contract.sender(alice).cap(), value);
     }
 }

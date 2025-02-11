@@ -74,20 +74,29 @@ impl IErc165 for Erc1155MetadataUri {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use stylus_sdk::alloy_primitives::uint;
+    use alloy_primitives::Address;
+    use motsu::prelude::Contract;
+    use stylus_sdk::{alloy_primitives::uint, prelude::TopLevelStorage};
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 
+    unsafe impl TopLevelStorage for Erc1155MetadataUri {}
+
     #[motsu::test]
-    fn uri_ignores_token_id(contract: Erc1155MetadataUri) {
+    fn uri_ignores_token_id(
+        contract: Contract<Erc1155MetadataUri>,
+        alice: Address,
+    ) {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
-        contract.uri.set_str(uri.clone());
+        contract.init(alice, |contract| {
+            contract.uri.set_str(uri.clone());
+        });
 
         let token_id = uint!(1_U256);
-        assert_eq!(uri, contract.uri(token_id));
+        assert_eq!(uri, contract.sender(alice).uri(token_id));
 
         let token_id = uint!(2_U256);
-        assert_eq!(uri, contract.uri(token_id));
+        assert_eq!(uri, contract.sender(alice).uri(token_id));
     }
 
     #[motsu::test]

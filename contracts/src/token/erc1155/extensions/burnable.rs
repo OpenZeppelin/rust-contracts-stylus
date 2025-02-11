@@ -109,8 +109,9 @@ impl Erc1155 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256};
-    use stylus_sdk::msg;
+
+    use alloy_primitives::{Address, U256};
+    use motsu::prelude::Contract;
 
     use super::IErc1155Burnable;
     use crate::token::erc1155::{
@@ -118,8 +119,6 @@ mod tests {
         ERC1155InsufficientBalance, ERC1155InvalidSender,
         ERC1155MissingApprovalForAll, Erc1155, Error, IErc1155,
     };
-
-    const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     fn init(
         contract: &mut Erc1155,
@@ -141,46 +140,62 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 1);
+    fn burns(contract: Contract<Erc1155>, alice: Address) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
 
-        let initial_balance = contract.balance_of(alice, token_ids[0]);
+        let initial_balance =
+            contract.sender(alice).balance_of(alice, token_ids[0]);
         assert_eq!(values[0], initial_balance);
 
         contract
+            .sender(alice)
             .burn(alice, token_ids[0], values[0])
             .expect("should burn own tokens");
 
-        let balance = contract.balance_of(alice, token_ids[0]);
+        let balance = contract.sender(alice).balance_of(alice, token_ids[0]);
         assert_eq!(U256::ZERO, balance);
     }
 
     #[motsu::test]
-    fn burns_with_approval(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, BOB, 1);
+    fn burns_with_approval(
+        contract: Contract<Erc1155>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 1));
 
-        let initial_balance = contract.balance_of(BOB, token_ids[0]);
+        let initial_balance =
+            contract.sender(alice).balance_of(bob, token_ids[0]);
         assert_eq!(values[0], initial_balance);
 
-        contract.operator_approvals.setter(BOB).setter(alice).set(true);
+        contract
+            .sender(bob)
+            .set_approval_for_all(alice, true)
+            .expect("should approve Bob's tokens to Alice");
 
         contract
-            .burn(BOB, token_ids[0], values[0])
+            .sender(alice)
+            .burn(bob, token_ids[0], values[0])
             .expect("should burn Bob's token");
 
-        let balance = contract.balance_of(BOB, token_ids[0]);
+        let balance = contract.sender(alice).balance_of(bob, token_ids[0]);
         assert_eq!(U256::ZERO, balance);
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_burns(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, BOB, 1);
+    fn error_when_missing_approval_burns(
+        contract: Contract<Erc1155>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 1));
 
         let err = contract
-            .burn(BOB, token_ids[0], values[0])
+            .sender(alice)
+            .burn(bob, token_ids[0], values[0])
             .expect_err("should not burn tokens without approval");
 
         assert!(matches!(
@@ -188,23 +203,26 @@ mod tests {
             Error::MissingApprovalForAll(ERC1155MissingApprovalForAll {
                 owner,
                 operator
-            }) if owner == BOB && operator == alice
+            }) if owner == bob && operator == alice
         ));
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_burns(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 1);
+    fn error_when_invalid_sender_burns(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
         let invalid_sender = Address::ZERO;
 
         contract
-            .operator_approvals
-            .setter(invalid_sender)
-            .setter(alice)
-            .set(true);
+            .sender(invalid_sender)
+            .set_approval_for_all(alice, true)
+            .expect("should approve Bob's tokens to Alice");
 
         let err = contract
+            .sender(alice)
             .burn(invalid_sender, token_ids[0], values[0])
             .expect_err("should not burn tokens from the `Address::ZERO`");
 
@@ -217,15 +235,19 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_insufficient_balance_burn(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 1);
+    fn error_when_insufficient_balance_burn(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 1));
 
         let token_id = token_ids[0];
         let value = values[0];
         let to_burn = value + U256::from(1);
 
         let err = contract
+            .sender(alice)
             .burn(alice, token_id, to_burn)
             .expect_err("should return `ERC1155InsufficientBalance`");
 
@@ -241,54 +263,68 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_batch(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 4);
+    fn burns_batch(contract: Contract<Erc1155>, alice: Address) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 4));
 
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
-            let balance = contract.balance_of(alice, token_id);
+            let balance = contract.sender(alice).balance_of(alice, token_id);
             assert_eq!(value, balance);
         }
 
         contract
+            .sender(alice)
             .burn_batch(alice, token_ids.clone(), values.clone())
             .expect("should burn own tokens in batch");
 
         for token_id in token_ids {
-            let balance = contract.balance_of(alice, token_id);
+            let balance = contract.sender(alice).balance_of(alice, token_id);
             assert_eq!(U256::ZERO, balance);
         }
     }
 
     #[motsu::test]
-    fn burns_batch_with_approval(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, BOB, 4);
+    fn burns_batch_with_approval(
+        contract: Contract<Erc1155>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 4));
 
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
-            let balance = contract.balance_of(BOB, token_id);
+            let balance = contract.sender(alice).balance_of(bob, token_id);
             assert_eq!(value, balance);
         }
 
-        contract.operator_approvals.setter(BOB).setter(alice).set(true);
+        contract
+            .sender(bob)
+            .set_approval_for_all(alice, true)
+            .expect("should approve Bob's tokens to Alice");
 
         contract
-            .burn_batch(BOB, token_ids.clone(), values.clone())
+            .sender(alice)
+            .burn_batch(bob, token_ids.clone(), values.clone())
             .expect("should burn Bob's tokens in batch");
 
         for token_id in token_ids {
-            let balance = contract.balance_of(BOB, token_id);
+            let balance = contract.sender(alice).balance_of(bob, token_id);
             assert_eq!(U256::ZERO, balance);
         }
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_burn_batch(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, BOB, 2);
+    fn error_when_missing_approval_burn_batch(
+        contract: Contract<Erc1155>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, bob, 2));
 
         let err = contract
-            .burn_batch(BOB, token_ids.clone(), values.clone())
+            .sender(alice)
+            .burn_batch(bob, token_ids.clone(), values.clone())
             .expect_err("should not burn tokens in batch without approval");
 
         assert!(matches!(
@@ -296,23 +332,26 @@ mod tests {
             Error::MissingApprovalForAll(ERC1155MissingApprovalForAll {
                 owner,
                 operator
-            }) if owner == BOB && operator == alice
+            }) if owner == bob && operator == alice
         ));
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_burn_batch(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 5);
+    fn error_when_invalid_sender_burn_batch(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 5));
         let invalid_sender = Address::ZERO;
 
         contract
-            .operator_approvals
-            .setter(invalid_sender)
-            .setter(alice)
-            .set(true);
+            .sender(invalid_sender)
+            .set_approval_for_all(alice, true)
+            .expect("should approve Bob's tokens to Alice");
 
         let err = contract
+            .sender(alice)
             .burn_batch(invalid_sender, token_ids.clone(), values.clone())
             .expect_err(
                 "should not burn tokens in batch from the `Address::ZERO`",
@@ -327,13 +366,17 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_insufficient_balance_burn_batch(contract: Erc1155) {
-        let alice = msg::sender();
-        let (token_ids, values) = init(contract, alice, 5);
+    fn error_when_insufficient_balance_burn_batch(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
+        let (token_ids, values) =
+            contract.init(alice, |contract| init(contract, alice, 5));
         let to_burn: Vec<U256> =
             values.iter().map(|v| v + U256::from(1)).collect();
 
         let err = contract
+            .sender(alice)
             .burn_batch(alice, token_ids.clone(), to_burn.clone())
             .expect_err("should return `ERC1155InsufficientBalance`");
 

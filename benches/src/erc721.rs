@@ -57,9 +57,9 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let token_3 = uint!(3_U256);
     let token_4 = uint!(4_U256);
 
-    let _ = receipt!(contract.mint(alice_addr, token_2))?;
-    let _ = receipt!(contract.mint(alice_addr, token_3))?;
-    let _ = receipt!(contract.mint(alice_addr, token_4))?;
+    receipt!(contract.mint(alice_addr, token_2))?;
+    receipt!(contract.mint(alice_addr, token_3))?;
+    receipt!(contract.mint(alice_addr, token_4))?;
 
     // IMPORTANT: Order matters!
     use Erc721::*;
