@@ -69,8 +69,7 @@ impl MethodError for Error {
 #[storage]
 pub struct Ownable {
     /// The current owner of this contract.
-    #[allow(clippy::used_underscore_binding)]
-    pub _owner: StorageAddress,
+    pub(crate) owner: StorageAddress,
 }
 
 /// Interface for an [`Ownable`] contract.
@@ -132,7 +131,7 @@ impl IOwnable for Ownable {
     type Error = Error;
 
     fn owner(&self) -> Address {
-        self._owner.get()
+        self.owner.get()
     }
 
     fn transfer_ownership(
@@ -193,8 +192,8 @@ impl Ownable {
     ///
     /// * [`OwnershipTransferred`].
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
-        let previous_owner = self._owner.get();
-        self._owner.set(new_owner);
+        let previous_owner = self.owner.get();
+        self.owner.set(new_owner);
         evm::log(OwnershipTransferred { previous_owner, new_owner });
     }
 }
@@ -211,7 +210,7 @@ mod tests {
 
     #[motsu::test]
     fn reads_owner(contract: Contract<Ownable>, alice: Address) {
-        contract.init(alice, |contract| contract._owner.set(alice));
+        contract.init(alice, |contract| contract.owner.set(alice));
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
     }
@@ -222,7 +221,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract._owner.set(alice));
+        contract.init(alice, |contract| contract.owner.set(alice));
 
         contract
             .sender(alice)
@@ -238,7 +237,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract._owner.set(bob));
+        contract.init(alice, |contract| contract.owner.set(bob));
 
         let err = contract.sender(alice).transfer_ownership(bob).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
@@ -249,7 +248,7 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.init(alice, |contract| contract._owner.set(alice));
+        contract.init(alice, |contract| contract.owner.set(alice));
 
         let err = contract
             .sender(alice)
@@ -263,7 +262,7 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.init(alice, |contract| contract._owner.set(alice));
+        contract.init(alice, |contract| contract.owner.set(alice));
 
         contract
             .sender(alice)
@@ -279,7 +278,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract._owner.set(bob));
+        contract.init(alice, |contract| contract.owner.set(bob));
 
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
@@ -291,7 +290,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract._owner.set(bob));
+        contract.init(alice, |contract| contract.owner.set(bob));
 
         contract.sender(alice)._transfer_ownership(bob);
         let owner = contract.sender(alice).owner();

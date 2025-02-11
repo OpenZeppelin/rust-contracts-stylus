@@ -37,8 +37,7 @@ mod sol {
 #[storage]
 pub struct Erc721UriStorage {
     /// Optional mapping for token URIs.
-    #[allow(clippy::used_underscore_binding)]
-    pub _token_uris: StorageMap<U256, StorageString>,
+    pub token_uris: StorageMap<U256, StorageString>,
 }
 
 impl Erc721UriStorage {
@@ -54,7 +53,7 @@ impl Erc721UriStorage {
     ///
     /// * [`MetadataUpdate`].
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
-        self._token_uris.setter(token_id).set_str(token_uri);
+        self.token_uris.setter(token_id).set_str(token_uri);
         evm::log(MetadataUpdate { token_id });
     }
 
@@ -96,9 +95,9 @@ impl Erc721UriStorage {
         erc721: &impl IErc721<Error = Error>,
         metadata: &Erc721Metadata,
     ) -> Result<String, Error> {
-        let _owner = erc721.owner_of(token_id)?;
+        erc721.owner_of(token_id)?;
 
-        let token_uri = self._token_uris.getter(token_id).get_string();
+        let token_uri = self.token_uris.getter(token_id).get_string();
         let base = metadata.base_uri();
 
         // If there is no base URI, return the token URI.

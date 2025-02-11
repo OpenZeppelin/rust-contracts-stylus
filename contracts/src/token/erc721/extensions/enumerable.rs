@@ -64,17 +64,13 @@ pub enum Error {
 #[storage]
 pub struct Erc721Enumerable {
     /// Maps owners to a mapping of indices to tokens ids.
-    #[allow(clippy::used_underscore_binding)]
-    pub _owned_tokens: StorageMap<Address, StorageMap<U256, StorageU256>>,
-    /// Maps tokens ids to indices in `_owned_tokens`.
-    #[allow(clippy::used_underscore_binding)]
-    pub _owned_tokens_index: StorageMap<U256, StorageU256>,
+    pub(crate) owned_tokens: StorageMap<Address, StorageMap<U256, StorageU256>>,
+    /// Maps tokens ids to indices in `owned_tokens`.
+    pub(crate) owned_tokens_index: StorageMap<U256, StorageU256>,
     /// Stores all tokens ids.
-    #[allow(clippy::used_underscore_binding)]
-    pub _all_tokens: StorageVec<StorageU256>,
-    /// Maps indices at `_all_tokens` to tokens ids.
-    #[allow(clippy::used_underscore_binding)]
-    pub _all_tokens_index: StorageMap<U256, StorageU256>,
+    pub(crate) all_tokens: StorageVec<StorageU256>,
+    /// Maps indices at `all_tokens` to tokens ids.
+    pub(crate) all_tokens_index: StorageMap<U256, StorageU256>,
 }
 
 /// This is the interface of the optional `Enumerable` extension
@@ -141,7 +137,7 @@ impl IErc721Enumerable for Erc721Enumerable {
         owner: Address,
         index: U256,
     ) -> Result<U256, Self::Error> {
-        let token = self._owned_tokens.getter(owner).get(index);
+        let token = self.owned_tokens.getter(owner).get(index);
 
         if token.is_zero() {
             Err(ERC721OutOfBoundsIndex { owner, index }.into())
@@ -151,12 +147,12 @@ impl IErc721Enumerable for Erc721Enumerable {
     }
 
     fn total_supply(&self) -> U256 {
-        let tokens_length = self._all_tokens.len();
+        let tokens_length = self.all_tokens.len();
         U256::from(tokens_length)
     }
 
     fn token_by_index(&self, index: U256) -> Result<U256, Self::Error> {
-        self._all_tokens.get(index).ok_or(
+        self.all_tokens.get(index).ok_or(
             ERC721OutOfBoundsIndex { owner: Address::ZERO, index }.into(),
         )
     }
@@ -191,8 +187,8 @@ impl Erc721Enumerable {
         erc721: &impl IErc721<Error = erc721::Error>,
     ) -> Result<(), erc721::Error> {
         let length = erc721.balance_of(to)? - uint!(1_U256);
-        self._owned_tokens.setter(to).setter(length).set(token_id);
-        self._owned_tokens_index.setter(token_id).set(length);
+        self.owned_tokens.setter(to).setter(length).set(token_id);
+        self.owned_tokens_index.setter(token_id).set(length);
 
         Ok(())
     }
@@ -207,20 +203,20 @@ impl Erc721Enumerable {
     pub fn _add_token_to_all_tokens_enumeration(&mut self, token_id: U256) {
         let index = self.total_supply();
 
-        self._all_tokens_index.setter(token_id).set(index);
-        self._all_tokens.push(token_id);
+        self.all_tokens_index.setter(token_id).set(index);
+        self.all_tokens.push(token_id);
     }
 
     /// Function to remove a token from this extension's
     /// ownership-tracking data structures.
     ///
     /// Note that while the token is not assigned a new owner,
-    /// the `self._owned_tokens_index` mapping is NOT updated:
+    /// the `self.owned_tokens_index` mapping is NOT updated:
     /// this allows for  gas optimizations e.g.
     /// when performing a transfer operation (avoiding double writes).
     ///
     /// This has O(1) time complexity, but alters the order
-    /// of the `self._owned_tokens` array.
+    /// of the `self.owned_tokens` array.
     ///
     /// # Arguments
     ///
@@ -244,9 +240,9 @@ impl Erc721Enumerable {
         // we store the last token in the index of the token to delete,
         // and then delete the last slot (swap and pop).
         let last_token_index = erc721.balance_of(from)?;
-        let token_index = self._owned_tokens_index.get(token_id);
+        let token_index = self.owned_tokens_index.get(token_id);
 
-        let mut owned_tokens_by_owner = self._owned_tokens.setter(from);
+        let mut owned_tokens_by_owner = self.owned_tokens.setter(from);
 
         // When the token to delete is the last token,
         // the swap operation is unnecessary.
@@ -256,11 +252,11 @@ impl Erc721Enumerable {
             // Move the last token to the slot of the to-delete token.
             owned_tokens_by_owner.setter(token_index).set(last_token_id);
             // Update the moved token's index.
-            self._owned_tokens_index.setter(last_token_id).set(token_index);
+            self.owned_tokens_index.setter(last_token_id).set(token_index);
         }
 
         // This also deletes the contents at the last position of the array.
-        self._owned_tokens_index.delete(token_id);
+        self.owned_tokens_index.delete(token_id);
         owned_tokens_by_owner.delete(last_token_index);
 
         Ok(())
@@ -270,7 +266,7 @@ impl Erc721Enumerable {
     /// token tracking data structures.
     ///
     /// This has O(1) time complexity,
-    /// but alters the order of the `self._all_tokens` array.
+    /// but alters the order of the `self.all_tokens` array.
     ///
     /// # Arguments
     ///
@@ -287,8 +283,8 @@ impl Erc721Enumerable {
         // To prevent a gap in the tokens array,
         // we store the last token in the index of the token to delete,
         // and then delete the last slot (swap and pop).
-        let last_token_index = U256::from(self._all_tokens.len() - 1);
-        let token_index = self._all_tokens_index.get(token_id);
+        let last_token_index = U256::from(self.all_tokens.len() - 1);
+        let token_index = self.all_tokens_index.get(token_id);
 
         // When the token to delete is the last token,
         // the swap operation is unnecessary.
@@ -298,22 +294,22 @@ impl Erc721Enumerable {
         // to avoid the gas cost of adding an 'if' statement
         // (like in `self._remove_token_from_owner_enumeration`).
         let last_token_id = self
-            ._all_tokens
+            .all_tokens
             .get(last_token_index)
             .expect("token at given index must exist");
 
         // Move the last token to the slot of the to-delete token.
-        self._all_tokens
+        self.all_tokens
             .setter(token_index)
             .expect("slot at given `token_index` must exist")
             .set(last_token_id);
 
         // Update the moved token's index.
-        self._all_tokens_index.setter(last_token_id).set(token_index);
+        self.all_tokens_index.setter(last_token_id).set(token_index);
 
         // This also deletes the contents at the last position of the array.
-        self._all_tokens_index.delete(token_id);
-        self._all_tokens.pop();
+        self.all_tokens_index.delete(token_id);
+        self.all_tokens.pop();
     }
 
     /// See [`erc721::Erc721::_increase_balance`].

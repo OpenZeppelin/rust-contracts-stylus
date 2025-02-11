@@ -122,8 +122,7 @@ pub struct RoleData {
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
-    #[allow(clippy::used_underscore_binding)]
-    pub _roles: StorageMap<FixedBytes<32>, RoleData>,
+    pub(crate) roles: StorageMap<FixedBytes<32>, RoleData>,
 }
 /// Interface for an [`AccessControl`] contract.
 #[interface_id]
@@ -247,7 +246,7 @@ impl IAccessControl for AccessControl {
 
     #[must_use]
     fn has_role(&self, role: B256, account: Address) -> bool {
-        self._roles.getter(role).has_role.get(account)
+        self.roles.getter(role).has_role.get(account)
     }
 
     fn only_role(&self, role: B256) -> Result<(), Self::Error> {
@@ -256,7 +255,7 @@ impl IAccessControl for AccessControl {
 
     #[must_use]
     fn get_role_admin(&self, role: B256) -> B256 {
-        *self._roles.getter(role).admin_role
+        *self.roles.getter(role).admin_role
     }
 
     fn grant_role(
@@ -314,7 +313,7 @@ impl AccessControl {
     /// * [`RoleAdminChanged`].
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
-        self._roles.setter(role).admin_role.set(new_admin_role);
+        self.roles.setter(role).admin_role.set(new_admin_role);
         evm::log(RoleAdminChanged {
             role,
             previous_admin_role,
@@ -366,7 +365,7 @@ impl AccessControl {
         if self.has_role(role, account) {
             false
         } else {
-            self._roles.setter(role).has_role.insert(account, true);
+            self.roles.setter(role).has_role.insert(account, true);
             evm::log(RoleGranted { role, account, sender: msg::sender() });
             true
         }
@@ -388,7 +387,7 @@ impl AccessControl {
     /// * [`RoleRevoked`].
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
-            self._roles.setter(role).has_role.insert(account, false);
+            self.roles.setter(role).has_role.insert(account, false);
             evm::log(RoleRevoked { role, account, sender: msg::sender() });
             true
         } else {

@@ -197,11 +197,9 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc1155 {
     /// Maps users to balances.
-    #[allow(clippy::used_underscore_binding)]
-    pub _balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
+    pub(crate) balances: StorageMap<U256, StorageMap<Address, StorageU256>>,
     /// Maps owners to a mapping of operator approvals.
-    #[allow(clippy::used_underscore_binding)]
-    pub _operator_approvals:
+    pub(crate) operator_approvals:
         StorageMap<Address, StorageMap<Address, StorageBool>>,
 }
 
@@ -361,7 +359,7 @@ impl IErc1155 for Erc1155 {
     type Error = Error;
 
     fn balance_of(&self, account: Address, id: U256) -> U256 {
-        self._balances.get(id).get(account)
+        self.balances.get(id).get(account)
     }
 
     fn balance_of_batch(
@@ -389,7 +387,7 @@ impl IErc1155 for Erc1155 {
     }
 
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
-        self._operator_approvals.get(account).get(operator)
+        self.operator_approvals.get(account).get(operator)
     }
 
     fn safe_transfer_from(
@@ -705,7 +703,7 @@ impl Erc1155 {
                 operator,
             }));
         }
-        self._operator_approvals.setter(owner).setter(operator).set(approved);
+        self.operator_approvals.setter(owner).setter(operator).set(approved);
         evm::log(ApprovalForAll { account: owner, operator, approved });
         Ok(())
     }
@@ -985,16 +983,16 @@ impl Erc1155 {
                     },
                 ));
             }
-            self._balances
+            self.balances
                 .setter(token_id)
                 .setter(from)
                 .sub_assign_unchecked(value);
         }
 
         if !to.is_zero() {
-            self._balances.setter(token_id).setter(to).add_assign_checked(
+            self.balances.setter(token_id).setter(to).add_assign_checked(
                 value,
-                "should not exceed `U256::MAX` for `_balances`",
+                "should not exceed `U256::MAX` for `balances`",
             );
         }
 
@@ -1252,7 +1250,7 @@ mod tests {
         bob: Address,
     ) {
         contract.init(alice, |contract| {
-            contract._operator_approvals.setter(alice).setter(bob).set(false);
+            contract.operator_approvals.setter(alice).setter(bob).set(false);
         });
 
         contract

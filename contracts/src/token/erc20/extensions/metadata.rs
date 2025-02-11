@@ -19,8 +19,7 @@ use crate::utils::Metadata;
 #[storage]
 pub struct Erc20Metadata {
     /// [`Metadata`] contract.
-    #[allow(clippy::used_underscore_binding)]
-    pub _metadata: Metadata,
+    pub(crate) metadata: Metadata,
 }
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
@@ -64,11 +63,11 @@ pub trait IErc20Metadata {
 #[public]
 impl IErc20Metadata for Erc20Metadata {
     fn name(&self) -> String {
-        self._metadata.name()
+        self.metadata.name()
     }
 
     fn symbol(&self) -> String {
-        self._metadata.symbol()
+        self.metadata.symbol()
     }
 
     fn decimals(&self) -> u8 {

@@ -16,11 +16,9 @@ use super::metadata_uri::{IErc1155MetadataUri, URI};
 #[storage]
 pub struct Erc1155UriStorage {
     /// Optional base URI.
-    #[allow(clippy::used_underscore_binding)]
-    pub _base_uri: StorageString,
+    pub(crate) base_uri: StorageString,
     /// Optional mapping for token URIs.
-    #[allow(clippy::used_underscore_binding)]
-    pub _token_uris: StorageMap<U256, StorageString>,
+    pub(crate) token_uris: StorageMap<U256, StorageString>,
 }
 
 impl Erc1155UriStorage {
@@ -51,12 +49,12 @@ impl Erc1155UriStorage {
         token_id: U256,
         metadata_uri: &impl IErc1155MetadataUri,
     ) -> String {
-        let token_uri = self._token_uris.get(token_id).get_string();
+        let token_uri = self.token_uris.get(token_id).get_string();
 
         if token_uri.is_empty() {
             metadata_uri.uri(token_id)
         } else {
-            self._base_uri.get_string() + &token_uri
+            self.base_uri.get_string() + &token_uri
         }
     }
 
@@ -79,18 +77,18 @@ impl Erc1155UriStorage {
         token_uri: String,
         metadata_uri: &impl IErc1155MetadataUri,
     ) {
-        self._token_uris.setter(token_id).set_str(token_uri);
+        self.token_uris.setter(token_id).set_str(token_uri);
         evm::log(URI { value: self.uri(token_id, metadata_uri), id: token_id });
     }
 
-    /// Sets `base_uri` as the `_base_uri` for all tokens.
+    /// Sets `base_uri` as the `base_uri` for all tokens.
     ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `base_uri` - New base URI.
     pub fn set_base_uri(&mut self, base_uri: String) {
-        self._base_uri.set_str(base_uri);
+        self.base_uri.set_str(base_uri);
     }
 }
 
@@ -129,7 +127,7 @@ mod tests {
         let uri = "https://some.metadata/token/uri";
 
         contract.init(alice, |contract| {
-            contract.metadata_uri._uri.set_str(uri.to_owned());
+            contract.metadata_uri.uri.set_str(uri.to_owned());
         });
 
         assert_eq!(uri, contract.sender(alice).uri(TOKEN_ID));
@@ -153,7 +151,7 @@ mod tests {
         contract.init(alice, |contract| {
             contract
                 .uri_storage
-                ._token_uris
+                .token_uris
                 .setter(TOKEN_ID)
                 .set_str(token_uri.to_owned());
         });
@@ -170,10 +168,10 @@ mod tests {
         let token_uri = "/some/token/uri";
 
         contract.init(alice, |contract| {
-            contract.uri_storage._base_uri.set_str(base_uri.to_owned());
+            contract.uri_storage.base_uri.set_str(base_uri.to_owned());
             contract
                 .uri_storage
-                ._token_uris
+                .token_uris
                 .setter(TOKEN_ID)
                 .set_str(token_uri.to_owned());
         });
@@ -193,10 +191,10 @@ mod tests {
         let token_uri = "https://some.short/token/uri";
 
         contract.init(alice, |contract| {
-            contract.metadata_uri._uri.set_str(uri.to_owned());
+            contract.metadata_uri.uri.set_str(uri.to_owned());
             contract
                 .uri_storage
-                ._token_uris
+                .token_uris
                 .setter(TOKEN_ID)
                 .set_str(token_uri.to_owned());
         });
@@ -212,7 +210,7 @@ mod tests {
         let token_uri = "https://some.short/token/uri".to_string();
 
         contract.init(alice, |contract| {
-            contract.metadata_uri._uri.set_str(uri.to_owned());
+            contract.metadata_uri.uri.set_str(uri.to_owned());
             contract.uri_storage.set_token_uri(
                 TOKEN_ID,
                 token_uri.clone(),
@@ -234,7 +232,7 @@ mod tests {
 
         assert_eq!(
             base_uri,
-            contract.sender(alice).uri_storage._base_uri.get_string()
+            contract.sender(alice).uri_storage.base_uri.get_string()
         );
     }
 }
