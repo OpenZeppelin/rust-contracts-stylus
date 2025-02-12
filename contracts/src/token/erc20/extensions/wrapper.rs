@@ -172,7 +172,7 @@ impl IErc20Wrapper for Erc20Wrapper {
             return Err(Error::InvalidSender(ERC20InvalidSender {
                 sender: contract::address(),
             }));
-        }
+        }     
 
         self.safe_erc20.safe_transfer_from(
             self.underlying(),
