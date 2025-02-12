@@ -81,7 +81,7 @@ async fn uri_returns_concatenated_base_uri_and_token_uri(
     let token_uri = "/some/token/uri";
     let expected_uri = BASE_URI.to_owned() + token_uri;
 
-    let _ = watch!(contract.setBaseURI(BASE_URI.to_owned()))?;
+    watch!(contract.setBaseURI(BASE_URI.to_owned()))?;
 
     let receipt =
         receipt!(contract.setTokenURI(token_id, token_uri.to_owned()))?;
@@ -142,7 +142,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
     let token_uri = "/some/token/uri";
     let expected_uri = BASE_URI.to_owned() + token_uri;
 
-    let _ = watch!(contract.setBaseURI(BASE_URI.to_owned()))?;
+    watch!(contract.setBaseURI(BASE_URI.to_owned()))?;
 
     let receipt =
         receipt!(contract.setTokenURI(token_id, token_uri.to_owned()))?;

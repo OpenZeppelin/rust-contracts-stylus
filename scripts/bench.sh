@@ -37,8 +37,10 @@ export RPC_URL=http://localhost:8547
 # No need to compile benchmarks with `--release`
 # since this only runs the benchmarking code and the contracts have already been compiled with `--release`.
 cargo run -p benches
-
-echo "NOTE: To measure non cached contract's gas usage correctly,
+echo "This benchmarks measure gas execution cost,
+ the 21000 EVM base gas fee is omitted."
+echo
+echo "To measure non cached contract's gas usage correctly,
  benchmarks should run on a clean instance of the nitro test node."
 echo
 echo "Finished running benches!"

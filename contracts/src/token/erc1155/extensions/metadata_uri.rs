@@ -31,13 +31,12 @@ mod sol {
     }
 }
 
-/// URI Metadata of an [`crate::token::erc1155::Erc1155`] token.
+/// State of an [`Erc1155MetadataUri`] contract.
 #[storage]
 pub struct Erc1155MetadataUri {
     /// Used as the URI for all token types by relying on ID substitution,
     /// e.g. https://token-cdn-domain/{id}.json.
-    #[allow(clippy::used_underscore_binding)]
-    pub _uri: StorageString,
+    pub(crate) uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-1155 standard.
@@ -61,7 +60,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
     /// Clients calling this function must replace the `id` substring with
     /// the actual token type ID.
     fn uri(&self, _id: U256) -> String {
-        self._uri.get_string()
+        self.uri.get_string()
     }
 }
 
@@ -75,20 +74,29 @@ impl IErc165 for Erc1155MetadataUri {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use stylus_sdk::alloy_primitives::uint;
+    use alloy_primitives::Address;
+    use motsu::prelude::Contract;
+    use stylus_sdk::{alloy_primitives::uint, prelude::TopLevelStorage};
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 
+    unsafe impl TopLevelStorage for Erc1155MetadataUri {}
+
     #[motsu::test]
-    fn uri_ignores_token_id(contract: Erc1155MetadataUri) {
+    fn uri_ignores_token_id(
+        contract: Contract<Erc1155MetadataUri>,
+        alice: Address,
+    ) {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
-        contract._uri.set_str(uri.clone());
+        contract.init(alice, |contract| {
+            contract.uri.set_str(uri.clone());
+        });
 
         let token_id = uint!(1_U256);
-        assert_eq!(uri, contract.uri(token_id));
+        assert_eq!(uri, contract.sender(alice).uri(token_id));
 
         let token_id = uint!(2_U256);
-        assert_eq!(uri, contract.uri(token_id));
+        assert_eq!(uri, contract.sender(alice).uri(token_id));
     }
 
     #[motsu::test]

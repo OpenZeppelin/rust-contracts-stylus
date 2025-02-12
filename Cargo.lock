@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "access-control-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -903,7 +903,7 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
 name = "basic-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy-primitives",
  "openzeppelin-stylus",
@@ -912,7 +912,7 @@ dependencies = [
 
 [[package]]
 name = "basic-example-script"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -923,7 +923,7 @@ dependencies = [
 
 [[package]]
 name = "benches"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1547,7 +1547,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1664,7 +1664,7 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "erc1155-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1677,7 +1677,7 @@ dependencies = [
 
 [[package]]
 name = "erc1155-metadata-uri-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1690,7 +1690,7 @@ dependencies = [
 
 [[package]]
 name = "erc1155-supply-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1703,7 +1703,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1716,7 +1716,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-flash-mint-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1729,7 +1729,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-permit-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1742,8 +1742,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc4626-example"
+version = "0.2.0-alpha.3"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc721-consecutive-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1758,7 +1771,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1772,7 +1785,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-metadata-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2514,7 +2527,7 @@ dependencies = [
 
 [[package]]
 name = "merkle-proofs-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -2565,10 +2578,12 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 
 [[package]]
 name = "motsu"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dc57234641c5dd30332b269b29ea11966496ca5b6e169eb6cf90e4092e84483"
+checksum = "2c5faabeb164ed0dc9218c6de07980366905fa9bf3912620c9fbc1ec58011b7e"
 dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
  "const-hex",
  "dashmap 6.1.0",
  "motsu-proc",
@@ -2579,9 +2594,9 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1216edabfdae92f935e07c21df8880a494afcc18267af7c8fe60cb979ecd594e"
+checksum = "df36c23409b608e32ef5ef7cd6187f5f63b2fa110854b3f78036e373039463de"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2735,9 +2750,8 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
- "crypto-bigint",
  "educe",
  "hex-literal",
  "num-traits",
@@ -2749,7 +2763,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",
@@ -2774,7 +2788,7 @@ dependencies = [
 
 [[package]]
 name = "ownable-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2787,7 +2801,7 @@ dependencies = [
 
 [[package]]
 name = "ownable-two-step-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2935,7 +2949,7 @@ checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
 
 [[package]]
 name = "poseidon-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -3361,6 +3375,9 @@ name = "rustc-hash"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "583034fd73374156e66797ed8e5b0d5690409c9226b22d87cb7f19821c05d152"
+dependencies = [
+ "rand",
+]
 
 [[package]]
 name = "rustc-hex"
@@ -3441,7 +3458,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "safe-erc20-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -4273,7 +4290,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vesting-wallet-example"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy",
  "alloy-primitives",

@@ -15,14 +15,11 @@ use alloc::vec::Vec;
 
 use crate::utils::Metadata;
 
-/// Metadata of the [`super::super::Erc20`] token.
-///
-/// It has hardcoded `decimals` to [`DEFAULT_DECIMALS`].
+/// State of an [`Erc20Metadata`] contract.
 #[storage]
 pub struct Erc20Metadata {
-    /// Common Metadata.
-    #[allow(clippy::used_underscore_binding)]
-    pub _metadata: Metadata,
+    /// [`Metadata`] contract.
+    pub(crate) metadata: Metadata,
 }
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
@@ -52,25 +49,25 @@ pub trait IErc20Metadata {
     /// between Ether and Wei. This is the default value returned by this
     /// function ([`DEFAULT_DECIMALS`]), unless it's overridden.
     ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    ///
     /// NOTE: This information is only used for *display* purposes: in
     /// no way it affects any of the arithmetic of the contract, including
     /// [`super::super::IErc20::balance_of`] and
     /// [`super::super::IErc20::transfer`].
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn decimals(&self) -> u8;
 }
 
 #[public]
 impl IErc20Metadata for Erc20Metadata {
     fn name(&self) -> String {
-        self._metadata.name()
+        self.metadata.name()
     }
 
     fn symbol(&self) -> String {
-        self._metadata.symbol()
+        self.metadata.symbol()
     }
 
     fn decimals(&self) -> u8 {

@@ -1,5 +1,5 @@
 //! Standard math utilities missing in `alloy_primitives`.
-use alloy_primitives::{uint, U256};
+use alloy_primitives::{uint, U256, U512};
 
 /// Trait for standard math utilities missing in `alloy_primitives`.
 pub trait Math {
@@ -22,6 +22,26 @@ pub trait Math {
     /// * `rhs` - second value to compute average.
     #[must_use]
     fn average(self, rhs: Self) -> Self;
+
+    /// Calculates floor(`self` * `y` / `denominator`) with full precision,
+    /// following the selected `rounding` direction.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - first value to compute the result.
+    /// * `y` - second value to compute the result.
+    /// * `denominator` - denominator of the division.
+    /// * `rounding` - rounding technique to use in calculation.
+    #[must_use]
+    fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self;
+}
+
+/// Enum representing many rounding techniques.
+pub enum Rounding {
+    /// Rounding toward negative infinity.
+    Floor,
+    /// Rounding toward positive infinity.
+    Ceil,
 }
 
 impl Math for U256 {
@@ -145,13 +165,45 @@ impl Math for U256 {
         // carries + carries.
         (self & rhs) + ((self ^ rhs) >> 1)
     }
+
+    fn mul_div(self, y: Self, denominator: Self, rounding: Rounding) -> Self {
+        assert!(
+            !denominator.is_zero(),
+            "division by U256::ZERO in `Math::mul_div`"
+        );
+
+        let prod = U512::from(self)
+            .checked_mul(U512::from(y))
+            .expect("should not panic with `U256` * `U256`");
+
+        // Adjust for rounding if needed.
+        let adjusted = match rounding {
+            Rounding::Floor => prod, // No adjustment for Rounding::Floor
+            Rounding::Ceil => prod
+                .checked_add(U512::from(denominator) - U512::from(1))
+                .expect("should not exceed `U512`"),
+        };
+
+        let result = adjusted
+            .checked_div(U512::from(denominator))
+            .expect("should not panic with `U512` / `U512`");
+
+        if result > U512::from(U256::MAX) {
+            panic!("should fit into `U256` in `Math::mul_div`");
+        } else {
+            U256::from(result)
+        }
+    }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{private::proptest::proptest, uint, U256, U512};
+    use alloy_primitives::{
+        private::proptest::{prop_assume, proptest},
+        uint, U256, U512,
+    };
 
-    use crate::utils::math::alloy::Math;
+    use crate::utils::math::alloy::{Math, Rounding};
 
     #[test]
     fn check_sqrt() {
@@ -168,5 +220,50 @@ mod tests {
             let expected = (U512::from(left) + U512::from(right)) / uint!(2_U512);
             assert_eq!(left.average(right), U256::from(expected));
         });
+    }
+
+    #[test]
+    fn check_mul_div_rounding_floor() {
+        proptest!(|(x: U256, y: U256, denominator: U256)| {
+            prop_assume!(denominator != U256::ZERO, "division by U256::ZERO in `Math::mul_div`.");
+            prop_assume!(denominator > y, "result should fit into `U256` in `Math::mul_div`.");
+            let value = x.mul_div(y, denominator, Rounding::Floor);
+            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`");
+            let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
+            assert_eq!(U512::from(value), expected);
+        })
+    }
+
+    #[test]
+    fn check_mul_div_rounding_ceil() {
+        proptest!(|(x: U256, y: U256, denominator: U256)| {
+            prop_assume!(denominator != U256::ZERO, "division by U256::ZERO in `Math::mul_div`.");
+            prop_assume!(denominator > y, "result should fit into `U256` in `Math::mul_div`.");
+            let value = x.mul_div(y, denominator, Rounding::Ceil);
+            let denominator = U512::from(denominator);
+            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::from(1)).expect("should not exceed `U512`");
+            let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
+            assert_eq!(U512::from(value), expected);
+        })
+    }
+
+    #[test]
+    #[should_panic = "division by U256::ZERO in `Math::mul_div`"]
+    fn check_mul_div_panics_when_denominator_is_zero() {
+        proptest!(|(x: U256, y: U256)| {
+            // This should panic.
+            _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
+        })
+    }
+
+    #[test]
+    #[should_panic = "should fit into `U256` in `Math::mul_div`"]
+    fn check_mul_div_panics_when_result_overflows() {
+        proptest!(|(x: U256, y: U256)| {
+            prop_assume!(x != U256::ZERO, "Guaranteed `x` for overflow.");
+            prop_assume!(y > U256::MAX / x, "Guaranteed `y` for overflow.");
+            // This should panic.
+            _ = x.mul_div(y, U256::from(1), Rounding::Floor);
+        })
     }
 }

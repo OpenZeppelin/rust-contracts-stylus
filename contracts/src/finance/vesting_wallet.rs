@@ -41,7 +41,10 @@ use stylus_sdk::{
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
-    token::erc20::utils::safe_erc20::{self, ISafeErc20, SafeErc20},
+    token::erc20::utils::{
+        safe_erc20::{self, ISafeErc20, SafeErc20},
+        IErc20,
+    },
     utils::math::storage::AddAssignChecked,
 };
 
@@ -92,42 +95,23 @@ pub enum Error {
     InvalidToken(InvalidToken),
 }
 
-pub use token::IErc20;
-mod token {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-
-    use alloc::vec;
-
-    use stylus_sdk::stylus_proc::sol_interface;
-
-    sol_interface! {
-        /// Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-        }
-    }
-}
-
-/// State of the [`VestingWallet`] Contract.
+/// State of a [`VestingWallet`] Contract.
 #[storage]
 pub struct VestingWallet {
     /// [`Ownable`] contract.
+    // We leave the parent [`Ownable`] contract instance public, so that
+    // inheritting contract have access to its internal functions.
     pub ownable: Ownable,
     /// Amount of Ether already released.
-    #[allow(clippy::used_underscore_binding)]
-    pub _released: StorageU256,
+    pub(crate) released: StorageU256,
     /// Amount of ERC-20 tokens already released.
-    #[allow(clippy::used_underscore_binding)]
-    pub _erc20_released: StorageMap<Address, StorageU256>,
+    pub(crate) erc20_released: StorageMap<Address, StorageU256>,
     /// Start timestamp.
-    #[allow(clippy::used_underscore_binding)]
-    pub _start: StorageU64,
+    pub(crate) start: StorageU64,
     /// Vesting duration.
-    #[allow(clippy::used_underscore_binding)]
-    pub _duration: StorageU64,
+    pub(crate) duration: StorageU64,
     /// [`SafeErc20`] contract.
-    pub safe_erc20: SafeErc20,
+    safe_erc20: SafeErc20,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -162,14 +146,14 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If called by any account other than the owner, then the error
-    /// [`ownable::Error::UnauthorizedAccount`] is returned.
-    /// If `new_owner` is the `Address::ZERO`, then the error
-    /// [`ownable::Error::InvalidOwner`] is returned.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
+    ///   other than the owner.
+    /// * [`ownable::Error::InvalidOwner`] - If `new_owner` is the
+    ///   `Address::ZERO`.
     ///
     /// # Events
     ///
-    /// Emits an [`ownable::OwnershipTransferred`] event.
+    /// * [`ownable::OwnershipTransferred`].
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
@@ -190,12 +174,11 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If not called by the owner, then the error
-    /// [`ownable::Error::UnauthorizedAccount`] is returned.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///
-    /// Emits an [`ownable::OwnershipTransferred`] event.
+    /// * [`ownable::OwnershipTransferred`].
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// The contract should be able to receive Ether.
@@ -251,8 +234,8 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
@@ -266,13 +249,12 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::InvalidToken`] is returned.
+    /// * [`Error::InvalidToken`] - If the `token` address is not a contract.
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
     fn releasable_erc20(&mut self, token: Address)
         -> Result<U256, Self::Error>;
@@ -285,17 +267,16 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If Ether transfer fails, then the error [`Error::ReleaseEtherFailed`] is
-    /// returned.
+    /// * [`Error::ReleaseEtherFailed`] - If Ether transfer fails.
     ///
     /// # Events
     ///
-    /// Emits an [`EtherReleased`] event.
+    /// * [`EtherReleased`].
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), Self::Error>;
 
@@ -308,19 +289,18 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::InvalidToken`] is returned.
-    /// If the contract fails to execute the call, then the error
-    /// [`safe_erc20::Error::SafeErc20FailedOperation`] is returned.
+    /// * [`Error::InvalidToken`] -  If the `token` address is not a contract.
+    /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If the contract
+    ///   fails to execute the call.
     ///
     /// # Events
     ///
-    /// Emits an [`ERC20Released`] event.
+    /// * [`ERC20Released`].
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
     fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
@@ -334,8 +314,8 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
@@ -350,13 +330,12 @@ pub trait IVestingWallet {
     ///
     /// # Errors
     ///
-    /// If the `token` address is not a contract, then the error
-    /// [`Error::InvalidToken`] is returned.
+    /// * [`Error::InvalidToken`] - If the `token` address is not a contract.
     ///
     /// # Panics
     ///
-    /// If total allocation exceeds `U256::MAX`.
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &mut self,
@@ -390,11 +369,11 @@ impl IVestingWallet for VestingWallet {
     }
 
     fn start(&self) -> U256 {
-        U256::from(self._start.get())
+        U256::from(self.start.get())
     }
 
     fn duration(&self) -> U256 {
-        U256::from(self._duration.get())
+        U256::from(self.duration.get())
     }
 
     fn end(&self) -> U256 {
@@ -405,12 +384,12 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "released")]
     fn released_eth(&self) -> U256 {
-        self._released.get()
+        self.released.get()
     }
 
     #[selector(name = "released")]
     fn released_erc20(&self, token: Address) -> U256 {
-        self._erc20_released.get(token)
+        self.erc20_released.get(token)
     }
 
     #[selector(name = "releasable")]
@@ -435,7 +414,7 @@ impl IVestingWallet for VestingWallet {
     fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
 
-        self._released.add_assign_checked(
+        self.released.add_assign_checked(
             amount,
             "total released should not exceed `U256::MAX`",
         );
@@ -454,7 +433,7 @@ impl IVestingWallet for VestingWallet {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
-        self._erc20_released.setter(token).add_assign_checked(
+        self.erc20_released.setter(token).add_assign_checked(
             amount,
             "total released should not exceed `U256::MAX`",
         );
@@ -507,7 +486,7 @@ impl VestingWallet {
     ///
     /// # Panics
     ///
-    /// If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         let timestamp = U256::from(timestamp);
 
@@ -534,101 +513,139 @@ impl VestingWallet {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256, U64};
+    use alloy_primitives::{uint, Address, U256, U64};
+    use motsu::prelude::Contract;
     use stylus_sdk::block;
 
     use super::{IVestingWallet, VestingWallet};
+    use crate::token::erc20::Erc20;
 
-    const TOKEN: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    const BALANCE: u64 = 1000;
+
     const DURATION: u64 = 4 * 365 * 86400; // 4 years
 
     fn start() -> u64 {
         block::timestamp() + 3600 // 1 hour
     }
 
-    fn init(
-        contract: &mut VestingWallet,
-        start: u64,
-        duration: u64,
-    ) -> (U64, U64) {
-        let start = U64::from(start);
-        let duration = U64::from(duration);
-        contract._start.set(start);
-        contract._duration.set(duration);
-        (start, duration)
+    impl VestingWallet {
+        fn init(&mut self, start: u64, duration: u64) -> (U64, U64) {
+            let start = U64::from(start);
+            let duration = U64::from(duration);
+            self.start.set(start);
+            self.duration.set(duration);
+            (start, duration)
+        }
     }
 
     #[motsu::test]
-    fn reads_start(contract: VestingWallet) {
-        let (start, _) = init(contract, start(), 0);
-        assert_eq!(U256::from(start), contract.start());
+    fn reads_start(contract: Contract<VestingWallet>, alice: Address) {
+        let (start, _) = contract.sender(alice).init(start(), DURATION);
+        assert_eq!(U256::from(start), contract.sender(alice).start());
     }
 
     #[motsu::test]
-    fn reads_duration(contract: VestingWallet) {
-        let (_, duration) = init(contract, 0, DURATION);
-        assert_eq!(U256::from(duration), contract.duration());
+    fn reads_duration(contract: Contract<VestingWallet>, alice: Address) {
+        let (_, duration) = contract.sender(alice).init(0, DURATION);
+        assert_eq!(U256::from(duration), contract.sender(alice).duration());
     }
 
     #[motsu::test]
-    fn reads_end(contract: VestingWallet) {
-        let (start, duration) = init(contract, start(), DURATION);
-        assert_eq!(U256::from(start + duration), contract.end());
+    fn reads_end(contract: Contract<VestingWallet>, alice: Address) {
+        let (start, duration) = contract.sender(alice).init(start(), DURATION);
+
+        assert_eq!(U256::from(start + duration), contract.sender(alice).end());
     }
 
     #[motsu::test]
-    fn reads_max_end(contract: VestingWallet) {
-        init(contract, u64::MAX, u64::MAX);
-        assert_eq!(U256::from(U64::MAX) + U256::from(U64::MAX), contract.end());
+    fn reads_max_end(contract: Contract<VestingWallet>, alice: Address) {
+        contract.sender(alice).init(u64::MAX, u64::MAX);
+        assert_eq!(
+            U256::from(U64::MAX) + U256::from(U64::MAX),
+            contract.sender(alice).end()
+        );
     }
 
     #[motsu::test]
-    fn reads_released_eth(contract: VestingWallet) {
-        let one = uint!(1_U256);
-        contract._released.set(one);
-        assert_eq!(one, contract.released_eth());
-    }
-
-    #[motsu::test]
-    fn reads_released_erc20(contract: VestingWallet) {
-        let one = uint!(1_U256);
-        contract._erc20_released.setter(TOKEN).set(one);
-        assert_eq!(one, contract.released_erc20(TOKEN));
-    }
-
-    #[motsu::test]
-    fn gets_vesting_schedule(contract: VestingWallet) {
-        let (start, duration) = init(contract, start(), DURATION);
+    fn gets_vesting_schedule(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
+        let (start, duration) = contract.sender(alice).init(start(), DURATION);
 
         let one = uint!(1_U256);
         let two = uint!(2_U256);
 
         assert_eq!(
             U256::ZERO,
-            contract.vesting_schedule(two, start - U64::from(1))
+            contract.sender(alice).vesting_schedule(two, start - U64::from(1))
         );
         assert_eq!(
             one,
-            contract.vesting_schedule(two, start + duration / U64::from(2))
+            contract
+                .sender(alice)
+                .vesting_schedule(two, start + duration / U64::from(2))
         );
-        assert_eq!(two, contract.vesting_schedule(two, start + duration));
         assert_eq!(
             two,
-            contract.vesting_schedule(two, start + duration + U64::from(1))
+            contract.sender(alice).vesting_schedule(two, start + duration)
+        );
+        assert_eq!(
+            two,
+            contract
+                .sender(alice)
+                .vesting_schedule(two, start + duration + U64::from(1))
         );
     }
 
     #[motsu::test]
-    fn gets_vesting_schedule_zero_duration(contract: VestingWallet) {
-        let (start, _) = init(contract, start(), 0);
+    fn gets_vesting_schedule_zero_duration(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
+        let (start, _) = contract.sender(alice).init(start(), 0);
 
         let two = uint!(2_U256);
 
         assert_eq!(
             U256::ZERO,
-            contract.vesting_schedule(two, start - U64::from(1))
+            contract.sender(alice).vesting_schedule(two, start - U64::from(1))
         );
-        assert_eq!(two, contract.vesting_schedule(two, start));
-        assert_eq!(two, contract.vesting_schedule(two, start + U64::from(1)));
+        assert_eq!(two, contract.sender(alice).vesting_schedule(two, start));
+        assert_eq!(
+            two,
+            contract.sender(alice).vesting_schedule(two, start + U64::from(1))
+        );
+    }
+
+    #[motsu::test]
+    fn check_vested_amount_erc20(
+        vesting_wallet: Contract<VestingWallet>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+    ) {
+        vesting_wallet.sender(alice).init(start(), DURATION);
+        erc20
+            .sender(alice)
+            ._mint(vesting_wallet.address(), U256::from(BALANCE))
+            .unwrap();
+
+        let start = start();
+        for i in 0..64 {
+            let timestamp = i * DURATION / 60 + start;
+            let expected_amount = U256::from(std::cmp::min(
+                BALANCE,
+                BALANCE * (timestamp - start) / DURATION,
+            ));
+
+            let vested_amount = vesting_wallet
+                .sender(alice)
+                .vested_amount_erc20(erc20.address(), timestamp)
+                .unwrap();
+            assert_eq!(
+                expected_amount, vested_amount,
+                "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
+            );
+        }
     }
 }
