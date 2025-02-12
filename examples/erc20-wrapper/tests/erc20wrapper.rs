@@ -88,9 +88,11 @@ mod deposit_to {
 
     use super::*;
 
-
     #[e2e::test]
-    async fn executes_with_approval(alice: Account, bob: Account) -> Result<()> {
+    async fn executes_with_approval(
+        alice: Account,
+        bob: Account,
+    ) -> Result<()> {
         let initial_supply = uint!(1000_U256);
         let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
         let alice_address = alice.address();
@@ -99,12 +101,13 @@ mod deposit_to {
 
         _ = watch!(asset.mint(alice_address, initial_supply))?;
         _ = watch!(asset.approve(alice_address, initial_supply))?;
-        let receipt = send!(contract.depositFor(alice_address, initial_supply))?;
+        let receipt =
+            send!(contract.depositFor(alice_address, initial_supply))?;
         println!("receipt: {:#?}", receipt);
         Ok(())
     }
 
-     #[e2e::test]
+    #[e2e::test]
     async fn reverts_when_invalid_asset(alice: Account) -> Result<()> {
         let invalid_asset = alice.address();
         let contract_addr = alice
@@ -117,8 +120,8 @@ mod deposit_to {
         let err = send!(contract.depositFor(invalid_asset, uint!(10_U256)))
             .expect_err("should return `InvalidAsset`");
         // assert!(
-        //     err.reverted_with(Erc20Wrapper::InvalidAsset { asset: invalid_asset })
-        // );
+        //     err.reverted_with(Erc20Wrapper::InvalidAsset { asset:
+        // invalid_asset }) );
 
         Ok(())
     }
