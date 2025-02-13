@@ -8,7 +8,7 @@ pub use group::*;
 
 use crate::{
     curve::{scalar_mul::variable_base::VariableBaseMSM, AffineRepr},
-    field::prime::PrimeField,
+    field::{group::AdditiveGroup, prime::PrimeField},
 };
 
 /// Constants and convenience functions that collectively define the [Twisted Edwards model](https://www.hyperelliptic.org/EFD/g1p/auto-twisted.html)

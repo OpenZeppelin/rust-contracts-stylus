@@ -11,10 +11,7 @@ use zeroize::Zeroize;
 
 use super::{Affine, SWCurveConfig};
 use crate::{
-    curve::{
-        scalar_mul::{variable_base::VariableBaseMSM, ScalarMul},
-        AffineRepr, CurveGroup, PrimeGroup,
-    },
+    curve::{AffineRepr, CurveGroup, PrimeGroup},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
 };
 
@@ -577,25 +574,6 @@ impl<P: SWCurveConfig> From<Affine<P>> for Projective<P> {
             y,
             z: P::BaseField::one(),
         })
-    }
-}
-
-impl<P: SWCurveConfig> ScalarMul for Projective<P> {
-    type MulBase = Affine<P>;
-
-    const NEGATION_IS_CHEAP: bool = true;
-
-    fn batch_convert_to_mul_base(bases: &[Self]) -> Vec<Self::MulBase> {
-        Self::normalize_batch(bases)
-    }
-}
-
-impl<P: SWCurveConfig> VariableBaseMSM for Projective<P> {
-    fn msm(
-        bases: &[Self::MulBase],
-        bigints: &[Self::ScalarField],
-    ) -> Result<Self, usize> {
-        P::msm(bases, bigints)
     }
 }
 

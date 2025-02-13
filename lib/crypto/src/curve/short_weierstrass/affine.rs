@@ -240,7 +240,7 @@ impl<P: SWCurveConfig, T: Borrow<Self>> Add<T> for Affine<P> {
     type Output = Projective<P>;
 
     fn add(self, other: T) -> Projective<P> {
-        // TODO implement more efficient formulae when z1 = z2 = 1.
+        // TODO#q: implement more efficient formulae when z1 = z2 = 1.
         let mut copy = self.into_group();
         copy += other.borrow();
         copy

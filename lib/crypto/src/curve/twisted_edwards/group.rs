@@ -1,10 +1,20 @@
+use core::{
+    borrow::Borrow,
+    fmt::{Display, Formatter},
+};
+use std::{
+    hash::{Hash, Hasher},
+    ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
+
 use educe::Educe;
+use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
 use super::{Affine, MontCurveConfig, TECurveConfig};
 use crate::{
-    scalar_mul::{variable_base::VariableBaseMSM, ScalarMul},
-    AffineRepr, CurveGroup, PrimeGroup,
+    curve::{AffineRepr, CurveGroup, PrimeGroup},
+    field::{group::AdditiveGroup, prime::PrimeField, Field},
 };
 
 /// `Projective` implements Extended Twisted Edwards Coordinates
@@ -190,6 +200,8 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
         //     1 inversion + 6N field multiplications
         // (batch inversion requires 3N multiplications + 1 inversion)
         let mut z_s = v.iter().map(|g| g.z).collect::<Vec<_>>();
+
+        // TODO#q: we don't need parallel here
         ark_ff::batch_inversion(&mut z_s);
 
         // Perform affine transformations
@@ -365,7 +377,7 @@ impl<P: TECurveConfig, T: Borrow<P::ScalarField>> Mul<T> for Projective<P> {
     }
 }
 
-impl<P: TECurveConfig, T: Borrow<Affine<P>>> ark_std::iter::Sum<T>
+impl<P: TECurveConfig, T: Borrow<Affine<P>>> core::iter::Sum<T>
     for Projective<P>
 {
     fn sum<I>(iter: I) -> Self
@@ -400,24 +412,5 @@ impl<P: MontCurveConfig> Display for MontgomeryAffine<P> {
 impl<P: MontCurveConfig> MontgomeryAffine<P> {
     pub fn new(x: P::BaseField, y: P::BaseField) -> Self {
         Self { x, y }
-    }
-}
-
-impl<P: TECurveConfig> ScalarMul for Projective<P> {
-    type MulBase = Affine<P>;
-
-    const NEGATION_IS_CHEAP: bool = true;
-
-    fn batch_convert_to_mul_base(bases: &[Self]) -> Vec<Self::MulBase> {
-        Self::normalize_batch(bases)
-    }
-}
-
-impl<P: TECurveConfig> VariableBaseMSM for Projective<P> {
-    fn msm(
-        bases: &[Self::MulBase],
-        bigints: &[Self::ScalarField],
-    ) -> Result<Self, usize> {
-        P::msm(bases, bigints)
     }
 }
