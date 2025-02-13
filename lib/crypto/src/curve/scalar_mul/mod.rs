@@ -1,6 +1,3 @@
-pub mod glv;
-pub mod wnaf;
-
 pub mod variable_base;
 
 use ark_ff::{AdditiveGroup, BigInteger, PrimeField, Zero};
