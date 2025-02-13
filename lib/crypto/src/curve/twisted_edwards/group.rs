@@ -13,6 +13,7 @@ use super::{Affine, MontCurveConfig, TECurveConfig};
 use crate::{
     curve::{AffineRepr, CurveGroup, PrimeGroup},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
+    impl_additive_ops_from_ref,
 };
 
 /// `Projective` implements Extended Twisted Edwards Coordinates
@@ -287,7 +288,8 @@ impl<P: TECurveConfig, T: Borrow<Affine<P>>> Sub<T> for Projective<P> {
         self
     }
 }
-ark_ff::impl_additive_ops_from_ref!(Projective, TECurveConfig);
+
+impl_additive_ops_from_ref!(Projective, TECurveConfig);
 
 impl<'a, P: TECurveConfig> Add<&'a Self> for Projective<P> {
     type Output = Self;

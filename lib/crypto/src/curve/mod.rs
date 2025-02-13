@@ -9,6 +9,7 @@ use zeroize::Zeroize;
 
 use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
+mod helpers;
 pub mod scalar_mul;
 pub mod short_weierstrass;
 pub mod twisted_edwards;

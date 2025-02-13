@@ -13,6 +13,7 @@ use super::{Affine, SWCurveConfig};
 use crate::{
     curve::{AffineRepr, CurveGroup, PrimeGroup},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
+    impl_additive_ops_from_ref,
 };
 
 /// Jacobian coordinates for a point on an elliptic curve in short Weierstrass
@@ -427,7 +428,7 @@ impl<P: SWCurveConfig, T: Borrow<Affine<P>>> Sub<T> for Projective<P> {
 
 // TODO#q: Add auto derive of multiplication operations
 // Implements AddAssign on Self by deferring to an implementation on &Self
-ark_ff::impl_additive_ops_from_ref!(Projective, SWCurveConfig);
+impl_additive_ops_from_ref!(Projective, SWCurveConfig);
 
 impl<'a, P: SWCurveConfig> Add<&'a Self> for Projective<P> {
     type Output = Self;
