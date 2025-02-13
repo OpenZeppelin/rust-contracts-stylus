@@ -8,10 +8,7 @@ pub use group::*;
 
 use crate::{
     curve::{
-        scalar_mul::{
-            sw_double_and_add_affine, sw_double_and_add_projective,
-            variable_base::VariableBaseMSM,
-        },
+        scalar_mul::{sw_double_and_add_affine, sw_double_and_add_projective},
         AffineRepr,
     },
     field::{group::AdditiveGroup, prime::PrimeField},
@@ -98,6 +95,7 @@ pub trait SWCurveConfig: super::CurveConfig {
         sw_double_and_add_affine(base, scalar)
     }
 
+    /* TODO#q: implement msm for short weierstrass curves
     /// Default implementation for multi scalar multiplication
     fn msm(
         bases: &[Affine<Self>],
@@ -107,4 +105,5 @@ pub trait SWCurveConfig: super::CurveConfig {
             .then(|| VariableBaseMSM::msm_unchecked(bases, scalars))
             .ok_or(bases.len().min(scalars.len()))
     }
+    */
 }

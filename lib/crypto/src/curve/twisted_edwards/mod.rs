@@ -83,6 +83,7 @@ pub trait TECurveConfig: super::CurveConfig {
         res
     }
 
+    /* TODO#q: implement msm for twisted edwards curves
     /// Default implementation for multi scalar multiplication
     fn msm(
         bases: &[Affine<Self>],
@@ -92,6 +93,7 @@ pub trait TECurveConfig: super::CurveConfig {
             .then(|| VariableBaseMSM::msm_unchecked(bases, scalars))
             .ok_or(bases.len().min(scalars.len()))
     }
+    */
 }
 
 /// Constants and convenience functions that collectively define the [Montgomery model](https://www.hyperelliptic.org/EFD/g1p/auto-montgom.html)

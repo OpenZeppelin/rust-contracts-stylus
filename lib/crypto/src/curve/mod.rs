@@ -5,7 +5,6 @@ use num_traits::Zero;
 use zeroize::Zeroize;
 
 use crate::{
-    curve::scalar_mul::{variable_base::VariableBaseMSM, ScalarMul},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     hash::Hash,
 };
@@ -77,8 +76,9 @@ pub trait CurveGroup:
     + AddAssign<Self::Affine>
     + Sub<Self::Affine, Output = Self>
     + SubAssign<Self::Affine>
-    + VariableBaseMSM
-    + ScalarMul<MulBase = Self::Affine>
+// TODO#q: think to replace VariableBaseMSM and ScalarMul
+    // + VariableBaseMSM
+    // + ScalarMul<MulBase = Self::Affine>
     + From<Self::Affine>
     + Into<Self::Affine>
     + core::iter::Sum<Self::Affine>
