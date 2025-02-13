@@ -8,7 +8,7 @@ use educe::Educe;
 use num_traits::{real::Real, One, Zero};
 use zeroize::Zeroize;
 
-use super::{Projective, SWCurveConfig, SWFlags};
+use super::{Projective, SWCurveConfig};
 use crate::{
     curve::AffineRepr,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
@@ -135,16 +135,6 @@ impl<P: SWCurveConfig> Affine<P> {
             self.y.square() == x3b
         } else {
             true
-        }
-    }
-
-    pub fn to_flags(&self) -> SWFlags {
-        if self.infinity {
-            SWFlags::PointAtInfinity
-        } else if self.y <= -self.y {
-            SWFlags::YIsPositive
-        } else {
-            SWFlags::YIsNegative
         }
     }
 }
