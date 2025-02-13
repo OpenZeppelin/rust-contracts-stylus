@@ -194,11 +194,6 @@ pub trait AffineRepr:
         self.into()
     }
 
-    /// Returns a group element if the set of bytes forms a valid group element,
-    /// otherwise returns None. This function is primarily intended for sampling
-    /// random group elements from a hash-function or RNG output.
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self>;
-
     /// Performs scalar multiplication of this element with mixed addition.
     #[must_use]
     fn mul_bigint(&self, by: impl AsRef<[u64]>) -> Self::Group;

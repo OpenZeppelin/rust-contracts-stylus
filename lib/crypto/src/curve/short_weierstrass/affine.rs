@@ -177,24 +177,6 @@ impl<P: SWCurveConfig> AffineRepr for Affine<P> {
         Self { x: P::BaseField::ZERO, y: P::BaseField::ZERO, infinity: true }
     }
 
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-        P::BaseField::from_random_bytes_with_flags::<SWFlags>(bytes).and_then(
-            |(x, flags)| {
-                // if x is valid and is zero and only the infinity flag is set,
-                // then parse this point as infinity. For all
-                // other choices, get the original point.
-                if x.is_zero() && flags.is_infinity() {
-                    Some(Self::identity())
-                } else if let Some(y_is_positive) = flags.is_positive() {
-                    Self::get_point_from_x_unchecked(x, y_is_positive)
-                    // Unwrap is safe because it's not zero.
-                } else {
-                    None
-                }
-            },
-        )
-    }
-
     fn mul_bigint(&self, by: impl AsRef<[u64]>) -> Self::Group {
         P::mul_affine(self, by.as_ref())
     }

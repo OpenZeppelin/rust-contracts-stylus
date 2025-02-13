@@ -8,10 +8,10 @@ use educe::Educe;
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
-use super::{Projective, TECurveConfig, TEFlags};
+use super::{Projective, TECurveConfig};
 use crate::{
     curve::AffineRepr,
-    field::{group::AdditiveGroup, Field},
+    field::{group::AdditiveGroup, prime::PrimeField, Field},
 };
 
 /// Affine coordinates for a point on a twisted Edwards curve, over the
@@ -169,14 +169,6 @@ impl<P: TECurveConfig> AffineRepr for Affine<P> {
 
     fn zero() -> Self {
         Self::new_unchecked(P::BaseField::ZERO, P::BaseField::ONE)
-    }
-
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-        P::BaseField::from_random_bytes_with_flags::<TEFlags>(bytes).and_then(
-            |(y, flags)| {
-                Self::get_point_from_y_unchecked(y, flags.is_negative())
-            },
-        )
     }
 
     fn mul_bigint(&self, by: impl AsRef<[u64]>) -> Self::Group {
