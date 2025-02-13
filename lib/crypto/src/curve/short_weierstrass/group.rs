@@ -1,7 +1,22 @@
+use core::{
+    borrow::Borrow,
+    fmt::{Debug, Display, Formatter},
+    hash::{Hash, Hasher},
+    ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
+
 use educe::Educe;
+use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
 use super::{Affine, SWCurveConfig};
+use crate::{
+    curve::{
+        scalar_mul::{variable_base::VariableBaseMSM, ScalarMul},
+        AffineRepr, CurveGroup, PrimeGroup,
+    },
+    field::{group::AdditiveGroup, prime::PrimeField, Field},
+};
 
 /// Jacobian coordinates for a point on an elliptic curve in short Weierstrass
 /// form, over the base field `P::BaseField`. This struct implements arithmetic
@@ -19,13 +34,13 @@ pub struct Projective<P: SWCurveConfig> {
 }
 
 impl<P: SWCurveConfig> Display for Projective<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", Affine::from(*self))
     }
 }
 
 impl<P: SWCurveConfig> Debug for Projective<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self.is_zero() {
             true => write!(f, "infinity"),
             false => write!(f, "({}, {}, {})", self.x, self.y, self.z),
@@ -67,21 +82,6 @@ impl<P: SWCurveConfig> PartialEq<Affine<P>> for Projective<P> {
 impl<P: SWCurveConfig> Hash for Projective<P> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.into_affine().hash(state)
-    }
-}
-
-impl<P: SWCurveConfig> Distribution<Projective<P>> for Standard {
-    /// Generates a uniformly random instance of the curve.
-    #[inline]
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projective<P> {
-        loop {
-            let x = P::BaseField::rand(rng);
-            let greatest = rng.gen();
-
-            if let Some(p) = Affine::get_point_from_x_unchecked(x, greatest) {
-                return p.mul_by_cofactor_to_group();
-            }
-        }
     }
 }
 
@@ -174,6 +174,7 @@ impl<P: SWCurveConfig> AdditiveGroup for Projective<P> {
             // D = 2*((X1+B)^2-A-C)
             //   = 2 * (X1 + Y1^2)^2 - A - C
             //   = 2 * 2 * X1 * Y1^2
+            // TODO#q: probably use different trait for extension_degree
             let d = if [1, 2].contains(&P::BaseField::extension_degree()) {
                 let mut d = self.x;
                 d *= &b;
@@ -291,6 +292,8 @@ impl<P: SWCurveConfig> CurveGroup for Projective<P> {
     #[inline]
     fn normalize_batch(v: &[Self]) -> Vec<Self::Affine> {
         let mut z_s = v.iter().map(|g| g.z).collect::<Vec<_>>();
+        // TODO#q: we don't need to do it in parallel onchain
+
         ark_ff::batch_inversion(&mut z_s);
 
         // Perform affine transformations
@@ -387,6 +390,7 @@ impl<P: SWCurveConfig, T: Borrow<Affine<P>>> AddAssign<T> for Projective<P> {
                 // Y3 = r*(V-X3) + 2*Y1*J
                 v -= &self.x;
                 self.y.double_in_place();
+                // TODO#q: we need sum of products for add assign
                 self.y = P::BaseField::sum_of_products(&[r, self.y], &[v, j]);
 
                 // Z3 = 2 * Z1 * H;
@@ -424,6 +428,8 @@ impl<P: SWCurveConfig, T: Borrow<Affine<P>>> Sub<T> for Projective<P> {
     }
 }
 
+// TODO#q: Add auto derive of multiplication operations
+// Implements AddAssign on Self by deferring to an implementation on &Self
 ark_ff::impl_additive_ops_from_ref!(Projective, SWCurveConfig);
 
 impl<'a, P: SWCurveConfig> Add<&'a Self> for Projective<P> {
@@ -571,62 +577,6 @@ impl<P: SWCurveConfig> From<Affine<P>> for Projective<P> {
             y,
             z: P::BaseField::one(),
         })
-    }
-}
-
-impl<P: SWCurveConfig> CanonicalSerialize for Projective<P> {
-    #[inline]
-    fn serialize_with_mode<W: Write>(
-        &self,
-        writer: W,
-        compress: Compress,
-    ) -> Result<(), SerializationError> {
-        let aff = Affine::from(*self);
-        P::serialize_with_mode(&aff, writer, compress)
-    }
-
-    #[inline]
-    fn serialized_size(&self, compress: Compress) -> usize {
-        P::serialized_size(compress)
-    }
-}
-
-impl<P: SWCurveConfig> Valid for Projective<P> {
-    fn check(&self) -> Result<(), SerializationError> {
-        self.into_affine().check()
-    }
-
-    fn batch_check<'a>(
-        batch: impl Iterator<Item = &'a Self> + Send,
-    ) -> Result<(), SerializationError>
-    where
-        Self: 'a,
-    {
-        let batch = batch.copied().collect::<Vec<_>>();
-        let batch = Self::normalize_batch(&batch);
-        Affine::batch_check(batch.iter())
-    }
-}
-
-impl<P: SWCurveConfig> CanonicalDeserialize for Projective<P> {
-    fn deserialize_with_mode<R: Read>(
-        reader: R,
-        compress: Compress,
-        validate: Validate,
-    ) -> Result<Self, SerializationError> {
-        let aff = P::deserialize_with_mode(reader, compress, validate)?;
-        Ok(aff.into())
-    }
-}
-
-impl<M: SWCurveConfig, ConstraintF: Field> ToConstraintField<ConstraintF>
-    for Projective<M>
-where
-    M::BaseField: ToConstraintField<ConstraintF>,
-{
-    #[inline]
-    fn to_field_elements(&self) -> Option<Vec<ConstraintF>> {
-        Affine::from(*self).to_field_elements()
     }
 }
 

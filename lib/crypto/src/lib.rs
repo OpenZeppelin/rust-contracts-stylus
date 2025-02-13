@@ -24,6 +24,11 @@ Common cryptographic procedures for a blockchain environment.
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 extern crate alloc;
 extern crate core;
+extern crate core;
+extern crate core;
+extern crate core;
+extern crate core;
+extern crate core;
 
 pub mod arithmetic;
 pub mod bits;

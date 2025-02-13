@@ -1,9 +1,18 @@
+use core::{
+    borrow::Borrow,
+    fmt::{Debug, Display, Formatter},
+};
+use std::ops::{Add, Mul, Neg, Sub};
+
 use educe::Educe;
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
 use super::{Projective, TECurveConfig, TEFlags};
-use crate::AffineRepr;
+use crate::{
+    curve::AffineRepr,
+    field::{group::AdditiveGroup, Field},
+};
 
 /// Affine coordinates for a point on a twisted Edwards curve, over the
 /// base field `P::BaseField`.
@@ -18,7 +27,7 @@ pub struct Affine<P: TECurveConfig> {
 }
 
 impl<P: TECurveConfig> Display for Affine<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self.is_zero() {
             true => write!(f, "infinity"),
             false => write!(f, "({}, {})", self.x, self.y),
@@ -27,7 +36,7 @@ impl<P: TECurveConfig> Display for Affine<P> {
 }
 
 impl<P: TECurveConfig> Debug for Affine<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self.is_zero() {
             true => write!(f, "infinity"),
             false => write!(f, "({}, {})", self.x, self.y),
@@ -265,21 +274,6 @@ impl<P: TECurveConfig> Default for Affine<P> {
     }
 }
 
-impl<P: TECurveConfig> Distribution<Affine<P>> for Standard {
-    /// Generates a uniformly random instance of the curve.
-    #[inline]
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Affine<P> {
-        loop {
-            let y = P::BaseField::rand(rng);
-            let greatest = rng.gen();
-
-            if let Some(p) = Affine::get_point_from_y_unchecked(y, greatest) {
-                return p.mul_by_cofactor();
-            }
-        }
-    }
-}
-
 impl<P: TECurveConfig, T: Borrow<P::ScalarField>> Mul<T> for Affine<P> {
     type Output = Projective<P>;
 
@@ -305,55 +299,5 @@ impl<P: TECurveConfig> From<Projective<P>> for Affine<P> {
             let y = p.y * &z_inv;
             Affine::new_unchecked(x, y)
         }
-    }
-}
-impl<P: TECurveConfig> CanonicalSerialize for Affine<P> {
-    #[inline]
-    fn serialize_with_mode<W: Write>(
-        &self,
-        writer: W,
-        compress: ark_serialize::Compress,
-    ) -> Result<(), SerializationError> {
-        P::serialize_with_mode(self, writer, compress)
-    }
-
-    #[inline]
-    fn serialized_size(&self, compress: Compress) -> usize {
-        P::serialized_size(compress)
-    }
-}
-
-impl<P: TECurveConfig> Valid for Affine<P> {
-    fn check(&self) -> Result<(), SerializationError> {
-        if self.is_on_curve() && self.is_in_correct_subgroup_assuming_on_curve()
-        {
-            Ok(())
-        } else {
-            Err(SerializationError::InvalidData)
-        }
-    }
-}
-
-impl<P: TECurveConfig> CanonicalDeserialize for Affine<P> {
-    fn deserialize_with_mode<R: Read>(
-        reader: R,
-        compress: Compress,
-        validate: Validate,
-    ) -> Result<Self, SerializationError> {
-        P::deserialize_with_mode(reader, compress, validate)
-    }
-}
-
-impl<M: TECurveConfig, ConstraintF: Field> ToConstraintField<ConstraintF>
-    for Affine<M>
-where
-    M::BaseField: ToConstraintField<ConstraintF>,
-{
-    #[inline]
-    fn to_field_elements(&self) -> Option<Vec<ConstraintF>> {
-        let mut x_fe = self.x.to_field_elements()?;
-        let y_fe = self.y.to_field_elements()?;
-        x_fe.extend_from_slice(&y_fe);
-        Some(x_fe)
     }
 }

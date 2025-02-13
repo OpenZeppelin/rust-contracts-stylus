@@ -29,7 +29,7 @@ impl<P: TECurveConfig> PartialEq<Affine<P>> for Projective<P> {
 }
 
 impl<P: TECurveConfig> Display for Projective<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", Affine::from(*self))
     }
 }
@@ -53,21 +53,6 @@ impl<P: TECurveConfig> PartialEq for Projective<P> {
 impl<P: TECurveConfig> Hash for Projective<P> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.into_affine().hash(state)
-    }
-}
-
-impl<P: TECurveConfig> Distribution<Projective<P>> for Standard {
-    /// Generates a uniformly random instance of the curve.
-    #[inline]
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Projective<P> {
-        loop {
-            let y = P::BaseField::rand(rng);
-            let greatest = rng.gen();
-
-            if let Some(p) = Affine::get_point_from_y_unchecked(y, greatest) {
-                return p.mul_by_cofactor_to_group();
-            }
-        }
     }
 }
 
@@ -407,7 +392,7 @@ pub struct MontgomeryAffine<P: MontCurveConfig> {
 }
 
 impl<P: MontCurveConfig> Display for MontgomeryAffine<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "MontgomeryAffine(x={}, y={})", self.x, self.y)
     }
 }
@@ -415,64 +400,6 @@ impl<P: MontCurveConfig> Display for MontgomeryAffine<P> {
 impl<P: MontCurveConfig> MontgomeryAffine<P> {
     pub fn new(x: P::BaseField, y: P::BaseField) -> Self {
         Self { x, y }
-    }
-}
-
-impl<P: TECurveConfig> CanonicalSerialize for Projective<P> {
-    #[allow(unused_qualifications)]
-    #[inline]
-    fn serialize_with_mode<W: Write>(
-        &self,
-        writer: W,
-        compress: Compress,
-    ) -> Result<(), SerializationError> {
-        let aff = Affine::from(*self);
-        P::serialize_with_mode(&aff, writer, compress)
-    }
-
-    #[inline]
-    fn serialized_size(&self, compress: Compress) -> usize {
-        P::serialized_size(compress)
-    }
-}
-
-impl<P: TECurveConfig> Valid for Projective<P> {
-    fn check(&self) -> Result<(), SerializationError> {
-        self.into_affine().check()
-    }
-
-    fn batch_check<'a>(
-        batch: impl Iterator<Item = &'a Self> + Send,
-    ) -> Result<(), SerializationError>
-    where
-        Self: 'a,
-    {
-        let batch = batch.copied().collect::<Vec<_>>();
-        let batch = Self::normalize_batch(&batch);
-        Affine::batch_check(batch.iter())
-    }
-}
-
-impl<P: TECurveConfig> CanonicalDeserialize for Projective<P> {
-    #[allow(unused_qualifications)]
-    fn deserialize_with_mode<R: Read>(
-        reader: R,
-        compress: Compress,
-        validate: Validate,
-    ) -> Result<Self, SerializationError> {
-        let aff = P::deserialize_with_mode(reader, compress, validate)?;
-        Ok(aff.into())
-    }
-}
-
-impl<M: TECurveConfig, ConstraintF: Field> ToConstraintField<ConstraintF>
-    for Projective<M>
-where
-    M::BaseField: ToConstraintField<ConstraintF>,
-{
-    #[inline]
-    fn to_field_elements(&self) -> Option<Vec<ConstraintF>> {
-        Affine::from(*self).to_field_elements()
     }
 }
 

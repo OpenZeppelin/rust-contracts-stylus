@@ -1,8 +1,18 @@
+use core::{
+    borrow::Borrow,
+    fmt::{Debug, Display, Formatter},
+    ops::{Add, Mul, Neg, Sub},
+};
+
 use educe::Educe;
+use num_traits::{real::Real, One, Zero};
 use zeroize::Zeroize;
 
 use super::{Projective, SWCurveConfig, SWFlags};
-use crate::AffineRepr;
+use crate::{
+    curve::AffineRepr,
+    field::{group::AdditiveGroup, prime::PrimeField, Field},
+};
 
 /// Affine coordinates for a point on an elliptic curve in short Weierstrass
 /// form, over the base field `P::BaseField`.
@@ -25,7 +35,7 @@ impl<P: SWCurveConfig> PartialEq<Projective<P>> for Affine<P> {
 }
 
 impl<P: SWCurveConfig> Display for Affine<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self.infinity {
             true => write!(f, "infinity"),
             false => write!(f, "({}, {})", self.x, self.y),
@@ -34,7 +44,7 @@ impl<P: SWCurveConfig> Display for Affine<P> {
 }
 
 impl<P: SWCurveConfig> Debug for Affine<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self.infinity {
             true => write!(f, "infinity"),
             false => write!(f, "({}, {})", self.x, self.y),
@@ -155,21 +165,6 @@ impl<P: SWCurveConfig> Zeroize for Affine<P> {
         self.x.zeroize();
         self.y.zeroize();
         self.infinity.zeroize();
-    }
-}
-
-impl<P: SWCurveConfig> Distribution<Affine<P>> for Standard {
-    /// Generates a uniformly random instance of the curve.
-    #[inline]
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Affine<P> {
-        loop {
-            let x = P::BaseField::rand(rng);
-            let greatest = rng.gen();
-
-            if let Some(p) = Affine::get_point_from_x_unchecked(x, greatest) {
-                return p.mul_by_cofactor();
-            }
-        }
     }
 }
 
@@ -333,58 +328,5 @@ impl<P: SWCurveConfig> From<Projective<P>> for Affine<P> {
 
             Affine::new_unchecked(x, y)
         }
-    }
-}
-
-impl<P: SWCurveConfig> CanonicalSerialize for Affine<P> {
-    #[inline]
-    fn serialize_with_mode<W: Write>(
-        &self,
-        writer: W,
-        compress: ark_serialize::Compress,
-    ) -> Result<(), SerializationError> {
-        P::serialize_with_mode(self, writer, compress)
-    }
-
-    #[inline]
-    fn serialized_size(&self, compress: Compress) -> usize {
-        P::serialized_size(compress)
-    }
-}
-
-impl<P: SWCurveConfig> Valid for Affine<P> {
-    fn check(&self) -> Result<(), SerializationError> {
-        if self.is_on_curve() && self.is_in_correct_subgroup_assuming_on_curve()
-        {
-            Ok(())
-        } else {
-            Err(SerializationError::InvalidData)
-        }
-    }
-}
-
-impl<P: SWCurveConfig> CanonicalDeserialize for Affine<P> {
-    fn deserialize_with_mode<R: Read>(
-        reader: R,
-        compress: Compress,
-        validate: Validate,
-    ) -> Result<Self, SerializationError> {
-        P::deserialize_with_mode(reader, compress, validate)
-    }
-}
-
-impl<M: SWCurveConfig, ConstraintF: Field> ToConstraintField<ConstraintF>
-    for Affine<M>
-where
-    M::BaseField: ToConstraintField<ConstraintF>,
-{
-    #[inline]
-    fn to_field_elements(&self) -> Option<Vec<ConstraintF>> {
-        let mut x = self.x.to_field_elements()?;
-        let y = self.y.to_field_elements()?;
-        let infinity = self.infinity.to_field_elements()?;
-        x.extend_from_slice(&y);
-        x.extend_from_slice(&infinity);
-        Some(x)
     }
 }
