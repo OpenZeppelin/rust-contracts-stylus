@@ -1,8 +1,6 @@
 use core::{
     borrow::Borrow,
     fmt::{Display, Formatter},
-};
-use std::{
     hash::{Hash, Hasher},
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };

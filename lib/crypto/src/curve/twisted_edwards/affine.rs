@@ -1,8 +1,8 @@
 use core::{
     borrow::Borrow,
     fmt::{Debug, Display, Formatter},
+    ops::{Add, Mul, Neg, Sub},
 };
-use std::ops::{Add, Mul, Neg, Sub};
 
 use educe::Educe;
 use num_traits::{One, Zero};

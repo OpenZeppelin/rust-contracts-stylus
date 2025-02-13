@@ -1,13 +1,13 @@
-use core::fmt::{Debug, Display};
-use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::{
+    fmt::{Debug, Display},
+    hash::Hash,
+    ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 
 use num_traits::Zero;
 use zeroize::Zeroize;
 
-use crate::{
-    field::{group::AdditiveGroup, prime::PrimeField, Field},
-    hash::Hash,
-};
+use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
 
 pub mod scalar_mul;
 pub mod short_weierstrass;
