@@ -25,11 +25,6 @@ pub const TRANSFER_ROLE: [u8; 32] =
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
-    #[constructor]
-    pub fn constructor(&mut self) {
-        self.access.constructor();
-    }
-
     pub fn make_admin(&mut self, account: Address) -> Result<(), Vec<u8>> {
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
         self.access.grant_role(TRANSFER_ROLE.into(), account)?;
