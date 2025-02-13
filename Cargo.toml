@@ -78,11 +78,11 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "0.7.0", default-features = false, features = [
+stylus-sdk = { version = "0.8.0", default-features = false, features = [
   "mini-alloc",
 ] }
 
-alloy = { version = "=0.7.3", features = [
+alloy = { version = "=0.11.1", features = [
   "contract",
   "network",
   "providers",
@@ -95,17 +95,17 @@ alloy = { version = "=0.7.3", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.14", default-features = false }
-alloy-sol-types = { version = "=0.8.14", default-features = false }
-alloy-sol-macro = { version = "=0.8.14", default-features = false }
-alloy-sol-macro-expander = { version = "=0.8.14", default-features = false }
-alloy-sol-macro-input = { version = "=0.8.14", default-features = false }
+alloy-primitives = { version = "=0.8.20", default-features = false }
+alloy-sol-types = { version = "=0.8.20", default-features = false }
+alloy-sol-macro = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"
 koba = "0.3.0"
 once_cell = "1.19.0"
-rand = "0.8.5"
+rand = "0.9.0"
 regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
@@ -151,3 +151,8 @@ default = { extend-ignore-identifiers-re = [
   "[0-9a-fA-F][0-9a-fA-F]",
 ] }
 files = { extend-exclude = [] }
+
+# TODO: remove motsu patch once update is released
+[patch.crates-io.motsu]
+git = "https://github.com/OpenZeppelin/stylus-test-helpers"
+branch = "build/stylus-v0.8"
