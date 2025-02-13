@@ -18,6 +18,9 @@ sol!(
         function flashFee(address token, uint256 amount) external view returns (uint256 fee);
         function flashLoan(address receiver, address token, uint256 amount, bytes calldata data) external returns (bool);
 
+        function setFlashFeeReceiver(address newReceiver) external;
+        function setFlashFeeValue(uint256 newValue) external;
+
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
         error ERC20InvalidReceiver(address receiver);
