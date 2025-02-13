@@ -1,17 +1,15 @@
 //! ERC-1155 token with storage based token URI management.
 //!
 //! Inspired by the [`crate::token::erc721::extensions::Erc721UriStorage`]
-use alloc::string::String;
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::U256;
 use stylus_sdk::{
-    evm,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageString},
 };
 
 use super::metadata_uri::{IErc1155MetadataUri, URI};
-
 /// State of an [`Erc1155UriStorage`] contract.
 #[storage]
 pub struct Erc1155UriStorage {
@@ -78,7 +76,10 @@ impl Erc1155UriStorage {
         metadata_uri: &impl IErc1155MetadataUri,
     ) {
         self.token_uris.setter(token_id).set_str(token_uri);
-        evm::log(URI { value: self.uri(token_id, metadata_uri), id: token_id });
+        log(
+            self.vm(),
+            URI { value: self.uri(token_id, metadata_uri), id: token_id },
+        );
     }
 
     /// Sets `base_uri` as the `base_uri` for all tokens.

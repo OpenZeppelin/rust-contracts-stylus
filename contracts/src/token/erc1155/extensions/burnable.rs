@@ -3,7 +3,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
+use stylus_sdk::prelude::*;
 
 use crate::token::erc1155::{
     self, ERC1155MissingApprovalForAll, Erc1155, IErc1155,
@@ -94,7 +94,7 @@ impl Erc1155 {
         &self,
         account: Address,
     ) -> Result<(), erc1155::Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         if account != sender && !self.is_approved_for_all(account, sender) {
             return Err(erc1155::Error::MissingApprovalForAll(
                 ERC1155MissingApprovalForAll {
