@@ -7,7 +7,7 @@ mod group;
 pub use group::*;
 
 use crate::{
-    curve::{scalar_mul::variable_base::VariableBaseMSM, AffineRepr},
+    curve::AffineRepr,
     field::{group::AdditiveGroup, prime::PrimeField},
 };
 
