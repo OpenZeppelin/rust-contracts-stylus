@@ -8,11 +8,7 @@ use openzeppelin_crypto::{
     merkle::{self, Verifier},
     KeccakBuilder,
 };
-use stylus_sdk::{
-    alloy_sol_types::sol,
-    prelude::{entrypoint, public, storage},
-    stylus_proc::SolidityError,
-};
+use stylus_sdk::{alloy_sol_types::sol, prelude::*};
 
 sol! {
     error MerkleProofInvalidMultiProofLength();

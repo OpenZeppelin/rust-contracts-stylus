@@ -11,7 +11,7 @@ use openzeppelin_stylus::{
     },
     utils::{introspection::erc165::IErc165, Pausable},
 };
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 const DECIMALS: u8 = 10;
 

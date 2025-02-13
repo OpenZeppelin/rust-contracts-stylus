@@ -2,13 +2,12 @@
 //!
 //! Nonces will only increment.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::utils::math::storage::AddAssignChecked;
@@ -116,7 +115,7 @@ impl Nonces {
 mod tests {
     use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::ONE;
     use crate::utils::nonces::{Error, Nonces};

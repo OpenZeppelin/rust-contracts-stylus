@@ -16,16 +16,11 @@
 //! This module uses [`Ownable`] as a member, and makes all its public functions
 //! available.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 pub use sol::*;
-use stylus_sdk::{
-    evm, msg,
-    prelude::storage,
-    storage::StorageAddress,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{prelude::*, storage::StorageAddress};
 
 use crate::access::ownable::{
     Error as OwnableError, IOwnable, Ownable, OwnableUnauthorizedAccount,
@@ -172,15 +167,18 @@ impl IOwnable2Step for Ownable2Step {
         self.pending_owner.set(new_owner);
 
         let current_owner = self.owner();
-        evm::log(OwnershipTransferStarted {
-            previous_owner: current_owner,
-            new_owner,
-        });
+        log(
+            self.vm(),
+            OwnershipTransferStarted {
+                previous_owner: current_owner,
+                new_owner,
+            },
+        );
         Ok(())
     }
 
     fn accept_ownership(&mut self) -> Result<(), Self::Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
             return Err(OwnableError::UnauthorizedAccount(
@@ -225,7 +223,7 @@ impl Ownable2Step {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::{Error, IOwnable2Step, Ownable2Step, OwnableError};
 

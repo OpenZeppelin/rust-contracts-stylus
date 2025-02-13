@@ -16,14 +16,15 @@
 
 // TODO: once ERC20Votes is implemented, include it in the comment above next to
 // ERC20Capped.
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::Call,
-    contract, msg,
+    contract,
     prelude::*,
-    storage::{StorageAddress, StorageU256, TopLevelStorage},
+    storage::{StorageAddress, StorageU256},
 };
 
 use crate::token::erc20::{self, Erc20, IErc20};
@@ -82,7 +83,7 @@ mod borrower {
     #![cfg_attr(coverage_nightly, coverage(off))]
     use alloc::vec;
 
-    use stylus_sdk::stylus_proc::sol_interface;
+    use stylus_sdk::prelude::sol_interface;
 
     sol_interface! {
         /// Interface of the ERC-3156 FlashBorrower, as defined in [ERC-3156].
@@ -299,10 +300,11 @@ impl IErc3156FlashLender for Erc20FlashMint {
         }
         erc20._mint(receiver, value)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
+        let msg_sender = self.vm().msg_sender();
         let loan_return = loan_receiver
             .on_flash_loan(
                 Call::new_in(self),
-                msg::sender(),
+                msg_sender,
                 token,
                 value,
                 fee,

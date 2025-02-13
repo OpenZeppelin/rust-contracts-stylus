@@ -4,17 +4,16 @@ use alloc::string::String;
 
 use alloy_primitives::FixedBytes;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, storage};
+use stylus_sdk::prelude::*;
 
 use crate::utils::introspection::erc165::IErc165;
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use crate::utils::Metadata;
-
 /// State of an [`Erc20Metadata`] contract.
 #[storage]
 pub struct Erc20Metadata {

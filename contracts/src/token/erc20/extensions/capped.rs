@@ -5,15 +5,11 @@
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::U256;
 pub use sol::*;
-use stylus_sdk::{
-    prelude::storage,
-    storage::StorageU256,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{prelude::*, storage::StorageU256};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -64,7 +60,7 @@ impl Capped {
 mod tests {
     use alloy_primitives::{uint, Address};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::Capped;
 

@@ -1,10 +1,7 @@
 //! Common Metadata Smart Contract.
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
-use stylus_sdk::{
-    prelude::storage, storage::StorageString, stylus_proc::public,
-};
-
+use stylus_sdk::{prelude::*, storage::StorageString};
 /// State of a [`Metadata`] contract.
 #[storage]
 pub struct Metadata {

@@ -6,15 +6,15 @@
 //! extends the ERC-20 standard. Any additional extensions included along it
 //! would affect the "shares" token represented by this contract and not the
 //! "assets" token which is an independent contract.
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
     call::Call,
-    contract, evm, msg,
-    prelude::storage,
-    storage::{StorageAddress, StorageU8, TopLevelStorage},
-    stylus_proc::SolidityError,
+    contract,
+    prelude::*,
+    storage::{StorageAddress, StorageU8},
 };
 
 use crate::{
@@ -840,7 +840,7 @@ impl IErc4626 for Erc4626 {
 
         let shares = self.preview_deposit(assets, erc20)?;
 
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(shares)
     }
@@ -862,7 +862,7 @@ impl IErc4626 for Erc4626 {
         }
 
         let assets = self.preview_mint(shares, erc20)?;
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(assets)
     }
@@ -883,7 +883,14 @@ impl IErc4626 for Erc4626 {
         }
 
         let shares = self.preview_withdraw(assets, erc20)?;
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(shares)
     }
@@ -906,7 +913,14 @@ impl IErc4626 for Erc4626 {
 
         let assets = self.preview_redeem(shares, erc20)?;
 
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(assets)
     }
@@ -1078,7 +1092,10 @@ impl Erc4626 {
 
         erc20._mint(receiver, shares)?;
 
-        evm::log(Deposit { sender: caller, owner: receiver, assets, shares });
+        log(
+            self.vm(),
+            Deposit { sender: caller, owner: receiver, assets, shares },
+        );
 
         Ok(())
     }
@@ -1130,7 +1147,10 @@ impl Erc4626 {
 
         self.safe_erc20.safe_transfer(self.asset(), receiver, assets)?;
 
-        evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
+        log(
+            self.vm(),
+            Withdraw { sender: caller, receiver, owner, assets, shares },
+        );
 
         Ok(())
     }

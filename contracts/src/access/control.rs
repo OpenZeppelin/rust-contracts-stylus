@@ -18,7 +18,7 @@
 //!
 //! ```rust,ignore
 //! pub fn foo() {
-//!   assert!(self.has_role(MY_ROLE.into(), msg::sender()));
+//!   assert!(self.has_role(MY_ROLE.into(), self.vm().msg_sender()));
 //!   // ...
 //! }
 //! ```
@@ -39,16 +39,14 @@
 //! taken to secure accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, B256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::{StorageBool, StorageFixedBytes, StorageMap},
-    stylus_proc::{public, SolidityError},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -250,7 +248,7 @@ impl IAccessControl for AccessControl {
     }
 
     fn only_role(&self, role: B256) -> Result<(), Self::Error> {
-        self._check_role(role, msg::sender())
+        self._check_role(role, self.vm().msg_sender())
     }
 
     #[must_use]
@@ -285,7 +283,7 @@ impl IAccessControl for AccessControl {
         role: B256,
         confirmation: Address,
     ) -> Result<(), Self::Error> {
-        if msg::sender() != confirmation {
+        if self.vm().msg_sender() != confirmation {
             return Err(Error::BadConfirmation(
                 AccessControlBadConfirmation {},
             ));
@@ -314,11 +312,10 @@ impl AccessControl {
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
         self.roles.setter(role).admin_role.set(new_admin_role);
-        evm::log(RoleAdminChanged {
-            role,
-            previous_admin_role,
-            new_admin_role,
-        });
+        log(
+            self.vm(),
+            RoleAdminChanged { role, previous_admin_role, new_admin_role },
+        );
     }
 
     /// Checks if `account` has been granted `role`.
@@ -366,7 +363,10 @@ impl AccessControl {
             false
         } else {
             self.roles.setter(role).has_role.insert(account, true);
-            evm::log(RoleGranted { role, account, sender: msg::sender() });
+            log(
+                self.vm(),
+                RoleGranted { role, account, sender: self.vm().msg_sender() },
+            );
             true
         }
     }
@@ -388,7 +388,10 @@ impl AccessControl {
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             self.roles.setter(role).has_role.insert(account, false);
-            evm::log(RoleRevoked { role, account, sender: msg::sender() });
+            log(
+                self.vm(),
+                RoleRevoked { role, account, sender: self.vm().msg_sender() },
+            );
             true
         } else {
             false
@@ -400,7 +403,7 @@ impl AccessControl {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::{AccessControl, Error, IAccessControl};
 

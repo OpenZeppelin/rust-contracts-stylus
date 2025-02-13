@@ -8,7 +8,7 @@ use openzeppelin_stylus::token::erc20::{
     extensions::{Erc20Metadata, Erc4626, IErc4626},
     Erc20,
 };
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]

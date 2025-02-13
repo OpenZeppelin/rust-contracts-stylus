@@ -9,7 +9,7 @@
 //! your contract, which allows you to call the safe operations as
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolCall;
@@ -18,9 +18,7 @@ use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
     function_selector,
-    prelude::storage,
-    storage::TopLevelStorage,
-    stylus_proc::{public, SolidityError},
+    prelude::*,
     types::AddressVM,
 };
 

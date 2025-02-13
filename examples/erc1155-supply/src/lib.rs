@@ -7,10 +7,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc1155::extensions::{
     Erc1155Supply, IErc1155Supply,
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, public, storage},
-};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 #[entrypoint]
 #[storage]

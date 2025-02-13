@@ -8,18 +8,12 @@
 //! This module is used through inheritance. It will make available the
 //! [`Ownable::only_owner`] function, which can be called to restrict operations
 //! to the owner.
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    call::MethodError,
-    evm, msg,
-    prelude::storage,
-    storage::StorageAddress,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{call::MethodError, prelude::*, storage::StorageAddress};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -170,7 +164,7 @@ impl Ownable {
     /// * [`Error::UnauthorizedAccount`] - If called by any account other than
     ///   the owner.
     pub fn only_owner(&self) -> Result<(), Error> {
-        let account = msg::sender();
+        let account = self.vm().msg_sender();
         if self.owner() != account {
             return Err(Error::UnauthorizedAccount(
                 OwnableUnauthorizedAccount { account },
@@ -194,7 +188,7 @@ impl Ownable {
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let previous_owner = self.owner.get();
         self.owner.set(new_owner);
-        evm::log(OwnershipTransferred { previous_owner, new_owner });
+        log(self.vm(), OwnershipTransferred { previous_owner, new_owner });
     }
 }
 
@@ -202,7 +196,7 @@ impl Ownable {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::{Error, IOwnable, Ownable};
 

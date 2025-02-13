@@ -6,9 +6,9 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
-    evm, function_selector, msg,
-    prelude::{public, storage, AddressVM, SolidityError},
-    storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
+    function_selector,
+    prelude::*,
+    storage::{StorageBool, StorageMap, StorageU256},
 };
 
 use crate::utils::{
@@ -250,7 +250,7 @@ pub trait IErc1155 {
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `approved` - Flag that determines whether or not permission will be
     ///   granted to `operator`. If true, this means `operator` will be allowed
-    ///   to manage `msg::sender()`'s assets.
+    ///   to manage `self.vm().msg_sender()`'s assets.
     ///
     /// # Errors
     ///
@@ -295,8 +295,8 @@ pub trait IErc1155 {
     ///   interface id or returned with error.
     /// * [`Error::InvalidSender`] - Returned when `from` is `Address::ZERO`.
     /// * [`Error::MissingApprovalForAll`] - Returned when `from` is not the
-    ///   caller (`msg::sender()`), and the caller does not have the right to
-    ///   approve.
+    ///   caller (`self.vm().msg_sender()`), and the caller does not have the
+    ///   right to approve.
     /// * [`Error::InsufficientBalance`] - Returned when `value` is greater than
     ///   the balance of the `from` account.
     ///
@@ -336,8 +336,8 @@ pub trait IErc1155 {
     /// * [`Error::InsufficientBalance`] - Returned when any of the `values` is
     ///   greater than the balance of the `from` account.
     /// * [`Error::MissingApprovalForAll`] - Returned when `from` is not the
-    ///   caller (`msg::sender()`), and the caller does not have the right to
-    ///   approve.
+    ///   caller (`self.vm().msg_sender()`), and the caller does not have the
+    ///   right to approve.
     ///
     /// # Events
     ///
@@ -383,7 +383,7 @@ impl IErc1155 for Erc1155 {
         operator: Address,
         approved: bool,
     ) -> Result<(), Self::Error> {
-        self._set_approval_for_all(msg::sender(), operator, approved)
+        self._set_approval_for_all(self.vm().msg_sender(), operator, approved)
     }
 
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
@@ -463,7 +463,7 @@ impl Erc1155 {
     ) -> Result<(), Error> {
         Self::require_equal_arrays_length(&ids, &values)?;
 
-        let operator = msg::sender();
+        let operator = self.vm().msg_sender();
 
         for (&token_id, &value) in ids.iter().zip(values.iter()) {
             self.do_update(from, to, token_id, value)?;
@@ -472,9 +472,9 @@ impl Erc1155 {
         if ids.len() == 1 {
             let id = ids[0];
             let value = values[0];
-            evm::log(TransferSingle { operator, from, to, id, value });
+            log(self.vm(), TransferSingle { operator, from, to, id, value });
         } else {
-            evm::log(TransferBatch { operator, from, to, ids, values });
+            log(self.vm(), TransferBatch { operator, from, to, ids, values });
         }
 
         Ok(())
@@ -527,7 +527,7 @@ impl Erc1155 {
 
         if !to.is_zero() {
             self._check_on_erc1155_received(
-                msg::sender(),
+                self.vm().msg_sender(),
                 from,
                 to,
                 Erc1155ReceiverData::new(ids, values),
@@ -704,7 +704,7 @@ impl Erc1155 {
             }));
         }
         self.operator_approvals.setter(owner).setter(operator).set(approved);
-        evm::log(ApprovalForAll { account: owner, operator, approved });
+        log(self.vm(), ApprovalForAll { account: owner, operator, approved });
         Ok(())
     }
 }
@@ -726,7 +726,7 @@ impl Erc1155 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - Generally the address that initiated the token transfer
-    ///   (e.g. `msg::sender()`).
+    ///   (e.g. `self.vm().msg_sender()`).
     /// * `from` - Account of the sender.
     /// * `to` - Account of the recipient.
     /// * `details` - Details about token transfer, check
@@ -1023,7 +1023,7 @@ impl Erc1155 {
         Ok(())
     }
 
-    /// Checks if `msg::sender()` is authorized to transfer tokens.
+    /// Checks if `self.vm().msg_sender()` is authorized to transfer tokens.
     ///
     /// # Arguments
     ///
@@ -1033,9 +1033,10 @@ impl Erc1155 {
     /// # Errors
     ///
     /// * [`Error::MissingApprovalForAll`] -  If the `from` is not the caller
-    ///   (`msg::sender()`), and the caller does not have the right to approve.
+    ///   (`self.vm().msg_sender()`), and the caller does not have the right to
+    ///   approve.
     fn authorize_transfer(&self, from: Address) -> Result<(), Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         if from != sender && !self.is_approved_for_all(from, sender) {
             return Err(Error::MissingApprovalForAll(
                 ERC1155MissingApprovalForAll { operator: sender, owner: from },

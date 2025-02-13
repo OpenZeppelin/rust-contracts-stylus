@@ -13,12 +13,13 @@
 //! - Accessing the same warm slot for every 256 _sequential_ indices
 //!
 //! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{uint, U256};
 use stylus_sdk::{
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
-
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);
 
@@ -101,7 +102,7 @@ mod tests {
         Address, U256,
     };
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::{public, TopLevelStorage};
+    use stylus_sdk::prelude::{public, *};
 
     use crate::utils::structs::bitmap::BitMap;
 
