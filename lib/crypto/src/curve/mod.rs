@@ -27,7 +27,7 @@ pub trait CurveConfig: Send + Sync + Sized + 'static {
     /// Finite prime field corresponding to an appropriate prime-order subgroup
     /// of the curve group.
     type ScalarField: PrimeField
-        + Into<<Self::ScalarField as PrimeField>::BigInt>;
+        + Into<<Self::ScalarField as PrimeField>::BigInt>; // TODO#q: we don't need this additional generic restriction Into<BigInt>
 
     /// The cofactor of this curve, represented as a sequence of little-endian
     /// limbs.
@@ -72,33 +72,35 @@ pub trait PrimeGroup: AdditiveGroup<Scalar = Self::ScalarField> {
 ///
 /// The point is guaranteed to be in the correct prime order subgroup.
 pub trait CurveGroup:
-    PrimeGroup
-    + Add<Self::Affine, Output = Self>
-    + AddAssign<Self::Affine>
-    + Sub<Self::Affine, Output = Self>
-    + SubAssign<Self::Affine>
+PrimeGroup
++ Add<Self::Affine, Output=Self>
++ AddAssign<Self::Affine>
++ Sub<Self::Affine, Output=Self>
++ SubAssign<Self::Affine>
 // TODO#q: think to replace VariableBaseMSM and ScalarMul
-    // + VariableBaseMSM
-    // + ScalarMul<MulBase = Self::Affine>
-    + From<Self::Affine>
-    + Into<Self::Affine>
-    + core::iter::Sum<Self::Affine>
-    + for<'a> core::iter::Sum<&'a Self::Affine>
+// + VariableBaseMSM
+// + ScalarMul<MulBase = Self::Affine>
++ From<Self::Affine>
++ Into<Self::Affine>
++ core::iter::Sum<Self::Affine>
++ for<'a> core::iter::Sum<&'a Self::Affine>
 {
     type Config: CurveConfig<
-        ScalarField = Self::ScalarField,
-        BaseField = Self::BaseField,
+        ScalarField=Self::ScalarField,
+        BaseField=Self::BaseField,
     >;
+
     /// The field over which this curve is defined.
     type BaseField: Field;
+
     /// The affine representation of this element.
     type Affine: AffineRepr<
-            Config = Self::Config,
-            Group = Self,
-            ScalarField = Self::ScalarField,
-            BaseField = Self::BaseField,
-        > + From<Self>
-        + Into<Self>;
+        Config=Self::Config,
+        Group=Self,
+        ScalarField=Self::ScalarField,
+        BaseField=Self::BaseField,
+    > + From<Self>
+    + Into<Self>;
 
     /// Type representing an element of the full elliptic curve group, not just
     /// the prime order subgroup.
@@ -150,8 +152,10 @@ pub trait AffineRepr:
         ScalarField = Self::ScalarField,
         BaseField = Self::BaseField,
     >;
+
     type ScalarField: PrimeField
         + Into<<Self::ScalarField as PrimeField>::BigInt>;
+
     /// The finite field over which this curve is defined.
     type BaseField: Field;
 
