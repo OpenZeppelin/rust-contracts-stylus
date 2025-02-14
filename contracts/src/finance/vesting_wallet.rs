@@ -25,7 +25,7 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
@@ -33,10 +33,9 @@ pub use sol::*;
 use stylus_sdk::{
     block,
     call::{self, call, Call},
-    contract, evm, function_selector,
-    prelude::storage,
-    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
-    stylus_proc::{public, SolidityError},
+    contract, function_selector,
+    prelude::*,
+    storage::{StorageMap, StorageU256, StorageU64},
 };
 
 use crate::{
@@ -421,7 +420,7 @@ impl IVestingWallet for VestingWallet {
 
         call(Call::new_in(self).value(amount), owner, &[])?;
 
-        evm::log(EtherReleased { amount });
+        log(self.vm(), EtherReleased { amount });
 
         Ok(())
     }
@@ -438,7 +437,7 @@ impl IVestingWallet for VestingWallet {
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
-        evm::log(ERC20Released { token, amount });
+        log(self.vm(), ERC20Released { token, amount });
 
         Ok(())
     }

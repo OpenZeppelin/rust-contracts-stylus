@@ -8,10 +8,7 @@ use openzeppelin_stylus::token::erc20::{
     extensions::{Erc20FlashMint, IErc3156FlashLender},
     Erc20,
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, public, storage},
-};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 #[entrypoint]
 #[storage]

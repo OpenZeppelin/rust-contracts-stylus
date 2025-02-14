@@ -11,17 +11,11 @@
 //! and thus is not required to hold Ether at all.
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2612
-
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
-use stylus_sdk::{
-    block,
-    prelude::{storage, StorageType},
-    storage::TopLevelStorage,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{block, prelude::*};
 
 use crate::{
     token::erc20::{self, Erc20, IErc20},

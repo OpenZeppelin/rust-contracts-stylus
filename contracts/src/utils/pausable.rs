@@ -14,15 +14,10 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 pub use sol::*;
-use stylus_sdk::{
-    evm, msg,
-    prelude::storage,
-    storage::StorageBool,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{prelude::*, storage::StorageBool};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -96,7 +91,7 @@ impl Pausable {
     pub fn pause(&mut self) -> Result<(), Error> {
         self.when_not_paused()?;
         self.paused.set(true);
-        evm::log(Paused { account: msg::sender() });
+        log(self.vm(), Paused { account: self.vm().msg_sender() });
         Ok(())
     }
 
@@ -112,7 +107,7 @@ impl Pausable {
     pub fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
         self.paused.set(false);
-        evm::log(Unpaused { account: msg::sender() });
+        log(self.vm(), Unpaused { account: self.vm().msg_sender() });
         Ok(())
     }
 
@@ -155,7 +150,7 @@ impl Pausable {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use crate::utils::pausable::{Error, Pausable};
 

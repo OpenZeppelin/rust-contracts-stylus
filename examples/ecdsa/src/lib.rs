@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256};
 use openzeppelin_stylus::utils::cryptography::ecdsa;
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]

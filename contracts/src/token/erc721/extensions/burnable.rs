@@ -1,7 +1,7 @@
 //! Optional Burnable extension of the ERC-721 standard.
 
 use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
+use stylus_sdk::prelude::*;
 
 use crate::token::erc721::{self, Erc721};
 
@@ -39,7 +39,7 @@ impl IErc721Burnable for Erc721 {
         //
         // Therefore, it is not needed to verify that the return value is not 0
         // here.
-        self._update(Address::ZERO, token_id, msg::sender())?;
+        self._update(Address::ZERO, token_id, self.vm().msg_sender())?;
         Ok(())
     }
 }

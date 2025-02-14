@@ -17,8 +17,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    msg,
-    prelude::{public, storage},
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
 
@@ -279,7 +278,7 @@ impl Erc1155Supply {
 
         if !to.is_zero() {
             self.erc1155._check_on_erc1155_received(
-                msg::sender(),
+                self.vm().msg_sender(),
                 from,
                 to,
                 erc1155::Erc1155ReceiverData::new(ids, values),
@@ -359,7 +358,7 @@ impl Erc1155Supply {
 mod tests {
     use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::{Erc1155Supply, IErc1155Supply};
     use crate::token::erc1155::{
