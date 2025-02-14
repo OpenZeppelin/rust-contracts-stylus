@@ -3097,9 +3097,9 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "mini-alloc"
-version = "0.8.1-alpha.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0030486effb55272bd2dfc6a6b26ff8e775a2d0b79a94cf5a5eb96951070c9ab"
+checksum = "e7f9182f9a333312973dfa30ecaa76af44137f4ccebaa8dac09c54c301ae288a"
 dependencies = [
  "cfg-if",
 ]
@@ -4375,9 +4375,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-core"
-version = "0.8.1-alpha.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b70d31dff4e84cf7f6a24fc8c7ebf7cf7f07c7a039cd5c380f155599380d9fd"
+checksum = "2853922ad43b26bf8bef41905b223eea3562598d81278fac9e2bff0736c29e67"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4387,9 +4387,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-proc"
-version = "0.8.1-alpha.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d6f8a13d586c603b3792e66ffe57bb4132d97b38e13dc55bd1143924bd78e8d"
+checksum = "83bef043b21df187e08545ef7fde1861ec9dbe9aced0fe9578c0f0addff7a7c1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4408,9 +4408,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-sdk"
-version = "0.8.1-alpha.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04b4cf2eb1e41d066dde7a72c00139b84984b031d489cb64751a015f17406633"
+checksum = "0782d384c8871842ae34d3d705cd5e84afcec5ca56585f0611ab85d031fe049b"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4427,9 +4427,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-test"
-version = "0.8.1-alpha.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a54f85e4dd618e23ae86fc840a2e191f175c731303473e7f207dce56361cf59"
+checksum = "23976e7ae0f9d342c502a94e300a341c9f75fb2322ed561d69d1e2915a0e7592"
 dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",
