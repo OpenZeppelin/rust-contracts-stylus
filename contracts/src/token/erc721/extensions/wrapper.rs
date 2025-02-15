@@ -7,6 +7,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
 use stylus_sdk::{
+    abi::Bytes,
     call::Call,
     contract, msg,
     prelude::storage,
@@ -143,7 +144,7 @@ impl Erc721Wrapper {
         operator: Address,
         from: Address,
         token_id: U256,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
         let sender = msg::sender();
 
@@ -153,7 +154,7 @@ impl Erc721Wrapper {
             }));
         }
 
-        self.erc721._safe_mint(to, token_id, data);
+        self.erc721._safe_mint(from, token_id, &data)?;
         // RECEIVER_FN_SELECTOR
         Ok(())
     }

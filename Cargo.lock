@@ -1798,6 +1798,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc721-wrapper"
+version = "0.2.0-alpha.3"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

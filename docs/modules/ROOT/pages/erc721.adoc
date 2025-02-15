@@ -74,3 +74,5 @@ Additionally, there are multiple custom extensions, including:
 * xref:erc721-pausable.adoc[ERC-721 Pausable]: A primitive to pause contract operation.
 
 * xref:erc721-uri-storage.adoc[ERC-721 Uri Storage]: A more flexible but more expensive way of storing metadata.
+
+* xref:erc721-wrapper.adoc[ERC-721 Wrapper]: Wrapper to create an ERC-721 backed by another ERC-721, with deposit and withdraw methods. 

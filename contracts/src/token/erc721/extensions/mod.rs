@@ -10,3 +10,4 @@ pub use burnable::IErc721Burnable;
 pub use enumerable::{Erc721Enumerable, IErc721Enumerable};
 pub use metadata::{Erc721Metadata, IErc721Metadata};
 pub use uri_storage::Erc721UriStorage;
+pub use wrapper::Erc721Wrapper;
