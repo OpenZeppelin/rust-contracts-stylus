@@ -151,4 +151,17 @@ pub trait Field:
         // If res is empty, return one.
         res.unwrap_or(Self::ONE)
     }
+
+    // TODO#q: add sum of products
+    /*
+    /// Returns `sum([a_i * b_i])`.
+    #[inline]
+    fn sum_of_products<const T: usize>(a: &[Self; T], b: &[Self; T]) -> Self {
+        let mut sum = Self::zero();
+        for i in 0..a.len() {
+            sum += a[i] * b[i];
+        }
+        sum
+    }
+    */
 }
