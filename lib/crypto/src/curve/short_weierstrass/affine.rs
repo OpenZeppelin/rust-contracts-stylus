@@ -116,7 +116,7 @@ impl<P: SWCurveConfig> Affine<P> {
         if !P::COEFF_A.is_zero() {
             x3_plus_ax_plus_b += P::mul_by_a(x)
         };
-        let y = x3_plus_ax_plus_b.sqrt()?;
+        let y = x3_plus_ax_plus_b.sqrt()?; // TODO#q: add sqrt or remove it
         let neg_y = -y;
         match y < neg_y {
             true => Some((y, neg_y)),

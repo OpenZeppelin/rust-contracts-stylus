@@ -122,7 +122,7 @@ impl<P: TECurveConfig> Affine<P> {
         denominator
             .inverse()
             .map(|denom| denom * &numerator)
-            .and_then(|x2| x2.sqrt())
+            .and_then(|x2| x2.sqrt()) // TODO#q: add sqrt or remove it
             .map(|x| {
                 let neg_x = -x;
                 if x <= neg_x {
