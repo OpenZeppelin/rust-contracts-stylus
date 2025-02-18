@@ -4,6 +4,7 @@ use crate::{
     curve::short_weierstrass::{Affine, Projective, SWCurveConfig},
     field::group::AdditiveGroup,
 };
+// TODO#q: move scalar_mul to curve module
 
 /// Standard double-and-add method for multiplication by a scalar.
 #[inline(always)]
