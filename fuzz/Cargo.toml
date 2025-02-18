@@ -13,6 +13,7 @@ motsu = "0.3.0"
 stylus-sdk = { version = "0.7.0", default-features = false, features = [
     "mini-alloc",
 ] }
+rs_merkle = { git = "https://github.com/Haxry/rs-merkle.git", branch = "sha3" }
 alloy-primitives = { version = "=0.8.14", default-features = false }
 
 [features]
@@ -48,6 +49,13 @@ bench = false
 [[bin]]
 name = "openzeppelin_stylus_utils"
 path = "fuzz_targets/openzeppelin_stylus_utils.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "diff_merkle_verify"
+path = "fuzz_targets/diff_merkle_verify.rs"
 test = false
 doc = false
 bench = false

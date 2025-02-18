@@ -963,9 +963,8 @@ checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
- "crypto-bigint",
  "educe",
  "hex-literal",
  "num-traits",
@@ -975,7 +974,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus"
-version = "0.2.0-alpha.2"
+version = "0.2.0-alpha.3"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",
@@ -1294,6 +1293,15 @@ checksum = "bb919243f34364b6bd2fc10ef797edbfa75f33c252e7998527479c6d6b47e1ec"
 dependencies = [
  "bytes",
  "rustc-hex",
+]
+
+[[package]]
+name = "rs_merkle"
+version = "1.4.2"
+source = "git+https://github.com/Haxry/rs-merkle.git?branch=sha3#1c717f20df67379a238062e8c1536416c48f9de4"
+dependencies = [
+ "sha2",
+ "tiny-keccak",
 ]
 
 [[package]]
@@ -1666,6 +1674,7 @@ dependencies = [
  "motsu",
  "openzeppelin-crypto",
  "openzeppelin-stylus",
+ "rs_merkle",
  "stylus-sdk",
 ]
 
