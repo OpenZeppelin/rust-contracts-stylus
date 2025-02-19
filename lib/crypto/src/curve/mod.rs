@@ -31,6 +31,7 @@ pub trait CurveConfig: Send + Sync + Sized + 'static {
     type ScalarField: PrimeField
         + Into<<Self::ScalarField as PrimeField>::BigInt>; // TODO#q: we don't need this additional generic restriction Into<BigInt>
 
+    // TODO#q: cofactor should be represented as a big integer
     /// The cofactor of this curve, represented as a sequence of little-endian
     /// limbs.
     const COFACTOR: &'static [u64];
