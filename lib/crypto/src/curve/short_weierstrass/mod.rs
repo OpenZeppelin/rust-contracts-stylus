@@ -7,6 +7,7 @@ mod group;
 pub use group::*;
 
 use crate::{
+    bits::BitIteratorBE,
     curve::AffineRepr,
     field::{group::AdditiveGroup, prime::PrimeField},
 };
@@ -81,14 +82,17 @@ pub trait SWCurveConfig: super::CurveConfig {
     /// coordinates
     fn mul_projective(
         base: &Projective<Self>,
-        scalar: &[u64],
+        scalar: impl BitIteratorBE,
     ) -> Projective<Self> {
         sw_double_and_add_projective(base, scalar)
     }
 
     /// Default implementation of group multiplication for affine
     /// coordinates.
-    fn mul_affine(base: &Affine<Self>, scalar: &[u64]) -> Projective<Self> {
+    fn mul_affine(
+        base: &Affine<Self>,
+        scalar: impl BitIteratorBE,
+    ) -> Projective<Self> {
         sw_double_and_add_affine(base, scalar)
     }
 
@@ -109,10 +113,10 @@ pub trait SWCurveConfig: super::CurveConfig {
 #[inline(always)]
 pub fn sw_double_and_add_affine<P: SWCurveConfig>(
     base: &Affine<P>,
-    scalar: impl AsRef<[u64]>,
+    scalar: impl BitIteratorBE,
 ) -> Projective<P> {
     let mut res = Projective::zero();
-    for b in ark_ff::BitIteratorBE::without_leading_zeros(scalar) {
+    for b in scalar.bit_be_trimmed_iter() {
         res.double_in_place();
         if b {
             res += base
@@ -126,10 +130,10 @@ pub fn sw_double_and_add_affine<P: SWCurveConfig>(
 #[inline(always)]
 pub fn sw_double_and_add_projective<P: SWCurveConfig>(
     base: &Projective<P>,
-    scalar: impl AsRef<[u64]>,
+    scalar: impl BitIteratorBE,
 ) -> Projective<P> {
     let mut res = Projective::zero();
-    for b in ark_ff::BitIteratorBE::without_leading_zeros(scalar) {
+    for b in scalar.bit_be_trimmed_iter() {
         res.double_in_place();
         if b {
             res += base

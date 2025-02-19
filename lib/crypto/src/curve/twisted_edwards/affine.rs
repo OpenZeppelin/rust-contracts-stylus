@@ -10,6 +10,7 @@ use zeroize::Zeroize;
 
 use super::{Projective, TECurveConfig};
 use crate::{
+    bits::BitIteratorBE,
     curve::AffineRepr,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
 };
@@ -114,8 +115,8 @@ impl<P: TECurveConfig> AffineRepr for Affine<P> {
         Self::new_unchecked(P::BaseField::ZERO, P::BaseField::ONE)
     }
 
-    fn mul_bigint(&self, by: impl AsRef<[u64]>) -> Self::Group {
-        P::mul_affine(self, by.as_ref())
+    fn mul_bigint(&self, by: impl BitIteratorBE) -> Self::Group {
+        P::mul_affine(self, by)
     }
 
     /// Multiplies this element by the cofactor and output the

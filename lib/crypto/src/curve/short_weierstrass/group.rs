@@ -11,6 +11,7 @@ use zeroize::Zeroize;
 
 use super::{Affine, SWCurveConfig};
 use crate::{
+    bits::BitIteratorBE,
     curve::{AffineRepr, CurveGroup, PrimeGroup},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     impl_additive_ops_from_ref,
@@ -172,7 +173,7 @@ impl<P: SWCurveConfig> AdditiveGroup for Projective<P> {
             // D = 2*((X1+B)^2-A-C)
             //   = 2 * (X1 + Y1^2)^2 - A - C
             //   = 2 * 2 * X1 * Y1^2
-            // TODO#q: probably use different trait for extension_degree
+            // TODO#q: use different trait for extension_degree
             let d = if [1, 2].contains(&P::BaseField::extension_degree()) {
                 let mut d = self.x;
                 d *= &b;
@@ -264,8 +265,8 @@ impl<P: SWCurveConfig> PrimeGroup for Projective<P> {
     }
 
     #[inline]
-    fn mul_bigint(&self, other: impl AsRef<[u64]>) -> Self {
-        P::mul_projective(self, other.as_ref())
+    fn mul_bigint(&self, other: impl BitIteratorBE) -> Self {
+        P::mul_projective(self, other)
     }
 }
 

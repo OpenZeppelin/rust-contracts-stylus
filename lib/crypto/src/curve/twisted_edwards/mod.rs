@@ -7,6 +7,7 @@ mod group;
 pub use group::*;
 
 use crate::{
+    bits::BitIteratorBE,
     curve::AffineRepr,
     field::{group::AdditiveGroup, prime::PrimeField},
 };
@@ -56,10 +57,10 @@ pub trait TECurveConfig: super::CurveConfig {
     /// coordinates
     fn mul_projective(
         base: &Projective<Self>,
-        scalar: &[u64],
+        scalar: impl BitIteratorBE,
     ) -> Projective<Self> {
         let mut res = Projective::zero();
-        for b in ark_ff::BitIteratorBE::without_leading_zeros(scalar) {
+        for b in scalar.bit_be_trimmed_iter() {
             res.double_in_place();
             if b {
                 res += base;
@@ -71,9 +72,12 @@ pub trait TECurveConfig: super::CurveConfig {
 
     /// Default implementation of group multiplication for affine
     /// coordinates
-    fn mul_affine(base: &Affine<Self>, scalar: &[u64]) -> Projective<Self> {
+    fn mul_affine(
+        base: &Affine<Self>,
+        scalar: impl BitIteratorBE,
+    ) -> Projective<Self> {
         let mut res = Projective::zero();
-        for b in ark_ff::BitIteratorBE::without_leading_zeros(scalar) {
+        for b in scalar.bit_be_trimmed_iter() {
             res.double_in_place();
             if b {
                 res += base

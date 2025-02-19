@@ -11,6 +11,7 @@ use zeroize::Zeroize;
 
 use super::{Affine, MontCurveConfig, TECurveConfig};
 use crate::{
+    bits::BitIteratorBE,
     curve::{AffineRepr, CurveGroup, PrimeGroup},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     impl_additive_ops_from_ref,
@@ -180,8 +181,8 @@ impl<P: TECurveConfig> PrimeGroup for Projective<P> {
     }
 
     #[inline]
-    fn mul_bigint(&self, other: impl AsRef<[u64]>) -> Self {
-        P::mul_projective(self, other.as_ref())
+    fn mul_bigint(&self, other: impl BitIteratorBE) -> Self {
+        P::mul_projective(self, other)
     }
 }
 

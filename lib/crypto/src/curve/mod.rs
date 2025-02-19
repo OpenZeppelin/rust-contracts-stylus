@@ -7,7 +7,10 @@ use core::{
 use num_traits::Zero;
 use zeroize::Zeroize;
 
-use crate::field::{group::AdditiveGroup, prime::PrimeField, Field};
+use crate::{
+    bits::BitIteratorBE,
+    field::{group::AdditiveGroup, prime::PrimeField, Field},
+};
 
 mod helpers;
 pub mod short_weierstrass;
@@ -49,7 +52,7 @@ pub trait PrimeGroup: AdditiveGroup<Scalar = Self::ScalarField> {
     fn generator() -> Self;
 
     /// Performs scalar multiplication of this element.
-    fn mul_bigint(&self, other: impl AsRef<[u64]>) -> Self;
+    fn mul_bigint(&self, other: impl BitIteratorBE) -> Self;
 
     /// Computes `other * self`, where `other` is a *big-endian*
     /// bit representation of some integer.
@@ -200,7 +203,7 @@ pub trait AffineRepr:
 
     /// Performs scalar multiplication of this element with mixed addition.
     #[must_use]
-    fn mul_bigint(&self, by: impl AsRef<[u64]>) -> Self::Group;
+    fn mul_bigint(&self, by: impl BitIteratorBE) -> Self::Group;
 
     /// Performs cofactor clearing.
     /// The default method is simply to multiply by the cofactor.
