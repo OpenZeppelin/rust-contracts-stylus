@@ -1694,7 +1694,7 @@ async fn error_when_burn_in_paused_state(alice: Account) -> eyre::Result<()> {
     let Erc721::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(alice_addr).call().await?;
 
-    watch!(contract.pause());
+    watch!(contract.pause())?;
 
     let err = send!(contract.burn(token_id))
         .expect_err("should return `EnforcedPause`");
