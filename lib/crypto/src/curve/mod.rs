@@ -80,7 +80,7 @@ PrimeGroup
 + AddAssign<Self::Affine>
 + Sub<Self::Affine, Output=Self>
 + SubAssign<Self::Affine>
-// TODO#q: think to replace VariableBaseMSM and ScalarMul
+// TODO#q: replace VariableBaseMSM and ScalarMul restrictions
 // + VariableBaseMSM
 // + ScalarMul<MulBase = Self::Affine>
 + From<Self::Affine>
