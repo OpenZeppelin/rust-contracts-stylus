@@ -1039,7 +1039,7 @@ mod tests {
     type Scalar = FpBLS12;
 
     #[test]
-    fn poseidon2_hash_success() {
+    fn poseidon2_hash_succeeds_with_outputs() {
         let mut poseidon2 = Poseidon2::<BLS2Params, _>::new();
         for i in 1..BLS2Params::T {
             poseidon2.absorb(&Scalar::from(i as u64));

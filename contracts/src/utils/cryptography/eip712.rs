@@ -163,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn eip712_domain_success() {
+    fn eip712_domain_returns_correct_domain_fields() {
         let contract = TestEIP712::default();
         let domain = contract.eip712_domain();
         assert_eq!(FIELDS, domain.0);
@@ -176,7 +176,7 @@ mod tests {
     }
 
     #[test]
-    fn to_typed_data_hash_success() {
+    fn to_typed_data_hash_creates_correct_eip712_hash() {
         // TYPE_HASH
         let domain_separator = b256!(
             "8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f"

@@ -68,7 +68,7 @@ mod tests {
     use super::Capped;
 
     #[motsu::test]
-    fn cap_read_success(contract: Capped) {
+    fn cap_returns_configured_maximum(contract: Capped) {
         let value = uint!(2024_U256);
         contract._cap.set(value);
         assert_eq!(contract.cap(), value);

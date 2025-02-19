@@ -1166,7 +1166,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn balance_of_reverts_when_owner_invalid(contract: Erc721) {
+    fn balance_of_reverts_when_owner_is_zero(contract: Erc721) {
         let invalid_owner = Address::ZERO;
         let err = contract
             .balance_of(invalid_owner)
@@ -1178,7 +1178,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_success_with_zero_balance(contract: Erc721) {
+    fn balance_of_returns_zero_for_new_address(contract: Erc721) {
         let owner = msg::sender();
         let balance =
             contract.balance_of(owner).expect("should return `U256::ZERO`");
@@ -1200,7 +1200,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_success(contract: Erc721) {
+    fn _mint_succeeds_for_valid_recipient(contract: Erc721) {
         let alice = msg::sender();
 
         let initial_balance = contract
@@ -1221,7 +1221,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_reverts_when_token_already_exists(contract: Erc721) {
+    fn _mint_reverts_when_token_already_exists(contract: Erc721) {
         let alice = msg::sender();
         contract
             ._mint(alice, TOKEN_ID)
@@ -1237,7 +1237,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_reverts_when_receiver_invalid(contract: Erc721) {
+    fn _mint_reverts_when_receiver_invalid(contract: Erc721) {
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -1253,7 +1253,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mint_success(contract: Erc721) {
+    fn _safe_mint_creates_token_successfully(contract: Erc721) {
         let alice = msg::sender();
 
         let initial_balance = contract
@@ -1277,7 +1277,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mint_reverts_when_token_already_exists(contract: Erc721) {
+    fn _safe_mint_reverts_when_token_already_exists(contract: Erc721) {
         let alice = msg::sender();
         contract
             ._mint(alice, TOKEN_ID)
@@ -1294,7 +1294,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mint_reverts_when_receiver_invalid(contract: Erc721) {
+    fn _safe_mint_reverts_when_receiver_invalid(contract: Erc721) {
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -1310,7 +1310,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_success(contract: Erc721) {
+    fn transfer_from_moves_token_successfully(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
         contract
@@ -1323,7 +1323,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_success_with_approval(contract: Erc721) {
+    fn transfer_from_succeeds_with_token_approval(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
         contract._token_approvals.setter(TOKEN_ID).set(alice);
@@ -1337,7 +1337,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_success_with_approval_for_all(contract: Erc721) {
+    fn transfer_from_moves_token_with_approval_for_all(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
 
@@ -1382,7 +1382,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_reverts_when_owner_incorrect(contract: Erc721) {
+    fn transfer_from_reverts_when_sender_is_not_owner(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
@@ -1437,7 +1437,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success(contract: Erc721) {
+    fn safe_transfer_from_moves_token_successfully(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
 
@@ -1453,7 +1453,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success_with_approval(contract: Erc721) {
+    fn safe_transfer_from_succeeds_with_token_approval(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
         contract._token_approvals.setter(TOKEN_ID).set(alice);
@@ -1467,7 +1467,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success_with_approval_for_all(contract: Erc721) {
+    fn safe_transfer_from_moves_token_with_approval_for_all(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
 
@@ -1744,7 +1744,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_success(contract: Erc721) {
+    fn approve_sets_token_approval(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token");
         contract
@@ -1784,7 +1784,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_for_all_success(contract: Erc721) {
+    fn set_approval_for_all_grants_operator_permission(contract: Erc721) {
         let alice = msg::sender();
         contract._operator_approvals.setter(alice).setter(BOB).set(false);
 
@@ -1800,7 +1800,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_for_all_reverts_when_operator_invalid(contract: Erc721) {
+    fn set_approval_for_all_reverts_when_operator_is_zero(contract: Erc721) {
         let invalid_operator = Address::ZERO;
 
         let err = contract
@@ -1859,7 +1859,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_success_with_approval(contract: Erc721) {
+    fn get_approved_returns_approved_address(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(alice, TOKEN_ID).expect("should mint a token");
@@ -1892,7 +1892,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn is_authorized_success_with_token_owner(contract: Erc721) {
+    fn _is_authorized_allows_token_owner(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token");
 
@@ -1949,7 +1949,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn check_authorized_success_with_token_owner(contract: Erc721) {
+    fn _check_authorized_succeeds_with_valid_permission(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token");
 
@@ -2001,7 +2001,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success(contract: Erc721) {
+    fn _burn_removes_token_successfully(contract: Erc721) {
         let alice = msg::sender();
         let one = uint!(1_U256);
 
@@ -2056,7 +2056,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_reverts_when_token_nonexistent(contract: Erc721) {
+    fn _burn_reverts_when_token_does_not_exist(contract: Erc721) {
         let err = contract
             ._burn(TOKEN_ID)
             .expect_err("should return Error::NonexistentToken");
@@ -2070,7 +2070,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_success(contract: Erc721) {
+    fn _transfer_moves_token_successfully(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
         contract
@@ -2118,7 +2118,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_reverts_when_receiver_invalid(contract: Erc721) {
+    fn _transfer_reverts_when_receiver_is_zero(contract: Erc721) {
         let alice = msg::sender();
         let invalid_receiver = Address::ZERO;
 
@@ -2142,7 +2142,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_reverts_when_owner_incorrect(contract: Erc721) {
+    fn _transfer_reverts_when_sender_is_not_owner(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
@@ -2168,7 +2168,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_reverts_when_token_nonexistent(contract: Erc721) {
+    fn _transfer_reverts_when_token_nonexistent(contract: Erc721) {
         let alice = msg::sender();
         let err = contract
             ._transfer(alice, BOB, TOKEN_ID)
@@ -2182,7 +2182,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_success(contract: Erc721) {
+    fn _safe_transfer_completes_successfully(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
 
@@ -2233,7 +2233,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_reverts_when_receiver_invalid(contract: Erc721) {
+    fn _safe_transfer_reverts_when_receiver_invalid(contract: Erc721) {
         let alice = msg::sender();
         let invalid_receiver = Address::ZERO;
 
@@ -2262,7 +2262,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_reverts_when_owner_incorrect(contract: Erc721) {
+    fn _safe_transfer_reverts_when_sender_is_not_owner(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
@@ -2287,7 +2287,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_reverts_when_token_nonexistent(contract: Erc721) {
+    fn _safe_transfer_reverts_when_token_nonexistent(contract: Erc721) {
         let alice = msg::sender();
         let err = contract
             ._safe_transfer(alice, BOB, TOKEN_ID, &vec![0, 1, 2, 3].into())
@@ -2302,7 +2302,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_internal_success(contract: Erc721) {
+    fn _approve_internal_sets_approval_correctly(contract: Erc721) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token");
         contract
@@ -2377,7 +2377,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn require_owned_success(contract: Erc721) {
+    fn _require_owned_returns_owner_successfully(contract: Erc721) {
         contract._mint(BOB, TOKEN_ID).expect("should mint a token");
 
         let owner = contract
@@ -2402,7 +2402,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn interface_id_success() {
+    fn interface_id_returns_correct_standard_id() {
         let actual = <Erc721 as IErc721>::INTERFACE_ID;
         let expected = 0x80ac58cd;
         assert_eq!(actual, expected);

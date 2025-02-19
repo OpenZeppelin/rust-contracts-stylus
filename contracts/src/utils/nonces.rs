@@ -122,12 +122,12 @@ mod tests {
     use crate::utils::nonces::{Error, Nonces};
 
     #[motsu::test]
-    fn nonce_read_success_with_initialization(contract: Nonces) {
+    fn nonces_returns_zero_for_new_address(contract: Nonces) {
         assert_eq!(contract.nonces(msg::sender()), U256::ZERO);
     }
 
     #[motsu::test]
-    fn use_nonce_success(contract: Nonces) {
+    fn use_nonce_increments_nonce_correctly(contract: Nonces) {
         let owner = msg::sender();
 
         let use_nonce = contract.use_nonce(owner);
@@ -138,7 +138,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn use_checked_nonce_success(contract: Nonces) {
+    fn use_checked_nonce_succeeds_with_valid_nonce(contract: Nonces) {
         let owner = msg::sender();
 
         let use_checked_nonce = contract.use_checked_nonce(owner, U256::ZERO);

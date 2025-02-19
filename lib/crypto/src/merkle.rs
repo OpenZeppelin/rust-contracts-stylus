@@ -383,7 +383,7 @@ mod tests {
     }
 
     #[test]
-    fn verify_success_with_valid_proof() {
+    fn verify_succeeds_with_valid_proof() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(
         //   toElements('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='),
@@ -462,7 +462,7 @@ mod tests {
     }
 
     #[test]
-    fn verify_multi_proof_success_with_valid_proof() {
+    fn verify_multi_proof_succeeds_with_valid_leaves() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
         //
@@ -552,7 +552,7 @@ mod tests {
     }
 
     #[test]
-    fn verify_multi_proof_reverts_when_length_invalid() {
+    fn verify_multi_proof_reverts_when_total_hashes_length_is_invalid() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //
@@ -588,7 +588,7 @@ mod tests {
     }
 
     #[test]
-    fn verify_multi_proof_success_with_single_leaf() {
+    fn verify_multi_proof_succeeds_with_single_leaf() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('a'), ['string']);
         //
@@ -611,7 +611,7 @@ mod tests {
     }
 
     #[test]
-    fn verify_multi_proof_success_with_empty_leaves() {
+    fn verify_multi_proof_succeeds_with_empty_leaves() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcd'), ['string']);
         //

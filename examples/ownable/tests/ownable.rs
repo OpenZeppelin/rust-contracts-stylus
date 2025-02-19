@@ -20,7 +20,9 @@ fn ctr(owner: Address) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn constructor_success(alice: Account) -> Result<()> {
+async fn constructor_succeeds_initializing_ownership(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let receipt =
         alice.as_deployer().with_constructor(ctr(alice_addr)).deploy().await?;
@@ -51,7 +53,7 @@ async fn constructor_reverts_when_owner_zero(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_ownership_success(
+async fn transfer_ownership_succeeds_updating_owner(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -127,7 +129,9 @@ async fn transfer_ownership_reverts_when_zero_address(
 }
 
 #[e2e::test]
-async fn renounce_ownership_success(alice: Account) -> Result<()> {
+async fn renounce_ownership_succeeds_removing_owner(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice
         .as_deployer()

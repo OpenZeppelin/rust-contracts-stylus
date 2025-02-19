@@ -165,7 +165,7 @@ mod tests {
     }
 
     #[test]
-    fn hash_pair_success() {
+    fn hash_pair_succeeds_with_different_input_order() {
         let builder = KeccakBuilder;
         let a = [1u8].as_slice();
         let b = [2u8].as_slice();
@@ -179,7 +179,7 @@ mod tests {
     }
 
     #[test]
-    fn commutative_hash_pair_success() {
+    fn commutative_hash_pair_succeeds_with_symmetric_inputs() {
         let builder = KeccakBuilder;
         let a = [1u8].as_slice();
         let b = [2u8].as_slice();

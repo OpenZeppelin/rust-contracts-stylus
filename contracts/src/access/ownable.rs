@@ -211,14 +211,14 @@ mod tests {
     const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
     #[motsu::test]
-    fn owner_read_success(contract: Ownable) {
+    fn owner_returns_stored_address(contract: Ownable) {
         contract._owner.set(msg::sender());
         let owner = contract.owner();
         assert_eq!(owner, msg::sender());
     }
 
     #[motsu::test]
-    fn transfer_ownership_success(contract: Ownable) {
+    fn transfer_ownership_updates_owner_address(contract: Ownable) {
         contract._owner.set(msg::sender());
 
         contract.transfer_ownership(ALICE).expect("should transfer ownership");
@@ -246,7 +246,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn renounce_ownership_success(contract: Ownable) {
+    fn renounce_ownership_sets_zero_address(contract: Ownable) {
         contract._owner.set(msg::sender());
 
         let _ = contract.renounce_ownership();
@@ -265,7 +265,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn internal_transfer_ownership_success(contract: Ownable) {
+    fn _transfer_ownership_updates_owner_storage(contract: Ownable) {
         contract._owner.set(ALICE);
 
         contract._transfer_ownership(ALICE);

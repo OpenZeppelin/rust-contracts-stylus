@@ -80,7 +80,7 @@ mod tests {
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 
     #[motsu::test]
-    fn uri_success_with_different_ids(contract: Erc1155MetadataUri) {
+    fn uri_returns_constant_for_different_ids(contract: Erc1155MetadataUri) {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
         contract._uri.set_str(uri.clone());
 
@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn interface_id_success() {
+    fn interface_id_returns_expected_constants() {
         let actual = <Erc1155MetadataUri as IErc1155MetadataUri>::INTERFACE_ID;
         let expected = 0x0e89341c;
         assert_eq!(actual, expected);

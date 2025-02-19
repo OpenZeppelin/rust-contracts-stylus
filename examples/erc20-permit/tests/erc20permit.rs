@@ -121,7 +121,7 @@ async fn permit_reverts_when_deadline_expired(
 }
 
 #[e2e::test]
-async fn permit_success_with_transfer(
+async fn permit_allows_token_transfer_with_valid_signature(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -339,7 +339,9 @@ async fn permit_reverts_when_signature_invalid(
 // ============================================================================
 
 #[e2e::test]
-async fn constructor_success(alice: Account) -> Result<()> {
+async fn constructor_initializes_total_supply_to_zero(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
 
@@ -351,7 +353,7 @@ async fn constructor_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mint_success(alice: Account) -> Result<()> {
+async fn mint_adds_tokens_to_account_balance(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -411,7 +413,10 @@ async fn mint_reverts_when_receiver_invalid(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_success(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_moves_tokens_between_accounts(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -535,7 +540,10 @@ async fn transfer_reverts_when_receiver_invalid(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn approve_success(alice: Account, bob: Account) -> Result<()> {
+async fn approve_sets_token_allowance_for_spender(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -654,7 +662,10 @@ async fn approve_reverts_when_spender_invalid(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_from_success(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_from_moves_tokens_with_approved_allowance(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);

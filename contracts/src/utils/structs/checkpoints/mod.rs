@@ -384,7 +384,7 @@ mod tests {
     };
 
     #[motsu::test]
-    fn push_success(checkpoint: Trace<S160>) {
+    fn push_adds_sequential_checkpoints_correctly(checkpoint: Trace<S160>) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -406,7 +406,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn push_success_with_same_value(checkpoint: Trace<S160>) {
+    fn push_updates_checkpoint_with_same_key(checkpoint: Trace<S160>) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -431,7 +431,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn lower_lookup_success(checkpoint: Trace<S160>) {
+    fn lower_lookup_returns_correct_checkpoint_value(checkpoint: Trace<S160>) {
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
@@ -443,7 +443,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upper_lookup_success(checkpoint: Trace<S160>) {
+    fn upper_lookup_returns_correct_checkpoint_value(checkpoint: Trace<S160>) {
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         checkpoint.push(uint!(5_U96), uint!(55_U160)).expect("push third");
@@ -455,7 +455,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upper_lookup_recent_success(checkpoint: Trace<S160>) {
+    fn upper_lookup_recent_returns_correct_checkpoint_value(
+        checkpoint: Trace<S160>,
+    ) {
         // `upper_lookup_recent` has different optimizations for "short" (<=5)
         // and "long" (>5) checkpoint arrays.
         //
@@ -499,7 +501,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn latest_success(checkpoint: Trace<S160>) {
+    fn latest_returns_most_recent_checkpoint_value(checkpoint: Trace<S160>) {
         assert_eq!(checkpoint.latest(), uint!(0_U160));
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
@@ -508,7 +510,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn latest_checkpoint_success(checkpoint: Trace<S160>) {
+    fn latest_checkpoint_returns_most_recent_checkpoint(
+        checkpoint: Trace<S160>,
+    ) {
         assert_eq!(checkpoint.latest_checkpoint(), None);
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
@@ -520,7 +524,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn push_reverts_when_insertion_unordered(checkpoint: Trace<S160>) {
+    fn push_reverts_when_inserting_checkpoint_with_lower_key(
+        checkpoint: Trace<S160>,
+    ) {
         checkpoint.push(uint!(1_U96), uint!(11_U160)).expect("push first");
         checkpoint.push(uint!(3_U96), uint!(33_U160)).expect("push second");
         let err = checkpoint

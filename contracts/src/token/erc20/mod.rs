@@ -598,7 +598,7 @@ mod tests {
     use crate::utils::introspection::erc165::IErc165;
 
     #[motsu::test]
-    fn balance_of_success(contract: Erc20) {
+    fn balance_of_returns_stored_value(contract: Erc20) {
         let balance = contract.balance_of(Address::ZERO);
         assert_eq!(U256::ZERO, balance);
 
@@ -610,7 +610,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_success_with_update(contract: Erc20) {
+    fn mint_succeeds_updating_balance_and_supply(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
 
@@ -646,7 +646,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_success(contract: Erc20) {
+    fn mint_succeeds_creating_tokens(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
 
@@ -699,7 +699,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success_with_update(contract: Erc20) {
+    fn burn_succeeds_updating_balances_and_supply(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let one = uint!(1_U256);
         let two = uint!(2_U256);
@@ -749,7 +749,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_success_with_update(contract: Erc20) {
+    fn transfer_succeeds_moving_tokens_between_accounts(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let one = uint!(1_U256);
@@ -805,7 +805,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_success(contract: Erc20) {
+    fn transfer_succeeds_with_approved_amount(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
@@ -825,7 +825,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_success(contract: Erc20) {
+    fn transfer_from_succeeds_with_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
         let sender = msg::sender();
@@ -898,7 +898,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn allowance_read_success(contract: Erc20) {
+    fn allowance_returns_approved_amount(contract: Erc20) {
         let owner = msg::sender();
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
@@ -912,7 +912,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_success(contract: Erc20) {
+    fn approve_succeeds_setting_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
 
         // `msg::sender` approves Alice.
@@ -930,7 +930,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn interface_id_success() {
+    fn interface_id_returns_expected_values() {
         let actual = <Erc20 as IErc20>::INTERFACE_ID;
         let expected = 0x36372b07;
         assert_eq!(actual, expected);

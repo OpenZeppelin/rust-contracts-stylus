@@ -847,7 +847,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_success_with_consecutive(contract: Erc721Consecutive) {
+    fn mint_succeeds_with_consecutive_and_standard_tokens(
+        contract: Erc721Consecutive,
+    ) {
         let alice = msg::sender();
 
         let initial_balance = contract
@@ -948,7 +950,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_from_success_with_consecutive(contract: Erc721Consecutive) {
+    fn transfer_from_succeeds_with_consecutive_tokens(
+        contract: Erc721Consecutive,
+    ) {
         let alice = msg::sender();
         let bob = BOB;
 
@@ -1001,7 +1005,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success_with_consecutive(contract: Erc721Consecutive) {
+    fn burn_succeeds_with_consecutive_and_standard_tokens(
+        contract: Erc721Consecutive,
+    ) {
         let alice = msg::sender();
 
         // Mint batch of 1000 tokens to Alice.
@@ -1071,7 +1077,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success(contract: Erc721Consecutive) {
+    fn safe_transfer_from_succeeds_moving_owned_token(
+        contract: Erc721Consecutive,
+    ) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
 
@@ -1087,7 +1095,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success_with_approval(contract: Erc721Consecutive) {
+    fn safe_transfer_from_succeeds_moving_approved_token(
+        contract: Erc721Consecutive,
+    ) {
         let alice = msg::sender();
         contract._mint(BOB, TOKEN_ID).expect("should mint token to Bob");
         contract.erc721._token_approvals.setter(TOKEN_ID).set(alice);
@@ -1166,7 +1176,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success_with_data(contract: Erc721Consecutive) {
+    fn safe_transfer_from_succeeds_with_additional_data(
+        contract: Erc721Consecutive,
+    ) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token to Alice");
 
@@ -1237,7 +1249,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mint_success(contract: Erc721Consecutive) {
+    fn safe_mint_succeeds_creating_owned_token(contract: Erc721Consecutive) {
         let alice = msg::sender();
 
         let initial_balance = contract
@@ -1261,7 +1273,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_success(contract: Erc721Consecutive) {
+    fn approve_succeeds_setting_token_approval(contract: Erc721Consecutive) {
         let alice = msg::sender();
         contract._mint(alice, TOKEN_ID).expect("should mint a token");
         contract
@@ -1301,7 +1313,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_for_all_success(contract: Erc721Consecutive) {
+    fn approve_for_all_succeeds_toggling_operator_status(
+        contract: Erc721Consecutive,
+    ) {
         let alice = msg::sender();
         contract
             .erc721

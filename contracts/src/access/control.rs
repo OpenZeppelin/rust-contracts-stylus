@@ -412,13 +412,17 @@ mod tests {
     }
 
     #[motsu::test]
-    fn default_admin_role_success(contract: AccessControl) {
+    fn get_role_admin_returns_default_admin_for_standard_role(
+        contract: AccessControl,
+    ) {
         let role_admin = contract.get_role_admin(ROLE.into());
         assert_eq!(role_admin, AccessControl::DEFAULT_ADMIN_ROLE);
     }
 
     #[motsu::test]
-    fn default_admin_role_admin_success(contract: AccessControl) {
+    fn get_role_admin_returns_default_admin_for_default_admin_role(
+        contract: AccessControl,
+    ) {
         const DEFAULT_ADMIN_ROLE: [u8; 32] = AccessControl::DEFAULT_ADMIN_ROLE;
         let role_admin = contract.get_role_admin(DEFAULT_ADMIN_ROLE.into());
         assert_eq!(role_admin, DEFAULT_ADMIN_ROLE);
@@ -431,7 +435,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn grant_role_success_with_multiple_grants(contract: AccessControl) {
+    fn grant_role_succeeds_assigning_role_multiple_times(
+        contract: AccessControl,
+    ) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
 
         contract.grant_role(ROLE.into(), ALICE).unwrap();
@@ -441,7 +447,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn revoke_role_success_with_ungranted_role(contract: AccessControl) {
+    fn revoke_role_succeeds_removing_ungranted_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
 
         let has_role = contract.has_role(ROLE.into(), ALICE);
@@ -452,7 +458,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn revoke_role_success(contract: AccessControl) {
+    fn revoke_role_succeeds_removing_granted_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
 
@@ -474,7 +480,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn revoke_role_success_with_multiple_revokes(contract: AccessControl) {
+    fn revoke_role_succeeds_removing_role_multiple_times(
+        contract: AccessControl,
+    ) {
         _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
 
         contract.revoke_role(ROLE.into(), ALICE).unwrap();
@@ -484,7 +492,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn renounce_role_success(contract: AccessControl) {
+    fn renounce_role_succeeds_removing_own_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
 
         let has_role = contract.has_role(ROLE.into(), msg::sender());
@@ -502,7 +510,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn renounce_role_success_with_multiple_renounces(contract: AccessControl) {
+    fn renounce_role_succeeds_removing_role_multiple_times(
+        contract: AccessControl,
+    ) {
         _grant_role_to_msg_sender(contract, ROLE);
 
         let sender = msg::sender();
@@ -513,7 +523,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_role_admin_success(contract: AccessControl) {
+    fn _set_role_admin_succeeds_updating_admin_role(contract: AccessControl) {
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
         _grant_role_to_msg_sender(contract, OTHER_ROLE);
 
@@ -522,7 +532,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn role_admin_change_success_with_new_grant(contract: AccessControl) {
+    fn grant_role_succeeds_assigning_role_with_new_admin(
+        contract: AccessControl,
+    ) {
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
         _grant_role_to_msg_sender(contract, OTHER_ROLE);
 
@@ -532,7 +544,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn role_admin_change_success_with_new_revoke(contract: AccessControl) {
+    fn revoke_role_succeeds_removing_role_with_new_admin(
+        contract: AccessControl,
+    ) {
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
         _grant_role_to_msg_sender(contract, OTHER_ROLE);
 
@@ -543,9 +557,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn role_admin_change_reverts_when_old_admin_grants(
-        contract: AccessControl,
-    ) {
+    fn grant_role_reverts_when_called_by_old_admin(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
 
@@ -554,9 +566,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn role_admin_change_reverts_when_old_admin_revokes(
-        contract: AccessControl,
-    ) {
+    fn revoke_role_reverts_when_called_by_old_admin(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
         contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
 
@@ -565,13 +575,13 @@ mod tests {
     }
 
     #[motsu::test]
-    fn check_role_success(contract: AccessControl) {
+    fn _check_role_succeeds_verifying_granted_role(contract: AccessControl) {
         _grant_role_to_msg_sender(contract, ROLE);
         contract._check_role(ROLE.into(), msg::sender()).unwrap();
     }
 
     #[motsu::test]
-    fn check_role_reverts_when_no_role(contract: AccessControl) {
+    fn _check_role_reverts_when_role_not_granted(contract: AccessControl) {
         let err = contract._check_role(ROLE.into(), msg::sender()).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
         let err =
@@ -580,27 +590,27 @@ mod tests {
     }
 
     #[motsu::test]
-    fn internal_grant_role_success_when_no_role(contract: AccessControl) {
+    fn _grant_role_succeeds_assigning_new_role(contract: AccessControl) {
         let role_granted = contract._grant_role(ROLE.into(), ALICE);
         assert!(role_granted);
     }
 
     #[motsu::test]
-    fn internal_grant_role_success_when_has_role(contract: AccessControl) {
+    fn _grant_role_succeeds_with_existing_role(contract: AccessControl) {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_granted = contract._grant_role(ROLE.into(), ALICE);
         assert!(!role_granted);
     }
 
     #[motsu::test]
-    fn internal_revoke_role_success_when_has_role(contract: AccessControl) {
+    fn _revoke_role_succeeds_removing_existing_role(contract: AccessControl) {
         contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
         let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
         assert!(role_revoked);
     }
 
     #[motsu::test]
-    fn internal_revoke_role_success_when_no_role(contract: AccessControl) {
+    fn _revoke_role_succeeds_with_nonexistent_role(contract: AccessControl) {
         let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
         assert!(!role_revoked);
     }

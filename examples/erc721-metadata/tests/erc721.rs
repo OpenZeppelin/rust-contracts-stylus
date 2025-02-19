@@ -34,7 +34,9 @@ fn ctr(base_uri: &str) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn constructor_success(alice: Account) -> eyre::Result<()> {
+async fn constructor_initializes_token_metadata_correctly(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(
@@ -86,7 +88,9 @@ async fn token_uri_reverts_when_token_nonexistent(
 }
 
 #[e2e::test]
-async fn token_uri_success_with_no_uris(alice: Account) -> eyre::Result<()> {
+async fn token_uri_returns_empty_string_when_no_uri_set(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(""))
@@ -109,7 +113,7 @@ async fn token_uri_success_with_no_uris(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn token_uri_success_with_base_uri_only(
+async fn token_uri_returns_base_uri_with_token_id_when_no_token_uri_set(
     alice: Account,
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
@@ -135,7 +139,7 @@ async fn token_uri_success_with_base_uri_only(
 }
 
 #[e2e::test]
-async fn token_uri_success_with_base_and_token_uri(
+async fn token_uri_returns_combined_base_and_token_uri(
     alice: Account,
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
@@ -170,7 +174,9 @@ async fn token_uri_success_with_base_and_token_uri(
 }
 
 #[e2e::test]
-async fn set_token_uri_success_before_mint(alice: Account) -> eyre::Result<()> {
+async fn set_token_uri_succeeds_before_token_minting(
+    alice: Account,
+) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
 
     let contract_addr = alice
@@ -213,7 +219,7 @@ async fn set_token_uri_success_before_mint(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn token_uri_success_after_burn_and_remint(
+async fn token_uri_remains_consistent_after_burn_and_remint(
     alice: Account,
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
@@ -275,7 +281,9 @@ async fn token_uri_success_after_burn_and_remint(
 // ============================================================================
 
 #[e2e::test]
-async fn supports_interface_success(alice: Account) -> eyre::Result<()> {
+async fn supports_interface_returns_metadata_interface_id(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(

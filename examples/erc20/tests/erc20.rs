@@ -40,7 +40,9 @@ fn ctr(cap: U256) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn constructor_success(alice: Account) -> Result<()> {
+async fn constructor_initializes_token_with_default_settings(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -67,7 +69,7 @@ async fn constructor_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mint_success(alice: Account) -> Result<()> {
+async fn mint_adds_tokens_to_account_balance(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -177,7 +179,10 @@ async fn mint_reverts_when_supply_overflows(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_success(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_moves_tokens_between_accounts(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -316,7 +321,10 @@ async fn transfer_reverts_when_receiver_invalid(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn approve_success(alice: Account, bob: Account) -> Result<()> {
+async fn approve_sets_token_allowance_for_spender(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -443,7 +451,10 @@ async fn approve_reverts_when_spender_invalid(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_from_success(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_from_moves_tokens_with_approved_allowance(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -684,7 +695,9 @@ async fn transfer_from_reverts_when_receiver_invalid(
 // ============================================================================
 
 #[e2e::test]
-async fn burn_success(alice: Account) -> Result<()> {
+async fn burn_removes_tokens_from_account_balance(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -764,7 +777,10 @@ async fn burn_reverts_when_balance_insufficient(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn burn_from_success(alice: Account, bob: Account) -> Result<()> {
+async fn burn_from_removes_tokens_with_approved_allowance(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -1044,7 +1060,9 @@ async fn constructor_reverts_when_cap_invalid(alice: Account) -> Result<()> {
 // ============================================================================
 
 #[e2e::test]
-async fn pause_success(alice: Account) -> eyre::Result<()> {
+async fn pause_changes_contract_state_to_paused(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -1086,7 +1104,9 @@ async fn pause_reverts_when_already_paused(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn unpause_success(alice: Account) -> eyre::Result<()> {
+async fn unpause_changes_contract_state_to_unpaused(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()
@@ -1371,7 +1391,9 @@ async fn transfer_from_reverts_when_paused(
 // ============================================================================
 
 #[e2e::test]
-async fn supports_interface_success(alice: Account) -> Result<()> {
+async fn supports_interface_returns_correct_interface_support(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_default_constructor::<constructorCall>()

@@ -68,7 +68,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn burn_success(contract: Erc721) {
+    fn burn_succeeds_destroying_owned_token(contract: Erc721) {
         let alice = msg::sender();
         let one = uint!(1_U256);
 
@@ -100,7 +100,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success_with_approval(contract: Erc721) {
+    fn burn_succeeds_destroying_approved_token(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(BOB, TOKEN_ID).expect("should mint a token for Bob");
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success_with_approval_for_all(contract: Erc721) {
+    fn burn_succeeds_destroying_operator_approved_token(contract: Erc721) {
         let alice = msg::sender();
 
         contract._mint(BOB, TOKEN_ID).expect("should mint a token for Bob");

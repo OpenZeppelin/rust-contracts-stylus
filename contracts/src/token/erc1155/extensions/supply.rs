@@ -389,7 +389,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn total_supply_success_before_mint(contract: Erc1155Supply) {
+    fn total_supply_returns_zero_for_unminted_token(contract: Erc1155Supply) {
         let token_id = random_token_ids(1)[0];
         assert_eq!(U256::ZERO, contract.total_supply(token_id));
         assert_eq!(U256::ZERO, contract.total_supply_all());
@@ -397,7 +397,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn total_supply_success_after_single_mint(contract: Erc1155Supply) {
+    fn total_supply_returns_amount_after_single_mint(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 1);
         assert_eq!(values[0], contract.balance_of(ALICE, token_ids[0]));
         assert_eq!(values[0], contract.total_supply(token_ids[0]));
@@ -406,7 +406,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn total_supply_success_after_batch_mint(contract: Erc1155Supply) {
+    fn total_supply_returns_amounts_after_batch_mint(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 4);
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
             assert_eq!(value, contract.balance_of(ALICE, token_id));
@@ -462,7 +462,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn total_supply_success_after_single_burn(contract: Erc1155Supply) {
+    fn total_supply_returns_zero_after_single_burn(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 1);
         contract._burn(ALICE, token_ids[0], values[0]).expect("should burn");
 
@@ -472,7 +472,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn total_supply_success_after_batch_burn(contract: Erc1155Supply) {
+    fn total_supply_returns_zero_after_batch_burn(contract: Erc1155Supply) {
         let (token_ids, values) = init(contract, ALICE, 4);
         contract
             ._burn_batch(ALICE, token_ids.clone(), values.clone())
@@ -507,7 +507,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn total_supply_success_with_no_op(contract: Erc1155Supply) {
+    fn total_supply_returns_zero_for_zero_addresses(contract: Erc1155Supply) {
         let token_ids = random_token_ids(1);
         let values = random_values(1);
 

@@ -9,7 +9,7 @@ mod abi;
 mod mock;
 
 #[e2e::test]
-async fn safe_increase_allowance_success_with_force_approve(
+async fn safe_increase_allowance_succeeds_with_force_approve(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -53,7 +53,7 @@ async fn safe_increase_allowance_success_with_force_approve(
 }
 
 #[e2e::test]
-async fn safe_decrease_allowance_success_with_force_approve(
+async fn safe_decrease_allowance_succeeds_with_force_approve(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -97,7 +97,7 @@ async fn safe_decrease_allowance_success_with_force_approve(
 }
 
 #[e2e::test]
-async fn force_approve_success(
+async fn force_approve_succeeds_with_updated_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {

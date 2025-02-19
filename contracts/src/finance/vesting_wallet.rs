@@ -557,45 +557,45 @@ mod tests {
     }
 
     #[motsu::test]
-    fn start_read_success(contract: VestingWallet) {
+    fn start_returns_configured_timestamp(contract: VestingWallet) {
         let (start, _) = init(contract, start(), 0);
         assert_eq!(U256::from(start), contract.start());
     }
 
     #[motsu::test]
-    fn duration_read_success(contract: VestingWallet) {
+    fn duration_returns_configured_period(contract: VestingWallet) {
         let (_, duration) = init(contract, 0, DURATION);
         assert_eq!(U256::from(duration), contract.duration());
     }
 
     #[motsu::test]
-    fn end_read_success(contract: VestingWallet) {
+    fn end_returns_start_plus_duration(contract: VestingWallet) {
         let (start, duration) = init(contract, start(), DURATION);
         assert_eq!(U256::from(start + duration), contract.end());
     }
 
     #[motsu::test]
-    fn end_read_success_with_max_values(contract: VestingWallet) {
+    fn end_returns_sum_with_max_values(contract: VestingWallet) {
         init(contract, u64::MAX, u64::MAX);
         assert_eq!(U256::from(U64::MAX) + U256::from(U64::MAX), contract.end());
     }
 
     #[motsu::test]
-    fn released_eth_read_success(contract: VestingWallet) {
+    fn released_eth_returns_released_amount(contract: VestingWallet) {
         let one = uint!(1_U256);
         contract._released.set(one);
         assert_eq!(one, contract.released_eth());
     }
 
     #[motsu::test]
-    fn released_erc20_read_success(contract: VestingWallet) {
+    fn released_erc20_returns_token_amount(contract: VestingWallet) {
         let one = uint!(1_U256);
         contract._erc20_released.setter(TOKEN).set(one);
         assert_eq!(one, contract.released_erc20(TOKEN));
     }
 
     #[motsu::test]
-    fn vesting_schedule_success(contract: VestingWallet) {
+    fn vesting_schedule_calculates_linear_vesting(contract: VestingWallet) {
         let (start, duration) = init(contract, start(), DURATION);
 
         let one = uint!(1_U256);
@@ -617,7 +617,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn vesting_schedule_success_with_zero_duration(contract: VestingWallet) {
+    fn vesting_schedule_calculates_immediate_release(contract: VestingWallet) {
         let (start, _) = init(contract, start(), 0);
 
         let two = uint!(2_U256);

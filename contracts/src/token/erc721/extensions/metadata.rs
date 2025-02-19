@@ -129,14 +129,14 @@ mod tests {
     use super::{Erc721Metadata, IErc165, IErc721Metadata};
 
     #[motsu::test]
-    fn interface_id_success() {
+    fn interface_id_returns_metadata_identifier() {
         let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
         let expected = 0x93254542;
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface_success() {
+    fn supports_interface_returns_true_for_metadata() {
         assert!(<Erc721Metadata as IErc165>::supports_interface(
             0x5b5e139f.into()
         ));

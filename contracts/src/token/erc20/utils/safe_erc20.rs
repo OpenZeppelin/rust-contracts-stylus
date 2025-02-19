@@ -408,32 +408,32 @@ impl SafeErc20 {
 mod tests {
     use super::SafeErc20;
     #[test]
-    fn encodes_true_reverts_when_slice_empty() {
+    fn encodes_true_returns_false_for_empty_slice() {
         assert!(!SafeErc20::encodes_true(&[]));
     }
 
     #[test]
-    fn encodes_true_reverts_when_single_byte_zero() {
+    fn encodes_true_returns_false_for_zero_byte() {
         assert!(!SafeErc20::encodes_true(&[0]));
     }
 
     #[test]
-    fn encodes_true_success_with_single_byte() {
+    fn encodes_true_returns_true_for_single_one() {
         assert!(SafeErc20::encodes_true(&[1]));
     }
 
     #[test]
-    fn encodes_true_reverts_when_all_bytes_zero() {
+    fn encodes_true_returns_false_for_all_zeros() {
         assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
-    fn encodes_true_success_with_many_bytes() {
+    fn encodes_true_returns_true_for_valid_encoding() {
         assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
-    fn encodes_true_reverts_when_bytes_invalid() {
+    fn encodes_true_returns_false_for_invalid_encoding() {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }

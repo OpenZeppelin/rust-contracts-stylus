@@ -86,7 +86,7 @@ mod tests {
     use crate::token::erc20::{Erc20, Error, IErc20};
 
     #[motsu::test]
-    fn burn_success(contract: Erc20) {
+    fn burn_decreases_balance_and_total_supply(contract: Erc20) {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 
@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_from_success(contract: Erc20) {
+    fn burn_from_decreases_balance_and_allowance(contract: Erc20) {
         let alice = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
         let sender = msg::sender();
 

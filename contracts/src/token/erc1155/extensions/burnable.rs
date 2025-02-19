@@ -142,7 +142,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success(contract: Erc1155) {
+    fn burn_destroys_owned_tokens(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 1);
 
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success_with_approval(contract: Erc1155) {
+    fn burn_destroys_approved_tokens(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 1);
 
@@ -242,7 +242,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_batch_success(contract: Erc1155) {
+    fn burn_batch_destroys_multiple_owned_tokens(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, alice, 4);
 
@@ -262,7 +262,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_batch_success_with_approval(contract: Erc1155) {
+    fn burn_batch_destroys_multiple_approved_tokens(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 4);
 

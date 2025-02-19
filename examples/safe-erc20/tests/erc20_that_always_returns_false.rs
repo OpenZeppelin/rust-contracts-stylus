@@ -9,7 +9,7 @@ mod abi;
 mod mock;
 
 #[e2e::test]
-async fn safe_transfer_reverts_when_operation_fails(
+async fn safe_transfer_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -33,7 +33,7 @@ async fn safe_transfer_reverts_when_operation_fails(
 }
 
 #[e2e::test]
-async fn safe_transfer_from_reverts_when_operation_fails(
+async fn safe_transfer_from_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -59,7 +59,7 @@ async fn safe_transfer_from_reverts_when_operation_fails(
 }
 
 #[e2e::test]
-async fn safe_increase_allowance_reverts_when_operation_fails(
+async fn safe_increase_allowance_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -83,7 +83,7 @@ async fn safe_increase_allowance_reverts_when_operation_fails(
 }
 
 #[e2e::test]
-async fn safe_decrease_allowance_reverts_when_operation_fails(
+async fn safe_decrease_allowance_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -107,7 +107,7 @@ async fn safe_decrease_allowance_reverts_when_operation_fails(
 }
 
 #[e2e::test]
-async fn force_approve_reverts_when_operation_fails(
+async fn force_approve_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {

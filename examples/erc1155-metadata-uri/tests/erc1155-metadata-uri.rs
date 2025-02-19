@@ -22,9 +22,7 @@ fn ctr(uri: &str) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn uri_success_with_metadata_uri_only(
-    alice: Account,
-) -> eyre::Result<()> {
+async fn uri_returns_correct_metadata_uri(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(URI))
@@ -43,7 +41,9 @@ async fn uri_success_with_metadata_uri_only(
 }
 
 #[e2e::test]
-async fn uri_success_with_no_uri_set(alice: Account) -> eyre::Result<()> {
+async fn uri_returns_empty_string_when_no_uri_set(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(""))
@@ -63,7 +63,7 @@ async fn uri_success_with_no_uri_set(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn uri_success_with_base_and_token_uri(
+async fn uri_returns_combined_base_and_token_uri(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
@@ -95,7 +95,7 @@ async fn uri_success_with_base_and_token_uri(
 }
 
 #[e2e::test]
-async fn uri_success_with_token_uri_only(alice: Account) -> eyre::Result<()> {
+async fn uri_returns_specific_token_uri(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(""))
@@ -122,7 +122,7 @@ async fn uri_success_with_token_uri_only(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn uri_success_when_token_uri_overrides_metadata(
+async fn uri_returns_token_uri_overriding_metadata_uri(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
@@ -158,7 +158,9 @@ async fn uri_success_when_token_uri_overrides_metadata(
 // ============================================================================
 
 #[e2e::test]
-async fn supports_interface_success(alice: Account) -> eyre::Result<()> {
+async fn supports_interface_returns_correct_interface_support(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(URI))

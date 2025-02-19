@@ -16,7 +16,7 @@ mod transfers {
     use super::*;
 
     #[e2e::test]
-    async fn safe_transfer_success(
+    async fn safe_transfer_succeeds_moving_tokens(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -102,7 +102,7 @@ mod transfers {
     }
 
     #[e2e::test]
-    async fn safe_transfer_from_success(
+    async fn safe_transfer_from_succeeds_moving_approved_tokens(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -198,7 +198,7 @@ mod approvals {
         use super::super::*;
 
         #[e2e::test]
-        async fn force_approve_success_with_non_zero_value(
+        async fn force_approve_succeeds_setting_nonzero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -241,7 +241,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn force_approve_success_with_zero_value(
+        async fn force_approve_succeeds_clearing_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -282,7 +282,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn safe_increase_allowance_success(
+        async fn safe_increase_allowance_succeeds_updating_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -400,7 +400,7 @@ mod approvals {
         use super::super::*;
 
         #[e2e::test]
-        async fn force_approve_success_with_existing_allowance(
+        async fn force_approve_succeeds_overwriting_existing_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -445,7 +445,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn force_approve_success_with_existing_allowance_to_zero(
+        async fn force_approve_succeeds_resetting_existing_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -488,7 +488,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn safe_increase_allowance_success_with_existing_allowance(
+        async fn safe_increase_allowance_succeeds_adding_to_existing(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -533,7 +533,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn safe_decrease_allowance_success_to_positive(
+        async fn safe_decrease_allowance_succeeds_reducing_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -578,7 +578,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn safe_decrease_allowance_reverts_when_negative(
+        async fn safe_decrease_allowance_reverts_when_amount_exceeds_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =

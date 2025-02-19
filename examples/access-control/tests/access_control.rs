@@ -21,7 +21,9 @@ const NEW_ADMIN_ROLE: [u8; 32] =
 // ============================================================================
 
 #[e2e::test]
-async fn constructor_success(alice: Account) -> Result<()> {
+async fn constructor_succeeds_with_default_admin_role(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let receipt = alice.as_deployer().deploy().await?;
     let contract = AccessControl::new(receipt.address()?, &alice.wallet);
@@ -40,7 +42,9 @@ async fn constructor_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn role_admin_success_with_default_admin(alice: Account) -> Result<()> {
+async fn get_role_admin_returns_default_admin_role(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -52,7 +56,9 @@ async fn role_admin_success_with_default_admin(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn default_admin_role_success(alice: Account) -> Result<()> {
+async fn get_role_admin_returns_correct_default_admin_role(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -68,7 +74,7 @@ async fn default_admin_role_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn grant_role_reverts_when_not_admin(
+async fn grant_role_reverts_when_caller_lacks_admin_permission(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -88,7 +94,7 @@ async fn grant_role_reverts_when_not_admin(
 }
 
 #[e2e::test]
-async fn grant_role_success_with_multiple_grants(
+async fn grant_role_succeeds_with_multiple_identical_grants(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -115,7 +121,9 @@ async fn grant_role_success_with_multiple_grants(
 }
 
 #[e2e::test]
-async fn revoke_role_success_with_ungranted_role(alice: Account) -> Result<()> {
+async fn revoke_role_succeeds_when_role_not_previously_granted(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
@@ -135,7 +143,10 @@ async fn revoke_role_success_with_ungranted_role(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn revoke_role_success(alice: Account, bob: Account) -> Result<()> {
+async fn revoke_role_succeeds_for_previously_granted_role(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -155,7 +166,7 @@ async fn revoke_role_success(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn revoke_role_reverts_when_not_admin(
+async fn revoke_role_reverts_when_caller_lacks_admin_permission(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -179,7 +190,7 @@ async fn revoke_role_reverts_when_not_admin(
 }
 
 #[e2e::test]
-async fn revoke_role_success_with_multiple_revokes(
+async fn revoke_role_succeeds_with_multiple_identical_revokes(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -201,7 +212,7 @@ async fn revoke_role_success_with_multiple_revokes(
 }
 
 #[e2e::test]
-async fn renounce_role_success_with_ungranted_role(
+async fn renounce_role_succeeds_when_role_not_previously_granted(
     alice: Account,
 ) -> Result<()> {
     let alice_addr = alice.address();
@@ -219,7 +230,10 @@ async fn renounce_role_success_with_ungranted_role(
 }
 
 #[e2e::test]
-async fn renounce_role_success(alice: Account, bob: Account) -> Result<()> {
+async fn renounce_role_succeeds_for_previously_granted_role(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let bob_addr = bob.address();
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
@@ -238,7 +252,7 @@ async fn renounce_role_success(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn renounce_role_reverts_when_not_sender(
+async fn renounce_role_reverts_when_not_role_holder(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -259,7 +273,7 @@ async fn renounce_role_reverts_when_not_sender(
 }
 
 #[e2e::test]
-async fn renounce_role_success_with_multiple_renounces(
+async fn renounce_role_succeeds_with_multiple_identical_renounces(
     alice: Account,
 ) -> Result<()> {
     let alice_addr = alice.address();
@@ -278,7 +292,9 @@ async fn renounce_role_success_with_multiple_renounces(
 }
 
 #[e2e::test]
-async fn set_role_admin_success(alice: Account) -> Result<()> {
+async fn set_role_admin_succeeds_with_new_admin_role(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
@@ -298,7 +314,7 @@ async fn set_role_admin_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn role_admin_change_success_with_new_grant(
+async fn role_admin_change_succeeds_with_new_admin_granting_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -330,7 +346,7 @@ async fn role_admin_change_success_with_new_grant(
 }
 
 #[e2e::test]
-async fn role_admin_change_success_with_new_revoke(
+async fn role_admin_change_succeeds_with_new_admin_revoking_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -363,7 +379,7 @@ async fn role_admin_change_success_with_new_revoke(
 }
 
 #[e2e::test]
-async fn role_admin_change_reverts_when_old_admin_grants(
+async fn role_admin_change_reverts_when_previous_admin_attempts_to_grant_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -392,7 +408,7 @@ async fn role_admin_change_reverts_when_old_admin_grants(
 }
 
 #[e2e::test]
-async fn role_admin_change_reverts_when_old_admin_revokes(
+async fn role_admin_change_reverts_when_previous_admin_attempts_to_revoke_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {

@@ -1245,7 +1245,7 @@ mod tests {
     }
 
     #[test]
-    fn create_transfer_single_success() {
+    fn create_transfer_single_returns_valid_data() {
         let id = uint!(1_U256);
         let value = uint!(10_U256);
         let details = Erc1155ReceiverData::new(vec![id], vec![value]);
@@ -1254,7 +1254,7 @@ mod tests {
     }
 
     #[test]
-    fn create_transfer_batch_success() {
+    fn create_transfer_batch_returns_valid_data() {
         let ids = random_token_ids(5);
         let values = random_values(5);
         let details = Erc1155ReceiverData::new(ids.clone(), values.clone());
@@ -1263,7 +1263,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_success_with_zero_balance(contract: Erc1155) {
+    fn balance_of_returns_zero_for_new_token(contract: Erc1155) {
         let owner = msg::sender();
         let token_id = random_token_ids(1)[0];
         let balance = contract.balance_of(owner, token_id);
@@ -1291,7 +1291,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_batch_success_with_zero_balance(contract: Erc1155) {
+    fn balance_of_batch_returns_zeros_for_new_tokens(contract: Erc1155) {
         let token_ids = random_token_ids(4);
         let accounts = vec![ALICE, BOB, DAVE, CHARLIE];
         let balances = contract
@@ -1303,7 +1303,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_approval_for_all_success(contract: Erc1155) {
+    fn set_approval_for_all_updates_operator_status(contract: Erc1155) {
         let alice = msg::sender();
         contract._operator_approvals.setter(alice).setter(BOB).set(false);
 
@@ -1335,7 +1335,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_success(contract: Erc1155) {
+    fn mint_creates_new_token_balance(contract: Erc1155) {
         let alice = msg::sender();
         let token_id = random_token_ids(1)[0];
         let value = random_values(1)[0];
@@ -1368,7 +1368,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_batch_success(contract: Erc1155) {
+    fn mint_batch_creates_multiple_token_balances(contract: Erc1155) {
         let token_ids = random_token_ids(4);
         let values = random_values(4);
 
@@ -1393,7 +1393,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_batch_success_with_same_token(contract: Erc1155) {
+    fn mint_batch_accumulates_same_token_balance(contract: Erc1155) {
         let token_id = uint!(1_U256);
         let values = random_values(4);
         let expected_balance: U256 = values.iter().sum();
@@ -1459,7 +1459,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_success(contract: Erc1155) {
+    fn burn_decreases_token_balance(contract: Erc1155) {
         let (token_ids, values) = init(contract, ALICE, 1);
         let token_id = token_ids[0];
         let value = values[0];
@@ -1508,7 +1508,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_batch_success(contract: Erc1155) {
+    fn burn_batch_decreases_multiple_balances(contract: Erc1155) {
         let (token_ids, values) = init(contract, ALICE, 4);
 
         contract
@@ -1523,7 +1523,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_batch_success_with_same_token(contract: Erc1155) {
+    fn burn_batch_decreases_accumulated_balance(contract: Erc1155) {
         let token_id = uint!(1_U256);
         let value = uint!(80_U256);
 
@@ -1608,7 +1608,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success(contract: Erc1155) {
+    fn safe_transfer_from_moves_token_between_accounts(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, BOB, 2);
         let amount_one = values[0] - uint!(1_U256);
@@ -1748,7 +1748,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from_success_with_data(contract: Erc1155) {
+    fn safe_transfer_from_moves_token_with_data(contract: Erc1155) {
         let alice = msg::sender();
         let (token_ids, values) = init(contract, DAVE, 1);
 
@@ -2214,7 +2214,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn interface_id_success() {
+    fn interface_id_returns_expected_values() {
         let actual = <Erc1155 as IErc1155>::INTERFACE_ID;
         let expected = 0xd9b67a26;
         assert_eq!(actual, expected);

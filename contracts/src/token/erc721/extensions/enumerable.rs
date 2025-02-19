@@ -350,7 +350,7 @@ mod tests {
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
 
     #[motsu::test]
-    fn total_supply_success_with_no_tokens(contract: Erc721Enumerable) {
+    fn total_supply_returns_zero_when_empty(contract: Erc721Enumerable) {
         assert_eq!(U256::ZERO, contract.total_supply());
     }
 
@@ -367,7 +367,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_enumeration_success_with_add_token(contract: Erc721Enumerable) {
+    fn _add_token_to_all_tokens_enumeration_updates_supply_and_indices(
+        contract: Erc721Enumerable,
+    ) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
         let tokens_len = 10;
@@ -397,7 +399,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_enumeration_success_with_remove_token(contract: Erc721Enumerable) {
+    fn _remove_token_from_all_tokens_enumeration_updates_remaining_indices(
+        contract: Erc721Enumerable,
+    ) {
         assert_eq!(U256::ZERO, contract.total_supply());
 
         let initial_tokens_len = 10;
@@ -446,14 +450,16 @@ mod tests {
     }
 
     #[motsu::test]
-    fn check_increase_balance_success() {
+    fn _check_increase_balance_validates_amount_constraints() {
         assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
         let err = Erc721Enumerable::_check_increase_balance(1).unwrap_err();
         assert!(matches!(err, Error::EnumerableForbiddenBatchMint(_)));
     }
 
     #[motsu::test]
-    fn token_of_owner_by_index_success(contract: Erc721Enumerable) {
+    fn token_of_owner_by_index_returns_correct_token(
+        contract: Erc721Enumerable,
+    ) {
         let alice = msg::sender();
         let mut erc721 = Erc721::default();
         assert_eq!(
@@ -522,7 +528,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_of_owner_by_index_success_after_transfer(
+    fn token_of_owner_by_index_returns_token_after_ownership_change(
         contract: Erc721Enumerable,
     ) {
         let alice = msg::sender();
@@ -572,7 +578,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn interface_id_success() {
+    fn interface_id_returns_enumerable_identifier() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
         let expected = 0x780e9d63;
         assert_eq!(actual, expected);

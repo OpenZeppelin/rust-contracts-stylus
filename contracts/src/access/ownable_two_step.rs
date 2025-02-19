@@ -230,21 +230,23 @@ mod tests {
     const BOB: Address = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
 
     #[motsu::test]
-    fn owner_read_success(contract: Ownable2Step) {
+    fn owner_returns_current_address(contract: Ownable2Step) {
         contract._ownable._owner.set(msg::sender());
         let owner = contract.owner();
         assert_eq!(owner, msg::sender());
     }
 
     #[motsu::test]
-    fn pending_owner_read_success(contract: Ownable2Step) {
+    fn pending_owner_returns_current_address(contract: Ownable2Step) {
         contract._pending_owner.set(ALICE);
         let pending_owner = contract.pending_owner();
         assert_eq!(pending_owner, ALICE);
     }
 
     #[motsu::test]
-    fn transfer_ownership_success(contract: Ownable2Step) {
+    fn transfer_ownership_succeeds_updating_pending_owner(
+        contract: Ownable2Step,
+    ) {
         contract._ownable._owner.set(msg::sender());
 
         contract
@@ -267,7 +269,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn accept_ownership_success(contract: Ownable2Step) {
+    fn accept_ownership_succeeds_completing_transfer(contract: Ownable2Step) {
         contract._ownable._owner.set(ALICE);
         contract._pending_owner.set(msg::sender());
 
@@ -289,7 +291,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn ownership_transfer_success_with_two_steps(contract: Ownable2Step) {
+    fn transfer_ownership_succeeds_with_complete_flow(contract: Ownable2Step) {
         contract._ownable._owner.set(msg::sender());
 
         contract
@@ -307,7 +309,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn renounce_ownership_success(contract: Ownable2Step) {
+    fn renounce_ownership_succeeds_clearing_owner(contract: Ownable2Step) {
         contract._ownable._owner.set(msg::sender());
 
         contract.renounce_ownership().expect("should renounce ownership");
@@ -326,7 +328,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn renounce_ownership_success_with_pending_transfer(
+    fn renounce_ownership_succeeds_clearing_pending_transfer(
         contract: Ownable2Step,
     ) {
         contract._ownable._owner.set(msg::sender());
@@ -338,7 +340,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_ownership_success_with_cancel(contract: Ownable2Step) {
+    fn transfer_ownership_succeeds_canceling_transfer(contract: Ownable2Step) {
         contract._ownable._owner.set(msg::sender());
         contract._pending_owner.set(ALICE);
 
@@ -350,7 +352,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_ownership_success_with_overwrite(contract: Ownable2Step) {
+    fn transfer_ownership_succeeds_overwriting_pending_owner(
+        contract: Ownable2Step,
+    ) {
         contract._ownable._owner.set(msg::sender());
 
         contract

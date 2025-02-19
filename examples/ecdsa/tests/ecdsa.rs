@@ -24,7 +24,7 @@ const ADDRESS: Address = address!("f39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
 // ============================================================================
 
 #[e2e::test]
-async fn recover_success(alice: Account) -> Result<()> {
+async fn recover_succeeds_with_valid_signature(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -37,7 +37,7 @@ async fn recover_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_success_with_different_hash(alice: Account) -> Result<()> {
+async fn recover_fails_with_different_hash(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -53,7 +53,7 @@ async fn recover_success_with_different_hash(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_success_with_different_v(alice: Account) -> Result<()> {
+async fn recover_fails_with_different_v_value(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -68,7 +68,7 @@ async fn recover_success_with_different_v(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_success_with_different_r(alice: Account) -> Result<()> {
+async fn recover_fails_with_different_r_value(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -85,7 +85,7 @@ async fn recover_success_with_different_r(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_success_with_different_s(alice: Account) -> Result<()> {
+async fn recover_fails_with_different_s_value(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -101,7 +101,7 @@ async fn recover_success_with_different_s(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_from_vrs_success(alice: Account) -> Result<()> {
+async fn recover_succeeds_with_signed_hash(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -122,7 +122,7 @@ async fn recover_from_vrs_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_reverts_when_v_is_zero(alice: Account) -> Result<()> {
+async fn recover_reverts_when_v_value_is_zero(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -139,7 +139,7 @@ async fn recover_reverts_when_v_is_zero(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_reverts_when_v_is_one(alice: Account) -> Result<()> {
+async fn recover_reverts_when_v_value_is_one(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
@@ -156,7 +156,9 @@ async fn recover_reverts_when_v_is_one(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn recover_reverts_when_s_exceeds_bound(alice: Account) -> Result<()> {
+async fn recover_reverts_when_s_value_exceeds_upper_bound(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.address()?;
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
