@@ -12,7 +12,7 @@ use zeroize::Zeroize;
 use super::{Affine, MontCurveConfig, TECurveConfig};
 use crate::{
     bits::BitIteratorBE,
-    curve::{AffineRepr, CurveGroup, PrimeGroup},
+    curve::{batch_inversion, AffineRepr, CurveGroup, PrimeGroup},
     field::{group::AdditiveGroup, prime::PrimeField, Field},
     impl_additive_ops_from_ref,
 };
@@ -201,11 +201,10 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
         // (batch inversion requires 3N multiplications + 1 inversion)
         let mut z_s = v.iter().map(|g| g.z).collect::<Vec<_>>();
 
-        // TODO#q: we don't need parallel here
-        ark_ff::batch_inversion(&mut z_s);
+        batch_inversion(&mut z_s);
 
         // Perform affine transformations
-        ark_std::cfg_iter!(v)
+        v.iter()
             .zip(z_s)
             .map(|(g, z)| match g.is_zero() {
                 true => Affine::zero(),
