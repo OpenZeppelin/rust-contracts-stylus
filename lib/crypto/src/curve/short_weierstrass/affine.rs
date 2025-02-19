@@ -77,53 +77,6 @@ impl<P: SWCurveConfig> Affine<P> {
         Self { x: P::BaseField::ZERO, y: P::BaseField::ZERO, infinity: true }
     }
 
-    /// Attempts to construct an affine point given an x-coordinate. The
-    /// point is not guaranteed to be in the prime order subgroup.
-    ///
-    /// If and only if `greatest` is set will the lexicographically
-    /// largest y-coordinate be selected.
-    #[allow(dead_code)]
-    pub fn get_point_from_x_unchecked(
-        x: P::BaseField,
-        greatest: bool,
-    ) -> Option<Self> {
-        Self::get_ys_from_x_unchecked(x).map(|(smaller, larger)| {
-            if greatest {
-                Self::new_unchecked(x, larger)
-            } else {
-                Self::new_unchecked(x, smaller)
-            }
-        })
-    }
-
-    /// Returns the two possible y-coordinates corresponding to the given
-    /// x-coordinate. The corresponding points are not guaranteed to be in
-    /// the prime-order subgroup, but are guaranteed to be on the curve.
-    /// That is, this method returns `None` if the x-coordinate corresponds
-    /// to a non-curve point.
-    ///
-    /// The results are sorted by lexicographical order.
-    /// This means that, if `P::BaseField: PrimeField`, the results are sorted
-    /// as integers.
-    pub fn get_ys_from_x_unchecked(
-        x: P::BaseField,
-    ) -> Option<(P::BaseField, P::BaseField)> {
-        // Compute the curve equation x^3 + Ax + B.
-        // Since Rust does not optimise away additions with zero, we explicitly
-        // check for that case here, and avoid multiplication by `a` if
-        // possible.
-        let mut x3_plus_ax_plus_b = P::add_b(x.square() * x);
-        if !P::COEFF_A.is_zero() {
-            x3_plus_ax_plus_b += P::mul_by_a(x)
-        };
-        let y = x3_plus_ax_plus_b.sqrt()?; // TODO#q: add sqrt or remove it
-        let neg_y = -y;
-        match y < neg_y {
-            true => Some((y, neg_y)),
-            false => Some((neg_y, y)),
-        }
-    }
-
     /// Checks if `self` is a valid point on the curve.
     pub fn is_on_curve(&self) -> bool {
         if !self.infinity {

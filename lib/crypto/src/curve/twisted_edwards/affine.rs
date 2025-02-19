@@ -76,63 +76,6 @@ impl<P: TECurveConfig> Affine<P> {
         self.x.is_zero() && self.y.is_one()
     }
 
-    /// Attempts to construct an affine point given an y-coordinate. The
-    /// point is not guaranteed to be in the prime order subgroup.
-    ///
-    /// If and only if `greatest` is set will the lexicographically
-    /// largest x-coordinate be selected.
-    ///
-    /// a * X^2 + Y^2 = 1 + d * X^2 * Y^2
-    /// a * X^2 - d * X^2 * Y^2 = 1 - Y^2
-    /// X^2 * (a - d * Y^2) = 1 - Y^2
-    /// X^2 = (1 - Y^2) / (a - d * Y^2)
-    #[allow(dead_code)]
-    pub fn get_point_from_y_unchecked(
-        y: P::BaseField,
-        greatest: bool,
-    ) -> Option<Self> {
-        Self::get_xs_from_y_unchecked(y).map(|(x, neg_x)| {
-            if greatest {
-                Self::new_unchecked(neg_x, y)
-            } else {
-                Self::new_unchecked(x, y)
-            }
-        })
-    }
-
-    /// Attempts to recover the x-coordinate given an y-coordinate. The
-    /// resulting point is not guaranteed to be in the prime order subgroup.
-    ///
-    /// If and only if `greatest` is set will the lexicographically
-    /// largest x-coordinate be selected.
-    ///
-    /// a * X^2 + Y^2 = 1 + d * X^2 * Y^2
-    /// a * X^2 - d * X^2 * Y^2 = 1 - Y^2
-    /// X^2 * (a - d * Y^2) = 1 - Y^2
-    /// X^2 = (1 - Y^2) / (a - d * Y^2)
-    #[allow(dead_code)]
-    pub fn get_xs_from_y_unchecked(
-        y: P::BaseField,
-    ) -> Option<(P::BaseField, P::BaseField)> {
-        let y2 = y.square();
-
-        let numerator = P::BaseField::one() - y2;
-        let denominator = P::COEFF_A - (y2 * P::COEFF_D);
-
-        denominator
-            .inverse()
-            .map(|denom| denom * &numerator)
-            .and_then(|x2| x2.sqrt()) // TODO#q: add sqrt or remove it
-            .map(|x| {
-                let neg_x = -x;
-                if x <= neg_x {
-                    (x, neg_x)
-                } else {
-                    (neg_x, x)
-                }
-            })
-    }
-
     /// Checks that the current point is on the elliptic curve.
     pub fn is_on_curve(&self) -> bool {
         let x2 = self.x.square();
