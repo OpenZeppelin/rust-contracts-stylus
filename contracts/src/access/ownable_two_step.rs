@@ -17,6 +17,7 @@
 //! available.
 
 use alloc::vec::Vec;
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::Address;
 pub use sol::*;
@@ -66,6 +67,20 @@ pub struct Ownable2Step {
     pub ownable: Ownable,
     /// Pending owner of the contract.
     pub(crate) pending_owner: StorageAddress,
+}
+
+impl Deref for Ownable2Step {
+    type Target = Ownable;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ownable
+    }
+}
+
+impl DerefMut for Ownable2Step {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ownable
+    }
 }
 
 /// Interface for an [`Ownable2Step`] contract.
