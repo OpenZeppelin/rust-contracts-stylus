@@ -16,11 +16,13 @@
 //! Marketplaces are expected to voluntarily pay royalties together with sales,
 //! but note that this standard is not yet widely supported.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    prelude::{storage, Erase},
+    prelude::{public, storage, Erase, TopLevelStorage},
     storage::{StorageAddress, StorageMap},
     stylus_proc::SolidityError,
 };
@@ -39,7 +41,7 @@ mod sol {
 
     sol! {
         /// Indicates an error for Invalid Default Royalty. Occurs when
-        /// fee_numerator > denominator.
+        /// `fee_numerator` > `denominator`.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC2981InvalidDefaultRoyalty(uint256 numerator, uint256 denominator);
@@ -65,7 +67,7 @@ mod sol {
     }
 }
 
-/// An [`Erc721Royalty`] extension error.
+/// An [`Erc2981`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// The default royalty set is invalid (eg. (numerator / denominator) >=
@@ -96,21 +98,23 @@ pub struct RoyaltyInfo {
     royalty_fraction: StorageU96,
 }
 
-/// State of a Royalty extension.
+/// State of an ERC2981 contract.
 #[storage]
-pub struct Erc721Royalty {
+pub struct Erc2981 {
     /// The default royalty information for all tokens.
-    #[allow(clippy::used_underscore_binding)]
-    pub _default_royalty_info: RoyaltyInfo,
+    pub(crate) default_royalty_info: RoyaltyInfo,
     /// The royalty information for a particular token.
-    #[allow(clippy::used_underscore_binding)]
-    pub _token_royalty_info: StorageMap<U256, RoyaltyInfo>,
+    /// It is a mapping of `token_id` to `RoyaltyInfo`.
+    pub(crate) token_royalty_info: StorageMap<U256, RoyaltyInfo>,
 }
 
-// This is the interface of the optional `Royalty` extension
-/// of the ERC-721 standard.
+/// Interface for the NFT Royalty Standard.
+
+/// A standardized way to retrieve royalty payment information for non-fungible
+/// tokens (NFTs) to enable universal support for royalty payments across all
+/// NFT marketplaces and ecosystem participants.
 #[interface_id]
-pub trait IErc721Royalty {
+pub trait IErc2981 {
     /// Returns how much royalty is owed and to whom, based on a sale price that
     /// may be denominated in any unit of exchange.
     ///
@@ -121,23 +125,35 @@ pub trait IErc721Royalty {
     /// In that case all the price would be sent to the royalty receiver and 0
     /// tokens to the seller. Contracts dealing with royalty should consider
     /// empty transfers.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Write access to the contract's state
+    /// * `token_id` - Token id of the token
+    /// * `sale_price` - The sale price of the token
     fn royalty_info(&self, token_id: U256, sale_price: U256)
         -> (Address, U256);
 }
 
-impl IErc721Royalty for Erc721Royalty {
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc2981 {}
+
+#[public]
+impl IErc2981 for Erc2981 {
     fn royalty_info(
         &self,
         token_id: U256,
         sale_price: U256,
     ) -> (Address, U256) {
-        let _royalty_info = self._token_royalty_info.get(token_id);
-        let mut royalty_receiver = &_royalty_info.receiver;
-        let mut royalty_fraction = &_royalty_info.royalty_fraction;
+        let royalty_info = self.token_royalty_info.get(token_id);
+        let mut royalty_receiver = &royalty_info.receiver;
+        let mut royalty_fraction = &royalty_info.royalty_fraction;
 
         if royalty_receiver.is_zero() {
-            royalty_receiver = &self._default_royalty_info.receiver;
-            royalty_fraction = &self._default_royalty_info.royalty_fraction;
+            royalty_receiver = &self.default_royalty_info.receiver;
+            royalty_fraction = &self.default_royalty_info.royalty_fraction;
         }
 
         let royalty_amount = (sale_price * U256::from(royalty_fraction.get()))
@@ -147,14 +163,13 @@ impl IErc721Royalty for Erc721Royalty {
     }
 }
 
-impl IErc165 for Erc721Royalty {
+impl IErc165 for Erc2981 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721Royalty>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
+        <Self as IErc2981>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
     }
 }
 
-impl Erc721Royalty {
+impl Erc2981 {
     /// Function to change the denominator with which to interpret the fee set
     /// in _setTokenRoyalty and _setDefaultRoyalty as a fraction of the sale
     /// price  
@@ -208,8 +223,8 @@ impl Erc721Royalty {
             ));
         }
 
-        self._default_royalty_info.receiver.set(receiver);
-        self._default_royalty_info.royalty_fraction.set(fee_numerator);
+        self.default_royalty_info.receiver.set(receiver);
+        self.default_royalty_info.royalty_fraction.set(fee_numerator);
 
         Ok(())
     }
@@ -220,8 +235,8 @@ impl Erc721Royalty {
     ///
     /// * `&mut self` - Write access to the contract's state.
     pub fn _delete_default_royalty(&mut self) {
-        self._default_royalty_info.receiver.set(Address::ZERO);
-        self._default_royalty_info.royalty_fraction.set(U96::from(0));
+        self.default_royalty_info.receiver.set(Address::ZERO);
+        self.default_royalty_info.royalty_fraction.set(U96::from(0));
     }
 
     /// Function to set the royalty information for a specific token id,
@@ -266,8 +281,8 @@ impl Erc721Royalty {
             ));
         }
 
-        self._token_royalty_info.setter(token_id).receiver.set(receiver);
-        self._token_royalty_info
+        self.token_royalty_info.setter(token_id).receiver.set(receiver);
+        self.token_royalty_info
             .setter(token_id)
             .royalty_fraction
             .set(fee_numerator);
@@ -282,16 +297,23 @@ impl Erc721Royalty {
     ///
     /// * `&mut self` - Write access to the contract's state.
     pub fn _reset_token_royalty(&mut self, token_id: U256) {
-        self._token_royalty_info.delete(token_id);
+        self.token_royalty_info.delete(token_id);
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use motsu::prelude::Contract;
     use stylus_sdk::alloy_primitives::{address, uint, Address, U256};
 
-    use super::{Erc721Royalty, Error, IErc721Royalty};
-    use crate::utils::structs::checkpoints::{Size, S160};
+    use super::{Erc2981, Error};
+    use crate::{
+        token::common::erc2981::IErc2981,
+        utils::{
+            introspection::erc165::IErc165,
+            structs::checkpoints::{Size, S160},
+        },
+    };
 
     type U96 = <S160 as Size>::Key;
     const BOB: Address = address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");
@@ -304,62 +326,68 @@ mod tests {
     /// DEFAULT ROYALTY TESTS
 
     #[motsu::test]
-    fn check_whether_update_default_royalty_works(contract: Erc721Royalty) {
+    fn check_whether_update_default_royalty_works(contract: Contract<Erc2981>) {
         let new_fraction = uint!(8000_U96);
 
         contract
+            .sender(BOB)
             ._set_default_royalty(BOB, new_fraction)
             .expect("Error in updating default royalty");
 
         let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+            contract.sender(BOB).royalty_info(TOKEN_ID, SALE_PRICE);
 
         assert_eq!(BOB, received_address);
         assert_eq!(
             U256::from(new_fraction) * SALE_PRICE
-                / U256::from(contract._fee_denominator()),
+                / U256::from(contract.sender(BOB)._fee_denominator()),
             received_royalty_fraction
         );
     }
 
     #[motsu::test]
     fn check_whether_default_royalty_is_same_for_all_tokens(
-        contract: Erc721Royalty,
+        contract: Contract<Erc2981>,
     ) {
         let token_id_2 = uint!(2_U256);
 
         contract
+            .sender(BOB)
             ._set_default_royalty(BOB, FEE_NUMERATOR)
             .expect("Error in updating default royalty");
 
         let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+            contract.sender(BOB).royalty_info(TOKEN_ID, SALE_PRICE);
 
         let (received_address_2, received_royalty_fraction_2) =
-            contract.royalty_info(token_id_2, SALE_PRICE);
+            contract.sender(BOB).royalty_info(token_id_2, SALE_PRICE);
 
         assert_eq!(received_address, received_address_2);
         assert_eq!(received_royalty_fraction, received_royalty_fraction_2);
     }
 
     #[motsu::test]
-    fn check_whether_delete_default_royalty_works(contract: Erc721Royalty) {
+    fn check_whether_delete_default_royalty_works(contract: Contract<Erc2981>) {
         contract
+            .sender(BOB)
             ._set_default_royalty(BOB, FEE_NUMERATOR)
             .expect("Error in setting default royalty");
 
-        contract._delete_default_royalty();
+        contract.sender(BOB)._delete_default_royalty();
 
         let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+            contract.sender(BOB).royalty_info(TOKEN_ID, SALE_PRICE);
 
         assert_eq!(ZERO_ADDRESS, received_address);
         assert_eq!(uint!(0_U256), received_royalty_fraction);
     }
 
     #[motsu::test]
-    fn check_whether_reverts_if_invalid_parameters(contract: Erc721Royalty) {
+    fn check_whether_reverts_if_invalid_parameters(
+        contract: Contract<Erc2981>,
+    ) {
         let err = contract
+            .sender(BOB)
             ._set_default_royalty(Address::ZERO, FEE_NUMERATOR)
             .unwrap_err();
 
@@ -367,8 +395,10 @@ mod tests {
 
         let new_fee_numerator = uint!(11000_U96);
 
-        let err =
-            contract._set_default_royalty(BOB, new_fee_numerator).unwrap_err();
+        let err = contract
+            .sender(BOB)
+            ._set_default_royalty(BOB, new_fee_numerator)
+            .unwrap_err();
 
         assert!(matches!(err, Error::InvalidDefaultRoyalty(_)));
     }
@@ -376,79 +406,85 @@ mod tests {
     // TOKEN ROYALTY TESTS
 
     #[motsu::test]
-    fn check_whether_update_token_royalty_works(contract: Erc721Royalty) {
+    fn check_whether_update_token_royalty_works(contract: Contract<Erc2981>) {
         let new_fraction = uint!(8000_U96);
 
         contract
+            .sender(BOB)
             ._set_token_royalty(TOKEN_ID, BOB, new_fraction)
             .expect("Error in updating token royalty");
 
         let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+            contract.sender(BOB).royalty_info(TOKEN_ID, SALE_PRICE);
 
         assert_eq!(BOB, received_address);
         assert_eq!(
             U256::from(new_fraction) * SALE_PRICE
-                / U256::from(contract._fee_denominator()),
+                / U256::from(contract.sender(BOB)._fee_denominator()),
             received_royalty_fraction
         );
     }
 
     #[motsu::test]
     fn check_whether_token_royalty_is_different_for_different_tokens(
-        contract: Erc721Royalty,
+        contract: Contract<Erc2981>,
     ) {
         let token_id_2 = uint!(2_U256);
         let new_fraction = uint!(8000_U96);
 
         contract
+            .sender(BOB)
             ._set_token_royalty(TOKEN_ID, BOB, FEE_NUMERATOR)
             .expect("Error in updating token royalty");
 
         contract
+            .sender(BOB)
             ._set_token_royalty(token_id_2, DAVE, new_fraction)
             .expect("Error in updating token royalty");
 
         let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+            contract.sender(BOB).royalty_info(TOKEN_ID, SALE_PRICE);
 
         let (received_address_2, received_royalty_fraction_2) =
-            contract.royalty_info(token_id_2, SALE_PRICE);
+            contract.sender(BOB).royalty_info(token_id_2, SALE_PRICE);
 
         assert_ne!(received_address, received_address_2);
         assert_ne!(received_royalty_fraction, received_royalty_fraction_2);
     }
 
     #[motsu::test]
-    fn check_whether_reset_token_royalty_works(contract: Erc721Royalty) {
+    fn check_whether_reset_token_royalty_works(contract: Contract<Erc2981>) {
         let new_fraction = uint!(8000_U96);
 
         contract
+            .sender(BOB)
             ._set_default_royalty(BOB, FEE_NUMERATOR)
             .expect("Error in setting default royalty");
 
         contract
+            .sender(BOB)
             ._set_token_royalty(TOKEN_ID, DAVE, new_fraction)
             .expect("Error in setting token royalty");
 
-        contract._reset_token_royalty(TOKEN_ID);
+        contract.sender(BOB)._reset_token_royalty(TOKEN_ID);
 
         let (received_address, received_royalty_fraction) =
-            contract.royalty_info(TOKEN_ID, SALE_PRICE);
+            contract.sender(BOB).royalty_info(TOKEN_ID, SALE_PRICE);
 
         assert_eq!(BOB, received_address);
         assert_eq!(
             U256::from(FEE_NUMERATOR) * SALE_PRICE
-                / U256::from(contract._fee_denominator()),
+                / U256::from(contract.sender(BOB)._fee_denominator()),
             received_royalty_fraction
         );
     }
 
     #[motsu::test]
     fn check_whether_token_royalty_reverts_if_invalid_parameters(
-        contract: Erc721Royalty,
+        contract: Contract<Erc2981>,
     ) {
         let err = contract
+            .sender(BOB)
             ._set_token_royalty(TOKEN_ID, Address::ZERO, FEE_NUMERATOR)
             .unwrap_err();
 
@@ -457,6 +493,7 @@ mod tests {
         let new_fee_numerator = uint!(11000_U96);
 
         let err = contract
+            .sender(BOB)
             ._set_token_royalty(TOKEN_ID, BOB, new_fee_numerator)
             .unwrap_err();
 
@@ -465,9 +502,13 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc721Royalty as IErc721Royalty>::INTERFACE_ID;
-        // Interface ID for ERC2981
-        let expected = 0x2a55205a;
+        let actual = <Erc2981 as IErc2981>::INTERFACE_ID;
+        let expected = 0x2a55_205a;
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(<Erc2981 as IErc165>::supports_interface(0x2a55_205a.into()));
     }
 }
