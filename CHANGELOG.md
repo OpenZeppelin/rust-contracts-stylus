@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
--
+- Implement `Deref<Target = Ownable>` for `Ownable2Step` and `Deref<Target = Erc20>` for `Erc20Permit`. #552
 
 ### Changed (Breaking)
 
