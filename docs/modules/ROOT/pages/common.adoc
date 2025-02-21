@@ -1,0 +1,12 @@
+= Common (Tokens)
+
+Functionality that is common to multiple token standards.
+
+* *ERC-2981*: NFT Royalties compatible with both ERC-721 and ERC-1155.
+    ** For ERC-721 consider {ERC721Royalty} which clears the royalty information from storage on burn.
+
+== Contracts
+
+=== ERC-2981
+ERC-2981 is a standard for non-fungible token royalties. It retrieves royalty information in a standardized way.
+For more information: xref:erc2981.adoc[ERC-2981]
