@@ -87,7 +87,7 @@ mod token {
 
 /// State of a [`SafeErc20`] Contract.
 #[storage]
-pub struct SafeErc20 {}
+pub struct SafeErc20;
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +

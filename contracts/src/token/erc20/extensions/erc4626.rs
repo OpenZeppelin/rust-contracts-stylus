@@ -1180,8 +1180,9 @@ impl Erc4626 {
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, U256, U8};
-    use stylus_sdk::{msg, prelude::storage};
+    use alloy_primitives::{address, Address, U256, U8};
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
     use crate::token::erc20::Erc20;
@@ -1192,59 +1193,82 @@ mod tests {
         erc20: Erc20,
     }
 
+    #[public]
+    impl Erc4626TestExample {
+        fn asset(&self) -> Address {
+            self.erc4626.asset()
+        }
+
+        fn max_deposit(&self, receiver: Address) -> U256 {
+            self.erc4626.max_deposit(receiver)
+        }
+
+        fn max_mint(&self, receiver: Address) -> U256 {
+            self.erc4626.max_mint(receiver)
+        }
+
+        fn max_redeem(&self, owner: Address) -> U256 {
+            self.erc4626.max_redeem(owner, &self.erc20)
+        }
+    }
+    unsafe impl TopLevelStorage for Erc4626TestExample {}
+
     #[motsu::test]
-    fn asset_works(contract: Erc4626TestExample) {
+    fn asset_works(contract: Contract<Erc4626TestExample>, alice: Address) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
-        contract.erc4626.asset.set(asset);
-        assert_eq!(contract.erc4626.asset(), asset);
+        contract.init(alice, |contract| contract.erc4626.asset.set(asset));
+        assert_eq!(contract.sender(alice).erc4626.asset(), asset);
     }
 
     #[motsu::test]
-    fn max_deposit(contract: Erc4626TestExample) {
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-        let max_deposit = contract.erc4626.max_deposit(bob);
+    fn max_deposit(contract: Contract<Erc4626TestExample>, alice: Address) {
+        let max_deposit = contract.sender(alice).max_deposit(alice);
         assert_eq!(max_deposit, U256::MAX);
     }
-
     #[motsu::test]
-    fn max_mint(contract: Erc4626TestExample) {
-        let bob = address!("B0B0cB49ec2e96DF5F5fFB081acaE66A2cBBc2e2");
-        let max_mint = contract.erc4626.max_mint(bob);
+    fn max_mint(contract: Contract<Erc4626TestExample>, alice: Address) {
+        let max_mint = contract.sender(alice).max_mint(alice);
         assert_eq!(max_mint, U256::MAX);
     }
 
     #[motsu::test]
-    fn max_redeem_works(contract: Erc4626TestExample) {
+    fn max_redeem_works(
+        contract: Contract<Erc4626TestExample>,
+        alice: Address,
+    ) {
         let assets = U256::from(1000);
-        let alice = msg::sender();
-        contract.erc20._mint(alice, assets).expect("should mint assets");
-        let max_redeem = contract.erc4626.max_redeem(alice, &contract.erc20);
+        contract.init(alice, |contract| {
+            contract.erc20._mint(alice, assets).expect("should mint assets");
+        });
+        let max_redeem = contract.sender(alice).max_redeem(alice);
         assert_eq!(assets, max_redeem);
     }
 
     #[motsu::test]
-    fn decimals_offset(contract: Erc4626TestExample) {
-        let decimals_offset = contract.erc4626._decimals_offset();
+    fn decimals_offset(contract: Contract<Erc4626TestExample>, alice: Address) {
+        let decimals_offset = contract.sender(alice).erc4626._decimals_offset();
         assert_eq!(decimals_offset, U8::ZERO);
 
         let new_decimal_offset = U8::from(10);
-        contract.erc4626.decimals_offset.set(new_decimal_offset);
+        contract.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
 
-        let decimals_offset = contract.erc4626._decimals_offset();
+        let decimals_offset = contract.sender(alice).erc4626._decimals_offset();
         assert_eq!(decimals_offset, new_decimal_offset);
     }
 
     #[motsu::test]
-    fn decimals(contract: Erc4626TestExample) {
+    fn decimals(contract: Contract<Erc4626TestExample>, alice: Address) {
         let underlying_decimals = U8::from(17);
-        contract.erc4626.underlying_decimals.set(underlying_decimals);
-        let decimals = contract.erc4626.decimals();
+        contract.init(alice, |contract| {
+            contract.erc4626.underlying_decimals.set(underlying_decimals);
+        });
+        let decimals = contract.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals);
 
         let new_decimal_offset = U8::from(10);
-        contract.erc4626.decimals_offset.set(new_decimal_offset);
+        contract.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
 
-        let decimals = contract.erc4626.decimals();
+        let decimals = contract.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals + new_decimal_offset);
     }
 }

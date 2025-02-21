@@ -251,7 +251,8 @@ mod tests {
     #[should_panic = "division by U256::ZERO in `Math::mul_div`"]
     fn check_mul_div_panics_when_denominator_is_zero() {
         proptest!(|(x: U256, y: U256)| {
-            let _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
+            // This should panic.
+            _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
         })
     }
 
@@ -261,7 +262,8 @@ mod tests {
         proptest!(|(x: U256, y: U256)| {
             prop_assume!(x != U256::ZERO, "Guaranteed `x` for overflow.");
             prop_assume!(y > U256::MAX / x, "Guaranteed `y` for overflow.");
-            let _ = x.mul_div(y, U256::from(1), Rounding::Floor);
+            // This should panic.
+            _ = x.mul_div(y, U256::from(1), Rounding::Floor);
         })
     }
 }

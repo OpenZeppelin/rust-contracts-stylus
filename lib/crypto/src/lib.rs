@@ -36,3 +36,6 @@ pub mod merkle;
 pub mod poseidon2;
 
 pub use keccak::KeccakBuilder;
+
+#[cfg(all(test, feature = "std"))]
+mod test_helpers;

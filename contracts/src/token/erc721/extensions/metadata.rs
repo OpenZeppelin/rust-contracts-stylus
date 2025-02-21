@@ -20,11 +20,9 @@ use crate::{
 #[storage]
 pub struct Erc721Metadata {
     /// [`Metadata`] contract.
-    #[allow(clippy::used_underscore_binding)]
-    pub _metadata: Metadata,
+    pub(crate) metadata: Metadata,
     /// Base URI for tokens.
-    #[allow(clippy::used_underscore_binding)]
-    pub _base_uri: StorageString,
+    pub(crate) base_uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
@@ -51,11 +49,11 @@ pub trait IErc721Metadata {
 #[public]
 impl IErc721Metadata for Erc721Metadata {
     fn name(&self) -> String {
-        self._metadata.name()
+        self.metadata.name()
     }
 
     fn symbol(&self) -> String {
-        self._metadata.symbol()
+        self.metadata.symbol()
     }
 }
 
@@ -89,7 +87,7 @@ impl Erc721Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     pub fn base_uri(&self) -> String {
-        self._base_uri.get_string()
+        self.base_uri.get_string()
     }
 
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.

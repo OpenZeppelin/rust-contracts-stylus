@@ -13,6 +13,7 @@
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2612
 
 use alloc::vec::Vec;
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
@@ -77,11 +78,27 @@ pub enum Error {
 #[storage]
 pub struct Erc20Permit<T: IEip712 + StorageType> {
     /// [`Erc20`] contract.
+    // We leave the parent ERC-20 contract instance public, so that inheritting
+    // contract have access to its internal functions.
     pub erc20: Erc20,
     /// [`Nonces`] contract.
-    pub nonces: Nonces,
+    pub(crate) nonces: Nonces,
     /// Contract implementing [`IEip712`] trait.
-    pub eip712: T,
+    pub(crate) eip712: T,
+}
+
+impl<T: IEip712 + StorageType> Deref for Erc20Permit<T> {
+    type Target = Erc20;
+
+    fn deref(&self) -> &Self::Target {
+        &self.erc20
+    }
+}
+
+impl<T: IEip712 + StorageType> DerefMut for Erc20Permit<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.erc20
+    }
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

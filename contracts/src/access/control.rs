@@ -14,7 +14,7 @@
 //! ```
 //!
 //! Roles can be used to represent a set of permissions. To restrict access to a
-//! function call, use [`AccessControl::has_role`]:
+//! function call, use [`IAccessControl::has_role`]:
 //!
 //! ```rust,ignore
 //! pub fn foo() {
@@ -23,24 +23,26 @@
 //! }
 //! ```
 //!
-//! Roles can be granted and revoked dynamically via the `grant_role` and
-//! `revoke_role` functions. Each role has an associated admin role, and only
-//! accounts that have a `role`'s `admin_role` can call `grant_role` and
-//! `revoke_role`.
+//! Roles can be granted and revoked dynamically via the
+//! [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`]
+//! functions. Each role has an associated admin role, and only accounts that
+//! have a `role`'s `admin_role` can call [`IAccessControl::grant_role`] and
+//! [`IAccessControl::revoke_role`].
 //!
-//! By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which
-//! means that only accounts with this role will be able to grant or revoke
-//! other roles. More complex role relationships can be created by using
-//! `_set_role_admin`.
+//! By default, the admin role for all roles is
+//! [`AccessControl::DEFAULT_ADMIN_ROLE`], which means that only accounts with
+//! this role will be able to grant or revoke other roles. More complex role
+//! relationships can be created by using [`AccessControl::_set_role_admin`].
 //!
-//! WARNING: The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission
-//! to grant and revoke this role. Extra precautions should be taken to secure
-//! accounts that have been granted it. We recommend using
+//! WARNING: The [`AccessControl::DEFAULT_ADMIN_ROLE`] is also its own admin: it
+//! has permission to grant and revoke this role. Extra precautions should be
+//! taken to secure accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, B256};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
@@ -120,12 +122,14 @@ pub struct RoleData {
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
-    #[allow(clippy::used_underscore_binding)]
-    pub _roles: StorageMap<FixedBytes<32>, RoleData>,
+    pub(crate) roles: StorageMap<FixedBytes<32>, RoleData>,
 }
+/// Interface for an [`AccessControl`] contract.
+#[interface_id]
+pub trait IAccessControl {
+    /// The error type associated with this interface implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
 
-#[public]
-impl AccessControl {
     /// Returns `true` if `account` has been granted `role`.
     ///
     /// # Arguments
@@ -133,10 +137,7 @@ impl AccessControl {
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
     /// * `account` - The account to check for membership.
-    #[must_use]
-    pub fn has_role(&self, role: B256, account: Address) -> bool {
-        self._roles.getter(role).has_role.get(account)
-    }
+    fn has_role(&self, role: B256, account: Address) -> bool;
 
     /// Checks if [`msg::sender`] has been granted `role`.
     ///
@@ -149,23 +150,18 @@ impl AccessControl {
     ///
     /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
     ///   granted `role`.
-    pub fn only_role(&self, role: B256) -> Result<(), Error> {
-        self._check_role(role, msg::sender())
-    }
+    fn only_role(&self, role: B256) -> Result<(), Self::Error>;
 
-    /// Returns the admin role that controls `role`. See [`Self::grant_role`]
-    /// and [`Self::revoke_role`].
+    /// Returns the admin role that controls `role`. See
+    /// [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`].
     ///
-    /// To change a role's admin, use [`Self::_set_role_admin`].
+    /// To change a role's admin, use [`AccessControl::_set_role_admin`].
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
-    #[must_use]
-    pub fn get_role_admin(&self, role: B256) -> B256 {
-        *self._roles.getter(role).admin_role
-    }
+    fn get_role_admin(&self, role: B256) -> B256;
 
     /// Grants `role` to `account`.
     ///
@@ -186,16 +182,11 @@ impl AccessControl {
     /// # Events
     ///
     /// * [`RoleGranted`]
-    pub fn grant_role(
+    fn grant_role(
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), Error> {
-        let admin_role = self.get_role_admin(role);
-        self.only_role(admin_role)?;
-        self._grant_role(role, account);
-        Ok(())
-    }
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from `account`.
     ///
@@ -215,16 +206,11 @@ impl AccessControl {
     /// # Events
     ///
     /// * [`RoleRevoked`].
-    pub fn revoke_role(
+    fn revoke_role(
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), Error> {
-        let admin_role = self.get_role_admin(role);
-        self.only_role(admin_role)?;
-        self._revoke_role(role, account);
-        Ok(())
-    }
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from the calling account.
     ///
@@ -247,11 +233,58 @@ impl AccessControl {
     /// # Events
     ///
     /// * [`RoleRevoked`] - If the calling account has its `role` revoked.
-    pub fn renounce_role(
+    fn renounce_role(
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error>;
+}
+
+#[public]
+impl IAccessControl for AccessControl {
+    type Error = Error;
+
+    #[must_use]
+    fn has_role(&self, role: B256, account: Address) -> bool {
+        self.roles.getter(role).has_role.get(account)
+    }
+
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
+        self._check_role(role, msg::sender())
+    }
+
+    #[must_use]
+    fn get_role_admin(&self, role: B256) -> B256 {
+        *self.roles.getter(role).admin_role
+    }
+
+    fn grant_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self._grant_role(role, account);
+        Ok(())
+    }
+
+    fn revoke_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self._revoke_role(role, account);
+        Ok(())
+    }
+
+    fn renounce_role(
+        &mut self,
+        role: B256,
+        confirmation: Address,
+    ) -> Result<(), Self::Error> {
         if msg::sender() != confirmation {
             return Err(Error::BadConfirmation(
                 AccessControlBadConfirmation {},
@@ -280,7 +313,7 @@ impl AccessControl {
     /// * [`RoleAdminChanged`].
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
-        self._roles.setter(role).admin_role.set(new_admin_role);
+        self.roles.setter(role).admin_role.set(new_admin_role);
         evm::log(RoleAdminChanged {
             role,
             previous_admin_role,
@@ -332,7 +365,7 @@ impl AccessControl {
         if self.has_role(role, account) {
             false
         } else {
-            self._roles.setter(role).has_role.insert(account, true);
+            self.roles.setter(role).has_role.insert(account, true);
             evm::log(RoleGranted { role, account, sender: msg::sender() });
             true
         }
@@ -354,7 +387,7 @@ impl AccessControl {
     /// * [`RoleRevoked`].
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
-            self._roles.setter(role).has_role.insert(account, false);
+            self.roles.setter(role).has_role.insert(account, false);
             evm::log(RoleRevoked { role, account, sender: msg::sender() });
             true
         } else {
@@ -365,10 +398,11 @@ impl AccessControl {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address};
-    use stylus_sdk::msg;
+    use alloy_primitives::Address;
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{AccessControl, Error};
+    use super::{AccessControl, Error, IAccessControl};
 
     /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice;
@@ -385,208 +419,291 @@ mod tests {
         OTHER_ROLE = "879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5";
     }
 
-    const ALICE: Address = address!("A11CEacF9aa32246d767FCCD72e02d6bCbcC375d");
+    const DEFAULT_ADMIN_ROLE: [u8; 32] = AccessControl::DEFAULT_ADMIN_ROLE;
 
-    // Since we don't have constructors, we need to call this  to setup
-    // `msg::sender` as a member of `ROLE`.
-    //
-    // NOTE: Once we have support for setting `msg::sender` and constructor,
-    // this function shouldn't be needed.
-    fn _grant_role_to_msg_sender(contract: &mut AccessControl, role: [u8; 32]) {
-        contract
-            ._roles
-            .setter(role.into())
-            .has_role
-            .insert(msg::sender(), true);
-    }
+    unsafe impl TopLevelStorage for AccessControl {}
 
     #[motsu::test]
-    fn default_role_is_default_admin(contract: AccessControl) {
-        let role_admin = contract.get_role_admin(ROLE.into());
-        assert_eq!(role_admin, AccessControl::DEFAULT_ADMIN_ROLE);
-    }
-
-    #[motsu::test]
-    fn default_admin_roles_admin_is_itself(contract: AccessControl) {
-        const DEFAULT_ADMIN_ROLE: [u8; 32] = AccessControl::DEFAULT_ADMIN_ROLE;
-        let role_admin = contract.get_role_admin(DEFAULT_ADMIN_ROLE.into());
+    fn default_role_is_default_admin(
+        contract: Contract<AccessControl>,
+        alice: Address,
+    ) {
+        let role_admin = contract.sender(alice).get_role_admin(ROLE.into());
         assert_eq!(role_admin, DEFAULT_ADMIN_ROLE);
     }
 
     #[motsu::test]
-    fn non_admin_cannot_grant_role_to_others(contract: AccessControl) {
-        let err = contract.grant_role(ROLE.into(), ALICE).unwrap_err();
+    fn default_admin_roles_admin_is_itself(
+        contract: Contract<AccessControl>,
+        alice: Address,
+    ) {
+        let role_admin =
+            contract.sender(alice).get_role_admin(DEFAULT_ADMIN_ROLE.into());
+        assert_eq!(role_admin, DEFAULT_ADMIN_ROLE);
+    }
+
+    #[motsu::test]
+    fn non_admin_cannot_grant_role_to_others(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let err =
+            contract.sender(alice).grant_role(ROLE.into(), bob).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
     #[motsu::test]
-    fn accounts_can_be_granted_roles_multiple_times(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
+    fn accounts_can_be_granted_roles_multiple_times(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(DEFAULT_ADMIN_ROLE.into(), alice);
 
-        contract.grant_role(ROLE.into(), ALICE).unwrap();
-        contract.grant_role(ROLE.into(), ALICE).unwrap();
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        contract.sender(alice).grant_role(ROLE.into(), bob).unwrap();
+        contract.sender(alice).grant_role(ROLE.into(), bob).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(has_role);
     }
 
     #[motsu::test]
-    fn not_granted_roles_can_be_revoked(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
+    fn not_granted_roles_can_be_revoked(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(DEFAULT_ADMIN_ROLE.into(), alice);
 
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(!has_role);
-        contract.revoke_role(ROLE.into(), ALICE).unwrap();
-        let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert!(!has_role);
-    }
-
-    #[motsu::test]
-    fn admin_can_revoke_role(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
-
-        let has_role = contract.has_role(ROLE.into(), ALICE);
-        assert!(has_role);
-        contract.revoke_role(ROLE.into(), ALICE).unwrap();
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(!has_role);
     }
 
     #[motsu::test]
-    fn non_admin_cannot_revoke_role(contract: AccessControl) {
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
+    fn admin_can_revoke_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(DEFAULT_ADMIN_ROLE.into(), alice);
+        contract.sender(alice).grant_role(ROLE.into(), bob).unwrap();
 
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(has_role);
-        let err = contract.revoke_role(ROLE.into(), ALICE).unwrap_err();
+        contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
+        assert!(!has_role);
+    }
+
+    #[motsu::test]
+    fn non_admin_cannot_revoke_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(bob)._grant_role(ROLE.into(), bob);
+
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
+        assert!(has_role);
+        let err =
+            contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
     #[motsu::test]
-    fn roles_can_be_revoked_multiple_times(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, AccessControl::DEFAULT_ADMIN_ROLE);
+    fn roles_can_be_revoked_multiple_times(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(DEFAULT_ADMIN_ROLE.into(), alice);
 
-        contract.revoke_role(ROLE.into(), ALICE).unwrap();
-        contract.revoke_role(ROLE.into(), ALICE).unwrap();
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap();
+        contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(!has_role);
     }
 
     #[motsu::test]
-    fn bearer_can_renounce_role(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, ROLE);
+    fn bearer_can_renounce_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), alice);
 
-        let has_role = contract.has_role(ROLE.into(), msg::sender());
+        let has_role = contract.sender(alice).has_role(ROLE.into(), alice);
         assert!(has_role);
-        contract.renounce_role(ROLE.into(), msg::sender()).unwrap();
-        let has_role = contract.has_role(ROLE.into(), msg::sender());
+        contract.sender(alice).renounce_role(ROLE.into(), alice).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), alice);
         assert!(!has_role);
     }
 
     #[motsu::test]
-    fn only_sender_can_renounce(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, ROLE);
-        let err = contract.renounce_role(ROLE.into(), ALICE).unwrap_err();
+    fn only_sender_can_renounce(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), alice);
+        let err =
+            contract.sender(alice).renounce_role(ROLE.into(), bob).unwrap_err();
         assert!(matches!(err, Error::BadConfirmation(_)));
     }
 
     #[motsu::test]
-    fn roles_can_be_renounced_multiple_times(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, ROLE);
+    fn roles_can_be_renounced_multiple_times(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), alice);
 
-        let sender = msg::sender();
-        contract.renounce_role(ROLE.into(), sender).unwrap();
-        contract.renounce_role(ROLE.into(), sender).unwrap();
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        contract.sender(alice).renounce_role(ROLE.into(), alice).unwrap();
+        contract.sender(alice).renounce_role(ROLE.into(), alice).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(!has_role);
     }
 
     #[motsu::test]
-    fn a_roles_admin_role_can_change(contract: AccessControl) {
-        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
-        _grant_role_to_msg_sender(contract, OTHER_ROLE);
+    fn a_roles_admin_role_can_change(
+        contract: Contract<AccessControl>,
+        alice: Address,
+    ) {
+        contract.sender(alice)._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+        contract.sender(alice)._grant_role(OTHER_ROLE.into(), alice);
 
-        let admin_role = contract.get_role_admin(ROLE.into());
+        let admin_role = contract.sender(alice).get_role_admin(ROLE.into());
         assert_eq!(admin_role, OTHER_ROLE);
     }
 
     #[motsu::test]
-    fn the_new_admin_can_grant_roles(contract: AccessControl) {
-        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
-        _grant_role_to_msg_sender(contract, OTHER_ROLE);
+    fn the_new_admin_can_grant_roles(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+        contract.sender(alice)._grant_role(OTHER_ROLE.into(), alice);
 
-        contract.grant_role(ROLE.into(), ALICE).unwrap();
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        contract.sender(alice).grant_role(ROLE.into(), bob).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(has_role);
     }
 
     #[motsu::test]
-    fn the_new_admin_can_revoke_roles(contract: AccessControl) {
-        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
-        _grant_role_to_msg_sender(contract, OTHER_ROLE);
+    fn the_new_admin_can_revoke_roles(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+        contract.sender(alice)._grant_role(OTHER_ROLE.into(), alice);
+        contract.sender(alice)._grant_role(OTHER_ROLE.into(), bob);
 
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
-        contract.revoke_role(ROLE.into(), ALICE).unwrap();
-        let has_role = contract.has_role(ROLE.into(), ALICE);
+        contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap();
+        let has_role = contract.sender(alice).has_role(ROLE.into(), bob);
         assert!(!has_role);
     }
 
     #[motsu::test]
-    fn previous_admins_no_longer_grant_roles(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, ROLE);
-        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+    fn previous_admins_no_longer_grant_roles(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), alice);
+        contract.sender(alice)._set_role_admin(ROLE.into(), OTHER_ROLE.into());
 
-        let err = contract.grant_role(ROLE.into(), ALICE).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
-    }
-
-    #[motsu::test]
-    fn previous_admins_no_longer_revoke_roles(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, ROLE);
-        contract._set_role_admin(ROLE.into(), OTHER_ROLE.into());
-
-        let err = contract.revoke_role(ROLE.into(), ALICE).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
-    }
-
-    #[motsu::test]
-    fn does_not_revert_if_sender_has_role(contract: AccessControl) {
-        _grant_role_to_msg_sender(contract, ROLE);
-        contract._check_role(ROLE.into(), msg::sender()).unwrap();
-    }
-
-    #[motsu::test]
-    fn reverts_if_sender_doesnt_have_role(contract: AccessControl) {
-        let err = contract._check_role(ROLE.into(), msg::sender()).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
         let err =
-            contract._check_role(OTHER_ROLE.into(), msg::sender()).unwrap_err();
+            contract.sender(alice).grant_role(ROLE.into(), bob).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
     }
 
     #[motsu::test]
-    fn internal_grant_role_true_if_no_role(contract: AccessControl) {
-        let role_granted = contract._grant_role(ROLE.into(), ALICE);
+    fn previous_admins_no_longer_revoke_roles(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), alice);
+        contract.sender(alice)._set_role_admin(ROLE.into(), OTHER_ROLE.into());
+
+        let err =
+            contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[motsu::test]
+    fn does_not_revert_if_sender_has_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), alice);
+
+        contract.sender(alice)._check_role(ROLE.into(), alice).unwrap();
+    }
+
+    #[motsu::test]
+    fn reverts_if_sender_doesnt_have_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+    ) {
+        let err =
+            contract.sender(alice)._check_role(ROLE.into(), alice).unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        let err = contract
+            .sender(alice)
+            ._check_role(OTHER_ROLE.into(), alice)
+            .unwrap_err();
+        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+    }
+
+    #[motsu::test]
+    fn internal_grant_role_true_if_no_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let role_granted = contract.sender(alice)._grant_role(ROLE.into(), bob);
         assert!(role_granted);
     }
 
     #[motsu::test]
-    fn internal_grant_role_false_if_role(contract: AccessControl) {
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
-        let role_granted = contract._grant_role(ROLE.into(), ALICE);
+    fn internal_grant_role_false_if_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), bob);
+
+        let role_granted = contract.sender(alice)._grant_role(ROLE.into(), bob);
         assert!(!role_granted);
     }
 
     #[motsu::test]
-    fn internal_revoke_role_true_if_role(contract: AccessControl) {
-        contract._roles.setter(ROLE.into()).has_role.insert(ALICE, true);
-        let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
+    fn internal_revoke_role_true_if_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract.sender(alice)._grant_role(ROLE.into(), bob);
+
+        let role_revoked =
+            contract.sender(alice)._revoke_role(ROLE.into(), bob);
         assert!(role_revoked);
     }
 
     #[motsu::test]
-    fn internal_revoke_role_false_if_no_role(contract: AccessControl) {
-        let role_revoked = contract._revoke_role(ROLE.into(), ALICE);
+    fn internal_revoke_role_false_if_no_role(
+        contract: Contract<AccessControl>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let role_revoked =
+            contract.sender(alice)._revoke_role(ROLE.into(), bob);
         assert!(!role_revoked);
     }
 }

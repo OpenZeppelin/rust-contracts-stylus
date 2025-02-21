@@ -9,11 +9,9 @@ use stylus_sdk::{
 #[storage]
 pub struct Metadata {
     /// Token name.
-    #[allow(clippy::used_underscore_binding)]
-    pub _name: StorageString,
+    pub(crate) name: StorageString,
     /// Token symbol.
-    #[allow(clippy::used_underscore_binding)]
-    pub _symbol: StorageString,
+    pub(crate) symbol: StorageString,
 }
 
 #[public]
@@ -31,7 +29,7 @@ impl Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     pub fn name(&self) -> String {
-        self._name.get_string()
+        self.name.get_string()
     }
 
     /// Returns the symbol of the token, usually a shorter version of the name.
@@ -40,6 +38,6 @@ impl Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     pub fn symbol(&self) -> String {
-        self._symbol.get_string()
+        self.symbol.get_string()
     }
 }

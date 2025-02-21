@@ -318,7 +318,7 @@ where
 ///
 /// TODO: Once <https://github.com/rust-lang/rust/issues/103765> is resolved,
 /// we should derive `core::error::Error`.
-#[derive(core::fmt::Debug)]
+#[derive(core::fmt::Debug, PartialEq)]
 pub enum MultiProofError {
     /// The proof length does not match the flags.
     InvalidProofLength,
@@ -356,6 +356,7 @@ mod tests {
     //! NOTE: The values used as input for these tests were all generated using
     //! <https://github.com/OpenZeppelin/merkle-tree>.
     use hex_literal::hex;
+    use proptest::{prelude::*, prop_compose};
     use rand::{thread_rng, RngCore};
 
     use super::{Bytes32, KeccakBuilder, Verifier};
@@ -380,6 +381,137 @@ mod tests {
               $(hex!($s),)*
             ]
         };
+    }
+
+    prop_compose! {
+        fn valid_merkle_proof(min_proof_len: usize)(
+            leaf: [u8; 32],
+            proof in prop::collection::vec(any::<[u8; 32]>(), min_proof_len..ProptestConfig::default().max_default_size_range),
+        ) -> (Vec<[u8; 32]>, [u8; 32], [u8; 32]) {
+            let mut current = leaf;
+            for &hash in &proof {
+                current = commutative_hash_pair(
+                    &current,
+                    &hash,
+                    KeccakBuilder.build_hasher(),
+                );
+            }
+            let root = current;
+            (proof, root, leaf)
+        }
+    }
+
+    #[test]
+    fn proof_tampering_invalidates() {
+        proptest!(
+            |((proof, root, leaf) in valid_merkle_proof(0),
+             tamper_idx in 0..32usize)| {
+                if let Some(proof_element) = proof.first() {
+                    let mut tampered_proof = proof.clone();
+                    let mut tampered_element = *proof_element;
+                    tampered_element[tamper_idx] =
+                        tampered_element[tamper_idx].wrapping_add(1);
+                    tampered_proof[0] = tampered_element;
+
+                    prop_assert!(!Verifier::verify(&tampered_proof, root, leaf));
+                }
+            }
+        )
+    }
+
+    #[test]
+    fn proof_length_affects_verification() {
+        proptest!(
+            |((proof, root, leaf) in valid_merkle_proof(0),
+             extra_hash: [u8; 32])| {
+                let longer_proof = &[proof.as_slice(), &[extra_hash]].concat();
+                prop_assert!(!Verifier::verify(longer_proof, root, leaf));
+
+                if !proof.is_empty() {
+                    let shorter_proof = &proof[1..];
+                    prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
+                    let shorter_proof = &proof[..proof.len() - 1];
+                    prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
+                }
+            }
+        )
+    }
+
+    #[test]
+    fn proof_consistency() {
+        proptest!(
+            |(proof: Vec<[u8; 32]>,
+             proof_flags: Vec<bool>,
+             root: [u8; 32],
+             // for regular proof
+             leaf: [u8; 32],
+             // for multi-proof
+             leaves: Vec<[u8; 32]>,)| {
+                let result1 = Verifier::verify(&proof, root, leaf);
+                let result2 = Verifier::verify(&proof, root, leaf);
+                prop_assert_eq!(result1, result2);
+
+                // ensure proof_flags length is always <= proof.len()
+                let proof_flags =
+                proof_flags.into_iter().take(proof.len()).collect::<Vec<_>>();
+
+                let result1 = Verifier::verify_multi_proof(
+                    &proof,
+                    &proof_flags,
+                    root,
+                    &leaves,
+                );
+                let result2 = Verifier::verify_multi_proof(
+                    &proof,
+                    &proof_flags,
+                    root,
+                    &leaves,
+                );
+                prop_assert_eq!(result1, result2);
+            }
+        )
+    }
+
+    #[test]
+    fn single_leaf_equals_regular_verify() {
+        proptest!(|((proof, root, leaf) in valid_merkle_proof(0))| {
+            let proof_flags = vec![false; proof.len()];
+            let multi_result = Verifier::verify_multi_proof(
+                &proof,
+                &proof_flags,
+                root,
+                &[leaf],
+            );
+            let regular_result = Verifier::verify(&proof, root, leaf);
+
+            let multi_result = multi_result.unwrap();
+            prop_assert_eq!(multi_result, regular_result);
+        })
+    }
+
+    #[test]
+    fn zero_length_proof_with_matching_leaf_and_root() {
+        let root = [0u8; 32];
+        let leaf = root.clone();
+        assert!(Verifier::verify(&[], root, leaf));
+    }
+
+    #[test]
+    fn multi_proof_empty_flags() {
+        let root = [0u8; 32];
+        let leaves = vec![[1u8; 32]];
+        let proof = vec![[2u8; 32]];
+
+        let result = Verifier::verify_multi_proof(&proof, &[], root, &leaves);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn multi_proof_minimum_valid_case() {
+        let root = [0u8; 32];
+        let leaves = vec![[0u8; 32]];
+        let result = Verifier::verify_multi_proof(&[], &[], root, &leaves);
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -585,29 +717,6 @@ mod tests {
         let verification =
             Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
         assert!(verification.is_err());
-    }
-
-    #[test]
-    fn verifies_single_leaf_multi_proof() {
-        // ```js
-        // const merkleTree = StandardMerkleTree.of(toElements('a'), ['string']);
-        //
-        // const root = merkleTree.root;
-        // const { proof, proofFlags, leaves } = merkleTree.getMultiProof(toElements('a'));
-        // const hashes = leaves.map(e => merkleTree.leafHash(e));
-        // ```
-        bytes!(root = "9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c");
-        let proof = [];
-        let proof_flags = [];
-        let leaves = [root];
-
-        let verification = Verifier::<KeccakBuilder>::verify_multi_proof(
-            &proof,
-            &proof_flags,
-            root,
-            &leaves,
-        );
-        assert!(verification.unwrap());
     }
 
     #[test]
