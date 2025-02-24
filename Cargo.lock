@@ -3133,7 +3133,7 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.4.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build%2Fstylus-v0.8#9ab12e66e5a9448a95c31b5895d77d78381ac8d7"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build%2Fstylus-v0.8#05bf6493453a775ac9f7eed9e6d89da89e86874a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3142,14 +3142,13 @@ dependencies = [
  "motsu-proc",
  "once_cell",
  "stylus-sdk",
- "stylus-test",
  "tiny-keccak",
 ]
 
 [[package]]
 name = "motsu-proc"
 version = "0.4.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build%2Fstylus-v0.8#9ab12e66e5a9448a95c31b5895d77d78381ac8d7"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build%2Fstylus-v0.8#05bf6493453a775ac9f7eed9e6d89da89e86874a"
 dependencies = [
  "proc-macro2",
  "quote",
