@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Replace `VestingWallet::receive_ether` with dedicated `receive` function. #529
 - Extract `IAccessControl` trait from `AccessControl` contract. #527
 
 ### Fixed
