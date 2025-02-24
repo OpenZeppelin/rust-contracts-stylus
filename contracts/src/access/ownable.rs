@@ -153,7 +153,7 @@ impl IOwnable for Ownable {
 }
 
 impl Ownable {
-    /// Checks if the [`msg::sender`] is set as the owner.
+    /// Checks if the message sender is set as the owner.
     ///
     /// # Arguments
     ///

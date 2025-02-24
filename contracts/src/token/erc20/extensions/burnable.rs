@@ -117,7 +117,7 @@ mod tests {
 
     #[motsu::test]
     fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
-        // Alice approves `msg::sender`.
+        // Alice approves Bob.
         let one = uint!(1_U256);
         contract.sender(alice).approve(bob, one).unwrap();
 
@@ -140,7 +140,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        // Alice approves `msg::sender`.
+        // Alice approves Bob.
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 

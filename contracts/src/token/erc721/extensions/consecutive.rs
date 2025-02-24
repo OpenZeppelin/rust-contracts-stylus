@@ -573,7 +573,7 @@ impl Erc721Consecutive {
     /// Transfers `token_id` from `from` to `to`.
     ///
     /// As opposed to [`Self::transfer_from`], this imposes no restrictions on
-    /// `msg::sender`.
+    /// message sender.
     ///
     /// # Arguments
     ///
