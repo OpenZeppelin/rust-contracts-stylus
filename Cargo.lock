@@ -6,7 +6,7 @@ version = 4
 name = "access-control-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -88,41 +88,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "02b0561294ccedc6181e5528b850b4579e3fbde696507baa00109bfd9054c5bb"
 dependencies = [
  "alloy-consensus 0.7.0",
- "alloy-contract 0.7.0",
+ "alloy-contract",
  "alloy-core",
  "alloy-eips 0.7.0",
- "alloy-genesis 0.7.0",
+ "alloy-genesis",
  "alloy-network 0.7.0",
  "alloy-provider 0.7.0",
  "alloy-rpc-client 0.7.0",
- "alloy-rpc-types 0.7.0",
+ "alloy-rpc-types",
  "alloy-serde 0.7.0",
  "alloy-signer 0.7.0",
- "alloy-signer-local 0.7.0",
+ "alloy-signer-local",
  "alloy-transport 0.7.0",
  "alloy-transport-http 0.7.0",
-]
-
-[[package]]
-name = "alloy"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d2cc5aeb8dfa1e451a49fac87bc4b86c5de40ebea153ed88e83eb92b8151e74"
-dependencies = [
- "alloy-consensus 0.11.1",
- "alloy-contract 0.11.1",
- "alloy-core",
- "alloy-eips 0.11.1",
- "alloy-genesis 0.11.1",
- "alloy-network 0.11.1",
- "alloy-provider 0.11.1",
- "alloy-rpc-client 0.11.1",
- "alloy-rpc-types 0.11.1",
- "alloy-serde 0.11.1",
- "alloy-signer 0.11.1",
- "alloy-signer-local 0.11.1",
- "alloy-transport 0.11.1",
- "alloy-transport-http 0.11.1",
 ]
 
 [[package]]
@@ -215,26 +193,6 @@ dependencies = [
  "futures",
  "futures-util",
  "thiserror 1.0.61",
-]
-
-[[package]]
-name = "alloy-contract"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee6180fb232becdea70fad57c63b6967f01f74ab9595671b870f504116dd29de"
-dependencies = [
- "alloy-dyn-abi",
- "alloy-json-abi",
- "alloy-network 0.11.1",
- "alloy-network-primitives 0.11.1",
- "alloy-primitives",
- "alloy-provider 0.11.1",
- "alloy-rpc-types-eth 0.11.1",
- "alloy-sol-types",
- "alloy-transport 0.11.1",
- "futures",
- "futures-util",
- "thiserror 2.0.11",
 ]
 
 [[package]]
@@ -360,19 +318,6 @@ checksum = "4841e8dd4e0f53d76b501fd4c6bc21d95d688bc8ebf0ea359fc6c7ab65b48742"
 dependencies = [
  "alloy-primitives",
  "alloy-serde 0.7.0",
- "serde",
-]
-
-[[package]]
-name = "alloy-genesis"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cded3a2d4bd7173f696458c5d4c98c18a628dfcc9f194385e80a486e412e2e0"
-dependencies = [
- "alloy-eips 0.11.1",
- "alloy-primitives",
- "alloy-serde 0.11.1",
- "alloy-trie",
  "serde",
 ]
 
@@ -678,18 +623,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "alloy-rpc-types"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f18e68a3882f372e045ddc89eb455469347767d17878ca492cfbac81e71a111"
-dependencies = [
- "alloy-primitives",
- "alloy-rpc-types-eth 0.11.1",
- "alloy-serde 0.11.1",
- "serde",
-]
-
-[[package]]
 name = "alloy-rpc-types-any"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -818,22 +751,6 @@ dependencies = [
  "k256",
  "rand 0.8.5",
  "thiserror 1.0.61",
-]
-
-[[package]]
-name = "alloy-signer-local"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe8f78cd6b7501c7e813a1eb4a087b72d23af51f5bb66d4e948dc840bdd207d8"
-dependencies = [
- "alloy-consensus 0.11.1",
- "alloy-network 0.11.1",
- "alloy-primitives",
- "alloy-signer 0.11.1",
- "async-trait",
- "k256",
- "rand 0.8.5",
- "thiserror 2.0.11",
 ]
 
 [[package]]
@@ -1278,7 +1195,7 @@ dependencies = [
 name = "basic-example-script"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "basic-example",
  "koba",
@@ -1289,7 +1206,7 @@ dependencies = [
 name = "benches"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -1907,7 +1824,7 @@ checksum = "feeef44e73baff3a26d371801df019877a9866a8c493d315ab00177843314f35"
 name = "e2e"
 version = "0.2.0"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "e2e-proc",
  "eyre",
  "koba",
@@ -1945,7 +1862,7 @@ dependencies = [
 name = "ecdsa-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2062,7 +1979,7 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 name = "erc1155-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2075,7 +1992,7 @@ dependencies = [
 name = "erc1155-metadata-uri-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2088,7 +2005,7 @@ dependencies = [
 name = "erc1155-supply-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2101,7 +2018,7 @@ dependencies = [
 name = "erc20-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2114,7 +2031,7 @@ dependencies = [
 name = "erc20-flash-mint-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2127,7 +2044,7 @@ dependencies = [
 name = "erc20-permit-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2141,7 +2058,7 @@ dependencies = [
 name = "erc4626-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2154,7 +2071,7 @@ dependencies = [
 name = "erc721-consecutive-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "alloy-sol-types",
  "e2e",
@@ -2169,7 +2086,7 @@ dependencies = [
 name = "erc721-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2183,7 +2100,7 @@ dependencies = [
 name = "erc721-metadata-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -2953,7 +2870,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "648bf93c7aff36defcf825c5a42d32503eb617c85f057a989f34ebfebed99f45"
 dependencies = [
- "alloy 0.7.3",
+ "alloy",
  "brotli2",
  "bytesize",
  "clap",
@@ -3237,9 +3154,7 @@ version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8983bb634df7248924ee0c4c3a749609b5abcb082c28fffe3254b3eb3602b307"
 dependencies = [
- "alloy-rlp",
  "const-hex",
- "proptest",
  "serde",
  "smallvec",
 ]
@@ -3345,7 +3260,7 @@ dependencies = [
 name = "ownable-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -3358,7 +3273,7 @@ dependencies = [
 name = "ownable-two-step-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -3506,7 +3421,7 @@ checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
 name = "poseidon-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -4046,7 +3961,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 name = "safe-erc20-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
@@ -4947,7 +4862,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "vesting-wallet-example"
 version = "0.2.0-alpha.3"
 dependencies = [
- "alloy 0.11.1",
+ "alloy",
  "alloy-primitives",
  "e2e",
  "eyre",
