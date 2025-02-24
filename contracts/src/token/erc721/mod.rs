@@ -6,7 +6,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
-    function_selector, msg,
+    function_selector,
     prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
