@@ -12,6 +12,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2612
 use alloc::{vec, vec::Vec};
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
@@ -78,6 +79,20 @@ pub struct Erc20Permit<T: IEip712 + StorageType> {
     pub(crate) nonces: Nonces,
     /// Contract implementing [`IEip712`] trait.
     pub(crate) eip712: T,
+}
+
+impl<T: IEip712 + StorageType> Deref for Erc20Permit<T> {
+    type Target = Erc20;
+
+    fn deref(&self) -> &Self::Target {
+        &self.erc20
+    }
+}
+
+impl<T: IEip712 + StorageType> DerefMut for Erc20Permit<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.erc20
+    }
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
