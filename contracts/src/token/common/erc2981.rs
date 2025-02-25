@@ -323,7 +323,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::alloy_primitives::{uint, Address, U256};
 
-    use super::{Erc2981, Error, U96};
+    use super::*;
     use crate::{
         token::common::erc2981::IErc2981, utils::introspection::erc165::IErc165,
     };
@@ -331,6 +331,7 @@ mod tests {
     const FEE_NUMERATOR: U96 = uint!(9000_U96);
     const TOKEN_ID: U256 = uint!(1_U256);
     const SALE_PRICE: U256 = uint!(1000_U256);
+    const DEFAULT_FEE_DENOMINATOR: U96 = uint!(10000_U96);
 
     /// DEFAULT ROYALTY TESTS
 
@@ -339,6 +340,10 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         let new_fraction = uint!(8000_U96);
 
         contract
@@ -362,6 +367,10 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         let token_id_2 = uint!(2_U256);
 
         contract
@@ -384,6 +393,10 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         contract
             .sender(bob)
             ._set_default_royalty(bob, FEE_NUMERATOR)
@@ -403,21 +416,35 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         let err = contract
             .sender(bob)
             ._set_default_royalty(Address::ZERO, FEE_NUMERATOR)
-            .unwrap_err();
+            .expect_err("should return `Error::InvalidDefaultRoyaltyReceiver`");
 
-        assert!(matches!(err, Error::InvalidDefaultRoyaltyReceiver(_)));
+        assert!(
+            matches!(err, Error::InvalidDefaultRoyaltyReceiver(ERC2981InvalidDefaultRoyaltyReceiver{
+            receiver
+        }) if receiver.is_zero())
+        );
 
         let new_fee_numerator = uint!(11000_U96);
 
         let err = contract
             .sender(bob)
             ._set_default_royalty(bob, new_fee_numerator)
-            .unwrap_err();
+            .expect_err("should return `Error::InvalidDefaultRoyalty`");
 
-        assert!(matches!(err, Error::InvalidDefaultRoyalty(_)));
+        assert!(
+            matches!(err, Error::InvalidDefaultRoyalty(ERC2981InvalidDefaultRoyalty{
+            numerator,
+            denominator
+        }) if numerator == U256::from(new_fee_numerator) &&
+            denominator == U256::from(DEFAULT_FEE_DENOMINATOR))
+        );
     }
 
     // TOKEN ROYALTY TESTS
@@ -427,6 +454,10 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         let new_fraction = uint!(8000_U96);
 
         contract
@@ -451,6 +482,10 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         let token_id_2 = uint!(2_U256);
         let new_fraction = uint!(8000_U96);
 
@@ -480,6 +515,10 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         let new_fraction = uint!(8000_U96);
 
         contract
@@ -510,21 +549,37 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
+        contract.init(bob, |contract| {
+            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
+        });
+
         let err = contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, Address::ZERO, FEE_NUMERATOR)
-            .unwrap_err();
+            .expect_err("should return `Error::InvalidTokenRoyaltyReceiver`");
 
-        assert!(matches!(err, Error::InvalidTokenRoyaltyReceiver(_)));
+        assert!(
+            matches!(err, Error::InvalidTokenRoyaltyReceiver(ERC2981InvalidTokenRoyaltyReceiver{
+            token_id,
+            receiver
+        }) if token_id == TOKEN_ID && receiver.is_zero())
+        );
 
         let new_fee_numerator = uint!(11000_U96);
 
         let err = contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, new_fee_numerator)
-            .unwrap_err();
+            .expect_err("should return `Error::InvalidTokenRoyalty`");
 
-        assert!(matches!(err, Error::InvalidTokenRoyalty(_)));
+        assert!(
+            matches!(err, Error::InvalidTokenRoyalty(ERC2981InvalidTokenRoyalty{
+            token_id,
+            numerator,
+            denominator
+        }) if token_id == TOKEN_ID && numerator == U256::from(new_fee_numerator) &&
+            denominator == U256::from(DEFAULT_FEE_DENOMINATOR))
+        );
     }
 
     #[motsu::test]
