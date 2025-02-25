@@ -344,7 +344,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, new_fraction)
-            .expect("Error in updating default royalty");
+            .expect("should update default royalty");
 
         let (received_address, received_royalty_fraction) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -367,7 +367,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, FEE_NUMERATOR)
-            .expect("Error in updating default royalty");
+            .expect("should update default royalty");
 
         let (received_address, received_royalty_fraction) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -387,7 +387,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, FEE_NUMERATOR)
-            .expect("Error in setting default royalty");
+            .expect("should set default royalty");
 
         contract.sender(bob)._delete_default_royalty();
 
@@ -432,7 +432,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, new_fraction)
-            .expect("Error in updating token royalty");
+            .expect("should update token royalty");
 
         let (received_address, received_royalty_fraction) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -457,12 +457,12 @@ mod tests {
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, FEE_NUMERATOR)
-            .expect("Error in updating token royalty");
+            .expect("should update token royalty");
 
         contract
             .sender(bob)
             ._set_token_royalty(token_id_2, dave, new_fraction)
-            .expect("Error in updating token royalty");
+            .expect("should update token royalty");
 
         let (received_address, received_royalty_fraction) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -485,12 +485,12 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, FEE_NUMERATOR)
-            .expect("Error in setting default royalty");
+            .expect("should set default royalty");
 
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, dave, new_fraction)
-            .expect("Error in setting token royalty");
+            .expect("should set token royalty");
 
         contract.sender(bob)._reset_token_royalty(TOKEN_ID);
 
