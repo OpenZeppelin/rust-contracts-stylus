@@ -45,7 +45,7 @@ impl Erc20PermitExample {
         Ok(())
     }
 
-    #[warn(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments)]
     fn permit(
         &mut self,
         owner: Address,
