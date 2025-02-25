@@ -391,9 +391,12 @@ mod tests {
     use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{Erc1155Supply, IErc1155Supply};
-    use crate::token::erc1155::{
-        tests::{random_token_ids, random_values},
-        ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+    use crate::{
+        token::erc1155::{
+            tests::{random_token_ids, random_values},
+            ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+        },
+        utils::introspection::erc165::IErc165,
     };
 
     unsafe impl TopLevelStorage for Erc1155Supply {}
@@ -617,5 +620,23 @@ mod tests {
         );
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
         assert!(!contract.sender(alice).exists(token_ids[0]));
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc1155Supply::supports_interface(
+            <Erc1155Supply as IErc1155>::INTERFACE_ID.into()
+        ));
+        assert!(Erc1155Supply::supports_interface(
+            <Erc1155Supply as IErc165>::INTERFACE_ID.into()
+        ));
+        // Solidity version doesn't override base ERC165 implementation and as
+        // there's no `IErc1155Supply` interface, so calling
+        // `Erc1155Supply::supports_interface` should behave the same as in the
+        // Solidity version.
+        // Current Solidity version: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/2ed895699249d7a528780d98512c566c0bc88e29/contracts/token/ERC1155/extensions/ERC1155Supply.sol
+        assert!(!Erc1155Supply::supports_interface(
+            <Erc1155Supply as IErc1155Supply>::INTERFACE_ID.into()
+        ));
     }
 }
