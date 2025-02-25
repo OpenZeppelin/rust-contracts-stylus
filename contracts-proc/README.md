@@ -41,7 +41,7 @@ fn safe_transfer_from(
     from: Address,
     to: Address,
     token_id: U256,
-) -> Result<(), Self::Error>;
+) -> Result<(), <Self as IErc721>::Error>;
 
 // Solidity allows function overloading, but Rust does not, so we map
 // the Rust function name to the appropriate Solidity function name.
@@ -52,7 +52,7 @@ fn safe_transfer_from_with_data(
     to: Address,
     token_id: U256,
     data: Bytes,
-) -> Result<(), Vec<u8>>;
+) -> Result<(), <Self as IErc721>::Error>;
 ```
 
 This ensures compatibility with Solidity's naming conventions.

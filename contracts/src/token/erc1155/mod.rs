@@ -5,7 +5,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, Call, MethodError},
+    call::{self, Call},
     evm, function_selector, msg,
     prelude::{public, storage, AddressVM, SolidityError},
     storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
@@ -187,12 +187,6 @@ pub enum Error {
     InvalidArrayLength(ERC1155InvalidArrayLength),
 }
 
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
 /// State of an [`Erc1155`] token.
 #[storage]
 pub struct Erc1155 {
@@ -239,7 +233,7 @@ pub trait IErc1155 {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, Self::Error>;
+    ) -> Result<Vec<U256>, <Self as IErc1155>::Error>;
 
     /// Grants or revokes permission to `operator`
     /// to transfer the caller's tokens, according to `approved`.
@@ -263,7 +257,7 @@ pub trait IErc1155 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc1155>::Error>;
 
     /// Returns true if `operator` is approved to transfer `account`'s
     /// tokens.
@@ -311,7 +305,7 @@ pub trait IErc1155 {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc1155>::Error>;
 
     /// Batched version of [`IErc1155::safe_transfer_from`].
     ///
@@ -351,7 +345,7 @@ pub trait IErc1155 {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc1155>::Error>;
 }
 
 #[public]
@@ -366,7 +360,7 @@ impl IErc1155 for Erc1155 {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, Self::Error> {
+    ) -> Result<Vec<U256>, <Self as IErc1155>::Error> {
         Self::require_equal_arrays_length(&ids, &accounts)?;
 
         let balances: Vec<U256> = accounts
@@ -382,7 +376,7 @@ impl IErc1155 for Erc1155 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IErc1155>::Error> {
         self._set_approval_for_all(msg::sender(), operator, approved)
     }
 
@@ -397,7 +391,7 @@ impl IErc1155 for Erc1155 {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IErc1155>::Error> {
         self.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, vec![id], vec![value], &data)
     }
@@ -409,7 +403,7 @@ impl IErc1155 for Erc1155 {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IErc1155>::Error> {
         self.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
     }

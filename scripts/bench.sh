@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source scripts/utils.sh
+
 MYDIR=$(realpath "$(dirname "$0")")
 cd "$MYDIR"
 cd ..
@@ -17,14 +19,7 @@ opt_wasm () {
   wasm-opt -O3 -o ./target/wasm32-unknown-unknown/release/"$CONTRACT_OPT_BIN_NAME" ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
 }
 
-# Retrieve all alphanumeric contract's crate names in `./examples` directory.
-get_example_crate_names () {
-  # shellcheck disable=SC2038
-  # NOTE: optimistically relying on the 'name = ' string at Cargo.toml file
-  find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
-}
-
-cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+build_contract
 
 # Optimize contract's wasm for gas usage.
 for CRATE_NAME in $(get_example_crate_names)
