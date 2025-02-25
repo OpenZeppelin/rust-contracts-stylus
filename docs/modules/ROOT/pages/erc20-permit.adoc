@@ -1,23 +1,28 @@
 = ERC-20 Permit
 Implementation of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in https://eips.ethereum.org/EIPS/eip-2612[`EIP-2612`].
 
-Adds the permit method, which can be used to change an account’s ERC20 allowance (see https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.allowance[`IErc20::allowance`]) by presenting a message signed by the account. By not relying on https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.approve[`IErc20::approve`], the token holder account doesn’t need to send a transaction, and thus is not required to hold Ether at all.
+Adds the permit method, which can be used to change an account’s ERC20 allowance (see https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.allowance[`IErc20::allowance`]) by presenting a message signed by the account. By not relying on https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/trait.IErc20.html#tymethod.approve[`IErc20::approve`], the token holder account doesn’t need to send a transaction, and thus is not required to hold Ether at all.
 
 
 [[usage]]
 == Usage
 
-In order to have https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/extensions/permit/index.html[`ERC-20 Permit`] token, you need to use only this contract without xref:erc20.adoc[ERC-20] as follows:
+In order to have https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/extensions/permit/index.html[`ERC-20 Permit`] token, you need to use only this contract without xref:erc20.adoc[ERC-20] as follows:
 
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc20::extensions::Erc20Permit, utils::cryptography::eip712::IEip712,
+    token::erc20::{extensions::Erc20Permit, Erc20},
+    utils::{cryptography::eip712::IEip712, nonces::Nonces},
 };
 
 #[entrypoint]
 #[storage]
 struct Erc20PermitExample {
+    #[borrow]
+    pub erc20: Erc20,
+    #[borrow]
+    pub nonces: Nonces,
     #[borrow]
     pub erc20_permit: Erc20Permit<Eip712>,
 }
@@ -32,8 +37,36 @@ impl IEip712 for Eip712 {
 }
 
 #[public]
-#[inherit(Erc20Permit<Eip712>)]
+#[inherit(Erc20, Nonces, Erc20Permit<Eip712>)]
 impl Erc20PermitExample {
-    // ...
+    // Add token minting feature.
+    fn mint(&mut self, account: Address, value: U256) -> Result<(), Vec<u8>> {
+        self.erc20._mint(account, value)?;
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn permit(
+        &mut self,
+        owner: Address,
+        spender: Address,
+        value: U256,
+        deadline: U256,
+        v: u8,
+        r: B256,
+        s: B256,
+    ) -> Result<(), Vec<u8>> {
+        Ok(self.erc20_permit.permit(
+            owner,
+            spender,
+            value,
+            deadline,
+            v,
+            r,
+            s,
+            &mut self.erc20,
+            &mut self.nonces,
+        )?)
+    }
 }
 ----
