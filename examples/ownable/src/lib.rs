@@ -22,6 +22,14 @@ struct OwnableExample {
 #[public]
 #[inherit(Erc20, Ownable)]
 impl OwnableExample {
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        initial_owner: Address,
+    ) -> Result<(), Vec<u8>> {
+        Ok(self.ownable.constructor(initial_owner)?)
+    }
+
     pub fn transfer(
         &mut self,
         to: Address,
