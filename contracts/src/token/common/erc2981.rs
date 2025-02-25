@@ -175,9 +175,13 @@ impl IErc2981 for Erc2981 {
 
         let royalty_amount = sale_price
             .checked_mul(U256::from(royalty_fraction.get()))
-            .expect("Multiplication overflowed.")
+            .expect(
+                "multiplication overflowed in `royalty_amount` calculation.",
+            )
             .checked_div(U256::from(self._fee_denominator()))
-            .expect("Cannot divide by zero");
+            .expect(
+                "division by `U256::ZERO` in `royalty_amount` calculation.",
+            );
 
         (royalty_receiver.get(), royalty_amount)
     }
@@ -192,8 +196,9 @@ impl IErc165 for Erc2981 {
 
 impl Erc2981 {
     /// Fetches the denominator with which to interpret the fee set
-    /// in [`Self::_set_token_royalty`] and [`Self::_set_default_royalty`] as a fraction of the sale
-    /// price.
+    /// in [`Self::_set_token_royalty`] and [`Self::_set_default_royalty`] as a
+    /// fraction of the sale price.
+    ///
     /// Defaults to 10000 so fees are expressed in basis points, but
     /// may be customized in the constructor.
     ///
@@ -216,9 +221,8 @@ impl Erc2981 {
     /// # Errors
     ///
     /// * [`Error::InvalidDefaultRoyalty`] - If `fee_numerator` > denominator.
-    ///
-    /// * [`Error::InvalidDefaultRoyaltyReceiver`] - If `receiver` is the zero
-    ///   address.
+    /// * [`Error::InvalidDefaultRoyaltyReceiver`] - If `receiver` is
+    ///   `Address::ZERO`.
     pub fn _set_default_royalty(
         &mut self,
         receiver: Address,
@@ -237,9 +241,7 @@ impl Erc2981 {
 
         if receiver.is_zero() {
             return Err(Error::InvalidDefaultRoyaltyReceiver(
-                ERC2981InvalidDefaultRoyaltyReceiver {
-                    receiver: Address::ZERO,
-                },
+                ERC2981InvalidDefaultRoyaltyReceiver { receiver },
             ));
         }
 
@@ -258,7 +260,7 @@ impl Erc2981 {
         self.default_royalty_info.erase();
     }
 
-    /// Sets the royalty information for a specific token id,
+    /// Sets the royalty information for a specific `token_id`,
     /// overriding the global default.
     ///
     /// # Arguments
@@ -272,9 +274,8 @@ impl Erc2981 {
     ///
     /// * [`Error::InvalidTokenRoyalty`] - If `fee_numerator` >
     ///   [`Self::_fee_denominator()`].
-    ///
-    /// * [`Error::InvalidTokenRoyaltyReceiver`] - If `receiver` is the zero
-    ///   address.
+    /// * [`Error::InvalidTokenRoyaltyReceiver`] - If `receiver` is
+    ///   `Address::ZERO`.
     pub fn _set_token_royalty(
         &mut self,
         token_id: U256,
@@ -294,18 +295,13 @@ impl Erc2981 {
 
         if receiver.is_zero() {
             return Err(Error::InvalidTokenRoyaltyReceiver(
-                ERC2981InvalidTokenRoyaltyReceiver {
-                    token_id,
-                    receiver: Address::ZERO,
-                },
+                ERC2981InvalidTokenRoyaltyReceiver { token_id, receiver },
             ));
         }
 
-        self.token_royalty_info.setter(token_id).receiver.set(receiver);
-        self.token_royalty_info
-            .setter(token_id)
-            .royalty_fraction
-            .set(fee_numerator);
+        let mut token_royalty_info = self.token_royalty_info.setter(token_id);
+        token_royalty_info.receiver.set(receiver);
+        token_royalty_info.royalty_fraction.set(fee_numerator);
 
         Ok(())
     }
@@ -327,17 +323,11 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::alloy_primitives::{uint, Address, U256};
 
-    use super::{Erc2981, Error};
+    use super::{Erc2981, Error, U96};
     use crate::{
-        token::common::erc2981::IErc2981,
-        utils::{
-            introspection::erc165::IErc165,
-            structs::checkpoints::{Size, S160},
-        },
+        token::common::erc2981::IErc2981, utils::introspection::erc165::IErc165,
     };
 
-    type U96 = <S160 as Size>::Key;
-    const ZERO_ADDRESS: Address = Address::ZERO;
     const FEE_NUMERATOR: U96 = uint!(9000_U96);
     const TOKEN_ID: U256 = uint!(1_U256);
     const SALE_PRICE: U256 = uint!(1000_U256);
@@ -404,7 +394,7 @@ mod tests {
         let (received_address, received_royalty_fraction) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
 
-        assert_eq!(ZERO_ADDRESS, received_address);
+        assert!(received_address.is_zero());
         assert_eq!(uint!(0_U256), received_royalty_fraction);
     }
 

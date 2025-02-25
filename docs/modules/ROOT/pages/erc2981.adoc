@@ -1,6 +1,6 @@
 = ERC-2981
 
-ERC-2981 offers a way to keep track of NFT royalties across different platforms. 
+ERC-2981 offers a way to keep track of NFT royalties across different platforms.
 
 Royalty is the amount of money given to the owner of a particular asset (NFT in this case). Full definition: https://en.wikipedia.org/wiki/Royalty_payment [royalty].
 
