@@ -13,8 +13,9 @@ You need to create the specified contract as follows:
 
 [source,rust]
 ----
-use openzeppelin_stylus::token::erc1155::extensions::{
-    Erc1155Supply, IErc1155Supply,
+use openzeppelin_stylus::{
+    token::erc1155::extensions::{Erc1155Supply, IErc1155Supply},
+    utils::introspection::erc165::IErc165,
 };
 
 #[entrypoint]
@@ -38,6 +39,10 @@ impl Erc1155Example {
 
     fn exists(&self, id: U256) -> bool {
         self.erc1155_supply.exists(id)
+    }
+
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc1155Supply::supports_interface(interface_id)
     }
 
     // ...
