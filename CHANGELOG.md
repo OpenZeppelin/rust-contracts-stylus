@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Refactor `Erc20Permit` extension to be a composition of `Erc20` and `Nonces` contracts. #
+- Refactor `Erc20Permit` extension to be a composition of `Erc20` and `Nonces` contracts. #574
 - Replace `VestingWallet::receive_ether` with dedicated `receive` function. #529
 - Extract `IAccessControl` trait from `AccessControl` contract. #527
 
