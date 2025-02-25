@@ -3,14 +3,12 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
 
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    prelude::storage, storage::StorageString, stylus_proc::public,
-};
+use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
@@ -76,7 +74,7 @@ impl IErc165 for Erc1155MetadataUri {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::{alloy_primitives::uint, prelude::TopLevelStorage};
+    use stylus_sdk::{alloy_primitives::uint, prelude::*};
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 

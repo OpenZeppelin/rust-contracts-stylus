@@ -4,16 +4,14 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
-    evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::utils::{
@@ -282,7 +280,7 @@ impl IErc20 for Erc20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let from = msg::sender();
+        let from = self.vm().msg_sender();
         self._transfer(from, to, value)?;
         Ok(true)
     }
@@ -296,7 +294,7 @@ impl IErc20 for Erc20 {
         spender: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let owner = msg::sender();
+        let owner = self.vm().msg_sender();
         self._approve(owner, spender, value, true)
     }
 
@@ -306,7 +304,7 @@ impl IErc20 for Erc20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let spender = msg::sender();
+        let spender = self.vm().msg_sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
         Ok(true)
@@ -361,7 +359,7 @@ impl Erc20 {
 
         self.allowances.setter(owner).insert(spender, value);
         if emit_event {
-            evm::log(Approval { owner, spender, value });
+            log(self.vm(), Approval { owner, spender, value });
         }
         Ok(true)
     }
@@ -501,7 +499,7 @@ impl Erc20 {
             self.balances.setter(to).add_assign_unchecked(value);
         }
 
-        evm::log(Transfer { from, to, value });
+        log(self.vm(), Transfer { from, to, value });
 
         Ok(())
     }
@@ -584,7 +582,7 @@ impl Erc20 {
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::{Erc20, Error, IErc20};
     use crate::utils::introspection::erc165::IErc165;

@@ -1,7 +1,7 @@
 //! Optional Burnable extension of the ERC-20 standard.
 
 use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
+use stylus_sdk::prelude::*;
 
 use crate::token::erc20::{self, Erc20};
 
@@ -60,7 +60,7 @@ impl IErc20Burnable for Erc20 {
     type Error = erc20::Error;
 
     fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
-        self._burn(msg::sender(), value)
+        self._burn(self.vm().msg_sender(), value)
     }
 
     fn burn_from(
@@ -68,7 +68,7 @@ impl IErc20Burnable for Erc20 {
         account: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        self._spend_allowance(account, msg::sender(), value)?;
+        self._spend_allowance(account, self.vm().msg_sender(), value)?;
         self._burn(account, value)
     }
 }
@@ -117,7 +117,7 @@ mod tests {
 
     #[motsu::test]
     fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
-        // Alice approves `msg::sender`.
+        // Alice approves Bob.
         let one = uint!(1_U256);
         contract.sender(alice).approve(bob, one).unwrap();
 
@@ -140,7 +140,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        // Alice approves `msg::sender`.
+        // Alice approves Bob.
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 

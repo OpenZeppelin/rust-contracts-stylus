@@ -2,7 +2,7 @@
 extern crate alloc;
 
 use openzeppelin_stylus::token::erc20::utils::safe_erc20::SafeErc20;
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]

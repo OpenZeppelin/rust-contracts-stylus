@@ -88,7 +88,7 @@ pub const MINTER_ROLE: [u8; 32] =
 #[inherit(Erc20, AccessControl)]
 impl Example {
     pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Vec<u8>> {
-        if self.access.has_role(MINTER_ROLE.into(), msg::sender()) {
+        if self.access.has_role(MINTER_ROLE.into(), self.vm().msg_sender()) {
             return Err(Vec::new());
         }
         self.erc20._mint(to, amount)?;
@@ -150,6 +150,6 @@ Every role has an associated admin role, which grants permission to call the `gr
 
 This mechanism can be used to create complex permissioning structures resembling organizational charts, but it also provides an easy way to manage simpler applications. `AccessControl` includes a special role, called `DEFAULT_ADMIN_ROLE`, which acts as the **default admin role for all roles**. An account with this role will be able to manage any other role, unless `_set_role_admin` is used to select a new admin role.
 
-Note that, by default, no accounts are granted the 'minter' or 'burner' roles. We assume you use a constructor to set the default admin role as the role of the deployer, or have a different mechanism where you make sure that you are able to grant roles. However, because those roles' admin role is the default admin role, and _that_ role was granted to `msg::sender()`, that same account can call `grant_role` to give minting or burning permission, and `revoke_role` to remove it.
+Note that, by default, no accounts are granted the 'minter' or 'burner' roles. We assume you use a constructor to set the default admin role as the role of the deployer, or have a different mechanism where you make sure that you are able to grant roles. However, because those roles' admin role is the default admin role, and _that_ role was granted to `self.vm().msg_sender()`, that same account can call `grant_role` to give minting or burning permission, and `revoke_role` to remove it.
 
 Dynamic role allocation is often a desirable property, for example in systems where trust in a participant may vary over time. It can also be used to support use cases such as https://en.wikipedia.org/wiki/Know_your_customer[KYC], where the list of role-bearers may not be known up-front, or may be prohibitively expensive to include in a single transaction.
