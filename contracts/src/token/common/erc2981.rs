@@ -20,6 +20,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     prelude::{public, storage, Erase, TopLevelStorage},
@@ -126,6 +127,7 @@ pub struct Erc2981 {
 /// A standardized way to retrieve royalty payment information for non-fungible
 /// tokens (NFTs) to enable universal support for royalty payments across all
 /// NFT marketplaces and ecosystem participants.
+#[interface_id]
 pub trait IErc2981: IErc165 {
     /// Returns how much royalty is owed and to whom, based on a sale price that
     /// may be denominated in any unit of exchange.
@@ -189,7 +191,7 @@ impl IErc2981 for Erc2981 {
 
 impl IErc165 for Erc2981 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Self::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+        <Self as IErc2981>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -584,13 +586,20 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc2981>::INTERFACE_ID;
+        let actual = <Erc2981 as IErc2981>::INTERFACE_ID;
+        // Value taken from official EIP
+        // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
         let expected = 0x2a55_205a;
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
-        assert!(<Erc2981 as IErc165>::supports_interface(0x2a55_205a.into()));
+        assert!(Erc2981::supports_interface(
+            <Erc2981 as IErc2981>::INTERFACE_ID.into()
+        ));
+        assert!(Erc2981::supports_interface(
+            <Erc2981 as IErc165>::INTERFACE_ID.into()
+        ));
     }
 }
