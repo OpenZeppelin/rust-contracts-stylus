@@ -28,4 +28,9 @@ impl VestingWalletExample {
             duration_seconds,
         )?)
     }
+
+    #[receive]
+    fn receive(&mut self) -> Result<(), Vec<u8>> {
+        Ok(())
+    }
 }
