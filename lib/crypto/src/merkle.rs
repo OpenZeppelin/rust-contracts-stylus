@@ -288,7 +288,9 @@ where
         // - A value from the "main queue" (merging branches) or a member of the
         //   `proof`, depending on `flag`.
         for &flag in proof_flags {
-            let a = hashes[hashes_pos];
+            let a = *hashes
+                .get(hashes_pos)
+                .ok_or(MultiProofError::InvalidRootChild)?;
             hashes_pos += 1;
 
             let b;
