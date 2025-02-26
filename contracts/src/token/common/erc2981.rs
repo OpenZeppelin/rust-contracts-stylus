@@ -41,8 +41,8 @@ mod sol {
     use alloy_sol_macro::sol;
 
     sol! {
-        /// Indicates an error for Invalid Default Royalty. Occurs when
-        /// `numerator` > `denominator`.
+        /// Indicates that the default royalty set is invalid
+        /// (eg. (`numerator` / `denominator``) >= 1).
         ///
         /// * `numerator` - Numerator in fraction of royalty.
         /// * `denomimator` - Denominator in fraction of royalty.
@@ -50,16 +50,15 @@ mod sol {
         #[allow(missing_docs)]
         error ERC2981InvalidDefaultRoyalty(uint256 numerator, uint256 denominator);
 
-        /// Indicates an error relating to default royalty receiver being invalid.
-        /// The zero address is considered invalid.
+        /// Indicates that the default royalty `receiver` is invalid.
         ///
         /// * `receiver` - Address to which royalty is sent.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC2981InvalidDefaultRoyaltyReceiver(address receiver);
 
-        /// Indicates an error for Invalid Token Royalty. Occurs when
-        /// `numerator` > `denominator`.
+        /// Indicates that the royalty set for a specific `token_id` is invalid
+        /// (eg. (`numerator` / `denominator`) >= 1).
         ///
         /// * `token_id` - Id of a token.
         /// * `numerator` - Numerator in fraction of royalty.
@@ -68,8 +67,7 @@ mod sol {
         #[allow(missing_docs)]
         error ERC2981InvalidTokenRoyalty(uint256 token_id, uint256 numerator, uint256 denominator);
 
-        /// Indicates an error relating to token royalty receiver being invalid.
-        /// The zero address is considered invalid.
+        /// Indicates that the royalty receiver for `token_id` is invalid.
         ///
         /// * `token_id` - Id of a token.
         /// * `receiver` - Address to which royalty is sent.
@@ -83,20 +81,18 @@ mod sol {
 /// An [`Erc2981`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Indicates an error for Invalid Default Royalty. Occurs when
-    /// `numerator` > `denominator`.
+    /// Indicates that the default royalty set is invalid
+    /// (eg. (`numerator` / `denominator``) >= 1).
     InvalidDefaultRoyalty(ERC2981InvalidDefaultRoyalty),
 
-    /// Indicates an error relating to default royalty receiver being invalid.
-    /// The zero address is considered invalid.
+    /// Indicates that the default royalty `receiver` is invalid.
     InvalidDefaultRoyaltyReceiver(ERC2981InvalidDefaultRoyaltyReceiver),
 
-    /// Indicates an error for Invalid Token Royalty. Occurs when
-    /// `numerator` > `denominator`.
+    /// Indicates that the royalty set for a specific `token_id` is invalid
+    /// (eg. (`numerator` / `denominator`) >= 1).
     InvalidTokenRoyalty(ERC2981InvalidTokenRoyalty),
 
-    /// Indicates an error relating to token royalty receiver being invalid.
-    /// The zero address is considered invalid.
+    /// Indicates that the royalty receiver for `token_id` is invalid.
     InvalidTokenRoyaltyReceiver(ERC2981InvalidTokenRoyaltyReceiver),
 }
 
