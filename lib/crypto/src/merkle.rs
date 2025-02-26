@@ -263,15 +263,22 @@ where
         builder: &B,
     ) -> Result<bool, MultiProofError> {
         let total_hashes = proof_flags.len();
+
         if leaves.len() + proof.len() != total_hashes + 1 {
             return Err(MultiProofError::InvalidTotalHashes);
         }
+
         if total_hashes == 0 {
             // We can safely assume that either `leaves` or `proof` is not empty
             // given the previous check. We use `unwrap_or_else` to avoid
             // eagerly evaluating `proof[0]`, which may panic.
             let rebuilt_root = *leaves.first().unwrap_or_else(|| &proof[0]);
             return Ok(root == rebuilt_root);
+        }
+
+        // We need at least one leaf for non-trivial trees
+        if leaves.is_empty() {
+            return Err(MultiProofError::NoLeaves);
         }
 
         // `hashes` represents a queue of hashes, our "main queue".
@@ -288,9 +295,7 @@ where
         // - A value from the "main queue" (merging branches) or a member of the
         //   `proof`, depending on `flag`.
         for &flag in proof_flags {
-            let a = *hashes
-                .get(hashes_pos)
-                .ok_or(MultiProofError::InvalidRootChild)?;
+            let a = &hashes[hashes_pos];
             hashes_pos += 1;
 
             let b;
@@ -306,7 +311,7 @@ where
                 proof_pos += 1;
             };
 
-            let hash = commutative_hash_pair(&a, b, builder.build_hasher());
+            let hash = commutative_hash_pair(a, b, builder.build_hasher());
             hashes.push(hash);
         }
 
@@ -337,6 +342,8 @@ pub enum MultiProofError {
     /// The number of leaves and proof members does not match the number of
     /// hashes necessary to complete the verification.
     InvalidTotalHashes,
+    /// No leaves were provided for a non-trivial tree.
+    NoLeaves,
 }
 
 impl core::fmt::Display for MultiProofError {
@@ -346,6 +353,9 @@ impl core::fmt::Display for MultiProofError {
             MultiProofError::InvalidRootChild => "invalid root child generated",
             MultiProofError::InvalidTotalHashes => {
                 "leaves.len() + proof.len() != total_hashes + 1"
+            }
+            MultiProofError::NoLeaves => {
+                "no leaves were provided for a non-trivial tree"
             }
         };
 
