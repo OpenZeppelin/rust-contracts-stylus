@@ -99,6 +99,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         self.eip712.domain_separator_v4()
     }
 }
+
 impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
     /// given `owner`'s signed approval.
