@@ -395,11 +395,14 @@ mod tests {
             ._set_default_royalty(Address::ZERO, FEE_NUMERATOR)
             .expect_err("should return `Error::InvalidDefaultRoyaltyReceiver`");
 
-        assert!(
-            matches!(err, Error::InvalidDefaultRoyaltyReceiver(ERC2981InvalidDefaultRoyaltyReceiver{
-            receiver
-        }) if receiver.is_zero())
-        );
+        assert!(matches!(
+            err,
+            Error::InvalidDefaultRoyaltyReceiver(
+                ERC2981InvalidDefaultRoyaltyReceiver {
+                    receiver: Address::ZERO
+                }
+            )
+        ));
     }
 
     #[motsu::test]
@@ -418,13 +421,14 @@ mod tests {
             ._set_default_royalty(bob, new_fee_numerator)
             .expect_err("should return `Error::InvalidDefaultRoyalty`");
 
-        assert!(
-            matches!(err, Error::InvalidDefaultRoyalty(ERC2981InvalidDefaultRoyalty{
-            numerator,
-            denominator
-        }) if numerator == U256::from(new_fee_numerator) &&
-            denominator == U256::from(DEFAULT_FEE_DENOMINATOR))
-        );
+        assert!(matches!(
+            err,
+            Error::InvalidDefaultRoyalty(ERC2981InvalidDefaultRoyalty {
+                numerator,
+                denominator
+            }) if numerator == U256::from(new_fee_numerator) &&
+            denominator == U256::from(DEFAULT_FEE_DENOMINATOR)
+        ));
     }
 
     #[motsu::test]
@@ -563,12 +567,12 @@ mod tests {
             ._set_token_royalty(TOKEN_ID, Address::ZERO, FEE_NUMERATOR)
             .expect_err("should return `Error::InvalidTokenRoyaltyReceiver`");
 
-        assert!(
-            matches!(err, Error::InvalidTokenRoyaltyReceiver(ERC2981InvalidTokenRoyaltyReceiver{
-            token_id,
-            receiver
-        }) if token_id == TOKEN_ID && receiver.is_zero())
-        );
+        assert!(matches!(
+            err,
+            Error::InvalidTokenRoyaltyReceiver(ERC2981InvalidTokenRoyaltyReceiver{
+                token_id,
+                receiver
+            }) if token_id == TOKEN_ID && receiver.is_zero()));
     }
 
     #[motsu::test]
@@ -587,14 +591,14 @@ mod tests {
             ._set_token_royalty(TOKEN_ID, bob, new_fee_numerator)
             .expect_err("should return `Error::InvalidTokenRoyalty`");
 
-        assert!(
-            matches!(err, Error::InvalidTokenRoyalty(ERC2981InvalidTokenRoyalty{
-            token_id,
-            numerator,
-            denominator
+        assert!(matches!(
+            err,
+            Error::InvalidTokenRoyalty(ERC2981InvalidTokenRoyalty{
+                token_id,
+                numerator,
+                denominator
         }) if token_id == TOKEN_ID && numerator == U256::from(new_fee_numerator) &&
-            denominator == U256::from(DEFAULT_FEE_DENOMINATOR))
-        );
+            denominator == U256::from(DEFAULT_FEE_DENOMINATOR)));
     }
 
     #[motsu::test]
