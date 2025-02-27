@@ -263,11 +263,9 @@ where
         builder: &B,
     ) -> Result<bool, MultiProofError> {
         let total_hashes = proof_flags.len();
-
         if leaves.len() + proof.len() != total_hashes + 1 {
             return Err(MultiProofError::InvalidTotalHashes);
         }
-
         if total_hashes == 0 {
             // We can safely assume that either `leaves` or `proof` is not empty
             // given the previous check. We use `unwrap_or_else` to avoid
@@ -295,7 +293,7 @@ where
         // - A value from the "main queue" (merging branches) or a member of the
         //   `proof`, depending on `flag`.
         for &flag in proof_flags {
-            let a = &hashes[hashes_pos];
+            let a = hashes[hashes_pos];
             hashes_pos += 1;
 
             let b;
@@ -311,7 +309,7 @@ where
                 proof_pos += 1;
             };
 
-            let hash = commutative_hash_pair(a, b, builder.build_hasher());
+            let hash = commutative_hash_pair(&a, b, builder.build_hasher());
             hashes.push(hash);
         }
 
