@@ -15,17 +15,17 @@ use stylus_sdk::prelude::*;
 #[storage]
 struct Erc721ConsecutiveExample {
     #[borrow]
-    pub erc721_consecutive: Erc721Consecutive,
+    erc721_consecutive: Erc721Consecutive,
 }
 
 #[public]
 #[inherit(Erc721Consecutive)]
 impl Erc721ConsecutiveExample {
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
+    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         self.erc721_consecutive._burn(token_id)
     }
 
-    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         self.erc721_consecutive._mint(to, token_id)
     }
 
