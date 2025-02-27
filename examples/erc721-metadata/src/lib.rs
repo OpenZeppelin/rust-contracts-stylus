@@ -29,6 +29,12 @@ struct Erc721MetadataExample {
 #[public]
 #[inherit(Erc721, Metadata)]
 impl Erc721MetadataExample {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String, base_uri: String) {
+        self.metadata.constructor(name, symbol);
+        self.metadata._base_uri.set_str(base_uri);
+    }
+
     pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
         Ok(self.erc721._mint(to, token_id)?)
     }

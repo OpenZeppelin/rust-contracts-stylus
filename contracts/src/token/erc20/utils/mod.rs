@@ -10,6 +10,7 @@ mod token {
 
     use alloc::vec;
 
+    use alloy_sol_types::sol;
     use stylus_sdk::stylus_proc::sol_interface;
 
     sol_interface! {
@@ -17,6 +18,15 @@ mod token {
         interface IErc20 {
             function balanceOf(address account) external view returns (uint256);
             function totalSupply() external view returns (uint256);
+        }
+    }
+
+    sol! {
+        /// Solidity Interface of the ERC-20 Metadata token.
+        interface IERC20Metadata {
+            function name() external view returns (string memory);
+            function symbol() external view returns (string memory);
+            function decimals() external view returns (uint8);
         }
     }
 }
