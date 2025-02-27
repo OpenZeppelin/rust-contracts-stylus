@@ -24,7 +24,7 @@ struct Erc721Example {
     #[borrow]
     pub erc721: Erc721,
     #[borrow]
-    pub enumerable: Enumerable,
+    pub enumerable: Erc721Enumerable,
 }
 
 #[public]
