@@ -9,7 +9,6 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    call::MethodError,
     evm, msg,
     prelude::storage,
     storage::{StorageMap, StorageU256},
@@ -118,12 +117,6 @@ pub enum Error {
     InvalidApprover(ERC20InvalidApprover),
 }
 
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
 /// State of an [`Erc20`] token.
 #[storage]
 pub struct Erc20 {
@@ -180,7 +173,7 @@ pub trait IErc20 {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, <Self as IErc20>::Error>;
 
     /// Returns the remaining number of tokens that `spender` will be allowed
     /// to spend on behalf of `owner` through `transfer_from`. This is zero by
@@ -225,7 +218,7 @@ pub trait IErc20 {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, <Self as IErc20>::Error>;
 
     /// Moves a `value` number of tokens from `from` to `to` using the
     /// allowance mechanism. `value` is then deducted from the caller's
@@ -262,7 +255,7 @@ pub trait IErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, <Self as IErc20>::Error>;
 }
 
 #[public]
@@ -281,7 +274,7 @@ impl IErc20 for Erc20 {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, <Self as IErc20>::Error> {
         let from = msg::sender();
         self._transfer(from, to, value)?;
         Ok(true)
@@ -295,7 +288,7 @@ impl IErc20 for Erc20 {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, <Self as IErc20>::Error> {
         let owner = msg::sender();
         self._approve(owner, spender, value, true)
     }
@@ -305,7 +298,7 @@ impl IErc20 for Erc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, <Self as IErc20>::Error> {
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;

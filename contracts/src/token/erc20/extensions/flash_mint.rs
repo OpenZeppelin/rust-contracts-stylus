@@ -179,7 +179,7 @@ pub trait IErc3156FlashLender {
         &self,
         token: Address,
         value: U256,
-    ) -> Result<U256, Self::Error>;
+    ) -> Result<U256, <Self as IErc3156FlashLender>::Error>;
 
     /// Performs a flash loan.
     ///
@@ -247,7 +247,7 @@ pub trait IErc3156FlashLender {
         value: U256,
         data: Bytes,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, <Self as IErc3156FlashLender>::Error>;
 }
 
 impl IErc3156FlashLender for Erc20FlashMint {
@@ -265,7 +265,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         &self,
         token: Address,
         _value: U256,
-    ) -> Result<U256, Self::Error> {
+    ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
         if token == contract::address() {
             Ok(self.flash_fee_value.get())
         } else {
@@ -283,7 +283,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         value: U256,
         data: Bytes,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
         let max_loan = self.max_flash_loan(token, erc20);
         if value > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {

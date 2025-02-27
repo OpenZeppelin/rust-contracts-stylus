@@ -5,7 +5,7 @@ use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, Call, MethodError},
+    call::{self, Call},
     evm, function_selector, msg,
     prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
@@ -173,12 +173,6 @@ pub enum Error {
     InvalidOperator(ERC721InvalidOperator),
 }
 
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
-}
-
 /// State of an [`Erc721`] token.
 #[storage]
 pub struct Erc721 {
@@ -214,7 +208,10 @@ pub trait IErc721 {
     /// # Errors
     ///
     /// * [`Error::InvalidOwner`] - If owner address is `Address::ZERO`.
-    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
+    fn balance_of(
+        &self,
+        owner: Address,
+    ) -> Result<U256, <Self as IErc721>::Error>;
 
     /// Returns the owner of the `token_id` token.
     ///
@@ -226,7 +223,10 @@ pub trait IErc721 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error>;
+    fn owner_of(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first
     /// that contract recipients are aware of the [`Erc721`] protocol to
@@ -257,7 +257,7 @@ pub trait IErc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`.
     ///
@@ -290,7 +290,7 @@ pub trait IErc721 {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Transfers `token_id` token from `from` to `to`.
     ///
@@ -323,7 +323,7 @@ pub trait IErc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Gives permission to `to` to transfer `token_id` token to another
     /// account. The approval is cleared when the token is transferred.
@@ -350,7 +350,7 @@ pub trait IErc721 {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Approve or remove `operator` as an operator for the caller.
     ///
@@ -376,7 +376,7 @@ pub trait IErc721 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Returns the account approved for `token_id` token.
     ///
@@ -388,7 +388,10 @@ pub trait IErc721 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error>;
+    fn get_approved(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error>;
 
     /// Returns whether the `operator` is allowed to manage all the assets of
     /// `owner`.

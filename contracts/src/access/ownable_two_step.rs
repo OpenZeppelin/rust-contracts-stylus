@@ -127,7 +127,7 @@ pub trait IOwnable2Step {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IOwnable2Step>::Error>;
 
     /// Accepts the ownership of the contract.
     /// Can only be called by the pending owner.
@@ -144,7 +144,9 @@ pub trait IOwnable2Step {
     /// # Events
     ///
     /// * [`crate::access::ownable::OwnershipTransferred`].
-    fn accept_ownership(&mut self) -> Result<(), Self::Error>;
+    fn accept_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Ownable::only_owner`] functions. Can only be called by the current
@@ -164,7 +166,9 @@ pub trait IOwnable2Step {
     /// # Events
     ///
     /// * [`crate::access::ownable::OwnershipTransferred`].
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error>;
 }
 
 #[public]
@@ -182,7 +186,7 @@ impl IOwnable2Step for Ownable2Step {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IOwnable2Step>::Error> {
         self.ownable.only_owner()?;
         self.pending_owner.set(new_owner);
 
@@ -194,7 +198,9 @@ impl IOwnable2Step for Ownable2Step {
         Ok(())
     }
 
-    fn accept_ownership(&mut self) -> Result<(), Self::Error> {
+    fn accept_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error> {
         let sender = msg::sender();
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
@@ -207,7 +213,9 @@ impl IOwnable2Step for Ownable2Step {
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Error> {
+    fn renounce_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error> {
         self.ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
