@@ -180,13 +180,6 @@ pub trait IVestingWallet {
     /// * [`ownable::OwnershipTransferred`].
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
-    /// The contract should be able to receive Ether.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    fn receive_ether(&self);
-
     /// Getter for the start timestamp.
     ///
     /// # Arguments
@@ -361,9 +354,6 @@ impl IVestingWallet for VestingWallet {
     fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
-
-    #[payable]
-    fn receive_ether(&self) {}
 
     fn start(&self) -> U256 {
         U256::from(self.start.get())
