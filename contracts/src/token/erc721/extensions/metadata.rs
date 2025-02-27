@@ -13,7 +13,10 @@ use stylus_sdk::{
 
 use crate::{
     token::erc721::{Error, IErc721},
-    utils::{introspection::erc165::IErc165, Metadata},
+    utils::{
+        introspection::erc165::{Erc165, IErc165},
+        Metadata,
+    },
 };
 
 /// State of an [`Erc721Metadata`] contract.
@@ -66,6 +69,7 @@ impl IErc165 for Erc721Metadata {
         //  [`Erc721Metadata::token_uri`]
         (<Self as IErc721Metadata>::INTERFACE_ID ^ TOKEN_URI_SELECTOR)
             == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
