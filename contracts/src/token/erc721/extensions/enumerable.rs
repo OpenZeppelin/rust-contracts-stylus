@@ -347,8 +347,10 @@ mod tests {
         ERC721EnumerableForbiddenBatchMint, ERC721OutOfBoundsIndex,
         Erc721Enumerable, Error, IErc721Enumerable,
     };
-    use crate::token::erc721::{Erc721, IErc721};
-
+    use crate::{
+        token::erc721::{self, Erc721, IErc721},
+        utils::introspection::erc165::IErc165,
+    };
     #[storage]
     struct Erc721EnumerableTestExample {
         pub erc721: Erc721,
@@ -718,5 +720,18 @@ mod tests {
         let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
         let expected = 0x780e9d63;
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc721Enumerable::supports_interface(
+            <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID.into()
+        ));
+        assert!(Erc721Enumerable::supports_interface(
+            <Erc721Enumerable as IErc165>::INTERFACE_ID.into()
+        ));
+        assert!(Erc721Enumerable::supports_interface(
+            <Erc721 as IErc721>::INTERFACE_ID.into()
+        ));
     }
 }
