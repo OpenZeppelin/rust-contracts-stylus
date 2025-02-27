@@ -173,7 +173,8 @@ impl Erc721Example {
     }
 
     pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Enumerable::supports_interface(interface_id)
+        Erc721::supports_interface(interface_id)
+            || Enumerable::supports_interface(interface_id)
     }
 
     /// WARNING: These functions are intended for **testing purposes** only. In
