@@ -348,7 +348,7 @@ mod tests {
         Erc721Enumerable, Error, IErc721Enumerable,
     };
     use crate::{
-        token::erc721::{self, Erc721, IErc721},
+        token::erc721::{Erc721, IErc721},
         utils::introspection::erc165::IErc165,
     };
     #[storage]

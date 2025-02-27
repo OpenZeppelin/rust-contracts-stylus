@@ -297,7 +297,19 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
 
     assert!(supports_interface);
 
-    // other tests verify that other ERC-721 interfaces are implemented
+    let erc721_interface_id: u32 = 0x80ac58cd;
+    let Erc721::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(erc721_interface_id.into()).call().await?;
+
+    assert!(supports_interface);
+
+    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let Erc721::supportsInterfaceReturn {
+        supportsInterface: supports_interface,
+    } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
+
+    assert!(supports_interface);
 
     Ok(())
 }

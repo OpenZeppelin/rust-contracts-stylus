@@ -133,19 +133,33 @@ impl Erc721Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use super::{Erc721Metadata, IErc165, IErc721Metadata};
+    use super::{Erc721Metadata, IErc165, IErc721Metadata, TOKEN_URI_SELECTOR};
 
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
         let expected = 0x93254542;
         assert_eq!(actual, expected);
+
+        let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID
+            ^ TOKEN_URI_SELECTOR;
+        let expected = 0x5b5e139f;
+        assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
-        assert!(<Erc721Metadata as IErc165>::supports_interface(
-            0x5b5e139f.into()
+        assert!(Erc721Metadata::supports_interface(
+            <Erc721Metadata as IErc165>::INTERFACE_ID.into()
+        ));
+        assert!(Erc721Metadata::supports_interface(
+            (<Erc721Metadata as IErc721Metadata>::INTERFACE_ID
+                ^ TOKEN_URI_SELECTOR)
+                .into()
+        ));
+        // Interface ID needs to include XOR TOKEN_URI_SELECTOR
+        assert!(!Erc721Metadata::supports_interface(
+            <Erc721Metadata as IErc721Metadata>::INTERFACE_ID.into()
         ));
     }
 }
