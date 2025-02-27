@@ -14,7 +14,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -25,10 +25,7 @@ use stylus_sdk::{
 
 use crate::{
     token::erc1155::{self, Erc1155, IErc1155},
-    utils::{
-        introspection::erc165::{Erc165, IErc165},
-        math::storage::{AddAssignChecked, SubAssignUnchecked},
-    },
+    utils::math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
 /// State of an [`Erc1155Supply`] contract.
@@ -148,17 +145,6 @@ impl IErc1155 for Erc1155Supply {
     ) -> Result<(), erc1155::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
-    }
-}
-
-// Copied over from [`Erc1155`] implementation as currently there's no way to
-// pass the call to the base implementation. This aligns with the current
-// Solidity implementation of the same contract.
-// See: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/2ed895699249d7a528780d98512c566c0bc88e29/contracts/token/ERC1155/extensions/ERC1155Supply.sol
-impl IErc165 for Erc1155Supply {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc1155>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -391,12 +377,9 @@ mod tests {
     use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{Erc1155Supply, IErc1155Supply};
-    use crate::{
-        token::erc1155::{
-            tests::{random_token_ids, random_values},
-            ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
-        },
-        utils::introspection::erc165::IErc165,
+    use crate::token::erc1155::{
+        tests::{random_token_ids, random_values},
+        ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
     };
 
     unsafe impl TopLevelStorage for Erc1155Supply {}
@@ -623,20 +606,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc1155>::INTERFACE_ID.into()
-        ));
-        assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc165>::INTERFACE_ID.into()
-        ));
-        // Solidity version doesn't override base ERC165 implementation and as
-        // there's no `IErc1155Supply` interface, so calling
-        // `Erc1155Supply::supports_interface` should behave the same as in the
-        // Solidity version.
-        // Current Solidity version: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/2ed895699249d7a528780d98512c566c0bc88e29/contracts/token/ERC1155/extensions/ERC1155Supply.sol
-        assert!(!Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc1155Supply>::INTERFACE_ID.into()
-        ));
+    fn interface_id() {
+        let actual = <Erc1155Supply as IErc1155Supply>::INTERFACE_ID;
+        let expected = 0xeac6339d;
+        assert_eq!(actual, expected);
     }
 }
