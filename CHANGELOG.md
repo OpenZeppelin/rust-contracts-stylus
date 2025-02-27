@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix `IErc165` implementations for `Erc721Metadata` and `Erc721Enumerable`. #570
+- `IErc165` implementations for `Erc721Metadata` and `Erc721Enumerable` now support ERC-165 interface ID. #570
 
 ## [v0.2.0-alpha.3] - 2025-01-30
 
