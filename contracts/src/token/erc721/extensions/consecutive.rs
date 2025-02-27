@@ -28,12 +28,7 @@ use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{uint, Address, U256};
-use stylus_sdk::{
-    abi::Bytes,
-    evm, msg,
-    prelude::{storage, TopLevelStorage},
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 use crate::{
     token::erc721::{
@@ -191,7 +186,7 @@ impl IErc721 for Erc721Consecutive {
     ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
-            msg::sender(),
+            self.vm().msg_sender(),
             from,
             to,
             token_id,
@@ -215,7 +210,8 @@ impl IErc721 for Erc721Consecutive {
         // Setting an "auth" argument enables the `_is_authorized` check which
         // verifies that the token exists (`!from.is_zero()`). Therefore, it is
         // not needed to verify that the return value is not 0 here.
-        let previous_owner = self._update(to, token_id, msg::sender())?;
+        let previous_owner =
+            self._update(to, token_id, self.vm().msg_sender())?;
         if previous_owner != from {
             return Err(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender: from,
@@ -228,7 +224,7 @@ impl IErc721 for Erc721Consecutive {
     }
 
     fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
-        self._approve(to, token_id, msg::sender(), true)
+        self._approve(to, token_id, self.vm().msg_sender(), true)
     }
 
     fn set_approval_for_all(
@@ -343,12 +339,15 @@ impl Erc721Consecutive {
                 alloy_primitives::U128::from(batch_size),
             );
 
-            evm::log(ConsecutiveTransfer {
-                from_token_id: next.to::<U256>(),
-                to_token_id: last.to::<U256>(),
-                from_address: Address::ZERO,
-                to_address: to,
-            });
+            log(
+                self.vm(),
+                ConsecutiveTransfer {
+                    from_token_id: next.to::<U256>(),
+                    to_token_id: last.to::<U256>(),
+                    from_address: Address::ZERO,
+                    to_address: to,
+                },
+            );
         };
         Ok(next)
     }
@@ -475,7 +474,7 @@ impl Erc721Consecutive {
         }
 
         self.erc721.owners.setter(token_id).set(to);
-        evm::log(Transfer { from, to, token_id });
+        log(self.vm(), Transfer { from, to, token_id });
         Ok(from)
     }
 
@@ -548,7 +547,7 @@ impl Erc721Consecutive {
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
-            msg::sender(),
+            self.vm().msg_sender(),
             Address::ZERO,
             to,
             token_id,
@@ -589,7 +588,7 @@ impl Erc721Consecutive {
     /// Transfers `token_id` from `from` to `to`.
     ///
     /// As opposed to [`Self::transfer_from`], this imposes no restrictions on
-    /// `msg::sender`.
+    /// message sender.
     ///
     /// # Arguments
     ///
@@ -679,7 +678,7 @@ impl Erc721Consecutive {
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
-            msg::sender(),
+            self.vm().msg_sender(),
             from,
             to,
             token_id,
@@ -732,7 +731,7 @@ impl Erc721Consecutive {
             }
 
             if emit_event {
-                evm::log(Approval { owner, approved: to, token_id });
+                log(self.vm(), Approval { owner, approved: to, token_id });
             }
         }
 

@@ -10,7 +10,7 @@ mod token {
 
     use alloc::vec;
 
-    use stylus_sdk::stylus_proc::sol_interface;
+    use stylus_sdk::prelude::sol_interface;
 
     sol_interface! {
         /// Solidity Interface of the ERC-20 token.

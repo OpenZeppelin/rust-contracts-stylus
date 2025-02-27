@@ -8,6 +8,7 @@
 //! Then store a new checkpoint for the current
 //! transaction block using the [`Trace::push`] function.
 pub mod generic_size;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, U256, U32};
 pub use generic_size::{Size, S160, S208, S224};
