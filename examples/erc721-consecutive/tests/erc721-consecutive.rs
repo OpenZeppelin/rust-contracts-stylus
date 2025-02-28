@@ -230,5 +230,5 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     Ok(())
 }
 
-// No need to test for ERC165 impl, as this is already tested in
+// No need to test for `IErc165` impl, as this is already tested in
 // ../../examples/erc721 e2e tests
