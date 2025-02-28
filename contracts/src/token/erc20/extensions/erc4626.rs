@@ -10,7 +10,7 @@
 use alloy_primitives::{uint, Address, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
-    call::Call,
+    call::{Call, MethodError},
     contract, evm, msg,
     prelude::storage,
     storage::{StorageAddress, StorageU8, TopLevelStorage},
@@ -120,6 +120,12 @@ pub enum Error {
     SafeErc20(safe_erc20::Error),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc4626`] token.

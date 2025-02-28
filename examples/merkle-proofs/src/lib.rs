@@ -49,7 +49,7 @@ impl core::convert::From<merkle::MultiProofError> for VerifierError {
 
 #[entrypoint]
 #[storage]
-struct VerifierContract {}
+struct VerifierContract;
 
 #[public]
 impl VerifierContract {

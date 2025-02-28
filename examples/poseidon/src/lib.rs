@@ -13,7 +13,7 @@ use stylus_sdk::prelude::{entrypoint, public, storage};
 
 #[entrypoint]
 #[storage]
-struct PoseidonExample {}
+struct PoseidonExample;
 
 #[public]
 impl PoseidonExample {

@@ -17,7 +17,7 @@ struct Erc20PermitExample {
     pub erc20_permit: Erc20Permit<Eip712>,
 }
 #[storage]
-struct Eip712 {}
+struct Eip712;
 
 impl IEip712 for Eip712 {
     const NAME: &'static str = "ERC-20 Permit Example";

@@ -6,6 +6,7 @@ use alloc::{string::String, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
+        self,
         extensions::{
             Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
             IErc721Burnable,
@@ -29,16 +30,20 @@ struct Erc721MetadataExample {
 #[public]
 #[inherit(Erc721, Metadata)]
 impl Erc721MetadataExample {
-    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+    pub fn mint(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), erc721::Error> {
         Ok(self.erc721._mint(to, token_id)?)
     }
 
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+    pub fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
         Ok(self.erc721.burn(token_id)?)
     }
 
     #[selector(name = "tokenURI")]
-    pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
+    pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
         Ok(self.uri_storage.token_uri(
             token_id,
             &self.erc721,

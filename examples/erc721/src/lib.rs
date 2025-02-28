@@ -6,15 +6,25 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
-        extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
+        self,
+        extensions::{
+            enumerable, Erc721Enumerable as Enumerable, IErc721Burnable,
+        },
         Erc721, IErc721,
     },
-    utils::{introspection::erc165::IErc165, Pausable},
+    utils::{introspection::erc165::IErc165, pausable, Pausable},
 };
 use stylus_sdk::{
     abi::Bytes,
-    prelude::{entrypoint, public, storage},
+    prelude::{entrypoint, public, storage, SolidityError},
 };
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Enumerable(enumerable::Error),
+    Erc721(erc721::Error),
+    Pausable(pausable::Error),
+}
 
 #[entrypoint]
 #[storage]
@@ -30,7 +40,7 @@ struct Erc721Example {
 #[public]
 #[inherit(Erc721, Enumerable, Pausable)]
 impl Erc721Example {
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+    pub fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the owner.
@@ -49,7 +59,7 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         self.erc721._mint(to, token_id)?;
@@ -70,7 +80,7 @@ impl Erc721Example {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         self.erc721._safe_mint(to, token_id, &data)?;
@@ -91,7 +101,7 @@ impl Erc721Example {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the previous owner.
@@ -121,7 +131,7 @@ impl Erc721Example {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the previous owner.
@@ -149,7 +159,7 @@ impl Erc721Example {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the previous owner.
@@ -181,11 +191,11 @@ impl Erc721Example {
     /// **production**, ensure strict access control to prevent unauthorized
     /// pausing or unpausing, which can disrupt contract functionality. Remove
     /// or secure these functions before deployment.
-    pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+    pub fn pause(&mut self) -> Result<(), Error> {
         self.pausable.pause().map_err(|e| e.into())
     }
 
-    pub fn unpause(&mut self) -> Result<(), Vec<u8>> {
+    pub fn unpause(&mut self) -> Result<(), Error> {
         self.pausable.unpause().map_err(|e| e.into())
     }
 }
