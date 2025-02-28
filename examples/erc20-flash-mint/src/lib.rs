@@ -5,10 +5,20 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20FlashMint, IErc3156FlashLender},
+    self,
+    extensions::{flash_mint, Erc20FlashMint, IErc3156FlashLender},
     Erc20,
 };
-use stylus_sdk::{abi::Bytes, prelude::*};
+use stylus_sdk::{
+    abi::Bytes,
+    prelude::{entrypoint, public, storage, SolidityError, *},
+};
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Erc20(erc20::Error),
+    Erc20FlashMint(flash_mint::Error),
+}
 
 #[entrypoint]
 #[storage]
@@ -26,7 +36,7 @@ impl Erc20FlashMintExample {
         self.flash_mint.max_flash_loan(token, &self.erc20)
     }
 
-    fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
+    fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Error> {
         Ok(self.flash_mint.flash_fee(token, value)?)
     }
 
@@ -36,7 +46,7 @@ impl Erc20FlashMintExample {
         token: Address,
         value: U256,
         data: Bytes,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> Result<bool, Error> {
         Ok(self.flash_mint.flash_loan(
             receiver,
             token,
@@ -46,7 +56,7 @@ impl Erc20FlashMintExample {
         )?)
     }
 
-    fn mint(&mut self, to: Address, value: U256) -> Result<(), Vec<u8>> {
+    fn mint(&mut self, to: Address, value: U256) -> Result<(), Error> {
         Ok(self.erc20._mint(to, value)?)
     }
 }

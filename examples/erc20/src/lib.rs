@@ -6,14 +6,22 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc20::{
+        self,
         extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
         Erc20, IErc20,
     },
-    utils::{introspection::erc165::IErc165, Pausable},
+    utils::{introspection::erc165::IErc165, pausable, Pausable},
 };
 use stylus_sdk::prelude::*;
 
 const DECIMALS: u8 = 10;
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Capped(capped::Error),
+    Erc20(erc20::Error),
+    Pausable(pausable::Error),
+}
 
 #[entrypoint]
 #[storage]
@@ -39,7 +47,7 @@ impl Erc20Example {
         DECIMALS
     }
 
-    pub fn burn(&mut self, value: U256) -> Result<(), Vec<u8>> {
+    pub fn burn(&mut self, value: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
         self.erc20.burn(value).map_err(|e| e.into())
     }
@@ -48,7 +56,7 @@ impl Erc20Example {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
         self.erc20.burn_from(account, value).map_err(|e| e.into())
     }
@@ -58,11 +66,7 @@ impl Erc20Example {
     // Make sure to handle `Capped` properly. You should not call
     // [`Erc20::_update`] to mint tokens -- it will the break `Capped`
     // mechanism.
-    pub fn mint(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Vec<u8>> {
+    pub fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
         let max_supply = self.capped.cap();
 
@@ -90,7 +94,7 @@ impl Erc20Example {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> Result<bool, Error> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer(to, value).map_err(|e| e.into())
     }
@@ -100,12 +104,12 @@ impl Erc20Example {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> Result<bool, Error> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
     }
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc20::supports_interface(interface_id)
             || Erc20Metadata::supports_interface(interface_id)
     }
@@ -114,11 +118,11 @@ impl Erc20Example {
     /// **production**, ensure strict access control to prevent unauthorized
     /// pausing or unpausing, which can disrupt contract functionality. Remove
     /// or secure these functions before deployment.
-    pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+    pub fn pause(&mut self) -> Result<(), Error> {
         self.pausable.pause().map_err(|e| e.into())
     }
 
-    pub fn unpause(&mut self) -> Result<(), Vec<u8>> {
+    pub fn unpause(&mut self) -> Result<(), Error> {
         self.pausable.unpause().map_err(|e| e.into())
     }
 }

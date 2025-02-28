@@ -9,7 +9,7 @@ use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
-struct ECDSAExample {}
+struct ECDSAExample;
 
 #[public]
 impl ECDSAExample {
@@ -19,7 +19,7 @@ impl ECDSAExample {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<Address, Vec<u8>> {
+    ) -> Result<Address, ecdsa::Error> {
         let signer = ecdsa::recover(self, hash, v, r, s)?;
         Ok(signer)
     }
