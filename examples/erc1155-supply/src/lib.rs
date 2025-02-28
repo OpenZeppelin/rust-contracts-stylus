@@ -6,6 +6,7 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc1155::{
+        self,
         extensions::{Erc1155Supply, IErc1155Supply},
         Erc1155,
     },
@@ -43,7 +44,7 @@ impl Erc1155Example {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         self.erc1155_supply._mint(to, id, value, &data)?;
         Ok(())
     }
@@ -54,7 +55,7 @@ impl Erc1155Example {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         self.erc1155_supply._mint_batch(to, ids, values, &data)?;
         Ok(())
     }
@@ -65,7 +66,7 @@ impl Erc1155Example {
         from: Address,
         id: U256,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         self.erc1155_supply._burn(from, id, value)?;
         Ok(())
     }
@@ -75,7 +76,7 @@ impl Erc1155Example {
         from: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         self.erc1155_supply._burn_batch(from, ids, values)?;
         Ok(())
     }

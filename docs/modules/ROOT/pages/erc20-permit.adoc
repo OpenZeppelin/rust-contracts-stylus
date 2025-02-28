@@ -28,7 +28,7 @@ struct Erc20PermitExample {
 }
 
 #[storage]
-struct Eip712 {}
+struct Eip712;
 
 // Define `NAME` and `VERSION` for your contract.
 impl IEip712 for Eip712 {
