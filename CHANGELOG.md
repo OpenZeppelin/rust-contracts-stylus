@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Remove `ownable_two_step::Error` wrapper and instead directly emit `ownable::Error` in `Ownable2Step`. #PR_ID
 - Replace `VestingWallet::receive_ether` with dedicated `receive` function. #529
 - Extract `IAccessControl` trait from `AccessControl` contract. #527
 
