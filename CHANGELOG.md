@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
--
+- Remove `ownable_two_step::Error` wrapper and instead directly emit `ownable::Error` in `Ownable2Step`. #PR_ID
 
 ### Fixed
 
