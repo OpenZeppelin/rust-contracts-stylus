@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Correctly handle missing leaves for non-trivial merkle trees. #578
+- Handle missing leaves for non-trivial merkle trees. #578
 
 ## [v0.2.0-alpha.3] - 2025-01-30
 
