@@ -42,7 +42,7 @@ mod sol {
 
     sol! {
         /// Indicates that the default royalty set is invalid
-        /// (eg. (`numerator` / `denominator``) >= 1).
+        /// (eg. (`numerator` / `denominator`) >= 1).
         ///
         /// * `numerator` - Numerator in fraction of royalty.
         /// * `denomimator` - Denominator in fraction of royalty.
