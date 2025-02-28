@@ -11,7 +11,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{prelude::*, storage::StorageString, stylus_proc::public};
 
 use crate::{
-    token::erc721::{Error, IErc721},
+    token::erc721::{self, IErc721},
     utils::{
         introspection::erc165::{Erc165, IErc165},
         Metadata,
@@ -114,8 +114,8 @@ impl Erc721Metadata {
     pub fn token_uri(
         &self,
         token_id: U256,
-        erc721: &impl IErc721<Error = Error>,
-    ) -> Result<String, Error> {
+        erc721: &impl IErc721<Error = erc721::Error>,
+    ) -> Result<String, erc721::Error> {
         erc721.owner_of(token_id)?;
 
         let base_uri = self.base_uri();
