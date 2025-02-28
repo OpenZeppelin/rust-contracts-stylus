@@ -177,8 +177,8 @@ pub trait IErc3156FlashLender {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_fee(token, value)?)
+    /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, flash_mint::Error> {
+    ///     self.erc20_flash_mint.flash_fee(token, value)
     /// }
     /// ```
     fn flash_fee(
@@ -236,14 +236,14 @@ pub trait IErc3156FlashLender {
     ///     token: Address,
     ///     value: U256,
     ///     data: Bytes,
-    /// ) -> Result<bool, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_loan(
+    /// ) -> Result<bool, flash_mint::Error> {
+    ///     self.erc20_flash_mint.flash_loan(
     ///         receiver,
     ///         token,
     ///         value,
     ///         data,
     ///         &mut self.erc20,
-    ///     )?)
+    ///     )
     /// }
     /// ```
     fn flash_loan(

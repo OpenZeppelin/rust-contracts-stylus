@@ -35,20 +35,16 @@ impl Erc721MetadataExample {
         to: Address,
         token_id: U256,
     ) -> Result<(), erc721::Error> {
-        Ok(self.erc721._mint(to, token_id)?)
+        self.erc721._mint(to, token_id)
     }
 
     pub fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
-        Ok(self.erc721.burn(token_id)?)
+        self.erc721.burn(token_id)
     }
 
     #[selector(name = "tokenURI")]
     pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
-        Ok(self.uri_storage.token_uri(
-            token_id,
-            &self.erc721,
-            &self.metadata,
-        )?)
+        self.uri_storage.token_uri(token_id, &self.erc721, &self.metadata)
     }
 
     #[selector(name = "setTokenURI")]
