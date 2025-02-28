@@ -107,8 +107,8 @@ impl Erc721Metadata {
     ///
     /// ```rust,ignore
     /// #[selector(name = "tokenURI")]
-    /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-    ///     Ok(self.metadata.token_uri(token_id, &self.erc721)?)
+    /// pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
+    ///     self.metadata.token_uri(token_id, &self.erc721)
     /// }
     /// ```
     pub fn token_uri(

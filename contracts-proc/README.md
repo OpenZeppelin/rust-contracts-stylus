@@ -22,8 +22,10 @@ use openzeppelin_stylus_proc::interface_id;
 
 #[interface_id]
 pub trait IErc721 {
-    fn balance_of(&self, owner: Address) -> Result<U256, Vec<u8>>;
-    fn owner_of(&self, token_id: U256) -> Result<Address, Vec<u8>>;
+    type Error: Into<alloc::vec::Vec<u8>>;
+
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error>;
 
     // ...
 }
@@ -52,7 +54,7 @@ fn safe_transfer_from_with_data(
     to: Address,
     token_id: U256,
     data: Bytes,
-) -> Result<(), Vec<u8>>;
+) -> Result<(), Self::Error>;
 ```
 
 This ensures compatibility with Solidity's naming conventions.

@@ -82,12 +82,12 @@ impl Erc721UriStorage {
     ///
     /// ```rust,ignore
     /// #[selector(name = "tokenURI")]
-    /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-    ///     Ok(self.uri_storage.token_uri(
+    /// pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
+    ///     self.uri_storage.token_uri(
     ///        token_id,
     ///        &self.erc721,
     ///        &self.metadata,
-    ///    )?)
+    ///     )
     /// }
     pub fn token_uri(
         &self,
@@ -123,7 +123,7 @@ mod tests {
     use stylus_sdk::prelude::*;
 
     use super::Erc721UriStorage;
-    use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
+    use crate::token::erc721::{self, extensions::Erc721Metadata, Erc721};
 
     const TOKEN_ID: U256 = uint!(1_U256);
 
@@ -137,12 +137,8 @@ mod tests {
     #[public]
     impl Erc721MetadataExample {
         #[selector(name = "tokenURI")]
-        fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-            Ok(self.uri_storage.token_uri(
-                token_id,
-                &self.erc721,
-                &self.metadata,
-            )?)
+        fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
+            self.uri_storage.token_uri(token_id, &self.erc721, &self.metadata)
         }
 
         #[selector(name = "setTokenURI")]
