@@ -2358,4 +2358,14 @@ mod tests {
         let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
     }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc1155::supports_interface(
+            <Erc1155 as IErc1155>::INTERFACE_ID.into()
+        ));
+        assert!(Erc1155::supports_interface(
+            <Erc1155 as IErc165>::INTERFACE_ID.into()
+        ));
+    }
 }
