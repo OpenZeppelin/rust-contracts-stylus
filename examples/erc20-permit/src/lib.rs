@@ -5,7 +5,8 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
-    token::erc20::extensions::Erc20Permit, utils::cryptography::eip712::IEip712,
+    token::erc20::extensions::{permit, Erc20Permit},
+    utils::cryptography::eip712::IEip712,
 };
 use stylus_sdk::prelude::{entrypoint, public, storage};
 
@@ -31,8 +32,7 @@ impl Erc20PermitExample {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.erc20_permit.erc20._mint(account, value)?;
-        Ok(())
+    ) -> Result<(), permit::Error> {
+        self.erc20_permit.erc20._mint(account, value).map_err(|e| e.into())
     }
 }
