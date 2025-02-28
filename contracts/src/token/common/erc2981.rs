@@ -82,7 +82,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that the default royalty set is invalid
-    /// (eg. (`numerator` / `denominator``) >= 1).
+    /// (eg. (`numerator` / `denominator`) >= 1).
     InvalidDefaultRoyalty(ERC2981InvalidDefaultRoyalty),
 
     /// Indicates that the default royalty `receiver` is invalid.
