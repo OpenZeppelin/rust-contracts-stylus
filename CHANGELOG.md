@@ -15,10 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- 
+-
 
 ### Changed (Breaking)
 
+- Refactor `Erc20Permit` extension to be a composition of `Erc20` and `Nonces` contracts. #574
 - Remove `IErc165` implementations for ERC-20 contracts to align with Solidity versions. #570
 - Replace `VestingWallet::receive_ether` with dedicated `receive` function. #529
 - Extract `IAccessControl` trait from `AccessControl` contract. #527
