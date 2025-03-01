@@ -51,7 +51,7 @@ pub trait IErc165 {
 /// ```rust,ignore
 /// impl IErc165 for Erc20 {
 ///     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-///         crate::token::erc20::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+///         <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
 ///             || Erc165::supports_interface(interface_id)
 ///     }
 /// }

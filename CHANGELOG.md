@@ -10,19 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `Erc2981` contract. #508
-
-### Changed
-
 - Implement `Deref<Target = Erc1155>` for `Erc1155Supply` and `Deref<Target = Erc721>` for `Erc721Consecutive`. #569
 - Implement `Deref<Target = Ownable>` for `Ownable2Step` and `Deref<Target = Erc20>` for `Erc20Permit`. #552
 
+### Changed
+
+- 
+
 ### Changed (Breaking)
 
+- Remove `IErc165` implementations for ERC-20 contracts to align with Solidity versions. #570
 - Replace `VestingWallet::receive_ether` with dedicated `receive` function. #529
 - Extract `IAccessControl` trait from `AccessControl` contract. #527
 
 ### Fixed
 
+- `IErc165` implementations for `Erc721Metadata` and `Erc721Enumerable` now support ERC-165 interface ID. #570
 - Handle missing leaves for non-trivial merkle trees. #578
 
 ## [v0.2.0-alpha.3] - 2025-01-30
