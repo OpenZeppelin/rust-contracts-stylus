@@ -106,7 +106,7 @@ pub trait IErc20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
     /// * `value` - The amount of tokens to deposit.
-    ///  
+    ///
     /// # Errors
     ///
     /// * If the sender address is `contract:address()` or invalid,
