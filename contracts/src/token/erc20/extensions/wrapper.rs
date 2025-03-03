@@ -237,19 +237,50 @@ impl Erc20Wrapper {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::address;
-    use stylus_sdk::prelude::storage;
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::*;
 
-    use super::{Erc20Wrapper, IErc20Wrapper};
+    use super::*;
 
     #[storage]
     struct Erc20WrapperTestExample {
         wrapper: Erc20Wrapper,
+        erc20: Erc20,
     }
 
+    #[public]
+    impl Erc20WrapperTestExample {
+        fn underlying(&self) -> Address {
+            self.wrapper.underlying()
+        }
+
+        fn deposit_for(
+            &mut self,
+            account: Address,
+            value: U256,
+        ) -> Result<bool, Error> {
+            self.wrapper.deposit_for(account, value, &mut self.erc20)
+        }
+
+        fn withdraw_to(
+            &mut self,
+            account: Address,
+            value: U256,
+        ) -> Result<bool, Error> {
+            self.wrapper.withdraw_to(account, value, &mut self.erc20)
+        }
+    }
+
+    unsafe impl TopLevelStorage for Erc20WrapperTestExample {}
     #[motsu::test]
-    fn underlying_works(contract: Erc20WrapperTestExample) {
+    fn underlying_works(
+        contract: Contract<Erc20WrapperTestExample>,
+        alice: Address,
+    ) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
-        contract.wrapper.underlying_address.set(asset);
-        assert_eq!(contract.wrapper.underlying(), asset);
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying_address.set(asset);
+        });
+        assert_eq!(contract.sender(alice).wrapper.underlying(), asset);
     }
 }
