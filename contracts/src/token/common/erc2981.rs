@@ -322,9 +322,7 @@ mod tests {
     use stylus_sdk::alloy_primitives::{uint, Address, U256};
 
     use super::*;
-    use crate::{
-        token::common::erc2981::IErc2981, utils::introspection::erc165::IErc165,
-    };
+    use crate::utils::introspection::erc165::IErc165;
 
     const FEE_NUMERATOR: U96 = uint!(9000_U96);
     const TOKEN_ID: U256 = uint!(1_U256);
