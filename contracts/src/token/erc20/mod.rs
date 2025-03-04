@@ -6,7 +6,7 @@
 //! [`Erc20`] applications.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
@@ -14,9 +14,8 @@ use stylus_sdk::{
     storage::{StorageMap, StorageU256},
 };
 
-use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
-    math::storage::{AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked},
+use crate::utils::math::storage::{
+    AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked,
 };
 
 pub mod extensions;
@@ -311,13 +310,6 @@ impl IErc20 for Erc20 {
     }
 }
 
-impl IErc165 for Erc20 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
-    }
-}
-
 impl Erc20 {
     /// Sets a `value` number of tokens as the allowance of `spender` over the
     /// caller's tokens.
@@ -585,7 +577,6 @@ mod tests {
     use stylus_sdk::prelude::*;
 
     use super::{Erc20, Error, IErc20};
-    use crate::utils::introspection::erc165::IErc165;
 
     unsafe impl TopLevelStorage for Erc20 {}
 
@@ -942,10 +933,6 @@ mod tests {
     fn interface_id() {
         let actual = <Erc20 as IErc20>::INTERFACE_ID;
         let expected = 0x36372b07;
-        assert_eq!(actual, expected);
-
-        let actual = <Erc20 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
     }
 }

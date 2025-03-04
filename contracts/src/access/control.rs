@@ -242,7 +242,6 @@ pub trait IAccessControl {
 impl IAccessControl for AccessControl {
     type Error = Error;
 
-    #[must_use]
     fn has_role(&self, role: B256, account: Address) -> bool {
         self.roles.getter(role).has_role.get(account)
     }
@@ -251,7 +250,6 @@ impl IAccessControl for AccessControl {
         self._check_role(role, self.vm().msg_sender())
     }
 
-    #[must_use]
     fn get_role_admin(&self, role: B256) -> B256 {
         *self.roles.getter(role).admin_role
     }

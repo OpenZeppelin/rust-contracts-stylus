@@ -14,6 +14,7 @@ sol! {
     error MerkleProofInvalidMultiProofLength();
     error MerkleProofInvalidRootChild();
     error MerkleProofInvalidTotalHashes();
+    error MerkleProofNoLeaves();
 }
 
 #[derive(SolidityError)]
@@ -21,6 +22,7 @@ pub enum VerifierError {
     InvalidProofLength(MerkleProofInvalidMultiProofLength),
     InvalidRootChild(MerkleProofInvalidRootChild),
     InvalidTotalHashes(MerkleProofInvalidTotalHashes),
+    NoLeaves(MerkleProofNoLeaves),
 }
 
 impl core::convert::From<merkle::MultiProofError> for VerifierError {
@@ -39,13 +41,16 @@ impl core::convert::From<merkle::MultiProofError> for VerifierError {
                     MerkleProofInvalidTotalHashes {},
                 )
             }
+            merkle::MultiProofError::NoLeaves => {
+                VerifierError::NoLeaves(MerkleProofNoLeaves {})
+            }
         }
     }
 }
 
 #[entrypoint]
 #[storage]
-struct VerifierContract {}
+struct VerifierContract;
 
 #[public]
 impl VerifierContract {
