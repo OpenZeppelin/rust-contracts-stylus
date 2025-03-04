@@ -18,8 +18,7 @@ use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
     function_selector,
-    prelude::storage,
-    storage::TopLevelStorage,
+    prelude::{storage, *},
     stylus_proc::{public, SolidityError},
     types::AddressVM,
 };

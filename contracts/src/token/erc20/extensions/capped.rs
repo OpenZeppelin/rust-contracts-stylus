@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{
-    prelude::storage,
+    prelude::*,
     storage::StorageU256,
     stylus_proc::{public, SolidityError},
 };

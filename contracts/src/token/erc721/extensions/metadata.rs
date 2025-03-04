@@ -7,9 +7,7 @@ use alloc::{
 
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{
-    prelude::storage, storage::StorageString, stylus_proc::public,
-};
+use stylus_sdk::{prelude::*, storage::StorageString, stylus_proc::public};
 
 use crate::{
     token::erc721::{Error, IErc721},

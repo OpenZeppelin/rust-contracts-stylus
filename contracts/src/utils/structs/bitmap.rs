@@ -15,7 +15,7 @@
 //! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
 use alloy_primitives::{uint, U256};
 use stylus_sdk::{
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
 

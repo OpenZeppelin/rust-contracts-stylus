@@ -14,7 +14,7 @@ use openzeppelin_stylus::{
     },
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]

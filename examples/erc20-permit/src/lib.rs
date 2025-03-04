@@ -8,7 +8,7 @@ use openzeppelin_stylus::{
     token::erc20::{extensions::Erc20Permit, Erc20},
     utils::{cryptography::eip712::IEip712, nonces::Nonces},
 };
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]

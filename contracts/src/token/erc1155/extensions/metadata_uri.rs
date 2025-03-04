@@ -8,9 +8,7 @@ use alloc::{string::String, vec::Vec};
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    prelude::storage, storage::StorageString, stylus_proc::public,
-};
+use stylus_sdk::{prelude::*, storage::StorageString, stylus_proc::public};
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 

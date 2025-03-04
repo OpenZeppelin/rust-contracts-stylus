@@ -3,7 +3,10 @@
 use alloc::string::String;
 
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, storage};
+use stylus_sdk::{
+    prelude::*,
+    stylus_proc::{public, storage},
+};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;

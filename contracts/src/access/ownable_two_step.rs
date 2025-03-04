@@ -23,7 +23,7 @@ use alloy_primitives::Address;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::StorageAddress,
     stylus_proc::{public, SolidityError},
 };

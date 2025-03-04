@@ -11,7 +11,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256},
     stylus_proc::{public, SolidityError},
 };

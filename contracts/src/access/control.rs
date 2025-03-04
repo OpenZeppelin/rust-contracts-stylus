@@ -46,7 +46,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::{StorageBool, StorageFixedBytes, StorageMap},
     stylus_proc::{public, SolidityError},
 };

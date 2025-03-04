@@ -18,8 +18,7 @@ use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
     block,
-    prelude::{storage, StorageType},
-    storage::TopLevelStorage,
+    prelude::*,
     stylus_proc::{public, SolidityError},
 };
 

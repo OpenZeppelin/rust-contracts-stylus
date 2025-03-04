@@ -19,7 +19,7 @@ use alloc::vec::Vec;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::StorageBool,
     stylus_proc::{public, SolidityError},
 };

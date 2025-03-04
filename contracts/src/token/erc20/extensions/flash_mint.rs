@@ -23,7 +23,7 @@ use stylus_sdk::{
     call::Call,
     contract, msg,
     prelude::*,
-    storage::{StorageAddress, StorageU256, TopLevelStorage},
+    storage::{StorageAddress, StorageU256},
 };
 
 use crate::token::erc20::{self, Erc20, IErc20};

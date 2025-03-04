@@ -7,7 +7,7 @@ use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{
     evm,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageString},
 };
 

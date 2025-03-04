@@ -15,7 +15,7 @@ use alloy_primitives::{uint, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256, StorageVec},
     stylus_proc::{public, SolidityError},
 };

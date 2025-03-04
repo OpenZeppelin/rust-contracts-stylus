@@ -16,7 +16,7 @@ pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::StorageAddress,
     stylus_proc::{public, SolidityError},
 };

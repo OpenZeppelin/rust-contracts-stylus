@@ -12,8 +12,8 @@ pub use sol::*;
 use stylus_sdk::{
     call::Call,
     contract, evm, msg,
-    prelude::storage,
-    storage::{StorageAddress, StorageU8, TopLevelStorage},
+    prelude::*,
+    storage::{StorageAddress, StorageU8},
     stylus_proc::SolidityError,
 };
 

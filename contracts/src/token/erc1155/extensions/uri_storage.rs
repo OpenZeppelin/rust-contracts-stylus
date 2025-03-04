@@ -6,7 +6,7 @@ use alloc::string::String;
 use alloy_primitives::U256;
 use stylus_sdk::{
     evm,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageString},
 };
 
