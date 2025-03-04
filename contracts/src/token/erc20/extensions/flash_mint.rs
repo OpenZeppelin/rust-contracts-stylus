@@ -17,6 +17,8 @@
 // TODO: once ERC20Votes is implemented, include it in the comment above next to
 // ERC20Capped.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
 use stylus_sdk::{
     abi::Bytes,
