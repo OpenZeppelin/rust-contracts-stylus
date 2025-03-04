@@ -22,7 +22,11 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{prelude::*, storage::*, stylus_proc::SolidityError};
+use stylus_sdk::{
+    prelude::*,
+    storage::{GlobalStorage, StorageAddress, StorageKey, StorageMap},
+    stylus_proc::SolidityError,
+};
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},
