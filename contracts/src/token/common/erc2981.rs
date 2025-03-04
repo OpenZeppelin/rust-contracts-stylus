@@ -17,16 +17,12 @@
 //! Marketplaces are expected to voluntarily pay royalties together with sales,
 //! but note that this standard is not yet widely supported.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    prelude::{public, storage, Erase, TopLevelStorage},
-    storage::{StorageAddress, StorageMap},
-    stylus_proc::SolidityError,
-};
+use stylus_sdk::{prelude::*, storage::*, stylus_proc::SolidityError};
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},
