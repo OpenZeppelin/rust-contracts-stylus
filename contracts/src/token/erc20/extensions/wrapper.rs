@@ -4,52 +4,45 @@
 //! number of "wrapped tokens". This is useful in conjunction with other
 //! modules.
 //!
-//! WARNING: Any mechanism in which the underlying token changes the {balanceOf}
-//! of an account without an explicit transfer may desynchronize this contract's
-//! supply and its underlying balance. Please exercise caution when wrapping
-//! tokens that may undercollateralize the wrapper (i.e. wrapper's total supply
-//! is higher than its underlying balance). See {_recover} for recovering value
-//! accrued to the wrapper.
+//! WARNING: Any mechanism in which the underlying token changes the
+//! [`IErc20::balance_of`] of an account without an explicit transfer may
+//! desynchronize this contract's supply and its underlying balance. Please
+//! exercise caution when wrapping tokens that may undercollateralize the
+//! wrapper (i.e. wrapper's total supply is higher than its underlying balance).
+//! See [`Erc20Wrapper::_recover`] for recovering value accrued to the wrapper.
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, U8};
 use alloy_sol_macro::sol;
 use stylus_sdk::{
     call::Call,
     contract, msg,
-    prelude::storage,
-    storage::{StorageAddress, TopLevelStorage},
+    prelude::*,
+    storage::{StorageAddress, StorageU8, TopLevelStorage},
     stylus_proc::SolidityError,
 };
 
 use crate::token::erc20::{
     self,
     utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
-    Erc20,
+    Erc20, IErc20,
 };
 
 sol! {
-    /// Indicates that he address is not a valid ERC-20 token.
+    /// Indicates that the address is not a valid ERC-20 token.
     ///
-    /// * `address` - Address of the invalid underling ERC-20 token.
+    /// * `address` - Address of the invalid ERC-20 token.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidUnderlying(address token);
 
-    /// Indicates that the address is not an Invalid Sender address.
+    /// Indicates that the address is not a valid sender address.
     ///
-    /// * `sender` - Address  is an invalid sender.
+    /// * `sender` - Address of the invalid sender.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidSender(address sender);
 
-    /// Indicates that The address is not a valid Invalid Asset.
-    ///
-    /// * `asset` - Address of the invalid  address of the token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error InvalidAsset(address asset);
-
-    /// Indicates that the address is not an invalid receiver addresss.
+    /// Indicates that the address is not a valid receiver addresss.
     ///
     /// * `receiver` - Address of the invalid receiver.
     #[derive(Debug)]
@@ -73,9 +66,6 @@ pub enum Error {
     /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
 
-    /// The address is not a valid ERC-20 token.
-    InvalidAsset(InvalidAsset),
-
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
 }
@@ -85,7 +75,8 @@ pub struct Erc20Wrapper {
     /// Token Address of the  underline token
     #[allow(clippy::used_underscore_binding)]
     pub(crate) underlying_address: StorageAddress,
-
+    /// Token decimals.
+    pub(crate) underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract
     safe_erc20: SafeErc20,
 }
@@ -95,24 +86,41 @@ pub trait IErc20Wrapper {
     /// The error type associated to the` trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// Returns the address of the underlying token that is been wrapped.
+    /// Returns the number of decimals used to get its user representation.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    fn decimals(&self) -> U8;
+
+    /// Returns the address of the underlying ERC-20 token that is being
+    /// wrapped.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn underlying(&self) -> Address;
 
     /// Allow a user to deposit underlying tokens and mint the corresponding
-    /// number of wrapped token
+    /// number of wrapped tokens.
     ///
     /// Arguments:
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
     /// * `value` - The amount of tokens to deposit.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
-    /// * If the sender address is `contract:address()` or invalid,
-    ///   [`Error::InvalidSender`] is returned.
-    /// * If the receiver address is `contract:address()` or invalid,
-    ///   [`Error::InvalidReceiver`] is returned.
+    /// * [`Error::InvalidSender`] - If the `msg::sender()`'s address is the
+    ///   `contract:address()`.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is a
+    ///   `contract:address()`.
+    /// * [`Error::SafeErc20`] - If caller lacks sufficient balance or hasn't
+    ///   approved enough tokens to the [`Erc20Wrapper`] contract.
+    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
+    ///   operation.
     fn deposit_for(
         &mut self,
         account: Address,
@@ -126,14 +134,18 @@ pub trait IErc20Wrapper {
     /// Arguments:
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `account` - The account to withdraw tokens to.
+    /// * `account` - The account to withdraw tokens from.
     /// * `value` - The amount of tokens to withdraw.
-    /// * `erc20` - A mutable reference to the Erc20 contract.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
-    /// * If the receiver address is `contract:address()` or invalid,
-    ///   [`Error::InvalidReceiver`] is returned.
+    /// * [`Error::InvalidReceiver`] - If the `account`'s address is a
+    ///   `contract:address()`.
+    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_burn`]
+    ///   operation.
+    /// * [`Error::SafeErc20`] - If the [`Erc20Wrapper`] contract lacks
+    ///   sufficient balance.
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -150,6 +162,10 @@ unsafe impl TopLevelStorage for Erc20Wrapper {}
 impl IErc20Wrapper for Erc20Wrapper {
     type Error = Error;
 
+    fn decimals(&self) -> U8 {
+        self.underlying_decimals.get()
+    }
+
     fn underlying(&self) -> Address {
         self.underlying_address.get()
     }
@@ -159,27 +175,25 @@ impl IErc20Wrapper for Erc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Error> {
+    ) -> Result<bool, Self::Error> {
+        let contract_address = contract::address();
         let sender = msg::sender();
 
-        if sender == contract::address() {
-            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
-                receiver: account,
-            }));
+        if sender == contract_address {
+            return Err(ERC20InvalidSender { sender }.into());
         }
 
-        if account == contract::address() {
-            return Err(Error::InvalidSender(ERC20InvalidSender {
-                sender: contract::address(),
-            }));
+        if account == contract_address {
+            return Err(ERC20InvalidReceiver { receiver: account }.into());
         }
 
         self.safe_erc20.safe_transfer_from(
             self.underlying(),
             sender,
-            contract::address(),
+            contract_address,
             value,
         )?;
+
         erc20._mint(account, value)?;
 
         Ok(true)
@@ -190,46 +204,55 @@ impl IErc20Wrapper for Erc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Error> {
+    ) -> Result<bool, Self::Error> {
         if account == contract::address() {
-            return Err(Error::InvalidReceiver(ERC20InvalidReceiver {
-                receiver: account,
-            }));
+            return Err(ERC20InvalidReceiver { receiver: account }.into());
         }
-        erc20._burn(account, value)?;
+
+        erc20._burn(msg::sender(), value)?;
+
         self.safe_erc20.safe_transfer(self.underlying(), account, value)?;
+
         Ok(true)
     }
 }
 
 impl Erc20Wrapper {
-    /// Mints wrapped tokens to cover any underlying tokens that might have been
-    /// mistakenly transferred or acquired through rebasing mechanisms.
+    /// Mint wrapped token to cover any underlying tokens that would have been
+    /// transferred by mistake or acquired from rebasing mechanisms.
     ///
-    /// This is an internal function that can be exposed with access control if
-    /// required.
+    /// Internal function that can be exposed with access control if desired.
     ///
     /// Arguments:
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to mint tokens to.
-    /// * `erc20` - A mutable reference to the Erc20 contract.
+    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
-    /// If the external call for balance of fails , then the error
-    /// [`Error::InvalidAsset`] is returned.
+    /// * [`Error::InvalidUnderlying`]  - If the external call for
+    ///   [`IErc20::balance_of`] fails.
+    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
+    ///   operation.
     pub fn _recover(
         &mut self,
         account: Address,
         erc20: &mut Erc20,
     ) -> Result<U256, Error> {
+        let contract_address = contract::address();
+
         let underline_token = IErc20Solidity::new(self.underlying());
-        let value = underline_token
-            .balance_of(Call::new_in(self), contract::address())
-            .map_err(|_| InvalidAsset { asset: contract::address() })?;
+
+        let underlying_balance = underline_token
+            .balance_of(Call::new_in(self), contract_address)
+            .map_err(|_| ERC20InvalidUnderlying { token: contract_address })?;
+
+        let value = underlying_balance - erc20.total_supply();
+
         erc20._mint(account, value)?;
-        Ok(U256::from(value))
+
+        Ok(value)
     }
 }
 
