@@ -2,6 +2,7 @@
 
 use alloc::{
     string::{String, ToString},
+    vec,
     vec::Vec,
 };
 

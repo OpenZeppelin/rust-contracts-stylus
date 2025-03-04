@@ -9,7 +9,7 @@
 //! interfere with enumerability and should not be used together with
 //! [`Erc721Enumerable`].
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;

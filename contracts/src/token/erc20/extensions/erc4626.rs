@@ -7,7 +7,7 @@
 //! would affect the "shares" token represented by this contract and not the
 //! "assets" token which is an independent contract.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256, U8};
 pub use sol::*;

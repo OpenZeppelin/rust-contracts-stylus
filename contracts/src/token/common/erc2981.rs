@@ -17,7 +17,7 @@
 //! Marketplaces are expected to voluntarily pay royalties together with sales,
 //! but note that this standard is not yet widely supported.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;

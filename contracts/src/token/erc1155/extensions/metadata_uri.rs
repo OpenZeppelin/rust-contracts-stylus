@@ -3,7 +3,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
 
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;

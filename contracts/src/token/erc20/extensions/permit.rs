@@ -12,7 +12,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2612
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;

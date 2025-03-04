@@ -1,7 +1,7 @@
 //! ERC-721 token with storage-based token URI management.
 //!
 //! It also implements IERC4096, which is an ERC-721 Metadata Update Extension.
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::U256;
 pub use sol::*;
