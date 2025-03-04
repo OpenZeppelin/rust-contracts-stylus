@@ -24,7 +24,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     prelude::*,
-    storage::{GlobalStorage, StorageAddress, StorageKey, StorageMap},
+    storage::{StorageAddress, StorageMap},
     stylus_proc::SolidityError,
 };
 
