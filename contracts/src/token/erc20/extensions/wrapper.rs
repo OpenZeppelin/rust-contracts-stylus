@@ -74,7 +74,7 @@ pub enum Error {
 pub struct Erc20Wrapper {
     /// Token Address of the  underline token
     #[allow(clippy::used_underscore_binding)]
-    pub(crate) underlying_address: StorageAddress,
+    pub(crate) underlying: StorageAddress,
     /// Token decimals.
     pub(crate) underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract
@@ -91,6 +91,14 @@ pub trait IErc20Wrapper {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn decimals(&self) -> U8 {
+    ///     self.erc20_wrapper.decimals()
+    /// }
+    /// ```
     fn decimals(&self) -> U8;
 
     /// Returns the address of the underlying ERC-20 token that is being
@@ -99,6 +107,14 @@ pub trait IErc20Wrapper {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn underlying(&self) -> Address {
+    ///     self.erc20_wrapper.underlying()
+    /// }
+    /// ```
     fn underlying(&self) -> Address;
 
     /// Allow a user to deposit underlying tokens and mint the corresponding
@@ -121,6 +137,18 @@ pub trait IErc20Wrapper {
     ///   approved enough tokens to the [`Erc20Wrapper`] contract.
     /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
     ///   operation.
+    ///
+    /// # Panics
+    ///
+    /// * If [`Erc20::_mint`] operation panics.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn deposit_for(&mut self, account: Address, value: U256) -> Result<bool, Vec<u8>> {
+    ///     Ok(self.erc20_wrapper.deposit_for(account, value, &mut self.erc20)?)
+    /// }
+    /// ```
     fn deposit_for(
         &mut self,
         account: Address,
@@ -146,6 +174,14 @@ pub trait IErc20Wrapper {
     ///   operation.
     /// * [`Error::SafeErc20`] - If the [`Erc20Wrapper`] contract lacks
     ///   sufficient balance.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn withdraw_to(&mut self, account: Address, value: U256) -> Result<bool, Vec<u8>> {
+    ///     Ok(self.erc20_wrapper.withdraw_to(account, value, &mut self.erc20)?)
+    /// }
+    /// ```
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -167,7 +203,7 @@ impl IErc20Wrapper for Erc20Wrapper {
     }
 
     fn underlying(&self) -> Address {
-        self.underlying_address.get()
+        self.underlying.get()
     }
 
     fn deposit_for(
@@ -302,7 +338,7 @@ mod tests {
     ) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
         contract.init(alice, |contract| {
-            contract.wrapper.underlying_address.set(asset);
+            contract.wrapper.underlying.set(asset);
         });
         assert_eq!(contract.sender(alice).wrapper.underlying(), asset);
     }
