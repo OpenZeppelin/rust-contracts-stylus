@@ -3097,8 +3097,9 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 
 [[package]]
 name = "motsu"
-version = "0.4.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build/stylus-v0.8#30e9a3b5e717093e0e8a769dcd0efae5247d3bd3"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "468405089ee996017d397619c4a1b00ee91bb257ee0f45adad51a8cb95f639ef"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3112,8 +3113,9 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.4.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers?branch=build/stylus-v0.8#30e9a3b5e717093e0e8a769dcd0efae5247d3bd3"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d89892fb2937177554806b600de553eb21f6e4568515777084c58918541f891"
 dependencies = [
  "proc-macro2",
  "quote",
