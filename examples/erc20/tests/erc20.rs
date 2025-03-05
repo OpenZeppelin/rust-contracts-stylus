@@ -1376,6 +1376,7 @@ async fn supports_interface(alice: Account) -> Result<()> {
         .await?
         .address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
+
     let invalid_interface_id: u32 = 0xffffffff;
     let supports_interface = contract
         .supportsInterface(invalid_interface_id.into())
