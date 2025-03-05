@@ -46,9 +46,6 @@ pub enum Opt {
     CacheWasmOpt,
 }
 
-type ArbTxReceipt =
-    WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Receipt<Log>>>>;
-
 async fn deploy(
     account: &Account,
     contract_name: &str,
