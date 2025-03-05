@@ -9,9 +9,7 @@ use openzeppelin_crypto::{
     KeccakBuilder,
 };
 use stylus_sdk::{
-    alloy_sol_types::sol,
-    prelude::{entrypoint, public, storage},
-    stylus_proc::SolidityError,
+    alloy_sol_types::sol, prelude::*, stylus_proc::SolidityError,
 };
 
 sol! {

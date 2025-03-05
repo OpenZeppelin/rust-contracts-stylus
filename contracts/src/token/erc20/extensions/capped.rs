@@ -5,12 +5,12 @@
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{
-    prelude::storage,
+    prelude::*,
     storage::StorageU256,
     stylus_proc::{public, SolidityError},
 };

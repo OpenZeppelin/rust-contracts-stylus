@@ -14,12 +14,12 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::StorageBool,
     stylus_proc::{public, SolidityError},
 };

@@ -39,14 +39,14 @@
 //! taken to secure accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, B256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::{StorageBool, StorageFixedBytes, StorageMap},
     stylus_proc::{public, SolidityError},
 };

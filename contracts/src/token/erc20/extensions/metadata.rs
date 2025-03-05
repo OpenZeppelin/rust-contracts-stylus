@@ -1,16 +1,17 @@
 //! Optional Metadata of the ERC-20 standard.
 
-use alloc::string::String;
+use alloc::{string::String, vec, vec::Vec};
 
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, storage};
+use stylus_sdk::{
+    prelude::*,
+    stylus_proc::{public, storage},
+};
+
+use crate::utils::Metadata;
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
-
-use alloc::vec::Vec;
-
-use crate::utils::Metadata;
 
 /// State of an [`Erc20Metadata`] contract.
 #[storage]
