@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "access-control-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1186,7 +1186,7 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
 name = "basic-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy-primitives",
  "openzeppelin-stylus",
@@ -1195,7 +1195,7 @@ dependencies = [
 
 [[package]]
 name = "basic-example-script"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1206,7 +1206,7 @@ dependencies = [
 
 [[package]]
 name = "benches"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1886,7 +1886,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2003,7 +2003,7 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "erc1155-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2016,7 +2016,7 @@ dependencies = [
 
 [[package]]
 name = "erc1155-metadata-uri-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2029,7 +2029,7 @@ dependencies = [
 
 [[package]]
 name = "erc1155-supply-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2042,7 +2042,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2055,7 +2055,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-flash-mint-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2068,7 +2068,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-permit-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2082,7 +2082,7 @@ dependencies = [
 
 [[package]]
 name = "erc4626-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2095,7 +2095,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-consecutive-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2110,7 +2110,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2124,7 +2124,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-metadata-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -3046,7 +3046,7 @@ dependencies = [
 
 [[package]]
 name = "merkle-proofs-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3272,7 +3272,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "educe",
  "hex-literal",
@@ -3285,7 +3285,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",
@@ -3310,7 +3310,7 @@ dependencies = [
 
 [[package]]
 name = "ownable-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -3323,7 +3323,7 @@ dependencies = [
 
 [[package]]
 name = "ownable-two-step-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -3473,7 +3473,7 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 
 [[package]]
 name = "poseidon-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -4017,7 +4017,7 @@ checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
 
 [[package]]
 name = "safe-erc20-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -4898,7 +4898,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vesting-wallet-example"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
