@@ -367,7 +367,7 @@ mod tests {
     //! <https://github.com/OpenZeppelin/merkle-tree>.
     use hex_literal::hex;
     use proptest::{prelude::*, prop_compose};
-    use rand::{thread_rng, RngCore};
+    use rand::{rng, RngCore};
 
     use super::{Bytes32, KeccakBuilder, Verifier};
     use crate::hash::{commutative_hash_pair, BuildHasher};
@@ -681,7 +681,7 @@ mod tests {
         };
 
         let mut random_bytes = [0u8; 32];
-        thread_rng().fill_bytes(&mut random_bytes);
+        rng().fill_bytes(&mut random_bytes);
 
         let fill = Bytes32::from(random_bytes);
         let proof = [hash_b, fill, hash_cd];
@@ -717,7 +717,7 @@ mod tests {
         };
 
         let mut random_bytes = [0u8; 32];
-        thread_rng().fill_bytes(&mut random_bytes);
+        rng().fill_bytes(&mut random_bytes);
 
         let fill = Bytes32::from(random_bytes);
         let proof = [hash_b, fill, hash_cd];
