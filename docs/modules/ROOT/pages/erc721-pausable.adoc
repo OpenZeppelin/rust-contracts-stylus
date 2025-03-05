@@ -7,7 +7,7 @@ Useful for scenarios such as preventing trades until the end of an evaluation pe
 [[usage]]
 == Usage
 
-In order to make your ERC721 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC721 token functions as follows:
+In order to make your ERC721 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC721 token functions as follows:
 
 [source,rust]
 ----
