@@ -1,12 +1,6 @@
 use std::process::Command;
 
-use alloy::{
-    primitives::Address,
-    rpc::types::{
-        serde_helpers::WithOtherFields, AnyReceiptEnvelope, Log, Receipt,
-        TransactionReceipt,
-    },
-};
+use alloy::primitives::Address;
 use alloy_primitives::U128;
 use e2e::{Account, ReceiptExt};
 use eyre::WrapErr;
