@@ -9,13 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Erc2981` contract. #508
-- Implement `Deref<Target = Erc1155>` for `Erc1155Supply` and `Deref<Target = Erc721>` for `Erc721Consecutive`. #569
-- Implement `Deref<Target = Ownable>` for `Ownable2Step` and `Deref<Target = Erc20>` for `Erc20Permit`. #552
+-
 
 ### Changed
 
 -
+
+### Changed (Breaking)
+
+-
+
+### Fixed
+
+-
+
+## [v0.2.0-alpha.4] - 2025-03-05
+
+### Added
+
+- `Erc2981` contract. #508
+- Implement `Deref<Target = Erc1155>` for `Erc1155Supply` and `Deref<Target = Erc721>` for `Erc721Consecutive`. #569
+- Implement `Deref<Target = Ownable>` for `Ownable2Step`. #552
 
 ### Changed (Breaking)
 
