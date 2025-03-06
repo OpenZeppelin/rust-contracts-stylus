@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::ECDSA;
-use alloy::primitives::{address, b256, uint, Address, Parity, B256};
+use alloy::primitives::{address, b256, uint, Address, B256};
 use e2e::{Account, ReceiptExt, Revert};
 use eyre::Result;
 use openzeppelin_stylus::utils::cryptography::ecdsa::SIGNATURE_S_UPPER_BOUND;
@@ -108,10 +108,7 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
     let contract = ECDSA::new(contract_addr, &alice.wallet);
 
     let signature = alice.sign_hash(&HASH).await;
-    let parity: Parity = signature.v().into();
-    let v_byte = parity
-        .y_parity_byte_non_eip155()
-        .expect("should be non-EIP155 signature");
+    let v_byte = signature.v() as u8 + 27;
 
     let ECDSA::recoverReturn { recovered } = contract
         .recover(HASH, v_byte, signature.r().into(), signature.s().into())
