@@ -17,7 +17,7 @@ struct PoseidonExample;
 
 #[public]
 impl PoseidonExample {
-    pub fn hash(&mut self, inputs: [U256; 2]) -> Result<U256, Vec<u8>> {
+    pub fn hash(&mut self, inputs: [U256; 2]) -> U256 {
         let mut hasher = Poseidon2::<BN256Params, FpBN256>::new();
 
         for input in inputs.iter() {
@@ -30,6 +30,6 @@ impl PoseidonExample {
         let hash = hasher.squeeze();
         let hash = hash.into_bigint().into_bytes_le();
 
-        Ok(U256::from_le_slice(&hash))
+        U256::from_le_slice(&hash)
     }
 }
