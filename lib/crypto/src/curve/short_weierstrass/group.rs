@@ -389,7 +389,6 @@ impl<P: SWCurveConfig, T: Borrow<Affine<P>>> AddAssign<T> for Projective<P> {
                 // Y3 = r*(V-X3) + 2*Y1*J
                 v -= &self.x;
                 self.y.double_in_place();
-                // TODO#q: we need sum of products for add assign
                 self.y = P::BaseField::sum_of_products(&[r, self.y], &[v, j]);
 
                 // Z3 = 2 * Z1 * H;

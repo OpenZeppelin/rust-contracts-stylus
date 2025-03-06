@@ -152,8 +152,6 @@ pub trait Field:
         res.unwrap_or(Self::ONE)
     }
 
-    // TODO#q: add sum of products
-    /*
     /// Returns `sum([a_i * b_i])`.
     #[inline]
     fn sum_of_products<const T: usize>(a: &[Self; T], b: &[Self; T]) -> Self {
@@ -163,5 +161,4 @@ pub trait Field:
         }
         sum
     }
-    */
 }
