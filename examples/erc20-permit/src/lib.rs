@@ -20,6 +20,7 @@ struct Erc20PermitExample {
     #[borrow]
     pub erc20_permit: Erc20Permit<Eip712>,
 }
+
 #[storage]
 struct Eip712 {}
 
