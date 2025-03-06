@@ -1,4 +1,4 @@
-#![cfg(feature = "e2e")]
+// #![cfg(feature = "e2e")]
 
 use abi::Erc20Permit;
 use alloy::{
@@ -64,6 +64,10 @@ fn permit_struct_hash(
     )))
 }
 
+// I was unable to find a function in alloy that converts `v` into [non-eip155
+// value], so I implemented the logic manually.
+//
+// [non-eip155 value]: https://eips.ethereum.org/EIPS/eip-155
 fn to_non_eip155_v(v: bool) -> u8 {
     v as u8 + 27
 }
