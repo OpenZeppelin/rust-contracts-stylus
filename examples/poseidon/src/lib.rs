@@ -9,7 +9,7 @@ use openzeppelin_crypto::{
     field::{instance::FpBN256, prime::PrimeField},
     poseidon2::{instance::bn256::BN256Params, Poseidon2},
 };
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]

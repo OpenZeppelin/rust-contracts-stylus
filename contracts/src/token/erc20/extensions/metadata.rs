@@ -1,26 +1,27 @@
 //! Optional Metadata of the ERC-20 standard.
 
-use alloc::string::String;
+use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::FixedBytes;
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::stylus_proc::{public, storage};
+use stylus_sdk::{
+    alloy_primitives::FixedBytes,
+    prelude::*,
+    stylus_proc::{public, storage},
+};
 
-use crate::utils::introspection::erc165::IErc165;
+use crate::utils::{
+    introspection::erc165::{Erc165, IErc165},
+    Metadata,
+};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: u8 = 18;
-
-use alloc::vec::Vec;
-
-use crate::utils::Metadata;
 
 /// State of an [`Erc20Metadata`] contract.
 #[storage]
 pub struct Erc20Metadata {
     /// [`Metadata`] contract.
-    #[allow(clippy::used_underscore_binding)]
-    pub _metadata: Metadata,
+    pub(crate) metadata: Metadata,
 }
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
@@ -64,11 +65,11 @@ pub trait IErc20Metadata {
 #[public]
 impl IErc20Metadata for Erc20Metadata {
     fn name(&self) -> String {
-        self._metadata.name()
+        self.metadata.name()
     }
 
     fn symbol(&self) -> String {
-        self._metadata.symbol()
+        self.metadata.symbol()
     }
 
     fn decimals(&self) -> u8 {
@@ -80,17 +81,31 @@ impl IErc165 for Erc20Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20Metadata>::INTERFACE_ID
             == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use crate::token::erc20::extensions::{Erc20Metadata, IErc20Metadata};
+    use super::{Erc20Metadata, IErc165, IErc20Metadata};
 
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
         let expected = 0xa219a025;
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc20Metadata::supports_interface(
+            <Erc20Metadata as IErc20Metadata>::INTERFACE_ID.into()
+        ));
+        assert!(Erc20Metadata::supports_interface(
+            <Erc20Metadata as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc20Metadata::supports_interface(fake_interface_id.into()));
     }
 }

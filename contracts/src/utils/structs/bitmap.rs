@@ -13,12 +13,13 @@
 //! - Accessing the same warm slot for every 256 _sequential_ indices
 //!
 //! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{uint, U256};
 use stylus_sdk::{
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
-
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);
 
@@ -26,8 +27,7 @@ const HEX_FF: U256 = uint!(0xff_U256);
 #[storage]
 pub struct BitMap {
     /// Inner laying mapping.
-    #[allow(clippy::used_underscore_binding)]
-    pub _data: StorageMap<U256, StorageU256>,
+    pub(crate) data: StorageMap<U256, StorageU256>,
 }
 
 impl BitMap {
@@ -40,7 +40,7 @@ impl BitMap {
     pub fn get(&self, index: U256) -> bool {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
-        let value = self._data.get(bucket);
+        let value = self.data.get(bucket);
         (value & mask) != U256::ZERO
     }
 
@@ -66,7 +66,7 @@ impl BitMap {
     pub fn set(&mut self, index: U256) {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
-        let mut value = self._data.setter(bucket);
+        let mut value = self.data.setter(bucket);
         let prev = value.get();
         value.set(prev | mask);
     }
@@ -79,7 +79,7 @@ impl BitMap {
     pub fn unset(&mut self, index: U256) {
         let bucket = Self::get_bucket(index);
         let mask = Self::get_mask(index);
-        let mut value = self._data.setter(bucket);
+        let mut value = self.data.setter(bucket);
         let prev = value.get();
         value.set(prev & !mask);
     }
@@ -97,39 +97,52 @@ impl BitMap {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{private::proptest::proptest, U256};
+    use alloy_primitives::{
+        private::proptest::{prop_assert, proptest},
+        Address, U256,
+    };
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::{public, TopLevelStorage};
 
     use crate::utils::structs::bitmap::BitMap;
 
+    unsafe impl TopLevelStorage for BitMap {}
+
+    #[public]
+    impl BitMap {}
+
     #[motsu::test]
     fn set_value() {
-        proptest!(|(value: U256)| {
-            let mut bit_map = BitMap::default();
-            assert!(!bit_map.get(value));
+        proptest!(|(value: U256, alice: Address)| {
+            let bit_map = Contract::<BitMap>::new();
+            let mut bit_map = bit_map.sender(alice);
+            prop_assert!(!bit_map.get(value));
             bit_map.set(value);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
         });
     }
 
     #[motsu::test]
     fn unset_value() {
-        proptest!(|(value: U256)| {
-            let mut bit_map = BitMap::default();
+        proptest!(|(value: U256, alice: Address)| {
+            let bit_map = Contract::<BitMap>::new();
+            let mut bit_map = bit_map.sender(alice);
             bit_map.set(value);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
             bit_map.unset(value);
-            assert!(!bit_map.get(value));
+            prop_assert!(!bit_map.get(value));
         });
     }
 
     #[motsu::test]
     fn set_to_value() {
-        proptest!(|(value: U256)| {
-            let mut bit_map = BitMap::default();
+        proptest!(|(value: U256, alice: Address)| {
+            let bit_map = Contract::<BitMap>::new();
+            let mut bit_map = bit_map.sender(alice);
             bit_map.set_to(value, true);
-            assert!(bit_map.get(value));
+            prop_assert!(bit_map.get(value));
             bit_map.set_to(value, false);
-            assert!(!bit_map.get(value));
+            prop_assert!(!bit_map.get(value));
         });
     }
 }

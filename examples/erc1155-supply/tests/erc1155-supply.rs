@@ -260,18 +260,13 @@ async fn mint_panics_on_total_supply_overflow(
     let two = U256::from(2);
     let three = U256::from(3);
 
-    let _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         U256::MAX / two,
         vec![].into()
-    ));
-    let _ = watch!(contract.mint(
-        bob_addr,
-        token_id,
-        U256::MAX / two,
-        vec![].into()
-    ));
+    ))?;
+    watch!(contract.mint(bob_addr, token_id, U256::MAX / two, vec![].into()))?;
 
     let err = send!(contract.mint(alice_addr, token_id, three, vec![].into()))
         .expect_err("should panic due to total_supply overflow");
@@ -291,12 +286,7 @@ async fn mint_panics_on_total_supply_all_overflow(
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
 
-    let _ = watch!(contract.mint(
-        alice_addr,
-        token_ids[0],
-        U256::MAX,
-        vec![].into()
-    ));
+    watch!(contract.mint(alice_addr, token_ids[0], U256::MAX, vec![].into()))?;
 
     let err = send!(contract.mint(
         alice_addr,
@@ -320,7 +310,7 @@ async fn burn(alice: Account) -> eyre::Result<()> {
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _ = watch!(contract.mint(alice_addr, token_id, value, vec![].into()));
+    watch!(contract.mint(alice_addr, token_id, value, vec![].into()))?;
 
     let receipt = receipt!(contract.burn(alice_addr, token_id, value))?;
 
@@ -357,9 +347,9 @@ async fn burn_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _ = watch!(contract.mint(bob_addr, token_id, value, vec![].into()));
+    watch!(contract.mint(bob_addr, token_id, value, vec![].into()))?;
 
-    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let receipt = receipt!(contract.burn(bob_addr, token_id, value))?;
 
@@ -393,12 +383,12 @@ async fn burn_batch(alice: Account) -> eyre::Result<()> {
     let token_ids = random_token_ids(4);
     let values = random_values(4);
 
-    let _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
-    ));
+    ))?;
 
     let receipt = receipt!(contract.burnBatch(
         alice_addr,
@@ -445,14 +435,14 @@ async fn burn_batch_with_approval(
     let token_ids = random_token_ids(4);
     let values = random_values(4);
 
-    let _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         bob_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
-    ));
+    ))?;
 
-    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let receipt = receipt!(contract.burnBatch(
         bob_addr,
@@ -498,7 +488,7 @@ async fn supply_unaffected_by_safe_transfer_from(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _ = watch!(contract.mint(alice_addr, token_id, value, vec![].into()));
+    watch!(contract.mint(alice_addr, token_id, value, vec![].into()))?;
 
     // assert balances as expected after mint
     let alice_balance =
@@ -564,12 +554,12 @@ async fn supply_unaffected_by_safe_transfer_from_batch(
     let token_ids = random_token_ids(4);
     let values = random_values(4);
 
-    let _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
-    ));
+    ))?;
 
     // assert balances as expected after mint
     for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
@@ -739,12 +729,12 @@ async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let bob_addr = bob.address();
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
-    let _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
-    ));
+    ))?;
 
     let Erc1155Supply::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr, token_id).call().await?;
@@ -792,14 +782,14 @@ async fn safe_transfer_from_with_approval(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _ = watch!(contract_bob.mint(
+    watch!(contract_bob.mint(
         bob_addr,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
-    ));
+    ))?;
 
-    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let Erc1155Supply::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr, token_id).call().await?;
@@ -848,12 +838,12 @@ async fn safe_transfer_to_receiver_contract(
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
 
-    let _ = watch!(contract.mint(
+    watch!(contract.mint(
         alice_addr,
         token_id,
         value,
         vec![0, 1, 2, 3].into()
-    ));
+    ))?;
 
     let Erc1155Supply::balanceOfReturn { balance: initial_alice_balance } =
         contract.balanceOf(alice_addr, token_id).call().await?;
@@ -908,12 +898,12 @@ async fn safe_batch_transfer_from(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let _ = watch!(contract_alice.mintBatch(
+    watch!(contract_alice.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
-    ));
+    ))?;
 
     let Erc1155Supply::balanceOfBatchReturn {
         balances: initial_alice_balances,
@@ -979,12 +969,12 @@ async fn safe_batch_transfer_to_receiver_contract(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let _ = watch!(contract.mintBatch(
+    watch!(contract.mintBatch(
         alice_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
-    ));
+    ))?;
 
     let Erc1155Supply::balanceOfBatchReturn {
         balances: initial_alice_balances,
@@ -1066,14 +1056,14 @@ async fn safe_batch_transfer_from_with_approval(
     let token_ids = random_token_ids(2);
     let values = random_values(2);
 
-    let _ = watch!(contract_alice.mintBatch(
+    watch!(contract_alice.mintBatch(
         bob_addr,
         token_ids.clone(),
         values.clone(),
         vec![].into()
-    ));
+    ))?;
 
-    let _ = watch!(contract_bob.setApprovalForAll(alice_addr, true));
+    watch!(contract_bob.setApprovalForAll(alice_addr, true))?;
 
     let Erc1155Supply::balanceOfBatchReturn { balances: initial_dave_balances } =
         contract_alice
@@ -1119,6 +1109,41 @@ async fn safe_batch_transfer_from_with_approval(
         assert_eq!(initial_bob_balances[idx] - value, bob_balances[idx]);
         assert_eq!(initial_dave_balances[idx] + value, dave_balances[idx]);
     }
+
+    Ok(())
+}
+
+// ============================================================================
+// Integration Tests: ERC-165 Support Interface
+// ============================================================================
+
+#[e2e::test]
+async fn supports_interface(alice: Account) -> eyre::Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
+    let invalid_interface_id: u32 = 0xffffffff;
+    let supports_interface = contract
+        .supportsInterface(invalid_interface_id.into())
+        .call()
+        .await?
+        ._0;
+
+    assert!(!supports_interface);
+
+    let erc1155_interface_id: u32 = 0xd9b67a26;
+    let supports_interface = contract
+        .supportsInterface(erc1155_interface_id.into())
+        .call()
+        .await?
+        ._0;
+
+    assert!(supports_interface);
+
+    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let supports_interface =
+        contract.supportsInterface(erc165_interface_id.into()).call().await?._0;
+
+    assert!(supports_interface);
 
     Ok(())
 }

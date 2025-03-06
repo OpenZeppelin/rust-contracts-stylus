@@ -1,7 +1,8 @@
 use alloy::{
-    network::{AnyNetwork, EthereumWallet},
+    network::{AnyNetwork, EthereumWallet, TransactionBuilder},
     primitives::Address,
-    providers::ProviderBuilder,
+    providers::{Provider, ProviderBuilder},
+    rpc::types::{serde_helpers::WithOtherFields, TransactionRequest},
     sol,
     sol_types::{SolCall, SolConstructor},
     uint,
@@ -18,7 +19,6 @@ sol!(
     #[sol(rpc)]
     contract VestingWallet {
         function owner() public view virtual returns (address owner);
-        function receiveEther() external payable virtual;
         function start() external view returns (uint256 start);
         function duration() external view returns (uint256 duration);
         function end() external view returns (uint256 end);
@@ -66,14 +66,21 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let contract = VestingWallet::new(contract_addr, &alice_wallet);
     let erc20 = Erc20::new(erc20_addr, &alice_wallet);
 
-    let _ = receipt!(contract.receiveEther().value(uint!(1000_U256)))?;
-    let _ = receipt!(erc20.mint(contract_addr, uint!(1000_U256)))?;
+    let tx: WithOtherFields<TransactionRequest> = WithOtherFields {
+        inner: TransactionRequest::default()
+            .with_from(alice.address())
+            .with_to(contract_addr)
+            .with_value(uint!(1000_U256)),
+        other: Default::default(),
+    };
+
+    alice_wallet.send_transaction(tx).await?.watch().await?;
+    receipt!(erc20.mint(contract_addr, uint!(1000_U256)))?;
 
     // IMPORTANT: Order matters!
     use VestingWallet::*;
     #[rustfmt::skip]
     let receipts = vec![
-        (receiveEtherCall::SIGNATURE, receipt!(contract.receiveEther())?),
         (startCall::SIGNATURE, receipt!(contract.start())?),
         (durationCall::SIGNATURE, receipt!(contract.duration())?),
         (endCall::SIGNATURE, receipt!(contract.end())?),

@@ -100,7 +100,7 @@ async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
 
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let Erc721::tokenURIReturn { tokenURI } =
         contract.tokenURI(token_id).call().await?;
@@ -127,7 +127,7 @@ async fn return_token_uri_with_base_uri_and_without_token_uri(
 
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let Erc721::tokenURIReturn { tokenURI } =
         contract.tokenURI(token_id).call().await?;
@@ -153,7 +153,7 @@ async fn return_token_uri_with_base_uri_and_token_uri(
 
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let token_uri = String::from(
         "blob/main/contracts/src/token/erc721/extensions/uri_storage.rs",
@@ -204,7 +204,7 @@ async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
 
     assert!(receipt.emits(Erc721::MetadataUpdate { tokenId: token_id }));
 
-    let _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let Erc721::tokenURIReturn { tokenURI } =
         contract.tokenURI(token_id).call().await?;
@@ -233,7 +233,7 @@ async fn return_token_uri_after_burn_and_remint(
 
     let token_id = random_token_id();
 
-    let _ = watch!(contract.mint(alice.address(), token_id))?;
+    watch!(contract.mint(alice.address(), token_id))?;
 
     let receipt = receipt!(contract.burn(token_id))?;
 
@@ -297,7 +297,26 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
 
     assert!(supports_interface);
 
-    // other tests verify that other ERC-721 interfaces are implemented
+    let erc721_interface_id: u32 = 0x80ac58cd;
+    let supports_interface =
+        contract.supportsInterface(erc721_interface_id.into()).call().await?._0;
+
+    assert!(supports_interface);
+
+    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let supports_interface =
+        contract.supportsInterface(erc165_interface_id.into()).call().await?._0;
+
+    assert!(supports_interface);
+
+    let invalid_interface_id: u32 = 0xffffffff;
+    let supports_interface = contract
+        .supportsInterface(invalid_interface_id.into())
+        .call()
+        .await?
+        ._0;
+
+    assert!(!supports_interface);
 
     Ok(())
 }

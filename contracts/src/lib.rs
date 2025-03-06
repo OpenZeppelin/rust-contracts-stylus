@@ -39,9 +39,9 @@ impl MyContract { }
 */
 
 #![allow(
-    clippy::pub_underscore_fields,
     clippy::module_name_repetitions,
-    clippy::used_underscore_items
+    clippy::used_underscore_items,
+    deprecated
 )]
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]

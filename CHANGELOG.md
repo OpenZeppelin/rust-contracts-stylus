@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 
 ### Added
@@ -24,6 +23,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -
 
+## [v0.2.0-alpha.4] - 2025-03-06
+
+### Added
+
+- `Erc2981` contract. #508
+- Implement `Deref<Target = Erc1155>` for `Erc1155Supply` and `Deref<Target = Erc721>` for `Erc721Consecutive`. #569
+- Implement `Deref<Target = Ownable>` for `Ownable2Step`. #552
+
+### Changed (Breaking)
+
+- Refactor `Erc20Permit` extension to be a composition of `Erc20` and `Nonces` contracts. #574
+- Replace `VestingWallet::receive_ether` with dedicated `receive` function. #529
+- Extract `IAccessControl` trait from `AccessControl` contract. #527
+- Bump Stylus SDK to v0.8.1 #587
+
+### Fixed
+
+- `IErc165` implementations for `Erc721Metadata` and `Erc721Enumerable` now support ERC-165 interface ID. #570
+- Handle missing leaves for non-trivial merkle trees. #578
 
 ## [v0.2.0-alpha.3] - 2025-01-30
 
@@ -43,13 +61,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- All contract state fields are no longer public. #500
+- `Erc721Consecutive::_mint_consecutive` turned into an internal function. #500
 - Bump cargo-stylus to v0.5.8. #493
 - Constants `TYPE_HASH`, `FIELDS`, `SALT` and `TYPED_DATA_PREFIX`, and type `DomainSeparatorTuple` are no longer exported from `utils::cryptography::eip712`. #478
 - Bump Stylus SDK to v0.7.0. #433
 - Bump `alloy` dependencies to v0.8.14. #433
 - Add full support for reentrancy (changed `VestingWallet` signature for some functions). #407
 - `Nonce::use_nonce` panics on exceeding `U256::MAX`. #467
-
 
 ## [v0.2.0-alpha.2] - 2024-12-18
 
@@ -73,7 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (Breaking)
 
 - Update internal functions of `Erc721` and `Erc721Consecutive` to accept a reference to `Bytes`. #437
-
 
 ## [v0.2.0-alpha.1] - 2024-11-15
 

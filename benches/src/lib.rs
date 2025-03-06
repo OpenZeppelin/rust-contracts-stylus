@@ -1,12 +1,6 @@
 use std::process::Command;
 
-use alloy::{
-    primitives::Address,
-    rpc::types::{
-        serde_helpers::WithOtherFields, AnyReceiptEnvelope, Log, Receipt,
-        TransactionReceipt,
-    },
-};
+use alloy::primitives::Address;
 use alloy_primitives::U128;
 use e2e::{Account, ReceiptExt};
 use eyre::WrapErr;
@@ -45,9 +39,6 @@ pub enum Opt {
     Cache,
     CacheWasmOpt,
 }
-
-type ArbTxReceipt =
-    WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Receipt<Log>>>>;
 
 async fn deploy(
     account: &Account,
@@ -125,7 +116,7 @@ fn cache_contract(
 ) -> eyre::Result<()> {
     // We don't need a status code.
     // Since it is not zero when the contract is already cached.
-    let _ = Command::new("cargo")
+    Command::new("cargo")
         .args(["stylus", "cache", "bid"])
         .args(["-e", &env("RPC_URL")?])
         .args(["--private-key", &format!("0x{}", account.pk())])

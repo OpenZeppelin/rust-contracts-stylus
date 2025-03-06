@@ -8,7 +8,7 @@ use openzeppelin_stylus::{
     access::ownable_two_step::Ownable2Step,
     token::erc20::{Erc20, IErc20},
 };
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
@@ -27,7 +27,7 @@ impl Ownable2StepExample {
         to: Address,
         value: U256,
     ) -> Result<(), Vec<u8>> {
-        self.ownable._ownable.only_owner()?;
+        self.ownable.only_owner()?;
         self.erc20.transfer(to, value)?;
         Ok(())
     }

@@ -9,7 +9,7 @@
 //! your contract, which allows you to call the safe operations as
 //! `contract.safe_transfer(token_addr, ...)`, etc.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolCall;
@@ -18,8 +18,7 @@ use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
     function_selector,
-    prelude::storage,
-    storage::TopLevelStorage,
+    prelude::{storage, *},
     stylus_proc::{public, SolidityError},
     types::AddressVM,
 };
@@ -87,7 +86,7 @@ mod token {
 
 /// State of a [`SafeErc20`] Contract.
 #[storage]
-pub struct SafeErc20 {}
+pub struct SafeErc20;
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +

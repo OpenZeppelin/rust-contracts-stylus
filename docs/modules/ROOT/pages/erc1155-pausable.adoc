@@ -7,13 +7,13 @@ Useful for scenarios such as preventing trades until the end of an evaluation pe
 [[usage]]
 == Usage
 
-In order to make your xref:erc1155.adoc[ERC-1155] token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC1155 token functions as follows:
+In order to make your xref:erc1155.adoc[ERC-1155] token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC1155 token functions as follows:
 
 [source,rust]
 ----
 use openzeppelin_stylus::{
     token::erc1155::{Erc1155, IErc1155},
-    utils::Pausable,
+    utils::{introspection::erc165::IErc165, Pausable},
 };
 
 #[entrypoint]
@@ -110,6 +110,10 @@ impl Erc1155Example {
         // ...
         self.erc1155.safe_batch_transfer_from(from, to, ids, values, data)?;
         Ok(())
+    }
+
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc1155::supports_interface(interface_id)
     }
 }
 ----

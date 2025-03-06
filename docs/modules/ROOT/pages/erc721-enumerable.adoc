@@ -5,14 +5,17 @@ The OpenZeppelin xref:erc721.adoc[ERC-721] Enumerable extension is used to provi
 [[usage]]
 == Usage
 
-In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc721/extensions/enumerable/index.html[Enumerable] flavour,
+In order to make an xref:erc721.adoc[ERC-721] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/extensions/enumerable/index.html[Enumerable] flavour,
 you need to create a specified contract as follows:
 
 [source,rust]
 ----
-use openzeppelin_stylus::token::erc721::{
-    extensions::{Erc721Enumerable, IErc721Burnable},
-    Erc721, IErc721,
+use openzeppelin_stylus::{
+    token::erc721::{
+        extensions::{Erc721Enumerable, IErc721Burnable},
+        Erc721, IErc721,
+    },
+    utils::introspection::erc165::IErc165,
 };
 
 #[entrypoint]
@@ -21,7 +24,7 @@ struct Erc721Example {
     #[borrow]
     pub erc721: Erc721,
     #[borrow]
-    pub enumerable: Enumerable,
+    pub enumerable: Erc721Enumerable,
 }
 
 #[public]
@@ -136,6 +139,11 @@ impl Erc721Example {
         )?;
 
         Ok(())
+    }
+
+    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc721::supports_interface(interface_id)
+            || Erc721Enumerable::supports_interface(interface_id)
     }
 }
 ----

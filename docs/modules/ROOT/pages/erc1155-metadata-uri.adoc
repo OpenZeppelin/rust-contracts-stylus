@@ -7,13 +7,14 @@ This is particularly useful for non-fungible tokens (NFTs) where each token is u
 [[usage]]
 == Usage
 
-In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[Metadata URI] flavour,
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[Metadata URI] flavour,
 you need to add the following code to your contract:
 
 [source,rust]
 ----
-use openzeppelin_stylus::token::erc1155::{
-    extensions::Erc1155MetadataUri, Erc1155,
+use openzeppelin_stylus::{
+    token::erc1155::{extensions::Erc1155MetadataUri, Erc1155},
+    utils::introspection::erc165::IErc165,
 };
 
 #[entrypoint]
@@ -21,12 +22,18 @@ use openzeppelin_stylus::token::erc1155::{
 struct Erc1155Example {
     #[borrow]
     pub erc1155: Erc1155,
+    #[borrow]
     pub metadata_uri: Erc1155MetadataUri,
 }
 
 #[public]
 #[inherit(Erc1155, Erc1155MetadataUri)]
 impl Erc1155Example {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc1155::supports_interface(interface_id)
+            || Erc1155MetadataUri::supports_interface(interface_id)
+    }
+
     // ...
 }
 ----
