@@ -17,11 +17,11 @@ use stylus_sdk::prelude::*;
 #[storage]
 struct Erc20PermitExample {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub nonces: Nonces,
+    nonces: Nonces,
     #[borrow]
-    pub erc20_permit: Erc20Permit<Eip712>,
+    erc20_permit: Erc20Permit<Eip712>,
 }
 
 #[storage]
@@ -55,7 +55,7 @@ impl Erc20PermitExample {
         r: B256,
         s: B256,
     ) -> Result<(), permit::Error> {
-        Ok(self.erc20_permit.permit(
+        self.erc20_permit.permit(
             owner,
             spender,
             value,
@@ -65,6 +65,6 @@ impl Erc20PermitExample {
             s,
             &mut self.erc20,
             &mut self.nonces,
-        )?)
+        )
     }
 }

@@ -9,10 +9,7 @@ use openzeppelin_stylus::token::erc20::{
     extensions::{flash_mint, Erc20FlashMint, IErc3156FlashLender},
     Erc20,
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, public, storage, SolidityError, *},
-};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 #[derive(SolidityError, Debug)]
 enum Error {
