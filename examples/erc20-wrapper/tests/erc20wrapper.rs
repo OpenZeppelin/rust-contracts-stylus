@@ -17,10 +17,12 @@ use mock::{erc20, erc20::ERC20Mock};
 
 sol!("src/constructor.sol");
 
+const DECIMALS: u8 = 18;
+
 fn ctr(asset_addr: Address) -> constructorCall {
     Erc20WrapperExample::constructorCall {
         underlyingToken_: asset_addr,
-        decimals_: 18,
+        decimals_: DECIMALS,
     }
 }
 
@@ -47,7 +49,7 @@ async fn deploy(
 }
 
 // ============================================================================
-// Integration Tests: ERC-20 Token + Metadata Extension + ERC-20 Wrapper
+// Integration Tests: ERC-20 Wrapper
 // ============================================================================
 
 mod constructor {
@@ -65,8 +67,11 @@ mod constructor {
             .address()?;
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
 
+        let underlying = contract.underlying().call().await?.underlying;
+        assert_eq!(underlying, asset_address);
+
         let decimals = contract.decimals().call().await?.decimals;
-        assert_eq!(decimals, 18);
+        assert_eq!(decimals, DECIMALS);
 
         Ok(())
     }

@@ -293,10 +293,12 @@ impl Erc20Wrapper {
     }
 }
 
-// TODO: Add missing tests once `motsu` supports calling external contracts.
+// TODO: Add missing tests once we solve these issues:
+// - https://github.com/OpenZeppelin/rust-contracts-stylus/issues/510
+// - https://github.com/OpenZeppelin/stylus-test-helpers/issues/65
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::address;
+    use alloy_primitives::uint;
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
 
@@ -332,15 +334,83 @@ mod tests {
     }
 
     unsafe impl TopLevelStorage for Erc20WrapperTestExample {}
+
     #[motsu::test]
     fn underlying_works(
         contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
         alice: Address,
     ) {
-        let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
+        let erc20_address = erc20_contract.address();
         contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(asset);
+            contract.wrapper.underlying.set(erc20_address);
         });
-        assert_eq!(contract.sender(alice).wrapper.underlying(), asset);
+        assert_eq!(contract.sender(alice).wrapper.underlying(), erc20_address);
+    }
+
+    #[motsu::test]
+    fn deposit_for_reverts_when_invalid_sender(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let invalid_sender = contract.address();
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        let err = contract
+            .sender(invalid_sender)
+            .deposit_for(alice, uint!(10_U256))
+            .expect_err("should return Error::InvalidSender");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSender(ERC20InvalidSender { sender }) if sender == invalid_sender
+        ));
+    }
+
+    #[motsu::test]
+    fn deposit_for_reverts_when_invalid_receiver(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let invalid_receiver = contract.address();
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        let err = contract
+            .sender(alice)
+            .deposit_for(invalid_receiver, uint!(10_U256))
+            .expect_err("should return Error::InvalidReceiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+        ));
+    }
+
+    #[motsu::test]
+    fn withdraw_to_reverts_when_invalid_receiver(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let invalid_receiver = contract.address();
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        let err = contract
+            .sender(alice)
+            .withdraw_to(invalid_receiver, uint!(10_U256))
+            .expect_err("should return Error::InvalidReceiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+        ));
     }
 }
