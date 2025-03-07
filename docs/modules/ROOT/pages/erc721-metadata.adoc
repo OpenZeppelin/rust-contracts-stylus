@@ -9,20 +9,17 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 
 [source,rust]
 ----
-use openzeppelin_stylus::{
-    token::erc721::{
-        extensions::Erc721Metadata,
-        Erc721,
-    },
+use openzeppelin_stylus::token::erc721::{
+    extensions::Erc721Metadata, Erc721, Error,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc721Example {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
     #[borrow]
-    pub metadata: Metadata,
+    metadata: Erc721Metadata,
 }
 
 #[public]
@@ -31,8 +28,8 @@ impl Erc721Example {
     // ...
 
     #[selector(name = "tokenURI")]
-    pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-        Ok(self.metadata.token_uri(token_id, &self.erc721)?)
+    fn token_uri(&self, token_id: U256) -> Result<String, Error> {
+        self.metadata.token_uri(token_id, &self.erc721)
     }
 }
 ----

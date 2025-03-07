@@ -10,9 +10,16 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 [source,rust]
 ----
 use openzeppelin_stylus::token::erc20::{
-    extensions::{Erc20FlashMint, IErc3156FlashLender},
+    self,
+    extensions::{flash_mint, Erc20FlashMint, IErc3156FlashLender},
     Erc20,
 };
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Erc20(erc20::Error),
+    Erc20FlashMint(flash_mint::Error),
+}
 
 #[entrypoint]
 #[storage]
@@ -30,7 +37,7 @@ impl Erc20FlashMintExample {
         self.flash_mint.max_flash_loan(token, &self.erc20)
     }
 
-    fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
+    fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Error> {
         Ok(self.flash_mint.flash_fee(token, value)?)
     }
 
@@ -40,7 +47,7 @@ impl Erc20FlashMintExample {
         token: Address,
         value: U256,
         data: Bytes,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> Result<bool, Error> {
         Ok(self.flash_mint.flash_loan(
             receiver,
             token,

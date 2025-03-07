@@ -12,45 +12,47 @@ In order to make your ERC20 token `pausable`, you need to use the https://docs.r
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc20::Erc20,
-    utils::Pausable,
+    token::erc20::{self, extensions::IErc20Burnable, Erc20, IErc20},
+    utils::{pausable, Pausable},
 };
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Erc20(erc20::Error),
+    Pausable(pausable::Error),
+}
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub pausable: Pausable,
+    pausable: Pausable,
 }
 
 #[public]
 #[inherit(Erc20, Pausable)]
 impl Erc20Example {
-    pub fn burn(&mut self, value: U256) -> Result<(), Vec<u8>> {
+    fn burn(&mut self, value: U256) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
         self.erc20.burn(value).map_err(|e| e.into())
     }
 
-    pub fn burn_from(
+    fn burn_from(
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
         self.erc20.burn_from(account, value).map_err(|e| e.into())
     }
 
-    pub fn mint(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Vec<u8>> {
+    fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -58,42 +60,23 @@ impl Erc20Example {
         Ok(())
     }
 
-
-    pub fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Vec<u8>> {
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
         self.erc20.transfer(to, value).map_err(|e| e.into())
     }
 
-    pub fn transfer_from(
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> Result<bool, Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
-    }
-
-}
-----
-
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
-
-[source,solidity]
-----
-contract Erc20Example {
-    bool private _paused;
-
-    constructor() {
-        _paused = false;
     }
 }
 ----

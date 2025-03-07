@@ -18,6 +18,7 @@ use alloy_primitives::{keccak256, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
     block,
+    call::MethodError,
     prelude::*,
     stylus_proc::{public, SolidityError},
 };
@@ -70,6 +71,12 @@ pub enum Error {
     Erc20(erc20::Error),
     /// Error type from [`ecdsa`] contract [`ecdsa::Error`].
     ECDSA(ecdsa::Error),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc20Permit`] Contract.

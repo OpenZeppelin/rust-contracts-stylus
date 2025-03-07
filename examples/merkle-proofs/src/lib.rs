@@ -20,7 +20,7 @@ sol! {
 }
 
 #[derive(SolidityError)]
-pub enum VerifierError {
+enum VerifierError {
     InvalidProofLength(MerkleProofInvalidMultiProofLength),
     InvalidRootChild(MerkleProofInvalidRootChild),
     InvalidTotalHashes(MerkleProofInvalidTotalHashes),
@@ -56,12 +56,12 @@ struct VerifierContract;
 
 #[public]
 impl VerifierContract {
-    pub fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
+    fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
         let proof: Vec<[u8; 32]> = proof.into_iter().map(|m| *m).collect();
         Verifier::<KeccakBuilder>::verify(&proof, *root, *leaf)
     }
 
-    pub fn verify_multi_proof(
+    fn verify_multi_proof(
         &self,
         proof: Vec<B256>,
         proof_flags: Vec<bool>,

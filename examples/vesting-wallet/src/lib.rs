@@ -8,7 +8,7 @@ use stylus_sdk::prelude::*;
 #[storage]
 struct VestingWalletExample {
     #[borrow]
-    pub vesting_wallet: VestingWallet,
+    vesting_wallet: VestingWallet,
 }
 
 #[public]

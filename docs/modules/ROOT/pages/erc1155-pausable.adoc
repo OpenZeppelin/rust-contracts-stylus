@@ -12,17 +12,23 @@ In order to make your xref:erc1155.adoc[ERC-1155] token `pausable`, you need to 
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc1155::{Erc1155, IErc1155},
-    utils::{introspection::erc165::IErc165, Pausable},
+    token::erc1155::{self, extensions::IErc1155Burnable, Erc1155, IErc1155},
+    utils::{introspection::erc165::IErc165, pausable, Pausable},
 };
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Erc1155(erc1155::Error),
+    Pausable(pausable::Error),
+}
 
 #[entrypoint]
 #[storage]
 struct Erc1155Example {
     #[borrow]
-    pub erc1155: Erc1155,
+    erc1155: Erc1155,
     #[borrow]
-    pub pausable: Pausable,
+    pausable: Pausable,
 }
 
 #[public]
@@ -34,7 +40,7 @@ impl Erc1155Example {
         token_id: U256,
         amount: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -48,7 +54,7 @@ impl Erc1155Example {
         token_ids: Vec<U256>,
         amounts: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -61,7 +67,7 @@ impl Erc1155Example {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -74,7 +80,7 @@ impl Erc1155Example {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -89,7 +95,7 @@ impl Erc1155Example {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -104,7 +110,7 @@ impl Erc1155Example {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -114,19 +120,6 @@ impl Erc1155Example {
 
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc1155::supports_interface(interface_id)
-    }
-}
-----
-
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
-
-[source,solidity]
-----
-contract Erc1155Example {
-    bool private _paused;
-
-    constructor() {
-        _paused = false;
     }
 }
 ----

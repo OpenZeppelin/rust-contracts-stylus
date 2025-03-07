@@ -6,6 +6,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
+    call::MethodError,
     prelude::*,
     storage::{StorageMap, StorageU256},
     stylus_proc::{public, SolidityError},
@@ -33,6 +34,12 @@ mod sol {
 pub enum Error {
     /// The nonce used for an `account` is not the expected current nonce.
     InvalidAccountNonce(InvalidAccountNonce),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of a [`Nonces`] Contract.

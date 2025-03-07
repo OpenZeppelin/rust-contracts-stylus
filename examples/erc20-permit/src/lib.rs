@@ -5,7 +5,10 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus::{
-    token::erc20::{extensions::Erc20Permit, Erc20},
+    token::erc20::{
+        extensions::{permit, Erc20Permit},
+        Erc20,
+    },
     utils::{cryptography::eip712::IEip712, nonces::Nonces},
 };
 use stylus_sdk::prelude::*;
@@ -14,15 +17,15 @@ use stylus_sdk::prelude::*;
 #[storage]
 struct Erc20PermitExample {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub nonces: Nonces,
+    nonces: Nonces,
     #[borrow]
-    pub erc20_permit: Erc20Permit<Eip712>,
+    erc20_permit: Erc20Permit<Eip712>,
 }
 
 #[storage]
-struct Eip712 {}
+struct Eip712;
 
 impl IEip712 for Eip712 {
     const NAME: &'static str = "ERC-20 Permit Example";
@@ -33,9 +36,12 @@ impl IEip712 for Eip712 {
 #[inherit(Erc20, Nonces, Erc20Permit<Eip712>)]
 impl Erc20PermitExample {
     // Add token minting feature.
-    fn mint(&mut self, account: Address, value: U256) -> Result<(), Vec<u8>> {
-        self.erc20._mint(account, value)?;
-        Ok(())
+    fn mint(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), permit::Error> {
+        Ok(self.erc20._mint(account, value)?)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -48,8 +54,8 @@ impl Erc20PermitExample {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<(), Vec<u8>> {
-        Ok(self.erc20_permit.permit(
+    ) -> Result<(), permit::Error> {
+        self.erc20_permit.permit(
             owner,
             spender,
             value,
@@ -59,6 +65,6 @@ impl Erc20PermitExample {
             s,
             &mut self.erc20,
             &mut self.nonces,
-        )?)
+        )
     }
 }

@@ -15,6 +15,7 @@ use alloy_primitives::{uint, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
+    call::MethodError,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageVec},
     stylus_proc::{public, SolidityError},
@@ -58,6 +59,12 @@ pub enum Error {
 
     /// Indicates an error related to batch minting not allowed.
     EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc721Enumerable`] contract.
