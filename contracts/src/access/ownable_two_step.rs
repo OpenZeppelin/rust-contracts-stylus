@@ -105,8 +105,8 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// * [`OwnableError::UnauthorizedAccount`] - If called by any account other
-    ///   than the owner.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
+    ///   other than the owner.
     ///
     /// # Events
     ///
@@ -125,8 +125,8 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// * [`OwnableError::UnauthorizedAccount`] - If called by any account other
-    ///   than the pending owner.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
+    ///   other than the pending owner.
     ///
     /// # Events
     ///
@@ -146,7 +146,7 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// * [`OwnableError::UnauthorizedAccount`] - If not called by the owner.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///

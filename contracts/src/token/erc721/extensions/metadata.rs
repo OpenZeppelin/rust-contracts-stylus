@@ -101,7 +101,7 @@ impl Erc721Metadata {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist.
+    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Examples
     ///

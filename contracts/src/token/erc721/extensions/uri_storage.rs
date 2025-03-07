@@ -76,7 +76,7 @@ impl Erc721UriStorage {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist.
+    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Examples
     ///
