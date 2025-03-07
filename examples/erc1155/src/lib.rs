@@ -20,9 +20,9 @@ enum Error {
 #[storage]
 struct Erc1155Example {
     #[borrow]
-    pub erc1155: Erc1155,
+    erc1155: Erc1155,
     #[borrow]
-    pub pausable: Pausable,
+    pausable: Pausable,
 }
 
 #[public]

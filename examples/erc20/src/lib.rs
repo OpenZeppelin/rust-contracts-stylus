@@ -27,13 +27,13 @@ enum Error {
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub metadata: Erc20Metadata,
+    metadata: Erc20Metadata,
     #[borrow]
-    pub capped: Capped,
+    capped: Capped,
     #[borrow]
-    pub pausable: Pausable,
+    pausable: Pausable,
 }
 
 #[public]
@@ -43,16 +43,16 @@ impl Erc20Example {
     //
     // If you don't provide this method in the `entrypoint` contract, it will
     // default to `18`.
-    pub fn decimals(&self) -> u8 {
+    fn decimals(&self) -> u8 {
         DECIMALS
     }
 
-    pub fn burn(&mut self, value: U256) -> Result<(), Error> {
+    fn burn(&mut self, value: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
         self.erc20.burn(value).map_err(|e| e.into())
     }
 
-    pub fn burn_from(
+    fn burn_from(
         &mut self,
         account: Address,
         value: U256,
@@ -66,7 +66,7 @@ impl Erc20Example {
     // Make sure to handle `Capped` properly. You should not call
     // [`Erc20::_update`] to mint tokens -- it will the break `Capped`
     // mechanism.
-    pub fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
+    fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
         let max_supply = self.capped.cap();
 
@@ -90,16 +90,12 @@ impl Erc20Example {
         Ok(())
     }
 
-    pub fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Error> {
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer(to, value).map_err(|e| e.into())
     }
 
-    pub fn transfer_from(
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
@@ -109,7 +105,7 @@ impl Erc20Example {
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
     }
 
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc20::supports_interface(interface_id)
             || Erc20Metadata::supports_interface(interface_id)
     }
@@ -118,11 +114,11 @@ impl Erc20Example {
     /// **production**, ensure strict access control to prevent unauthorized
     /// pausing or unpausing, which can disrupt contract functionality. Remove
     /// or secure these functions before deployment.
-    pub fn pause(&mut self) -> Result<(), Error> {
+    fn pause(&mut self) -> Result<(), Error> {
         self.pausable.pause().map_err(|e| e.into())
     }
 
-    pub fn unpause(&mut self) -> Result<(), Error> {
+    fn unpause(&mut self) -> Result<(), Error> {
         self.pausable.unpause().map_err(|e| e.into())
     }
 }

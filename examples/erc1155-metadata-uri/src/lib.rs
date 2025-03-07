@@ -15,9 +15,9 @@ use stylus_sdk::prelude::*;
 #[storage]
 struct Erc1155MetadataUriExample {
     #[borrow]
-    pub erc1155: Erc1155,
-    pub metadata_uri: Erc1155MetadataUri,
-    pub uri_storage: Erc1155UriStorage,
+    erc1155: Erc1155,
+    metadata_uri: Erc1155MetadataUri,
+    uri_storage: Erc1155UriStorage,
 }
 
 #[public]

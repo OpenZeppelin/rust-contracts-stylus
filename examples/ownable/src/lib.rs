@@ -20,15 +20,15 @@ enum Error {
 #[storage]
 struct OwnableExample {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub ownable: Ownable,
+    ownable: Ownable,
 }
 
 #[public]
 #[inherit(Erc20, Ownable)]
 impl OwnableExample {
-    pub fn transfer(&mut self, to: Address, value: U256) -> Result<(), Error> {
+    fn transfer(&mut self, to: Address, value: U256) -> Result<(), Error> {
         self.ownable.only_owner()?;
         self.erc20.transfer(to, value)?;
         Ok(())

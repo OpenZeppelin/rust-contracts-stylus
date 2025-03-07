@@ -13,15 +13,15 @@ use stylus_sdk::prelude::{entrypoint, public, storage, *};
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub metadata: Erc20Metadata,
+    metadata: Erc20Metadata,
 }
 
 #[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc20Example {
-    pub fn mint(
+    fn mint(
         &mut self,
         account: Address,
         value: U256,

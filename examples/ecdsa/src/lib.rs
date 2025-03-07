@@ -13,7 +13,7 @@ struct ECDSAExample;
 
 #[public]
 impl ECDSAExample {
-    pub fn recover(
+    fn recover(
         &mut self,
         hash: B256,
         v: u8,

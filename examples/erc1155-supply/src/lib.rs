@@ -18,7 +18,7 @@ use stylus_sdk::{abi::Bytes, prelude::*};
 #[storage]
 struct Erc1155Example {
     #[borrow]
-    pub erc1155_supply: Erc1155Supply,
+    erc1155_supply: Erc1155Supply,
 }
 
 #[public]
@@ -38,7 +38,7 @@ impl Erc1155Example {
     }
 
     // Add token minting feature.
-    pub fn mint(
+    fn mint(
         &mut self,
         to: Address,
         id: U256,
@@ -49,7 +49,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn mint_batch(
+    fn mint_batch(
         &mut self,
         to: Address,
         ids: Vec<U256>,
@@ -61,7 +61,7 @@ impl Erc1155Example {
     }
 
     // Add token burning feature.
-    pub fn burn(
+    fn burn(
         &mut self,
         from: Address,
         id: U256,
@@ -71,7 +71,7 @@ impl Erc1155Example {
         Ok(())
     }
 
-    pub fn burn_batch(
+    fn burn_batch(
         &mut self,
         from: Address,
         ids: Vec<U256>,
