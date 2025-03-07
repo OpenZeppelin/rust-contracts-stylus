@@ -1,4 +1,4 @@
-// #![cfg(feature = "e2e")]
+#![cfg(feature = "e2e")]
 
 use abi::Erc20Permit;
 use alloy::{

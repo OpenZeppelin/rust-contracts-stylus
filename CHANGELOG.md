@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
--
+- `Erc20Wrapper` "Token Wrapping contract". #498
 
 ### Changed
 
@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `mul_div` for `U256`. #465
 - Implement `AddAssignChecked` for `StorageUint`. #474
 - `Erc20FlashMint` extension. #407
+
 
 ### Changed
 
