@@ -1,12 +1,12 @@
 //! ERC-1155 token with storage based token URI management.
 //!
 //! Inspired by the [`crate::token::erc721::extensions::Erc721UriStorage`]
-use alloc::string::String;
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::U256;
 use stylus_sdk::{
     evm,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageString},
 };
 

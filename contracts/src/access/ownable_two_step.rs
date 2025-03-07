@@ -16,14 +16,14 @@
 //! This module uses [`Ownable`] as a member, and makes all its public functions
 //! available.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::Address;
 pub use sol::*;
 use stylus_sdk::{
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::StorageAddress,
     stylus_proc::{public, SolidityError},
 };

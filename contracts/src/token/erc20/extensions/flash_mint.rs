@@ -17,13 +17,15 @@
 // TODO: once ERC20Votes is implemented, include it in the comment above next to
 // ERC20Capped.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{Address, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::Call,
     contract, msg,
     prelude::*,
-    storage::{StorageAddress, StorageU256, TopLevelStorage},
+    storage::{StorageAddress, StorageU256},
 };
 
 use crate::token::erc20::{self, Erc20, IErc20};

@@ -25,7 +25,7 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
@@ -34,8 +34,8 @@ use stylus_sdk::{
     block,
     call::{self, call, Call},
     contract, evm, function_selector,
-    prelude::storage,
-    storage::{StorageMap, StorageU256, StorageU64, TopLevelStorage},
+    prelude::*,
+    storage::{StorageMap, StorageU256, StorageU64},
     stylus_proc::{public, SolidityError},
 };
 

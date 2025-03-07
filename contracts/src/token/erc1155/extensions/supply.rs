@@ -19,7 +19,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     msg,
-    prelude::{public, storage},
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
 
