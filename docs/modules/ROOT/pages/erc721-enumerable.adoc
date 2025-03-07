@@ -12,25 +12,32 @@ you need to create a specified contract as follows:
 ----
 use openzeppelin_stylus::{
     token::erc721::{
-        extensions::{Erc721Enumerable, IErc721Burnable},
+        self,
+        extensions::{enumerable, Erc721Enumerable, IErc721Burnable},
         Erc721, IErc721,
     },
     utils::introspection::erc165::IErc165,
 };
 
+#[derive(SolidityError, Debug)]
+enum Error {
+    Enumerable(enumerable::Error),
+    Erc721(erc721::Error),
+}
+
 #[entrypoint]
 #[storage]
 struct Erc721Example {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
     #[borrow]
-    pub enumerable: Erc721Enumerable,
+    enumerable: Erc721Enumerable,
 }
 
 #[public]
 #[inherit(Erc721, Erc721Enumerable)]
 impl Erc721Example {
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         // Retrieve the owner.
         let owner = self.erc721.owner_of(token_id)?;
 
@@ -47,7 +54,7 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+    fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         self.erc721._mint(to, token_id)?;
 
         // Update the extension's state.
@@ -61,12 +68,12 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn safe_transfer_from(
+    fn safe_transfer_from(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -88,13 +95,13 @@ impl Erc721Example {
     }
 
     #[selector(name = "safeTransferFrom")]
-    pub fn safe_transfer_from_with_data(
+    fn safe_transfer_from_with_data(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -115,12 +122,12 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn transfer_from(
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -141,7 +148,7 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc721::supports_interface(interface_id)
             || Erc721Enumerable::supports_interface(interface_id)
     }
