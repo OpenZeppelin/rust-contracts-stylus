@@ -5,10 +5,7 @@ use alloy::{
     primitives::{uint, Address, U256},
     sol,
 };
-use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
-};
+use e2e::{send, watch, Account, ReceiptExt, Revert};
 use eyre::Result;
 
 use crate::Erc20WrapperExample::constructorCall;
@@ -20,14 +17,10 @@ use mock::{erc20, erc20::ERC20Mock};
 
 sol!("src/constructor.sol");
 
-const WRAPPED_TOKEN_NAME: &str = "WRAPPED Test Token";
-const WRAPPED_TOKEN_SYMBOL: &str = "WTTK";
-
 fn ctr(asset_addr: Address) -> constructorCall {
     Erc20WrapperExample::constructorCall {
         underlyingToken_: asset_addr,
-        name_: WRAPPED_TOKEN_NAME.to_owned(),
-        symbol_: WRAPPED_TOKEN_SYMBOL.to_owned(),
+        decimals_: 18,
     }
 }
 
@@ -71,11 +64,6 @@ mod constructor {
             .await?
             .address()?;
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-        let name = contract.name().call().await?.name;
-        assert_eq!(name, WRAPPED_TOKEN_NAME.to_owned());
-
-        let symbol = contract.symbol().call().await?.symbol;
-        assert_eq!(symbol, WRAPPED_TOKEN_SYMBOL.to_owned());
 
         let decimals = contract.decimals().call().await?.decimals;
         assert_eq!(decimals, 18);
@@ -89,10 +77,7 @@ mod deposit_to {
     use super::*;
 
     #[e2e::test]
-    async fn executes_with_approval(
-        alice: Account,
-        bob: Account,
-    ) -> Result<()> {
+    async fn executes_with_approval(alice: Account) -> Result<()> {
         let initial_supply = uint!(1000_U256);
         let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
         let alice_address = alice.address();
@@ -117,7 +102,7 @@ mod deposit_to {
             .await?
             .address()?;
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-        let err = send!(contract.depositFor(invalid_asset, uint!(10_U256)))
+        let _err = send!(contract.depositFor(invalid_asset, uint!(10_U256)))
             .expect_err("should return `InvalidAsset`");
         // assert!(
         //     err.reverted_with(Erc20Wrapper::InvalidAsset { asset:
@@ -175,7 +160,7 @@ mod deposit_to {
 
     #[e2e::test]
     async fn reverts_when_insuficient_balance(alice: Account) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
         let alice_address = alice.address();
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         let err = contract
@@ -193,9 +178,9 @@ mod deposit_to {
 
     #[e2e::test]
     async fn reflects_balance_after_deposit_for(alice: Account) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let alice_address = alice.address();
-        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+        let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let _alice_address = alice.address();
+        let _contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         Ok(())
     }
 }
@@ -206,7 +191,7 @@ mod withdraw_to {
     #[e2e::test]
     async fn success(alice: Account) -> Result<()> {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
-        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+        let _contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         Ok(())
     }
 
@@ -226,13 +211,10 @@ mod withdraw_to {
     }
 
     #[e2e::test]
-    async fn reflects_balance_after_withdraw_to(
-        alice: Account,
-        bob: Account,
-    ) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let alice_address = alice.address();
-        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+    async fn reflects_balance_after_withdraw_to(alice: Account) -> Result<()> {
+        let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let _alice_address = alice.address();
+        let _contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         Ok(())
     }
 }
