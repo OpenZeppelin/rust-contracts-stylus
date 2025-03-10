@@ -228,7 +228,9 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{ownable::Error, IOwnable2Step, Ownable2Step};
+    use super::{
+        ownable::Error, IOwnable2Step, Ownable2Step, OwnableUnauthorizedAccount,
+    };
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -285,7 +287,12 @@ mod tests {
         });
 
         let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        assert!(matches!(
+            err,
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account
+            }) if account == alice
+        ));
     }
 
     #[motsu::test]
@@ -320,7 +327,12 @@ mod tests {
         });
 
         let err = contract.sender(alice).accept_ownership().unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        assert!(matches!(
+            err,
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account
+            }) if account == alice
+        ));
     }
 
     #[motsu::test]
@@ -372,7 +384,12 @@ mod tests {
         });
 
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        assert!(matches!(
+            err,
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account
+            }) if account == alice
+        ));
     }
 
     #[motsu::test]
