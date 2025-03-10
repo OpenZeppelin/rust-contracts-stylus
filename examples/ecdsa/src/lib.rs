@@ -20,7 +20,6 @@ impl ECDSAExample {
         r: B256,
         s: B256,
     ) -> Result<Address, ecdsa::Error> {
-        let signer = ecdsa::recover(self, hash, v, r, s)?;
-        Ok(signer)
+        ecdsa::recover(self, hash, v, r, s)
     }
 }
