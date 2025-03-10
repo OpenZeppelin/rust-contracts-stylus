@@ -187,8 +187,7 @@ impl IOwnable2Step for Ownable2Step {
         if sender != pending_owner {
             return Err(ownable::Error::UnauthorizedAccount(
                 OwnableUnauthorizedAccount { account: sender },
-            )
-            .into());
+            ));
         }
         self._transfer_ownership(sender);
         Ok(())
