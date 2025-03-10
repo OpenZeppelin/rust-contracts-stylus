@@ -11,7 +11,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 ----
 use openzeppelin_stylus::{
     token::erc721::{
-        extensions::consecutive::{self, Erc721Consecutive},
+        extensions::{consecutive, Erc721Consecutive},
         Erc721,
     },
     utils::introspection::erc165::IErc165,
