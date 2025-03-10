@@ -26,7 +26,6 @@ impl Erc20Example {
         account: Address,
         value: U256,
     ) -> Result<(), erc20::Error> {
-        self.erc20._mint(account, value)?;
-        Ok(())
+        self.erc20._mint(account, value)
     }
 }
