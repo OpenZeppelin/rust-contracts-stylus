@@ -3,7 +3,7 @@ extern crate alloc;
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus::token::erc20::{
     extensions::{Erc20Wrapper, IErc20Wrapper},
     Erc20,
@@ -24,6 +24,10 @@ struct Erc20WrapperExample {
 impl Erc20WrapperExample {
     fn underlying(&self) -> Address {
         self.erc20_wrapper.underlying()
+    }
+
+    fn decimals(&self) -> U8 {
+        self.erc20_wrapper.decimals()
     }
 
     fn deposit_for(
