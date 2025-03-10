@@ -10,7 +10,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 [source,rust]
 ----
 use openzeppelin_stylus::token::erc721::{
-    extensions::IErc721Burnable, Erc721, Error, IErc721,
+    self, extensions::IErc721Burnable, Erc721, IErc721,
 };
 
 #[entrypoint]
@@ -23,7 +23,7 @@ struct Erc721Example {
 #[public]
 #[inherit(Erc721)]
 impl Erc721Example {
-    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
+    fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
         // ...
         self.erc721.burn(token_id)
     }

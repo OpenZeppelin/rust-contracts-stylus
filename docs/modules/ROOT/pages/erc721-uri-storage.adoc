@@ -14,8 +14,9 @@ You need to create a specified contract as follows:
 [source,rust]
 ----
 use openzeppelin_stylus::token::erc721::{
+    self,
     extensions::{Erc721Metadata, Erc721UriStorage, IErc721Burnable},
-    Erc721, Error,
+    Erc721,
 };
 
 #[entrypoint]
@@ -31,16 +32,20 @@ struct Erc721MetadataExample {
 #[public]
 #[inherit(Erc721, Erc721Metadata)]
 impl Erc721MetadataExample {
-    fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    fn mint(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), erc721::Error> {
         self.erc721._mint(to, token_id)
     }
 
-    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
+    fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
         self.erc721.burn(token_id)
     }
 
     #[selector(name = "tokenURI")]
-    fn token_uri(&self, token_id: U256) -> Result<String, Error> {
+    fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
         self.uri_storage.token_uri(token_id, &self.erc721, &self.metadata)
     }
 

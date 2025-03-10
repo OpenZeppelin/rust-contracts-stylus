@@ -10,7 +10,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 [source,rust]
 ----
 use openzeppelin_stylus::token::erc20::{
-    extensions::IErc20Burnable, Erc20, Error, IErc20,
+    self, extensions::IErc20Burnable, Erc20, IErc20,
 };
 
 #[entrypoint]
@@ -23,7 +23,7 @@ struct Erc20Example {
 #[public]
 #[inherit(Erc20)]
 impl Erc20Example {
-    pub fn burn(&mut self, value: U256) -> Result<(), Error> {
+    pub fn burn(&mut self, value: U256) -> Result<(), erc20::Error> {
         // ...
         self.erc20.burn(value)
     }
@@ -32,7 +32,7 @@ impl Erc20Example {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc20::Error> {
         // ...
         self.erc20.burn_from(account, value)
     }
