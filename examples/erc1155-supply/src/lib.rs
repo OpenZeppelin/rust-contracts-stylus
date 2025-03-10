@@ -45,8 +45,7 @@ impl Erc1155Example {
         value: U256,
         data: Bytes,
     ) -> Result<(), erc1155::Error> {
-        self.erc1155_supply._mint(to, id, value, &data)?;
-        Ok(())
+        self.erc1155_supply._mint(to, id, value, &data)
     }
 
     fn mint_batch(
@@ -56,8 +55,7 @@ impl Erc1155Example {
         values: Vec<U256>,
         data: Bytes,
     ) -> Result<(), erc1155::Error> {
-        self.erc1155_supply._mint_batch(to, ids, values, &data)?;
-        Ok(())
+        self.erc1155_supply._mint_batch(to, ids, values, &data)
     }
 
     // Add token burning feature.
@@ -67,8 +65,7 @@ impl Erc1155Example {
         id: U256,
         value: U256,
     ) -> Result<(), erc1155::Error> {
-        self.erc1155_supply._burn(from, id, value)?;
-        Ok(())
+        self.erc1155_supply._burn(from, id, value)
     }
 
     fn burn_batch(
@@ -77,8 +74,7 @@ impl Erc1155Example {
         ids: Vec<U256>,
         values: Vec<U256>,
     ) -> Result<(), erc1155::Error> {
-        self.erc1155_supply._burn_batch(from, ids, values)?;
-        Ok(())
+        self.erc1155_supply._burn_batch(from, ids, values)
     }
 
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
