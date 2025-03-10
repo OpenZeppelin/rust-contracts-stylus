@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Implement `MethodError` for all contracts. #594
+- Implement `MethodError` for all contracts' errors. #594
 
 ### Changed
 
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- In `Ownable2Step` remove `ownable_two_step::Error` wrapper, and emit `ownable::Error` directly. #594
+- Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
 
 ### Fixed
 
