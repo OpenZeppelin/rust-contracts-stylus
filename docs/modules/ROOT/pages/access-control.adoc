@@ -23,7 +23,7 @@ enum Error {
 #[storage]
 struct OwnableExample {
     #[borrow]
-    pub ownable: Ownable,
+    ownable: Ownable,
 }
 
 #[public]
@@ -33,9 +33,7 @@ impl MyContract {
         // anyone can call this normal_thing()
     }
 
-    pub fn special_thing(
-        &mut self,
-    ) -> Result<(), Error> {
+    fn special_thing(&mut self) -> Result<(), Error> {
         self.ownable.only_owner()?;
 
         // only the owner can call special_thing()!
@@ -93,18 +91,18 @@ enum Error {
 #[storage]
 struct Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub access: AccessControl,
+    access: AccessControl,
 }
 
-pub const MINTER_ROLE: [u8; 32] =
+const MINTER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
-    pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
+    fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(MINTER_ROLE.into())?;
         self.erc20._mint(to, amount)?;
         Ok(())
@@ -135,27 +133,27 @@ enum Error {
 #[storage]
 struct Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub access: AccessControl,
+    access: AccessControl,
 }
 
-pub const MINTER_ROLE: [u8; 32] =
+const MINTER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
-pub const BURNER_ROLE: [u8; 32] =
+const BURNER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"BURNER_ROLE").finalize();
 
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
-    pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
+    fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(MINTER_ROLE.into())?;
         self.erc20._mint(to, amount)?;
         Ok(())
     }
 
-    pub fn burn(&mut self, from: Address, amount: U256) -> Result<(), Error> {
+    fn burn(&mut self, from: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(BURNER_ROLE.into())?;
         self.erc20._burn(from, amount)?;
         Ok(())

@@ -17,18 +17,18 @@ use openzeppelin_stylus::token::erc20::{
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
 }
 
 #[public]
 #[inherit(Erc20)]
 impl Erc20Example {
-    pub fn burn(&mut self, value: U256) -> Result<(), erc20::Error> {
+    fn burn(&mut self, value: U256) -> Result<(), erc20::Error> {
         // ...
         self.erc20.burn(value)
     }
 
-    pub fn burn_from(
+    fn burn_from(
         &mut self,
         account: Address,
         value: U256,
