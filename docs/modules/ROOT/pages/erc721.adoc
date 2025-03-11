@@ -21,24 +21,25 @@ Here's what a contract for tokenized items might look like:
 
 [source,rust]
 ----
+use openzeppelin_stylus::token::erc721::{
+    self, extensions::Erc721Metadata, Erc721,
+};
+
 #[entrypoint]
 #[storage]
 struct GameItem {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
     #[borrow]
-    pub metadata: Metadata,
-    pub next_token_id: StorageU256,
+    metadata: Erc721Metadata,
+    next_token_id: StorageU256,
 }
 
 #[public]
-#[inherit(Erc721, Metadata)]
+#[inherit(Erc721, Erc721Metadata)]
 impl GameItem {
-    pub fn award_item(
-        &mut self,
-        player: Address,
-    ) -> Result<U256, Vec<u8>> {
-        let token_id = self._next_token_id.get() + uint!(1_U256);
+    fn award_item(&mut self, player: Address) -> Result<U256, erc721::Error> {
+        let token_id = self.next_token_id.get() + uint!(1_U256);
         self.next_token_id.set(token_id);
 
         self.erc721._mint(player, token_id)?;

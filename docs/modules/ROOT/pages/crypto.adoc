@@ -16,7 +16,7 @@ https://docs.rs/openzeppelin-crypto/0.2.0-alpha.4/openzeppelin_crypto/merkle/str
 
 [source,rust]
 ----
-pub fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
+fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
     let proof: Vec<[u8; 32]> = proof.into_iter().map(|m| *m).collect();
     Verifier::<KeccakBuilder>::verify(&proof, *root, *leaf)
 }

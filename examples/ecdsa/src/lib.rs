@@ -9,18 +9,17 @@ use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
-struct ECDSAExample {}
+struct ECDSAExample;
 
 #[public]
 impl ECDSAExample {
-    pub fn recover(
+    fn recover(
         &mut self,
         hash: B256,
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<Address, Vec<u8>> {
-        let signer = ecdsa::recover(self, hash, v, r, s)?;
-        Ok(signer)
+    ) -> Result<Address, ecdsa::Error> {
+        ecdsa::recover(self, hash, v, r, s)
     }
 }

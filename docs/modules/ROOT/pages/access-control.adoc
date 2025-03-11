@@ -11,13 +11,19 @@ OpenZeppelin Contracts for Stylus provides https://docs.rs/openzeppelin-stylus/0
 
 [source,rust]
 ----
-use openzeppelin_stylus::access::ownable::Ownable;
+use openzeppelin_stylus::access::ownable::{self, Ownable};
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Ownable(ownable::Error),
+    // other custom errors...
+}
 
 #[entrypoint]
 #[storage]
 struct OwnableExample {
     #[borrow]
-    pub ownable: Ownable,
+    ownable: Ownable,
 }
 
 #[public]
@@ -27,9 +33,7 @@ impl MyContract {
         // anyone can call this normal_thing()
     }
 
-    pub fn special_thing(
-        &mut self,
-    ) -> Result<(), Vec<u8>> {
+    fn special_thing(&mut self) -> Result<(), Error> {
         self.ownable.only_owner()?;
 
         // only the owner can call special_thing()!
@@ -72,25 +76,34 @@ Here's a simple example of using `AccessControl` in an xref:erc20.adoc[ERC-20 to
 
 [source,rust]
 ----
+use openzeppelin_stylus::{
+    access::control::{self, AccessControl, IAccessControl},
+    token::erc20::{self, Erc20, IErc20},
+};
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    AccessControl(control::Error),
+    Erc20(erc20::Error),
+}
+
 #[entrypoint]
 #[storage]
 struct Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub access: AccessControl,
+    access: AccessControl,
 }
 
-pub const MINTER_ROLE: [u8; 32] =
+const MINTER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
-    pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Vec<u8>> {
-        if self.access.has_role(MINTER_ROLE.into(), msg::sender()) {
-            return Err(Vec::new());
-        }
+    fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
+        self.access.only_role(MINTER_ROLE.into())?;
         self.erc20._mint(to, amount)?;
         Ok(())
     }
@@ -105,31 +118,42 @@ Let's augment our ERC-20 token example by also defining a 'burner' role, which l
 
 [source,rust]
 ----
+use openzeppelin_stylus::{
+    access::control::{self, AccessControl, IAccessControl},
+    token::erc20::{self, Erc20, IErc20},
+};
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    AccessControl(control::Error),
+    Erc20(erc20::Error),
+}
+
 #[entrypoint]
 #[storage]
 struct Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub access: AccessControl,
+    access: AccessControl,
 }
 
-pub const MINTER_ROLE: [u8; 32] =
+const MINTER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
-pub const BURNER_ROLE: [u8; 32] =
+const BURNER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"BURNER_ROLE").finalize();
 
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl Example {
-    pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Vec<u8>> {
+    fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(MINTER_ROLE.into())?;
         self.erc20._mint(to, amount)?;
         Ok(())
     }
 
-    pub fn burn(&mut self, from: Address, amount: U256) -> Result<(), Vec<u8>> {
+    fn burn(&mut self, from: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(BURNER_ROLE.into())?;
         self.erc20._burn(from, amount)?;
         Ok(())
