@@ -87,4 +87,4 @@ Additionally, there are multiple custom extensions, including:
 
  * xref:erc20-flash-mint.adoc[ERC-20 Flash-Mint]: token level support for flash loans through the minting and burning of ephemeral tokens (standardized as https://eips.ethereum.org/EIPS/eip-3156[`EIP-3156`]).
 
- * xref:erc20-wrapper.adoc[ERC-20 Wrapper]: Extension of the ERC-20 token contract to support token wrapping .
+ * xref:erc20-wrapper.adoc[ERC-20 Wrapper]: wrapper to create an ERC-20 backed by another ERC-20, with deposit and withdraw methods.
