@@ -7,31 +7,49 @@ This is particularly useful for non-fungible tokens (NFTs) where each token is u
 [[usage]]
 == Usage
 
-In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc1155/extensions/uri_storage/index.html[URI Storage] flavour,
-your token should also use https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[`ERC-1155 Metadata URI`] extension to provide additional URI metadata for each token.
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/uri_storage/index.html[URI Storage] flavour,
+your token should also use https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[`ERC-1155 Metadata URI`] extension to provide additional URI metadata for each token.
 You need to create a specified contract as follows:
 
 [source,rust]
 ----
-use openzeppelin_stylus::token::erc1155::{
-    extensions::{Erc1155MetadataUri, Erc1155UriStorage},
-    Erc1155,
+use openzeppelin_stylus::{
+    token::erc1155::{
+        extensions::{Erc1155MetadataUri, Erc1155UriStorage},
+        Erc1155,
+    },
+    utils::introspection::erc165::IErc165,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc1155MetadataUriExample {
     #[borrow]
-    pub erc1155: Erc1155,
-    pub metadata_uri: Erc1155MetadataUri,
-    pub uri_storage: Erc1155UriStorage,
+    erc1155: Erc1155,
+    metadata_uri: Erc1155MetadataUri,
+    uri_storage: Erc1155UriStorage,
 }
 
 #[public]
 #[inherit(Erc1155)]
 impl Erc1155MetadataUriExample {
-    pub fn uri(&self, token_id: U256) -> String {
+    fn uri(&self, token_id: U256) -> String {
         self.uri_storage.uri(token_id, &self.metadata_uri)
+    }
+
+    #[selector(name = "setTokenURI")]
+    fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+        self.uri_storage.set_token_uri(token_id, token_uri, &self.metadata_uri)
+    }
+
+    #[selector(name = "setBaseURI")]
+    fn set_base_uri(&mut self, base_uri: String) {
+        self.uri_storage.set_base_uri(base_uri)
+    }
+
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc1155::supports_interface(interface_id)
+            || Erc1155MetadataUri::supports_interface(interface_id)
     }
 }
 ----

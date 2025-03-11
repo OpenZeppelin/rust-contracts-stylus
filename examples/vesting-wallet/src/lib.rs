@@ -2,13 +2,13 @@
 extern crate alloc;
 
 use openzeppelin_stylus::finance::vesting_wallet::VestingWallet;
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
 struct VestingWalletExample {
     #[borrow]
-    pub vesting_wallet: VestingWallet,
+    vesting_wallet: VestingWallet,
 }
 
 #[public]

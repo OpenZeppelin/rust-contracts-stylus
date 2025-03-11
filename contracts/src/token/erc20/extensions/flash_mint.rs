@@ -17,13 +17,15 @@
 // TODO: once ERC20Votes is implemented, include it in the comment above next to
 // ERC20Capped.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{Address, U256};
 use stylus_sdk::{
     abi::Bytes,
-    call::Call,
+    call::{Call, MethodError},
     contract, msg,
     prelude::*,
-    storage::{StorageAddress, StorageU256, TopLevelStorage},
+    storage::{StorageAddress, StorageU256},
 };
 
 use crate::token::erc20::{self, Erc20, IErc20};
@@ -74,6 +76,12 @@ pub enum Error {
     InvalidReceiver(ERC3156InvalidReceiver),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 pub use borrower::IERC3156FlashBorrower;
@@ -171,8 +179,8 @@ pub trait IErc3156FlashLender {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_fee(token, value)?)
+    /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, flash_mint::Error> {
+    ///     self.erc20_flash_mint.flash_fee(token, value)
     /// }
     /// ```
     fn flash_fee(
@@ -230,14 +238,14 @@ pub trait IErc3156FlashLender {
     ///     token: Address,
     ///     value: U256,
     ///     data: Bytes,
-    /// ) -> Result<bool, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_loan(
+    /// ) -> Result<bool, flash_mint::Error> {
+    ///     self.erc20_flash_mint.flash_loan(
     ///         receiver,
     ///         token,
     ///         value,
     ///         data,
     ///         &mut self.erc20,
-    ///     )?)
+    ///     )
     /// }
     /// ```
     fn flash_loan(

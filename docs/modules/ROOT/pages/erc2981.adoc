@@ -1,0 +1,17 @@
+= ERC-2981
+
+ERC-2981 offers a way to keep track of NFT royalties across different platforms.
+
+Royalty is the amount of money given to the owner of a particular asset (NFT in this case). Full definition: https://en.wikipedia.org/wiki/Royalty_payment [royalty].
+
+This makes ERC-2981 useful for keeping track of royalty information across different platforms. It ensures that users don't have to specify this information on every platform, and the information remains transparent on the blockchain.
+
+== Limitations and Considerations
+
+- **Marketplace Enforcement**: Some NFT marketplaces may not enforce royalties.
+- **Manual Distribution**: On-chain royalty tracking does not mean automatic payouts.
+- **Gas Costs**: Extra storage and computations can slightly increase gas fees.
+
+== Additional Resources
+
+- ERC-2981 EIP: https://eips.ethereum.org/EIPS/eip-2981[EIP-2981 Specification]

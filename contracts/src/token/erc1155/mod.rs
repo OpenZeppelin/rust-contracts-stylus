@@ -7,8 +7,8 @@ use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
     evm, function_selector, msg,
-    prelude::{public, storage, AddressVM, SolidityError},
-    storage::{StorageBool, StorageMap, StorageU256, TopLevelStorage},
+    prelude::*,
+    storage::{StorageBool, StorageMap, StorageU256},
 };
 
 use crate::utils::{
@@ -2357,5 +2357,15 @@ mod tests {
         let actual = <Erc1155 as IErc165>::INTERFACE_ID;
         let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc1155::supports_interface(
+            <Erc1155 as IErc1155>::INTERFACE_ID.into()
+        ));
+        assert!(Erc1155::supports_interface(
+            <Erc1155 as IErc165>::INTERFACE_ID.into()
+        ));
     }
 }

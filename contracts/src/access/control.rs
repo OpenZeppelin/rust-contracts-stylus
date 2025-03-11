@@ -39,14 +39,15 @@
 //! taken to secure accounts that have been granted it. We recommend using
 //! `AccessControlDefaultAdminRules` to enforce additional security measures for
 //! this role.
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, B256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
+    call::MethodError,
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::{StorageBool, StorageFixedBytes, StorageMap},
     stylus_proc::{public, SolidityError},
 };
@@ -105,6 +106,12 @@ pub enum Error {
     UnauthorizedAccount(AccessControlUnauthorizedAccount),
     /// The caller of a afunction is not the expected one.
     BadConfirmation(AccessControlBadConfirmation),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of a [`RoleData`] contract.
@@ -244,7 +251,6 @@ pub trait IAccessControl {
 impl IAccessControl for AccessControl {
     type Error = Error;
 
-    #[must_use]
     fn has_role(&self, role: B256, account: Address) -> bool {
         self.roles.getter(role).has_role.get(account)
     }
@@ -253,7 +259,6 @@ impl IAccessControl for AccessControl {
         self._check_role(role, msg::sender())
     }
 
-    #[must_use]
     fn get_role_admin(&self, role: B256) -> B256 {
         *self.roles.getter(role).admin_role
     }

@@ -5,24 +5,29 @@ Extension of xref:erc20.adoc[ERC-20] that adds a cap to the supply of tokens.
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc20/extensions/capped/index.html[`ERC-20 Capped`] methods supervising the supply of tokens, you need to add them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/extensions/capped/index.html[`ERC-20 Capped`] methods supervising the supply of tokens, you need to add them by yourself for your final contract as follows:
 
 [source,rust]
 ----
-use openzeppelin_stylus::{
-    token::erc20::{
-        extensions::{capped, Capped},
-        Erc20, IErc20,
-    }
+use openzeppelin_stylus::token::erc20::{
+    self,
+    extensions::{capped, Capped},
+    Erc20, IErc20,
 };
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Capped(capped::Error),
+    Erc20(erc20::Error),
+}
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub capped: Capped,
+    capped: Capped,
 }
 
 #[public]
@@ -33,12 +38,11 @@ impl Erc20Example {
     // Make sure to handle `Capped` properly. You should not call
     // [`Erc20::_update`] to mint tokens -- it will the break `Capped`
     // mechanism.
-    pub fn mint(
+    fn mint(
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.pausable.when_not_paused()?;
+    ) -> Result<(), Error> {
         let max_supply = self.capped.cap();
 
         // Overflow check required.
