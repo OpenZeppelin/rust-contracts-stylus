@@ -153,8 +153,8 @@ pub trait IErc20Wrapper {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn deposit_for(&mut self, account: Address, value: U256) -> Result<bool, Vec<u8>> {
-    ///     Ok(self.erc20_wrapper.deposit_for(account, value, &mut self.erc20)?)
+    /// fn deposit_for(&mut self, account: Address, value: U256) -> Result<bool, wrapper::Error> {
+    ///     self.erc20_wrapper.deposit_for(account, value, &mut self.erc20)
     /// }
     /// ```
     fn deposit_for(
@@ -186,8 +186,8 @@ pub trait IErc20Wrapper {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn withdraw_to(&mut self, account: Address, value: U256) -> Result<bool, Vec<u8>> {
-    ///     Ok(self.erc20_wrapper.withdraw_to(account, value, &mut self.erc20)?)
+    /// fn withdraw_to(&mut self, account: Address, value: U256,) -> Result<bool, wrapper::Error> {
+    ///    self.erc20_wrapper.withdraw_to(account, value, &mut self.erc20)
     /// }
     /// ```
     fn withdraw_to(
