@@ -24,7 +24,6 @@ around the use cases that motivate it. Features are prioritized according to
 the impact they may have on the ecosystem, so we appreciate information showing
 that the impact could be high.
 
-[security policy]: https://github.com/OpenZeppelin/openzeppelin-contracts/security
 [open an issue]: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/new/choose
 
 ## Submitting a pull request
@@ -42,4 +41,4 @@ linter and tests to make sure your pull request is good before submitting it.
 If you're looking for a good place to start, look for issues labelled
 ["good first issue"].
 
-["good first issue"]: https://github.com/OpenZeppelin/rust-contracts-stylus/labels/good%20first%20issue!
+["good first issue"]: https://github.com/OpenZeppelin/rust-contracts-stylus/labels/good%20first%20issue
