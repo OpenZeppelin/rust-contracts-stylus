@@ -127,8 +127,6 @@ mod deposit_for {
             deploy(&alice, initial_supply).await?;
         let alice_addr: Address = alice.address();
 
-        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
-
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         let err = contract
             .depositFor(alice_addr, initial_supply)
@@ -152,7 +150,7 @@ mod deposit_for {
 
         let value = initial_supply + uint!(1_U256);
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
-        _ = watch!(asset.approve(contract_addr, value))?;
+        watch!(asset.approve(contract_addr, value))?;
 
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         let err = contract
@@ -169,7 +167,7 @@ mod deposit_for {
     }
 
     #[e2e::test]
-    async fn works(alice: Account) -> Result<()> {
+    async fn success(alice: Account) -> Result<()> {
         let initial_supply = uint!(1000_U256);
         let (contract_addr, asset_addr) =
             deploy(&alice, initial_supply).await?;
@@ -177,8 +175,7 @@ mod deposit_for {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
 
-        _ = watch!(asset.mint(alice_address, initial_supply))?;
-        _ = watch!(asset.approve(contract_addr, initial_supply))?;
+        watch!(asset.approve(contract_addr, initial_supply))?;
 
         let initial_wrapped_balance =
             contract.balanceOf(alice_address).call().await?.balance;
@@ -216,37 +213,116 @@ mod deposit_for {
 }
 
 mod withdraw_to {
-    /*
+
     use super::*;
 
-        #[e2e::test]
-        async fn success(alice: Account) -> Result<()> {
-            let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
-            let _contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-            Ok(())
-        }
+    /// Deploy a new [`Erc20`] contract and [`Erc20Wrapper`] contract, mint
+    /// initial ERC-20 tokens to `account`, and deposit for `account` to get
+    /// wrapped tokens.
+    async fn deploy_and_deposit_for(
+        account: &Account,
+        initial_tokens: U256,
+    ) -> Result<(Address, Address)> {
+        let (contract_addr, asset_addr) =
+            deploy(account, initial_tokens).await?;
 
-        #[e2e::test]
-        async fn reverts_for_invalid_sender(alice: Account) -> Result<()> {
-            let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
-            let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-            let err = contract
-                .withdrawTo(contract_addr, uint!(1000_U256))
-                .call()
-                .await
-                .expect_err("should return `InvalidReciver`");
-            assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidReceiver {
-                receiver: contract_addr
-            }));
-            Ok(())
-        }
+        let asset = ERC20Mock::new(asset_addr, &account.wallet);
+        let contract = Erc20Wrapper::new(contract_addr, &account.wallet);
 
-        #[e2e::test]
-        async fn reflects_balance_after_withdraw_to(alice: Account) -> Result<()> {
-            let (contract_addr, _asset_addr) = deploy(&alice, U256::ZERO).await?;
-            let _alice_address = alice.address();
-            let _contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-            Ok(())
-        }
-    */
+        watch!(asset.approve(contract_addr, initial_tokens))?;
+
+        watch!(contract.depositFor(account.address(), initial_tokens))?;
+
+        Ok((contract_addr, asset_addr))
+    }
+
+    #[e2e::test]
+    async fn reverts_when_invalid_sender(alice: Account) -> Result<()> {
+        let initial_tokens = uint!(1000_U256);
+        let (contract_addr, _) =
+            deploy_and_deposit_for(&alice, initial_tokens).await?;
+        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+
+        let err = contract
+            .withdrawTo(contract_addr, initial_tokens)
+            .call()
+            .await
+            .expect_err("should return `InvalidReciver`");
+
+        assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidReceiver {
+            receiver: contract_addr
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn reverts_when_insufficient_balance(alice: Account) -> Result<()> {
+        let initial_tokens = uint!(1000_U256);
+        let (contract_addr, _) =
+            deploy_and_deposit_for(&alice, initial_tokens).await?;
+        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+
+        let value = initial_tokens + uint!(100_U256);
+
+        let wrapped_balance =
+            contract.balanceOf(alice.address()).call().await?.balance;
+
+        let err = contract
+            .withdrawTo(alice.address(), value)
+            .call()
+            .await
+            .expect_err("should return `InsufficientBalance`");
+
+        assert!(err.reverted_with(Erc20::ERC20InsufficientBalance {
+            sender: alice.address(),
+            balance: wrapped_balance,
+            needed: value
+        }));
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn success(alice: Account) -> Result<()> {
+        let initial_tokens = uint!(1000_U256);
+        let (contract_addr, _) =
+            deploy_and_deposit_for(&alice, initial_tokens).await?;
+        let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
+
+        let initial_wrapped_balance =
+            contract.balanceOf(alice.address()).call().await?.balance;
+        assert_eq!(initial_tokens, initial_wrapped_balance);
+
+        let initial_wrapped_supply =
+            contract.totalSupply().call().await?.totalSupply;
+
+        let value = uint!(10_U256);
+        let receipt = receipt!(contract.withdrawTo(alice.address(), value))?;
+
+        // `Transfer` event for ERC-20 Wrapped token should be emitted (burning
+        // wrapped tokens from Alice).
+        assert!(receipt.emits(Erc20::Transfer {
+            from: alice.address(),
+            to: Address::ZERO,
+            value
+        }));
+
+        // `Transfer` event for ERC-20 token transfer from
+        // [`Erc20Wrapper`] contract to Alice should be emitted.
+        assert!(receipt.emits(Erc20::Transfer {
+            from: contract_addr,
+            to: alice.address(),
+            value
+        }));
+
+        let wrapped_balance =
+            contract.balanceOf(alice.address()).call().await?.balance;
+        assert_eq!(initial_wrapped_balance - value, wrapped_balance);
+
+        let wrapped_supply = contract.totalSupply().call().await?.totalSupply;
+        assert_eq!(initial_wrapped_supply - value, wrapped_supply);
+
+        Ok(())
+    }
 }
