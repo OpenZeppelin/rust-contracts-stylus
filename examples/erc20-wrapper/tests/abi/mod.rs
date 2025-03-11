@@ -21,21 +21,21 @@ sol!(
         #[derive(Debug)]
         function withdrawTo(address account, uint256 value) external  returns (bool);
 
-        error SafeErc20FailedOperation(address token);
-
         error ERC20InvalidUnderlying(address token);
-
-        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
         error ERC20InvalidReceiver(address receiver);
-        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-        error ERC20InvalidSpender(address spender);
-        error InvalidAsset(address asset);
 
+    }
+
+    contract Erc20 {
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
+    }
 
+    #[sol(rpc)]
+    contract SafeErc20 {
+        error SafeErc20FailedOperation(address token);
     }
 );
