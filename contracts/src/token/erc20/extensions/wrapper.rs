@@ -300,9 +300,6 @@ impl Erc20Wrapper {
     }
 }
 
-// TODO: Add missing tests once we solve these issues:
-// - https://github.com/OpenZeppelin/rust-contracts-stylus/issues/510
-// - https://github.com/OpenZeppelin/stylus-test-helpers/issues/65
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
@@ -356,6 +353,29 @@ mod tests {
     }
 
     #[motsu::test]
+    fn deposit_for_reverts_when_invalid_asset(
+        contract: Contract<Erc20WrapperTestExample>,
+        alice: Address,
+    ) {
+        let invalid_asset = alice;
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(invalid_asset);
+        });
+
+        let err = contract
+            .sender(alice)
+            .deposit_for(invalid_asset, uint!(10_U256))
+            .expect_err("should return Error::SafeErc20");
+
+        assert!(matches!(
+            err,
+            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+                safe_erc20::SafeErc20FailedOperation { token }
+            )) if token == invalid_asset
+        ));
+    }
+
+    #[motsu::test]
     fn deposit_for_reverts_when_invalid_sender(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -397,6 +417,126 @@ mod tests {
             err,
             Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
+    }
+
+    #[motsu::test]
+    fn deposit_for_reverts_when_insufficient_allowance(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+            erc20_contract
+                .sender(alice)
+                ._mint(alice, amount)
+                .expect("should mint");
+        });
+
+        let err = contract
+            .sender(alice)
+            .deposit_for(alice, amount)
+            .expect_err("should return Error::SafeErc20");
+
+        assert!(matches!(
+            err,
+            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+                safe_erc20::SafeErc20FailedOperation { token }
+            )) if token == erc20_contract.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn deposit_for_reverts_when_insufficient_balance(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        let exceeding_value = amount + uint!(1_U256);
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+            erc20_contract
+                .sender(alice)
+                ._mint(alice, amount)
+                .expect("should mint");
+        });
+
+        erc20_contract
+            .sender(alice)
+            .approve(contract.address(), exceeding_value)
+            .expect("should approve");
+
+        let err = contract
+            .sender(alice)
+            .deposit_for(alice, exceeding_value)
+            .expect_err("should return Error::SafeErc20");
+
+        assert!(matches!(
+            err,
+            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+                safe_erc20::SafeErc20FailedOperation { token }
+            )) if token == erc20_contract.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn deposit_for_works(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+            erc20_contract
+                .sender(alice)
+                ._mint(alice, amount)
+                .expect("should mint");
+        });
+
+        let initial_balance = erc20_contract.sender(alice).balance_of(alice);
+        let initial_wrapped_balance =
+            contract.sender(alice).erc20.balance_of(alice);
+
+        let initial_contract_balance =
+            erc20_contract.sender(alice).balance_of(contract.address());
+
+        let initial_wrapped_supply =
+            contract.sender(alice).erc20.total_supply();
+
+        erc20_contract
+            .sender(alice)
+            .approve(contract.address(), amount)
+            .expect("should approve");
+
+        assert!(contract
+            .sender(alice)
+            .deposit_for(alice, amount)
+            .expect("should deposit"));
+
+        assert_eq!(
+            erc20_contract.sender(alice).balance_of(alice),
+            initial_balance - amount
+        );
+        assert_eq!(
+            contract.sender(alice).erc20.balance_of(alice),
+            initial_wrapped_balance + amount
+        );
+        assert_eq!(
+            erc20_contract
+                .sender(contract.address())
+                .balance_of(contract.address()),
+            initial_contract_balance + amount
+        );
+        assert_eq!(
+            contract.sender(alice).erc20.total_supply(),
+            initial_wrapped_supply + amount
+        );
     }
 
     #[motsu::test]

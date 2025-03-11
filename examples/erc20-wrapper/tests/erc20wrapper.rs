@@ -121,7 +121,7 @@ mod deposit_for {
     }
 
     #[e2e::test]
-    async fn reverts_when_missing_approval(alice: Account) -> Result<()> {
+    async fn reverts_when_insufficient_allowance(alice: Account) -> Result<()> {
         let initial_supply = uint!(1000_U256);
         let (contract_addr, asset_addr) =
             deploy(&alice, initial_supply).await?;
@@ -132,7 +132,7 @@ mod deposit_for {
             .depositFor(alice_addr, initial_supply)
             .call()
             .await
-            .expect_err("should not transfer when insufficient balance");
+            .expect_err("should not transfer when insufficient allowance");
 
         assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
             token: asset_addr
