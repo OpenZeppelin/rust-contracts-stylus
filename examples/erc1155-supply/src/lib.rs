@@ -6,6 +6,7 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc1155::{
+        self,
         extensions::{Erc1155Supply, IErc1155Supply},
         Erc1155,
     },
@@ -17,7 +18,7 @@ use stylus_sdk::{abi::Bytes, prelude::*};
 #[storage]
 struct Erc1155Example {
     #[borrow]
-    pub erc1155_supply: Erc1155Supply,
+    erc1155_supply: Erc1155Supply,
 }
 
 #[public]
@@ -37,47 +38,43 @@ impl Erc1155Example {
     }
 
     // Add token minting feature.
-    pub fn mint(
+    fn mint(
         &mut self,
         to: Address,
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155_supply._mint(to, id, value, &data)?;
-        Ok(())
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155_supply._mint(to, id, value, &data)
     }
 
-    pub fn mint_batch(
+    fn mint_batch(
         &mut self,
         to: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155_supply._mint_batch(to, ids, values, &data)?;
-        Ok(())
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155_supply._mint_batch(to, ids, values, &data)
     }
 
     // Add token burning feature.
-    pub fn burn(
+    fn burn(
         &mut self,
         from: Address,
         id: U256,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155_supply._burn(from, id, value)?;
-        Ok(())
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155_supply._burn(from, id, value)
     }
 
-    pub fn burn_batch(
+    fn burn_batch(
         &mut self,
         from: Address,
         ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Vec<u8>> {
-        self.erc1155_supply._burn_batch(from, ids, values)?;
-        Ok(())
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155_supply._burn_batch(from, ids, values)
     }
 
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {

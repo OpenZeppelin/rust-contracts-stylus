@@ -19,9 +19,9 @@ Here's what our GLD token might look like.
 #[storage]
 struct GLDToken {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub metadata: Erc20Metadata,
+    metadata: Erc20Metadata,
 }
 
 #[public]
@@ -57,7 +57,7 @@ To use a different value, you will need to override the `decimals()` function in
 
 [source,rust]
 ----
-pub fn decimals(&self) -> u8 {
+fn decimals(&self) -> u8 {
     16
 }
 ----

@@ -8,7 +8,7 @@ use stylus_sdk::prelude::*;
 #[storage]
 struct SafeErc20Example {
     #[borrow]
-    pub safe_erc20: SafeErc20,
+    safe_erc20: SafeErc20,
 }
 
 #[public]

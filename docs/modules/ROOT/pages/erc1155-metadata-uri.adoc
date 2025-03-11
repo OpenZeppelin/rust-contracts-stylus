@@ -21,9 +21,9 @@ use openzeppelin_stylus::{
 #[storage]
 struct Erc1155Example {
     #[borrow]
-    pub erc1155: Erc1155,
+    erc1155: Erc1155,
     #[borrow]
-    pub metadata_uri: Erc1155MetadataUri,
+    metadata_uri: Erc1155MetadataUri,
 }
 
 #[public]

@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Erc20Wrapper` "Token Wrapping contract". #498
+- `Erc20Wrapper` extension to support token wrapping. #498
+- Implement `MethodError` for all contracts' errors. #594
 
 ### Changed
 
@@ -17,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
--
+- Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
 
 ### Fixed
 
