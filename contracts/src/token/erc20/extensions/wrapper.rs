@@ -307,6 +307,7 @@ mod tests {
     use stylus_sdk::prelude::*;
 
     use super::*;
+    use crate::token::erc20;
 
     #[storage]
     struct Erc20WrapperTestExample {
@@ -316,6 +317,10 @@ mod tests {
 
     #[public]
     impl Erc20WrapperTestExample {
+        fn decimals(&self) -> U8 {
+            self.wrapper.decimals()
+        }
+
         fn underlying(&self) -> Address {
             self.wrapper.underlying()
         }
@@ -340,6 +345,19 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20WrapperTestExample {}
 
     #[motsu::test]
+    fn decimals_works(
+        contract: Contract<Erc20WrapperTestExample>,
+        alice: Address,
+    ) {
+        let decimals = uint!(18_U8);
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying_decimals.set(decimals);
+        });
+
+        assert_eq!(contract.sender(alice).decimals(), decimals);
+    }
+
+    #[motsu::test]
     fn underlying_works(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -349,7 +367,7 @@ mod tests {
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc20_address);
         });
-        assert_eq!(contract.sender(alice).wrapper.underlying(), erc20_address);
+        assert_eq!(contract.sender(alice).underlying(), erc20_address);
     }
 
     #[motsu::test]
@@ -382,6 +400,7 @@ mod tests {
         alice: Address,
     ) {
         let invalid_sender = contract.address();
+
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
@@ -404,6 +423,7 @@ mod tests {
         alice: Address,
     ) {
         let invalid_receiver = contract.address();
+
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
@@ -429,11 +449,9 @@ mod tests {
 
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc20_contract.address());
-            erc20_contract
-                .sender(alice)
-                ._mint(alice, amount)
-                .expect("should mint");
         });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         let err = contract
             .sender(alice)
@@ -457,13 +475,12 @@ mod tests {
         let amount = uint!(10_U256);
 
         let exceeding_value = amount + uint!(1_U256);
+
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc20_contract.address());
-            erc20_contract
-                .sender(alice)
-                ._mint(alice, amount)
-                .expect("should mint");
         });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         erc20_contract
             .sender(alice)
@@ -493,11 +510,9 @@ mod tests {
 
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc20_contract.address());
-            erc20_contract
-                .sender(alice)
-                ._mint(alice, amount)
-                .expect("should mint");
         });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         let initial_balance = erc20_contract.sender(alice).balance_of(alice);
         let initial_wrapped_balance =
@@ -519,20 +534,35 @@ mod tests {
             .deposit_for(alice, amount)
             .expect("should deposit"));
 
+        erc20_contract.assert_emitted(&erc20::Transfer {
+            from: alice,
+            to: contract.address(),
+            value: amount,
+        });
+
+        contract.assert_emitted(&erc20::Transfer {
+            from: Address::ZERO,
+            to: alice,
+            value: amount,
+        });
+
         assert_eq!(
             erc20_contract.sender(alice).balance_of(alice),
             initial_balance - amount
         );
+
         assert_eq!(
             contract.sender(alice).erc20.balance_of(alice),
             initial_wrapped_balance + amount
         );
+
         assert_eq!(
             erc20_contract
                 .sender(contract.address())
                 .balance_of(contract.address()),
             initial_contract_balance + amount
         );
+
         assert_eq!(
             contract.sender(alice).erc20.total_supply(),
             initial_wrapped_supply + amount
@@ -559,5 +589,122 @@ mod tests {
             err,
             Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
+    }
+
+    #[motsu::test]
+    fn withdraw_to_reverts_when_insufficient_balance(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+
+        erc20_contract
+            .sender(alice)
+            .approve(contract.address(), amount)
+            .expect("should approve");
+
+        contract
+            .sender(alice)
+            .deposit_for(alice, amount)
+            .expect("should deposit");
+
+        let exceeding_value = amount + uint!(1_U256);
+
+        let err = contract
+            .sender(alice)
+            .withdraw_to(alice, exceeding_value)
+            .expect_err("should return Error::SafeErc20");
+
+        assert!(matches!(
+            err,
+            Error::Erc20(erc20::Error::InsufficientBalance(
+                erc20::ERC20InsufficientBalance {
+                    sender,
+                    balance,
+                    needed
+                }
+            )) if sender == alice && balance == amount && needed == exceeding_value
+        ));
+    }
+
+    #[motsu::test]
+    fn withdraw_to_works(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+
+        erc20_contract
+            .sender(alice)
+            .approve(contract.address(), amount)
+            .expect("should approve");
+
+        contract
+            .sender(alice)
+            .deposit_for(alice, amount)
+            .expect("should deposit");
+
+        let initial_balance = erc20_contract.sender(alice).balance_of(alice);
+        let initial_wrapped_balance =
+            contract.sender(alice).erc20.balance_of(alice);
+
+        let initial_contract_balance =
+            erc20_contract.sender(alice).balance_of(contract.address());
+
+        let initial_wrapped_supply =
+            contract.sender(alice).erc20.total_supply();
+
+        assert!(contract
+            .sender(alice)
+            .withdraw_to(alice, amount)
+            .expect("should withdraw"));
+
+        contract.assert_emitted(&erc20::Transfer {
+            from: alice,
+            to: Address::ZERO,
+            value: amount,
+        });
+
+        erc20_contract.assert_emitted(&erc20::Transfer {
+            from: contract.address(),
+            to: alice,
+            value: amount,
+        });
+
+        assert_eq!(
+            erc20_contract.sender(alice).balance_of(alice),
+            initial_balance + amount
+        );
+
+        assert_eq!(
+            contract.sender(alice).erc20.balance_of(alice),
+            initial_wrapped_balance - amount
+        );
+
+        assert_eq!(
+            erc20_contract
+                .sender(contract.address())
+                .balance_of(contract.address()),
+            initial_contract_balance - amount
+        );
+
+        assert_eq!(
+            contract.sender(alice).erc20.total_supply(),
+            initial_wrapped_supply - amount
+        );
     }
 }
