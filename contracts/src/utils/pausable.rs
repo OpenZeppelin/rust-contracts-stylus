@@ -14,12 +14,13 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 pub use sol::*;
 use stylus_sdk::{
+    call::MethodError,
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::StorageBool,
     stylus_proc::{public, SolidityError},
 };
@@ -62,6 +63,12 @@ pub enum Error {
     /// Indicates an error related to the operation that failed
     /// because the contract had been in `Unpaused` state.
     ExpectedPause(ExpectedPause),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of a [`Pausable`] Contract.

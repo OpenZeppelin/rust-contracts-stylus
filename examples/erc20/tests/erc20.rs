@@ -1376,34 +1376,40 @@ async fn supports_interface(alice: Account) -> Result<()> {
         .await?
         .address()?;
     let contract = Erc20::new(contract_addr, &alice.wallet);
+
     let invalid_interface_id: u32 = 0xffffffff;
-    let Erc20::supportsInterfaceReturn {
-        supportsInterface: supports_interface,
-    } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
+    let supports_interface = contract
+        .supportsInterface(invalid_interface_id.into())
+        .call()
+        .await?
+        .supportsInterface;
 
     assert!(!supports_interface);
 
     let erc20_interface_id: u32 = 0x36372b07;
-    let Erc20::supportsInterfaceReturn {
-        supportsInterface: supports_interface,
-    } = contract.supportsInterface(erc20_interface_id.into()).call().await?;
+    let supports_interface = contract
+        .supportsInterface(erc20_interface_id.into())
+        .call()
+        .await?
+        .supportsInterface;
 
     assert!(supports_interface);
 
     let erc165_interface_id: u32 = 0x01ffc9a7;
-    let Erc20::supportsInterfaceReturn {
-        supportsInterface: supports_interface,
-    } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
+    let supports_interface = contract
+        .supportsInterface(erc165_interface_id.into())
+        .call()
+        .await?
+        .supportsInterface;
 
     assert!(supports_interface);
 
     let erc20_metadata_interface_id: u32 = 0xa219a025;
-    let Erc20::supportsInterfaceReturn {
-        supportsInterface: supports_interface,
-    } = contract
+    let supports_interface = contract
         .supportsInterface(erc20_metadata_interface_id.into())
         .call()
-        .await?;
+        .await?
+        .supportsInterface;
 
     assert!(supports_interface);
 

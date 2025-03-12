@@ -16,19 +16,15 @@
 //! This module uses [`Ownable`] as a member, and makes all its public functions
 //! available.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::Address;
 pub use sol::*;
-use stylus_sdk::{
-    evm, msg,
-    prelude::storage,
-    storage::StorageAddress,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
 use crate::access::ownable::{
-    Error as OwnableError, IOwnable, Ownable, OwnableUnauthorizedAccount,
+    self, IOwnable, Ownable, OwnableUnauthorizedAccount,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -49,14 +45,6 @@ mod sol {
     }
 }
 
-/// An error that occurred in the implementation of an [`Ownable2Step`]
-/// contract.
-#[derive(SolidityError, Debug)]
-pub enum Error {
-    /// Error type from [`Ownable`] contract.
-    Ownable(OwnableError),
-}
-
 /// State of an [`Ownable2Step`] contract.
 #[storage]
 pub struct Ownable2Step {
@@ -66,6 +54,20 @@ pub struct Ownable2Step {
     pub ownable: Ownable,
     /// Pending owner of the contract.
     pub(crate) pending_owner: StorageAddress,
+}
+
+impl Deref for Ownable2Step {
+    type Target = Ownable;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ownable
+    }
+}
+
+impl DerefMut for Ownable2Step {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ownable
+    }
 }
 
 /// Interface for an [`Ownable2Step`] contract.
@@ -103,8 +105,8 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// * [`OwnableError::UnauthorizedAccount`] - If called by any account other
-    ///   than the owner.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
+    ///   other than the owner.
     ///
     /// # Events
     ///
@@ -123,8 +125,8 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// * [`OwnableError::UnauthorizedAccount`] - If called by any account other
-    ///   than the pending owner.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
+    ///   other than the pending owner.
     ///
     /// # Events
     ///
@@ -144,7 +146,7 @@ pub trait IOwnable2Step {
     ///
     /// # Errors
     ///
-    /// * [`OwnableError::UnauthorizedAccount`] - If not called by the owner.
+    /// * [`ownable::Error::UnauthorizedAccount`] - If not called by the owner.
     ///
     /// # Events
     ///
@@ -154,7 +156,7 @@ pub trait IOwnable2Step {
 
 #[public]
 impl IOwnable2Step for Ownable2Step {
-    type Error = Error;
+    type Error = ownable::Error;
 
     fn owner(&self) -> Address {
         self.ownable.owner()
@@ -183,16 +185,15 @@ impl IOwnable2Step for Ownable2Step {
         let sender = msg::sender();
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
-            return Err(OwnableError::UnauthorizedAccount(
+            return Err(ownable::Error::UnauthorizedAccount(
                 OwnableUnauthorizedAccount { account: sender },
-            )
-            .into());
+            ));
         }
         self._transfer_ownership(sender);
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         self.ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
@@ -227,7 +228,9 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{Error, IOwnable2Step, Ownable2Step, OwnableError};
+    use super::{
+        ownable::Error, IOwnable2Step, Ownable2Step, OwnableUnauthorizedAccount,
+    };
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -286,7 +289,9 @@ mod tests {
         let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
         assert!(matches!(
             err,
-            Error::Ownable(OwnableError::UnauthorizedAccount(_))
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account
+            }) if account == alice
         ));
     }
 
@@ -324,7 +329,9 @@ mod tests {
         let err = contract.sender(alice).accept_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::Ownable(OwnableError::UnauthorizedAccount(_))
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account
+            }) if account == alice
         ));
     }
 
@@ -379,7 +386,9 @@ mod tests {
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::Ownable(OwnableError::UnauthorizedAccount(_))
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account
+            }) if account == alice
         ));
     }
 

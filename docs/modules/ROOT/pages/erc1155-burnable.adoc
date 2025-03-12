@@ -6,19 +6,20 @@ own tokens and those that they have been approved to use.
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc1155/extensions/burnable/index.html[`ERC-1155 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/burnable/index.html[`ERC-1155 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
 
 [source,rust]
 ----
-use openzeppelin_stylus::token::erc1155::{
-    extensions::IErc1155Burnable, Erc1155,
+use openzeppelin_stylus::{
+    token::erc1155::{self, extensions::IErc1155Burnable, Erc1155},
+    utils::introspection::erc165::IErc165,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc1155Example {
     #[borrow]
-    pub erc1155: Erc1155,
+    erc1155: Erc1155,
 }
 
 #[public]
@@ -29,10 +30,11 @@ impl Erc1155Example {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         // ...
         self.erc1155.burn(account, token_id, value)?;
         // ...
+        Ok(())
     }
 
     fn burn_batch(
@@ -40,10 +42,15 @@ impl Erc1155Example {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         // ...
         self.erc1155.burn_batch(account, token_ids, values)?;
         // ...
+        Ok(())
+    }
+
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc1155::supports_interface(interface_id)
     }
 }
 ----

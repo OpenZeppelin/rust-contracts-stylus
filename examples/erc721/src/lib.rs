@@ -6,31 +6,38 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
-        extensions::{Erc721Enumerable as Enumerable, IErc721Burnable},
+        self,
+        extensions::{
+            enumerable, Erc721Enumerable as Enumerable, IErc721Burnable,
+        },
         Erc721, IErc721,
     },
-    utils::{introspection::erc165::IErc165, Pausable},
+    utils::{introspection::erc165::IErc165, pausable, Pausable},
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, public, storage},
-};
+use stylus_sdk::{abi::Bytes, prelude::*};
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    Enumerable(enumerable::Error),
+    Erc721(erc721::Error),
+    Pausable(pausable::Error),
+}
 
 #[entrypoint]
 #[storage]
 struct Erc721Example {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
     #[borrow]
-    pub enumerable: Enumerable,
+    enumerable: Enumerable,
     #[borrow]
-    pub pausable: Pausable,
+    pausable: Pausable,
 }
 
 #[public]
 #[inherit(Erc721, Enumerable, Pausable)]
 impl Erc721Example {
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the owner.
@@ -49,7 +56,7 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Vec<u8>> {
+    fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         self.erc721._mint(to, token_id)?;
@@ -65,12 +72,12 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn safe_mint(
+    fn safe_mint(
         &mut self,
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         self.erc721._safe_mint(to, token_id, &data)?;
@@ -86,12 +93,12 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn safe_transfer_from(
+    fn safe_transfer_from(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the previous owner.
@@ -115,13 +122,13 @@ impl Erc721Example {
     }
 
     #[selector(name = "safeTransferFrom")]
-    pub fn safe_transfer_from_with_data(
+    fn safe_transfer_from_with_data(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the previous owner.
@@ -144,12 +151,12 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn transfer_from(
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.pausable.when_not_paused()?;
 
         // Retrieve the previous owner.
@@ -172,7 +179,7 @@ impl Erc721Example {
         Ok(())
     }
 
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc721::supports_interface(interface_id)
             || Enumerable::supports_interface(interface_id)
     }
@@ -181,11 +188,11 @@ impl Erc721Example {
     /// **production**, ensure strict access control to prevent unauthorized
     /// pausing or unpausing, which can disrupt contract functionality. Remove
     /// or secure these functions before deployment.
-    pub fn pause(&mut self) -> Result<(), Vec<u8>> {
+    fn pause(&mut self) -> Result<(), Error> {
         self.pausable.pause().map_err(|e| e.into())
     }
 
-    pub fn unpause(&mut self) -> Result<(), Vec<u8>> {
+    fn unpause(&mut self) -> Result<(), Error> {
         self.pausable.unpause().map_err(|e| e.into())
     }
 }

@@ -5,30 +5,27 @@ xref:erc721.adoc[ERC-721] Token that can be burned (destroyed).
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc721/extensions/burnable/index.html[`ERC-721 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/extensions/burnable/index.html[`ERC-721 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
 
 [source,rust]
 ----
-use openzeppelin_stylus::{
-    token::erc721::{
-        extensions::IErc721Burnable,
-        Erc721, IErc721,
-    },
+use openzeppelin_stylus::token::erc721::{
+    self, extensions::IErc721Burnable, Erc721, IErc721,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc721Example {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
 }
 
 #[public]
 #[inherit(Erc721)]
 impl Erc721Example {
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+    fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
         // ...
-        self.erc721.burn(token_id).map_err(|e| e.into())
+        self.erc721.burn(token_id)
     }
 }
 ----

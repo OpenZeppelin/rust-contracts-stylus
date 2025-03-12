@@ -33,16 +33,16 @@ For a contract like this:
 #[entrypoint]
 #[storage]
 struct Counter {
-    pub number: StorageU256,
+    number: StorageU256,
 }
 
 #[public]
 impl Counter {
-    pub fn number(&self) -> U256 {
+    fn number(&self) -> U256 {
         self.number.get()
     }
 
-    pub fn increment(&mut self) {
+    fn increment(&mut self) {
         let number = self.number.get();
         self.set_number(number + U256::from(1));
     }
