@@ -4,7 +4,7 @@ extern crate alloc;
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
-        extensions::consecutive::{Erc721Consecutive, Error},
+        extensions::{consecutive, Erc721Consecutive},
         Erc721,
     },
     utils::introspection::erc165::IErc165,
@@ -21,11 +21,15 @@ struct Erc721ConsecutiveExample {
 #[public]
 #[inherit(Erc721Consecutive)]
 impl Erc721ConsecutiveExample {
-    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
+    fn burn(&mut self, token_id: U256) -> Result<(), consecutive::Error> {
         self.erc721_consecutive._burn(token_id)
     }
 
-    fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    fn mint(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), consecutive::Error> {
         self.erc721_consecutive._mint(to, token_id)
     }
 

@@ -11,7 +11,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc1155::{extensions::IErc1155Burnable, Erc1155},
+    token::erc1155::{self, extensions::IErc1155Burnable, Erc1155},
     utils::introspection::erc165::IErc165,
 };
 
@@ -19,7 +19,7 @@ use openzeppelin_stylus::{
 #[storage]
 struct Erc1155Example {
     #[borrow]
-    pub erc1155: Erc1155,
+    erc1155: Erc1155,
 }
 
 #[public]
@@ -30,7 +30,7 @@ impl Erc1155Example {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         // ...
         self.erc1155.burn(account, token_id, value)?;
         // ...
@@ -42,7 +42,7 @@ impl Erc1155Example {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc1155::Error> {
         // ...
         self.erc1155.burn_batch(account, token_ids, values)?;
         // ...

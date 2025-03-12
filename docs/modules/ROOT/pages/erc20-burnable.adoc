@@ -9,35 +9,32 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 
 [source,rust]
 ----
-use openzeppelin_stylus::{
-    token::erc20::{
-        extensions::IErc20Burnable,
-        Erc20, IErc20,
-    },
+use openzeppelin_stylus::token::erc20::{
+    self, extensions::IErc20Burnable, Erc20, IErc20,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
 }
 
 #[public]
 #[inherit(Erc20)]
 impl Erc20Example {
-    pub fn burn(&mut self, value: U256) -> Result<(), Vec<u8>> {
+    fn burn(&mut self, value: U256) -> Result<(), erc20::Error> {
         // ...
-        self.erc20.burn(value).map_err(|e| e.into())
+        self.erc20.burn(value)
     }
 
-    pub fn burn_from(
+    fn burn_from(
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), erc20::Error> {
         // ...
-        self.erc20.burn_from(account, value).map_err(|e| e.into())
+        self.erc20.burn_from(account, value)
     }
 }
 ----

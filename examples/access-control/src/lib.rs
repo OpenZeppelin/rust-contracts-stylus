@@ -5,18 +5,24 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus::{
-    access::control::{AccessControl, IAccessControl},
-    token::erc20::{Erc20, IErc20},
+    access::control::{self, AccessControl, IAccessControl},
+    token::erc20::{self, Erc20, IErc20},
 };
 use stylus_sdk::prelude::*;
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    AccessControl(control::Error),
+    Erc20(erc20::Error),
+}
 
 #[entrypoint]
 #[storage]
 struct AccessControlExample {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub access: AccessControl,
+    access: AccessControl,
 }
 
 pub const TRANSFER_ROLE: [u8; 32] =
@@ -25,18 +31,18 @@ pub const TRANSFER_ROLE: [u8; 32] =
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
-    pub fn make_admin(&mut self, account: Address) -> Result<(), Vec<u8>> {
+    fn make_admin(&mut self, account: Address) -> Result<(), Error> {
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
         self.access.grant_role(TRANSFER_ROLE.into(), account)?;
         Ok(())
     }
 
-    pub fn transfer_from(
+    fn transfer_from(
         &mut self,
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> Result<bool, Error> {
         self.access.only_role(TRANSFER_ROLE.into())?;
         let transfer_result = self.erc20.transfer_from(from, to, value)?;
         Ok(transfer_result)
@@ -44,7 +50,7 @@ impl AccessControlExample {
 
     // WARNING: This should not be part of the public API, it's here for testing
     // purposes only.
-    pub fn set_role_admin(&mut self, role: B256, new_admin_role: B256) {
+    fn set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         self.access._set_role_admin(role, new_admin_role)
     }
 }

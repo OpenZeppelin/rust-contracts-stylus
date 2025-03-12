@@ -20,9 +20,9 @@ use openzeppelin_stylus::{
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub metadata: Erc20Metadata,
+    metadata: Erc20Metadata,
 }
 
 #[public]

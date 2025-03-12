@@ -19,13 +19,13 @@ Contracts for Stylus provides helpers for implementing ERC-165 in your contracts
 #[storage]
 struct Erc721Example {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
 }
 
 #[public]
 #[inherit(Erc721)]
 impl Erc721Example {
-    pub fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc721::supports_interface(interface_id)
     }
 }

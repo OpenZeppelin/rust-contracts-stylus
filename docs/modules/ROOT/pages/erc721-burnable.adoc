@@ -9,26 +9,23 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 
 [source,rust]
 ----
-use openzeppelin_stylus::{
-    token::erc721::{
-        extensions::IErc721Burnable,
-        Erc721, IErc721,
-    },
+use openzeppelin_stylus::token::erc721::{
+    self, extensions::IErc721Burnable, Erc721, IErc721,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc721Example {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
 }
 
 #[public]
 #[inherit(Erc721)]
 impl Erc721Example {
-    pub fn burn(&mut self, token_id: U256) -> Result<(), Vec<u8>> {
+    fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
         // ...
-        self.erc721.burn(token_id).map_err(|e| e.into())
+        self.erc721.burn(token_id)
     }
 }
 ----
