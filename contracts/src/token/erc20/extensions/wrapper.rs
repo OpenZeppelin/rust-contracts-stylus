@@ -91,7 +91,7 @@ pub struct Erc20Wrapper {
 
 /// ERC-20 Wrapper Standard Interface
 pub trait IErc20Wrapper {
-    /// The error type associated to the` trait implementation.
+    /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Returns the number of decimals used to get its user representation.
@@ -292,9 +292,13 @@ impl Erc20Wrapper {
             .balance_of(Call::new_in(self), contract_address)
             .map_err(|_| ERC20InvalidUnderlying { token: contract_address })?;
 
-        let value = underlying_balance - erc20.total_supply();
+        let value = underlying_balance
+            .checked_sub(erc20.total_supply())
+            .expect("underlying balance should be greater than the `IErc20::total_supply`");
 
-        erc20._mint(account, value)?;
+        if value > U256::ZERO {
+            erc20._mint(account, value)?;
+        }
 
         Ok(value)
     }
@@ -340,6 +344,10 @@ mod tests {
         ) -> Result<bool, Error> {
             self.wrapper.withdraw_to(account, value, &mut self.erc20)
         }
+
+        fn recover(&mut self, account: Address) -> Result<U256, Error> {
+            self.wrapper._recover(account, &mut self.erc20)
+        }
     }
 
     unsafe impl TopLevelStorage for Erc20WrapperTestExample {}
@@ -364,9 +372,11 @@ mod tests {
         alice: Address,
     ) {
         let erc20_address = erc20_contract.address();
+
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc20_address);
         });
+
         assert_eq!(contract.sender(alice).underlying(), erc20_address);
     }
 
@@ -706,5 +716,133 @@ mod tests {
             contract.sender(alice).erc20.total_supply(),
             initial_wrapped_supply - amount
         );
+    }
+
+    // TODO: Should be a test for the `Error::InvalidUnderlying` error,
+    // but impossible with current motsu limitations.
+    #[motsu::test]
+    #[ignore]
+    fn recover_reverts_when_invalid_underlying(
+        contract: Contract<Erc20WrapperTestExample>,
+        invalid_underlying: Contract<crate::access::ownable::Ownable>,
+        alice: Address,
+    ) {
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(invalid_underlying.address());
+        });
+
+        let err = contract
+            .sender(alice)
+            .recover(alice)
+            .expect_err("should return Error::InvalidUnderlying");
+
+        assert!(matches!(
+            err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == invalid_underlying.address()
+        ));
+    }
+
+    #[motsu::test]
+    #[should_panic = "underlying balance should be greater than the `IErc20::total_supply`"]
+    fn recover_panics_when_underlying_balance_is_less_than_total_supply(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+
+        erc20_contract
+            .sender(alice)
+            .approve(contract.address(), amount)
+            .expect("should approve");
+
+        contract
+            .sender(alice)
+            .deposit_for(alice, amount)
+            .expect("should deposit");
+
+        // Unexpected mint.
+        contract.sender(alice).erc20._mint(alice, amount).expect("should mint");
+
+        // This should panic.
+        _ = contract.sender(alice).recover(alice);
+    }
+
+    #[motsu::test]
+    fn recover_works_when_underlying_balance_is_equal_to_total_supply(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+
+        erc20_contract
+            .sender(alice)
+            .approve(contract.address(), amount)
+            .expect("should approve");
+
+        contract
+            .sender(alice)
+            .deposit_for(alice, amount)
+            .expect("should deposit");
+
+        assert_eq!(
+            contract.sender(alice).recover(alice).expect("should recover"),
+            U256::ZERO
+        );
+    }
+
+    #[motsu::test]
+    fn recover_works_when_underlying_balance_is_greater_than_total_supply(
+        contract: Contract<Erc20WrapperTestExample>,
+        erc20_contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let amount = uint!(10_U256);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc20_contract.address());
+        });
+
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+
+        erc20_contract
+            .sender(alice)
+            .approve(contract.address(), amount)
+            .expect("should approve");
+
+        contract
+            .sender(alice)
+            .deposit_for(alice, amount)
+            .expect("should deposit");
+
+        // Unexpected mint.
+        let unexpected_delta = uint!(1_U256);
+        erc20_contract
+            .sender(alice)
+            ._mint(contract.address(), unexpected_delta)
+            .expect("should mint");
+
+        assert_eq!(
+            contract.sender(alice).recover(alice).expect("should recover"),
+            unexpected_delta
+        );
+
+        contract.assert_emitted(&erc20::Transfer {
+            from: Address::ZERO,
+            to: alice,
+            value: unexpected_delta,
+        });
     }
 }
