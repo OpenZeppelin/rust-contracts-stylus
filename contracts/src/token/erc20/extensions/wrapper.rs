@@ -279,6 +279,11 @@ impl Erc20Wrapper {
     ///   [`IErc20::balance_of`] fails.
     /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
     ///   operation.
+    ///
+    /// # Panics
+    ///
+    /// * If the underlying balance is less than the [`IErc20::total_supply`].
+    /// * If [`Erc20::_mint`] operation panics (should not happen).
     pub fn _recover(
         &mut self,
         account: Address,
