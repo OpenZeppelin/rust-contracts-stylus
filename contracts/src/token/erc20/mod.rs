@@ -13,7 +13,6 @@ use stylus_sdk::{
     evm, msg,
     prelude::*,
     storage::{StorageMap, StorageU256},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::utils::{

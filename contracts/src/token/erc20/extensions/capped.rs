@@ -9,12 +9,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::U256;
 pub use sol::*;
-use stylus_sdk::{
-    call::MethodError,
-    prelude::*,
-    storage::StorageU256,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{call::MethodError, prelude::*, storage::StorageU256};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
