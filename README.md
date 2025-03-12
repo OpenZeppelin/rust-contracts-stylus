@@ -12,11 +12,8 @@
 - [Unit] and [integration] test affordances, used in our own tests.
 
 [`openzeppelin-contracts`]: https://github.com/OpenZeppelin/openzeppelin-contracts
-
 [`koba`]: https://github.com/OpenZeppelin/koba
-
 [Unit]: https://github.com/OpenZeppelin/stylus-test-helpers
-
 [integration]: ./lib/e2e/README.md
 
 ## Usage
@@ -26,7 +23,7 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "0.1.1"
+openzeppelin-stylus = "0.2.0-alpha.4"
 ```
 
 Optionally, you can specify a git dependency if you want to have the latest
@@ -39,12 +36,14 @@ openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-st
 
 > [!NOTE]
 > This library is designed to be `no_std`, which helps reduce wasm size. If you want your project to be `no_std` as well, ensure that your dependencies are not importing the standard library.
->You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
+> You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
 >
 > ```toml
 > [dependencies]
-> alloy-primitives = { version = "=0.7.6", default-features = false }
->
+> alloy-primitives = { version = "=0.8.20", default-features = false }
+> stylus-sdk = { version = "=0.8.1", default-features = false, features = [
+>   "mini-alloc",
+> ] }
 > ```
 >
 > You will also need to define your own panic handler for `cargo stylus check` to pass.
@@ -89,7 +88,7 @@ For more information on what this library will include in the future, see our
 [roadmap].
 
 [basic]: ./examples/basic
-[roadmap]: https://github.com/OpenZeppelin/rust-contracts-stylus/milestone/2
+[roadmap]: https://github.com/orgs/OpenZeppelin/projects/35/views/8
 
 ## Contribute
 

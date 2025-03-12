@@ -453,7 +453,7 @@ impl Erc1155 {
     /// # Panics
     ///
     /// * If updated balance exceeds `U256::MAX`, may happen during `mint`
-    /// operation.
+    ///   operation.
     fn _update(
         &mut self,
         from: Address,
