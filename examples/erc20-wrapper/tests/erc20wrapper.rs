@@ -107,10 +107,7 @@ mod deposit_for {
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
         let amount = uint!(1_U256);
 
-        let err = contract
-            .depositFor(contract_addr, amount)
-            .call()
-            .await
+        let err = send!(contract.depositFor(contract_addr, amount))
             .expect_err("should return `InvalidReceiver`");
 
         assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidReceiver {
@@ -128,10 +125,7 @@ mod deposit_for {
         let alice_addr: Address = alice.address();
 
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-        let err = contract
-            .depositFor(alice_addr, initial_supply)
-            .call()
-            .await
+        let err = send!(contract.depositFor(alice_addr, initial_supply))
             .expect_err("should not transfer when insufficient allowance");
 
         assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
@@ -153,10 +147,7 @@ mod deposit_for {
         watch!(asset.approve(contract_addr, value))?;
 
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
-        let err = contract
-            .depositFor(alice_addr, value)
-            .call()
-            .await
+        let err = send!(contract.depositFor(alice_addr, value))
             .expect_err("should not transfer when insufficient balance");
 
         assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
@@ -237,16 +228,13 @@ mod withdraw_to {
     }
 
     #[e2e::test]
-    async fn reverts_when_invalid_sender(alice: Account) -> Result<()> {
+    async fn reverts_when_invalid_receiver(alice: Account) -> Result<()> {
         let initial_tokens = uint!(1000_U256);
         let (contract_addr, _) =
             deploy_and_deposit_for(&alice, initial_tokens).await?;
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
 
-        let err = contract
-            .withdrawTo(contract_addr, initial_tokens)
-            .call()
-            .await
+        let err = send!(contract.withdrawTo(contract_addr, initial_tokens))
             .expect_err("should return `InvalidReciver`");
 
         assert!(err.reverted_with(Erc20Wrapper::ERC20InvalidReceiver {
@@ -263,21 +251,15 @@ mod withdraw_to {
             deploy_and_deposit_for(&alice, initial_tokens).await?;
         let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
 
-        let value = initial_tokens + uint!(100_U256);
+        let exceeding_value = initial_tokens + uint!(100_U256);
 
-        let wrapped_balance =
-            contract.balanceOf(alice.address()).call().await?.balance;
-
-        let err = contract
-            .withdrawTo(alice.address(), value)
-            .call()
-            .await
+        let err = send!(contract.withdrawTo(alice.address(), exceeding_value))
             .expect_err("should return `InsufficientBalance`");
 
         assert!(err.reverted_with(Erc20::ERC20InsufficientBalance {
             sender: alice.address(),
-            balance: wrapped_balance,
-            needed: value
+            balance: initial_tokens,
+            needed: exceeding_value
         }));
 
         Ok(())
