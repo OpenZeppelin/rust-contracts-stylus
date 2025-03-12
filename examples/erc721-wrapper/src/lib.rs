@@ -3,7 +3,7 @@ extern crate alloc;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc721::{extensions::Erc721Wrapper, Erc721};
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]

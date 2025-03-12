@@ -3,7 +3,7 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-    contract Erc20Wrapper {
+    contract Erc721Wrapper {
         function name() external view returns (string name);
         function symbol() external view returns (string symbol);
         function totalSupply() external view returns (uint256 totalSupply);

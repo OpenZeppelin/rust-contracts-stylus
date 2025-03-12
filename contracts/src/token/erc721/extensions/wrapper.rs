@@ -7,11 +7,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
 use stylus_sdk::{
-    abi::Bytes,
-    call::Call,
-    contract, msg,
-    prelude::storage,
-    storage::{StorageAddress, TopLevelStorage},
+    abi::Bytes, call::Call, contract, msg, prelude::*, storage::StorageAddress,
     stylus_proc::SolidityError,
 };
 
@@ -28,6 +24,9 @@ pub struct Erc721Wrapper {
     pub erc721: Erc721,
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc721Wrapper {}
 
 pub use sol::*;

@@ -2138,7 +2138,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-wrapper"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
