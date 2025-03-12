@@ -27,7 +27,8 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256, U64};
+use alloy_primitives::{Address, U256, U64, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -502,6 +503,13 @@ impl VestingWallet {
             // and the function would have returned earlier.
             scaled_allocation / self.duration()
         }
+    }
+}
+
+impl IErc165 for VestingWallet {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IVestingWallet>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
+        Erc165::supports_interface(interface_id)
     }
 }
 

@@ -51,6 +51,7 @@ use stylus_sdk::{
     storage::{StorageBool, StorageFixedBytes, StorageMap},
     stylus_proc::{public, SolidityError},
 };
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -398,6 +399,13 @@ impl AccessControl {
         } else {
             false
         }
+    }
+}
+
+impl IErc165 for AccessControl {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IAccessControl>::INTERFACE_ID == u32::from_be_bytes(*interface_id) || 
+        Erc165::supports_interface(interface_id)
     }
 }
 

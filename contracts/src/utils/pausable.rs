@@ -16,6 +16,8 @@
 
 use alloc::{vec, vec::Vec};
 
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+use alloy_primitives::FixedBytes;
 pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
@@ -155,6 +157,12 @@ impl Pausable {
             return Err(Error::ExpectedPause(ExpectedPause {}));
         }
         Ok(())
+    }
+}
+
+impl IErc165 for Pausable {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
     }
 }
 

@@ -10,7 +10,8 @@
 //! to the owner.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::Address;
+use alloy_primitives::{Address, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -195,6 +196,13 @@ impl Ownable {
         let previous_owner = self.owner.get();
         self.owner.set(new_owner);
         evm::log(OwnershipTransferred { previous_owner, new_owner });
+    }
+}
+
+impl IErc165 for Ownable {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IOwnable>::INTERFACE_ID == u32::from_be_bytes(*interface_id) || 
+        Erc165::supports_interface(interface_id)
     }
 }
 

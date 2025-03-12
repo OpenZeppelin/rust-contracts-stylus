@@ -3,7 +3,9 @@
 //! It also implements IERC4096, which is an ERC-721 Metadata Update Extension.
 use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::U256;
+use alloy_primitives::{U256,FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
 pub use sol::*;
 use stylus_sdk::{
     evm,
@@ -116,6 +118,12 @@ impl Erc721UriStorage {
     }
 }
 
+impl IErc165 for Erc721UriStorage {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
@@ -170,5 +178,14 @@ mod tests {
                 .token_uri(TOKEN_ID)
                 .expect("should return token URI")
         );
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc721UriStorage::supports_interface(
+            <Erc721UriStorage as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc721UriStorage::supports_interface(fake_interface_id.into()));
     }
 }

@@ -9,7 +9,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, U256, U8};
+use alloy_primitives::{uint, Address, U256, U8, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -1151,6 +1153,12 @@ impl Erc4626 {
     }
 }
 
+impl IErc165 for Erc4626 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
+    }
+}
+
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
@@ -1244,5 +1252,14 @@ mod tests {
 
         let decimals = contract.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals + new_decimal_offset);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc4626::supports_interface(
+        <Erc4626 as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc4626::supports_interface(fake_interface_id.into()));
     }
 }

@@ -14,7 +14,8 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -367,6 +368,14 @@ impl Erc1155Supply {
             ));
         }
         self._update_with_acceptance_check(from, to, ids, values, data)
+    }
+}
+
+impl IErc165 for Erc1155Supply {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc1155Supply>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
+        <Self as IErc1155>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
+        Erc165::supports_interface(interface_id)
     }
 }
 

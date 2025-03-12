@@ -7,7 +7,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::U256;
+use alloy_primitives::{U256, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
 pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
@@ -15,6 +17,12 @@ use stylus_sdk::{
     storage::StorageU256,
     stylus_proc::{public, SolidityError},
 };
+
+impl IErc165 for Capped {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
+    }
+}
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {

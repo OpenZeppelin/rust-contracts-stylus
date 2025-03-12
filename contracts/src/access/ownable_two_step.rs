@@ -19,7 +19,8 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::Address;
+use alloy_primitives::{Address, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
@@ -219,6 +220,12 @@ impl Ownable2Step {
     fn _transfer_ownership(&mut self, new_owner: Address) {
         self.pending_owner.set(Address::ZERO);
         self.ownable._transfer_ownership(new_owner);
+    }
+}
+
+impl IErc165 for Ownable2Step {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
     }
 }
 

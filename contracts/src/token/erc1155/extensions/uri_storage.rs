@@ -3,7 +3,8 @@
 //! Inspired by the [`crate::token::erc721::extensions::Erc721UriStorage`]
 use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::U256;
+use alloy_primitives::{U256, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 use stylus_sdk::{
     evm,
     prelude::*,
@@ -89,6 +90,12 @@ impl Erc1155UriStorage {
     /// * `base_uri` - New base URI.
     pub fn set_base_uri(&mut self, base_uri: String) {
         self.base_uri.set_str(base_uri);
+    }
+}
+
+impl IErc165 for Erc1155UriStorage {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
     }
 }
 

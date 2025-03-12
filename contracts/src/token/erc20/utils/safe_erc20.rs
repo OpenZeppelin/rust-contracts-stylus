@@ -11,7 +11,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
 use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
@@ -382,6 +384,12 @@ impl SafeErc20 {
         data.split_last().is_some_and(|(last, rest)| {
             *last == 1 && rest.iter().all(|&byte| byte == 0)
         })
+    }
+}
+
+impl IErc165 for SafeErc20 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
     }
 }
 

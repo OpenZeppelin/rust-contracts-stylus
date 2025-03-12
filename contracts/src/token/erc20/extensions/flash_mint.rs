@@ -19,7 +19,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -343,6 +345,12 @@ impl IErc3156FlashLender for Erc20FlashMint {
     }
 }
 
+impl IErc165 for Erc20FlashMint {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
@@ -540,5 +548,14 @@ mod tests {
             Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
                 if receiver == invalid_receiver
         ));
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc20FlashMint::supports_interface(
+            <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+         assert!(!Erc20FlashMint::supports_interface(fake_interface_id.into()));
     }
 }
