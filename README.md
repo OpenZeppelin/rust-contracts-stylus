@@ -27,9 +27,13 @@ openzeppelin-stylus = "=0.1.1"
 ```
 
 If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
-> [!NOTE]
 
-> We put great effort in testing the contracts before releasing an alpha, but these are not yet audited and we don't guarantee any backwards compatibility between alpha version.
+```toml
+[dependencies]
+openzeppelin-stylus = "=0.2.0-alpha.4"
+```
+
+We put great effort in testing the contracts before releasing an alpha, but these are not yet audited and we don't guarantee any backwards compatibility between alpha version.
 
 > [!NOTE]
 > This library is designed to be `no_std`, which helps reduce wasm size. If you want your project to be `no_std` as well, ensure that your dependencies are not importing the standard library.
