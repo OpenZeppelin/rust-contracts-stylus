@@ -9,8 +9,8 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-motsu = "0.5.0"
-stylus-sdk = { version = "0.8.1", default-features = false, features = [
+motsu = "0.6.0"
+stylus-sdk = { version = "0.8.3-rc.1", default-features = false, features = [
     "mini-alloc",
 ] }
 alloy-primitives = { version = "=0.8.20", default-features = false }
@@ -51,3 +51,6 @@ path = "fuzz_targets/openzeppelin_stylus_utils.rs"
 test = false
 doc = false
 bench = false
+
+[patch.crates-io.motsu]
+path = "../../stylus-test-helpers/crates/motsu"

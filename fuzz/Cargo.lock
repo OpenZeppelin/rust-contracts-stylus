@@ -900,18 +900,16 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "mini-alloc"
-version = "0.8.1"
+version = "0.8.3-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7f9182f9a333312973dfa30ecaa76af44137f4ccebaa8dac09c54c301ae288a"
+checksum = "f73b765544712e3e32527b552420b0b5436550478071679314d2918e5ee59bfd"
 dependencies = [
  "cfg-if",
 ]
 
 [[package]]
 name = "motsu"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "468405089ee996017d397619c4a1b00ee91bb257ee0f45adad51a8cb95f639ef"
+version = "0.6.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -925,9 +923,7 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d89892fb2937177554806b600de553eb21f6e4568515777084c58918541f891"
+version = "0.6.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1556,9 +1552,9 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "stylus-core"
-version = "0.8.1"
+version = "0.8.3-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2853922ad43b26bf8bef41905b223eea3562598d81278fac9e2bff0736c29e67"
+checksum = "85a095471f2ca0cbe181f0717bc654bf27d205e2608bb56eb553e7fbd22095ea"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -1568,9 +1564,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-proc"
-version = "0.8.1"
+version = "0.8.3-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83bef043b21df187e08545ef7fde1861ec9dbe9aced0fe9578c0f0addff7a7c1"
+checksum = "ef200d21171db13ad3eb70624add147a165d5acd8bee9dbfc7419155ea867f4e"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -1589,9 +1585,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-sdk"
-version = "0.8.2"
+version = "0.8.3-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "301aac79d25f60a90a2d6b01b40ad80a721efbea5b2ccf7a0586f13aeaff5707"
+checksum = "f55a0125a2b5f7c6dc610bba41ad053d265d358dc03b6dc91414ad3f8f2a420f"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
