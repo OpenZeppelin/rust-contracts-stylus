@@ -14,7 +14,7 @@ alloy-sol-types.workspace = true
 alloy-sol-macro.workspace = true
 alloy-sol-macro-expander.workspace = true
 alloy-sol-macro-input.workspace = true
-stylus-sdk.workspace = true
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
 keccak-const.workspace = true
 openzeppelin-stylus-proc.workspace = true
 
@@ -28,6 +28,7 @@ motsu.workspace = true
 # Currently, the std feature is only used for testing purposes.
 std = []
 reentrant = ["stylus-sdk/reentrant"]
+stylus-test = ["stylus-sdk/stylus-test"]
 
 [lib]
 crate-type = ["lib"]
