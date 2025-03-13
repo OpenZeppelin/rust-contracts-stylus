@@ -78,7 +78,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "0.8.1", default-features = false, features = [
+stylus-sdk = { version = "0.8.2", default-features = false, features = [
   "mini-alloc",
 ] }
 
@@ -122,7 +122,7 @@ proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
 # test helpers
-motsu = "0.5.0"
+motsu = "0.6.0"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
@@ -151,3 +151,7 @@ default = { extend-ignore-identifiers-re = [
   "[0-9a-fA-F][0-9a-fA-F]",
 ] }
 files = { extend-exclude = [] }
+
+[patch.crates-io.motsu]
+git = "https://github.com/OpenZeppelin/stylus-test-helpers.git"
+branch = "account-sign-feat"
