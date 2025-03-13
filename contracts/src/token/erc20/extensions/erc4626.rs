@@ -1162,12 +1162,13 @@ impl IErc165 for Erc4626 {
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256, U8};
+    use alloy_primitives::{address, Address, U256, U8, FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
     use crate::token::erc20::Erc20;
+    use crate::utils::introspection::erc165::IErc165;
 
     #[storage]
     struct Erc4626TestExample {
@@ -1254,10 +1255,24 @@ mod tests {
         assert_eq!(decimals, underlying_decimals + new_decimal_offset);
     }
 
+
     #[motsu::test]
-    fn supports_interface() {
+    fn erc4626_interface_id() {
+        let actual = <Erc4626 as IErc4626>::INTERFACE_ID;
+        let expected = 0x4d49e87d; 
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn erc4626_supports_interface() {
         assert!(Erc4626::supports_interface(
-        <Erc4626 as IErc165>::INTERFACE_ID.into()
+            <Erc4626 as IErc4626>::INTERFACE_ID.into()
+    ));
+        assert!(Erc4626::supports_interface(
+            <Erc4626 as IErc165>::INTERFACE_ID.into()
+    ));
+        assert!(Erc4626::supports_interface(
+            <Erc4626 as IErc20>::INTERFACE_ID.into()
     ));
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc4626::supports_interface(fake_interface_id.into()));

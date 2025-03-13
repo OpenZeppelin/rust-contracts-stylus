@@ -396,6 +396,8 @@ impl IErc165 for SafeErc20 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use super::SafeErc20;
+    use crate::utils::introspection::erc165::IErc165;
+    
     #[test]
     fn encodes_true_empty_slice() {
         assert!(!SafeErc20::encodes_true(&[]));
@@ -424,5 +426,14 @@ mod tests {
     #[test]
     fn encodes_true_wrong_bytes() {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
+    }
+
+    #[motsu::test]
+    fn safe_erc20_supports_interface() {
+        assert!(SafeErc20::supports_interface(
+            <SafeErc20 as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
     }
 }

@@ -42,3 +42,24 @@ impl IErc165 for Metadata {
         Erc165::supports_interface(interface_id)
     }
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use super::*;
+    use alloy_primitives::Address;
+    use motsu::prelude::Contract;
+    use crate::utils::introspection::erc165::IErc165;
+
+    
+    const INTERFACE_ID_ERC165: u32 = 0x01ffc9a7;
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Metadata::supports_interface(
+            INTERFACE_ID_ERC165.into()
+        ));
+        
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Metadata::supports_interface(fake_interface_id.into()));
+    }
+}

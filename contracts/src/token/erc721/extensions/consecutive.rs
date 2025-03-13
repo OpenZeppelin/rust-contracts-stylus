@@ -784,7 +784,8 @@ impl IErc165 for Erc721Consecutive {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, U256, FixedBytes};
+    use crate::utils::introspection::erc165::IErc165;
     use motsu::prelude::Contract;
 
     use crate::token::{
@@ -1405,6 +1406,29 @@ mod tests {
     ));
         assert!(Erc721Consecutive::supports_interface(
         <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc721Consecutive::supports_interface(fake_interface_id.into()));
+    }
+
+    #[motsu::test]
+    fn erc721_consecutive_interface_id() {
+        let actual = <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID;
+        let expected = 0x8ef68167; // Example value, calculate the actual
+        assert_eq!(actual, expected);
+}
+
+    #[motsu::test]
+    fn erc721_consecutive_supports_interface() {
+        assert!(Erc721Consecutive::supports_interface(
+            <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID.into()
+    ));
+        assert!(Erc721Consecutive::supports_interface(
+            <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
+    ));
+    
+        assert!(Erc721Consecutive::supports_interface(
+            <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
     ));
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc721Consecutive::supports_interface(fake_interface_id.into()));

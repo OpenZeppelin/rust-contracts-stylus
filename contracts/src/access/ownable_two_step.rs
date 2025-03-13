@@ -231,9 +231,10 @@ impl IErc165 for Ownable2Step {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::Address;
+    use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
+    use crate::utils::introspection::erc165::IErc165;
 
     use super::{
         ownable::Error, IOwnable2Step, Ownable2Step, OwnableUnauthorizedAccount,
@@ -460,5 +461,24 @@ mod tests {
             .expect("should overwrite transfer");
         assert_eq!(contract.sender(alice).pending_owner(), dave);
         assert_eq!(contract.sender(alice).owner(), alice);
+    }
+
+    #[motsu::test]
+    fn ownable_two_step_interface_id() {
+        let actual = <OwnableTwoStep as IOwnableTwoStep>::INTERFACE_ID;
+        let expected = 0x6b14daf8; 
+        assert_eq!(actual, expected);
+}
+
+    #[motsu::test]
+    fn ownable_two_step_supports_interface() {
+        assert!(OwnableTwoStep::supports_interface(
+            <OwnableTwoStep as IOwnableTwoStep>::INTERFACE_ID.into()
+    ));
+        assert!(OwnableTwoStep::supports_interface(
+            <OwnableTwoStep as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!OwnableTwoStep::supports_interface(fake_interface_id.into()));
     }
 }

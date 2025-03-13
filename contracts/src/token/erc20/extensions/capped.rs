@@ -77,9 +77,10 @@ impl Capped {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address};
+    use alloy_primitives::{uint, Address, FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
+    use crate::utils::introspection::erc165::IErc165;
 
     use super::Capped;
 
@@ -94,5 +95,27 @@ mod tests {
         let value = uint!(1_U256);
         contract.init(alice, |contract| contract.cap.set(value));
         assert_eq!(contract.sender(alice).cap(), value);
+    }
+
+    #[motsu::test]
+    fn erc20_capped_interface_id() {
+        let actual = <Erc20Capped as IErc20Capped>::INTERFACE_ID;
+        let expected = 0x49064906; 
+        assert_eq!(actual, expected);
+}
+
+    #[motsu::test]
+    fn erc20_capped_supports_interface() {
+        assert!(Erc20Capped::supports_interface(
+            <Erc20Capped as IErc20Capped>::INTERFACE_ID.into()
+    ));
+        assert!(Erc20Capped::supports_interface(
+            <Erc20Capped as IErc165>::INTERFACE_ID.into()
+    ));
+        assert!(Erc20Capped::supports_interface(
+            <Erc20Capped as IErc20>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc20Capped::supports_interface(fake_interface_id.into()));
     }
 }

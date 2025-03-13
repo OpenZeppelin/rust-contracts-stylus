@@ -188,4 +188,26 @@ mod tests {
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc721UriStorage::supports_interface(fake_interface_id.into()));
     }
+
+    #[motsu::test]
+    fn erc721_uri_storage_interface_id() {
+        let actual = <Erc721UriStorage as IErc721Metadata>::INTERFACE_ID;
+        let expected = 0x5b5e139f;  
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn erc721_uri_storage_supports_interface() {
+        assert!(Erc721UriStorage::supports_interface(
+            <Erc721UriStorage as IErc721Metadata>::INTERFACE_ID.into()
+    ));
+        assert!(Erc721UriStorage::supports_interface(
+            <Erc721UriStorage as IErc165>::INTERFACE_ID.into()
+    ));
+        assert!(Erc721UriStorage::supports_interface(
+            <Erc721UriStorage as IErc721>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc721UriStorage::supports_interface(fake_interface_id.into()));
+    }
 }

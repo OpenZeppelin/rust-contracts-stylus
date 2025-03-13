@@ -208,9 +208,10 @@ impl IErc165 for Ownable {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::Address;
+    use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
+    use crate::utils::introspection::erc165::IErc165;
 
     use super::{Error, IOwnable, Ownable};
 
@@ -304,4 +305,23 @@ mod tests {
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, bob);
     }
+
+    #[test]
+    fn ownable_interface_id() {
+        let actual = <Ownable as IOwnable>::INTERFACE_ID;
+        let expected = 0x7f5828d0;
+        assert_eq!(actual, expected);
+}
+
+    #[motsu::test]
+    fn ownable_supports_interface() {
+        assert!(Ownable::supports_interface(
+            <Ownable as IOwnable>::INTERFACE_ID.into()
+    ));
+        assert!(Ownable::supports_interface(
+            <Ownable as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Ownable::supports_interface(fake_interface_id.into()));
+}
 }

@@ -353,10 +353,11 @@ impl IErc165 for Erc20FlashMint {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, U256,FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::{abi::Bytes, prelude::*};
-
+    use crate::utils::introspection::erc165::IErc165;
+    
     use super::{
         ERC3156ExceededMaxLoan, ERC3156InvalidReceiver,
         ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
@@ -549,13 +550,25 @@ mod tests {
                 if receiver == invalid_receiver
         ));
     }
-
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
-    ));
+    fn flash_mint_interface_id() {
+        let actual = <FlashMint as IFlashMint>::INTERFACE_ID;
+        let expected = 0x25829410; 
+        assert_eq!(actual, expected);
+    }
+    
+    #[motsu::test]
+    fn flash_mint_supports_interface() {
+        assert!(FlashMint::supports_interface(
+            <FlashMint as IFlashMint>::INTERFACE_ID.into()
+        ));
+        assert!(FlashMint::supports_interface(
+            <FlashMint as IErc165>::INTERFACE_ID.into()
+        ));
+        assert!(FlashMint::supports_interface(
+            <FlashMint as IErc20>::INTERFACE_ID.into()
+        ));
         let fake_interface_id = 0x12345678u32;
-         assert!(!Erc20FlashMint::supports_interface(fake_interface_id.into()));
+        assert!(!FlashMint::supports_interface(fake_interface_id.into()));
     }
 }
