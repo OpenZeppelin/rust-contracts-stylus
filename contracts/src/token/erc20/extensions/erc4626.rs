@@ -16,7 +16,6 @@ use stylus_sdk::{
     contract, evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
-    stylus_proc::SolidityError,
 };
 
 use crate::{
