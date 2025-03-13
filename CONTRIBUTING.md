@@ -36,7 +36,7 @@ If you're new and looking for a good place to start, check out issues labeled ["
 
 ### More "experienced" Contributors
 
-If you've already merged at least one Pull Request into the repository, you're familiar with our development process. We recommend tackling one of the following:
+If you are already more familiar with our codebase and Stylus here are some recommended views to to find issues you can work on. We just ask you to comment on the issue, that way one of the maintainers can assign it to you.
 
 - [A Low-Priority GitHub Issue from the current cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/8?filterQuery=milestone%3A%22Release+v0.2.0%22+cycle%3A%40current+priority%3A%22priority%3A+low%22+no%3Aassignee).
 - [A Medium-Priority GitHub Issue from the next cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/8?filterQuery=milestone%3A%22Release+v0.2.0%22+cycle%3A%40next+priority%3A%22priority%3A+medium%22+no%3Aassignee).
