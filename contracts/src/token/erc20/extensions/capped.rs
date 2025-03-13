@@ -11,12 +11,7 @@ use alloy_primitives::{U256, FixedBytes};
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 pub use sol::*;
-use stylus_sdk::{
-    call::MethodError,
-    prelude::*,
-    storage::StorageU256,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{call::MethodError, prelude::*, storage::StorageU256};
 
 impl IErc165 for Capped {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {

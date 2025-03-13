@@ -1,7 +1,7 @@
 //! Common Metadata Smart Contract.
 use alloc::{string::String, vec, vec::Vec};
 
-use stylus_sdk::{prelude::*, storage::StorageString, stylus_proc::public};
+use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 

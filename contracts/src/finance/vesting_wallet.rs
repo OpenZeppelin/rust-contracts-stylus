@@ -37,7 +37,6 @@ use stylus_sdk::{
     contract, evm, function_selector,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::{

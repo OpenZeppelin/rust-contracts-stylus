@@ -49,7 +49,6 @@ use stylus_sdk::{
     evm, msg,
     prelude::*,
     storage::{StorageBool, StorageFixedBytes, StorageMap},
-    stylus_proc::{public, SolidityError},
 };
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 

@@ -4,7 +4,7 @@
 #![cfg_attr(coverage_nightly, coverage(off))]
 use alloc::vec;
 
-use stylus_sdk::stylus_proc::sol_interface;
+use stylus_sdk::prelude::sol_interface;
 
 sol_interface! {
     /// [`super::Erc1155`] token receiver interface.

@@ -15,11 +15,7 @@ use crate::utils::introspection::erc165::{Erc165, IErc165};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
-    evm, msg,
-    prelude::*,
-    storage::StorageAddress,
-    stylus_proc::{public, SolidityError},
+    call::MethodError, evm, msg, prelude::*, storage::StorageAddress,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
