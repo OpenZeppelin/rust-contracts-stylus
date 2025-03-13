@@ -23,16 +23,25 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "0.2.0-alpha.4"
+openzeppelin-stylus = "=0.1.1"
 ```
 
-Optionally, you can specify a git dependency if you want to have the latest
-changes from the `main` branch:
-
-```toml
-[dependencies]
-openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus" }
-```
+> [!NOTE]
+> If you want to use our experimental contracts, you can check out the latest
+> alpha version of our library:
+>
+> ```toml
+> [dependencies]
+> openzeppelin-stylus = "=0.2.0-alpha.4"
+> ```
+>
+> Optionally, you can specify a git dependency if you want to have the latest
+> changes from the `main` branch:
+>
+> ```toml
+> [dependencies]
+> openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus" }
+> ```
 
 > [!NOTE]
 > This library is designed to be `no_std`, which helps reduce wasm size. If you want your project to be `no_std` as well, ensure that your dependencies are not importing the standard library.
@@ -70,7 +79,7 @@ use openzeppelin_stylus::token::erc20::Erc20;
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
 }
 
 #[public]
