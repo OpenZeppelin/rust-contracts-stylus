@@ -28,7 +28,7 @@ use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{uint, Address, U256};
-use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
+use stylus_sdk::{abi::Bytes, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{
@@ -112,12 +112,6 @@ pub enum Error {
     ForbiddenMint(ERC721ForbiddenMint),
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 /// State of an [`Erc721Consecutive`] token.
