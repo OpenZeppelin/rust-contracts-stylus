@@ -80,6 +80,7 @@ all = "warn"
 # Stylus SDK related
 stylus-sdk = { version = "0.8.2", default-features = false, features = [
   "mini-alloc",
+  "stylus-test",
 ] }
 
 alloy = { version = "=0.7.3", features = [
