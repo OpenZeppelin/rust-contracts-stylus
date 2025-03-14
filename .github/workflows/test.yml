@@ -57,14 +57,7 @@ jobs:
 
         # https://twitter.com/jonhoo/status/1571290371124260865
       - name: Run unit tests
-        run: cargo nextest run --profile ci --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          files: target/nextest/ci/junit.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
+        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
@@ -100,14 +93,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Run unit tests
-        run: cargo nextest run --profile ci --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          files: target/nextest/ci/junit.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
+        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
@@ -151,6 +137,11 @@ jobs:
       - name: Cargo install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
+      - name: "Install nextest"
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
@@ -160,6 +151,16 @@ jobs:
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
+
+      - name: Prepare report for Codecov
+        run: cargo nextest run --profile ci --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          files: target/nextest/ci/junit.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v5
