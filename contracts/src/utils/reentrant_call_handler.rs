@@ -18,7 +18,7 @@
 //! [ReentrantCallHandler::flush_storage_cache].
 //!
 //! [RawCall::call]: https://docs.rs/stylus-sdk/0.8.1/stylus_sdk/call/struct.RawCall.html#method.call
-//! [ReentrantCallHandler::flush_storage_cache]: https://docs.rs/stylus-sdk/0.8./stylus_sdk/call/struct.RawCall.html#method.flush_storage_cache
+//! [ReentrantCallHandler::flush_storage_cache]: https://docs.rs/stylus-sdk/0.8.1/stylus_sdk/call/struct.RawCall.html#method.flush_storage_cache
 
 use alloy_primitives::Address;
 use stylus_sdk::{call::RawCall, ArbResult};
