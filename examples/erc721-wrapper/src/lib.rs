@@ -1,39 +1,58 @@
 #![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
-use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc721::{extensions::Erc721Wrapper, Erc721};
-use stylus_sdk::prelude::*;
+use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus::token::erc721::{
+    extensions::{wrapper, Erc721Wrapper, IErc721Wrapper},
+    Erc721,
+};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 #[entrypoint]
 #[storage]
 struct Erc721WrapperExample {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
     #[borrow]
-    pub wrapper: Erc721Wrapper,
+    erc721_wrapper: Erc721Wrapper,
 }
 
 #[public]
 #[inherit(Erc721)]
 impl Erc721WrapperExample {
     fn underlying(&self) -> Address {
-        self.wrapper.underlying()
+        self.erc721_wrapper.underlying()
     }
 
     fn deposit_for(
         &mut self,
         account: Address,
         values: Vec<U256>,
-    ) -> Result<bool, Vec<u8>> {
-        Ok(self.wrapper.deposit_for(account, values, &mut self.erc721)?)
+    ) -> Result<bool, wrapper::Error> {
+        self.erc721_wrapper.deposit_for(account, values, &mut self.erc721)
     }
 
     fn withdraw_to(
         &mut self,
         account: Address,
         values: Vec<U256>,
-    ) -> Result<bool, Vec<u8>> {
-        Ok(self.wrapper.withdraw_to(account, values, &mut self.erc721)?)
+    ) -> Result<bool, wrapper::Error> {
+        self.erc721_wrapper.withdraw_to(account, values, &mut self.erc721)
+    }
+
+    fn on_erc721_received(
+        &mut self,
+        operator: Address,
+        from: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<FixedBytes<4>, wrapper::Error> {
+        self.erc721_wrapper.on_erc721_received(
+            operator,
+            from,
+            token_id,
+            data,
+            &mut self.erc721,
+        )
     }
 }

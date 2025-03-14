@@ -5,31 +5,17 @@
 //! modules.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
-use stylus_sdk::{
-    abi::Bytes, call::Call, contract, msg, prelude::*, storage::StorageAddress,
-    stylus_proc::SolidityError,
-};
-
-use crate::token::erc721::{
-    self, Erc721, IErc721 as IErc721Solidity, RECEIVER_FN_SELECTOR,
-};
-
-/// State of an [`Erc721Wrapper`] token.
-#[storage]
-pub struct Erc721Wrapper {
-    /// Erc721 contract storage.
-    pub underlying_address: StorageAddress,
-    /// The ERC-721 token.
-    pub erc721: Erc721,
-}
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc721Wrapper {}
-
+use alloy_primitives::{Address, FixedBytes, U256};
 pub use sol::*;
+use stylus_sdk::{
+    abi::Bytes,
+    call::{Call, MethodError},
+    contract, msg,
+    prelude::*,
+    storage::StorageAddress,
+};
+
+use crate::token::erc721::{self, Erc721, RECEIVER_FN_SELECTOR};
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -37,20 +23,10 @@ mod sol {
     sol! {
         /// The received ERC-721 token couldn't be wrapped.
         ///
-        /// * `token_id` - Token id as a number.
+        /// * `token` - The token address.
         #[derive(Debug)]
         #[allow(missing_docs)]
-        error ERC721UnsupportedToken(uint256 token_id);
-
-        /// Indicates an error related to the ownership over a particular token.
-        /// Used in transfers.
-        ///
-        /// * `sender` - Address whose tokens are being transferred.
-        /// * `token_id` - Token id as a number.
-        /// * `owner` - Address of the owner of the token.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ERC721IncorrectOwner(address sender, uint256 token_id, address owner);
+        error ERC721UnsupportedToken(address token);
     }
 }
 
@@ -61,116 +37,189 @@ pub enum Error {
     Erc721(erc721::Error),
     /// The received ERC-721 token couldn't be wrapped.
     UnsupportedToken(ERC721UnsupportedToken),
-    /// Indicates an error related to the ownership over a particular token.
-    IncorrectOwner(ERC721IncorrectOwner),
 }
 
-pub use token::IErc721;
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
+pub use token::IErc721 as IErc721Solidity;
 mod token {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
     use alloc::vec;
 
-    stylus_sdk::stylus_proc::sol_interface! {
+    stylus_sdk::prelude::sol_interface! {
         /// Interface of the ERC-721 token.
         interface IErc721 {
             function ownerOf(uint256 token_id) external view returns (address);
+            function safeTransferFrom(address from, address to, uint256 token_id) external;
+            function transferFrom(address from, address to, uint256 token_id) external;
         }
     }
 }
 
-impl Erc721Wrapper {
+/// State of an [`Erc721Wrapper`] token.
+#[storage]
+pub struct Erc721Wrapper {
+    /// Address of the underlying token.
+    underlying: StorageAddress,
+}
+
+/// ERC-721 Wrapper Standard Interface
+pub trait IErc721Wrapper {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// tokenIds.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
-    /// * `token_ids` - The tokenIds of the underlying tokens to deposit.
-    /// * `erc721` - A mutable reference to the Erc721 contract.
-    pub fn deposit_for(
+    /// * `token_ids` - List of underlying token ids to deposit.
+    /// * `erc721` - Write access to an [`Erc721`] contract.
+    fn deposit_for(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
-    ) -> Result<bool, Error> {
-        let sender = msg::sender();
-
-        token_ids.iter().for_each(|&token_id| {
-            self.erc721
-                .transfer_from(sender, contract::address(), token_id)
-                .expect("transfer failed");
-            erc721
-                ._safe_mint(account, token_id, &vec![].into())
-                .expect("mint failed");
-        });
-
-        Ok(true)
-    }
+    ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn wrapped tokens and withdraw the corresponding
     /// tokenIds of the underlying tokens.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to withdraw tokens to.
-    /// * `token_ids` - The tokenIds of the underlying tokens to withdraw.
-    /// * `erc721` - A mutable reference to the Erc721 contract.
-    pub fn withdraw_to(
+    /// * `token_ids` - List of underlying token ids to withdraw.
+    /// * `erc721` - Write access to an [`Erc721`] contract.
+    fn withdraw_to(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
-    ) -> Result<bool, Error> {
-        let sender = msg::sender();
+    ) -> Result<bool, Self::Error>;
 
-        token_ids.iter().for_each(|&token_id| {
-            erc721
-                ._update(Address::ZERO, token_id, sender)
-                .expect("update failed");
-            self.erc721
-                .safe_transfer_from(contract::address(), account, token_id)
-                .expect("transfer failed");
-        });
+    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
+    /// minting on direct ERC-721 transfers to this contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `operator` - The operator of the transfer.
+    /// * `from` - The sender of the transfer.
+    /// * `token_id` - The token id of the transfer.
+    /// * `data` - The data of the transfer.
+    /// * `erc721` - Write access to an [`Erc721`] contract.
+    fn on_erc721_received(
+        &mut self,
+        _operator: Address,
+        from: Address,
+        token_id: U256,
+        data: Bytes,
+        erc721: &mut Erc721,
+    ) -> Result<FixedBytes<4>, Self::Error>;
+
+    /// Returns the underlying token.
+    fn underlying(&self) -> Address;
+}
+
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc721Wrapper {}
+
+impl IErc721Wrapper for Erc721Wrapper {
+    type Error = Error;
+
+    fn deposit_for(
+        &mut self,
+        account: Address,
+        token_ids: Vec<U256>,
+        erc721: &mut Erc721,
+    ) -> Result<bool, Self::Error> {
+        let sender = msg::sender();
+        let underlying = IErc721Solidity::new(self.underlying());
+
+        for token_id in token_ids {
+            // This is an "unsafe" transfer that doesn't call any hook on
+            // the receiver. With [`IErc721Wrapper::underlying()`] being trusted
+            // (by design of this contract) and no other contracts expected to
+            // be called from there, we are safe.
+            underlying
+                .transfer_from(
+                    Call::new_in(self),
+                    sender,
+                    contract::address(),
+                    token_id,
+                )
+                .map_err(|e| Error::Erc721(e.into()))?;
+
+            erc721._safe_mint(account, token_id, &vec![].into())?;
+        }
 
         Ok(true)
     }
 
-    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
-    /// minting on direct ERC-721 transfers to this contract.
-    pub fn on_erc721_received(
+    fn withdraw_to(
         &mut self,
-        operator: Address,
+        account: Address,
+        token_ids: Vec<U256>,
+        erc721: &mut Erc721,
+    ) -> Result<bool, Self::Error> {
+        let sender = msg::sender();
+        let underlying = IErc721Solidity::new(self.underlying());
+
+        for token_id in token_ids {
+            erc721._update(Address::ZERO, token_id, sender)?;
+            underlying
+                .safe_transfer_from(
+                    Call::new_in(self),
+                    contract::address(),
+                    account,
+                    token_id,
+                )
+                .map_err(|e| Error::Erc721(e.into()))?;
+        }
+
+        Ok(true)
+    }
+
+    fn on_erc721_received(
+        &mut self,
+        _operator: Address,
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
+        erc721: &mut Erc721,
+    ) -> Result<FixedBytes<4>, Error> {
         let sender = msg::sender();
-
         if self.underlying() != sender {
             return Err(Error::UnsupportedToken(ERC721UnsupportedToken {
-                token_id,
+                token: sender,
             }));
         }
 
-        self.erc721._safe_mint(from, token_id, &data)?;
-        // RECEIVER_FN_SELECTOR
-        Ok(())
+        erc721._safe_mint(from, token_id, &data)?;
+
+        Ok(RECEIVER_FN_SELECTOR.into())
     }
 
-    /// Returns the underlying token.
-    pub fn underlying(&self) -> Address {
-        self.underlying_address.get()
+    fn underlying(&self) -> Address {
+        self.underlying.get()
     }
 }
 
-// ************** ERC-721 Internal **************
-
 impl Erc721Wrapper {
     /// Mints wrapped tokens to cover any underlying tokens that would have been
-    /// function taht can be exposed with access control if desired.
+    /// function that can be exposed with access control if desired.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to mint tokens to.
@@ -184,29 +233,31 @@ impl Erc721Wrapper {
         &mut self,
         account: Address,
         token_id: U256,
+        erc721: &mut Erc721,
     ) -> Result<U256, Error> {
-        let underlying = IErc721::new(self.underlying());
-        let owner = match underlying.owner_of(Call::new_in(self), token_id) {
-            Ok(owner) => owner,
-            Err(e) => return Err(Error::Erc721(e.into())),
-        };
+        let underlying = IErc721Solidity::new(self.underlying());
+
+        let owner = underlying
+            .owner_of(Call::new_in(self), token_id)
+            .map_err(|e| Error::Erc721(e.into()))?;
+
         if owner != contract::address() {
-            return Err(Error::IncorrectOwner(ERC721IncorrectOwner {
-                sender: contract::address(),
-                token_id,
-                owner,
-            }));
+            return Err(Error::Erc721(erc721::Error::IncorrectOwner(
+                erc721::ERC721IncorrectOwner {
+                    sender: contract::address(),
+                    token_id,
+                    owner,
+                },
+            )));
         }
-        self.erc721._safe_mint(account, token_id, &vec![].into())?;
+
+        erc721._safe_mint(account, token_id, &vec![].into())?;
+
         Ok(token_id)
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, uint, Address, U256};
-    use stylus_sdk::msg;
-
-    #[motsu::test]
-    fn recover(contract: Erc721Wrapper) {}
+    use super::*;
 }
