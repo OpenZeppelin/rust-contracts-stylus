@@ -31,7 +31,7 @@ use crate::token::erc20::{
 sol! {
     /// Indicates that the address is not a valid ERC-20 token.
     ///
-    /// * `address` - Address of the invalid ERC-20 token.
+    /// * `token` - Address of the invalid ERC-20 token.
     #[derive(Debug)]
     #[allow(missing_docs)]
     error ERC20InvalidUnderlying(address token);
@@ -64,7 +64,7 @@ pub enum Error {
     /// The Sender Address is not valid.
     InvalidSender(ERC20InvalidSender),
 
-    /// The Reciver Address is not valid.
+    /// The Receiver Address is not valid.
     InvalidReceiver(ERC20InvalidReceiver),
 
     /// The underlying token couldn't be wrapped.
@@ -81,11 +81,10 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc20Wrapper {
     /// Token Address of the  underline token
-    #[allow(clippy::used_underscore_binding)]
     pub(crate) underlying: StorageAddress,
     /// Token decimals.
     pub(crate) underlying_decimals: StorageU8,
-    /// [`SafeErc20`] contract
+    /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
 
@@ -283,7 +282,6 @@ impl Erc20Wrapper {
     /// # Panics
     ///
     /// * If the underlying balance is less than the [`IErc20::total_supply`].
-    /// * If [`Erc20::_mint`] operation panics (should not happen).
     pub fn _recover(
         &mut self,
         account: Address,
@@ -313,10 +311,8 @@ impl Erc20Wrapper {
 mod tests {
     use alloy_primitives::uint;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::*;
 
     use super::*;
-    use crate::token::erc20;
 
     #[storage]
     struct Erc20WrapperTestExample {
