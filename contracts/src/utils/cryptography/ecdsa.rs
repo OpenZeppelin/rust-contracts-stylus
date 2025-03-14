@@ -9,7 +9,6 @@ use alloy_sol_types::SolType;
 use stylus_sdk::{
     call::{self, Call, MethodError},
     prelude::*,
-    stylus_proc::SolidityError,
 };
 
 use crate::utils::cryptography::ecdsa;

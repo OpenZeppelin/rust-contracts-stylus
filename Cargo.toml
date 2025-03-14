@@ -8,6 +8,7 @@ members = [
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
+  "examples/erc20-wrapper",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -36,6 +37,7 @@ default-members = [
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
+  "examples/erc20-wrapper",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -80,7 +82,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "0.8.1", default-features = false, features = [
+stylus-sdk = { version = "=0.8.1", default-features = false, features = [
   "mini-alloc",
 ] }
 
@@ -124,7 +126,7 @@ proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
 # test helpers
-motsu = "0.5.0"
+motsu = "0.6.0"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
