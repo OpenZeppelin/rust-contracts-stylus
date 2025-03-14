@@ -82,6 +82,8 @@ pub trait IErc721Wrapper {
     /// * `account` - The account to deposit tokens to.
     /// * `token_ids` - List of underlying token ids to deposit.
     /// * `erc721` - Write access to an [`Erc721`] contract.
+    ///
+    /// # Errors
     fn deposit_for(
         &mut self,
         account: Address,
@@ -98,6 +100,8 @@ pub trait IErc721Wrapper {
     /// * `account` - The account to withdraw tokens to.
     /// * `token_ids` - List of underlying token ids to withdraw.
     /// * `erc721` - Write access to an [`Erc721`] contract.
+    ///
+    /// # Errors
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -116,6 +120,8 @@ pub trait IErc721Wrapper {
     /// * `token_id` - The token id of the transfer.
     /// * `data` - The data of the transfer.
     /// * `erc721` - Write access to an [`Erc721`] contract.
+    ///
+    /// # Errors
     fn on_erc721_received(
         &mut self,
         _operator: Address,
@@ -226,9 +232,6 @@ impl Erc721Wrapper {
     /// * `token_id` - A mutable reference to the Erc20 contract.
     ///
     /// # Errors
-    ///
-    /// If the underlying token is not owned by the contract, the error
-    /// [`Error::`] is returned.
     fn _recover(
         &mut self,
         account: Address,
@@ -241,10 +244,11 @@ impl Erc721Wrapper {
             .owner_of(Call::new_in(self), token_id)
             .map_err(|e| Error::Erc721(e.into()))?;
 
-        if owner != contract::address() {
+        let contract_address = contract::address();
+        if owner != contract_address {
             return Err(Error::Erc721(erc721::Error::IncorrectOwner(
                 erc721::ERC721IncorrectOwner {
-                    sender: contract::address(),
+                    sender: contract_address,
                     token_id,
                     owner,
                 },
