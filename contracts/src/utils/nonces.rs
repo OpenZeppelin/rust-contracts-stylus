@@ -9,7 +9,6 @@ use stylus_sdk::{
     call::MethodError,
     prelude::*,
     storage::{StorageMap, StorageU256},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::utils::math::storage::AddAssignChecked;
