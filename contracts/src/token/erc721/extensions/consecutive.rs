@@ -27,8 +27,16 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{uint, Address, U256};
-use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
+use alloy_primitives::{uint, Address, U256, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
+use stylus_sdk::{
+    abi::Bytes,
+    call::MethodError,
+    evm, msg,
+    prelude::*,
+    stylus_proc::{public, SolidityError},
+};
 
 use crate::{
     token::erc721::{
@@ -767,9 +775,17 @@ impl Erc721Consecutive {
     }
 }
 
+impl IErc165 for Erc721Consecutive {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
+        Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, U256, FixedBytes};
+    use crate::utils::introspection::erc165::IErc165;
     use motsu::prelude::Contract;
 
     use crate::token::{
@@ -1381,5 +1397,40 @@ mod tests {
                 token_id: t_id
             })) if TOKEN_ID == t_id
         ));
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc721Consecutive::supports_interface(
+        <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
+    ));
+        assert!(Erc721Consecutive::supports_interface(
+        <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc721Consecutive::supports_interface(fake_interface_id.into()));
+    }
+
+    #[motsu::test]
+    fn erc721_consecutive_interface_id() {
+        let actual = <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID;
+        let expected = 0x8ef68167; // Example value, calculate the actual
+        assert_eq!(actual, expected);
+}
+
+    #[motsu::test]
+    fn erc721_consecutive_supports_interface() {
+        assert!(Erc721Consecutive::supports_interface(
+            <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID.into()
+    ));
+        assert!(Erc721Consecutive::supports_interface(
+            <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
+    ));
+    
+        assert!(Erc721Consecutive::supports_interface(
+            <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc721Consecutive::supports_interface(fake_interface_id.into()));
     }
 }

@@ -16,6 +16,8 @@
 
 use alloc::{vec, vec::Vec};
 
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+use alloy_primitives::FixedBytes;
 pub use sol::*;
 use stylus_sdk::{
     call::MethodError, evm, msg, prelude::*, storage::StorageBool,
@@ -154,6 +156,12 @@ impl Pausable {
     }
 }
 
+impl IErc165 for Pausable {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::Address;
@@ -268,5 +276,23 @@ mod tests {
         let result = contract.sender(alice).unpause();
         assert!(matches!(result, Err(Error::ExpectedPause(_))));
         assert!(!contract.sender(alice).paused());
+    }
+    #[test]
+    fn pausable_interface_id() {
+        let actual = <Pausable as IPausable>::INTERFACE_ID;
+        let expected = 0xe613f82b; 
+        assert_eq!(actual, expected);
+}
+
+    #[motsu::test]
+    fn pausable_supports_interface() {
+        assert!(Pausable::supports_interface(
+            <Pausable as IPausable>::INTERFACE_ID.into()
+    ));
+        assert!(Pausable::supports_interface(
+            <Pausable as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Pausable::supports_interface(fake_interface_id.into()));
     }
 }
