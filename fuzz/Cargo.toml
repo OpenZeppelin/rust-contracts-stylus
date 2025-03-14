@@ -52,5 +52,7 @@ test = false
 doc = false
 bench = false
 
+# TODO#q: release update for motsu and remove patch
 [patch.crates-io.motsu]
-path = "../../stylus-test-helpers/crates/motsu"
+git = "https://github.com/OpenZeppelin/stylus-test-helpers.git"
+branch = "build/sdk-v0.8.3"
