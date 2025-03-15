@@ -80,7 +80,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "=0.8.1", default-features = false, features = [
+stylus-sdk = { version = "=0.8.3-rc.1", default-features = false, features = [
   "mini-alloc",
 ] }
 
@@ -153,3 +153,8 @@ default = { extend-ignore-identifiers-re = [
   "[0-9a-fA-F][0-9a-fA-F]",
 ] }
 files = { extend-exclude = [] }
+
+# TODO#q: release update for motsu and remove patch
+[patch.crates-io.motsu]
+git = "https://github.com/OpenZeppelin/stylus-test-helpers.git"
+branch = "build/sdk-v0.8.3"
