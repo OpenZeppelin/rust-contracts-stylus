@@ -1,18 +1,18 @@
 use alloy::{
-    network::EthereumWallet,
-    primitives::{Address, B256},
+    network::{EthereumWallet, TransactionBuilder},
+    primitives::{b256, Address, B256, U256},
     providers::{Provider, ProviderBuilder},
+    rpc::types::TransactionRequest,
     signers::{local::PrivateKeySigner, Signature, Signer},
+    transports::http::reqwest::Url,
 };
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
 use crate::{
     deploy::Deployer,
-    system::{fund_account, Wallet, RPC_URL_ENV_VAR_NAME},
+    system::{Wallet, RPC_URL_ENV_VAR_NAME},
 };
-
-const DEFAULT_FUNDING_ETH: u32 = 100;
 
 /// Type that corresponds to a test account.
 #[derive(Clone, Debug)]
@@ -85,7 +85,7 @@ struct AccountFactory;
 impl AccountFactory {
     /// Get access to the factory in a synchronized manner.
     async fn lock() -> MutexGuard<'static, Self> {
-        /// Since after wallet generation accounts get funded in the nitro test
+        /// Since after wallet generation accounts get funded in the nitro dev
         /// node from a single "god" wallet, we must synchronize account
         /// creation (otherwise the nonce will be too low).
         static SYNC_ACCOUNT_FACTORY: Lazy<Mutex<AccountFactory>> =
@@ -94,7 +94,7 @@ impl AccountFactory {
         SYNC_ACCOUNT_FACTORY.lock().await
     }
 
-    /// Create new account and fund it via nitro test node access.
+    /// Create new account and fund it via nitro node access.
     ///
     /// # Errors
     ///
@@ -104,13 +104,35 @@ impl AccountFactory {
         let _lock = AccountFactory::lock().await;
 
         let signer = PrivateKeySigner::random();
-        let addr = signer.address();
-        fund_account(addr, DEFAULT_FUNDING_ETH)?;
+        let account_address = signer.address();
 
-        let rpc_url = std::env::var(RPC_URL_ENV_VAR_NAME)
+        let rpc_url: Url = std::env::var(RPC_URL_ENV_VAR_NAME)
             .expect("failed to load RPC_URL var from env")
             .parse()
             .expect("failed to parse RPC_URL string into a URL");
+
+        let master = PrivateKeySigner::from_bytes(&b256!(
+                    "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
+                ))
+                .expect("failed to create master signer");
+
+        let master_wallet = ProviderBuilder::new()
+            .with_recommended_fillers()
+            .wallet(EthereumWallet::from(master.clone()))
+            .on_http(rpc_url.clone());
+
+        let tx = TransactionRequest::default()
+            .with_from(master.address())
+            .with_to(account_address)
+            .with_value(U256::from(100_000_000_000_000_000u128));
+
+        master_wallet
+            .send_transaction(tx)
+            .await?
+            .watch()
+            .await
+            .expect("account's wallet wasn't funded - address is {address}");
+
         let wallet = ProviderBuilder::new()
             .with_recommended_fillers()
             .wallet(EthereumWallet::from(signer.clone()))

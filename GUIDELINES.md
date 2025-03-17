@@ -4,7 +4,7 @@
 
 1. Install [Docker].
 1. Install the [Solidity Compiler] version `0.8.24`.
-(NOTE: it is important to use this exact version to avoid compatibility issues).
+   (NOTE: it is important to use this exact version to avoid compatibility issues).
 1. Install toolchain providing `cargo` using [rustup].
 1. Install the cargo stylus tool with `cargo install --force cargo-stylus`.
 
@@ -14,9 +14,7 @@ the following command: `sudo apt-get install build-essential pkg-config libssl-d
 and retry installing the stylus tool.
 
 [Docker]: https://docs.docker.com/engine/install/
-
 [Solidity Compiler]: https://docs.soliditylang.org/en/v0.8.28/installing-solidity.html#linux-packages
-
 [rustup]: https://rustup.rs/
 
 ## Testing
@@ -234,11 +232,11 @@ Make sure all tests are passing with:
 
 ### Running end-to-end tests
 
-To run e2e tests, you need to have a local nitro test node up and running.
+To run e2e tests, you need to have a local nitro node up and running.
 Run the following command and wait till script exit successfully:
 
 ```shell
-./scripts/nitro-testnode.sh -i -d
+./scripts/nitro-devnode.sh -i
 ```
 
 Then you will be able to run e2e tests:
@@ -342,11 +340,10 @@ conventions that must be followed.
 - Custom errors should be declared following the [EIP-6093] rationale whenever
   reasonable. Also, consider the following:
 
-    - The domain prefix should be picked in the following order:
-        1. Use `ERC<number>` if the error is a violation of an ERC specification.
-        2. Use the name of the underlying component where it belongs (eg.
-           `Governor`, `ECDSA`, or `Timelock`).
+  - The domain prefix should be picked in the following order:
+    1. Use `ERC<number>` if the error is a violation of an ERC specification.
+    2. Use the name of the underlying component where it belongs (eg.
+       `Governor`, `ECDSA`, or `Timelock`).
 
 [The Rust Style Guide]: https://doc.rust-lang.org/nightly/style-guide/
-
 [EIP-6093]: https://eips.ethereum.org/EIPS/eip-6093

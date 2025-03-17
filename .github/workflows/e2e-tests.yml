@@ -4,7 +4,7 @@
 # - Install rust
 # - Install `cargo-stylus`
 # - Install `solc`
-# - Spin up `nitro-testnode`
+# - Spin up `nitro-devnode`
 #
 # Contract deployments and account funding happen on a per-test basis.
 name: e2e
@@ -12,7 +12,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [ main, release/* ]
+    branches: [main, release/*]
   pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -33,7 +33,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.8
+        run: cargo install cargo-stylus@0.5.10
 
       - name: Install solc
         run: |
@@ -42,6 +42,6 @@ jobs:
           sudo chmod a+x /usr/bin/solc
 
       - name: Setup nitro node
-        run: ./scripts/nitro-testnode.sh -d -i
+        run: ./scripts/nitro-devnode.sh -i &
       - name: run integration tests
         run: ./scripts/e2e-tests.sh

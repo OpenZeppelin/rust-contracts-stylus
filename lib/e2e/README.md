@@ -3,10 +3,9 @@
 This end-to-end testing crate provides affordances to test your contracts in a
 blockchain environment.
 
-This crate is currently coupled to [`nitro-testnode`] and [`koba`].
+This crate is currently coupled to [`nitro-devnode`] and [`koba`].
 
-[`nitro-testnode`]: https://github.com/OffchainLabs/nitro-testnode
-
+[`nitro-devnode`]: https://github.com/OffchainLabs/nitro-devnode
 [`koba`]: https://github.com/OpenZeppelin/koba
 
 ## Usage
@@ -46,7 +45,6 @@ async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
     // ...
 }
 ```
-
 
 [`WalletFiller`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/provider/src/fillers/wallet.rs#L30
 
@@ -139,7 +137,6 @@ That being said, please do open an issue to start a discussion, keeping in mind
 our [code of conduct] and [contribution guidelines].
 
 [code of conduct]: ../../CODE_OF_CONDUCT.md
-
 [contribution guidelines]: ../../CONTRIBUTING.md
 
 ## Security
