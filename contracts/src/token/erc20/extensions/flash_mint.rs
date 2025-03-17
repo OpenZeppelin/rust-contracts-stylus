@@ -17,13 +17,15 @@
 // TODO: once ERC20Votes is implemented, include it in the comment above next to
 // ERC20Capped.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{Address, U256};
 use stylus_sdk::{
     abi::Bytes,
-    call::Call,
+    call::{Call, MethodError},
     contract, msg,
     prelude::*,
-    storage::{StorageAddress, StorageU256, TopLevelStorage},
+    storage::{StorageAddress, StorageU256},
 };
 
 use crate::token::erc20::{self, Erc20, IErc20};
@@ -76,13 +78,19 @@ pub enum Error {
     Erc20(erc20::Error),
 }
 
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
 pub use borrower::IERC3156FlashBorrower;
 mod borrower {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
     use alloc::vec;
 
-    use stylus_sdk::stylus_proc::sol_interface;
+    use stylus_sdk::prelude::sol_interface;
 
     sol_interface! {
         /// Interface of the ERC-3156 FlashBorrower, as defined in [ERC-3156].
@@ -116,10 +124,14 @@ mod borrower {
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
+    // We keep this field public, since this is used to simulate overriding
+    // (which is not possible in Rust).
     /// Fee applied when doing flash loans.
-    pub(crate) flash_fee_value: StorageU256,
+    pub flash_fee_value: StorageU256,
+    // We keep this field public, since this is used to simulate overriding
+    // (which is not possible in Rust).
     /// Receiver address of the flash fee.
-    pub(crate) flash_fee_receiver_address: StorageAddress,
+    pub flash_fee_receiver_address: StorageAddress,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -171,8 +183,8 @@ pub trait IErc3156FlashLender {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_fee(token, value)?)
+    /// fn flash_fee(&self, token: Address, value: U256) -> Result<U256, flash_mint::Error> {
+    ///     self.erc20_flash_mint.flash_fee(token, value)
     /// }
     /// ```
     fn flash_fee(
@@ -230,14 +242,14 @@ pub trait IErc3156FlashLender {
     ///     token: Address,
     ///     value: U256,
     ///     data: Bytes,
-    /// ) -> Result<bool, Vec<u8>> {
-    ///     Ok(self.erc20_flash_mint.flash_loan(
+    /// ) -> Result<bool, flash_mint::Error> {
+    ///     self.erc20_flash_mint.flash_loan(
     ///         receiver,
     ///         token,
     ///         value,
     ///         data,
     ///         &mut self.erc20,
-    ///     )?)
+    ///     )
     /// }
     /// ```
     fn flash_loan(

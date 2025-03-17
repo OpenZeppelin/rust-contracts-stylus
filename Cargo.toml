@@ -8,6 +8,7 @@ members = [
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
+  "examples/erc20-wrapper",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -35,6 +36,7 @@ default-members = [
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
+  "examples/erc20-wrapper",
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
@@ -64,7 +66,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -78,7 +80,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", branch = "gligneul/constructors", default-features = false, features = [
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
   "mini-alloc",
 ] }
 
@@ -95,17 +97,17 @@ alloy = { version = "=0.7.3", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.14", default-features = false }
-alloy-sol-types = { version = "=0.8.14", default-features = false }
-alloy-sol-macro = { version = "=0.8.14", default-features = false }
-alloy-sol-macro-expander = { version = "=0.8.14", default-features = false }
-alloy-sol-macro-input = { version = "=0.8.14", default-features = false }
+alloy-primitives = { version = "=0.8.20", default-features = false }
+alloy-sol-types = { version = "=0.8.20", default-features = false }
+alloy-sol-macro = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"
 koba = "0.3.0"
 once_cell = "1.19.0"
-rand = "0.8.5"
+rand = "0.9.0"
 regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 tokio = { version = "1.12.0", features = ["full"] }
@@ -122,7 +124,7 @@ proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
 # test helpers
-motsu = "0.4.0"
+motsu = "0.6.0"
 
 # members
 openzeppelin-stylus = { path = "contracts" }

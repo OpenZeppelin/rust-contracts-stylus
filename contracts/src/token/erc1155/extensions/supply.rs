@@ -19,7 +19,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     msg,
-    prelude::{public, storage},
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
 
@@ -603,5 +603,12 @@ mod tests {
         );
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
         assert!(!contract.sender(alice).exists(token_ids[0]));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc1155Supply as IErc1155Supply>::INTERFACE_ID;
+        let expected = 0xeac6339d;
+        assert_eq!(actual, expected);
     }
 }

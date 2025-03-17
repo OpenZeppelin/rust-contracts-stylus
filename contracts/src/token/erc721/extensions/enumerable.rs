@@ -9,20 +9,20 @@
 //! interfere with enumerability and should not be used together with
 //! [`Erc721Enumerable`].
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    prelude::storage,
+    call::MethodError,
+    prelude::*,
     storage::{StorageMap, StorageU256, StorageVec},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::{
     token::erc721::{self, IErc721},
-    utils::introspection::erc165::IErc165,
+    utils::introspection::erc165::{Erc165, IErc165},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -58,6 +58,12 @@ pub enum Error {
 
     /// Indicates an error related to batch minting not allowed.
     EnumerableForbiddenBatchMint(ERC721EnumerableForbiddenBatchMint),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc721Enumerable`] contract.
@@ -162,6 +168,7 @@ impl IErc165 for Erc721Enumerable {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721Enumerable>::INTERFACE_ID
             == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -346,8 +353,10 @@ mod tests {
         ERC721EnumerableForbiddenBatchMint, ERC721OutOfBoundsIndex,
         Erc721Enumerable, Error, IErc721Enumerable,
     };
-    use crate::token::erc721::{Erc721, IErc721};
-
+    use crate::{
+        token::erc721::{Erc721, IErc721},
+        utils::introspection::erc165::IErc165,
+    };
     #[storage]
     struct Erc721EnumerableTestExample {
         pub erc721: Erc721,
@@ -717,5 +726,15 @@ mod tests {
         let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
         let expected = 0x780e9d63;
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc721Enumerable::supports_interface(
+            <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID.into()
+        ));
+        assert!(Erc721Enumerable::supports_interface(
+            <Erc721Enumerable as IErc165>::INTERFACE_ID.into()
+        ));
     }
 }

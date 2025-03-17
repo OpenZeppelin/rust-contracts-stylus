@@ -2,13 +2,13 @@
 //!
 //! Nonces will only increment.
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
-    prelude::storage,
+    call::MethodError,
+    prelude::*,
     storage::{StorageMap, StorageU256},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::utils::math::storage::AddAssignChecked;
@@ -33,6 +33,12 @@ mod sol {
 pub enum Error {
     /// The nonce used for an `account` is not the expected current nonce.
     InvalidAccountNonce(InvalidAccountNonce),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of a [`Nonces`] Contract.

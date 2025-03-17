@@ -4,16 +4,15 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageU256},
-    stylus_proc::{public, SolidityError},
 };
 
 use crate::utils::{
@@ -34,10 +33,12 @@ mod sol {
         /// another (`to`).
         ///
         /// Note that `value` may be zero.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Transfer(address indexed from, address indexed to, uint256 value);
         /// Emitted when the allowance of a `spender` for an `owner` is set by a
         /// call to `approve`. `value` is the new allowance.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
     }
@@ -313,13 +314,6 @@ impl IErc20 for Erc20 {
     }
 }
 
-impl IErc165 for Erc20 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
-    }
-}
-
 impl Erc20 {
     /// Sets a `value` number of tokens as the allowance of `spender` over the
     /// caller's tokens.
@@ -580,14 +574,20 @@ impl Erc20 {
     }
 }
 
+impl IErc165 for Erc20 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{Erc20, Error, IErc20};
-    use crate::utils::introspection::erc165::IErc165;
+    use super::{Erc20, Error, IErc165, IErc20};
 
     unsafe impl TopLevelStorage for Erc20 {}
 
@@ -949,5 +949,18 @@ mod tests {
         let actual = <Erc20 as IErc165>::INTERFACE_ID;
         let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc20::supports_interface(
+            <Erc20 as IErc20>::INTERFACE_ID.into()
+        ));
+        assert!(Erc20::supports_interface(
+            <Erc20 as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc20::supports_interface(fake_interface_id.into()));
     }
 }

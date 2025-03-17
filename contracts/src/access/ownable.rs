@@ -8,17 +8,13 @@
 //! This module is used through inheritance. It will make available the
 //! [`Ownable::only_owner`] function, which can be called to restrict operations
 //! to the owner.
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
-    evm, msg,
-    prelude::storage,
-    storage::StorageAddress,
-    stylus_proc::{public, SolidityError},
+    call::MethodError, evm, msg, prelude::*, storage::StorageAddress,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]

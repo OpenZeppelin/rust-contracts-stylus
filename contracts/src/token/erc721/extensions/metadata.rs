@@ -2,18 +2,20 @@
 
 use alloc::{
     string::{String, ToString},
+    vec,
     vec::Vec,
 };
 
 use alloy_primitives::{FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{
-    prelude::storage, storage::StorageString, stylus_proc::public,
-};
+use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::{
-    token::erc721::{Error, IErc721},
-    utils::{introspection::erc165::IErc165, Metadata},
+    token::erc721::{self, IErc721},
+    utils::{
+        introspection::erc165::{Erc165, IErc165},
+        Metadata,
+    },
 };
 
 /// State of an [`Erc721Metadata`] contract.
@@ -21,8 +23,10 @@ use crate::{
 pub struct Erc721Metadata {
     /// [`Metadata`] contract.
     pub(crate) metadata: Metadata,
+    // We keep this field public, since this is used to simulate overriding
+    // (which is not possible in Rust).
     /// Base URI for tokens.
-    pub(crate) base_uri: StorageString,
+    pub base_uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
@@ -63,7 +67,7 @@ impl Erc721Metadata {
     /// Constructor
     // #[constructor]
     pub fn constructor(&mut self, name: String, symbol: String) {
-        self._metadata.constructor(name, symbol);
+        self.metadata.constructor(name, symbol);
     }
 }
 
@@ -76,6 +80,7 @@ impl IErc165 for Erc721Metadata {
         //  [`Erc721Metadata::token_uri`]
         (<Self as IErc721Metadata>::INTERFACE_ID ^ TOKEN_URI_SELECTOR)
             == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -108,21 +113,21 @@ impl Erc721Metadata {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist.
+    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Examples
     ///
     /// ```rust,ignore
     /// #[selector(name = "tokenURI")]
-    /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-    ///     Ok(self.metadata.token_uri(token_id, &self.erc721)?)
+    /// pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
+    ///     self.metadata.token_uri(token_id, &self.erc721)
     /// }
     /// ```
     pub fn token_uri(
         &self,
         token_id: U256,
-        erc721: &impl IErc721<Error = Error>,
-    ) -> Result<String, Error> {
+        erc721: &impl IErc721<Error = erc721::Error>,
+    ) -> Result<String, erc721::Error> {
         erc721.owner_of(token_id)?;
 
         let base_uri = self.base_uri();
@@ -139,19 +144,33 @@ impl Erc721Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use super::{Erc721Metadata, IErc165, IErc721Metadata};
+    use super::{Erc721Metadata, IErc165, IErc721Metadata, TOKEN_URI_SELECTOR};
 
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
         let expected = 0x93254542;
         assert_eq!(actual, expected);
+
+        let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID
+            ^ TOKEN_URI_SELECTOR;
+        let expected = 0x5b5e139f;
+        assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
-        assert!(<Erc721Metadata as IErc165>::supports_interface(
-            0x5b5e139f.into()
+        assert!(Erc721Metadata::supports_interface(
+            <Erc721Metadata as IErc165>::INTERFACE_ID.into()
+        ));
+        assert!(Erc721Metadata::supports_interface(
+            (<Erc721Metadata as IErc721Metadata>::INTERFACE_ID
+                ^ TOKEN_URI_SELECTOR)
+                .into()
+        ));
+        // Interface ID needs to include XOR TOKEN_URI_SELECTOR
+        assert!(!Erc721Metadata::supports_interface(
+            <Erc721Metadata as IErc721Metadata>::INTERFACE_ID.into()
         ));
     }
 }

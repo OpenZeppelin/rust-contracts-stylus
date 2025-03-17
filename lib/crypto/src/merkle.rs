@@ -104,8 +104,7 @@ impl Verifier<KeccakBuilder> {
     ///
     /// # Panics
     ///
-    /// * Will panic with an out-of-bounds error if the proof is malicious. See
-    /// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
+    /// * If the proof is malicious (with an out-of-bounds error). See <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
     ///
     /// # Examples
     ///
@@ -274,6 +273,11 @@ where
             return Ok(root == rebuilt_root);
         }
 
+        // We need at least one leaf for non-trivial trees
+        if leaves.is_empty() {
+            return Err(MultiProofError::NoLeaves);
+        }
+
         // `hashes` represents a queue of hashes, our "main queue".
         let mut hashes = Vec::with_capacity(total_hashes + leaves.len());
         // Which initially gets populated with the leaves.
@@ -335,6 +339,8 @@ pub enum MultiProofError {
     /// The number of leaves and proof members does not match the number of
     /// hashes necessary to complete the verification.
     InvalidTotalHashes,
+    /// No leaves were provided for a non-trivial tree.
+    NoLeaves,
 }
 
 impl core::fmt::Display for MultiProofError {
@@ -344,6 +350,9 @@ impl core::fmt::Display for MultiProofError {
             MultiProofError::InvalidRootChild => "invalid root child generated",
             MultiProofError::InvalidTotalHashes => {
                 "leaves.len() + proof.len() != total_hashes + 1"
+            }
+            MultiProofError::NoLeaves => {
+                "no leaves were provided for a non-trivial tree"
             }
         };
 
@@ -357,7 +366,7 @@ mod tests {
     //! <https://github.com/OpenZeppelin/merkle-tree>.
     use hex_literal::hex;
     use proptest::{prelude::*, prop_compose};
-    use rand::{thread_rng, RngCore};
+    use rand::{rng, RngCore};
 
     use super::{Bytes32, KeccakBuilder, Verifier};
     use crate::hash::{commutative_hash_pair, BuildHasher};
@@ -671,7 +680,7 @@ mod tests {
         };
 
         let mut random_bytes = [0u8; 32];
-        thread_rng().fill_bytes(&mut random_bytes);
+        rng().fill_bytes(&mut random_bytes);
 
         let fill = Bytes32::from(random_bytes);
         let proof = [hash_b, fill, hash_cd];
@@ -707,7 +716,7 @@ mod tests {
         };
 
         let mut random_bytes = [0u8; 32];
-        thread_rng().fill_bytes(&mut random_bytes);
+        rng().fill_bytes(&mut random_bytes);
 
         let fill = Bytes32::from(random_bytes);
         let proof = [hash_b, fill, hash_cd];

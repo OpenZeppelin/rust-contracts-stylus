@@ -4,32 +4,33 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc20::{extensions::Erc20Metadata, Erc20};
-use stylus_sdk::prelude::{entrypoint, public, storage};
+use openzeppelin_stylus::token::erc20::{
+    self, extensions::Erc20Metadata, Erc20,
+};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
     #[borrow]
-    pub erc20: Erc20,
+    erc20: Erc20,
     #[borrow]
-    pub metadata: Erc20Metadata,
+    metadata: Erc20Metadata,
 }
 
 #[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc20Example {
     #[constructor]
-    pub fn constructor(&mut self, name: String, symbol: String) {
+    fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
     }
 
-    pub fn mint(
+    fn mint(
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Vec<u8>> {
-        self.erc20._mint(account, value)?;
-        Ok(())
+    ) -> Result<(), erc20::Error> {
+        self.erc20._mint(account, value)
     }
 }

@@ -1,9 +1,7 @@
 //! Common Metadata Smart Contract.
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
-use stylus_sdk::{
-    prelude::storage, storage::StorageString, stylus_proc::public,
-};
+use stylus_sdk::{prelude::*, storage::StorageString};
 
 /// State of a [`Metadata`] contract.
 #[storage]
@@ -19,8 +17,8 @@ impl Metadata {
     /// Constructor
     #[constructor]
     pub fn constructor(&mut self, name: String, symbol: String) {
-        self._name.set_str(name);
-        self._symbol.set_str(symbol);
+        self.name.set_str(name);
+        self.symbol.set_str(symbol);
     }
 
     /// Returns the name of the token.
