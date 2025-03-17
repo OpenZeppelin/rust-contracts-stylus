@@ -13,12 +13,8 @@ use eyre::Result;
 use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
 use stylus_sdk::alloy_sol_types::SolCall;
 
-use crate::Erc20FlashMintExample::constructorCall;
-
 mod abi;
 mod mock;
-
-sol!("src/constructor.sol");
 
 const FEE_RECEIVER: Address =
     address!("F4EaCDAbEf3c8f1EdE91b6f2A6840bc2E4DD3526");

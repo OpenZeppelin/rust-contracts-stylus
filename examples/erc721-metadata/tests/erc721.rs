@@ -1,17 +1,10 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc721;
-use alloy::{
-    primitives::{Address, U256},
-    sol,
-};
+use alloy::primitives::{Address, U256};
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
 
-use crate::Erc721MetadataExample::constructorCall;
-
 mod abi;
-
-sol!("src/constructor.sol");
 
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "NFT";
@@ -21,12 +14,8 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn ctr(base_uri: &str) -> constructorCall {
-    constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        baseUri_: base_uri.to_owned(),
-    }
+fn ctr(base_uri: &str) -> String {
+    format!("\"{TOKEN_NAME}\" \"{TOKEN_SYMBOL}\" \"{base_uri}\"")
 }
 
 // ============================================================================

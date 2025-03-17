@@ -4,7 +4,6 @@ mod deploy;
 mod environment;
 mod error;
 mod event;
-mod project;
 mod receipt;
 mod system;
 

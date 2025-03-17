@@ -1,18 +1,14 @@
 #![cfg(feature = "e2e")]
 
 use abi::{Ownable, Ownable::OwnershipTransferred};
-use alloy::{primitives::Address, sol};
+use alloy::primitives::Address;
 use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
 
-use crate::OwnableExample::constructorCall;
-
 mod abi;
 
-sol!("src/constructor.sol");
-
-fn ctr(owner: Address) -> constructorCall {
-    constructorCall { initialOwner: owner }
+fn ctr(owner: Address) -> String {
+    format!("\"{owner}\"")
 }
 
 // ============================================================================

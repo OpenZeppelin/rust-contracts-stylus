@@ -1,20 +1,16 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc1155;
-use alloy::{primitives::U256, sol};
+use alloy::primitives::U256;
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
 
-use crate::Erc1155MetadataUriExample::constructorCall;
-
 mod abi;
-
-sol!("src/constructor.sol");
 
 const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 const BASE_URI: &str = "https://github.com";
 
-fn ctr(uri: &str) -> constructorCall {
-    constructorCall { uri_: uri.to_owned() }
+fn ctr(uri: &str) -> String {
+    format!("\"{uri}\"")
 }
 
 // ============================================================================
