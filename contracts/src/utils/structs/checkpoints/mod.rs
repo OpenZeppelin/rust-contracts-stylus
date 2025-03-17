@@ -378,7 +378,7 @@ mod tests {
     use alloy_primitives::{uint, Address};
     use stylus_sdk::prelude::*;
 
-    use crate::utils::structs::checkpoints::{
+    use super::{
         generic_size::S160, CheckpointUnorderedInsertion, Error, Trace,
     };
 

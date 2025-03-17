@@ -4,18 +4,14 @@ use abi::{
     Ownable2Step,
     Ownable2Step::{OwnershipTransferStarted, OwnershipTransferred},
 };
-use alloy::{primitives::Address, sol};
+use alloy::primitives::Address;
 use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert};
 use eyre::Result;
 
-use crate::Ownable2StepExample::constructorCall;
-
 mod abi;
 
-sol!("src/constructor.sol");
-
-fn ctr(owner: Address) -> constructorCall {
-    constructorCall { initialOwner: owner }
+fn ctr(owner: Address) -> String {
+    format!("\"{owner}\"")
 }
 
 // ============================================================================

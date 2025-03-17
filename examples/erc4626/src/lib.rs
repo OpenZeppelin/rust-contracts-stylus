@@ -31,6 +31,18 @@ struct Erc4626Example {
 #[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc4626Example {
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        name: String,
+        symbol: String,
+        asset: Address,
+        decimals_offset: U8,
+    ) {
+        self.metadata.constructor(name, symbol);
+        self.erc4626.constructor(asset, decimals_offset);
+    }
+
     fn decimals(&self) -> U8 {
         self.erc4626.decimals()
     }

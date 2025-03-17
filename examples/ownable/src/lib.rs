@@ -28,6 +28,11 @@ struct OwnableExample {
 #[public]
 #[inherit(Erc20, Ownable)]
 impl OwnableExample {
+    #[constructor]
+    fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
+        Ok(self.ownable.constructor(initial_owner)?)
+    }
+
     fn transfer(&mut self, to: Address, value: U256) -> Result<(), Error> {
         self.ownable.only_owner()?;
         self.erc20.transfer(to, value)?;

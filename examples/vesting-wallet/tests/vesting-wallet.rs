@@ -7,7 +7,6 @@ use alloy::{
     primitives::{Address, U256},
     providers::Provider,
     rpc::types::{BlockTransactionsKind, TransactionRequest},
-    sol,
 };
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
@@ -15,12 +14,8 @@ use e2e::{
 };
 use mock::{erc20, erc20::ERC20Mock};
 
-use crate::VestingWalletExample::constructorCall;
-
 mod abi;
 mod mock;
-
-sol!("src/constructor.sol");
 
 const BALANCE: u64 = 1000;
 const DURATION: u64 = 365 * 86400; // 1 year
@@ -29,12 +24,8 @@ fn ctr(
     beneficiary: Address,
     start_timestamp: u64,
     duration_seconds: u64,
-) -> constructorCall {
-    constructorCall {
-        beneficiary,
-        startTimestamp: start_timestamp,
-        durationSeconds: duration_seconds,
-    }
+) -> String {
+    format!("\"{beneficiary}\" \"{start_timestamp}\" \"{duration_seconds}\"")
 }
 
 async fn block_timestamp(account: &Account) -> eyre::Result<u64> {

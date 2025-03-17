@@ -98,7 +98,7 @@ dependencies = [
  "alloy-rpc-types",
  "alloy-serde 0.7.3",
  "alloy-signer 0.7.3",
- "alloy-signer-local",
+ "alloy-signer-local 0.7.3",
  "alloy-transport 0.7.3",
  "alloy-transport-http 0.7.3",
 ]
@@ -749,6 +749,22 @@ dependencies = [
  "alloy-signer 0.7.3",
  "async-trait",
  "eth-keystore",
+ "k256",
+ "rand 0.8.5",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "alloy-signer-local"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe8f78cd6b7501c7e813a1eb4a087b72d23af51f5bb66d4e948dc840bdd207d8"
+dependencies = [
+ "alloy-consensus 0.11.1",
+ "alloy-network 0.11.1",
+ "alloy-primitives",
+ "alloy-signer 0.11.1",
+ "async-trait",
  "k256",
  "rand 0.8.5",
  "thiserror 2.0.12",
@@ -3076,8 +3092,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "mini-alloc"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7f9182f9a333312973dfa30ecaa76af44137f4ccebaa8dac09c54c301ae288a"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=76d0454defed46b2cfaab82e566aeb8ddde5944a#76d0454defed46b2cfaab82e566aeb8ddde5944a"
 dependencies = [
  "cfg-if",
 ]
@@ -3111,13 +3126,14 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f11816ec018094aa612081ec5053c4f41ad8c64adb44666ad5f69ce3e8a1901b"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=update-sdk#bf4add6388007a9514a7dbfc1abe26e7930cef20"
 dependencies = [
  "alloy-primitives",
+ "alloy-signer-local 0.11.1",
  "alloy-sol-types",
  "const-hex",
  "dashmap 6.1.0",
+ "k256",
  "motsu-proc",
  "once_cell",
  "stylus-sdk",
@@ -3127,8 +3143,7 @@ dependencies = [
 [[package]]
 name = "motsu-proc"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23d4d8171f070b58febd3eae8bd29c91ff993862fa0e01fc604d23321583a18a"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=update-sdk#bf4add6388007a9514a7dbfc1abe26e7930cef20"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4368,8 +4383,7 @@ dependencies = [
 [[package]]
 name = "stylus-core"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2853922ad43b26bf8bef41905b223eea3562598d81278fac9e2bff0736c29e67"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=76d0454defed46b2cfaab82e566aeb8ddde5944a#76d0454defed46b2cfaab82e566aeb8ddde5944a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4380,8 +4394,7 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83bef043b21df187e08545ef7fde1861ec9dbe9aced0fe9578c0f0addff7a7c1"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=76d0454defed46b2cfaab82e566aeb8ddde5944a#76d0454defed46b2cfaab82e566aeb8ddde5944a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4401,12 +4414,12 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0782d384c8871842ae34d3d705cd5e84afcec5ca56585f0611ab85d031fe049b"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=76d0454defed46b2cfaab82e566aeb8ddde5944a#76d0454defed46b2cfaab82e566aeb8ddde5944a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "cfg-if",
+ "clap",
  "derivative",
  "hex",
  "keccak-const",
@@ -4420,8 +4433,7 @@ dependencies = [
 [[package]]
 name = "stylus-test"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23976e7ae0f9d342c502a94e300a341c9f75fb2322ed561d69d1e2915a0e7592"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=76d0454defed46b2cfaab82e566aeb8ddde5944a#76d0454defed46b2cfaab82e566aeb8ddde5944a"
 dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",

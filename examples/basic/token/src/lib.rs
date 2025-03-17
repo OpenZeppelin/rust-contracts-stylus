@@ -7,7 +7,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
     self, extensions::Erc20Metadata, Erc20,
 };
-use stylus_sdk::prelude::{entrypoint, public, storage, *};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
@@ -21,6 +21,11 @@ struct Erc20Example {
 #[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc20Example {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+
     fn mint(
         &mut self,
         account: Address,

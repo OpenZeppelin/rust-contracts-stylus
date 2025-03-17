@@ -27,7 +27,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{uint, Address, U256};
+use alloy_primitives::{aliases::U96, uint, Address, U256};
 use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
@@ -46,7 +46,6 @@ use crate::{
     },
 };
 
-type U96 = <S160 as Size>::Key;
 type StorageU96 = <S160 as Size>::KeyStorage;
 
 pub use sol::*;
@@ -129,13 +128,17 @@ pub struct Erc721Consecutive {
     pub(crate) sequential_ownership: Trace<S160>,
     /// [`BitMap`] contract for sequential burn of tokens.
     pub(crate) sequential_burn: BitMap,
+    // We keep this field public, since this is used to simulate overriding
+    // (which is not possible in Rust).
     /// Used to offset the first token id in `next_consecutive_id` calculation.
-    pub(crate) first_consecutive_id: StorageU96,
+    pub first_consecutive_id: StorageU96,
+    // We keep this field public, since this is used to simulate overriding
+    // (which is not possible in Rust).
     /// Maximum size of a batch of consecutive tokens. This is designed to
     /// limit stress on off-chain indexing services that have to record one
     /// entry per token, and have protections against "unreasonably large"
     /// batches of tokens.
-    pub(crate) max_batch_size: StorageU96,
+    pub max_batch_size: StorageU96,
 }
 
 impl Deref for Erc721Consecutive {
@@ -247,6 +250,16 @@ impl IErc721 for Erc721Consecutive {
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
         self.erc721.is_approved_for_all(owner, operator)
+    }
+}
+
+// TODO: uncomment once multiple public attributes are supported
+// #[public]
+impl Erc721Consecutive {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(&mut self) {
+        self.max_batch_size.set(U96::from(5000));
     }
 }
 

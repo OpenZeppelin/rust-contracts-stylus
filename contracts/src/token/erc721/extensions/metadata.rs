@@ -23,8 +23,10 @@ use crate::{
 pub struct Erc721Metadata {
     /// [`Metadata`] contract.
     pub(crate) metadata: Metadata,
+    // We keep this field public, since this is used to simulate overriding
+    // (which is not possible in Rust).
     /// Base URI for tokens.
-    pub(crate) base_uri: StorageString,
+    pub base_uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
@@ -56,6 +58,16 @@ impl IErc721Metadata for Erc721Metadata {
 
     fn symbol(&self) -> String {
         self.metadata.symbol()
+    }
+}
+
+// TODO: uncomment once multiple public attributes are supported
+// #[public]
+impl Erc721Metadata {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
     }
 }
 

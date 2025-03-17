@@ -1,38 +1,25 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc20;
-use alloy::{
-    primitives::{uint, Address, U256},
-    sol,
-};
+use alloy::primitives::{uint, Address, U256};
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
     Revert,
 };
 use eyre::Result;
 
-use crate::Erc20Example::constructorCall;
-
 mod abi;
-
-sol!("src/constructor.sol");
 
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-impl Default for constructorCall {
-    fn default() -> Self {
-        ctr(CAP)
-    }
+fn ctr(cap: U256) -> String {
+    format!("\"{TOKEN_NAME}\" \"{TOKEN_SYMBOL}\" \"{cap}\"")
 }
 
-fn ctr(cap: U256) -> constructorCall {
-    Erc20Example::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: cap,
-    }
+fn default_ctr() -> String {
+    format!("\"{TOKEN_NAME}\" \"{TOKEN_SYMBOL}\" \"{CAP}\"")
 }
 
 // ============================================================================
@@ -43,7 +30,7 @@ fn ctr(cap: U256) -> constructorCall {
 async fn constructs(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -70,7 +57,7 @@ async fn constructs(alice: Account) -> Result<()> {
 async fn mints(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -107,7 +94,7 @@ async fn mints(alice: Account) -> Result<()> {
 async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -180,7 +167,7 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
 async fn transfers(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -229,7 +216,7 @@ async fn transfer_rejects_insufficient_balance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -275,7 +262,7 @@ async fn transfer_rejects_insufficient_balance(
 async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -319,7 +306,7 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
 async fn approves(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -391,7 +378,7 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
 async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -446,7 +433,7 @@ async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
 async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -506,7 +493,7 @@ async fn transfer_from_reverts_insufficient_balance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -566,7 +553,7 @@ async fn transfer_from_rejects_insufficient_allowance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -626,7 +613,7 @@ async fn transfer_from_rejects_invalid_receiver(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -687,7 +674,7 @@ async fn transfer_from_rejects_invalid_receiver(
 async fn burns(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -727,7 +714,7 @@ async fn burns(alice: Account) -> Result<()> {
 async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -767,7 +754,7 @@ async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
 async fn burns_from(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -826,7 +813,7 @@ async fn burn_from_reverts_insufficient_balance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -886,7 +873,7 @@ async fn burn_from_rejects_insufficient_allowance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -947,7 +934,7 @@ async fn burn_from_rejects_insufficient_allowance(
 async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -988,7 +975,7 @@ async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
 async fn mint_rejects_when_cap_reached(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1049,7 +1036,7 @@ async fn should_not_deploy_capped_with_invalid_cap(
 async fn pauses(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1070,7 +1057,7 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1091,7 +1078,7 @@ async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 async fn unpauses(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1114,7 +1101,7 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1137,7 +1124,7 @@ async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
 async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1178,7 +1165,7 @@ async fn error_when_burn_from_in_paused_state(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1232,7 +1219,7 @@ async fn error_when_burn_from_in_paused_state(
 async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1270,7 +1257,7 @@ async fn error_when_transfer_in_paused_state(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1313,7 +1300,7 @@ async fn error_when_transfer_in_paused_state(
 async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;
@@ -1371,7 +1358,7 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
 async fn supports_interface(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
         .address()?;

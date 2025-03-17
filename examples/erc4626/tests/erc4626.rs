@@ -1,10 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc4626;
-use alloy::{
-    primitives::{uint, Address, U256},
-    sol,
-};
+use alloy::primitives::{uint, Address, U256};
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
     Revert,
@@ -15,8 +12,6 @@ use mock::{
     erc20_failing_transfer::ERC20FailingTransferMock,
 };
 
-use crate::Erc4626Example::constructorCall;
-
 const ERC4626_NAME: &str = "Erc4626 Token";
 const ERC4626_SYMBOL: &str = "ETT";
 const DECIMALS_OFFSET: u8 = 0;
@@ -26,24 +21,12 @@ const MIN_OVERFLOW_DECIMAL_OFFSET: u8 = 78;
 mod abi;
 mod mock;
 
-sol!("src/constructor.sol");
-
-fn ctr(asset: Address) -> constructorCall {
-    constructorCall {
-        asset_: asset,
-        name_: ERC4626_NAME.to_owned(),
-        symbol_: ERC4626_SYMBOL.to_owned(),
-        decimalsOffset_: DECIMALS_OFFSET,
-    }
+fn ctr(asset: Address) -> String {
+    format!("\"{asset}\" \"{ERC4626_NAME}\" \"{ERC4626_SYMBOL}\" \"{DECIMALS_OFFSET}\"")
 }
 
-fn dec_offset_overflow_ctr(asset: Address) -> constructorCall {
-    constructorCall {
-        asset_: asset,
-        name_: ERC4626_NAME.to_owned(),
-        symbol_: ERC4626_SYMBOL.to_owned(),
-        decimalsOffset_: MIN_OVERFLOW_DECIMAL_OFFSET,
-    }
+fn dec_offset_overflow_ctr(asset: Address) -> String {
+    format!("\"{asset}\" \"{ERC4626_NAME}\" \"{ERC4626_SYMBOL}\" \"{MIN_OVERFLOW_DECIMAL_OFFSET}\"")
 }
 
 async fn deploy(

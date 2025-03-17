@@ -39,6 +39,18 @@ struct Erc20Example {
 #[public]
 #[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
 impl Erc20Example {
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        name: String,
+        symbol: String,
+        cap: U256,
+    ) -> Result<(), Vec<u8>> {
+        self.metadata.constructor(name, symbol);
+        self.capped.constructor(cap)?;
+        Ok(())
+    }
+
     // Overrides the default [`Metadata::decimals`], and sets it to `10`.
     //
     // If you don't provide this method in the `entrypoint` contract, it will

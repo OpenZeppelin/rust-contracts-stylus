@@ -10,9 +10,10 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256, U8};
+use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError},
+    call::{self, Call, MethodError},
     contract, evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
@@ -21,7 +22,10 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+        utils::{
+            safe_erc20, IERC20Metadata, IErc20 as IErc20Solidity, ISafeErc20,
+            SafeErc20,
+        },
         Erc20, IErc20,
     },
     utils::math::alloy::{Math, Rounding},
@@ -916,6 +920,36 @@ impl IErc4626 for Erc4626 {
         self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(assets)
+    }
+}
+
+// TODO: uncomment once multiple public attributes are supported
+// #[public]
+impl Erc4626 {
+    /// Constructor
+    // TODO: remove `decimals_offset` once function overriding is possible
+    // #[constructor]
+    pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
+        let underlying_decimals =
+            self.try_get_asset_decimals(asset).unwrap_or(18);
+
+        self.underlying_decimals.set(U8::from(underlying_decimals));
+        self.asset.set(asset);
+        self.decimals_offset.set(decimals_offset);
+    }
+
+    /// Attempts to fetch the asset decimals. Returns None if the attempt failed
+    /// in any way. This follows Rust's idiomatic Option pattern rather than
+    /// Solidity's boolean tuple return.
+    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
+        let call = IERC20Metadata::decimalsCall {};
+
+        // Perform the static call
+        let decimals =
+            call::static_call(Call::new_in(self), asset, &call.abi_encode())
+                .ok()?;
+
+        decimals.first().copied()
     }
 }
 
