@@ -1,17 +1,17 @@
 //! ERC-721 token with storage-based token URI management.
 //!
 //! It also implements IERC4096, which is an ERC-721 Metadata Update Extension.
-use alloc::string::String;
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{
     evm,
-    prelude::storage,
+    prelude::*,
     storage::{StorageMap, StorageString},
 };
 
-use crate::token::erc721::{extensions::Erc721Metadata, Error, IErc721};
+use crate::token::erc721::{self, extensions::Erc721Metadata, IErc721};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -76,25 +76,25 @@ impl Erc721UriStorage {
     ///
     /// # Errors
     ///
-    /// * [`Error::NonexistentToken`] - If the token does not exist.
+    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
     ///
     /// # Examples
     ///
     /// ```rust,ignore
     /// #[selector(name = "tokenURI")]
-    /// pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-    ///     Ok(self.uri_storage.token_uri(
+    /// pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
+    ///     self.uri_storage.token_uri(
     ///        token_id,
     ///        &self.erc721,
     ///        &self.metadata,
-    ///    )?)
+    ///     )
     /// }
     pub fn token_uri(
         &self,
         token_id: U256,
-        erc721: &impl IErc721<Error = Error>,
+        erc721: &impl IErc721<Error = erc721::Error>,
         metadata: &Erc721Metadata,
-    ) -> Result<String, Error> {
+    ) -> Result<String, erc721::Error> {
         erc721.owner_of(token_id)?;
 
         let token_uri = self.token_uris.getter(token_id).get_string();
@@ -119,11 +119,11 @@ impl Erc721UriStorage {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
-    use motsu::prelude::Contract;
-    use stylus_sdk::prelude::{public, storage, TopLevelStorage};
+    use motsu::prelude::*;
+    use stylus_sdk::prelude::*;
 
     use super::Erc721UriStorage;
-    use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
+    use crate::token::erc721::{self, extensions::Erc721Metadata, Erc721};
 
     const TOKEN_ID: U256 = uint!(1_U256);
 
@@ -137,12 +137,8 @@ mod tests {
     #[public]
     impl Erc721MetadataExample {
         #[selector(name = "tokenURI")]
-        fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-            Ok(self.uri_storage.token_uri(
-                token_id,
-                &self.erc721,
-                &self.metadata,
-            )?)
+        fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
+            self.uri_storage.token_uri(token_id, &self.erc721, &self.metadata)
         }
 
         #[selector(name = "setTokenURI")]

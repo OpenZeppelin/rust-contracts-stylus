@@ -7,14 +7,15 @@
 //! would affect the "shares" token represented by this contract and not the
 //! "assets" token which is an independent contract.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{uint, Address, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
-    call::Call,
+    call::{Call, MethodError},
     contract, evm, msg,
-    prelude::storage,
-    storage::{StorageAddress, StorageU8, TopLevelStorage},
-    stylus_proc::SolidityError,
+    prelude::*,
+    storage::{StorageAddress, StorageU8},
 };
 
 use crate::{
@@ -122,6 +123,12 @@ pub enum Error {
     Erc20(erc20::Error),
 }
 
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
 /// State of an [`Erc4626`] token.
 #[storage]
 pub struct Erc4626 {
@@ -200,8 +207,8 @@ pub trait IErc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.convert_to_shares(assets, &self.erc20)?)
+    /// fn convert_to_shares(&mut self, assets: U256) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.convert_to_shares(assets, &self.erc20)
     /// }
     /// ```
     fn convert_to_shares(
@@ -244,8 +251,8 @@ pub trait IErc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.convert_to_assets(shares, &self.erc20)?)
+    /// fn convert_to_assets(&mut self, shares: U256) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.convert_to_assets(shares, &self.erc20)
     /// }
     /// ```
     fn convert_to_assets(
@@ -296,8 +303,8 @@ pub trait IErc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn preview_deposit(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.preview_deposit(assets, &self.erc20)?)
+    /// fn preview_deposit(&mut self, assets: U256) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.preview_deposit(assets, &self.erc20)
     /// }
     /// ```
     fn preview_deposit(
@@ -348,10 +355,10 @@ pub trait IErc4626 {
     /// ```rust,ignore
     /// fn deposit(
     ///     &mut self,
-    ///    assets: U256,
-    ///    receiver: Address,
-    /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.deposit(assets, receiver, &mut self.erc20)?)
+    ///     assets: U256,
+    ///     receiver: Address,
+    /// ) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.deposit(assets, receiver, &mut self.erc20)
     /// }
     /// ```
     fn deposit(
@@ -403,8 +410,8 @@ pub trait IErc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn preview_mint(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.preview_mint(shares, &self.erc20)?)
+    /// fn preview_mint(&mut self, shares: U256) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.preview_mint(shares, &self.erc20)
     /// }
     /// ```
     fn preview_mint(
@@ -458,10 +465,10 @@ pub trait IErc4626 {
     /// ```rust,ignore
     /// fn mint(
     ///     &mut self,
-    ///    shares: U256,
-    ///    receiver: Address,
-    /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.mint(shares, receiver, &mut self.erc20)?)
+    ///     shares: U256,
+    ///     receiver: Address,
+    /// ) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.mint(shares, receiver, &mut self.erc20)
     /// }
     /// ```
     fn mint(
@@ -499,8 +506,8 @@ pub trait IErc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn max_withdraw(&mut self, owner: Address) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.max_withdraw(owner, &self.erc20)?)
+    /// fn max_withdraw(&mut self, owner: Address) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.max_withdraw(owner, &self.erc20)
     /// }
     /// ```
     fn max_withdraw(
@@ -537,8 +544,8 @@ pub trait IErc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.preview_withdraw(assets, &self.erc20)?)
+    /// fn preview_withdraw(&mut self, assets: U256) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.preview_withdraw(assets, &self.erc20)
     /// }
     /// ```
     fn preview_withdraw(
@@ -597,11 +604,11 @@ pub trait IErc4626 {
     /// ```rust,ignore
     /// fn withdraw(
     ///     &mut self,
-    ///    assets: U256,
-    ///    receiver: Address,
-    ///    owner: Address,
-    /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.withdraw(assets, receiver, owner, &mut self.erc20)?)
+    ///     assets: U256,
+    ///     receiver: Address,
+    ///     owner: Address,
+    /// ) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.withdraw(assets, receiver, owner, &mut self.erc20)
     /// }
     /// ```
     fn withdraw(
@@ -631,7 +638,7 @@ pub trait IErc4626 {
     ///
     /// ```rust,ignore
     /// fn max_redeem(&mut self, owner: Address) -> U256 {
-    ///     Ok(self.erc4626.max_redeem(owner, &self.erc20)?)
+    ///     self.erc4626.max_redeem(owner, &self.erc20)
     /// }
     /// ```
     fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256;
@@ -669,8 +676,8 @@ pub trait IErc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn preview_redeem(&mut self, shares: U256) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.preview_redeem(shares, &self.erc20)?)
+    /// fn preview_redeem(&mut self, shares: U256) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.preview_redeem(shares, &self.erc20)
     /// }
     /// ```
     fn preview_redeem(
@@ -723,10 +730,10 @@ pub trait IErc4626 {
     /// fn redeem(
     ///     &mut self,
     ///     shares: U256,
-    ///    receiver: Address,
-    ///    owner: Address,
-    /// ) -> Result<U256, Vec<u8>> {
-    ///     Ok(self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)?)
+    ///     receiver: Address,
+    ///     owner: Address,
+    /// ) -> Result<U256, erc4626::Error> {
+    ///     self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)
     /// }
     /// ```
     fn redeem(

@@ -8,23 +8,21 @@ use openzeppelin_crypto::{
     merkle::{self, Verifier},
     KeccakBuilder,
 };
-use stylus_sdk::{
-    alloy_sol_types::sol,
-    prelude::{entrypoint, public, storage},
-    stylus_proc::SolidityError,
-};
+use stylus_sdk::{alloy_sol_types::sol, prelude::*};
 
 sol! {
     error MerkleProofInvalidMultiProofLength();
     error MerkleProofInvalidRootChild();
     error MerkleProofInvalidTotalHashes();
+    error MerkleProofNoLeaves();
 }
 
 #[derive(SolidityError)]
-pub enum VerifierError {
+enum VerifierError {
     InvalidProofLength(MerkleProofInvalidMultiProofLength),
     InvalidRootChild(MerkleProofInvalidRootChild),
     InvalidTotalHashes(MerkleProofInvalidTotalHashes),
+    NoLeaves(MerkleProofNoLeaves),
 }
 
 impl core::convert::From<merkle::MultiProofError> for VerifierError {
@@ -43,22 +41,25 @@ impl core::convert::From<merkle::MultiProofError> for VerifierError {
                     MerkleProofInvalidTotalHashes {},
                 )
             }
+            merkle::MultiProofError::NoLeaves => {
+                VerifierError::NoLeaves(MerkleProofNoLeaves {})
+            }
         }
     }
 }
 
 #[entrypoint]
 #[storage]
-struct VerifierContract {}
+struct VerifierContract;
 
 #[public]
 impl VerifierContract {
-    pub fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
+    fn verify(&self, proof: Vec<B256>, root: B256, leaf: B256) -> bool {
         let proof: Vec<[u8; 32]> = proof.into_iter().map(|m| *m).collect();
         Verifier::<KeccakBuilder>::verify(&proof, *root, *leaf)
     }
 
-    pub fn verify_multi_proof(
+    fn verify_multi_proof(
         &self,
         proof: Vec<B256>,
         proof_flags: Vec<bool>,

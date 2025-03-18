@@ -6,7 +6,7 @@ ERC-721 is a standard for representing ownership of xref:tokens.adoc#different-k
 
 ERC-721 is a more complex standard than ERC-20, with multiple optional extensions, and is split across a number of contracts.
 The OpenZeppelin Contracts provide flexibility regarding how these are combined, along with custom useful extensions.
-Check out the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc721/struct.Erc721.html[`API reference`] to learn more about these.
+Check out the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/struct.Erc721.html[`API reference`] to learn more about these.
 
 == Constructing an ERC-721 Token Contract
 
@@ -21,24 +21,25 @@ Here's what a contract for tokenized items might look like:
 
 [source,rust]
 ----
+use openzeppelin_stylus::token::erc721::{
+    self, extensions::Erc721Metadata, Erc721,
+};
+
 #[entrypoint]
 #[storage]
 struct GameItem {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
     #[borrow]
-    pub metadata: Metadata,
-    pub next_token_id: StorageU256,
+    metadata: Erc721Metadata,
+    next_token_id: StorageU256,
 }
 
 #[public]
-#[inherit(Erc721, Metadata)]
+#[inherit(Erc721, Erc721Metadata)]
 impl GameItem {
-    pub fn award_item(
-        &mut self,
-        player: Address,
-    ) -> Result<U256, Vec<u8>> {
-        let token_id = self._next_token_id.get() + uint!(1_U256);
+    fn award_item(&mut self, player: Address) -> Result<U256, erc721::Error> {
+        let token_id = self.next_token_id.get() + uint!(1_U256);
         self.next_token_id.set(token_id);
 
         self.erc721._mint(player, token_id)?;
@@ -48,7 +49,7 @@ impl GameItem {
 }
 ----
 
-The https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
+The https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
 It extends the contract itself with the name, symbol and base uri for the token.
 
 Also note that, unlike ERC-20, ERC-721 lacks a `decimals` field, since each token is distinct and cannot be partitioned.

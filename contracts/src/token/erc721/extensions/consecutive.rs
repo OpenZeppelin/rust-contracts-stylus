@@ -25,14 +25,10 @@
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
 use alloc::{vec, vec::Vec};
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{uint, Address, U256};
-use stylus_sdk::{
-    abi::Bytes,
-    evm, msg,
-    prelude::{storage, TopLevelStorage},
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{
@@ -52,24 +48,6 @@ use crate::{
 
 type U96 = <S160 as Size>::Key;
 type StorageU96 = <S160 as Size>::KeyStorage;
-
-/// State of an [`Erc721Consecutive`] token.
-#[storage]
-pub struct Erc721Consecutive {
-    /// [`Erc721`] contract.
-    pub erc721: Erc721,
-    /// [`Trace`] contract for sequential ownership.
-    pub(crate) sequential_ownership: Trace<S160>,
-    /// [`BitMap`] contract for sequential burn of tokens.
-    pub(crate) sequential_burn: BitMap,
-    /// Used to offset the first token id in `next_consecutive_id` calculation.
-    pub(crate) first_consecutive_id: StorageU96,
-    /// Maximum size of a batch of consecutive tokens. This is designed to
-    /// limit stress on off-chain indexing services that have to record one
-    /// entry per token, and have protections against "unreasonably large"
-    /// batches of tokens.
-    pub(crate) max_batch_size: StorageU96,
-}
 
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -134,6 +112,44 @@ pub enum Error {
     ForbiddenMint(ERC721ForbiddenMint),
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
+}
+
+/// State of an [`Erc721Consecutive`] token.
+#[storage]
+pub struct Erc721Consecutive {
+    /// [`Erc721`] contract.
+    pub erc721: Erc721,
+    /// [`Trace`] contract for sequential ownership.
+    pub(crate) sequential_ownership: Trace<S160>,
+    /// [`BitMap`] contract for sequential burn of tokens.
+    pub(crate) sequential_burn: BitMap,
+    /// Used to offset the first token id in `next_consecutive_id` calculation.
+    pub(crate) first_consecutive_id: StorageU96,
+    /// Maximum size of a batch of consecutive tokens. This is designed to
+    /// limit stress on off-chain indexing services that have to record one
+    /// entry per token, and have protections against "unreasonably large"
+    /// batches of tokens.
+    pub(crate) max_batch_size: StorageU96,
+}
+
+impl Deref for Erc721Consecutive {
+    type Target = Erc721;
+
+    fn deref(&self) -> &Self::Target {
+        &self.erc721
+    }
+}
+
+impl DerefMut for Erc721Consecutive {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.erc721
+    }
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

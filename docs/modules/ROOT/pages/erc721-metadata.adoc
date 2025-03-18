@@ -5,24 +5,21 @@ Extension of xref:erc721.adoc[ERC-721] that adds the optional metadata functions
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.3/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
 
 [source,rust]
 ----
-use openzeppelin_stylus::{
-    token::erc721::{
-        extensions::Erc721Metadata,
-        Erc721,
-    },
+use openzeppelin_stylus::token::erc721::{
+    self, extensions::Erc721Metadata, Erc721,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc721Example {
     #[borrow]
-    pub erc721: Erc721,
+    erc721: Erc721,
     #[borrow]
-    pub metadata: Metadata,
+    metadata: Erc721Metadata,
 }
 
 #[public]
@@ -31,8 +28,8 @@ impl Erc721Example {
     // ...
 
     #[selector(name = "tokenURI")]
-    pub fn token_uri(&self, token_id: U256) -> Result<String, Vec<u8>> {
-        Ok(self.metadata.token_uri(token_id, &self.erc721)?)
+    fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
+        self.metadata.token_uri(token_id, &self.erc721)
     }
 }
 ----

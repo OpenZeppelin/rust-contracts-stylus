@@ -1034,11 +1034,8 @@ impl Erc721 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U256};
-    use motsu::prelude::Contract;
-    use stylus_sdk::{
-        abi::Bytes,
-        prelude::{public, sol_storage, TopLevelStorage},
-    };
+    use motsu::prelude::*;
+    use stylus_sdk::{abi::Bytes, prelude::*};
 
     use super::{
         ERC721IncorrectOwner, ERC721InsufficientApproval,

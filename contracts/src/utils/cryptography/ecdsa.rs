@@ -8,8 +8,7 @@ use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
     call::{self, Call, MethodError},
-    storage::TopLevelStorage,
-    stylus_proc::SolidityError,
+    prelude::*,
 };
 
 use crate::utils::cryptography::ecdsa;
