@@ -223,8 +223,10 @@ impl Ownable2Step {
     }
 }
 
-impl IErc165 for Ownable2Step {
+impl IErc165 for OwnableTwoStep {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IOwnableTwoStep>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
+        <Self as IOwnable>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
         Erc165::supports_interface(interface_id)
     }
 }
@@ -474,6 +476,9 @@ mod tests {
     fn ownable_two_step_supports_interface() {
         assert!(OwnableTwoStep::supports_interface(
             <OwnableTwoStep as IOwnableTwoStep>::INTERFACE_ID.into()
+    ));
+        assert!(OwnableTwoStep::supports_interface(
+            <OwnableTwoStep as IOwnable>::INTERFACE_ID.into()
     ));
         assert!(OwnableTwoStep::supports_interface(
             <OwnableTwoStep as IErc165>::INTERFACE_ID.into()
