@@ -514,7 +514,7 @@ impl IErc165 for VestingWallet {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256, U64};
+    use alloy_primitives::{uint, Address, U256, U64git};
     use motsu::prelude::Contract;
     use stylus_sdk::block;
 
