@@ -721,7 +721,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn access_control_interface_id() {
+    fn interface_id() {
         let actual = <AccessControl as IAccessControl>::INTERFACE_ID;
         let expected = 0x7965db0b; 
         assert_eq!(actual, expected);
