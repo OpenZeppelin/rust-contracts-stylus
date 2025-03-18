@@ -778,6 +778,7 @@ impl Erc721Consecutive {
 impl IErc165 for Erc721Consecutive {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
+        <Self as IErc2309>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
         Erc165::supports_interface(interface_id)
     }
 }
