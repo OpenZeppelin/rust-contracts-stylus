@@ -3,9 +3,7 @@
 //! It also implements IERC4096, which is an ERC-721 Metadata Update Extension.
 use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{U256,FixedBytes};
-use crate::utils::introspection::erc165::{Erc165, IErc165};
-
+use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{
     evm,
@@ -118,12 +116,6 @@ impl Erc721UriStorage {
     }
 }
 
-impl IErc165 for Erc721UriStorage {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc165::supports_interface(interface_id)
-    }
-}
-
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
@@ -178,36 +170,5 @@ mod tests {
                 .token_uri(TOKEN_ID)
                 .expect("should return token URI")
         );
-    }
-
-    #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc721UriStorage::supports_interface(
-            <Erc721UriStorage as IErc165>::INTERFACE_ID.into()
-    ));
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721UriStorage::supports_interface(fake_interface_id.into()));
-    }
-
-    #[motsu::test]
-    fn erc721_uri_storage_interface_id() {
-        let actual = <Erc721UriStorage as IErc721Metadata>::INTERFACE_ID;
-        let expected = 0x5b5e139f;  
-        assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn erc721_uri_storage_supports_interface() {
-        assert!(Erc721UriStorage::supports_interface(
-            <Erc721UriStorage as IErc721Metadata>::INTERFACE_ID.into()
-    ));
-        assert!(Erc721UriStorage::supports_interface(
-            <Erc721UriStorage as IErc165>::INTERFACE_ID.into()
-    ));
-        assert!(Erc721UriStorage::supports_interface(
-            <Erc721UriStorage as IErc721>::INTERFACE_ID.into()
-    ));
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721UriStorage::supports_interface(fake_interface_id.into()));
     }
 }
