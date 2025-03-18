@@ -432,6 +432,9 @@ mod tests {
         assert!(SafeErc20::supports_interface(
             <SafeErc20 as IErc165>::INTERFACE_ID.into()
     ));
+            assert!(SafeErc20::supports_interface(
+                <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
+            ));
         let fake_interface_id = 0x12345678u32;
         assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
     }
