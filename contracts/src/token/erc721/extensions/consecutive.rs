@@ -1405,6 +1405,9 @@ mod tests {
         <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
     ));
         assert!(Erc721Consecutive::supports_interface(
+            <Erc721Consecutive as IErc2309>::INTERFACE_ID.into()
+        ));
+        assert!(Erc721Consecutive::supports_interface(
         <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
     ));
         let fake_interface_id = 0x12345678u32;
