@@ -1154,6 +1154,7 @@ impl Erc4626 {
 
 impl IErc165 for Erc4626 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc4626>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
         Erc165::supports_interface(interface_id)
     }
 }
