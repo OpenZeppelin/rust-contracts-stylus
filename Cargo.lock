@@ -98,7 +98,7 @@ dependencies = [
  "alloy-rpc-types",
  "alloy-serde 0.7.3",
  "alloy-signer 0.7.3",
- "alloy-signer-local",
+ "alloy-signer-local 0.7.3",
  "alloy-transport 0.7.3",
  "alloy-transport-http 0.7.3",
 ]
@@ -680,7 +680,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde 0.11.1",
  "alloy-sol-types",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -749,6 +749,22 @@ dependencies = [
  "alloy-signer 0.7.3",
  "async-trait",
  "eth-keystore",
+ "k256",
+ "rand 0.8.5",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "alloy-signer-local"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe8f78cd6b7501c7e813a1eb4a087b72d23af51f5bb66d4e948dc840bdd207d8"
+dependencies = [
+ "alloy-consensus 0.11.1",
+ "alloy-network 0.11.1",
+ "alloy-primitives",
+ "alloy-signer 0.11.1",
+ "async-trait",
  "k256",
  "rand 0.8.5",
  "thiserror 2.0.12",
@@ -2863,15 +2879,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3081,9 +3088,9 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "mini-alloc"
-version = "0.8.3-rc.1"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f73b765544712e3e32527b552420b0b5436550478071679314d2918e5ee59bfd"
+checksum = "3b3dc09847999e8f92fb6ff6f3e11e9ac1b1976208aed3d6a3688d94132f4298"
 dependencies = [
  "cfg-if",
 ]
@@ -3117,12 +3124,14 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.6.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=build/sdk-v0.8.3#951ecc03eece24374073d12598a2d4db09e26541"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=build/sdk-v0.8.3#1591a0e06237fe0a5284a9a384eb54bc59ea2bf4"
 dependencies = [
  "alloy-primitives",
+ "alloy-signer-local 0.11.1",
  "alloy-sol-types",
  "const-hex",
  "dashmap 6.1.0",
+ "k256",
  "motsu-proc",
  "once_cell",
  "stylus-sdk",
@@ -3132,7 +3141,7 @@ dependencies = [
 [[package]]
 name = "motsu-proc"
 version = "0.6.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=build/sdk-v0.8.3#951ecc03eece24374073d12598a2d4db09e26541"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=build/sdk-v0.8.3#1591a0e06237fe0a5284a9a384eb54bc59ea2bf4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4380,9 +4389,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-core"
-version = "0.8.3-rc.1"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85a095471f2ca0cbe181f0717bc654bf27d205e2608bb56eb553e7fbd22095ea"
+checksum = "c2434fc6bcabf9b7f1a3d5da44cfa34609b12e98e3fde3f3d0c4709e5726474a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4392,9 +4401,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-proc"
-version = "0.8.3-rc.1"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef200d21171db13ad3eb70624add147a165d5acd8bee9dbfc7419155ea867f4e"
+checksum = "c003efb32d59dc3f291f4a22c777e81e5dc699cdbcafeefd4a39598bd0c36e7a"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4413,9 +4422,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-sdk"
-version = "0.8.3-rc.1"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f55a0125a2b5f7c6dc610bba41ad053d265d358dc03b6dc91414ad3f8f2a420f"
+checksum = "df6cba6ce22094d368abca999750bde1eade17083d5037d036a9fb553cb04532"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4433,9 +4442,9 @@ dependencies = [
 
 [[package]]
 name = "stylus-test"
-version = "0.8.3-rc.1"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42c4b6c289b5e01bf4ae7362f36b75b73c99a9e79d34096265ff73c44e5d5e1f"
+checksum = "bdedf2d3c35b94843379767025e94142deaa6919179c2e679953cf48da40924b"
 dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",
