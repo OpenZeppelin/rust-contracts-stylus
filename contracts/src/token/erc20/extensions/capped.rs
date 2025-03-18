@@ -7,17 +7,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{U256, FixedBytes};
-use crate::utils::introspection::erc165::{Erc165, IErc165};
-
+use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{call::MethodError, prelude::*, storage::StorageU256};
-
-impl IErc165 for Capped {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc165::supports_interface(interface_id)
-    }
-}
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -72,10 +64,9 @@ impl Capped {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes};
+    use alloy_primitives::{uint, Address};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
-    use crate::utils::introspection::erc165::IErc165;
 
     use super::Capped;
 
@@ -90,27 +81,5 @@ mod tests {
         let value = uint!(1_U256);
         contract.init(alice, |contract| contract.cap.set(value));
         assert_eq!(contract.sender(alice).cap(), value);
-    }
-
-    #[motsu::test]
-    fn erc20_capped_interface_id() {
-        let actual = <Erc20Capped as IErc20Capped>::INTERFACE_ID;
-        let expected = 0x49064906; 
-        assert_eq!(actual, expected);
-}
-
-    #[motsu::test]
-    fn erc20_capped_supports_interface() {
-        assert!(Erc20Capped::supports_interface(
-            <Erc20Capped as IErc20Capped>::INTERFACE_ID.into()
-    ));
-        assert!(Erc20Capped::supports_interface(
-            <Erc20Capped as IErc165>::INTERFACE_ID.into()
-    ));
-        assert!(Erc20Capped::supports_interface(
-            <Erc20Capped as IErc20>::INTERFACE_ID.into()
-    ));
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20Capped::supports_interface(fake_interface_id.into()));
     }
 }
