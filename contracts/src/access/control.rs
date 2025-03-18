@@ -728,7 +728,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn access_control_supports_interface() {
+    fn supports_interface() {
         assert!(AccessControl::supports_interface(
             <AccessControl as IAccessControl>::INTERFACE_ID.into()
     ));
