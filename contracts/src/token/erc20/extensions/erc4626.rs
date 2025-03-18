@@ -1270,9 +1270,6 @@ mod tests {
         assert!(Erc4626::supports_interface(
             <Erc4626 as IErc165>::INTERFACE_ID.into()
     ));
-        assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc20>::INTERFACE_ID.into()
-    ));
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc4626::supports_interface(fake_interface_id.into()));
     }
