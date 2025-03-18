@@ -514,7 +514,7 @@ impl IErc165 for VestingWallet {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256, U64, FixedBytes};
+    use alloy_primitives::{uint, Address, U256, U64};
     use motsu::prelude::Contract;
     use stylus_sdk::block;
 
@@ -654,7 +654,7 @@ mod tests {
     #[motsu::test]
     fn vesting_wallet_interface_id() {
         let actual = <VestingWallet as IVestingWallet>::INTERFACE_ID;
-        let expected = 0x45c25d80; // Example value, calculate the actual
+        let expected = 0x45c25d80; 
         assert_eq!(actual, expected);
     }
 
