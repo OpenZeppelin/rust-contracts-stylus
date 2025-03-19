@@ -9,8 +9,8 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-motsu = "0.6.0"
-stylus-sdk = { version = "0.8.1", default-features = false, features = [
+motsu = "0.7.0"
+stylus-sdk = { version = "=0.8.3", default-features = false, features = [
     "mini-alloc",
 ] }
 rs_merkle = { git = "https://github.com/Haxry/rs-merkle.git", branch = "sha3" }

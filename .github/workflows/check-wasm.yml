@@ -5,7 +5,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [ main, release/* ]
+    branches: [main, release/*]
   pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -25,7 +25,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.8
+        run: cargo install cargo-stylus@0.5.10
 
       - name: Run wasm check
         run: ./scripts/check-wasm.sh
