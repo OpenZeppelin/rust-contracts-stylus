@@ -3135,8 +3135,9 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 
 [[package]]
 name = "motsu"
-version = "0.6.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?rev=93c95c1661f3e84749ba29509204c050c726462a#93c95c1661f3e84749ba29509204c050c726462a"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b268a11003a485c01c4ddbc15223b0a1ff3fd1389e37c7dc1c277f25f143c26a"
 dependencies = [
  "alloy-primitives",
  "alloy-signer-local 0.11.1",
@@ -3152,8 +3153,9 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.6.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?rev=93c95c1661f3e84749ba29509204c050c726462a#93c95c1661f3e84749ba29509204c050c726462a"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a45f688b2e7f47d6f0b81907408a58957b0f556456dbbce361dc4ce6bda9ca8e"
 dependencies = [
  "proc-macro2",
  "quote",
