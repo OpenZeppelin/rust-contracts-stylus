@@ -157,5 +157,5 @@ files = { extend-exclude = [] }
 # TODO#q: release update for motsu and remove patch
 [patch.crates-io.motsu]
 git = "https://github.com/OpenZeppelin/stylus-test-helpers.git"
-branch = "build/sdk-v0.8.3"
+# branch = "build/sdk-v0.8.3"
 rev = "93c95c1661f3e84749ba29509204c050c726462a"
