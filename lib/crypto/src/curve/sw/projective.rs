@@ -1,3 +1,8 @@
+//! Projective coordinates for a point on a Short Weierstrass curve
+//! ([Homogeneous coordinates]).
+//!
+//! [Homogeneous coordinates]: https://en.wikipedia.org/wiki/Homogeneous_coordinates
+
 use alloc::vec::Vec;
 use core::{
     borrow::Borrow,
@@ -41,9 +46,10 @@ impl<P: SWCurveConfig> Display for Projective<P> {
 
 impl<P: SWCurveConfig> Debug for Projective<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        match self.is_zero() {
-            true => write!(f, "infinity"),
-            false => write!(f, "({}, {}, {})", self.x, self.y, self.z),
+        if self.is_zero() {
+            write!(f, "infinity")
+        } else {
+            write!(f, "({}, {}, {})", self.x, self.y, self.z)
         }
     }
 }
@@ -65,10 +71,10 @@ impl<P: SWCurveConfig> PartialEq for Projective<P> {
         let z1z1 = self.z.square();
         let z2z2 = other.z.square();
 
-        if self.x * &z2z2 != other.x * &z1z1 {
-            false
+        if self.x * z2z2 == other.x * z1z1 {
+            self.y * (z2z2 * other.z) == other.y * (z1z1 * self.z)
         } else {
-            self.y * &(z2z2 * &other.z) == other.y * &(z1z1 * &self.z)
+            false
         }
     }
 }
@@ -81,7 +87,7 @@ impl<P: SWCurveConfig> PartialEq<Affine<P>> for Projective<P> {
 
 impl<P: SWCurveConfig> Hash for Projective<P> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.into_affine().hash(state)
+        self.into_affine().hash(state);
     }
 }
 
@@ -105,6 +111,11 @@ impl<P: SWCurveConfig> Projective<P> {
 
     /// Constructs a new group element in a way while enforcing that points are
     /// in the prime-order subgroup.
+    ///
+    /// # Panics
+    ///
+    /// * If point is not on curve.
+    /// * If point is not in the prime-order subgroup.
     pub fn new(x: P::BaseField, y: P::BaseField, z: P::BaseField) -> Self {
         let p = Self::new_unchecked(x, y, z).into_affine();
         assert!(p.is_on_curve());
@@ -151,6 +162,7 @@ impl<P: SWCurveConfig> AdditiveGroup for Projective<P> {
     /// Sets `self = 2 * self`. Note that Jacobian formulae are incomplete, and
     /// so doubling cannot be computed as `self + self`. Instead, this
     /// implementation uses the following specialized doubling formulae:
+    ///
     /// * [`P::A` is zero](http://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l)
     /// * [`P::A` is not zero](https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian.html#doubling-dbl-2007-bl)
     fn double_in_place(&mut self) -> &mut Self {
@@ -174,7 +186,6 @@ impl<P: SWCurveConfig> AdditiveGroup for Projective<P> {
             // D = 2*((X1+B)^2-A-C)
             //   = 2 * (X1 + Y1^2)^2 - A - C
             //   = 2 * 2 * X1 * Y1^2
-            // TODO#q: use different trait for extension_degree
             let d = if [1, 2].contains(&P::BaseField::extension_degree()) {
                 let mut d = self.x;
                 d *= &b;
@@ -226,7 +237,7 @@ impl<P: SWCurveConfig> AdditiveGroup for Projective<P> {
             zz.square_in_place();
 
             // S = 2*((X1+YY)^2-XX-YYYY)
-            let s = ((self.x + &yy).square() - &xx - &yyyy).double();
+            let s = ((self.x + yy).square() - xx - yyyy).double();
 
             // M = 3*XX+a*ZZ^2
             let mut m = xx;
@@ -298,9 +309,10 @@ impl<P: SWCurveConfig> CurveGroup for Projective<P> {
         // Perform affine transformations
         v.iter()
             .zip(z_s)
-            .map(|(g, z)| match g.is_zero() {
-                true => Affine::identity(),
-                false => {
+            .map(|(g, z)| {
+                if g.is_zero() {
+                    Affine::identity()
+                } else {
                     let z2 = z.square();
                     let x = g.x * z2;
                     let y = g.y * z2 * z;
@@ -352,7 +364,7 @@ impl<P: SWCurveConfig, T: Borrow<Affine<P>>> AddAssign<T> for Projective<P> {
                     self.double_in_place();
                 } else {
                     // a + (-a) = 0
-                    *self = Self::zero()
+                    *self = Self::zero();
                 }
             } else {
                 // H = U2-X1
@@ -426,8 +438,6 @@ impl<P: SWCurveConfig, T: Borrow<Affine<P>>> Sub<T> for Projective<P> {
     }
 }
 
-// TODO#q: Add auto derive of multiplication operations
-// Implements AddAssign on Self by deferring to an implementation on &Self
 impl_additive_ops_from_ref!(Projective, SWCurveConfig);
 
 impl<'a, P: SWCurveConfig> Add<&'a Self> for Projective<P> {
@@ -551,7 +561,7 @@ impl<P: SWCurveConfig, T: Borrow<P::ScalarField>> MulAssign<T>
     for Projective<P>
 {
     fn mul_assign(&mut self, other: T) {
-        *self = self.mul_bigint(other.borrow().into_bigint())
+        *self = self.mul_bigint(other.borrow().into_bigint());
     }
 }
 

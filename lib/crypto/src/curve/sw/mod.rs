@@ -1,10 +1,15 @@
+//! This module contains definitions for the [Short Weierstrass model] of the
+//! curve.
+//!
+//! [Short Weierstrass model]: https://www.hyperelliptic.org/EFD/g1p/auto-shortw.html
+
 use num_traits::Zero;
 
 mod affine;
 pub use affine::*;
 
-mod group;
-pub use group::*;
+mod projective;
+pub use projective::*;
 
 use crate::{
     bits::BitIteratorBE,
@@ -12,11 +17,13 @@ use crate::{
     field::{group::AdditiveGroup, prime::PrimeField},
 };
 
-/// Constants and convenience functions that collectively define the [Short Weierstrass model](https://www.hyperelliptic.org/EFD/g1p/auto-shortw.html)
-/// of the curve.
+/// Constants and convenience functions that collectively define the
+/// [Short Weierstrass model] of the curve.
 ///
 /// In this model, the curve equation is `y² = x³ + a * x + b`, for constants
 /// `a` and `b`.
+///
+/// [Short Weierstrass model]: https://www.hyperelliptic.org/EFD/g1p/auto-shortw.html
 pub trait SWCurveConfig: super::CurveConfig {
     /// Coefficient `a` of the curve equation.
     const COEFF_A: Self::BaseField;
@@ -49,7 +56,7 @@ pub trait SWCurveConfig: super::CurveConfig {
         if Self::COEFF_B.is_zero() {
             elem
         } else {
-            elem + &Self::COEFF_B
+            elem + Self::COEFF_B
         }
     }
 
@@ -95,18 +102,6 @@ pub trait SWCurveConfig: super::CurveConfig {
     ) -> Projective<Self> {
         sw_double_and_add_affine(base, scalar)
     }
-
-    /* TODO#q: implement msm for short weierstrass curves
-    /// Default implementation for multi scalar multiplication
-    fn msm(
-        bases: &[Affine<Self>],
-        scalars: &[Self::ScalarField],
-    ) -> Result<Projective<Self>, usize> {
-        (bases.len() == scalars.len())
-            .then(|| VariableBaseMSM::msm_unchecked(bases, scalars))
-            .ok_or(bases.len().min(scalars.len()))
-    }
-    */
 }
 
 /// Standard double-and-add method for multiplication by a scalar.
@@ -119,7 +114,7 @@ pub fn sw_double_and_add_affine<P: SWCurveConfig>(
     for b in scalar.bit_be_trimmed_iter() {
         res.double_in_place();
         if b {
-            res += base
+            res += base;
         }
     }
 
@@ -136,7 +131,7 @@ pub fn sw_double_and_add_projective<P: SWCurveConfig>(
     for b in scalar.bit_be_trimmed_iter() {
         res.double_in_place();
         if b {
-            res += base
+            res += base;
         }
     }
 

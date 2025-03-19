@@ -101,6 +101,10 @@ pub trait Field:
     /// The multiplicative identity of the field.
     const ONE: Self;
 
+    /// Returns the extension degree of this field.
+    #[must_use]
+    fn extension_degree() -> usize;
+
     /// Returns `self * self`.
     #[must_use]
     fn square(&self) -> Self;

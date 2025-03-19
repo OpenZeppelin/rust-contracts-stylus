@@ -1,3 +1,6 @@
+//! This module provides common operations to work with elliptic curves.
+
+use alloc::vec::Vec;
 use core::{
     fmt::{Debug, Display},
     hash::Hash,
@@ -13,8 +16,8 @@ use crate::{
 };
 
 mod helpers;
-pub mod short_weierstrass;
-pub mod twisted_edwards;
+pub mod sw;
+pub mod te;
 
 /// Elliptic curves can be represented via different "models" with varying
 /// efficiency properties.
@@ -28,15 +31,16 @@ pub trait CurveConfig: Send + Sync + Sized + 'static {
     type BaseField: Field;
     /// Finite prime field corresponding to an appropriate prime-order subgroup
     /// of the curve group.
-    type ScalarField: PrimeField
-        + Into<<Self::ScalarField as PrimeField>::BigInt>; // TODO#q: we don't need this additional generic restriction Into<BigInt>
+    type ScalarField: PrimeField;
 
-    // TODO#q: cofactor should be represented as a big integer
     /// The cofactor of this curve, represented as a sequence of little-endian
     /// limbs.
     const COFACTOR: &'static [u64];
+
+    /// The inverse of the cofactor.
     const COFACTOR_INV: Self::ScalarField;
 
+    /// Returns `true` if the cofactor is one.
     fn cofactor_is_one() -> bool {
         Self::COFACTOR[0] == 1
             && Self::COFACTOR.iter().skip(1).all(Zero::is_zero)
@@ -53,10 +57,12 @@ pub trait PrimeGroup: AdditiveGroup<Scalar = Self::ScalarField> {
     fn generator() -> Self;
 
     /// Performs scalar multiplication of this element.
+    #[must_use]
     fn mul_bigint(&self, other: impl BitIteratorBE) -> Self;
 
     /// Computes `other * self`, where `other` is a *big-endian*
     /// bit representation of some integer.
+    #[must_use]
     fn mul_bits_be(&self, other: impl Iterator<Item = bool>) -> Self {
         let mut res = Self::zero();
         for b in other.skip_while(|b| !b) {
@@ -75,22 +81,20 @@ pub trait PrimeGroup: AdditiveGroup<Scalar = Self::ScalarField> {
 ///
 /// The point is guaranteed to be in the correct prime order subgroup.
 pub trait CurveGroup:
-PrimeGroup
-+ Add<Self::Affine, Output=Self>
-+ AddAssign<Self::Affine>
-+ Sub<Self::Affine, Output=Self>
-+ SubAssign<Self::Affine>
-// TODO#q: replace VariableBaseMSM and ScalarMul restrictions
-// + VariableBaseMSM
-// + ScalarMul<MulBase = Self::Affine>
-+ From<Self::Affine>
-+ Into<Self::Affine>
-+ core::iter::Sum<Self::Affine>
-+ for<'a> core::iter::Sum<&'a Self::Affine>
+    PrimeGroup
+    + Add<Self::Affine, Output = Self>
+    + AddAssign<Self::Affine>
+    + Sub<Self::Affine, Output = Self>
+    + SubAssign<Self::Affine>
+    + From<Self::Affine>
+    + Into<Self::Affine>
+    + core::iter::Sum<Self::Affine>
+    + for<'a> core::iter::Sum<&'a Self::Affine>
 {
+    /// Associated configuration for this curve.
     type Config: CurveConfig<
-        ScalarField=Self::ScalarField,
-        BaseField=Self::BaseField,
+        ScalarField = Self::ScalarField,
+        BaseField = Self::BaseField,
     >;
 
     /// The field over which this curve is defined.
@@ -98,12 +102,12 @@ PrimeGroup
 
     /// The affine representation of this element.
     type Affine: AffineRepr<
-        Config=Self::Config,
-        Group=Self,
-        ScalarField=Self::ScalarField,
-        BaseField=Self::BaseField,
-    > + From<Self>
-    + Into<Self>;
+            Config = Self::Config,
+            Group = Self,
+            ScalarField = Self::ScalarField,
+            BaseField = Self::BaseField,
+        > + From<Self>
+        + Into<Self>;
 
     /// Type representing an element of the full elliptic curve group, not just
     /// the prime order subgroup.
@@ -151,15 +155,17 @@ pub trait AffineRepr:
     + Mul<Self::ScalarField, Output = Self::Group>
     + for<'a> Mul<&'a Self::ScalarField, Output = Self::Group>
 {
+    /// Associated configuration for this curve.
     type Config: CurveConfig<
         ScalarField = Self::ScalarField,
         BaseField = Self::BaseField,
     >;
 
-    type ScalarField: PrimeField
-        + Into<<Self::ScalarField as PrimeField>::BigInt>;
+    /// Finite prime field corresponding to an appropriate prime-order subgroup
+    /// of the curve group.
+    type ScalarField: PrimeField;
 
-    /// The finite field over which this curve is defined.
+    /// Base field that the curve is defined over.
     type BaseField: Field;
 
     /// The projective representation of points on this curve.
@@ -231,19 +237,19 @@ pub trait AffineRepr:
     }
 }
 
-// Given a vector of field elements {v_i}, compute the vector {v_i^(-1)}
+/// Given a vector of field elements `v_i`, compute the vector `v_i^(-1)`
 pub fn batch_inversion<F: Field>(v: &mut [F]) {
-    serial_batch_inversion_and_mul(v, &F::one());
+    batch_inversion_and_mul(v, &F::one());
 }
 
-/// Given a vector of field elements {v_i}, compute the vector {coeff *
-/// v_i^(-1)}. This method is explicitly single-threaded.
-fn serial_batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
+/// Given a vector of field elements `v_i`, compute the vector `coeff *
+/// v_i^(-1)`.
+fn batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
     // Montgomery’s Trick and Fast Implementation of Masked AES
     // Genelle, Prouff and Quisquater
     // Section 3.2
     // but with an optimization to multiply every element in the returned vector
-    // by coeff
+    // by coeff.
 
     // First pass: compute [a, ab, abc, ...]
     let mut prod = Vec::with_capacity(v.len());
@@ -256,7 +262,7 @@ fn serial_batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
     // Invert `tmp`.
     tmp = tmp.inverse().unwrap(); // Guaranteed to be nonzero.
 
-    // Multiply product by coeff, so all inverses will be scaled by coeff
+    // Multiply product by coeff, so all inverses will be scaled by coeff.
     tmp *= coeff;
 
     // Second pass: iterate backwards to compute inverses
@@ -271,7 +277,7 @@ fn serial_batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
     {
         // tmp := tmp * f; f := tmp * s = 1/f
         let new_tmp = tmp * *f;
-        *f = tmp * &s;
+        *f = tmp * s;
         tmp = new_tmp;
     }
 }

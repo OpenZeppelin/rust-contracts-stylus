@@ -1,3 +1,9 @@
+//! Projective coordinates for a point on a Twisted Edwards curve
+//! ([Homogeneous coordinates]).
+//!
+//! [Homogeneous coordinates]: https://en.wikipedia.org/wiki/Homogeneous_coordinates
+
+use alloc::vec::Vec;
 use core::{
     borrow::Borrow,
     fmt::{Display, Formatter},
@@ -55,14 +61,14 @@ impl<P: TECurveConfig> PartialEq for Projective<P> {
         }
 
         // x1/z1 == x2/z2  <==> x1 * z2 == x2 * z1
-        (self.x * &other.z) == (other.x * &self.z)
-            && (self.y * &other.z) == (other.y * &self.z)
+        (self.x * other.z) == (other.x * self.z)
+            && (self.y * other.z) == (other.y * self.z)
     }
 }
 
 impl<P: TECurveConfig> Hash for Projective<P> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.into_affine().hash(state)
+        self.into_affine().hash(state);
     }
 }
 
@@ -87,6 +93,11 @@ impl<P: TECurveConfig> Projective<P> {
 
     /// Construct a new group element in a way while enforcing that points are
     /// in the prime-order subgroup.
+    ///
+    /// # Panics
+    ///
+    /// * If point is not on curve.
+    /// * If point is not in the prime-order subgroup.
     pub fn new(
         x: P::BaseField,
         y: P::BaseField,
@@ -153,21 +164,21 @@ impl<P: TECurveConfig> AdditiveGroup for Projective<P> {
         // D = a * A
         let d = P::mul_by_a(a);
         // E = (X1 + Y1)^2 - A - B
-        let e = (self.x + &self.y).square() - &a - &b;
+        let e = (self.x + self.y).square() - a - b;
         // G = D + B
-        let g = d + &b;
+        let g = d + b;
         // F = G - C
-        let f = g - &c;
+        let f = g - c;
         // H = D - B
-        let h = d - &b;
+        let h = d - b;
         // X3 = E * F
-        self.x = e * &f;
+        self.x = e * f;
         // Y3 = G * H
-        self.y = g * &h;
+        self.y = g * h;
         // T3 = E * H
-        self.t = e * &h;
+        self.t = e * h;
         // Z3 = F * G
-        self.z = f * &g;
+        self.z = f * g;
 
         self
     }
@@ -206,11 +217,12 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
         // Perform affine transformations
         v.iter()
             .zip(z_s)
-            .map(|(g, z)| match g.is_zero() {
-                true => Affine::zero(),
-                false => {
-                    let x = g.x * &z;
-                    let y = g.y * &z;
+            .map(|(g, z)| {
+                if g.is_zero() {
+                    Affine::zero()
+                } else {
+                    let x = g.x * z;
+                    let y = g.y * z;
                     Affine::new_unchecked(x, y)
                 }
             })
@@ -237,30 +249,30 @@ impl<P: TECurveConfig, T: Borrow<Affine<P>>> AddAssign<T> for Projective<P> {
         // Source: https://www.hyperelliptic.org/EFD/g1p/data/twisted/extended/addition/madd-2008-hwcd
 
         // A = X1*X2
-        let a = self.x * &other.x;
+        let a = self.x * other.x;
         // B = Y1*Y2
-        let b = self.y * &other.y;
+        let b = self.y * other.y;
         // C = T1*d*T2
-        let c = P::COEFF_D * &self.t * &other.x * &other.y;
+        let c = P::COEFF_D * self.t * other.x * other.y;
 
         // D = Z1
         let d = self.z;
         // E = (X1+Y1)*(X2+Y2)-A-B
-        let e = (self.x + &self.y) * &(other.x + &other.y) - &a - &b;
+        let e = (self.x + self.y) * (other.x + other.y) - a - b;
         // F = D-C
-        let f = d - &c;
+        let f = d - c;
         // G = D+C
-        let g = d + &c;
+        let g = d + c;
         // H = B-a*A
-        let h = b - &P::mul_by_a(a);
+        let h = b - P::mul_by_a(a);
         // X3 = E*F
-        self.x = e * &f;
+        self.x = e * f;
         // Y3 = G*H
-        self.y = g * &h;
+        self.y = g * h;
         // T3 = E*H
-        self.t = e * &h;
+        self.t = e * h;
         // Z3 = F*G
-        self.z = f * &g;
+        self.z = f * g;
     }
 }
 
@@ -316,40 +328,40 @@ impl<'a, P: TECurveConfig> AddAssign<&'a Self> for Projective<P> {
         // 3.1 Unified Addition in E^e
 
         // A = x1 * x2
-        let a = self.x * &other.x;
+        let a = self.x * other.x;
 
         // B = y1 * y2
-        let b = self.y * &other.y;
+        let b = self.y * other.y;
 
         // C = d * t1 * t2
-        let c = P::COEFF_D * &self.t * &other.t;
+        let c = P::COEFF_D * self.t * other.t;
 
         // D = z1 * z2
-        let d = self.z * &other.z;
+        let d = self.z * other.z;
 
         // H = B - aA
-        let h = b - &P::mul_by_a(a);
+        let h = b - P::mul_by_a(a);
 
         // E = (x1 + y1) * (x2 + y2) - A - B
-        let e = (self.x + &self.y) * &(other.x + &other.y) - &a - &b;
+        let e = (self.x + self.y) * (other.x + other.y) - a - b;
 
         // F = D - C
-        let f = d - &c;
+        let f = d - c;
 
         // G = D + C
-        let g = d + &c;
+        let g = d + c;
 
         // x3 = E * F
-        self.x = e * &f;
+        self.x = e * f;
 
         // y3 = G * H
-        self.y = g * &h;
+        self.y = g * h;
 
         // t3 = E * H
-        self.t = e * &h;
+        self.t = e * h;
 
         // z3 = F * G
-        self.z = f * &g;
+        self.z = f * g;
     }
 }
 
@@ -363,7 +375,7 @@ impl<P: TECurveConfig, T: Borrow<P::ScalarField>> MulAssign<T>
     for Projective<P>
 {
     fn mul_assign(&mut self, other: T) {
-        *self = self.mul_bigint(other.borrow().into_bigint())
+        *self = self.mul_bigint(other.borrow().into_bigint());
     }
 }
 
@@ -392,7 +404,7 @@ impl<P: TECurveConfig, T: Borrow<Affine<P>>> core::iter::Sum<T>
 // with Z = 1.
 impl<P: TECurveConfig> From<Affine<P>> for Projective<P> {
     fn from(p: Affine<P>) -> Projective<P> {
-        Self::new_unchecked(p.x, p.y, p.x * &p.y, P::BaseField::one())
+        Self::new_unchecked(p.x, p.y, p.x * p.y, P::BaseField::one())
     }
 }
 

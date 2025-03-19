@@ -1,10 +1,15 @@
+//! This module contains definitions for the [Twisted Edwards model] of the
+//! curve.
+//!
+//! [Twisted Edwards model]: https://www.hyperelliptic.org/EFD/g1p/auto-twisted.html
+
 use num_traits::Zero;
 
 mod affine;
 pub use affine::*;
 
-mod group;
-pub use group::*;
+mod projective;
+pub use projective::*;
 
 use crate::{
     bits::BitIteratorBE,
@@ -12,11 +17,13 @@ use crate::{
     field::{group::AdditiveGroup, prime::PrimeField},
 };
 
-/// Constants and convenience functions that collectively define the [Twisted Edwards model](https://www.hyperelliptic.org/EFD/g1p/auto-twisted.html)
-/// of the curve.
+/// Constants and convenience functions
+/// that define the [Twisted Edwards model] of the curve.
 ///
 /// In this model, the curve equation is `a * x² + y² = 1 + d * x² * y²`, for
 /// constants `a` and `d`.
+///
+/// [Twisted Edwards model]: https://www.hyperelliptic.org/EFD/g1p/auto-twisted.html
 pub trait TECurveConfig: super::CurveConfig {
     /// Coefficient `a` of the curve equation.
     const COEFF_A: Self::BaseField;
@@ -80,24 +87,12 @@ pub trait TECurveConfig: super::CurveConfig {
         for b in scalar.bit_be_trimmed_iter() {
             res.double_in_place();
             if b {
-                res += base
+                res += base;
             }
         }
 
         res
     }
-
-    /* TODO#q: implement msm for twisted edwards curves
-    /// Default implementation for multi scalar multiplication
-    fn msm(
-        bases: &[Affine<Self>],
-        scalars: &[Self::ScalarField],
-    ) -> Result<Projective<Self>, usize> {
-        (bases.len() == scalars.len())
-            .then(|| VariableBaseMSM::msm_unchecked(bases, scalars))
-            .ok_or(bases.len().min(scalars.len()))
-    }
-    */
 }
 
 /// Constants and convenience functions that collectively define the [Montgomery model](https://www.hyperelliptic.org/EFD/g1p/auto-montgom.html)
@@ -115,5 +110,3 @@ pub trait MontCurveConfig: super::CurveConfig {
     /// equivalent to this curve.
     type TECurveConfig: TECurveConfig<BaseField = Self::BaseField>;
 }
-
-//////////////////////////////////////////////////////////////////////////////

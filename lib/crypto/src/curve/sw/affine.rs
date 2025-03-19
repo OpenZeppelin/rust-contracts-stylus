@@ -1,3 +1,8 @@
+//! Affine coordinates for a point on a Short Weierstrass curve
+//! ([Affine Space]).
+//!
+//! [Affine Space]: https://en.wikipedia.org/wiki/Affine_space
+
 use core::{
     borrow::Borrow,
     fmt::{Debug, Display, Formatter},
@@ -5,7 +10,7 @@ use core::{
 };
 
 use educe::Educe;
-use num_traits::{real::Real, One, Zero};
+use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
 use super::{Projective, SWCurveConfig};
@@ -37,18 +42,20 @@ impl<P: SWCurveConfig> PartialEq<Projective<P>> for Affine<P> {
 
 impl<P: SWCurveConfig> Display for Affine<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        match self.infinity {
-            true => write!(f, "infinity"),
-            false => write!(f, "({}, {})", self.x, self.y),
+        if self.infinity {
+            write!(f, "infinity")
+        } else {
+            write!(f, "({}, {})", self.x, self.y)
         }
     }
 }
 
 impl<P: SWCurveConfig> Debug for Affine<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        match self.infinity {
-            true => write!(f, "infinity"),
-            false => write!(f, "({}, {})", self.x, self.y),
+        if self.infinity {
+            write!(f, "infinity")
+        } else {
+            write!(f, "({}, {})", self.x, self.y)
         }
     }
 }
@@ -57,6 +64,11 @@ impl<P: SWCurveConfig> Affine<P> {
     /// Constructs a group element from x and y coordinates.
     /// Performs checks to ensure that the point is on the curve and is in the
     /// right subgroup.
+    ///
+    /// # Panics
+    ///
+    /// * If point is not on curve.
+    /// * If point is not in the prime-order subgroup.
     pub fn new(x: P::BaseField, y: P::BaseField) -> Self {
         let point = Self { x, y, infinity: false };
         assert!(point.is_on_curve());
@@ -74,6 +86,7 @@ impl<P: SWCurveConfig> Affine<P> {
         Self { x, y, infinity: false }
     }
 
+    /// Additive identity element of the curve group.
     pub const fn identity() -> Self {
         Self { x: P::BaseField::ZERO, y: P::BaseField::ZERO, infinity: true }
     }
@@ -166,7 +179,6 @@ impl<P: SWCurveConfig, T: Borrow<Self>> Add<T> for Affine<P> {
     type Output = Projective<P>;
 
     fn add(self, other: T) -> Projective<P> {
-        // TODO#q: implement more efficient formulae when z1 = z2 = 1.
         let mut copy = self.into_group();
         copy += other.borrow();
         copy
@@ -247,10 +259,10 @@ impl<P: SWCurveConfig> From<Projective<P>> for Affine<P> {
             let zinv_squared = zinv.square();
 
             // X/Z^2
-            let x = p.x * &zinv_squared;
+            let x = p.x * zinv_squared;
 
             // Y/Z^3
-            let y = p.y * &(zinv_squared * &zinv);
+            let y = p.y * (zinv_squared * zinv);
 
             Affine::new_unchecked(x, y)
         }

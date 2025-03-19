@@ -1,3 +1,7 @@
+//! Affine coordinates for a point on a Twisted Edwards curve ([Affine Space]).
+//!
+//! [Affine Space]: https://en.wikipedia.org/wiki/Affine_space
+
 use core::{
     borrow::Borrow,
     fmt::{Debug, Display, Formatter},
@@ -29,18 +33,20 @@ pub struct Affine<P: TECurveConfig> {
 
 impl<P: TECurveConfig> Display for Affine<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        match self.is_zero() {
-            true => write!(f, "infinity"),
-            false => write!(f, "({}, {})", self.x, self.y),
+        if self.is_zero() {
+            write!(f, "infinity")
+        } else {
+            write!(f, "({}, {})", self.x, self.y)
         }
     }
 }
 
 impl<P: TECurveConfig> Debug for Affine<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        match self.is_zero() {
-            true => write!(f, "infinity"),
-            false => write!(f, "({}, {})", self.x, self.y),
+        if self.is_zero() {
+            write!(f, "infinity")
+        } else {
+            write!(f, "({}, {})", self.x, self.y)
         }
     }
 }
@@ -60,6 +66,11 @@ impl<P: TECurveConfig> Affine<P> {
 
     /// Construct a new group element in a way while enforcing that points are
     /// in the prime-order subgroup.
+    ///
+    /// # Panics
+    ///
+    /// * If point is not on curve.
+    /// * If point is not in the prime-order subgroup.
     pub fn new(x: P::BaseField, y: P::BaseField) -> Self {
         let p = Self::new_unchecked(x, y);
         assert!(p.is_on_curve());
@@ -83,7 +94,7 @@ impl<P: TECurveConfig> Affine<P> {
         let y2 = self.y.square();
 
         let lhs = y2 + P::mul_by_a(x2);
-        let rhs = P::BaseField::one() + &(P::COEFF_D * &(x2 * &y2));
+        let rhs = P::BaseField::one() + (P::COEFF_D * (x2 * y2));
 
         lhs == rhs
     }
@@ -228,10 +239,10 @@ impl<P: TECurveConfig> From<Projective<P>> for Affine<P> {
             // If Z is one, the point is already normalized.
             Affine::new_unchecked(p.x, p.y)
         } else {
-            // Z is nonzero, so it must have an inverse in a field.
+            // Z is nonzero, so it must have inverse in a field.
             let z_inv = p.z.inverse().unwrap();
-            let x = p.x * &z_inv;
-            let y = p.y * &z_inv;
+            let x = p.x * z_inv;
+            let y = p.y * z_inv;
             Affine::new_unchecked(x, y)
         }
     }

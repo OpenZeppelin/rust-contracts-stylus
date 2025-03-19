@@ -1840,9 +1840,9 @@ dependencies = [
 
 [[package]]
 name = "motsu"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "468405089ee996017d397619c4a1b00ee91bb257ee0f45adad51a8cb95f639ef"
+checksum = "f11816ec018094aa612081ec5053c4f41ad8c64adb44666ad5f69ce3e8a1901b"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -1856,9 +1856,9 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d89892fb2937177554806b600de553eb21f6e4568515777084c58918541f891"
+checksum = "23d4d8171f070b58febd3eae8bd29c91ff993862fa0e01fc604d23321583a18a"
 dependencies = [
  "proc-macro2",
  "quote",
