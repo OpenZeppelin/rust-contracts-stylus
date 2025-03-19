@@ -28,13 +28,7 @@ use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{uint, Address, U256};
-use stylus_sdk::{
-    abi::Bytes,
-    call::MethodError,
-    evm, msg,
-    prelude::*,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{

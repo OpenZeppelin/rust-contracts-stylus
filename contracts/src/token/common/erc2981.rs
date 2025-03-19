@@ -26,7 +26,6 @@ use stylus_sdk::{
     call::MethodError,
     prelude::*,
     storage::{StorageAddress, StorageMap},
-    stylus_proc::SolidityError,
 };
 
 use crate::utils::{

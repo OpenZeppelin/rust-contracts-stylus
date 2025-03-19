@@ -17,8 +17,8 @@
 //! management, see the documentation for [RawCall::call] and
 //! [ReentrantCallHandler::flush_storage_cache].
 //!
-//! [RawCall::call]: https://docs.rs/stylus-sdk/0.6.0/stylus_sdk/call/struct.RawCall.html#method.call
-//! [ReentrantCallHandler::flush_storage_cache]: https://docs.rs/stylus-sdk/0.6.0/stylus_sdk/call/struct.RawCall.html#method.flush_storage_cache
+//! [RawCall::call]: https://docs.rs/stylus-sdk/0.8.1/stylus_sdk/call/struct.RawCall.html#method.call
+//! [ReentrantCallHandler::flush_storage_cache]: https://docs.rs/stylus-sdk/0.8.1/stylus_sdk/call/struct.RawCall.html#method.flush_storage_cache
 
 use alloy_primitives::Address;
 use stylus_sdk::{call::RawCall, ArbResult};
@@ -47,8 +47,8 @@ use stylus_sdk::{call::RawCall, ArbResult};
 /// - [RawCall::call]
 /// - [ReentrantCallHandler::flush_storage_cache]
 ///
-/// [RawCall::call]: https://docs.rs/stylus-sdk/0.6.0/stylus_sdk/call/struct.RawCall.html#method.call
-/// [ReentrantCallHandler::flush_storage_cache]: https://docs.rs/stylus-sdk/0.6.0/stylus_sdk/call/struct.RawCall.html#method.flush_storage_cache
+/// [RawCall::call]: https://docs.rs/stylus-sdk/0.8.1/stylus_sdk/call/struct.RawCall.html#method.call
+/// [ReentrantCallHandler::flush_storage_cache]: https://docs.rs/stylus-sdk/0.8.1/stylus_sdk/call/struct.RawCall.html#method.flush_storage_cache
 pub trait ReentrantCallHandler {
     /// Executes a contract call with reentrancy safeguards, returning the call
     /// result.

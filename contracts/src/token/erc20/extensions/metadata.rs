@@ -3,11 +3,7 @@
 use alloc::{string::String, vec, vec::Vec};
 
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{
-    alloy_primitives::FixedBytes,
-    prelude::*,
-    stylus_proc::{public, storage},
-};
+use stylus_sdk::{alloy_primitives::FixedBytes, prelude::*};
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},

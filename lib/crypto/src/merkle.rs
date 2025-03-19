@@ -104,8 +104,7 @@ impl Verifier<KeccakBuilder> {
     ///
     /// # Panics
     ///
-    /// * Will panic with an out-of-bounds error if the proof is malicious. See
-    /// <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
+    /// * If the proof is malicious (with an out-of-bounds error). See <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
     ///
     /// # Examples
     ///
