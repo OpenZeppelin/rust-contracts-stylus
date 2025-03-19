@@ -90,7 +90,7 @@ mod borrower {
     #![cfg_attr(coverage_nightly, coverage(off))]
     use alloc::vec;
 
-    use stylus_sdk::stylus_proc::sol_interface;
+    use stylus_sdk::prelude::sol_interface;
 
     sol_interface! {
         /// Interface of the ERC-3156 FlashBorrower, as defined in [ERC-3156].

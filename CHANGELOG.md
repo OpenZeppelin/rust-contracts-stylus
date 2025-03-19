@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Erc20Wrapper` extension to support token wrapping. #498
+- `Erc20` events derive `Debug`. #498
 - Implement `MethodError` for all contracts' errors. #594
 
 ### Changed
 
--
+- Optimize Stylus SDK imports. #598
 
 ### Changed (Breaking)
 

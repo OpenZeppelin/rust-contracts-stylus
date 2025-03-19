@@ -18,11 +18,7 @@ use alloc::{vec, vec::Vec};
 
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
-    evm, msg,
-    prelude::*,
-    storage::StorageBool,
-    stylus_proc::{public, SolidityError},
+    call::MethodError, evm, msg, prelude::*, storage::StorageBool,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]

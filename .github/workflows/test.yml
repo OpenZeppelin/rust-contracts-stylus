@@ -11,7 +11,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [ main, release/* ]
+    branches: [main, release/*]
     paths-ignore:
       - "**.md"
       - "**.adoc"
@@ -32,7 +32,7 @@ jobs:
       matrix:
         # Run on stable and beta to ensure that tests won't break on the next
         # version of the rust toolchain.
-        toolchain: [ stable, beta ]
+        toolchain: [stable, beta]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-latest ]
+        os: [macos-latest]
         # Windows fails because of `stylus-proc`.
         # os: [macos-latest, windows-latest]
     steps:
@@ -94,6 +94,7 @@ jobs:
 
       - name: Run unit tests
         run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
     # is compatible with codecov.io.
@@ -136,6 +137,11 @@ jobs:
       - name: Cargo install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
+      - name: "Install nextest"
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
@@ -145,6 +151,16 @@ jobs:
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
+
+      - name: Prepare report for Codecov
+        run: cargo nextest run --profile ci --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          files: target/nextest/ci/junit.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v5
