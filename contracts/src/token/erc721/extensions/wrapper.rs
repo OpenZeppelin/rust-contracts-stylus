@@ -267,6 +267,7 @@ mod tests {
     use motsu::prelude::Contract;
 
     use super::*;
+    use crate::token::erc721::IErc721;
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
         (0..size).map(U256::from).collect()
@@ -328,22 +329,23 @@ mod tests {
         erc721_contract: Contract<Erc721>,
         alice: Address,
     ) {
-        // let amount = uint!(10_U256);
         let token_ids = random_token_ids(2);
 
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(erc721_contract.address());
         });
 
-        erc721_contract
-            .sender(alice)
-            ._mint(alice, token_ids[0])
-            .expect("should mint");
+        for token_id in &token_ids {
+            erc721_contract
+                .sender(alice)
+                ._mint(alice, *token_id)
+                .expect("should mint {token_id} for {alice}");
 
-        erc721_contract
-            .sender(alice)
-            ._mint(alice, token_ids[1])
-            .expect("should mint");
+            erc721_contract
+                .sender(alice)
+                .approve(contract.address(), *token_id)
+                .expect("should approve {token_id} for {contract.address()}");
+        }
 
         assert!(contract
             .sender(alice)
