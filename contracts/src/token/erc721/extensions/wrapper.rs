@@ -150,6 +150,7 @@ impl IErc721Wrapper for Erc721Wrapper {
         erc721: &mut Erc721,
     ) -> Result<bool, Self::Error> {
         let sender = msg::sender();
+        let contract_address = contract::address();
         let underlying = IErc721Solidity::new(self.underlying());
 
         for token_id in token_ids {
@@ -161,7 +162,7 @@ impl IErc721Wrapper for Erc721Wrapper {
                 .transfer_from(
                     Call::new_in(self),
                     sender,
-                    contract::address(),
+                    contract_address,
                     token_id,
                 )
                 .map_err(|e| Error::Erc721(e.into()))?;
@@ -263,5 +264,90 @@ impl Erc721Wrapper {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use motsu::prelude::Contract;
+
     use super::*;
+
+    pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
+        (0..size).map(U256::from).collect()
+    }
+
+    #[storage]
+    struct Erc721WrapperTestExample {
+        wrapper: Erc721Wrapper,
+        erc721: Erc721,
+    }
+
+    #[public]
+    impl Erc721WrapperTestExample {
+        fn underlying(&self) -> Address {
+            self.wrapper.underlying()
+        }
+
+        fn deposit_for(
+            &mut self,
+            account: Address,
+            token_ids: Vec<U256>,
+        ) -> Result<bool, Error> {
+            self.wrapper.deposit_for(account, token_ids, &mut self.erc721)
+        }
+
+        // fn withdraw_to(
+        //     &mut self,
+        //     account: Address,
+        //     value: U256,
+        // ) -> Result<bool, Error> {
+        //     self.wrapper.withdraw_to(account, value, &mut self.erc20)
+        // }
+
+        // fn recover(&mut self, account: Address) -> Result<U256, Error> {
+        //     self.wrapper._recover(account, &mut self.erc20)
+        // }
+    }
+
+    unsafe impl TopLevelStorage for Erc721WrapperTestExample {}
+
+    #[motsu::test]
+    fn underlying_works(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let erc721_address = erc721_contract.address();
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_address);
+        });
+
+        assert_eq!(contract.sender(alice).underlying(), erc721_address);
+    }
+
+    #[motsu::test]
+    fn deposit_for_works(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        // let amount = uint!(10_U256);
+        let token_ids = random_token_ids(2);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        erc721_contract
+            .sender(alice)
+            ._mint(alice, token_ids[0])
+            .expect("should mint");
+
+        erc721_contract
+            .sender(alice)
+            ._mint(alice, token_ids[1])
+            .expect("should mint");
+
+        assert!(contract
+            .sender(alice)
+            .deposit_for(alice, token_ids)
+            .expect("should deposit"));
+    }
 }

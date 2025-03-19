@@ -17,6 +17,6 @@ fn ctr(asset_addr: Address) -> constructorCall {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> eyre::Result<()> {
+async fn constructs(alice: Account) -> Result<()> {
     Ok(())
 }
