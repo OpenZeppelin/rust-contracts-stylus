@@ -55,6 +55,7 @@ mod sol {
         /// Emitted when `amount` of Ether has been released.
         ///
         /// * `amount` - Total Ether released.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event EtherReleased(uint256 amount);
 
@@ -62,6 +63,7 @@ mod sol {
         ///
         /// * `token` - Address of the token being released.
         /// * `amount` - Number of tokens released.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event ERC20Released(address indexed token, uint256 amount);
     }

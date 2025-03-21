@@ -49,6 +49,7 @@ mod sol {
     sol! {
         /// Emitted when `value` amount of tokens of type `id` are
         /// transferred from `from` to `to` by `operator`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event TransferSingle(
             address indexed operator,
@@ -60,6 +61,7 @@ mod sol {
 
         /// Equivalent to multiple [`TransferSingle`] events, where `operator`
         /// `from` and `to` are the same for all transfers.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event TransferBatch(
             address indexed operator,
@@ -71,6 +73,7 @@ mod sol {
 
         /// Emitted when `account` grants or revokes permission to `operator`
         /// to transfer their tokens, according to `approved`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event ApprovalForAll(
             address indexed account,

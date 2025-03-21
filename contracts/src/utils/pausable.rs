@@ -27,10 +27,12 @@ mod sol {
 
     sol! {
         /// Emitted when pause is triggered by `account`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Paused(address account);
 
         /// Emitted when the pause is lifted by `account`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Unpaused(address account);
     }

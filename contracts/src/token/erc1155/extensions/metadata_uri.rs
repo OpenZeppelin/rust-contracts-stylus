@@ -24,6 +24,7 @@ mod sol {
         /// `value` will equal the value returned by [`IErc1155MetadataUri::uri`].
         ///
         /// [guarantees]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event URI(string value, uint256 indexed id);
     }
