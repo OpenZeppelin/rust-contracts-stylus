@@ -27,7 +27,8 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256, U64};
+use alloy_primitives::{Address, U256, U64, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -504,14 +505,22 @@ impl VestingWallet {
     }
 }
 
+impl IErc165 for VestingWallet {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IVestingWallet>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
+        Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256, U64};
+    use alloy_primitives::{uint, Address, U256, U64git};
     use motsu::prelude::Contract;
     use stylus_sdk::block;
 
     use super::{IVestingWallet, VestingWallet};
     use crate::token::erc20::Erc20;
+    use crate::utils::introspection::erc165::IErc165;
 
     const BALANCE: u64 = 1000;
 
@@ -640,5 +649,24 @@ mod tests {
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
         }
+    }
+
+    #[motsu::test]
+    fn vesting_wallet_interface_id() {
+        let actual = <VestingWallet as IVestingWallet>::INTERFACE_ID;
+        let expected = 0x45c25d80; 
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn vesting_wallet_supports_interface() {
+        assert!(VestingWallet::supports_interface(
+            <VestingWallet as IVestingWallet>::INTERFACE_ID.into()
+    ));
+        assert!(VestingWallet::supports_interface(
+            <VestingWallet as IErc165>::INTERFACE_ID.into()
+    ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!VestingWallet::supports_interface(fake_interface_id.into()));
     }
 }

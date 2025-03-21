@@ -19,7 +19,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, U256, FixedBytes};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -343,12 +345,19 @@ impl IErc3156FlashLender for Erc20FlashMint {
     }
 }
 
+impl IErc165 for Erc20FlashMint {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, U256,FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::{abi::Bytes, prelude::*};
-
+    use crate::utils::introspection::erc165::IErc165;
+    
     use super::{
         ERC3156ExceededMaxLoan, ERC3156InvalidReceiver,
         ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
@@ -540,5 +549,26 @@ mod tests {
             Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
                 if receiver == invalid_receiver
         ));
+    }
+    #[motsu::test]
+    fn flash_mint_interface_id() {
+        let actual = <FlashMint as IFlashMint>::INTERFACE_ID;
+        let expected = 0x25829410; 
+        assert_eq!(actual, expected);
+    }
+    
+    #[motsu::test]
+    fn flash_mint_supports_interface() {
+        assert!(FlashMint::supports_interface(
+            <FlashMint as IFlashMint>::INTERFACE_ID.into()
+        ));
+        assert!(FlashMint::supports_interface(
+            <FlashMint as IErc165>::INTERFACE_ID.into()
+        ));
+        assert!(FlashMint::supports_interface(
+            <FlashMint as IErc20>::INTERFACE_ID.into()
+        ));
+        let fake_interface_id = 0x12345678u32;
+        assert!(!FlashMint::supports_interface(fake_interface_id.into()));
     }
 }
