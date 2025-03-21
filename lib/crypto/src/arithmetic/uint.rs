@@ -681,6 +681,12 @@ impl<const N: usize> BitIteratorBE for Uint<N> {
     }
 }
 
+impl BitIteratorBE for &[Limb] {
+    fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
+        self.iter().rev().flat_map(Limb::bit_be_iter)
+    }
+}
+
 /// Parse a number from a string in a given radix.
 ///
 /// This implementation can be slow on big numbers and possibly fail constant

@@ -12,6 +12,8 @@ use core::{
 use limb::Limb;
 use zeroize::Zeroize;
 
+use crate::bits::BitIteratorBE;
+
 /// Defines a big integer with a constant length.
 pub trait BigInteger:
     'static
@@ -43,6 +45,7 @@ pub trait BigInteger:
     + for<'a> BitOrAssign<&'a Self>
     + BitOr<Self, Output = Self>
     + for<'a> BitOr<&'a Self, Output = Self>
+    + BitIteratorBE
 {
     /// Number of `usize` limbs representing `Self`.
     const NUM_LIMBS: usize;
