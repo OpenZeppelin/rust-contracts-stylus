@@ -41,6 +41,6 @@ echo "This benchmarks measure gas execution cost,
  the 21000 EVM base gas fee is omitted."
 echo
 echo "To measure non cached contract's gas usage correctly,
- benchmarks should run on a clean instance of the nitro test node."
+ benchmarks should run on a clean instance of the nitro node."
 echo
 echo "Finished running benches!"

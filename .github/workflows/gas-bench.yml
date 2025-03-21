@@ -38,6 +38,6 @@ jobs:
           sudo chmod a+x /usr/bin/solc
 
       - name: Setup nitro node
-        run: ./scripts/nitro-testnode.sh -d -i
+        run: ./scripts/nitro-devnode.sh -i &
       - name: run benches
         run: ./scripts/bench.sh

@@ -1,5 +1,5 @@
 [toolchain]
-# We should use stable here once nitro-testnode is updated and the contracts fit
+# We should use stable here once nitro-devnode is updated and the contracts fit
 # the size limit (issue <https://github.com/OpenZeppelin/rust-contracts-stylus/issues/129>).
 channel = "nightly-2024-09-05"
 components = ["rust-src"]

@@ -22,7 +22,7 @@ async fn main() -> eyre::Result<()> {
     ];
 
     // Run benchmarks max 3 at the same time.
-    // Otherwise, nitro test node can overload and revert transaction.
+    // Otherwise, nitro node can overload and revert transaction.
     const MAX_PARALLEL: usize = 3;
     let mut report = BenchmarkReport::default();
     for chunk in &benchmarks.into_iter().chunks(MAX_PARALLEL) {
