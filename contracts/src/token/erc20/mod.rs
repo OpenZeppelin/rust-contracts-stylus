@@ -592,7 +592,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20 {}
 
     #[motsu::test]
-    fn mint_works(contract: Contract<Erc20>, alice: Address) {
+    fn mint(contract: Contract<Erc20>, alice: Address) {
         let one = uint!(1_U256);
 
         // Store initial balance & supply.
