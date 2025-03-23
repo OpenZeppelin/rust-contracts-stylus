@@ -652,14 +652,14 @@ mod tests {
     }
 
     #[motsu::test]
-    fn vesting_wallet_interface_id() {
+    fn interface_id() {
         let actual = <VestingWallet as IVestingWallet>::INTERFACE_ID;
         let expected = 0x45c25d80; 
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn vesting_wallet_supports_interface() {
+    fn supports_interface() {
         assert!(VestingWallet::supports_interface(
             <VestingWallet as IVestingWallet>::INTERFACE_ID.into()
     ));

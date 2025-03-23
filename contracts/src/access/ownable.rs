@@ -303,14 +303,14 @@ mod tests {
     }
 
     #[test]
-    fn ownable_interface_id() {
+    fn interface_id() {
         let actual = <Ownable as IOwnable>::INTERFACE_ID;
         let expected = 0x7f5828d0;
         assert_eq!(actual, expected);
 }
 
     #[motsu::test]
-    fn ownable_supports_interface() {
+    fn supports_interface() {
         assert!(Ownable::supports_interface(
             <Ownable as IOwnable>::INTERFACE_ID.into()
     ));

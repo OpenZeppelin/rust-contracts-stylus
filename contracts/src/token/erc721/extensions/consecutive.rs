@@ -775,6 +775,12 @@ impl Erc721Consecutive {
     }
 }
 
+/// ERC-721 Consecutive Transfer Extension.
+#[interface_id]
+pub trait IErc2309 {
+   
+}
+
 impl IErc165 for Erc721Consecutive {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
@@ -1416,9 +1422,9 @@ mod tests {
     }
 
     #[motsu::test]
-    fn erc721_consecutive_interface_id() {
+    fn interface_id() {
         let actual = <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID;
-        let expected = 0x8ef68167; // Example value, calculate the actual
+        let expected = 0x8ef68167; 
         assert_eq!(actual, expected);
 }
 }

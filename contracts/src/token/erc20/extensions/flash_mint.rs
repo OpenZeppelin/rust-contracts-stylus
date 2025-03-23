@@ -357,7 +357,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{abi::Bytes, prelude::*};
     use crate::utils::introspection::erc165::IErc165;
-    
+
     use super::{
         ERC3156ExceededMaxLoan, ERC3156InvalidReceiver,
         ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
@@ -551,14 +551,14 @@ mod tests {
         ));
     }
     #[motsu::test]
-    fn flash_mint_interface_id() {
+    fn interface_id() {
         let actual = <FlashMint as IFlashMint>::INTERFACE_ID;
         let expected = 0x25829410; 
         assert_eq!(actual, expected);
     }
     
     #[motsu::test]
-    fn flash_mint_supports_interface() {
+    fn supports_interface() {
         assert!(FlashMint::supports_interface(
             <FlashMint as IFlashMint>::INTERFACE_ID.into()
         ));

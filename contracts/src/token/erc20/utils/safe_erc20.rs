@@ -256,7 +256,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Self::Error> {x
         let current_allowance = Self::allowance(token, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
@@ -428,7 +428,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_erc20_supports_interface() {
+    fn supports_interface() {
         assert!(SafeErc20::supports_interface(
             <SafeErc20 as IErc165>::INTERFACE_ID.into()
     ));

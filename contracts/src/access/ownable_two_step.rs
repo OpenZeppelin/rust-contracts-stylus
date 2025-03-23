@@ -466,14 +466,14 @@ mod tests {
     }
 
     #[motsu::test]
-    fn ownable_two_step_interface_id() {
+    fn interface_id() {
         let actual = <OwnableTwoStep as IOwnableTwoStep>::INTERFACE_ID;
         let expected = 0x6b14daf8; 
         assert_eq!(actual, expected);
 }
 
     #[motsu::test]
-    fn ownable_two_step_supports_interface() {
+    fn supports_interface() {
         assert!(OwnableTwoStep::supports_interface(
             <OwnableTwoStep as IOwnableTwoStep>::INTERFACE_ID.into()
     ));
