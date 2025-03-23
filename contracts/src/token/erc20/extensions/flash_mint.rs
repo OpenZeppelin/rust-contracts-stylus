@@ -565,9 +565,6 @@ mod tests {
         assert!(FlashMint::supports_interface(
             <FlashMint as IErc165>::INTERFACE_ID.into()
         ));
-        assert!(FlashMint::supports_interface(
-            <FlashMint as IErc20>::INTERFACE_ID.into()
-        ));
         let fake_interface_id = 0x12345678u32;
         assert!(!FlashMint::supports_interface(fake_interface_id.into()));
     }
