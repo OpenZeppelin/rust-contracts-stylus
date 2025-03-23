@@ -29,6 +29,7 @@ use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{uint, Address, U256, FixedBytes};
 use crate::utils::introspection::erc165::{Erc165, IErc165};
+use openzeppelin_stylus_proc::interface_id;
 
 use stylus_sdk::{
     abi::Bytes,

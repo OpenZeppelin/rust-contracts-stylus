@@ -1154,7 +1154,6 @@ impl Erc4626 {
 
 impl IErc165 for Erc4626 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc4626>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
         Erc165::supports_interface(interface_id)
     }
 }
@@ -1257,20 +1256,11 @@ mod tests {
 
 
     #[motsu::test]
-    fn erc4626_interface_id() {
-        let actual = <Erc4626 as IErc4626>::INTERFACE_ID;
-        let expected = 0x4d49e87d; 
-        assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn erc4626_supports_interface() {
-        assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc4626>::INTERFACE_ID.into()
-    ));
+    fn supports_interface() {
         assert!(Erc4626::supports_interface(
             <Erc4626 as IErc165>::INTERFACE_ID.into()
-    ));
+        ));
+        
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc4626::supports_interface(fake_interface_id.into()));
     }

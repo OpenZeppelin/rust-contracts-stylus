@@ -13,6 +13,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256, FixedBytes};
 use crate::utils::introspection::erc165::{Erc165, IErc165};
+use openzeppelin_stylus_proc::interface_id;
 
 use alloy_sol_types::SolCall;
 pub use sol::*;
@@ -95,6 +96,7 @@ pub struct SafeErc20;
 unsafe impl TopLevelStorage for SafeErc20 {}
 
 /// Required interface of a [`SafeErc20`] utility contract.
+#[interface_id]
 pub trait ISafeErc20 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -256,7 +258,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {x
+    ) -> Result<(), Self::Error> {
         let current_allowance = Self::allowance(token, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
@@ -388,6 +390,7 @@ impl SafeErc20 {
 
 impl IErc165 for SafeErc20 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as ISafeErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
         Erc165::supports_interface(interface_id)
     }
 }
@@ -437,5 +440,12 @@ mod tests {
             ));
         let fake_interface_id = 0x12345678u32;
         assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <SafeErc20 as IErc165>::INTERFACE_ID;
+        let expected = 0x01ffc9a7; 
+        assert_eq!(actual, expected);
     }
 }
