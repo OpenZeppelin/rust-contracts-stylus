@@ -412,7 +412,7 @@ impl IErc165 for AccessControl {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{Address, FixedBytes};
+    use alloy_primitives::{Address};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 

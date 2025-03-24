@@ -9,7 +9,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, FixedBytes, U256, U8};
+use alloy_primitives::{uint, Address, U256, U8, FixedBytes};
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -1162,7 +1162,7 @@ impl IErc165 for Erc4626 {
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, FixedBytes, U256, U8};
+    use alloy_primitives::{address, Address, U256, U8};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
 

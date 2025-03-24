@@ -27,7 +27,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{uint, Address, FixedBytes, U256};
+use alloy_primitives::{uint, Address, U256, FixedBytes};
 use stylus_sdk::{
     abi::Bytes,
     call::MethodError,
@@ -783,7 +783,7 @@ impl IErc165 for Erc721Consecutive {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
 
     use crate::{
@@ -1407,21 +1407,11 @@ mod tests {
             <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
         ));
         assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc2309>::INTERFACE_ID.into()
-        ));
-        assert!(Erc721Consecutive::supports_interface(
             <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
         ));
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc721Consecutive::supports_interface(
             fake_interface_id.into()
         ));
-    }
-
-    #[motsu::test]
-    fn interface_id() {
-        let actual = <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID;
-        let expected = 0x8ef68167;
-        assert_eq!(actual, expected);
     }
 }

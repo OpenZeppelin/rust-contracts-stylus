@@ -388,6 +388,7 @@ mod tests {
     use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
+    use crate::utils::introspection::erc165::IErc165;
 
     use super::{Erc1155Supply, IErc1155Supply};
     use crate::token::erc1155::{

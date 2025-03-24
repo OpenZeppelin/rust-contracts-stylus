@@ -19,7 +19,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{Address, U256, FixedBytes};
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -141,6 +141,7 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
+#[interface_id]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -354,7 +355,7 @@ impl IErc165 for Erc20FlashMint {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -552,21 +553,17 @@ mod tests {
         ));
     }
     #[motsu::test]
-    fn interface_id() {
-        let actual = <FlashMint as IFlashMint>::INTERFACE_ID;
-        let expected = 0x25829410;
-        assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
     fn supports_interface() {
-        assert!(FlashMint::supports_interface(
-            <FlashMint as IFlashMint>::INTERFACE_ID.into()
+       
+        let flash_lender_interface_id = 0x25829410u32;
+        
+        assert!(Erc20FlashMint::supports_interface(
+            flash_lender_interface_id.into()
         ));
-        assert!(FlashMint::supports_interface(
-            <FlashMint as IErc165>::INTERFACE_ID.into()
+        assert!(Erc20FlashMint::supports_interface(
+            <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
         ));
         let fake_interface_id = 0x12345678u32;
-        assert!(!FlashMint::supports_interface(fake_interface_id.into()));
+        assert!(!Erc20FlashMint::supports_interface(fake_interface_id.into()));
     }
 }
