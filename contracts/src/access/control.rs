@@ -50,6 +50,7 @@ use stylus_sdk::{
     prelude::*,
     storage::{StorageBool, StorageFixedBytes, StorageMap},
 };
+
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -403,8 +404,9 @@ impl AccessControl {
 
 impl IErc165 for AccessControl {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IAccessControl>::INTERFACE_ID == u32::from_be_bytes(*interface_id) || 
-        Erc165::supports_interface(interface_id)
+        <Self as IAccessControl>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -413,9 +415,9 @@ mod tests {
     use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
-    use crate::utils::introspection::erc165::IErc165;
 
     use super::{AccessControl, Error, IAccessControl};
+    use crate::utils::introspection::erc165::IErc165;
 
     /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice;
@@ -723,7 +725,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <AccessControl as IAccessControl>::INTERFACE_ID;
-        let expected = 0x7965db0b; 
+        let expected = 0x7965db0b;
         assert_eq!(actual, expected);
     }
 
@@ -731,10 +733,10 @@ mod tests {
     fn supports_interface() {
         assert!(AccessControl::supports_interface(
             <AccessControl as IAccessControl>::INTERFACE_ID.into()
-    ));
+        ));
         assert!(AccessControl::supports_interface(
             <AccessControl as IErc165>::INTERFACE_ID.into()
-    ));
+        ));
         let fake_interface_id = 0x12345678u32;
         assert!(!AccessControl::supports_interface(fake_interface_id.into()));
     }

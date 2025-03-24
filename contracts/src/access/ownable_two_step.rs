@@ -20,13 +20,13 @@ use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{Address, FixedBytes};
-use crate::utils::introspection::erc165::{Erc165, IErc165};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
-use openzeppelin_stylus_proc::interface_id;
 
-use crate::access::ownable::{
-    self, IOwnable, Ownable, OwnableUnauthorizedAccount,
+use crate::{
+    access::ownable::{self, IOwnable, Ownable, OwnableUnauthorizedAccount},
+    utils::introspection::erc165::{Erc165, IErc165},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -227,8 +227,9 @@ impl Ownable2Step {
 
 impl IErc165 for Ownable2Step {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IOwnable2Step>::INTERFACE_ID == u32::from_be_bytes(*interface_id);
-        Erc165::supports_interface(interface_id)
+        <Self as IOwnable2Step>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -237,11 +238,11 @@ mod tests {
     use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
-    use crate::utils::introspection::erc165::IErc165;
 
     use super::{
         ownable::Error, IOwnable2Step, Ownable2Step, OwnableUnauthorizedAccount,
     };
+    use crate::utils::introspection::erc165::IErc165;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -469,21 +470,21 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable2Step as IOwnable2Step>::INTERFACE_ID;
-        let expected = 0x6b14daf8; 
+        let expected = 0x6b14daf8;
         assert_eq!(actual, expected);
-}
+    }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Ownable2Step::supports_interface(
             <Ownable2Step as IOwnable2Step>::INTERFACE_ID.into()
-    ));
+        ));
         assert!(Ownable2Step::supports_interface(
             <Ownable2Step as IOwnable>::INTERFACE_ID.into()
-    ));
+        ));
         assert!(Ownable2Step::supports_interface(
             <Ownable2Step as IErc165>::INTERFACE_ID.into()
-    ));
+        ));
         let fake_interface_id = 0x12345678u32;
         assert!(!Ownable2Step::supports_interface(fake_interface_id.into()));
     }

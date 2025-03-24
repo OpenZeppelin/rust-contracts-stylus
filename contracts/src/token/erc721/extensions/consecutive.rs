@@ -27,10 +27,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{uint, Address, U256, FixedBytes};
-use crate::utils::introspection::erc165::{Erc165, IErc165};
-use openzeppelin_stylus_proc::interface_id;
-
+use alloy_primitives::{uint, Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::MethodError,
@@ -46,6 +43,7 @@ use crate::{
         Erc721, IErc721, Transfer,
     },
     utils::{
+        introspection::erc165::{Erc165, IErc165},
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
@@ -776,35 +774,31 @@ impl Erc721Consecutive {
     }
 }
 
-/// ERC-721 Consecutive Transfer Extension.
-#[interface_id]
-pub trait IErc2309 {
-   
-}
-
 impl IErc165 for Erc721Consecutive {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
-        <Self as IErc2309>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
-        Erc165::supports_interface(interface_id)
+        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256, FixedBytes};
-    use crate::utils::introspection::erc165::IErc165;
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;
 
-    use crate::token::{
-        erc721,
-        erc721::{
-            extensions::consecutive::{
-                ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
+    use crate::{
+        token::{
+            erc721,
+            erc721::{
+                extensions::consecutive::{
+                    ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
+                },
+                ERC721IncorrectOwner, ERC721InvalidApprover,
+                ERC721InvalidReceiver, ERC721InvalidSender,
+                ERC721NonexistentToken, IErc721,
             },
-            ERC721IncorrectOwner, ERC721InvalidApprover, ERC721InvalidReceiver,
-            ERC721InvalidSender, ERC721NonexistentToken, IErc721,
         },
+        utils::introspection::erc165::IErc165,
     };
 
     const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
@@ -1410,22 +1404,24 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Consecutive::supports_interface(
-        <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
-    ));
+            <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
+        ));
         assert!(Erc721Consecutive::supports_interface(
             <Erc721Consecutive as IErc2309>::INTERFACE_ID.into()
         ));
         assert!(Erc721Consecutive::supports_interface(
-        <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
-    ));
+            <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
+        ));
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721Consecutive::supports_interface(fake_interface_id.into()));
+        assert!(!Erc721Consecutive::supports_interface(
+            fake_interface_id.into()
+        ));
     }
 
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Consecutive as IErc721Consecutive>::INTERFACE_ID;
-        let expected = 0x8ef68167; 
+        let expected = 0x8ef68167;
         assert_eq!(actual, expected);
-}
+    }
 }

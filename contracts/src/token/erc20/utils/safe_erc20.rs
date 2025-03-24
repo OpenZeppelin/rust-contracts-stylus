@@ -11,11 +11,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256, FixedBytes};
-use crate::utils::introspection::erc165::{Erc165, IErc165};
-use openzeppelin_stylus_proc::interface_id;
-
+use alloy_primitives::{Address, FixedBytes, U256};
 use alloy_sol_types::SolCall;
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
@@ -25,7 +23,13 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::{token::erc20, utils::ReentrantCallHandler};
+use crate::{
+    token::erc20,
+    utils::{
+        introspection::erc165::{Erc165, IErc165},
+        ReentrantCallHandler,
+    },
+};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -390,8 +394,8 @@ impl SafeErc20 {
 
 impl IErc165 for SafeErc20 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as ISafeErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id) ||
-        Erc165::supports_interface(interface_id)
+        <Self as ISafeErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -399,7 +403,7 @@ impl IErc165 for SafeErc20 {
 mod tests {
     use super::SafeErc20;
     use crate::utils::introspection::erc165::IErc165;
-    
+
     #[test]
     fn encodes_true_empty_slice() {
         assert!(!SafeErc20::encodes_true(&[]));
@@ -434,10 +438,10 @@ mod tests {
     fn supports_interface() {
         assert!(SafeErc20::supports_interface(
             <SafeErc20 as IErc165>::INTERFACE_ID.into()
-    ));
-            assert!(SafeErc20::supports_interface(
-                <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
-            ));
+        ));
+        assert!(SafeErc20::supports_interface(
+            <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
+        ));
         let fake_interface_id = 0x12345678u32;
         assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
     }
@@ -445,7 +449,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <SafeErc20 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7; 
+        let expected = 0x01ffc9a7;
         assert_eq!(actual, expected);
     }
 }

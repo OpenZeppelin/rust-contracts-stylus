@@ -9,9 +9,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, U256, U8, FixedBytes};
-use crate::utils::introspection::erc165::{Erc165, IErc165};
-
+use alloy_primitives::{uint, Address, FixedBytes, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -26,7 +24,10 @@ use crate::{
         utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
-    utils::math::alloy::{Math, Rounding},
+    utils::{
+        introspection::erc165::{Erc165, IErc165},
+        math::alloy::{Math, Rounding},
+    },
 };
 
 const ONE: U256 = uint!(1_U256);
@@ -1161,13 +1162,12 @@ impl IErc165 for Erc4626 {
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256, U8, FixedBytes};
+    use alloy_primitives::{address, Address, FixedBytes, U256, U8};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
-    use crate::token::erc20::Erc20;
-    use crate::utils::introspection::erc165::IErc165;
+    use crate::{token::erc20::Erc20, utils::introspection::erc165::IErc165};
 
     #[storage]
     struct Erc4626TestExample {
@@ -1254,13 +1254,12 @@ mod tests {
         assert_eq!(decimals, underlying_decimals + new_decimal_offset);
     }
 
-
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc4626::supports_interface(
             <Erc4626 as IErc165>::INTERFACE_ID.into()
         ));
-        
+
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc4626::supports_interface(fake_interface_id.into()));
     }
