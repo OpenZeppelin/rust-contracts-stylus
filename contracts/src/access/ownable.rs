@@ -26,6 +26,7 @@ mod sol {
         ///
         /// * `previous_owner` - Address of the previous owner.
         /// * `new_owner` - Address of the new owner.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
     }

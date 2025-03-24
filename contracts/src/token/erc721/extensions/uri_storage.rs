@@ -21,6 +21,7 @@ mod sol {
         /// This event gets emitted when the metadata of a token is changed.
         ///
         /// The event comes from IERC4096.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event MetadataUpdate(uint256 token_id);
 
@@ -28,6 +29,7 @@ mod sol {
         /// is changed.
         ///
         /// The event comes from IERC4096.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);
     }
