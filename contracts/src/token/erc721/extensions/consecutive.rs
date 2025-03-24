@@ -27,7 +27,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{uint, Address, U256, FixedBytes};
+use alloy_primitives::{uint, Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::MethodError,

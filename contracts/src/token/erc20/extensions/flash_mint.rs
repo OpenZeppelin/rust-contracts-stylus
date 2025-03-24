@@ -19,7 +19,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256, FixedBytes};
+use alloy_primitives::{Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -141,7 +141,6 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
-#[interface_id]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -554,9 +553,8 @@ mod tests {
     }
     #[motsu::test]
     fn supports_interface() {
-       
         let flash_lender_interface_id = 0x25829410u32;
-        
+
         assert!(Erc20FlashMint::supports_interface(
             flash_lender_interface_id.into()
         ));

@@ -388,12 +388,14 @@ mod tests {
     use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
-    use crate::utils::introspection::erc165::IErc165;
 
     use super::{Erc1155Supply, IErc1155Supply};
-    use crate::token::erc1155::{
-        tests::{random_token_ids, random_values},
-        ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+    use crate::{
+        token::erc1155::{
+            tests::{random_token_ids, random_values},
+            ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+        },
+        utils::introspection::erc165::IErc165,
     };
 
     unsafe impl TopLevelStorage for Erc1155Supply {}

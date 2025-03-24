@@ -401,7 +401,7 @@ impl IErc165 for SafeErc20 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use super::{SafeErc20, ISafeErc20};
+    use super::{ISafeErc20, SafeErc20};
     use crate::utils::introspection::erc165::IErc165;
 
     #[test]

@@ -9,7 +9,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, U256, U8, FixedBytes};
+use alloy_primitives::{uint, Address, FixedBytes, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
