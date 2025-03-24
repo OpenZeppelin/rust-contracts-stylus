@@ -310,7 +310,7 @@ impl Erc20Wrapper {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
 
     use super::*;
 
@@ -394,7 +394,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(invalid_asset, uint!(10_U256))
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
@@ -419,7 +419,7 @@ mod tests {
         let err = contract
             .sender(invalid_sender)
             .deposit_for(alice, uint!(10_U256))
-            .expect_err("should return Error::InvalidSender");
+            .motsu_expect_err("should return Error::InvalidSender");
 
         assert!(matches!(
             err,
@@ -442,7 +442,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(invalid_receiver, uint!(10_U256))
-            .expect_err("should return Error::InvalidReceiver");
+            .motsu_expect_err("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,
@@ -462,12 +462,15 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         let err = contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
@@ -491,17 +494,20 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), exceeding_value)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         let err = contract
             .sender(alice)
             .deposit_for(alice, exceeding_value)
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
@@ -523,7 +529,10 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         let initial_balance = erc20_contract.sender(alice).balance_of(alice);
         let initial_wrapped_balance =
@@ -538,12 +547,12 @@ mod tests {
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         assert!(contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit"));
+            .motsu_expect("should deposit"));
 
         erc20_contract.assert_emitted(&erc20::Transfer {
             from: alice,
@@ -594,7 +603,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .withdraw_to(invalid_receiver, uint!(10_U256))
-            .expect_err("should return Error::InvalidReceiver");
+            .motsu_expect_err("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,
@@ -614,24 +623,27 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         let exceeding_value = amount + uint!(1_U256);
 
         let err = contract
             .sender(alice)
             .withdraw_to(alice, exceeding_value)
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
@@ -657,17 +669,20 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         let initial_balance = erc20_contract.sender(alice).balance_of(alice);
         let initial_wrapped_balance =
@@ -682,7 +697,7 @@ mod tests {
         assert!(contract
             .sender(alice)
             .withdraw_to(alice, amount)
-            .expect("should withdraw"));
+            .motsu_expect("should withdraw"));
 
         contract.assert_emitted(&erc20::Transfer {
             from: alice,
@@ -735,7 +750,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .recover(alice)
-            .expect_err("should return Error::InvalidUnderlying");
+            .motsu_expect_err("should return Error::InvalidUnderlying");
 
         assert!(matches!(
             err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == invalid_underlying.address()
@@ -755,20 +770,27 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         // Unexpected mint.
-        contract.sender(alice).erc20._mint(alice, amount).expect("should mint");
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         // This should panic.
         _ = contract.sender(alice).recover(alice);
@@ -786,20 +808,26 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         assert_eq!(
-            contract.sender(alice).recover(alice).expect("should recover"),
+            contract
+                .sender(alice)
+                .recover(alice)
+                .motsu_expect("should recover"),
             U256::ZERO
         );
     }
@@ -816,27 +844,33 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         // Unexpected mint.
         let unexpected_delta = uint!(1_U256);
         erc20_contract
             .sender(alice)
             ._mint(contract.address(), unexpected_delta)
-            .expect("should mint");
+            .motsu_expect("should mint");
 
         assert_eq!(
-            contract.sender(alice).recover(alice).expect("should recover"),
+            contract
+                .sender(alice)
+                .recover(alice)
+                .motsu_expect("should recover"),
             unexpected_delta
         );
 
