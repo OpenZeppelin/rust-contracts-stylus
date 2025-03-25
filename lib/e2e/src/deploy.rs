@@ -11,22 +11,24 @@ use alloy::{
 use eyre::{Context, ContextCompat};
 use regex::Regex;
 
+use crate::system::DEPLOYER_ADDRESS;
+
 /// A basic smart contract deployer.
 pub struct Deployer {
     rpc_url: String,
     private_key: String,
-    ctr_args: Option<String>,
+    ctor_args: Option<String>,
 }
 
 impl Deployer {
     pub fn new(rpc_url: String, private_key: String) -> Self {
-        Self { rpc_url, private_key, ctr_args: None }
+        Self { rpc_url, private_key, ctor_args: None }
     }
 
     /// Add solidity constructor to the deployer.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn with_constructor(mut self, constructor: String) -> Deployer {
-        self.ctr_args = Some(constructor);
+    pub fn with_constructor(mut self, ctor_args: String) -> Deployer {
+        self.ctor_args = Some(ctor_args);
         self
     }
 
@@ -50,12 +52,20 @@ impl Deployer {
 
         // koba::deploy(&config).await
         let signer = auth.wallet()?;
-        let output = Command::new("cargo")
+        let mut command = Command::new("cargo");
+        command
             .args(["stylus", "deploy"])
             .args(["-e", &self.rpc_url])
             .args(["--private-key", &self.private_key])
-            .args(["--experimental-constructor-args", &self.ctr_args.unwrap()])
-            .args(["--no-verify"])
+            .args(["--no-verify"]);
+
+        if let Some(ctor_args) = self.ctor_args {
+            command
+                .args(["--experimental-deployer-address", &DEPLOYER_ADDRESS])
+                .args(["--experimental-constructor-args", &ctor_args]);
+        }
+
+        let output = command
             .output()
             .context("failed to execute `cargo stylus deploy` command")?;
 
