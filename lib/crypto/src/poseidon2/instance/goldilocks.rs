@@ -14,7 +14,8 @@ pub struct Goldilocks12Params;
 impl PoseidonParams<FpGoldiLocks> for Goldilocks12Params {
     const T: usize = 12;
     const D: u8 = 7;
-    const CAPACITY: usize = 1;
+    // Capacity 4 will give `4*64 = 256` bits security.
+    const CAPACITY: usize = 4; 
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 22;
     const MAT_INTERNAL_DIAG_M_1: &'static [FpGoldiLocks] = &[
@@ -476,16 +477,14 @@ mod tests {
             .squeeze_batch(Goldilocks12Params::T - Goldilocks12Params::CAPACITY)
             .into_iter();
 
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("1f0d2cc525b2540c"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("6282c1dfe1e0358d"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("e780d721f698e1e6"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("280c0b6f753d833b"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("1b942dd5023156ab"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("43f0df3fcccb8398"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("e8e8190585489025"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("56bdbf72f77ada22"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("7911c32bf9dcd705"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("ec467926508fbe67"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("6a50450ddf85a6ed"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("919ad117c013584c"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("da52e5769cff16e3"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("61018d9476a8588e"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("eded3197110731fb"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("57224df1bb91d294"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("655c1fb6ef455b96"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("aff582f1574c02b1"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("5fde11bb5be4f4f9"));
+        assert!(perm.next().is_none());
     }
 }
