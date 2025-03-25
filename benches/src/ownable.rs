@@ -3,7 +3,7 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
 };
 use e2e::{receipt, Account};
 
@@ -20,8 +20,6 @@ sol!(
         function transferOwnership(address newOwner) external;
     }
 );
-
-sol!("../examples/ownable/src/constructor.sol");
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     ContractReport::generate("Ownable", run).await
@@ -64,8 +62,6 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 }
 
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    let args =
-        OwnableExample::constructorCall { initialOwner: account.address() };
-    let args = alloy::hex::encode(args.abi_encode());
+    let args = format!("{}", account.address());
     crate::deploy(account, "ownable", Some(args), cache_opt).await
 }

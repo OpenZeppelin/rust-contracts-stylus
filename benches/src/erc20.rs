@@ -3,7 +3,7 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
     uint,
 };
 use alloy_primitives::U256;
@@ -35,8 +35,6 @@ sol!(
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     }
 );
-
-sol!("../examples/erc20/src/constructor.sol");
 
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
@@ -94,11 +92,6 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 }
 
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    let args = Erc20Example::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: CAP,
-    };
-    let args = alloy::hex::encode(args.abi_encode());
+    let args = format!("\"{TOKEN_NAME}\" \"{TOKEN_SYMBOL}\" \"{CAP}\"");
     crate::deploy(account, "erc20", Some(args), cache_opt).await
 }
