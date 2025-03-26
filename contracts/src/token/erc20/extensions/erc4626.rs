@@ -39,10 +39,12 @@ mod sol {
 
     sol! {
         /// Emitted when assets are deposited into the contract.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares);
 
         /// Emitted when assets are withdrawn from the contract.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Withdraw(
             address indexed sender,
