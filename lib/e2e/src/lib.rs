@@ -7,7 +7,7 @@ mod project;
 mod receipt;
 mod system;
 
-pub use account::Account;
+pub use account::{get_master_signer, Account};
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::Ext as EventExt;

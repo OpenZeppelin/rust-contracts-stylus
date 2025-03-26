@@ -82,6 +82,62 @@ impl Account {
     pub fn as_deployer(&self) -> Deployer {
         Deployer::new(self.url().to_string(), self.pk())
     }
+
+    /// Get gas token balance.
+    #[must_use]
+    pub async fn balance(&self) -> U256 {
+        ProviderBuilder::new()
+            .with_recommended_fillers()
+            .wallet(EthereumWallet::from(self.signer.clone()))
+            .on_http(self.url().parse().expect("URL already valid"))
+            .get_balance(self.address())
+            .await
+            .expect("should get balance")
+    }
+
+    /// Send gas token to an address.
+    pub async fn send_value(
+        &self,
+        to: Address,
+        value: U256,
+    ) -> eyre::Result<()> {
+        let wallet = ProviderBuilder::new()
+            .with_recommended_fillers()
+            .wallet(EthereumWallet::from(self.signer.clone()))
+            .on_http(self.url().parse().expect("URL already valid"));
+
+        let tx = TransactionRequest::default()
+            .with_from(self.address())
+            .with_to(to)
+            .with_value(value);
+
+        let estimated_gas = wallet.estimate_gas(&tx).await?;
+
+        let gas_price = wallet.get_gas_price().await?;
+
+        // Compute gas cost
+        let gas_cost = U256::from(estimated_gas)
+            .checked_mul(U256::from(gas_price))
+            .unwrap_or(U256::MAX);
+
+        // Ensure value is sufficient to cover gas cost
+        let send_value = if value > gas_cost {
+            value - gas_cost
+        } else {
+            return Ok(()); // If not enough, then there's nothing to do
+        };
+
+        let tx = tx.with_value(send_value);
+
+        wallet
+            .send_transaction(tx)
+            .await?
+            .watch()
+            .await
+            .expect("funds were not sent");
+
+        Ok(())
+    }
 }
 
 /// A unit struct used as a synchronization mechanism in
@@ -117,8 +173,7 @@ impl AccountFactory {
             .parse()
             .expect("failed to parse RPC_URL string into a URL");
 
-        let master = PrivateKeySigner::from_str(MASTER_PRIVATE_KEY)
-            .expect("failed to create master signer");
+        let master = get_master_signer();
 
         let master_wallet = ProviderBuilder::new()
             .with_recommended_fillers()
@@ -135,7 +190,7 @@ impl AccountFactory {
             .await?
             .watch()
             .await
-            .expect("account's wallet wasn't funded - address is {address}");
+            .expect("account's wallet wasn't funded");
 
         let wallet = ProviderBuilder::new()
             .with_recommended_fillers()
@@ -144,4 +199,10 @@ impl AccountFactory {
 
         Ok(Account { signer, wallet })
     }
+}
+
+/// Get Master signer for the chain.
+pub fn get_master_signer() -> PrivateKeySigner {
+    PrivateKeySigner::from_str(MASTER_PRIVATE_KEY)
+        .expect("failed to create master signer")
 }

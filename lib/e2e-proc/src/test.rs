@@ -25,7 +25,7 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
     let fn_stmts = &item_fn.block.stmts;
     let fn_args = &sig.inputs;
 
-    let account_declarations = fn_args.into_iter().map(|arg| {
+    let arg_inits = fn_args.into_iter().map(|arg| {
         let FnArg::Typed(arg) = arg else {
             error!(arg, "unexpected receiver argument in test signature");
         };
@@ -35,12 +35,51 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
             let #account_arg_binding = #account_ty::new().await?;
         }
     });
+
+    let account_defs = fn_args.iter().map(|arg| {
+        let FnArg::Typed(arg) = arg else {
+            error!(arg, "unexpected receiver argument in test signature");
+        };
+        let account_arg_binding = &arg.pat;
+        let account_ty = &arg.ty;
+        quote! {
+            #account_arg_binding: #account_ty
+        }
+    });
+
+    let account_arg_bindings = fn_args.iter().map(|arg| {
+        let FnArg::Typed(arg) = arg else {
+            error!(arg, "unexpected receiver argument in test signature");
+        };
+        let account_arg_binding = &arg.pat;
+        quote! {
+            #account_arg_binding.clone()
+        }
+    });
+
+    let account_balance_returns = fn_args.into_iter().map(|arg| {
+        let FnArg::Typed(arg) = arg else {
+            error!(arg, "unexpected receiver argument in test signature");
+        };
+        let account_arg_binding = &arg.pat;
+        quote! {
+            let balance = #account_arg_binding.balance().await;
+            #account_arg_binding.send_value(master.address(), balance).await?;
+        }
+    });
+
     quote! {
         #( #attrs )*
         #[tokio::test]
         async fn #fn_name() #fn_return_type {
-            #( #account_declarations )*
-            #( #fn_stmts )*
+            #( #arg_inits )*
+            async fn inner( #( #account_defs ),* ) #fn_return_type {
+                #( #fn_stmts )*
+            }
+            let result = inner( #( #account_arg_bindings ),* ).await;
+            let master = e2e::get_master_signer();
+            #( #account_balance_returns )*
+            result
         }
     }
     .into()
