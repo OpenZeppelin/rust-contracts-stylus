@@ -303,12 +303,13 @@ mod tests {
         assert_eq!(owner, bob);
     }
 
-    #[test]
+    #[motsu::test]
     fn interface_id() {
         let actual = <Ownable as IOwnable>::INTERFACE_ID;
-        assert_ne!(actual, 0);
-    }
 
+        let expected = 235417718;
+        assert_eq!(actual, expected);
+    }
     #[motsu::test]
     fn supports_interface() {
         assert!(Ownable::supports_interface(

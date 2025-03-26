@@ -242,10 +242,7 @@ mod tests {
     use super::{
         ownable::Error, IOwnable2Step, Ownable2Step, OwnableUnauthorizedAccount,
     };
-    use crate::{
-        access::ownable::{IOwnable, Ownable},
-        utils::introspection::erc165::IErc165,
-    };
+    use crate::utils::introspection::erc165::IErc165;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -473,7 +470,10 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable2Step as IOwnable2Step>::INTERFACE_ID;
-        assert_ne!(actual, 0);
+
+        let expected = 2495502745;
+
+        assert_eq!(actual, expected);
     }
 
     #[motsu::test]

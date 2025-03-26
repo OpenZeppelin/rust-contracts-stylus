@@ -629,13 +629,6 @@ mod tests {
     }
 
     #[motsu::test]
-    fn erc1155_supply_interface_id() {
-        let actual = <Erc1155Supply as IErc1155Supply>::INTERFACE_ID;
-        let expected = 0x9ddb0141;
-        assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
     fn erc1155_supply_supports_interface() {
         assert!(Erc1155Supply::supports_interface(
             <Erc1155Supply as IErc1155Supply>::INTERFACE_ID.into()

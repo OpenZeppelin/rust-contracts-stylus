@@ -346,9 +346,12 @@ impl IErc3156FlashLender for Erc20FlashMint {
     }
 }
 
+pub const ERC3156_FLASH_LENDER_INTERFACE_ID: u32 = 0x25829410;
+
 impl IErc165 for Erc20FlashMint {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc165::supports_interface(interface_id)
+        ERC3156_FLASH_LENDER_INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -363,7 +366,10 @@ mod tests {
         ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
         IErc3156FlashLender,
     };
-    use crate::utils::introspection::erc165::IErc165;
+    use crate::{
+        token::erc20::extensions::flash_mint::ERC3156_FLASH_LENDER_INTERFACE_ID,
+        utils::introspection::erc165::IErc165,
+    };
 
     #[storage]
     struct Erc20FlashMintTestExample {
@@ -551,12 +557,11 @@ mod tests {
                 if receiver == invalid_receiver
         ));
     }
+
     #[motsu::test]
     fn supports_interface() {
-        let flash_lender_interface_id = 0x25829410u32;
-
         assert!(Erc20FlashMint::supports_interface(
-            flash_lender_interface_id.into()
+            ERC3156_FLASH_LENDER_INTERFACE_ID.into()
         ));
         assert!(Erc20FlashMint::supports_interface(
             <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
