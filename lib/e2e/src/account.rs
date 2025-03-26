@@ -1,6 +1,8 @@
+use std::str::FromStr;
+
 use alloy::{
     network::{EthereumWallet, TransactionBuilder},
-    primitives::{b256, Address, B256, U256},
+    primitives::{uint, Address, B256, U256},
     providers::{Provider, ProviderBuilder},
     rpc::types::TransactionRequest,
     signers::{local::PrivateKeySigner, Signature, Signer},
@@ -13,6 +15,10 @@ use crate::{
     deploy::Deployer,
     system::{Wallet, RPC_URL_ENV_VAR_NAME},
 };
+
+const MASTER_PRIVATE_KEY: &str =
+    "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659";
+const DEFAULT_FUNDING_ETH: U256 = uint!(100_000_000_000_000_000_U256);
 
 /// Type that corresponds to a test account.
 #[derive(Clone, Debug)]
@@ -111,10 +117,8 @@ impl AccountFactory {
             .parse()
             .expect("failed to parse RPC_URL string into a URL");
 
-        let master = PrivateKeySigner::from_bytes(&b256!(
-                    "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
-                ))
-                .expect("failed to create master signer");
+        let master = PrivateKeySigner::from_str(MASTER_PRIVATE_KEY)
+            .expect("failed to create master signer");
 
         let master_wallet = ProviderBuilder::new()
             .with_recommended_fillers()
@@ -124,7 +128,7 @@ impl AccountFactory {
         let tx = TransactionRequest::default()
             .with_from(master.address())
             .with_to(account_address)
-            .with_value(U256::from(100_000_000_000_000_000u128));
+            .with_value(DEFAULT_FUNDING_ETH);
 
         master_wallet
             .send_transaction(tx)
