@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- All events now derive `Debug`. #614
 - `Erc20Wrapper` extension to support token wrapping. #498
 - `Erc20` events derive `Debug`. #498
 - Implement `MethodError` for all contracts' errors. #594
@@ -19,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Bump `cargo-stylus` to `v0.5.10`. #605
+- Bump Stylus SDK to `v0.8.3`. #605
 - Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
+- Poseidon babybear and goldilocks (64-bit) instances now have 256-bit security (capacity 4). #613
 
 ### Fixed
 
@@ -38,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor `Erc20Permit` extension to be a composition of `Erc20` and `Nonces` contracts. #574
 - Replace `VestingWallet::receive_ether` with dedicated `receive` function. #529
 - Extract `IAccessControl` trait from `AccessControl` contract. #527
-- Bump Stylus SDK to v0.8.1 #587
+- Bump Stylus SDK to `v0.8.1` #587
 
 ### Fixed
 
@@ -65,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - All contract state fields are no longer public. #500
 - `Erc721Consecutive::_mint_consecutive` turned into an internal function. #500
-- Bump cargo-stylus to v0.5.8. #493
+- Bump `cargo-stylus` to `v0.5.8`. #493
 - Constants `TYPE_HASH`, `FIELDS`, `SALT` and `TYPED_DATA_PREFIX`, and type `DomainSeparatorTuple` are no longer exported from `utils::cryptography::eip712`. #478
 - Bump Stylus SDK to v0.7.0. #433
 - Bump `alloy` dependencies to v0.8.14. #433
