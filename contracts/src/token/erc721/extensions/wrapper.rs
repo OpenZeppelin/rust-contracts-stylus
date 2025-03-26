@@ -264,6 +264,7 @@ impl Erc721Wrapper {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use alloy_primitives::uint;
     use motsu::prelude::Contract;
 
     use super::*;
@@ -293,16 +294,16 @@ mod tests {
             self.wrapper.deposit_for(account, token_ids, &mut self.erc721)
         }
 
-        // fn withdraw_to(
-        //     &mut self,
-        //     account: Address,
-        //     value: U256,
-        // ) -> Result<bool, Error> {
-        //     self.wrapper.withdraw_to(account, value, &mut self.erc20)
-        // }
+        fn withdraw_to(
+            &mut self,
+            account: Address,
+            token_ids: Vec<U256>,
+        ) -> Result<bool, Error> {
+            self.wrapper.withdraw_to(account, token_ids, &mut self.erc721)
+        }
 
         // fn recover(&mut self, account: Address) -> Result<U256, Error> {
-        //     self.wrapper._recover(account, &mut self.erc20)
+        //     self.wrapper._recover(account, &mut self.erc721)
         // }
     }
 
@@ -347,9 +348,124 @@ mod tests {
                 .expect("should approve {token_id} for {contract.address()}");
         }
 
+        let initial_balance =
+            erc721_contract.sender(alice).balance_of(alice).unwrap();
+        let initial_wrapped_balance =
+            contract.sender(alice).erc721.balance_of(alice).unwrap();
+
+        let initial_contract_balance = erc721_contract
+            .sender(alice)
+            .balance_of(contract.address())
+            .unwrap();
+
         assert!(contract
             .sender(alice)
-            .deposit_for(alice, token_ids)
+            .deposit_for(alice, token_ids.clone())
             .expect("should deposit"));
+
+        erc721_contract.assert_emitted(&erc721::Transfer {
+            from: alice,
+            to: contract.address(),
+            token_id: token_ids[0],
+        });
+
+        erc721_contract.assert_emitted(&erc721::Transfer {
+            from: alice,
+            to: contract.address(),
+            token_id: token_ids[1],
+        });
+
+        assert_eq!(
+            erc721_contract.sender(alice).balance_of(alice).unwrap(),
+            initial_balance - uint!(2_U256)
+        );
+
+        assert_eq!(
+            contract.sender(alice).erc721.balance_of(alice).unwrap(),
+            initial_wrapped_balance + uint!(2_U256)
+        );
+
+        assert_eq!(
+            erc721_contract
+                .sender(contract.address())
+                .balance_of(contract.address())
+                .unwrap(),
+            initial_contract_balance + uint!(2_U256)
+        );
+    }
+
+    #[motsu::test]
+    fn withdraw_to_works(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_ids = random_token_ids(2);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        for token_id in &token_ids {
+            erc721_contract
+                .sender(alice)
+                ._mint(alice, *token_id)
+                .expect("should mint {token_id} for {alice}");
+
+            erc721_contract
+                .sender(alice)
+                .approve(contract.address(), *token_id)
+                .expect("should approve {token_id} for {contract.address()}");
+        }
+
+        assert!(contract
+            .sender(alice)
+            .deposit_for(alice, token_ids.clone())
+            .expect("should deposit"));
+
+        let initial_balance =
+            erc721_contract.sender(alice).balance_of(alice).unwrap();
+        let initial_wrapped_balance =
+            contract.sender(alice).erc721.balance_of(alice).unwrap();
+
+        let initial_contract_balance = erc721_contract
+            .sender(alice)
+            .balance_of(contract.address())
+            .unwrap();
+
+        assert!(contract
+            .sender(alice)
+            .withdraw_to(alice, token_ids.clone())
+            .expect("should withdraw"));
+
+        erc721_contract.assert_emitted(&erc721::Transfer {
+            from: contract.address(),
+            to: alice,
+            token_id: token_ids[0],
+        });
+
+        erc721_contract.assert_emitted(&erc721::Transfer {
+            from: contract.address(),
+            to: alice,
+            token_id: token_ids[1],
+        });
+
+        assert_eq!(
+            erc721_contract.sender(alice).balance_of(alice).unwrap(),
+            initial_balance + uint!(2_U256)
+        );
+
+        assert_eq!(
+            contract.sender(alice).erc721.balance_of(alice).unwrap(),
+            initial_wrapped_balance - uint!(2_U256)
+        );
+
+        assert_eq!(
+            erc721_contract
+                .sender(contract.address())
+                .balance_of(contract.address())
+                .unwrap(),
+            initial_contract_balance - uint!(2_U256)
+        );
     }
 }
