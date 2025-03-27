@@ -76,6 +76,7 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
                 #( #fn_stmts )*
             }
             let result = inner( #( #account_arg_bindings ),* ).await;
+            #( #account_balance_returns )*
             result
         }
     }

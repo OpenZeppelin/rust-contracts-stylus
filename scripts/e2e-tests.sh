@@ -10,7 +10,7 @@ export RPC_URL=http://localhost:8547
 
 # If any arguments are set, just pass them as-is to the cargo test command
 if [[ $# -eq 0 ]]; then
-    RUST_TEST_THREADS=2 cargo test --features e2e --test "*"
+    RUST_TEST_THREADS=1 cargo test --features e2e --test "*"
 else
-    RUST_TEST_THREADS=2 cargo test --features e2e "$@"
+    RUST_TEST_THREADS=1 cargo test --features e2e "$@"
 fi
