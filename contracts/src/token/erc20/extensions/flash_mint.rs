@@ -142,6 +142,7 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
+#[interface_id]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -166,7 +167,7 @@ pub trait IErc3156FlashLender {
     ///     self.erc20_flash_mint.max_flash_loan(token, &self.erc20)
     /// }
     /// ```
-    fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
+    fn max_flash_loan(&self, token: Address, erc20: &erc20::Erc20) -> U256;
 
     /// Returns the fee applied when doing flash loans.
     ///
@@ -349,10 +350,9 @@ impl IErc3156FlashLender for Erc20FlashMint {
 
 impl IErc165 for Erc20FlashMint {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        // <Self as IErc3156FlashLender>::INTERFACE_ID
-        //     == u32::from_be_bytes(*interface_id)
-        //     ||
-        Erc165::supports_interface(interface_id)
+        <Self as IErc3156FlashLender>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -559,7 +559,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID;
-        let expected = 0x25829410;
+        let expected = 0xe4143091;
         assert_eq!(actual, expected);
     }
 
@@ -571,6 +571,7 @@ mod tests {
         assert!(Erc20FlashMint::supports_interface(
             <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
         ));
+
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc20FlashMint::supports_interface(fake_interface_id.into()));
     }

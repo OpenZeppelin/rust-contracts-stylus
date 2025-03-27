@@ -18,6 +18,7 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU8},
 };
 
+use super::{Erc20Metadata, IErc20Metadata};
 use crate::{
     token::erc20::{
         self,
@@ -156,6 +157,14 @@ unsafe impl TopLevelStorage for Erc4626 {}
 pub trait IErc4626 {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Manually adding this value, as [`openzeppelin_stylus_proc::interface_id`]
+    // currently does not support specifying additional trait functions to XOR.
+    //
+    /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
+    /// XOR of selectors for each function in the trait, as well as of selectors
+    /// of [`IErc20`] and [`IErc20Metadata`] functions.
+    const INTERFACE_ID: u32 = 0x13f16e82;
 
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
@@ -1157,7 +1166,12 @@ impl Erc4626 {
 
 impl IErc165 for Erc4626 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc165::supports_interface(interface_id)
+        <Self as IErc4626>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || <Erc20 as IErc20>::INTERFACE_ID
+                == u32::from_be_bytes(*interface_id)
+            || <Erc20Metadata as IErc20Metadata>::INTERFACE_ID
+                == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
     }
 }
 
@@ -1169,7 +1183,13 @@ mod tests {
     use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
-    use crate::{token::erc20::Erc20, utils::introspection::erc165::IErc165};
+    use crate::{
+        token::erc20::{
+            extensions::{Erc20Metadata, IErc20Metadata},
+            Erc20, IErc20,
+        },
+        utils::introspection::erc165::IErc165,
+    };
 
     #[storage]
     struct Erc4626TestExample {
@@ -1257,7 +1277,25 @@ mod tests {
     }
 
     #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc4626 as IErc4626>::INTERFACE_ID
+            ^ <Erc20 as IErc20>::INTERFACE_ID
+            ^ <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
+        let expected = 0x13f16e82;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
     fn supports_interface() {
+        assert!(Erc4626::supports_interface(
+            <Erc4626 as IErc4626>::INTERFACE_ID.into()
+        ));
+        assert!(Erc4626::supports_interface(
+            <Erc20 as IErc20>::INTERFACE_ID.into()
+        ));
+        assert!(Erc4626::supports_interface(
+            <Erc20Metadata as IErc20Metadata>::INTERFACE_ID.into()
+        ));
         assert!(Erc4626::supports_interface(
             <Erc4626 as IErc165>::INTERFACE_ID.into()
         ));
