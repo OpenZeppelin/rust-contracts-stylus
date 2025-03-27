@@ -27,6 +27,14 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC721UnsupportedToken(address token);
+
+        /// An operation with an ERC-721 token failed.
+        ///
+        /// * `token` - Address of the ERC-721 token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error Erc721FailedOperation(address token);
+
     }
 }
 
@@ -37,6 +45,8 @@ pub enum Error {
     Erc721(erc721::Error),
     /// The received ERC-721 token couldn't be wrapped.
     UnsupportedToken(ERC721UnsupportedToken),
+    /// An operation with an ERC-721 token failed.
+    Erc721FailedOperation(Erc721FailedOperation),
 }
 
 impl MethodError for Error {
@@ -84,6 +94,9 @@ pub trait IErc721Wrapper {
     /// * `erc721` - Write access to an [`Erc721`] contract.
     ///
     /// # Errors
+    ///
+    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not a
+    ///   [`Erc721`] contract, or the contract fails to execute the call.
     fn deposit_for(
         &mut self,
         account: Address,
@@ -165,7 +178,11 @@ impl IErc721Wrapper for Erc721Wrapper {
                     contract_address,
                     token_id,
                 )
-                .map_err(|e| Error::Erc721(e.into()))?;
+                .map_err(|_| {
+                    Error::Erc721FailedOperation(Erc721FailedOperation {
+                        token: self.underlying(),
+                    })
+                })?;
 
             erc721._safe_mint(account, token_id, &vec![].into())?;
         }
@@ -191,7 +208,11 @@ impl IErc721Wrapper for Erc721Wrapper {
                     account,
                     token_id,
                 )
-                .map_err(|e| Error::Erc721(e.into()))?;
+                .map_err(|_| {
+                    Error::Erc721FailedOperation(Erc721FailedOperation {
+                        token: self.underlying(),
+                    })
+                })?;
         }
 
         Ok(true)
@@ -241,9 +262,13 @@ impl Erc721Wrapper {
     ) -> Result<U256, Error> {
         let underlying = IErc721Solidity::new(self.underlying());
 
-        let owner = underlying
-            .owner_of(Call::new_in(self), token_id)
-            .map_err(|e| Error::Erc721(e.into()))?;
+        let owner = underlying.owner_of(Call::new_in(self), token_id).map_err(
+            |_| {
+                Error::Erc721FailedOperation(Erc721FailedOperation {
+                    token: self.underlying(),
+                })
+            },
+        )?;
 
         let contract_address = contract::address();
         if owner != contract_address {
@@ -341,6 +366,85 @@ mod tests {
         });
 
         assert_eq!(contract.sender(alice).underlying(), erc721_address);
+    }
+
+    #[motsu::test]
+    // TODO: motsu should not panic on this test
+    #[ignore]
+    fn deposit_for_reverts_when_unsupported_token(
+        contract: Contract<Erc721WrapperTestExample>,
+        alice: Address,
+    ) {
+        let token_ids = random_token_ids(1);
+
+        let invalid_token = alice;
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(invalid_token);
+        });
+
+        let err = contract
+            .sender(alice)
+            .deposit_for(alice, token_ids.clone())
+            .motsu_expect_err("should return Error::InvalidUnderlying");
+
+        assert!(matches!(
+            err,
+            Error::UnsupportedToken(ERC721UnsupportedToken { token }
+            ) if token == invalid_token
+        ));
+    }
+
+    #[motsu::test]
+    fn deposit_for_reverts_when_nonexistent_token(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_ids = random_token_ids(1);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        let err = contract
+            .sender(alice)
+            .deposit_for(alice, token_ids.clone())
+            .motsu_expect_err("should return Error::Erc721FailedOperation");
+
+        assert!(matches!(
+            err,
+            Error::Erc721FailedOperation(Erc721FailedOperation { token })
+                if token == erc721_contract.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn deposit_for_reverts_when_missing_approval(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_ids = random_token_ids(1);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        erc721_contract
+            .sender(alice)
+            ._mint(alice, token_ids[0])
+            .motsu_expect("should mint {token_id} for {alice}");
+
+        let err = contract
+            .sender(alice)
+            .deposit_for(alice, token_ids)
+            .motsu_expect_err("should return Error::Erc721FailedOperation");
+
+        assert!(matches!(
+            err,
+            Error::Erc721FailedOperation(Erc721FailedOperation { token })
+                if token == erc721_contract.address()
+        ));
     }
 
     #[motsu::test]
