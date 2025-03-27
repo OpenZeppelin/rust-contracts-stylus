@@ -229,8 +229,6 @@ impl IErc165 for Ownable2Step {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IOwnable2Step>::INTERFACE_ID
             == u32::from_be_bytes(*interface_id)
-            || <Ownable as IOwnable>::INTERFACE_ID
-                == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -242,8 +240,7 @@ mod tests {
     use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{
-        ownable::Error, IOwnable, IOwnable2Step, Ownable, Ownable2Step,
-        OwnableUnauthorizedAccount,
+        ownable::Error, IOwnable2Step, Ownable2Step, OwnableUnauthorizedAccount,
     };
     use crate::utils::introspection::erc165::IErc165;
 
@@ -481,9 +478,6 @@ mod tests {
     fn supports_interface() {
         assert!(Ownable2Step::supports_interface(
             <Ownable2Step as IOwnable2Step>::INTERFACE_ID.into()
-        ));
-        assert!(Ownable2Step::supports_interface(
-            <Ownable as IOwnable>::INTERFACE_ID.into()
         ));
         assert!(Ownable2Step::supports_interface(
             <Ownable2Step as IErc165>::INTERFACE_ID.into()

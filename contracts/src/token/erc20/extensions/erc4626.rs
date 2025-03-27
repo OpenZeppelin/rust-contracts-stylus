@@ -10,6 +10,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, FixedBytes, U256, U8};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -18,7 +19,6 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU8},
 };
 
-use super::{Erc20Metadata, IErc20Metadata};
 use crate::{
     token::erc20::{
         self,
@@ -154,17 +154,10 @@ pub struct Erc4626 {
 unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
+#[interface_id]
 pub trait IErc4626 {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
-
-    // Manually adding this value, as [`openzeppelin_stylus_proc::interface_id`]
-    // currently does not support specifying additional trait functions to XOR.
-    //
-    /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
-    /// XOR of selectors for each function in the trait, as well as of selectors
-    /// of [`IErc20`] and [`IErc20Metadata`] functions.
-    const INTERFACE_ID: u32 = 0x13f16e82;
 
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
@@ -1167,10 +1160,6 @@ impl Erc4626 {
 impl IErc165 for Erc4626 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc4626>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || <Erc20 as IErc20>::INTERFACE_ID
-                == u32::from_be_bytes(*interface_id)
-            || <Erc20Metadata as IErc20Metadata>::INTERFACE_ID
-                == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -1183,13 +1172,7 @@ mod tests {
     use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
-    use crate::{
-        token::erc20::{
-            extensions::{Erc20Metadata, IErc20Metadata},
-            Erc20, IErc20,
-        },
-        utils::introspection::erc165::IErc165,
-    };
+    use crate::{token::erc20::Erc20, utils::introspection::erc165::IErc165};
 
     #[storage]
     struct Erc4626TestExample {
@@ -1278,10 +1261,8 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc4626 as IErc4626>::INTERFACE_ID
-            ^ <Erc20 as IErc20>::INTERFACE_ID
-            ^ <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
-        let expected = 0x13f16e82;
+        let actual = <Erc4626 as IErc4626>::INTERFACE_ID;
+        let expected = 0x87dfe5a0;
         assert_eq!(actual, expected);
     }
 
@@ -1289,12 +1270,6 @@ mod tests {
     fn supports_interface() {
         assert!(Erc4626::supports_interface(
             <Erc4626 as IErc4626>::INTERFACE_ID.into()
-        ));
-        assert!(Erc4626::supports_interface(
-            <Erc20 as IErc20>::INTERFACE_ID.into()
-        ));
-        assert!(Erc4626::supports_interface(
-            <Erc20Metadata as IErc20Metadata>::INTERFACE_ID.into()
         ));
         assert!(Erc4626::supports_interface(
             <Erc4626 as IErc165>::INTERFACE_ID.into()
