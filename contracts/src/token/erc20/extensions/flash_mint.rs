@@ -359,7 +359,7 @@ impl IErc165 for Erc20FlashMint {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
     use stylus_sdk::{abi::Bytes, prelude::*};
 
     use super::{
@@ -438,7 +438,7 @@ mod tests {
             contract
                 .erc20
                 ._mint(alice, initial_supply)
-                .expect("should mint {{initial_supply}} tokens for {{alice}}");
+                .motsu_expect("should mint initial supply tokens");
         });
 
         let max_flash_loan =
@@ -460,7 +460,7 @@ mod tests {
         let flash_fee = contract
             .sender(alice)
             .flash_fee(contract.address(), uint!(1000_U256))
-            .expect("should return flash fee value");
+            .motsu_expect("should return flash fee value");
 
         assert_eq!(flash_fee, flash_fee_value);
     }
@@ -475,7 +475,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .flash_fee(invalid_token, uint!(1000_U256))
-            .expect_err("should return Error::UnsupportedToken");
+            .motsu_expect_err("should return Error::UnsupportedToken");
 
         assert!(matches!(
             err,
@@ -495,13 +495,13 @@ mod tests {
             contract
                 .erc20
                 ._mint(alice, initial_supply)
-                .expect("should mint {{initial_supply}} tokens for {{alice}}");
+                .motsu_expect("should mint initial supply tokens");
         });
 
         let err = contract
             .sender(alice)
             .flash_loan(alice, contract.address(), U256::MAX, vec![0, 1].into())
-            .expect_err("should return Error::ExceededMaxLoan");
+            .motsu_expect_err("should return Error::ExceededMaxLoan");
 
         assert!(matches!(
             err,
@@ -524,7 +524,7 @@ mod tests {
                 uint!(1000_U256),
                 vec![0, 1].into(),
             )
-            .expect_err("should return Error::InvalidReceiver");
+            .motsu_expect_err("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,
@@ -547,7 +547,7 @@ mod tests {
                 uint!(1000_U256),
                 vec![0, 1].into(),
             )
-            .expect_err("should return Error::InvalidReceiver");
+            .motsu_expect_err("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,

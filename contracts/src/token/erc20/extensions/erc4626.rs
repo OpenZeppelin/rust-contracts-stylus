@@ -1168,7 +1168,7 @@ impl IErc165 for Erc4626 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{address, Address, U256, U8};
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
@@ -1225,7 +1225,10 @@ mod tests {
     ) {
         let assets = U256::from(1000);
         contract.init(alice, |contract| {
-            contract.erc20._mint(alice, assets).expect("should mint assets");
+            contract
+                .erc20
+                ._mint(alice, assets)
+                .motsu_expect("should mint assets");
         });
         let max_redeem = contract.sender(alice).max_redeem(alice);
         assert_eq!(assets, max_redeem);
