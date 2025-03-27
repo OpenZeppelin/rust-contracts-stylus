@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Bump `cargo-stylus` to `v0.5.11`. #616
+- Bump `cargo-stylus` to `v0.5.11`. #617
 - Bump Stylus SDK to `v0.8.3`. #605
 - Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
 - Poseidon babybear and goldilocks (64-bit) instances now have 256-bit security (capacity 4). #613
