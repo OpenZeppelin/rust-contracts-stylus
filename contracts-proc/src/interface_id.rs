@@ -9,6 +9,7 @@ use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input, FnArg, ItemTrait, LitStr, Result, Token, TraitItem,
+    Type,
 };
 
 /// Computes an interface id as an associated constant for the trait.
@@ -47,7 +48,13 @@ pub(crate) fn interface_id(
         });
 
         let arg_types = func.sig.inputs.iter().filter_map(|arg| match arg {
-            FnArg::Typed(t) => Some(t.ty.clone()),
+            FnArg::Typed(t) => {
+                if is_abi_compatible_type(&t.ty) {
+                    Some(t.ty.clone())
+                } else {
+                    None
+                }
+            }
             // Opt out any `self` arguments.
             FnArg::Receiver(_) => None,
         });
@@ -80,6 +87,37 @@ pub(crate) fn interface_id(
         }
     }
     .into()
+}
+
+/// Determines if a type is compatible with Solidity ABI encoding
+fn is_abi_compatible_type(ty: &Type) -> bool {
+    match ty {
+        // References are never ABI compatible
+        Type::Reference(_) => false,
+
+        // Slices like &[T] are not ABI compatible
+        Type::Slice(_) => false,
+
+        // For generic types, we need to be more careful
+        Type::Path(type_path) => {
+            let last_segment = type_path.path.segments.last();
+            if let Some(segment) = last_segment {
+                // Filter out known Rust-specific types that aren't ABI
+                // compatible
+                let name = segment.ident.to_string();
+                !matches!(
+                    name.as_str(),
+                    "Erc20" | "Erc721" | "Erc1155" | "Nonces"
+                )
+            } else {
+                // Empty path is not valid
+                false
+            }
+        }
+
+        // All other types we assume are OK
+        _ => true,
+    }
 }
 
 /// Contains arguments of the `#[selector(..)]` attribute.
