@@ -139,7 +139,9 @@ impl Account {
 
         let gas_price = wallet.get_gas_price().await?;
 
-        // Compute gas cost
+        // Compute gas cost. Multiply it with 3 to create a sufficient "buffer",
+        // because this was the only multiplier that got the function to pass
+        // successfully in all my tests against the nitro devnode.
         let gas_cost = U256::from(estimated_gas)
             .saturating_mul(U256::from(gas_price))
             .saturating_mul(U256::from(3));
