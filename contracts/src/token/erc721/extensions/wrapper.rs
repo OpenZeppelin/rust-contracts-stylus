@@ -115,6 +115,11 @@ pub trait IErc721Wrapper {
     /// * `erc721` - Write access to an [`Erc721`] contract.
     ///
     /// # Errors
+    ///
+    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not a
+    ///   [`Erc721`] contract, or the contract fails to execute the call.
+    /// * [`Error::Erc721`] - If the wrapped token for `token_id` does not
+    ///   exist.
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -520,6 +525,76 @@ mod tests {
                 .motsu_unwrap(),
             initial_contract_balance + U256::from(tokens)
         );
+    }
+
+    #[motsu::test]
+    fn withdraw_to_reverts_when_invalid_receiver(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let tokens = 4;
+        let token_ids = random_token_ids(tokens);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        for token_id in &token_ids {
+            erc721_contract
+                .sender(alice)
+                ._mint(alice, *token_id)
+                .motsu_expect("should mint {token_id} for {alice}");
+
+            erc721_contract
+                .sender(alice)
+                .approve(contract.address(), *token_id)
+                .motsu_expect(
+                    "should approve {token_id} for {contract.address()}",
+                );
+        }
+
+        assert!(contract
+            .sender(alice)
+            .deposit_for(alice, token_ids.clone())
+            .motsu_expect("should deposit"));
+
+        let err = contract
+            .sender(alice)
+            .withdraw_to(Address::ZERO, token_ids.clone())
+            .motsu_expect_err("should return Error::Erc721FailedOperation");
+
+        assert!(matches!(
+            err,
+            Error::Erc721FailedOperation(Erc721FailedOperation { token })
+                if token == erc721_contract.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn withdraw_to_reverts_when_insufficient_balance(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let tokens = 1;
+        let token_ids = random_token_ids(tokens);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        let err = contract
+            .sender(alice)
+            .withdraw_to(alice, token_ids.clone())
+            .motsu_expect_err("should return Error::Erc721");
+
+        assert!(matches!(
+            err,
+            Error::Erc721(erc721::Error::NonexistentToken(
+                erc721::ERC721NonexistentToken { token_id },
+            )) if token_id == token_ids[0]
+        ));
     }
 
     #[motsu::test]
