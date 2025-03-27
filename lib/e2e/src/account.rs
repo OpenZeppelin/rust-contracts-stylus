@@ -111,24 +111,6 @@ impl Account {
             .with_to(to)
             .with_value(value);
 
-        let estimated_gas = wallet.estimate_gas(&tx).await?;
-
-        let gas_price = wallet.get_gas_price().await?;
-
-        // Compute gas cost
-        let gas_cost = U256::from(estimated_gas)
-            .checked_mul(U256::from(gas_price))
-            .unwrap_or(U256::MAX);
-
-        // Ensure value is sufficient to cover gas cost
-        let send_value = if value > gas_cost {
-            value - gas_cost
-        } else {
-            return Ok(()); // If not enough, then there's nothing to do
-        };
-
-        let tx = tx.with_value(send_value);
-
         wallet
             .send_transaction(tx)
             .await?
@@ -137,6 +119,37 @@ impl Account {
             .expect("funds were not sent");
 
         Ok(())
+    }
+
+    /// Return all balance to master.
+    pub async fn return_balance_to_master(&self) -> eyre::Result<()> {
+        let balance = self.balance().await;
+        let to = get_master_signer().address();
+        let wallet = ProviderBuilder::new()
+            .with_recommended_fillers()
+            .wallet(EthereumWallet::from(self.signer.clone()))
+            .on_http(self.url().parse().expect("URL already valid"));
+
+        let tx = TransactionRequest::default()
+            .with_from(self.address())
+            .with_to(to)
+            .with_value(balance);
+
+        let estimated_gas = wallet.estimate_gas(&tx).await?;
+
+        let gas_price = wallet.get_gas_price().await?;
+
+        // Compute gas cost
+        let gas_cost = U256::from(estimated_gas)
+            .saturating_mul(U256::from(gas_price))
+            .saturating_mul(U256::from(3));
+
+        // Ensure balance is sufficient to cover gas cost
+        if balance <= gas_cost {
+            return Ok(()); // If not enough, then there's nothing to do
+        };
+
+        self.send_value(to, balance - gas_cost).await
     }
 }
 
@@ -202,7 +215,7 @@ impl AccountFactory {
 }
 
 /// Get Master signer for the chain.
-pub fn get_master_signer() -> PrivateKeySigner {
+fn get_master_signer() -> PrivateKeySigner {
     PrivateKeySigner::from_str(MASTER_PRIVATE_KEY)
         .expect("failed to create master signer")
 }

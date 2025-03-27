@@ -63,8 +63,7 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
         };
         let account_arg_binding = &arg.pat;
         quote! {
-            let balance = #account_arg_binding.balance().await;
-            #account_arg_binding.send_value(master.address(), balance).await?;
+            #account_arg_binding.return_balance_to_master().await?;
         }
     });
 
@@ -77,7 +76,6 @@ pub(crate) fn test(_attr: &TokenStream, input: TokenStream) -> TokenStream {
                 #( #fn_stmts )*
             }
             let result = inner( #( #account_arg_bindings ),* ).await;
-            let master = e2e::get_master_signer();
             #( #account_balance_returns )*
             result
         }
