@@ -435,6 +435,13 @@ mod tests {
     }
 
     #[motsu::test]
+    fn interface_id() {
+        let actual = <SafeErc20 as ISafeErc20>::INTERFACE_ID;
+        let expected = 0xf71993e3;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
     fn supports_interface() {
         assert!(SafeErc20::supports_interface(
             <SafeErc20 as IErc165>::INTERFACE_ID.into()
@@ -442,14 +449,8 @@ mod tests {
         assert!(SafeErc20::supports_interface(
             <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
         ));
+
         let fake_interface_id = 0x12345678u32;
         assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
-    }
-
-    #[motsu::test]
-    fn interface_id() {
-        let actual = <SafeErc20 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
-        assert_eq!(actual, expected);
     }
 }

@@ -629,17 +629,17 @@ mod tests {
     }
 
     #[motsu::test]
-    fn erc1155_supply_supports_interface() {
+    fn supports_interface() {
         assert!(Erc1155Supply::supports_interface(
             <Erc1155Supply as IErc1155Supply>::INTERFACE_ID.into()
         ));
         assert!(Erc1155Supply::supports_interface(
             <Erc1155Supply as IErc165>::INTERFACE_ID.into()
         ));
-
         assert!(Erc1155Supply::supports_interface(
             <Erc1155Supply as IErc1155>::INTERFACE_ID.into()
         ));
+
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc1155Supply::supports_interface(fake_interface_id.into()));
     }

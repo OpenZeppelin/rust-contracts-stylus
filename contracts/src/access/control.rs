@@ -728,7 +728,8 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <AccessControl as IAccessControl>::INTERFACE_ID;
-        assert_ne!(actual, 0);
+        let expected = 0x7965db0b;
+        assert_ne!(actual, expected);
     }
 
     #[motsu::test]
@@ -739,6 +740,7 @@ mod tests {
         assert!(AccessControl::supports_interface(
             <AccessControl as IErc165>::INTERFACE_ID.into()
         ));
+
         let fake_interface_id = 0x12345678u32;
         assert!(!AccessControl::supports_interface(fake_interface_id.into()));
     }

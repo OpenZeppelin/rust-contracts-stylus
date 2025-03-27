@@ -20,6 +20,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -346,12 +347,12 @@ impl IErc3156FlashLender for Erc20FlashMint {
     }
 }
 
-pub const ERC3156_FLASH_LENDER_INTERFACE_ID: u32 = 0x25829410;
-
 impl IErc165 for Erc20FlashMint {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        ERC3156_FLASH_LENDER_INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+        // <Self as IErc3156FlashLender>::INTERFACE_ID
+        //     == u32::from_be_bytes(*interface_id)
+        //     ||
+        Erc165::supports_interface(interface_id)
     }
 }
 
@@ -366,10 +367,7 @@ mod tests {
         ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
         IErc3156FlashLender,
     };
-    use crate::{
-        token::erc20::extensions::flash_mint::ERC3156_FLASH_LENDER_INTERFACE_ID,
-        utils::introspection::erc165::IErc165,
-    };
+    use crate::utils::introspection::erc165::IErc165;
 
     #[storage]
     struct Erc20FlashMintTestExample {
@@ -559,9 +557,16 @@ mod tests {
     }
 
     #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID;
+        let expected = 0x25829410;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
     fn supports_interface() {
         assert!(Erc20FlashMint::supports_interface(
-            ERC3156_FLASH_LENDER_INTERFACE_ID.into()
+            <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID.into()
         ));
         assert!(Erc20FlashMint::supports_interface(
             <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
