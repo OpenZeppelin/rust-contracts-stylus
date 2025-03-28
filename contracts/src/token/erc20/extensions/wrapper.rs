@@ -13,7 +13,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256, U8};
+use alloy_primitives::{Address, FixedBytes, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -22,10 +22,13 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU8},
 };
 
-use crate::token::erc20::{
-    self,
-    utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
-    Erc20, IErc20,
+use crate::{
+    token::erc20::{
+        self,
+        utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+        Erc20, IErc20,
+    },
+    utils::introspection::erc165::{Erc165, IErc165},
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -95,6 +98,24 @@ pub struct Erc20Wrapper {
 pub trait IErc20Wrapper {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Manually calculated, as some of the functions' parameters do not
+    // implement AbiType.
+    /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
+    /// as a XOR of selectors for each function in the trait.
+    const INTERFACE_ID: u32 =
+        u32::from_be_bytes(stylus_sdk::function_selector!("decimals"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!("underlying"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "depositFor",
+                Address,
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "withdrawTo",
+                Address,
+                U256
+            ));
 
     /// Returns the number of decimals used to get its user representation.
     ///
@@ -310,12 +331,21 @@ impl Erc20Wrapper {
     }
 }
 
+impl IErc165 for Erc20Wrapper {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc20Wrapper>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
     use motsu::prelude::*;
 
     use super::*;
+    use crate::utils::introspection::erc165::IErc165;
 
     #[storage]
     struct Erc20WrapperTestExample {
@@ -882,5 +912,25 @@ mod tests {
             to: alice,
             value: unexpected_delta,
         });
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID;
+        let expected = 0x511f913e;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc20Wrapper::supports_interface(
+            <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID.into()
+        ));
+        assert!(Erc20Wrapper::supports_interface(
+            <Erc20Wrapper as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc20Wrapper::supports_interface(fake_interface_id.into()));
     }
 }
