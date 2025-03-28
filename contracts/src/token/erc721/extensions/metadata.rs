@@ -7,7 +7,6 @@ use alloc::{
 };
 
 use alloy_primitives::{FixedBytes, U256};
-use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::{
@@ -28,8 +27,18 @@ pub struct Erc721Metadata {
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
-#[interface_id]
 pub trait IErc721Metadata {
+    // Manually calculated, as the trait is missing
+    // [`Erc721Metadata::token_uri`].
+    /// Solidity interface id associated with [`IErc721Metadata`] trait.
+    /// Computed as a XOR of selectors for each function in the trait.
+    const INTERFACE_ID: u32 =
+        u32::from_be_bytes(stylus_sdk::function_selector!("name"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!("symbol"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "tokenURI", U256
+            ));
+
     /// Returns the token collection name.
     ///
     /// # Arguments
@@ -59,14 +68,9 @@ impl IErc721Metadata for Erc721Metadata {
     }
 }
 
-const TOKEN_URI_SELECTOR: u32 =
-    u32::from_be_bytes(stylus_sdk::function_selector!("tokenURI", U256));
-
 impl IErc165 for Erc721Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        // NOTE: interface id is calculated using additional selector
-        //  [`Erc721Metadata::token_uri`]
-        (<Self as IErc721Metadata>::INTERFACE_ID ^ TOKEN_URI_SELECTOR)
+        <Self as IErc721Metadata>::INTERFACE_ID
             == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -132,16 +136,11 @@ impl Erc721Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use super::{Erc721Metadata, IErc165, IErc721Metadata, TOKEN_URI_SELECTOR};
+    use super::{Erc721Metadata, IErc165, IErc721Metadata};
 
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
-        let expected = 0x93254542;
-        assert_eq!(actual, expected);
-
-        let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID
-            ^ TOKEN_URI_SELECTOR;
         let expected = 0x5b5e139f;
         assert_eq!(actual, expected);
     }
@@ -149,16 +148,13 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Metadata::supports_interface(
-            <Erc721Metadata as IErc165>::INTERFACE_ID.into()
-        ));
-        assert!(Erc721Metadata::supports_interface(
-            (<Erc721Metadata as IErc721Metadata>::INTERFACE_ID
-                ^ TOKEN_URI_SELECTOR)
-                .into()
-        ));
-        // Interface ID needs to include XOR TOKEN_URI_SELECTOR
-        assert!(!Erc721Metadata::supports_interface(
             <Erc721Metadata as IErc721Metadata>::INTERFACE_ID.into()
         ));
+        assert!(Erc721Metadata::supports_interface(
+            <Erc721Metadata as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc721Metadata::supports_interface(fake_interface_id.into()));
     }
 }

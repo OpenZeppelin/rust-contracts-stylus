@@ -19,7 +19,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -28,7 +28,10 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU256},
 };
 
-use crate::token::erc20::{self, Erc20, IErc20};
+use crate::{
+    token::erc20::{self, Erc20, IErc20},
+    utils::introspection::erc165::{Erc165, IErc165},
+};
 
 /// The expected value returned from [`IERC3156FlashBorrower::on_flash_loan`].
 pub const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
@@ -142,6 +145,24 @@ pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
+    // Manually calculated, as some of the functions' parameters do not
+    // implement AbiType.
+    /// Solidity interface id associated with [`IErc3156FlashLender`] trait.
+    /// Computed as a XOR of selectors for each function in the trait.
+    const INTERFACE_ID: u32 = u32::from_be_bytes(
+        stylus_sdk::function_selector!("maxFlashLoan", Address),
+    ) ^ u32::from_be_bytes(
+        stylus_sdk::function_selector!("flashFee", Address, U256),
+    ) ^ u32::from_be_bytes(
+        stylus_sdk::function_selector!(
+            "flashLoan",
+            Address,
+            Address,
+            U256,
+            Bytes
+        ),
+    );
+
     /// Returns the maximum amount of tokens available for loan.
     ///
     /// NOTE: This function does not consider any form of supply cap, so in case
@@ -162,7 +183,7 @@ pub trait IErc3156FlashLender {
     ///     self.erc20_flash_mint.max_flash_loan(token, &self.erc20)
     /// }
     /// ```
-    fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256;
+    fn max_flash_loan(&self, token: Address, erc20: &erc20::Erc20) -> U256;
 
     /// Returns the fee applied when doing flash loans.
     ///
@@ -343,6 +364,14 @@ impl IErc3156FlashLender for Erc20FlashMint {
     }
 }
 
+impl IErc165 for Erc20FlashMint {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc3156FlashLender>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
@@ -354,6 +383,7 @@ mod tests {
         ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
         IErc3156FlashLender,
     };
+    use crate::utils::introspection::erc165::IErc165;
 
     #[storage]
     struct Erc20FlashMintTestExample {
@@ -540,5 +570,25 @@ mod tests {
             Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
                 if receiver == invalid_receiver
         ));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID;
+        let expected = 0xe4143091;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc20FlashMint::supports_interface(
+            <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID.into()
+        ));
+        assert!(Erc20FlashMint::supports_interface(
+            <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc20FlashMint::supports_interface(fake_interface_id.into()));
     }
 }

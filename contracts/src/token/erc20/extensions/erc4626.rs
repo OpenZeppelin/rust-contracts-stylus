@@ -9,7 +9,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, U256, U8};
+use alloy_primitives::{uint, Address, FixedBytes, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -24,7 +24,10 @@ use crate::{
         utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
-    utils::math::alloy::{Math, Rounding},
+    utils::{
+        introspection::erc165::{Erc165, IErc165},
+        math::alloy::{Math, Rounding},
+    },
 };
 
 const ONE: U256 = uint!(1_U256);
@@ -153,6 +156,65 @@ unsafe impl TopLevelStorage for Erc4626 {}
 pub trait IErc4626 {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Manually calculated, as some of the functions' parameters do not
+    // implement AbiType.
+    /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
+    /// XOR of selectors for each function in the trait.
+    const INTERFACE_ID: u32 =
+        u32::from_be_bytes(stylus_sdk::function_selector!("asset"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!("totalAssets"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "convertToShares",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "convertToAssets",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxDeposit",
+                Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewDeposit",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "deposit", U256, Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxMint", Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewMint",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "mint", U256, Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxWithdraw",
+                Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewWithdraw",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "withdraw", U256, Address, Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxRedeem",
+                Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewRedeem",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "redeem", U256, Address, Address
+            ));
 
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
@@ -1152,6 +1214,13 @@ impl Erc4626 {
     }
 }
 
+impl IErc165 for Erc4626 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc4626>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
@@ -1160,7 +1229,7 @@ mod tests {
     use stylus_sdk::prelude::*;
 
     use super::{Erc4626, IErc4626};
-    use crate::token::erc20::Erc20;
+    use crate::{token::erc20::Erc20, utils::introspection::erc165::IErc165};
 
     #[storage]
     struct Erc4626TestExample {
@@ -1248,5 +1317,25 @@ mod tests {
 
         let decimals = contract.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals + new_decimal_offset);
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc4626 as IErc4626>::INTERFACE_ID;
+        let expected = 0x87dfe5a0;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc4626::supports_interface(
+            <Erc4626 as IErc4626>::INTERFACE_ID.into()
+        ));
+        assert!(Erc4626::supports_interface(
+            <Erc4626 as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc4626::supports_interface(fake_interface_id.into()));
     }
 }
