@@ -70,9 +70,7 @@ impl IErc721Metadata for Erc721Metadata {
 
 impl IErc165 for Erc721Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        // NOTE: interface id is calculated using additional selector
-        //  [`Erc721Metadata::token_uri`]
-        (<Self as IErc721Metadata>::INTERFACE_ID)
+        <Self as IErc721Metadata>::INTERFACE_ID
             == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -150,7 +148,7 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Metadata::supports_interface(
-            (<Erc721Metadata as IErc721Metadata>::INTERFACE_ID).into()
+            <Erc721Metadata as IErc721Metadata>::INTERFACE_ID.into()
         ));
         assert!(Erc721Metadata::supports_interface(
             <Erc721Metadata as IErc165>::INTERFACE_ID.into()
