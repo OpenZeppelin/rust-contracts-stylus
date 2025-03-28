@@ -15,7 +15,7 @@ impl PoseidonParams<FpGoldiLocks> for Goldilocks12Params {
     const T: usize = 12;
     const D: u8 = 7;
     // Capacity 4 will give `4*64 = 256` bits security.
-    const CAPACITY: usize = 4; 
+    const CAPACITY: usize = 4;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 22;
     const MAT_INTERNAL_DIAG_M_1: &'static [FpGoldiLocks] = &[

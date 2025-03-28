@@ -18,6 +18,7 @@ use crate::utils::{
 
 pub mod extensions;
 mod receiver;
+pub mod utils;
 pub use receiver::IERC721Receiver;
 
 /// The expected value returned from [`IERC721Receiver::on_erc_721_received`].
