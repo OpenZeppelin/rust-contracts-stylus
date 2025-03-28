@@ -294,6 +294,7 @@ impl Erc721Wrapper {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use alloy_primitives::uint;
     use motsu::prelude::*;
 
     use super::*;
@@ -674,6 +675,72 @@ mod tests {
                 .balance_of(contract.address())
                 .motsu_unwrap(),
             initial_contract_balance - U256::from(tokens)
+        );
+    }
+
+    #[motsu::test]
+    fn on_erc721_received_reverts_when_invalid_operator(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_id = random_token_ids(1)[0];
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        let invalid_operator = alice;
+
+        let err = contract
+            .sender(invalid_operator)
+            .on_erc721_received(
+                invalid_operator,
+                alice,
+                token_id,
+                vec![].into(),
+            )
+            .motsu_expect_err("should return Error::UnsupportedToken");
+
+        assert!(matches!(
+            err,
+            Error::UnsupportedToken(ERC721UnsupportedToken { token })
+                if token == invalid_operator
+        ));
+    }
+
+    #[motsu::test]
+    fn on_erc721_received_works(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_id = random_token_ids(1)[0];
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        let initial_wrapped_balance =
+            contract.sender(alice).erc721.balance_of(alice).motsu_unwrap();
+
+        let operator = erc721_contract.address();
+        let interface_id = contract
+            .sender(operator)
+            .on_erc721_received(operator, alice, token_id, vec![].into())
+            .motsu_expect("should handle ERC721Received");
+
+        assert_eq!(interface_id, RECEIVER_FN_SELECTOR);
+
+        contract.assert_emitted(&erc721::Transfer {
+            from: Address::ZERO,
+            to: alice,
+            token_id,
+        });
+
+        assert_eq!(
+            contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
+            initial_wrapped_balance + uint!(1_U256)
         );
     }
 }
