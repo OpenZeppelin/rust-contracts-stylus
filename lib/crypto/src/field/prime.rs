@@ -23,13 +23,6 @@ pub trait PrimeField:
         Self::MODULUS
     }
 
-    /// Returns the extension degree of this field with respect
-    /// to `Self::BasePrimeField`.
-    #[must_use]
-    fn extension_degree() -> usize {
-        1
-    }
-
     /// Construct a prime field element from a big integer.
     fn from_bigint(repr: Self::BigInt) -> Self;
 
