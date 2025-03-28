@@ -7,7 +7,7 @@ license.workspace = true
 repository.workspace = true
 keywords = ["arbitrum", "ethereum", "stylus", "smart-contracts", "standards"]
 categories = ["cryptography::cryptocurrencies", "no-std", "wasm"]
-version = "0.1.1"
+version = "0.1.0"
 
 [dependencies]
 proc-macro2.workspace = true
