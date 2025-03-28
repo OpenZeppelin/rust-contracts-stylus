@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Erc20` events derive `Debug`. #498
 - Implement `MethodError` for all contracts' errors. #594
 - Implement `IErc165` for all base contracts for standard interface detection. #603
+- Expose `INTERFACE_ID` for `Erc20Wrapper`, `Erc4626` and `Erc20FlashMint`. #603
 
 ### Changed
 
@@ -28,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
--
+- `IErc20Metadata::INTERFACE_ID` now has the correct value.
 
 ## [v0.2.0-alpha.4] - 2025-03-06
 

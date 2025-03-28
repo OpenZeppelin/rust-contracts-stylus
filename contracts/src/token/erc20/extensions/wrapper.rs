@@ -15,7 +15,6 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256, U8};
 use alloy_sol_macro::sol;
-use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::{Call, MethodError},
     contract, msg,
@@ -93,10 +92,27 @@ pub struct Erc20Wrapper {
 }
 
 /// ERC-20 Wrapper Standard Interface
-#[interface_id]
 pub trait IErc20Wrapper {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Manually calculated, as some of the functions' parameters do not
+    // implement AbiType.
+    /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
+    /// as a XOR of selectors for each function in the trait.
+    const INTERFACE_ID: u32 =
+        u32::from_be_bytes(stylus_sdk::function_selector!("decimals"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!("underlying"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "depositFor",
+                Address,
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "withdrawTo",
+                Address,
+                U256
+            ));
 
     /// Returns the number of decimals used to get its user representation.
     ///

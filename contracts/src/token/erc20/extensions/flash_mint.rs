@@ -20,7 +20,6 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
-use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -142,10 +141,27 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
-#[interface_id]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Manually calculated, as some of the functions' parameters do not
+    // implement AbiType.
+    /// Solidity interface id associated with [`IErc3156FlashLender`] trait.
+    /// Computed as a XOR of selectors for each function in the trait.
+    const INTERFACE_ID: u32 = u32::from_be_bytes(
+        stylus_sdk::function_selector!("maxFlashLoan", Address),
+    ) ^ u32::from_be_bytes(
+        stylus_sdk::function_selector!("flashFee", Address, U256),
+    ) ^ u32::from_be_bytes(
+        stylus_sdk::function_selector!(
+            "flashLoan",
+            Address,
+            Address,
+            U256,
+            Bytes
+        ),
+    );
 
     /// Returns the maximum amount of tokens available for loan.
     ///

@@ -10,7 +10,6 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, FixedBytes, U256, U8};
-use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -154,10 +153,68 @@ pub struct Erc4626 {
 unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
-#[interface_id]
 pub trait IErc4626 {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Manually calculated, as some of the functions' parameters do not
+    // implement AbiType.
+    /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
+    /// XOR of selectors for each function in the trait.
+    const INTERFACE_ID: u32 =
+        u32::from_be_bytes(stylus_sdk::function_selector!("asset"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!("totalAssets"))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "convertToShares",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "convertToAssets",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxDeposit",
+                Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewDeposit",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "deposit", U256, Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxMint", Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewMint",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "mint", U256, Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxWithdraw",
+                Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewWithdraw",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "withdraw", U256, Address, Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "maxRedeem",
+                Address
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "previewRedeem",
+                U256
+            ))
+            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+                "redeem", U256, Address, Address
+            ));
 
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
