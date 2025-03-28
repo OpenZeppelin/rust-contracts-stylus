@@ -743,4 +743,116 @@ mod tests {
             initial_wrapped_balance + uint!(1_U256)
         );
     }
+
+    #[motsu::test]
+    #[ignore] // TODO: issue in motsu
+    fn recover_reverts_when_invalid_token(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_id = random_token_ids(1)[0];
+        let invalid_token_address = alice;
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(invalid_token_address);
+        });
+
+        erc721_contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .motsu_expect("should mint {token_id} for {alice}");
+
+        let err = contract
+            .sender(alice)
+            .recover(alice, token_id)
+            .motsu_expect_err("should return Error::Erc721FailedOperation");
+
+        assert!(matches!(
+            err,
+            Error::Erc721FailedOperation(Erc721FailedOperation { token })
+                if token == invalid_token_address
+        ));
+    }
+
+    #[motsu::test]
+    fn recover_reverts_when_incorrect_owner(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_id = random_token_ids(1)[0];
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        erc721_contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .motsu_expect("should mint {token_id} for {alice}");
+
+        let err = contract
+            .sender(alice)
+            .recover(alice, token_id)
+            .motsu_expect_err("should return Error::Erc721");
+
+        assert!(matches!(
+            err,
+            Error::Erc721(erc721::Error::IncorrectOwner(
+                erc721::ERC721IncorrectOwner { sender, token_id: t_id, owner },
+            )) if sender == contract.address() && t_id == token_id && owner == alice
+        ));
+    }
+
+    #[motsu::test]
+    fn recover_works(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+    ) {
+        let token_id = random_token_ids(1)[0];
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        erc721_contract
+            .sender(alice)
+            ._mint(alice, token_id)
+            .motsu_expect("should mint {token_id} for {alice}");
+
+        erc721_contract
+            .sender(alice)
+            .transfer_from(
+                alice,
+                contract.address(),
+                token_id,
+            )
+            .motsu_expect("should transfer {token_id} from {alice} to {contract.address()}");
+
+        let initial_wrapped_balance =
+            contract.sender(alice).erc721.balance_of(alice).motsu_unwrap();
+
+        contract
+            .sender(alice)
+            .recover(alice, token_id)
+            .motsu_expect("should recover {token_id} for {alice}");
+
+        let wrapped_balance =
+            contract.sender(alice).erc721.balance_of(alice).motsu_unwrap();
+
+        assert_eq!(wrapped_balance, initial_wrapped_balance + uint!(1_U256));
+
+        contract.assert_emitted(&erc721::Transfer {
+            from: Address::ZERO,
+            to: alice,
+            token_id,
+        });
+
+        assert_eq!(
+            contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
+            initial_wrapped_balance + uint!(1_U256)
+        );
+    }
 }
