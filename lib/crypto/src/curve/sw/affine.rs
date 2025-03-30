@@ -61,7 +61,7 @@ impl<P: SWCurveConfig> Debug for Affine<P> {
 }
 
 impl<P: SWCurveConfig> Affine<P> {
-    /// Constructs a group element from x and y coordinates.
+    /// Constructs a group element from `x` and `y` coordinates.
     /// Performs checks to ensure that the point is on the curve and is in the
     /// right subgroup.
     ///
@@ -76,7 +76,7 @@ impl<P: SWCurveConfig> Affine<P> {
         point
     }
 
-    /// Constructs a group element from x and y coordinates.
+    /// Constructs a group element from `x` and `y` coordinates.
     ///
     /// # Warning
     ///

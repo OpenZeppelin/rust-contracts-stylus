@@ -17,15 +17,14 @@ use crate::{
 
 mod helpers;
 pub mod sw;
-pub mod te;
 
 /// Elliptic curves can be represented via different "models" with varying
 /// efficiency properties.
 ///
-/// `CurveConfig` bundles together the types that are common
-/// to all models of the given curve, namely the `BaseField` over which the
-/// curve is defined, and the `ScalarField` defined by the appropriate
-/// prime-order subgroup of the curve.
+/// [`CurveConfig`] bundles together the types that are common
+/// to all models of the given curve, namely the [`Self::BaseField`] over which
+/// the curve is defined, and the [`Self::ScalarField`] defined by the
+/// appropriate prime-order subgroup of the curve.
 pub trait CurveConfig: Send + Sync + Sized + 'static {
     /// Base field that the curve is defined over.
     type BaseField: Field;
@@ -260,7 +259,7 @@ fn batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
     }
 
     // Invert `tmp`.
-    tmp = tmp.inverse().unwrap(); // Guaranteed to be nonzero.
+    tmp = tmp.inverse().expect("should not be zero");
 
     // Multiply product by coeff, so all inverses will be scaled by coeff.
     tmp *= coeff;

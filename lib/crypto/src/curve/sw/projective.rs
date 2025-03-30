@@ -25,7 +25,7 @@ use crate::{
 
 /// Jacobian coordinates for a point on an elliptic curve in short Weierstrass
 /// form, over the base field `P::BaseField`. This struct implements arithmetic
-/// via the Jacobian formulae
+/// via the Jacobian formulae.
 #[derive(Educe)]
 #[educe(Copy, Clone)]
 #[must_use]
@@ -289,7 +289,7 @@ impl<P: SWCurveConfig> CurveGroup for Projective<P> {
     type FullGroup = Affine<P>;
 
     /// Normalizes a slice of projective elements so that
-    /// conversion to affine is cheap.
+    /// conversion to affine is inexpensive.
     ///
     /// In more detail, this method converts a curve point in Jacobian
     /// coordinates (x, y, z) into an equivalent representation (x/z^2,
