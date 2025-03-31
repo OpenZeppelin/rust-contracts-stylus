@@ -15,7 +15,9 @@ use stylus_sdk::{
     storage::StorageAddress,
 };
 
-use crate::token::erc721::{self, Erc721, RECEIVER_FN_SELECTOR};
+use crate::token::erc721::{
+    self, utils::IErc721 as IErc721Solidity, Erc721, RECEIVER_FN_SELECTOR,
+};
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -55,22 +57,6 @@ impl MethodError for Error {
     }
 }
 
-pub use token::IErc721 as IErc721Solidity;
-mod token {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-    use alloc::vec;
-
-    stylus_sdk::prelude::sol_interface! {
-        /// Interface of the ERC-721 token.
-        interface IErc721 {
-            function ownerOf(uint256 token_id) external view returns (address);
-            function safeTransferFrom(address from, address to, uint256 token_id) external;
-            function transferFrom(address from, address to, uint256 token_id) external;
-        }
-    }
-}
-
 /// State of an [`Erc721Wrapper`] token.
 #[storage]
 pub struct Erc721Wrapper {
@@ -84,7 +70,7 @@ pub trait IErc721Wrapper {
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Allow a user to deposit underlying tokens and mint the corresponding
-    /// tokenIds.
+    /// `token_ids`.
     ///
     /// # Arguments
     ///
@@ -97,6 +83,14 @@ pub trait IErc721Wrapper {
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not a
     ///   [`Erc721`] contract, or the contract fails to execute the call.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn deposit_for(&mut self, account: Address, token_ids: Vec<U256>) -> Result<bool, Error> {
+    ///     self.erc721_wrapper.deposit_for(account, token_ids, &mut self.erc721)
+    /// }
+    /// ```
     fn deposit_for(
         &mut self,
         account: Address,
@@ -105,7 +99,7 @@ pub trait IErc721Wrapper {
     ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn wrapped tokens and withdraw the corresponding
-    /// tokenIds of the underlying tokens.
+    /// `token_ids` of the underlying tokens.
     ///
     /// # Arguments
     ///
@@ -120,6 +114,14 @@ pub trait IErc721Wrapper {
     ///   [`Erc721`] contract, or the contract fails to execute the call.
     /// * [`Error::Erc721`] - If the wrapped token for `token_id` does not
     ///   exist.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn withdraw_to(&mut self, account: Address, token_ids: Vec<U256>) -> Result<bool, Error> {
+    ///     self.erc721_wrapper.withdraw_to(account, token_ids, &mut self.erc721)
+    /// }
+    /// ```
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -140,6 +142,16 @@ pub trait IErc721Wrapper {
     /// * `erc721` - Write access to an [`Erc721`] contract.
     ///
     /// # Errors
+    ///
+    /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
+    ///   token.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn on_erc721_received(&mut self, operator: Address, from: Address, token_id: U256, data: Bytes) -> Result<FixedBytes<4>, Error> {
+    ///     self.erc721_wrapper.on_erc721_received(operator, from, token_id, data, &mut self.erc721)
+    /// }
     fn on_erc721_received(
         &mut self,
         _operator: Address,
@@ -150,6 +162,18 @@ pub trait IErc721Wrapper {
     ) -> Result<FixedBytes<4>, Self::Error>;
 
     /// Returns the underlying token.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// fn underlying(&self) -> Address {
+    ///     self.erc721_wrapper.underlying()
+    /// }
+    /// ```
     fn underlying(&self) -> Address;
 }
 
@@ -259,6 +283,11 @@ impl Erc721Wrapper {
     /// * `token_id` - A mutable reference to the Erc20 contract.
     ///
     /// # Errors
+    ///
+    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not a
+    ///   [`Erc721`] contract, or the contract fails to execute the call.
+    /// * [`Error::Erc721IncorrectOwner`] - If the underlying token is not owned
+    ///   by the contract.
     fn _recover(
         &mut self,
         account: Address,

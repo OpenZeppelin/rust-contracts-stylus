@@ -29,17 +29,17 @@ impl Erc721WrapperExample {
     fn deposit_for(
         &mut self,
         account: Address,
-        values: Vec<U256>,
+        token_ids: Vec<U256>,
     ) -> Result<bool, wrapper::Error> {
-        self.erc721_wrapper.deposit_for(account, values, &mut self.erc721)
+        self.erc721_wrapper.deposit_for(account, token_ids, &mut self.erc721)
     }
 
     fn withdraw_to(
         &mut self,
         account: Address,
-        values: Vec<U256>,
+        token_ids: Vec<U256>,
     ) -> Result<bool, wrapper::Error> {
-        self.erc721_wrapper.withdraw_to(account, values, &mut self.erc721)
+        self.erc721_wrapper.withdraw_to(account, token_ids, &mut self.erc721)
     }
 
     fn on_erc721_received(
