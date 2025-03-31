@@ -59,15 +59,7 @@ impl Deployer {
         if let Some(ctr_args) = &self.ctr_args {
             command
                 .args(["--experimental-deployer-address", &deployer_address])
-                .args([
-                    "--experimental-constructor-args",
-                    "Erc4626 Token",
-                    "ETT",
-                    "0xc85ade26863B0a293D96A10a1359688431b002CA",
-                    "0",
-                ]);
-
-            println!("{:?}", command);
+                .args(["--experimental-constructor-args", ctr_args]);
         }
 
         let output = command
