@@ -97,11 +97,11 @@ alloy = { version = "=0.7.3", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.20", default-features = false }
-alloy-sol-types = { version = "=0.8.20", default-features = false }
-alloy-sol-macro = { version = "=0.8.20", default-features = false }
-alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
-alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
+alloy-primitives = { version = "0.8.20", default-features = false }
+alloy-sol-types = { version = "0.8.20", default-features = false }
+alloy-sol-macro = { version = "0.8.20", default-features = false }
+alloy-sol-macro-expander = { version = "0.8.20", default-features = false }
+alloy-sol-macro-input = { version = "0.8.20", default-features = false }
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"
