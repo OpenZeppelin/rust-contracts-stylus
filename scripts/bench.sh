@@ -32,7 +32,7 @@ for CRATE_NAME in $(get_example_crate_names); do
 done
 
 export RPC_URL=http://localhost:8547
-export DEPLOYER_ADDRESS=0xA6E41fFD769491a42A6e5Ce453259b93983a22EF
+export DEPLOYER_ADDRESS=0xD678cE107b0627e08393680bE6cA41F583b53AA4
 
 # No need to compile benchmarks with `--release`
 # since this only runs the benchmarking code and the contracts have already been compiled with `--release`.

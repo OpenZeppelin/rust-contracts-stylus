@@ -59,9 +59,12 @@ impl Deployer {
             .args(["--private-key", &self.private_key])
             .args(["--no-verify"]);
 
+        let deployer_address = std::env::var(DEPLOYER_ADDRESS)
+            .expect("deployer address should be set");
+
         if let Some(ctor_args) = self.ctor_args {
             command
-                .args(["--experimental-deployer-address", &DEPLOYER_ADDRESS])
+                .args(["--experimental-deployer-address", &deployer_address])
                 .args(["--experimental-constructor-args", &ctor_args]);
         }
 
