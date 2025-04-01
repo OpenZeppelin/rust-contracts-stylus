@@ -83,14 +83,6 @@ pub trait IErc721Wrapper {
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
     ///   ERC-721 contract, or the contract fails to execute the call.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn deposit_for(&mut self, account: Address, token_ids: Vec<U256>) -> Result<bool, Error> {
-    ///     self.erc721_wrapper.deposit_for(account, token_ids, &mut self.erc721)
-    /// }
-    /// ```
     fn deposit_for(
         &mut self,
         account: Address,
@@ -114,14 +106,6 @@ pub trait IErc721Wrapper {
     ///   [`Erc721`] contract, or the contract fails to execute the call.
     /// * [`Error::Erc721`] - If the wrapped token for `token_id` does not
     ///   exist.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn withdraw_to(&mut self, account: Address, token_ids: Vec<U256>) -> Result<bool, Error> {
-    ///     self.erc721_wrapper.withdraw_to(account, token_ids, &mut self.erc721)
-    /// }
-    /// ```
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -145,13 +129,6 @@ pub trait IErc721Wrapper {
     ///
     /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
     ///   token.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn on_erc721_received(&mut self, operator: Address, from: Address, token_id: U256, data: Bytes) -> Result<FixedBytes<4>, Error> {
-    ///     self.erc721_wrapper.on_erc721_received(operator, from, token_id, data, &mut self.erc721)
-    /// }
     fn on_erc721_received(
         &mut self,
         operator: Address,
@@ -166,14 +143,6 @@ pub trait IErc721Wrapper {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn underlying(&self) -> Address {
-    ///     self.erc721_wrapper.underlying()
-    /// }
-    /// ```
     fn underlying(&self) -> Address;
 }
 
@@ -229,8 +198,10 @@ impl IErc721Wrapper for Erc721Wrapper {
         let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
-            // Setting the `auth` argument enables the `_is_authorized` check which verifies that the token exists
-            // (from != 0). Therefore, it is not needed to verify that the return value is not 0 here.
+            // Setting the `auth` argument enables the `_is_authorized` check
+            // which verifies that the token exists (from != 0).
+            // Therefore, it is not needed to verify that the return value is
+            // not 0 here.
             erc721._update(Address::ZERO, token_id, sender)?;
             underlying
                 .safe_transfer_from(
@@ -255,7 +226,7 @@ impl IErc721Wrapper for Erc721Wrapper {
         _operator: Address,
         from: Address,
         token_id: U256,
-        data: Bytes,
+        _data: Bytes,
         erc721: &mut Erc721,
     ) -> Result<FixedBytes<4>, Error> {
         let sender = msg::sender();
@@ -265,7 +236,7 @@ impl IErc721Wrapper for Erc721Wrapper {
             }));
         }
 
-        erc721._safe_mint(from, token_id, &data)?;
+        erc721._safe_mint(from, token_id, &vec![].into())?;
 
         Ok(RECEIVER_FN_SELECTOR.into())
     }
@@ -284,6 +255,7 @@ impl Erc721Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to mint tokens to.
     /// * `token_id` - A mutable reference to the Erc20 contract.
+    /// * `erc721` - Write access to an [`Erc721`] contract.
     ///
     /// # Errors
     ///
@@ -406,8 +378,9 @@ mod tests {
         assert_eq!(contract.sender(alice).underlying(), erc721_address);
     }
 
+    // TODO: motsu should revert on calling a function that doesn't exist at
+    // specified address.
     #[motsu::test]
-    // TODO: motsu should not panic on this test
     #[ignore]
     fn deposit_for_reverts_when_unsupported_token(
         contract: Contract<Erc721WrapperTestExample>,
@@ -423,7 +396,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(alice, token_ids.clone())
-            .motsu_expect_err("should return Error::InvalidUnderlying");
+            .motsu_expect_err("should return Error::UnsupportedToken");
 
         assert!(matches!(
             err,
@@ -776,8 +749,10 @@ mod tests {
         );
     }
 
+    // TODO: motsu should revert on calling a function that doesn't exist at
+    // specified address.
     #[motsu::test]
-    #[ignore] // TODO: issue in motsu
+    #[ignore]
     fn recover_reverts_when_invalid_token(
         contract: Contract<Erc721WrapperTestExample>,
         alice: Address,

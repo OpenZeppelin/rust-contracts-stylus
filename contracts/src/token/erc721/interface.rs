@@ -1,7 +1,7 @@
 //! Solidity Interface of the ERC-721 token.
-pub use interface::*;
+pub use token::*;
 
-mod interface {
+mod token {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
     use alloc::vec;
