@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All events now derive `Debug`. #614
 - `Erc20Wrapper` extension to support token wrapping. #498
 - `Erc20` events derive `Debug`. #498
+- `Erc721Wrapper` extension to support token wrapping. #461
+- `Erc721` events derive `Debug`. #461
 - Implement `MethodError` for all contracts' errors. #594
 - Implement `IErc165` for all base contracts for standard interface detection. #603
 - Expose `INTERFACE_ID` for `Erc20Wrapper`, `Erc4626` and `Erc20FlashMint`. #603
