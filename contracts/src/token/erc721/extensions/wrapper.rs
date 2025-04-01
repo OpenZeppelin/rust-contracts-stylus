@@ -1,7 +1,7 @@
 //! Extension of the ERC-721 token contract to support token wrapping.
 //!
 //! Users can deposit and withdraw an "underlying token" and receive a "wrapped
-//! token" with a matching tokenId. This is useful in conjunction with other
+//! token" with a matching token ID. This is useful in conjunction with other
 //! modules.
 use alloc::{vec, vec::Vec};
 
