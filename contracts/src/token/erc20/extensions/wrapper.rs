@@ -25,7 +25,8 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+        interface::Erc20Interface,
+        utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
     utils::introspection::erc165::{Erc165, IErc165},
@@ -313,7 +314,7 @@ impl Erc20Wrapper {
     ) -> Result<U256, Error> {
         let contract_address = contract::address();
 
-        let underline_token = IErc20Solidity::new(self.underlying());
+        let underline_token = Erc20Interface::new(self.underlying());
 
         let underlying_balance = underline_token
             .balance_of(Call::new_in(self), contract_address)

@@ -16,7 +16,7 @@ use stylus_sdk::{
 };
 
 use crate::token::erc721::{
-    self, utils::IErc721 as IErc721Solidity, Erc721, RECEIVER_FN_SELECTOR,
+    self, interface::Erc721Interface, Erc721, RECEIVER_FN_SELECTOR,
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -193,7 +193,7 @@ impl IErc721Wrapper for Erc721Wrapper {
     ) -> Result<bool, Self::Error> {
         let sender = msg::sender();
         let contract_address = contract::address();
-        let underlying = IErc721Solidity::new(self.underlying());
+        let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
             // This is an "unsafe" transfer that doesn't call any hook on
@@ -226,7 +226,7 @@ impl IErc721Wrapper for Erc721Wrapper {
         erc721: &mut Erc721,
     ) -> Result<bool, Self::Error> {
         let sender = msg::sender();
-        let underlying = IErc721Solidity::new(self.underlying());
+        let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
             erc721._update(Address::ZERO, token_id, sender)?;
@@ -236,6 +236,7 @@ impl IErc721Wrapper for Erc721Wrapper {
                     contract::address(),
                     account,
                     token_id,
+                    vec![].into(),
                 )
                 .map_err(|_| {
                     Error::Erc721FailedOperation(Erc721FailedOperation {
@@ -294,7 +295,7 @@ impl Erc721Wrapper {
         token_id: U256,
         erc721: &mut Erc721,
     ) -> Result<U256, Error> {
-        let underlying = IErc721Solidity::new(self.underlying());
+        let underlying = Erc721Interface::new(self.underlying());
 
         let owner = underlying.owner_of(Call::new_in(self), token_id).map_err(
             |_| {
