@@ -81,8 +81,8 @@ pub trait IErc721Wrapper {
     ///
     /// # Errors
     ///
-    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not a
-    ///   [`Erc721`] contract, or the contract fails to execute the call.
+    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
+    ///   ERC-721 contract, or the contract fails to execute the call.
     ///
     /// # Examples
     ///
@@ -154,7 +154,7 @@ pub trait IErc721Wrapper {
     /// }
     fn on_erc721_received(
         &mut self,
-        _operator: Address,
+        operator: Address,
         from: Address,
         token_id: U256,
         data: Bytes,
@@ -229,6 +229,8 @@ impl IErc721Wrapper for Erc721Wrapper {
         let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
+            // Setting the `auth` argument enables the `_is_authorized` check which verifies that the token exists
+            // (from != 0). Therefore, it is not needed to verify that the return value is not 0 here.
             erc721._update(Address::ZERO, token_id, sender)?;
             underlying
                 .safe_transfer_from(
@@ -496,15 +498,15 @@ mod tests {
             contract.wrapper.underlying.set(erc721_contract.address());
         });
 
-        for token_id in &token_ids {
+        for &token_id in &token_ids {
             erc721_contract
                 .sender(alice)
-                ._mint(alice, *token_id)
+                ._mint(alice, token_id)
                 .motsu_expect("should mint {token_id} for {alice}");
 
             erc721_contract
                 .sender(alice)
-                .approve(contract.address(), *token_id)
+                .approve(contract.address(), token_id)
                 .motsu_expect(
                     "should approve {token_id} for {contract.address()}",
                 );

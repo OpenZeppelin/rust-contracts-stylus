@@ -10,8 +10,7 @@ sol! {
     // SPDX-License-Identifier: MIT
     // Compatible with OpenZeppelin Contracts ^5.0.0
     contract ERC721Mock is ERC721 {
-        constructor()
-            ERC721("ERC721Mock", "MTK") {}
+        constructor() ERC721("ERC721Mock", "MTK") {}
 
         function safeMint(address to, uint256 tokenId) public {
             _safeMint(to, tokenId);
