@@ -777,7 +777,6 @@ mod tests {
     #[ignore] // TODO: issue in motsu
     fn recover_reverts_when_invalid_token(
         contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -786,11 +785,6 @@ mod tests {
         contract.init(alice, |contract| {
             contract.wrapper.underlying.set(invalid_token_address);
         });
-
-        erc721_contract
-            .sender(alice)
-            ._mint(alice, token_id)
-            .motsu_expect("should mint {token_id} for {alice}");
 
         let err = contract
             .sender(alice)
