@@ -251,17 +251,20 @@ fn batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
     // by coeff.
 
     // First pass: compute [a, ab, abc, ...]
-    let mut prod = Vec::with_capacity(v.len());
     let mut tmp = F::one();
-    for f in v.iter().filter(|f| !f.is_zero()) {
-        tmp *= f;
-        prod.push(tmp);
-    }
+    let prod: Vec<_> = v
+        .iter()
+        .filter(|f| !f.is_zero())
+        .map(|f| {
+            tmp *= f;
+            tmp
+        })
+        .collect();
 
     // Invert `tmp`.
     tmp = tmp.inverse().expect("should not be zero");
 
-    // Multiply product by coeff, so all inverses will be scaled by coeff.
+    // Multiply product by coeff, so coeff will scale all inverses.
     tmp *= coeff;
 
     // Second pass: iterate backwards to compute inverses
