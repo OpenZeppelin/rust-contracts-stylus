@@ -729,9 +729,9 @@ mod tests {
         let initial_wrapped_balance =
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap();
 
-        let operator = erc721_contract.address();
+        let operator = alice;
         let interface_id = contract
-            .sender(operator)
+            .sender(erc721_contract.address())
             .on_erc721_received(operator, alice, token_id, vec![].into())
             .motsu_expect("should handle ERC721Received");
 
