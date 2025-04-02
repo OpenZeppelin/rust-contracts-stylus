@@ -64,11 +64,12 @@ pub struct Erc721Wrapper {
     underlying: StorageAddress,
 }
 
-/// ERC-721 Wrapper Standard Interface
-pub trait IErc721Wrapper {
-    /// The error type associated to the trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc721Wrapper {}
 
+impl Erc721Wrapper {
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// `token_ids`.
     ///
@@ -84,83 +85,12 @@ pub trait IErc721Wrapper {
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
     ///   ERC-721 contract, or the contract fails to execute the call.
     /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
-    fn deposit_for(
+    pub fn deposit_for(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
-    ) -> Result<bool, Self::Error>;
-
-    /// Allow a user to burn wrapped tokens and withdraw the corresponding
-    /// `token_ids` of the underlying tokens.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `account` - The account to withdraw tokens to.
-    /// * `token_ids` - List of underlying token ids to withdraw.
-    /// * `erc721` - Write access to an [`Erc721`] contract.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
-    ///   ERC-721 contract, or the contract fails to execute the call.
-    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_update`].
-    fn withdraw_to(
-        &mut self,
-        account: Address,
-        token_ids: Vec<U256>,
-        erc721: &mut Erc721,
-    ) -> Result<bool, Self::Error>;
-
-    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
-    /// minting on direct ERC-721 transfers to this contract.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `operator` - The operator of the transfer.
-    /// * `from` - The sender of the transfer.
-    /// * `token_id` - The token id of the transfer.
-    /// * `data` - The data of the transfer.
-    /// * `erc721` - Write access to an [`Erc721`] contract.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
-    ///   token.
-    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
-    fn on_erc721_received(
-        &mut self,
-        operator: Address,
-        from: Address,
-        token_id: U256,
-        data: Bytes,
-        erc721: &mut Erc721,
-    ) -> Result<FixedBytes<4>, Self::Error>;
-
-    /// Returns the underlying token.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    fn underlying(&self) -> Address;
-}
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for Erc721Wrapper {}
-
-impl IErc721Wrapper for Erc721Wrapper {
-    type Error = Error;
-
-    fn deposit_for(
-        &mut self,
-        account: Address,
-        token_ids: Vec<U256>,
-        erc721: &mut Erc721,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         let sender = msg::sender();
         let contract_address = contract::address();
         let underlying = Erc721Interface::new(self.underlying());
@@ -189,12 +119,27 @@ impl IErc721Wrapper for Erc721Wrapper {
         Ok(true)
     }
 
-    fn withdraw_to(
+    /// Allow a user to burn wrapped tokens and withdraw the corresponding
+    /// `token_ids` of the underlying tokens.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `account` - The account to withdraw tokens to.
+    /// * `token_ids` - List of underlying token ids to withdraw.
+    /// * `erc721` - Write access to an [`Erc721`] contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
+    ///   ERC-721 contract, or the contract fails to execute the call.
+    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_update`].
+    pub fn withdraw_to(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         let sender = msg::sender();
         let underlying = Erc721Interface::new(self.underlying());
 
@@ -222,7 +167,24 @@ impl IErc721Wrapper for Erc721Wrapper {
         Ok(true)
     }
 
-    fn on_erc721_received(
+    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
+    /// minting on direct ERC-721 transfers to this contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `operator` - The operator of the transfer.
+    /// * `from` - The sender of the transfer.
+    /// * `token_id` - The token id of the transfer.
+    /// * `data` - The data of the transfer.
+    /// * `erc721` - Write access to an [`Erc721`] contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
+    ///   token.
+    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
+    pub fn on_erc721_received(
         &mut self,
         _operator: Address,
         from: Address,
@@ -242,7 +204,12 @@ impl IErc721Wrapper for Erc721Wrapper {
         Ok(RECEIVER_FN_SELECTOR.into())
     }
 
-    fn underlying(&self) -> Address {
+    /// Returns the underlying token.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    pub fn underlying(&self) -> Address {
         self.underlying.get()
     }
 }

@@ -5,7 +5,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::token::erc721::{
-    extensions::{wrapper, Erc721Wrapper, IErc721Wrapper},
+    extensions::{wrapper, Erc721Wrapper},
     Erc721,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
