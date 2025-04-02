@@ -81,7 +81,7 @@ impl<P: SWCurveConfig> PartialEq for Projective<P> {
 
 impl<P: SWCurveConfig> PartialEq<Affine<P>> for Projective<P> {
     fn eq(&self, other: &Affine<P>) -> bool {
-        *self == other.into_group()
+        self == &other.into_group()
     }
 }
 

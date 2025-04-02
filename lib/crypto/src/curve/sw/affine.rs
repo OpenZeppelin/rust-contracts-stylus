@@ -262,7 +262,7 @@ impl<P: SWCurveConfig> From<Projective<P>> for Affine<P> {
             let x = p.x * zinv_squared;
 
             // Y/Z^3
-            let y = p.y * (zinv_squared * zinv);
+            let y = p.y * zinv_squared * zinv;
 
             Affine::new_unchecked(x, y)
         }
