@@ -101,7 +101,7 @@ impl<P: SWCurveConfig> Affine<P> {
         // Optimise addition with zero.
         if !P::COEFF_A.is_zero() {
             x3b += P::mul_by_a(self.x);
-        };
+        }
         self.y.square() == x3b
     }
 }
