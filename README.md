@@ -30,7 +30,7 @@ If you want to use some of our newest features before they are fully stable or a
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "=0.2.0-alpha.4"
+openzeppelin-stylus = "=0.2.0-rc.0"
 ```
 
 We put great effort in testing the contracts before releasing an alpha, but these are not yet audited and we don't guarantee any backwards compatibility between alpha version.

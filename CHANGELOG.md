@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Changed (Breaking)
+
+## [v0.2.0-rc.0] - 2025-04-22
+
+### Added
+
 - `Erc721Wrapper` extension to support token wrapping. #461
 - Add callable interface for ERC-721. #461
 - Add missing functions to callable ERC-20 interface. #461

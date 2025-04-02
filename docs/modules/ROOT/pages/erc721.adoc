@@ -6,7 +6,7 @@ ERC-721 is a standard for representing ownership of xref:tokens.adoc#different-k
 
 ERC-721 is a more complex standard than ERC-20, with multiple optional extensions, and is split across a number of contracts.
 The OpenZeppelin Contracts provide flexibility regarding how these are combined, along with custom useful extensions.
-Check out the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/struct.Erc721.html[`API reference`] to learn more about these.
+Check out the https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc721/struct.Erc721.html[`API reference`] to learn more about these.
 
 == Constructing an ERC-721 Token Contract
 
@@ -49,7 +49,7 @@ impl GameItem {
 }
 ----
 
-The https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
+The https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
 It extends the contract itself with the name, symbol and base uri for the token.
 
 Also note that, unlike ERC-20, ERC-721 lacks a `decimals` field, since each token is distinct and cannot be partitioned.

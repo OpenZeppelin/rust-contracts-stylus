@@ -415,7 +415,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.2.0-alpha.4"
+version = "0.2.0-rc.0"
 dependencies = [
  "educe",
  "hex-literal",
