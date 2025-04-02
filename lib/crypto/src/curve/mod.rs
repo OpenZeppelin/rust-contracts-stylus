@@ -41,8 +41,8 @@ pub trait CurveConfig: Send + Sync + Sized + 'static {
 
     /// Returns `true` if the cofactor is one.
     fn cofactor_is_one() -> bool {
-        Self::COFACTOR[0] == 1
-            && Self::COFACTOR.iter().skip(1).all(Zero::is_zero)
+        let mut iter = Self::COFACTOR.iter();
+        matches!(iter.next(), Some(1)) && iter.all(Zero::is_zero)
     }
 }
 

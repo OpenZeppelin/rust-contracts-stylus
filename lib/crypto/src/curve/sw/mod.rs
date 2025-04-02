@@ -178,7 +178,7 @@ mod test {
         type BaseField = Fq;
         type ScalarField = Fr;
 
-        const COFACTOR: &'static [u64] = &[0x1];
+        const COFACTOR: &'static [u64] = &[0x1, 0x0];
         const COFACTOR_INV: Fr = Fr::ONE;
     }
 
@@ -196,7 +196,7 @@ mod test {
         fp_from_num!("32670510020758816978083085130507043184471273380659243275938904335757337482424");
 
     #[test]
-    fn test_scalar_mul() {
+    fn scalar_mul() {
         assert!(Affine::generator().mul_bigint(0u32).into_affine().infinity);
 
         let result: Vec<_> = (1u32..25)
@@ -239,7 +239,7 @@ mod test {
     }
 
     #[test]
-    fn test_point_add() {
+    fn point_add() {
         let g = Affine::generator();
         let g_proj: Projective = g.into();
 
@@ -261,7 +261,7 @@ mod test {
     }
 
     #[test]
-    fn test_point_sub() {
+    fn point_sub() {
         let g = Affine::generator();
         let g_proj: Projective = g.into();
 
@@ -275,5 +275,22 @@ mod test {
                 fp_from_hex!("1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A"),
             ).into();
         assert_eq!(g2 - g_proj, g_proj);
+    }
+
+    #[test]
+    fn cofactor_is_one() {
+        #[derive(Clone, Default, PartialEq, Eq)]
+        struct NotOneCofactorConfig;
+
+        impl CurveConfig for NotOneCofactorConfig {
+            type BaseField = Fq;
+            type ScalarField = Fr;
+
+            const COFACTOR: &'static [u64] = &[0x0, 0x0, 0x0, 0x1, 0x0];
+            const COFACTOR_INV: Fr = Fr::ONE;
+        }
+
+        assert!(Config::cofactor_is_one());
+        assert!(!NotOneCofactorConfig::cofactor_is_one());
     }
 }
