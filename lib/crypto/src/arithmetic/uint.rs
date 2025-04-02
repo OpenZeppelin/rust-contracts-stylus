@@ -77,6 +77,12 @@ impl<const N: usize> Uint<N> {
         &self.limbs
     }
 
+    /// Returns inner [`Limbs`] array (constant).
+    #[must_use]
+    pub const fn into_limbs(self) -> Limbs<N> {
+        self.limbs
+    }
+
     /// Returns true if this number is odd (constant).
     #[doc(hidden)]
     #[inline]
@@ -676,14 +682,14 @@ impl<const N: usize> BigInteger for Uint<N> {
 }
 
 impl<const N: usize> BitIteratorBE for Uint<N> {
-    fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
-        self.as_limbs().iter().rev().flat_map(Limb::bit_be_iter)
+    fn bit_be_iter(self) -> impl Iterator<Item = bool> {
+        self.into_limbs().into_iter().rev().flat_map(Limb::bit_be_iter)
     }
 }
 
 impl BitIteratorBE for &[Limb] {
-    fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
-        self.iter().rev().flat_map(Limb::bit_be_iter)
+    fn bit_be_iter(self) -> impl Iterator<Item = bool> {
+        self.iter().rev().copied().flat_map(Limb::bit_be_iter)
     }
 }
 
