@@ -93,16 +93,16 @@ impl<P: SWCurveConfig> Affine<P> {
 
     /// Checks if `self` is a valid point on the curve.
     pub fn is_on_curve(&self) -> bool {
-        if !self.infinity {
-            // Rust does not optimise away addition with zero
-            let mut x3b = P::add_b(self.x.square() * self.x);
-            if !P::COEFF_A.is_zero() {
-                x3b += P::mul_by_a(self.x);
-            };
-            self.y.square() == x3b
-        } else {
-            true
+        if self.infinity {
+            return true;
         }
+
+        let mut x3b = P::add_b(self.x.square() * self.x);
+        // Optimise addition with zero.
+        if !P::COEFF_A.is_zero() {
+            x3b += P::mul_by_a(self.x);
+        };
+        self.y.square() == x3b
     }
 }
 
