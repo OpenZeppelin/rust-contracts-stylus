@@ -83,6 +83,7 @@ pub trait IErc721Wrapper {
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
     ///   ERC-721 contract, or the contract fails to execute the call.
+    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
     fn deposit_for(
         &mut self,
         account: Address,
@@ -102,10 +103,9 @@ pub trait IErc721Wrapper {
     ///
     /// # Errors
     ///
-    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not a
-    ///   [`Erc721`] contract, or the contract fails to execute the call.
-    /// * [`Error::Erc721`] - If the wrapped token for `token_id` does not
-    ///   exist.
+    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
+    ///   ERC-721 contract, or the contract fails to execute the call.
+    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_update`].
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -129,6 +129,7 @@ pub trait IErc721Wrapper {
     ///
     /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
     ///   token.
+    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
     fn on_erc721_received(
         &mut self,
         operator: Address,
@@ -263,6 +264,7 @@ impl Erc721Wrapper {
     ///   [`Erc721`] contract, or the contract fails to execute the call.
     /// * [`Error::Erc721IncorrectOwner`] - If the underlying token is not owned
     ///   by the contract.
+    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
     fn _recover(
         &mut self,
         account: Address,
