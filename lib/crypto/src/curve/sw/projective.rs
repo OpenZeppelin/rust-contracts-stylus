@@ -202,7 +202,7 @@ impl<P: SWCurveConfig> AdditiveGroup for Projective<P> {
             };
 
             // E = 3*A
-            let e = a + &*a.double_in_place();
+            let e = a + a.double_in_place();
 
             // Z3 = 2*Y1*Z1
             self.z *= &self.y;
