@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Changed (Breaking)
+
+## [v0.2.0-alpha.5] - 2025-04-03
+
+### Added
+
 - All events now derive `Debug`. #614
 - `Erc20Wrapper` extension to support token wrapping. #498
 - `Erc20` events derive `Debug`. #498

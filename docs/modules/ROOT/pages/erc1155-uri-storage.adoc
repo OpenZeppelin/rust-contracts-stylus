@@ -7,8 +7,8 @@ This is particularly useful for non-fungible tokens (NFTs) where each token is u
 [[usage]]
 == Usage
 
-In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/uri_storage/index.html[URI Storage] flavour,
-your token should also use https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[`ERC-1155 Metadata URI`] extension to provide additional URI metadata for each token.
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.5/openzeppelin_stylus/token/erc1155/extensions/uri_storage/index.html[URI Storage] flavour,
+your token should also use https://docs.rs/openzeppelin-stylus/0.2.0-alpha.5/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[`ERC-1155 Metadata URI`] extension to provide additional URI metadata for each token.
 You need to create a specified contract as follows:
 
 [source,rust]
