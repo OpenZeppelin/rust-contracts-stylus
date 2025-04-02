@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement `MethodError` for all contracts' errors. #594
 - Implement `IErc165` for all base contracts for standard interface detection. #603
 - Expose `INTERFACE_ID` for `Erc20Wrapper`, `Erc4626` and `Erc20FlashMint`. #603
+- Short Weierstrass elliptic curves primitives. #589
 
 ### Changed
 
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump Stylus SDK to `v0.8.3`. #605
 - Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
 - Poseidon babybear and goldilocks (64-bit) instances now have 256-bit security (capacity 4). #613
+- `BitIteratorBE` (bit iteration) trait at `openzeppelin_crypto` now accepts `self` by value. #589
 
 ### Fixed
 
