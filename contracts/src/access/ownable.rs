@@ -10,12 +10,14 @@
 //! to the owner.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::Address;
+use alloy_primitives::{Address, FixedBytes};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::MethodError, evm, msg, prelude::*, storage::StorageAddress,
 };
+
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -26,6 +28,7 @@ mod sol {
         ///
         /// * `previous_owner` - Address of the previous owner.
         /// * `new_owner` - Address of the new owner.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event OwnershipTransferred(address indexed previous_owner, address indexed new_owner);
     }
@@ -194,6 +197,13 @@ impl Ownable {
     }
 }
 
+impl IErc165 for Ownable {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IOwnable>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::Address;
@@ -201,6 +211,7 @@ mod tests {
     use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{Error, IOwnable, Ownable};
+    use crate::utils::introspection::erc165::IErc165;
 
     unsafe impl TopLevelStorage for Ownable {}
 
@@ -291,5 +302,25 @@ mod tests {
         contract.sender(alice)._transfer_ownership(bob);
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, bob);
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Ownable as IOwnable>::INTERFACE_ID;
+        let expected = 0xe083076;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Ownable::supports_interface(
+            <Ownable as IOwnable>::INTERFACE_ID.into()
+        ));
+        assert!(Ownable::supports_interface(
+            <Ownable as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Ownable::supports_interface(fake_interface_id.into()));
     }
 }

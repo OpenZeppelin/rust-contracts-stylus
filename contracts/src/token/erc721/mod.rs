@@ -35,6 +35,7 @@ mod sol {
         /// * `from` - Address from which the token will be transferred.
         /// * `to` - Address where the token will be transferred to.
         /// * `token_id` - Token id as a number.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Transfer(
             address indexed from,
@@ -47,6 +48,7 @@ mod sol {
         /// * `owner` - Address of the owner of the token.
         /// * `approved` - Address of the approver.
         /// * `token_id` - Token id as a number.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Approval(
             address indexed owner,
@@ -62,6 +64,7 @@ mod sol {
         ///   will manage operations on the token.
         /// * `approved` - Whether or not permission has been granted. If true,
         ///   this means `operator` will be allowed to manage `owner`'s assets.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
     }
@@ -200,7 +203,7 @@ unsafe impl TopLevelStorage for Erc721 {}
 
 /// Required interface of an [`Erc721`] compliant contract.
 #[interface_id]
-pub trait IErc721 {
+pub trait IErc721: IErc165 {
     /// The error type associated to this ERC-721 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
@@ -2667,10 +2670,19 @@ mod tests {
         let actual = <Erc721 as IErc721>::INTERFACE_ID;
         let expected = 0x80ac58cd;
         assert_eq!(actual, expected);
+    }
 
-        let actual = <Erc721 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
-        assert_eq!(actual, expected);
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc721::supports_interface(
+            <Erc721 as IErc721>::INTERFACE_ID.into()
+        ));
+        assert!(Erc721::supports_interface(
+            <Erc721 as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc721::supports_interface(fake_interface_id.into()));
     }
 
     sol_storage! {

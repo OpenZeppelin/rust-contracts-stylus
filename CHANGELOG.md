@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- All events now derive `Debug`. #614
 - `Erc20Wrapper` extension to support token wrapping. #498
 - `Erc20` events derive `Debug`. #498
 - Implement `MethodError` for all contracts' errors. #594
+- Implement `IErc165` for all base contracts for standard interface detection. #603
+- Expose `INTERFACE_ID` for `Erc20Wrapper`, `Erc4626` and `Erc20FlashMint`. #603
 
 ### Changed
 
@@ -19,13 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Bump `cargo-stylus` to `v0.5.10`. #605
+- Bump `cargo-stylus` to `v0.5.11`. #617
 - Bump Stylus SDK to `v0.8.3`. #605
 - Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
+- Poseidon babybear and goldilocks (64-bit) instances now have 256-bit security (capacity 4). #613
 
 ### Fixed
 
--
+- `IErc20Metadata::INTERFACE_ID` now has the correct value.
 
 ## [v0.2.0-alpha.4] - 2025-03-06
 

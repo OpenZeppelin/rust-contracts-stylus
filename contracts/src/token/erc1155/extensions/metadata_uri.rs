@@ -24,6 +24,7 @@ mod sol {
         /// `value` will equal the value returned by [`IErc1155MetadataUri::uri`].
         ///
         /// [guarantees]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event URI(string value, uint256 indexed id);
     }
@@ -102,9 +103,20 @@ mod tests {
         let actual = <Erc1155MetadataUri as IErc1155MetadataUri>::INTERFACE_ID;
         let expected = 0x0e89341c;
         assert_eq!(actual, expected);
+    }
 
-        let actual = <Erc1155MetadataUri as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
-        assert_eq!(actual, expected);
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc1155MetadataUri::supports_interface(
+            <Erc1155MetadataUri as IErc1155MetadataUri>::INTERFACE_ID.into()
+        ));
+        assert!(Erc1155MetadataUri::supports_interface(
+            <Erc1155MetadataUri as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc1155MetadataUri::supports_interface(
+            fake_interface_id.into()
+        ));
     }
 }
