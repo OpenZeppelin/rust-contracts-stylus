@@ -118,7 +118,7 @@ impl Erc721Wrapper {
                 contract_address,
                 token_id,
             ) {
-                Ok(_) => (),
+                Ok(()) => (),
                 Err(e) => {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
@@ -131,7 +131,7 @@ impl Erc721Wrapper {
                         Erc721FailedOperation { token: self.underlying() },
                     ));
                 }
-            };
+            }
 
             erc721._safe_mint(account, token_id, &vec![].into())?;
         }
@@ -179,7 +179,7 @@ impl Erc721Wrapper {
                 token_id,
                 vec![].into(),
             ) {
-                Ok(_) => (),
+                Ok(()) => (),
                 Err(e) => {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
@@ -192,7 +192,7 @@ impl Erc721Wrapper {
                         Erc721FailedOperation { token: self.underlying() },
                     ));
                 }
-            };
+            }
         }
 
         Ok(true)
@@ -646,7 +646,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn withdraw_to_reverts_when_insufficient_balance(
+    fn withdraw_to_reverts_when_nonexistent_token(
         contract: Contract<Erc721WrapperTestExample>,
         erc721_contract: Contract<Erc721>,
         alice: Address,
@@ -668,6 +668,48 @@ mod tests {
             Error::Erc721(erc721::Error::NonexistentToken(
                 erc721::ERC721NonexistentToken { token_id },
             )) if token_id == token_ids[0]
+        ));
+    }
+
+    #[motsu::test]
+    fn withdraw_to_reverts_when_insufficient_approval(
+        contract: Contract<Erc721WrapperTestExample>,
+        erc721_contract: Contract<Erc721>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let tokens = 1;
+        let token_ids = random_token_ids(tokens);
+
+        contract.init(alice, |contract| {
+            contract.wrapper.underlying.set(erc721_contract.address());
+        });
+
+        erc721_contract
+            .sender(alice)
+            ._mint(alice, token_ids[0])
+            .motsu_expect("should mint {token_id} for {alice}");
+
+        erc721_contract
+            .sender(alice)
+            .approve(contract.address(), token_ids[0])
+            .motsu_expect("should approve {token_id} for {contract.address()}");
+
+        assert!(contract
+            .sender(alice)
+            .deposit_for(alice, token_ids.clone())
+            .motsu_expect("should deposit"));
+
+        let err = contract
+            .sender(bob)
+            .withdraw_to(alice, token_ids.clone())
+            .motsu_expect_err("should return Error::Erc721");
+
+        assert!(matches!(
+            err,
+            Error::Erc721(erc721::Error::InsufficientApproval(
+                erc721::ERC721InsufficientApproval { token_id, operator},
+            )) if token_id == token_ids[0] && operator == bob
         ));
     }
 
