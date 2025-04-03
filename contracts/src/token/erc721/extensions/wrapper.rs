@@ -9,7 +9,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
-    call::{Call, MethodError},
+    call::{self, Call, MethodError},
     contract, msg,
     prelude::*,
     storage::StorageAddress,
@@ -49,6 +49,16 @@ pub enum Error {
     UnsupportedToken(ERC721UnsupportedToken),
     /// An operation with an ERC-721 token failed.
     Erc721FailedOperation(Erc721FailedOperation),
+    /// An operation with and ERC-721 token failed, with the reason specified
+    /// by it.
+    ///
+    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
+    /// return data, this error will be encoded either as `Error(string)` or
+    /// `Panic(uint256)`, as those are the built-in errors emitted by default
+    /// by Solidity's special functions `assert`, `require`, and `revert`.
+    ///
+    /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
+    Erc721FailedOperationWithReason(call::Error),
 }
 
 impl MethodError for Error {
@@ -83,7 +93,9 @@ impl Erc721Wrapper {
     /// # Errors
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
-    ///   ERC-721 contract, or the contract fails to execute the call.
+    ///   ERC-721 contract.
+    /// * [`Error::Erc721FailedOperationWithReason`] - If an error occurs during
+    ///   [`erc721::IErc721::transfer_from`] operation on the underlying token.
     /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
     pub fn deposit_for(
         &mut self,
@@ -100,18 +112,26 @@ impl Erc721Wrapper {
             // the receiver. With [`IErc721Wrapper::underlying()`] being trusted
             // (by design of this contract) and no other contracts expected to
             // be called from there, we are safe.
-            underlying
-                .transfer_from(
-                    Call::new_in(self),
-                    sender,
-                    contract_address,
-                    token_id,
-                )
-                .map_err(|_| {
-                    Error::Erc721FailedOperation(Erc721FailedOperation {
-                        token: self.underlying(),
-                    })
-                })?;
+            match underlying.transfer_from(
+                Call::new_in(self),
+                sender,
+                contract_address,
+                token_id,
+            ) {
+                Ok(_) => (),
+                Err(e) => {
+                    if let call::Error::Revert(ref reason) = e {
+                        if !reason.is_empty() {
+                            return Err(
+                                Error::Erc721FailedOperationWithReason(e),
+                            );
+                        }
+                    }
+                    return Err(Error::Erc721FailedOperation(
+                        Erc721FailedOperation { token: self.underlying() },
+                    ));
+                }
+            };
 
             erc721._safe_mint(account, token_id, &vec![].into())?;
         }
@@ -132,7 +152,10 @@ impl Erc721Wrapper {
     /// # Errors
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
-    ///   ERC-721 contract, or the contract fails to execute the call.
+    ///   ERC-721 contract.
+    /// * [`Error::Erc721FailedOperationWithReason`] - If an error occurs during
+    ///   [`erc721::IErc721::safe_transfer_from`] operation on the underlying
+    ///   token.
     /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_update`].
     pub fn withdraw_to(
         &mut self,
@@ -149,19 +172,27 @@ impl Erc721Wrapper {
             // Therefore, it is not needed to verify that the return value is
             // not 0 here.
             erc721._update(Address::ZERO, token_id, sender)?;
-            underlying
-                .safe_transfer_from(
-                    Call::new_in(self),
-                    contract::address(),
-                    account,
-                    token_id,
-                    vec![].into(),
-                )
-                .map_err(|_| {
-                    Error::Erc721FailedOperation(Erc721FailedOperation {
-                        token: self.underlying(),
-                    })
-                })?;
+            match underlying.safe_transfer_from(
+                Call::new_in(self),
+                contract::address(),
+                account,
+                token_id,
+                vec![].into(),
+            ) {
+                Ok(_) => (),
+                Err(e) => {
+                    if let call::Error::Revert(ref reason) = e {
+                        if !reason.is_empty() {
+                            return Err(
+                                Error::Erc721FailedOperationWithReason(e),
+                            );
+                        }
+                    }
+                    return Err(Error::Erc721FailedOperation(
+                        Erc721FailedOperation { token: self.underlying() },
+                    ));
+                }
+            };
         }
 
         Ok(true)
@@ -389,12 +420,20 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(alice, token_ids.clone())
-            .motsu_expect_err("should return Error::Erc721FailedOperation");
+            .motsu_expect_err(
+                "should return Error::Erc721FailedOperationWithReason",
+            );
+
+        let expected_error: Vec<u8> =
+            erc721::Error::NonexistentToken(erc721::ERC721NonexistentToken {
+                token_id: token_ids[0],
+            })
+            .into();
 
         assert!(matches!(
             err,
-            Error::Erc721FailedOperation(Erc721FailedOperation { token })
-                if token == erc721_contract.address()
+            Error::Erc721FailedOperationWithReason(call::Error::Revert(reason))
+                if reason == expected_error
         ));
     }
 
@@ -417,13 +456,23 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .deposit_for(alice, token_ids)
-            .motsu_expect_err("should return Error::Erc721FailedOperation");
+            .deposit_for(alice, token_ids.clone())
+            .motsu_expect_err(
+                "should return Error::Erc721FailedOperationWithReason",
+            );
+
+        let expected_error: Vec<u8> = erc721::Error::InsufficientApproval(
+            erc721::ERC721InsufficientApproval {
+                operator: contract.address(),
+                token_id: token_ids[0],
+            },
+        )
+        .into();
 
         assert!(matches!(
             err,
-            Error::Erc721FailedOperation(Erc721FailedOperation { token })
-                if token == erc721_contract.address()
+            Error::Erc721FailedOperationWithReason(call::Error::Revert(reason))
+                if reason == expected_error
         ));
     }
 
@@ -579,12 +628,20 @@ mod tests {
         let err = contract
             .sender(alice)
             .withdraw_to(Address::ZERO, token_ids.clone())
-            .motsu_expect_err("should return Error::Erc721FailedOperation");
+            .motsu_expect_err(
+                "should return Error::Erc721FailedOperationWithReason",
+            );
+
+        let expected_error: Vec<u8> =
+            erc721::Error::InvalidReceiver(erc721::ERC721InvalidReceiver {
+                receiver: Address::ZERO,
+            })
+            .into();
 
         assert!(matches!(
             err,
-            Error::Erc721FailedOperation(Erc721FailedOperation { token })
-                if token == erc721_contract.address()
+            Error::Erc721FailedOperationWithReason(call::Error::Revert(reason))
+                if reason == expected_error
         ));
     }
 
