@@ -19,8 +19,8 @@ alloy-primitives = "0.8.20"
 path = "../lib/crypto"
 
 [[bin]]
-name = "merkle_differential_test"
-path = "fuzz_targets/merkle_differential_test.rs"
+name = "merkle"
+path = "fuzz_targets/merkle.rs"
 test = false
 doc = false
 bench = false
