@@ -680,7 +680,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde 0.11.1",
  "alloy-sol-types",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -2895,15 +2895,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3114,8 +3105,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "mini-alloc"
 version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b3dc09847999e8f92fb6ff6f3e11e9ac1b1976208aed3d6a3688d94132f4298"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=feat/flatten-error-enum#b60039dcdd492688b25a92d74e0bf5725bbb45ca"
 dependencies = [
  "cfg-if",
 ]
@@ -4447,8 +4437,7 @@ dependencies = [
 [[package]]
 name = "stylus-core"
 version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2434fc6bcabf9b7f1a3d5da44cfa34609b12e98e3fde3f3d0c4709e5726474a"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=feat/flatten-error-enum#b60039dcdd492688b25a92d74e0bf5725bbb45ca"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4459,8 +4448,7 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c003efb32d59dc3f291f4a22c777e81e5dc699cdbcafeefd4a39598bd0c36e7a"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=feat/flatten-error-enum#b60039dcdd492688b25a92d74e0bf5725bbb45ca"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4480,8 +4468,7 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df6cba6ce22094d368abca999750bde1eade17083d5037d036a9fb553cb04532"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=feat/flatten-error-enum#b60039dcdd492688b25a92d74e0bf5725bbb45ca"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4500,8 +4487,7 @@ dependencies = [
 [[package]]
 name = "stylus-test"
 version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdedf2d3c35b94843379767025e94142deaa6919179c2e679953cf48da40924b"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=feat/flatten-error-enum#b60039dcdd492688b25a92d74e0bf5725bbb45ca"
 dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",

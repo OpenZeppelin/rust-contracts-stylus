@@ -16,10 +16,7 @@ use alloy_sol_types::SolCall;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::{MethodError, RawCall},
-    contract::address,
-    function_selector,
-    prelude::*,
+    call::RawCall, contract::address, function_selector, prelude::*,
     types::AddressVM,
 };
 
@@ -67,12 +64,6 @@ pub enum Error {
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 pub use token::*;

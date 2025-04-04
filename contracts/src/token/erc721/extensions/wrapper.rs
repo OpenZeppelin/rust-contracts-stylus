@@ -9,7 +9,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, Call, MethodError},
+    call::{self, Call},
     contract, msg,
     prelude::*,
     storage::StorageAddress,
@@ -59,12 +59,6 @@ pub enum Error {
     ///
     /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
     Erc721FailedOperationWithReason(call::Error),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 /// State of an [`Erc721Wrapper`] token.
