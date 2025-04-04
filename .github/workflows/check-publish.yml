@@ -23,12 +23,6 @@ jobs:
         with:
           rustflags: ""
 
-      - name: Check motsu-proc
-        run: cargo publish -p motsu-proc --dry-run
-
-      - name: Check motsu
-        run: cargo publish -p motsu --dry-run
-
       - name: Check openzeppelin-crypto
         run: cargo publish -p openzeppelin-crypto --target wasm32-unknown-unknown  --dry-run
 

@@ -7,6 +7,9 @@
 //! define sizes for key and value.
 //! Then store a new checkpoint for the current
 //! transaction block using the [`Trace::push`] function.
+
+use alloc::{vec, vec::Vec};
+
 pub mod generic_size;
 
 use alloy_primitives::{uint, U256, U32};
