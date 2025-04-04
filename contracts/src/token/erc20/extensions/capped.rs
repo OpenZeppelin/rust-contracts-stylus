@@ -5,9 +5,12 @@
 //! Note that they will not be capped by simply including this module,
 //! but only once the checks are put in place.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
 use stylus_proc::{public, sol_storage, SolidityError};
+use stylus_sdk::prelude::*;
 
 sol! {
     /// Indicates an error related to the operation that failed

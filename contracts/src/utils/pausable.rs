@@ -14,9 +14,11 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
+use alloc::{vec, vec::Vec};
+
 use alloy_sol_types::sol;
 use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::{evm, msg};
+use stylus_sdk::{evm, msg, prelude::*};
 
 sol! {
     /// Emitted when pause is triggered by `account`.

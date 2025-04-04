@@ -8,7 +8,7 @@ use openzeppelin_stylus::{
     access::ownable::Ownable,
     token::erc20::{Erc20, IErc20},
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::*;
 
 sol_storage! {
     #[entrypoint]

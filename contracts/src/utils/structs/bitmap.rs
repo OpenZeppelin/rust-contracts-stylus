@@ -13,8 +13,12 @@
 //! - Accessing the same warm slot for every 256 _sequential_ indices
 //!
 //! [merkle-distributor]: https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol
+
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{uint, U256};
 use stylus_proc::sol_storage;
+use stylus_sdk::prelude::*;
 
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);

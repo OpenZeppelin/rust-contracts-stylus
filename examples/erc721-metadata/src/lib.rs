@@ -11,7 +11,7 @@ use openzeppelin_stylus::token::erc721::{
     },
     Erc721,
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::*;
 
 sol_storage! {
     #[entrypoint]

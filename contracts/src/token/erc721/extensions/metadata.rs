@@ -1,9 +1,14 @@
 //! Optional Metadata of the ERC-721 standard.
 
-use alloc::string::{String, ToString};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{FixedBytes, U256};
 use stylus_proc::{public, sol_storage};
+use stylus_sdk::prelude::*;
 
 use crate::{
     token::erc721::{Error, IErc721},

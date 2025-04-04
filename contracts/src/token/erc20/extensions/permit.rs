@@ -9,10 +9,13 @@
 //! By not relying on [`crate::token::erc20::IErc20::approve`],
 //! the token holder account doesn’t need to send a transaction,
 //! and thus is not required to hold Ether at all.
+
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{b256, keccak256, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
 use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::{block, prelude::StorageType, storage::TopLevelStorage};
+use stylus_sdk::{block, prelude::*};
 
 use crate::{
     token::erc20::{self, Erc20, IErc20},

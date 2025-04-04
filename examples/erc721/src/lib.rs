@@ -11,10 +11,7 @@ use openzeppelin_stylus::{
     },
     utils::{introspection::erc165::IErc165, Pausable},
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{entrypoint, public, sol_storage},
-};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 sol_storage! {
     #[entrypoint]

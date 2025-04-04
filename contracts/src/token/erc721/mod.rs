@@ -1,5 +1,6 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::vec;
+
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -163,7 +164,9 @@ impl MethodError for Error {
 pub use receiver::IERC721Receiver;
 #[allow(missing_docs)]
 mod receiver {
-    stylus_proc::sol_interface! {
+    use alloc::vec;
+
+    stylus_sdk::prelude::sol_interface! {
         /// [`Erc721`] token receiver interface.
         ///
         /// Interface for any contract that wants to support `safe_transfers`

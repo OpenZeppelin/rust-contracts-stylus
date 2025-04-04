@@ -1,12 +1,13 @@
 //! ERC-721 token with storage-based token URI management.
 //!
 //! It also implements IERC4096, which is an ERC-721 Metadata Update Extension.
-use alloc::string::String;
+
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
 use stylus_proc::sol_storage;
-use stylus_sdk::evm;
+use stylus_sdk::{evm, prelude::*};
 
 use crate::token::erc721::{extensions::Erc721Metadata, Error, IErc721};
 
@@ -108,7 +109,7 @@ impl Erc721UriStorage {
 mod tests {
     use alloy_primitives::U256;
     use stylus_proc::sol_storage;
-    use stylus_sdk::msg;
+    use stylus_sdk::{msg, prelude::*};
 
     use super::Erc721UriStorage;
     use crate::token::erc721::{extensions::Erc721Metadata, Erc721};
