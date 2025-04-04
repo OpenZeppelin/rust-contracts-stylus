@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Erc721Wrapper` extension to support token wrapping. #461
+- Add callable interface for ERC-721. #461
+- Add missing functions to callable ERC-20 interface. #461
 - All events now derive `Debug`. #614
 - `Erc20Wrapper` extension to support token wrapping. #498
 - `Erc20` events derive `Debug`. #498
@@ -22,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Moved `Erc20` callable interface to _/erc20/interface.rs_ module and renamed it to `Erc20Interface`. #461
 - Bump `cargo-stylus` to `v0.5.11`. #617
 - Bump Stylus SDK to `v0.8.3`. #605
 - Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594

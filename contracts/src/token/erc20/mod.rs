@@ -21,6 +21,7 @@ use crate::utils::{
 };
 
 pub mod extensions;
+pub mod interface;
 pub mod utils;
 
 pub use sol::*;
