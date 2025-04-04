@@ -6,8 +6,10 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    prelude::*,
+    stylus_proc::{public, sol_storage, SolidityError},
+};
 
 const ONE: U256 = uint!(1_U256);
 

@@ -9,8 +9,10 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::U256;
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    prelude::*,
+    stylus_proc::{public, sol_storage, SolidityError},
+};
 
 sol! {
     /// Indicates an error related to the operation that failed

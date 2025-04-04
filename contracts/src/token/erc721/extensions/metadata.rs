@@ -7,8 +7,10 @@ use alloc::{
 };
 
 use alloy_primitives::{FixedBytes, U256};
-use stylus_proc::{public, sol_storage};
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    prelude::*,
+    stylus_proc::{public, sol_storage},
+};
 
 use crate::{
     token::erc721::{Error, IErc721},

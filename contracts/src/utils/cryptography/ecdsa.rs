@@ -6,10 +6,10 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::{sol, SolType};
-use stylus_proc::SolidityError;
 use stylus_sdk::{
     call::{self, Call, MethodError},
     prelude::*,
+    stylus_proc::SolidityError,
 };
 
 use crate::utils::cryptography::ecdsa;

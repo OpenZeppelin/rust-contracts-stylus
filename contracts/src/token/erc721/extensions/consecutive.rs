@@ -26,8 +26,12 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::{abi::Bytes, evm, msg, prelude::*};
+use stylus_sdk::{
+    abi::Bytes,
+    evm, msg,
+    prelude::*,
+    stylus_proc::{public, sol_storage, SolidityError},
+};
 
 use crate::{
     token::{

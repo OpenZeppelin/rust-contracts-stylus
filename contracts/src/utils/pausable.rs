@@ -17,8 +17,11 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::{evm, msg, prelude::*};
+use stylus_sdk::{
+    evm, msg,
+    prelude::*,
+    stylus_proc::{public, sol_storage, SolidityError},
+};
 
 sol! {
     /// Emitted when pause is triggered by `account`.

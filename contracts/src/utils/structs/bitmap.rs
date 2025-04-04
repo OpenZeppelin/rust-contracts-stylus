@@ -17,8 +17,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, U256};
-use stylus_proc::sol_storage;
-use stylus_sdk::prelude::*;
+use stylus_sdk::{prelude::*, stylus_proc::sol_storage};
 
 const ONE: U256 = uint!(0x1_U256);
 const HEX_FF: U256 = uint!(0xff_U256);
