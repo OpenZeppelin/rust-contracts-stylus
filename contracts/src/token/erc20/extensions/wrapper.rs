@@ -14,7 +14,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256, U8};
-use alloy_sol_macro::sol;
+pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
     contract, msg,
@@ -25,34 +25,38 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+        interface::Erc20Interface,
+        utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
     utils::introspection::erc165::{Erc165, IErc165},
 };
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-sol! {
-    /// Indicates that the address is not a valid ERC-20 token.
-    ///
-    /// * `token` - Address of the invalid ERC-20 token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidUnderlying(address token);
+    sol! {
+        /// Indicates that the address is not a valid ERC-20 token.
+        ///
+        /// * `token` - Address of the invalid ERC-20 token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidUnderlying(address token);
 
-    /// Indicates that the address is not a valid sender address.
-    ///
-    /// * `sender` - Address of the invalid sender.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidSender(address sender);
+        /// Indicates that the address is not a valid sender address.
+        ///
+        /// * `sender` - Address of the invalid sender.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidSender(address sender);
 
-    /// Indicates that the address is not a valid receiver addresss.
-    ///
-    /// * `receiver` - Address of the invalid receiver.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidReceiver(address receiver);
-
+        /// Indicates that the address is not a valid receiver addresss.
+        ///
+        /// * `receiver` - Address of the invalid receiver.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidReceiver(address receiver);
+    }
 }
 
 /// An [`Erc20Wrapper`] error.
@@ -83,9 +87,9 @@ impl MethodError for Error {
 /// State of an [`Erc20Wrapper`] token.
 #[storage]
 pub struct Erc20Wrapper {
-    /// Token Address of the  underline token
+    /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
-    /// Token decimals.
+    /// Underlying token decimals.
     pub(crate) underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
@@ -148,7 +152,7 @@ pub trait IErc20Wrapper {
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// number of wrapped tokens.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
@@ -187,7 +191,7 @@ pub trait IErc20Wrapper {
     /// Allow a user to burn a number of wrapped tokens and withdraw the
     /// corresponding number of underlying tokens.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to withdraw tokens from.
@@ -287,7 +291,7 @@ impl Erc20Wrapper {
     ///
     /// Internal function that can be exposed with access control if desired.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to mint tokens to.
@@ -310,7 +314,7 @@ impl Erc20Wrapper {
     ) -> Result<U256, Error> {
         let contract_address = contract::address();
 
-        let underline_token = IErc20Solidity::new(self.underlying());
+        let underline_token = Erc20Interface::new(self.underlying());
 
         let underlying_balance = underline_token
             .balance_of(Call::new_in(self), contract_address)

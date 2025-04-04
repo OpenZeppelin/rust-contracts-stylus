@@ -21,7 +21,8 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+        interface::Erc20Interface,
+        utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
     utils::{
@@ -817,7 +818,7 @@ impl IErc4626 for Erc4626 {
     }
 
     fn total_assets(&mut self) -> Result<U256, Self::Error> {
-        let erc20 = IErc20Solidity::new(self.asset());
+        let erc20 = Erc20Interface::new(self.asset());
         let call = Call::new_in(self);
         Ok(erc20
             .balance_of(call, contract::address())
