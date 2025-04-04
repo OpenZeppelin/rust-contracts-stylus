@@ -22,7 +22,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
-    call::{Call, MethodError},
+    call::Call,
     contract, msg,
     prelude::*,
     storage::{StorageAddress, StorageU256},
@@ -79,12 +79,6 @@ pub enum Error {
     InvalidReceiver(ERC3156InvalidReceiver),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 pub use borrower::IERC3156FlashBorrower;

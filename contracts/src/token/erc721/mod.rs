@@ -5,7 +5,7 @@ use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, Call, MethodError},
+    call::{self, Call},
     evm, function_selector, msg,
     prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
@@ -175,12 +175,6 @@ pub enum Error {
     /// Indicates a failure with the `operator` to be approved. Used in
     /// approvals.
     InvalidOperator(ERC721InvalidOperator),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 /// State of an [`Erc721`] token.

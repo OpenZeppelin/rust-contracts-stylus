@@ -7,11 +7,9 @@ use alloc::vec::Vec;
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
-    call::{self, Call, MethodError},
+    call::{self, Call},
     prelude::*,
 };
-
-use crate::utils::cryptography::ecdsa;
 
 /// Address of the `ecrecover` EVM precompile.
 pub const ECRECOVER_ADDR: Address =
@@ -64,12 +62,6 @@ pub enum Error {
     InvalidSignature(ECDSAInvalidSignature),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),
-}
-
-impl MethodError for ecdsa::Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 /// Returns the address that signed a hashed message (`hash`).
