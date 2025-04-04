@@ -101,6 +101,10 @@ pub trait Field:
     /// The multiplicative identity of the field.
     const ONE: Self;
 
+    /// Returns the extension degree of this field.
+    #[must_use]
+    fn extension_degree() -> usize;
+
     /// Returns `self * self`.
     #[must_use]
     fn square(&self) -> Self;
@@ -150,5 +154,15 @@ pub trait Field:
 
         // If res is empty, return one.
         res.unwrap_or(Self::ONE)
+    }
+
+    /// Returns `sum([a_i * b_i])`.
+    #[inline]
+    fn sum_of_products<const T: usize>(a: &[Self; T], b: &[Self; T]) -> Self {
+        let mut sum = Self::zero();
+        for i in 0..a.len() {
+            sum += a[i] * b[i];
+        }
+        sum
     }
 }
