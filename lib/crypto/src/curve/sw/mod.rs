@@ -70,12 +70,9 @@ pub trait SWCurveConfig: super::CurveConfig {
     /// for performing this check (for example, via leveraging curve
     /// isomorphisms).
     fn is_in_correct_subgroup_assuming_on_curve(item: &Affine<Self>) -> bool {
-        if Self::cofactor_is_one() {
-            true
-        } else {
-            Self::mul_affine(item, Self::ScalarField::characteristic())
+        Self::cofactor_is_one()
+            || Self::mul_affine(item, Self::ScalarField::characteristic())
                 .is_zero()
-        }
     }
 
     /// Performs cofactor clearing.
@@ -138,7 +135,7 @@ pub fn sw_double_and_add_projective<P: SWCurveConfig>(
     res
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod test {
     use num_traits::Zero;
 
