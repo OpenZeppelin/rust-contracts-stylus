@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `AccessControlEnumerable` extension to support role member enumeration. #361
+- Add `get_role_member` and `get_role_member_count` methods for role enumeration. #361
+- Add `IAccessControlEnumerable` interface for standard interface detection. #361
 - `Erc721Wrapper` extension to support token wrapping. #461
 - Add callable interface for ERC-721. #461
 - Add missing functions to callable ERC-20 interface. #461
