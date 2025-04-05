@@ -2,9 +2,6 @@
 //!
 //! This implements an optional extension of [`super::control::AccessControl`] that adds
 //! enumerability of all accounts that have been granted a role.
-//!
-//! CAUTION: When using getRoleMember and getRoleMemberCount, make sure you perform
-//! all queries on the same block to avoid inconsistencies.
 
 use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
@@ -87,6 +84,7 @@ impl IAccessControlEnumerable for AccessControlEnumerable {
 
     fn get_role_member_count(&self, role: FixedBytes<32>) -> U256 {
         let members = self.enumeration.role_members.get(role);
+        // SAFETY: members.len() is always <= usize::MAX, so conversion to U256 is safe
         U256::from(members.len())
     }
 }
