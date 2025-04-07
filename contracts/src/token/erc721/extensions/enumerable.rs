@@ -100,7 +100,7 @@ pub trait IErc721Enumerable {
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, Self::Error>;
+    ) -> Result<U256, <Self as IErc721Enumerable>::Error>;
 
     /// Returns the total amount of tokens stored by the contract.
     ///
@@ -124,7 +124,10 @@ pub trait IErc721Enumerable {
     ///
     /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
     ///   bounds for `index`.
-    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
+    fn token_by_index(
+        &self,
+        index: U256,
+    ) -> Result<U256, <Self as IErc721Enumerable>::Error>;
 }
 
 #[public]
@@ -135,7 +138,7 @@ impl IErc721Enumerable for Erc721Enumerable {
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, Self::Error> {
+    ) -> Result<U256, <Self as IErc721Enumerable>::Error> {
         let token = self.owned_tokens.getter(owner).get(index);
 
         if token.is_zero() {
@@ -150,7 +153,10 @@ impl IErc721Enumerable for Erc721Enumerable {
         U256::from(tokens_length)
     }
 
-    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error> {
+    fn token_by_index(
+        &self,
+        index: U256,
+    ) -> Result<U256, <Self as IErc721Enumerable>::Error> {
         self.all_tokens.get(index).ok_or(
             ERC721OutOfBoundsIndex { owner: Address::ZERO, index }.into(),
         )

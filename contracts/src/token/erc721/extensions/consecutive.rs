@@ -164,11 +164,17 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
-    fn balance_of(&self, owner: Address) -> Result<U256, Error> {
+    fn balance_of(
+        &self,
+        owner: Address,
+    ) -> Result<U256, <Self as IErc721>::Error> {
         Ok(self.erc721.balance_of(owner)?)
     }
 
-    fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
+    fn owner_of(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error> {
         self._require_owned(token_id)
     }
 
@@ -177,7 +183,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         // TODO: Once the SDK supports the conversion,
         // use alloy_primitives::bytes!("") here.
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
@@ -190,7 +196,7 @@ impl IErc721 for Erc721Consecutive {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         self.transfer_from(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
             msg::sender(),
@@ -206,7 +212,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
                 ERC721InvalidReceiver { receiver: Address::ZERO },
@@ -229,7 +235,11 @@ impl IErc721 for Erc721Consecutive {
         Ok(())
     }
 
-    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), <Self as IErc721>::Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -237,11 +247,14 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         Ok(self.erc721.set_approval_for_all(operator, approved)?)
     }
 
-    fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
+    fn get_approved(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error> {
         self._require_owned(token_id)?;
         Ok(self.erc721._get_approved(token_id))
     }
