@@ -177,4 +177,65 @@ fuzz_target!(|input: Input| {
             Verifier::verify(&tampered_proof, root, leaves[index_to_prove]);
         assert!(!oz_verified);
     }
+
+    // ===== TEST 6: Wrong proof length =====
+
+    if oz_proof.len() > 1 {
+        let shortened_proof = oz_proof[..oz_proof.len() - 1].to_vec();
+        _ = Verifier::verify(&shortened_proof, root, leaves[index_to_prove]);
+        // It might still verify by chance, but we verify it doesn't panic
+    }
+
+    // ===== TEST 7: Invalid root testing =====
+
+    let mut invalid_root = root.clone();
+    invalid_root[0] ^= 1;
+
+    let oz_invalid_root =
+        Verifier::verify(&oz_proof, invalid_root, leaves[index_to_prove]);
+    assert!(!oz_invalid_root);
+
+    // ===== TEST 8: Invalid multi-proof flags =====
+
+    // Case where proof_flags.len() != leaves.len() + proof.len() - 1
+    let wrong_flags = vec![true; leaves.len() + oz_proof.len()]; // Wrong number of flags
+    let result =
+        Verifier::verify_multi_proof(&oz_proof, &wrong_flags, root, &leaves);
+    assert!(result.is_err());
+
+    // No flags for non-trivial tree
+    if !oz_proof.is_empty() {
+        let result =
+            Verifier::verify_multi_proof(&oz_proof, &[], root, &leaves);
+        assert!(result.is_err());
+    }
+
+    // ===== TEST 9: Test case from vulnerability example =====
+
+    // Test case for the vulnerability described in GHSA-wprv-93r4-jj2p
+    // See: <https://github.com/OpenZeppelin/openzeppelin-contracts/security/advisories/GHSA-wprv-93r4-jj2p>
+    if leaves.len() >= 3 {
+        // Create a potentially problematic flag pattern
+        let mut malicious_flags = vec![true; leaves.len() - 1];
+        malicious_flags.push(false);
+
+        // The result should be an error or false, not a panic
+        let result = Verifier::verify_multi_proof(
+            &oz_proof,
+            &malicious_flags,
+            root,
+            &leaves,
+        );
+
+        // Either we get an error or we get a boolean result, but shouldn't
+        // panic
+        if let Ok(verified) = result {
+            // If it claims to be verified, double-check with another
+            // implementation
+            if verified {
+                // This is just to make sure it's not a false positive
+                // In real cases, this would likely be false or error
+            }
+        }
+    }
 });

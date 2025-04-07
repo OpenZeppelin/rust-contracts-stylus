@@ -13,7 +13,7 @@ stylus-sdk = { version = "0.8.3", default-features = false, features = [
     "mini-alloc",
 ] }
 rs_merkle = { version = "1.5.0", features = ["keccak256"] }
-alloy-primitives = "0.8.20"
+alloy-primitives = { version = "=0.8.20", default-features = false }
 
 [dependencies.openzeppelin-crypto]
 path = "../lib/crypto"

@@ -801,4 +801,39 @@ mod tests {
         // invalid if root != leaf
         assert!(!Verifier::verify(&proof, root, leaf));
     }
+
+    #[test]
+    fn verify_reverts_processing_manipulated_proofs_with_a_zero_value_node_at_depth_1(
+    ) {
+        // Create a merkle tree that contains a zero leaf at depth 1
+        // ```js
+        // const { MerkleTree } = require('merkletreejs'); // v0.2.32
+        // const keccak256 = require('keccak256'); // v1.0.6
+        //
+        // const leaves = [keccak256('real leaf'), Buffer.alloc(32, 0)];
+        // const merkleTree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        // const root = merkleTree.getRoot();
+        // ```
+        bytes! {
+            root = "f2d552e1e4c59d4f0fa2b80859febc9e4bdc915dff37c56c858550d8b64659a5";
+            leaf = "5e941ddd8f313c0b39f92562c0eca709c3d91360965d396aaef584b3fa76889a";
+        }
+
+        let malicious_leaves = bytes_array! {
+            "1f23ad5fc0ee6ccbe2f3d30df856758f05ad9d03408a51a99c1c9f0854309db2",
+            "4e7e8301f5d206748d1c4f822e3564ddb1124f86591a839f58dfc2f007983b61",
+            "613994f4e324d0667c07857cd5d147994bc917da5d07ee63fc3f0a1fe8a18e34",
+        };
+
+        let malicious_proof = [leaf, leaf];
+        let malicious_proof_flags = vec![true, true, false];
+
+        assert!(Verifier::verify_multi_proof(
+            &malicious_proof,
+            &malicious_proof_flags,
+            root,
+            &malicious_leaves
+        )
+        .is_err())
+    }
 }
