@@ -806,6 +806,9 @@ mod tests {
     fn verify_reverts_processing_manipulated_proofs_with_a_zero_value_node_at_depth_1(
     ) {
         // Create a merkle tree that contains a zero leaf at depth 1
+        //
+        // Taken from https://github.com/advisories/GHSA-wprv-93r4-jj2p
+        //
         // ```js
         // const { MerkleTree } = require('merkletreejs'); // v0.2.32
         // const keccak256 = require('keccak256'); // v1.0.6
