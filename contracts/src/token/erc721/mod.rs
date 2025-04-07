@@ -17,6 +17,7 @@ use crate::utils::{
 };
 
 pub mod extensions;
+pub mod interface;
 mod receiver;
 pub use receiver::IERC721Receiver;
 

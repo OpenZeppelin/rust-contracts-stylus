@@ -40,9 +40,9 @@ use stylus_sdk::{
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
-    token::erc20::utils::{
-        safe_erc20::{self, ISafeErc20, SafeErc20},
-        IErc20,
+    token::erc20::{
+        interface::Erc20Interface,
+        utils::safe_erc20::{self, ISafeErc20, SafeErc20},
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
@@ -458,7 +458,7 @@ impl IVestingWallet for VestingWallet {
         token: Address,
         timestamp: u64,
     ) -> Result<U256, Self::Error> {
-        let erc20 = IErc20::new(token);
+        let erc20 = Erc20Interface::new(token);
         let balance = erc20
             .balance_of(Call::new_in(self), contract::address())
             .map_err(|_| InvalidToken { token })?;
