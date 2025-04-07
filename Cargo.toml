@@ -46,7 +46,7 @@ edition = "2021"
 license = "MIT"
 keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.1.1"
+version = "0.1.2"
 
 [workspace.lints.rust]
 missing_docs = "warn"
