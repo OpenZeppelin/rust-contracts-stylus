@@ -167,13 +167,13 @@ mod receiver {
     use alloc::vec;
 
     stylus_sdk::prelude::sol_interface! {
-        /// [`Erc721`] token receiver interface.
+        /// [`super::Erc721`] token receiver interface.
         ///
         /// Interface for any contract that wants to support `safe_transfers`
-        /// from [`Erc721`] asset contracts.
+        /// from [`super::Erc721`] asset contracts.
         interface IERC721Receiver {
-            /// Whenever an [`Erc721`] `token_id` token is transferred
-            /// to this contract via [`Erc721::safe_transfer_from`].
+            /// Whenever an [`super::Erc721`] `token_id` token is transferred
+            /// to this contract via [`super::IErc721::safe_transfer_from`].
             ///
             /// It must return its function selector to confirm the token transfer.
             /// If any other value is returned or the interface is not implemented
