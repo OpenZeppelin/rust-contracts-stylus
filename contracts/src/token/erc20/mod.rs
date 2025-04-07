@@ -14,7 +14,7 @@ use stylus_sdk::{
     call::MethodError,
     evm, msg,
     prelude::*,
-    stylus_proc::{public, SolidityError, sol_storage},
+    stylus_proc::{public, sol_storage, SolidityError},
 };
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
