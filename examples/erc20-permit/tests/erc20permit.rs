@@ -65,6 +65,14 @@ fn permit_struct_hash(
     )))
 }
 
+// I was unable to find a function in alloy that converts `v` into [non-eip155
+// value], so I implemented the logic manually.
+//
+// [non-eip155 value]: https://eips.ethereum.org/EIPS/eip-155
+fn to_non_eip155_v(v: bool) -> u8 {
+    v as u8 + 27
+}
+
 // ============================================================================
 // Integration Tests: ERC-20 Permit Extension
 // ============================================================================
@@ -103,7 +111,7 @@ async fn error_when_expired_deadline_for_permit(
         bob_addr,
         balance,
         EXPIRED_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        to_non_eip155_v(signature.v()),
         signature.r().into(),
         signature.s().into()
     ))
@@ -152,7 +160,7 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        to_non_eip155_v(signature.v()),
         signature.r().into(),
         signature.s().into()
     ))?;
@@ -237,7 +245,7 @@ async fn permit_rejects_reused_signature(
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        to_non_eip155_v(signature.v()),
         signature.r().into(),
         signature.s().into()
     ))?;
@@ -247,7 +255,7 @@ async fn permit_rejects_reused_signature(
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        to_non_eip155_v(signature.v()),
         signature.r().into(),
         signature.s().into()
     ))
@@ -312,7 +320,7 @@ async fn permit_rejects_invalid_signature(
         bob_addr,
         balance,
         FAIR_DEADLINE,
-        signature.v().y_parity_byte_non_eip155().unwrap(),
+        to_non_eip155_v(signature.v()),
         signature.r().into(),
         signature.s().into()
     ))
