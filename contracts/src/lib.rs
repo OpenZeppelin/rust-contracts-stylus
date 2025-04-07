@@ -39,7 +39,11 @@ impl MyContract { }
 ```
 */
 
-#![allow(clippy::pub_underscore_fields, clippy::module_name_repetitions)]
+#![allow(
+    clippy::pub_underscore_fields,
+    clippy::module_name_repetitions,
+    deprecated
+)]
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;

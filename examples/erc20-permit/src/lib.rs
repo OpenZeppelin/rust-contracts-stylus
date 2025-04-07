@@ -7,7 +7,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
     token::erc20::extensions::Erc20Permit, utils::cryptography::eip712::IEip712,
 };
-use stylus_sdk::prelude::{entrypoint, public, sol_storage};
+use stylus_sdk::prelude::*;
 
 sol_storage! {
     #[entrypoint]

@@ -4,7 +4,6 @@ use alloy::{
     providers::{Provider, ProviderBuilder},
     signers::{local::PrivateKeySigner, Signature, Signer},
 };
-use eyre::Result;
 use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -12,6 +11,8 @@ use crate::{
     deploy::Deployer,
     system::{fund_account, Wallet, RPC_URL_ENV_VAR_NAME},
 };
+
+const DEFAULT_FUNDING_ETH: u32 = 100;
 
 /// Type that corresponds to a test account.
 #[derive(Clone, Debug)]
@@ -23,12 +24,12 @@ pub struct Account {
 }
 
 impl Account {
-    /// Create a new account.
+    /// Create a new account with a default funding of [`DEFAULT_FUNDING_ETH`].
     ///
     /// # Errors
     ///
     /// May fail if funding the newly created account fails.
-    pub async fn new() -> Result<Self> {
+    pub async fn new() -> eyre::Result<Self> {
         AccountFactory::create().await
     }
 
@@ -71,6 +72,7 @@ impl Account {
     }
 
     /// Create a configurable smart contract deployer on behalf of this account.
+    #[must_use]
     pub fn as_deployer(&self) -> Deployer {
         Deployer::new(self.url().to_string(), self.pk())
     }
@@ -103,7 +105,7 @@ impl AccountFactory {
 
         let signer = PrivateKeySigner::random();
         let addr = signer.address();
-        fund_account(addr, "100")?;
+        fund_account(addr, DEFAULT_FUNDING_ETH)?;
 
         let rpc_url = std::env::var(RPC_URL_ENV_VAR_NAME)
             .expect("failed to load RPC_URL var from env")

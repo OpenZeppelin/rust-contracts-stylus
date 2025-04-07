@@ -1,5 +1,5 @@
 //! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
-//! in https://eips.ethereum.org/EIPS/eip-2309[ERC-2309].
+//! in [ERC-2309].
 //!
 //! This extension allows the minting large batches of tokens, during
 //! contract construction only. For upgradeable contracts, this implies that
@@ -21,13 +21,19 @@
 //! As opposed to the Solidity implementation of Consecutive, there is no
 //! restriction on the [`Erc721Consecutive::_update`] function call since it is
 //! not possible to call a Rust function from the Solidity constructor.
+//!
+//! [ERC-2309]: https://eips.ethereum.org/EIPS/eip-2309
 
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use alloy_sol_types::sol;
-use stylus_proc::{public, sol_storage, SolidityError};
-use stylus_sdk::{abi::Bytes, evm, msg, prelude::TopLevelStorage};
+use stylus_sdk::{
+    abi::Bytes,
+    evm, msg,
+    prelude::*,
+    stylus_proc::{public, sol_storage, SolidityError},
+};
 
 use crate::{
     token::{

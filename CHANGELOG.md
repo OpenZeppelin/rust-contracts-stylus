@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
--
+- Bump `stylus-sdk` to `0.8.3`. #621
 
 ### Fixed
 
