@@ -779,4 +779,26 @@ mod tests {
         );
         assert!(verification.is_err());
     }
+
+    #[test]
+    fn verify_empty_proof_should_mean_leaf_equal_to_root() {
+        // ```js
+        // const merkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
+        //
+        // const root = merkleTree.root;
+        // const leaf = merkleTree.leafHash(['a']);
+        // const proof = merkleTree.getProof(['a']);
+        // ```
+        bytes! {
+            root = "f2129b5a697531ef818f644564a6552b35c549722385bc52aa7fe46c0b5f46b1";
+            leaf = "9c15a6a0eaeed500fd9eed4cbeab71f797cefcc67bfd46683e4d2e6ff7f06d1c";
+        };
+        let proof = [];
+
+        // valid if root == leaf
+        assert!(Verifier::verify(&proof, root, root));
+
+        // invalid if root != leaf
+        assert!(!Verifier::verify(&proof, root, leaf));
+    }
 }

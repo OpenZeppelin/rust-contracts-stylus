@@ -139,4 +139,42 @@ fuzz_target!(|input: Input| {
             );
         }
     }
+
+    // ===== TEST 4: Edge cases - Zero-value leaf nodes =====
+
+    let mut leaves_with_zero = leaves.clone();
+    leaves_with_zero[index_to_prove] = [0u8; 32];
+
+    let tree_with_zero =
+        MerkleTree::<Keccak256>::from_leaves(&leaves_with_zero);
+    if let Some(root_with_zero) = tree_with_zero.root() {
+        let proof_with_zero = tree_with_zero.proof(&[index_to_prove]);
+
+        let rs_verified = proof_with_zero.verify(
+            root_with_zero,
+            &[index_to_prove],
+            &[leaves_with_zero[index_to_prove]],
+            leaves_with_zero.len(),
+        );
+
+        let oz_proof_zero = proof_with_zero.proof_hashes();
+        let oz_verified = Verifier::verify(
+            &oz_proof_zero,
+            root_with_zero,
+            leaves_with_zero[index_to_prove],
+        );
+
+        assert_eq!(oz_verified, rs_verified);
+    }
+
+    // ===== TEST 5: Tampering with proofs =====
+
+    if !oz_proof.is_empty() {
+        let mut tampered_proof = oz_proof.clone();
+        tampered_proof[0][0] ^= 1; // Flip one bit
+
+        let oz_verified =
+            Verifier::verify(&tampered_proof, root, leaves[index_to_prove]);
+        assert!(!oz_verified);
+    }
 });
