@@ -11,6 +11,8 @@ use rs_merkle::{algorithms::Keccak256, Hasher, MerkleTree};
 
 const MIN_LEAVES: usize = 2;
 const MAX_LEAVES: usize = 31;
+const MIN_INDICES: usize = 1;
+const MAX_INDICES: usize = 3;
 
 #[derive(Debug)]
 struct Leaves(Vec<[u8; 32]>);
@@ -49,7 +51,8 @@ impl<'a> Arbitrary<'a> for Input {
     fn arbitrary(u: &mut Unstructured<'a>) -> ArbitraryResult<Self> {
         let leaves: Leaves = u.arbitrary()?;
 
-        let num_indices = u.int_in_range(1..=std::cmp::min(3, leaves.len()))?;
+        let idx_range = MIN_INDICES..=std::cmp::min(MAX_INDICES, leaves.len());
+        let num_indices = u.int_in_range(idx_range)?;
         let mut indices_to_prove = Vec::with_capacity(num_indices);
         for _ in 0..num_indices {
             let mut idx = u.int_in_range(0..=(leaves.len() - 1))?;
@@ -83,7 +86,7 @@ fuzz_target!(|input: Input| {
         leaves.len(),
     );
 
-    let oz_proof = proof.proof_hashes().to_vec();
+    let oz_proof = proof.proof_hashes();
     let oz_verified = Verifier::verify(&oz_proof, root, leaves[index_to_prove]);
 
     assert_eq!(oz_verified, rs_verified);
@@ -170,7 +173,7 @@ fuzz_target!(|input: Input| {
     // ===== TEST 5: Tampering with proofs =====
 
     if !oz_proof.is_empty() {
-        let mut tampered_proof = oz_proof.clone();
+        let mut tampered_proof = oz_proof.to_vec();
         tampered_proof[0][0] ^= 1; // Flip one bit
 
         let oz_verified =
