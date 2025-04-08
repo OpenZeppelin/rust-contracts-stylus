@@ -55,9 +55,9 @@ impl<'a> Arbitrary<'a> for Input {
         let num_indices = u.int_in_range(idx_range)?;
         let mut indices_to_prove = Vec::with_capacity(num_indices);
         for _ in 0..num_indices {
-            let mut idx = u.int_in_range(0..=(leaves.len() - 1))?;
+            let mut idx = u.arbitrary::<usize>()? % leaves.len();
             while indices_to_prove.contains(&idx) {
-                idx = u.int_in_range(0..=(leaves.len() - 1))?;
+                idx = (idx + 1) % leaves.len();
             }
             indices_to_prove.push(idx);
         }
