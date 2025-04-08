@@ -68,10 +68,38 @@ impl<'a> Arbitrary<'a> for Input {
     }
 }
 
+#[derive(Clone)]
+struct CommutativeKeccak256;
+impl Hasher for CommutativeKeccak256 {
+    type Hash = [u8; 32];
+
+    fn hash(data: &[u8]) -> Self::Hash {
+        Keccak256::hash(data)
+    }
+
+    fn concat_and_hash(
+        left: &Self::Hash,
+        right: Option<&Self::Hash>,
+    ) -> Self::Hash {
+        match right {
+            Some(right) => {
+                if left > right {
+                    let concat = &[right.as_slice(), left.as_slice()].concat();
+                    Self::hash(concat)
+                } else {
+                    let concat = &[left.as_slice(), right.as_slice()].concat();
+                    Self::hash(concat)
+                }
+            }
+            None => *left,
+        }
+    }
+}
+
 fuzz_target!(|input: Input| {
     let Input { leaves, indices_to_prove, proof_flags } = input;
 
-    let merkle_tree = MerkleTree::<Keccak256>::from_leaves(&leaves);
+    let merkle_tree = MerkleTree::<CommutativeKeccak256>::from_leaves(&leaves);
     let root = merkle_tree.root().expect("root should be present");
 
     // ===== TEST 1: Basic single-proof differential testing =====
@@ -153,7 +181,7 @@ fuzz_target!(|input: Input| {
     leaves_with_zero[index_to_prove] = [0u8; 32];
 
     let tree_with_zero =
-        MerkleTree::<Keccak256>::from_leaves(&leaves_with_zero);
+        MerkleTree::<CommutativeKeccak256>::from_leaves(&leaves_with_zero);
     if let Some(root_with_zero) = tree_with_zero.root() {
         let proof_with_zero = tree_with_zero.proof(&[index_to_prove]);
 
