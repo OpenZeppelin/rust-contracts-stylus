@@ -93,16 +93,14 @@ fuzz_target!(|input: Input| {
 
     // ===== TEST 2: Multi-proof verification with single leaf =====
 
-    // For OpenZeppelin multi-proof verification, we need to prepare appropriate
-    // flags Let's create reasonable flags if the provided ones are
+    // Let's create reasonable flags if the provided ones are
     // inappropriate
-    let appropriate_proof_flags =
-        if proof_flags.len() == oz_proof.len() + leaves.len() - 1 {
-            proof_flags.clone()
-        } else {
-            // Create a dummy set of flags with appropriate length
-            vec![false; oz_proof.len() + leaves.len() - 1]
-        };
+    let appropriate_proof_flags = if proof_flags.len() == oz_proof.len() {
+        proof_flags.clone()
+    } else {
+        // Create a dummy set of flags with appropriate length
+        vec![false; oz_proof.len()]
+    };
 
     let oz_multi_single_result = Verifier::verify_multi_proof(
         &oz_proof,
@@ -129,14 +127,19 @@ fuzz_target!(|input: Input| {
         let oz_multi_proof = multi_proof.proof_hashes();
 
         // Create proper flags for multiple leaves
-        let multi_flags_len = leaf_subset.len() + oz_multi_proof.len() - 1;
-        if multi_flags_len > 0 {
-            let multi_flags = vec![false; multi_flags_len];
-
+        let appropriate_proof_flags = if proof_flags.len()
+            == leaf_subset.len() + oz_multi_proof.len() - 1
+        {
+            proof_flags.clone()
+        } else {
+            // Create a dummy set of flags with appropriate length
+            vec![false; leaf_subset.len() + oz_multi_proof.len() - 1]
+        };
+        if appropriate_proof_flags.len() > 0 {
             // Just test that the function doesn't panic
             _ = Verifier::verify_multi_proof(
                 oz_multi_proof,
-                &multi_flags,
+                &appropriate_proof_flags,
                 root,
                 &leaf_subset,
             );
