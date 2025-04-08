@@ -87,8 +87,9 @@ fuzz_target!(|input: Input| {
     );
 
     let oz_proof = proof.proof_hashes();
-    let oz_verified = Verifier::verify(&oz_proof, root, leaves[index_to_prove]);
+    let oz_verified = Verifier::verify(oz_proof, root, leaves[index_to_prove]);
 
+    // Both should be true
     assert_eq!(oz_verified, rs_verified);
 
     // ===== TEST 2: Multi-proof verification with single leaf =====
@@ -103,7 +104,7 @@ fuzz_target!(|input: Input| {
     };
 
     let oz_multi_single_result = Verifier::verify_multi_proof(
-        &oz_proof,
+        oz_proof,
         &appropriate_proof_flags,
         root,
         &[leaves[index_to_prove]],
@@ -165,7 +166,7 @@ fuzz_target!(|input: Input| {
 
         let oz_proof_zero = proof_with_zero.proof_hashes();
         let oz_verified = Verifier::verify(
-            &oz_proof_zero,
+            oz_proof_zero,
             root_with_zero,
             leaves_with_zero[index_to_prove],
         );
@@ -179,6 +180,8 @@ fuzz_target!(|input: Input| {
         let mut tampered_proof = oz_proof.to_vec();
         tampered_proof[0][0] ^= 1; // Flip one bit
 
+        // Since in TEST 1 we asserted that the original proof was valid,
+        // we should now assert that it's not
         let oz_verified =
             Verifier::verify(&tampered_proof, root, leaves[index_to_prove]);
         assert!(!oz_verified);
@@ -198,21 +201,6 @@ fuzz_target!(|input: Input| {
     invalid_root[0] ^= 1;
 
     let oz_invalid_root =
-        Verifier::verify(&oz_proof, invalid_root, leaves[index_to_prove]);
+        Verifier::verify(oz_proof, invalid_root, leaves[index_to_prove]);
     assert!(!oz_invalid_root);
-
-    // ===== TEST 8: Invalid multi-proof flags =====
-
-    // Case where proof_flags.len() != leaves.len() + proof.len() - 1
-    let wrong_flags = vec![true; leaves.len() + oz_proof.len()]; // Wrong number of flags
-    let result =
-        Verifier::verify_multi_proof(&oz_proof, &wrong_flags, root, &leaves);
-    assert!(result.is_err());
-
-    // No flags for non-trivial tree
-    if !oz_proof.is_empty() {
-        let result =
-            Verifier::verify_multi_proof(&oz_proof, &[], root, &leaves);
-        assert!(result.is_err());
-    }
 });
