@@ -1,7 +1,7 @@
 use std::{fs, io::Write, path::Path};
 
 use rs_merkle::Hasher;
-use test_fuzz::CommutativeKeccak256;
+use test_fuzz::{consts::merkle::MAX_LEAVES, CommutativeKeccak256};
 
 /// Simple struct to represent our test cases
 struct TestCase {
@@ -61,38 +61,36 @@ fn write_corpus_file(dir_path: &str, case: &TestCase) -> std::io::Result<()> {
 fn main() -> std::io::Result<()> {
     let corpus_dir = "corpus/merkle";
 
-    // Create test cases
     let test_cases = vec![
-        // Case 1: Basic tree with 3 leaves
         TestCase {
-            name: "basic_3_leaves",
+            name: "3_leaves_single_index",
             leaves: vec![hash_leaf(b"a"), hash_leaf(b"b"), hash_leaf(b"c")],
-            indices_to_prove: vec![1], // Prove leaf "b"
-            proof_flags: vec![false, false], // Simple proof flags
+            indices_to_prove: vec![1],
+            proof_flags: vec![false, false],
         },
-        // Case 2: More complex tree with 7 leaves (perfect binary tree)
         TestCase {
-            name: "perfect_tree_7_leaves",
-            leaves: vec![
-                hash_leaf(b"data1"),
-                hash_leaf(b"data2"),
-                hash_leaf(b"data3"),
-                hash_leaf(b"data4"),
-                hash_leaf(b"data5"),
-                hash_leaf(b"data6"),
-                hash_leaf(b"data7"),
-            ],
-            indices_to_prove: vec![2, 5], // Prove leaves "data3" and "data6"
-            proof_flags: vec![false, true, false, true], // Multiple proof flags
+            name: "3_leaves_multiple_indices",
+            leaves: vec![hash_leaf(b"a"), hash_leaf(b"b"), hash_leaf(b"c")],
+            indices_to_prove: vec![1, 2],
+            proof_flags: vec![false, true],
         },
-        // Case 3: Edge case with exactly 2 leaves
+        TestCase {
+            name: "perfect_tree_4_leaves",
+            leaves: vec![
+                hash_leaf(b"a"),
+                hash_leaf(b"b"),
+                hash_leaf(b"c"),
+                hash_leaf(b"d"),
+            ],
+            indices_to_prove: vec![0, 3],
+            proof_flags: vec![false, false, true],
+        },
         TestCase {
             name: "minimal_2_leaves",
             leaves: vec![hash_leaf(b"left"), hash_leaf(b"right")],
-            indices_to_prove: vec![0], // Prove "left" leaf
-            proof_flags: vec![false],  // Minimal flags
+            indices_to_prove: vec![0],
+            proof_flags: vec![false],
         },
-        // Case 4: Edge case with zero-value leaf
         TestCase {
             name: "zero_value_leaf",
             leaves: vec![
@@ -103,14 +101,15 @@ fn main() -> std::io::Result<()> {
             indices_to_prove: vec![1], // Prove the zero leaf
             proof_flags: vec![false, false],
         },
-        // Case 5: Maximum number of leaves in our test range
         TestCase {
             name: "max_leaves",
-            leaves: (0..30).map(|i| hash_leaf(&[i as u8])).collect(),
-            indices_to_prove: vec![5, 15, 25], // Prove multiple leaves
-            proof_flags: vec![false, true, false, true, false, true, false],
+            leaves: (0..MAX_LEAVES).map(|i| hash_leaf(&[i as u8])).collect(),
+            indices_to_prove: vec![5, 10, 15, 20, 25],
+            proof_flags: vec![
+                false, true, false, true, false, true, false, false, true,
+                false, true, false, true, false, true, true, false,
+            ],
         },
-        // Case 6: Testing with duplicate data (different indices)
         TestCase {
             name: "duplicate_leaves",
             leaves: vec![
@@ -122,7 +121,7 @@ fn main() -> std::io::Result<()> {
             indices_to_prove: vec![0, 2], // Prove two identical leaves
             proof_flags: vec![false, true, false],
         },
-        // Case 7: Special case testing with specific bit patterns
+        // Special case testing with specific bit patterns
         TestCase {
             name: "bit_patterns",
             leaves: vec![
@@ -132,7 +131,7 @@ fn main() -> std::io::Result<()> {
                 [0x55u8; 32], // Alternating bits (inverted)
             ],
             indices_to_prove: vec![0, 1], // Prove both extremes
-            proof_flags: vec![false, true, false],
+            proof_flags: vec![false, true],
         },
     ];
 

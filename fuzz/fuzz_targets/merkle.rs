@@ -8,12 +8,10 @@ use libfuzzer_sys::{
 };
 use openzeppelin_crypto::merkle::Verifier;
 use rs_merkle::{algorithms::Keccak256, Hasher, MerkleTree};
-use test_fuzz::CommutativeKeccak256;
-
-const MIN_LEAVES: usize = 2;
-const MAX_LEAVES: usize = 31;
-const MIN_INDICES: usize = 1;
-const MAX_INDICES: usize = 3;
+use test_fuzz::{
+    consts::merkle::{MAX_LEAVES, MIN_INDICES, MIN_LEAVES},
+    CommutativeKeccak256,
+};
 
 #[derive(Debug)]
 struct Leaves(Vec<[u8; 32]>);
@@ -52,7 +50,7 @@ impl<'a> Arbitrary<'a> for Input {
     fn arbitrary(u: &mut Unstructured<'a>) -> ArbitraryResult<Self> {
         let leaves: Leaves = u.arbitrary()?;
 
-        let idx_range = MIN_INDICES..=std::cmp::min(MAX_INDICES, leaves.len());
+        let idx_range = MIN_INDICES..=(leaves.len() - 1);
         let num_indices = u.int_in_range(idx_range)?;
         let mut indices_to_prove = Vec::with_capacity(num_indices);
         for _ in 0..num_indices {
@@ -69,6 +67,8 @@ impl<'a> Arbitrary<'a> for Input {
     }
 }
 
+// We construct a valid Merkle tree using [`rs_merkle`] and make various
+// assertions against our own implementation.
 fuzz_target!(|input: Input| {
     let Input { leaves, indices_to_prove, proof_flags } = input;
 

@@ -28,3 +28,11 @@ impl Hasher for CommutativeKeccak256 {
         }
     }
 }
+
+pub mod consts {
+    pub mod merkle {
+        pub const MIN_LEAVES: usize = 2;
+        pub const MAX_LEAVES: usize = 32;
+        pub const MIN_INDICES: usize = 1;
+    }
+}
