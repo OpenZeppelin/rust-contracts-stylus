@@ -404,7 +404,6 @@ mod tests {
     use super::{ISafeErc20, SafeErc20};
     use crate::utils::introspection::erc165::IErc165;
 
-
     #[test]
     fn encodes_true_empty_slice() {
         assert!(!SafeErc20::encodes_true(&[]));
@@ -436,87 +435,19 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer(contract: Contract<Erc20>, alice: Address, bob: Address) {
-        // let one = uint!(1_U256);
+    fn safe_transfer(alice: Address, bob: Address) {}
 
-        // // Initialize state for the test case:
-        // //  Alice's & Bob's balance as `one`.
-        // contract
-        //     .sender(alice)
-        //     ._mint(alice, one)
-        //     .motsu_expect("should mint tokens");
-        // contract
-        //     .sender(alice)
-        //     ._mint(bob, one)
-        //     .motsu_expect("should mint tokens");
+    #[motsu::test]
+    fn safe_transfer_from(alice: Address, bob: Address) {}
 
-        // // Store initial balance & supply.
-        // let initial_alice_balance = contract.sender(alice).balance_of(alice);
-        // let initial_bob_balance = contract.sender(alice).balance_of(bob);
-        // let initial_supply = contract.sender(alice).total_supply();
+    #[motsu::test]
+    fn safe_increase_allowance(alice: Address, bob: Address) {}
 
-        // // Transfer action should work.
-        // let result = contract.sender(alice).transfer(bob, one);
-        // assert!(result.is_ok());
-
-        // // Check updated balance & supply.
-        // assert_eq!(
-        //     initial_alice_balance - one,
-        //     contract.sender(alice).balance_of(alice)
-        // );
-        // assert_eq!(
-        //     initial_bob_balance + one,
-        //     contract.sender(alice).balance_of(bob)
-        // );
-        // assert_eq!(initial_supply, contract.sender(alice).total_supply());
-
-        // contract.assert_emitted(&Transfer { from: alice, to: bob, value: one });
-    }
-
-     fn safe_transfer_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
-        // let one = uint!(1_U256);
-
-        // // Initialize state for the test case:
-        // //  Alice's & Bob's balance as `one`.
-        // contract
-        //     .sender(alice)
-        //     ._mint(alice, one)
-        //     .motsu_expect("should mint tokens");
-        // contract
-        //     .sender(alice)
-        //     ._mint(bob, one)
-        //     .motsu_expect("should mint tokens");
-
-        // // Store initial balance & supply.
-        // let initial_alice_balance = contract.sender(alice).balance_of(alice);
-        // let initial_bob_balance = contract.sender(alice).balance_of(bob);
-        // let initial_supply = contract.sender(alice).total_supply();
-
-        // // Transfer action should work.
-        // let result = contract.sender(alice).transfer(bob, one);
-        // assert!(result.is_ok());
-
-        // // Check updated balance & supply.
-        // assert_eq!(
-        //     initial_alice_balance - one,
-        //     contract.sender(alice).balance_of(alice)
-        // );
-        // assert_eq!(
-        //     initial_bob_balance + one,
-        //     contract.sender(alice).balance_of(bob)
-        // );
-        // assert_eq!(initial_supply, contract.sender(alice).total_supply());
-
-        // contract.assert_emitted(&Transfer { from: alice, to: bob, value: one });
-    }
-
-    fn safe_increase_allowance() {}
-
-    fn safe_decrease_allowance() {}
-
-    fn force_approve() {}
-
+    #[motsu::test]
+    fn safe_decrease_allowance(alice: Address, bob: Address) {}
     
+    #[motsu::test]
+    fn force_approve(alice: Address, bob: Address) {}
 
     #[motsu::test]
     fn interface_id() {
