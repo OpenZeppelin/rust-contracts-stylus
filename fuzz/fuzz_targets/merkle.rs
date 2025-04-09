@@ -124,6 +124,8 @@ fuzz_target!(|input: Input| {
 
     // Let's create reasonable flags if the provided ones are
     // inappropriate
+
+    // Since we have 1 leaf, the flags length is equal to the proof length
     let appropriate_proof_flags = if proof_flags.len() == oz_proof.len() {
         proof_flags.clone()
     } else {
