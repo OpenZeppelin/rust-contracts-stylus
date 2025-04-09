@@ -31,3 +31,10 @@ path = "fuzz_targets/keccak.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "corpus"
+path = "src/merkle/corpus.rs"
+test = false
+doc = false
+bench = false
