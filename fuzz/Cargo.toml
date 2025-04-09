@@ -33,7 +33,7 @@ doc = false
 bench = false
 
 [[bin]]
-name = "corpus"
+name = "gen-merkle-corpus"
 path = "src/merkle/corpus.rs"
 test = false
 doc = false
