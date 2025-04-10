@@ -60,18 +60,26 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Start index of partial rounds.
+    ///
+    /// This represents the point where the algorithm transitions from full rounds
+    /// to partial rounds in the Poseidon permutation.
     #[must_use]
     const fn partial_round_start() -> usize {
         P::ROUNDS_F / 2
     }
 
     /// End index of partial rounds (noninclusive).
+    ///
+    /// This represents the point where the algorithm transitions from partial rounds
+    /// back to full rounds in the Poseidon permutation.
     #[must_use]
     const fn partial_round_end() -> usize {
         Self::partial_round_start() + P::ROUNDS_P
     }
 
     /// Total number of rounds.
+    ///
+    /// This is the sum of full rounds and partial rounds in the Poseidon permutation.
     #[must_use]
     const fn rounds() -> usize {
         P::ROUNDS_F + P::ROUNDS_P
@@ -128,6 +136,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply external round to the state.
+    ///
+    /// External rounds apply S-box to all elements of the state vector, followed by
+    /// the MDS matrix multiplication.
     #[inline]
     fn external_round(&mut self, round: usize) {
         self.add_rc_external(round);
@@ -136,6 +147,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply internal round to the state.
+    ///
+    /// Internal rounds apply S-box only to the first element of the state vector,
+    /// followed by the MDS matrix multiplication, which is more efficient.
     #[inline]
     fn internal_round(&mut self, round: usize) {
         self.add_rc_internal(round);
@@ -164,6 +178,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply sbox to the entire state in the external round.
+    ///
+    /// This raises each element in the state to the power of D, which is
+    /// the S-box degree defined in the Poseidon parameters.
     #[inline]
     fn apply_sbox_external(&mut self) {
         for elem in &mut self.state {
@@ -172,12 +189,19 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply sbox to the first element in the internal round.
+    ///
+    /// This applies the S-box (raising to power D) only to the first element of the state,
+    /// which is more efficient than applying it to all elements.
     #[inline]
     fn apply_sbox_internal(&mut self) {
         self.state[0] = self.state[0].pow(P::D);
     }
 
     /// Apply the external MDS matrix `M_E` to the state.
+    ///
+    /// This function applies the Maximum Distance Separable (MDS) matrix multiplication
+    /// to the entire state vector for external rounds of the Poseidon permutation.
+    /// The implementation is optimized for different state sizes.
     #[allow(clippy::needless_range_loop)]
     #[inline(always)]
     fn matmul_external(&mut self) {
@@ -222,6 +246,12 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Apply the cheap 4x4 MDS matrix to each 4-element part of the state.
+    ///
+    /// This is a specialized matrix multiplication operation optimized for state sizes
+    /// that are multiples of 4. It applies a 4x4 Maximum Distance Separable (MDS) matrix
+    /// to each 4-element block of the state vector. This implementation uses temporary
+    /// variables and in-place operations to efficiently compute the matrix multiplication
+    /// without explicitly constructing the full matrix.
     #[inline(always)]
     fn matmul_m4(&mut self) {
         let state = &mut self.state;
@@ -258,7 +288,10 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
         }
     }
 
-    /// Apply the internal MDS matrix `M_I` to the state.
+    /// Perform matrix multiplication for the internal round.
+    ///
+    /// This applies an optimized version of the MDS matrix multiplication
+    /// for internal rounds, focusing on efficient updates to the state.
     #[inline(always)]
     fn matmul_internal(&mut self) {
         let t = Self::state_size();

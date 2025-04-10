@@ -236,15 +236,38 @@ pub trait AffineRepr:
     }
 }
 
-/// Given a vector of field elements `v_i`, compute the vector `v_i^(-1)`
+/// Efficiently computes the inverse of each non-zero element in the slice.
+///
+/// This function uses Montgomery's trick to compute the inverses of multiple field 
+/// elements with fewer field inversions than would be required by inverting each 
+/// element individually. Zero elements in the slice are left unchanged.
+///
+/// # Arguments
+///
+/// * `v` - A mutable slice of field elements whose inverses will be computed in-place
 pub fn batch_inversion<F: Field>(v: &mut [F]) {
     batch_inversion_and_mul(v, &F::one());
 }
 
-/// Given a vector of field elements `v_i`, compute the vector `coeff *
-/// v_i^(-1)`.
+/// Given a vector of field elements `v_i`, efficiently compute the vector `coeff * v_i^(-1)`.
+///
+/// This function implements Montgomery's trick for batch inversion with an optimization
+/// to multiply each inverted element by a coefficient. Zero elements in the input
+/// vector are left unchanged.
+///
+/// # Implementation
+///
+/// The algorithm works in two passes:
+/// 1. First pass: compute consecutive products [a, ab, abc, ...] 
+/// 2. Invert the final product and scale by the coefficient
+/// 3. Second pass: work backwards, computing each inverse from the previous ones
+///
+/// # Arguments
+///
+/// * `v` - A mutable slice of field elements whose scaled inverses will be computed in-place
+/// * `coeff` - The coefficient to multiply each inverse by
 fn batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
-    // Montgomery’s Trick and Fast Implementation of Masked AES
+    // Montgomery's Trick and Fast Implementation of Masked AES
     // Genelle, Prouff and Quisquater
     // Section 3.2
     // but with an optimization to multiply every element in the returned vector

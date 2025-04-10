@@ -127,6 +127,23 @@ pub trait BuildHasher {
 }
 
 /// Hash the pair `(a, b)` with `state`.
+///
+/// This function sequentially hashes two values using the provided hasher state.
+/// First `a` is hashed, then `b`, and finally the hasher's state is finalized to 
+/// produce the output.
+///
+/// Unlike `commutative_hash_pair`, this function's output is dependent on the 
+/// order of `a` and `b`.
+///
+/// # Arguments
+///
+/// * `a` - The first value to hash
+/// * `b` - The second value to hash 
+/// * `state` - The hasher state to use
+///
+/// # Returns
+///
+/// The finalized hash output from the hasher
 #[inline]
 pub fn hash_pair<S, H>(a: &H, b: &H, mut state: S) -> S::Output
 where
