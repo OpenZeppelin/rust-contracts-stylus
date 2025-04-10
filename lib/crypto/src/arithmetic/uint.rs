@@ -789,7 +789,18 @@ const fn parse_digit(utf8_digit: u8, digit_radix: u32) -> u32 {
     }
 }
 
-/// Parse a single UTF-8 byte.
+/// Parse a single UTF-8 byte into a char.
+///
+/// Converts bytes to characters during compile-time string evaluation.
+/// Only handles ASCII bytes (0x00-0x7F).
+///
+/// # Arguments
+///
+/// * `byte` - Byte to convert.
+///
+/// # Panics
+///
+/// * If the byte is non-ASCII (>= 0x80).
 pub(crate) const fn parse_utf8_byte(byte: u8) -> char {
     match byte {
         0x00..=0x7F => byte as char,
