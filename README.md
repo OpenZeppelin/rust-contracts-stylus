@@ -42,7 +42,7 @@ We put great effort in testing the contracts before releasing an alpha, but thes
 > ```toml
 > [dependencies]
 > alloy-primitives = { version = "=0.8.20", default-features = false }
-> stylus-sdk = { version = "=0.8.1", default-features = false, features = [
+> stylus-sdk = { version = "=0.8.4", default-features = false, features = [
 >   "mini-alloc",
 > ] }
 > ```

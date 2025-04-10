@@ -90,7 +90,7 @@ impl IErc1155Supply for Erc1155Supply {
     }
 
     fn total_supply_all(&self) -> U256 {
-        *self.total_supply_all
+        self.total_supply_all.get()
     }
 
     fn exists(&self, id: U256) -> bool {
