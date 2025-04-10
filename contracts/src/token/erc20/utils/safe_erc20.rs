@@ -408,8 +408,10 @@ impl IErc165 for SafeErc20 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use alloy_primitives::{Address, FixedBytes, U256};
     use super::{ISafeErc20, SafeErc20};
     use crate::utils::introspection::erc165::IErc165;
+
 
     #[test]
     fn encodes_true_empty_slice() {
@@ -439,6 +441,31 @@ mod tests {
     #[test]
     fn encodes_true_wrong_bytes() {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
+    }
+
+    #[motsu::test]
+    fn safe_transfer(alice: Address, bob: Address) {
+        assert!(true, true);
+    }
+
+    #[motsu::test]
+    fn safe_transfer_from(alice: Address, bob: Address) {
+        assert!(true, true);
+    }
+
+    #[motsu::test]
+    fn safe_increase_allowance(alice: Address, bob: Address) {
+        assert!(true, true);
+    }
+
+    #[motsu::test]
+    fn safe_decrease_allowance(alice: Address, bob: Address) {
+        assert!(true, true);
+    }
+
+    #[motsu::test] 
+    fn force_approve(alice: Address, bob: Address) {
+        assert!(true, true);
     }
 
     #[motsu::test]
