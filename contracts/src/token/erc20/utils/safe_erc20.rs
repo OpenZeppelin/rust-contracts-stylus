@@ -25,10 +25,7 @@ use stylus_sdk::{
 
 use crate::{
     token::erc20,
-    utils::{
-        introspection::erc165::{Erc165, IErc165},
-        ReentrantCallHandler,
-    },
+    utils::introspection::erc165::{Erc165, IErc165},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -339,12 +336,17 @@ impl SafeErc20 {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        match RawCall::new()
-            .limit_return_data(0, 32)
-            .call_with_reentrant_handling(token, &call.abi_encode())
-        {
-            Ok(data) if data.is_empty() || Self::encodes_true(&data) => Ok(()),
-            _ => Err(SafeErc20FailedOperation { token }.into()),
+        unsafe {
+            match RawCall::new()
+                .limit_return_data(0, 32)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+            {
+                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
+                    Ok(())
+                }
+                _ => Err(SafeErc20FailedOperation { token }.into()),
+            }
         }
     }
 
@@ -368,14 +370,17 @@ impl SafeErc20 {
         }
 
         let call = IErc20::allowanceCall { owner: address(), spender };
-        let result = RawCall::new()
-            .limit_return_data(0, 32)
-            .call_with_reentrant_handling(token, &call.abi_encode())
-            .map_err(|_| {
-                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                    token,
-                })
-            })?;
+        let result = unsafe {
+            RawCall::new()
+                .limit_return_data(0, 32)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+                .map_err(|_| {
+                    Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                        token,
+                    })
+                })?
+        };
 
         Ok(U256::from_be_slice(&result))
     }
