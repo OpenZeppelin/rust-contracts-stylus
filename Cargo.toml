@@ -126,7 +126,7 @@ proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
 # test helpers
-motsu = "0.7.0"
+motsu = "0.8.0"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
