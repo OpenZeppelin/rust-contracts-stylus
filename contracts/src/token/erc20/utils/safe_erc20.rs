@@ -28,6 +28,8 @@ use crate::{
     utils::introspection::erc165::{Erc165, IErc165},
 };
 
+const BOOL_TYPE_SIZE: usize = 32;
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -338,7 +340,7 @@ impl SafeErc20 {
 
         unsafe {
             match RawCall::new()
-                .limit_return_data(0, 32)
+                .limit_return_data(0, BOOL_TYPE_SIZE)
                 .flush_storage_cache()
                 .call(token, &call.abi_encode())
             {
@@ -372,7 +374,7 @@ impl SafeErc20 {
         let call = IErc20::allowanceCall { owner: address(), spender };
         let result = unsafe {
             RawCall::new()
-                .limit_return_data(0, 32)
+                .limit_return_data(0, BOOL_TYPE_SIZE)
                 .flush_storage_cache()
                 .call(token, &call.abi_encode())
                 .map_err(|_| {
