@@ -63,8 +63,8 @@ all = "warn"
 
 [workspace.dependencies]
 # stylus-related
-stylus-sdk = { version = "=0.6.0", default-features = false }
-stylus-proc = { version = "=0.6.0", default-features = false }
+stylus-sdk = { version = "=0.6.1", default-features = false }
+stylus-proc = { version = "=0.6.1", default-features = false }
 mini-alloc = "0.4.2"
 
 alloy = { version = "=0.1.4", features = [
@@ -105,10 +105,10 @@ quote = "1.0.35"
 openzeppelin-stylus = { path = "contracts" }
 openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
-motsu = { path = "lib/motsu"}
+motsu = { path = "lib/motsu" }
 motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
 e2e = { path = "lib/e2e" }
-e2e-proc = {path = "lib/e2e-proc"}
+e2e-proc = { path = "lib/e2e-proc" }
 
 [profile.release]
 codegen-units = 1
