@@ -28,7 +28,7 @@ motsu.workspace = true
 # Currently, the std feature is only used for testing purposes.
 std = []
 reentrant = ["stylus-sdk/reentrant"]
-export-abi = ["stylus-sdk/export-abi"]
+# export-abi = ["stylus-sdk/export-abi"]
 
 [lib]
 crate-type = ["lib"]

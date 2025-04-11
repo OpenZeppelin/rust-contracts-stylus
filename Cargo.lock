@@ -3130,8 +3130,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "mini-alloc"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bb2aa3693a765fb59300b47151b0587b4058a73dec61f7fda974e160856e4d0"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=fix/nested-errors#7bf391dfa5cc79e42cb83efae209cb824b8d3dc9"
 dependencies = [
  "cfg-if",
 ]
@@ -4582,8 +4581,7 @@ dependencies = [
 [[package]]
 name = "stylus-core"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2586fda31f933cca8f1d90d3cdfb46d85e3e9c21351f0d6c25fbaba4804bf43e"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=fix/nested-errors#7bf391dfa5cc79e42cb83efae209cb824b8d3dc9"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4594,8 +4592,7 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25f21ddceb4cf882b442f5f591f8c3bb8c1fc2b38059759ac55721d3af21850e"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=fix/nested-errors#7bf391dfa5cc79e42cb83efae209cb824b8d3dc9"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4615,8 +4612,7 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5de0c762e897a961dfd004f589a113d8f36bdb464fba6d980d53ff5f0ce3e75e"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=fix/nested-errors#7bf391dfa5cc79e42cb83efae209cb824b8d3dc9"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4627,7 +4623,6 @@ dependencies = [
  "lazy_static",
  "mini-alloc",
  "rclite",
- "regex",
  "stylus-core",
  "stylus-proc",
  "stylus-test",
@@ -4636,8 +4631,7 @@ dependencies = [
 [[package]]
 name = "stylus-test"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78a9611edff24096c74bc3114bc5cd7988662f6855a5f2a23640d9f747b347ff"
+source = "git+https://github.com/bidzyyys/stylus-sdk-rs?branch=fix/nested-errors#7bf391dfa5cc79e42cb83efae209cb824b8d3dc9"
 dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",
