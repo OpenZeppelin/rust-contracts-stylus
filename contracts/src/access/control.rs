@@ -158,7 +158,7 @@ impl AccessControl {
     /// * `role` - The role identifier.
     #[must_use]
     pub fn get_role_admin(&self, role: B256) -> B256 {
-        *self._roles.getter(role).admin_role
+        self._roles.getter(role).admin_role.get()
     }
 
     /// Grants `role` to `account`.

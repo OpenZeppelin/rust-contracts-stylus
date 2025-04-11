@@ -150,7 +150,8 @@ pub unsafe extern "C" fn storage_cache_bytes32(
 /// of [`SSTORE`].
 ///
 /// [`SSTORE`]: https://www.evm.codes/#55
-pub fn storage_flush_cache(_: bool) {
+#[no_mangle]
+pub unsafe extern "C" fn storage_flush_cache(_: bool) {
     // No-op: we don't use the cache in our unit-tests.
 }
 
