@@ -16,7 +16,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError},
+    call::Call,
     contract, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
@@ -76,12 +76,6 @@ pub enum Error {
 
     /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 /// State of an [`Erc20Wrapper`] token.
@@ -186,7 +180,7 @@ pub trait IErc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
 
     /// Allow a user to burn a number of wrapped tokens and withdraw the
     /// corresponding number of underlying tokens.
@@ -219,7 +213,7 @@ pub trait IErc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -243,7 +237,7 @@ impl IErc20Wrapper for Erc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
         let contract_address = contract::address();
         let sender = msg::sender();
 
@@ -272,7 +266,7 @@ impl IErc20Wrapper for Erc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
         if account == contract::address() {
             return Err(ERC20InvalidReceiver { receiver: account }.into());
         }

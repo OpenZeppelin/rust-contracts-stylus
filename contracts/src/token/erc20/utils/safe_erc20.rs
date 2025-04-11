@@ -16,10 +16,7 @@ use alloy_sol_types::SolCall;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::{MethodError, RawCall},
-    contract::address,
-    function_selector,
-    prelude::*,
+    call::RawCall, contract::address, function_selector, prelude::*,
     types::AddressVM,
 };
 
@@ -66,12 +63,6 @@ pub enum Error {
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 pub use token::*;
@@ -125,7 +116,7 @@ pub trait ISafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as ISafeErc20>::Error>;
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the
     /// approval given by `from` to the calling contract. If `token` returns
@@ -150,7 +141,7 @@ pub trait ISafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as ISafeErc20>::Error>;
 
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
@@ -177,7 +168,7 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as ISafeErc20>::Error>;
 
     /// Decrease the calling contract's allowance toward `spender` by
     /// `requested_decrease`. If `token` returns no value, non-reverting
@@ -202,7 +193,7 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as ISafeErc20>::Error>;
 
     /// Set the calling contract's allowance toward `spender` to `value`. If
     /// `token` returns no value, non-reverting calls are assumed to be
@@ -226,7 +217,7 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as ISafeErc20>::Error>;
 }
 
 #[public]
@@ -238,7 +229,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as ISafeErc20>::Error> {
         let call = IErc20::transferCall { to, value };
 
         Self::call_optional_return(token, &call)
@@ -250,7 +241,7 @@ impl ISafeErc20 for SafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as ISafeErc20>::Error> {
         let call = IErc20::transferFromCall { from, to, value };
 
         Self::call_optional_return(token, &call)
@@ -261,7 +252,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as ISafeErc20>::Error> {
         let current_allowance = Self::allowance(token, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
@@ -274,7 +265,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as ISafeErc20>::Error> {
         let current_allowance = Self::allowance(token, spender)?;
 
         if current_allowance < requested_decrease {
@@ -298,7 +289,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as ISafeErc20>::Error> {
         let approve_call = IErc20::approveCall { spender, value };
 
         // Try performing the approval with the desired value.

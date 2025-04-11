@@ -22,7 +22,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
-    call::{Call, MethodError},
+    call::Call,
     contract, msg,
     prelude::*,
     storage::{StorageAddress, StorageU256},
@@ -79,12 +79,6 @@ pub enum Error {
     InvalidReceiver(ERC3156InvalidReceiver),
     /// Error type from [`Erc20`] contract [`erc20::Error`].
     Erc20(erc20::Error),
-}
-
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
-    }
 }
 
 pub use borrower::IERC3156FlashBorrower;
@@ -208,7 +202,7 @@ pub trait IErc3156FlashLender {
         &self,
         token: Address,
         value: U256,
-    ) -> Result<U256, Self::Error>;
+    ) -> Result<U256, <Self as IErc3156FlashLender>::Error>;
 
     /// Performs a flash loan.
     ///
@@ -276,7 +270,7 @@ pub trait IErc3156FlashLender {
         value: U256,
         data: Bytes,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, <Self as IErc3156FlashLender>::Error>;
 }
 
 impl IErc3156FlashLender for Erc20FlashMint {
@@ -294,7 +288,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         &self,
         token: Address,
         _value: U256,
-    ) -> Result<U256, Self::Error> {
+    ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
         if token == contract::address() {
             Ok(self.flash_fee_value.get())
         } else {
@@ -312,7 +306,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         value: U256,
         data: Bytes,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
         let max_loan = self.max_flash_loan(token, erc20);
         if value > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
