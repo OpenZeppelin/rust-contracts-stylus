@@ -2356,15 +2356,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
-name = "mini-alloc"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14eacc4bfcf10da9b6d5185ef51b2dc75434afac34b4d8aabe40f6b141ee071c"
-dependencies = [
- "cfg-if",
-]
-
-[[package]]
 name = "miniz_oxide"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3536,7 +3527,6 @@ dependencies = [
  "hex",
  "keccak-const",
  "lazy_static",
- "mini-alloc",
  "stylus-proc",
 ]
 
