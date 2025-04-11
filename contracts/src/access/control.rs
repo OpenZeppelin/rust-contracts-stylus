@@ -263,7 +263,7 @@ impl IAccessControl for AccessControl {
     }
 
     fn get_role_admin(&self, role: B256) -> B256 {
-        *self.roles.getter(role).admin_role
+        self.roles.getter(role).admin_role.get()
     }
 
     fn grant_role(
