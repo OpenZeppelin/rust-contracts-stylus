@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "access-control-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -793,7 +793,7 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
 name = "basic-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy-primitives",
  "openzeppelin-stylus",
@@ -814,7 +814,7 @@ dependencies = [
 
 [[package]]
 name = "benches"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1254,7 +1254,7 @@ dependencies = [
 
 [[package]]
 name = "cryptography-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1505,7 +1505,7 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "erc20-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1519,7 +1519,7 @@ dependencies = [
 
 [[package]]
 name = "erc20-permit-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-consecutive-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1549,7 +1549,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1564,7 +1564,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-metadata-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "merkle-proofs-example"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -2403,7 +2403,7 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -2552,7 +2552,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "hex-literal",
  "rand",
@@ -2561,7 +2561,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",
