@@ -1,7 +1,43 @@
 //! Extension of AccessControl that allows enumerating the members of each role.
 //!
-//! This implements an optional extension of [`super::control::AccessControl`] that adds
-//! enumerability of all accounts that have been granted a role.
+//! This module implements an optional extension of [`super::control::AccessControl`] that adds
+//! enumerability of all accounts that have been granted a role. This extension is useful when
+//! you need to track and list all accounts that have been granted specific roles in your contract.
+//!
+//! # Overview
+//! 
+//! The `AccessControlEnumerable` extension provides two main functionalities:
+//! 1. Get the number of accounts that have been granted a specific role
+//! 2. Get the account address at a specific index for a role
+//!
+//! # Example
+//!
+//! ```rust,ignore
+//! use openzeppelin_stylus::access::enumerable::{AccessControlEnumerable, IAccessControlEnumerable};
+//!
+//! const ADMIN_ROLE: [u8; 32] = keccak_const::Keccak256::new()
+//!     .update(b"ADMIN_ROLE")
+//!     .finalize();
+//!
+//! #[storage]
+//! struct MyContract {
+//!     #[borrow]
+//!     access: AccessControlEnumerable,
+//! }
+//!
+//! impl MyContract {
+//!     fn get_admins(&self) -> Vec<Address> {
+//!         let count = self.access.get_role_member_count(ADMIN_ROLE.into());
+//!         let mut admins = Vec::new();
+//!         for i in 0..count.as_u64() {
+//!             if let Ok(admin) = self.access.get_role_member(ADMIN_ROLE.into(), i.into()) {
+//!                 admins.push(admin);
+//!             }
+//!         }
+//!         admins
+//!     }
+//! }
+//! ```
 
 use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
@@ -47,17 +83,33 @@ pub trait IAccessControlEnumerable: IAccessControl {
     fn get_role_member_count(role: FixedBytes<32>) -> U256;
 }
 
-/// State for role enumeration functionality
+/// State for role enumeration functionality.
+/// This struct maintains a mapping of roles to their member addresses,
+/// enabling efficient enumeration of role members.
 #[storage]
 #[derive(Debug)]
 pub struct RoleEnumeration {
     /// Mapping from role to list of member addresses.
     /// This tracks all accounts that have been granted each role for enumeration purposes.
+    /// The list is maintained in a deterministic order based on when members were added.
     role_members: StorageMap<FixedBytes<32>, StorageVec<Address>>,
 }
 
 /// State of an enumerable access control contract.
-/// Combines the base AccessControl functionality with role enumeration capabilities.
+/// This struct combines the base AccessControl functionality with role enumeration capabilities,
+/// allowing for both role-based access control and enumeration of role members.
+///
+/// # Features
+///
+/// * All functionality from base AccessControl
+/// * Enumeration of role members
+/// * Tracking of role member count
+/// * Access to role members by index
+///
+/// # Note
+///
+/// The enumeration order of role members is deterministic but may not match the order
+/// in which roles were granted, especially after revocations.
 #[storage]
 #[derive(Debug)]
 pub struct AccessControlEnumerable {
