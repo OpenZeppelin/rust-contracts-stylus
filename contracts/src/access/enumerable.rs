@@ -10,6 +10,13 @@
 //! 1. Get the number of accounts that have been granted a specific role
 //! 2. Get the account address at a specific index for a role
 //!
+//! # Security Considerations
+//!
+//! * Role enumeration is an administrative feature intended for off-chain use. 
+//! * Gas costs increase with the number of role members, so be cautious when using enumeration in transactions.
+//! * Consider implementing view functions that return arrays of role members for off-chain use only.
+//! * The order of role members in enumeration may change when members are removed.
+//!
 //! # Example
 //!
 //! ```rust,ignore
@@ -38,6 +45,13 @@
 //!     }
 //! }
 //! ```
+//!
+//! # Implementation Details
+//!
+//! * Role members are stored in a deterministic order based on when they were added
+//! * When a member is removed, the last member in the list is moved to fill the gap
+//! * Duplicate role assignments are ignored to prevent redundant storage usage
+//! * All role management operations maintain consistency between AccessControl and enumeration state
 
 use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
