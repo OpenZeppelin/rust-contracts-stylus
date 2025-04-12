@@ -1,0 +1,18 @@
+[package]
+name = "access-control-enumerable-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+alloy-primitives = "0.6"
+alloy-sol-macro = "0.6"
+alloy-sol-types = "0.6"
+openzeppelin-stylus = { path = "../.." }
+stylus-sdk = "0.4.1"
+
+[dev-dependencies]
+alloy = "0.6"
+e2e = { path = "../../e2e" }
+eyre = "0.6"
+motsu = "0.1.0" 
