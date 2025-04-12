@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -
 
+## [0.1.2] - 2025-04-11
+
+### Changed (Breaking)
+
+- Bumped Stylus SDK to 0.6.1. #628
+
 ## [0.1.1] - 2024-10-28
 
 ### Changed

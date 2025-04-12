@@ -50,7 +50,7 @@ edition = "2021"
 license = "MIT"
 keywords = ["arbitrum", "ethereum", "stylus"]
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.1.1"
+version = "0.1.2"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -63,8 +63,8 @@ all = "warn"
 
 [workspace.dependencies]
 # stylus-related
-stylus-sdk = "0.6.0"
-stylus-proc = "0.6.0"
+stylus-sdk = "=0.6.1"
+stylus-proc = "=0.6.1"
 
 alloy = { version = "=0.1.4", features = [
   "contract",
@@ -104,10 +104,10 @@ quote = "1.0.35"
 openzeppelin-stylus = { path = "contracts" }
 openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
-motsu = { path = "lib/motsu"}
+motsu = { path = "lib/motsu" }
 motsu-proc = { path = "lib/motsu-proc", version = "0.1.0" }
 e2e = { path = "lib/e2e" }
-e2e-proc = {path = "lib/e2e-proc"}
+e2e-proc = { path = "lib/e2e-proc" }
 
 [profile.release]
 codegen-units = 1
