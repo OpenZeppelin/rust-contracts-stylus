@@ -814,7 +814,7 @@ impl IErc4626 for Erc4626 {
     type Error = Error;
 
     fn asset(&self) -> Address {
-        *self.asset
+        self.asset.get()
     }
 
     fn total_assets(&mut self) -> Result<U256, Self::Error> {
