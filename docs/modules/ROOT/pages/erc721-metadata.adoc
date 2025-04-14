@@ -5,7 +5,7 @@ Extension of xref:erc721.adoc[ERC-721] that adds the optional metadata functions
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.5/openzeppelin_stylus/token/erc721/extensions/metadata/index.html[`ERC-721 Metadata`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
 
 [source,rust]
 ----

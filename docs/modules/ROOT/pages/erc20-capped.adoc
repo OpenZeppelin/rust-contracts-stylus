@@ -5,7 +5,7 @@ Extension of xref:erc20.adoc[ERC-20] that adds a cap to the supply of tokens.
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/extensions/capped/index.html[`ERC-20 Capped`] methods supervising the supply of tokens, you need to add them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.5/openzeppelin_stylus/token/erc20/extensions/capped/index.html[`ERC-20 Capped`] methods supervising the supply of tokens, you need to add them by yourself for your final contract as follows:
 
 [source,rust]
 ----
