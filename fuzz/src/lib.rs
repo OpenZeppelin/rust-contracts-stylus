@@ -1,38 +1,58 @@
-use rs_merkle::{algorithms::Keccak256, Hasher};
+use libfuzzer_sys::arbitrary::{
+    Arbitrary, Result as ArbitraryResult, Unstructured,
+};
 
-#[derive(Clone)]
-pub struct CommutativeKeccak256;
+type Bytes32 = [u8; 32];
 
-impl Hasher for CommutativeKeccak256 {
-    type Hash = [u8; 32];
+#[derive(Debug)]
+pub struct SingleProof {
+    pub leaf: Bytes32,
+    pub proof: Vec<Bytes32>,
+}
 
-    fn hash(data: &[u8]) -> Self::Hash {
-        Keccak256::hash(data)
-    }
+#[derive(Debug)]
+pub struct MultiProof {
+    pub leaves: Vec<Bytes32>,
+    pub proof: Vec<Bytes32>,
+    pub proof_flags: Vec<bool>,
+}
 
-    fn concat_and_hash(
-        left: &Self::Hash,
-        right: Option<&Self::Hash>,
-    ) -> Self::Hash {
-        match right {
-            Some(right) => {
-                if left > right {
-                    let concat = &[right.as_slice(), left.as_slice()].concat();
-                    Self::hash(concat)
-                } else {
-                    let concat = &[left.as_slice(), right.as_slice()].concat();
-                    Self::hash(concat)
-                }
-            }
-            None => *left,
-        }
+#[derive(Debug)]
+pub struct Input {
+    pub root: Bytes32,
+    pub single_proof: SingleProof,
+    pub multi_proof: MultiProof,
+}
+
+impl<'a> Arbitrary<'a> for SingleProof {
+    fn arbitrary(u: &mut Unstructured<'a>) -> ArbitraryResult<Self> {
+        let leaf = u.arbitrary()?;
+        let proof: Vec<Bytes32> = u.arbitrary()?;
+        Ok(SingleProof { leaf, proof })
     }
 }
 
-pub mod consts {
-    pub mod merkle {
-        pub const MIN_LEAVES: usize = 2;
-        pub const MAX_LEAVES: usize = 32;
-        pub const MIN_INDICES: usize = 1;
+impl<'a> Arbitrary<'a> for MultiProof {
+    fn arbitrary(u: &mut Unstructured<'a>) -> ArbitraryResult<Self> {
+        let leaves: Vec<Bytes32> = u.arbitrary()?;
+        let proof: Vec<Bytes32> = u.arbitrary()?;
+
+        let proof_flag_len = leaves.len() + proof.len() - 1;
+        let mut proof_flags = Vec::with_capacity(proof_flag_len);
+        for _ in 0..proof_flag_len {
+            proof_flags.push(u.arbitrary()?);
+        }
+
+        Ok(MultiProof { leaves, proof, proof_flags })
+    }
+}
+
+impl<'a> Arbitrary<'a> for Input {
+    fn arbitrary(u: &mut Unstructured<'a>) -> ArbitraryResult<Self> {
+        let root = u.arbitrary()?;
+        let single_proof = u.arbitrary()?;
+        let multi_proof = u.arbitrary()?;
+
+        Ok(Input { root, single_proof, multi_proof })
     }
 }

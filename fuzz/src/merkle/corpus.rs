@@ -1,19 +1,23 @@
 use std::{fs, io::Write, path::Path};
 
-use rs_merkle::Hasher;
-use test_fuzz::{consts::merkle::MAX_LEAVES, CommutativeKeccak256};
+use openzeppelin_crypto::{
+    hash::{BuildHasher, Hasher},
+    keccak::KeccakBuilder,
+};
+use test_fuzz::{Input, MultiProof, SingleProof};
 
 /// Simple struct to represent our test cases
 struct TestCase {
     name: &'static str,
-    leaves: Vec<[u8; 32]>,
-    indices_to_prove: Vec<usize>,
-    proof_flags: Vec<bool>,
+    input: Input,
 }
 
 /// Function that hashes a byte array using Keccak256
 fn hash_leaf(data: &[u8]) -> [u8; 32] {
-    CommutativeKeccak256::hash(data)
+    let builder = KeccakBuilder;
+    let mut hasher = builder.build_hasher();
+    hasher.update(&data);
+    hasher.finalize()
 }
 
 /// Writes a binary corpus file for libFuzzer
@@ -26,31 +30,62 @@ fn write_corpus_file(dir_path: &str, case: &TestCase) -> std::io::Result<()> {
     let file_path = dir.join(format!("seed_{}", case.name));
     let mut file = fs::File::create(file_path)?;
 
-    // First, write the number of leaves
-    let num_leaves = case.leaves.len() as u32;
+    // Fuzzer will reconstruct the Input struct from the data, so we need to
+    // write the data in the order in which it would be listed if it were
+    // flattened
+    let Input { root, single_proof, multi_proof } = &case.input;
+
+    // === Write the root data ===
+
+    // Write the root length
+    file.write_all(&root.len().to_le_bytes())?;
+    // Write the root
+    file.write_all(root)?;
+
+    // === Write the SingleProof data ===
+
+    // Write the leaf lenght (32 bytes)
+    let leaf_len = single_proof.leaf.len();
+    file.write_all(&leaf_len.to_le_bytes())?;
+
+    // Write the leaf
+    file.write_all(&single_proof.leaf)?;
+
+    // Write the number of proof hashes
+    let num_proof_hashes = single_proof.proof.len();
+    file.write_all(&num_proof_hashes.to_le_bytes())?;
+
+    // Write each proof hash
+    for proof_hash in &single_proof.proof {
+        file.write_all(proof_hash)?;
+    }
+
+    // === Now write the MultiProof data ===
+
+    // Write the number of leaves
+    let num_leaves = multi_proof.leaves.len();
     file.write_all(&num_leaves.to_le_bytes())?;
 
     // Write each leaf
-    for leaf in &case.leaves {
+    for leaf in &multi_proof.leaves {
         file.write_all(leaf)?;
     }
 
-    // Write the number of indices
-    let num_indices = case.indices_to_prove.len() as u32;
-    file.write_all(&num_indices.to_le_bytes())?;
+    // Write the number of multi-proof hashes
+    let num_proof_hashes = multi_proof.proof.len();
+    file.write_all(&num_proof_hashes.to_le_bytes())?;
 
-    // Write each index
-    for &idx in &case.indices_to_prove {
-        let idx_u32 = idx as u32;
-        file.write_all(&idx_u32.to_le_bytes())?;
+    // Write each proof hash
+    for proof_hash in &multi_proof.proof {
+        file.write_all(proof_hash)?;
     }
 
-    // Write the number of flags
-    let num_flags = case.proof_flags.len() as u32;
+    // Write the number of proof flags
+    let num_flags = multi_proof.proof_flags.len();
     file.write_all(&num_flags.to_le_bytes())?;
 
     // Write each flag as a byte
-    for &flag in &case.proof_flags {
+    for &flag in &multi_proof.proof_flags {
         let flag_byte = if flag { 1u8 } else { 0u8 };
         file.write_all(&[flag_byte])?;
     }
@@ -102,8 +137,8 @@ fn main() -> std::io::Result<()> {
             proof_flags: vec![false, false],
         },
         TestCase {
-            name: "max_leaves",
-            leaves: (0..MAX_LEAVES).map(|i| hash_leaf(&[i as u8])).collect(),
+            name: "lots_of_leaves",
+            leaves: (0..32).map(|i| hash_leaf(&[i as u8])).collect(),
             indices_to_prove: vec![5, 10, 15, 20, 25],
             proof_flags: vec![
                 false, true, false, true, false, true, false, false, true,
