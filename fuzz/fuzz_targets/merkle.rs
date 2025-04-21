@@ -14,12 +14,13 @@ fuzz_target!(|input: Input| {
     if leaves.len() == 1 {
         let single_verif = Verifier::verify(&proof, root, leaves[0]);
 
+        // ensure the results match if no errors occurred
         if let Ok(multi_verif) = multi_verif {
-            // ensure the results match if no errors occurred
             assert_eq!(single_verif, multi_verif);
-        } else {
-            // otherwise single-proof verification must be false
-            assert!(!single_verif);
         }
+        
+        // the reason we don't make any assumptions in case of multi-proof
+        // errors is that it is possible that fuzzer generates invalid
+        // proof_flags for valid merkle tree, returning an error
     }
 });
