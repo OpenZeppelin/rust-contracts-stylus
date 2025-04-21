@@ -44,14 +44,21 @@ jobs:
       - name: Set up fuzzing directory
         run: |
           mkdir -p fuzz/corpus/${{ github.event.inputs.fuzz_target }}
-          
-      - name: Cache fuzzing corpus
+
+      - name: Restore cached corpus
+        id: cache-corpus
         uses: actions/cache@v3
         with:
           path: fuzz/corpus/${{ github.event.inputs.fuzz_target }}
           key: fuzz-corpus-${{ github.event.inputs.fuzz_target }}-${{ github.sha }}
           restore-keys: |
             fuzz-corpus-${{ github.event.inputs.fuzz_target }}-
+          
+      - name: Generate corpus if needed
+        if: steps.cache-corpus.outputs.cache-hit != 'true'
+        run: |
+          echo "No cached corpus found. Generating new corpus..."
+          cargo run --bin gen-${{ github.event.inputs.fuzz_target }}-corpus
 
       - name: Run fuzzer with ${{ github.event.inputs.sanitizer }} sanitizer
         working-directory: ./fuzz
