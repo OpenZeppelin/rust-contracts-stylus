@@ -13,7 +13,9 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
+use stylus_sdk::{
+    call::MethodError, evm, msg, prelude::*, storage::StorageAddress,
+};
 
 use crate::utils::introspection::erc165::{Erc165, IErc165};
 
@@ -54,6 +56,12 @@ pub enum Error {
     UnauthorizedAccount(OwnableUnauthorizedAccount),
     /// The owner is not a valid owner account. (eg. `Address::ZERO`)
     InvalidOwner(OwnableInvalidOwner),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Ownable`] contract.

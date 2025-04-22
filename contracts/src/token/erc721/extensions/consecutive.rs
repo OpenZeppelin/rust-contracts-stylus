@@ -30,6 +30,7 @@ use core::ops::{Deref, DerefMut};
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
+    call::MethodError,
     evm, msg,
     prelude::*,
     stylus_proc::{public, SolidityError},
@@ -119,6 +120,12 @@ pub enum Error {
     ForbiddenMint(ERC721ForbiddenMint),
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc721Consecutive`] token.

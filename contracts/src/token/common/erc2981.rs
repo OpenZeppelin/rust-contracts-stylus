@@ -23,6 +23,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
+    call::MethodError,
     prelude::*,
     storage::{StorageAddress, StorageMap},
 };
@@ -93,6 +94,12 @@ pub enum Error {
 
     /// Indicates that the royalty receiver for `token_id` is invalid.
     InvalidTokenRoyaltyReceiver(ERC2981InvalidTokenRoyaltyReceiver),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// Struct for Royalty Information of tokens.

@@ -32,7 +32,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     block,
-    call::{self, call, Call},
+    call::{self, call, Call, MethodError},
     contract, evm, function_selector,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
@@ -97,6 +97,12 @@ pub enum Error {
     SafeErc20(safe_erc20::Error),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of a [`VestingWallet`] Contract.

@@ -16,7 +16,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
-    call::Call,
+    call::{Call, MethodError},
     contract, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
@@ -76,6 +76,12 @@ pub enum Error {
 
     /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc20Wrapper`] token.

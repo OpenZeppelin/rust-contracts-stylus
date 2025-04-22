@@ -5,7 +5,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, Call},
+    call::{self, Call, MethodError},
     evm, function_selector, msg,
     prelude::*,
     storage::{StorageBool, StorageMap, StorageU256},
@@ -188,6 +188,12 @@ pub enum Error {
     /// [`Erc1155::safe_batch_transfer_from`] operation.
     /// Used in batch transfers.
     InvalidArrayLength(ERC1155InvalidArrayLength),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc1155`] token.

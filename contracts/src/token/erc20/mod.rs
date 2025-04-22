@@ -9,6 +9,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
+    call::MethodError,
     evm, msg,
     prelude::*,
     storage::{StorageMap, StorageU256},
@@ -117,6 +118,12 @@ pub enum Error {
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals. approver Address initiating an approval operation.
     InvalidApprover(ERC20InvalidApprover),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of an [`Erc20`] token.

@@ -9,7 +9,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::U256;
 pub use sol::*;
-use stylus_sdk::{prelude::*, storage::StorageU256};
+use stylus_sdk::{call::MethodError, prelude::*, storage::StorageU256};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -39,6 +39,12 @@ pub enum Error {
     /// Indicates an error related to the operation that failed
     /// because the supplied `cap` is not a valid cap value.
     InvalidCap(ERC20InvalidCap),
+}
+
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
+    }
 }
 
 /// State of a [`Capped`] Contract.
