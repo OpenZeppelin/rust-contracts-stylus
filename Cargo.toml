@@ -157,4 +157,4 @@ default = { extend-ignore-identifiers-re = [
 files = { extend-exclude = [] }
 
 [patch.crates-io]
-stylus-sdk = { git = "https://github.com/bidzyyys/stylus-sdk-rs", branch = "fix/nested-errors" }
+stylus-sdk = { git = "https://github.com/bidzyyys/stylus-sdk-rs", branch = "feat/flatten-error-enum" }
