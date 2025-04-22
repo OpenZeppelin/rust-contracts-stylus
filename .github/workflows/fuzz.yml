@@ -1,0 +1,134 @@
+name: Fuzzing
+
+on:
+  workflow_dispatch:
+    inputs:
+      fuzz_time_mins:
+        description: 'Duration to run fuzzer (minutes)'
+        required: true
+        default: '350'
+      sanitizer:
+        description: 'Sanitizer to use (address, memory, thread)'
+        required: true
+        default: 'address'
+        type: choice
+        options:
+          - address
+          - memory
+          - thread
+      fuzz_target:
+        description: 'Name of the fuzz target'
+        required: true
+        default: 'merkle'
+
+jobs:
+  fuzz:
+    name: Run fuzzer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rust-src, llvm-tools-preview
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz
+
+      - name: Set up fuzzing directory
+        run: |
+          mkdir -p fuzz/corpus/${{ github.event.inputs.fuzz_target }}
+
+      - name: Restore cached corpus
+        id: cache-corpus
+        uses: actions/cache@v3
+        with:
+          path: fuzz/corpus/${{ github.event.inputs.fuzz_target }}
+          key: fuzz-corpus-${{ github.event.inputs.fuzz_target }}-${{ github.sha }}
+          restore-keys: |
+            fuzz-corpus-${{ github.event.inputs.fuzz_target }}-
+          
+      - name: Generate corpus if needed
+        if: steps.cache-corpus.outputs.cache-hit != 'true'
+        run: |
+          echo "No cached corpus found. Generating new corpus..."
+          cargo run --bin gen-${{ github.event.inputs.fuzz_target }}-corpus
+
+      - name: Run fuzzer with ${{ github.event.inputs.sanitizer }} sanitizer
+        working-directory: ./fuzz
+        env:
+          RUSTFLAGS: "-Zsanitizer=${{ github.event.inputs.sanitizer }} -Copt-level=3"
+          RUSTDOCFLAGS: "-Zsanitizer=${{ github.event.inputs.sanitizer }}"
+        run: |
+          # Calculate duration in seconds (minutes * 60)
+          DURATION=$(( ${{ github.event.inputs.fuzz_time_mins }} * 60 ))
+          
+          # Run the fuzzer with a time limit
+          cargo +nightly fuzz run ${{ github.event.inputs.fuzz_target }} -- \
+            -max_total_time=$DURATION \
+            -detect_leaks=0 \
+            -max_len=4096 \
+            -use_value_profile=1 \
+            -rss_limit_mb=4096
+        
+      - name: Minimize corpus (if fuzzing succeeded)
+        if: success()
+        working-directory: ./fuzz
+        run: |
+          cargo +nightly fuzz cmin ${{ github.event.inputs.fuzz_target }} \
+            corpus/${{ github.event.inputs.fuzz_target }}
+
+      - name: Create artifact with crashes (if any)
+        if: always()
+        working-directory: ./fuzz
+        run: |
+          CRASHES_DIR="artifacts/crashes-${{ github.event.inputs.fuzz_target }}"
+          if [ -d "artifacts/${{ github.event.inputs.fuzz_target }}" ]; then
+            mkdir -p "$CRASHES_DIR"
+            cp -r artifacts/${{ github.event.inputs.fuzz_target }}/* "$CRASHES_DIR"/ || true
+            echo "Crashes found! Check the uploaded artifact."
+          else
+            mkdir -p "$CRASHES_DIR"
+            echo "No crashes found during fuzzing." > "$CRASHES_DIR/no_crashes.txt"
+          fi
+
+      - name: Upload crashes
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: fuzz-crashes-${{ github.event.inputs.fuzz_target }}
+          path: fuzz/artifacts/crashes-${{ github.event.inputs.fuzz_target }}
+          retention-days: 7
+          
+      - name: Generate fuzzing stats
+        if: always()
+        working-directory: ./fuzz
+        run: |
+          mkdir -p fuzz_stats
+          if [ -f "artifacts/${{ github.event.inputs.fuzz_target }}/fuzzer_stats" ]; then
+            cp artifacts/${{ github.event.inputs.fuzz_target }}/fuzzer_stats fuzz_stats/
+            echo "## Fuzzing Statistics" > fuzz_stats/summary.md
+            echo "Target: ${{ github.event.inputs.fuzz_target }}" >> fuzz_stats/summary.md
+            echo "Sanitizer: ${{ github.event.inputs.sanitizer }}" >> fuzz_stats/summary.md
+            echo "Duration: ${{ github.event.inputs.fuzz_time_mins }} minutes" >> fuzz_stats/summary.md
+            echo "" >> fuzz_stats/summary.md
+            echo '```' >> fuzz_stats/summary.md
+            cat artifacts/${{ github.event.inputs.fuzz_target }}/fuzzer_stats >> fuzz_stats/summary.md
+            echo '```' >> fuzz_stats/summary.md
+          else
+            echo "No fuzzer stats available." > fuzz_stats/no_stats.txt
+          fi
+          
+      - name: Upload fuzzing stats
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: fuzz-stats-${{ github.event.inputs.fuzz_target }}
+          path: fuzz/fuzz_stats
+          retention-days: 7
