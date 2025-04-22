@@ -3398,6 +3398,7 @@ dependencies = [
 name = "openzeppelin-crypto"
 version = "0.2.0-alpha.4"
 dependencies = [
+ "alloy-primitives",
  "educe",
  "hex-literal",
  "num-traits",
