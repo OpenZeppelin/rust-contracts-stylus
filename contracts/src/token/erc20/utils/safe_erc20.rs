@@ -23,10 +23,7 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::{
-    token::erc20,
-    utils::introspection::erc165::{Erc165, IErc165},
-};
+use crate::utils::introspection::erc165::{Erc165, IErc165};
 
 const BOOL_TYPE_SIZE: usize = 32;
 
@@ -60,8 +57,6 @@ mod sol {
 /// A [`SafeErc20`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`erc20::Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
     /// An operation with an ERC-20 token failed.
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.

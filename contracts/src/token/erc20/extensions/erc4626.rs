@@ -22,8 +22,16 @@ use crate::{
     token::erc20::{
         self,
         interface::Erc20Interface,
-        utils::{safe_erc20, ISafeErc20, SafeErc20},
-        Erc20, IErc20,
+        utils::{
+            safe_erc20::{
+                self, SafeErc20FailedDecreaseAllowance,
+                SafeErc20FailedOperation,
+            },
+            ISafeErc20, SafeErc20,
+        },
+        ERC20InsufficientAllowance, ERC20InsufficientBalance,
+        ERC20InvalidApprover, ERC20InvalidReceiver, ERC20InvalidSender,
+        ERC20InvalidSpender, Erc20, IErc20,
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
@@ -123,10 +131,56 @@ pub enum Error {
     ExceededMaxRedeem(ERC4626ExceededMaxRedeem),
     /// The address is not a valid ERC-20 token.
     InvalidAsset(InvalidAsset),
-    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-    SafeErc20(safe_erc20::Error),
-    /// Error type from [`Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
+    /// An operation with an ERC-20 token failed.
+    SafeErc20FailedOperation(SafeErc20FailedOperation),
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+    SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
+    /// Indicates an error related to the current balance of `sender`. Used in
+    /// transfers.
+    InsufficientBalance(ERC20InsufficientBalance),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(ERC20InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(ERC20InvalidReceiver),
+    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// transfers.
+    InsufficientAllowance(ERC20InsufficientAllowance),
+    /// Indicates a failure with the `spender` to be approved. Used in
+    /// approvals.
+    InvalidSpender(ERC20InvalidSpender),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals. approver Address initiating an approval operation.
+    InvalidApprover(ERC20InvalidApprover),
+}
+
+impl From<safe_erc20::Error> for Error {
+    fn from(value: safe_erc20::Error) -> Self {
+        match value {
+            safe_erc20::Error::SafeErc20FailedOperation(e) => {
+                Error::SafeErc20FailedOperation(e)
+            }
+            safe_erc20::Error::SafeErc20FailedDecreaseAllowance(e) => {
+                Error::SafeErc20FailedDecreaseAllowance(e)
+            }
+        }
+    }
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
 }
 
 impl MethodError for Error {

@@ -29,7 +29,11 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::erc20::{self, Erc20, IErc20},
+    token::erc20::{
+        self, ERC20InsufficientAllowance, ERC20InsufficientBalance,
+        ERC20InvalidApprover, ERC20InvalidReceiver, ERC20InvalidSender,
+        ERC20InvalidSpender, Erc20, IErc20,
+    },
     utils::introspection::erc165::{Erc165, IErc165},
 };
 
@@ -76,9 +80,40 @@ pub enum Error {
     ExceededMaxLoan(ERC3156ExceededMaxLoan),
     /// Indicate that the receiver of a flashloan is not a valid
     /// [`IERC3156FlashBorrower::on_flash_loan`] implementer.
-    InvalidReceiver(ERC3156InvalidReceiver),
-    /// Error type from [`Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
+    ERC3156InvalidReceiver(ERC3156InvalidReceiver),
+    /// Indicates an error related to the current balance of `sender`. Used in
+    /// transfers.
+    InsufficientBalance(ERC20InsufficientBalance),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(ERC20InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(ERC20InvalidReceiver),
+    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// transfers.
+    InsufficientAllowance(ERC20InsufficientAllowance),
+    /// Indicates a failure with the `spender` to be approved. Used in
+    /// approvals.
+    InvalidSpender(ERC20InvalidSpender),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals. approver Address initiating an approval operation.
+    InvalidApprover(ERC20InvalidApprover),
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -322,9 +357,9 @@ impl IErc3156FlashLender for Erc20FlashMint {
 
         let fee = self.flash_fee(token, value)?;
         if !Address::has_code(&receiver) {
-            return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
-                receiver,
-            }));
+            return Err(Error::ERC3156InvalidReceiver(
+                ERC3156InvalidReceiver { receiver },
+            ));
         }
         erc20._mint(receiver, value)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
@@ -338,12 +373,14 @@ impl IErc3156FlashLender for Erc20FlashMint {
                 data.to_vec().into(),
             )
             .map_err(|_| {
-                Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
+                Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver {
+                    receiver,
+                })
             })?;
         if loan_return != BORROWER_CALLBACK_VALUE {
-            return Err(Error::InvalidReceiver(ERC3156InvalidReceiver {
-                receiver,
-            }));
+            return Err(Error::ERC3156InvalidReceiver(
+                ERC3156InvalidReceiver { receiver },
+            ));
         }
 
         let allowance = value

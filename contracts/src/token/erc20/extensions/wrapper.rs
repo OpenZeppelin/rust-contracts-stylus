@@ -26,8 +26,16 @@ use crate::{
     token::erc20::{
         self,
         interface::Erc20Interface,
-        utils::{safe_erc20, ISafeErc20, SafeErc20},
-        Erc20, IErc20,
+        utils::{
+            safe_erc20::{
+                self, SafeErc20FailedDecreaseAllowance,
+                SafeErc20FailedOperation,
+            },
+            ISafeErc20, SafeErc20,
+        },
+        ERC20InsufficientAllowance, ERC20InsufficientBalance,
+        ERC20InvalidApprover, ERC20InvalidReceiver, ERC20InvalidSender,
+        ERC20InvalidSpender, Erc20, IErc20,
     },
     utils::introspection::erc165::{Erc165, IErc165},
 };
@@ -42,40 +50,64 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC20InvalidUnderlying(address token);
-
-        /// Indicates that the address is not a valid sender address.
-        ///
-        /// * `sender` - Address of the invalid sender.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ERC20InvalidSender(address sender);
-
-        /// Indicates that the address is not a valid receiver addresss.
-        ///
-        /// * `receiver` - Address of the invalid receiver.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ERC20InvalidReceiver(address receiver);
     }
 }
 
 /// An [`Erc20Wrapper`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
-
-    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-    SafeErc20(safe_erc20::Error),
-
-    /// The Sender Address is not valid.
+    /// Indicates an error related to the current balance of `sender`. Used in
+    /// transfers.
+    InsufficientBalance(ERC20InsufficientBalance),
+    /// Indicates a failure with the token `sender`. Used in transfers.
     InvalidSender(ERC20InvalidSender),
-
-    /// The Receiver Address is not valid.
+    /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC20InvalidReceiver),
-
+    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// transfers.
+    InsufficientAllowance(ERC20InsufficientAllowance),
+    /// Indicates a failure with the `spender` to be approved. Used in
+    /// approvals.
+    InvalidSpender(ERC20InvalidSpender),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals. approver Address initiating an approval operation.
+    InvalidApprover(ERC20InvalidApprover),
+    /// An operation with an ERC-20 token failed.
+    SafeErc20FailedOperation(SafeErc20FailedOperation),
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+    SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
     /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
+}
+
+impl From<safe_erc20::Error> for Error {
+    fn from(value: safe_erc20::Error) -> Self {
+        match value {
+            safe_erc20::Error::SafeErc20FailedOperation(e) => {
+                Error::SafeErc20FailedOperation(e)
+            }
+            safe_erc20::Error::SafeErc20FailedDecreaseAllowance(e) => {
+                Error::SafeErc20FailedDecreaseAllowance(e)
+            }
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -165,10 +197,11 @@ pub trait IErc20Wrapper {
     ///   `contract:address()`.
     /// * [`Error::InvalidReceiver`] - If the `account` address is a
     ///   `contract:address()`.
-    /// * [`Error::SafeErc20`] - If caller lacks sufficient balance or hasn't
-    ///   approved enough tokens to the [`Erc20Wrapper`] contract.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
-    ///   operation.
+    /// * [`Error::SafeErc20FailedOperation`] - If caller lacks sufficient
+    ///   balance or hasn't approved enough tokens to the [`Erc20Wrapper`]
+    ///   contract.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   `Address::ZERO`.
     ///
     /// # Panics
     ///
@@ -202,10 +235,11 @@ pub trait IErc20Wrapper {
     ///
     /// * [`Error::InvalidReceiver`] - If the `account`'s address is a
     ///   `contract:address()`.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_burn`]
-    ///   operation.
-    /// * [`Error::SafeErc20`] - If the [`Erc20Wrapper`] contract lacks
-    ///   sufficient balance.
+    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens.
+    /// * [`Error::SafeErc20FailedOperation`] - If the [`Erc20Wrapper`] contract
+    ///   lacks sufficient balance.
     ///
     /// # Examples
     ///

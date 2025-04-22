@@ -16,7 +16,10 @@ use stylus_sdk::{
 };
 
 use crate::token::erc721::{
-    self, interface::Erc721Interface, Erc721, RECEIVER_FN_SELECTOR,
+    self, interface::Erc721Interface, ERC721IncorrectOwner,
+    ERC721InsufficientApproval, ERC721InvalidApprover, ERC721InvalidOperator,
+    ERC721InvalidOwner, ERC721InvalidReceiver, ERC721InvalidSender,
+    ERC721NonexistentToken, Erc721, RECEIVER_FN_SELECTOR,
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -43,14 +46,21 @@ mod sol {
 /// An [`Erc721Wrapper`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Erc721`] contract [`erc721::Error`].
-    Erc721(erc721::Error),
-    /// The received ERC-721 token couldn't be wrapped.
-    UnsupportedToken(ERC721UnsupportedToken),
-    /// An operation with an ERC-721 token failed.
-    Erc721FailedOperation(Erc721FailedOperation),
-    /// An operation with and ERC-721 token failed, with the reason specified
-    /// by it.
+    /// Indicates that an address can't be an owner.
+    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// Used in balance queries.
+    InvalidOwner(ERC721InvalidOwner),
+    /// Indicates a `token_id` whose `owner` is the zero address.
+    NonexistentToken(ERC721NonexistentToken),
+    /// Indicates an error related to the ownership over a particular token.
+    /// Used in transfers.
+    IncorrectOwner(ERC721IncorrectOwner),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(ERC721InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(ERC721InvalidReceiver),
+    /// Indicates a failure with the token `receiver`, with the reason
+    /// specified by it.
     ///
     /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
     /// return data, this error will be encoded either as `Error(string)` or
@@ -58,7 +68,39 @@ pub enum Error {
     /// by Solidity's special functions `assert`, `require`, and `revert`.
     ///
     /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    Erc721FailedOperationWithReason(call::Error),
+    InvalidReceiverWithReason(call::Error),
+    /// Indicates a failure with the `operator`’s approval. Used in transfers.
+    InsufficientApproval(ERC721InsufficientApproval),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals.
+    InvalidApprover(ERC721InvalidApprover),
+    /// Indicates a failure with the `operator` to be approved. Used in
+    /// approvals.
+    InvalidOperator(ERC721InvalidOperator),
+    /// The received ERC-721 token couldn't be wrapped.
+    UnsupportedToken(ERC721UnsupportedToken),
+    /// An operation with an ERC-721 token failed.
+    Erc721FailedOperation(Erc721FailedOperation),
+}
+
+impl From<erc721::Error> for Error {
+    fn from(value: erc721::Error) -> Self {
+        match value {
+            erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+            erc721::Error::NonexistentToken(e) => Error::NonexistentToken(e),
+            erc721::Error::IncorrectOwner(e) => Error::IncorrectOwner(e),
+            erc721::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc721::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc721::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc721::Error::InsufficientApproval(e) => {
+                Error::InsufficientApproval(e)
+            }
+            erc721::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc721::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -94,9 +136,13 @@ impl Erc721Wrapper {
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
     ///   ERC-721 contract.
-    /// * [`Error::Erc721FailedOperationWithReason`] - If an error occurs during
+    /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
     ///   [`erc721::IErc721::transfer_from`] operation on the underlying token.
-    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
+    /// * [`Error::InvalidSender`] - If `token_id` already exists.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or returned with an error.
     pub fn deposit_for(
         &mut self,
         account: Address,
@@ -122,9 +168,7 @@ impl Erc721Wrapper {
                 Err(e) => {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
-                            return Err(
-                                Error::Erc721FailedOperationWithReason(e),
-                            );
+                            return Err(Error::InvalidReceiverWithReason(e));
                         }
                     }
                     return Err(Error::Erc721FailedOperation(
@@ -153,10 +197,13 @@ impl Erc721Wrapper {
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
     ///   ERC-721 contract.
-    /// * [`Error::Erc721FailedOperationWithReason`] - If an error occurs during
+    /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
     ///   [`erc721::IErc721::safe_transfer_from`] operation on the underlying
     ///   token.
-    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_update`].
+    /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
+    ///   is not `Address::ZERO`.
+    /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
+    ///   `auth` does not have a right to approve this token.
     pub fn withdraw_to(
         &mut self,
         account: Address,
@@ -183,9 +230,7 @@ impl Erc721Wrapper {
                 Err(e) => {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
-                            return Err(
-                                Error::Erc721FailedOperationWithReason(e),
-                            );
+                            return Err(Error::InvalidReceiverWithReason(e));
                         }
                     }
                     return Err(Error::Erc721FailedOperation(
@@ -214,7 +259,11 @@ impl Erc721Wrapper {
     ///
     /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
     ///   token.
-    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
+    /// * [`Error::InvalidSender`] - If `token_id` already exists.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or returned with an error.
     pub fn on_erc721_received(
         &mut self,
         _operator: Address,
@@ -260,9 +309,13 @@ impl Erc721Wrapper {
     ///
     /// * [`Error::Erc721FailedOperation`] - If the underlying token is not a
     ///   [`Erc721`] contract, or the contract fails to execute the call.
-    /// * [`Error::Erc721IncorrectOwner`] - If the underlying token is not owned
-    ///   by the contract.
-    /// * [`Error::Erc721`] - If an error occurs during [`Erc721::_safe_mint`].
+    /// * [`Error::IncorrectOwner`] - If the underlying token is not owned by
+    ///   the contract.
+    /// * [`Error::InvalidSender`] - If `token_id` already exists.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or returned with an error.
     fn _recover(
         &mut self,
         account: Address,
@@ -281,13 +334,14 @@ impl Erc721Wrapper {
 
         let contract_address = contract::address();
         if owner != contract_address {
-            return Err(Error::Erc721(erc721::Error::IncorrectOwner(
+            return Err(erc721::Error::IncorrectOwner(
                 erc721::ERC721IncorrectOwner {
                     sender: contract_address,
                     token_id,
                     owner,
                 },
-            )));
+            )
+            .into());
         }
 
         erc721._safe_mint(account, token_id, &vec![].into())?;
@@ -420,9 +474,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(alice, token_ids.clone())
-            .motsu_expect_err(
-                "should return Error::Erc721FailedOperationWithReason",
-            );
+            .motsu_expect_err("should return Error::InvalidReceiverWithReason");
 
         let expected_error: Vec<u8> =
             erc721::Error::NonexistentToken(erc721::ERC721NonexistentToken {
@@ -432,7 +484,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721FailedOperationWithReason(call::Error::Revert(reason))
+            Error::InvalidReceiverWithReason(call::Error::Revert(reason))
                 if reason == expected_error
         ));
     }
@@ -457,9 +509,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(alice, token_ids.clone())
-            .motsu_expect_err(
-                "should return Error::Erc721FailedOperationWithReason",
-            );
+            .motsu_expect_err("should return Error::InvalidReceiverWithReason");
 
         let expected_error: Vec<u8> = erc721::Error::InsufficientApproval(
             erc721::ERC721InsufficientApproval {
@@ -471,7 +521,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721FailedOperationWithReason(call::Error::Revert(reason))
+            Error::InvalidReceiverWithReason(call::Error::Revert(reason))
                 if reason == expected_error
         ));
     }
@@ -628,9 +678,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .withdraw_to(Address::ZERO, token_ids.clone())
-            .motsu_expect_err(
-                "should return Error::Erc721FailedOperationWithReason",
-            );
+            .motsu_expect_err("should return Error::InvalidReceiverWithReason");
 
         let expected_error: Vec<u8> =
             erc721::Error::InvalidReceiver(erc721::ERC721InvalidReceiver {
@@ -640,7 +688,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721FailedOperationWithReason(call::Error::Revert(reason))
+            Error::InvalidReceiverWithReason(call::Error::Revert(reason))
                 if reason == expected_error
         ));
     }

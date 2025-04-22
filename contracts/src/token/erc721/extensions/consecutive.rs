@@ -30,7 +30,7 @@ use core::ops::{Deref, DerefMut};
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
-    call::MethodError,
+    call::{self, MethodError},
     evm, msg,
     prelude::*,
     stylus_proc::{public, SolidityError},
@@ -38,7 +38,8 @@ use stylus_sdk::{
 
 use crate::{
     token::erc721::{
-        self, Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
+        self, Approval, ERC721IncorrectOwner, ERC721InsufficientApproval,
+        ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
         Erc721, IErc721, Transfer,
     },
@@ -47,8 +48,9 @@ use crate::{
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
-            checkpoints,
-            checkpoints::{Size, Trace, S160},
+            checkpoints::{
+                self, CheckpointUnorderedInsertion, Size, Trace, S160,
+            },
         },
     },
 };
@@ -106,10 +108,39 @@ mod sol {
 /// An [`Erc721Consecutive`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Erc721`] contract [`erc721::Error`].
-    Erc721(erc721::Error),
-    /// Error type from checkpoint contract [`checkpoints::Error`].
-    Checkpoints(checkpoints::Error),
+    /// Indicates that an address can't be an owner.
+    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// Used in balance queries.
+    InvalidOwner(ERC721InvalidOwner),
+    /// Indicates a `token_id` whose `owner` is the zero address.
+    NonexistentToken(ERC721NonexistentToken),
+    /// Indicates an error related to the ownership over a particular token.
+    /// Used in transfers.
+    IncorrectOwner(ERC721IncorrectOwner),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(ERC721InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(ERC721InvalidReceiver),
+    /// Indicates a failure with the token `receiver`, with the reason
+    /// specified by it.
+    ///
+    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
+    /// return data, this error will be encoded either as `Error(string)` or
+    /// `Panic(uint256)`, as those are the built-in errors emitted by default
+    /// by Solidity's special functions `assert`, `require`, and `revert`.
+    ///
+    /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
+    InvalidReceiverWithReason(call::Error),
+    /// Indicates a failure with the `operator`’s approval. Used in transfers.
+    InsufficientApproval(ERC721InsufficientApproval),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals.
+    InvalidApprover(ERC721InvalidApprover),
+    /// Indicates a failure with the `operator` to be approved. Used in
+    /// approvals.
+    InvalidOperator(ERC721InvalidOperator),
+    /// A value was attempted to be inserted into a past checkpoint.
+    CheckpointUnorderedInsertion(CheckpointUnorderedInsertion),
     /// Batch mint is restricted to the constructor.
     /// Any batch mint not emitting the [`Transfer`] event outside of
     /// the constructor is non ERC-721 compliant.
@@ -120,6 +151,36 @@ pub enum Error {
     ForbiddenMint(ERC721ForbiddenMint),
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
+}
+
+impl From<erc721::Error> for Error {
+    fn from(value: erc721::Error) -> Self {
+        match value {
+            erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+            erc721::Error::NonexistentToken(e) => Error::NonexistentToken(e),
+            erc721::Error::IncorrectOwner(e) => Error::IncorrectOwner(e),
+            erc721::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc721::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc721::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc721::Error::InsufficientApproval(e) => {
+                Error::InsufficientApproval(e)
+            }
+            erc721::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc721::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+        }
+    }
+}
+
+impl From<checkpoints::Error> for Error {
+    fn from(value: checkpoints::Error) -> Self {
+        match value {
+            checkpoints::Error::CheckpointUnorderedInsertion(e) => {
+                Error::CheckpointUnorderedInsertion(e)
+            }
+        }
+    }
 }
 
 impl MethodError for Error {

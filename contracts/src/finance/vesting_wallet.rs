@@ -39,10 +39,16 @@ use stylus_sdk::{
 };
 
 use crate::{
-    access::ownable::{self, IOwnable, Ownable},
+    access::ownable::{
+        self, IOwnable, Ownable, OwnableInvalidOwner,
+        OwnableUnauthorizedAccount,
+    },
     token::erc20::{
         interface::Erc20Interface,
-        utils::safe_erc20::{self, ISafeErc20, SafeErc20},
+        utils::safe_erc20::{
+            self, ISafeErc20, SafeErc20, SafeErc20FailedDecreaseAllowance,
+            SafeErc20FailedOperation,
+        },
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
@@ -89,14 +95,42 @@ mod sol {
 /// An error that occurred in the [`VestingWallet`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Ownable`] contract [`ownable::Error`].
-    Ownable(ownable::Error),
+    /// The caller account is not authorized to perform an operation.
+    UnauthorizedAccount(OwnableUnauthorizedAccount),
+    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+    InvalidOwner(OwnableInvalidOwner),
     /// Indicates an error related to the underlying Ether transfer.
     ReleaseEtherFailed(call::Error),
-    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-    SafeErc20(safe_erc20::Error),
+    /// An operation with an ERC-20 token failed.
+    SafeErc20FailedOperation(SafeErc20FailedOperation),
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+    SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
+}
+
+impl From<ownable::Error> for Error {
+    fn from(value: ownable::Error) -> Self {
+        match value {
+            ownable::Error::UnauthorizedAccount(e) => {
+                Error::UnauthorizedAccount(e)
+            }
+            ownable::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+        }
+    }
+}
+
+impl From<safe_erc20::Error> for Error {
+    fn from(value: safe_erc20::Error) -> Self {
+        match value {
+            safe_erc20::Error::SafeErc20FailedOperation(e) => {
+                Error::SafeErc20FailedOperation(e)
+            }
+            safe_erc20::Error::SafeErc20FailedDecreaseAllowance(e) => {
+                Error::SafeErc20FailedDecreaseAllowance(e)
+            }
+        }
+    }
 }
 
 impl MethodError for Error {
