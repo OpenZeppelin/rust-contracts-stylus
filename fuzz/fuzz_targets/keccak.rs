@@ -1,9 +1,6 @@
 #![no_main]
-#[macro_use]
-extern crate libfuzzer_sys;
-extern crate openzeppelin_crypto;
-
-use crate::openzeppelin_crypto::{
+use libfuzzer_sys::fuzz_target;
+use openzeppelin_crypto::{
     hash::{BuildHasher, Hasher},
     keccak::KeccakBuilder,
 };
