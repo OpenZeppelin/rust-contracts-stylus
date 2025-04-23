@@ -1,5 +1,5 @@
 //! Implementation of the ERC-1155 token standard.
-use alloc::{vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -151,6 +151,13 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC1155InvalidArrayLength(uint256 ids_length, uint256 values_length);
+
+        /// Indicates a failure with the receiver reverting with a reason.
+        ///
+        /// * `reason` - Revert reason.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidReceiverWithReason(string reason);
     }
 }
 
@@ -175,7 +182,7 @@ pub enum Error {
     /// by Solidity's special functions `assert`, `require`, and `revert`.
     ///
     /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    InvalidReceiverWithReason(call::Error),
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     MissingApprovalForAll(ERC1155MissingApprovalForAll),
     /// Indicates a failure with the `approver` of a token to be approved.
@@ -740,11 +747,13 @@ impl Erc1155 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
-    ///   interface id or returned with error.
-    /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
-    ///   interface id or returned with error.
+    ///   [`IERC1155Receiver::on_erc_1155_received`] or
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] haven't returned the
+    ///   interface id or returned an error.
+    /// * [`Error::InvalidReceiverWithReason`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_received`] or
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] reverted with revert
+    ///   data.
     fn _check_on_erc1155_received(
         &mut self,
         operator: Address,
@@ -775,7 +784,12 @@ impl Erc1155 {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
                         // Non-IERC1155Receiver implementer.
-                        return Err(e.into());
+                        return Err(Error::InvalidReceiverWithReason(
+                            InvalidReceiverWithReason {
+                                reason: String::from_utf8(reason.to_owned())
+                                    .expect("should be valid UTF8"),
+                            },
+                        ));
                     }
                 }
 

@@ -30,7 +30,7 @@ use core::ops::{Deref, DerefMut};
 use alloy_primitives::{uint, Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, MethodError},
+    call::MethodError,
     evm, msg,
     prelude::*,
     stylus_proc::{public, SolidityError},
@@ -41,7 +41,7 @@ use crate::{
         self, Approval, ERC721IncorrectOwner, ERC721InsufficientApproval,
         ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, IErc721, Transfer,
+        Erc721, IErc721, InvalidReceiverWithReason, Transfer,
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
@@ -130,7 +130,7 @@ pub enum Error {
     /// by Solidity's special functions `assert`, `require`, and `revert`.
     ///
     /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    InvalidReceiverWithReason(call::Error),
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used

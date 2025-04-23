@@ -3,7 +3,7 @@
 //! Users can deposit and withdraw an "underlying token" and receive a "wrapped
 //! token" with a matching token ID. This is useful in conjunction with other
 //! modules.
-use alloc::{vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 pub use sol::*;
@@ -19,7 +19,8 @@ use crate::token::erc721::{
     self, interface::Erc721Interface, ERC721IncorrectOwner,
     ERC721InsufficientApproval, ERC721InvalidApprover, ERC721InvalidOperator,
     ERC721InvalidOwner, ERC721InvalidReceiver, ERC721InvalidSender,
-    ERC721NonexistentToken, Erc721, RECEIVER_FN_SELECTOR,
+    ERC721NonexistentToken, Erc721, InvalidReceiverWithReason,
+    RECEIVER_FN_SELECTOR,
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -68,7 +69,7 @@ pub enum Error {
     /// by Solidity's special functions `assert`, `require`, and `revert`.
     ///
     /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    InvalidReceiverWithReason(call::Error),
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used
@@ -168,7 +169,14 @@ impl Erc721Wrapper {
                 Err(e) => {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
-                            return Err(Error::InvalidReceiverWithReason(e));
+                            return Err(Error::InvalidReceiverWithReason(
+                                InvalidReceiverWithReason {
+                                    reason: alloc::string::String::from_utf8(
+                                        reason.to_owned(),
+                                    )
+                                    .expect("should be valid UTF8"),
+                                },
+                            ));
                         }
                     }
                     return Err(Error::Erc721FailedOperation(
@@ -230,7 +238,14 @@ impl Erc721Wrapper {
                 Err(e) => {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
-                            return Err(Error::InvalidReceiverWithReason(e));
+                            return Err(Error::InvalidReceiverWithReason(
+                                InvalidReceiverWithReason {
+                                    reason: String::from_utf8(
+                                        reason.to_owned(),
+                                    )
+                                    .expect("should be valid UTF8"),
+                                },
+                            ));
                         }
                     }
                     return Err(Error::Erc721FailedOperation(

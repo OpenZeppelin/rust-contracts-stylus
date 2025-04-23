@@ -25,14 +25,14 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
-use alloc::{vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     block,
-    call::{self, call, Call, MethodError},
+    call::{call, Call, MethodError},
     contract, evm, function_selector,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
@@ -81,7 +81,12 @@ mod sol {
         /// Indicates an error related to the underlying Ether transfer.
         #[derive(Debug)]
         #[allow(missing_docs)]
-        error ReleaseEtherFailed();
+        error ReleaseEtherFailed(string reason);
+
+        /// Indicates that a low-level call failed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error FailedCall();
 
         /// The token address is not valid (eg. `Address::ZERO`).
         ///
@@ -100,7 +105,9 @@ pub enum Error {
     /// The owner is not a valid owner account. (eg. `Address::ZERO`)
     InvalidOwner(OwnableInvalidOwner),
     /// Indicates an error related to the underlying Ether transfer.
-    ReleaseEtherFailed(call::Error),
+    ReleaseEtherFailed(ReleaseEtherFailed),
+    /// Indicates that a low-level call failed.
+    FailedCall(FailedCall),
     /// An operation with an ERC-20 token failed.
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
@@ -116,6 +123,22 @@ impl From<ownable::Error> for Error {
                 Error::UnauthorizedAccount(e)
             }
             ownable::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+        }
+    }
+}
+
+impl From<stylus_sdk::call::Error> for Error {
+    fn from(value: stylus_sdk::call::Error) -> Self {
+        match value {
+            stylus_sdk::call::Error::AbiDecodingFailed(_) => {
+                Error::FailedCall(FailedCall {})
+            }
+            stylus_sdk::call::Error::Revert(reason) => {
+                Error::ReleaseEtherFailed(ReleaseEtherFailed {
+                    reason: String::from_utf8(reason.to_owned())
+                        .expect("should be valid UTF8"),
+                })
+            }
         }
     }
 }

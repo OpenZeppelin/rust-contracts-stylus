@@ -1,5 +1,5 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::{vec, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -136,6 +136,13 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC721InvalidOperator(address operator);
+
+        /// Indicates a failure with the receiver reverting with a reason.
+        ///
+        /// * `reason` - Revert reason.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidReceiverWithReason(string reason);
     }
 }
 
@@ -166,7 +173,7 @@ pub enum Error {
     /// by Solidity's special functions `assert`, `require`, and `revert`.
     ///
     /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    InvalidReceiverWithReason(call::Error),
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used
@@ -1011,7 +1018,9 @@ impl Erc721 {
     ///
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
-    ///   id or returned with error.
+    ///   id or returned an error.
+    /// * [`Error::InvalidReceiverWithReason`] - If
+    ///   [`IERC721Receiver::on_erc_721_received`] reverted with revert data.
     pub fn _check_on_erc721_received(
         &mut self,
         operator: Address,
@@ -1040,7 +1049,12 @@ impl Erc721 {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
                         // Non-IERC721Receiver implementer.
-                        return Err(e.into());
+                        return Err(Error::InvalidReceiverWithReason(
+                            InvalidReceiverWithReason {
+                                reason: String::from_utf8(reason.to_owned())
+                                    .expect("should be valid UTF8"),
+                            },
+                        ));
                     }
                 }
 
