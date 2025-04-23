@@ -1,5 +1,9 @@
 //! This module contains the pedersen hash function parameters for Starknet.
 
+use alloc::{vec, vec::Vec};
+
+use once_cell::sync::Lazy;
+
 use crate::{
     arithmetic::uint::U256,
     curve::{
@@ -63,10 +67,23 @@ impl SWCurveConfig for StarknetCurveConfig {
 /// Pedersen Hash parameters for Starknet.
 pub struct StarknetPedersenParams;
 
-// TODO: confirm this
 impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
-    #[allow(long_running_const_eval)]
-    const CONSTANT_POINTS: &'static [Affine<StarknetCurveConfig>] = &[
+    const FIELD_PRIME: U256 = FqParam::MODULUS;
+    const N_ELEMENT_BITS_HASH: usize = 252;
+    const SHIFT_POINT: Affine<StarknetCurveConfig> = Affine::new_unchecked(
+			fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
+			fp_from_num!("1713931329540660377023406109199410414810705867260802078187082345529207694986")
+		);
+
+    fn constant_points() -> &'static [Affine<StarknetCurveConfig>] {
+        CONSTANT_POINTS.as_ref()
+    }
+}
+
+/// Constant points for Starknet Curve.
+static CONSTANT_POINTS: Lazy<Vec<Affine<StarknetCurveConfig>>> = Lazy::new(
+    || {
+        vec![
 		Affine::new_unchecked(
 			fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
 			fp_from_num!("1713931329540660377023406109199410414810705867260802078187082345529207694986")
@@ -2091,11 +2108,9 @@ impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
 			fp_from_num!("1254733481274108825174693797237617285863727098996450904398879255272288617861"),
 			fp_from_num!("2644890941682394074696857415419096381561354281743803087373802494123523779468")
 		),
-    ];
-    const FIELD_PRIME: U256 = FqParam::MODULUS;
-    const N_ELEMENT_BITS_HASH: usize = 252;
-    const SHIFT_POINT: Affine<StarknetCurveConfig> = Self::CONSTANT_POINTS[0];
-}
+    ]
+    },
+);
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
@@ -2172,16 +2187,6 @@ mod tests {
         }
     }
 
-    fn proper_values() -> impl Strategy<Value = alloy_primitives::U256> {
-        any::<alloy_primitives::U256>().prop_filter(
-            "Should be less than `StarknetPedersenParams::FIELD_PRIME`",
-            |x| {
-                U256::from_bytes_le(&x.to_le_bytes_vec())
-                    <= StarknetPedersenParams::FIELD_PRIME
-            },
-        )
-    }
-
     #[test]
     #[should_panic = "Pedersen hash failed -- invalid input"]
     fn panics_on_wrong_item() {
@@ -2202,6 +2207,16 @@ mod tests {
         let input = vec![one, one, one];
 
         let _ = pedersen.hash(&input);
+    }
+
+    fn proper_values() -> impl Strategy<Value = alloy_primitives::U256> {
+        any::<alloy_primitives::U256>().prop_filter(
+            "Should be less than `StarknetPedersenParams::FIELD_PRIME`",
+            |x| {
+                U256::from_bytes_le(&x.to_le_bytes_vec())
+                    <= StarknetPedersenParams::FIELD_PRIME
+            },
+        )
     }
 
     #[test]

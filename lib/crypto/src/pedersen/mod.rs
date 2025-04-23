@@ -10,7 +10,6 @@ use crate::{
         sw::{Affine, Projective, SWCurveConfig},
         AffineRepr,
     },
-    hash::Hasher,
     pedersen::params::PedersenParams,
 };
 
@@ -41,13 +40,13 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
         }
     }
 
-    /// Add `input` values to the hash state.
-    pub fn update(&mut self, input: &[U256]) {
-        self.state.extend(input);
-    }
-
     /// Hashes the input values and returns the result as `x` coordinate of
     /// the point on the curve.
+    ///
+    /// # Arguments
+    ///
+    /// * `mut self` - Pedersen hasher instance.
+    /// * `input` - The input values to hash.
     ///
     /// # Panics
     ///
@@ -57,18 +56,22 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
         let hash = self.finalize();
         hash.x().expect("Pedersen hash failed")
     }
-}
 
-impl<F: PedersenParams<P>, P: SWCurveConfig> Hasher for Pedersen<F, P> {
-    type Output = Affine<P>;
-
-    /// Update the hash state with a new element.
-    fn update(&mut self, input: impl AsRef<[u8]>) {
-        let value = U256::from_bytes_le(input.as_ref());
-        self.state.push(value);
+    /// Add `input` values to the hash state.
+    ///
+    /// # Arguments
+    ///
+    /// * `mut self` - Mutable reference to the Pedersen hasher instance.
+    /// * `input` - The input values to update the hasher state.
+    pub fn update(&mut self, input: &[U256]) {
+        self.state.extend(input);
     }
 
     /// Finalize the hash and return the result.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - Pedersen hasher instance.
     ///
     /// # Panics
     ///
@@ -77,8 +80,11 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Hasher for Pedersen<F, P> {
     /// * If the input values contains more elements than length of
     ///   [`PedersenParams::CONSTANT_POINTS`] /
     ///   [`PedersenParams::N_ELEMENT_BITS_HASH`].
-    fn finalize(self) -> Affine<P> {
+    pub fn finalize(self) -> Affine<P> {
         let mut point: Projective<P> = F::SHIFT_POINT.into();
+
+        let constant_points = F::constant_points();
+        let constant_points_len = constant_points.len();
 
         for (idx, value) in self.state.iter().enumerate() {
             let mut element = *value;
@@ -90,9 +96,12 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Hasher for Pedersen<F, P> {
             let start_idx = 2 + idx * F::N_ELEMENT_BITS_HASH;
             let end_idx = 2 + (idx + 1) * F::N_ELEMENT_BITS_HASH;
 
-            assert!(end_idx <= F::CONSTANT_POINTS.len(), "Pedersen hash failed -- too many elements");
+            assert!(
+                end_idx <= constant_points_len,
+                "Pedersen hash failed -- too many elements"
+            );
 
-            let point_list = &F::CONSTANT_POINTS[start_idx..end_idx];
+            let point_list = &constant_points[start_idx..end_idx];
 
             assert!(point_list.len() == F::N_ELEMENT_BITS_HASH);
 
