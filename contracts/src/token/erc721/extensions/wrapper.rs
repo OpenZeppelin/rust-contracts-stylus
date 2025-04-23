@@ -3,7 +3,11 @@
 //! Users can deposit and withdraw an "underlying token" and receive a "wrapped
 //! token" with a matching token ID. This is useful in conjunction with other
 //! modules.
-use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 pub use sol::*;
@@ -171,10 +175,8 @@ impl Erc721Wrapper {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
                                 InvalidReceiverWithReason {
-                                    reason: alloc::string::String::from_utf8(
-                                        reason.to_owned(),
-                                    )
-                                    .expect("should be valid UTF8"),
+                                    reason: String::from_utf8_lossy(reason)
+                                        .to_string(),
                                 },
                             ));
                         }
@@ -240,10 +242,8 @@ impl Erc721Wrapper {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
                                 InvalidReceiverWithReason {
-                                    reason: String::from_utf8(
-                                        reason.to_owned(),
-                                    )
-                                    .expect("should be valid UTF8"),
+                                    reason: String::from_utf8_lossy(reason)
+                                        .to_string(),
                                 },
                             ));
                         }

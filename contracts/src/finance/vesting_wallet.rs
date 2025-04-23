@@ -25,7 +25,11 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
-use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{Address, FixedBytes, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
@@ -135,8 +139,7 @@ impl From<stylus_sdk::call::Error> for Error {
             }
             stylus_sdk::call::Error::Revert(reason) => {
                 Error::ReleaseEtherFailed(ReleaseEtherFailed {
-                    reason: String::from_utf8(reason.to_owned())
-                        .expect("should be valid UTF8"),
+                    reason: String::from_utf8_lossy(&reason).to_string(),
                 })
             }
         }

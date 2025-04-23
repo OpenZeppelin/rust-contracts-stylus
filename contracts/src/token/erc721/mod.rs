@@ -1,5 +1,9 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -1050,8 +1054,8 @@ impl Erc721 {
                     if !reason.is_empty() {
                         return Err(Error::InvalidReceiverWithReason(
                             InvalidReceiverWithReason {
-                                reason: String::from_utf8(reason.to_owned())
-                                    .expect("should be valid UTF8"),
+                                reason: String::from_utf8_lossy(reason)
+                                    .to_string(),
                             },
                         ));
                     }
