@@ -855,16 +855,12 @@ mod tests {
     use motsu::prelude::Contract;
 
     use crate::{
-        token::{
-            erc721,
-            erc721::{
-                extensions::consecutive::{
-                    ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
-                },
-                ERC721IncorrectOwner, ERC721InvalidApprover,
-                ERC721InvalidReceiver, ERC721InvalidSender,
-                ERC721NonexistentToken, IErc721,
+        token::erc721::{
+            extensions::consecutive::{
+                ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
             },
+            ERC721IncorrectOwner, ERC721InvalidApprover, ERC721InvalidReceiver,
+            ERC721InvalidSender, ERC721NonexistentToken, IErc721,
         },
         utils::introspection::erc165::IErc165,
     };
@@ -942,9 +938,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidSender(ERC721InvalidSender {
-                sender: Address::ZERO
-            }))
+            Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
         ));
     }
 
@@ -962,9 +956,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(ERC721InvalidReceiver {
+            Error::InvalidReceiver(ERC721InvalidReceiver {
                 receiver
-            })) if receiver == invalid_receiver
+            }) if receiver == invalid_receiver
         ));
     }
 
@@ -979,9 +973,9 @@ mod tests {
             .expect_err("should not mint consecutive");
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(
-                ERC721InvalidReceiver { receiver: Address::ZERO }
-            ))
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver: Address::ZERO
+            })
         ));
     }
 
@@ -1094,7 +1088,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken { token_id }))
+            Error::NonexistentToken(ERC721NonexistentToken { token_id })
             if token_id == U256::from(FIRST_CONSECUTIVE_TOKEN_ID)
         ));
 
@@ -1127,7 +1121,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken { token_id }))
+            Error::NonexistentToken(ERC721NonexistentToken { token_id })
             if token_id == U256::from(non_consecutive_token_id)
         ));
 
@@ -1140,9 +1134,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken (ERC721NonexistentToken{
+            Error::NonexistentToken (ERC721NonexistentToken{
                 token_id: t_id
-            })) if t_id == non_existent_token
+            }) if t_id == non_existent_token
         ));
     }
 
@@ -1214,11 +1208,11 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
+            Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender,
                 token_id: t_id,
                 owner
-            })) if sender == dave && t_id == TOKEN_ID && owner == alice
+            }) if sender == dave && t_id == TOKEN_ID && owner == alice
         ));
     }
 
@@ -1235,9 +1229,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken {
+            Error::NonexistentToken(ERC721NonexistentToken {
                 token_id: t_id,
-            })) if t_id == TOKEN_ID
+            }) if t_id == TOKEN_ID
         ));
     }
 
@@ -1260,9 +1254,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(ERC721InvalidReceiver {
+            Error::InvalidReceiver(ERC721InvalidReceiver {
                 receiver
-            })) if receiver == invalid_receiver
+            }) if receiver == invalid_receiver
         ));
 
         let owner = contract
@@ -1325,9 +1319,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(ERC721InvalidReceiver {
+            Error::InvalidReceiver(ERC721InvalidReceiver {
                 receiver
-            })) if receiver == invalid_receiver
+            }) if receiver == invalid_receiver
         ));
 
         let owner = contract
@@ -1355,11 +1349,11 @@ mod tests {
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
+            Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender,
                 token_id: t_id,
                 owner
-            })) if sender == dave && t_id == TOKEN_ID && owner == alice
+            }) if sender == dave && t_id == TOKEN_ID && owner == alice
         ));
     }
 
@@ -1402,9 +1396,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken {
+            Error::NonexistentToken(ERC721NonexistentToken {
                 token_id: t_id
-            })) if TOKEN_ID == t_id
+            }) if TOKEN_ID == t_id
         ));
     }
 
@@ -1427,9 +1421,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidApprover(ERC721InvalidApprover {
+            Error::InvalidApprover(ERC721InvalidApprover {
                 approver
-            })) if approver == alice
+            }) if approver == alice
         ));
     }
 
@@ -1463,9 +1457,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken {
+            Error::NonexistentToken(ERC721NonexistentToken {
                 token_id: t_id
-            })) if TOKEN_ID == t_id
+            }) if TOKEN_ID == t_id
         ));
     }
 

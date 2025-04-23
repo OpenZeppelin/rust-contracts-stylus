@@ -577,7 +577,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC3156InvalidReceiver { receiver }) if receiver == invalid_reciver
+            Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver }) if receiver == invalid_reciver
         ));
     }
 
@@ -600,7 +600,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC3156InvalidReceiver { receiver })
+            Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver })
                 if receiver == invalid_receiver
         ));
     }

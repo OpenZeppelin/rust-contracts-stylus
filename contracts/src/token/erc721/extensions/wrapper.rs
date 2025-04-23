@@ -20,11 +20,7 @@ use stylus_sdk::{
 };
 
 use crate::token::erc721::{
-    self, interface::Erc721Interface, ERC721IncorrectOwner,
-    ERC721InsufficientApproval, ERC721InvalidApprover, ERC721InvalidOperator,
-    ERC721InvalidOwner, ERC721InvalidReceiver, ERC721InvalidSender,
-    ERC721NonexistentToken, Erc721, InvalidReceiverWithReason,
-    RECEIVER_FN_SELECTOR,
+    self, interface::Erc721Interface, Erc721, RECEIVER_FN_SELECTOR,
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -54,27 +50,27 @@ pub enum Error {
     /// Indicates that an address can't be an owner.
     /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
-    InvalidOwner(ERC721InvalidOwner),
+    InvalidOwner(erc721::ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
-    NonexistentToken(ERC721NonexistentToken),
+    NonexistentToken(erc721::ERC721NonexistentToken),
     /// Indicates an error related to the ownership over a particular token.
     /// Used in transfers.
-    IncorrectOwner(ERC721IncorrectOwner),
+    IncorrectOwner(erc721::ERC721IncorrectOwner),
     /// Indicates a failure with the token `sender`. Used in transfers.
-    InvalidSender(ERC721InvalidSender),
+    InvalidSender(erc721::ERC721InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
-    InvalidReceiver(ERC721InvalidReceiver),
+    InvalidReceiver(erc721::ERC721InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
-    InvalidReceiverWithReason(InvalidReceiverWithReason),
+    InvalidReceiverWithReason(erc721::InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
-    InsufficientApproval(ERC721InsufficientApproval),
+    InsufficientApproval(erc721::ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals.
-    InvalidApprover(ERC721InvalidApprover),
+    InvalidApprover(erc721::ERC721InvalidApprover),
     /// Indicates a failure with the `operator` to be approved. Used in
     /// approvals.
-    InvalidOperator(ERC721InvalidOperator),
+    InvalidOperator(erc721::ERC721InvalidOperator),
     /// The received ERC-721 token couldn't be wrapped.
     UnsupportedToken(ERC721UnsupportedToken),
     /// An operation with an ERC-721 token failed.
@@ -167,7 +163,7 @@ impl Erc721Wrapper {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
-                                InvalidReceiverWithReason {
+                                erc721::InvalidReceiverWithReason {
                                     reason: String::from_utf8_lossy(reason)
                                         .to_string(),
                                 },
@@ -234,7 +230,7 @@ impl Erc721Wrapper {
                     if let call::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
-                                InvalidReceiverWithReason {
+                                erc721::InvalidReceiverWithReason {
                                     reason: String::from_utf8_lossy(reason)
                                         .to_string(),
                                 },
@@ -361,6 +357,7 @@ impl Erc721Wrapper {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
+    use alloy_sol_types::SolError;
     use motsu::prelude::*;
 
     use super::*;
@@ -489,10 +486,11 @@ mod tests {
                 token_id: token_ids[0],
             })
             .into();
+        let expected_error = String::from_utf8_lossy(&expected_error);
 
         assert!(matches!(
             err,
-            Error::InvalidReceiverWithReason(call::Error::Revert(reason))
+            Error::InvalidReceiverWithReason(erc721::InvalidReceiverWithReason { reason })
                 if reason == expected_error
         ));
     }
@@ -526,10 +524,11 @@ mod tests {
             },
         )
         .into();
+        let expected_error = String::from_utf8_lossy(&expected_error);
 
         assert!(matches!(
             err,
-            Error::InvalidReceiverWithReason(call::Error::Revert(reason))
+            Error::InvalidReceiverWithReason(erc721::InvalidReceiverWithReason { reason })
                 if reason == expected_error
         ));
     }
@@ -570,9 +569,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidSender(
+            Error::InvalidSender(
                 erc721::ERC721InvalidSender { sender }
-            )) if sender.is_zero()
+            ) if sender.is_zero()
         ));
     }
 
@@ -693,10 +692,11 @@ mod tests {
                 receiver: Address::ZERO,
             })
             .into();
+        let expected_error = String::from_utf8_lossy(&expected_error);
 
         assert!(matches!(
             err,
-            Error::InvalidReceiverWithReason(call::Error::Revert(reason))
+            Error::InvalidReceiverWithReason(erc721::InvalidReceiverWithReason { reason })
                 if reason == expected_error
         ));
     }
@@ -721,9 +721,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(
+            Error::NonexistentToken(
                 erc721::ERC721NonexistentToken { token_id },
-            )) if token_id == token_ids[0]
+            ) if token_id == token_ids[0]
         ));
     }
 
@@ -763,9 +763,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InsufficientApproval(
+            Error::InsufficientApproval(
                 erc721::ERC721InsufficientApproval { token_id, operator},
-            )) if token_id == token_ids[0] && operator == bob
+            ) if token_id == token_ids[0] && operator == bob
         ));
     }
 
@@ -908,9 +908,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidSender(
+            Error::InvalidSender(
                 erc721::ERC721InvalidSender { sender }
-            )) if sender.is_zero()
+            ) if sender.is_zero()
         ));
     }
 
@@ -1000,9 +1000,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::IncorrectOwner(
+            Error::IncorrectOwner(
                 erc721::ERC721IncorrectOwner { sender, token_id: t_id, owner },
-            )) if sender == contract.address() && t_id == token_id && owner == alice
+            ) if sender == contract.address() && t_id == token_id && owner == alice
         ));
     }
 
@@ -1046,9 +1046,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidSender(
+            Error::InvalidSender(
                 erc721::ERC721InvalidSender { sender }
-            )) if sender.is_zero()
+            ) if sender.is_zero()
         ));
     }
 

@@ -464,9 +464,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == invalid_asset
+            ) if token == invalid_asset
         ));
     }
 
@@ -489,7 +489,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidSender(ERC20InvalidSender { sender }) if sender == invalid_sender
+            Error::InvalidSender(erc20::ERC20InvalidSender { sender }) if sender == invalid_sender
         ));
     }
 
@@ -512,7 +512,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+            Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
     }
 
@@ -540,9 +540,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == erc20_contract.address()
+            ) if token == erc20_contract.address()
         ));
     }
 
@@ -577,9 +577,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == erc20_contract.address()
+            ) if token == erc20_contract.address()
         ));
     }
 
@@ -673,7 +673,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+            Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
     }
 
@@ -713,13 +713,13 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc20(erc20::Error::InsufficientBalance(
+            Error::InsufficientBalance(
                 erc20::ERC20InsufficientBalance {
                     sender,
                     balance,
                     needed
                 }
-            )) if sender == alice && balance == amount && needed == exceeding_value
+            ) if sender == alice && balance == amount && needed == exceeding_value
         ));
     }
 
