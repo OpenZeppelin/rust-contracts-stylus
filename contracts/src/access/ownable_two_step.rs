@@ -25,7 +25,7 @@ pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
 use crate::{
-    access::ownable::{self, IOwnable, Ownable, OwnableUnauthorizedAccount},
+    access::ownable::{self, IOwnable, Ownable},
     utils::introspection::erc165::{Erc165, IErc165},
 };
 
@@ -195,7 +195,7 @@ impl IOwnable2Step for Ownable2Step {
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
             return Err(ownable::Error::UnauthorizedAccount(
-                OwnableUnauthorizedAccount { account: sender },
+                ownable::OwnableUnauthorizedAccount { account: sender },
             ));
         }
         self._transfer_ownership(sender);
@@ -249,11 +249,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{
-        ownable::Error, IOwnable, IOwnable2Step, Ownable, Ownable2Step,
-        OwnableUnauthorizedAccount,
-    };
-    use crate::utils::introspection::erc165::IErc165;
+    use super::*;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -312,7 +308,7 @@ mod tests {
         let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));
@@ -352,7 +348,7 @@ mod tests {
         let err = contract.sender(alice).accept_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));
@@ -409,7 +405,7 @@ mod tests {
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));

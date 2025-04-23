@@ -357,7 +357,6 @@ impl Erc721Wrapper {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::uint;
-    use alloy_sol_types::SolError;
     use motsu::prelude::*;
 
     use super::*;

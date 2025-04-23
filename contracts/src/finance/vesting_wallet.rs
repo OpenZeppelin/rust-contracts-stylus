@@ -43,16 +43,10 @@ use stylus_sdk::{
 };
 
 use crate::{
-    access::ownable::{
-        self, IOwnable, Ownable, OwnableInvalidOwner,
-        OwnableUnauthorizedAccount,
-    },
+    access::ownable::{self, IOwnable, Ownable},
     token::erc20::{
         interface::Erc20Interface,
-        utils::safe_erc20::{
-            self, ISafeErc20, SafeErc20, SafeErc20FailedDecreaseAllowance,
-            SafeErc20FailedOperation,
-        },
+        utils::{safe_erc20, ISafeErc20, SafeErc20},
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
@@ -105,17 +99,19 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// The caller account is not authorized to perform an operation.
-    UnauthorizedAccount(OwnableUnauthorizedAccount),
+    UnauthorizedAccount(ownable::OwnableUnauthorizedAccount),
     /// The owner is not a valid owner account. (eg. `Address::ZERO`)
-    InvalidOwner(OwnableInvalidOwner),
+    InvalidOwner(ownable::OwnableInvalidOwner),
     /// Indicates an error related to the underlying Ether transfer.
     ReleaseEtherFailed(ReleaseEtherFailed),
     /// Indicates that a low-level call failed.
     FailedCall(FailedCall),
     /// An operation with an ERC-20 token failed.
-    SafeErc20FailedOperation(SafeErc20FailedOperation),
+    SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
-    SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
+    SafeErc20FailedDecreaseAllowance(
+        safe_erc20::SafeErc20FailedDecreaseAllowance,
+    ),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
 }
