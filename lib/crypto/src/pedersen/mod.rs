@@ -30,7 +30,6 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Default for Pedersen<F, P> {
 impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     #[must_use]
     #[inline]
-
     /// Creates a new Pedersen hash instance.
     pub fn new() -> Self {
         Self {
@@ -51,6 +50,7 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     /// # Panics
     ///
     /// * If [`Pedersen::finalize`] panics.
+    #[must_use]
     pub fn hash(mut self, input: &[U256]) -> P::BaseField {
         self.update(input);
         let hash = self.finalize();
