@@ -21,12 +21,6 @@ pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig> {
     state: Vec<U256>,
 }
 
-impl<F: PedersenParams<P>, P: SWCurveConfig> Default for Pedersen<F, P> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     #[must_use]
     #[inline]
