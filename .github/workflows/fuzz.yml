@@ -47,7 +47,7 @@ jobs:
 
       - name: Restore cached corpus
         id: cache-corpus
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: fuzz/corpus/${{ github.event.inputs.fuzz_target }}
           key: fuzz-corpus-${{ github.event.inputs.fuzz_target }}-${{ github.sha }}
