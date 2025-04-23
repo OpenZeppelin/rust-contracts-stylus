@@ -333,8 +333,8 @@ impl Erc20Wrapper {
     ///
     /// * [`Error::InvalidUnderlying`]  - If the external call for
     ///   [`IErc20::balance_of`] fails.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
-    ///   operation.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   `Address::ZERO`.
     ///
     /// # Panics
     ///
