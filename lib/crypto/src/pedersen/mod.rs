@@ -90,9 +90,7 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Hasher for Pedersen<F, P> {
             let start_idx = 2 + idx * F::N_ELEMENT_BITS_HASH;
             let end_idx = 2 + (idx + 1) * F::N_ELEMENT_BITS_HASH;
 
-            if end_idx > F::CONSTANT_POINTS.len() {
-                panic!("Pedersen hash failed -- too many elements");
-            }
+            assert!(end_idx <= F::CONSTANT_POINTS.len(), "Pedersen hash failed -- too many elements");
 
             let point_list = &F::CONSTANT_POINTS[start_idx..end_idx];
 
