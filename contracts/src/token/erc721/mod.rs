@@ -1048,7 +1048,6 @@ impl Erc721 {
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
-                        // Non-IERC721Receiver implementer.
                         return Err(Error::InvalidReceiverWithReason(
                             InvalidReceiverWithReason {
                                 reason: String::from_utf8(reason.to_owned())
@@ -1058,6 +1057,7 @@ impl Erc721 {
                     }
                 }
 
+                // Non-IERC721Receiver implementer.
                 return Err(ERC721InvalidReceiver { receiver: to }.into());
             }
         };

@@ -783,7 +783,6 @@ impl Erc1155 {
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
-                        // Non-IERC1155Receiver implementer.
                         return Err(Error::InvalidReceiverWithReason(
                             InvalidReceiverWithReason {
                                 reason: String::from_utf8(reason.to_owned())
@@ -793,6 +792,7 @@ impl Erc1155 {
                     }
                 }
 
+                // Non-IERC1155Receiver implementer.
                 return Err(ERC1155InvalidReceiver { receiver: to }.into());
             }
         };
