@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload crashes
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fuzz-crashes-${{ github.event.inputs.fuzz_target }}
           path: fuzz/artifacts/crashes-${{ github.event.inputs.fuzz_target }}
@@ -127,7 +127,7 @@ jobs:
           
       - name: Upload fuzzing stats
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fuzz-stats-${{ github.event.inputs.fuzz_target }}
           path: fuzz/fuzz_stats
