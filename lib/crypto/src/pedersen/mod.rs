@@ -78,7 +78,7 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     /// * If one of the input values is higher than
     ///   [`PedersenParams::FIELD_PRIME`].
     /// * If the input values contains more elements than length of
-    ///   [`PedersenParams::CONSTANT_POINTS`] /
+    ///   [`PedersenParams::constant_points()`] /
     ///   [`PedersenParams::N_ELEMENT_BITS_HASH`].
     pub fn finalize(self) -> Affine<P> {
         let mut point: Projective<P> = F::SHIFT_POINT.into();
