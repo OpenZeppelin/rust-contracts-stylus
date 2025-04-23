@@ -19,11 +19,7 @@ use alloy_sol_types::SolType;
 use stylus_sdk::{block, call::MethodError, prelude::*};
 
 use crate::{
-    token::erc20::{
-        self, ERC20InsufficientAllowance, ERC20InsufficientBalance,
-        ERC20InvalidApprover, ERC20InvalidReceiver, ERC20InvalidSender,
-        ERC20InvalidSpender, Erc20,
-    },
+    token::erc20::{self, Erc20},
     utils::{
         cryptography::{
             ecdsa::{self, ECDSAInvalidSignature, ECDSAInvalidSignatureS},
@@ -71,20 +67,20 @@ pub enum Error {
     InvalidSigner(ERC2612InvalidSigner),
     /// Indicates an error related to the current balance of `sender`. Used in
     /// transfers.
-    InsufficientBalance(ERC20InsufficientBalance),
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
     /// Indicates a failure with the token `sender`. Used in transfers.
-    InvalidSender(ERC20InvalidSender),
+    InvalidSender(erc20::ERC20InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
-    InvalidReceiver(ERC20InvalidReceiver),
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
     /// Indicates a failure with the `spender`’s `allowance`. Used in
     /// transfers.
-    InsufficientAllowance(ERC20InsufficientAllowance),
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
-    InvalidSpender(ERC20InvalidSpender),
+    InvalidSpender(erc20::ERC20InvalidSpender),
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals. approver Address initiating an approval operation.
-    InvalidApprover(ERC20InvalidApprover),
+    InvalidApprover(erc20::ERC20InvalidApprover),
     /// The signature derives the `Address::ZERO`.
     InvalidSignature(ECDSAInvalidSignature),
     /// The signature has an `S` value that is in the upper half order.

@@ -26,16 +26,8 @@ use crate::{
     token::erc20::{
         self,
         interface::Erc20Interface,
-        utils::{
-            safe_erc20::{
-                self, SafeErc20FailedDecreaseAllowance,
-                SafeErc20FailedOperation,
-            },
-            ISafeErc20, SafeErc20,
-        },
-        ERC20InsufficientAllowance, ERC20InsufficientBalance,
-        ERC20InvalidApprover, ERC20InvalidReceiver, ERC20InvalidSender,
-        ERC20InvalidSpender, Erc20, IErc20,
+        utils::{safe_erc20, ISafeErc20, SafeErc20},
+        Erc20, IErc20,
     },
     utils::introspection::erc165::{Erc165, IErc165},
 };
@@ -58,24 +50,26 @@ mod sol {
 pub enum Error {
     /// Indicates an error related to the current balance of `sender`. Used in
     /// transfers.
-    InsufficientBalance(ERC20InsufficientBalance),
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
     /// Indicates a failure with the token `sender`. Used in transfers.
-    InvalidSender(ERC20InvalidSender),
+    InvalidSender(erc20::ERC20InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
-    InvalidReceiver(ERC20InvalidReceiver),
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
     /// Indicates a failure with the `spender`’s `allowance`. Used in
     /// transfers.
-    InsufficientAllowance(ERC20InsufficientAllowance),
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
     /// Indicates a failure with the `spender` to be approved. Used in
     /// approvals.
-    InvalidSpender(ERC20InvalidSpender),
+    InvalidSpender(erc20::ERC20InvalidSpender),
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals. approver Address initiating an approval operation.
-    InvalidApprover(ERC20InvalidApprover),
+    InvalidApprover(erc20::ERC20InvalidApprover),
     /// An operation with an ERC-20 token failed.
-    SafeErc20FailedOperation(SafeErc20FailedOperation),
+    SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
-    SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
+    SafeErc20FailedDecreaseAllowance(
+        safe_erc20::SafeErc20FailedDecreaseAllowance,
+    ),
     /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
 }
@@ -282,11 +276,13 @@ impl IErc20Wrapper for Erc20Wrapper {
         let sender = msg::sender();
 
         if sender == contract_address {
-            return Err(ERC20InvalidSender { sender }.into());
+            return Err(erc20::ERC20InvalidSender { sender }.into());
         }
 
         if account == contract_address {
-            return Err(ERC20InvalidReceiver { receiver: account }.into());
+            return Err(
+                erc20::ERC20InvalidReceiver { receiver: account }.into()
+            );
         }
 
         self.safe_erc20.safe_transfer_from(
@@ -308,7 +304,9 @@ impl IErc20Wrapper for Erc20Wrapper {
         erc20: &mut Erc20,
     ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
         if account == contract::address() {
-            return Err(ERC20InvalidReceiver { receiver: account }.into());
+            return Err(
+                erc20::ERC20InvalidReceiver { receiver: account }.into()
+            );
         }
 
         erc20._burn(msg::sender(), value)?;
