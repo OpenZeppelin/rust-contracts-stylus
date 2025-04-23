@@ -5,9 +5,9 @@ name: Check Links
 # Because of that, we use linkspector for adoc files and lychee for md files.
 on:
   push:
-    branches: [ main, v*, release/* ]
+    branches: [main, v*]
   pull_request:
-    branches: [ main, v*, release/* ]
+    branches: [main, v*]
 
 jobs:
   check-links-md:
