@@ -18,9 +18,51 @@ const DECIMALS: u8 = 10;
 
 #[derive(SolidityError, Debug)]
 enum Error {
-    Capped(capped::Error),
-    Erc20(erc20::Error),
-    Pausable(pausable::Error),
+    ExceededCap(capped::ERC20ExceededCap),
+    InvalidCap(capped::ERC20InvalidCap),
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
+    InvalidSender(erc20::ERC20InvalidSender),
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
+    InvalidSpender(erc20::ERC20InvalidSpender),
+    InvalidApprover(erc20::ERC20InvalidApprover),
+    EnforcedPause(pausable::EnforcedPause),
+    ExpectedPause(pausable::ExpectedPause),
+}
+
+impl From<capped::Error> for Error {
+    fn from(value: capped::Error) -> Self {
+        match value {
+            capped::Error::ExceededCap(e) => Error::ExceededCap(e),
+            capped::Error::InvalidCap(e) => Error::InvalidCap(e),
+        }
+    }
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
+}
+
+impl From<pausable::Error> for Error {
+    fn from(value: pausable::Error) -> Self {
+        match value {
+            pausable::Error::EnforcedPause(e) => Error::EnforcedPause(e),
+            pausable::Error::ExpectedPause(e) => Error::ExpectedPause(e),
+        }
+    }
 }
 
 #[entrypoint]
