@@ -12,7 +12,7 @@ dependencies = [
  "eyre",
  "keccak-const",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -1217,7 +1217,7 @@ version = "0.2.0-alpha.4"
 dependencies = [
  "alloy-primitives",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
 ]
 
 [[package]]
@@ -1306,15 +1306,6 @@ dependencies = [
  "glob",
  "threadpool",
  "zeroize",
-]
-
-[[package]]
-name = "branches"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c3cb31f305a2591edaae2206f29e1e05b19ba48eba41042a18735bcc0efe165"
-dependencies = [
- "rustc_version 0.2.3",
 ]
 
 [[package]]
@@ -1892,7 +1883,7 @@ dependencies = [
  "koba",
  "once_cell",
  "regex",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
  "toml",
 ]
@@ -1929,7 +1920,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2057,7 +2048,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2070,7 +2061,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2083,7 +2074,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2096,7 +2087,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2109,7 +2100,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2123,7 +2114,7 @@ dependencies = [
  "eyre",
  "keccak-const",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2136,7 +2127,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2149,7 +2140,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2164,7 +2155,7 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand 0.9.0",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2178,7 +2169,7 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand 0.9.0",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2192,7 +2183,7 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand 0.9.0",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -2205,7 +2196,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -3127,7 +3118,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "openzeppelin-crypto",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
 ]
 
 [[package]]
@@ -3173,7 +3164,7 @@ checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
 [[package]]
 name = "motsu"
 version = "0.8.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?rev=bc4aaa4#bc4aaa40e3dd31aa3c12f7674aa6686d169d3776"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?rev=bddced2#bddced2000d58cb21e36479dfbf00eeb91339161"
 dependencies = [
  "alloy-primitives",
  "alloy-signer-local 0.11.1",
@@ -3184,14 +3175,14 @@ dependencies = [
  "motsu-proc",
  "once_cell",
  "revm-precompile",
- "stylus-sdk 0.8.3",
+ "stylus-sdk",
  "tiny-keccak",
 ]
 
 [[package]]
 name = "motsu-proc"
 version = "0.8.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?rev=bc4aaa4#bc4aaa40e3dd31aa3c12f7674aa6686d169d3776"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?rev=bddced2#bddced2000d58cb21e36479dfbf00eeb91339161"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3416,7 +3407,7 @@ dependencies = [
  "keccak-const",
  "motsu",
  "openzeppelin-stylus-proc",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
 ]
 
 [[package]]
@@ -3438,7 +3429,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -3451,7 +3442,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -3601,7 +3592,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -3855,15 +3846,6 @@ checksum = "1465873a3dfdaa8ae7cb14b4383657caab0b3e8a0aa9ae8e04b044854c8dfce2"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
-]
-
-[[package]]
-name = "rclite"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e79f2d4b75d397f03c8102b2e6b1a7e24b9cd7d7e0d7dafc0655aa38483b2b9"
-dependencies = [
- "branches",
 ]
 
 [[package]]
@@ -4131,15 +4113,6 @@ checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
 
 [[package]]
 name = "rustc_version"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
-dependencies = [
- "semver 0.9.0",
-]
-
-[[package]]
-name = "rustc_version"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0dfe2087c51c460008730de8b57e6a320782fbfb312e1f4d520e6c6fae155ee"
@@ -4217,7 +4190,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
@@ -4332,20 +4305,11 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
-dependencies = [
- "semver-parser 0.7.0",
-]
-
-[[package]]
-name = "semver"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f301af10236f6df4160f7c3f04eec6dbc70ace82d23326abad5edee88801c6b6"
 dependencies = [
- "semver-parser 0.10.3",
+ "semver-parser",
 ]
 
 [[package]]
@@ -4353,12 +4317,6 @@ name = "semver"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56e6fa9c48d24d85fb3de5ad847117517440f6beceb7798af16b4a87d616b8d0"
-
-[[package]]
-name = "semver-parser"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "semver-parser"
@@ -4597,40 +4555,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "stylus-core"
-version = "0.8.3"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=131c550#131c5507321064344fde15d335f9b163ca905acc"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "cfg-if",
- "dyn-clone",
-]
-
-[[package]]
 name = "stylus-proc"
 version = "0.8.1"
 source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=76d0454defed46b2cfaab82e566aeb8ddde5944a#76d0454defed46b2cfaab82e566aeb8ddde5944a"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "cfg-if",
- "convert_case",
- "lazy_static",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "regex",
- "sha3",
- "syn 2.0.100",
- "syn-solidity",
- "trybuild",
-]
-
-[[package]]
-name = "stylus-proc"
-version = "0.8.3"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=131c550#131c5507321064344fde15d335f9b163ca905acc"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4661,28 +4588,9 @@ dependencies = [
  "keccak-const",
  "lazy_static",
  "mini-alloc",
- "stylus-core 0.8.1",
- "stylus-proc 0.8.1",
- "stylus-test 0.8.1",
-]
-
-[[package]]
-name = "stylus-sdk"
-version = "0.8.3"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=131c550#131c5507321064344fde15d335f9b163ca905acc"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "cfg-if",
- "clap",
- "derivative",
- "hex",
- "keccak-const",
- "lazy_static",
- "rclite",
- "stylus-core 0.8.3",
- "stylus-proc 0.8.3",
- "stylus-test 0.8.3",
+ "stylus-core",
+ "stylus-proc",
+ "stylus-test",
 ]
 
 [[package]]
@@ -4693,20 +4601,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",
  "alloy-sol-types",
- "stylus-core 0.8.1",
- "tokio",
- "url",
-]
-
-[[package]]
-name = "stylus-test"
-version = "0.8.3"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=131c550#131c5507321064344fde15d335f9b163ca905acc"
-dependencies = [
- "alloy-primitives",
- "alloy-provider 0.11.1",
- "alloy-sol-types",
- "stylus-core 0.8.3",
+ "stylus-core",
  "tokio",
  "url",
 ]
@@ -5210,7 +5105,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-stylus",
- "stylus-sdk 0.8.1",
+ "stylus-sdk",
  "tokio",
 ]
 
