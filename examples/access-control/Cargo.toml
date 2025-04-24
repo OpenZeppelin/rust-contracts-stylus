@@ -1,22 +1,38 @@
 [package]
 name = "access-control-example"
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 publish = false
-version.workspace = true
 
 [dependencies]
-openzeppelin-stylus.workspace = true
-alloy-primitives.workspace = true
-stylus-sdk.workspace = true
-keccak-const.workspace = true
+alloy = { version = "=0.7.3", features = [
+    "contract",
+    "network",
+    "providers",
+    "provider-http",
+    "rpc-client",
+    "rpc-types-eth",
+    "signer-local",
+    "getrandom",
+] }
+openzeppelin-stylus = { path = "../../contracts" }
+alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+    "tiny-keccak",
+] }
+alloy-sol-types = { version = "=0.8.20", default-features = false }
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a" }
+hex = "0.4.3"
+dotenv = "0.15.0"
+keccak-const = "0.2.0"
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 
 [dev-dependencies]
-alloy.workspace = true
-e2e.workspace = true
-tokio.workspace = true
-eyre.workspace = true
+tokio = { version = "1.12.0", features = ["full"] }
+ethers = "2.0"
+eyre = "0.6.8"
+e2e = { path = "../../lib/e2e" }
 
 [lib]
 crate-type = ["lib", "cdylib"]

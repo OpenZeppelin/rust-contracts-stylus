@@ -19,7 +19,6 @@ members = [
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/vesting-wallet",
-  "examples/access-control",
   "examples/basic/token",
   "examples/basic/script",
   "examples/ecdsa",
@@ -49,12 +48,11 @@ default-members = [
   "examples/ownable",
   "examples/vesting-wallet",
   "examples/ownable-two-step",
-  "examples/access-control",
   "examples/basic/token",
   "examples/ecdsa",
   "examples/poseidon",
 ]
-exclude = ["fuzz"]
+exclude = ["examples/access-control", "fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
