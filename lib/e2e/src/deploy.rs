@@ -11,7 +11,7 @@ use alloy::{
 use eyre::{Context, ContextCompat};
 use regex::Regex;
 
-use crate::{project::get_wasm_path, system::DEPLOYER_ADDRESS};
+use crate::system::DEPLOYER_ADDRESS;
 
 /// A basic smart contract deployer.
 pub struct Deployer {
@@ -43,24 +43,21 @@ impl Deployer {
     /// - Unable to collect information about the crate required for deployment.
     /// - [`koba::deploy`] errors.
     pub async fn deploy(self) -> eyre::Result<TransactionReceipt> {
-        let wasm_path = get_wasm_path()?;
-
         let deployer_address = std::env::var(DEPLOYER_ADDRESS)
             .expect("deployer address should be set");
 
         let ctr_args = self.ctr_args.clone().unwrap_or_default();
-
-        println!("{deployer_address:?}");
 
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
             .args(["-e", &self.rpc_url])
             .args(["--private-key", &self.private_key])
-            .args(["--wasm-file", wasm_path.to_str().unwrap()])
             .args(["--no-verify"])
             .args(["--experimental-deployer-address", &deployer_address])
             .args(["--experimental-constructor-args", &ctr_args]);
+
+        println!("{command:?}");
 
         let output = command
             .output()
@@ -108,6 +105,7 @@ impl Deployer {
             })?
             .ok_or_else(|| eyre::eyre!("Transaction receipt not found"))?;
 
+        println!("from: {:?}", receipt.from);
         Ok(receipt)
     }
 }

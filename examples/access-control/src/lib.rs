@@ -37,7 +37,6 @@ impl AccessControlExample {
             AccessControl::DEFAULT_ADMIN_ROLE.into(),
             msg::sender(),
         );
-        panic!("some panic");
     }
 
     fn make_admin(&mut self, account: Address) -> Result<(), Error> {

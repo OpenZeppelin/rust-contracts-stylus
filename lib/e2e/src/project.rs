@@ -65,6 +65,7 @@ pub(crate) fn get_wasm_path() -> eyre::Result<PathBuf> {
 /// - Unable to read the package name from the parsed toml file.
 fn read_pkg_name() -> eyre::Result<String> {
     let cargo_toml = env::current_dir()?.join("Cargo.toml");
+    println!("{:?}", env::current_dir()?);
 
     let mut reader = BufReader::new(File::open(cargo_toml)?);
     let mut buffer = String::new();

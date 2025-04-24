@@ -23,6 +23,7 @@ const NEW_ADMIN_ROLE: [u8; 32] =
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
+    println!("sender: {alice_addr:?}");
     let receipt = alice.as_deployer().deploy().await?;
     let contract = AccessControl::new(receipt.address()?, &alice.wallet);
 

@@ -34,8 +34,13 @@ ethers = "2.0"
 eyre = "0.6.8"
 e2e = { path = "../../lib/e2e" }
 
+[[bin]]
+name = "access-control-example"
+path = "src/main.rs"
+
 [lib]
 crate-type = ["lib", "cdylib"]
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/std"]
