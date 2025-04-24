@@ -76,7 +76,7 @@ impl IErc20Burnable for Erc20 {
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
 
     use super::IErc20Burnable;
     use crate::token::erc20::{Erc20, Error, IErc20};
@@ -91,11 +91,14 @@ mod tests {
         // Mint some tokens for Alice.
 
         let two = uint!(2_U256);
-        contract.sender(alice)._update(Address::ZERO, alice, two).unwrap();
+        contract
+            .sender(alice)
+            ._update(Address::ZERO, alice, two)
+            .motsu_unwrap();
         assert_eq!(two, contract.sender(alice).balance_of(alice));
         assert_eq!(two, contract.sender(alice).total_supply());
 
-        contract.sender(alice).burn(one).unwrap();
+        contract.sender(alice).burn(one).motsu_unwrap();
 
         assert_eq!(one, contract.sender(alice).balance_of(alice));
         assert_eq!(one, contract.sender(alice).total_supply());
@@ -119,15 +122,18 @@ mod tests {
     fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
         // Alice approves `msg::sender`.
         let one = uint!(1_U256);
-        contract.sender(alice).approve(bob, one).unwrap();
+        contract.sender(alice).approve(bob, one).motsu_unwrap();
 
         // Mint some tokens for Alice.
         let two = uint!(2_U256);
-        contract.sender(alice)._update(Address::ZERO, alice, two).unwrap();
+        contract
+            .sender(alice)
+            ._update(Address::ZERO, alice, two)
+            .motsu_unwrap();
         assert_eq!(two, contract.sender(alice).balance_of(alice));
         assert_eq!(two, contract.sender(alice).total_supply());
 
-        contract.sender(bob).burn_from(alice, one).unwrap();
+        contract.sender(bob).burn_from(alice, one).motsu_unwrap();
 
         assert_eq!(one, contract.sender(alice).balance_of(alice));
         assert_eq!(one, contract.sender(alice).total_supply());
@@ -144,7 +150,7 @@ mod tests {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 
-        contract.sender(alice).approve(bob, one).unwrap();
+        contract.sender(alice).approve(bob, one).motsu_unwrap();
         assert_eq!(zero, contract.sender(alice).balance_of(bob));
 
         let one = uint!(1_U256);
@@ -160,7 +166,10 @@ mod tests {
     ) {
         // Mint some tokens for Alice.
         let one = uint!(1_U256);
-        contract.sender(alice)._update(Address::ZERO, alice, one).unwrap();
+        contract
+            .sender(alice)
+            ._update(Address::ZERO, alice, one)
+            .motsu_unwrap();
         assert_eq!(one, contract.sender(alice).balance_of(alice));
 
         let result = contract.sender(alice).burn_from(alice, one);

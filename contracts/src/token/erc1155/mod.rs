@@ -49,6 +49,7 @@ mod sol {
     sol! {
         /// Emitted when `value` amount of tokens of type `id` are
         /// transferred from `from` to `to` by `operator`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event TransferSingle(
             address indexed operator,
@@ -60,6 +61,7 @@ mod sol {
 
         /// Equivalent to multiple [`TransferSingle`] events, where `operator`
         /// `from` and `to` are the same for all transfers.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event TransferBatch(
             address indexed operator,
@@ -71,6 +73,7 @@ mod sol {
 
         /// Emitted when `account` grants or revokes permission to `operator`
         /// to transfer their tokens, according to `approved`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event ApprovalForAll(
             address indexed account,
@@ -210,7 +213,7 @@ unsafe impl TopLevelStorage for Erc1155 {}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]
-pub trait IErc1155 {
+pub trait IErc1155: IErc165 {
     /// The error type associated to this ERC-1155 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
@@ -2353,10 +2356,6 @@ mod tests {
         let actual = <Erc1155 as IErc1155>::INTERFACE_ID;
         let expected = 0xd9b67a26;
         assert_eq!(actual, expected);
-
-        let actual = <Erc1155 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
-        assert_eq!(actual, expected);
     }
 
     #[motsu::test]
@@ -2367,5 +2366,8 @@ mod tests {
         assert!(Erc1155::supports_interface(
             <Erc1155 as IErc165>::INTERFACE_ID.into()
         ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc1155::supports_interface(fake_interface_id.into()));
     }
 }

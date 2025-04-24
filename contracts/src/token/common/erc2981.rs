@@ -169,7 +169,7 @@ impl IErc2981 for Erc2981 {
     ) -> (Address, U256) {
         let royalty_info = self.token_royalty_info.get(token_id);
         let (royalty_receiver, royalty_fraction) =
-            if royalty_info.receiver.is_zero() {
+            if royalty_info.receiver.get().is_zero() {
                 (
                     &self.default_royalty_info.receiver,
                     &self.default_royalty_info.royalty_fraction,
@@ -759,8 +759,8 @@ mod tests {
 
         // With no default royalty, should return zero address and zero amount
         let token_royalty = contract.token_royalty_info.get(TOKEN_ID);
-        assert!(token_royalty.receiver.is_zero());
-        assert_eq!(U96::ZERO, *token_royalty.royalty_fraction);
+        assert!(token_royalty.receiver.get().is_zero());
+        assert_eq!(U96::ZERO, token_royalty.royalty_fraction.get());
     }
 
     #[motsu::test]

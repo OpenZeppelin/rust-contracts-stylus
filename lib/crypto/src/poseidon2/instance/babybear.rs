@@ -12,7 +12,8 @@ pub struct BabyBear24Params;
 impl PoseidonParams<FpBabyBear> for BabyBear24Params {
     const T: usize = 24;
     const D: u8 = 7;
-    const CAPACITY: usize = 1;
+    // Capacity 4 will give `4*64 = 256` bits security.
+    const CAPACITY: usize = 4;
     const ROUNDS_F: usize = 8;
     const ROUNDS_P: usize = 21;
     const MAT_INTERNAL_DIAG_M_1: &'static [FpBabyBear] = &[
@@ -819,28 +820,27 @@ mod tests {
         let mut perm = poseidon2
             .squeeze_batch(BabyBear24Params::T - BabyBear24Params::CAPACITY)
             .into_iter();
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("12921fb0"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("0e659e79"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("61d81dc9"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("32bae33b"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("62486ae3"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("1e681b60"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("24b91325"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("2a2ef5b9"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("50e8593e"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("5bc818ec"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("10691997"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("35a14520"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("2ba6a3c5"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("279d47ec"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("55014e81"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("5953a67f"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("2f403111"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("6b8828ff"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("1801301f"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("2749207a"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("3dc9cf21"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("3c985ba2"));
-        assert_eq!(perm.next().unwrap(), fp_from_hex!("57a99864"));
+
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("5F5A91BB"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("1AB970BC"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("641C2977"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("70EE1E1F"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("5002978A"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("309B742F"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("09C59B3E"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("6B554AC2"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("450C070E"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("07EAEA75"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("358E2514"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("387D082C"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("4869C4E2"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("66E56CAE"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("349EAB1A"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("58A416EC"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("5EB14F6A"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("28BD8371"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("56B19FBE"));
+        assert_eq!(perm.next().unwrap(), fp_from_hex!("01DD53EF"));
+        assert!(perm.next().is_none());
     }
 }

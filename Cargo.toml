@@ -12,6 +12,7 @@ members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc721-wrapper",
   "examples/erc1155",
   "examples/erc1155-metadata-uri",
   "examples/erc1155-supply",
@@ -40,6 +41,7 @@ default-members = [
   "examples/erc721",
   "examples/erc721-consecutive",
   "examples/erc721-metadata",
+  "examples/erc721-wrapper",
   "examples/erc1155",
   "examples/erc1155-metadata-uri",
   "examples/erc1155-supply",
@@ -79,10 +81,9 @@ pedantic = "warn"
 all = "warn"
 
 [workspace.dependencies]
-# Stylus SDK related
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "131c550", default-features = false, features = [
   "mini-alloc",
-] }
+] } # Stylus SDK related
 
 alloy = { version = "=0.7.3", features = [
   "contract",
@@ -123,8 +124,7 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
-# test helpers
-motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", branch = "update-sdk" }
+motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "bc4aaa4" }
 
 # members
 openzeppelin-stylus = { path = "contracts" }
