@@ -48,10 +48,10 @@ then
   cd "$MYDIR" || exit
   cd ..
 
-  git clone --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
+  git clone --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git --branch v3-support
   cd ./nitro-testnode || exit
   git pull origin release --recurse-submodules
-  git checkout 33b04f162eb388e648619e1df6dbe4e1ab8437a0 || exit
+  git checkout de8cf4edec0d12e5ef1b7623e54e35ddb579ff0b || exit
 
   ./test-node.bash --no-run --init || exit
 fi

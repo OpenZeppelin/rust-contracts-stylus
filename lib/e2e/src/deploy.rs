@@ -48,19 +48,19 @@ impl Deployer {
         let deployer_address = std::env::var(DEPLOYER_ADDRESS)
             .expect("deployer address should be set");
 
+        let ctr_args = self.ctr_args.clone().unwrap_or_default();
+
+        println!("{deployer_address:?}");
+
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
             .args(["-e", &self.rpc_url])
             .args(["--private-key", &self.private_key])
             .args(["--wasm-file", wasm_path.to_str().unwrap()])
-            .args(["--no-verify"]);
-
-        if let Some(ctr_args) = &self.ctr_args {
-            command
-                .args(["--experimental-deployer-address", &deployer_address])
-                .args(["--experimental-constructor-args", ctr_args]);
-        }
+            .args(["--no-verify"])
+            .args(["--experimental-deployer-address", &deployer_address])
+            .args(["--experimental-constructor-args", &ctr_args]);
 
         let output = command
             .output()

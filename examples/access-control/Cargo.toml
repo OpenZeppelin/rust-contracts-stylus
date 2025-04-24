@@ -7,16 +7,6 @@ repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 publish = false
 
 [dependencies]
-alloy = { version = "=0.7.3", features = [
-    "contract",
-    "network",
-    "providers",
-    "provider-http",
-    "rpc-client",
-    "rpc-types-eth",
-    "signer-local",
-    "getrandom",
-] }
 openzeppelin-stylus = { path = "../../contracts" }
 alloy-primitives = { version = "=0.8.20", default-features = false, features = [
     "tiny-keccak",
@@ -29,6 +19,16 @@ keccak-const = "0.2.0"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 
 [dev-dependencies]
+alloy = { version = "=0.7.3", features = [
+    "contract",
+    "network",
+    "providers",
+    "provider-http",
+    "rpc-client",
+    "rpc-types-eth",
+    "signer-local",
+    "getrandom",
+] }
 tokio = { version = "1.12.0", features = ["full"] }
 ethers = "2.0"
 eyre = "0.6.8"
