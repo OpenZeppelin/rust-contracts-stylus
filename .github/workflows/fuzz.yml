@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -47,7 +47,7 @@ jobs:
 
       - name: Restore cached corpus
         id: cache-corpus
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: fuzz/corpus/${{ github.event.inputs.fuzz_target }}
           key: fuzz-corpus-${{ github.event.inputs.fuzz_target }}-${{ github.sha }}
@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload crashes
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fuzz-crashes-${{ github.event.inputs.fuzz_target }}
           path: fuzz/artifacts/crashes-${{ github.event.inputs.fuzz_target }}
@@ -127,7 +127,7 @@ jobs:
           
       - name: Upload fuzzing stats
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fuzz-stats-${{ github.event.inputs.fuzz_target }}
           path: fuzz/fuzz_stats
