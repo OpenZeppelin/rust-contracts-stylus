@@ -24,6 +24,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
+use super::ownable::OwnableInvalidOwner;
 use crate::{
     access::ownable::{self, IOwnable, Ownable, OwnableUnauthorizedAccount},
     utils::introspection::erc165::{Erc165, IErc165},

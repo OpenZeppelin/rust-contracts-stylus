@@ -81,7 +81,7 @@ pedantic = "warn"
 all = "warn"
 
 [workspace.dependencies]
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "131c550", default-features = false, features = [
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
   "mini-alloc",
 ] } # Stylus SDK related
 
@@ -124,7 +124,7 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
-motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "bc4aaa4" }
+motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "617ec38" }
 
 # members
 openzeppelin-stylus = { path = "contracts" }
