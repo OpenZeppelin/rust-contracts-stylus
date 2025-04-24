@@ -130,7 +130,7 @@ motsu = "0.8.0"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
-openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.1.0" }
+openzeppelin-stylus-proc = { path = "contracts-proc", version = ">=0.1.0, <=0.2.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }
