@@ -8,46 +8,37 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys = "0.4"
-motsu = "0.6.0"
-stylus-sdk = { version = "0.8.1", default-features = false, features = [
+libfuzzer-sys = "0.4.9"
+stylus-sdk = { version = "0.8.4", default-features = false, features = [
     "mini-alloc",
 ] }
 alloy-primitives = { version = "=0.8.20", default-features = false }
 
-[features]
-arbitrary = ["alloy-primitives/arbitrary"]
-
 [dependencies.openzeppelin-crypto]
 path = "../lib/crypto"
 
-[dependencies.openzeppelin-stylus]
-path = "../contracts"
+# fuzz targets
 
 [[bin]]
-name = "merkle_verify"
-path = "fuzz_targets/merkle_verify.rs"
+name = "merkle"
+path = "fuzz_targets/merkle.rs"
 test = false
 doc = false
 bench = false
 
 [[bin]]
-name = "keccak_does_not_panic"
-path = "fuzz_targets/keccak/does_not_panic.rs"
+name = "keccak"
+path = "fuzz_targets/keccak.rs"
 test = false
 doc = false
 bench = false
 
-[[bin]]
-name = "keccak_memory_safety"
-path = "fuzz_targets/keccak/memory_safety.rs"
-test = false
-doc = false
-bench = false
+# corpus generators
 
+# name must be in format 'gen-{{fuzz-target}}-corpus
 [[bin]]
-name = "openzeppelin_stylus_utils"
-path = "fuzz_targets/openzeppelin_stylus_utils.rs"
+name = "gen-merkle-corpus"
+path = "src/merkle/corpus.rs"
 test = false
 doc = false
 bench = false

@@ -51,6 +51,8 @@ use stylus_sdk::{
     storage::{StorageBool, StorageFixedBytes, StorageMap},
 };
 
+use crate::utils::introspection::erc165::{Erc165, IErc165};
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -61,6 +63,7 @@ mod sol {
         ///
         /// `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
         /// `RoleAdminChanged` not being emitted signaling this.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previous_admin_role, bytes32 indexed new_admin_role);
         /// Emitted when `account` is granted `role`.
@@ -69,6 +72,7 @@ mod sol {
         /// bears the admin role (for the granted role).
         /// Expected in cases where the role was granted using the internal
         /// [`AccessControl::grant_role`].
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
         /// Emitted when `account` is revoked `role`.
@@ -76,6 +80,7 @@ mod sol {
         /// `sender` is the account that originated the contract call:
         ///   - if using `revoke_role`, it is the admin role bearer.
         ///   - if using `renounce_role`, it is the role bearer (i.e. `account`).
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
     }
@@ -259,7 +264,7 @@ impl IAccessControl for AccessControl {
     }
 
     fn get_role_admin(&self, role: B256) -> B256 {
-        *self.roles.getter(role).admin_role
+        self.roles.getter(role).admin_role.get()
     }
 
     fn grant_role(
@@ -400,6 +405,14 @@ impl AccessControl {
     }
 }
 
+impl IErc165 for AccessControl {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IAccessControl>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::Address;
@@ -407,6 +420,7 @@ mod tests {
     use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{AccessControl, Error, IAccessControl};
+    use crate::utils::introspection::erc165::IErc165;
 
     /// Shorthand for declaring variables converted from a hex literal to a
     /// fixed 32-byte slice;
@@ -709,5 +723,25 @@ mod tests {
         let role_revoked =
             contract.sender(alice)._revoke_role(ROLE.into(), bob);
         assert!(!role_revoked);
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <AccessControl as IAccessControl>::INTERFACE_ID;
+        let expected = 0x7965db0b;
+        assert_ne!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(AccessControl::supports_interface(
+            <AccessControl as IAccessControl>::INTERFACE_ID.into()
+        ));
+        assert!(AccessControl::supports_interface(
+            <AccessControl as IErc165>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!AccessControl::supports_interface(fake_interface_id.into()));
     }
 }

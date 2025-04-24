@@ -11,8 +11,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use alloy_sol_types::SolCall;
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
@@ -22,7 +23,12 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::{token::erc20, utils::ReentrantCallHandler};
+use crate::{
+    token::erc20,
+    utils::introspection::erc165::{Erc165, IErc165},
+};
+
+const BOOL_TYPE_SIZE: usize = 32;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -93,6 +99,7 @@ pub struct SafeErc20;
 unsafe impl TopLevelStorage for SafeErc20 {}
 
 /// Required interface of a [`SafeErc20`] utility contract.
+#[interface_id]
 pub trait ISafeErc20 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -331,12 +338,17 @@ impl SafeErc20 {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        match RawCall::new()
-            .limit_return_data(0, 32)
-            .call_with_reentrant_handling(token, &call.abi_encode())
-        {
-            Ok(data) if data.is_empty() || Self::encodes_true(&data) => Ok(()),
-            _ => Err(SafeErc20FailedOperation { token }.into()),
+        unsafe {
+            match RawCall::new()
+                .limit_return_data(0, BOOL_TYPE_SIZE)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+            {
+                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
+                    Ok(())
+                }
+                _ => Err(SafeErc20FailedOperation { token }.into()),
+            }
         }
     }
 
@@ -360,14 +372,17 @@ impl SafeErc20 {
         }
 
         let call = IErc20::allowanceCall { owner: address(), spender };
-        let result = RawCall::new()
-            .limit_return_data(0, 32)
-            .call_with_reentrant_handling(token, &call.abi_encode())
-            .map_err(|_| {
-                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                    token,
-                })
-            })?;
+        let result = unsafe {
+            RawCall::new()
+                .limit_return_data(0, BOOL_TYPE_SIZE)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+                .map_err(|_| {
+                    Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                        token,
+                    })
+                })?
+        };
 
         Ok(U256::from_be_slice(&result))
     }
@@ -384,9 +399,18 @@ impl SafeErc20 {
     }
 }
 
+impl IErc165 for SafeErc20 {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as ISafeErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use super::SafeErc20;
+    use super::{ISafeErc20, SafeErc20};
+    use crate::utils::introspection::erc165::IErc165;
+
     #[test]
     fn encodes_true_empty_slice() {
         assert!(!SafeErc20::encodes_true(&[]));
@@ -415,5 +439,25 @@ mod tests {
     #[test]
     fn encodes_true_wrong_bytes() {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <SafeErc20 as ISafeErc20>::INTERFACE_ID;
+        let expected = 0xf71993e3;
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(SafeErc20::supports_interface(
+            <SafeErc20 as IErc165>::INTERFACE_ID.into()
+        ));
+        assert!(SafeErc20::supports_interface(
+            <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
     }
 }

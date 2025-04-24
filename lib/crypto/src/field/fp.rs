@@ -519,6 +519,10 @@ impl<P: FpParams<N>, const N: usize> AdditiveGroup for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
     const ONE: Self = Fp::new_unchecked(P::R);
 
+    fn extension_degree() -> usize {
+        1
+    }
+
     #[inline]
     fn square(&self) -> Self {
         let mut temp = *self;

@@ -14,7 +14,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -25,7 +25,10 @@ use stylus_sdk::{
 
 use crate::{
     token::erc1155::{self, Erc1155, IErc1155},
-    utils::math::storage::{AddAssignChecked, SubAssignUnchecked},
+    utils::{
+        introspection::erc165::{Erc165, IErc165},
+        math::storage::{AddAssignChecked, SubAssignUnchecked},
+    },
 };
 
 /// State of an [`Erc1155Supply`] contract.
@@ -87,7 +90,7 @@ impl IErc1155Supply for Erc1155Supply {
     }
 
     fn total_supply_all(&self) -> U256 {
-        *self.total_supply_all
+        self.total_supply_all.get()
     }
 
     fn exists(&self, id: U256) -> bool {
@@ -370,6 +373,16 @@ impl Erc1155Supply {
     }
 }
 
+impl IErc165 for Erc1155Supply {
+    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc1155Supply>::INTERFACE_ID
+            == u32::from_be_bytes(*interface_id)
+            || <Self as IErc1155>::INTERFACE_ID
+                == u32::from_be_bytes(*interface_id)
+            || Erc165::supports_interface(interface_id)
+    }
+}
+
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{Address, U256};
@@ -377,9 +390,12 @@ mod tests {
     use stylus_sdk::prelude::TopLevelStorage;
 
     use super::{Erc1155Supply, IErc1155Supply};
-    use crate::token::erc1155::{
-        tests::{random_token_ids, random_values},
-        ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+    use crate::{
+        token::erc1155::{
+            tests::{random_token_ids, random_values},
+            ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+        },
+        utils::introspection::erc165::IErc165,
     };
 
     unsafe impl TopLevelStorage for Erc1155Supply {}
@@ -610,5 +626,21 @@ mod tests {
         let actual = <Erc1155Supply as IErc1155Supply>::INTERFACE_ID;
         let expected = 0xeac6339d;
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface() {
+        assert!(Erc1155Supply::supports_interface(
+            <Erc1155Supply as IErc1155Supply>::INTERFACE_ID.into()
+        ));
+        assert!(Erc1155Supply::supports_interface(
+            <Erc1155Supply as IErc165>::INTERFACE_ID.into()
+        ));
+        assert!(Erc1155Supply::supports_interface(
+            <Erc1155Supply as IErc1155>::INTERFACE_ID.into()
+        ));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!Erc1155Supply::supports_interface(fake_interface_id.into()));
     }
 }
