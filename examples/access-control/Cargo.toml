@@ -43,4 +43,14 @@ crate-type = ["lib", "cdylib"]
 
 [features]
 e2e = []
-export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/std"]
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
+
+[profile.release]
+codegen-units = 1
+strip = true
+lto = true
+panic = "abort"
+
+# If you need to reduce the binary size, it is advisable to try other
+# optimization levels, such as "s" and "z"
+opt-level = 3
