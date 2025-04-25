@@ -22,7 +22,6 @@ members = [
   "examples/vesting-wallet",
   "examples/basic/token",
   "examples/basic/script",
-  "examples/ecdsa",
   "examples/ownable-two-step",
   "examples/safe-erc20",
   "benches",
@@ -51,10 +50,9 @@ default-members = [
   "examples/vesting-wallet",
   "examples/ownable-two-step",
   "examples/basic/token",
-  "examples/ecdsa",
   "examples/poseidon",
 ]
-exclude = ["examples/access-control", "fuzz"]
+exclude = ["examples/access-control", "examples/ecdsa", "fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
