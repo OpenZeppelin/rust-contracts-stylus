@@ -273,7 +273,7 @@ impl Erc721Wrapper {
         _operator: Address,
         from: Address,
         token_id: U256,
-        _data: Bytes,
+        _data: &Bytes,
         erc721: &mut Erc721,
     ) -> Result<FixedBytes<4>, Error> {
         let sender = msg::sender();
@@ -293,6 +293,7 @@ impl Erc721Wrapper {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     pub fn underlying(&self) -> Address {
         self.underlying.get()
     }
@@ -413,7 +414,7 @@ mod tests {
                 operator,
                 from,
                 token_id,
-                data,
+                &data,
                 &mut self.erc721,
             )
         }

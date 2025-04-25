@@ -1056,6 +1056,7 @@ impl Erc4626 {
     ///         self.erc4626.decimals()
     ///     }
     /// ```
+    #[must_use]
     pub fn decimals(&self) -> U8 {
         self.underlying_decimals
             .get()
