@@ -8,7 +8,6 @@ version = "0.0.0"
 dependencies = [
  "alloy",
  "alloy-primitives",
- "alloy-sol-types",
  "e2e",
  "eyre",
  "keccak-const",
