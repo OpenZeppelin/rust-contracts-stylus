@@ -25,7 +25,7 @@ pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
 use crate::{
-    access::ownable::{self, IOwnable, Ownable, OwnableUnauthorizedAccount},
+    access::ownable::{self, IOwnable, Ownable},
     utils::introspection::erc165::{Erc165, IErc165},
 };
 
@@ -117,7 +117,7 @@ pub trait IOwnable2Step {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IOwnable2Step>::Error>;
 
     /// Accepts the ownership of the contract.
     /// Can only be called by the pending owner.
@@ -134,7 +134,9 @@ pub trait IOwnable2Step {
     /// # Events
     ///
     /// * [`crate::access::ownable::OwnershipTransferred`].
-    fn accept_ownership(&mut self) -> Result<(), Self::Error>;
+    fn accept_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Ownable::only_owner`] functions. Can only be called by the current
@@ -154,7 +156,9 @@ pub trait IOwnable2Step {
     /// # Events
     ///
     /// * [`crate::access::ownable::OwnershipTransferred`].
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error>;
 }
 
 #[public]
@@ -172,7 +176,7 @@ impl IOwnable2Step for Ownable2Step {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IOwnable2Step>::Error> {
         self.ownable.only_owner()?;
         self.pending_owner.set(new_owner);
 
@@ -184,19 +188,23 @@ impl IOwnable2Step for Ownable2Step {
         Ok(())
     }
 
-    fn accept_ownership(&mut self) -> Result<(), Self::Error> {
+    fn accept_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error> {
         let sender = msg::sender();
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
             return Err(ownable::Error::UnauthorizedAccount(
-                OwnableUnauthorizedAccount { account: sender },
+                ownable::OwnableUnauthorizedAccount { account: sender },
             ));
         }
         self._transfer_ownership(sender);
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    fn renounce_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IOwnable2Step>::Error> {
         self.ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
@@ -241,11 +249,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{
-        ownable::Error, IOwnable, IOwnable2Step, Ownable, Ownable2Step,
-        OwnableUnauthorizedAccount,
-    };
-    use crate::utils::introspection::erc165::IErc165;
+    use super::*;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -304,7 +308,7 @@ mod tests {
         let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));
@@ -344,7 +348,7 @@ mod tests {
         let err = contract.sender(alice).accept_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));
@@ -401,7 +405,7 @@ mod tests {
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));

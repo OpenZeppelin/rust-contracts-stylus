@@ -18,9 +18,63 @@ use stylus_sdk::{abi::Bytes, prelude::*};
 
 #[derive(SolidityError, Debug)]
 enum Error {
-    Enumerable(enumerable::Error),
-    Erc721(erc721::Error),
-    Pausable(pausable::Error),
+    OutOfBoundsIndex(enumerable::ERC721OutOfBoundsIndex),
+    EnumerableForbiddenBatchMint(
+        enumerable::ERC721EnumerableForbiddenBatchMint,
+    ),
+    InvalidOwner(erc721::ERC721InvalidOwner),
+    NonexistentToken(erc721::ERC721NonexistentToken),
+    IncorrectOwner(erc721::ERC721IncorrectOwner),
+    InvalidSender(erc721::ERC721InvalidSender),
+    InvalidReceiver(erc721::ERC721InvalidReceiver),
+    InvalidReceiverWithReason(erc721::InvalidReceiverWithReason),
+    InsufficientApproval(erc721::ERC721InsufficientApproval),
+    InvalidApprover(erc721::ERC721InvalidApprover),
+    InvalidOperator(erc721::ERC721InvalidOperator),
+    EnforcedPause(pausable::EnforcedPause),
+    ExpectedPause(pausable::ExpectedPause),
+}
+
+impl From<enumerable::Error> for Error {
+    fn from(value: enumerable::Error) -> Self {
+        match value {
+            enumerable::Error::OutOfBoundsIndex(e) => {
+                Error::OutOfBoundsIndex(e)
+            }
+            enumerable::Error::EnumerableForbiddenBatchMint(e) => {
+                Error::EnumerableForbiddenBatchMint(e)
+            }
+        }
+    }
+}
+
+impl From<erc721::Error> for Error {
+    fn from(value: erc721::Error) -> Self {
+        match value {
+            erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+            erc721::Error::NonexistentToken(e) => Error::NonexistentToken(e),
+            erc721::Error::IncorrectOwner(e) => Error::IncorrectOwner(e),
+            erc721::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc721::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc721::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc721::Error::InsufficientApproval(e) => {
+                Error::InsufficientApproval(e)
+            }
+            erc721::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc721::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+        }
+    }
+}
+
+impl From<pausable::Error> for Error {
+    fn from(value: pausable::Error) -> Self {
+        match value {
+            pausable::Error::EnforcedPause(e) => Error::EnforcedPause(e),
+            pausable::Error::ExpectedPause(e) => Error::ExpectedPause(e),
+        }
+    }
 }
 
 #[entrypoint]
