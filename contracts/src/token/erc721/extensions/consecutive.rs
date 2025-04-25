@@ -38,17 +38,19 @@ use stylus_sdk::{
 
 use crate::{
     token::erc721::{
-        self, Approval, ERC721IncorrectOwner, ERC721InvalidApprover,
+        self, Approval, ERC721IncorrectOwner, ERC721InsufficientApproval,
+        ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, IErc721, Transfer,
+        Erc721, IErc721, InvalidReceiverWithReason, Transfer,
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
-            checkpoints,
-            checkpoints::{Size, Trace, S160},
+            checkpoints::{
+                self, CheckpointUnorderedInsertion, Size, Trace, S160,
+            },
         },
     },
 };
@@ -105,10 +107,32 @@ mod sol {
 /// An [`Erc721Consecutive`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Erc721`] contract [`erc721::Error`].
-    Erc721(erc721::Error),
-    /// Error type from checkpoint contract [`checkpoints::Error`].
-    Checkpoints(checkpoints::Error),
+    /// Indicates that an address can't be an owner.
+    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// Used in balance queries.
+    InvalidOwner(ERC721InvalidOwner),
+    /// Indicates a `token_id` whose `owner` is the zero address.
+    NonexistentToken(ERC721NonexistentToken),
+    /// Indicates an error related to the ownership over a particular token.
+    /// Used in transfers.
+    IncorrectOwner(ERC721IncorrectOwner),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(ERC721InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(ERC721InvalidReceiver),
+    /// Indicates a failure with the token `receiver`, with the reason
+    /// specified by it.
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
+    /// Indicates a failure with the `operator`’s approval. Used in transfers.
+    InsufficientApproval(ERC721InsufficientApproval),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals.
+    InvalidApprover(ERC721InvalidApprover),
+    /// Indicates a failure with the `operator` to be approved. Used in
+    /// approvals.
+    InvalidOperator(ERC721InvalidOperator),
+    /// A value was attempted to be inserted into a past checkpoint.
+    CheckpointUnorderedInsertion(CheckpointUnorderedInsertion),
     /// Batch mint is restricted to the constructor.
     /// Any batch mint not emitting the [`Transfer`] event outside of
     /// the constructor is non ERC-721 compliant.
@@ -119,6 +143,36 @@ pub enum Error {
     ForbiddenMint(ERC721ForbiddenMint),
     /// Batch burn is not supported.
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
+}
+
+impl From<erc721::Error> for Error {
+    fn from(value: erc721::Error) -> Self {
+        match value {
+            erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+            erc721::Error::NonexistentToken(e) => Error::NonexistentToken(e),
+            erc721::Error::IncorrectOwner(e) => Error::IncorrectOwner(e),
+            erc721::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc721::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc721::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc721::Error::InsufficientApproval(e) => {
+                Error::InsufficientApproval(e)
+            }
+            erc721::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc721::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+        }
+    }
+}
+
+impl From<checkpoints::Error> for Error {
+    fn from(value: checkpoints::Error) -> Self {
+        match value {
+            checkpoints::Error::CheckpointUnorderedInsertion(e) => {
+                Error::CheckpointUnorderedInsertion(e)
+            }
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -174,11 +228,17 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
-    fn balance_of(&self, owner: Address) -> Result<U256, Error> {
+    fn balance_of(
+        &self,
+        owner: Address,
+    ) -> Result<U256, <Self as IErc721>::Error> {
         Ok(self.erc721.balance_of(owner)?)
     }
 
-    fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
+    fn owner_of(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error> {
         self._require_owned(token_id)
     }
 
@@ -187,7 +247,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         // TODO: Once the SDK supports the conversion,
         // use alloy_primitives::bytes!("") here.
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
@@ -200,7 +260,7 @@ impl IErc721 for Erc721Consecutive {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         self.transfer_from(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
             msg::sender(),
@@ -216,7 +276,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
                 ERC721InvalidReceiver { receiver: Address::ZERO },
@@ -239,7 +299,11 @@ impl IErc721 for Erc721Consecutive {
         Ok(())
     }
 
-    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), <Self as IErc721>::Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -247,11 +311,14 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         Ok(self.erc721.set_approval_for_all(operator, approved)?)
     }
 
-    fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
+    fn get_approved(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error> {
         self._require_owned(token_id)?;
         Ok(self.erc721._get_approved(token_id))
     }
@@ -801,16 +868,12 @@ mod tests {
     use motsu::prelude::Contract;
 
     use crate::{
-        token::{
-            erc721,
-            erc721::{
-                extensions::consecutive::{
-                    ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
-                },
-                ERC721IncorrectOwner, ERC721InvalidApprover,
-                ERC721InvalidReceiver, ERC721InvalidSender,
-                ERC721NonexistentToken, IErc721,
+        token::erc721::{
+            extensions::consecutive::{
+                ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
             },
+            ERC721IncorrectOwner, ERC721InvalidApprover, ERC721InvalidReceiver,
+            ERC721InvalidSender, ERC721NonexistentToken, IErc721,
         },
         utils::introspection::erc165::IErc165,
     };
@@ -888,9 +951,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidSender(ERC721InvalidSender {
-                sender: Address::ZERO
-            }))
+            Error::InvalidSender(ERC721InvalidSender { sender: Address::ZERO })
         ));
     }
 
@@ -908,9 +969,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(ERC721InvalidReceiver {
+            Error::InvalidReceiver(ERC721InvalidReceiver {
                 receiver
-            })) if receiver == invalid_receiver
+            }) if receiver == invalid_receiver
         ));
     }
 
@@ -925,9 +986,9 @@ mod tests {
             .expect_err("should not mint consecutive");
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(
-                ERC721InvalidReceiver { receiver: Address::ZERO }
-            ))
+            Error::InvalidReceiver(ERC721InvalidReceiver {
+                receiver: Address::ZERO
+            })
         ));
     }
 
@@ -1040,7 +1101,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken { token_id }))
+            Error::NonexistentToken(ERC721NonexistentToken { token_id })
             if token_id == U256::from(FIRST_CONSECUTIVE_TOKEN_ID)
         ));
 
@@ -1073,7 +1134,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken { token_id }))
+            Error::NonexistentToken(ERC721NonexistentToken { token_id })
             if token_id == U256::from(non_consecutive_token_id)
         ));
 
@@ -1086,9 +1147,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken (ERC721NonexistentToken{
+            Error::NonexistentToken (ERC721NonexistentToken{
                 token_id: t_id
-            })) if t_id == non_existent_token
+            }) if t_id == non_existent_token
         ));
     }
 
@@ -1160,11 +1221,11 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
+            Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender,
                 token_id: t_id,
                 owner
-            })) if sender == dave && t_id == TOKEN_ID && owner == alice
+            }) if sender == dave && t_id == TOKEN_ID && owner == alice
         ));
     }
 
@@ -1181,9 +1242,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken {
+            Error::NonexistentToken(ERC721NonexistentToken {
                 token_id: t_id,
-            })) if t_id == TOKEN_ID
+            }) if t_id == TOKEN_ID
         ));
     }
 
@@ -1206,9 +1267,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(ERC721InvalidReceiver {
+            Error::InvalidReceiver(ERC721InvalidReceiver {
                 receiver
-            })) if receiver == invalid_receiver
+            }) if receiver == invalid_receiver
         ));
 
         let owner = contract
@@ -1271,9 +1332,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidReceiver(ERC721InvalidReceiver {
+            Error::InvalidReceiver(ERC721InvalidReceiver {
                 receiver
-            })) if receiver == invalid_receiver
+            }) if receiver == invalid_receiver
         ));
 
         let owner = contract
@@ -1301,11 +1362,11 @@ mod tests {
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::IncorrectOwner(ERC721IncorrectOwner {
+            Error::IncorrectOwner(ERC721IncorrectOwner {
                 sender,
                 token_id: t_id,
                 owner
-            })) if sender == dave && t_id == TOKEN_ID && owner == alice
+            }) if sender == dave && t_id == TOKEN_ID && owner == alice
         ));
     }
 
@@ -1348,9 +1409,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken {
+            Error::NonexistentToken(ERC721NonexistentToken {
                 token_id: t_id
-            })) if TOKEN_ID == t_id
+            }) if TOKEN_ID == t_id
         ));
     }
 
@@ -1373,9 +1434,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::InvalidApprover(ERC721InvalidApprover {
+            Error::InvalidApprover(ERC721InvalidApprover {
                 approver
-            })) if approver == alice
+            }) if approver == alice
         ));
     }
 
@@ -1409,9 +1470,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc721(erc721::Error::NonexistentToken(ERC721NonexistentToken {
+            Error::NonexistentToken(ERC721NonexistentToken {
                 token_id: t_id
-            })) if TOKEN_ID == t_id
+            }) if TOKEN_ID == t_id
         ));
     }
 

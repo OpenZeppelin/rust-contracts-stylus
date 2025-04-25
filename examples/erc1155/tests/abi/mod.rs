@@ -20,8 +20,7 @@ sol!(
         function pause() external;
         function unpause() external;
 
-        error Error(string message);
-        error Panic(uint256 code);
+        error InvalidReceiverWithReason(string message);
         error ERC1155InvalidArrayLength(uint256 idsLength, uint256 valuesLength);
         error ERC1155InvalidOperator(address operator);
         error ERC1155InvalidSender(address sender);
@@ -30,6 +29,9 @@ sol!(
         error ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 tokenId);
         error EnforcedPause();
         error ExpectedPause();
+
+        error Error(string message);
+        error Panic(uint256 code);
 
         #[derive(Debug, PartialEq)]
         event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);

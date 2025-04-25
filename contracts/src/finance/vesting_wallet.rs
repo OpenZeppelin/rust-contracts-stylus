@@ -25,14 +25,18 @@
 //! adjustment in the vesting schedule to ensure the vested amount is as
 //! intended.
 
-use alloc::{vec, vec::Vec};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{Address, FixedBytes, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     block,
-    call::{self, call, Call, MethodError},
+    call::{call, Call, MethodError},
     contract, evm, function_selector,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
@@ -42,7 +46,7 @@ use crate::{
     access::ownable::{self, IOwnable, Ownable},
     token::erc20::{
         interface::Erc20Interface,
-        utils::safe_erc20::{self, ISafeErc20, SafeErc20},
+        utils::{safe_erc20, ISafeErc20, SafeErc20},
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
@@ -75,7 +79,12 @@ mod sol {
         /// Indicates an error related to the underlying Ether transfer.
         #[derive(Debug)]
         #[allow(missing_docs)]
-        error ReleaseEtherFailed();
+        error ReleaseEtherFailed(string reason);
+
+        /// Indicates that a low-level call failed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error FailedCall();
 
         /// The token address is not valid (eg. `Address::ZERO`).
         ///
@@ -89,14 +98,61 @@ mod sol {
 /// An error that occurred in the [`VestingWallet`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Ownable`] contract [`ownable::Error`].
-    Ownable(ownable::Error),
+    /// The caller account is not authorized to perform an operation.
+    UnauthorizedAccount(ownable::OwnableUnauthorizedAccount),
+    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+    InvalidOwner(ownable::OwnableInvalidOwner),
     /// Indicates an error related to the underlying Ether transfer.
-    ReleaseEtherFailed(call::Error),
-    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-    SafeErc20(safe_erc20::Error),
+    ReleaseEtherFailed(ReleaseEtherFailed),
+    /// Indicates that a low-level call failed.
+    FailedCall(FailedCall),
+    /// An operation with an ERC-20 token failed.
+    SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation),
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+    SafeErc20FailedDecreaseAllowance(
+        safe_erc20::SafeErc20FailedDecreaseAllowance,
+    ),
     /// The token address is not valid. (eg. `Address::ZERO`).
     InvalidToken(InvalidToken),
+}
+
+impl From<ownable::Error> for Error {
+    fn from(value: ownable::Error) -> Self {
+        match value {
+            ownable::Error::UnauthorizedAccount(e) => {
+                Error::UnauthorizedAccount(e)
+            }
+            ownable::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+        }
+    }
+}
+
+impl From<stylus_sdk::call::Error> for Error {
+    fn from(value: stylus_sdk::call::Error) -> Self {
+        match value {
+            stylus_sdk::call::Error::AbiDecodingFailed(_) => {
+                Error::FailedCall(FailedCall {})
+            }
+            stylus_sdk::call::Error::Revert(reason) => {
+                Error::ReleaseEtherFailed(ReleaseEtherFailed {
+                    reason: String::from_utf8_lossy(&reason).to_string(),
+                })
+            }
+        }
+    }
+}
+
+impl From<safe_erc20::Error> for Error {
+    fn from(value: safe_erc20::Error) -> Self {
+        match value {
+            safe_erc20::Error::SafeErc20FailedOperation(e) => {
+                Error::SafeErc20FailedOperation(e)
+            }
+            safe_erc20::Error::SafeErc20FailedDecreaseAllowance(e) => {
+                Error::SafeErc20FailedDecreaseAllowance(e)
+            }
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -167,7 +223,7 @@ pub trait IVestingWallet {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IVestingWallet>::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Ownable::only_owner`] functions. Can only be called by the current
@@ -189,7 +245,9 @@ pub trait IVestingWallet {
     /// # Events
     ///
     /// * [`ownable::OwnershipTransferred`].
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IVestingWallet>::Error>;
 
     /// Getter for the start timestamp.
     ///
@@ -259,8 +317,10 @@ pub trait IVestingWallet {
     /// * If total allocation exceeds `U256::MAX`.
     /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "releasable")]
-    fn releasable_erc20(&mut self, token: Address)
-        -> Result<U256, Self::Error>;
+    fn releasable_erc20(
+        &mut self,
+        token: Address,
+    ) -> Result<U256, <Self as IVestingWallet>::Error>;
 
     /// Release the native tokens (Ether) that have already vested.
     ///
@@ -281,7 +341,7 @@ pub trait IVestingWallet {
     /// * If total allocation exceeds `U256::MAX`.
     /// * If scaled total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), Self::Error>;
+    fn release_eth(&mut self) -> Result<(), <Self as IVestingWallet>::Error>;
 
     /// Release the tokens that have already vested.
     ///
@@ -305,7 +365,10 @@ pub trait IVestingWallet {
     /// * If total allocation exceeds `U256::MAX`.
     /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
     #[selector(name = "release")]
-    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
+    fn release_erc20(
+        &mut self,
+        token: Address,
+    ) -> Result<(), <Self as IVestingWallet>::Error>;
 
     /// Calculates the amount of Ether that has already vested.
     /// The Default implementation is a linear vesting curve.
@@ -344,7 +407,7 @@ pub trait IVestingWallet {
         &mut self,
         token: Address,
         timestamp: u64,
-    ) -> Result<U256, Self::Error>;
+    ) -> Result<U256, <Self as IVestingWallet>::Error>;
 }
 
 #[public]
@@ -358,11 +421,13 @@ impl IVestingWallet for VestingWallet {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IVestingWallet>::Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    fn renounce_ownership(
+        &mut self,
+    ) -> Result<(), <Self as IVestingWallet>::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 
@@ -401,7 +466,7 @@ impl IVestingWallet for VestingWallet {
     fn releasable_erc20(
         &mut self,
         token: Address,
-    ) -> Result<U256, Self::Error> {
+    ) -> Result<U256, <Self as IVestingWallet>::Error> {
         let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
@@ -409,7 +474,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), Self::Error> {
+    fn release_eth(&mut self) -> Result<(), <Self as IVestingWallet>::Error> {
         let amount = self.releasable_eth();
 
         self.released.add_assign_checked(
@@ -427,7 +492,10 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
+    fn release_erc20(
+        &mut self,
+        token: Address,
+    ) -> Result<(), <Self as IVestingWallet>::Error> {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
@@ -457,7 +525,7 @@ impl IVestingWallet for VestingWallet {
         &mut self,
         token: Address,
         timestamp: u64,
-    ) -> Result<U256, Self::Error> {
+    ) -> Result<U256, <Self as IVestingWallet>::Error> {
         let erc20 = Erc20Interface::new(token);
         let balance = erc20
             .balance_of(Call::new_in(self), contract::address())
