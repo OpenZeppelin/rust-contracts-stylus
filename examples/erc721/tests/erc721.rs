@@ -1,7 +1,10 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc721;
-use alloy::primitives::{fixed_bytes, uint, Address, Bytes, U256};
+use alloy::{
+    primitives::{fixed_bytes, uint, Address, Bytes, U256},
+    sol_types::SolError,
+};
 use e2e::{
     receipt, send, watch, Account, EventExt, PanicCode, ReceiptExt, Revert,
 };
@@ -13,6 +16,17 @@ mod mock;
 fn random_token_id() -> U256 {
     let num: u32 = rand::random();
     U256::from(num)
+}
+
+trait EncodeAsStr {
+    fn encode_as_str(&self) -> String;
+}
+
+impl<T: SolError> EncodeAsStr for T {
+    fn encode_as_str(&self) -> String {
+        let expected_error = self.abi_encode();
+        String::from_utf8_lossy(&expected_error).to_string()
+    }
 }
 
 // ============================================================================
@@ -1104,9 +1118,11 @@ async fn errors_when_receiver_reverts_with_reason(
     ))
     .expect_err("should not transfer when receiver errors with reason");
 
-    assert!(err.reverted_with(Erc721::Error {
-        message: "ERC721ReceiverMock: reverting".to_string()
-    }));
+    let message =
+        Erc721::Error { message: "ERC721ReceiverMock: reverting".to_string() }
+            .encode_as_str();
+
+    assert!(err.reverted_with(Erc721::InvalidReceiverWithReason { message }));
 
     Ok(())
 }
@@ -1164,9 +1180,10 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     ))
     .expect_err("should not transfer when receiver panics");
 
-    assert!(err.reverted_with(Erc721::Panic {
-        code: U256::from(PanicCode::DivisionByZero as u8)
-    }));
+    let message =
+        Erc721::Panic { code: U256::from(PanicCode::DivisionByZero as u8) }
+            .encode_as_str();
+    assert!(err.reverted_with(Erc721::InvalidReceiverWithReason { message }));
 
     Ok(())
 }
@@ -1551,9 +1568,11 @@ async fn error_when_receiver_reverts_with_reason_on_safe_mint_with_data(
     let err = send!(contract.safeMint(receiver_address, token_id, data))
         .expect_err("should not safe mint when receiver errors with reason");
 
-    assert!(err.reverted_with(Erc721::Error {
-        message: "ERC721ReceiverMock: reverting".to_string()
-    }));
+    let message =
+        Erc721::Error { message: "ERC721ReceiverMock: reverting".to_string() }
+            .encode_as_str();
+
+    assert!(err.reverted_with(Erc721::InvalidReceiverWithReason { message }));
 
     Ok(())
 }
@@ -1603,9 +1622,10 @@ async fn error_when_receiver_panics_on_safe_mint_with_data(
     let err = send!(contract.safeMint(receiver_address, token_id, data))
         .expect_err("should not safe mint when receiver panics");
 
-    assert!(err.reverted_with(Erc721::Panic {
-        code: U256::from(PanicCode::DivisionByZero as u8)
-    }));
+    let message =
+        Erc721::Panic { code: U256::from(PanicCode::DivisionByZero as u8) }
+            .encode_as_str();
+    assert!(err.reverted_with(Erc721::InvalidReceiverWithReason { message }));
 
     Ok(())
 }

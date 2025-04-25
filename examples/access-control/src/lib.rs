@@ -12,8 +12,42 @@ use stylus_sdk::prelude::*;
 
 #[derive(SolidityError, Debug)]
 enum Error {
-    AccessControl(control::Error),
-    Erc20(erc20::Error),
+    UnauthorizedAccount(control::AccessControlUnauthorizedAccount),
+    BadConfirmation(control::AccessControlBadConfirmation),
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
+    InvalidSender(erc20::ERC20InvalidSender),
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
+    InvalidSpender(erc20::ERC20InvalidSpender),
+    InvalidApprover(erc20::ERC20InvalidApprover),
+}
+
+impl From<control::Error> for Error {
+    fn from(value: control::Error) -> Self {
+        match value {
+            control::Error::UnauthorizedAccount(e) => {
+                Error::UnauthorizedAccount(e)
+            }
+            control::Error::BadConfirmation(e) => Error::BadConfirmation(e),
+        }
+    }
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
 }
 
 #[entrypoint]

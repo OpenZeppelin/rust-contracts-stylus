@@ -21,7 +21,10 @@ use stylus_sdk::{block, call::MethodError, prelude::*};
 use crate::{
     token::erc20::{self, Erc20},
     utils::{
-        cryptography::{ecdsa, eip712::IEip712},
+        cryptography::{
+            ecdsa::{self, ECDSAInvalidSignature, ECDSAInvalidSignatureS},
+            eip712::IEip712,
+        },
         nonces::Nonces,
     },
 };
@@ -62,10 +65,52 @@ pub enum Error {
     ExpiredSignature(ERC2612ExpiredSignature),
     /// Indicates an error related to the issue about mismatched signature.
     InvalidSigner(ERC2612InvalidSigner),
-    /// Error type from [`Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
-    /// Error type from [`ecdsa`] contract [`ecdsa::Error`].
-    ECDSA(ecdsa::Error),
+    /// Indicates an error related to the current balance of `sender`. Used in
+    /// transfers.
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(erc20::ERC20InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
+    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// transfers.
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
+    /// Indicates a failure with the `spender` to be approved. Used in
+    /// approvals.
+    InvalidSpender(erc20::ERC20InvalidSpender),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals. approver Address initiating an approval operation.
+    InvalidApprover(erc20::ERC20InvalidApprover),
+    /// The signature derives the `Address::ZERO`.
+    InvalidSignature(ECDSAInvalidSignature),
+    /// The signature has an `S` value that is in the upper half order.
+    InvalidSignatureS(ECDSAInvalidSignatureS),
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
+}
+
+impl From<ecdsa::Error> for Error {
+    fn from(value: ecdsa::Error) -> Self {
+        match value {
+            ecdsa::Error::InvalidSignature(e) => Error::InvalidSignature(e),
+            ecdsa::Error::InvalidSignatureS(e) => Error::InvalidSignatureS(e),
+        }
+    }
 }
 
 impl MethodError for Error {

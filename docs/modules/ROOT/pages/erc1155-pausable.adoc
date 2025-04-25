@@ -18,8 +18,48 @@ use openzeppelin_stylus::{
 
 #[derive(SolidityError, Debug)]
 enum Error {
-    Erc1155(erc1155::Error),
-    Pausable(pausable::Error),
+    InsufficientBalance(erc1155::ERC1155InsufficientBalance),
+    InvalidSender(erc1155::ERC1155InvalidSender),
+    InvalidReceiver(erc1155::ERC1155InvalidReceiver),
+    InvalidReceiverWithReason(erc1155::InvalidReceiverWithReason),
+    MissingApprovalForAll(erc1155::ERC1155MissingApprovalForAll),
+    InvalidApprover(erc1155::ERC1155InvalidApprover),
+    InvalidOperator(erc1155::ERC1155InvalidOperator),
+    InvalidArrayLength(erc1155::ERC1155InvalidArrayLength),
+    EnforcedPause(pausable::EnforcedPause),
+    ExpectedPause(pausable::ExpectedPause),
+}
+
+impl From<erc1155::Error> for Error {
+    fn from(value: erc1155::Error) -> Self {
+        match value {
+            erc1155::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc1155::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc1155::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc1155::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc1155::Error::MissingApprovalForAll(e) => {
+                Error::MissingApprovalForAll(e)
+            }
+            erc1155::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc1155::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+            erc1155::Error::InvalidArrayLength(e) => {
+                Error::InvalidArrayLength(e)
+            }
+        }
+    }
+}
+
+impl From<pausable::Error> for Error {
+    fn from(value: pausable::Error) -> Self {
+        match value {
+            pausable::Error::EnforcedPause(e) => Error::EnforcedPause(e),
+            pausable::Error::ExpectedPause(e) => Error::ExpectedPause(e),
+        }
+    }
 }
 
 #[entrypoint]

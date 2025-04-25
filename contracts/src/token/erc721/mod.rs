@@ -1,5 +1,9 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::{vec, vec::Vec};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -136,6 +140,13 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC721InvalidOperator(address operator);
+
+        /// Indicates a failure with the receiver reverting with a reason.
+        ///
+        /// * `reason` - Revert reason.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidReceiverWithReason(string reason);
     }
 }
 
@@ -159,14 +170,7 @@ pub enum Error {
     InvalidReceiver(ERC721InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
-    ///
-    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
-    /// return data, this error will be encoded either as `Error(string)` or
-    /// `Panic(uint256)`, as those are the built-in errors emitted by default
-    /// by Solidity's special functions `assert`, `require`, and `revert`.
-    ///
-    /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    InvalidReceiverWithReason(call::Error),
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used
@@ -218,7 +222,10 @@ pub trait IErc721: IErc165 {
     /// # Errors
     ///
     /// * [`Error::InvalidOwner`] - If owner address is `Address::ZERO`.
-    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
+    fn balance_of(
+        &self,
+        owner: Address,
+    ) -> Result<U256, <Self as IErc721>::Error>;
 
     /// Returns the owner of the `token_id` token.
     ///
@@ -230,7 +237,10 @@ pub trait IErc721: IErc165 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error>;
+    fn owner_of(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first
     /// that contract recipients are aware of the [`Erc721`] protocol to
@@ -261,7 +271,7 @@ pub trait IErc721: IErc165 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`.
     ///
@@ -294,7 +304,7 @@ pub trait IErc721: IErc165 {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Transfers `token_id` token from `from` to `to`.
     ///
@@ -327,7 +337,7 @@ pub trait IErc721: IErc165 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Gives permission to `to` to transfer `token_id` token to another
     /// account. The approval is cleared when the token is transferred.
@@ -354,7 +364,7 @@ pub trait IErc721: IErc165 {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Approve or remove `operator` as an operator for the caller.
     ///
@@ -380,7 +390,7 @@ pub trait IErc721: IErc165 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc721>::Error>;
 
     /// Returns the account approved for `token_id` token.
     ///
@@ -392,7 +402,10 @@ pub trait IErc721: IErc165 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error>;
+    fn get_approved(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error>;
 
     /// Returns whether the `operator` is allowed to manage all the assets of
     /// `owner`.
@@ -409,14 +422,20 @@ pub trait IErc721: IErc165 {
 impl IErc721 for Erc721 {
     type Error = Error;
 
-    fn balance_of(&self, owner: Address) -> Result<U256, Error> {
+    fn balance_of(
+        &self,
+        owner: Address,
+    ) -> Result<U256, <Self as IErc721>::Error> {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
         Ok(self.balances.get(owner))
     }
 
-    fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
+    fn owner_of(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error> {
         self._require_owned(token_id)
     }
 
@@ -425,7 +444,7 @@ impl IErc721 for Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
@@ -436,7 +455,7 @@ impl IErc721 for Erc721 {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         self.transfer_from(from, to, token_id)?;
         self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
     }
@@ -446,7 +465,7 @@ impl IErc721 for Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         if to.is_zero() {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
@@ -468,7 +487,11 @@ impl IErc721 for Erc721 {
         Ok(())
     }
 
-    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), <Self as IErc721>::Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -476,11 +499,14 @@ impl IErc721 for Erc721 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<(), <Self as IErc721>::Error> {
         self._set_approval_for_all(msg::sender(), operator, approved)
     }
 
-    fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
+    fn get_approved(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, <Self as IErc721>::Error> {
         self._require_owned(token_id)?;
         Ok(self._get_approved(token_id))
     }
@@ -989,7 +1015,9 @@ impl Erc721 {
     ///
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
-    ///   id or returned with error.
+    ///   id or returned an error.
+    /// * [`Error::InvalidReceiverWithReason`] - If
+    ///   [`IERC721Receiver::on_erc_721_received`] reverted with revert data.
     pub fn _check_on_erc721_received(
         &mut self,
         operator: Address,
@@ -1017,11 +1045,16 @@ impl Erc721 {
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
-                        // Non-IERC721Receiver implementer.
-                        return Err(e.into());
+                        return Err(Error::InvalidReceiverWithReason(
+                            InvalidReceiverWithReason {
+                                reason: String::from_utf8_lossy(reason)
+                                    .to_string(),
+                            },
+                        ));
                     }
                 }
 
+                // Non-IERC721Receiver implementer.
                 return Err(ERC721InvalidReceiver { receiver: to }.into());
             }
         };
