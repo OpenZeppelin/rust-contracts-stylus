@@ -2,7 +2,7 @@
 extern crate alloc;
 
 use alloy_primitives::{Address, U64};
-use openzeppelin_stylus::finance::vesting_wallet::VestingWallet;
+use openzeppelin_stylus::finance::vesting_wallet::{Error, VestingWallet};
 use stylus_sdk::prelude::*;
 
 #[entrypoint]
@@ -21,7 +21,7 @@ impl VestingWalletExample {
         beneficiary: Address,
         start_timestamp: U64,
         duration_seconds: U64,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         Ok(self.vesting_wallet.constructor(
             beneficiary,
             start_timestamp,

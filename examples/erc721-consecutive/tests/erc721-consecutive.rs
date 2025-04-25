@@ -34,7 +34,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.address(), &alice.wallet);
 
     let balance = contract.balanceOf(alice_addr).call().await?.balance;
     assert_eq!(balance, uint!(10_U256));
@@ -51,7 +51,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.address(), &alice.wallet);
 
     assert!(receipt.emits(Erc721::ConsecutiveTransfer {
         fromTokenId: U256::from(FIRST_CONSECUTIVE_ID),
@@ -119,7 +119,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.address(), &alice.wallet);
 
     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 
@@ -167,7 +167,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.address(), &alice.wallet);
 
     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 

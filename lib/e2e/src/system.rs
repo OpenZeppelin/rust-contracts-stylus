@@ -15,7 +15,8 @@ use eyre::bail;
 use crate::environment::get_node_path;
 
 pub(crate) const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
-pub(crate) const DEPLOYER_ADDRESS: &str = "DEPLOYER_ADDRESS";
+/// StylusDeployer contract address.
+pub const DEPLOYER_ADDRESS: &str = "DEPLOYER_ADDRESS";
 
 /// Convenience type alias that represents an Ethereum wallet.
 pub type Wallet = FillProvider<

@@ -8,7 +8,7 @@ use openzeppelin_stylus::{
     access::control::{self, AccessControl, IAccessControl},
     token::erc20::{self, Erc20, IErc20},
 };
-use stylus_sdk::{msg, prelude::*};
+use stylus_sdk::prelude::*;
 
 #[derive(SolidityError, Debug)]
 enum Error {
@@ -66,11 +66,9 @@ pub const TRANSFER_ROLE: [u8; 32] =
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
     #[constructor]
-    fn constructor(&mut self) {
-        self.access._grant_role(
-            AccessControl::DEFAULT_ADMIN_ROLE.into(),
-            msg::sender(),
-        );
+    fn constructor(&mut self, admin: Address) {
+        self.access
+            ._grant_role(AccessControl::DEFAULT_ADMIN_ROLE.into(), admin);
     }
 
     fn make_admin(&mut self, account: Address) -> Result<(), Error> {

@@ -2,7 +2,7 @@ use std::{process::Command, str::FromStr};
 
 use alloy::{
     network::EthereumWallet,
-    primitives::TxHash,
+    primitives::{Address, TxHash},
     providers::{Provider, ProviderBuilder},
     rpc::types::TransactionReceipt,
     signers::local::PrivateKeySigner,
@@ -42,7 +42,7 @@ impl Deployer {
     ///
     /// - Unable to collect information about the crate required for deployment.
     /// - [`koba::deploy`] errors.
-    pub async fn deploy(self) -> eyre::Result<TransactionReceipt> {
+    pub async fn deploy(self) -> eyre::Result<(TransactionReceipt, Address)> {
         let deployer_address = std::env::var(DEPLOYER_ADDRESS)
             .expect("deployer address should be set");
 
@@ -57,8 +57,6 @@ impl Deployer {
             .args(["--experimental-deployer-address", &deployer_address])
             .args(["--experimental-constructor-args", &ctr_args]);
 
-        println!("{command:?}");
-
         let output = command
             .output()
             .context("failed to execute `cargo stylus deploy` command")?;
@@ -70,7 +68,7 @@ impl Deployer {
     async fn get_receipt(
         self,
         output: std::process::Output,
-    ) -> eyre::Result<TransactionReceipt> {
+    ) -> eyre::Result<(TransactionReceipt, Address)> {
         let provider = ProviderBuilder::new()
             .with_recommended_fillers()
             .wallet(EthereumWallet::from(
@@ -84,7 +82,13 @@ impl Deployer {
         // Extract transaction hash using regex
         // The pattern matches a 0x followed by 64 hex characters
         let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
-            .context("Failed to create regex")?;
+            .context("Failed to create tx hash regex")?;
+
+        // Extract contract address
+        // The pattern matches a 0x followed by 20 hex characters
+        let contract_addr_regex =
+            Regex::new(r"cargo stylus cache bid\s*([a-fA-F0-9]{40})")
+                .context("Failed to create contract addr regex")?;
 
         let tx_hash = tx_hash_regex
             .find(&*output_str)
@@ -92,6 +96,18 @@ impl Deployer {
                 "No transaction hash found in output {output_str}"
             ))?
             .as_str();
+
+        let contract_addr = contract_addr_regex
+            .captures(&output_str)
+            .and_then(|cap| cap.get(1))
+            .context(format!(
+                "No contract address found in output {output_str}"
+            ))?
+            .as_str();
+        let contract_address = Address::from_str(&format!("0x{contract_addr}"))
+            .context(format!(
+                "Failed to parse contract address from string: {contract_addr}"
+            ))?;
 
         // Convert string to TxHash
         let tx_hash = TxHash::from_str(tx_hash)
@@ -105,7 +121,6 @@ impl Deployer {
             })?
             .ok_or_else(|| eyre::eyre!("Transaction receipt not found"))?;
 
-        println!("from: {:?}", receipt.from);
-        Ok(receipt)
+        Ok((receipt, contract_address))
     }
 }

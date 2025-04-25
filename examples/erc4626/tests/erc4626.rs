@@ -40,7 +40,7 @@ async fn deploy(
         .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
 
     // Mint initial tokens to the vault
     if initial_tokens > U256::ZERO {
@@ -61,7 +61,7 @@ mod constructor {
             .with_constructor(ctr(asset_address))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -149,7 +149,7 @@ mod total_assets {
             .with_constructor(ctr(Address::ZERO))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -173,7 +173,7 @@ mod total_assets {
             .with_constructor(ctr(alice.address()))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -285,7 +285,7 @@ mod convert_to_shares {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -327,7 +327,7 @@ mod convert_to_shares {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -412,7 +412,7 @@ mod convert_to_assets {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -439,7 +439,7 @@ mod convert_to_assets {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -546,7 +546,7 @@ mod preview_deposit {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -588,7 +588,7 @@ mod preview_deposit {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -615,7 +615,7 @@ mod deposit {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.deposit(uint!(10_U256), alice.address()))
@@ -843,7 +843,7 @@ mod deposit {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
         let asset = ERC20Mock::new(asset, &alice.wallet);
 
@@ -919,7 +919,7 @@ mod preview_mint {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -961,7 +961,7 @@ mod preview_mint {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -988,7 +988,7 @@ mod mint {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.mint(uint!(10_U256), alice.address()))
@@ -1117,7 +1117,7 @@ mod mint {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
         let asset = ERC20Mock::new(asset, &alice.wallet);
 
@@ -1282,7 +1282,7 @@ mod max_withdraw {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -1328,7 +1328,7 @@ mod max_withdraw {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -1355,7 +1355,7 @@ mod preview_withdraw {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -1459,7 +1459,7 @@ mod preview_withdraw {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -1635,7 +1635,7 @@ mod withdraw {
             .with_constructor(ctr(failing))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         // Setup failing asset
@@ -1892,7 +1892,7 @@ mod withdraw {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.withdraw(
@@ -2157,7 +2157,7 @@ mod withdraw {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.withdraw(
@@ -2320,7 +2320,7 @@ mod preview_redeem {
             .with_constructor(ctr(invalid_asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
@@ -2392,7 +2392,7 @@ mod preview_redeem {
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 

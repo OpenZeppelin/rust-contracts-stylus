@@ -87,7 +87,7 @@ impl Erc20Example {
         name: String,
         symbol: String,
         cap: U256,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Error> {
         self.metadata.constructor(name, symbol);
         self.capped.constructor(cap)?;
         Ok(())

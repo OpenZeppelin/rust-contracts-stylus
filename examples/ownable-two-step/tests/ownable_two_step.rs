@@ -23,7 +23,7 @@ async fn constructs(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
     let receipt =
         alice.as_deployer().with_constructor(ctr(alice_addr)).deploy().await?;
-    let contract = Ownable2Step::new(receipt.address()?, &alice.wallet);
+    let contract = Ownable2Step::new(receipt.address(), &alice.wallet);
 
     assert!(receipt.emits(OwnershipTransferred {
         previousOwner: Address::ZERO,
@@ -71,7 +71,7 @@ async fn transfer_ownership_initiates_transfer(
         .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.transferOwnership(bob_addr))?;
@@ -105,7 +105,7 @@ async fn transfer_ownership_reverts_when_not_owner(
         .with_constructor(ctr(bob_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
 
     let err = send!(contract.transferOwnership(bob_addr))
@@ -127,7 +127,7 @@ async fn accept_ownership(alice: Account, bob: Account) -> Result<()> {
         .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
     receipt!(contract.transferOwnership(bob_addr))?;
 
@@ -162,7 +162,7 @@ async fn transfer_ownership_cancel_transfer(
         .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
     receipt!(contract.transferOwnership(bob_addr))?;
 
@@ -194,7 +194,7 @@ async fn overwrite_previous_transfer_ownership(
         .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
 
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
 
@@ -255,7 +255,7 @@ async fn accept_ownership_reverts_when_not_pending_owner(
         .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
     receipt!(contract.transferOwnership(bob_addr))?;
 
@@ -278,7 +278,7 @@ async fn renounce_ownership(alice: Account) -> Result<()> {
         .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Ownable2Step::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.renounceOwnership())?;
@@ -311,7 +311,7 @@ async fn renounce_ownership_reverts_when_not_owner(
         .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Ownable2Step::new(contract_addr, &bob.wallet);
 
     let err = send!(contract.renounceOwnership())

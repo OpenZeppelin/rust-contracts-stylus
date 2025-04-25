@@ -1,8 +1,4 @@
-use alloy::{
-    network::ReceiptResponse, primitives::Address,
-    rpc::types::TransactionReceipt,
-};
-use eyre::ContextCompat;
+use alloy::{primitives::Address, rpc::types::TransactionReceipt};
 
 /// Extension trait to recover address of the contract that was deployed.
 pub trait Ext {
@@ -11,11 +7,11 @@ pub trait Ext {
     /// # Errors
     ///
     /// May fail if there's no contract address.
-    fn address(&self) -> eyre::Result<Address>;
+    fn address(&self) -> Address;
 }
 
-impl Ext for TransactionReceipt {
-    fn address(&self) -> eyre::Result<Address> {
-        self.contract_address().context("should contain contract address")
+impl Ext for (TransactionReceipt, Address) {
+    fn address(&self) -> Address {
+        self.1
     }
 }

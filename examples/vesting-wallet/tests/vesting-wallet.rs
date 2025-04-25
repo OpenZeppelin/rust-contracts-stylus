@@ -61,7 +61,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(alice.address(), start_timestamp, DURATION))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
     let owner = contract.owner().call().await?.owner;
@@ -110,7 +110,7 @@ mod ether_vesting {
             .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
-            .address()?;
+            .address();
 
         let tx = TransactionRequest::default()
             .with_from(account.address())
@@ -233,7 +233,7 @@ mod erc20_vesting {
             .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
-            .address()?;
+            .address();
         Ok(contract_addr)
     }
 

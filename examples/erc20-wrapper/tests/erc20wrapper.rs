@@ -39,7 +39,7 @@ async fn deploy(
         .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
 
     if initial_tokens > U256::ZERO {
         let asset = ERC20Mock::new(asset_addr, &account.wallet);
@@ -57,7 +57,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .with_constructor(ctr(asset_address))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Erc20Wrapper::new(contract_addr, alice.wallet);
 
     let underlying = contract.underlying().call().await?.underlying;

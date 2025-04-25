@@ -93,7 +93,7 @@ async fn deploy(
     let address = koba::deploy(&config)
         .await
         .expect("should deploy contract")
-        .address()?;
+        .address();
 
     match opt {
         Opt::Cache | Opt::CacheWasmOpt => {

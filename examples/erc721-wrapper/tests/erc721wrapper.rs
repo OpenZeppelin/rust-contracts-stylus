@@ -29,7 +29,7 @@ async fn deploy(account: &Account) -> Result<(Address, Address)> {
         .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
-        .address()?;
+        .address();
 
     Ok((asset_addr, contract_addr))
 }
@@ -42,7 +42,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .with_constructor(ctr(asset_address))
         .deploy()
         .await?
-        .address()?;
+        .address();
     let contract = Erc721Wrapper::new(contract_addr, alice.wallet);
 
     let underlying = contract.underlying().call().await?.underlying;
