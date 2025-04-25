@@ -21,6 +21,17 @@ fn random_values(size: usize) -> Vec<U256> {
     (1..=size).map(U256::from).collect()
 }
 
+trait EncodeAsStr {
+    fn encode_as_str(&self) -> String;
+}
+
+impl<T: SolError> EncodeAsStr for T {
+    fn encode_as_str(&self) -> String {
+        let expected_error = self.abi_encode();
+        String::from_utf8_lossy(&expected_error).to_string()
+    }
+}
+
 // ============================================================================
 // Integration Tests: ERC-1155 Token
 // ============================================================================
@@ -192,11 +203,10 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
     ))
     .expect_err("should not mint when receiver errors with reason");
 
-    let expected_error: Vec<u8> = Erc1155::Error {
+    let message = Erc1155::Error {
         message: "ERC1155ReceiverMock: reverting on receive".to_string(),
     }
-    .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+    .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
@@ -256,10 +266,10 @@ async fn errors_when_receiver_panics_in_mint(
     ))
     .expect_err("should not mint when receiver panics");
 
-    let expected_error: Vec<u8> =
+    let message =
         Erc1155::Panic { code: U256::from(PanicCode::DivisionByZero as u8) }
-            .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+            .encode_as_str();
+
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
     Ok(())
@@ -422,11 +432,10 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     ))
     .expect_err("should not mint batch when receiver errors with reason");
 
-    let expected_error: Vec<u8> = Erc1155::Error {
+    let message = Erc1155::Error {
         message: "ERC1155ReceiverMock: reverting on batch receive".to_string(),
     }
-    .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+    .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
@@ -486,10 +495,9 @@ async fn errors_when_receiver_panics_in_batch_mint(
     ))
     .expect_err("should not mint batch when receiver panics");
 
-    let expected_error: Vec<u8> =
+    let message =
         Erc1155::Panic { code: U256::from(PanicCode::DivisionByZero as u8) }
-            .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+            .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
@@ -825,11 +833,10 @@ async fn errors_when_receiver_reverts_with_reason(
     ))
     .expect_err("should not transfer when receiver errors with reason");
 
-    let expected_error: Vec<u8> = Erc1155::Error {
+    let message = Erc1155::Error {
         message: "ERC1155ReceiverMock: reverting on receive".to_string(),
     }
-    .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+    .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
@@ -905,10 +912,9 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     ))
     .expect_err("should not transfer when receiver panics");
 
-    let expected_error: Vec<u8> =
+    let message =
         Erc1155::Panic { code: U256::from(PanicCode::DivisionByZero as u8) }
-            .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+            .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
@@ -1236,11 +1242,10 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     ))
     .expect_err("should not transfer when receiver errors with reason");
 
-    let expected_error: Vec<u8> = Erc1155::Error {
+    let message = Erc1155::Error {
         message: "ERC1155ReceiverMock: reverting on batch receive".to_string(),
     }
-    .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+    .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
@@ -1318,10 +1323,9 @@ async fn errors_when_receiver_panics_in_batch_transfer(
     ))
     .expect_err("should not transfer when receiver panics");
 
-    let expected_error: Vec<u8> =
+    let message =
         Erc1155::Panic { code: U256::from(PanicCode::DivisionByZero as u8) }
-            .abi_encode();
-    let message = String::from_utf8_lossy(&expected_error).to_string();
+            .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
 
