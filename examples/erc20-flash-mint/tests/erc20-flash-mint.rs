@@ -3,7 +3,6 @@
 use abi::Erc20FlashMint;
 use alloy::{
     primitives::{address, uint, Address, U256},
-    sol,
 };
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,

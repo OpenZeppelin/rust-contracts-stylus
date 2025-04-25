@@ -22,6 +22,11 @@ struct Erc721WrapperExample {
 #[public]
 #[inherit(Erc721)]
 impl Erc721WrapperExample {
+    #[constructor]
+    fn constructor(&mut self, underlying_token: Address) {
+        self.erc721_wrapper.constructor(underlying_token);
+    }
+
     fn underlying(&self) -> Address {
         self.erc721_wrapper.underlying()
     }

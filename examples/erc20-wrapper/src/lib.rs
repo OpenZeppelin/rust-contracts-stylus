@@ -22,6 +22,17 @@ struct Erc20WrapperExample {
 #[public]
 #[inherit(Erc20)]
 impl Erc20WrapperExample {
+    #[constructor]
+    fn constructor(
+        &mut self,
+        underlying_token: Address,
+        decimals: U8,
+    ) -> Result<(), wrapper::Error> {
+        self.erc20_wrapper.constructor(underlying_token)?;
+        self.erc20_wrapper.underlying_decimals.set(decimals);
+        Ok(())
+    }
+
     fn underlying(&self) -> Address {
         self.erc20_wrapper.underlying()
     }

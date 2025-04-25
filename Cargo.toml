@@ -5,33 +5,12 @@ members = [
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
-  "examples/erc20",
-  "examples/erc20-permit",
-  "examples/erc20-flash-mint",
-  "examples/erc20-wrapper",
-  "examples/erc721",
-  "examples/erc721-consecutive",
-  "examples/erc721-metadata",
-  "examples/erc721-wrapper",
-  "examples/erc1155",
-  "examples/erc1155-metadata-uri",
-  "examples/erc1155-supply",
-  "examples/erc4626",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/vesting-wallet",
-  "examples/basic/token",
-  "examples/basic/script",
-  "examples/ownable-two-step",
-  "examples/safe-erc20",
   "benches",
-  "examples/poseidon",
 ]
-default-members = [
-  "contracts",
-  "contracts-proc",
-  "lib/crypto",
-  "lib/e2e-proc",
+default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
+exclude = [
+  "examples/access-control",
+  "examples/ecdsa",
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
@@ -51,8 +30,8 @@ default-members = [
   "examples/ownable-two-step",
   "examples/basic/token",
   "examples/poseidon",
+  "fuzz",
 ]
-exclude = ["examples/access-control", "examples/ecdsa", "fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.

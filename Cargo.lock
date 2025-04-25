@@ -1198,26 +1198,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89e25b6adfb930f02d1981565a6e5d9c547ac15a96606256d3b59040e5cd4ca3"
 
 [[package]]
-name = "basic-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy-primitives",
- "openzeppelin-stylus",
- "stylus-sdk",
-]
-
-[[package]]
-name = "basic-example-script"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "basic-example",
- "koba",
- "tokio",
-]
-
-[[package]]
 name = "benches"
 version = "0.2.0-alpha.4"
 dependencies = [
@@ -2011,167 +1991,6 @@ name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
-
-[[package]]
-name = "erc1155-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc1155-metadata-uri-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc1155-supply-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc20-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc20-flash-mint-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc20-permit-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "keccak-const",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc20-wrapper"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc4626-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc721-consecutive-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "alloy-sol-types",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "rand 0.9.0",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc721-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "rand 0.9.0",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc721-metadata-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "rand 0.9.0",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "erc721-wrapper"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
 
 [[package]]
 name = "errno"
@@ -3085,16 +2904,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "merkle-proofs-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "openzeppelin-crypto",
- "stylus-sdk",
-]
-
-[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3394,32 +3203,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ownable-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
-name = "ownable-two-step-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
 name = "owo-colors"
 version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3555,19 +3338,6 @@ name = "pkg-config"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
-
-[[package]]
-name = "poseidon-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-crypto",
- "stylus-sdk",
- "tokio",
-]
 
 [[package]]
 name = "ppv-lite86"
@@ -4153,19 +3923,6 @@ name = "ryu"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
-
-[[package]]
-name = "safe-erc20-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
 
 [[package]]
 name = "salsa20"
@@ -5069,19 +4826,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "vesting-wallet-example"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
 
 [[package]]
 name = "wait-timeout"

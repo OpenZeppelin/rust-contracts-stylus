@@ -8,9 +8,7 @@ publish = false
 
 [dependencies]
 openzeppelin-stylus = { path = "../../contracts" }
-alloy-primitives = { version = "=0.8.20", default-features = false, features = [
-    "tiny-keccak",
-] }
+alloy-primitives = { version = "=0.8.20", default-features = false }
 stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
     "mini-alloc",
 ] }
@@ -29,6 +27,8 @@ path = "src/main.rs"
 crate-type = ["lib", "cdylib"]
 
 [features]
+# If you need to reduce the binary size, it is advisable to try other
+# optimization levels, such as "s" and "z"
 e2e = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
@@ -38,6 +38,4 @@ strip = true
 lto = true
 panic = "abort"
 
-# If you need to reduce the binary size, it is advisable to try other
-# optimization levels, such as "s" and "z"
 opt-level = 3

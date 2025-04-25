@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+export RPC_URL=http://localhost:8547
+export DEPLOYER_ADDRESS=0x6ac4839Bfe169CadBBFbDE3f29bd8459037Bf64e
+
 # Get the root directory of the git repository
 mydir=$(git rev-parse --show-toplevel)
 cd "$mydir" || exit
@@ -19,30 +22,37 @@ build_and_test() {
     cargo test --features e2e "$@"
 }
 
-manifest_path="$1"
-test_arg="$2"
+for CRATE_NAME in $(get_example_manifest_paths)
+do
+    cd "$CRATE_NAME"
+    build_and_test
+    cd "$mydir"
+done
+        
+# manifest_path="$1"
+# test_arg="$2"
     
-# Main logic based on number of arguments
-case $# in
-    1)
-        # If one argument is passed, process all examples
-        for CRATE_NAME in $(get_example_manifest_paths)
-        do
-            cd "$CRATE_NAME"
-            build_and_test "$1"
-            cd "$mydir"
-        done
-        ;;
-    2)
-        # If two arguments are passed, process only the specified manifest
-        build_and_test "$2" "$1"
-        ;;
-    *)
-        echo "Usage: $0 <test_arg> [<manifest_path>]"
-        echo "  One argument: Run with all examples in ./examples directory"
-        echo "  Two arguments: Run with specific manifest path"
-        exit 1
-        ;;
-esac
+# # Main logic based on number of arguments
+# case $# in
+#     1)
+#         # If one argument is passed, process all examples
+#         for CRATE_NAME in $(get_example_manifest_paths)
+#         do
+#             cd "$CRATE_NAME"
+#             build_and_test "$1"
+#             cd "$mydir"
+#         done
+#         ;;
+#     2)
+#         # If two arguments are passed, process only the specified manifest
+#         build_and_test "$2" "$1"
+#         ;;
+#     *)
+#         echo "Usage: $0 <test_arg> [<manifest_path>]"
+#         echo "  One argument: Run with all examples in ./examples directory"
+#         echo "  Two arguments: Run with specific manifest path"
+#         exit 1
+#         ;;
+# esac
 
 # TODO: FINISH

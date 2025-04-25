@@ -116,7 +116,8 @@ pub struct Erc20Wrapper {
     /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
     /// Underlying token decimals.
-    pub(crate) underlying_decimals: StorageU8,
+    // Must be `pub` so that we can override the value in inheriting contracts.
+    pub underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
@@ -314,6 +315,25 @@ impl IErc20Wrapper for Erc20Wrapper {
         self.safe_erc20.safe_transfer(self.underlying(), account, value)?;
 
         Ok(true)
+    }
+}
+
+// TODO: uncomment once multiple public attributes are supported
+// #[public]
+impl Erc20Wrapper {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(
+        &mut self,
+        underlying_token: Address,
+    ) -> Result<(), Error> {
+        if underlying_token == contract::address() {
+            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
+                token: underlying_token,
+            }));
+        }
+        self.underlying.set(underlying_token);
+        Ok(())
     }
 }
 

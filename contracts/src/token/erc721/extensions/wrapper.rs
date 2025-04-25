@@ -115,7 +115,15 @@ pub struct Erc721Wrapper {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc721Wrapper {}
 
+// TODO: uncomment once multiple public attributes are supported
+// #[public]
 impl Erc721Wrapper {
+    /// Constructor
+    // #[constructor]
+    pub fn constructor(&mut self, underlying_token: Address) {
+        self.underlying.set(underlying_token);
+    }
+
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// `token_ids`.
     ///

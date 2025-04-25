@@ -43,6 +43,7 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
 
     assert!(err
         .reverted_with(Ownable::OwnableInvalidOwner { owner: Address::ZERO }));
+
     Ok(())
 }
 
