@@ -84,10 +84,10 @@ impl Deployer {
         let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
             .context("Failed to create tx hash regex")?;
 
-        // Extract contract address
-        // The pattern matches a 0x followed by 20 hex characters
+        // The pattern matches the contract address that is preceeded by ANSI
+        // escape codes (`cargo stylus deploy` outputs colored text).
         let contract_addr_regex =
-            Regex::new(r"cargo stylus cache bid\s*([a-fA-F0-9]{40})")
+            Regex::new(r"deployed code at address:\s*(?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]{40})")
                 .context("Failed to create contract addr regex")?;
 
         let tx_hash = tx_hash_regex
@@ -104,8 +104,8 @@ impl Deployer {
                 "No contract address found in output {output_str}"
             ))?
             .as_str();
-        let contract_address = Address::from_str(&format!("0x{contract_addr}"))
-            .context(format!(
+        let contract_address =
+            Address::from_str(contract_addr).context(format!(
                 "Failed to parse contract address from string: {contract_addr}"
             ))?;
 
