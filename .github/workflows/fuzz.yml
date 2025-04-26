@@ -53,7 +53,7 @@ jobs:
           key: fuzz-corpus-${{ github.event.inputs.fuzz_target }}-${{ github.sha }}
           restore-keys: |
             fuzz-corpus-${{ github.event.inputs.fuzz_target }}-
-          
+
       - name: Generate corpus if needed
         if: steps.cache-corpus.outputs.cache-hit != 'true'
         run: |
@@ -68,7 +68,7 @@ jobs:
         run: |
           # Calculate duration in seconds (minutes * 60)
           DURATION=$(( ${{ github.event.inputs.fuzz_time_mins }} * 60 ))
-          
+
           # Run the fuzzer with a time limit
           cargo +nightly fuzz run ${{ github.event.inputs.fuzz_target }} -- \
             -max_total_time=$DURATION \
@@ -76,7 +76,7 @@ jobs:
             -max_len=4096 \
             -use_value_profile=1 \
             -rss_limit_mb=4096
-        
+
       - name: Minimize corpus (if fuzzing succeeded)
         if: success()
         working-directory: ./fuzz
@@ -105,7 +105,7 @@ jobs:
           name: fuzz-crashes-${{ github.event.inputs.fuzz_target }}
           path: fuzz/artifacts/crashes-${{ github.event.inputs.fuzz_target }}
           retention-days: 7
-          
+
       - name: Generate fuzzing stats
         if: always()
         working-directory: ./fuzz
@@ -124,7 +124,7 @@ jobs:
           else
             echo "No fuzzer stats available." > fuzz_stats/no_stats.txt
           fi
-          
+
       - name: Upload fuzzing stats
         if: always()
         uses: actions/upload-artifact@v4

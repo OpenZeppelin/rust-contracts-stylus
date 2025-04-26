@@ -67,6 +67,7 @@ impl Capped {
     }
 
     /// Returns the cap on the token's total supply.
+    #[must_use]
     pub fn cap(&self) -> U256 {
         self.cap.get()
     }

@@ -36,6 +36,7 @@ sol!(
         error Error(string message);
         error Panic(uint256 code);
 
+        error InvalidReceiverWithReason(string message);
         error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
         error ERC721InsufficientApproval(address operator, uint256 tokenId);
         error ERC721InvalidApprover(address approver);

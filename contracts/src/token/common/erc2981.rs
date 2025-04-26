@@ -208,6 +208,7 @@ impl Erc2981 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     pub fn _fee_denominator(&self) -> U96 {
         self.fee_denominator.get()
     }

@@ -58,7 +58,7 @@ impl Erc721WrapperExample {
             operator,
             from,
             token_id,
-            data,
+            &data,
             &mut self.erc721,
         )
     }
