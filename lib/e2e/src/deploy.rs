@@ -51,15 +51,19 @@ impl Deployer {
             .args(["stylus", "deploy"])
             .args(["-e", &self.rpc_url])
             .args(["--private-key", &self.private_key])
-            .args(["--no-verify"])
-            .args(["--experimental-deployer-address", &deployer_address])
-            .args(
-                [
-                    vec!["--experimental-constructor-args".to_string()],
-                    self.ctr_args.clone().unwrap_or_default(),
-                ]
-                .concat(),
-            );
+            .args(["--no-verify"]);
+
+        if let Some(ctor_args) = self.ctr_args.clone() {
+            command
+                .args(["--experimental-deployer-address", &deployer_address])
+                .args(
+                    [
+                        vec!["--experimental-constructor-args".to_string()],
+                        ctor_args,
+                    ]
+                    .concat(),
+                );
+        }
 
         let output = command
             .output()

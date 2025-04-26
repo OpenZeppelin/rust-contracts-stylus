@@ -25,6 +25,10 @@ eyre = "0.6.8"
 e2e = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
+[[bin]]
+name = "erc1155-example"
+path = "src/main.rs"
+
 [lib]
 crate-type = ["lib", "cdylib"]
 

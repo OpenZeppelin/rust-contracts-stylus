@@ -21,6 +21,10 @@ stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = 
 # Currently, the std feature is only used for testing purposes.
 std = []
 
+[[bin]]
+name = "merkle-proofs-example"
+path = "src/main.rs"
+
 [lib]
 crate-type = ["lib", "cdylib"]
 
