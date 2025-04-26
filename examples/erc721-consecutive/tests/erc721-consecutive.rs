@@ -16,12 +16,12 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> String {
+fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> Vec<String> {
     let receivers =
         receivers.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
     let amounts =
         amounts.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
-    format!("{receivers} {amounts} {FIRST_CONSECUTIVE_ID} {MAX_BATCH_SIZE}")
+    vec![format!("[{receivers}]"), format!("[{amounts}]"), FIRST_CONSECUTIVE_ID.to_string(), MAX_BATCH_SIZE.to_string()]
 }
 
 #[e2e::test]

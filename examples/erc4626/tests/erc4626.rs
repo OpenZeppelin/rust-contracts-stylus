@@ -21,12 +21,12 @@ const MIN_OVERFLOW_DECIMAL_OFFSET: u8 = 78;
 mod abi;
 mod mock;
 
-fn ctr(asset: Address) -> String {
-    format!("{ERC4626_NAME} {ERC4626_SYMBOL} {asset} {DECIMALS_OFFSET}")
+fn ctr(asset: Address) -> Vec<String> {
+    vec![ERC4626_NAME.to_string(), ERC4626_SYMBOL.to_string(), asset.to_string(), DECIMALS_OFFSET.to_string()]
 }
 
-fn dec_offset_overflow_ctr(asset: Address) -> String {
-    format!("{ERC4626_NAME} {ERC4626_SYMBOL} {asset} {MIN_OVERFLOW_DECIMAL_OFFSET}")
+fn dec_offset_overflow_ctr(asset: Address) -> Vec<String> {
+    vec![ERC4626_NAME.to_string(), ERC4626_SYMBOL.to_string(), asset.to_string(), MIN_OVERFLOW_DECIMAL_OFFSET.to_string()]
 }
 
 async fn deploy(

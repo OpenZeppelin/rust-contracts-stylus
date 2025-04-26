@@ -14,8 +14,8 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn ctr(base_uri: &str) -> String {
-    format!("{TOKEN_NAME} {TOKEN_SYMBOL} {base_uri}")
+fn ctr(base_uri: &str) -> Vec<String> {
+    vec![TOKEN_NAME.to_string(), TOKEN_SYMBOL.to_string(), base_uri.to_string()]
 }
 
 // ============================================================================

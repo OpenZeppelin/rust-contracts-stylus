@@ -24,8 +24,8 @@ fn ctr(
     beneficiary: Address,
     start_timestamp: u64,
     duration_seconds: u64,
-) -> String {
-    format!("{beneficiary} {start_timestamp} {duration_seconds}")
+) -> Vec<String> {
+    vec![beneficiary.to_string(), start_timestamp.to_string(), duration_seconds.to_string()]
 }
 
 async fn block_timestamp(account: &Account) -> eyre::Result<u64> {

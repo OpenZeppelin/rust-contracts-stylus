@@ -17,7 +17,7 @@ use crate::system::DEPLOYER_ADDRESS;
 pub struct Deployer {
     rpc_url: String,
     private_key: String,
-    ctr_args: Option<String>,
+    ctr_args: Option<Vec<String>>,
 }
 
 impl Deployer {
@@ -27,7 +27,7 @@ impl Deployer {
 
     /// Add solidity constructor to the deployer.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn with_constructor(mut self, ctr_args: String) -> Deployer {
+    pub fn with_constructor(mut self, ctr_args: Vec<String>) -> Deployer {
         self.ctr_args = Some(ctr_args);
         self
     }
@@ -46,8 +46,6 @@ impl Deployer {
         let deployer_address = std::env::var(DEPLOYER_ADDRESS)
             .expect("deployer address should be set");
 
-        let ctr_args = self.ctr_args.clone().unwrap_or_default();
-
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
@@ -55,7 +53,13 @@ impl Deployer {
             .args(["--private-key", &self.private_key])
             .args(["--no-verify"])
             .args(["--experimental-deployer-address", &deployer_address])
-            .args(["--experimental-constructor-args", &ctr_args]);
+            .args(
+                [
+                    vec!["--experimental-constructor-args".to_string()],
+                    self.ctr_args.clone().unwrap_or_default(),
+                ]
+                .concat(),
+            );
 
         let output = command
             .output()

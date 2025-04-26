@@ -18,8 +18,8 @@ const NEW_ADMIN_ROLE: [u8; 32] =
     hex!("879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5");
 
         
-fn ctr(admin: Address) -> String {
-    format!("{admin}")
+fn ctr(admin: Address) -> Vec<String> {
+    vec![admin.to_string()]
 }
 
 // ============================================================================

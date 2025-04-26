@@ -13,8 +13,8 @@ mod mock;
 
 use mock::{erc721, erc721::ERC721Mock};
 
-fn ctr(asset_addr: Address) -> String {
-    format!("{assert_addr}")
+fn ctr(asset_addr: Address) -> Vec<String> {
+    vec![assert_addr.to_string()]
 }
 
 async fn deploy(account: &Account) -> Result<(Address, Address)> {

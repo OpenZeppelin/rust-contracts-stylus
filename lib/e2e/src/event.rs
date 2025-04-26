@@ -40,9 +40,6 @@ where
             .iter()
             .filter_map(|log| log.log_decode().ok())
             .map(|log| log.inner.data)
-            .any(|event| {
-                println!("event: {event:?}");
-                expected == event
-            })
+            .any(|event| expected == event)
     }
 }

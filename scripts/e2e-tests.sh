@@ -10,7 +10,7 @@ cd "$mydir" || exit
 
 # Function to retrieve all Cargo.toml paths in the ./examples directory
 get_example_manifest_paths() {
-    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname
+    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
 # Function to build and test a crate
@@ -46,14 +46,21 @@ if [ "$project_arg" = "*" ]; then
         cd "$mydir"
     done
 else
-    # Find matching projects
+    # Find matching projects based on pattern
     matching_projects=()
     for dir in ./examples/*; do
         if [ -d "$dir" ] && [ -f "$dir/Cargo.toml" ]; then
-            # Extract project name and check if it contains the search term
             project_name=$(basename "$dir")
-            if [[ "$project_name" == *"$project_arg"* ]]; then
-                matching_projects+=("$dir")
+            
+            # Handle different pattern types
+            if [[ "$project_arg" == *"*"* ]]; then
+                # Contains wildcard - use pattern matching
+                # Replace * with regex pattern for =~ operator
+                pattern="${project_arg//\*/.*}"
+                [[ "$project_name" =~ ^${pattern}$ ]] && matching_projects+=("$dir")
+            else
+                # No wildcard - exact match only
+                [[ "$project_name" == "$project_arg" ]] && matching_projects+=("$dir")
             fi
         fi
     done

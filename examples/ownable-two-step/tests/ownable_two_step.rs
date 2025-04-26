@@ -10,8 +10,8 @@ use eyre::Result;
 
 mod abi;
 
-fn ctr(owner: Address) -> String {
-    format!("{owner}")
+fn ctr(owner: Address) -> Vec<String> {
+    vec![owner.to_string()]
 }
 
 // ============================================================================

@@ -29,7 +29,7 @@ impl Erc1155MetadataUriExample {
         self.metadata_uri.constructor(uri);
     }
 
-    fn uri(&self, token_id: U256) -> String {
+    fn uri(&self, token_id: U256) -> Vec<String> {
         self.uri_storage.uri(token_id, &self.metadata_uri)
     }
 

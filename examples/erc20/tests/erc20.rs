@@ -14,12 +14,12 @@ const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-fn ctr(cap: U256) -> String {
-    format!("{TOKEN_NAME} {TOKEN_SYMBOL} {cap}")
+fn ctr(cap: U256) -> Vec<String> {
+    vec![TOKEN_NAME.to_string(), TOKEN_SYMBOL.to_string(), cap.to_string()]
 }
 
-fn default_ctr() -> String {
-    format!("{TOKEN_NAME} {TOKEN_SYMBOL} {CAP}")
+fn default_ctr() -> Vec<String> {
+    vec![TOKEN_NAME.to_string(), TOKEN_SYMBOL.to_string(), CAP.to_string()]
 }
 
 // ============================================================================

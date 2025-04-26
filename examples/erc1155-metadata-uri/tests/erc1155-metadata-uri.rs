@@ -9,8 +9,8 @@ mod abi;
 const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 const BASE_URI: &str = "https://github.com";
 
-fn ctr(uri: &str) -> String {
-    format!("{uri}")
+fn ctr(uri: &str) -> Vec<String> {
+    vec![uri.to_string()]
 }
 
 // ============================================================================

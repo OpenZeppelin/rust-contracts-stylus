@@ -3,7 +3,6 @@
 use abi::{Erc20, Erc20Wrapper};
 use alloy::{
     primitives::{uint, Address, U256},
-    sol,
 };
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
 use eyre::Result;
@@ -15,8 +14,8 @@ use mock::{erc20, erc20::ERC20Mock};
 
 const DECIMALS: u8 = 18;
 
-fn ctr(asset_addr: Address) -> String {
-    format!("{assert_addr} {DECIMALS}")
+fn ctr(asset_addr: Address) -> Vec<String> {
+    vec![asset_addr.to_string(), DECIMALS.to_string()]
 }
 
 /// Deploy a new [`Erc20`] contract and [`Erc20Wrapper`] contract and mint
