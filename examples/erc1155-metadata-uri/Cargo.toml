@@ -8,7 +8,9 @@ version = "0.0.0"
 
 [dependencies]
 openzeppelin-stylus = { path = "../../contracts" }
-alloy-primitives = { version = "=0.8.20", default-features = false }
+alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+    "tiny-keccak",
+] }
 stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
     "mini-alloc",
 ] }
@@ -22,6 +24,10 @@ eyre = "0.6.8"
 [features]
 e2e = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
+
+[[bin]]
+name = "erc1155-metadata-uri-example"
+path = "src/main.rs"
 
 [lib]
 crate-type = ["lib", "cdylib"]
