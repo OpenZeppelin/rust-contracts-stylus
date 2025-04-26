@@ -11,7 +11,7 @@ use eyre::Result;
 mod abi;
 
 fn ctr(owner: Address) -> String {
-    format!("\"{owner}\"")
+    format!("{owner}")
 }
 
 // ============================================================================

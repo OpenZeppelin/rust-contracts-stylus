@@ -8,22 +8,15 @@ use alloy::{
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
 use eyre::Result;
 
-use crate::Erc20WrapperExample::constructorCall;
-
 mod abi;
 mod mock;
 
 use mock::{erc20, erc20::ERC20Mock};
 
-sol!("src/constructor.sol");
-
 const DECIMALS: u8 = 18;
 
-fn ctr(asset_addr: Address) -> constructorCall {
-    Erc20WrapperExample::constructorCall {
-        underlyingToken_: asset_addr,
-        decimals_: DECIMALS,
-    }
+fn ctr(asset_addr: Address) -> String {
+    format!("{assert_addr} {DECIMALS}")
 }
 
 /// Deploy a new [`Erc20`] contract and [`Erc20Wrapper`] contract and mint

@@ -13,12 +13,8 @@ mod mock;
 
 use mock::{erc721, erc721::ERC721Mock};
 
-use crate::Erc721WrapperExample::constructorCall;
-
-sol!("src/constructor.sol");
-
-fn ctr(asset_addr: Address) -> constructorCall {
-    Erc721WrapperExample::constructorCall { underlyingToken_: asset_addr }
+fn ctr(asset_addr: Address) -> String {
+    format!("{assert_addr}")
 }
 
 async fn deploy(account: &Account) -> Result<(Address, Address)> {

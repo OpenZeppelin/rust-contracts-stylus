@@ -46,23 +46,37 @@ if [ "$project_arg" = "*" ]; then
         cd "$mydir"
     done
 else
-    # Process only the specified project
-    project_path="./examples/$project_arg"
+    # Find matching projects
+    matching_projects=()
+    for dir in ./examples/*; do
+        if [ -d "$dir" ] && [ -f "$dir/Cargo.toml" ]; then
+            # Extract project name and check if it contains the search term
+            project_name=$(basename "$dir")
+            if [[ "$project_name" == *"$project_arg"* ]]; then
+                matching_projects+=("$dir")
+            fi
+        fi
+    done
     
-    if [ ! -d "$project_path" ]; then
-        echo "Error: Project '$project_arg' not found in examples/"
+    # Check if we found any matches
+    if [ ${#matching_projects[@]} -eq 0 ]; then
+        echo "Error: No projects found matching '$project_arg' in examples/"
         exit 1
     fi
     
-    if [ ! -f "$project_path/Cargo.toml" ]; then
-        echo "Error: No Cargo.toml found in $project_path"
-        exit 1
-    fi
+    # Process all matching projects
+    echo "Found ${#matching_projects[@]} matching project(s):"
+    for project in "${matching_projects[@]}"; do
+        echo "  - $(basename "$project")"
+    done
+    echo ""
     
-    echo "Processing: $project_path"
-    cd "$project_path"
-    build_and_test "$@"
-    cd "$mydir"
+    for project_path in "${matching_projects[@]}"; do
+        echo "Processing: $project_path"
+        cd "$project_path"
+        build_and_test "$@"
+        cd "$mydir"
+    done
 fi
 
 echo "Build and test completed successfully."

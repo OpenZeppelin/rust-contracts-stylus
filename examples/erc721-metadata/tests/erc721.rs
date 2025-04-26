@@ -15,7 +15,7 @@ fn random_token_id() -> U256 {
 }
 
 fn ctr(base_uri: &str) -> String {
-    format!("\"{TOKEN_NAME}\" \"{TOKEN_SYMBOL}\" \"{base_uri}\"")
+    format!("{TOKEN_NAME} {TOKEN_SYMBOL} {base_uri}")
 }
 
 // ============================================================================

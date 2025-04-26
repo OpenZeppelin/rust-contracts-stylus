@@ -15,11 +15,11 @@ const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
 fn ctr(cap: U256) -> String {
-    format!("\"{TOKEN_NAME}\" \"{TOKEN_SYMBOL}\" \"{cap}\"")
+    format!("{TOKEN_NAME} {TOKEN_SYMBOL} {cap}")
 }
 
 fn default_ctr() -> String {
-    format!("\"{TOKEN_NAME}\" \"{TOKEN_SYMBOL}\" \"{CAP}\"")
+    format!("{TOKEN_NAME} {TOKEN_SYMBOL} {CAP}")
 }
 
 // ============================================================================

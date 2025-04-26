@@ -25,7 +25,7 @@ fn ctr(
     start_timestamp: u64,
     duration_seconds: u64,
 ) -> String {
-    format!("\"{beneficiary}\" \"{start_timestamp}\" \"{duration_seconds}\"")
+    format!("{beneficiary} {start_timestamp} {duration_seconds}")
 }
 
 async fn block_timestamp(account: &Account) -> eyre::Result<u64> {

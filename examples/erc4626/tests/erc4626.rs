@@ -22,11 +22,11 @@ mod abi;
 mod mock;
 
 fn ctr(asset: Address) -> String {
-    format!("\"{ERC4626_NAME}\" \"{ERC4626_SYMBOL}\" {asset} {DECIMALS_OFFSET}")
+    format!("{ERC4626_NAME} {ERC4626_SYMBOL} {asset} {DECIMALS_OFFSET}")
 }
 
 fn dec_offset_overflow_ctr(asset: Address) -> String {
-    format!("\"{ERC4626_NAME}\" \"{ERC4626_SYMBOL}\" {asset} {MIN_OVERFLOW_DECIMAL_OFFSET}")
+    format!("{ERC4626_NAME} {ERC4626_SYMBOL} {asset} {MIN_OVERFLOW_DECIMAL_OFFSET}")
 }
 
 async fn deploy(

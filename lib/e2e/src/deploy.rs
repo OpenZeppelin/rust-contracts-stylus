@@ -79,6 +79,7 @@ impl Deployer {
         // Convert output to string
         let output_str = String::from_utf8_lossy(&output.stdout);
 
+        println!("{:?}", String::from_utf8_lossy(&output.stderr));
         // Extract transaction hash using regex
         // The pattern matches a 0x followed by 64 hex characters
         let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
