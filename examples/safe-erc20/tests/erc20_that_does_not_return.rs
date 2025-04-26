@@ -199,8 +199,7 @@ mod approvals {
         async fn does_not_revert_when_force_approving_a_non_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -243,8 +242,7 @@ mod approvals {
         async fn does_not_revert_when_force_approving_a_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -285,8 +283,7 @@ mod approvals {
         async fn does_not_revert_when_increasing_the_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -329,8 +326,7 @@ mod approvals {
         async fn panics_when_increasing_the_allowance_overflow(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -363,8 +359,7 @@ mod approvals {
         async fn reverts_when_decreasing_the_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -406,8 +401,7 @@ mod approvals {
         async fn does_not_revert_when_force_approving_a_non_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -452,8 +446,7 @@ mod approvals {
         async fn does_not_revert_when_force_approving_a_zero_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -496,8 +489,7 @@ mod approvals {
         async fn does_not_revert_when_increasing_the_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -542,8 +534,7 @@ mod approvals {
         async fn does_not_revert_when_decreasing_the_allowance_to_a_positive_value(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -588,8 +579,7 @@ mod approvals {
         async fn reverts_when_decreasing_the_allowance_to_a_negative_value(
             alice: Account,
         ) -> eyre::Result<()> {
-            let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address();
+            let safe_erc20_addr = alice.as_deployer().deploy().await?.address();
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();

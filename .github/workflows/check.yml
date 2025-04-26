@@ -42,7 +42,7 @@ jobs:
           rustflags: ""
 
       - name: Check formatting
-        run: cargo fmt --all --check
+        run: ./scripts/check-fmt.sh
   clippy:
     runs-on: ubuntu-latest
     name: ${{ matrix.toolchain }} / clippy

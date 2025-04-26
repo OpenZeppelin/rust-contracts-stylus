@@ -542,7 +542,12 @@ impl IVestingWallet for VestingWallet {
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
 impl VestingWallet {
-    /// Constructor
+    /// Constructor.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If initial owner is
+    ///   `Address::ZERO`.
     // #[constructor]
     pub fn constructor(
         &mut self,

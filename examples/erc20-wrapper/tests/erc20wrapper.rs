@@ -1,9 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::{Erc20, Erc20Wrapper};
-use alloy::{
-    primitives::{uint, Address, U256},
-};
+use alloy::primitives::{uint, Address, U256};
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
 use eyre::Result;
 

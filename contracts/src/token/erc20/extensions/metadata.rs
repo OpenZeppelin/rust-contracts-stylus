@@ -76,7 +76,7 @@ impl IErc20Metadata for Erc20Metadata {
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
 impl Erc20Metadata {
-    /// Constructor
+    /// Constructor.
     // #[constructor]
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);

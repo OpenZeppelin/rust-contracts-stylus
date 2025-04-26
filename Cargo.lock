@@ -1198,23 +1198,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89e25b6adfb930f02d1981565a6e5d9c547ac15a96606256d3b59040e5cd4ca3"
 
 [[package]]
-name = "benches"
-version = "0.2.0-alpha.4"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "futures",
- "itertools 0.13.0",
- "keccak-const",
- "koba",
- "openzeppelin-stylus",
- "serde",
- "tokio",
-]
-
-[[package]]
 name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

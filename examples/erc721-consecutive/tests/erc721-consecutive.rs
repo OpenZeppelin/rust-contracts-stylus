@@ -21,7 +21,12 @@ fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> Vec<String> {
         receivers.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
     let amounts =
         amounts.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
-    vec![format!("[{receivers}]"), format!("[{amounts}]"), FIRST_CONSECUTIVE_ID.to_string(), MAX_BATCH_SIZE.to_string()]
+    vec![
+        format!("[{receivers}]"),
+        format!("[{amounts}]"),
+        FIRST_CONSECUTIVE_ID.to_string(),
+        MAX_BATCH_SIZE.to_string(),
+    ]
 }
 
 #[e2e::test]

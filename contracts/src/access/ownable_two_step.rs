@@ -217,7 +217,12 @@ impl IOwnable2Step for Ownable2Step {
 // not part of the `IOwnable2Step` trait
 // #[public]
 impl Ownable2Step {
-    /// Constructor
+    /// Constructor.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If initial owner is
+    ///   `Address::ZERO`.
     // #[constructor]
     pub fn constructor(
         &mut self,
@@ -226,8 +231,7 @@ impl Ownable2Step {
         if initial_owner.is_zero() {
             return Err(ownable::Error::InvalidOwner(OwnableInvalidOwner {
                 owner: Address::ZERO,
-            })
-            .into());
+            }));
         }
         self._transfer_ownership(initial_owner);
         Ok(())

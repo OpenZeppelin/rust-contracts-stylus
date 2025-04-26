@@ -162,14 +162,17 @@ impl IOwnable for Ownable {
 // not part of the `IOwnable` trait
 // #[public]
 impl Ownable {
-    /// Constructor
+    /// Constructor.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidOwner`] - If initial owner is `Address::ZERO`.
     // #[constructor]
     pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
         if initial_owner.is_zero() {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
                 owner: Address::ZERO,
-            })
-            .into());
+            }));
         }
         self._transfer_ownership(initial_owner);
         Ok(())

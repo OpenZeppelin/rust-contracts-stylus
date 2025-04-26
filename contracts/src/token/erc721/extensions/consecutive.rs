@@ -331,7 +331,7 @@ impl IErc721 for Erc721Consecutive {
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
 impl Erc721Consecutive {
-    /// Constructor
+    /// Constructor.
     // #[constructor]
     pub fn constructor(&mut self) {
         self.max_batch_size.set(U96::from(5000));

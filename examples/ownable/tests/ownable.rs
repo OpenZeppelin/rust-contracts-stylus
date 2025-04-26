@@ -2,7 +2,9 @@
 
 use abi::{Ownable, Ownable::OwnershipTransferred, StylusDeployer};
 use alloy::primitives::Address;
-use e2e::{receipt, send, Account, EventExt, ReceiptExt, Revert, StylusDeployerError};
+use e2e::{
+    receipt, send, Account, EventExt, ReceiptExt, Revert, StylusDeployerError,
+};
 use eyre::Result;
 
 mod abi;
@@ -41,18 +43,18 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
-    // TODO: assert the actual `OwnableInvalidOwner` error was returned once StylusDeployer is able to return the exact revert reason from constructors.
-    // assert!(err.reverted_with(Ownable::OwnableInvalidOwner { owner: Address::ZERO }));
-    
+    // TODO: assert the actual `OwnableInvalidOwner` error was returned once
+    // StylusDeployer is able to return the exact revert reason from
+    // constructors. assert!(err.reverted_with(Ownable::OwnableInvalidOwner
+    // { owner: Address::ZERO }));
+
     let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
     let contract_address = deployment_error.contract_address;
-        
-    assert!(err
-        .reverted_with(StylusDeployer::ContractInitializationError { 
-            newContract: contract_address 
-        })
-    );
-   
+
+    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
+        newContract: contract_address
+    }));
+
     Ok(())
 }
 

@@ -5,7 +5,6 @@ members = [
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
-  "benches",
 ]
 default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
 exclude = [
@@ -31,6 +30,8 @@ exclude = [
   "examples/basic/token",
   "examples/poseidon",
   "fuzz",
+  # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
+  "benches",
 ]
 
 # Explicitly set the resolver to version 2, which is the default for packages

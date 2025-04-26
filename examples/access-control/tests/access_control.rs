@@ -6,7 +6,10 @@ use abi::AccessControl::{
 };
 use alloy::hex;
 use alloy_primitives::Address;
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert, DEPLOYER_ADDRESS};
+use e2e::{
+    receipt, send, watch, Account, EventExt, ReceiptExt, Revert,
+    DEPLOYER_ADDRESS,
+};
 use eyre::Result;
 
 mod abi;
@@ -17,7 +20,6 @@ const ROLE: [u8; 32] = access_control_example::TRANSFER_ROLE;
 const NEW_ADMIN_ROLE: [u8; 32] =
     hex!("879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5");
 
-        
 fn ctr(admin: Address) -> Vec<String> {
     vec![admin.to_string()]
 }

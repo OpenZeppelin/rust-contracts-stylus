@@ -321,7 +321,11 @@ impl IErc20Wrapper for Erc20Wrapper {
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
 impl Erc20Wrapper {
-    /// Constructor
+    /// Constructor.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidUnderlying`] - If underlying token is this contract.
     // #[constructor]
     pub fn constructor(
         &mut self,

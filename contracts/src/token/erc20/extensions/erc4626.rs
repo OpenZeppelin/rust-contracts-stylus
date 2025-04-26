@@ -1035,7 +1035,7 @@ impl IErc4626 for Erc4626 {
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
 impl Erc4626 {
-    /// Constructor
+    /// Constructor.
     // TODO: remove `decimals_offset` once function overriding is possible
     // #[constructor]
     pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
@@ -1053,8 +1053,7 @@ impl Erc4626 {
     fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
         let erc20 = IERC20Metadata::new(asset);
         let call = Call::new_in(self);
-        let decimals = erc20.decimals(call).ok();
-        decimals
+        erc20.decimals(call).ok()
     }
 }
 

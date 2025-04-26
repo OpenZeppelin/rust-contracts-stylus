@@ -118,7 +118,7 @@ unsafe impl TopLevelStorage for Erc721Wrapper {}
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
 impl Erc721Wrapper {
-    /// Constructor
+    /// Constructor.
     // #[constructor]
     pub fn constructor(&mut self, underlying_token: Address) {
         self.underlying.set(underlying_token);

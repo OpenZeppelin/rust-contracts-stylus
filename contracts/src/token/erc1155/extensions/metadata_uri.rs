@@ -66,7 +66,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
 // TODO: uncomment once multiple public attributes are supported
 // #[public]
 impl Erc1155MetadataUri {
-    /// Constructor
+    /// Constructor.
     // #[constructor]
     pub fn constructor(&mut self, uri: String) {
         self.uri.set_str(uri);

@@ -9,13 +9,11 @@ cd "$ROOT_DIR" || exit
 check_wasm() {
   local CRATE_PATH=$1
 
-  echo "Checking contract $CRATE_PATH"
+  echo "Checking formatting for $CRATE_PATH"
 
   cd "$CRATE_PATH"
 
-  cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
-
-  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc
+  cargo fmt --all --check
 
   cd "$ROOT_DIR"
 }

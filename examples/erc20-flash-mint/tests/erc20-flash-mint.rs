@@ -1,9 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc20FlashMint;
-use alloy::{
-    primitives::{address, uint, Address, U256},
-};
+use alloy::primitives::{address, uint, Address, U256};
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
     Revert,
