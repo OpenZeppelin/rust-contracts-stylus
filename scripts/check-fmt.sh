@@ -23,6 +23,10 @@ get_example_dirs() {
   find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
+# format main crates
+cargo fmt --all --check
+
+# format examples
 for CRATE_PATH in $(get_example_dirs); do
   check_wasm "$CRATE_PATH"
 done
