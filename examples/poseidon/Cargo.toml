@@ -32,7 +32,7 @@ path = "src/main.rs"
 # If you need to reduce the binary size, it is advisable to try other
 # optimization levels, such as "s" and "z"
 e2e = []
-export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
+export-abi = ["stylus-sdk/export-abi"]
 
 [profile.release]
 codegen-units = 1

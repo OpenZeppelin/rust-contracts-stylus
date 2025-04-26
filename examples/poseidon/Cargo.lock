@@ -1814,6 +1814,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "educe"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d7bc049e1bd8cdeb31b68bbd586a9464ecf9f3944af3958a7a9d0f8b9799417"
+dependencies = [
+ "enum-ordinalize",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1859,6 +1871,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum-ordinalize"
+version = "4.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fea0dcfa4e54eeb516fe454635a95753ddd39acda650ce703031c6973e315dd5"
+dependencies = [
+ "enum-ordinalize-derive",
+]
+
+[[package]]
+name = "enum-ordinalize-derive"
+version = "4.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d28318a75d4aead5c4db25382e8ef717932d0346600cacae6357eb5941bc5ff"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
 name = "enumset"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1884,19 +1916,6 @@ name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
-
-[[package]]
-name = "erc1155-example"
-version = "0.0.0"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
-]
 
 [[package]]
 name = "errno"
@@ -2263,6 +2282,12 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hmac"
@@ -2989,27 +3014,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "openzeppelin-stylus"
+name = "openzeppelin-crypto"
 version = "0.2.0-alpha.4"
 dependencies = [
- "alloy-primitives",
- "alloy-sol-macro",
- "alloy-sol-macro-expander",
- "alloy-sol-macro-input",
- "alloy-sol-types",
- "keccak-const",
- "openzeppelin-stylus-proc",
- "stylus-sdk",
-]
-
-[[package]]
-name = "openzeppelin-stylus-proc"
-version = "0.2.0"
-dependencies = [
- "convert_case",
- "proc-macro2",
- "quote",
- "syn 2.0.100",
+ "educe",
+ "hex-literal",
+ "num-traits",
+ "tiny-keccak",
+ "zeroize",
 ]
 
 [[package]]
@@ -3148,6 +3160,19 @@ name = "pkg-config"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
+
+[[package]]
+name = "poseidon-example"
+version = "0.0.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-crypto",
+ "stylus-sdk",
+ "tokio",
+]
 
 [[package]]
 name = "ppv-lite86"
