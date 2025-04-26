@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus::token::erc20::{
-    extensions::{erc4626, Erc20Metadata, Erc4626, IErc4626},
+    extensions::{erc4626, Erc4626, IErc4626},
     Erc20,
 };
 use stylus_sdk::prelude::*;
@@ -16,23 +16,14 @@ struct Erc4626Example {
     #[borrow]
     erc20: Erc20,
     #[borrow]
-    metadata: Erc20Metadata,
-    #[borrow]
     erc4626: Erc4626,
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata)]
+#[inherit(Erc20)]
 impl Erc4626Example {
     #[constructor]
-    pub fn constructor(
-        &mut self,
-        name: String,
-        symbol: String,
-        asset: Address,
-        decimals_offset: U8,
-    ) {
-        self.metadata.constructor(name, symbol);
+    pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
         self.erc4626.constructor(asset, decimals_offset);
     }
 

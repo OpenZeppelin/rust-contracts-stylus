@@ -11,6 +11,7 @@ openzeppelin-crypto = { path = "../../lib/crypto" }
 alloy-primitives = { version = "=0.8.20", default-features = false, features = [
     "tiny-keccak",
 ] }
+alloy-sol-types = { version = "=0.8.20", default-features = false }
 stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
     "mini-alloc",
 ] }
@@ -20,6 +21,7 @@ stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = 
 # features, because this crate is meant to be used in a `no_std` environment.
 # Currently, the std feature is only used for testing purposes.
 std = []
+export-abi = ["stylus-sdk/export-abi"]
 
 [[bin]]
 name = "merkle-proofs-example"

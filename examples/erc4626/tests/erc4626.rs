@@ -12,8 +12,6 @@ use mock::{
     erc20_failing_transfer::ERC20FailingTransferMock,
 };
 
-const ERC4626_NAME: &str = "Erc4626 Token";
-const ERC4626_SYMBOL: &str = "ETT";
 const DECIMALS_OFFSET: u8 = 0;
 /// The minimum decimal offset needed to induce overflow
 const MIN_OVERFLOW_DECIMAL_OFFSET: u8 = 78;
@@ -22,11 +20,11 @@ mod abi;
 mod mock;
 
 fn ctr(asset: Address) -> Vec<String> {
-    vec![ERC4626_NAME.to_string(), ERC4626_SYMBOL.to_string(), asset.to_string(), DECIMALS_OFFSET.to_string()]
+    vec![asset.to_string(), DECIMALS_OFFSET.to_string()]
 }
 
 fn dec_offset_overflow_ctr(asset: Address) -> Vec<String> {
-    vec![ERC4626_NAME.to_string(), ERC4626_SYMBOL.to_string(), asset.to_string(), MIN_OVERFLOW_DECIMAL_OFFSET.to_string()]
+    vec![asset.to_string(), MIN_OVERFLOW_DECIMAL_OFFSET.to_string()]
 }
 
 async fn deploy(
@@ -64,12 +62,6 @@ mod constructor {
             .address();
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
-
-        let name = contract.name().call().await?.name;
-        assert_eq!(name, ERC4626_NAME.to_owned());
-
-        let symbol = contract.symbol().call().await?.symbol;
-        assert_eq!(symbol, ERC4626_SYMBOL.to_owned());
 
         let decimals = contract.decimals().call().await?.decimals;
         assert_eq!(decimals, 18);

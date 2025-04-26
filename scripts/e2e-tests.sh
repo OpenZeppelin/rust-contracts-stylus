@@ -5,20 +5,20 @@ export RPC_URL=http://localhost:8547
 export DEPLOYER_ADDRESS=0x6ac4839Bfe169CadBBFbDE3f29bd8459037Bf64e
 
 # Get the root directory of the git repository
-mydir=$(git rev-parse --show-toplevel)
-cd "$mydir" || exit
+ROOT_DIR=$(git rev-parse --show-toplevel)
+cd "$ROOT_DIR" || exit
 
 # Function to retrieve all Cargo.toml paths in the ./examples directory
-get_example_manifest_paths() {
+get_example_dirs() {
     find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
 # Function to build and test a crate
-build_and_test() {    
+build_and_test() {
     cargo build --release --target wasm32-unknown-unknown \
         -Z build-std=std,panic_abort \
         -Z build-std-features=panic_immediate_abort
-    
+
     cargo test --features e2e "$@"
 }
 
@@ -38,12 +38,11 @@ shift
 # Main logic based on first argument
 if [ "$project_arg" = "*" ]; then
     # Process all examples
-    for CRATE_NAME in $(get_example_manifest_paths)
-    do
+    for CRATE_NAME in $(get_example_dirs); do
         echo "Processing: $CRATE_NAME"
         cd "$CRATE_NAME"
         build_and_test "$@"
-        cd "$mydir"
+        cd "$ROOT_DIR"
     done
 else
     # Find matching projects based on pattern
@@ -51,7 +50,7 @@ else
     for dir in ./examples/*; do
         if [ -d "$dir" ] && [ -f "$dir/Cargo.toml" ]; then
             project_name=$(basename "$dir")
-            
+
             # Handle different pattern types
             if [[ "$project_arg" == *"*"* ]]; then
                 # Contains wildcard - use pattern matching
@@ -64,25 +63,25 @@ else
             fi
         fi
     done
-    
+
     # Check if we found any matches
     if [ ${#matching_projects[@]} -eq 0 ]; then
         echo "Error: No projects found matching '$project_arg' in examples/"
         exit 1
     fi
-    
+
     # Process all matching projects
     echo "Found ${#matching_projects[@]} matching project(s):"
     for project in "${matching_projects[@]}"; do
         echo "  - $(basename "$project")"
     done
     echo ""
-    
+
     for project_path in "${matching_projects[@]}"; do
         echo "Processing: $project_path"
         cd "$project_path"
         build_and_test "$@"
-        cd "$mydir"
+        cd "$ROOT_DIR"
     done
 fi
 

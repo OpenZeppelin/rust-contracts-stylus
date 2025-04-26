@@ -12,7 +12,7 @@ use openzeppelin_stylus::{
         },
         Erc721, IErc721,
     },
-    utils::{introspection::erc165::IErc165, pausable, Pausable},
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -31,8 +31,6 @@ enum Error {
     InsufficientApproval(erc721::ERC721InsufficientApproval),
     InvalidApprover(erc721::ERC721InvalidApprover),
     InvalidOperator(erc721::ERC721InvalidOperator),
-    EnforcedPause(pausable::EnforcedPause),
-    ExpectedPause(pausable::ExpectedPause),
 }
 
 impl From<enumerable::Error> for Error {
@@ -68,15 +66,6 @@ impl From<erc721::Error> for Error {
     }
 }
 
-impl From<pausable::Error> for Error {
-    fn from(value: pausable::Error) -> Self {
-        match value {
-            pausable::Error::EnforcedPause(e) => Error::EnforcedPause(e),
-            pausable::Error::ExpectedPause(e) => Error::ExpectedPause(e),
-        }
-    }
-}
-
 #[entrypoint]
 #[storage]
 struct Erc721Example {
@@ -84,16 +73,12 @@ struct Erc721Example {
     erc721: Erc721,
     #[borrow]
     enumerable: Enumerable,
-    #[borrow]
-    pausable: Pausable,
 }
 
 #[public]
-#[inherit(Erc721, Enumerable, Pausable)]
+#[inherit(Erc721, Enumerable)]
 impl Erc721Example {
     fn burn(&mut self, token_id: U256) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the owner.
         let owner = self.erc721.owner_of(token_id)?;
 
@@ -111,8 +96,6 @@ impl Erc721Example {
     }
 
     fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-
         self.erc721._mint(to, token_id)?;
 
         // Update the extension's state.
@@ -132,8 +115,6 @@ impl Erc721Example {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-
         self.erc721._safe_mint(to, token_id, &data)?;
 
         // Update the extension's state.
@@ -153,8 +134,6 @@ impl Erc721Example {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -183,8 +162,6 @@ impl Erc721Example {
         token_id: U256,
         data: Bytes,
     ) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -211,8 +188,6 @@ impl Erc721Example {
         to: Address,
         token_id: U256,
     ) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-
         // Retrieve the previous owner.
         let previous_owner = self.erc721.owner_of(token_id)?;
 
@@ -236,17 +211,5 @@ impl Erc721Example {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc721::supports_interface(interface_id)
             || Enumerable::supports_interface(interface_id)
-    }
-
-    /// WARNING: These functions are intended for **testing purposes** only. In
-    /// **production**, ensure strict access control to prevent unauthorized
-    /// pausing or unpausing, which can disrupt contract functionality. Remove
-    /// or secure these functions before deployment.
-    fn pause(&mut self) -> Result<(), Error> {
-        self.pausable.pause().map_err(|e| e.into())
-    }
-
-    fn unpause(&mut self) -> Result<(), Error> {
-        self.pausable.unpause().map_err(|e| e.into())
     }
 }
