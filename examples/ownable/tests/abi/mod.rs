@@ -14,4 +14,8 @@ sol!(
         function renounceOwnership() public virtual onlyOwner;
         function transferOwnership(address newOwner) public virtual;
     }
+
+    contract StylusDeployer {
+        error ContractInitializationError(address newContract);
+    }
 );

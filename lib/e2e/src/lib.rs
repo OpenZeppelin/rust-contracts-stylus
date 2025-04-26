@@ -8,6 +8,7 @@ mod receipt;
 mod system;
 
 pub use account::Account;
+pub use deploy::StylusDeployerError;
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::Ext as EventExt;

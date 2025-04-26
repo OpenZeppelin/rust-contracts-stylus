@@ -4,6 +4,8 @@ use alloy::{
 };
 use stylus_sdk::call::MethodError;
 
+use crate::deploy::StylusDeployerError;
+
 /// Possible panic codes for a revert.
 ///
 /// Taken from <https://github.com/NomicFoundation/hardhat/blob/main/packages/hardhat-chai-matchers/src/internal/reverted/panic.ts>
@@ -100,6 +102,13 @@ impl<E: MethodError> Revert<E> for alloy::contract::Error {
 
 impl<E: SolError> Revert<E> for eyre::Report {
     fn reverted_with(&self, expected: E) -> bool {
+        if let Some(deployment_error) =
+            self.downcast_ref::<StylusDeployerError>()
+        {
+            let expected = alloy::hex::encode(expected.abi_encode());
+            return deployment_error.revert_data == expected;
+        }
+
         let Some(received) = self
             .chain()
             .find_map(|err| err.downcast_ref::<RpcError<TransportErrorKind>>())

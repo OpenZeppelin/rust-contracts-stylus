@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use abi::VestingWallet;
+use abi::{VestingWallet, StylusDeployer};
 use alloy::{
     eips::BlockId,
     network::TransactionBuilder,
@@ -10,7 +10,7 @@ use alloy::{
 };
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
+    Revert,StylusDeployerError,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
@@ -89,9 +89,20 @@ async fn rejects_zero_address_for_beneficiary(
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
-    assert!(err.reverted_with(VestingWallet::OwnableInvalidOwner {
-        owner: Address::ZERO
-    }));
+    // TODO: assert the actual `OwnableInvalidOwner` error was returned once StylusDeployer is able to return the exact revert reason from constructors.
+    // assert!(err.reverted_with(VestingWallet::OwnableInvalidOwner {   
+    //     owner: Address::ZERO 
+    // })); 
+    
+    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
+    let contract_address = deployment_error.contract_address;
+        
+    assert!(err
+        .reverted_with(StylusDeployer::ContractInitializationError { 
+            newContract: contract_address 
+        })
+    );
+    
 
     Ok(())
 }

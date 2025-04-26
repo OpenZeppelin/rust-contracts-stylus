@@ -30,4 +30,8 @@ sol!(
           #[derive(Debug, PartialEq)]
           event ERC20Released(address indexed token, uint256 amount);
    }
+
+   contract StylusDeployer {
+       error ContractInitializationError(address newContract);
+   }
 );
