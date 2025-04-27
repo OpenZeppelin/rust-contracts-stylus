@@ -2,9 +2,9 @@
 
 use alloy::primitives::{Address, U256};
 use alloy_primitives::{aliases::U96, uint};
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert, StylusDeployerError};
 
-use crate::abi::Erc721;
+use crate::abi::{Erc721, StylusDeployer};
 
 mod abi;
 
@@ -90,9 +90,21 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
         .await
         .expect_err("should not mint consecutive");
 
-    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
-        receiver: Address::ZERO
+
+    // TODO: assert the actual `ERC721InvalidReceiver` error was returned once
+    // StylusDeployer is able to return the exact revert reason from
+    // constructors.
+    // assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+    //     receiver: Address::ZERO
+    // }));
+
+    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
+    let contract_address = deployment_error.contract_address;
+
+    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
+        newContract: contract_address
     }));
+    
     Ok(())
 }
 
@@ -107,10 +119,21 @@ async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
         .await
         .expect_err("should not mint consecutive");
 
-    assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
-        batchSize: U256::from(MAX_BATCH_SIZE + uint!(1_U96)),
-        maxBatch: U256::from(MAX_BATCH_SIZE),
+    // TODO: assert the actual `ERC721ExceededMaxBatchMint` error was returned once
+    // StylusDeployer is able to return the exact revert reason from
+    // constructors.
+    // assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
+    //     batchSize: U256::from(MAX_BATCH_SIZE + uint!(1_U96)),
+    //     maxBatch: U256::from(MAX_BATCH_SIZE),
+    // }));
+
+    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
+    let contract_address = deployment_error.contract_address;
+
+    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
+        newContract: contract_address
     }));
+    
     Ok(())
 }
 

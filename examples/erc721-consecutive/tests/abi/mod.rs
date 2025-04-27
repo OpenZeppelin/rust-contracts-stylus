@@ -50,4 +50,8 @@ sol!(
                address indexed toAddress
           );
     }
+
+    contract StylusDeployer {
+        error ContractInitializationError(address newContract);
+    }
 );

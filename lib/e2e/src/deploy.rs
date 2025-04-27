@@ -1,7 +1,8 @@
 use std::{process::Command, str::FromStr};
 
 use alloy::{
-    hex,
+    consensus::Transaction,
+    hex::{self, ToHexExt},
     network::EthereumWallet,
     primitives::{Address, TxHash},
     providers::{Provider, ProviderBuilder},
@@ -17,6 +18,9 @@ use crate::system::DEPLOYER_ADDRESS;
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address);
+
+const PROGRAM_UP_TO_DATE_ERROR_SELECTOR: [u8; 4] =
+    function_selector!("ProgramUpToDate");
 
 /// StylusDeployer error.
 ///
@@ -74,9 +78,6 @@ impl Deployer {
     /// - Unable to collect information about the crate required for deployment.
     /// - [`koba::deploy`] errors.
     pub async fn deploy(self) -> eyre::Result<(TransactionReceipt, Address)> {
-        let deployer_address = std::env::var(DEPLOYER_ADDRESS)
-            .expect("deployer address should be set");
-
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
@@ -85,6 +86,9 @@ impl Deployer {
             .args(["--no-verify"]);
 
         if let Some(ctor_args) = self.ctr_args.clone() {
+            let deployer_address = std::env::var(DEPLOYER_ADDRESS)
+                .expect("deployer address should be set");
+
             command
                 .args(["--experimental-deployer-address", &deployer_address])
                 .args(
@@ -105,33 +109,39 @@ impl Deployer {
             let stderr = String::from_utf8_lossy(&output.stderr);
 
             // Try to parse the error and extract contract address
-            if let Some(deployment_error) = self.parse_deployment_error(&stderr)
-            {
-                return Err(deployment_error);
-            }
-
-            // Fallback to generic error if we can't parse
-            return Err(eyre::eyre!("Deployment failed: {}", stderr));
+            return self
+                .parse_deployment_error(
+                    &stderr,
+                    &String::from_utf8_lossy(&output.stdout),
+                )
+                .await;
         }
 
         // output.
         self.get_receipt(output).await
     }
 
-    fn parse_deployment_error(&self, stderr: &str) -> Option<eyre::Report> {
+    async fn parse_deployment_error(
+        &self,
+        stderr: &str,
+        stdout: &str,
+    ) -> eyre::Result<(TransactionReceipt, Address)> {
         // Look for the error pattern with hex data
-        let error_regex =
-            Regex::new(r#"data: Some\(String\("(0x[a-fA-F0-9]+)"\)\)"#).ok()?;
+        let contract_init_error_regex =
+            Regex::new(r#"data: Some\(String\("(0x[a-fA-F0-9]+)"\)\)"#)
+                .context(
+                    "failed to create ContractInitializationError regex",
+                )?;
 
-        if let Some(captures) = error_regex.captures(stderr) {
+        if let Some(captures) = contract_init_error_regex.captures(stderr) {
             if let Some(hex_data) = captures.get(1) {
                 let hex_str = hex_data.as_str();
                 let hex_str = &hex_str[2..]; // Skip "0x" prefix
-                let data = hex::decode(hex_str).ok()?;
+                let data = hex::decode(hex_str)
+                    .context(format!("failed to decode hex: {hex_str}"))?;
+                let error_selector = &data[0..4];
 
-                // Check if this is a ContractInitializationError (selector
-                // 0xb66f7a36)
-                if &data[0..4] == CONTRACT_INITIALIZATION_ERROR_SELECTOR {
+                if error_selector == CONTRACT_INITIALIZATION_ERROR_SELECTOR {
                     // Extract the address (last 20 bytes)
                     let address_bytes = &data[16..36];
                     let contract_address = Address::from_slice(address_bytes);
@@ -141,13 +151,82 @@ impl Deployer {
                         revert_data: hex_str.to_string(),
                     };
 
-                    return Some(eyre::Report::new(deployment_error));
+                    return Err(eyre::Report::new(deployment_error));
+                } else if error_selector == PROGRAM_UP_TO_DATE_ERROR_SELECTOR {
+                    println!("stderr: {:?}", stderr);
+                    println!("stdout: {:?}", stdout);
                 }
 
-                return Some(eyre::eyre!(hex_str.to_string()));
+                return Err(eyre::eyre!(hex_str.to_string()));
             }
         }
-        None
+
+        let activation_error_regex =
+            Regex::new(r#"activate tx reverted (?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]+)"#)
+                .context("failed to create activation error regex")?;
+
+        if let Some(captures) = activation_error_regex.captures(stderr) {
+            if let Some(tx_hash_match) = captures.get(1) {
+                let tx_hash = tx_hash_match.as_str();
+
+                let tx_hash = TxHash::from_str(tx_hash)
+                    .context("Failed to parse transaction hash")?;
+
+                let provider = ProviderBuilder::new()
+                    .with_recommended_fillers()
+                    .wallet(EthereumWallet::from(
+                        self.private_key.parse::<PrivateKeySigner>()?,
+                    ))
+                    .on_http(
+                        Url::from_str(&self.rpc_url).expect("invalid Url"),
+                    );
+
+                let tx = provider
+                    .get_transaction_by_hash(tx_hash)
+                    .await
+                    .map_err(|e: RpcError<TransportErrorKind>| {
+                        eyre::eyre!("RPC error: {}", e)
+                    })?
+                    .ok_or_else(|| {
+                        eyre::eyre!("Transaction receipt not found")
+                    })?;
+
+                let input = tx.input().encode_hex();
+
+                // The pattern matches the contract address contained in the
+                // input
+                let contract_addr_regex =
+                    Regex::new(r"[a-fA-F0-9]{8}0+([a-fA-F0-9]{40})$")
+                        .context("Failed to create contract addr regex")?;
+
+                let contract_addr = contract_addr_regex
+                    .captures(&input)
+                    .and_then(|cap| cap.get(1))
+                    .context(format!(
+                        "No contract address found in input {input}"
+                    ))?
+                    .as_str();
+
+                let contract_address = Address::from_str(contract_addr)
+                    .context(format!(
+                        "Failed to parse contract address from string: {contract_addr}"
+                    ))?;
+
+                let receipt = provider
+                    .get_transaction_receipt(tx_hash)
+                    .await
+                    .map_err(|e: RpcError<TransportErrorKind>| {
+                        eyre::eyre!("RPC error: {}", e)
+                    })?
+                    .ok_or_else(|| {
+                        eyre::eyre!("Transaction receipt not found")
+                    })?;
+
+                return Ok((receipt, contract_address));
+            }
+        }
+
+        Err(eyre::eyre!("Deployment failed: {}", stderr))
     }
 
     async fn get_receipt(
