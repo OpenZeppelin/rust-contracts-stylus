@@ -16,7 +16,8 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256, U8};
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError},
+    abi::Bytes,
+    call::{self, Call, MethodError},
     contract, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
@@ -231,7 +232,35 @@ impl IErc20Wrapper for Erc20Wrapper {
     type Error = Error;
 
     fn decimals(&self) -> U8 {
-        self.underlying_decimals.get()
+        // Selector for decimals() -> 0x313ce567
+        const DECIMALS_SELECTOR: FixedBytes<4> =
+            FixedBytes([0x31, 0x3c, 0xe5, 0x67]);
+
+        // Attempt to call decimals() on the underlying token
+        match call::call(
+            self.underlying(),
+            &DECIMALS_SELECTOR,
+            &vec![].into(), // No arguments
+        ) {
+            // If the call is successful and returns data
+            Ok(data) => {
+                // Try to decode the result as u8 (Solidity uint8)
+                // Solidity uint types are right-padded with zeros up to 32 bytes.
+                // We only care about the last byte for uint8.
+                if data.len() >= 32 {
+                    if let Some(last_byte) = data.last() {
+                        return U8::from(*last_byte);
+                    }
+                }
+                // If decoding fails or data is too short, fallback
+                self.underlying_decimals.get()
+            }
+            // If the call fails (e.g., underlying has no decimals function, or it reverts)
+            Err(_) => {
+                // Fallback to the wrapper's decimals
+                self.underlying_decimals.get()
+            }
+        }
     }
 
     fn underlying(&self) -> Address {
