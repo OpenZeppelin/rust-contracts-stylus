@@ -2887,6 +2887,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "merkle-proofs-example"
+version = "0.2.0-alpha.4"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "openzeppelin-crypto",
+ "stylus-sdk",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"

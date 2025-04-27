@@ -1,39 +1,22 @@
 [package]
 name = "merkle-proofs-example"
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 publish = false
-version = "0.0.0"
+version.workspace = true
 
 [dependencies]
-openzeppelin-crypto = { path = "../../lib/crypto" }
-alloy-primitives = { version = "=0.8.20", default-features = false, features = [
-    "tiny-keccak",
-] }
-alloy-sol-types = { version = "=0.8.20", default-features = false }
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
-    "mini-alloc",
-] }
+openzeppelin-crypto.workspace = true
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+stylus-sdk.workspace = true
 
 [features]
 # Enables using the standard library. This is not included in the default
 # features, because this crate is meant to be used in a `no_std` environment.
 # Currently, the std feature is only used for testing purposes.
 std = []
-export-abi = ["stylus-sdk/export-abi"]
-
-[[bin]]
-name = "merkle-proofs-example"
-path = "src/main.rs"
 
 [lib]
 crate-type = ["lib", "cdylib"]
-
-[profile.release]
-codegen-units = 1
-strip = true
-lto = true
-panic = "abort"
-
-opt-level = 3
