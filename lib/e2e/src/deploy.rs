@@ -106,26 +106,18 @@ impl Deployer {
 
         // Check if the command failed
         if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-
-            // Try to parse the error and extract contract address
-            return self
-                .parse_deployment_error(
-                    &stderr,
-                    &String::from_utf8_lossy(&output.stdout),
-                )
-                .await;
+            self.parse_deployment_error(output).await
+        } else {
+            self.get_receipt(output).await
         }
-
-        // output.
-        self.get_receipt(output).await
     }
 
     async fn parse_deployment_error(
         &self,
-        stderr: &str,
-        stdout: &str,
+        output: std::process::Output,
     ) -> eyre::Result<(TransactionReceipt, Address)> {
+        let stderr = &String::from_utf8_lossy(&output.stderr);
+
         // Look for the error pattern with hex data
         let contract_init_error_regex =
             Regex::new(r#"data: Some\(String\("(0x[a-fA-F0-9]+)"\)\)"#)
@@ -153,11 +145,20 @@ impl Deployer {
 
                     return Err(eyre::Report::new(deployment_error));
                 } else if error_selector == PROGRAM_UP_TO_DATE_ERROR_SELECTOR {
-                    println!("stderr: {:?}", stderr);
-                    println!("stdout: {:?}", stdout);
+                    // For some reason, the error here is:
+                    // ```
+                    // did not estimate correctly: (code: 3, message: execution reverted: error ProgramUpToDate(), data: Some(String(\"0xcc944bf2\")))
+                    // ```
+                    // which is the same as the one handles later (the
+                    // activation error), but it still contains the stdout that
+                    // is the same as if the deployment was successful.
+                    //
+                    // This is probably some weird nitro-testnode issue, but for
+                    // now this quick-fix should work.
+                    return self.get_receipt(output).await;
+                } else {
+                    return Err(eyre::eyre!(hex_str.to_string()));
                 }
-
-                return Err(eyre::eyre!(hex_str.to_string()));
             }
         }
 
@@ -230,7 +231,7 @@ impl Deployer {
     }
 
     async fn get_receipt(
-        self,
+        &self,
         output: std::process::Output,
     ) -> eyre::Result<(TransactionReceipt, Address)> {
         // Convert output to string
