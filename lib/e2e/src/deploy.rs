@@ -112,6 +112,9 @@ impl Deployer {
         }
     }
 
+    /// These are all band-aid solutions for peculiar nitro-testnode behavior
+    /// (as of commit de8cf4edec0d12e5ef1b7623e54e35ddb579ff0b on branch
+    /// "v3-support").
     async fn parse_deployment_error(
         &self,
         output: std::process::Output,
