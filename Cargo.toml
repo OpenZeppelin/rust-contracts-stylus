@@ -5,17 +5,9 @@ members = [
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
-  "examples/merkle-proofs",
 ]
-default-members = [
-  "contracts",
-  "contracts-proc",
-  "lib/crypto",
-  "lib/e2e-proc",
-  "examples/merkle-proofs", # has no tests, so can be left in members
-]
+default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
 exclude = [
-  # move examples to `members` when cargo-stylus CLI supports workspaces
   "examples/access-control",
   "examples/ecdsa",
   "examples/erc20",
@@ -31,13 +23,14 @@ exclude = [
   "examples/erc1155-supply",
   "examples/erc4626",
   "examples/safe-erc20",
+  "examples/merkle-proofs",
   "examples/ownable",
   "examples/vesting-wallet",
   "examples/ownable-two-step",
   "examples/basic/token",
   "examples/poseidon",
   "fuzz",
-  # TODO: move benches to `members` when cargo-stylus CLI supports workspaces
+  # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
   "benches",
 ]
 
