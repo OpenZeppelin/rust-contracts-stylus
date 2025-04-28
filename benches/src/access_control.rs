@@ -4,7 +4,7 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::SolCall,
+    sol_types::{SolCall, SolConstructor},
 };
 use e2e::{receipt, Account};
 
@@ -16,6 +16,8 @@ use crate::{
 sol!(
     #[sol(rpc)]
     contract AccessControl {
+        constructor();
+
         function hasRole(bytes32 role, address account) public view virtual returns (bool hasRole);
         function getRoleAdmin(bytes32 role) public view virtual returns (bytes32 role);
         function grantRole(bytes32 role, address account) public virtual;
@@ -79,5 +81,7 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 }
 
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    crate::deploy(account, "access-control", None, cache_opt).await
+    let args = AccessControl::constructorCall {};
+    let args = alloy::hex::encode(args.abi_encode());
+    crate::deploy(account, "access-control", Some(args), cache_opt).await
 }

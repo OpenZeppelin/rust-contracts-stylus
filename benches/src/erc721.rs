@@ -3,7 +3,7 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::SolCall,
+    sol_types::{SolCall, SolConstructor},
     uint,
 };
 use e2e::{receipt, Account};
@@ -29,6 +29,8 @@ sol!(
         function burn(uint256 tokenId) external;
     }
 );
+
+sol!("../examples/erc721/src/constructor.sol");
 
 pub async fn bench() -> eyre::Result<ContractReport> {
     ContractReport::generate("Erc721", run).await
@@ -83,5 +85,7 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 }
 
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    crate::deploy(account, "erc721", None, cache_opt).await
+    let args = Erc721Example::constructorCall {};
+    let args = alloy::hex::encode(args.abi_encode());
+    crate::deploy(account, "erc721", Some(args), cache_opt).await
 }
