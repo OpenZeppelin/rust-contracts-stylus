@@ -49,8 +49,4 @@ sol!(
         #[derive(Debug, PartialEq)]
         event Unpaused(address account);
     }
-
-    contract StylusDeployer {
-        error ContractInitializationError(address newContract);
-    }
 );

@@ -7,7 +7,7 @@ use e2e::{
     Revert,
 };
 
-use crate::abi::{Erc721, StylusDeployer};
+use crate::abi::Erc721;
 
 mod abi;
 

@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use abi::{Ownable, Ownable::OwnershipTransferred, StylusDeployer};
+use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::primitives::Address;
 use e2e::{
     receipt, send, Account, ContractInitializationError, EventExt, ReceiptExt,

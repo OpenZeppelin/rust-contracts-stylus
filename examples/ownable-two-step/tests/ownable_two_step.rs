@@ -3,7 +3,6 @@
 use abi::{
     Ownable2Step,
     Ownable2Step::{OwnershipTransferStarted, OwnershipTransferred},
-    StylusDeployer,
 };
 use alloy::primitives::Address;
 use e2e::{

@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use abi::{StylusDeployer, VestingWallet};
+use abi::VestingWallet;
 use alloy::{
     eips::BlockId,
     network::TransactionBuilder,

@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use abi::{Erc20, StylusDeployer};
+use abi::Erc20;
 use alloy::primitives::{uint, Address, U256};
 use e2e::{
     receipt, send, watch, Account, ContractInitializationError, EventExt,
