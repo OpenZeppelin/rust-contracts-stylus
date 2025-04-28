@@ -4,7 +4,7 @@ use abi::{Erc20, StylusDeployer};
 use alloy::primitives::{uint, Address, U256};
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert, StylusDeployerError,
+    Revert, ContractInitializationError,
 };
 use eyre::Result;
 
@@ -1028,12 +1028,7 @@ async fn should_not_deploy_capped_with_invalid_cap(
     // constructors. assert!(err.reverted_with(Erc20::ERC20InvalidCap { cap:
     // invalid_cap }));
 
-    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
-    let contract_address = deployment_error.contract_address;
-
-    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
-        newContract: contract_address
-    }));
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }

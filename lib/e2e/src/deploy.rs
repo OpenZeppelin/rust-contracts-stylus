@@ -22,48 +22,48 @@ const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
 const PROGRAM_UP_TO_DATE_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ProgramUpToDate");
 
-/// StylusDeployer error.
+/// Represents the `ContractInitializationError(address)` error in
+/// StylusDeployer.
 ///
-/// Currently only supports `error ContractInitializationError(address)`.
+/// This error is returned when a revert happens inside the contract
+/// constructor. The StylusDeployer contract then returns this error, which
+/// contains the would-be address of the contract.
+///
+/// See: <https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L78-L81>
 #[derive(Debug)]
-pub struct StylusDeployerError {
-    /// Deployed contract address.
-    pub contract_address: Address,
-    /// Hex encoded revert data.
-    pub revert_data: String,
-}
+pub struct ContractInitializationError;
 
-impl StylusDeployerError {
-    /// Convert [`eyre::Report`] into [`StylusDeployerError`].
+impl ContractInitializationError {
+    /// Convert [`eyre::Report`] into [`ContractInitializationError`].
     pub fn from_report(report: &eyre::Report) -> Option<&Self> {
-        report.downcast_ref::<StylusDeployerError>()
+        report.downcast_ref::<ContractInitializationError>()
     }
 }
 
-impl std::fmt::Display for StylusDeployerError {
+impl std::fmt::Display for ContractInitializationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.revert_data)
+        f.write_str("ContractInitializationError")
     }
 }
 
-impl std::error::Error for StylusDeployerError {}
+impl std::error::Error for ContractInitializationError {}
 
 /// A basic smart contract deployer.
 pub struct Deployer {
     rpc_url: String,
     private_key: String,
-    ctr_args: Option<Vec<String>>,
+    ctor_args: Option<Vec<String>>,
 }
 
 impl Deployer {
     pub fn new(rpc_url: String, private_key: String) -> Self {
-        Self { rpc_url, private_key, ctr_args: None }
+        Self { rpc_url, private_key, ctor_args: None }
     }
 
     /// Add solidity constructor to the deployer.
     #[allow(clippy::needless_pass_by_value)]
     pub fn with_constructor(mut self, ctr_args: Vec<String>) -> Deployer {
-        self.ctr_args = Some(ctr_args);
+        self.ctor_args = Some(ctr_args);
         self
     }
 
@@ -78,6 +78,20 @@ impl Deployer {
     /// - Unable to collect information about the crate required for deployment.
     /// - [`koba::deploy`] errors.
     pub async fn deploy(self) -> eyre::Result<(TransactionReceipt, Address)> {
+        let mut command = self.create_command();
+
+        let output = command
+            .output()
+            .context("failed to execute `cargo stylus deploy` command")?;
+
+        if !output.status.success() {
+            self.parse_deployment_error(output).await
+        } else {
+            self.get_receipt(output).await
+        }
+    }
+
+    fn create_command(&self) -> Command {
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
@@ -85,7 +99,18 @@ impl Deployer {
             .args(["--private-key", &self.private_key])
             .args(["--no-verify"]);
 
-        if let Some(ctor_args) = self.ctr_args.clone() {
+        // There are 3 possible cases when it comes to invoking constructors:
+        //      1. No constructor exists on a contract - `self.ctor_args` should
+        //         be None
+        //      2. Constructor exists, but accepts no arguments -
+        //         `self.ctor_args` should be Some(vec![])
+        //      3. Constructor exists and accepts arguments - `self.ctor_args`
+        //         should be Some(vec!["arg1", "arg2", ...])
+        //
+        // The deployer address and constructor-args must both be set if the
+        // constructor is to be invoked on a contract. Otherwise,
+        // neither should be set.
+        if let Some(ctor_args) = self.ctor_args.as_ref() {
             let deployer_address = std::env::var(DEPLOYER_ADDRESS)
                 .expect("deployer address should be set");
 
@@ -93,23 +118,14 @@ impl Deployer {
                 .args(["--experimental-deployer-address", &deployer_address])
                 .args(
                     [
-                        vec!["--experimental-constructor-args".to_string()],
-                        ctor_args,
+                        &["--experimental-constructor-args".to_string()],
+                        ctor_args.as_slice(),
                     ]
                     .concat(),
                 );
         }
 
-        let output = command
-            .output()
-            .context("failed to execute `cargo stylus deploy` command")?;
-
-        // Check if the command failed
-        if !output.status.success() {
-            self.parse_deployment_error(output).await
-        } else {
-            self.get_receipt(output).await
-        }
+        command
     }
 
     /// These are all band-aid solutions for peculiar nitro-testnode behavior
@@ -122,13 +138,11 @@ impl Deployer {
         let stderr = &String::from_utf8_lossy(&output.stderr);
 
         // Look for the error pattern with hex data
-        let contract_init_error_regex =
+        let error_data_regex =
             Regex::new(r#"data: Some\(String\("(0x[a-fA-F0-9]+)"\)\)"#)
-                .context(
-                    "failed to create ContractInitializationError regex",
-                )?;
+                .context("failed to create error data regex")?;
 
-        if let Some(captures) = contract_init_error_regex.captures(stderr) {
+        if let Some(captures) = error_data_regex.captures(stderr) {
             if let Some(hex_data) = captures.get(1) {
                 let hex_str = hex_data.as_str();
                 let hex_str = &hex_str[2..]; // Skip "0x" prefix
@@ -137,16 +151,9 @@ impl Deployer {
                 let error_selector = &data[0..4];
 
                 if error_selector == CONTRACT_INITIALIZATION_ERROR_SELECTOR {
-                    // Extract the address (last 20 bytes)
-                    let address_bytes = &data[16..36];
-                    let contract_address = Address::from_slice(address_bytes);
-
-                    let deployment_error = StylusDeployerError {
-                        contract_address,
-                        revert_data: hex_str.to_string(),
-                    };
-
-                    return Err(eyre::Report::new(deployment_error));
+                    return Err(eyre::Report::new(
+                        ContractInitializationError {},
+                    ));
                 } else if error_selector == PROGRAM_UP_TO_DATE_ERROR_SELECTOR {
                     // For some reason, the error here is:
                     // ```

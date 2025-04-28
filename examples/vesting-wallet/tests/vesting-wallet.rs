@@ -10,7 +10,7 @@ use alloy::{
 };
 use e2e::{
     receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert, StylusDeployerError,
+    Revert, ContractInitializationError,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
@@ -99,12 +99,7 @@ async fn rejects_zero_address_for_beneficiary(
     // reverted_with(VestingWallet::OwnableInvalidOwner {     owner:
     // Address::ZERO }));
 
-    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
-    let contract_address = deployment_error.contract_address;
-
-    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
-        newContract: contract_address
-    }));
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }

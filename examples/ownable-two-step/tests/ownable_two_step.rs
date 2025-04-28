@@ -7,7 +7,7 @@ use abi::{
 };
 use alloy::primitives::Address;
 use e2e::{
-    receipt, send, Account, EventExt, ReceiptExt, Revert, StylusDeployerError,
+    receipt, send, Account, EventExt, ReceiptExt, Revert, ContractInitializationError,
 };
 use eyre::Result;
 
@@ -60,12 +60,7 @@ async fn construct_reverts_when_owner_is_zero_address(
     // reverted_with(Ownable2Step::OwnableInvalidOwner {     owner:
     // Address::ZERO }));
 
-    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
-    let contract_address = deployment_error.contract_address;
-
-    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
-        newContract: contract_address
-    }));
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }

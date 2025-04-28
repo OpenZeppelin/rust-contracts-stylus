@@ -3,7 +3,7 @@
 use alloy::primitives::{Address, U256};
 use alloy_primitives::{aliases::U96, uint};
 use e2e::{
-    receipt, watch, Account, EventExt, ReceiptExt, Revert, StylusDeployerError,
+    receipt, watch, Account, EventExt, ReceiptExt, Revert, ContractInitializationError,
 };
 
 use crate::abi::{Erc721, StylusDeployer};
@@ -99,12 +99,7 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
     //     receiver: Address::ZERO
     // }));
 
-    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
-    let contract_address = deployment_error.contract_address;
-
-    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
-        newContract: contract_address
-    }));
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }
@@ -128,12 +123,7 @@ async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
     //     maxBatch: U256::from(MAX_BATCH_SIZE),
     // }));
 
-    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
-    let contract_address = deployment_error.contract_address;
-
-    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
-        newContract: contract_address
-    }));
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }

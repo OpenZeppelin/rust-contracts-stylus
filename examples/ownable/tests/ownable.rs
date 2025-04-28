@@ -3,7 +3,7 @@
 use abi::{Ownable, Ownable::OwnershipTransferred, StylusDeployer};
 use alloy::primitives::Address;
 use e2e::{
-    receipt, send, Account, EventExt, ReceiptExt, Revert, StylusDeployerError,
+    receipt, send, Account, EventExt, ReceiptExt, Revert, ContractInitializationError,
 };
 use eyre::Result;
 
@@ -48,12 +48,7 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
     // constructors. assert!(err.reverted_with(Ownable::OwnableInvalidOwner
     // { owner: Address::ZERO }));
 
-    let deployment_error = err.downcast_ref::<StylusDeployerError>().unwrap();
-    let contract_address = deployment_error.contract_address;
-
-    assert!(err.reverted_with(StylusDeployer::ContractInitializationError {
-        newContract: contract_address
-    }));
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }
