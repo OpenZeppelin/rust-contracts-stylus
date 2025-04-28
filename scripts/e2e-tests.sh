@@ -23,15 +23,6 @@ get_example_dirs() {
     find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
-# Function to build and test a crate
-build_and_test() {
-    cargo build --release --target wasm32-unknown-unknown \
-        -Z build-std=std,panic_abort \
-        -Z build-std-features=panic_immediate_abort
-
-    cargo test --features e2e "$@"
-}
-
 # Check for at least one argument
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <project_name|*> [test_args...]"
@@ -51,7 +42,7 @@ if [ "$project_arg" = "*" ]; then
     for CRATE_NAME in $(get_example_dirs); do
         echo "Processing: $CRATE_NAME"
         cd "$CRATE_NAME"
-        build_and_test "$@"
+        cargo test --features e2e "$@"
         cd "$ROOT_DIR"
     done
 else
@@ -90,7 +81,7 @@ else
     for project_path in "${matching_projects[@]}"; do
         echo "Processing: $project_path"
         cd "$project_path"
-        build_and_test "$@"
+        cargo test --features e2e "$@"
         cd "$ROOT_DIR"
     done
 fi
