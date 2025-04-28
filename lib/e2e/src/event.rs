@@ -33,13 +33,6 @@ where
     E: PartialEq,
 {
     fn emits(&self, expected: E) -> bool {
-        // Extract all events that are the expected type.
-        self.0
-            .inner
-            .logs()
-            .iter()
-            .filter_map(|log| log.log_decode().ok())
-            .map(|log| log.inner.data)
-            .any(|event| expected == event)
+        self.0.emits(expected)
     }
 }

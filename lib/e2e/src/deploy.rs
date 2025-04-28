@@ -172,6 +172,8 @@ impl Deployer {
             }
         }
 
+        // The pattern matches the contract address that is preceeded by
+        // ANSI escape codes (`cargo stylus deploy` outputs colored text).
         let activation_error_regex =
             Regex::new(r#"activate tx reverted (?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]+)"#)
                 .context("failed to create activation error regex")?;
@@ -191,6 +193,12 @@ impl Deployer {
                     .on_http(
                         Url::from_str(&self.rpc_url).expect("invalid Url"),
                     );
+
+                // We extract the address of the contract that was supposed to
+                // be activated by StylusDeployer by getting the transaction
+                // that StylusDeployer sent to Arbitrum `activateProgram`
+                // precompile and extracting the address used in the transaction
+                // input.
 
                 let tx = provider
                     .get_transaction_by_hash(tx_hash)
@@ -217,12 +225,13 @@ impl Deployer {
                         "No contract address found in input {input}"
                     ))?
                     .as_str();
-
                 let contract_address = Address::from_str(contract_addr)
                     .context(format!(
                         "Failed to parse contract address from string: {contract_addr}"
                     ))?;
 
+                // now that we have the contract address, we only need the
+                // receipt
                 let receipt = provider
                     .get_transaction_receipt(tx_hash)
                     .await
@@ -233,6 +242,15 @@ impl Deployer {
                         eyre::eyre!("Transaction receipt not found")
                     })?;
 
+                // Because this receipt is related to the transaction sent to
+                // the StylusDeployer, calling `.contract_address()` on it would
+                // return the StylusDeployer's address and not the one of our
+                // deployed contract.
+                // Therefore, we need to separately store the actual contract
+                // address extracted from the `cargo stylus deploy` output.
+                //
+                // TODO: create TxReceipt wrapper struct and use it instead of
+                // this tuple.
                 return Ok((receipt, contract_address));
             }
         }
@@ -240,6 +258,9 @@ impl Deployer {
         Err(eyre::eyre!("Deployment failed: {}", stderr))
     }
 
+    /// Constructs the receipt struct extracting the necessary receipt and
+    /// contract address data out of the `cargo stylus deploy` output with the
+    /// help of regex.
     async fn get_receipt(
         &self,
         output: std::process::Output,
@@ -247,24 +268,13 @@ impl Deployer {
         // Convert output to string
         let output_str = String::from_utf8_lossy(&output.stdout);
 
-        // Extract transaction hash using regex
-        // The pattern matches a 0x followed by 64 hex characters
-        let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
-            .context("Failed to create tx hash regex")?;
+        // first we get the contract address
 
         // The pattern matches the contract address that is preceeded by
-        // ANSI escape codes (`cargo stylus deploy` outputs
-        // colored text).
+        // ANSI escape codes (`cargo stylus deploy` outputs colored text).
         let contract_addr_regex =
             Regex::new(r"deployed code at address:\s*(?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]{40})")
                 .context("Failed to create contract addr regex")?;
-
-        let tx_hash = tx_hash_regex
-            .find(&*output_str)
-            .context(format!(
-                "No transaction hash found in output {output_str}"
-            ))?
-            .as_str();
 
         let contract_addr = contract_addr_regex
             .captures(&output_str)
@@ -278,9 +288,21 @@ impl Deployer {
                 "Failed to parse contract address from string: {contract_addr}"
             ))?;
 
-        // Convert string to TxHash
+        // Now we extract the transaction hash to fetch to receipt
+
+        let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
+            .context("Failed to create tx hash regex")?;
+
+        let tx_hash = tx_hash_regex
+            .find(&*output_str)
+            .context(format!(
+                "No transaction hash found in output {output_str}"
+            ))?
+            .as_str();
         let tx_hash = TxHash::from_str(tx_hash)
             .context("Failed to parse transaction hash")?;
+
+        // Finally we can fetch the receipt
 
         let provider = ProviderBuilder::new()
             .with_recommended_fillers()
