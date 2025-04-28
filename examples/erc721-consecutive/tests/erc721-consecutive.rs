@@ -3,7 +3,8 @@
 use alloy::primitives::{Address, U256};
 use alloy_primitives::{aliases::U96, uint};
 use e2e::{
-    receipt, watch, Account, EventExt, ReceiptExt, Revert, ContractInitializationError,
+    receipt, watch, Account, ContractInitializationError, EventExt, ReceiptExt,
+    Revert,
 };
 
 use crate::abi::{Erc721, StylusDeployer};

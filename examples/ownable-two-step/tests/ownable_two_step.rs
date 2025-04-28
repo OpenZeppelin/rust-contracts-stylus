@@ -7,7 +7,8 @@ use abi::{
 };
 use alloy::primitives::Address;
 use e2e::{
-    receipt, send, Account, EventExt, ReceiptExt, Revert, ContractInitializationError,
+    receipt, send, Account, ContractInitializationError, EventExt, ReceiptExt,
+    Revert,
 };
 use eyre::Result;
 

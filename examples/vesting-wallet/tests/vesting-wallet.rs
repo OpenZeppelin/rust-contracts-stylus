@@ -9,8 +9,8 @@ use alloy::{
     rpc::types::{BlockTransactionsKind, TransactionRequest},
 };
 use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert, ContractInitializationError,
+    receipt, send, watch, Account, ContractInitializationError, EventExt,
+    Panic, PanicCode, ReceiptExt, Revert,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
