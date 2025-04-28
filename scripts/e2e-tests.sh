@@ -18,9 +18,9 @@ export DEPLOYER_ADDRESS=0x6ac4839Bfe169CadBBFbDE3f29bd8459037Bf64e
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR" || exit
 
-# Function to retrieve all Cargo.toml paths in the ./examples directory
+# Function to retrieve all Cargo.toml paths in the ./examples directory except "merkle-proofs" as it has no tests
 get_example_dirs() {
-    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
+    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | grep -v "examples/merkle-proofs" | sort
 }
 
 # Function to build and test a crate
