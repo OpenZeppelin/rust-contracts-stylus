@@ -5,7 +5,7 @@ set -e
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR" || exit
 
-# Check contract wasm binary by crate name
+# Check contract wasm binary by crate path
 check_wasm() {
   local CRATE_PATH=$1
 

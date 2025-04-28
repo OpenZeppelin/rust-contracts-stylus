@@ -212,9 +212,7 @@ impl IOwnable2Step for Ownable2Step {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
-// NOTE: cannot include constructor in the above #[public], as constructor is
-// not part of the `IOwnable2Step` trait
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Ownable2Step {
     /// Constructor.

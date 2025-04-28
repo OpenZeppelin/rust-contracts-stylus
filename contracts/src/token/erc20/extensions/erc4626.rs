@@ -1032,7 +1032,7 @@ impl IErc4626 for Erc4626 {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Erc4626 {
     /// Constructor.

@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_main)]
+#![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
 use alloc::vec::Vec;

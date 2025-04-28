@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e
 
+# Invoke the script by passing any non-zero number of arguments.
+# The first argument is always the test project(s) to run and all the other arguments are valid `cargo test` arguments.
+#
 # The following are all valid ways to invoke this script:
 # - ./scripts/e2e-tests.sh "*" <- invoke all tests
 # - ./scripts/e2e-tests.sh erc20 <- invoke tests only for erc20
 # - ./scripts/e2e-tests.sh erc20* <- invoke tests for all tests beginning with "erc20..."
 # - ./scripts/e2e-tests.sh *erc20 <- invoke tests for all tests ending with "...erc20"
 # - ./scripts/e2e-tests.sh "*" -- constructs <- invoke the "constructs" test in all test projects
-#
-# As you can see, you can pass any valid `cargo test` arguments after the first one,
-# which represents the project for which to run the script
 
 export RPC_URL=http://localhost:8547
 export DEPLOYER_ADDRESS=0x6ac4839Bfe169CadBBFbDE3f29bd8459037Bf64e
@@ -18,9 +18,9 @@ export DEPLOYER_ADDRESS=0x6ac4839Bfe169CadBBFbDE3f29bd8459037Bf64e
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR" || exit
 
-# Function to retrieve all Cargo.toml paths in the ./examples directory except "merkle-proofs" as it has no tests
+# Function to retrieve all Cargo.toml paths in the ./examples directory
 get_example_dirs() {
-    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | grep -v "examples/merkle-proofs" | sort
+    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
 # Function to build and test a crate

@@ -115,7 +115,7 @@ pub struct Erc721Wrapper {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc721Wrapper {}
 
-// TODO: uncomment once multiple public attributes are supported
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Erc721Wrapper {
     /// Constructor.

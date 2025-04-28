@@ -158,12 +158,12 @@ mod borrower {
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
-    // We keep this field public, since this is used to simulate overriding
-    // (which is not possible in Rust).
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Fee applied when doing flash loans.
     pub flash_fee_value: StorageU256,
-    // We keep this field public, since this is used to simulate overriding
-    // (which is not possible in Rust).
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Receiver address of the flash fee.
     pub flash_fee_receiver_address: StorageAddress,
 }

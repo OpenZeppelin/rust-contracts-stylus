@@ -184,18 +184,20 @@ impl MethodError for Error {
 /// State of an [`Erc721Consecutive`] token.
 #[storage]
 pub struct Erc721Consecutive {
+    // Must be public so that internal fields can be accessed in inheriting
+    // contracts' constructors.
     /// [`Erc721`] contract.
     pub erc721: Erc721,
     /// [`Trace`] contract for sequential ownership.
     pub(crate) sequential_ownership: Trace<S160>,
     /// [`BitMap`] contract for sequential burn of tokens.
     pub(crate) sequential_burn: BitMap,
-    // We keep this field public, since this is used to simulate overriding
-    // (which is not possible in Rust).
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Used to offset the first token id in `next_consecutive_id` calculation.
     pub first_consecutive_id: StorageU96,
-    // We keep this field public, since this is used to simulate overriding
-    // (which is not possible in Rust).
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Maximum size of a batch of consecutive tokens. This is designed to
     /// limit stress on off-chain indexing services that have to record one
     /// entry per token, and have protections against "unreasonably large"
@@ -328,7 +330,7 @@ impl IErc721 for Erc721Consecutive {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Erc721Consecutive {
     /// Constructor.

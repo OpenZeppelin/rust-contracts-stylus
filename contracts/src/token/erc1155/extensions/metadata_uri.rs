@@ -63,7 +63,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Erc1155MetadataUri {
     /// Constructor.

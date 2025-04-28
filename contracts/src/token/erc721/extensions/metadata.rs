@@ -22,8 +22,8 @@ use crate::{
 pub struct Erc721Metadata {
     /// [`Metadata`] contract.
     pub(crate) metadata: Metadata,
-    // We keep this field public, since this is used to simulate overriding
-    // (which is not possible in Rust).
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Base URI for tokens.
     pub base_uri: StorageString,
 }
@@ -70,7 +70,7 @@ impl IErc721Metadata for Erc721Metadata {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Erc721Metadata {
     /// Constructor.

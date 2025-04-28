@@ -21,6 +21,7 @@ stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = 
 # features, because this crate is meant to be used in a `no_std` environment.
 # Currently, the std feature is only used for testing purposes.
 std = []
+e2e = []
 export-abi = ["stylus-sdk/export-abi"]
 
 [[bin]]

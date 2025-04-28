@@ -115,8 +115,9 @@ impl MethodError for Error {
 pub struct Erc20Wrapper {
     /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Underlying token decimals.
-    // Must be `pub` so that we can override the value in inheriting contracts.
     pub underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
@@ -318,7 +319,7 @@ impl IErc20Wrapper for Erc20Wrapper {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Erc20Wrapper {
     /// Constructor.

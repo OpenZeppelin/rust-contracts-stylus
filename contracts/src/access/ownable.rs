@@ -157,9 +157,7 @@ impl IOwnable for Ownable {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
-// NOTE: cannot include constructor in the above #[public], as constructor is
-// not part of the `IOwnable` trait
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl Ownable {
     /// Constructor.

@@ -539,15 +539,14 @@ impl IVestingWallet for VestingWallet {
     }
 }
 
-// TODO: uncomment once multiple public attributes are supported
+// TODO: uncomment once multiple `#[public]` attributes are supported
 // #[public]
 impl VestingWallet {
     /// Constructor.
     ///
     /// # Errors
     ///
-    /// * [`ownable::Error::InvalidOwner`] - If initial owner is
-    ///   `Address::ZERO`.
+    /// * [`ownable::Error::InvalidOwner`] - If beneficiary is `Address::ZERO`.
     // #[constructor]
     pub fn constructor(
         &mut self,
@@ -555,12 +554,6 @@ impl VestingWallet {
         start_timestamp: U64,
         duration_seconds: U64,
     ) -> Result<(), Error> {
-        if beneficiary.is_zero() {
-            return Err(ownable::Error::InvalidOwner(
-                ownable::OwnableInvalidOwner { owner: Address::ZERO },
-            )
-            .into());
-        }
         self.ownable.constructor(beneficiary)?;
         self.start.set(start_timestamp);
         self.duration.set(duration_seconds);
