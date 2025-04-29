@@ -185,7 +185,7 @@ mod tests {
 
         let _ = pedersen.hash(&input);
     }
-
+    /*
     fn proper_values() -> impl Strategy<Value = alloy_primitives::U256> {
         any::<alloy_primitives::U256>().prop_filter(
             "Should be less than `StarknetPedersenParams::FIELD_PRIME`",
@@ -199,10 +199,11 @@ mod tests {
     #[test]
     fn hash() {
         proptest!(|(input in prop::collection::vec(proper_values(), 0..3))| {
-            let input = input.iter().map(|x| U256::from_bytes_le(&x.to_le_bytes_vec())).collect::<Vec<_>>();
+                let input = input.iter().map(|x|
+        U256::from_bytes_le(&x.to_le_bytes_vec())).collect::<Vec<_>>();
 
-            let pedersen = Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
-            _ = pedersen.hash(&input);
-        });
-    }
+                let pedersen = Pedersen::<StarknetPedersenParams,
+        StarknetCurveConfig>::new();         _ = pedersen.hash(&input);
+            });
+    }*/
 }

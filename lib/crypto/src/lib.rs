@@ -40,5 +40,6 @@ pub mod poseidon2;
 pub use keccak::KeccakBuilder;
 
 pub mod curve;
+mod pedersen_starknet;
 #[cfg(all(test, feature = "std"))]
 mod test_helpers;

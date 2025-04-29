@@ -9,6 +9,7 @@ use core::{
     fmt::{Debug, Display, Result, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
+        Shl, ShlAssign, Shr, ShrAssign,
     },
 };
 
@@ -641,6 +642,88 @@ impl<const N: usize> Not for Uint<N> {
     }
 }
 
+impl<const N: usize> Shr<u32> for Uint<N> {
+    type Output = Self;
+
+    fn shr(mut self, rhs: u32) -> Self::Output {
+        self >>= rhs;
+        self
+    }
+}
+
+impl<const N: usize> ShrAssign<u32> for Uint<N> {
+    fn shr_assign(&mut self, rhs: u32) {
+        let shift = rhs as usize;
+        let bits = Limb::BITS as usize;
+
+        // If the shift is greater than the number of bits in the number.
+        if N * bits <= shift {
+            *self = Self::ZERO;
+            return;
+        }
+
+        // Shift bits in limbs array in-place.
+        for index in (0..N).rev() {
+            let limb_shift = shift % bits;
+            let index_shift = shift / bits;
+
+            let current_limb = self.limbs[index];
+            self.limbs[index] = 0;
+
+            let index1 = index + index_shift;
+            if index1 < N {
+                self.limbs[index1] |= current_limb >> limb_shift;
+            }
+
+            let index2 = index1 + 1;
+            if index2 < N {
+                self.limbs[index2] |= current_limb << (bits - limb_shift);
+            }
+        }
+    }
+}
+
+impl<const N: usize> Shl<u32> for Uint<N> {
+    type Output = Self;
+
+    fn shl(mut self, rhs: u32) -> Self::Output {
+        self <<= rhs;
+        self
+    }
+}
+
+impl<const N: usize> ShlAssign<u32> for Uint<N> {
+    fn shl_assign(&mut self, rhs: u32) {
+        let shift = rhs as usize;
+        let bits = Limb::BITS as usize;
+
+        // If the shift is greater than the number of bits in the number.
+        if N * bits <= shift {
+            *self = Self::ZERO;
+            return;
+        }
+
+        // Shift bits in limbs array in-place.
+        for index in 0..N {
+            let limb_shift = shift % bits;
+            let index_shift = shift / bits;
+
+            let current_limb = self.limbs[index];
+            self.limbs[index] = 0;
+
+            if index_shift <= index {
+                let index1 = index - index_shift;
+                self.limbs[index1] |= current_limb << limb_shift;
+            }
+
+            if index_shift + 1 <= index {
+                let index2 = index - index_shift - 1;
+                self.limbs[index2] |= current_limb >> (bits - limb_shift);
+            }
+        }
+    }
+}
+
 impl<const N: usize> BigInteger for Uint<N> {
     const LIMB_BITS: usize = Limb::BITS as usize;
     const MAX: Self = Self { limbs: [u64::MAX; N] };
@@ -1012,5 +1095,33 @@ mod test {
         assert!(!a.ct_lt(&b));
         assert!(a.ct_eq(&b));
         assert!(!a.ct_ne(&b));
+    }
+
+    #[test]
+    fn shr() {
+        let num = Uint::<4>::new([0b1100, 0, 0, 0]);
+
+        let expected = Uint::<4>::new([0, 0b110000, 0, 0]);
+        assert_eq!(num >> 62, expected);
+
+        let expected = Uint::<4>::new([0, 0, 0b11000000, 0]);
+        assert_eq!(num >> (60 + 64), expected);
+
+        let expected = Uint::<4>::new([0, 0, 0, 0b1100000000]);
+        assert_eq!(num >> (58 + 64 + 64), expected);
+    }
+
+    #[test]
+    fn shl() {
+        let num = Uint::<4>::new([0, 0, 0, 0b11000000]);
+
+        let expected = Uint::<4>::new([0, 0, 0b110000, 0]);
+        assert_eq!(num << 62, expected);
+
+        let expected = Uint::<4>::new([0, 0b1100, 0, 0]);
+        assert_eq!(num << (60 + 64), expected);
+
+        let expected = Uint::<4>::new([0b11, 0, 0, 0]);
+        assert_eq!(num << (58 + 64 + 64), expected);
     }
 }
