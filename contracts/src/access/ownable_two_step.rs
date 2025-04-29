@@ -212,16 +212,18 @@ impl IOwnable2Step for Ownable2Step {
     }
 }
 
-// TODO: uncomment once multiple `#[public]` attributes are supported
-// #[public]
 impl Ownable2Step {
     /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `initial_owner` - The initial owner of this contract.
     ///
     /// # Errors
     ///
     /// * [`ownable::Error::InvalidOwner`] - If initial owner is
     ///   `Address::ZERO`.
-    // #[constructor]
     pub fn constructor(
         &mut self,
         initial_owner: Address,

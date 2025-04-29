@@ -157,15 +157,17 @@ impl IOwnable for Ownable {
     }
 }
 
-// TODO: uncomment once multiple `#[public]` attributes are supported
-// #[public]
 impl Ownable {
     /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `initial_owner` - The initial owner of this contract.
     ///
     /// # Errors
     ///
     /// * [`Error::InvalidOwner`] - If initial owner is `Address::ZERO`.
-    // #[constructor]
     pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
         if initial_owner.is_zero() {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {

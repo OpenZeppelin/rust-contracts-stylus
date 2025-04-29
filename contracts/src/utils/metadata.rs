@@ -15,6 +15,12 @@ pub struct Metadata {
 #[public]
 impl Metadata {
     /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
     #[constructor]
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.name.set_str(name);

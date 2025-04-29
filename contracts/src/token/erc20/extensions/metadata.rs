@@ -73,11 +73,14 @@ impl IErc20Metadata for Erc20Metadata {
     }
 }
 
-// TODO: uncomment once multiple `#[public]` attributes are supported
-// #[public]
 impl Erc20Metadata {
     /// Constructor.
-    // #[constructor]
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
     }

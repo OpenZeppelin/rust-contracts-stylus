@@ -1032,12 +1032,15 @@ impl IErc4626 for Erc4626 {
     }
 }
 
-// TODO: uncomment once multiple `#[public]` attributes are supported
-// #[public]
 impl Erc4626 {
+    // TODO: remove `decimals_offset` once function overriding is possible.
     /// Constructor.
-    // TODO: remove `decimals_offset` once function overriding is possible
-    // #[constructor]
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `asset` - The underlying vault asset.
+    /// * `decimals_offset` - The decimal offset of the vault shares.
     pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
         let underlying_decimals =
             self.try_get_asset_decimals(asset).unwrap_or(18);

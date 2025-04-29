@@ -319,15 +319,17 @@ impl IErc20Wrapper for Erc20Wrapper {
     }
 }
 
-// TODO: uncomment once multiple `#[public]` attributes are supported
-// #[public]
 impl Erc20Wrapper {
     /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `underlying_token` - The wrapped token.
     ///
     /// # Errors
     ///
     /// * [`Error::InvalidUnderlying`] - If underlying token is this contract.
-    // #[constructor]
     pub fn constructor(
         &mut self,
         underlying_token: Address,

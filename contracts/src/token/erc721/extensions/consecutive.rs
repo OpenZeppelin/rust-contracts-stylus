@@ -330,11 +330,14 @@ impl IErc721 for Erc721Consecutive {
     }
 }
 
-// TODO: uncomment once multiple `#[public]` attributes are supported
-// #[public]
 impl Erc721Consecutive {
+    // TODO: remove once function overriding is possible, so `max_batch_size`
+    // can be set that way.
     /// Constructor.
-    // #[constructor]
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
     pub fn constructor(&mut self) {
         self.max_batch_size.set(U96::from(5000));
     }

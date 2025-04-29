@@ -58,6 +58,11 @@ pub struct Capped {
 impl Capped {
     /// Constructor.
     ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `cap` - The token supply cap.
+    ///
     /// # Errors
     ///
     /// * [`Error::InvalidCap`] - If cap is zero.

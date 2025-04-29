@@ -63,11 +63,13 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
     }
 }
 
-// TODO: uncomment once multiple `#[public]` attributes are supported
-// #[public]
 impl Erc1155MetadataUri {
     /// Constructor.
-    // #[constructor]
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `uri` - The token URI.
     pub fn constructor(&mut self, uri: String) {
         self.uri.set_str(uri);
     }
