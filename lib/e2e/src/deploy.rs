@@ -84,6 +84,9 @@ impl Deployer {
             .output()
             .context("failed to execute `cargo stylus deploy` command")?;
 
+        // Resources for context on the implementation:
+        // - https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L10
+        // - https://github.com/OffchainLabs/nitro/blob/98aefbacd814b002bd93a625edaaa0abd9e0d2f0/arbos/programs/programs.go#L113
         if !output.status.success() {
             self.parse_deployment_error(output).await
         } else {
