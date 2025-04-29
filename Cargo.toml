@@ -6,13 +6,7 @@ members = [
   "lib/e2e",
   "lib/e2e-proc",
 ]
-default-members = [
-  "contracts",
-  "contracts-proc",
-  "lib/crypto",
-  "lib/e2e-proc",
-  "lib/e2e",
-]
+default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
 exclude = [
   "examples/access-control",
   "examples/ecdsa",
