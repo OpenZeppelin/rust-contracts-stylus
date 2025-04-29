@@ -75,7 +75,7 @@ impl Deployer {
     /// May error if:
     ///
     /// - Unable to collect information about the crate required for deployment.
-    /// - [`koba::deploy`] errors.
+    /// - `cargo stylus deploy` errors.
     pub async fn deploy(self) -> eyre::Result<Receipt> {
         let mut command = self.create_command();
 

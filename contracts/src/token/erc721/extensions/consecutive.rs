@@ -13,8 +13,7 @@
 //!
 //! Fields `first_consecutive_id` (used to offset first token id) and
 //! `max_batch_size` (used to restrict maximum batch size) can be assigned
-//! during construction with `koba` (stylus construction tooling) within
-//! solidity constructor file.
+//! during construction.
 //!
 //! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
 //! inside the contract's Solidity constructor.

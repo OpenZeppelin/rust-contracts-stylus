@@ -3,11 +3,9 @@
 This end-to-end testing crate provides affordances to test your contracts in a
 blockchain environment.
 
-This crate is currently coupled to [`nitro-testnode`] and [`koba`].
+This crate is currently coupled to [`nitro-testnode`].
 
 [`nitro-testnode`]: https://github.com/OffchainLabs/nitro-testnode
-
-[`koba`]: https://github.com/OpenZeppelin/koba
 
 ## Usage
 
