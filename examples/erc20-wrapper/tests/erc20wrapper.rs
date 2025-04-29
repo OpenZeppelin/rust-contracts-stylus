@@ -2,7 +2,7 @@
 
 use abi::{Erc20, Erc20Wrapper};
 use alloy::primitives::{uint, Address, U256};
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
+use e2e::{receipt, watch, Account, EventExt};
 use eyre::Result;
 
 mod abi;
@@ -29,7 +29,7 @@ async fn deploy(
         .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     if initial_tokens > U256::ZERO {
         let asset = ERC20Mock::new(asset_addr, &account.wallet);
@@ -47,7 +47,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .with_constructor(ctr(asset_address))
         .deploy()
         .await?
-        .address();
+        .contract_address;
     let contract = Erc20Wrapper::new(contract_addr, alice.wallet);
 
     let underlying = contract.underlying().call().await?.underlying;

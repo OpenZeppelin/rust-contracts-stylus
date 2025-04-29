@@ -2,7 +2,7 @@
 
 use abi::Erc721;
 use alloy::primitives::{Address, U256};
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{receipt, watch, Account, EventExt, Revert};
 
 mod abi;
 
@@ -32,7 +32,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         ))
         .deploy()
         .await?
-        .address();
+        .contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let Erc721::nameReturn { name } = contract.name().call().await?;
@@ -106,7 +106,7 @@ async fn return_token_uri_with_base_uri_and_without_token_uri(
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -133,7 +133,7 @@ async fn return_token_uri_with_base_uri_and_token_uri(
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -167,7 +167,7 @@ async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -215,7 +215,7 @@ async fn return_token_uri_after_burn_and_remint(
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -274,7 +274,7 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
         ))
         .deploy()
         .await?
-        .address();
+        .contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let erc721_metadata_interface_id: u32 = 0x5b5e139f;

@@ -2,10 +2,7 @@
 
 use abi::Erc20FlashMint;
 use alloy::primitives::{address, uint, Address, U256};
-use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
-};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
 use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
 use stylus_sdk::alloy_sol_types::SolCall;

@@ -118,7 +118,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr)
         .deploy()
         .await?
-        .address();
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let Erc20::nameReturn { name } = contract.name().call().await?;

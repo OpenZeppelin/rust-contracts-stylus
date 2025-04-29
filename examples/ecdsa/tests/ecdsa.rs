@@ -2,7 +2,7 @@
 
 use abi::ECDSA;
 use alloy::primitives::{address, b256, uint, Address, B256};
-use e2e::{Account, ReceiptExt, Revert};
+use e2e::{Account, Revert};
 use eyre::Result;
 use openzeppelin_stylus::utils::cryptography::ecdsa::SIGNATURE_S_UPPER_BOUND;
 

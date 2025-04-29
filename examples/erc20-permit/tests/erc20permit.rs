@@ -7,7 +7,7 @@ use alloy::{
     sol_types::SolType,
 };
 use alloy_primitives::uint;
-use e2e::{receipt, send, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, Revert};
 use eyre::Result;
 mod abi;
 

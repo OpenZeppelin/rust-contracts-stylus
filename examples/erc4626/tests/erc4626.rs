@@ -2,10 +2,7 @@
 
 use abi::Erc4626;
 use alloy::primitives::{uint, Address, U256};
-use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
-};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
 use mock::{
     erc20, erc20::ERC20Mock, erc20_failing_transfer,
@@ -38,7 +35,7 @@ async fn deploy(
         .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     // Mint initial tokens to the vault
     if initial_tokens > U256::ZERO {

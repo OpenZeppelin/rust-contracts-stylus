@@ -2,7 +2,7 @@
 
 use abi::SafeErc20;
 use alloy::primitives::{uint, U256};
-use e2e::{send, Account, ReceiptExt, Revert};
+use e2e::{send, Account, Revert};
 
 mod abi;
 mod mock;

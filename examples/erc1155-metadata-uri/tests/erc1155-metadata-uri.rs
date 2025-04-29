@@ -2,7 +2,7 @@
 
 use abi::Erc1155;
 use alloy::primitives::U256;
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
+use e2e::{receipt, watch, Account, EventExt};
 
 mod abi;
 
@@ -26,7 +26,7 @@ async fn uri_returns_metadata_uri_when_token_uri_is_not_set(
         .with_constructor(ctr(URI))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
@@ -118,7 +118,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
         .with_constructor(ctr(URI))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 

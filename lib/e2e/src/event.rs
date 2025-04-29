@@ -1,9 +1,8 @@
 use std::fmt::Debug;
 
-use alloy::{
-    primitives::Address, rpc::types::eth::TransactionReceipt,
-    sol_types::SolEvent,
-};
+use alloy::{rpc::types::eth::TransactionReceipt, sol_types::SolEvent};
+
+use crate::Receipt;
 
 /// Extension trait for asserting an event gets emitted.
 pub trait Ext<E> {
@@ -27,12 +26,12 @@ where
     }
 }
 
-impl<E: Debug> Ext<E> for (TransactionReceipt, Address)
+impl<E: Debug> Ext<E> for Receipt
 where
     E: SolEvent,
     E: PartialEq,
 {
     fn emits(&self, expected: E) -> bool {
-        self.0.emits(expected)
+        self.inner.emits(expected)
     }
 }

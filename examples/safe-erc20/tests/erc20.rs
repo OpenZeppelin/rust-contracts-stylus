@@ -3,10 +3,7 @@
 use abi::{Erc20, SafeErc20};
 use alloy::primitives::uint;
 use alloy_primitives::U256;
-use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
-};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use mock::{erc20, erc20::ERC20Mock};
 
 mod abi;

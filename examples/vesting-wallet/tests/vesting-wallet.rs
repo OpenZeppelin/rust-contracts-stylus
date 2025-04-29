@@ -10,7 +10,7 @@ use alloy::{
 };
 use e2e::{
     receipt, send, watch, Account, ContractInitializationError, EventExt,
-    Panic, PanicCode, ReceiptExt, Revert,
+    Panic, PanicCode, Revert,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
@@ -65,7 +65,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(alice.address(), start_timestamp, DURATION))
         .deploy()
         .await?
-        .address();
+        .contract_address;
     let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
     let owner = contract.owner().call().await?.owner;

@@ -6,7 +6,6 @@ use alloy::{
     network::EthereumWallet,
     primitives::{Address, TxHash},
     providers::{Provider, ProviderBuilder},
-    rpc::types::TransactionReceipt,
     signers::local::PrivateKeySigner,
     transports::{http::reqwest::Url, RpcError, TransportErrorKind},
 };
@@ -14,7 +13,7 @@ use eyre::{Context, ContextCompat};
 use regex::Regex;
 use stylus_sdk::function_selector;
 
-use crate::system::DEPLOYER_ADDRESS;
+use crate::{system::DEPLOYER_ADDRESS, Receipt};
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address);
@@ -77,7 +76,7 @@ impl Deployer {
     ///
     /// - Unable to collect information about the crate required for deployment.
     /// - [`koba::deploy`] errors.
-    pub async fn deploy(self) -> eyre::Result<(TransactionReceipt, Address)> {
+    pub async fn deploy(self) -> eyre::Result<Receipt> {
         let mut command = self.create_command();
 
         let output = command
@@ -137,7 +136,7 @@ impl Deployer {
     async fn parse_deployment_error(
         &self,
         output: std::process::Output,
-    ) -> eyre::Result<(TransactionReceipt, Address)> {
+    ) -> eyre::Result<Receipt> {
         let stderr = &String::from_utf8_lossy(&output.stderr);
 
         // Look for the error pattern with hex data
@@ -245,16 +244,7 @@ impl Deployer {
                         eyre::eyre!("Transaction receipt not found")
                     })?;
 
-                // Because this receipt is related to the transaction sent to
-                // the StylusDeployer, calling `.contract_address()` on it would
-                // return the StylusDeployer's address and not the one of our
-                // deployed contract.
-                // Therefore, we need to separately store the actual contract
-                // address extracted from the `cargo stylus deploy` output.
-                //
-                // TODO: create TxReceipt wrapper struct and use it instead of
-                // this tuple.
-                return Ok((receipt, contract_address));
+                return Ok(Receipt { inner: receipt, contract_address });
             }
         }
 
@@ -267,7 +257,7 @@ impl Deployer {
     async fn get_receipt(
         &self,
         output: std::process::Output,
-    ) -> eyre::Result<(TransactionReceipt, Address)> {
+    ) -> eyre::Result<Receipt> {
         // Convert output to string
         let output_str = String::from_utf8_lossy(&output.stdout);
 
@@ -322,6 +312,6 @@ impl Deployer {
             })?
             .ok_or_else(|| eyre::eyre!("Transaction receipt not found"))?;
 
-        Ok((receipt, contract_address))
+        Ok(Receipt { inner: receipt, contract_address })
     }
 }

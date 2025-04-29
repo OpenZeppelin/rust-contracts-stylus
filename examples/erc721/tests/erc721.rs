@@ -5,9 +5,7 @@ use alloy::{
     primitives::{fixed_bytes, uint, Address, Bytes, U256},
     sol_types::SolError,
 };
-use e2e::{
-    receipt, send, watch, Account, EventExt, PanicCode, ReceiptExt, Revert,
-};
+use e2e::{receipt, send, watch, Account, EventExt, PanicCode, Revert};
 use mock::{receiver, receiver::ERC721ReceiverMock};
 
 mod abi;

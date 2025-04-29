@@ -2,7 +2,7 @@
 
 use abi::{Erc721, Erc721Wrapper};
 use alloy::primitives::{uint, Address};
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{receipt, watch, Account, EventExt, Revert};
 use eyre::Result;
 
 mod abi;
@@ -22,7 +22,7 @@ async fn deploy(account: &Account) -> Result<(Address, Address)> {
         .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
-        .address();
+        .contract_address;
 
     Ok((asset_addr, contract_addr))
 }
@@ -35,7 +35,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .with_constructor(ctr(asset_address))
         .deploy()
         .await?
-        .address();
+        .contract_address;
     let contract = Erc721Wrapper::new(contract_addr, alice.wallet);
 
     let underlying = contract.underlying().call().await?.underlying;

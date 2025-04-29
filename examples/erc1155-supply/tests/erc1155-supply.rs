@@ -2,9 +2,7 @@
 
 use abi::Erc1155Supply;
 use alloy::primitives::{Address, U256};
-use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
 mod abi;
