@@ -118,7 +118,7 @@ mod ether_vesting {
             .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
-            .address();
+            .contract_address;
 
         let tx = TransactionRequest::default()
             .with_from(account.address())
@@ -241,7 +241,7 @@ mod erc20_vesting {
             .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
-            .address();
+            .contract_address;
         Ok(contract_addr)
     }
 
