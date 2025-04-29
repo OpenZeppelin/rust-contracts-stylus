@@ -35,7 +35,7 @@ impl IErc721Burnable for Erc721 {
     fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
         // Setting an "auth" arguments enables the
         // [`super::super::Erc721::_is_authorized`] check which verifies that
-        // the token exists (from != `Address::ZERO`).
+        // the token exists (from != [`Address::ZERO`]).
         //
         // Therefore, it is not needed to verify that the return value is not 0
         // here.

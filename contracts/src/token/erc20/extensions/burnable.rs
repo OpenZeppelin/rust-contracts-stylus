@@ -42,7 +42,7 @@ pub trait IErc20Burnable {
     /// * [`erc20::Error::InsufficientAllowance`] - If not enough allowance is
     ///   available.
     /// * [`erc20::Error::InvalidSender`] - If the `from` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     /// * [`erc20::Error::InsufficientBalance`] - If the `from` address doesn't
     ///   have enough tokens.
     ///

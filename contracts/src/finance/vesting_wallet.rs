@@ -77,7 +77,7 @@ mod sol {
         #[allow(missing_docs)]
         error ReleaseEtherFailed();
 
-        /// The token address is not valid (eg. `Address::ZERO`).
+        /// The token address is not valid (eg. [`Address::ZERO`]).
         ///
         /// * `token` - Address of the token being released.
         #[derive(Debug)]
@@ -95,7 +95,7 @@ pub enum Error {
     ReleaseEtherFailed(call::Error),
     /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
     SafeErc20(safe_erc20::Error),
-    /// The token address is not valid. (eg. `Address::ZERO`).
+    /// The token address is not valid. (eg. [`Address::ZERO`]).
     InvalidToken(InvalidToken),
 }
 
@@ -159,7 +159,7 @@ pub trait IVestingWallet {
     /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
     ///   other than the owner.
     /// * [`ownable::Error::InvalidOwner`] - If `new_owner` is the
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///

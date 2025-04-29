@@ -257,7 +257,7 @@ pub trait IErc1155: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -293,10 +293,10 @@ pub trait IErc1155: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - Returned when `to` is `Address::ZERO` or
+    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`] or
     ///   when [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
-    /// * [`Error::InvalidSender`] - Returned when `from` is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::MissingApprovalForAll`] - Returned when `from` is not the
     ///   caller (`msg::sender()`), and the caller does not have the right to
     ///   approve.
@@ -330,10 +330,10 @@ pub trait IErc1155: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - Returned when `to` is `Address::ZERO` or
+    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`] or
     ///   when [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned
     ///   its interface id or returned with error.
-    /// * [`Error::InvalidSender`] - Returned when `from` is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - Returned when the length of `ids` is
     ///   not equal to the length of `values`.
     /// * [`Error::InsufficientBalance`] - Returned when any of the `values` is
@@ -427,7 +427,7 @@ impl IErc165 for Erc1155 {
 
 impl Erc1155 {
     /// Transfers a `value` amount of tokens of type `ids` from `from` to
-    /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
+    /// `to`. Will mint (or burn) if `from` (or `to`) is the [`Address::ZERO`].
     ///
     /// NOTE: The ERC-1155 acceptance check is not performed in this function.
     /// See [`Self::_update_with_acceptance_check`] instead.
@@ -555,7 +555,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
@@ -590,7 +590,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] -  If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] -  If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`IERC1155Receiver::on_erc_1155_received`] - If  hasn't returned its
@@ -628,7 +628,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`]  - If `value` is greater than the
     ///   balance of the `from` account.
     ///
@@ -656,7 +656,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`Error::InsufficientBalance`] - If any of the `values` is greater
@@ -690,7 +690,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is the `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is the [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -808,7 +808,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
@@ -859,7 +859,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`Error::InsufficientBalance`] -If any of the `values` is greater than
@@ -906,8 +906,8 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is the `Address::ZERO`.
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is the [`Address::ZERO`].
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`Error::InsufficientBalance`] - If `value` is greater than the
@@ -949,7 +949,7 @@ impl Erc1155 {
     }
 
     /// Transfers a `value` amount of `token_id` from `from` to
-    /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
+    /// `to`. Will mint (or burn) if `from` (or `to`) is the [`Address::ZERO`].
     ///
     /// # Arguments
     ///

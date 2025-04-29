@@ -226,7 +226,7 @@ impl Erc2981 {
     ///
     /// * [`Error::InvalidDefaultRoyalty`] - If `fee_numerator` > denominator.
     /// * [`Error::InvalidDefaultRoyaltyReceiver`] - If `receiver` is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     pub fn _set_default_royalty(
         &mut self,
         receiver: Address,
@@ -279,7 +279,7 @@ impl Erc2981 {
     /// * [`Error::InvalidTokenRoyalty`] - If `fee_numerator` >
     ///   [`Self::_fee_denominator()`].
     /// * [`Error::InvalidTokenRoyaltyReceiver`] - If `receiver` is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     pub fn _set_token_royalty(
         &mut self,
         token_id: U256,

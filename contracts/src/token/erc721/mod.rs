@@ -72,7 +72,7 @@ mod sol {
 
     sol! {
         /// Indicates that an address can't be an owner.
-        /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+        /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
         /// Used in balance queries.
         ///
         /// * `owner` - The address deemed to be an invalid owner.
@@ -145,7 +145,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -217,7 +217,7 @@ pub trait IErc721: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOwner`] - If owner address is `Address::ZERO`.
+    /// * [`Error::InvalidOwner`] - If owner address is [`Address::ZERO`].
     fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
 
     /// Returns the owner of the `token_id` token.
@@ -251,7 +251,7 @@ pub trait IErc721: IErc165 {
     /// * [`Error::NonexistentToken`] - If the token does not exist.
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    /// interface id or returned with error, `to` is `Address::ZERO`.
+    /// interface id or returned with error, `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -282,7 +282,7 @@ pub trait IErc721: IErc165 {
     ///  * [`Error::NonexistentToken`] - If the token does not exist.
     ///  * [`Error::InvalidReceiver`] - If
     ///    [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///    interface id or returned with error, or `to` is `Address::ZERO`.
+    ///    interface id or returned with error, or `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -313,7 +313,7 @@ pub trait IErc721: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     /// * [`Error::InsufficientApproval`] - If the caller does not have the
     ///   right to approve.
@@ -333,7 +333,7 @@ pub trait IErc721: IErc165 {
     /// account. The approval is cleared when the token is transferred.
     ///
     /// Only a single account can be approved at a time,
-    /// so approving the `Address::ZERO` clears previous approvals.
+    /// so approving the [`Address::ZERO`] clears previous approvals.
     ///
     /// # Arguments
     ///
@@ -371,7 +371,7 @@ pub trait IErc721: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -614,7 +614,7 @@ impl Erc721 {
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
+    /// mints (or burns) if the current owner (or `to`) is the [`Address::ZERO`].
     /// Returns the owner of the `token_id` before the update.
     ///
     /// The `auth` argument is optional. If the value passed is non-zero, then
@@ -634,8 +634,8 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
-    ///   is not `Address::ZERO`.
-    /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
+    ///   is not [`Address::ZERO`].
+    /// * [`Error::InsufficientApproval`] - If `auth` is not [`Address::ZERO`] and
     ///   `auth` does not have a right to approve this token.
     ///
     /// # Events
@@ -685,7 +685,7 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -721,7 +721,7 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
     ///   id or returned with an error.
@@ -786,7 +786,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
@@ -842,7 +842,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
@@ -923,7 +923,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is [`Address::ZERO`].
     ///
     /// # Events
     ///
