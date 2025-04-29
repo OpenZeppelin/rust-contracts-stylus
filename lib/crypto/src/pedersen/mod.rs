@@ -1,18 +1,25 @@
 //! This module contains Pedersen Hash Function implementation.
+//! Based on the [Starknet] implementation of the Pedersen Hash Function.
+//! [Starknet](https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/crypto/signature/fast_pedersen_hash.py).
 
 pub mod instance;
 pub mod params;
 use alloc::{vec, vec::Vec};
 
 use crate::{
+    from_num,
     arithmetic::{uint::U256, BigInteger},
     curve::{
         sw::{Affine, Projective, SWCurveConfig},
-        AffineRepr,
+        AffineRepr, PrimeGroup,
     },
     pedersen::params::PedersenParams,
 };
 
+/// Low part bits.
+const LOW_PART_BITS: U256 = from_num!("248");
+/// Low part mask. (2**248 - 1)
+const LOW_PART_MASK: U256 = from_num!("2").checked_pow(LOW_PART_BITS).unwrap();
 /// Pedersen hash.
 #[derive(Clone, Debug)]
 pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig> {
@@ -33,83 +40,41 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
         }
     }
 
-    /// Hashes the input values and returns the result as `x` coordinate of
-    /// the point on the curve.
+    fn process_single_element(element: U256, p1: Projective<P>, p2: Projective<P>) -> Projective<P> {
+        assert!(
+            U256::ZERO <= element && element < F::FIELD_PRIME,
+            "Element integer value is out of range"
+        );
+
+        let high_nibble = element >> LOW_PART_BITS;
+        let low_part = element & LOW_PART_MASK;
+        p1.mul_bigint(low_part) + high_nibble * p2.mul_bigint(high_nibble)
+    }   
+    
+    /// Computes the Starkware version of the Pedersen hash of x and y.
+    /// The hash is defined by:
+    /// shift_point + x_low * P_0 + x_high * P1 + y_low * P2  + y_high * P3
+    /// where x_low is the 248 low bits of x, x_high is the 4 high bits of x and similarly for y.
+    /// shift_point, P_0, P_1, P_2, P_3 are constant points generated from the digits of pi.
     ///
     /// # Arguments
     ///
-    /// * `mut self` - Pedersen hasher instance.
-    /// * `input` - The input values to hash.
+    /// * `&self` - Pedersen hasher instance.
+    /// * `x` - The x coordinate of the point to hash.
+    /// * `y` - The y coordinate of the point to hash.
     ///
     /// # Panics
     ///
     /// * If [`Pedersen::finalize`] panics.
     #[must_use]
-    pub fn hash(mut self, input: &[U256]) -> P::BaseField {
-        self.update(input);
-        let hash = self.finalize();
-        hash.x().expect("Pedersen hash failed")
-    }
+    pub fn hash(&self, x: U256, y: U256) -> Option<P::BaseField> {
+        let hash: Projective<P> = F::SHIFT_POINT 
+        + Self::process_single_element(x, F::P_0, F::P_1) 
+        + Self::process_single_element(y, F::P_2, F::P_3);
 
-    /// Add `input` values to the hash state.
-    ///
-    /// # Arguments
-    ///
-    /// * `mut self` - Mutable reference to the Pedersen hasher instance.
-    /// * `input` - The input values to update the hasher state.
-    pub fn update(&mut self, input: &[U256]) {
-        self.state.extend(input);
-    }
+        let hash: Affine<P> = hash.into();
+        hash.x()
+    }    
 
-    /// Finalize the hash and return the result.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` - Pedersen hasher instance.
-    ///
-    /// # Panics
-    ///
-    /// * If one of the input values is higher than
-    ///   [`PedersenParams::FIELD_PRIME`].
-    /// * If the input values contains more elements than length of
-    ///   [`PedersenParams::constant_points()`] /
-    ///   [`PedersenParams::N_ELEMENT_BITS_HASH`].
-    pub fn finalize(self) -> Affine<P> {
-        let mut point: Projective<P> = F::SHIFT_POINT.into();
 
-        let constant_points = F::constant_points();
-        let constant_points_len = constant_points.len();
-
-        for (idx, value) in self.state.iter().enumerate() {
-            let mut element = *value;
-            assert!(
-                U256::ZERO <= element && element < F::FIELD_PRIME,
-                "Pedersen hash failed -- invalid input"
-            );
-
-            let start_idx = 2 + idx * F::N_ELEMENT_BITS_HASH;
-            let end_idx = 2 + (idx + 1) * F::N_ELEMENT_BITS_HASH;
-
-            assert!(
-                end_idx <= constant_points_len,
-                "Pedersen hash failed -- too many elements"
-            );
-
-            let point_list = &constant_points[start_idx..end_idx];
-
-            assert!(point_list.len() == F::N_ELEMENT_BITS_HASH);
-
-            for pt in point_list {
-                assert!(pt.x != point.x, "Unhashable input.");
-                if element.ct_is_odd() {
-                    point += pt;
-                }
-                element.div2_assign();
-            }
-            assert!(element.is_zero());
-        }
-
-        // Convert to Affine coordinates.
-        point.into()
-    }
 }
