@@ -81,7 +81,7 @@ async fn error_when_expired_deadline_for_permit(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address();
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -124,7 +124,7 @@ async fn error_when_expired_deadline_for_permit(
 
 #[e2e::test]
 async fn permit_works(alice: Account, bob: Account) -> Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address();
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -215,7 +215,7 @@ async fn permit_rejects_reused_signature(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address();
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -290,7 +290,7 @@ async fn permit_rejects_invalid_signature(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address();
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();

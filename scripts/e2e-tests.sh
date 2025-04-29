@@ -23,6 +23,15 @@ get_example_dirs() {
     find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
+run_test() {
+    local project_path=$1
+
+    echo "Processing: $project_path"
+    cd "$project_path"
+    cargo test --features e2e "$@" --no-run
+    cd "$ROOT_DIR"
+}
+
 # Check for at least one argument
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <project_name|*> [test_args...]"
@@ -40,10 +49,7 @@ shift
 if [ "$project_arg" = "*" ]; then
     # Process all examples
     for CRATE_NAME in $(get_example_dirs); do
-        echo "Processing: $CRATE_NAME"
-        cd "$CRATE_NAME"
-        cargo test --features e2e "$@"
-        cd "$ROOT_DIR"
+        run_test "$CRATE_NAME"
     done
 else
     # Find matching projects based on pattern
@@ -79,10 +85,7 @@ else
     echo ""
 
     for project_path in "${matching_projects[@]}"; do
-        echo "Processing: $project_path"
-        cd "$project_path"
-        cargo test --features e2e "$@"
-        cd "$ROOT_DIR"
+        run_test "$project_path"
     done
 fi
 

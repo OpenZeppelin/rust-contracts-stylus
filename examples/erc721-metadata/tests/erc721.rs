@@ -54,7 +54,7 @@ async fn error_when_checking_token_uri_for_nonexistent_token(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr =
-        alice.as_deployer().with_constructor(ctr("")).deploy().await?.address();
+        alice.as_deployer().with_constructor(ctr("")).deploy().await?.contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -78,7 +78,7 @@ async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr =
-        alice.as_deployer().with_constructor(ctr("")).deploy().await?.address();
+        alice.as_deployer().with_constructor(ctr("")).deploy().await?.contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 

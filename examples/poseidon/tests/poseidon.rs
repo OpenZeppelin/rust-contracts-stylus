@@ -14,7 +14,7 @@ mod abi;
 
 #[e2e::test]
 async fn poseidon_works(alice: Account) -> Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address();
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PoseidonExample::new(contract_addr, &alice.wallet);
 
     let PoseidonExample::hashReturn { hash } =

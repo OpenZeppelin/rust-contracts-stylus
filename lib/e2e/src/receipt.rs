@@ -7,6 +7,7 @@ use alloy::{primitives::Address, rpc::types::TransactionReceipt};
 /// This is necessary because calling [`TransactionReceipt::contract_address`]
 /// would return the address of StylusDeployer, instead of the newly deployed
 /// contract.
+#[derive(Debug)]
 pub struct Receipt {
     /// Transaction receipt of the tx sent to StylusDeployer.
     pub inner: TransactionReceipt,
