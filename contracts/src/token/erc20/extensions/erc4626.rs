@@ -210,7 +210,10 @@ pub trait IErc4626 {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
     /// XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 =
+    fn interface_id() -> u32
+    where
+        Self: Sized,
+    {
         u32::from_be_bytes(stylus_sdk::function_selector!("asset"))
             ^ u32::from_be_bytes(stylus_sdk::function_selector!("totalAssets"))
             ^ u32::from_be_bytes(stylus_sdk::function_selector!(
@@ -263,7 +266,8 @@ pub trait IErc4626 {
             ))
             ^ u32::from_be_bytes(stylus_sdk::function_selector!(
                 "redeem", U256, Address, Address
-            ));
+            ))
+    }
 
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
@@ -1266,7 +1270,7 @@ impl Erc4626 {
 
 impl IErc165 for Erc4626 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc4626>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+        <Self as IErc4626>::interface_id() == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -1371,7 +1375,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc4626 as IErc4626>::INTERFACE_ID;
+        let actual = <Erc4626 as IErc4626>::interface_id();
         let expected = 0x87dfe5a0;
         assert_eq!(actual, expected);
     }
@@ -1379,10 +1383,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc4626>::INTERFACE_ID.into()
+            <Erc4626 as IErc4626>::interface_id().into()
         ));
         assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc165>::INTERFACE_ID.into()
+            <Erc4626 as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

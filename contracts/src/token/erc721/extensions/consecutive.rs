@@ -844,7 +844,7 @@ impl Erc721Consecutive {
 
 impl IErc165 for Erc721Consecutive {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+        <Self as IErc721>::interface_id() == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -1466,10 +1466,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
+            <Erc721Consecutive as IErc721>::interface_id().into()
         ));
         assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
+            <Erc721Consecutive as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

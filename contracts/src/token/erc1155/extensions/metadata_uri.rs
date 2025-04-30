@@ -65,7 +65,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
 
 impl IErc165 for Erc1155MetadataUri {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc1155MetadataUri>::INTERFACE_ID
+        <Self as IErc1155MetadataUri>::interface_id()
             == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -100,7 +100,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc1155MetadataUri as IErc1155MetadataUri>::INTERFACE_ID;
+        let actual = <Erc1155MetadataUri as IErc1155MetadataUri>::interface_id();
         let expected = 0x0e89341c;
         assert_eq!(actual, expected);
     }
@@ -108,10 +108,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc1155MetadataUri::supports_interface(
-            <Erc1155MetadataUri as IErc1155MetadataUri>::INTERFACE_ID.into()
+            <Erc1155MetadataUri as IErc1155MetadataUri>::interface_id().into()
         ));
         assert!(Erc1155MetadataUri::supports_interface(
-            <Erc1155MetadataUri as IErc165>::INTERFACE_ID.into()
+            <Erc1155MetadataUri as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

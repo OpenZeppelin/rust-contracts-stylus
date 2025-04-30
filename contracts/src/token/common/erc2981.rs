@@ -193,7 +193,7 @@ impl IErc2981 for Erc2981 {
 
 impl IErc165 for Erc2981 {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc2981>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+        <Self as IErc2981>::interface_id() == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -869,7 +869,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc2981 as IErc2981>::INTERFACE_ID;
+        let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
         let expected = 0x2a55_205a;
@@ -879,10 +879,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc2981>::INTERFACE_ID.into()
+            <Erc2981 as IErc2981>::interface_id().into()
         ));
         assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc165>::INTERFACE_ID.into()
+            <Erc2981 as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

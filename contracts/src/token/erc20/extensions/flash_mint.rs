@@ -180,19 +180,23 @@ pub trait IErc3156FlashLender {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc3156FlashLender`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 = u32::from_be_bytes(
-        stylus_sdk::function_selector!("maxFlashLoan", Address),
-    ) ^ u32::from_be_bytes(
-        stylus_sdk::function_selector!("flashFee", Address, U256),
-    ) ^ u32::from_be_bytes(
-        stylus_sdk::function_selector!(
+    fn interface_id() -> u32
+    where
+        Self: Sized,
+    {
+        u32::from_be_bytes(stylus_sdk::function_selector!(
+            "maxFlashLoan",
+            Address
+        )) ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            "flashFee", Address, U256
+        )) ^ u32::from_be_bytes(stylus_sdk::function_selector!(
             "flashLoan",
             Address,
             Address,
             U256,
             Bytes
-        ),
-    );
+        ))
+    }
 
     /// Returns the maximum amount of tokens available for loan.
     ///
@@ -399,7 +403,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
 
 impl IErc165 for Erc20FlashMint {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc3156FlashLender>::INTERFACE_ID
+        <Self as IErc3156FlashLender>::interface_id()
             == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -607,7 +611,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID;
+        let actual = <Erc20FlashMint as IErc3156FlashLender>::interface_id();
         let expected = 0xe4143091;
         assert_eq!(actual, expected);
     }
@@ -615,10 +619,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID.into()
+            <Erc20FlashMint as IErc3156FlashLender>::interface_id().into()
         ));
         assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
+            <Erc20FlashMint as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

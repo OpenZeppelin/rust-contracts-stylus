@@ -172,7 +172,7 @@ impl IErc721Enumerable for Erc721Enumerable {
 
 impl IErc165 for Erc721Enumerable {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721Enumerable>::INTERFACE_ID
+        <Self as IErc721Enumerable>::interface_id()
             == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -729,7 +729,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID;
+        let actual = <Erc721Enumerable as IErc721Enumerable>::interface_id();
         let expected = 0x780e9d63;
         assert_eq!(actual, expected);
     }
@@ -737,10 +737,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Enumerable::supports_interface(
-            <Erc721Enumerable as IErc721Enumerable>::INTERFACE_ID.into()
+            <Erc721Enumerable as IErc721Enumerable>::interface_id().into()
         ));
         assert!(Erc721Enumerable::supports_interface(
-            <Erc721Enumerable as IErc165>::INTERFACE_ID.into()
+            <Erc721Enumerable as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

@@ -413,7 +413,7 @@ impl AccessControl {
 
 impl IErc165 for AccessControl {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IAccessControl>::INTERFACE_ID
+        <Self as IAccessControl>::interface_id()
             == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -733,7 +733,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <AccessControl as IAccessControl>::INTERFACE_ID;
+        let actual = <AccessControl as IAccessControl>::interface_id();
         let expected = 0x7965db0b;
         assert_ne!(actual, expected);
     }
@@ -741,10 +741,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(AccessControl::supports_interface(
-            <AccessControl as IAccessControl>::INTERFACE_ID.into()
+            <AccessControl as IAccessControl>::interface_id().into()
         ));
         assert!(AccessControl::supports_interface(
-            <AccessControl as IErc165>::INTERFACE_ID.into()
+            <AccessControl as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

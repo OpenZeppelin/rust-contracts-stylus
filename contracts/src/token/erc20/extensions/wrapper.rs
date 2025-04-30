@@ -130,7 +130,10 @@ pub trait IErc20Wrapper {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
     /// as a XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 =
+    fn interface_id() -> u32
+    where
+        Self: Sized,
+    {
         u32::from_be_bytes(stylus_sdk::function_selector!("decimals"))
             ^ u32::from_be_bytes(stylus_sdk::function_selector!("underlying"))
             ^ u32::from_be_bytes(stylus_sdk::function_selector!(
@@ -142,7 +145,8 @@ pub trait IErc20Wrapper {
                 "withdrawTo",
                 Address,
                 U256
-            ));
+            ))
+    }
 
     /// Returns the number of decimals used to get its user representation.
     ///
@@ -366,7 +370,7 @@ impl Erc20Wrapper {
 
 impl IErc165 for Erc20Wrapper {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Wrapper>::INTERFACE_ID
+        <Self as IErc20Wrapper>::interface_id()
             == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -949,7 +953,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID;
+        let actual = <Erc20Wrapper as IErc20Wrapper>::interface_id();
         let expected = 0x511f913e;
         assert_eq!(actual, expected);
     }
@@ -957,10 +961,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID.into()
+            <Erc20Wrapper as IErc20Wrapper>::interface_id().into()
         ));
         assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc165>::INTERFACE_ID.into()
+            <Erc20Wrapper as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;

@@ -235,9 +235,9 @@ impl Ownable2Step {
 
 impl IErc165 for Ownable2Step {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IOwnable2Step>::INTERFACE_ID
+        <Self as IOwnable2Step>::interface_id()
             == u32::from_be_bytes(*interface_id)
-            || <Ownable as IOwnable>::INTERFACE_ID
+            || <Ownable as IOwnable>::interface_id()
                 == u32::from_be_bytes(*interface_id)
             || Erc165::supports_interface(interface_id)
     }
@@ -476,7 +476,7 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Ownable2Step as IOwnable2Step>::INTERFACE_ID;
+        let actual = <Ownable2Step as IOwnable2Step>::interface_id();
         let expected = 0x94be5999;
         assert_eq!(actual, expected);
     }
@@ -484,13 +484,13 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IOwnable2Step>::INTERFACE_ID.into()
+            <Ownable2Step as IOwnable2Step>::interface_id().into()
         ));
         assert!(Ownable2Step::supports_interface(
-            <Ownable as IOwnable>::INTERFACE_ID.into()
+            <Ownable as IOwnable>::interface_id().into()
         ));
         assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IErc165>::INTERFACE_ID.into()
+            <Ownable2Step as IErc165>::interface_id().into()
         ));
 
         let fake_interface_id = 0x12345678u32;
