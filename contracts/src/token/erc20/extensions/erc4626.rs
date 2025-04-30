@@ -21,7 +21,7 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        interface::{Erc20Interface, IERC20Metadata},
+        interface::{Erc20Interface, IErc20MetadataInterface},
         utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
@@ -1054,7 +1054,7 @@ impl Erc4626 {
     /// in any way. This follows Rust's idiomatic Option pattern rather than
     /// Solidity's boolean tuple return.
     fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
-        let erc20 = IERC20Metadata::new(asset);
+        let erc20 = IErc20MetadataInterface::new(asset);
         let call = Call::new_in(self);
         erc20.decimals(call).ok()
     }

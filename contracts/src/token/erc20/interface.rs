@@ -21,7 +21,7 @@ mod token {
 
     sol_interface! {
         /// Solidity Interface of the ERC-20 Metadata token.
-        interface IERC20Metadata {
+        interface IErc20MetadataInterface {
             function name() external view returns (string);
             function symbol() external view returns (string);
             function decimals() external view returns (uint8);
