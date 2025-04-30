@@ -82,7 +82,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "=0.8.4", default-features = false, features = [
+stylus-sdk = { git = 'https://github.com/OffchainLabs/stylus-sdk-rs.git', rev = "0afb869a7aa13c1acb7904167a1e6ef6b11a977f", default-features = false, features = [
   "mini-alloc",
 ] }
 
