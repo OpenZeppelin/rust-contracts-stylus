@@ -156,14 +156,13 @@ impl Pedersen {
     ///   [`crate::pedersen::params::PedersenParams::constant_points()`] /
     ///   [`crate::pedersen::params::PedersenParams::N_ELEMENT_BITS_HASH`].
     pub fn finalize(self) -> Fq {
-        let fp = pedersen_hash(&self.hash, &self.len.into());
-        fp.into()
+        pedersen_hash(&self.hash, &self.len.into())
     }
 }
 
 fn pedersen_hash(x: &Fq, y: &Fq) -> Fq {
-    let processed_x = process_element(*x, P0.into(), P1.into());
-    let processed_y = process_element(*y, P2.into(), P3.into());
+    let processed_x = process_element(*x, P1.into(), P2.into());
+    let processed_y = process_element(*y, P3.into(), P4.into());
 
     let shift_point: Projective<StarknetCurveConfig> = SHIFT_POINT.into();
     let affine = (processed_x + processed_y + shift_point).into_affine();

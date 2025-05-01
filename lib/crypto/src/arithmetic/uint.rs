@@ -663,21 +663,21 @@ impl<const N: usize> ShrAssign<u32> for Uint<N> {
         }
 
         // Shift bits in limbs array in-place.
-        for index in (0..N).rev() {
+        for index in 0..N {
             let limb_shift = shift % bits;
             let index_shift = shift / bits;
 
             let current_limb = self.limbs[index];
             self.limbs[index] = 0;
 
-            let index1 = index + index_shift;
-            if index1 < N {
-                self.limbs[index1] |= current_limb >> limb_shift;
+            if index_shift + 1 <= index {
+                let index1 = index - index_shift - 1;
+                self.limbs[index1] |= current_limb << (bits - limb_shift);
             }
 
-            let index2 = index1 + 1;
-            if index2 < N {
-                self.limbs[index2] |= current_limb << (bits - limb_shift);
+            if index_shift <= index {
+                let index2 = index - index_shift;
+                self.limbs[index2] |= current_limb >> limb_shift;
             }
         }
     }
@@ -704,20 +704,20 @@ impl<const N: usize> ShlAssign<u32> for Uint<N> {
         }
 
         // Shift bits in limbs array in-place.
-        for index in 0..N {
+        for index in (0..N).rev() {
             let limb_shift = shift % bits;
             let index_shift = shift / bits;
 
             let current_limb = self.limbs[index];
             self.limbs[index] = 0;
 
-            if index_shift <= index {
-                let index1 = index - index_shift;
+            let index1 = index + index_shift;
+            if index1 < N {
                 self.limbs[index1] |= current_limb << limb_shift;
             }
 
-            if index_shift + 1 <= index {
-                let index2 = index - index_shift - 1;
+            let index2 = index1 + 1;
+            if index2 < N {
                 self.limbs[index2] |= current_limb >> (bits - limb_shift);
             }
         }
@@ -1098,30 +1098,32 @@ mod test {
     }
 
     #[test]
-    fn shr() {
-        let num = Uint::<4>::new([0b1100, 0, 0, 0]);
+    fn shl() {
+        // The first limb is the lowest order part of the number.
+        let num = Uint::<4>::new([0b1100000000, 0, 0, 0]);
 
-        let expected = Uint::<4>::new([0, 0b110000, 0, 0]);
-        assert_eq!(num >> 62, expected);
+        let expected = Uint::<4>::new([0, 0b11000000, 0, 0]);
+        assert_eq!(num << 62, expected);
 
-        let expected = Uint::<4>::new([0, 0, 0b11000000, 0]);
-        assert_eq!(num >> (60 + 64), expected);
+        let expected = Uint::<4>::new([0, 0, 0b110000, 0]);
+        assert_eq!(num << (60 + 64), expected);
 
-        let expected = Uint::<4>::new([0, 0, 0, 0b1100000000]);
-        assert_eq!(num >> (58 + 64 + 64), expected);
+        let expected = Uint::<4>::new([0, 0, 0, 0b1100]);
+        assert_eq!(num << (58 + 64 + 64), expected);
     }
 
     #[test]
-    fn shl() {
-        let num = Uint::<4>::new([0, 0, 0, 0b11000000]);
+    fn shr() {
+        // The last limb is the highest order part of the number.
+        let num = Uint::<4>::new([0, 0, 0, 0b11]);
 
-        let expected = Uint::<4>::new([0, 0, 0b110000, 0]);
-        assert_eq!(num << 62, expected);
+        let expected = Uint::<4>::new([0, 0, 0b1100, 0]);
+        assert_eq!(num >> 62, expected);
 
-        let expected = Uint::<4>::new([0, 0b1100, 0, 0]);
-        assert_eq!(num << (60 + 64), expected);
+        let expected = Uint::<4>::new([0, 0b110000, 0, 0]);
+        assert_eq!(num >> (60 + 64), expected);
 
-        let expected = Uint::<4>::new([0b11, 0, 0, 0]);
-        assert_eq!(num << (58 + 64 + 64), expected);
+        let expected = Uint::<4>::new([0b11000000, 0, 0, 0]);
+        assert_eq!(num >> (58 + 64 + 64), expected);
     }
 }
