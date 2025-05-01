@@ -670,7 +670,7 @@ impl<const N: usize> ShrAssign<u32> for Uint<N> {
             let current_limb = self.limbs[index];
             self.limbs[index] = 0;
 
-            if index_shift + 1 <= index {
+            if index_shift < index {
                 let index1 = index - index_shift - 1;
                 self.limbs[index1] |= current_limb << (bits - limb_shift);
             }
@@ -983,7 +983,7 @@ mod test {
 
     use crate::{
         arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint},
+            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
             *,
         },
         bits::BitIteratorBE,
@@ -1125,5 +1125,20 @@ mod test {
 
         let expected = Uint::<4>::new([0b11000000, 0, 0, 0]);
         assert_eq!(num >> (58 + 64 + 64), expected);
+    }
+
+    #[test]
+    fn test_process_single_element_masks_correctly() {
+        let low_part_bits = 248;
+        let low_part_mask: U256 = from_str_hex(
+            "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        );
+        let element: U256 = from_str_hex(
+            "01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        );
+        let high_part = element >> low_part_bits;
+        let low_part = element & low_part_mask;
+        assert_eq!(high_part, U256::ONE);
+        assert_eq!(low_part, low_part_mask);
     }
 }
