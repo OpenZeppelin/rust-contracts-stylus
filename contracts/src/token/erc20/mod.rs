@@ -4,6 +4,15 @@
 //! revert instead of returning `false` on failure. This behavior is
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
+//!
+//! # SafeERC20
+//!
+//! The `utils::safe_erc20` module provides wrappers around ERC-20 operations that throw on failure
+//! (when the token contract returns false). Tokens that return no value (and instead revert or
+//! throw on failure) are also supported, non-reverting calls are assumed to be successful.
+//!
+//! To use this library, you can add a `#[inherit(SafeErc20)]` attribute to your contract,
+//! which allows you to call the safe operations as `contract.safe_transfer(token_addr, ...)`, etc.
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
@@ -23,6 +32,8 @@ use crate::utils::{
 pub mod extensions;
 pub mod interface;
 pub mod utils;
+
+pub use utils::safe_erc20::{ISafeErc20, SafeErc20};
 
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -66,7 +77,7 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC20InvalidReceiver(address receiver);
-        /// Indicates a failure with the `spender`’s `allowance`. Used in
+        /// Indicates a failure with the `spender`'s `allowance`. Used in
         /// transfers.
         ///
         /// * `spender` - Address that may be allowed to operate on tokens without
@@ -109,7 +120,7 @@ pub enum Error {
     InvalidSender(ERC20InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC20InvalidReceiver),
-    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// Indicates a failure with the `spender`'s `allowance`. Used in
     /// transfers.
     InsufficientAllowance(ERC20InsufficientAllowance),
     /// Indicates a failure with the `spender` to be approved. Used in

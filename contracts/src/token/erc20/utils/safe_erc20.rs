@@ -368,8 +368,7 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error> {
         let call = IErc20::transferCall { to, value };
-
-        Self::call_optional_return(token, &call)
+        Self::call_optional_return(&token, &call)
     }
 
     fn safe_transfer_from(
@@ -380,8 +379,7 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error> {
         let call = IErc20::transferFromCall { from, to, value };
-
-        Self::call_optional_return(token, &call)
+        Self::call_optional_return(&token, &call)
     }
 
     fn try_safe_transfer(
@@ -391,8 +389,7 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
     ) -> Result<bool, Self::Error> {
         let call = IErc20::transferCall { to, value };
-
-        Self::call_optional_return_bool(token, &call)
+        Self::call_optional_return_bool(&token, &call)
     }
 
     fn try_safe_transfer_from(
@@ -403,8 +400,7 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
     ) -> Result<bool, Self::Error> {
         let call = IErc20::transferFromCall { from, to, value };
-
-        Self::call_optional_return_bool(token, &call)
+        Self::call_optional_return_bool(&token, &call)
     }
 
     fn safe_increase_allowance(
@@ -413,11 +409,8 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let current_allowance = Self::allowance(token, spender)?;
-        let new_allowance = current_allowance
-            .checked_add(value)
-            .expect("should not exceed `U256::MAX` for allowance");
-        self.force_approve(token, spender, new_allowance)
+        let old_allowance = Self::allowance(&token, spender)?;
+        Self::force_approve(&token, spender, old_allowance.checked_add(value).ok_or(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }))?)
     }
 
     fn safe_decrease_allowance(
@@ -426,22 +419,17 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         requested_decrease: U256,
     ) -> Result<(), Self::Error> {
-        let current_allowance = Self::allowance(token, spender)?;
-
+        let current_allowance = Self::allowance(&token, spender)?;
         if current_allowance < requested_decrease {
-            return Err(SafeErc20FailedDecreaseAllowance {
-                spender,
-                current_allowance,
-                requested_decrease,
-            }
-            .into());
+            return Err(Error::SafeErc20FailedDecreaseAllowance(
+                SafeErc20FailedDecreaseAllowance {
+                    spender,
+                    current_allowance,
+                    requested_decrease,
+                },
+            ));
         }
-
-        self.force_approve(
-            token,
-            spender,
-            current_allowance - requested_decrease,
-        )
+        Self::force_approve(&token, spender, current_allowance - requested_decrease)
     }
 
     fn force_approve(
@@ -451,18 +439,19 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error> {
         let approve_call = IErc20::approveCall { spender, value };
-
-        // Try performing the approval with the desired value.
-        if Self::call_optional_return_bool(token, &approve_call)? {
+        
+        // Try direct approve first
+        if Self::call_optional_return_bool(&token, &approve_call)? {
             return Ok(());
         }
 
-        // If that fails, reset the allowance to zero, then retry the desired
-        // approval.
-        let reset_approval_call =
-            IErc20::approveCall { spender, value: U256::ZERO };
-        Self::call_optional_return(token, &reset_approval_call)?;
-        Self::call_optional_return(token, &approve_call)
+        // If it failed, fallback to zero-reset strategy
+        let reset_call = IErc20::approveCall {
+            spender,
+            value: U256::from(0),
+        };
+        Self::call_optional_return(&token, &reset_call)?;
+        Self::call_optional_return(&token, &approve_call)
     }
 
     fn transfer_and_call_relaxed(
@@ -472,15 +461,15 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if !Address::has_code(&to) {
-            return self.safe_transfer(token, to, value);
+        if to.code_length() == 0 {
+            self.safe_transfer(token, to, value)
+        } else {
+            let call = IErc1363::transferAndCallCall { to, value, data };
+            if !Self::call_optional_return_bool(&token, &call)? {
+                return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
+            }
+            Ok(())
         }
-
-        let call = IErc1363::transferAndCallCall { to, value, data };
-        if !Self::call_optional_return_bool(token, &call)? {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-        Ok(())
     }
 
     fn transfer_from_and_call_relaxed(
@@ -491,142 +480,112 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if !Address::has_code(&to) {
-            return self.safe_transfer_from(token, from, to, value);
+        if to.code_length() == 0 {
+            self.safe_transfer_from(token, from, to, value)
+        } else {
+            let call = IErc1363::transferFromAndCallCall { from, to, value, data };
+            if !Self::call_optional_return_bool(&token, &call)? {
+                return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
+            }
+            Ok(())
         }
-
-        let call = IErc1363::transferFromAndCallCall { from, to, value, data };
-        if !Self::call_optional_return_bool(token, &call)? {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-        Ok(())
     }
 
     fn approve_and_call_relaxed(
         &mut self,
         token: Address,
-        spender: Address,
+        to: Address,
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if !Address::has_code(&spender) {
-            return self.force_approve(token, spender, value);
+        if to.code_length() == 0 {
+            self.force_approve(token, to, value)
+        } else {
+            let call = IErc1363::approveAndCallCall { spender: to, value, data };
+            if !Self::call_optional_return_bool(&token, &call)? {
+                return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
+            }
+            Ok(())
         }
-
-        let call = IErc1363::approveAndCallCall { spender, value, data };
-        if !Self::call_optional_return_bool(token, &call)? {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-        Ok(())
     }
 }
 
 impl SafeErc20 {
-    /// Imitates a Stylus high-level call, relaxing the requirement on the
-    /// return value: if data is returned, it must not be `false`, otherwise
-    /// calls are assumed to be successful.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Address of the ERC-20 token contract.
-    /// * `call` - [`IErc20`] call that implements [`SolCall`] trait.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///   contract, the contract fails to execute the call or the call returns
-    ///   value that is not `true`.
     fn call_optional_return(
-        token: Address,
+        token: &Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
-        if !Address::has_code(&token) {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-
-        unsafe {
-            match RawCall::new()
-                .limit_return_data(0, BOOL_TYPE_SIZE)
-                .flush_storage_cache()
-                .call(token, &call.abi_encode())
-            {
-                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
-                    Ok(())
-                }
-                _ => Err(SafeErc20FailedOperation { token }.into()),
-            }
-        }
-    }
-
-    /// Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
-    /// on the return value: the return value is optional (but if data is returned, it must not be false).
-    /// Returns a bool indicating success.
-    fn call_optional_return_bool(
-        token: Address,
-        call: &impl SolCall,
-    ) -> Result<bool, Error> {
-        if !Address::has_code(&token) {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-
-        unsafe {
-            match RawCall::new()
-                .limit_return_data(0, BOOL_TYPE_SIZE)
-                .flush_storage_cache()
-                .call(token, &call.abi_encode())
-            {
-                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
-                    Ok(true)
-                }
-                _ => Ok(false),
-            }
-        }
-    }
-
-    /// Returns the remaining number of ERC-20 tokens that `spender`
-    /// will be allowed to spend on behalf of an owner.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Address of the ERC-20 token contract.
-    /// * `spender` - Account that will spend the tokens.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///   contract.
-    /// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
-    ///   `spender`'s allowance.
-    fn allowance(token: Address, spender: Address) -> Result<U256, Error> {
-        if !Address::has_code(&token) {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-
-        let call = IErc20::allowanceCall { owner: address(), spender };
-        let result = unsafe {
+        let mut return_data = vec![0u8; BOOL_TYPE_SIZE];
+        let success = unsafe {
             RawCall::new()
-                .limit_return_data(0, BOOL_TYPE_SIZE)
-                .flush_storage_cache()
-                .call(token, &call.abi_encode())
-                .map_err(|_| {
-                    Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                        token,
-                    })
-                })?
+                .gas(u64::MAX)
+                .call(token, call.encode())
+                .copy_into(&mut return_data)
         };
 
-        Ok(U256::from_be_slice(&result))
+        if !success {
+            return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                token: *token,
+            }));
+        }
+
+        if !Self::encodes_true(&return_data) {
+            return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                token: *token,
+            }));
+        }
+
+        Ok(())
     }
 
-    /// Returns true if a slice of bytes is an ABI encoded `true` value.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - Slice of bytes.
+    fn call_optional_return_bool(
+        token: &Address,
+        call: &impl SolCall,
+    ) -> Result<bool, Error> {
+        let mut return_data = vec![0u8; BOOL_TYPE_SIZE];
+        let success = unsafe {
+            RawCall::new()
+                .gas(u64::MAX)
+                .call(token, call.encode())
+                .copy_into(&mut return_data)
+        };
+
+        if !success {
+            return Ok(false);
+        }
+
+        Ok(Self::encodes_true(&return_data))
+    }
+
+    fn allowance(token: &Address, spender: Address) -> Result<U256, Error> {
+        let call = IErc20::allowanceCall {
+            owner: address(),
+            spender,
+        };
+        let mut return_data = vec![0u8; 32];
+        let success = unsafe {
+            RawCall::new()
+                .gas(u64::MAX)
+                .call(token, call.encode())
+                .copy_into(&mut return_data)
+        };
+
+        if !success {
+            return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                token: *token,
+            }));
+        }
+
+        Ok(U256::from_be_bytes(return_data.try_into().unwrap()))
+    }
+
     fn encodes_true(data: &[u8]) -> bool {
-        data.split_last().is_some_and(|(last, rest)| {
-            *last == 1 && rest.iter().all(|&byte| byte == 0)
-        })
+        if data.is_empty() {
+            return false;
+        }
+
+        // Check if the first byte is 1 and all other bytes are 0
+        data[0] == 1 && data[1..].iter().all(|&b| b == 0)
     }
 }
 
