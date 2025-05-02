@@ -271,19 +271,12 @@ pub trait ISafeErc20 {
     /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
     ///   contract, the contract fails to execute the call or the call returns
     ///   value that is not `true`.
-    pub fn force_approve(token: &Address, spender: Address, value: U256) -> Result<(), SafeErc20Error> {
-        let approve_call = IErc20::approveCall { spender, value };
-    
-        // Try direct approve first
-        if Self::call_optional_return(token, &approve_call).is_ok() {
-            return Ok(());
-        }
-    
-        // If it failed, fallback to zero-reset strategy
-        let reset_call = IErc20::approveCall { spender, value: U256::from(0) };
-        Self::call_optional_return(token, &reset_call)?;
-        Self::call_optional_return(token, &approve_call)
-    }
+    fn force_approve(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+    ) -> Result<(), Self::Error>;
 
     /// Performs an ERC1363 transferAndCall, with a fallback to the simple ERC20 transfer if the target has no
     /// code. This can be used to implement an ERC721-like safe transfer that rely on ERC1363 checks when
@@ -461,7 +454,7 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if to.code_length() == 0 {
+        if Self::account_has_code(to) == 0 {
             self.safe_transfer(token, to, value)
         } else {
             let call = IErc1363::transferAndCallCall { to, value, data };
@@ -480,7 +473,7 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if to.code_length() == 0 {
+        if Self::account_has_code(to) == 0 {
             self.safe_transfer_from(token, from, to, value)
         } else {
             let call = IErc1363::transferFromAndCallCall { from, to, value, data };
@@ -498,7 +491,7 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if to.code_length() == 0 {
+        if Self::account_has_code(to) == 0 {
             self.force_approve(token, to, value)
         } else {
             let call = IErc1363::approveAndCallCall { spender: to, value, data };
@@ -511,6 +504,12 @@ impl ISafeErc20 for SafeErc20 {
 }
 
 impl SafeErc20 {
+    #[inline]
+    fn account_has_code(addr: Address) -> usize {
+        // SAFETY: extcodesize is a pure query, no state mutation or re-entrancy
+        unsafe { RawCall::new().code_length(&addr) }
+    }
+
     fn call_optional_return(
         token: &Address,
         call: &impl SolCall,
@@ -522,19 +521,17 @@ impl SafeErc20 {
                 .call(token, call.encode())
                 .copy_into(&mut return_data)
         };
-
         if !success {
             return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
                 token: *token,
             }));
         }
-
-        if !Self::encodes_true(&return_data) {
+        // Treat no-data (all zeros) as success; only fail if there's non-zero junk that isn't `true`
+        if return_data.iter().any(|&b| b != 0) && !Self::encodes_true(&return_data) {
             return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
                 token: *token,
             }));
         }
-
         Ok(())
     }
 
@@ -581,11 +578,11 @@ impl SafeErc20 {
 
     fn encodes_true(data: &[u8]) -> bool {
         if data.is_empty() {
-            return false;
+            return true;
         }
-
-        // Check if the first byte is 1 and all other bytes are 0
-        data[0] == 1 && data[1..].iter().all(|&b| b == 0)
+        data.len() == 32
+            && data[31] == 1
+            && data[..31].iter().all(|&b| b == 0)
     }
 }
 
