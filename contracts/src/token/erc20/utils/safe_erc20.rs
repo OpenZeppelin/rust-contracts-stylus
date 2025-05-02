@@ -344,7 +344,7 @@ pub trait ISafeErc20 {
     fn approve_and_call_relaxed(
         &mut self,
         token: Address,
-        to: Address,
+        spender: Address,
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error>;
@@ -403,7 +403,9 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error> {
         let old_allowance = Self::allowance(&token, spender)?;
-        Self::force_approve(&token, spender, old_allowance.checked_add(value).ok_or(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }))?)
+        let new_allowance = old_allowance.checked_add(value)
+            .ok_or_else(|| Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }))?;
+        self.force_approve(token, spender, new_allowance)
     }
 
     fn safe_decrease_allowance(
@@ -487,14 +489,14 @@ impl ISafeErc20 for SafeErc20 {
     fn approve_and_call_relaxed(
         &mut self,
         token: Address,
-        to: Address,
+        spender: Address,
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if Self::account_has_code(to) == 0 {
-            self.force_approve(token, to, value)
+        if Self::account_has_code(spender) == 0 {
+            self.force_approve(token, spender, value)
         } else {
-            let call = IErc1363::approveAndCallCall { spender: to, value, data };
+            let call = IErc1363::approveAndCallCall { spender, value, data };
             if !Self::call_optional_return_bool(&token, &call)? {
                 return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
             }
