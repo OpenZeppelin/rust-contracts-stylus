@@ -271,12 +271,19 @@ pub trait ISafeErc20 {
     /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
     ///   contract, the contract fails to execute the call or the call returns
     ///   value that is not `true`.
-    fn force_approve(
-        &mut self,
-        token: Address,
-        spender: Address,
-        value: U256,
-    ) -> Result<(), Self::Error>;
+    pub fn force_approve(token: &Address, spender: Address, value: U256) -> Result<(), SafeErc20Error> {
+        let approve_call = IErc20::approveCall { spender, value };
+    
+        // Try direct approve first
+        if Self::call_optional_return(token, &approve_call).is_ok() {
+            return Ok(());
+        }
+    
+        // If it failed, fallback to zero-reset strategy
+        let reset_call = IErc20::approveCall { spender, value: U256::from(0) };
+        Self::call_optional_return(token, &reset_call)?;
+        Self::call_optional_return(token, &approve_call)
+    }
 
     /// Performs an ERC1363 transferAndCall, with a fallback to the simple ERC20 transfer if the target has no
     /// code. This can be used to implement an ERC721-like safe transfer that rely on ERC1363 checks when
