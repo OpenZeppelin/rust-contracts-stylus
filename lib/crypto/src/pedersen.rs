@@ -1,6 +1,11 @@
-//! This module contains Fast Pedersen Hash Function implementation.
+//! This module contains Fast Pedersen Hash Function implementation with the
+//! following [parameters].
 //!
-//! https://docs.starkware.co/starkex/crypto/pedersen-hash-function.html#constant_points
+//! The implementation is based upon Starknet fast Pedersen hash [referenced
+//! implementation].
+//!
+//! [parameters]: https://docs.starkware.co/starkex/crypto/pedersen-hash-function.html#constant_points
+//! [referenced implementation]: https://github.com/xJonathanLEI/starknet-rs/blob/a70f4cef2032ea0ea839d615426e42a74993bf0b/starknet-crypto/src/pedersen_hash/no_lookup.rs
 
 use crate::{
     arithmetic::uint::{Uint, U256},
@@ -21,6 +26,7 @@ pub type Fq = Fp256<FqParam>;
 /// Base Field parameters for
 /// [`StarknetCurveConfig`].
 pub struct FqParam;
+
 impl FpParams<LIMBS_256> for FqParam {
     // The multiplicative generator of Fp.
     const GENERATOR: Fp256<Self> = fp_from_num!("3");
@@ -37,7 +43,6 @@ pub type Fr = Fp256<FrParam>;
 pub struct FrParam;
 impl FpParams<LIMBS_256> for FrParam {
     // Primitive generator of the multiplicative group of the scalar field.
-    // TODO: confirm this
     const GENERATOR: Fp256<Self> = fp_from_num!("5");
     // The curve's group order (`EC_ORDER`).
     const MODULUS: U256 = from_num!("3618502788666131213697322783095070105526743751716087489154079457884512865583");
@@ -51,7 +56,6 @@ impl CurveConfig for StarknetCurveConfig {
     type BaseField = Fq;
     type ScalarField = Fr;
 
-    // TODO: confirm this
     const COFACTOR: &'static [u64] = &[0x1];
     const COFACTOR_INV: Fr = Fr::ONE;
 }
@@ -126,7 +130,7 @@ impl Pedersen {
     #[must_use]
     pub fn hash(mut self, input: &[U256]) -> Fq {
         for input in input {
-            self.update(*input)
+            self.update(*input);
         }
         self.finalize()
     }
@@ -188,7 +192,7 @@ fn process_element(
 mod test {
     use crate::{
         fp_from_hex,
-        pedersen_starknet::{pedersen_hash, Fq},
+        pedersen::{pedersen_hash, Fq},
     };
 
     #[test]

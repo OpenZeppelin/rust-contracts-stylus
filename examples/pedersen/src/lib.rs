@@ -6,10 +6,7 @@ use alloc::vec::Vec;
 use openzeppelin_crypto::{
     arithmetic::{uint::U256, BigInteger},
     field::prime::PrimeField,
-    pedersen::{
-        instance::starknet::{StarknetCurveConfig, StarknetPedersenParams},
-        Pedersen,
-    },
+    pedersen::Pedersen,
 };
 use stylus_sdk::prelude::*;
 #[entrypoint]
@@ -22,8 +19,7 @@ impl PedersenExample {
         &mut self,
         inputs: [alloy_primitives::U256; 2],
     ) -> alloy_primitives::U256 {
-        let hasher =
-            Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
+        let hasher = Pedersen::new();
 
         let inputs: Vec<U256> = inputs
             .iter()
