@@ -154,6 +154,7 @@ impl Pedersen {
     /// * If the input values contains more elements than length of
     ///   [`crate::pedersen::params::PedersenParams::constant_points()`] /
     ///   [`crate::pedersen::params::PedersenParams::N_ELEMENT_BITS_HASH`].
+    #[must_use]
     pub fn finalize(self) -> Fq {
         pedersen_hash(&self.hash, &self.len.into())
     }
