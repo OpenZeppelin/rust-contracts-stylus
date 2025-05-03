@@ -96,11 +96,6 @@ const P4: Affine<StarknetCurveConfig> = Affine::new_unchecked(
     fp_from_num!("776496453633298175483985398648758586525933812536653089401905292063708816422"),
 );
 
-const SHIFT_POINT: Affine<StarknetCurveConfig> = Affine::new_unchecked(
-    fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
-    fp_from_num!("1713931329540660377023406109199410414810705867260802078187082345529207694986"),
-);
-
 /// Pedersen hash.
 #[derive(Clone, Debug, Default)]
 pub struct Pedersen {
@@ -168,7 +163,7 @@ fn pedersen_hash(x: &Fq, y: &Fq) -> Fq {
     let processed_x = process_element(*x, P1.into(), P2.into());
     let processed_y = process_element(*y, P3.into(), P4.into());
 
-    let shift_point: Projective<StarknetCurveConfig> = SHIFT_POINT.into();
+    let shift_point: Projective<StarknetCurveConfig> = P0.into();
     let affine = (processed_x + processed_y + shift_point).into_affine();
     affine.x().unwrap()
 }
