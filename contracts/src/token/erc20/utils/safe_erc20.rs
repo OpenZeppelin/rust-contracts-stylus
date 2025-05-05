@@ -424,7 +424,8 @@ impl ISafeErc20 for SafeErc20 {
                 },
             ));
         }
-        Self::force_approve(&token, spender, current_allowance - requested_decrease)
+        self.force_approve(token, spender, current_allowance - requested_decrease)
+
     }
 
     fn force_approve(
@@ -545,14 +546,20 @@ impl SafeErc20 {
         let success = unsafe {
             RawCall::new()
                 .gas(u64::MAX)
-                .call(token, call.encode())
-                .copy_into(&mut return_data)
-        };
 
+               .call(token, &call.encode())
+               .map(|result| {
+                   if let Some(data) = result {
+                       let len = data.len().min(return_data.len());
+                       return_data[..len].copy_from_slice(&data[..len]);
+                   }
+                   true
+               })
+               .unwrap_or(false)
+        };
         if !success {
             return Ok(false);
         }
-
         Ok(Self::encodes_true(&return_data))
     }
 
@@ -564,14 +571,20 @@ impl SafeErc20 {
         let mut return_data = vec![0u8; 32];
         let success = unsafe {
             RawCall::new()
-                .gas(u64::MAX)
-                .call(token, call.encode())
-                .copy_into(&mut return_data)
-        };
-
-        if !success {
-            return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                token: *token,
+            gas(u64::MAX)
+            .call(token, &call.encode())
+            .map(|result| {
+                if let Some(data) = result {
+                    let len = data.len().min(return_data.len());
+                    return_data[..len].copy_from_slice(&data[..len]);
+                }
+                true
+            })
+            .unwrap_or(false)
+    };
+    if !success {
+        return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+            token: *token,
             }));
         }
 
