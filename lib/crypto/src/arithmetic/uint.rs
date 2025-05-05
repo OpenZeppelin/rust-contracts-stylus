@@ -716,7 +716,7 @@ impl<const N: usize> ShlAssign<u32> for Uint<N> {
                 self.limbs[index1] |= current_limb << limb_shift;
             }
 
-            if index_shift + 1 <= index {
+            if index_shift < index {
                 let index2 = index - index_shift - 1;
                 self.limbs[index2] |= current_limb >> (bits - limb_shift);
             }

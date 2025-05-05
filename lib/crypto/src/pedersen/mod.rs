@@ -1,7 +1,8 @@
 //! This module contains Pedersen Hash Function implementation.
-//! Based on the [Starknet] implementation of the Pedersen Hash Function.
-//! [Starknet](https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/crypto/signature/fast_pedersen_hash.py).
-
+///
+/// Based on the [Starknet] implementation of the Pedersen Hash Function.
+///
+/// [Starknet]: <https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/crypto/signature/fast_pedersen_hash.py>
 pub mod instance;
 pub mod params;
 
@@ -26,6 +27,12 @@ const LOW_PART_MASK: U256 = from_num!(
 pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig> {
     params: core::marker::PhantomData<F>,
     curve: core::marker::PhantomData<P>,
+}
+
+impl<F: PedersenParams<P>, P: SWCurveConfig> Default for Pedersen<F, P> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
@@ -55,21 +62,21 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     }
 
     /// Computes the Starkware version of the Pedersen hash of x and y.
+    ///
     /// The hash is defined by:
-    /// shift_point + x_low * P_0 + x_high * P1 + y_low * P2  + y_high * P3
-    /// where x_low is the 248 low bits of x, x_high is the 4 high bits of x and
-    /// similarly for y. shift_point, P_0, P_1, P_2, P_3 are constant points
-    /// generated from the digits of pi.
+    /// [`F::SHIFT_POINT`] + `x_low` * [`F::P_0`] + `x_high` * [`F::P_1`] +
+    /// `y_low` * [`F::P_2`] + `y_high` * [`F::P_3`]
+    ///
+    /// where `x_low` is the 248 low bits of `x`, `x_high` is the 4 high bits of
+    /// `x` and similarly for `y`. [`F::SHIFT_POINT`], [`F::P_0`],
+    /// [`F::P_1`], [`F::P_2`], [`F::P_3`] are constant points generated
+    /// from the digits of pi.
     ///
     /// # Arguments
     ///
     /// * `&self` - Pedersen hasher instance.
     /// * `x` - The x coordinate of the point to hash.
     /// * `y` - The y coordinate of the point to hash.
-    ///
-    /// # Panics
-    ///
-    /// * If [`Pedersen::finalize`] panics.
     #[must_use]
     pub fn hash(&self, x: U256, y: U256) -> Option<P::BaseField> {
         let hash: Projective<P> = F::SHIFT_POINT
