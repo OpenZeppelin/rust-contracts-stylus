@@ -7,7 +7,7 @@ pub mod instance;
 pub mod params;
 
 use crate::{
-    arithmetic::{uint::U256, BigInteger},
+    arithmetic::uint::U256,
     curve::{
         sw::{Affine, Projective, SWCurveConfig},
         AffineRepr, PrimeGroup,
@@ -52,7 +52,7 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
         p2: Projective<P>,
     ) -> Projective<P> {
         assert!(
-            U256::ZERO <= element && element < F::FIELD_PRIME,
+            element < F::FIELD_PRIME,
             "Element integer value is out of range"
         );
 
@@ -64,13 +64,15 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     /// Computes the Starkware version of the Pedersen hash of x and y.
     ///
     /// The hash is defined by:
-    /// [`F::SHIFT_POINT`] + `x_low` * [`F::P_0`] + `x_high` * [`F::P_1`] +
-    /// `y_low` * [`F::P_2`] + `y_high` * [`F::P_3`]
+    /// [`PedersenParams::SHIFT_POINT`] + `x_low` * [`PedersenParams::P_0`] +
+    /// `x_high` * [`PedersenParams::P_1`] +
+    /// `y_low` * [`PedersenParams::P_2`] + `y_high` * [`PedersenParams::P_3`]
     ///
     /// where `x_low` is the 248 low bits of `x`, `x_high` is the 4 high bits of
-    /// `x` and similarly for `y`. [`F::SHIFT_POINT`], [`F::P_0`],
-    /// [`F::P_1`], [`F::P_2`], [`F::P_3`] are constant points generated
-    /// from the digits of pi.
+    /// `x` and similarly for `y`. [`PedersenParams::SHIFT_POINT`],
+    /// [`PedersenParams::P_0`], [`PedersenParams::P_1`],
+    /// [`PedersenParams::P_2`], [`PedersenParams::P_3`] are constant points
+    /// generated from the digits of pi.
     ///
     /// # Arguments
     ///
