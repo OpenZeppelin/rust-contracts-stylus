@@ -460,7 +460,7 @@ impl ISafeErc20 for SafeErc20 {
         if Self::account_has_code(to) == 0 {
             self.safe_transfer(token, to, value)
         } else {
-            let call = IErc1363::transferAndCallCall { to, value, data };
+            let call = IErc1363::transferAndCallCall { to, value, data.into() };
             if !Self::call_optional_return_bool(&token, &call)? {
                 return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
             }
@@ -510,7 +510,7 @@ impl SafeErc20 {
     #[inline]
     fn account_has_code(addr: Address) -> usize {
         // SAFETY: extcodesize is a pure query, no state mutation or re-entrancy
-        unsafe { RawCall::new().code_length(&addr) }
+        unsafe { RawCall::new().extcodesize(&addr) }
     }
 
     fn call_optional_return(
