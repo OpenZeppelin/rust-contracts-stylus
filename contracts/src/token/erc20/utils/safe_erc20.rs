@@ -479,7 +479,7 @@ impl ISafeErc20 for SafeErc20 {
         if Self::account_has_code(to) == 0 {
             self.safe_transfer_from(token, from, to, value)
         } else {
-            let call = IErc1363::transferFromAndCallCall { from, to, value, data };
+            let call = IErc1363::transferFromAndCallCall { from, to, value, data: data.into() };
             if !Self::call_optional_return_bool(&token, &call)? {
                 return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
             }
@@ -497,7 +497,8 @@ impl ISafeErc20 for SafeErc20 {
         if Self::account_has_code(spender) == 0 {
             self.force_approve(token, spender, value)
         } else {
-            let call = IErc1363::approveAndCallCall { spender, value, data };
+-            let call = IErc1363::approveAndCallCall { spender, value, data };
++            let call = IErc1363::approveAndCallCall { spender, value, data: data.into() };
             if !Self::call_optional_return_bool(&token, &call)? {
                 return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
             }
@@ -546,16 +547,15 @@ impl SafeErc20 {
         let success = unsafe {
             RawCall::new()
                 .gas(u64::MAX)
-
-               .call(token, &call.encode())
-               .map(|result| {
-                   if let Some(data) = result {
-                       let len = data.len().min(return_data.len());
-                       return_data[..len].copy_from_slice(&data[..len]);
-                   }
-                   true
-               })
-               .unwrap_or(false)
+                .call(*token, &call.encode())
+                .map(|result| {
+                    if let Some(data) = result {
+                        let len = data.len().min(return_data.len());
+                        return_data[..len].copy_from_slice(&data[..len]);
+                    }
+                    true
+                })
+                .unwrap_or(false)
         };
         if !success {
             return Ok(false);
