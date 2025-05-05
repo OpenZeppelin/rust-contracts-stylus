@@ -123,13 +123,11 @@ pub struct Erc20Wrapper {
 
 /// ERC-20 Wrapper Standard Interface
 pub trait IErc20Wrapper {
-    /// The error type associated to the trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     // Manually calculated, as some of the functions' parameters do not
     // implement AbiType.
     /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
     /// as a XOR of selectors for each function in the trait.
+    #[must_use]
     fn interface_id() -> u32
     where
         Self: Sized,
@@ -217,7 +215,7 @@ pub trait IErc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
+    ) -> Result<bool, Error>;
 
     /// Allow a user to burn a number of wrapped tokens and withdraw the
     /// corresponding number of underlying tokens.
@@ -251,7 +249,7 @@ pub trait IErc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
+    ) -> Result<bool, Error>;
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -260,8 +258,6 @@ pub trait IErc20Wrapper {
 unsafe impl TopLevelStorage for Erc20Wrapper {}
 
 impl IErc20Wrapper for Erc20Wrapper {
-    type Error = Error;
-
     fn decimals(&self) -> U8 {
         self.underlying_decimals.get()
     }
@@ -275,7 +271,7 @@ impl IErc20Wrapper for Erc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
+    ) -> Result<bool, Error> {
         let contract_address = contract::address();
         let sender = msg::sender();
 
@@ -306,7 +302,7 @@ impl IErc20Wrapper for Erc20Wrapper {
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
+    ) -> Result<bool, Error> {
         if account == contract::address() {
             return Err(
                 erc20::ERC20InvalidReceiver { receiver: account }.into()

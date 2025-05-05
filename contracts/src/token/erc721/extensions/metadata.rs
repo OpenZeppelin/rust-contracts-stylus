@@ -32,6 +32,7 @@ pub trait IErc721Metadata {
     // [`Erc721Metadata::token_uri`].
     /// Solidity interface id associated with [`IErc721Metadata`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
+    #[must_use]
     fn interface_id() -> u32
     where
         Self: Sized,
@@ -121,7 +122,7 @@ impl Erc721Metadata {
     pub fn token_uri(
         &self,
         token_id: U256,
-        erc721: &impl IErc721<Error = erc721::Error>,
+        erc721: &impl IErc721,
     ) -> Result<String, erc721::Error> {
         erc721.owner_of(token_id)?;
 

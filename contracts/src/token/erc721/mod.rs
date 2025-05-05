@@ -209,9 +209,6 @@ unsafe impl TopLevelStorage for Erc721 {}
 /// Required interface of an [`Erc721`] compliant contract.
 #[interface_id]
 pub trait IErc721: IErc165 {
-    /// The error type associated to this ERC-721 trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns the number of tokens in `owner`'s account.
     ///
     /// # Arguments
@@ -222,10 +219,7 @@ pub trait IErc721: IErc165 {
     /// # Errors
     ///
     /// * [`Error::InvalidOwner`] - If owner address is `Address::ZERO`.
-    fn balance_of(
-        &self,
-        owner: Address,
-    ) -> Result<U256, <Self as IErc721>::Error>;
+    fn balance_of(&self, owner: Address) -> Result<U256, Error>;
 
     /// Returns the owner of the `token_id` token.
     ///
@@ -237,10 +231,7 @@ pub trait IErc721: IErc165 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    fn owner_of(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error>;
+    fn owner_of(&self, token_id: U256) -> Result<Address, Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`, checking first
     /// that contract recipients are aware of the [`Erc721`] protocol to
@@ -271,7 +262,7 @@ pub trait IErc721: IErc165 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error>;
+    ) -> Result<(), Error>;
 
     /// Safely transfers `token_id` token from `from` to `to`.
     ///
@@ -304,7 +295,7 @@ pub trait IErc721: IErc165 {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc721>::Error>;
+    ) -> Result<(), Error>;
 
     /// Transfers `token_id` token from `from` to `to`.
     ///
@@ -337,7 +328,7 @@ pub trait IErc721: IErc165 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error>;
+    ) -> Result<(), Error>;
 
     /// Gives permission to `to` to transfer `token_id` token to another
     /// account. The approval is cleared when the token is transferred.
@@ -360,11 +351,7 @@ pub trait IErc721: IErc165 {
     /// # Events
     ///
     /// * [`Approval`].
-    fn approve(
-        &mut self,
-        to: Address,
-        token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error>;
+    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error>;
 
     /// Approve or remove `operator` as an operator for the caller.
     ///
@@ -390,7 +377,7 @@ pub trait IErc721: IErc165 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc721>::Error>;
+    ) -> Result<(), Error>;
 
     /// Returns the account approved for `token_id` token.
     ///
@@ -402,10 +389,7 @@ pub trait IErc721: IErc165 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist.
-    fn get_approved(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error>;
+    fn get_approved(&self, token_id: U256) -> Result<Address, Error>;
 
     /// Returns whether the `operator` is allowed to manage all the assets of
     /// `owner`.
@@ -420,22 +404,14 @@ pub trait IErc721: IErc165 {
 
 #[public]
 impl IErc721 for Erc721 {
-    type Error = Error;
-
-    fn balance_of(
-        &self,
-        owner: Address,
-    ) -> Result<U256, <Self as IErc721>::Error> {
+    fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
         Ok(self.balances.get(owner))
     }
 
-    fn owner_of(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
         self._require_owned(token_id)
     }
 
@@ -444,7 +420,7 @@ impl IErc721 for Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Error> {
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
@@ -455,7 +431,7 @@ impl IErc721 for Erc721 {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Error> {
         self.transfer_from(from, to, token_id)?;
         self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
     }
@@ -465,7 +441,7 @@ impl IErc721 for Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Error> {
         if to.is_zero() {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
@@ -487,11 +463,7 @@ impl IErc721 for Erc721 {
         Ok(())
     }
 
-    fn approve(
-        &mut self,
-        to: Address,
-        token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -499,14 +471,11 @@ impl IErc721 for Erc721 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Error> {
         self._set_approval_for_all(msg::sender(), operator, approved)
     }
 
-    fn get_approved(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
         self._require_owned(token_id)?;
         Ok(self._get_approved(token_id))
     }

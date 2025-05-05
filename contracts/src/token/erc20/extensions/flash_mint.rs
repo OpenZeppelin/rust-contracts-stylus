@@ -173,13 +173,11 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
 pub trait IErc3156FlashLender {
-    /// The error type associated to this trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     // Manually calculated, as some of the functions' parameters do not
     // implement AbiType.
     /// Solidity interface id associated with [`IErc3156FlashLender`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
+    #[must_use]
     fn interface_id() -> u32
     where
         Self: Sized,
@@ -239,11 +237,7 @@ pub trait IErc3156FlashLender {
     ///     self.erc20_flash_mint.flash_fee(token, value)
     /// }
     /// ```
-    fn flash_fee(
-        &self,
-        token: Address,
-        value: U256,
-    ) -> Result<U256, <Self as IErc3156FlashLender>::Error>;
+    fn flash_fee(&self, token: Address, value: U256) -> Result<U256, Error>;
 
     /// Performs a flash loan.
     ///
@@ -311,12 +305,10 @@ pub trait IErc3156FlashLender {
         value: U256,
         data: Bytes,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc3156FlashLender>::Error>;
+    ) -> Result<bool, Error>;
 }
 
 impl IErc3156FlashLender for Erc20FlashMint {
-    type Error = Error;
-
     fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256 {
         if token == contract::address() {
             U256::MAX - erc20.total_supply()
@@ -325,11 +317,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         }
     }
 
-    fn flash_fee(
-        &self,
-        token: Address,
-        _value: U256,
-    ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
+    fn flash_fee(&self, token: Address, _value: U256) -> Result<U256, Error> {
         if token == contract::address() {
             Ok(self.flash_fee_value.get())
         } else {
@@ -347,7 +335,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
         value: U256,
         data: Bytes,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
+    ) -> Result<bool, Error> {
         let max_loan = self.max_flash_loan(token, erc20);
         if value > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {

@@ -94,7 +94,7 @@ impl Erc721UriStorage {
     pub fn token_uri(
         &self,
         token_id: U256,
-        erc721: &impl IErc721<Error = erc721::Error>,
+        erc721: &impl IErc721,
         metadata: &Erc721Metadata,
     ) -> Result<String, erc721::Error> {
         erc721.owner_of(token_id)?;

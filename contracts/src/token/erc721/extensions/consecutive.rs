@@ -223,19 +223,11 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 #[public]
 impl IErc721 for Erc721Consecutive {
-    type Error = Error;
-
-    fn balance_of(
-        &self,
-        owner: Address,
-    ) -> Result<U256, <Self as IErc721>::Error> {
-        Ok(self.erc721.balance_of(owner)?)
+    fn balance_of(&self, owner: Address) -> Result<U256, erc721::Error> {
+        self.erc721.balance_of(owner)
     }
 
-    fn owner_of(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, erc721::Error> {
         self._require_owned(token_id)
     }
 
@@ -244,7 +236,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), erc721::Error> {
         // TODO: Once the SDK supports the conversion,
         // use alloy_primitives::bytes!("") here.
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
@@ -257,15 +249,15 @@ impl IErc721 for Erc721Consecutive {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), erc721::Error> {
         self.transfer_from(from, to, token_id)?;
-        Ok(self.erc721._check_on_erc721_received(
+        self.erc721._check_on_erc721_received(
             msg::sender(),
             from,
             to,
             token_id,
             &data,
-        )?)
+        )
     }
 
     fn transfer_from(
@@ -273,12 +265,11 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), erc721::Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
                 ERC721InvalidReceiver { receiver: Address::ZERO },
-            )
-            .into());
+            ));
         }
 
         // Setting an "auth" argument enables the `_is_authorized` check which
@@ -290,8 +281,7 @@ impl IErc721 for Erc721Consecutive {
                 sender: from,
                 token_id,
                 owner: previous_owner,
-            })
-            .into());
+            }));
         }
         Ok(())
     }
@@ -300,7 +290,7 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), erc721::Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -308,14 +298,11 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc721>::Error> {
-        Ok(self.erc721.set_approval_for_all(operator, approved)?)
+    ) -> Result<(), erc721::Error> {
+        self.erc721.set_approval_for_all(operator, approved)
     }
 
-    fn get_approved(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, erc721::Error> {
         self._require_owned(token_id)?;
         Ok(self.erc721._get_approved(token_id))
     }
@@ -455,7 +442,7 @@ impl Erc721Consecutive {
         to: Address,
         token_id: U256,
         auth: Address,
-    ) -> Result<Address, Error> {
+    ) -> Result<Address, erc721::Error> {
         let previous_owner = self._update_base(to, token_id, auth)?;
 
         // if we burn
@@ -527,7 +514,7 @@ impl Erc721Consecutive {
         to: Address,
         token_id: U256,
         auth: Address,
-    ) -> Result<Address, Error> {
+    ) -> Result<Address, erc721::Error> {
         let from = self._owner_of(token_id);
 
         // Perform (optional) operator check.
@@ -793,7 +780,7 @@ impl Erc721Consecutive {
         token_id: U256,
         auth: Address,
         emit_event: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<(), erc721::Error> {
         // Avoid reading the owner unless necessary.
         if emit_event || !auth.is_zero() {
             let owner = self._require_owned(token_id)?;
@@ -803,8 +790,7 @@ impl Erc721Consecutive {
             {
                 return Err(erc721::Error::InvalidApprover(
                     ERC721InvalidApprover { approver: auth },
-                )
-                .into());
+                ));
             }
 
             if emit_event {
@@ -830,13 +816,15 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::NonexistentToken`] - If token does not exist.
-    pub fn _require_owned(&self, token_id: U256) -> Result<Address, Error> {
+    pub fn _require_owned(
+        &self,
+        token_id: U256,
+    ) -> Result<Address, erc721::Error> {
         let owner = self._owner_of(token_id);
         if owner.is_zero() {
             return Err(erc721::Error::NonexistentToken(
                 ERC721NonexistentToken { token_id },
-            )
-            .into());
+            ));
         }
         Ok(owner)
     }

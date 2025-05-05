@@ -138,9 +138,6 @@ pub struct AccessControl {
 /// Interface for an [`AccessControl`] contract.
 #[interface_id]
 pub trait IAccessControl {
-    /// The error type associated with this interface implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns `true` if `account` has been granted `role`.
     ///
     /// # Arguments
@@ -161,10 +158,7 @@ pub trait IAccessControl {
     ///
     /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
     ///   granted `role`.
-    fn only_role(
-        &self,
-        role: B256,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    fn only_role(&self, role: B256) -> Result<(), Error>;
 
     /// Returns the admin role that controls `role`. See
     /// [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`].
@@ -196,11 +190,8 @@ pub trait IAccessControl {
     /// # Events
     ///
     /// * [`RoleGranted`]
-    fn grant_role(
-        &mut self,
-        role: B256,
-        account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    fn grant_role(&mut self, role: B256, account: Address)
+        -> Result<(), Error>;
 
     /// Revokes `role` from `account`.
     ///
@@ -224,7 +215,7 @@ pub trait IAccessControl {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    ) -> Result<(), Error>;
 
     /// Revokes `role` from the calling account.
     ///
@@ -251,21 +242,16 @@ pub trait IAccessControl {
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    ) -> Result<(), Error>;
 }
 
 #[public]
 impl IAccessControl for AccessControl {
-    type Error = Error;
-
     fn has_role(&self, role: B256, account: Address) -> bool {
         self.roles.getter(role).has_role.get(account)
     }
 
-    fn only_role(
-        &self,
-        role: B256,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    fn only_role(&self, role: B256) -> Result<(), Error> {
         self._check_role(role, msg::sender())
     }
 
@@ -277,7 +263,7 @@ impl IAccessControl for AccessControl {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Error> {
         let admin_role = self.get_role_admin(role);
         self.only_role(admin_role)?;
         self._grant_role(role, account);
@@ -288,7 +274,7 @@ impl IAccessControl for AccessControl {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Error> {
         let admin_role = self.get_role_admin(role);
         self.only_role(admin_role)?;
         self._revoke_role(role, account);
@@ -299,7 +285,7 @@ impl IAccessControl for AccessControl {
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Error> {
         if msg::sender() != confirmation {
             return Err(Error::BadConfirmation(
                 AccessControlBadConfirmation {},

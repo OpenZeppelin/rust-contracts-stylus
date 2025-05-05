@@ -203,13 +203,11 @@ unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
 pub trait IErc4626 {
-    /// The error type associated to the trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     // Manually calculated, as some of the functions' parameters do not
     // implement AbiType.
     /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
     /// XOR of selectors for each function in the trait.
+    #[must_use]
     fn interface_id() -> u32
     where
         Self: Sized,
@@ -288,7 +286,7 @@ pub trait IErc4626 {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not a ERC-20
     ///   Token address.
-    fn total_assets(&mut self) -> Result<U256, <Self as IErc4626>::Error>;
+    fn total_assets(&mut self) -> Result<U256, Error>;
 
     /// Returns the amount of shares that the Vault would exchange for the
     /// amount of assets provided, in an ideal scenario where all the conditions
@@ -332,7 +330,7 @@ pub trait IErc4626 {
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
     /// amount of shares provided, in an ideal scenario where all the conditions
@@ -376,7 +374,7 @@ pub trait IErc4626 {
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Returns the maximum amount of the underlying asset that can be deposited
     /// into the Vault for the receiver, through a deposit call.
@@ -428,7 +426,7 @@ pub trait IErc4626 {
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Deposits exactly `assets` amount of underlying tokens into the Vault and
     /// mints corresponding Vault shares to `receiver`.
@@ -483,7 +481,7 @@ pub trait IErc4626 {
         assets: U256,
         receiver: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Returns the maximum amount of the Vault shares that can be minted for
     /// the receiver, through a mint call.
@@ -535,7 +533,7 @@ pub trait IErc4626 {
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Mints the specified number of shares to `receiver` by pulling the
     /// required amount of underlying tokens from caller.
@@ -593,7 +591,7 @@ pub trait IErc4626 {
         shares: U256,
         receiver: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Returns the maximum amount of the underlying asset that can be withdrawn
     /// from the owner balance in the Vault, through a withdraw call.
@@ -631,7 +629,7 @@ pub trait IErc4626 {
         &mut self,
         owner: Address,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// withdrawal at the current block, given current on-chain conditions.
@@ -669,7 +667,7 @@ pub trait IErc4626 {
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Withdraws the specified amount of underlying tokens to `receiver` by
     /// burning the required number of shares from `owner`.
@@ -734,7 +732,7 @@ pub trait IErc4626 {
         receiver: Address,
         owner: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Returns the maximum amount of Vault shares that can be redeemed from the
     /// owner balance in the Vault, through a redeem call.
@@ -801,7 +799,7 @@ pub trait IErc4626 {
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 
     /// Burns the specified number of shares from `owner` and sends the
     /// corresponding amount of underlying tokens to `receiver`.
@@ -859,17 +857,15 @@ pub trait IErc4626 {
         receiver: Address,
         owner: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Error>;
 }
 
 impl IErc4626 for Erc4626 {
-    type Error = Error;
-
     fn asset(&self) -> Address {
         self.asset.get()
     }
 
-    fn total_assets(&mut self) -> Result<U256, <Self as IErc4626>::Error> {
+    fn total_assets(&mut self) -> Result<U256, Error> {
         let erc20 = Erc20Interface::new(self.asset());
         let call = Call::new_in(self);
         Ok(erc20
@@ -881,7 +877,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_shares(assets, Rounding::Floor, erc20)
     }
 
@@ -889,7 +885,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
@@ -905,7 +901,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         owner: Address,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         let balance = erc20.balance_of(owner);
         self._convert_to_assets(balance, Rounding::Floor, erc20)
     }
@@ -918,7 +914,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_shares(assets, Rounding::Floor, erc20)
     }
 
@@ -926,7 +922,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_assets(shares, Rounding::Ceil, erc20)
     }
 
@@ -934,7 +930,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_shares(assets, Rounding::Ceil, erc20)
     }
 
@@ -942,7 +938,7 @@ impl IErc4626 for Erc4626 {
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
@@ -951,7 +947,7 @@ impl IErc4626 for Erc4626 {
         assets: U256,
         receiver: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         let max_assets = self.max_deposit(receiver);
 
         if assets > max_assets {
@@ -1018,7 +1014,7 @@ impl IErc4626 for Erc4626 {
         receiver: Address,
         owner: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         let max_shares = self.max_redeem(owner, erc20);
         if shares > max_shares {
             return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem {

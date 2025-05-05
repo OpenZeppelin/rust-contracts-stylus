@@ -22,10 +22,8 @@ use openzeppelin_stylus_proc::interface_id;
 
 #[interface_id]
 pub trait IErc721 {
-    type Error: Into<alloc::vec::Vec<u8>>;
-
-    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
-    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error>;
+    fn balance_of(&self, owner: Address) -> Result<U256, Error>;
+    fn owner_of(&self, token_id: U256) -> Result<Address, Error>;
 
     // ...
 }

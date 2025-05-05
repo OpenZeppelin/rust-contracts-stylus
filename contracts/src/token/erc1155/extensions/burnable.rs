@@ -12,9 +12,6 @@ use crate::token::erc1155::{
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
 /// own tokens and those that they have been approved to use.
 pub trait IErc1155Burnable {
-    /// The error type associated to this trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Destroys a `value` amount of token from `account`.
     ///
     /// # Arguments
@@ -36,7 +33,7 @@ pub trait IErc1155Burnable {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error>;
+    ) -> Result<(), erc1155::Error>;
 
     /// Destroys a batch of tokens from `account`.
     ///
@@ -62,18 +59,16 @@ pub trait IErc1155Burnable {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error>;
+    ) -> Result<(), erc1155::Error>;
 }
 
 impl IErc1155Burnable for Erc1155 {
-    type Error = erc1155::Error;
-
     fn burn(
         &mut self,
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error> {
+    ) -> Result<(), erc1155::Error> {
         self.ensure_approved_or_owner(account)?;
         self._burn(account, token_id, value)
     }
@@ -83,7 +78,7 @@ impl IErc1155Burnable for Erc1155 {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error> {
+    ) -> Result<(), erc1155::Error> {
         self.ensure_approved_or_owner(account)?;
         self._burn_batch(account, token_ids, values)
     }
