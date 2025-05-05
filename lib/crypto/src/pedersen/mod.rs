@@ -7,12 +7,12 @@ pub mod params;
 use alloc::{vec, vec::Vec};
 
 use crate::{
-    from_num,
     arithmetic::{uint::U256, BigInteger},
     curve::{
         sw::{Affine, Projective, SWCurveConfig},
         AffineRepr, PrimeGroup,
     },
+    from_num,
     pedersen::params::PedersenParams,
 };
 
@@ -40,7 +40,11 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
         }
     }
 
-    fn process_single_element(element: U256, p1: Projective<P>, p2: Projective<P>) -> Projective<P> {
+    fn process_single_element(
+        element: U256,
+        p1: Projective<P>,
+        p2: Projective<P>,
+    ) -> Projective<P> {
         assert!(
             U256::ZERO <= element && element < F::FIELD_PRIME,
             "Element integer value is out of range"
@@ -49,13 +53,14 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
         let high_nibble = element >> LOW_PART_BITS;
         let low_part = element & LOW_PART_MASK;
         p1.mul_bigint(low_part) + high_nibble * p2.mul_bigint(high_nibble)
-    }   
-    
+    }
+
     /// Computes the Starkware version of the Pedersen hash of x and y.
     /// The hash is defined by:
     /// shift_point + x_low * P_0 + x_high * P1 + y_low * P2  + y_high * P3
-    /// where x_low is the 248 low bits of x, x_high is the 4 high bits of x and similarly for y.
-    /// shift_point, P_0, P_1, P_2, P_3 are constant points generated from the digits of pi.
+    /// where x_low is the 248 low bits of x, x_high is the 4 high bits of x and
+    /// similarly for y. shift_point, P_0, P_1, P_2, P_3 are constant points
+    /// generated from the digits of pi.
     ///
     /// # Arguments
     ///
@@ -68,13 +73,11 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     /// * If [`Pedersen::finalize`] panics.
     #[must_use]
     pub fn hash(&self, x: U256, y: U256) -> Option<P::BaseField> {
-        let hash: Projective<P> = F::SHIFT_POINT 
-        + Self::process_single_element(x, F::P_0, F::P_1) 
-        + Self::process_single_element(y, F::P_2, F::P_3);
+        let hash: Projective<P> = F::SHIFT_POINT
+            + Self::process_single_element(x, F::P_0.into(), F::P_1.into())
+            + Self::process_single_element(y, F::P_2.into(), F::P_3.into());
 
         let hash: Affine<P> = hash.into();
         hash.x()
-    }    
-
-
+    }
 }
