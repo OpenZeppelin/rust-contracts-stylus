@@ -479,7 +479,7 @@ impl ISafeErc20 for SafeErc20 {
         if Self::account_has_code(to) == 0 {
             self.safe_transfer_from(token, from, to, value)
         } else {
-            let call = IErc1363::transferFromAndCallCall { from, to, value, data };
+            let call = IErc1363::transferFromAndCallCall { from, to, value, data: data.into() };
             if !Self::call_optional_return_bool(&token, &call)? {
                 return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
             }
