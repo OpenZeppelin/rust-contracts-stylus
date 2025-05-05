@@ -547,16 +547,15 @@ impl SafeErc20 {
         let success = unsafe {
             RawCall::new()
                 .gas(u64::MAX)
-
-               .call(token, &call.encode())
-               .map(|result| {
-                   if let Some(data) = result {
-                       let len = data.len().min(return_data.len());
-                       return_data[..len].copy_from_slice(&data[..len]);
-                   }
-                   true
-               })
-               .unwrap_or(false)
+                .call(*token, &call.encode())
+                .map(|result| {
+                    if let Some(data) = result {
+                        let len = data.len().min(return_data.len());
+                        return_data[..len].copy_from_slice(&data[..len]);
+                    }
+                    true
+                })
+                .unwrap_or(false)
         };
         if !success {
             return Ok(false);
