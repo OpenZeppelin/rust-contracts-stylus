@@ -4,7 +4,6 @@
 
 pub mod instance;
 pub mod params;
-use alloc::{vec, vec::Vec};
 
 use crate::{
     arithmetic::{uint::U256, BigInteger},
@@ -17,15 +16,16 @@ use crate::{
 };
 
 /// Low part bits.
-const LOW_PART_BITS: U256 = from_num!("248");
+const LOW_PART_BITS: u32 = 248;
 /// Low part mask. (2**248 - 1)
-const LOW_PART_MASK: U256 = from_num!("2").checked_pow(LOW_PART_BITS).unwrap();
+const LOW_PART_MASK: U256 = from_num!(
+    "452312848583266388373324160190187140051835877600158453279131187530910662655"
+);
 /// Pedersen hash.
 #[derive(Clone, Debug)]
 pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig> {
     params: core::marker::PhantomData<F>,
     curve: core::marker::PhantomData<P>,
-    state: Vec<U256>,
 }
 
 impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
@@ -36,7 +36,6 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
         Self {
             params: core::marker::PhantomData,
             curve: core::marker::PhantomData,
-            state: vec![],
         }
     }
 
@@ -52,7 +51,7 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
 
         let high_nibble = element >> LOW_PART_BITS;
         let low_part = element & LOW_PART_MASK;
-        p1.mul_bigint(low_part) + high_nibble * p2.mul_bigint(high_nibble)
+        p1.mul_bigint(low_part) + p2.mul_bigint(high_nibble)
     }
 
     /// Computes the Starkware version of the Pedersen hash of x and y.

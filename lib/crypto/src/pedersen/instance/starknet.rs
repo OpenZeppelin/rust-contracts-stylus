@@ -3,7 +3,7 @@
 use crate::{
     arithmetic::uint::U256,
     curve::{
-        sw::{Affine, Projective, SWCurveConfig},
+        sw::{Affine, SWCurveConfig},
         CurveConfig,
     },
     field::fp::{Fp256, FpParams, LIMBS_256},
@@ -91,8 +91,6 @@ impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloc::{vec, vec::Vec};
-
     use proptest::prelude::*;
 
     use super::*;
@@ -134,21 +132,24 @@ mod tests {
 
     #[derive(Debug)]
     struct StarknetTestCase {
-        input: Vec<U256>,
-        expected: Fq,
+        x: U256,
+        y: U256,
+        expected: Option<Fq>,
     }
 
     #[test]
     fn smoke() {
-        // Based on https://github.com/starkware-libs/starkware-crypto-utils/blob/master/test/config/signature_test_data.json.
+        // Based on <https://github.com/starkware-libs/starkware-crypto-utils/blob/master/test/config/signature_test_data.json>.
         let test_cases = vec![
                 StarknetTestCase {
-                    input: vec![from_str_hex("3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb"), from_str_hex("208a0a10250e382e1e4bbe2880906c2791bf6275695e02fbbc6aeff9cd8b31a")],
-                    expected: fp_from_hex!("30e480bed5fe53fa909cc0f8c4d99b8f9f2c016be4c41e13a4848797979c662")
+                    x: from_str_hex("3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb"),
+                    y: from_str_hex("208a0a10250e382e1e4bbe2880906c2791bf6275695e02fbbc6aeff9cd8b31a"),
+                    expected: Some(fp_from_hex!("30e480bed5fe53fa909cc0f8c4d99b8f9f2c016be4c41e13a4848797979c662"))
                 },
                 StarknetTestCase {
-                    input: vec![from_str_hex("58f580910a6ca59b28927c08fe6c43e2e303ca384badc365795fc645d479d45"), from_str_hex("78734f65a067be9bdb39de18434d71e79f7b6466a4b66bbd979ab9e7515fe0b")],
-                    expected: fp_from_hex!("68cc0b76cddd1dd4ed2301ada9b7c872b23875d5ff837b3a87993e0d9996b87"),
+                    x: from_str_hex("58f580910a6ca59b28927c08fe6c43e2e303ca384badc365795fc645d479d45"),
+                    y: from_str_hex("78734f65a067be9bdb39de18434d71e79f7b6466a4b66bbd979ab9e7515fe0b"),
+                    expected: Some(fp_from_hex!("68cc0b76cddd1dd4ed2301ada9b7c872b23875d5ff837b3a87993e0d9996b87")),
                 },
             ];
         for test_case in test_cases {
@@ -156,54 +157,49 @@ mod tests {
                 Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
 
             assert_eq!(
-                pedersen.hash(&test_case.input),
+                pedersen.hash(test_case.x, test_case.y),
                 test_case.expected,
-                "Failed for input: {:?}",
-                test_case.input
+                "Failed for input x: {:?}, y: {:?}",
+                test_case.x,
+                test_case.y
             );
         }
     }
 
-    #[test]
-    #[should_panic = "Pedersen hash failed -- invalid input"]
-    fn panics_on_wrong_item() {
-        let pedersen =
-            Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
-        let input = vec![StarknetPedersenParams::FIELD_PRIME];
-
-        let _ = pedersen.hash(&input);
-    }
-
-    #[test]
-    #[should_panic = "Pedersen hash failed -- too many elements"]
-    fn panics_on_too_many_elements() {
-        let pedersen =
-            Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
-
-        let one = U256::from(1u32);
-        let input = vec![one, one, one];
-
-        let _ = pedersen.hash(&input);
-    }
-    /*
     fn proper_values() -> impl Strategy<Value = alloy_primitives::U256> {
         any::<alloy_primitives::U256>().prop_filter(
             "Should be less than `StarknetPedersenParams::FIELD_PRIME`",
-            |x| {
-                U256::from_bytes_le(&x.to_le_bytes_vec())
-                    <= StarknetPedersenParams::FIELD_PRIME
-            },
+            |x| from_u256(x) < StarknetPedersenParams::FIELD_PRIME,
         )
+    }
+
+    fn invalid_values() -> impl Strategy<Value = alloy_primitives::U256> {
+        any::<alloy_primitives::U256>().prop_filter(
+            "Should be greater or equal than `StarknetPedersenParams::FIELD_PRIME`",
+            |x| from_u256(x) >= StarknetPedersenParams::FIELD_PRIME,
+        )
+    }
+
+    fn from_u256(elem: &alloy_primitives::U256) -> U256 {
+        U256::from_bytes_le(&elem.to_le_bytes_vec())
     }
 
     #[test]
     fn hash() {
-        proptest!(|(input in prop::collection::vec(proper_values(), 0..3))| {
-                let input = input.iter().map(|x|
-        U256::from_bytes_le(&x.to_le_bytes_vec())).collect::<Vec<_>>();
+        proptest!(|(input in proptest::array::uniform2(proper_values()))| {
+            let pedersen = Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
+            let hash = pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
+            assert!(hash.is_some());
+        });
+    }
 
-                let pedersen = Pedersen::<StarknetPedersenParams,
-        StarknetCurveConfig>::new();         _ = pedersen.hash(&input);
-            });
-    }*/
+    #[test]
+    #[should_panic = "Element integer value is out of range"]
+    fn panics_on_wrong_item() {
+        proptest!(|(input in proptest::array::uniform2(invalid_values()))| {
+            let pedersen = Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
+            let hash = pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
+            assert!(hash.is_some());
+        });
+    }
 }
