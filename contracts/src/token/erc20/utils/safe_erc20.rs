@@ -511,7 +511,7 @@ impl SafeErc20 {
     #[inline]
     fn account_has_code(addr: Address) -> usize {
         // SAFETY: extcodesize is a pure query, no state mutation or re-entrancy
-        unsafe { RawCall::new().extcodesize(&addr) }
+        unsafe { stylus_sdk::evm::extcodesize(addr) as usize }
     }
 
     fn call_optional_return(
