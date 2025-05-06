@@ -511,25 +511,30 @@ impl SafeErc20 {
     #[inline]
     fn account_has_code(addr: Address) -> usize {
         // SAFETY: extcodesize is a pure query, no state mutation or re-entrancy
-        unsafe { RawCall::new().extcodesize(&addr) }
+        unsafe { stylus_sdk::evm::extcodesize(addr) as usize }
     }
 
     fn call_optional_return(
         token: &Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
-        let mut return_data = vec![0u8; BOOL_TYPE_SIZE];
-        let success = unsafe {
+
+        let calldata = call.abi_encode();
+        let result = unsafe {
             RawCall::new()
                 .gas(u64::MAX)
-                .call(token, call.encode())
-                .copy_into(&mut return_data)
+                .call(*token, &calldata)
         };
-        if !success {
-            return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                token: *token,
-            }));
-        }
+
+        let return_data = match result {
+            Ok(bytes) => bytes,
+            Err(_) => {
+                return Err(Error::SafeErc20FailedOperation(
+                    SafeErc20FailedOperation { token: *token },
+                ));
+            }
+        };
+ 
         // Treat no-data (all zeros) as success; only fail if there's non-zero junk that isn't `true`
         if return_data.iter().any(|&b| b != 0) && !Self::encodes_true(&return_data) {
             return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
@@ -543,23 +548,16 @@ impl SafeErc20 {
         token: &Address,
         call: &impl SolCall,
     ) -> Result<bool, Error> {
-        let mut return_data = vec![0u8; BOOL_TYPE_SIZE];
-        let success = unsafe {
+        let calldata = call.abi_encode();
+        let result = unsafe {
             RawCall::new()
                 .gas(u64::MAX)
-                .call(*token, &call.encode())
-                .map(|result| {
-                    if let Some(data) = result {
-                        let len = data.len().min(return_data.len());
-                        return_data[..len].copy_from_slice(&data[..len]);
-                    }
-                    true
-                })
-                .unwrap_or(false)
+                .call(*token, &calldata)
         };
-        if !success {
-            return Ok(false);
-        }
+        let return_data = match result {
+            Ok(bytes) => bytes,
+            Err(_) => return Ok(false), // keep “soft” failure but make it explicit
+        };
         Ok(Self::encodes_true(&return_data))
     }
 
@@ -568,27 +566,19 @@ impl SafeErc20 {
             owner: address(),
             spender,
         };
-        let mut return_data = vec![0u8; 32];
-        let success = unsafe {
+        let calldata = call.abi_encode();
+        let result = unsafe {
             RawCall::new()
-            gas(u64::MAX)
-            .call(token, &call.encode())
-            .map(|result| {
-                if let Some(data) = result {
-                    let len = data.len().min(return_data.len());
-                    return_data[..len].copy_from_slice(&data[..len]);
-                }
-                true
-            })
-            .unwrap_or(false)
-    };
-    if !success {
-        return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-            token: *token,
-            }));
-        }
-
-        Ok(U256::from_be_bytes(return_data.try_into().unwrap()))
+                .gas(u64::MAX)
+                .call(*token, &calldata)
+        };
+        let data = result.map_err(|_| {
+            Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token: *token })
+        })?;
+        let mut buf = [0u8; 32];
+        buf[..data.len().min(32)]
+            .copy_from_slice(&data[..data.len().min(32)]);
+        Ok(U256::from_be_bytes(buf))
     }
 
     fn encodes_true(data: &[u8]) -> bool {
