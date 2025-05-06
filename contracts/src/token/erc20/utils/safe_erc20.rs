@@ -554,10 +554,12 @@ impl SafeErc20 {
                 .gas(u64::MAX)
                 .call(*token, &calldata)
         };
+
         let return_data = match result {
             Ok(bytes) => bytes,
             Err(_) => return Ok(false), // keep “soft” failure but make it explicit
         };
+
         Ok(Self::encodes_true(&return_data))
     }
 
