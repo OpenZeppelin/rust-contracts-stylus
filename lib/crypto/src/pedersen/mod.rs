@@ -64,14 +64,14 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     /// Computes the Starkware version of the Pedersen hash of x and y.
     ///
     /// The hash is defined by:
-    /// [`PedersenParams::SHIFT_POINT`] + `x_low` * [`PedersenParams::P_0`] +
-    /// `x_high` * [`PedersenParams::P_1`] +
-    /// `y_low` * [`PedersenParams::P_2`] + `y_high` * [`PedersenParams::P_3`]
+    /// [`PedersenParams::P_0`] + `x_low` * [`PedersenParams::P_1`] +
+    /// `x_high` * [`PedersenParams::P_2`] + `y_low` * [`PedersenParams::P_3`] +
+    /// `y_high` * [`PedersenParams::P_4`]
     ///
     /// where `x_low` is the 248 low bits of `x`, `x_high` is the 4 high bits of
-    /// `x` and similarly for `y`. [`PedersenParams::SHIFT_POINT`],
-    /// [`PedersenParams::P_0`], [`PedersenParams::P_1`],
-    /// [`PedersenParams::P_2`], [`PedersenParams::P_3`] are constant points
+    /// `x` and similarly for `y`. [`PedersenParams::P_0`],
+    /// [`PedersenParams::P_1`], [`PedersenParams::P_2`],
+    /// [`PedersenParams::P_3`], [`PedersenParams::P_4`] are constant points
     /// generated from the digits of pi.
     ///
     /// # Arguments
@@ -81,9 +81,9 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     /// * `y` - The y coordinate of the point to hash.
     #[must_use]
     pub fn hash(&self, x: U256, y: U256) -> Option<P::BaseField> {
-        let hash: Projective<P> = F::SHIFT_POINT
-            + Self::process_single_element(x, F::P_0.into(), F::P_1.into())
-            + Self::process_single_element(y, F::P_2.into(), F::P_3.into());
+        let hash: Projective<P> = F::P_0
+            + Self::process_single_element(x, F::P_1.into(), F::P_2.into())
+            + Self::process_single_element(y, F::P_3.into(), F::P_4.into());
 
         let hash: Affine<P> = hash.into();
         hash.x()

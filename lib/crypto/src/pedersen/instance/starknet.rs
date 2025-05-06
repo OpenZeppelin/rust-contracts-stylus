@@ -64,30 +64,30 @@ pub struct StarknetPedersenParams;
 impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
     const FIELD_PRIME: U256 = FqParam::MODULUS;
     const N_ELEMENT_BITS_HASH: usize = 252;
-    const P_0: Affine<StarknetCurveConfig> =
+    const P_0: Affine<StarknetCurveConfig> = Affine::new_unchecked(
+			fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
+			fp_from_num!("1713931329540660377023406109199410414810705867260802078187082345529207694986")
+		);
+    const P_1: Affine<StarknetCurveConfig> =
 		Affine::new_unchecked(
             fp_from_num!("996781205833008774514500082376783249102396023663454813447423147977397232763"),
             fp_from_num!("1668503676786377725805489344771023921079126552019160156920634619255970485781")
         );
-    const P_1: Affine<StarknetCurveConfig> =
+    const P_2: Affine<StarknetCurveConfig> =
         Affine::new_unchecked(
             fp_from_num!("2251563274489750535117886426533222435294046428347329203627021249169616184184"),
             fp_from_num!("1798716007562728905295480679789526322175868328062420237419143593021674992973")
         );
-    const P_2: Affine<StarknetCurveConfig> =
+    const P_3: Affine<StarknetCurveConfig> =
 		Affine::new_unchecked(
             fp_from_num!("2138414695194151160943305727036575959195309218611738193261179310511854807447"),
             fp_from_num!("113410276730064486255102093846540133784865286929052426931474106396135072156")
         );
-    const P_3:  Affine<StarknetCurveConfig> =
+    const P_4:  Affine<StarknetCurveConfig> =
 		Affine::new_unchecked(
             fp_from_num!("2379962749567351885752724891227938183011949129833673362440656643086021394946"),
             fp_from_num!("776496453633298175483985398648758586525933812536653089401905292063708816422")
         );
-    const SHIFT_POINT: Affine<StarknetCurveConfig> = Affine::new_unchecked(
-			fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
-			fp_from_num!("1713931329540660377023406109199410414810705867260802078187082345529207694986")
-		);
 }
 
 #[cfg(all(test, feature = "std"))]
@@ -118,14 +118,15 @@ mod tests {
 
     #[test]
     fn correct_curve_config() {
-        // TODO
-        // assert!(U256::from(2).pow(U256::from(251)) < FrParam::MODULUS);
+        // 2**256 < [`FrParam::MODULUS`]
+        assert!(from_num!("3618502788666131106986593281521497120414687020801267626233049500247285301248") < FrParam::MODULUS);
+
         assert!(FrParam::MODULUS < StarknetPedersenParams::FIELD_PRIME);
     }
 
     #[test]
     fn correct_shift_point() {
-        assert_eq!(StarknetPedersenParams::SHIFT_POINT, Affine::new_unchecked(
+        assert_eq!(StarknetPedersenParams::P_0, Affine::new_unchecked(
             fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
             fp_from_num!("1713931329540660377023406109199410414810705867260802078187082345529207694986")
         ));

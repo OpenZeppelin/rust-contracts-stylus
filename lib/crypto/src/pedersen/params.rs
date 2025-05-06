@@ -11,15 +11,15 @@ pub trait PedersenParams<P: SWCurveConfig> {
     /// Field prime.
     const FIELD_PRIME: U256;
 
-    /// Constant point -- `P_0`.
+    /// Shift point.
     const P_0: Affine<P>;
+
     /// Constant point -- `P_1`.
     const P_1: Affine<P>;
     /// Constant point -- `P_2`.
     const P_2: Affine<P>;
     /// Constant point -- `P_3`.
     const P_3: Affine<P>;
-
-    /// Shift point.
-    const SHIFT_POINT: Affine<P>;
+    /// Constant point -- `P_4`.
+    const P_4: Affine<P>;
 }
