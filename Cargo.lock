@@ -3403,7 +3403,6 @@ dependencies = [
  "educe",
  "hex-literal",
  "num-traits",
- "once_cell",
  "proptest",
  "rand 0.9.0",
  "tiny-keccak",
