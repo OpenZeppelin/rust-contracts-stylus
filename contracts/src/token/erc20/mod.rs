@@ -511,7 +511,7 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     ///
