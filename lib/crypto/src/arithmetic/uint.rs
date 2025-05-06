@@ -1110,6 +1110,13 @@ mod test {
 
         let expected = Uint::<4>::new([0, 0, 0, 0b1100]);
         assert_eq!(num << (58 + 64 + 64), expected);
+
+        // edge case to make shift the number into all zeroes
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num << (56 + 64 + 64 + 64), expected);
+
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num << 1000, expected);
     }
 
     #[test]
@@ -1125,6 +1132,13 @@ mod test {
 
         let expected = Uint::<4>::new([0b11000000, 0, 0, 0]);
         assert_eq!(num >> (58 + 64 + 64), expected);
+
+        // edge case to make shift the number into all zeroes
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num >> (2 + 64 + 64 + 64), expected);
+
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num >> 1000, expected);
     }
 
     #[test]

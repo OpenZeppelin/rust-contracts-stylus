@@ -12,6 +12,7 @@ use openzeppelin_crypto::{
     },
 };
 use stylus_sdk::prelude::*;
+
 #[entrypoint]
 #[storage]
 struct PedersenExample;

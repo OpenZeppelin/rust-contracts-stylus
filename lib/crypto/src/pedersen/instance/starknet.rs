@@ -10,8 +10,9 @@ use crate::{
     fp_from_num, from_num,
     pedersen::params::PedersenParams,
 };
-#[derive(Clone, Default, PartialEq, Eq)]
+
 /// Starknet's Curve Details.
+#[derive(Clone, Default, PartialEq, Eq)]
 pub struct StarknetCurveConfig;
 
 /// Base Field for [`StarknetCurveConfig`].
