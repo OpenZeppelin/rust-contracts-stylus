@@ -12,15 +12,15 @@ use crate::{
         sw::{Affine, Projective, SWCurveConfig},
         AffineRepr, PrimeGroup,
     },
-    from_num,
+    from_hex,
     pedersen::params::PedersenParams,
 };
 
 /// Low part bits.
 const LOW_PART_BITS: u32 = 248;
 /// Low part mask. (2**248 - 1)
-const LOW_PART_MASK: U256 = from_num!(
-    "452312848583266388373324160190187140051835877600158453279131187530910662655"
+const LOW_PART_MASK: U256 = from_hex!(
+    "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
 /// Pedersen hash.
 #[derive(Clone, Debug)]
