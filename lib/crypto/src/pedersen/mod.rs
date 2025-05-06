@@ -12,16 +12,9 @@ use crate::{
         sw::{Affine, Projective, SWCurveConfig},
         AffineRepr, PrimeGroup,
     },
-    from_hex,
     pedersen::params::PedersenParams,
 };
 
-/// Low part bits.
-const LOW_PART_BITS: u32 = 248;
-/// Low part mask. (2**248 - 1)
-const LOW_PART_MASK: U256 = from_hex!(
-    "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-);
 /// Pedersen hash.
 #[derive(Clone, Debug)]
 pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig> {
@@ -56,8 +49,9 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
             "Element integer value is out of range"
         );
 
-        let high_nibble = element >> LOW_PART_BITS;
-        let low_part = element & LOW_PART_MASK;
+        let high_nibble = element >> F::LOW_PART_BITS;
+        let low_part = element & F::LOW_PART_MASK;
+
         p1.mul_bigint(low_part) + p2.mul_bigint(high_nibble)
     }
 

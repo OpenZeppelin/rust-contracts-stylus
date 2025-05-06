@@ -22,4 +22,9 @@ pub trait PedersenParams<P: SWCurveConfig> {
     const P_3: Affine<P>;
     /// Constant point -- `P_4`.
     const P_4: Affine<P>;
+
+    /// Low bits of a value to hash.
+    const LOW_PART_BITS: u32;
+    /// Low part mask for a value to hash.
+    const LOW_PART_MASK: U256;
 }

@@ -1,3 +1,2 @@
-//! This module contains pedersen hash instances for some popular curve
-//! instances.
+//! This module contains Pedersen Hash instances for some popular curves.
 pub mod starknet;

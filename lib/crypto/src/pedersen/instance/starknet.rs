@@ -1,4 +1,7 @@
-//! This module contains the pedersen hash function parameters for Starknet.
+//! This module contains the Pedersen Hash function (and curve) parameters for
+//! [Starknet instance].
+//!
+//! [Starknet instance]: <https://docs.starkware.co/starkex/crypto/pedersen-hash-function.html>
 
 use crate::{
     arithmetic::uint::U256,
@@ -7,7 +10,7 @@ use crate::{
         CurveConfig,
     },
     field::fp::{Fp256, FpParams, LIMBS_256},
-    fp_from_num, from_num,
+    fp_from_num, from_hex, from_num,
     pedersen::params::PedersenParams,
 };
 
@@ -63,6 +66,12 @@ pub struct StarknetPedersenParams;
 
 impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
     const FIELD_PRIME: U256 = FqParam::MODULUS;
+    /// Low part bits.
+    const LOW_PART_BITS: u32 = 248;
+    /// Low part mask. (2**248 - 1)
+    const LOW_PART_MASK: U256 = from_hex!(
+        "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    );
     const N_ELEMENT_BITS_HASH: usize = 252;
     const P_0: Affine<StarknetCurveConfig> = Affine::new_unchecked(
 			fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
