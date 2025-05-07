@@ -180,16 +180,16 @@ pub trait IErc3156FlashLender {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc3156FlashLender`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
-    fn interface_id() -> u32
+    fn interface_id() -> FixedBytes<4>
     where
         Self: Sized,
     {
-        u32::from_be_bytes(stylus_sdk::function_selector!(
+        FixedBytes::<4>::new(stylus_sdk::function_selector!(
             "maxFlashLoan",
             Address
-        )) ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+        )) ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
             "flashFee", Address, U256
-        )) ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+        )) ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
             "flashLoan",
             Address,
             Address,
@@ -403,8 +403,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
 
 impl IErc165 for Erc20FlashMint {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc3156FlashLender>::interface_id()
-            == interface_id
+        <Self as IErc3156FlashLender>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }

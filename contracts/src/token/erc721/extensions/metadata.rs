@@ -32,13 +32,13 @@ pub trait IErc721Metadata {
     // [`Erc721Metadata::token_uri`].
     /// Solidity interface id associated with [`IErc721Metadata`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
-    fn interface_id() -> u32
+    fn interface_id() -> FixedBytes<4>
     where
         Self: Sized,
     {
-        u32::from_be_bytes(stylus_sdk::function_selector!("name"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!("symbol"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+        FixedBytes::<4>::new(stylus_sdk::function_selector!("name"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!("symbol"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "tokenURI", U256
             ))
     }
@@ -73,8 +73,7 @@ impl IErc721Metadata for Erc721Metadata {
 
 impl IErc165 for Erc721Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721Metadata>::interface_id()
-            == interface_id
+        <Self as IErc721Metadata>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }

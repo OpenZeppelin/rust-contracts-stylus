@@ -130,18 +130,18 @@ pub trait IErc20Wrapper {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
     /// as a XOR of selectors for each function in the trait.
-    fn interface_id() -> u32
+    fn interface_id() -> FixedBytes<4>
     where
         Self: Sized,
     {
-        u32::from_be_bytes(stylus_sdk::function_selector!("decimals"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!("underlying"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+        FixedBytes::<4>::new(stylus_sdk::function_selector!("decimals"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!("underlying"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "depositFor",
                 Address,
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "withdrawTo",
                 Address,
                 U256
@@ -370,8 +370,7 @@ impl Erc20Wrapper {
 
 impl IErc165 for Erc20Wrapper {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Wrapper>::interface_id()
-            == interface_id
+        <Self as IErc20Wrapper>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }

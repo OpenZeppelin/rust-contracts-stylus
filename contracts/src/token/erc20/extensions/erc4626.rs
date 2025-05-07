@@ -210,61 +210,63 @@ pub trait IErc4626 {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
     /// XOR of selectors for each function in the trait.
-    fn interface_id() -> u32
+    fn interface_id() -> FixedBytes<4>
     where
         Self: Sized,
     {
-        u32::from_be_bytes(stylus_sdk::function_selector!("asset"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!("totalAssets"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+        FixedBytes::<4>::new(stylus_sdk::function_selector!("asset"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
+                "totalAssets"
+            ))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "convertToShares",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "convertToAssets",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxDeposit",
                 Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewDeposit",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "deposit", U256, Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxMint", Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewMint",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "mint", U256, Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxWithdraw",
                 Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewWithdraw",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "withdraw", U256, Address, Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxRedeem",
                 Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewRedeem",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "redeem", U256, Address, Address
             ))
     }
