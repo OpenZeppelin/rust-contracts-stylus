@@ -7,28 +7,37 @@ pub mod instance;
 pub mod params;
 
 use crate::{
-    arithmetic::uint::U256,
     curve::{
         sw::{Affine, Projective, SWCurveConfig},
-        AffineRepr, PrimeGroup,
+        AffineRepr, CurveConfig, PrimeGroup,
     },
+    field::prime::PrimeField,
     pedersen::params::PedersenParams,
 };
 
 /// Pedersen hash.
 #[derive(Clone, Debug)]
-pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig> {
+pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig>
+where
+    <P as CurveConfig>::BaseField: PrimeField,
+{
     params: core::marker::PhantomData<F>,
     curve: core::marker::PhantomData<P>,
 }
 
-impl<F: PedersenParams<P>, P: SWCurveConfig> Default for Pedersen<F, P> {
+impl<F: PedersenParams<P>, P: SWCurveConfig> Default for Pedersen<F, P>
+where
+    <P as CurveConfig>::BaseField: PrimeField,
+{
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
+impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P>
+where
+    <P as CurveConfig>::BaseField: PrimeField,
+{
     #[must_use]
     #[inline]
     /// Creates a new Pedersen hash instance.
@@ -40,14 +49,11 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     }
 
     fn process_single_element(
-        element: U256,
+        element: P::BaseField,
         p1: Projective<P>,
         p2: Projective<P>,
     ) -> Projective<P> {
-        assert!(
-            element < F::FIELD_PRIME,
-            "Element integer value is out of range"
-        );
+        let element = element.into_bigint();
 
         let high_nibble = element >> F::LOW_PART_BITS;
         let low_part = element & F::LOW_PART_MASK;
@@ -74,7 +80,11 @@ impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P> {
     /// * `x` - The x coordinate of the point to hash.
     /// * `y` - The y coordinate of the point to hash.
     #[must_use]
-    pub fn hash(&self, x: U256, y: U256) -> Option<P::BaseField> {
+    pub fn hash(
+        &self,
+        x: P::BaseField,
+        y: P::BaseField,
+    ) -> Option<P::BaseField> {
         let hash: Projective<P> = F::P_0
             + Self::process_single_element(x, F::P_1.into(), F::P_2.into())
             + Self::process_single_element(y, F::P_3.into(), F::P_4.into());

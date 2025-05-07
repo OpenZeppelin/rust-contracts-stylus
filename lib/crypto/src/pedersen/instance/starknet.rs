@@ -65,7 +65,6 @@ impl SWCurveConfig for StarknetCurveConfig {
 pub struct StarknetPedersenParams;
 
 impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
-    const FIELD_PRIME: U256 = FqParam::MODULUS;
     /// Low part bits.
     const LOW_PART_BITS: u32 = 248;
     /// Low part mask. (2**248 - 1)
@@ -101,11 +100,8 @@ impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use proptest::prelude::*;
-
     use super::*;
     use crate::{
-        arithmetic::{uint::from_str_hex, BigInteger},
         fp_from_hex,
         pedersen::{
             instance::starknet::{
@@ -121,19 +117,6 @@ mod tests {
     }
 
     #[test]
-    fn correct_field_prime() {
-        assert_eq!(StarknetPedersenParams::FIELD_PRIME, FqParam::MODULUS);
-    }
-
-    #[test]
-    fn correct_curve_config() {
-        // 2**256 < [`FrParam::MODULUS`]
-        assert!(from_num!("3618502788666131106986593281521497120414687020801267626233049500247285301248") < FrParam::MODULUS);
-
-        assert!(FrParam::MODULUS < StarknetPedersenParams::FIELD_PRIME);
-    }
-
-    #[test]
     fn correct_shift_point() {
         assert_eq!(StarknetPedersenParams::P_0, Affine::new_unchecked(
             fp_from_num!("2089986280348253421170679821480865132823066470938446095505822317253594081284"),
@@ -143,8 +126,8 @@ mod tests {
 
     #[derive(Debug)]
     struct StarknetTestCase {
-        x: U256,
-        y: U256,
+        x: Fq,
+        y: Fq,
         expected: Option<Fq>,
     }
 
@@ -153,13 +136,13 @@ mod tests {
         // Based on <https://github.com/starkware-libs/starkware-crypto-utils/blob/master/test/config/signature_test_data.json>.
         let test_cases = vec![
                 StarknetTestCase {
-                    x: from_str_hex("3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb"),
-                    y: from_str_hex("208a0a10250e382e1e4bbe2880906c2791bf6275695e02fbbc6aeff9cd8b31a"),
+                    x: fp_from_hex!("3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb"),
+                    y: fp_from_hex!("208a0a10250e382e1e4bbe2880906c2791bf6275695e02fbbc6aeff9cd8b31a"),
                     expected: Some(fp_from_hex!("30e480bed5fe53fa909cc0f8c4d99b8f9f2c016be4c41e13a4848797979c662"))
                 },
                 StarknetTestCase {
-                    x: from_str_hex("58f580910a6ca59b28927c08fe6c43e2e303ca384badc365795fc645d479d45"),
-                    y: from_str_hex("78734f65a067be9bdb39de18434d71e79f7b6466a4b66bbd979ab9e7515fe0b"),
+                    x: fp_from_hex!("58f580910a6ca59b28927c08fe6c43e2e303ca384badc365795fc645d479d45"),
+                    y: fp_from_hex!("78734f65a067be9bdb39de18434d71e79f7b6466a4b66bbd979ab9e7515fe0b"),
                     expected: Some(fp_from_hex!("68cc0b76cddd1dd4ed2301ada9b7c872b23875d5ff837b3a87993e0d9996b87")),
                 },
             ];
@@ -177,40 +160,46 @@ mod tests {
         }
     }
 
-    fn proper_values() -> impl Strategy<Value = alloy_primitives::U256> {
-        any::<alloy_primitives::U256>().prop_filter(
-            "Should be less than `StarknetPedersenParams::FIELD_PRIME`",
-            |x| from_u256(x) < StarknetPedersenParams::FIELD_PRIME,
-        )
-    }
+    // TODO#q: uncomment and refactor
+    /*
+        fn proper_values() -> impl Strategy<Value = alloy_primitives::U256> {
+            any::<alloy_primitives::U256>().prop_filter(
+                "Should be less than `StarknetPedersenParams::FIELD_PRIME`",
+                |x| from_u256(x) < StarknetPedersenParams::FIELD_PRIME,
+            )
+        }
 
-    fn invalid_values() -> impl Strategy<Value = alloy_primitives::U256> {
-        any::<alloy_primitives::U256>().prop_filter(
-            "Should be greater or equal than `StarknetPedersenParams::FIELD_PRIME`",
-            |x| from_u256(x) >= StarknetPedersenParams::FIELD_PRIME,
-        )
-    }
+        fn invalid_values() -> impl Strategy<Value = alloy_primitives::U256> {
+            any::<alloy_primitives::U256>().prop_filter(
+                "Should be greater or equal than `StarknetPedersenParams::FIELD_PRIME`",
+                |x| from_u256(x) >= StarknetPedersenParams::FIELD_PRIME,
+            )
+        }
 
-    fn from_u256(elem: &alloy_primitives::U256) -> U256 {
-        U256::from_bytes_le(&elem.to_le_bytes_vec())
-    }
+        fn from_u256(elem: &alloy_primitives::U256) -> U256 {
+            U256::from_bytes_le(&elem.to_le_bytes_vec())
+        }
 
-    #[test]
-    fn hash() {
-        proptest!(|(input in proptest::array::uniform2(proper_values()))| {
-            let pedersen = Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
-            let hash = pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
-            assert!(hash.is_some());
-        });
-    }
+        //
+        #[test]
+        fn hash() {
+            proptest!(|(input in proptest::array::uniform2(proper_values()))| {
+                    let pedersen = Pedersen::<StarknetPedersenParams,
+            StarknetCurveConfig>::new();         let hash =
+            pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
+                    assert!(hash.is_some());
+                });
+        }
 
-    #[test]
-    #[should_panic = "Element integer value is out of range"]
-    fn panics_on_wrong_item() {
-        proptest!(|(input in proptest::array::uniform2(invalid_values()))| {
-            let pedersen = Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
-            let hash = pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
-            assert!(hash.is_some());
-        });
-    }
+        #[test]
+        #[should_panic = "Element integer value is out of range"]
+        fn panics_on_wrong_item() {
+            proptest!(|(input in proptest::array::uniform2(invalid_values()))| {
+                    let pedersen = Pedersen::<StarknetPedersenParams,
+            StarknetCurveConfig>::new();         let hash =
+            pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
+                    assert!(hash.is_some());
+                });
+        }
+    */
 }

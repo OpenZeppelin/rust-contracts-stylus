@@ -1,15 +1,20 @@
 //! Pedersen hash parameters.
 
 use crate::{
-    arithmetic::uint::U256,
-    curve::sw::{Affine, SWCurveConfig},
+    curve::{
+        sw::{Affine, SWCurveConfig},
+        CurveConfig,
+    },
+    field::prime::PrimeField,
 };
+
 /// Pedersen hash parameters.
-pub trait PedersenParams<P: SWCurveConfig> {
+pub trait PedersenParams<P: SWCurveConfig>
+where
+    <P as CurveConfig>::BaseField: PrimeField,
+{
     /// Number of elements in the hash.
     const N_ELEMENT_BITS_HASH: usize;
-    /// Field prime.
-    const FIELD_PRIME: U256;
 
     /// Shift point.
     const P_0: Affine<P>;
@@ -26,5 +31,5 @@ pub trait PedersenParams<P: SWCurveConfig> {
     /// Low bits of a value to hash.
     const LOW_PART_BITS: u32;
     /// Low part mask for a value to hash.
-    const LOW_PART_MASK: U256;
+    const LOW_PART_MASK: <P::BaseField as PrimeField>::BigInt;
 }

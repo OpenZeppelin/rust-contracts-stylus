@@ -31,7 +31,7 @@ impl PedersenExample {
             .map(|x| U256::from_bytes_le(&x.to_le_bytes_vec()))
             .collect();
 
-        let hash = hasher.hash(inputs[0], inputs[1]);
+        let hash = hasher.hash(inputs[0].into(), inputs[1].into());
         let hash = hash.expect("Failed to hash").into_bigint().into_bytes_le();
 
         alloy_primitives::U256::from_le_slice(&hash)
