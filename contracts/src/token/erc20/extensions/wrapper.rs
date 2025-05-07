@@ -153,11 +153,11 @@ pub trait IErc20Wrapper {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// fn decimals(&self) -> U8 {
+    /// fn decimals(&self) -> u8 {
     ///     self.erc20_wrapper.decimals()
     /// }
     /// ```
-    fn decimals(&self) -> U8;
+    fn decimals(&self) -> u8;
 
     /// Returns the address of the underlying ERC-20 token that is being
     /// wrapped.
@@ -258,8 +258,8 @@ unsafe impl TopLevelStorage for Erc20Wrapper {}
 impl IErc20Wrapper for Erc20Wrapper {
     type Error = Error;
 
-    fn decimals(&self) -> U8 {
-        self.underlying_decimals.get()
+    fn decimals(&self) -> u8 {
+        self.underlying_decimals.get().to::<u8>()
     }
 
     fn underlying(&self) -> Address {
@@ -388,7 +388,7 @@ mod tests {
 
     #[public]
     impl Erc20WrapperTestExample {
-        fn decimals(&self) -> U8 {
+        fn decimals(&self) -> u8 {
             self.wrapper.decimals()
         }
 

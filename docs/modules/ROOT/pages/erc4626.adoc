@@ -35,7 +35,7 @@ struct Erc4626Example {
 #[public]
 #[inherit(Erc20, Erc20Metadata)]
 impl Erc4626Example {
-    fn decimals(&self) -> U8 {
+    fn decimals(&self) -> u8 {
         self.erc4626.decimals()
     }
 

@@ -10,6 +10,7 @@ version.workspace = true
 openzeppelin-stylus.workspace = true
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
+stylus-proc.workspace = true
 
 [dev-dependencies]
 alloy.workspace = true

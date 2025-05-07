@@ -249,6 +249,13 @@ pub trait IVestingWallet {
         &mut self,
     ) -> Result<(), <Self as IVestingWallet>::Error>;
 
+    /// The contract should be able to receive Ether.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    fn receive_ether(&self);
+
     /// Getter for the start timestamp.
     ///
     /// # Arguments
@@ -430,6 +437,9 @@ impl IVestingWallet for VestingWallet {
     ) -> Result<(), <Self as IVestingWallet>::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
+
+    #[payable]
+    fn receive_ether(&self) {}
 
     fn start(&self) -> U256 {
         U256::from(self.start.get())

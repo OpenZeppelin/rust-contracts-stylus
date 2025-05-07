@@ -1052,16 +1052,17 @@ impl Erc4626 {
     /// # Examples
     ///
     /// ```rust,ignore
-    ///     fn decimals(&self) -> U8 {
+    ///     fn decimals(&self) -> u8 {
     ///         self.erc4626.decimals()
     ///     }
     /// ```
     #[must_use]
-    pub fn decimals(&self) -> U8 {
+    pub fn decimals(&self) -> u8 {
         self.underlying_decimals
             .get()
             .checked_add(self._decimals_offset())
             .expect("Decimals should not be greater than `U8::MAX`")
+            .to::<u8>()
     }
 
     /// Converts a given amount of assets to shares using the specified

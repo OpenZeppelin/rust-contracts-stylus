@@ -3,10 +3,9 @@
 use abi::VestingWallet;
 use alloy::{
     eips::BlockId,
-    network::TransactionBuilder,
     primitives::{Address, U256},
     providers::Provider,
-    rpc::types::{BlockTransactionsKind, TransactionRequest},
+    rpc::types::BlockTransactionsKind,
     sol,
 };
 use e2e::{
@@ -121,13 +120,9 @@ mod ether_vesting {
             .await?
             .address()?;
 
-        let tx = TransactionRequest::default()
-            .with_from(account.address())
-            .with_to(contract_addr)
-            .with_value(U256::from(allocation));
+        let contract = VestingWallet::new(contract_addr, &account.wallet);
 
-        account.wallet.send_transaction(tx).await?.watch().await?;
-
+        watch!(contract.receiveEther().value(U256::from(allocation)))?;
         Ok(contract_addr)
     }
 

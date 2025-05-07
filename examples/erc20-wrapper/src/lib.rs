@@ -26,7 +26,7 @@ impl Erc20WrapperExample {
         self.erc20_wrapper.underlying()
     }
 
-    fn decimals(&self) -> U8 {
+    fn decimals(&self) -> u8 {
         self.erc20_wrapper.decimals()
     }
 

@@ -13,9 +13,4 @@ struct VestingWalletExample {
 
 #[public]
 #[inherit(VestingWallet)]
-impl VestingWalletExample {
-    #[receive]
-    fn receive(&mut self) -> Result<(), Vec<u8>> {
-        Ok(())
-    }
-}
+impl VestingWalletExample {}
