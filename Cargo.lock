@@ -1243,6 +1243,7 @@ dependencies = [
  "itertools 0.13.0",
  "keccak-const",
  "koba",
+ "openzeppelin-crypto",
  "openzeppelin-stylus",
  "serde",
  "tokio",
@@ -3398,6 +3399,7 @@ dependencies = [
 name = "openzeppelin-crypto"
 version = "0.2.0-alpha.4"
 dependencies = [
+ "alloy-primitives",
  "educe",
  "hex-literal",
  "num-traits",
@@ -3528,6 +3530,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83a0692ec44e4cf1ef28ca317f14f8f07da2d95ec3fa01f86e4467b725e60917"
 dependencies = [
  "digest 0.10.7",
+]
+
+[[package]]
+name = "pedersen-example"
+version = "0.2.0-alpha.4"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-crypto",
+ "stylus-sdk",
+ "tokio",
 ]
 
 [[package]]
