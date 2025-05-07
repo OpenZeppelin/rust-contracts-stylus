@@ -100,8 +100,11 @@ impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use proptest::proptest;
+
     use super::*;
     use crate::{
+        arithmetic::BigInteger,
         fp_from_hex,
         pedersen::{
             instance::starknet::{
@@ -160,46 +163,18 @@ mod tests {
         }
     }
 
-    // TODO#q: uncomment and refactor
-    /*
-        fn proper_values() -> impl Strategy<Value = alloy_primitives::U256> {
-            any::<alloy_primitives::U256>().prop_filter(
-                "Should be less than `StarknetPedersenParams::FIELD_PRIME`",
-                |x| from_u256(x) < StarknetPedersenParams::FIELD_PRIME,
-            )
-        }
+    fn from_u256(elem: &alloy_primitives::U256) -> U256 {
+        U256::from_bytes_le(&elem.to_le_bytes_vec())
+    }
 
-        fn invalid_values() -> impl Strategy<Value = alloy_primitives::U256> {
-            any::<alloy_primitives::U256>().prop_filter(
-                "Should be greater or equal than `StarknetPedersenParams::FIELD_PRIME`",
-                |x| from_u256(x) >= StarknetPedersenParams::FIELD_PRIME,
-            )
-        }
-
-        fn from_u256(elem: &alloy_primitives::U256) -> U256 {
-            U256::from_bytes_le(&elem.to_le_bytes_vec())
-        }
-
-        //
-        #[test]
-        fn hash() {
-            proptest!(|(input in proptest::array::uniform2(proper_values()))| {
-                    let pedersen = Pedersen::<StarknetPedersenParams,
-            StarknetCurveConfig>::new();         let hash =
-            pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
-                    assert!(hash.is_some());
-                });
-        }
-
-        #[test]
-        #[should_panic = "Element integer value is out of range"]
-        fn panics_on_wrong_item() {
-            proptest!(|(input in proptest::array::uniform2(invalid_values()))| {
-                    let pedersen = Pedersen::<StarknetPedersenParams,
-            StarknetCurveConfig>::new();         let hash =
-            pedersen.hash(from_u256(&input[0]), from_u256(&input[1]));
-                    assert!(hash.is_some());
-                });
-        }
-    */
+    #[test]
+    fn hash() {
+        // Check no panics.
+        proptest!(|(input1: alloy_primitives::U256, input2: alloy_primitives::U256)| {
+            let pedersen =
+                Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
+            let hash = pedersen.hash(from_u256(&input1).into(), from_u256(&input2).into());
+            assert!(hash.is_some());
+        });
+    }
 }
