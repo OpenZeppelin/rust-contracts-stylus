@@ -14,7 +14,7 @@
 //! exposed by default.
 //! You should expose them manually in your contract's abi.
 
-use alloc::{vec, vec::Vec};
+use alloc::vec;
 
 pub use sol::*;
 use stylus_sdk::{

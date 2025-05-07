@@ -11,9 +11,7 @@
 //! wrapper (i.e. wrapper's total supply is higher than its underlying balance).
 //! See [`Erc20Wrapper::_recover`] for recovering value accrued to the wrapper.
 
-use alloc::{vec, vec::Vec};
-
-use alloy_primitives::{Address, FixedBytes, U256, U8};
+use alloy_primitives::{Address, FixedBytes, U256};
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},

@@ -1,8 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_main)]
 extern crate alloc;
 
-use alloc::vec::Vec;
-
 use alloy_primitives::B256;
 use openzeppelin_crypto::{
     merkle::{self, Verifier},

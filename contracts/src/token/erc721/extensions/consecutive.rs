@@ -24,7 +24,7 @@
 //!
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
-use alloc::{vec, vec::Vec};
+use alloc::vec;
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{uint, Address, FixedBytes, U256};

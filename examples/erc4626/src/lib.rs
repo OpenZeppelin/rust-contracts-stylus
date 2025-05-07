@@ -1,9 +1,7 @@
 #![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
-use alloc::vec::Vec;
-
-use alloy_primitives::{Address, U256, U8};
+use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
     extensions::{erc4626, Erc20Metadata, Erc4626, IErc4626},
     Erc20,

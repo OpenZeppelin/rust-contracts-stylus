@@ -1,8 +1,6 @@
 #![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
-use alloc::vec::Vec;
-
 use alloy_primitives::U256;
 use openzeppelin_crypto::{
     arithmetic::{uint::Uint, BigInteger},

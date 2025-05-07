@@ -1,10 +1,6 @@
 //! Optional Metadata of the ERC-721 standard.
 
-use alloc::{
-    string::{String, ToString},
-    vec,
-    vec::Vec,
-};
+use alloc::string::{String, ToString};
 
 use alloy_primitives::{FixedBytes, U256};
 use stylus_sdk::{prelude::*, storage::StorageString};

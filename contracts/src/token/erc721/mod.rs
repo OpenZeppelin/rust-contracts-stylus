@@ -2,7 +2,6 @@
 use alloc::{
     string::{String, ToString},
     vec,
-    vec::Vec,
 };
 
 use alloy_primitives::{uint, Address, FixedBytes, U128, U256};

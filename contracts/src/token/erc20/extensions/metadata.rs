@@ -1,6 +1,6 @@
 //! Optional Metadata of the ERC-20 standard.
 
-use alloc::{string::String, vec, vec::Vec};
+use alloc::{string::String, vec};
 
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{alloy_primitives::FixedBytes, prelude::*};
