@@ -143,17 +143,17 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Metadata as IErc721Metadata>::interface_id();
-        let expected = 0x5b5e139f;
+        let expected = 0x5b5e139f.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Metadata::supports_interface(
-            <Erc721Metadata as IErc721Metadata>::interface_id().into()
+            <Erc721Metadata as IErc721Metadata>::interface_id()
         ));
         assert!(Erc721Metadata::supports_interface(
-            <Erc721Metadata as IErc165>::interface_id().into()
+            <Erc721Metadata as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

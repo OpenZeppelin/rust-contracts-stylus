@@ -475,20 +475,20 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable2Step as IOwnable2Step>::interface_id();
-        let expected = 0x94be5999;
+        let expected = 0x94be5999.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IOwnable2Step>::interface_id().into()
+            <Ownable2Step as IOwnable2Step>::interface_id()
         ));
         assert!(Ownable2Step::supports_interface(
-            <Ownable as IOwnable>::interface_id().into()
+            <Ownable as IOwnable>::interface_id()
         ));
         assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IErc165>::interface_id().into()
+            <Ownable2Step as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

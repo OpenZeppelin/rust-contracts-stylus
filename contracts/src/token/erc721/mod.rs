@@ -2702,18 +2702,18 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721 as IErc721>::interface_id();
-        let expected = 0x80ac58cd;
+        let expected = 0x80ac58cd.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
-        assert!(Erc721::supports_interface(
-            <Erc721 as IErc721>::interface_id().into()
-        ));
-        assert!(Erc721::supports_interface(
-            <Erc721 as IErc165>::interface_id().into()
-        ));
+        assert!(
+            Erc721::supports_interface(<Erc721 as IErc721>::interface_id())
+        );
+        assert!(
+            Erc721::supports_interface(<Erc721 as IErc165>::interface_id())
+        );
 
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc721::supports_interface(fake_interface_id.into()));

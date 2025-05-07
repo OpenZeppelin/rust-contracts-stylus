@@ -611,17 +611,17 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20FlashMint as IErc3156FlashLender>::interface_id();
-        let expected = 0xe4143091;
+        let expected = 0xe4143091.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc3156FlashLender>::interface_id().into()
+            <Erc20FlashMint as IErc3156FlashLender>::interface_id()
         ));
         assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc165>::interface_id().into()
+            <Erc20FlashMint as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

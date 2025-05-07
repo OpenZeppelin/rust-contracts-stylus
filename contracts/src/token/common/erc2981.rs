@@ -872,17 +872,17 @@ mod tests {
         let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
-        let expected = 0x2a55_205a;
+        let expected = 0x2a55_205a.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc2981>::interface_id().into()
+            <Erc2981 as IErc2981>::interface_id()
         ));
         assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc165>::interface_id().into()
+            <Erc2981 as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

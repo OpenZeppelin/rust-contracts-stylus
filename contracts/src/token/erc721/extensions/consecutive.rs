@@ -1466,10 +1466,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc721>::interface_id().into()
+            <Erc721Consecutive as IErc721>::interface_id()
         ));
         assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc165>::interface_id().into()
+            <Erc721Consecutive as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

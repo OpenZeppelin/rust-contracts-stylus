@@ -75,8 +75,7 @@ impl IErc20Metadata for Erc20Metadata {
 
 impl IErc165 for Erc20Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Metadata>::interface_id()
-            == interface_id
+        <Self as IErc20Metadata>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -88,17 +87,17 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
-        let expected = 0xa219a025;
+        let expected = 0xa219a025.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc20Metadata::supports_interface(
-            <Erc20Metadata as IErc20Metadata>::interface_id().into()
+            <Erc20Metadata as IErc20Metadata>::interface_id()
         ));
         assert!(Erc20Metadata::supports_interface(
-            <Erc20Metadata as IErc165>::interface_id().into()
+            <Erc20Metadata as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

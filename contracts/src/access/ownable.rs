@@ -307,17 +307,17 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable as IOwnable>::interface_id();
-        let expected = 0xe083076;
+        let expected = 0xe083076.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Ownable::supports_interface(
-            <Ownable as IOwnable>::interface_id().into()
+            <Ownable as IOwnable>::interface_id()
         ));
         assert!(Ownable::supports_interface(
-            <Ownable as IErc165>::interface_id().into()
+            <Ownable as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

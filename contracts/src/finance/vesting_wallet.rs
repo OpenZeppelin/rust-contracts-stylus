@@ -579,8 +579,7 @@ impl VestingWallet {
 
 impl IErc165 for VestingWallet {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IVestingWallet>::interface_id()
-            == interface_id
+        <Self as IVestingWallet>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -726,17 +725,17 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <VestingWallet as IVestingWallet>::interface_id();
-        let expected = 0x23a2649d;
+        let expected = 0x23a2649d.into();
         assert_ne!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(VestingWallet::supports_interface(
-            <VestingWallet as IVestingWallet>::interface_id().into()
+            <VestingWallet as IVestingWallet>::interface_id()
         ));
         assert!(VestingWallet::supports_interface(
-            <VestingWallet as IErc165>::interface_id().into()
+            <VestingWallet as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

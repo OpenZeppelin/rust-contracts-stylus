@@ -375,10 +375,8 @@ impl Erc1155Supply {
 
 impl IErc165 for Erc1155Supply {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc1155Supply>::interface_id()
-            == interface_id
-            || <Self as IErc1155>::interface_id()
-                == interface_id
+        <Self as IErc1155Supply>::interface_id() == interface_id
+            || <Self as IErc1155>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }
@@ -624,20 +622,20 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155Supply as IErc1155Supply>::interface_id();
-        let expected = 0xeac6339d;
+        let expected = 0xeac6339d.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc1155Supply>::interface_id().into()
+            <Erc1155Supply as IErc1155Supply>::interface_id()
         ));
         assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc165>::interface_id().into()
+            <Erc1155Supply as IErc165>::interface_id()
         ));
         assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc1155>::interface_id().into()
+            <Erc1155Supply as IErc1155>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;
