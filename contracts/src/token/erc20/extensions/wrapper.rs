@@ -371,7 +371,7 @@ impl Erc20Wrapper {
 impl IErc165 for Erc20Wrapper {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20Wrapper>::interface_id()
-            == u32::from_be_bytes(*interface_id)
+            == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }

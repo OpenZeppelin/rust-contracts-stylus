@@ -135,6 +135,7 @@ pub struct AccessControl {
     /// Role identifier -> Role information.
     pub(crate) roles: StorageMap<FixedBytes<32>, RoleData>,
 }
+
 /// Interface for an [`AccessControl`] contract.
 #[interface_id]
 pub trait IAccessControl {
@@ -413,8 +414,7 @@ impl AccessControl {
 
 impl IErc165 for AccessControl {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IAccessControl>::interface_id()
-            == u32::from_be_bytes(*interface_id)
+        <Self as IAccessControl>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }

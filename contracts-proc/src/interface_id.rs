@@ -54,7 +54,7 @@ pub(crate) fn interface_id(
 
         // Store selector expression from every function in the trait.
         selectors.push(
-            quote! { u32::from_be_bytes(stylus_sdk::function_selector!(#solidity_fn_name #(, #arg_types )*)) }
+            quote! { alloy_primitives::FixedBytes::<4>::new(stylus_sdk::function_selector!(#solidity_fn_name #(, #arg_types )*)) }
         );
     }
 
@@ -74,7 +74,7 @@ pub(crate) fn interface_id(
 
             #[doc = concat!("Solidity interface id associated with ", stringify!(#name), " trait.")]
             #[doc = "Computed as a XOR of selectors for each function in the trait."]
-            fn interface_id() -> u32 
+            fn interface_id() -> FixedBytes<4>
             where 
                 Self: Sized,
             {

@@ -235,10 +235,8 @@ impl Ownable2Step {
 
 impl IErc165 for Ownable2Step {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IOwnable2Step>::interface_id()
-            == u32::from_be_bytes(*interface_id)
-            || <Ownable as IOwnable>::interface_id()
-                == u32::from_be_bytes(*interface_id)
+        <Self as IOwnable2Step>::interface_id() == interface_id
+            || <Ownable as IOwnable>::interface_id() == interface_id
             || Erc165::supports_interface(interface_id)
     }
 }
