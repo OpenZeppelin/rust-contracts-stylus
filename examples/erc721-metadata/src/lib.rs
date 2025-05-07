@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
