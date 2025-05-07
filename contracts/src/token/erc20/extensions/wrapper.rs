@@ -427,7 +427,7 @@ mod tests {
             contract.wrapper.underlying_decimals.set(decimals);
         });
 
-        assert_eq!(contract.sender(alice).decimals(), decimals);
+        assert_eq!(contract.sender(alice).decimals(), decimals.to::<u8>());
     }
 
     #[motsu::test]

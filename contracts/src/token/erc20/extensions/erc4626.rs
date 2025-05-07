@@ -1359,13 +1359,16 @@ mod tests {
             contract.erc4626.underlying_decimals.set(underlying_decimals);
         });
         let decimals = contract.sender(alice).erc4626.decimals();
-        assert_eq!(decimals, underlying_decimals);
+        assert_eq!(decimals, underlying_decimals.to::<u8>());
 
         let new_decimal_offset = U8::from(10);
         contract.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
 
         let decimals = contract.sender(alice).erc4626.decimals();
-        assert_eq!(decimals, underlying_decimals + new_decimal_offset);
+        assert_eq!(
+            decimals,
+            (underlying_decimals + new_decimal_offset).to::<u8>()
+        );
     }
 
     #[motsu::test]

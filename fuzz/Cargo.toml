@@ -9,10 +9,10 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4.9"
-stylus-sdk = { version = "0.8.4", default-features = false, features = [
+stylus-sdk = { version = "=0.6.1", default-features = false, features = [
     "mini-alloc",
 ] }
-alloy-primitives = { version = "=0.8.20", default-features = false }
+alloy-primitives = { version = "=0.7.6", default-features = false }
 
 [dependencies.openzeppelin-crypto]
 path = "../lib/crypto"

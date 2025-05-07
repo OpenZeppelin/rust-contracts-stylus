@@ -3,8 +3,8 @@ use alloy::{
     primitives::Address,
     providers::{
         fillers::{
-            BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill,
-            NonceFiller, WalletFiller,
+            ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
+            WalletFiller,
         },
         Identity, RootProvider,
     },
@@ -20,11 +20,8 @@ pub(crate) const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
 pub type Wallet = FillProvider<
     JoinFill<
         JoinFill<
-            Identity,
-            JoinFill<
-                GasFiller,
-                JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>,
-            >,
+            JoinFill<JoinFill<Identity, GasFiller>, NonceFiller>,
+            ChainIdFiller,
         >,
         WalletFiller<EthereumWallet>,
     >,
