@@ -140,9 +140,8 @@ impl Deployer {
         let stderr = &String::from_utf8_lossy(&output.stderr);
 
         // Look for the error pattern with hex data
-        let error_data_regex =
-            Regex::new(r#"data: Some\(String\("(0x[a-fA-F0-9]+)"\)\)"#)
-                .context("failed to create error data regex")?;
+        let error_data_regex = Regex::new(r#"data:.+"(0x[a-fA-F0-9]+)""#)
+            .context("failed to create error data regex")?;
 
         if let Some(captures) = error_data_regex.captures(stderr) {
             if let Some(hex_data) = captures.get(1) {
