@@ -39,7 +39,6 @@ mod sol {
         ///
         /// * `token` - Address of the ERC-20 token.
         #[derive(Debug)]
-        #[allow(missing_docs)]
         error SafeErc20FailedOperation(address token);
 
         /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
@@ -48,7 +47,6 @@ mod sol {
         /// * `current_allowance` - Current allowance of the `spender`.
         /// * `requested_decrease` - Requested decrease in allowance for `spender`.
         #[derive(Debug)]
-        #[allow(missing_docs)]
         error SafeErc20FailedDecreaseAllowance(
             address spender,
             uint256 current_allowance,
@@ -350,7 +348,6 @@ pub trait ISafeErc20 {
     ) -> Result<(), Self::Error>;
 }
 
-#[public]
 impl ISafeErc20 for SafeErc20 {
     type Error = Error;
 
@@ -480,7 +477,8 @@ impl ISafeErc20 for SafeErc20 {
         if Self::account_has_code(to) == 0 {
             self.safe_transfer_from(token, from, to, value)
         } else {
-            let call = IErc1363::transferFromAndCallCall { from, to, value, data: data.into() };
+            let data_bytes = data.into();
+            let call = IErc1363::transferFromAndCallCall { from, to, value, data: data_bytes };
             if !Self::call_optional_return_bool(&token, &call)? {
                 return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
             }
@@ -510,9 +508,9 @@ impl ISafeErc20 for SafeErc20 {
 
 impl SafeErc20 {
     #[inline]
-    fn account_has_code(addr: Address) -> usize {
-        // SAFETY: extcodesize is a pure query, no state mutation or re-entrancy
-        unsafe { stylus_sdk::prelude::extcodesize(addr) }
+    fn account_has_code(addr: Address) -> bool {
+        // returns true if `addr` has contract code
+        addr.has_code()
     }
 
     fn call_optional_return(
@@ -558,7 +556,7 @@ impl SafeErc20 {
 
         let return_data = match result {
             Ok(bytes) => bytes,
-            Err(_) => return Ok(false), // keep “soft” failure but make it explicit
+            Err(_) => return Ok(false), // keep "soft" failure but make it explicit
         };
 
         Ok(Self::encodes_true(&return_data))
