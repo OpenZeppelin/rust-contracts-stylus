@@ -3,14 +3,14 @@
 use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::primitives::Address;
 use e2e::{
-    receipt, send, Account, ContractInitializationError, EventExt, Revert,ConstructorData
+    receipt, send, Account, ContractInitializationError, EventExt, Revert,
 };
 use eyre::Result;
 
 mod abi;
 
-fn ctr(owner: Address) -> ConstructorData {
-    ConstructorData { signature: "constructor(address)".to_string(), args: vec![owner.to_string()] }
+fn ctr(owner: Address) -> Vec<String> {
+    vec![owner.to_string()]
 }
 
 // ============================================================================
@@ -45,9 +45,9 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
 
     // TODO: assert the actual `OwnableInvalidOwner` error was returned once
     // StylusDeployer is able to return the exact revert reason from
-    // constructors. assert!(err.reverted_with(Ownable::OwnableInvalidOwner
-    // { owner: Address::ZERO }));
-
+    // constructors.
+    // assert!(err.reverted_with(Ownable::OwnableInvalidOwner { owner:
+    // Address::ZERO }));
     assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
