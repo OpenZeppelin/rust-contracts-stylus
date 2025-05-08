@@ -4,11 +4,12 @@ mod deploy;
 mod environment;
 mod error;
 mod event;
+mod project;
 mod receipt;
 mod system;
 
 pub use account::Account;
-pub use deploy::ContractInitializationError;
+pub use deploy::{ConstructorData, ContractInitializationError};
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::Ext as EventExt;

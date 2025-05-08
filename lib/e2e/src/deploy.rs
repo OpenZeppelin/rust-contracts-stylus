@@ -13,7 +13,7 @@ use eyre::{Context, ContextCompat};
 use regex::Regex;
 use stylus_sdk::function_selector;
 
-use crate::{system::DEPLOYER_ADDRESS, Receipt};
+use crate::{project::Crate, system::DEPLOYER_ADDRESS, Receipt};
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address);
@@ -47,22 +47,29 @@ impl std::fmt::Display for ContractInitializationError {
 
 impl std::error::Error for ContractInitializationError {}
 
+/// Constructor data
+pub struct ConstructorData {
+    /// Constructor signature
+    pub signature: String,
+    /// Constructor arguments
+    pub args: Vec<String>,
+}
 /// A basic smart contract deployer.
 pub struct Deployer {
     rpc_url: String,
     private_key: String,
-    ctor_args: Option<Vec<String>>,
+    ctor: Option<ConstructorData>,
 }
 
 impl Deployer {
     pub fn new(rpc_url: String, private_key: String) -> Self {
-        Self { rpc_url, private_key, ctor_args: None }
+        Self { rpc_url, private_key, ctor: None }
     }
 
     /// Add solidity constructor to the deployer.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn with_constructor(mut self, ctr_args: Vec<String>) -> Deployer {
-        self.ctor_args = Some(ctr_args);
+    pub fn with_constructor(mut self, ctor: ConstructorData) -> Deployer {
+        self.ctor = Some(ctor);
         self
     }
 
@@ -77,7 +84,9 @@ impl Deployer {
     /// - Unable to collect information about the crate required for deployment.
     /// - `cargo stylus deploy` errors.
     pub async fn deploy(self) -> eyre::Result<Receipt> {
-        let mut command = self.create_command();
+        let pkg = Crate::new()?;
+
+        let mut command = self.create_command(pkg);
 
         let output = command
             .output()
@@ -93,13 +102,17 @@ impl Deployer {
         }
     }
 
-    fn create_command(&self) -> Command {
+    fn create_command(&self, e2e_crate: Crate) -> Command {
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
             .args(["-e", &self.rpc_url])
             .args(["--private-key", &self.private_key])
-            .args(["--no-verify"]);
+            .args(["--no-verify"])
+            .args([
+                "--wasm-file",
+                e2e_crate.wasm.to_str().expect("should be valid wasm path"),
+            ]);
 
         // There are 3 possible cases when it comes to invoking constructors:
         //      1. No constructor exists on a contract - `self.ctor_args` should
@@ -112,16 +125,17 @@ impl Deployer {
         // The deployer address and constructor-args must both be set if the
         // constructor is to be invoked on a contract. Otherwise,
         // neither should be set.
-        if let Some(ctor_args) = self.ctor_args.as_ref() {
+        if let Some(ctor) = self.ctor.as_ref() {
             let deployer_address = std::env::var(DEPLOYER_ADDRESS)
                 .expect("deployer address should be set");
 
             command
                 .args(["--experimental-deployer-address", &deployer_address])
+                .args(["--experimental-constructor-signature", &ctor.signature])
                 .args(
                     [
                         &["--experimental-constructor-args".to_string()],
-                        ctor_args.as_slice(),
+                        ctor.args.as_slice(),
                     ]
                     .concat(),
                 );
