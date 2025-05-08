@@ -25,10 +25,12 @@ get_example_dirs() {
 
 run_test() {
     local project_path=$1
+    shift
+    local test_args=$@
 
     echo "Processing: $project_path"
     cd "$project_path"
-    cargo test --features e2e "$@" --no-run
+    cargo test --features e2e $test_args
     cd "$ROOT_DIR"
 }
 
@@ -49,7 +51,7 @@ shift
 if [ "$project_arg" = "*" ]; then
     # Process all examples
     for CRATE_NAME in $(get_example_dirs); do
-        run_test "$CRATE_NAME"
+        run_test "$CRATE_NAME" "$@"
     done
 else
     # Find matching projects based on pattern
@@ -85,7 +87,7 @@ else
     echo ""
 
     for project_path in "${matching_projects[@]}"; do
-        run_test "$project_path"
+        run_test "$project_path" "$@"
     done
 fi
 
