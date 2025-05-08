@@ -52,9 +52,9 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn deposit_for_success(alice: Account) -> Result<()> {
+async fn deposit_for_success(alice: Account, deployer: Account) -> Result<()> {
     let token_id = uint!(1_U256);
-    let (asset_addr, contract_addr) = deploy(&alice).await?;
+    let (asset_addr, contract_addr) = deploy(&deployer).await?;
     let alice_address = alice.address();
     let asset = ERC721Mock::new(asset_addr, &alice.wallet);
     let contract = Erc721Wrapper::new(contract_addr, &alice.wallet);
@@ -107,9 +107,9 @@ async fn deposit_for_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn withdraw_to_success(alice: Account) -> Result<()> {
+async fn withdraw_to_success(alice: Account, deployer: Account) -> Result<()> {
     let token_id = uint!(1_U256);
-    let (asset_addr, contract_addr) = deploy(&alice).await?;
+    let (asset_addr, contract_addr) = deploy(&deployer).await?;
     let alice_address = alice.address();
     let asset = ERC721Mock::new(asset_addr, &alice.wallet);
     let contract = Erc721Wrapper::new(contract_addr, &alice.wallet);

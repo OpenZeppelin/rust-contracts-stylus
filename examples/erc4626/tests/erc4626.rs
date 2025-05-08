@@ -46,10 +46,7 @@ fn dec_offset_overflow_ctr(asset: Address) -> constructorCall {
     }
 }
 
-async fn deploy(
-    account: &Account,
-    initial_tokens: U256,
-) -> Result<(Address, Address)> {
+async fn deploy(account: &Account) -> Result<(Address, Address)> {
     let asset_addr = erc20::deploy(&account.wallet).await?;
 
     let contract_addr = account
@@ -58,12 +55,6 @@ async fn deploy(
         .deploy()
         .await?
         .address()?;
-
-    // Mint initial tokens to the vault
-    if initial_tokens > U256::ZERO {
-        let asset = ERC20Mock::new(asset_addr, &account.wallet);
-        watch!(asset.mint(contract_addr, initial_tokens))?;
-    }
 
     Ok((contract_addr, asset_addr))
 }
@@ -105,7 +96,7 @@ mod total_assets {
     async fn reports_zero_total_assets_when_empty(
         alice: Account,
     ) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, _) = deploy(&alice).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let total = contract.totalAssets().call().await?.totalAssets;
@@ -117,9 +108,13 @@ mod total_assets {
     #[e2e::test]
     async fn reports_correct_total_assets_after_deposit(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_deposit = uint!(1000_U256);
-        let (contract_addr, _) = deploy(&alice, initial_deposit).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_deposit))?;
+
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let total = contract.totalAssets().call().await?.totalAssets;
@@ -129,14 +124,17 @@ mod total_assets {
     }
 
     #[e2e::test]
-    async fn updates_after_external_transfer(alice: Account) -> Result<()> {
+    async fn updates_after_external_transfer(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let initial_deposit = uint!(1000_U256);
         let additional_amount = uint!(500_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_deposit).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_deposit))?;
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
-        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Transfer additional tokens directly to the vault
         watch!(asset.mint(contract_addr, additional_amount))?;
@@ -148,8 +146,13 @@ mod total_assets {
     }
 
     #[e2e::test]
-    async fn handles_max_uint256_balance(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+    async fn handles_max_uint256_balance(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::MAX))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let total = contract.totalAssets().call().await?.totalAssets;
@@ -207,14 +210,17 @@ mod total_assets {
     }
 
     #[e2e::test]
-    async fn reflects_balance_after_withdrawal(alice: Account) -> Result<()> {
+    async fn reflects_balance_after_withdrawal(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let initial_deposit = uint!(1000_U256);
         let withdrawal = uint!(400_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_deposit).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_deposit))?;
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
-        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         let alice_addr = alice.address();
 
@@ -233,8 +239,13 @@ mod convert_to_shares {
     use super::*;
 
     #[e2e::test]
-    async fn converts_zero_assets_to_zero_shares(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn converts_zero_assets_to_zero_shares(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = contract.convertToShares(U256::ZERO).call().await?.shares;
@@ -246,10 +257,13 @@ mod convert_to_shares {
     #[e2e::test]
     async fn returns_zero_shares_for_asset_amount_less_then_vault_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
         let assets_to_convert = uint!(100_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares =
@@ -263,9 +277,12 @@ mod convert_to_shares {
     #[e2e::test]
     async fn returns_shares_equal_to_deposit_when_vault_is_empty(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::ZERO))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares =
@@ -279,10 +296,13 @@ mod convert_to_shares {
     #[e2e::test]
     async fn returns_shares_proportional_to_deposit_when_vault_has_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let expected_shares = uint!(1_U256);
@@ -320,8 +340,13 @@ mod convert_to_shares {
     }
 
     #[e2e::test]
-    async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+    async fn reverts_when_result_overflows(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::MAX))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -364,8 +389,13 @@ mod convert_to_assets {
     use super::*;
 
     #[e2e::test]
-    async fn converts_zero_shares_to_zero_assets(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn converts_zero_shares_to_zero_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let assets = contract.convertToAssets(U256::ZERO).call().await?.assets;
@@ -377,10 +407,14 @@ mod convert_to_assets {
     #[e2e::test]
     async fn returns_more_assets_than_expected_when_no_shares_were_ever_minted(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, _) = deploy(&alice, tokens).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
+
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(69_U256);
@@ -396,10 +430,11 @@ mod convert_to_assets {
     #[e2e::test]
     async fn returns_assets_proportional_to_shares(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(10_U256);
         // conversion is 1:1 for empty vaults
@@ -476,8 +511,13 @@ mod max_deposit {
     use super::*;
 
     #[e2e::test]
-    async fn returns_max_uint256_for_any_address(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn returns_max_uint256_for_any_address(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let max = contract.maxDeposit(alice.address()).call().await?.maxDeposit;
@@ -494,8 +534,13 @@ mod preview_deposit {
     use super::*;
 
     #[e2e::test]
-    async fn returns_zero_assets_for_zero_shares(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn returns_zero_assets_for_zero_shares(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = contract.previewDeposit(U256::ZERO).call().await?.shares;
@@ -507,10 +552,13 @@ mod preview_deposit {
     #[e2e::test]
     async fn returns_zero_shares_for_asset_amount_less_then_vault_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
         let assets_to_convert = uint!(100_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares =
@@ -524,9 +572,12 @@ mod preview_deposit {
     #[e2e::test]
     async fn returns_shares_equal_to_deposit_when_vault_is_empty(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::ZERO))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares =
@@ -540,10 +591,13 @@ mod preview_deposit {
     #[e2e::test]
     async fn returns_shares_proportional_to_deposit_when_vault_has_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let expected_shares = uint!(1_U256);
@@ -581,8 +635,13 @@ mod preview_deposit {
     }
 
     #[e2e::test]
-    async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+    async fn reverts_when_result_overflows(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::MAX))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -622,6 +681,7 @@ mod preview_deposit {
 }
 
 mod deposit {
+
     use super::*;
 
     #[e2e::test]
@@ -645,11 +705,15 @@ mod deposit {
     }
 
     #[e2e::test]
-    async fn mints_zero_shares_for_zero_assets(alice: Account) -> Result<()> {
-        let (contract_addr, asset_addr) =
-            deploy(&alice, uint!(1000_U256)).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+    async fn mints_zero_shares_for_zero_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(erc20_alice.mint(contract_addr, uint!(1000_U256)))?;
+
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let alice_address = alice.address();
 
         watch!(erc20_alice.mint(alice_address, uint!(1000_U256)))?;
@@ -681,13 +745,14 @@ mod deposit {
     #[e2e::test]
     async fn mints_zero_shares_for_asset_amount_less_then_vault_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
         let assets_to_convert = uint!(100_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(erc20_alice.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let alice_address = alice.address();
 
         watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
@@ -727,11 +792,12 @@ mod deposit {
     #[e2e::test]
     async fn mints_shares_equal_to_deposit_when_vault_is_empty(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let alice_address = alice.address();
 
         watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
@@ -771,13 +837,17 @@ mod deposit {
     #[e2e::test]
     async fn mints_shares_proportional_to_deposit_when_vault_has_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(erc20_alice.mint(contract_addr, initial_assets))?;
+
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
+
         let alice_address = alice.address();
 
         watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
@@ -816,11 +886,14 @@ mod deposit {
     }
 
     #[e2e::test]
-    async fn reverts_when_no_approval_on_assets(alice: Account) -> Result<()> {
+    async fn reverts_when_no_approval_on_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let erc20_alice = ERC20Mock::new(asset_addr, &alice.wallet);
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let alice_address = alice.address();
 
         watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
@@ -839,8 +912,11 @@ mod deposit {
     async fn reverts_when_result_overflows(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::MAX))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.deposit(U256::MAX, bob.address()))
@@ -853,9 +929,10 @@ mod deposit {
     #[e2e::test]
     async fn reverts_when_decimals_offset_overflows_during_conversion(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let asset = erc20::deploy(&alice.wallet).await?;
-        let contract_addr = alice
+        let asset = erc20::deploy(&deployer.wallet).await?;
+        let contract_addr = deployer
             .as_deployer()
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
@@ -881,8 +958,13 @@ mod max_mint {
     use super::*;
 
     #[e2e::test]
-    async fn returns_max_uint256_for_any_address(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn returns_max_uint256_for_any_address(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let max = contract.maxMint(alice.address()).call().await?.maxMint;
@@ -899,8 +981,13 @@ mod preview_mint {
     use super::*;
 
     #[e2e::test]
-    async fn returns_zero_shares_to_zero_assets(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn returns_zero_shares_to_zero_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let assets = contract.previewMint(U256::ZERO).call().await?.assets;
@@ -912,10 +999,13 @@ mod preview_mint {
     #[e2e::test]
     async fn returns_more_assets_than_expected_when_no_shares_were_ever_minted(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, _) = deploy(&alice, tokens).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(69_U256);
@@ -954,8 +1044,13 @@ mod preview_mint {
     }
 
     #[e2e::test]
-    async fn reverts_when_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+    async fn reverts_when_overflows(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::from(1)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -1018,11 +1113,14 @@ mod mint {
     }
 
     #[e2e::test]
-    async fn creates_zero_shares_for_zero_assets(alice: Account) -> Result<()> {
-        let (contract_addr, asset_addr) =
-            deploy(&alice, uint!(1000_U256)).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+    async fn creates_zero_shares_for_zero_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let alice_address = alice.address();
         let shares = U256::ZERO;
@@ -1050,18 +1148,20 @@ mod mint {
     #[e2e::test]
     async fn requires_more_assets_than_expected_when_no_shares_were_ever_minted(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let alice_address = alice.address();
         let shares = uint!(69_U256);
         let assets = uint!(6969_U256);
 
-        watch!(asset.mint(alice.address(), assets))?;
+        watch!(asset.mint(alice_address, assets))?;
         watch!(asset.regular_approve(alice_address, contract_addr, assets))?;
 
         let initial_alice_assets =
@@ -1089,12 +1189,16 @@ mod mint {
     }
 
     #[e2e::test]
-    async fn reverts_when_no_approval_on_assets(alice: Account) -> Result<()> {
+    async fn reverts_when_no_approval_on_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let alice_address = alice.address();
         let shares = uint!(69_U256);
@@ -1113,8 +1217,13 @@ mod mint {
     }
 
     #[e2e::test]
-    async fn reverts_when_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+    async fn reverts_when_overflows(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::from(1)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.mint(U256::MAX, alice.address()))
@@ -1127,9 +1236,10 @@ mod mint {
     #[e2e::test]
     async fn reverts_when_decimals_offset_overflows_during_conversion(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let asset = erc20::deploy(&alice.wallet).await?;
-        let contract_addr = alice
+        let asset = erc20::deploy(&deployer.wallet).await?;
+        let contract_addr = deployer
             .as_deployer()
             .with_constructor(dec_offset_overflow_ctr(asset))
             .deploy()
@@ -1159,9 +1269,13 @@ mod max_withdraw {
     #[e2e::test]
     async fn returns_zero_for_vault_with_no_shares(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let max =
@@ -1172,8 +1286,11 @@ mod max_withdraw {
     }
 
     #[e2e::test]
-    async fn returns_zero_when_vault_is_empty(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+    async fn returns_zero_when_vault_is_empty(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, _) = deploy(&deployer).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let max =
@@ -1187,12 +1304,13 @@ mod max_withdraw {
     async fn returns_convertible_assets_for_sole_share_owner(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = uint!(1010_U256);
@@ -1220,10 +1338,11 @@ mod max_withdraw {
     async fn returns_convertible_assets_for_sole_share_owner_when_vault_was_empty(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares_to_mint = uint!(10_U256);
         // conversion is 1:1 for empty vaults
@@ -1252,11 +1371,12 @@ mod max_withdraw {
     async fn returns_convertible_assets_to_multiple_share_owners(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
         let contract = Erc4626::new(contract_addr, &alice.wallet);
         let contract_bob = Erc4626::new(contract_addr, &bob.wallet);
-        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         let shares_to_mint = uint!(10_U256);
         // conversion is 1:1 for empty vaults
@@ -1320,8 +1440,11 @@ mod max_withdraw {
     #[e2e::test]
     async fn reverts_when_multiplier_overflows_during_conversion(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::MAX))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -1390,8 +1513,13 @@ mod preview_withdraw {
     }
 
     #[e2e::test]
-    async fn returns_zero_assets_for_zero_shares(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn returns_zero_assets_for_zero_shares(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = contract.previewWithdraw(U256::ZERO).call().await?.shares;
@@ -1403,10 +1531,13 @@ mod preview_withdraw {
     #[e2e::test]
     async fn returns_one_share_for_asset_amount_less_then_vault_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
         let assets_to_convert = uint!(100_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares =
@@ -1420,9 +1551,10 @@ mod preview_withdraw {
     #[e2e::test]
     async fn returns_shares_equal_to_deposit_when_vault_is_empty(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, _) = deploy(&deployer).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares =
@@ -1436,10 +1568,13 @@ mod preview_withdraw {
     #[e2e::test]
     async fn returns_shares_proportional_to_deposit_when_vault_has_assets(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let assets_to_convert = uint!(101_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let expected_shares = uint!(1_U256);
@@ -1452,8 +1587,13 @@ mod preview_withdraw {
     }
 
     #[e2e::test]
-    async fn reverts_when_result_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
+    async fn reverts_when_result_overflows(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::MAX))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -1496,16 +1636,19 @@ mod withdraw {
     use super::*;
 
     #[e2e::test]
-    async fn reverts_when_exceeds_max_withdraw(alice: Account) -> Result<()> {
+    async fn reverts_when_exceeds_max_withdraw(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = uint!(1010_U256);
         let assets_to_withdraw = uint!(1011_U256); // More than deposited
 
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         // Mint shares
         watch!(asset.mint(alice.address(), assets_to_deposit))?;
@@ -1539,8 +1682,9 @@ mod withdraw {
     #[e2e::test]
     async fn reverts_when_withdrawing_from_empty_vault(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, _) = deploy(&deployer).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.withdraw(
@@ -1563,6 +1707,7 @@ mod withdraw {
     async fn reverts_when_caller_lacks_allowance(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let shares_to_mint = uint!(10_U256);
@@ -1570,11 +1715,11 @@ mod withdraw {
         let shares_to_redeem = uint!(1_U256);
         let assets_to_withdraw = uint!(101_U256);
 
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
         let bob_contract = Erc4626::new(contract_addr, &bob.wallet);
-        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Mint shares to alice
         watch!(asset.mint(alice.address(), assets_to_deposit))?;
@@ -1605,8 +1750,11 @@ mod withdraw {
     #[e2e::test]
     async fn reverts_when_withdrawing_from_zero_address(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.withdraw(
@@ -1637,17 +1785,20 @@ mod withdraw {
     }
 
     #[e2e::test]
-    async fn reverts_when_transfer_fails(alice: Account) -> Result<()> {
+    async fn reverts_when_transfer_fails(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = shares_to_mint;
         let assets_to_withdraw = uint!(1_U256);
 
         // Deploy failing ERC20
-        let failing = erc20_failing_transfer::deploy(&alice.wallet).await?;
+        let failing = erc20_failing_transfer::deploy(&deployer.wallet).await?;
         let failing_asset =
             ERC20FailingTransferMock::new(failing, &alice.wallet);
 
-        let contract_addr = alice
+        let contract_addr = deployer
             .as_deployer()
             .with_constructor(ctr(failing))
             .deploy()
@@ -1679,10 +1830,13 @@ mod withdraw {
     }
 
     #[e2e::test]
-    async fn reverts_when_calculation_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+    async fn reverts_when_calculation_overflows(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         // Mint maximum shares
         watch!(asset.mint(alice.address(), U256::MAX))?;
@@ -1709,14 +1863,15 @@ mod withdraw {
     async fn succeeds_with_no_initial_assets(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = shares_to_mint;
         let assets_to_withdraw = uint!(5_U256);
 
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         // Initial state check
         let initial_max_withdraw =
@@ -1797,6 +1952,7 @@ mod withdraw {
     async fn succeeds_with_initial_assets(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let shares_to_mint = uint!(10_U256);
@@ -1804,10 +1960,10 @@ mod withdraw {
         let shares_to_redeem = uint!(1_U256);
         let assets_to_withdraw = uint!(101_U256);
 
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         // Initial state check
         let initial_total_assets =
@@ -1931,12 +2087,13 @@ mod withdraw {
         alice: Account,
         bob: Account,
         charlie: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, asset_addr) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
         let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
         let contract_bob = Erc4626::new(contract_addr, &bob.wallet);
         let contract_charlie = Erc4626::new(contract_addr, &charlie.wallet);
-        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Mint and approve for all users
         for user in [&alice, &bob, &charlie] {
@@ -2000,14 +2157,15 @@ mod withdraw {
         alice: Account,
         bob: Account,
         charlie: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract_alice = Erc4626::new(contract_addr, &alice.wallet);
         let contract_bob = Erc4626::new(contract_addr, &bob.wallet);
         let contract_charlie = Erc4626::new(contract_addr, &charlie.wallet);
-        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Record initial total assets
         let initial_total =
@@ -2077,12 +2235,15 @@ mod withdraw {
     }
 
     #[e2e::test]
-    async fn maintains_share_price_ratio(alice: Account) -> Result<()> {
+    async fn maintains_share_price_ratio(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let initial_assets = uint!(100_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(10_U256);
         let assets = uint!(2000_U256);
@@ -2114,16 +2275,17 @@ mod withdraw {
     #[e2e::test]
     async fn maintains_state_consistency_after_failed_withdrawal(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = uint!(1010_U256);
         let excessive_assets_to_withdraw = uint!(1011_U256);
 
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         // Setup initial state
         watch!(asset.mint(alice.address(), assets_to_deposit))?;
@@ -2196,9 +2358,12 @@ mod max_redeem {
     #[e2e::test]
     async fn returns_zero_for_vault_with_no_shares(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(1000_U256);
-        let (contract_addr, _) = deploy(&alice, initial_assets).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
@@ -2209,7 +2374,7 @@ mod max_redeem {
 
     #[e2e::test]
     async fn returns_zero_when_vault_is_empty(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, _) = deploy(&alice).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
@@ -2221,12 +2386,13 @@ mod max_redeem {
     #[e2e::test]
     async fn returns_full_share_balance_for_owner(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let assets_to_deposit = uint!(6969_U256);
         let shares_to_mint = uint!(69_U256);
@@ -2250,12 +2416,13 @@ mod max_redeem {
     async fn returns_balance_after_partial_transfer(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
         let initial_assets = uint!(100_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let assets_to_deposit = uint!(8080_U256);
         let shares_to_mint = uint!(80_U256);
@@ -2284,12 +2451,15 @@ mod max_redeem {
     }
 
     #[e2e::test]
-    async fn returns_updated_balance_after_mint(alice: Account) -> Result<()> {
+    async fn returns_updated_balance_after_mint(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let initial_assets = uint!(100_U256);
-        let (contract_addr, asset_addr) =
-            deploy(&alice, initial_assets).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, initial_assets))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let first_mint = uint!(10_U256);
         let second_mint = uint!(50_U256);
@@ -2355,8 +2525,13 @@ mod preview_redeem {
     }
 
     #[e2e::test]
-    async fn returns_zero_shares_to_zero_assets(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
+    async fn returns_zero_shares_to_zero_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let assets = contract.previewRedeem(U256::ZERO).call().await?.assets;
@@ -2368,10 +2543,13 @@ mod preview_redeem {
     #[e2e::test]
     async fn returns_more_assets_than_expected_when_no_shares_were_ever_minted(
         alice: Account,
+        deployer: Account,
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, _) = deploy(&alice, tokens).await?;
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(69_U256);
@@ -2385,8 +2563,13 @@ mod preview_redeem {
     }
 
     #[e2e::test]
-    async fn reverts_when_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+    async fn reverts_when_overflows(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
+        let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, U256::from(1)))?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -2432,8 +2615,9 @@ mod redeem {
     async fn reverts_when_exceeded_max_redeem_zero_balance(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
+        let (contract_addr, _) = deploy(&deployer).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let shares = uint!(10_U256);
@@ -2450,11 +2634,14 @@ mod redeem {
     }
 
     #[e2e::test]
-    async fn zero_shares_for_zero_assets(alice: Account) -> Result<()> {
-        let (contract_addr, asset_addr) =
-            deploy(&alice, uint!(1000_U256)).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+    async fn zero_shares_for_zero_assets(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, uint!(1000_U256)))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let alice_address = alice.address();
 
         let initial_alice_assets =
@@ -2487,12 +2674,16 @@ mod redeem {
     }
 
     #[e2e::test]
-    async fn full_share_balance_for_owner(alice: Account) -> Result<()> {
+    async fn full_share_balance_for_owner(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let alice_address = alice.address();
 
         let assets = uint!(6969_U256);
@@ -2533,12 +2724,14 @@ mod redeem {
     async fn reverts_when_insufficient_allowance(
         alice: Account,
         bob: Account,
+        deployer: Account,
     ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let contract_bob = Erc4626::new(contract_addr, &bob.wallet);
         let alice_address = alice.address();
 
@@ -2564,12 +2757,16 @@ mod redeem {
     }
 
     #[e2e::test]
-    async fn reverts_when_exceeded_max_redeem(alice: Account) -> Result<()> {
+    async fn reverts_when_exceeded_max_redeem(
+        alice: Account,
+        deployer: Account,
+    ) -> Result<()> {
         let tokens = uint!(100_U256);
 
-        let (contract_addr, asset_addr) = deploy(&alice, tokens).await?;
-        let contract = Erc4626::new(contract_addr, &alice.wallet);
+        let (contract_addr, asset_addr) = deploy(&deployer).await?;
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+        watch!(asset.mint(contract_addr, tokens))?;
+        let contract = Erc4626::new(contract_addr, &alice.wallet);
         let alice_address = alice.address();
 
         let assets = uint!(6969_U256);

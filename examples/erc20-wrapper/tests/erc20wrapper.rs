@@ -2,7 +2,7 @@
 
 use abi::{Erc20, Erc20Wrapper};
 use alloy::{
-    primitives::{uint, Address, U256},
+    primitives::{uint, Address},
     sol,
 };
 use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
@@ -26,29 +26,6 @@ fn ctr(asset_addr: Address) -> constructorCall {
     }
 }
 
-/// Deploy a new [`Erc20`] contract and [`Erc20Wrapper`] contract and mint
-/// initial ERC-20 tokens to `account`.
-async fn deploy(
-    account: &Account,
-    initial_tokens: U256,
-) -> Result<(Address, Address)> {
-    let asset_addr = erc20::deploy(&account.wallet).await?;
-
-    let contract_addr = account
-        .as_deployer()
-        .with_constructor(ctr(asset_addr))
-        .deploy()
-        .await?
-        .address()?;
-
-    if initial_tokens > U256::ZERO {
-        let asset = ERC20Mock::new(asset_addr, &account.wallet);
-        watch!(asset.mint(account.address(), initial_tokens))?;
-    }
-
-    Ok((contract_addr, asset_addr))
-}
-
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let asset_address = erc20::deploy(&alice.wallet).await?;
@@ -70,21 +47,29 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn deposit_for_success(alice: Account) -> Result<()> {
-    let initial_supply = uint!(1000_U256);
-    let (contract_addr, asset_addr) = deploy(&alice, initial_supply).await?;
-    let alice_address = alice.address();
+async fn deposit_for_success(alice: Account, deployer: Account) -> Result<()> {
+    let asset_addr = erc20::deploy(&deployer.wallet).await?;
     let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+    let contract_addr = deployer
+        .as_deployer()
+        .with_constructor(ctr(asset_addr))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
 
-    watch!(asset.approve(contract_addr, initial_supply))?;
+    let initial_tokens = uint!(1000_U256);
+    let alice_address = alice.address();
+    watch!(asset.mint(alice_address, initial_tokens))?;
+    watch!(asset.approve(contract_addr, initial_tokens))?;
 
     let initial_wrapped_balance =
         contract.balanceOf(alice_address).call().await?.balance;
     let initial_wrapped_supply =
         contract.totalSupply().call().await?.totalSupply;
 
-    let value = initial_supply;
+    let value = initial_tokens;
     let receipt = receipt!(contract.depositFor(alice_address, value))?;
 
     // `Transfer` event for ERC-20 token transfer from Alice to the
@@ -114,13 +99,21 @@ async fn deposit_for_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn withdraw_to_success(alice: Account) -> Result<()> {
-    let initial_tokens = uint!(1000_U256);
-    let (contract_addr, asset_addr) = deploy(&alice, initial_tokens).await?;
-
+async fn withdraw_to_success(alice: Account, deployer: Account) -> Result<()> {
+    let asset_addr = erc20::deploy(&deployer.wallet).await?;
     let asset = ERC20Mock::new(asset_addr, &alice.wallet);
+
+    let contract_addr = deployer
+        .as_deployer()
+        .with_constructor(ctr(asset_addr))
+        .deploy()
+        .await?
+        .address()?;
     let contract = Erc20Wrapper::new(contract_addr, &alice.wallet);
 
+    let initial_tokens = uint!(1000_U256);
+    let alice_address = alice.address();
+    watch!(asset.mint(alice_address, initial_tokens))?;
     watch!(asset.approve(contract_addr, initial_tokens))?;
 
     watch!(contract.depositFor(alice.address(), initial_tokens))?;
