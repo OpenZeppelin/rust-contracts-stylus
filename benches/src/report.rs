@@ -1,10 +1,15 @@
 use std::{collections::HashMap, fmt::Display, future::Future};
 
-use alloy::network::AnyTransactionReceipt;
+use alloy::rpc::types::{
+    serde_helpers::WithOtherFields, AnyReceiptEnvelope, Log, TransactionReceipt,
+};
 
 use crate::{ArbOtherFields, Opt};
 
 const SEPARATOR: &str = "::";
+
+type ArbTxReceipt =
+    WithOtherFields<TransactionReceipt<AnyReceiptEnvelope<Log>>>;
 
 #[derive(Debug)]
 pub struct FunctionReport {
@@ -13,9 +18,7 @@ pub struct FunctionReport {
 }
 
 impl FunctionReport {
-    pub(crate) fn new(
-        receipt: (&str, AnyTransactionReceipt),
-    ) -> eyre::Result<Self> {
+    pub(crate) fn new(receipt: (&str, ArbTxReceipt)) -> eyre::Result<Self> {
         Ok(FunctionReport {
             sig: receipt.0.to_owned(),
             gas: get_l2_gas_used(&receipt.1)?,
@@ -216,7 +219,7 @@ impl Display for BenchmarkReport {
 
 const BASE_GAS_FEE: u128 = 21_000;
 
-fn get_l2_gas_used(receipt: &AnyTransactionReceipt) -> eyre::Result<u128> {
+fn get_l2_gas_used(receipt: &ArbTxReceipt) -> eyre::Result<u128> {
     let l2_gas = receipt.gas_used;
     let arb_fields: ArbOtherFields = receipt.other.deserialize_as()?;
     let l1_gas = arb_fields.gas_used_for_l1.to::<u128>();

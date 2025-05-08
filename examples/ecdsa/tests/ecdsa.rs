@@ -109,12 +109,16 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
 
     let signature = alice.sign_hash(&HASH).await;
 
-    // converted to non-eip155 `v` value
-    // see https://eips.ethereum.org/EIPS/eip-155
-    let v_byte = signature.v() as u8 + 27;
-
     let ECDSA::recoverReturn { recovered } = contract
-        .recover(HASH, v_byte, signature.r().into(), signature.s().into())
+        .recover(
+            HASH,
+            signature
+                .v()
+                .y_parity_byte_non_eip155()
+                .expect("should be non-EIP155 signature"),
+            signature.r().into(),
+            signature.s().into(),
+        )
         .call()
         .await?;
 

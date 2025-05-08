@@ -21,7 +21,10 @@ sol!(
 
         error ERC721NonexistentToken(uint256 tokenId);
     }
+);
 
+sol!(
+    #[sol(rpc)]
     contract Erc721 {
         function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) external;
 
