@@ -29,6 +29,7 @@ exclude = [
   "examples/ownable-two-step",
   "examples/basic/token",
   "examples/poseidon",
+  "examples/pedersen",
   "fuzz",
   # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
   "benches",
