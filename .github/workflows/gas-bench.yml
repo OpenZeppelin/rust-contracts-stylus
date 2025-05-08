@@ -29,7 +29,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.11
+        run: cargo install cargo-stylus@0.5.12
 
       - name: Install wasm-opt
         run: cargo install wasm-opt@0.116.1
