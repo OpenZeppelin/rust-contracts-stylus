@@ -2455,7 +2455,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "mini-alloc"
 version = "0.9.0"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=0afb869a7aa13c1acb7904167a1e6ef6b11a977f#0afb869a7aa13c1acb7904167a1e6ef6b11a977f"
+source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
 dependencies = [
  "cfg-if",
 ]
@@ -3693,7 +3693,7 @@ dependencies = [
 [[package]]
 name = "stylus-core"
 version = "0.9.0"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=0afb869a7aa13c1acb7904167a1e6ef6b11a977f#0afb869a7aa13c1acb7904167a1e6ef6b11a977f"
+source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3724,7 +3724,7 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.9.0"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=0afb869a7aa13c1acb7904167a1e6ef6b11a977f#0afb869a7aa13c1acb7904167a1e6ef6b11a977f"
+source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3762,7 +3762,7 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.9.0"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=0afb869a7aa13c1acb7904167a1e6ef6b11a977f#0afb869a7aa13c1acb7904167a1e6ef6b11a977f"
+source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3796,7 +3796,7 @@ dependencies = [
 [[package]]
 name = "stylus-test"
 version = "0.9.0"
-source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=0afb869a7aa13c1acb7904167a1e6ef6b11a977f#0afb869a7aa13c1acb7904167a1e6ef6b11a977f"
+source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
 dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",

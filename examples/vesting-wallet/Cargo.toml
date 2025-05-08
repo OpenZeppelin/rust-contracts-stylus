@@ -11,7 +11,7 @@ openzeppelin-stylus = { path = "../../contracts" }
 alloy-primitives = { version = "=0.8.20", default-features = false, features = [
     "tiny-keccak",
 ] }
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
+stylus-sdk = { git = "https://github.com/0xNeshi/stylus-sdk-rs.git", rev = "8fe26c6", default-features = false, features = [
     "mini-alloc",
 ] }
 

@@ -59,10 +59,9 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { git = 'https://github.com/OffchainLabs/stylus-sdk-rs.git', rev = "0afb869a7aa13c1acb7904167a1e6ef6b11a977f", default-features = false, features = [
+stylus-sdk = { git = "https://github.com/0xNeshi/stylus-sdk-rs.git", rev = "8fe26c6", default-features = false, features = [
   "mini-alloc",
-  "reentrant",  # TODO: delete this when using audited 0.9 version
-] } # Stylus SDK related
+] }
 
 alloy = { version = "=0.7.3", features = [
   "contract",
