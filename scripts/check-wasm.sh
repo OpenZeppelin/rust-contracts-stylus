@@ -1,30 +1,28 @@
 #!/bin/bash
 set -e
 
-mydir=$(dirname "$0")
-cd "$mydir" || exit
-cd ..
+# Get the root directory of the git repository
+ROOT_DIR=$(git rev-parse --show-toplevel)
+cd "$ROOT_DIR" || exit
 
 # Check contract wasm binary by crate name
-check_wasm () {
-  local CONTRACT_CRATE_NAME=$1
-  local CONTRACT_BIN_NAME="${CONTRACT_CRATE_NAME//-/_}.wasm"
+check_wasm() {
+  local CRATE_PATH=$1
 
-  echo
-  echo "Checking contract $CONTRACT_CRATE_NAME"
-  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
+  echo "Checking contract $CRATE_PATH"
+
+  cd "$CRATE_PATH"
+
+  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc
+
+  cd "$ROOT_DIR"
 }
 
-# Retrieve all alphanumeric contract's crate names in `./examples` directory.
-get_example_crate_names () {
-  # shellcheck disable=SC2038
-  # NOTE: optimistically relying on the 'name = ' string at Cargo.toml file
-  find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
+# Function to retrieve all Cargo.toml paths in the ./examples directory
+get_example_dirs() {
+  find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
-cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
-
-for CRATE_NAME in $(get_example_crate_names)
-do
-  check_wasm "$CRATE_NAME"
+for CRATE_PATH in $(get_example_dirs); do
+  check_wasm "$CRATE_PATH"
 done

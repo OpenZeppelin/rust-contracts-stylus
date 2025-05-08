@@ -2,7 +2,7 @@
 
 use abi::SafeErc20;
 use alloy::primitives::{uint, U256};
-use e2e::{send, Account, ReceiptExt, Revert};
+use e2e::{send, Account, Revert};
 
 mod abi;
 mod mock;
@@ -13,7 +13,7 @@ async fn reverts_on_transfer(
     bob: Account,
     has_no_code: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
     let has_no_code_addr = has_no_code.address();
@@ -36,7 +36,7 @@ async fn reverts_on_transfer_from(
     bob: Account,
     has_no_code: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -64,7 +64,7 @@ async fn reverts_on_increase_allowance(
     bob: Account,
     has_no_code: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
     let has_no_code_addr = has_no_code.address();
@@ -90,7 +90,7 @@ async fn reverts_on_decrease_allowance(
     bob: Account,
     has_no_code: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
     let has_no_code_addr = has_no_code.address();
@@ -116,7 +116,7 @@ async fn reverts_on_force_approve(
     bob: Account,
     has_no_code: Account,
 ) -> eyre::Result<()> {
-    let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
     let has_no_code_addr = has_no_code.address();

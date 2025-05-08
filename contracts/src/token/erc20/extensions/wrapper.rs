@@ -115,8 +115,10 @@ impl MethodError for Error {
 pub struct Erc20Wrapper {
     /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Underlying token decimals.
-    pub(crate) underlying_decimals: StorageU8,
+    pub underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
@@ -318,6 +320,31 @@ impl IErc20Wrapper for Erc20Wrapper {
         self.safe_erc20.safe_transfer(self.underlying(), account, value)?;
 
         Ok(true)
+    }
+}
+
+impl Erc20Wrapper {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `underlying_token` - The wrapped token.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidUnderlying`] - If underlying token is this contract.
+    pub fn constructor(
+        &mut self,
+        underlying_token: Address,
+    ) -> Result<(), Error> {
+        if underlying_token == contract::address() {
+            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
+                token: underlying_token,
+            }));
+        }
+        self.underlying.set(underlying_token);
+        Ok(())
     }
 }
 

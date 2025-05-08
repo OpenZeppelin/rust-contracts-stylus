@@ -540,6 +540,32 @@ impl IVestingWallet for VestingWallet {
 }
 
 impl VestingWallet {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `beneficiary` - The wallet owner.
+    /// * `start_timestamp` - The point in time when token vesting starts.
+    /// * `duration_seconds` - The vesting duration in seconds.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If beneficiary is `Address::ZERO`.
+    pub fn constructor(
+        &mut self,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
+    ) -> Result<(), Error> {
+        self.ownable.constructor(beneficiary)?;
+        self.start.set(start_timestamp);
+        self.duration.set(duration_seconds);
+        Ok(())
+    }
+}
+
+impl VestingWallet {
     /// Virtual implementation of the vesting formula. This returns the amount
     /// vested, as a function of time, for an asset given its total
     /// historical allocation.

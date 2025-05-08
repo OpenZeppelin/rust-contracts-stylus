@@ -73,6 +73,19 @@ impl IErc20Metadata for Erc20Metadata {
     }
 }
 
+impl Erc20Metadata {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+}
+
 impl IErc165 for Erc20Metadata {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20Metadata>::interface_id() == interface_id

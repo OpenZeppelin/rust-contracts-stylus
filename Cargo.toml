@@ -5,6 +5,11 @@ members = [
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
+]
+default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
+exclude = [
+  "examples/access-control",
+  "examples/ecdsa",
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
@@ -17,48 +22,18 @@ members = [
   "examples/erc1155-metadata-uri",
   "examples/erc1155-supply",
   "examples/erc4626",
+  "examples/safe-erc20",
   "examples/merkle-proofs",
   "examples/ownable",
   "examples/vesting-wallet",
-  "examples/access-control",
-  "examples/basic/token",
-  "examples/basic/script",
-  "examples/ecdsa",
   "examples/ownable-two-step",
-  "examples/safe-erc20",
+  "examples/basic/token",
+  "examples/poseidon",
+  "examples/pedersen",
+  "fuzz",
+  # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
   "benches",
-  "examples/poseidon",
-  "examples/pedersen",
 ]
-default-members = [
-  "contracts",
-  "contracts-proc",
-  "lib/crypto",
-  "lib/e2e-proc",
-  "examples/erc20",
-  "examples/erc20-permit",
-  "examples/erc20-flash-mint",
-  "examples/erc20-wrapper",
-  "examples/erc721",
-  "examples/erc721-consecutive",
-  "examples/erc721-metadata",
-  "examples/erc721-wrapper",
-  "examples/erc1155",
-  "examples/erc1155-metadata-uri",
-  "examples/erc1155-supply",
-  "examples/erc4626",
-  "examples/safe-erc20",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/vesting-wallet",
-  "examples/ownable-two-step",
-  "examples/access-control",
-  "examples/basic/token",
-  "examples/ecdsa",
-  "examples/poseidon",
-  "examples/pedersen",
-]
-exclude = ["fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
@@ -86,7 +61,8 @@ all = "warn"
 # Stylus SDK related
 stylus-sdk = { git = 'https://github.com/OffchainLabs/stylus-sdk-rs.git', rev = "0afb869a7aa13c1acb7904167a1e6ef6b11a977f", default-features = false, features = [
   "mini-alloc",
-] }
+  "reentrant",  # TODO: delete this when using audited 0.9 version
+] } # Stylus SDK related
 
 alloy = { version = "=0.7.3", features = [
   "contract",
@@ -109,7 +85,6 @@ alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"
-koba = "0.3.0"
 once_cell = "1.19.0"
 rand = "0.9.0"
 regex = "1.10.4"
@@ -127,8 +102,7 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
-# test helpers
-motsu = "0.8.0"
+motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "bddced2" }
 
 # members
 openzeppelin-stylus = { path = "contracts" }

@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -65,6 +65,12 @@ pub const TRANSFER_ROLE: [u8; 32] =
 #[public]
 #[inherit(Erc20, AccessControl)]
 impl AccessControlExample {
+    #[constructor]
+    fn constructor(&mut self, admin: Address) {
+        self.access
+            ._grant_role(AccessControl::DEFAULT_ADMIN_ROLE.into(), admin);
+    }
+
     fn make_admin(&mut self, account: Address) -> Result<(), Error> {
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
         self.access.grant_role(TRANSFER_ROLE.into(), account)?;

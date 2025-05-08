@@ -158,10 +158,14 @@ mod borrower {
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Fee applied when doing flash loans.
-    pub(crate) flash_fee_value: StorageU256,
+    pub flash_fee_value: StorageU256,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Receiver address of the flash fee.
-    pub(crate) flash_fee_receiver_address: StorageAddress,
+    pub flash_fee_receiver_address: StorageAddress,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

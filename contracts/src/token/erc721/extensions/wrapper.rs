@@ -116,6 +116,16 @@ pub struct Erc721Wrapper {
 unsafe impl TopLevelStorage for Erc721Wrapper {}
 
 impl Erc721Wrapper {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `underlying_token` - The wrapped token.
+    pub fn constructor(&mut self, underlying_token: Address) {
+        self.underlying.set(underlying_token);
+    }
+
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// `token_ids`.
     ///

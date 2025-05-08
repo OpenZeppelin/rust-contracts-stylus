@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
@@ -7,10 +7,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
         self,
-        extensions::{
-            Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
-            IErc721Burnable,
-        },
+        extensions::{Erc721Metadata, Erc721UriStorage, IErc721Burnable},
         Erc721,
     },
     utils::introspection::erc165::IErc165,
@@ -23,13 +20,19 @@ struct Erc721MetadataExample {
     #[borrow]
     erc721: Erc721,
     #[borrow]
-    metadata: Metadata,
-    uri_storage: UriStorage,
+    metadata: Erc721Metadata,
+    uri_storage: Erc721UriStorage,
 }
 
 #[public]
-#[inherit(Erc721, Metadata)]
+#[inherit(Erc721, Erc721Metadata)]
 impl Erc721MetadataExample {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String, base_uri: String) {
+        self.metadata.constructor(name, symbol);
+        self.metadata.base_uri.set_str(base_uri);
+    }
+
     fn mint(
         &mut self,
         to: Address,
@@ -54,6 +57,6 @@ impl Erc721MetadataExample {
 
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         Erc721::supports_interface(interface_id)
-            || Metadata::supports_interface(interface_id)
+            || Erc721Metadata::supports_interface(interface_id)
     }
 }

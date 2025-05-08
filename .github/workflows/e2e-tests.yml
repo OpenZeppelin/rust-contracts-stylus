@@ -44,4 +44,4 @@ jobs:
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
       - name: run integration tests
-        run: ./scripts/e2e-tests.sh
+        run: ./scripts/e2e-tests.sh "*"

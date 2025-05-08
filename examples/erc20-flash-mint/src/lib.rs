@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -56,5 +56,17 @@ impl Erc20FlashMintExample {
         value: U256,
     ) -> Result<(), flash_mint::Error> {
         Ok(self.erc20._mint(to, value)?)
+    }
+
+    /// WARNING: These functions are intended for **testing purposes** only. In
+    /// **production**, ensure strict access control to prevent unauthorized
+    /// operations, which can disrupt contract functionality. Remove or secure
+    /// these functions before deployment.
+    fn set_flash_fee_receiver(&mut self, new_receiver: Address) {
+        self.flash_mint.flash_fee_receiver_address.set(new_receiver);
+    }
+
+    fn set_flash_fee_value(&mut self, new_value: U256) {
+        self.flash_mint.flash_fee_value.set(new_value);
     }
 }

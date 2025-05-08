@@ -3,11 +3,9 @@
 This end-to-end testing crate provides affordances to test your contracts in a
 blockchain environment.
 
-This crate is currently coupled to [`nitro-testnode`] and [`koba`].
+This crate is currently coupled to [`nitro-testnode`].
 
 [`nitro-testnode`]: https://github.com/OffchainLabs/nitro-testnode
-
-[`koba`]: https://github.com/OpenZeppelin/koba
 
 ## Usage
 
@@ -83,7 +81,7 @@ It will facilitate deployment of the contract marked with the `#[entrypoint]` ma
 Then you can configure deployment with default constructor:
 
 ```rust,ignore
-let contract_addr = alice.as_deployer().deploy().await?.address()?;
+let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 ```
 
 Or with a custom constructor.
@@ -118,7 +116,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr)
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let Erc20::nameReturn { name } = contract.name().call().await?;

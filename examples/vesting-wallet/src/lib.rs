@@ -1,7 +1,8 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
-use openzeppelin_stylus::finance::vesting_wallet::VestingWallet;
+use alloy_primitives::{Address, U64};
+use openzeppelin_stylus::finance::vesting_wallet::{Error, VestingWallet};
 use stylus_sdk::prelude::*;
 
 #[entrypoint]
@@ -14,6 +15,20 @@ struct VestingWalletExample {
 #[public]
 #[inherit(VestingWallet)]
 impl VestingWalletExample {
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
+    ) -> Result<(), Error> {
+        Ok(self.vesting_wallet.constructor(
+            beneficiary,
+            start_timestamp,
+            duration_seconds,
+        )?)
+    }
+
     #[receive]
     fn receive(&mut self) -> Result<(), Vec<u8>> {
         Ok(())

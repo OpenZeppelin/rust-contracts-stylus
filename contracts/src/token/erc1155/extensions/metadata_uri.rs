@@ -63,6 +63,18 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
     }
 }
 
+impl Erc1155MetadataUri {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `uri` - The token URI.
+    pub fn constructor(&mut self, uri: String) {
+        self.uri.set_str(uri);
+    }
+}
+
 impl IErc165 for Erc1155MetadataUri {
     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155MetadataUri>::interface_id() == interface_id

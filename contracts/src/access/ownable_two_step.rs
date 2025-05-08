@@ -24,6 +24,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
+use super::ownable::OwnableInvalidOwner;
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     utils::introspection::erc165::{Erc165, IErc165},
@@ -207,6 +208,32 @@ impl IOwnable2Step for Ownable2Step {
     ) -> Result<(), <Self as IOwnable2Step>::Error> {
         self.ownable.only_owner()?;
         self._transfer_ownership(Address::ZERO);
+        Ok(())
+    }
+}
+
+impl Ownable2Step {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `initial_owner` - The initial owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If initial owner is
+    ///   `Address::ZERO`.
+    pub fn constructor(
+        &mut self,
+        initial_owner: Address,
+    ) -> Result<(), ownable::Error> {
+        if initial_owner.is_zero() {
+            return Err(ownable::Error::InvalidOwner(OwnableInvalidOwner {
+                owner: Address::ZERO,
+            }));
+        }
+        self._transfer_ownership(initial_owner);
         Ok(())
     }
 }

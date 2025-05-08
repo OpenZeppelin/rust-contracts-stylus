@@ -15,7 +15,6 @@ tokio = { workspace = true, features = ["process"] }
 eyre.workspace = true
 regex.workspace = true
 once_cell.workspace = true
-koba.workspace = true
 e2e-proc.workspace = true
 stylus-sdk.workspace = true
 toml = "0.8.13"

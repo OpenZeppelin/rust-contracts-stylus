@@ -21,7 +21,7 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        interface::Erc20Interface,
+        interface::{Erc20Interface, IErc20MetadataInterface},
         utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
@@ -1035,6 +1035,34 @@ impl IErc4626 for Erc4626 {
         self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
 
         Ok(assets)
+    }
+}
+
+impl Erc4626 {
+    // TODO: remove `decimals_offset` once function overriding is possible.
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `asset` - The underlying vault asset.
+    /// * `decimals_offset` - The decimal offset of the vault shares.
+    pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
+        let underlying_decimals =
+            self.try_get_asset_decimals(asset).unwrap_or(18);
+
+        self.underlying_decimals.set(U8::from(underlying_decimals));
+        self.asset.set(asset);
+        self.decimals_offset.set(decimals_offset);
+    }
+
+    /// Attempts to fetch the asset decimals. Returns None if the attempt failed
+    /// in any way. This follows Rust's idiomatic Option pattern rather than
+    /// Solidity's boolean tuple return.
+    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
+        let erc20 = IErc20MetadataInterface::new(asset);
+        let call = Call::new_in(self);
+        erc20.decimals(call).ok()
     }
 }
 

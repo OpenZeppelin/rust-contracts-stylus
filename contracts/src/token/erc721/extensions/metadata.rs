@@ -22,8 +22,10 @@ use crate::{
 pub struct Erc721Metadata {
     /// [`Metadata`] contract.
     pub(crate) metadata: Metadata,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Base URI for tokens.
-    pub(crate) base_uri: StorageString,
+    pub base_uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
@@ -68,6 +70,19 @@ impl IErc721Metadata for Erc721Metadata {
 
     fn symbol(&self) -> String {
         self.metadata.symbol()
+    }
+}
+
+impl Erc721Metadata {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
     }
 }
 

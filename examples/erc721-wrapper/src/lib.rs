@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::{vec, vec::Vec};
@@ -22,6 +22,11 @@ struct Erc721WrapperExample {
 #[public]
 #[inherit(Erc721)]
 impl Erc721WrapperExample {
+    #[constructor]
+    fn constructor(&mut self, underlying_token: Address) {
+        self.erc721_wrapper.constructor(underlying_token);
+    }
+
     fn underlying(&self) -> Address {
         self.erc721_wrapper.underlying()
     }
