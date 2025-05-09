@@ -101,11 +101,11 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
-motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "bddced2" }
+motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "9b038630f682e33d5b70c477e904b7858370a5f4" }
 
 # members
 openzeppelin-stylus = { path = "contracts" }
-openzeppelin-stylus-proc = { path = "contracts-proc", version = ">=0.1.0, <=0.2.0" }
+openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.2.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }
