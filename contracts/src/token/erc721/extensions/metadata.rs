@@ -89,12 +89,12 @@ impl Erc721Metadata {
         self.metadata.constructor(name, symbol);
     }
 
-    /// Check [IErc721Metadata::name()] for more details.
+    /// Check [`IErc721Metadata::name()`] for more details.
     pub fn name(&self) -> String {
         self.metadata.name()
     }
 
-    /// Check [IErc721Metadata::symbol()] for more details.
+    /// Check [`IErc721Metadata::symbol()`] for more details.
     pub fn symbol(&self) -> String {
         self.metadata.symbol()
     }
@@ -109,7 +109,7 @@ impl Erc721Metadata {
         self.base_uri.get_string()
     }
 
-    /// Check [IErc721Metadata::token_uri()] for more details.
+    /// Check [`IErc721Metadata::token_uri()`] for more details.
     pub fn token_uri(
         &self,
         token_id: U256,
