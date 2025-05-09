@@ -1,13 +1,14 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
+use alloy_primitives::FixedBytes;
 use alloy_primitives::{aliases::U96, Address, /* FixedBytes, */ U256};
 use openzeppelin_stylus::{
     token::erc721::{
         extensions::{consecutive, Erc721Consecutive, IErc721Burnable},
         IErc721,
     },
-    // utils::introspection::erc165::IErc165,
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 #[entrypoint]
@@ -18,7 +19,7 @@ struct Erc721ConsecutiveExample {
 }
 
 #[public]
-#[implements(IErc721<Error=consecutive::Error>, IErc721Burnable<Error=consecutive::Error>, /*IErc165*/)]
+#[implements(IErc721<Error=consecutive::Error>, IErc721Burnable<Error=consecutive::Error>, IErc165)]
 impl Erc721ConsecutiveExample {
     #[constructor]
     fn constructor(
@@ -124,10 +125,12 @@ impl IErc721Burnable for Erc721ConsecutiveExample {
     }
 }
 
-/*
 #[public]
 impl IErc165 for Erc721ConsecutiveExample {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc721::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        Erc721Consecutive::supports_interface(
+            &self.erc721_consecutive,
+            interface_id,
+        )
     }
-}*/
+}

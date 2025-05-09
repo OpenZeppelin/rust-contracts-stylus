@@ -3,17 +3,16 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, /* FixedBytes, */ U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
         self,
         extensions::{
-            enumerable, Erc721Enumerable as Enumerable, IErc721Burnable,
-            IErc721Enumerable,
+            enumerable, Erc721Enumerable, IErc721Burnable, IErc721Enumerable,
         },
         Erc721, IErc721,
     },
-    // utils::introspection::erc165::IErc165,
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 #[derive(SolidityError, Debug)]
@@ -72,11 +71,11 @@ struct Erc721Example {
     #[borrow]
     erc721: Erc721,
     #[borrow]
-    enumerable: Enumerable,
+    enumerable: Erc721Enumerable,
 }
 
 #[public]
-#[implements(IErc721<Error=Error>, IErc721Burnable<Error=Error>, IErc721Enumerable<Error=Error>, /*IErc165*/)]
+#[implements(IErc721<Error=Error>, IErc721Burnable<Error=Error>, IErc721Enumerable<Error=Error>, IErc165)]
 impl Erc721Example {
     fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         self.erc721._mint(to, token_id)?;
@@ -268,12 +267,13 @@ impl IErc721Enumerable for Erc721Example {
     }
 }
 
-/*#[public]
+#[public]
 impl IErc165 for Erc721Example {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <self as IErc721<Error = Error>>::supports_interface(interface_id)
-            || <self as IErc721Enumerable<Error = Error>>::supports_interface(
+        Erc721::supports_interface(&self.erc721, interface_id)
+            || Erc721Enumerable::supports_interface(
+                &self.enumerable,
                 interface_id,
             )
     }
-}*/
+}
