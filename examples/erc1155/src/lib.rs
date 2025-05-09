@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc1155::{
-    self, extensions::IErc1155Burnable, Erc1155,
+    self, extensions::IErc1155Burnable, Erc1155, IErc1155,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -52,7 +52,7 @@ struct Erc1155Example {
 }
 
 #[public]
-#[inherit(Erc1155)]
+#[implements(IErc1155<Error=Error>)]
 impl Erc1155Example {
     fn mint(
         &mut self,
@@ -94,5 +94,58 @@ impl Erc1155Example {
     ) -> Result<(), Error> {
         self.erc1155.burn_batch(account, token_ids, values)?;
         Ok(())
+    }
+}
+
+#[public]
+impl IErc1155 for Erc1155Example {
+    type Error = Error;
+
+    fn balance_of(&self, account: Address, id: U256) -> U256 {
+        self.erc1155.balance_of(account, id)
+    }
+
+    fn balance_of_batch(
+        &self,
+        accounts: Vec<Address>,
+        ids: Vec<U256>,
+    ) -> Result<Vec<U256>, <Self as IErc1155>::Error> {
+        Ok(self.erc1155.balance_of_batch(accounts, ids)?)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), <Self as IErc1155>::Error> {
+        Ok(self.erc1155.set_approval_for_all(operator, approved)?)
+    }
+
+    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
+        self.erc1155.is_approved_for_all(account, operator)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), <Self as IErc1155>::Error> {
+        Ok(self.erc1155.safe_transfer_from(from, to, id, value, data)?)
+    }
+
+    fn safe_batch_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), <Self as IErc1155>::Error> {
+        Ok(self
+            .erc1155
+            .safe_batch_transfer_from(from, to, ids, values, data)?)
     }
 }
