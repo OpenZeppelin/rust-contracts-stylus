@@ -22,6 +22,7 @@ use stylus_sdk::{
 use crate::token::erc721::{
     self, interface::Erc721Interface, Erc721, RECEIVER_FN_SELECTOR,
 };
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -115,16 +116,11 @@ pub struct Erc721Wrapper {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc721Wrapper {}
 
-impl Erc721Wrapper {
-    /// Constructor.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `underlying_token` - The wrapped token.
-    pub fn constructor(&mut self, underlying_token: Address) {
-        self.underlying.set(underlying_token);
-    }
+/// Interface of an extension of the ERC-721 token contract that supports token
+/// wrapping.
+pub trait IErc721Wrapper {
+    /// The error type associated to this trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// `token_ids`.
@@ -134,7 +130,6 @@ impl Erc721Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
     /// * `token_ids` - List of underlying token ids to deposit.
-    /// * `erc721` - Write access to an [`Erc721`] contract.
     ///
     /// # Errors
     ///
@@ -147,6 +142,87 @@ impl Erc721Wrapper {
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with an error.
+    fn deposit_for(
+        &mut self,
+        account: Address,
+        token_ids: Vec<U256>,
+    ) -> Result<bool, <Self as IErc721Wrapper>::Error>;
+
+    /// Allow a user to burn wrapped tokens and withdraw the corresponding
+    /// `token_ids` of the underlying tokens.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `account` - The account to withdraw tokens to.
+    /// * `token_ids` - List of underlying token ids to withdraw.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
+    ///   ERC-721 contract.
+    /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
+    ///   [`erc721::IErc721::safe_transfer_from`] operation on the underlying
+    ///   token.
+    /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
+    ///   is not `Address::ZERO`.
+    /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
+    ///   `auth` does not have a right to approve this token.
+    fn withdraw_to(
+        &mut self,
+        account: Address,
+        token_ids: Vec<U256>,
+    ) -> Result<bool, <Self as IErc721Wrapper>::Error>;
+
+    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
+    /// minting on direct ERC-721 transfers to this contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `operator` - The operator of the transfer.
+    /// * `from` - The sender of the transfer.
+    /// * `token_id` - The token id of the transfer.
+    /// * `data` - The data of the transfer.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
+    ///   token.
+    /// * [`Error::InvalidSender`] - If `token_id` already exists.
+    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If
+    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   interface id or returned with an error.
+    fn on_erc721_received(
+        &mut self,
+        _operator: Address,
+        from: Address,
+        token_id: U256,
+        _data: Bytes,
+    ) -> Result<FixedBytes<4>, <Self as IErc721Wrapper>::Error>;
+
+    /// Returns the underlying token.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    #[must_use]
+    fn underlying(&self) -> Address;
+}
+
+impl Erc721Wrapper {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `underlying_token` - The wrapped token.
+    pub fn constructor(&mut self, underlying_token: Address) {
+        self.underlying.set(underlying_token);
+    }
+
+    /// Check [`IErc721Wrapper::deposit_for()`] for more information.
     pub fn deposit_for(
         &mut self,
         account: Address,
@@ -192,27 +268,7 @@ impl Erc721Wrapper {
         Ok(true)
     }
 
-    /// Allow a user to burn wrapped tokens and withdraw the corresponding
-    /// `token_ids` of the underlying tokens.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `account` - The account to withdraw tokens to.
-    /// * `token_ids` - List of underlying token ids to withdraw.
-    /// * `erc721` - Write access to an [`Erc721`] contract.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
-    ///   ERC-721 contract.
-    /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
-    ///   [`erc721::IErc721::safe_transfer_from`] operation on the underlying
-    ///   token.
-    /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
-    ///   is not `Address::ZERO`.
-    /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
-    ///   `auth` does not have a right to approve this token.
+    /// Check [`IErc721Wrapper::withdraw_to()`] for more information.
     pub fn withdraw_to(
         &mut self,
         account: Address,
@@ -257,27 +313,7 @@ impl Erc721Wrapper {
         Ok(true)
     }
 
-    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
-    /// minting on direct ERC-721 transfers to this contract.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `operator` - The operator of the transfer.
-    /// * `from` - The sender of the transfer.
-    /// * `token_id` - The token id of the transfer.
-    /// * `data` - The data of the transfer.
-    /// * `erc721` - Write access to an [`Erc721`] contract.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
-    ///   token.
-    /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
-    /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///   interface id or returned with an error.
+    /// Check [`IErc721Wrapper::on_erc721_received()`] for more information.
     pub fn on_erc721_received(
         &mut self,
         _operator: Address,
@@ -298,18 +334,12 @@ impl Erc721Wrapper {
         Ok(RECEIVER_FN_SELECTOR.into())
     }
 
-    /// Returns the underlying token.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
+    /// Check [`IErc721Wrapper::underlying()`] for more information.
     #[must_use]
     pub fn underlying(&self) -> Address {
         self.underlying.get()
     }
-}
 
-impl Erc721Wrapper {
     /// Mints wrapped tokens to cover any underlying tokens that would have been
     /// function that can be exposed with access control if desired.
     ///
