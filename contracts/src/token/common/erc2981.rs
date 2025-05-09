@@ -191,9 +191,9 @@ impl IErc2981 for Erc2981 {
 }
 
 impl IErc165 for Erc2981 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc2981>::interface_id() == interface_id
-            || Erc165::supports_interface(interface_id)
+            || Erc165::interface_id() == interface_id
     }
 }
 
