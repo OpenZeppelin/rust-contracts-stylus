@@ -18,8 +18,10 @@
 // ERC20Capped.
 
 use alloc::{vec, vec::Vec};
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
@@ -158,6 +160,9 @@ mod borrower {
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
+    // TODO: use erc20 directly once function overriding is possible.
+    /// Underlying token.
+    pub erc20: Erc20,
     // TODO: Remove this field once function overriding is possible. For now we
     // keep this field `pub`, since this is used to simulate overriding.
     /// Fee applied when doing flash loans.
@@ -168,6 +173,20 @@ pub struct Erc20FlashMint {
     pub flash_fee_receiver_address: StorageAddress,
 }
 
+impl Deref for Erc20FlashMint {
+    type Target = Erc20;
+
+    fn deref(&self) -> &Self::Target {
+        &self.erc20
+    }
+}
+
+impl DerefMut for Erc20FlashMint {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.erc20
+    }
+}
+
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
@@ -176,31 +195,10 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
+#[interface_id]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
-
-    // Manually calculated, as some of the functions' parameters do not
-    // implement AbiType.
-    /// Solidity interface id associated with [`IErc3156FlashLender`] trait.
-    /// Computed as a XOR of selectors for each function in the trait.
-    fn interface_id() -> FixedBytes<4>
-    where
-        Self: Sized,
-    {
-        FixedBytes::<4>::new(stylus_sdk::function_selector!(
-            "maxFlashLoan",
-            Address
-        )) ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-            "flashFee", Address, U256
-        )) ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-            "flashLoan",
-            Address,
-            Address,
-            U256,
-            Bytes
-        ))
-    }
 
     /// Returns the maximum amount of tokens available for loan.
     ///
@@ -213,16 +211,7 @@ pub trait IErc3156FlashLender {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token` - The address of the token that is requested.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn max_flash_loan(&self, token: Address) -> U256 {
-    ///     self.erc20_flash_mint.max_flash_loan(token, &self.erc20)
-    /// }
-    /// ```
-    fn max_flash_loan(&self, token: Address, erc20: &erc20::Erc20) -> U256;
+    fn max_flash_loan(&self, token: Address) -> U256;
 
     /// Returns the fee applied when doing flash loans.
     ///
@@ -267,7 +256,6 @@ pub trait IErc3156FlashLender {
     ///   is supported.
     /// * `value` - The amount of tokens to be loaned.
     /// * `data` - Arbitrary data that is passed to the receiver.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -288,42 +276,21 @@ pub trait IErc3156FlashLender {
     /// * If the new (temporary) total supply exceeds `U256::MAX`.
     /// * If the sum of the loan value and fee exceeds the maximum value of
     ///   `U256::MAX`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn flash_loan(
-    ///     &mut self,
-    ///     receiver: Address,
-    ///     token: Address,
-    ///     value: U256,
-    ///     data: Bytes,
-    /// ) -> Result<bool, flash_mint::Error> {
-    ///     self.erc20_flash_mint.flash_loan(
-    ///         receiver,
-    ///         token,
-    ///         value,
-    ///         data,
-    ///         &mut self.erc20,
-    ///     )
-    /// }
-    /// ```
     fn flash_loan(
         &mut self,
         receiver: Address,
         token: Address,
         value: U256,
         data: Bytes,
-        erc20: &mut Erc20,
     ) -> Result<bool, <Self as IErc3156FlashLender>::Error>;
 }
 
 impl IErc3156FlashLender for Erc20FlashMint {
     type Error = Error;
 
-    fn max_flash_loan(&self, token: Address, erc20: &Erc20) -> U256 {
+    fn max_flash_loan(&self, token: Address) -> U256 {
         if token == contract::address() {
-            U256::MAX - erc20.total_supply()
+            U256::MAX - self.erc20.total_supply()
         } else {
             U256::MIN
         }
@@ -350,9 +317,8 @@ impl IErc3156FlashLender for Erc20FlashMint {
         token: Address,
         value: U256,
         data: Bytes,
-        erc20: &mut Erc20,
     ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
-        let max_loan = self.max_flash_loan(token, erc20);
+        let max_loan = self.max_flash_loan(token);
         if value > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
                 max_loan,
@@ -365,7 +331,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
                 ERC3156InvalidReceiver { receiver },
             ));
         }
-        erc20._mint(receiver, value)?;
+        self.erc20._mint(receiver, value)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
@@ -390,15 +356,19 @@ impl IErc3156FlashLender for Erc20FlashMint {
         let allowance = value
             .checked_add(fee)
             .expect("allowance should not exceed `U256::MAX`");
-        erc20._spend_allowance(receiver, contract::address(), allowance)?;
+        self.erc20._spend_allowance(
+            receiver,
+            contract::address(),
+            allowance,
+        )?;
 
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
 
         if fee.is_zero() || flash_fee_receiver.is_zero() {
-            erc20._burn(receiver, allowance)?;
+            self.erc20._burn(receiver, allowance)?;
         } else {
-            erc20._burn(receiver, value)?;
-            erc20._transfer(receiver, flash_fee_receiver, fee)?;
+            self.erc20._burn(receiver, value)?;
+            self.erc20._transfer(receiver, flash_fee_receiver, fee)?;
         }
 
         Ok(true)

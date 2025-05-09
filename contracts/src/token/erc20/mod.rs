@@ -138,6 +138,11 @@ pub struct Erc20 {
     pub(crate) total_supply: StorageU256,
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc20 {}
+
 /// Required interface of an [`Erc20`] compliant contract.
 #[interface_id]
 pub trait IErc20 {
