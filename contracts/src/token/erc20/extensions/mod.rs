@@ -8,7 +8,7 @@ pub mod permit;
 pub mod wrapper;
 
 pub use burnable::IErc20Burnable;
-pub use capped::Capped;
+pub use capped::{Capped, ICapped};
 pub use erc4626::{Erc4626, IErc4626};
 pub use flash_mint::{Erc20FlashMint, IErc3156FlashLender};
 pub use metadata::{Erc20Metadata, IErc20Metadata};

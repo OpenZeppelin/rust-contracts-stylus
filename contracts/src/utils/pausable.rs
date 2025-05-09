@@ -16,6 +16,7 @@
 
 use alloc::{vec, vec::Vec};
 
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::MethodError, evm, msg, prelude::*, storage::StorageBool,
@@ -76,13 +77,19 @@ pub struct Pausable {
     pub(crate) paused: StorageBool,
 }
 
-#[public]
-impl Pausable {
+/// Pausable interface.
+#[interface_id]
+pub trait IPausable {
     /// Returns true if the contract is paused, and false otherwise.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    fn paused(&self) -> bool;
+}
+
+#[public]
+impl IPausable for Pausable {
     fn paused(&self) -> bool {
         self.paused.get()
     }

@@ -22,7 +22,7 @@ pub struct Erc20Metadata {
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
 #[interface_id]
-pub trait IErc20Metadata {
+pub trait IErc20Metadata: IErc165 {
     /// Returns the name of the token.
     ///
     /// # Arguments
