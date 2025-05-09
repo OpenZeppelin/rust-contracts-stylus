@@ -1582,7 +1582,7 @@ dependencies = [
  "eyre",
  "once_cell",
  "regex",
- "stylus-sdk 0.9.0",
+ "stylus-sdk 0.8.3",
  "tokio",
  "toml",
 ]
@@ -2454,8 +2454,8 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "mini-alloc"
-version = "0.9.0"
-source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
 dependencies = [
  "cfg-if",
 ]
@@ -2727,7 +2727,7 @@ dependencies = [
  "keccak-const",
  "motsu",
  "openzeppelin-stylus-proc",
- "stylus-sdk 0.9.0",
+ "stylus-sdk 0.8.3",
 ]
 
 [[package]]
@@ -3692,8 +3692,8 @@ dependencies = [
 
 [[package]]
 name = "stylus-core"
-version = "0.9.0"
-source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3723,8 +3723,8 @@ dependencies = [
 
 [[package]]
 name = "stylus-proc"
-version = "0.9.0"
-source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3761,8 +3761,8 @@ dependencies = [
 
 [[package]]
 name = "stylus-sdk"
-version = "0.9.0"
-source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3775,9 +3775,9 @@ dependencies = [
  "mini-alloc",
  "rclite",
  "regex",
- "stylus-core 0.9.0",
- "stylus-proc 0.9.0",
- "stylus-test 0.9.0",
+ "stylus-core 0.8.3",
+ "stylus-proc 0.8.3",
+ "stylus-test 0.8.3",
 ]
 
 [[package]]
@@ -3795,13 +3795,13 @@ dependencies = [
 
 [[package]]
 name = "stylus-test"
-version = "0.9.0"
-source = "git+https://github.com/0xNeshi/stylus-sdk-rs.git?rev=8fe26c6#8fe26c64499e6d03ce65ee822d0e748bc7ad7783"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
 dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",
  "alloy-sol-types",
- "stylus-core 0.9.0",
+ "stylus-core 0.8.3",
  "tokio",
  "url",
 ]

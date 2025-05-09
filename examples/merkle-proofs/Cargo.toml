@@ -12,7 +12,7 @@ alloy-primitives = { version = "=0.8.20", default-features = false, features = [
     "tiny-keccak",
 ] }
 alloy-sol-types = { version = "=0.8.20", default-features = false }
-stylus-sdk = { git = "https://github.com/0xNeshi/stylus-sdk-rs.git", rev = "8fe26c6", default-features = false, features = [
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "b7310ef", default-features = false, features = [
     "mini-alloc",
 ] }
 
