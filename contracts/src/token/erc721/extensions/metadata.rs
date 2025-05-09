@@ -11,10 +11,7 @@ use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::{
     token::erc721::{self, IErc721},
-    utils::{
-        introspection::erc165::{Erc165, IErc165},
-        Metadata,
-    },
+    utils::{introspection::erc165::IErc165, Metadata},
 };
 
 /// State of an [`Erc721Metadata`] contract.
@@ -29,7 +26,10 @@ pub struct Erc721Metadata {
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
-pub trait IErc721Metadata {
+pub trait IErc721Metadata: IErc165 {
+    /// The error type associated to this trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     // Manually calculated, as the trait is missing
     // [`Erc721Metadata::token_uri`].
     /// Solidity interface id associated with [`IErc721Metadata`] trait.
@@ -57,20 +57,24 @@ pub trait IErc721Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     fn symbol(&self) -> String;
-}
 
-// FIXME: Apply multi-level inheritance to export Metadata's functions.
-// With the current version of SDK it is not possible.
-// See https://github.com/OffchainLabs/stylus-sdk-rs/pull/120
-#[public]
-impl IErc721Metadata for Erc721Metadata {
-    fn name(&self) -> String {
-        self.metadata.name()
-    }
-
-    fn symbol(&self) -> String {
-        self.metadata.symbol()
-    }
+    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
+    ///
+    /// NOTE: The implementation should use `#[selector(name = "tokenURI")]` to
+    /// match Solidity's camelCase naming convention.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `token_id` - ID of a token.
+    ///
+    /// # Errors
+    ///
+    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
+    fn token_uri(
+        &self,
+        token_id: U256,
+    ) -> Result<String, <Self as IErc721Metadata>::Error>;
 }
 
 impl Erc721Metadata {
@@ -84,16 +88,17 @@ impl Erc721Metadata {
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
     }
-}
 
-impl IErc165 for Erc721Metadata {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721Metadata>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+    /// Check [IErc721Metadata::name()] for more details.
+    pub fn name(&self) -> String {
+        self.metadata.name()
     }
-}
 
-impl Erc721Metadata {
+    /// Check [IErc721Metadata::symbol()] for more details.
+    pub fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
     /// Returns the base of Uniform Resource Identifier (URI) for tokens'
     /// collection.
     ///
@@ -104,34 +109,7 @@ impl Erc721Metadata {
         self.base_uri.get_string()
     }
 
-    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
-    ///
-    /// NOTE: To expose this function in your contract's ABI, implement it as
-    /// shown in the Examples section below, accepting only the `token_id`
-    /// parameter. The `erc721` reference should come from your contract's
-    /// state. The implementation should use `#[selector(name = "tokenURI")]` to
-    /// match Solidity's camelCase naming convention and it should forward the
-    /// call to your internal storage instance along with the `erc721`
-    /// reference.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - ID of a token.
-    /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
-    ///
-    /// # Errors
-    ///
-    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// #[selector(name = "tokenURI")]
-    /// pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
-    ///     self.metadata.token_uri(token_id, &self.erc721)
-    /// }
-    /// ```
+    /// Check [IErc721Metadata::token_uri()] for more details.
     pub fn token_uri(
         &self,
         token_id: U256,

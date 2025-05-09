@@ -11,7 +11,11 @@ use stylus_sdk::{
     storage::{StorageMap, StorageString},
 };
 
-use crate::token::erc721::{self, extensions::Erc721Metadata, IErc721};
+use crate::token::erc721::{
+    self,
+    extensions::{Erc721Metadata, IErc721Metadata},
+    IErc721,
+};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -42,6 +46,10 @@ pub struct Erc721UriStorage {
     pub token_uris: StorageMap<U256, StorageString>,
 }
 
+/// Interface of an optional extension ERC-721 token providing storage based
+/// token URI management.
+pub trait IErc721UriStorage: IErc721Metadata {}
+
 impl Erc721UriStorage {
     /// Sets `token_uri` as the token URI of `token_id`.
     ///
@@ -59,38 +67,7 @@ impl Erc721UriStorage {
         evm::log(MetadataUpdate { token_id });
     }
 
-    /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
-    ///
-    /// NOTE: To expose this function in your contract's ABI, implement it as
-    /// shown in the Examples section below, accepting only the `token_id`
-    /// parameter. Both the `erc721` and `metadata` references should come from
-    /// your contract's state. The implementation should use
-    /// `#[selector(name = "tokenURI")]` to match Solidity's camelCase naming
-    /// convention and it should forward the call to your internal storage
-    /// instance along with both references.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    /// * `token_id` - Id of a token.
-    /// * `erc721` - Read access to a contract providing [`IErc721`] interface.
-    /// * `metadata` - Read access to a [`Erc721Metadata`] contract.
-    ///
-    /// # Errors
-    ///
-    /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// #[selector(name = "tokenURI")]
-    /// pub fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
-    ///     self.uri_storage.token_uri(
-    ///        token_id,
-    ///        &self.erc721,
-    ///        &self.metadata,
-    ///     )
-    /// }
+    /// Check [`IErc721Metadata::token_uri()`] for more details.
     pub fn token_uri(
         &self,
         token_id: U256,
