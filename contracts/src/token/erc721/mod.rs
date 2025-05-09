@@ -614,8 +614,9 @@ impl Erc721 {
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the [`Address::ZERO`].
-    /// Returns the owner of the `token_id` before the update.
+    /// mints (or burns) if the current owner (or `to`) is the
+    /// [`Address::ZERO`]. Returns the owner of the `token_id` before the
+    /// update.
     ///
     /// The `auth` argument is optional. If the value passed is non-zero, then
     /// this function will check that `auth` is either the owner of the
@@ -635,8 +636,8 @@ impl Erc721 {
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
     ///   is not [`Address::ZERO`].
-    /// * [`Error::InsufficientApproval`] - If `auth` is not [`Address::ZERO`] and
-    ///   `auth` does not have a right to approve this token.
+    /// * [`Error::InsufficientApproval`] - If `auth` is not [`Address::ZERO`]
+    ///   and `auth` does not have a right to approve this token.
     ///
     /// # Events
     ///

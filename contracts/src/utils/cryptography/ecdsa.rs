@@ -86,7 +86,8 @@ impl MethodError for ecdsa::Error {
 ///
 /// * [`Error::InvalidSignatureS`] - If the `s` value is grater than
 ///   [`SIGNATURE_S_UPPER_BOUND`].
-/// * [`Error::InvalidSignature`] - If the recovered address is [`Address::ZERO`].
+/// * [`Error::InvalidSignature`] - If the recovered address is
+///   [`Address::ZERO`].
 ///
 /// # Panics
 ///
@@ -119,7 +120,8 @@ pub fn recover(
 ///
 /// # Errors
 ///
-/// * [`Error::InvalidSignature`] - If the recovered address is [`Address::ZERO`].
+/// * [`Error::InvalidSignature`] - If the recovered address is
+///   [`Address::ZERO`].
 ///
 /// # Panics
 ///

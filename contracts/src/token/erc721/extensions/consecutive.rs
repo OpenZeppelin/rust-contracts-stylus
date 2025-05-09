@@ -446,8 +446,9 @@ impl Erc721Consecutive {
 
 impl Erc721Consecutive {
     /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the [`Address::ZERO`].
-    /// Returns the owner of the `token_id` before the update.
+    /// mints (or burns) if the current owner (or `to`) is the
+    /// [`Address::ZERO`]. Returns the owner of the `token_id` before the
+    /// update.
     ///
     /// The `auth` argument is optional. If the value passed is non-zero, then
     /// this function will check that `auth` is either the owner of the

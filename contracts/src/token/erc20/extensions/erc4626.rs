@@ -1119,7 +1119,8 @@ impl Erc4626 {
     ///
     /// * [`safe_erc20::Error::SafeErc20FailedOperation`] - If token transfer
     ///   fails.
-    /// * [`erc20::Error::InvalidReceiver`] - If `receiver` is [`Address::ZERO`].
+    /// * [`erc20::Error::InvalidReceiver`] - If `receiver` is
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///

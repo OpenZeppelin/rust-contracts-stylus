@@ -293,8 +293,8 @@ pub trait IErc1155: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`] or
-    ///   when [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`]
+    ///   or when [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
     /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::MissingApprovalForAll`] - Returned when `from` is not the
@@ -330,9 +330,9 @@ pub trait IErc1155: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`] or
-    ///   when [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned
-    ///   its interface id or returned with error.
+    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`]
+    ///   or when [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't
+    ///   returned its interface id or returned with error.
     /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - Returned when the length of `ids` is
     ///   not equal to the length of `values`.
