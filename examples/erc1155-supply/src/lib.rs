@@ -8,7 +8,7 @@ use openzeppelin_stylus::{
     token::erc1155::{
         self,
         extensions::{Erc1155Supply, IErc1155Supply},
-        Erc1155, IErc1155,
+        IErc1155,
     },
     utils::introspection::erc165::IErc165,
 };
