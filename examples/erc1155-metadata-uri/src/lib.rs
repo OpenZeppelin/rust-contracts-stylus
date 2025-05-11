@@ -1,12 +1,18 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
-use alloy_primitives::U256;
 use openzeppelin_stylus::token::{
     erc1155,
-    erc1155::extensions::{Erc1155MetadataUri, Erc1155UriStorage},
+    erc1155::{
+        extensions::{Erc1155MetadataUri, Erc1155UriStorage},
+        Erc1155, IErc1155,
+    },
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::{Address, U256},
+    prelude::*,
+};
 
 #[derive(SolidityError, Debug)]
 enum Error {
@@ -46,18 +52,13 @@ impl From<erc1155::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Erc1155MetadataUriExample {
-    // TODO: contract size becomes too large, so uncomment this when the SDK
-    // produces a smaller contract.
-    // #[borrow]
-    // erc1155: Erc1155,
+    erc1155: Erc1155,
     metadata_uri: Erc1155MetadataUri,
     uri_storage: Erc1155UriStorage,
 }
 
 #[public]
-// TODO: contract size becomes too large, so uncomment this when the SDK
-// produces a smaller contract.
-// #[implements(IErc1155<Error=Error>)]
+#[implements(IErc1155<Error=Error>)]
 impl Erc1155MetadataUriExample {
     #[constructor]
     fn constructor(&mut self, uri: String) {
@@ -79,9 +80,6 @@ impl Erc1155MetadataUriExample {
     }
 }
 
-// TODO: contract size becomes too large, so uncomment this when the SDK
-// produces a smaller contract.
-/*
 #[public]
 impl IErc1155 for Erc1155MetadataUriExample {
     type Error = Error;
@@ -134,4 +132,3 @@ impl IErc1155 for Erc1155MetadataUriExample {
             .safe_batch_transfer_from(from, to, ids, values, data)?)
     }
 }
-*/
