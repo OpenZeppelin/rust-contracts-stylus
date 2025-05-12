@@ -78,7 +78,7 @@ struct Erc20Example {
 }
 
 #[public]
-#[implements(IErc20<Error = Error>, IErc20Metadata, ICapped, IPausable)]
+#[implements(IErc20<Error = Error>, IErc20Metadata, ICapped, IPausable, IErc165)]
 impl Erc20Example {
     #[constructor]
     pub fn constructor(
@@ -133,10 +133,6 @@ impl Erc20Example {
 
         self.erc20._mint(account, value)?;
         Ok(())
-    }
-
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc165>::supports_interface(interface_id)
     }
 
     /// WARNING: These functions are intended for **testing purposes** only. In
@@ -215,10 +211,11 @@ impl IErc20Metadata for Erc20Example {
     }
 }
 
+#[public]
 impl IErc165 for Erc20Example {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc20::supports_interface(interface_id)
-            || Erc20Metadata::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        Erc20::supports_interface(&self.erc20, interface_id)
+            || Erc20Metadata::supports_interface(&self.metadata, interface_id)
     }
 }
 
