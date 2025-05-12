@@ -27,13 +27,7 @@ use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{aliases::U96, uint, Address, FixedBytes, U256};
-use stylus_sdk::{
-    abi::Bytes,
-    call::MethodError,
-    evm, msg,
-    prelude::*,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{
@@ -225,7 +219,6 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 
 // ************** ERC-721 External **************
 
-#[public]
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
@@ -254,7 +247,6 @@ impl IErc721 for Erc721Consecutive {
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
-    #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
         &mut self,
         from: Address,
@@ -932,6 +924,7 @@ mod tests {
             Ok(self.erc721.safe_transfer_from(from, to, token_id)?)
         }
 
+        #[selector(name = "safeTransferFrom")]
         fn safe_transfer_from_with_data(
             &mut self,
             from: Address,

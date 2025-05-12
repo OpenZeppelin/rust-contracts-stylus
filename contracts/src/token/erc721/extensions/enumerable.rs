@@ -137,7 +137,6 @@ pub trait IErc721Enumerable {
     ) -> Result<U256, <Self as IErc721Enumerable>::Error>;
 }
 
-#[public]
 impl IErc721Enumerable for Erc721Enumerable {
     type Error = Error;
 
