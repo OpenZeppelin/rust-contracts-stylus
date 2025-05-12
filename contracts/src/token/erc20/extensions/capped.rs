@@ -63,7 +63,6 @@ pub trait ICapped {
     fn cap(&self) -> U256;
 }
 
-#[public]
 impl ICapped for Capped {
     fn cap(&self) -> U256 {
         self.cap.get()

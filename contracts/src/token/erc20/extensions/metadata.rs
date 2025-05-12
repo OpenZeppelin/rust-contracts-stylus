@@ -58,7 +58,6 @@ pub trait IErc20Metadata: IErc165 {
     fn decimals(&self) -> u8;
 }
 
-#[public]
 impl IErc20Metadata for Erc20Metadata {
     fn name(&self) -> String {
         self.metadata.name()
