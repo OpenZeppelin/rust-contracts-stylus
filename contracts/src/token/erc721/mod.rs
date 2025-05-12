@@ -773,9 +773,7 @@ impl Erc721 {
 
     /// Destroys `token_id`.
     ///
-    /// The approval is cleared when the token is burned. This is an
-    /// internal function that does not check if the sender is authorized
-    /// to operate on the token.
+    /// The approval is cleared when the token is burned.
     ///
     /// # Arguments
     ///
@@ -791,7 +789,7 @@ impl Erc721 {
     /// * [`Transfer`].
     pub fn _burn(&mut self, token_id: U256) -> Result<(), Error> {
         let previous_owner =
-            self._update(Address::ZERO, token_id, Address::ZERO)?;
+            self._update(Address::ZERO, token_id, msg::sender())?;
         if previous_owner.is_zero() {
             return Err(ERC721NonexistentToken { token_id }.into());
         }

@@ -1125,9 +1125,6 @@ mod tests {
     ) {
         // Mint batches of 1000 tokens to Alice and Bob.
         contract.init(alice, |contract| {
-            //     contract.first_consecutive_id.
-            // set(FIRST_CONSECUTIVE_TOKEN_ID);     contract.
-            // max_batch_size.set(MAX_BATCH_SIZE);
             contract
                 .erc721
                 .first_consecutive_id

@@ -15,6 +15,7 @@ use openzeppelin_stylus::{
     utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
+
 #[derive(SolidityError, Debug)]
 enum Error {
     OutOfBoundsIndex(enumerable::ERC721OutOfBoundsIndex),
@@ -232,7 +233,7 @@ impl IErc721Burnable for Erc721Example {
         // Retrieve the owner.
         let owner = self.erc721.owner_of(token_id)?;
 
-        self.erc721.burn(token_id)?;
+        self.erc721._burn(token_id)?;
 
         // Update the extension's state.
         self.enumerable._remove_token_from_owner_enumeration(

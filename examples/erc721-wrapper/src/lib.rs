@@ -6,6 +6,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
+        self,
         extensions::{
             wrapper, wrapper::IErc721Wrapper, Erc721Wrapper, IErc721Burnable,
         },
@@ -14,6 +15,66 @@ use openzeppelin_stylus::{
     utils::introspection::erc165::{Erc165, IErc165},
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
+
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    InvalidOwner(erc721::ERC721InvalidOwner),
+    NonexistentToken(erc721::ERC721NonexistentToken),
+    IncorrectOwner(erc721::ERC721IncorrectOwner),
+    InvalidSender(erc721::ERC721InvalidSender),
+    InvalidReceiver(erc721::ERC721InvalidReceiver),
+    InvalidReceiverWithReason(erc721::InvalidReceiverWithReason),
+    InsufficientApproval(erc721::ERC721InsufficientApproval),
+    InvalidApprover(erc721::ERC721InvalidApprover),
+    InvalidOperator(erc721::ERC721InvalidOperator),
+    UnsupportedToken(wrapper::ERC721UnsupportedToken),
+    Erc721FailedOperation(wrapper::Erc721FailedOperation),
+}
+
+impl From<wrapper::Error> for Error {
+    fn from(value: wrapper::Error) -> Self {
+        match value {
+            wrapper::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+            wrapper::Error::NonexistentToken(e) => Error::NonexistentToken(e),
+            wrapper::Error::IncorrectOwner(e) => Error::IncorrectOwner(e),
+            wrapper::Error::InvalidSender(e) => Error::InvalidSender(e),
+            wrapper::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            wrapper::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            wrapper::Error::InsufficientApproval(e) => {
+                Error::InsufficientApproval(e)
+            }
+            wrapper::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            wrapper::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+            wrapper::Error::UnsupportedToken(e) => Error::UnsupportedToken(e),
+            wrapper::Error::Erc721FailedOperation(e) => {
+                Error::Erc721FailedOperation(e)
+            }
+        }
+    }
+}
+
+impl From<erc721::Error> for Error {
+    fn from(value: erc721::Error) -> Self {
+        match value {
+            erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+            erc721::Error::NonexistentToken(e) => Error::NonexistentToken(e),
+            erc721::Error::IncorrectOwner(e) => Error::IncorrectOwner(e),
+            erc721::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc721::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc721::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc721::Error::InsufficientApproval(e) => {
+                Error::InsufficientApproval(e)
+            }
+            erc721::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc721::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+        }
+    }
+}
+
 #[entrypoint]
 #[storage]
 struct Erc721WrapperExample {
@@ -24,7 +85,7 @@ struct Erc721WrapperExample {
 }
 
 #[public]
-#[implements(IErc721<Error=wrapper::Error>, IErc721Burnable<Error=wrapper::Error>, IErc721Wrapper<Error=wrapper::Error>, IErc165)]
+#[implements(IErc721<Error=Error>, IErc721Burnable<Error=Error>, IErc721Wrapper<Error=Error>, IErc165)]
 impl Erc721WrapperExample {
     #[constructor]
     fn constructor(&mut self, underlying_token: Address) {
@@ -34,13 +95,13 @@ impl Erc721WrapperExample {
 
 #[public]
 impl IErc721 for Erc721WrapperExample {
-    type Error = wrapper::Error;
+    type Error = Error;
 
-    fn balance_of(&self, owner: Address) -> Result<U256, wrapper::Error> {
+    fn balance_of(&self, owner: Address) -> Result<U256, Error> {
         Ok(self.erc721.balance_of(owner)?)
     }
 
-    fn owner_of(&self, token_id: U256) -> Result<Address, wrapper::Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
         Ok(self.erc721.owner_of(token_id)?)
     }
 
@@ -49,7 +110,7 @@ impl IErc721 for Erc721WrapperExample {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), wrapper::Error> {
+    ) -> Result<(), Error> {
         Ok(self.erc721.safe_transfer_from(from, to, token_id)?)
     }
 
@@ -59,7 +120,7 @@ impl IErc721 for Erc721WrapperExample {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), wrapper::Error> {
+    ) -> Result<(), Error> {
         Ok(self
             .erc721
             .safe_transfer_from_with_data(from, to, token_id, data)?)
@@ -70,15 +131,11 @@ impl IErc721 for Erc721WrapperExample {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), wrapper::Error> {
+    ) -> Result<(), Error> {
         Ok(self.erc721.transfer_from(from, to, token_id)?)
     }
 
-    fn approve(
-        &mut self,
-        to: Address,
-        token_id: U256,
-    ) -> Result<(), wrapper::Error> {
+    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         Ok(self.erc721.approve(to, token_id)?)
     }
 
@@ -86,11 +143,11 @@ impl IErc721 for Erc721WrapperExample {
         &mut self,
         to: Address,
         approved: bool,
-    ) -> Result<(), wrapper::Error> {
+    ) -> Result<(), Error> {
         Ok(self.erc721.set_approval_for_all(to, approved)?)
     }
 
-    fn get_approved(&self, token_id: U256) -> Result<Address, wrapper::Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
         Ok(self.erc721.get_approved(token_id)?)
     }
 
@@ -101,16 +158,16 @@ impl IErc721 for Erc721WrapperExample {
 
 #[public]
 impl IErc721Burnable for Erc721WrapperExample {
-    type Error = wrapper::Error;
+    type Error = Error;
 
-    fn burn(&mut self, token_id: U256) -> Result<(), wrapper::Error> {
-        Ok(self.erc721.burn(token_id)?)
+    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
+        Ok(self.erc721._burn(token_id)?)
     }
 }
 
 #[public]
 impl IErc721Wrapper for Erc721WrapperExample {
-    type Error = wrapper::Error;
+    type Error = Error;
 
     fn underlying(&self) -> Address {
         self.erc721_wrapper.underlying()
@@ -120,7 +177,7 @@ impl IErc721Wrapper for Erc721WrapperExample {
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, wrapper::Error> {
+    ) -> Result<bool, Error> {
         Ok(self.erc721_wrapper.deposit_for(
             account,
             token_ids,
@@ -132,7 +189,7 @@ impl IErc721Wrapper for Erc721WrapperExample {
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, wrapper::Error> {
+    ) -> Result<bool, Error> {
         Ok(self.erc721_wrapper.withdraw_to(
             account,
             token_ids,
@@ -146,7 +203,7 @@ impl IErc721Wrapper for Erc721WrapperExample {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<FixedBytes<4>, wrapper::Error> {
+    ) -> Result<FixedBytes<4>, Error> {
         Ok(self.erc721_wrapper.on_erc721_received(
             operator,
             from,

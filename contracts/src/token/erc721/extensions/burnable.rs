@@ -1,9 +1,6 @@
 //! Optional Burnable extension of the ERC-721 standard.
 
-use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
-
-use crate::token::erc721::{self, Erc721};
+use alloy_primitives::U256;
 
 /// An [`Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {
@@ -19,47 +16,30 @@ pub trait IErc721Burnable {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::NonexistentToken`] - If token does not exist.
-    /// * [`erc721::Error::InsufficientApproval`] - If the caller does not have
-    ///   the right to approve.
+    /// * [`crate::token::erc721::Error::NonexistentToken`] - If token does not
+    ///   exist.
+    /// * [`crate::token::erc721::Error::InsufficientApproval`] - If the caller
+    ///   does not have the right to approve.
     ///
     /// # Events
     ///
-    /// * [`erc721::Transfer`].
+    /// * [`crate::token::erc721::Transfer`].
     fn burn(
         &mut self,
         token_id: U256,
     ) -> Result<(), <Self as IErc721Burnable>::Error>;
 }
 
-impl IErc721Burnable for Erc721 {
-    type Error = erc721::Error;
-
-    fn burn(
-        &mut self,
-        token_id: U256,
-    ) -> Result<(), <Self as IErc721Burnable>::Error> {
-        // Setting an "auth" arguments enables the
-        // [`super::super::Erc721::_is_authorized`] check which verifies that
-        // the token exists (from != `Address::ZERO`).
-        //
-        // Therefore, it is not needed to verify that the return value is not 0
-        // here.
-        self._update(Address::ZERO, token_id, msg::sender())?;
-        Ok(())
-    }
-}
-
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::uint;
+    use alloy_primitives::{uint, Address};
     use motsu::prelude::*;
     use stylus_sdk::{abi::Bytes, prelude::*};
 
     use super::*;
     use crate::token::erc721::{
-        ERC721InsufficientApproval, ERC721NonexistentToken, Erc721, Error,
-        IErc721,
+        self, ERC721InsufficientApproval, ERC721NonexistentToken, Erc721,
+        Error, IErc721,
     };
 
     const TOKEN_ID: U256 = uint!(1_U256);
@@ -169,7 +149,7 @@ mod tests {
         type Error = erc721::Error;
 
         fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
-            self.erc721.burn(token_id)
+            self.erc721._burn(token_id)
         }
     }
 
