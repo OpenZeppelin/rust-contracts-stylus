@@ -3,28 +3,35 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc20::{
-    extensions::{flash_mint, Erc20FlashMint, IErc3156FlashLender},
-    IErc20,
+use openzeppelin_stylus::{
+    token::erc20::{
+        extensions::{flash_mint, Erc20FlashMint, IErc3156FlashLender},
+        Erc20, IErc20,
+    },
+    utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::{abi::Bytes, prelude::*};
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::{Address, FixedBytes, U256},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
 struct Erc20FlashMintExample {
+    erc20: Erc20,
     flash_mint: Erc20FlashMint,
 }
 
 #[public]
-#[implements(IErc20<Error = flash_mint::Error>, IErc3156FlashLender<Error = flash_mint::Error>)]
+#[implements(IErc20<Error = flash_mint::Error>, IErc3156FlashLender<Error = flash_mint::Error>, IErc165)]
 impl Erc20FlashMintExample {
     fn mint(
         &mut self,
         to: Address,
         value: U256,
     ) -> Result<(), flash_mint::Error> {
-        Ok(self.flash_mint._mint(to, value)?)
+        Ok(self.erc20._mint(to, value)?)
     }
 
     /// WARNING: These functions are intended for **testing purposes** only. In
@@ -45,7 +52,7 @@ impl IErc3156FlashLender for Erc20FlashMintExample {
     type Error = flash_mint::Error;
 
     fn max_flash_loan(&self, token: Address) -> U256 {
-        self.flash_mint.max_flash_loan(token)
+        self.flash_mint.max_flash_loan(token, &self.erc20)
     }
 
     fn flash_fee(
@@ -63,7 +70,13 @@ impl IErc3156FlashLender for Erc20FlashMintExample {
         value: U256,
         data: Bytes,
     ) -> Result<bool, flash_mint::Error> {
-        Ok(self.flash_mint.flash_loan(receiver, token, value, data)?)
+        Ok(self.flash_mint.flash_loan(
+            receiver,
+            token,
+            value,
+            data,
+            &mut self.erc20,
+        )?)
     }
 }
 
@@ -72,11 +85,11 @@ impl IErc20 for Erc20FlashMintExample {
     type Error = flash_mint::Error;
 
     fn total_supply(&self) -> U256 {
-        self.flash_mint.total_supply()
+        self.erc20.total_supply()
     }
 
     fn balance_of(&self, account: Address) -> U256 {
-        self.flash_mint.balance_of(account)
+        self.erc20.balance_of(account)
     }
 
     fn transfer(
@@ -84,11 +97,11 @@ impl IErc20 for Erc20FlashMintExample {
         to: Address,
         value: U256,
     ) -> Result<bool, <Self as IErc20>::Error> {
-        Ok(self.flash_mint.transfer(to, value)?)
+        Ok(self.erc20.transfer(to, value)?)
     }
 
     fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        self.flash_mint.allowance(owner, spender)
+        self.erc20.allowance(owner, spender)
     }
 
     fn approve(
@@ -96,7 +109,7 @@ impl IErc20 for Erc20FlashMintExample {
         spender: Address,
         value: U256,
     ) -> Result<bool, <Self as IErc20>::Error> {
-        Ok(self.flash_mint.approve(spender, value)?)
+        Ok(self.erc20.approve(spender, value)?)
     }
 
     fn transfer_from(
@@ -105,6 +118,14 @@ impl IErc20 for Erc20FlashMintExample {
         to: Address,
         value: U256,
     ) -> Result<bool, <Self as IErc20>::Error> {
-        Ok(self.flash_mint.transfer_from(from, to, value)?)
+        Ok(self.erc20.transfer_from(from, to, value)?)
+    }
+}
+
+#[public]
+impl IErc165 for Erc20FlashMintExample {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc3156FlashLender>::interface_id() == interface_id
+            || Erc20::supports_interface(&self.erc20, interface_id)
     }
 }

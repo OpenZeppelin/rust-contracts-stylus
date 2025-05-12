@@ -18,9 +18,8 @@
 // ERC20Capped.
 
 use alloc::{vec, vec::Vec};
-use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -30,10 +29,7 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU256},
 };
 
-use crate::{
-    token::erc20::{self, Erc20, IErc20},
-    utils::introspection::erc165::{Erc165, IErc165},
-};
+use crate::token::erc20::{self, Erc20, IErc20};
 
 /// The expected value returned from [`IERC3156FlashBorrower::on_flash_loan`].
 pub const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
@@ -160,9 +156,6 @@ mod borrower {
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
-    // TODO: use erc20 directly once function overriding is possible.
-    /// Underlying token.
-    pub erc20: Erc20,
     // TODO: Remove this field once function overriding is possible. For now we
     // keep this field `pub`, since this is used to simulate overriding.
     /// Fee applied when doing flash loans.
@@ -171,20 +164,6 @@ pub struct Erc20FlashMint {
     // keep this field `pub`, since this is used to simulate overriding.
     /// Receiver address of the flash fee.
     pub flash_fee_receiver_address: StorageAddress,
-}
-
-impl Deref for Erc20FlashMint {
-    type Target = Erc20;
-
-    fn deref(&self) -> &Self::Target {
-        &self.erc20
-    }
-}
-
-impl DerefMut for Erc20FlashMint {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.erc20
-    }
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -285,22 +264,22 @@ pub trait IErc3156FlashLender {
     ) -> Result<bool, <Self as IErc3156FlashLender>::Error>;
 }
 
-impl IErc3156FlashLender for Erc20FlashMint {
-    type Error = Error;
-
-    fn max_flash_loan(&self, token: Address) -> U256 {
+impl Erc20FlashMint {
+    /// See [`IErc3156FlashLender::max_flash_loan`].
+    pub fn max_flash_loan(&self, token: Address, erc20: &erc20::Erc20) -> U256 {
         if token == contract::address() {
-            U256::MAX - self.erc20.total_supply()
+            U256::MAX - erc20.total_supply()
         } else {
             U256::MIN
         }
     }
 
-    fn flash_fee(
+    /// See [`IErc3156FlashLender::flash_fee`].
+    pub fn flash_fee(
         &self,
         token: Address,
         _value: U256,
-    ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
+    ) -> Result<U256, Error> {
         if token == contract::address() {
             Ok(self.flash_fee_value.get())
         } else {
@@ -311,14 +290,16 @@ impl IErc3156FlashLender for Erc20FlashMint {
     // This function can reenter, but it doesn't pose a risk because it always
     // preserves the property that the amount minted at the beginning is always
     // recovered and burned at the end, or else the entire function will revert.
-    fn flash_loan(
+    /// See [`IErc3156FlashLender::flash_loan`].
+    pub fn flash_loan(
         &mut self,
         receiver: Address,
         token: Address,
         value: U256,
         data: Bytes,
-    ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
-        let max_loan = self.max_flash_loan(token);
+        erc20: &mut Erc20,
+    ) -> Result<bool, Error> {
+        let max_loan = self.max_flash_loan(token, erc20);
         if value > max_loan {
             return Err(Error::ExceededMaxLoan(ERC3156ExceededMaxLoan {
                 max_loan,
@@ -331,7 +312,7 @@ impl IErc3156FlashLender for Erc20FlashMint {
                 ERC3156InvalidReceiver { receiver },
             ));
         }
-        self.erc20._mint(receiver, value)?;
+        erc20._mint(receiver, value)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
@@ -356,29 +337,18 @@ impl IErc3156FlashLender for Erc20FlashMint {
         let allowance = value
             .checked_add(fee)
             .expect("allowance should not exceed `U256::MAX`");
-        self.erc20._spend_allowance(
-            receiver,
-            contract::address(),
-            allowance,
-        )?;
+        erc20._spend_allowance(receiver, contract::address(), allowance)?;
 
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
 
         if fee.is_zero() || flash_fee_receiver.is_zero() {
-            self.erc20._burn(receiver, allowance)?;
+            erc20._burn(receiver, allowance)?;
         } else {
-            self.erc20._burn(receiver, value)?;
-            self.erc20._transfer(receiver, flash_fee_receiver, fee)?;
+            erc20._burn(receiver, value)?;
+            erc20._transfer(receiver, flash_fee_receiver, fee)?;
         }
 
         Ok(true)
-    }
-}
-
-impl IErc165 for Erc20FlashMint {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc3156FlashLender>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
     }
 }
 
