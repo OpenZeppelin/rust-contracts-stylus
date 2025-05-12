@@ -868,8 +868,9 @@ impl IErc165 for Erc721Consecutive {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;
+    use stylus_sdk::{abi::Bytes, prelude::*};
 
     use crate::{
         token::erc721::{
@@ -887,22 +888,104 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
     const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
 
-    fn mint_consecutive(
-        contract: &mut Erc721Consecutive,
-        receivers: Vec<Address>,
-        batches: Vec<U96>,
-    ) {
-        contract.first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
-        contract.max_batch_size.set(MAX_BATCH_SIZE);
-        for (to, batch_size) in receivers.into_iter().zip(batches) {
-            contract
-                ._mint_consecutive(to, batch_size)
-                .expect("should mint consecutively");
+    #[storage]
+    struct Erc721ConsecutiveExample {
+        #[borrow]
+        erc721: Erc721Consecutive,
+    }
+
+    #[public]
+    #[implements(IErc721<Error=Error>)]
+    impl Erc721ConsecutiveExample {
+        fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+            self.erc721._mint(to, token_id)
+        }
+
+        fn safe_mint(
+            &mut self,
+            to: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> Result<(), Error> {
+            self.erc721._safe_mint(to, token_id, &data)
         }
     }
 
+    #[public]
+    impl IErc721 for Erc721ConsecutiveExample {
+        type Error = Error;
+
+        fn balance_of(&self, owner: Address) -> Result<U256, Error> {
+            Ok(self.erc721.balance_of(owner)?)
+        }
+
+        fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
+            Ok(self.erc721.owner_of(token_id)?)
+        }
+
+        fn safe_transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), Error> {
+            Ok(self.erc721.safe_transfer_from(from, to, token_id)?)
+        }
+
+        fn safe_transfer_from_with_data(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> Result<(), Error> {
+            Ok(self
+                .erc721
+                .safe_transfer_from_with_data(from, to, token_id, data)?)
+        }
+
+        fn transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), Error> {
+            Ok(self.erc721.transfer_from(from, to, token_id)?)
+        }
+
+        fn approve(
+            &mut self,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), Error> {
+            Ok(self.erc721.approve(to, token_id)?)
+        }
+
+        fn set_approval_for_all(
+            &mut self,
+            operator: Address,
+            approved: bool,
+        ) -> Result<(), Error> {
+            Ok(self.erc721.set_approval_for_all(operator, approved)?)
+        }
+
+        fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
+            Ok(self.erc721.get_approved(token_id)?)
+        }
+
+        fn is_approved_for_all(
+            &self,
+            owner: Address,
+            operator: Address,
+        ) -> bool {
+            self.erc721.is_approved_for_all(owner, operator)
+        }
+    }
+
+    unsafe impl TopLevelStorage for Erc721ConsecutiveExample {}
+
     #[motsu::test]
-    fn mints(contract: Contract<Erc721Consecutive>, alice: Address) {
+    fn mints(contract: Contract<Erc721ConsecutiveExample>, alice: Address) {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -910,7 +993,15 @@ mod tests {
 
         let init_tokens_count = uint!(10_U96);
         contract.init(alice, |contract| {
-            mint_consecutive(contract, vec![alice], vec![init_tokens_count]);
+            contract
+                .erc721
+                .first_consecutive_id
+                .set(FIRST_CONSECUTIVE_TOKEN_ID);
+            contract.erc721.max_batch_size.set(MAX_BATCH_SIZE);
+            contract
+                .erc721
+                ._mint_consecutive(alice, init_tokens_count)
+                .expect("should mint consecutively");
         });
 
         let balance1 = contract
@@ -923,7 +1014,7 @@ mod tests {
         let non_consecutive_token_id = uint!(10_U256);
         contract
             .sender(alice)
-            ._mint(alice, non_consecutive_token_id)
+            .mint(alice, non_consecutive_token_id)
             .expect("should mint a token for Alice");
         let owner = contract
             .sender(alice)
@@ -941,16 +1032,16 @@ mod tests {
 
     #[motsu::test]
     fn error_when_minting_token_id_twice(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint the token a first time");
         let err = contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect_err("should not mint a token with `TOKEN_ID` twice");
 
         assert!(matches!(
@@ -961,14 +1052,14 @@ mod tests {
 
     #[motsu::test]
     fn error_when_minting_token_invalid_receiver(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
     ) {
         let invalid_receiver = Address::ZERO;
 
         let err = contract
             .sender(alice)
-            ._mint(invalid_receiver, TOKEN_ID)
+            .mint(invalid_receiver, TOKEN_ID)
             .expect_err("should not mint a token for invalid receiver");
 
         assert!(matches!(
@@ -981,11 +1072,12 @@ mod tests {
 
     #[motsu::test]
     fn error_when_to_is_zero(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
     ) {
         let err = contract
             .sender(alice)
+            .erc721
             ._mint_consecutive(Address::ZERO, uint!(11_U96))
             .expect_err("should not mint consecutive");
         assert!(matches!(
@@ -998,13 +1090,14 @@ mod tests {
 
     #[motsu::test]
     fn error_when_exceed_batch_size(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
     ) {
         let batch_size =
-            contract.sender(alice)._max_batch_size() + uint!(1_U96);
+            contract.sender(alice).erc721._max_batch_size() + uint!(1_U96);
         let err = contract
             .sender(alice)
+            .erc721
             ._mint_consecutive(alice, batch_size)
             .expect_err("should not mint consecutive");
         assert!(matches!(
@@ -1013,25 +1106,35 @@ mod tests {
                 batch_size,
                 max_batch
             })
-            if batch_size == U256::from(batch_size) && max_batch == U256::from(contract.sender(alice)._max_batch_size())
+            if batch_size == U256::from(batch_size) && max_batch == U256::from(contract.sender(alice).erc721._max_batch_size())
         ));
     }
 
     #[motsu::test]
     fn transfers_from(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
     ) {
         // Mint batches of 1000 tokens to Alice and Bob.
         contract.init(alice, |contract| {
-            mint_consecutive(
-                contract,
-                vec![alice, bob],
-                vec![uint!(1000_U96), uint!(1000_U96)],
-            );
+            //     contract.first_consecutive_id.
+            // set(FIRST_CONSECUTIVE_TOKEN_ID);     contract.
+            // max_batch_size.set(MAX_BATCH_SIZE);
+            contract
+                .erc721
+                .first_consecutive_id
+                .set(FIRST_CONSECUTIVE_TOKEN_ID);
+            contract.erc721.max_batch_size.set(MAX_BATCH_SIZE);
+            contract
+                .erc721
+                ._mint_consecutive(alice, uint!(1000_U96))
+                .expect("should mint consecutively");
+            contract
+                .erc721
+                ._mint_consecutive(bob, uint!(1000_U96))
+                .expect("should mint consecutively");
         });
-
         // Transfer first consecutive token from Alice to Bob.
         contract
             .sender(alice)
@@ -1059,7 +1162,7 @@ mod tests {
         // Check non-consecutive mint.
         contract
             .sender(alice)
-            ._mint(alice, NON_CONSECUTIVE_TOKEN_ID)
+            .mint(alice, NON_CONSECUTIVE_TOKEN_ID)
             .expect("should mint a token to Alice");
         let alice_balance = contract
             .sender(alice)
@@ -1080,15 +1183,24 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Contract<Erc721Consecutive>, alice: Address) {
+    fn burns(contract: Contract<Erc721ConsecutiveExample>, alice: Address) {
         // Mint batch of 1000 tokens to Alice.
         contract.init(alice, |contract| {
-            mint_consecutive(contract, vec![alice], vec![uint!(1000_U96)]);
+            contract
+                .erc721
+                .first_consecutive_id
+                .set(FIRST_CONSECUTIVE_TOKEN_ID);
+            contract.erc721.max_batch_size.set(MAX_BATCH_SIZE);
+            contract
+                .erc721
+                ._mint_consecutive(alice, uint!(1000_U96))
+                .expect("should mint consecutively");
         });
 
         // Check consecutive token burn.
         contract
             .sender(alice)
+            .erc721
             ._burn(U256::from(FIRST_CONSECUTIVE_TOKEN_ID))
             .expect("should burn token");
 
@@ -1113,7 +1225,7 @@ mod tests {
         let non_consecutive_token_id = uint!(2000_U256);
         contract
             .sender(alice)
-            ._mint(alice, non_consecutive_token_id)
+            .mint(alice, non_consecutive_token_id)
             .expect("should mint a token to Alice");
         let owner = contract
             .sender(alice)
@@ -1128,6 +1240,7 @@ mod tests {
 
         contract
             .sender(alice)
+            .erc721
             ._burn(non_consecutive_token_id)
             .expect("should burn token");
 
@@ -1146,6 +1259,7 @@ mod tests {
         let non_existent_token = non_consecutive_token_id;
         let err = contract
             .sender(alice)
+            .erc721
             ._burn(non_existent_token)
             .expect_err("should return Error::NonexistentToken");
 
@@ -1159,13 +1273,13 @@ mod tests {
 
     #[motsu::test]
     fn safe_transfer_from(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token to Alice");
 
         contract
@@ -1183,13 +1297,13 @@ mod tests {
 
     #[motsu::test]
     fn safe_transfers_from_approved_token(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(bob, TOKEN_ID)
+            .mint(bob, TOKEN_ID)
             .expect("should mint token to Bob");
         contract
             .sender(bob)
@@ -1208,14 +1322,14 @@ mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_from_incorrect_owner(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
         dave: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token to Alice");
 
         let err = contract
@@ -1235,13 +1349,18 @@ mod tests {
 
     #[motsu::test]
     fn error_when_internal_safe_transfer_nonexistent_token(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
     ) {
         let err = contract
             .sender(alice)
-            ._safe_transfer(alice, bob, TOKEN_ID, &vec![0, 1, 2, 3].into())
+            .safe_transfer_from_with_data(
+                alice,
+                bob,
+                TOKEN_ID,
+                vec![0, 1, 2, 3].into(),
+            )
             .expect_err("should not transfer a non-existent token");
 
         assert!(matches!(
@@ -1254,14 +1373,14 @@ mod tests {
 
     #[motsu::test]
     fn error_when_safe_transfer_to_invalid_receiver(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
     ) {
         let invalid_receiver = Address::ZERO;
 
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token to Alice");
 
         let err = contract
@@ -1285,13 +1404,13 @@ mod tests {
 
     #[motsu::test]
     fn safe_transfers_from_with_data(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token to Alice");
 
         contract
@@ -1314,23 +1433,23 @@ mod tests {
 
     #[motsu::test]
     fn error_when_internal_safe_transfer_to_invalid_receiver(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
     ) {
         let invalid_receiver = Address::ZERO;
 
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
-            ._safe_transfer(
+            .safe_transfer_from_with_data(
                 alice,
                 invalid_receiver,
                 TOKEN_ID,
-                &vec![0, 1, 2, 3].into(),
+                vec![0, 1, 2, 3].into(),
             )
             .expect_err("should not transfer the token to invalid receiver");
 
@@ -1350,19 +1469,24 @@ mod tests {
 
     #[motsu::test]
     fn error_when_internal_safe_transfer_from_incorrect_owner(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
         dave: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
-            ._safe_transfer(dave, bob, TOKEN_ID, &vec![0, 1, 2, 3].into())
+            .safe_transfer_from_with_data(
+                dave,
+                bob,
+                TOKEN_ID,
+                vec![0, 1, 2, 3].into(),
+            )
             .expect_err("should not transfer the token from incorrect owner");
         assert!(matches!(
             err,
@@ -1375,7 +1499,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mints(contract: Contract<Erc721Consecutive>, alice: Address) {
+    fn safe_mints(
+        contract: Contract<Erc721ConsecutiveExample>,
+        alice: Address,
+    ) {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -1383,7 +1510,7 @@ mod tests {
 
         contract
             .sender(alice)
-            ._safe_mint(alice, TOKEN_ID, &vec![0, 1, 2, 3].into())
+            .safe_mint(alice, TOKEN_ID, vec![0, 1, 2, 3].into())
             .expect("should mint a token for Alice");
 
         let owner = contract
@@ -1402,7 +1529,7 @@ mod tests {
 
     #[motsu::test]
     fn error_when_approve_for_nonexistent_token(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
     ) {
@@ -1421,14 +1548,14 @@ mod tests {
 
     #[motsu::test]
     fn error_when_approve_by_invalid_approver(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
         dave: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(bob, TOKEN_ID)
+            .mint(bob, TOKEN_ID)
             .expect("should mint a token");
 
         let err = contract
@@ -1446,7 +1573,7 @@ mod tests {
 
     #[motsu::test]
     fn approval_for_all(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
         bob: Address,
     ) {
@@ -1464,7 +1591,7 @@ mod tests {
 
     #[motsu::test]
     fn error_when_get_approved_of_nonexistent_token(
-        contract: Contract<Erc721Consecutive>,
+        contract: Contract<Erc721ConsecutiveExample>,
         alice: Address,
     ) {
         let err = contract
@@ -1481,17 +1608,25 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc721>::interface_id()
-        ));
-        assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc165>::interface_id()
-        ));
+    fn supports_interface(
+        contract: Contract<Erc721ConsecutiveExample>,
+        alice: Address,
+    ) {
+        assert!(
+            contract.sender(alice).erc721.supports_interface(
+                <Erc721Consecutive as IErc721>::interface_id()
+            )
+        );
+        assert!(
+            contract.sender(alice).erc721.supports_interface(
+                <Erc721Consecutive as IErc165>::interface_id()
+            )
+        );
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721Consecutive::supports_interface(
-            fake_interface_id.into()
-        ));
+        let fake_interface_id: FixedBytes<4> = 0x12345678u32.into();
+        assert!(!contract
+            .sender(alice)
+            .erc721
+            .supports_interface(fake_interface_id));
     }
 }
