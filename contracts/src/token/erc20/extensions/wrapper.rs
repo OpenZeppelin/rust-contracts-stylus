@@ -13,7 +13,8 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256, U8};
+use alloy_primitives::{Address, U256, U8};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -22,14 +23,11 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU8},
 };
 
-use crate::{
-    token::erc20::{
-        self,
-        interface::Erc20Interface,
-        utils::{safe_erc20, ISafeErc20, SafeErc20},
-        Erc20, IErc20,
-    },
-    utils::introspection::erc165::{Erc165, IErc165},
+use crate::token::erc20::{
+    self,
+    interface::Erc20Interface,
+    utils::{safe_erc20, ISafeErc20, SafeErc20},
+    Erc20, IErc20,
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -124,31 +122,10 @@ pub struct Erc20Wrapper {
 }
 
 /// ERC-20 Wrapper Standard Interface
+#[interface_id]
 pub trait IErc20Wrapper {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
-
-    // Manually calculated, as some of the functions' parameters do not
-    // implement AbiType.
-    /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
-    /// as a XOR of selectors for each function in the trait.
-    fn interface_id() -> FixedBytes<4>
-    where
-        Self: Sized,
-    {
-        FixedBytes::<4>::new(stylus_sdk::function_selector!("decimals"))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!("underlying"))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "depositFor",
-                Address,
-                U256
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "withdrawTo",
-                Address,
-                U256
-            ))
-    }
 
     /// Returns the number of decimals used to get its user representation.
     ///
@@ -189,7 +166,6 @@ pub trait IErc20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
     /// * `value` - The amount of tokens to deposit.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -206,19 +182,10 @@ pub trait IErc20Wrapper {
     /// # Panics
     ///
     /// * If [`Erc20::_mint`] operation panics.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn deposit_for(&mut self, account: Address, value: U256) -> Result<bool, wrapper::Error> {
-    ///     self.erc20_wrapper.deposit_for(account, value, &mut self.erc20)
-    /// }
-    /// ```
     fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
-        erc20: &mut Erc20,
     ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
 
     /// Allow a user to burn a number of wrapped tokens and withdraw the
@@ -229,7 +196,6 @@ pub trait IErc20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to withdraw tokens from.
     /// * `value` - The amount of tokens to withdraw.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -240,19 +206,10 @@ pub trait IErc20Wrapper {
     ///   enough tokens.
     /// * [`Error::SafeErc20FailedOperation`] - If the [`Erc20Wrapper`] contract
     ///   lacks sufficient balance.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn withdraw_to(&mut self, account: Address, value: U256,) -> Result<bool, wrapper::Error> {
-    ///    self.erc20_wrapper.withdraw_to(account, value, &mut self.erc20)
-    /// }
-    /// ```
     fn withdraw_to(
         &mut self,
         account: Address,
         value: U256,
-        erc20: &mut Erc20,
     ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
 }
 
@@ -261,23 +218,24 @@ pub trait IErc20Wrapper {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc20Wrapper {}
 
-impl IErc20Wrapper for Erc20Wrapper {
-    type Error = Error;
-
-    fn decimals(&self) -> U8 {
+impl Erc20Wrapper {
+    /// See [`IErc20Wrapper::decimals`].
+    pub fn decimals(&self) -> U8 {
         self.underlying_decimals.get()
     }
 
-    fn underlying(&self) -> Address {
+    /// See [`IErc20Wrapper::underlying`].
+    pub fn underlying(&self) -> Address {
         self.underlying.get()
     }
 
-    fn deposit_for(
+    /// See [`IErc20Wrapper::deposit_for`].
+    pub fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
+    ) -> Result<bool, Error> {
         let contract_address = contract::address();
         let sender = msg::sender();
 
@@ -303,12 +261,13 @@ impl IErc20Wrapper for Erc20Wrapper {
         Ok(true)
     }
 
-    fn withdraw_to(
+    /// See [`IErc20Wrapper::withdraw_to`].
+    pub fn withdraw_to(
         &mut self,
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
+    ) -> Result<bool, Error> {
         if account == contract::address() {
             return Err(
                 erc20::ERC20InvalidReceiver { receiver: account }.into()
@@ -392,13 +351,6 @@ impl Erc20Wrapper {
         }
 
         Ok(value)
-    }
-}
-
-impl IErc165 for Erc20Wrapper {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Wrapper>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
     }
 }
 
