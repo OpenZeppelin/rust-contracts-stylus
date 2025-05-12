@@ -52,10 +52,11 @@ impl IErc721Burnable for Erc721 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
-    use motsu::prelude::Contract;
+    use alloy_primitives::uint;
+    use motsu::prelude::*;
+    use stylus_sdk::{abi::Bytes, prelude::*};
 
-    use super::IErc721Burnable;
+    use super::*;
     use crate::token::erc721::{
         ERC721InsufficientApproval, ERC721NonexistentToken, Erc721, Error,
         IErc721,
@@ -63,13 +64,122 @@ mod tests {
 
     const TOKEN_ID: U256 = uint!(1_U256);
 
+    #[entrypoint]
+    #[storage]
+    struct Erc721Example {
+        #[borrow]
+        erc721: Erc721,
+    }
+
+    #[public]
+    #[implements(IErc721<Error=erc721::Error>, IErc721Burnable<Error=erc721::Error>)]
+    impl Erc721Example {
+        fn mint(
+            &mut self,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721._mint(to, token_id)
+        }
+
+        fn safe_mint(
+            &mut self,
+            to: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> Result<(), erc721::Error> {
+            self.erc721._safe_mint(to, token_id, &data)
+        }
+    }
+
+    #[public]
+    impl IErc721 for Erc721Example {
+        type Error = erc721::Error;
+
+        fn balance_of(&self, owner: Address) -> Result<U256, erc721::Error> {
+            self.erc721.balance_of(owner)
+        }
+
+        fn owner_of(&self, token_id: U256) -> Result<Address, erc721::Error> {
+            self.erc721.owner_of(token_id)
+        }
+
+        fn safe_transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.safe_transfer_from(from, to, token_id)
+        }
+
+        fn safe_transfer_from_with_data(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.safe_transfer_from_with_data(from, to, token_id, data)
+        }
+
+        fn transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.transfer_from(from, to, token_id)
+        }
+
+        fn approve(
+            &mut self,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.approve(to, token_id)
+        }
+
+        fn set_approval_for_all(
+            &mut self,
+            operator: Address,
+            approved: bool,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.set_approval_for_all(operator, approved)
+        }
+
+        fn get_approved(
+            &self,
+            token_id: U256,
+        ) -> Result<Address, erc721::Error> {
+            self.erc721.get_approved(token_id)
+        }
+
+        fn is_approved_for_all(
+            &self,
+            owner: Address,
+            operator: Address,
+        ) -> bool {
+            self.erc721.is_approved_for_all(owner, operator)
+        }
+    }
+
+    #[public]
+    impl IErc721Burnable for Erc721Example {
+        type Error = erc721::Error;
+
+        fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
+            self.erc721.burn(token_id)
+        }
+    }
+
     #[motsu::test]
-    fn burns(contract: Contract<Erc721>, alice: Address) {
+    fn burns(contract: Contract<Erc721Example>, alice: Address) {
         let one = uint!(1_U256);
 
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let initial_balance = contract
@@ -102,13 +212,13 @@ mod tests {
 
     #[motsu::test]
     fn burns_with_approval(
-        contract: Contract<Erc721>,
+        contract: Contract<Erc721Example>,
         alice: Address,
         bob: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(bob, TOKEN_ID)
+            .mint(bob, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let initial_balance = contract
@@ -146,13 +256,13 @@ mod tests {
 
     #[motsu::test]
     fn burns_with_approval_for_all(
-        contract: Contract<Erc721>,
+        contract: Contract<Erc721Example>,
         alice: Address,
         bob: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(bob, TOKEN_ID)
+            .mint(bob, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let initial_balance = contract
@@ -191,13 +301,13 @@ mod tests {
 
     #[motsu::test]
     fn error_when_get_approved_of_previous_approval_burned(
-        contract: Contract<Erc721>,
+        contract: Contract<Erc721Example>,
         alice: Address,
         bob: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(alice, TOKEN_ID)
+            .mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
         contract
             .sender(alice)
@@ -224,13 +334,13 @@ mod tests {
 
     #[motsu::test]
     fn error_when_burn_without_approval(
-        contract: Contract<Erc721>,
+        contract: Contract<Erc721Example>,
         alice: Address,
         bob: Address,
     ) {
         contract
             .sender(alice)
-            ._mint(bob, TOKEN_ID)
+            .mint(bob, TOKEN_ID)
             .expect("should mint a token for Bob");
 
         let err = contract
@@ -249,7 +359,7 @@ mod tests {
 
     #[motsu::test]
     fn error_when_burn_nonexistent_token(
-        contract: Contract<Erc721>,
+        contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let err = contract
