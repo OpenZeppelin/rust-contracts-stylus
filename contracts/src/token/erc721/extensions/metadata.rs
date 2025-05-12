@@ -141,7 +141,7 @@ mod tests {
     };
 
     #[storage]
-    struct Erc721Example {
+    struct Erc721MetadataExample {
         #[borrow]
         erc721: Erc721,
         #[borrow]
@@ -150,7 +150,7 @@ mod tests {
 
     #[public]
     #[implements(IErc721Metadata<Error=erc721::Error>, IErc165)]
-    impl Erc721Example {
+    impl Erc721MetadataExample {
         #[constructor]
         fn constructor(&mut self, name: String, symbol: String) {
             self.metadata.constructor(name, symbol);
@@ -166,7 +166,7 @@ mod tests {
     }
 
     #[public]
-    impl IErc721Metadata for Erc721Example {
+    impl IErc721Metadata for Erc721MetadataExample {
         type Error = erc721::Error;
 
         fn name(&self) -> String {
@@ -177,44 +177,48 @@ mod tests {
             self.metadata.symbol()
         }
 
+        #[selector(name = "tokenURI")]
         fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
             self.metadata.token_uri(token_id, &self.erc721)
         }
     }
 
     #[public]
-    impl IErc165 for Erc721Example {
+    impl IErc165 for Erc721MetadataExample {
         fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
             <Self as IErc721Metadata>::interface_id() == interface_id
                 || Erc165::interface_id() == interface_id
         }
     }
 
-    unsafe impl TopLevelStorage for Erc721Example {}
+    unsafe impl TopLevelStorage for Erc721MetadataExample {}
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc721Example as IErc721Metadata>::interface_id();
+        let actual = <Erc721MetadataExample as IErc721Metadata>::interface_id();
         let expected: FixedBytes<4> = 0x5b5e139f.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface(contract: Contract<Erc721Example>, alice: Address) {
+    fn supports_interface(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
         assert!(contract.sender(alice).supports_interface(
-            <Erc721Example as IErc721Metadata>::interface_id()
+            <Erc721MetadataExample as IErc721Metadata>::interface_id()
         ));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<Erc721Example as IErc165>::interface_id()));
+        assert!(contract.sender(alice).supports_interface(
+            <Erc721MetadataExample as IErc165>::interface_id()
+        ));
 
         let fake_interface_id: FixedBytes<4> = 0x12345678u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 
     #[motsu::test]
-    fn metadata(contract: Contract<Erc721Example>, alice: Address) {
-        let name: String = "Erc721Example".to_string();
+    fn metadata(contract: Contract<Erc721MetadataExample>, alice: Address) {
+        let name: String = "Erc721MetadataExample".to_string();
         let symbol: String = "OZ".to_string();
 
         contract.init(alice, |contract| {
@@ -225,8 +229,8 @@ mod tests {
     }
 
     #[motsu::test]
-    fn constructor(contract: Contract<Erc721Example>, alice: Address) {
-        let name: String = "Erc721Example".to_string();
+    fn constructor(contract: Contract<Erc721MetadataExample>, alice: Address) {
+        let name: String = "Erc721MetadataExample".to_string();
         let symbol: String = "OZ".to_string();
         contract.init(alice, |contract| {
             contract.constructor(name.clone(), symbol.clone());
