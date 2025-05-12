@@ -399,22 +399,206 @@ impl Erc721Wrapper {
 mod tests {
     use alloy_primitives::uint;
     use motsu::prelude::*;
+    use stylus_sdk::abi::Bytes;
 
     use super::*;
-    use crate::token::erc721::IErc721;
+    use crate::token::erc721::{self, IErc721};
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
         (0..size).map(U256::from).collect()
     }
 
     #[storage]
-    struct Erc721WrapperTestExample {
+    struct Erc721Example {
+        #[borrow]
+        erc721: Erc721,
+    }
+
+    #[public]
+    #[implements(IErc721<Error=erc721::Error>)]
+    impl Erc721Example {
+        fn mint(
+            &mut self,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721._mint(to, token_id)
+        }
+    }
+
+    #[public]
+    impl IErc721 for Erc721Example {
+        type Error = erc721::Error;
+
+        fn balance_of(&self, owner: Address) -> Result<U256, erc721::Error> {
+            self.erc721.balance_of(owner)
+        }
+
+        fn owner_of(&self, token_id: U256) -> Result<Address, erc721::Error> {
+            self.erc721.owner_of(token_id)
+        }
+
+        fn safe_transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.safe_transfer_from(from, to, token_id)
+        }
+
+        fn safe_transfer_from_with_data(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.safe_transfer_from_with_data(from, to, token_id, data)
+        }
+
+        fn transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.transfer_from(from, to, token_id)
+        }
+
+        fn approve(
+            &mut self,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.approve(to, token_id)
+        }
+
+        fn set_approval_for_all(
+            &mut self,
+            operator: Address,
+            approved: bool,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.set_approval_for_all(operator, approved)
+        }
+
+        fn get_approved(
+            &self,
+            token_id: U256,
+        ) -> Result<Address, erc721::Error> {
+            self.erc721.get_approved(token_id)
+        }
+
+        fn is_approved_for_all(
+            &self,
+            owner: Address,
+            operator: Address,
+        ) -> bool {
+            self.erc721.is_approved_for_all(owner, operator)
+        }
+    }
+
+    unsafe impl TopLevelStorage for Erc721Example {}
+
+    #[storage]
+    struct Erc721WrapperExample {
         wrapper: Erc721Wrapper,
         erc721: Erc721,
     }
 
     #[public]
-    impl Erc721WrapperTestExample {
+    #[implements(IErc721<Error=erc721::Error>, IErc721Wrapper<Error=Error>)]
+    impl Erc721WrapperExample {
+        #[constructor]
+        fn constructor(&mut self, underlying_token: Address) {
+            self.wrapper.constructor(underlying_token);
+        }
+
+        fn recover(
+            &mut self,
+            account: Address,
+            token_id: U256,
+        ) -> Result<U256, Error> {
+            self.wrapper._recover(account, token_id, &mut self.erc721)
+        }
+    }
+
+    #[public]
+    impl IErc721 for Erc721WrapperExample {
+        type Error = erc721::Error;
+
+        fn balance_of(&self, owner: Address) -> Result<U256, erc721::Error> {
+            self.erc721.balance_of(owner)
+        }
+
+        fn owner_of(&self, token_id: U256) -> Result<Address, erc721::Error> {
+            self.erc721.owner_of(token_id)
+        }
+
+        fn safe_transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.safe_transfer_from(from, to, token_id)
+        }
+
+        fn safe_transfer_from_with_data(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+            data: Bytes,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.safe_transfer_from_with_data(from, to, token_id, data)
+        }
+
+        fn transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.transfer_from(from, to, token_id)
+        }
+
+        fn approve(
+            &mut self,
+            to: Address,
+            token_id: U256,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.approve(to, token_id)
+        }
+
+        fn set_approval_for_all(
+            &mut self,
+            operator: Address,
+            approved: bool,
+        ) -> Result<(), erc721::Error> {
+            self.erc721.set_approval_for_all(operator, approved)
+        }
+
+        fn get_approved(
+            &self,
+            token_id: U256,
+        ) -> Result<Address, erc721::Error> {
+            self.erc721.get_approved(token_id)
+        }
+
+        fn is_approved_for_all(
+            &self,
+            owner: Address,
+            operator: Address,
+        ) -> bool {
+            self.erc721.is_approved_for_all(owner, operator)
+        }
+    }
+
+    #[public]
+    impl IErc721Wrapper for Erc721WrapperExample {
+        type Error = Error;
+
         fn underlying(&self) -> Address {
             self.wrapper.underlying()
         }
@@ -435,14 +619,6 @@ mod tests {
             self.wrapper.withdraw_to(account, token_ids, &mut self.erc721)
         }
 
-        fn recover(
-            &mut self,
-            account: Address,
-            token_id: U256,
-        ) -> Result<U256, Error> {
-            self.wrapper._recover(account, token_id, &mut self.erc721)
-        }
-
         fn on_erc721_received(
             &mut self,
             operator: Address,
@@ -460,12 +636,12 @@ mod tests {
         }
     }
 
-    unsafe impl TopLevelStorage for Erc721WrapperTestExample {}
+    unsafe impl TopLevelStorage for Erc721WrapperExample {}
 
     #[motsu::test]
     fn underlying_works(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let erc721_address = erc721_contract.address();
@@ -482,7 +658,7 @@ mod tests {
     #[motsu::test]
     #[ignore]
     fn deposit_for_reverts_when_unsupported_token(
-        contract: Contract<Erc721WrapperTestExample>,
+        contract: Contract<Erc721WrapperExample>,
         alice: Address,
     ) {
         let token_ids = random_token_ids(1);
@@ -506,8 +682,8 @@ mod tests {
 
     #[motsu::test]
     fn deposit_for_reverts_when_nonexistent_token(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_ids = random_token_ids(1);
@@ -537,8 +713,8 @@ mod tests {
 
     #[motsu::test]
     fn deposit_for_reverts_when_missing_approval(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_ids = random_token_ids(1);
@@ -549,7 +725,7 @@ mod tests {
 
         erc721_contract
             .sender(alice)
-            ._mint(alice, token_ids[0])
+            .mint(alice, token_ids[0])
             .motsu_expect("should mint {token_id} for {alice}");
 
         let err = contract
@@ -575,8 +751,8 @@ mod tests {
 
     #[motsu::test]
     fn deposit_for_reverts_when_wrapped_token_already_exists(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_ids = random_token_ids(1);
@@ -587,7 +763,7 @@ mod tests {
 
         erc721_contract
             .sender(alice)
-            ._mint(alice, token_ids[0])
+            .mint(alice, token_ids[0])
             .motsu_expect("should mint {token_id} for {alice}");
 
         erc721_contract
@@ -617,8 +793,8 @@ mod tests {
 
     #[motsu::test]
     fn deposit_for_works(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let tokens = 4;
@@ -631,7 +807,7 @@ mod tests {
         for &token_id in &token_ids {
             erc721_contract
                 .sender(alice)
-                ._mint(alice, token_id)
+                .mint(alice, token_id)
                 .motsu_expect("should mint {token_id} for {alice}");
 
             erc721_contract
@@ -692,8 +868,8 @@ mod tests {
 
     #[motsu::test]
     fn withdraw_to_reverts_when_invalid_receiver(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let tokens = 4;
@@ -706,7 +882,7 @@ mod tests {
         for token_id in &token_ids {
             erc721_contract
                 .sender(alice)
-                ._mint(alice, *token_id)
+                .mint(alice, *token_id)
                 .motsu_expect("should mint {token_id} for {alice}");
 
             erc721_contract
@@ -743,8 +919,8 @@ mod tests {
 
     #[motsu::test]
     fn withdraw_to_reverts_when_nonexistent_token(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let tokens = 1;
@@ -769,8 +945,8 @@ mod tests {
 
     #[motsu::test]
     fn withdraw_to_reverts_when_insufficient_approval(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
         bob: Address,
     ) {
@@ -783,7 +959,7 @@ mod tests {
 
         erc721_contract
             .sender(alice)
-            ._mint(alice, token_ids[0])
+            .mint(alice, token_ids[0])
             .motsu_expect("should mint {token_id} for {alice}");
 
         erc721_contract
@@ -811,8 +987,8 @@ mod tests {
 
     #[motsu::test]
     fn withdraw_to_works(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let tokens = 4;
@@ -825,7 +1001,7 @@ mod tests {
         for token_id in &token_ids {
             erc721_contract
                 .sender(alice)
-                ._mint(alice, *token_id)
+                .mint(alice, *token_id)
                 .motsu_expect("should mint {token_id} for {alice}");
 
             erc721_contract
@@ -891,8 +1067,8 @@ mod tests {
 
     #[motsu::test]
     fn on_erc721_received_reverts_when_sender_is_unsupported_token(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -922,8 +1098,8 @@ mod tests {
 
     #[motsu::test]
     fn on_erc721_received_reverts_when_wrapped_token_already_exists(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -956,8 +1132,8 @@ mod tests {
 
     #[motsu::test]
     fn on_erc721_received_works(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -994,7 +1170,7 @@ mod tests {
     #[motsu::test]
     #[ignore]
     fn recover_reverts_when_invalid_token(
-        contract: Contract<Erc721WrapperTestExample>,
+        contract: Contract<Erc721WrapperExample>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -1018,8 +1194,8 @@ mod tests {
 
     #[motsu::test]
     fn recover_reverts_when_incorrect_owner(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -1030,7 +1206,7 @@ mod tests {
 
         erc721_contract
             .sender(alice)
-            ._mint(alice, token_id)
+            .mint(alice, token_id)
             .motsu_expect("should mint {token_id} for {alice}");
 
         let err = contract
@@ -1048,8 +1224,8 @@ mod tests {
 
     #[motsu::test]
     fn recover_reverts_when_wrapped_token_already_exists(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -1060,7 +1236,7 @@ mod tests {
 
         erc721_contract
             .sender(alice)
-            ._mint(alice, token_id)
+            .mint(alice, token_id)
             .motsu_expect("should mint {token_id} for {alice}");
 
         erc721_contract
@@ -1094,8 +1270,8 @@ mod tests {
 
     #[motsu::test]
     fn recover_works(
-        contract: Contract<Erc721WrapperTestExample>,
-        erc721_contract: Contract<Erc721>,
+        contract: Contract<Erc721WrapperExample>,
+        erc721_contract: Contract<Erc721Example>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
@@ -1106,7 +1282,7 @@ mod tests {
 
         erc721_contract
             .sender(alice)
-            ._mint(alice, token_id)
+            .mint(alice, token_id)
             .motsu_expect("should mint {token_id} for {alice}");
 
         erc721_contract
