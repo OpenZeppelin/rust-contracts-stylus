@@ -78,7 +78,7 @@ struct Erc20Example {
 }
 
 #[public]
-#[implements(IErc20<Error = Error>, IErc20Metadata, ICapped, IPausable, IErc165)]
+#[implements(IErc20<Error = Error>, IErc20Burnable<Error = Error>, IErc20Metadata, ICapped, IPausable, IErc165)]
 impl Erc20Example {
     #[constructor]
     pub fn constructor(
@@ -90,20 +90,6 @@ impl Erc20Example {
         self.metadata.constructor(name, symbol);
         self.capped.constructor(cap)?;
         Ok(())
-    }
-
-    fn burn(&mut self, value: U256) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-        self.erc20.burn(value).map_err(|e| e.into())
-    }
-
-    fn burn_from(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-        self.erc20.burn_from(account, value).map_err(|e| e.into())
     }
 
     // Add token minting feature.
@@ -216,6 +202,28 @@ impl IErc165 for Erc20Example {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         Erc20::supports_interface(&self.erc20, interface_id)
             || Erc20Metadata::supports_interface(&self.metadata, interface_id)
+    }
+}
+
+#[public]
+impl IErc20Burnable for Erc20Example {
+    type Error = Error;
+
+    fn burn(
+        &mut self,
+        value: U256,
+    ) -> Result<(), <Self as IErc20Burnable>::Error> {
+        self.pausable.when_not_paused()?;
+        self.erc20.burn(value).map_err(|e| e.into())
+    }
+
+    fn burn_from(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), <Self as IErc20Burnable>::Error> {
+        self.pausable.when_not_paused()?;
+        self.erc20.burn_from(account, value).map_err(|e| e.into())
     }
 }
 
