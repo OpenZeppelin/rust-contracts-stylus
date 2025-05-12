@@ -128,9 +128,6 @@ impl IErc721Burnable for Erc721ConsecutiveExample {
 #[public]
 impl IErc165 for Erc721ConsecutiveExample {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        Erc721Consecutive::supports_interface(
-            &self.erc721_consecutive,
-            interface_id,
-        )
+        self.erc721_consecutive.supports_interface(interface_id)
     }
 }

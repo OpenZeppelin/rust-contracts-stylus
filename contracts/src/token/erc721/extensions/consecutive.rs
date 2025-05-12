@@ -895,7 +895,7 @@ mod tests {
     }
 
     #[public]
-    #[implements(IErc721<Error=Error>)]
+    #[implements(IErc721<Error=Error>, IErc165)]
     impl Erc721ConsecutiveExample {
         fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
             self.erc721._mint(to, token_id)
@@ -979,6 +979,13 @@ mod tests {
             operator: Address,
         ) -> bool {
             self.erc721.is_approved_for_all(owner, operator)
+        }
+    }
+
+    #[public]
+    impl IErc165 for Erc721ConsecutiveExample {
+        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+            self.erc721.supports_interface(interface_id)
         }
     }
 
@@ -1613,20 +1620,17 @@ mod tests {
         alice: Address,
     ) {
         assert!(
-            contract.sender(alice).erc721.supports_interface(
+            contract.sender(alice).supports_interface(
                 <Erc721Consecutive as IErc721>::interface_id()
             )
         );
         assert!(
-            contract.sender(alice).erc721.supports_interface(
+            contract.sender(alice).supports_interface(
                 <Erc721Consecutive as IErc165>::interface_id()
             )
         );
 
         let fake_interface_id: FixedBytes<4> = 0x12345678u32.into();
-        assert!(!contract
-            .sender(alice)
-            .erc721
-            .supports_interface(fake_interface_id));
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }
