@@ -87,9 +87,9 @@ impl Erc721Metadata {
 }
 
 impl IErc165 for Erc721Metadata {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721Metadata>::interface_id() == interface_id
-            || Erc165::supports_interface(interface_id)
+            || Erc165::interface_id() == interface_id
     }
 }
 

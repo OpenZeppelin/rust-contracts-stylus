@@ -604,9 +604,9 @@ impl VestingWallet {
 }
 
 impl IErc165 for VestingWallet {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IVestingWallet>::interface_id() == interface_id
-            || Erc165::supports_interface(interface_id)
+            || Erc165::interface_id() == interface_id
     }
 }
 
