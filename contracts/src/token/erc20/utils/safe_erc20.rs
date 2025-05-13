@@ -225,6 +225,10 @@ pub trait ISafeErc20 {
 }
 
 #[public]
+#[implements(ISafeErc20<Error = Error>)]
+impl SafeErc20 {}
+
+#[public]
 impl ISafeErc20 for SafeErc20 {
     type Error = Error;
 
@@ -403,6 +407,9 @@ impl IErc165 for SafeErc20 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use motsu::prelude::Contract;
+    use stylus_sdk::alloy_primitives::{Address, FixedBytes};
+
     use super::{ISafeErc20, SafeErc20};
     use crate::utils::introspection::erc165::IErc165;
 
@@ -439,20 +446,22 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <SafeErc20 as ISafeErc20>::interface_id();
-        let expected = 0xf71993e3.into();
+        let expected: FixedBytes<4> = 0xf71993e3u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(SafeErc20::supports_interface(
-            <SafeErc20 as IErc165>::interface_id()
-        ));
-        assert!(SafeErc20::supports_interface(
-            <SafeErc20 as ISafeErc20>::interface_id()
-        ));
+    fn supports_interface(contract: Contract<SafeErc20>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<SafeErc20 as IErc165>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<SafeErc20 as ISafeErc20>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

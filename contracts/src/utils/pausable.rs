@@ -89,6 +89,10 @@ pub trait IPausable {
 }
 
 #[public]
+#[implements(IPausable)]
+impl Pausable {}
+
+#[public]
 impl IPausable for Pausable {
     fn paused(&self) -> bool {
         self.paused.get()
@@ -167,9 +171,9 @@ impl Pausable {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
-    use crate::utils::pausable::{Error, Pausable};
+    use crate::utils::pausable::{Error, IPausable, Pausable};
 
     unsafe impl TopLevelStorage for Pausable {}
 

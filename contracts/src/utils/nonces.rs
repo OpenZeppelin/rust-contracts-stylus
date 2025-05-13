@@ -61,6 +61,9 @@ pub trait INonces {
 }
 
 #[public]
+impl Nonces {}
+
+#[public]
 impl INonces for Nonces {
     fn nonces(&self, owner: Address) -> U256 {
         self.nonces.get(owner)
@@ -130,7 +133,7 @@ mod tests {
     use stylus_sdk::prelude::TopLevelStorage;
 
     use super::ONE;
-    use crate::utils::nonces::{Error, Nonces};
+    use crate::utils::nonces::{Error, INonces, Nonces};
 
     unsafe impl TopLevelStorage for Nonces {}
 

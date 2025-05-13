@@ -354,7 +354,7 @@ impl Erc20FlashMint {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;
     use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -363,7 +363,6 @@ mod tests {
         ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
         IErc3156FlashLender,
     };
-    use crate::utils::introspection::erc165::IErc165;
 
     #[storage]
     struct Erc20FlashMintTestExample {
@@ -372,7 +371,13 @@ mod tests {
     }
 
     #[public]
-    impl Erc20FlashMintTestExample {
+    #[implements(IErc3156FlashLender<Error = Error>)]
+    impl Erc20FlashMintTestExample {}
+
+    #[public]
+    impl IErc3156FlashLender for Erc20FlashMintTestExample {
+        type Error = Error;
+
         fn max_flash_loan(&self, token: Address) -> U256 {
             self.erc20_flash_mint.max_flash_loan(token, &self.erc20)
         }
@@ -554,21 +559,9 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20FlashMint as IErc3156FlashLender>::interface_id();
-        let expected = 0xe4143091.into();
+        let actual =
+            <Erc20FlashMintTestExample as IErc3156FlashLender>::interface_id();
+        let expected: FixedBytes<4> = 0xe4143091u32.into();
         assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc3156FlashLender>::interface_id()
-        ));
-        assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc165>::interface_id()
-        ));
-
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20FlashMint::supports_interface(fake_interface_id.into()));
     }
 }

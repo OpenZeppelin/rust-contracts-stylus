@@ -63,6 +63,11 @@ pub trait ICapped {
     fn cap(&self) -> U256;
 }
 
+#[public]
+#[implements(ICapped)]
+impl Capped {}
+
+#[public]
 impl ICapped for Capped {
     fn cap(&self) -> U256 {
         self.cap.get()
@@ -95,7 +100,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::Capped;
+    use super::*;
 
     unsafe impl TopLevelStorage for Capped {}
 

@@ -9,7 +9,8 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, FixedBytes, U256, U8};
+use alloy_primitives::{uint, Address, U256, U8};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
@@ -25,10 +26,7 @@ use crate::{
         utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
-    utils::{
-        introspection::erc165::{Erc165, IErc165},
-        math::alloy::{Math, Rounding},
-    },
+    utils::math::alloy::{Math, Rounding},
 };
 
 const ONE: U256 = uint!(1_U256);
@@ -202,74 +200,10 @@ pub struct Erc4626 {
 unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
+#[interface_id]
 pub trait IErc4626 {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
-
-    // Manually calculated, as some of the functions' parameters do not
-    // implement AbiType.
-    /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
-    /// XOR of selectors for each function in the trait.
-    fn interface_id() -> FixedBytes<4>
-    where
-        Self: Sized,
-    {
-        FixedBytes::<4>::new(stylus_sdk::function_selector!("asset"))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "totalAssets"
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "convertToShares",
-                U256
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "convertToAssets",
-                U256
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "maxDeposit",
-                Address
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "previewDeposit",
-                U256
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "deposit", U256, Address
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "maxMint", Address
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "previewMint",
-                U256
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "mint", U256, Address
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "maxWithdraw",
-                Address
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "previewWithdraw",
-                U256
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "withdraw", U256, Address, Address
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "maxRedeem",
-                Address
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "previewRedeem",
-                U256
-            ))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "redeem", U256, Address, Address
-            ))
-    }
 
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
@@ -311,7 +245,6 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -322,18 +255,9 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn convert_to_shares(&mut self, assets: U256) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.convert_to_shares(assets, &self.erc20)
-    /// }
-    /// ```
     fn convert_to_shares(
         &mut self,
         assets: U256,
-        erc20: &Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
@@ -355,7 +279,6 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -366,18 +289,9 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn convert_to_assets(&mut self, shares: U256) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.convert_to_assets(shares, &self.erc20)
-    /// }
-    /// ```
     fn convert_to_assets(
         &mut self,
         shares: U256,
-        erc20: &Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be deposited
@@ -407,7 +321,6 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset to deposit.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -418,18 +331,9 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn preview_deposit(&mut self, assets: U256) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.preview_deposit(assets, &self.erc20)
-    /// }
-    /// ```
     fn preview_deposit(
         &mut self,
         assets: U256,
-        erc20: &Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Deposits exactly `assets` amount of underlying tokens into the Vault and
@@ -448,7 +352,6 @@ pub trait IErc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset to deposit.
     /// * `receiver` - The address receiving the shares.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -468,23 +371,10 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn deposit(
-    ///     &mut self,
-    ///     assets: U256,
-    ///     receiver: Address,
-    /// ) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.deposit(assets, receiver, &mut self.erc20)
-    /// }
-    /// ```
     fn deposit(
         &mut self,
         assets: U256,
         receiver: Address,
-        erc20: &mut Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Returns the maximum amount of the Vault shares that can be minted for
@@ -514,7 +404,6 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares to mint.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -525,18 +414,9 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn preview_mint(&mut self, shares: U256) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.preview_mint(shares, &self.erc20)
-    /// }
-    /// ```
     fn preview_mint(
         &mut self,
         shares: U256,
-        erc20: &Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Mints the specified number of shares to `receiver` by pulling the
@@ -558,7 +438,6 @@ pub trait IErc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares to mint.
     /// * `receiver` - The address receiving the shares.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -578,23 +457,10 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn mint(
-    ///     &mut self,
-    ///     shares: U256,
-    ///     receiver: Address,
-    /// ) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.mint(shares, receiver, &mut self.erc20)
-    /// }
-    /// ```
     fn mint(
         &mut self,
         shares: U256,
         receiver: Address,
-        erc20: &mut Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be withdrawn
@@ -610,7 +476,6 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `owner` - The address of the entity owning the shares.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -621,18 +486,9 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn max_withdraw(&mut self, owner: Address) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.max_withdraw(owner, &self.erc20)
-    /// }
-    /// ```
     fn max_withdraw(
         &mut self,
         owner: Address,
-        erc20: &Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
@@ -648,7 +504,6 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `assets` - Amount of the underlying asset to withdraw.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -659,18 +514,9 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn preview_withdraw(&mut self, assets: U256) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.preview_withdraw(assets, &self.erc20)
-    /// }
-    /// ```
     fn preview_withdraw(
         &mut self,
         assets: U256,
-        erc20: &Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Withdraws the specified amount of underlying tokens to `receiver` by
@@ -694,7 +540,6 @@ pub trait IErc4626 {
     /// * `assets` - Amount of the underlying asset to withdraw.
     /// * `receiver` - The address receiving the withdrawn assets.
     /// * `owner` - The address owning the shares to be deducted.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -717,25 +562,11 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn withdraw(
-    ///     &mut self,
-    ///     assets: U256,
-    ///     receiver: Address,
-    ///     owner: Address,
-    /// ) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.withdraw(assets, receiver, owner, &mut self.erc20)
-    /// }
-    /// ```
     fn withdraw(
         &mut self,
         assets: U256,
         receiver: Address,
         owner: Address,
-        erc20: &mut Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Returns the maximum amount of Vault shares that can be redeemed from the
@@ -751,16 +582,7 @@ pub trait IErc4626 {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address of the entity owning the shares.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn max_redeem(&mut self, owner: Address) -> U256 {
-    ///     self.erc4626.max_redeem(owner, &self.erc20)
-    /// }
-    /// ```
-    fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256;
+    fn max_redeem(&self, owner: Address) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// redemption at the current block, given current on-chain conditions.
@@ -780,7 +602,6 @@ pub trait IErc4626 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `shares` - Number of shares to redeem.
-    /// * `erc20` - Read access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -791,18 +612,9 @@ pub trait IErc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn preview_redeem(&mut self, shares: U256) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.preview_redeem(shares, &self.erc20)
-    /// }
-    /// ```
     fn preview_redeem(
         &mut self,
         shares: U256,
-        erc20: &Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 
     /// Burns the specified number of shares from `owner` and sends the
@@ -822,7 +634,6 @@ pub trait IErc4626 {
     /// * `shares` - Number of shares to redeem.
     /// * `receiver` - The address receiving the underlying assets.
     /// * `owner` - The address owning the shares to be redeemed.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -842,36 +653,22 @@ pub trait IErc4626 {
     /// # Panics
     ///
     /// * If multiplication or division operations overflow during conversion.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn redeem(
-    ///     &mut self,
-    ///     shares: U256,
-    ///     receiver: Address,
-    ///     owner: Address,
-    /// ) -> Result<U256, erc4626::Error> {
-    ///     self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)
-    /// }
-    /// ```
     fn redeem(
         &mut self,
         shares: U256,
         receiver: Address,
         owner: Address,
-        erc20: &mut Erc20,
     ) -> Result<U256, <Self as IErc4626>::Error>;
 }
 
-impl IErc4626 for Erc4626 {
-    type Error = Error;
-
-    fn asset(&self) -> Address {
+impl Erc4626 {
+    /// See [`IErc4626::asset`].
+    pub fn asset(&self) -> Address {
         self.asset.get()
     }
 
-    fn total_assets(&mut self) -> Result<U256, <Self as IErc4626>::Error> {
+    /// See [`IErc4626::total_assets`].
+    pub fn total_assets(&mut self) -> Result<U256, Error> {
         let erc20 = Erc20Interface::new(self.asset());
         let call = Call::new_in(self);
         Ok(erc20
@@ -879,81 +676,92 @@ impl IErc4626 for Erc4626 {
             .map_err(|_| InvalidAsset { asset: self.asset() })?)
     }
 
-    fn convert_to_shares(
+    /// See [`IErc4626::convert_to_shares`].
+    pub fn convert_to_shares(
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_shares(assets, Rounding::Floor, erc20)
     }
 
-    fn convert_to_assets(
+    /// See [`IErc4626::convert_to_assets`].
+    pub fn convert_to_assets(
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
-    fn max_deposit(&self, _receiver: Address) -> U256 {
+    /// See [`IErc4626::max_deposit`].
+    pub fn max_deposit(&self, _receiver: Address) -> U256 {
         U256::MAX
     }
 
-    fn max_mint(&self, _receiver: Address) -> U256 {
+    /// See [`IErc4626::max_mint`].
+    pub fn max_mint(&self, _receiver: Address) -> U256 {
         U256::MAX
     }
 
-    fn max_withdraw(
+    /// See [`IErc4626::max_withdraw`].
+    pub fn max_withdraw(
         &mut self,
         owner: Address,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         let balance = erc20.balance_of(owner);
         self._convert_to_assets(balance, Rounding::Floor, erc20)
     }
 
-    fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256 {
+    /// See [`IErc4626::max_redeem`].
+    pub fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256 {
         erc20.balance_of(owner)
     }
 
-    fn preview_deposit(
+    /// See [`IErc4626::preview_deposit`].
+    pub fn preview_deposit(
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_shares(assets, Rounding::Floor, erc20)
     }
 
-    fn preview_mint(
+    /// See [`IErc4626::preview_mint`].
+    pub fn preview_mint(
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_assets(shares, Rounding::Ceil, erc20)
     }
 
-    fn preview_withdraw(
+    /// See [`IErc4626::preview_withdraw`].
+    pub fn preview_withdraw(
         &mut self,
         assets: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_shares(assets, Rounding::Ceil, erc20)
     }
 
-    fn preview_redeem(
+    /// See [`IErc4626::preview_redeem`].
+    pub fn preview_redeem(
         &mut self,
         shares: U256,
         erc20: &Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         self._convert_to_assets(shares, Rounding::Floor, erc20)
     }
 
-    fn deposit(
+    /// See [`IErc4626::deposit`].
+    pub fn deposit(
         &mut self,
         assets: U256,
         receiver: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         let max_assets = self.max_deposit(receiver);
 
         if assets > max_assets {
@@ -971,7 +779,8 @@ impl IErc4626 for Erc4626 {
         Ok(shares)
     }
 
-    fn mint(
+    /// See [`IErc4626::mint`].
+    pub fn mint(
         &mut self,
         shares: U256,
         receiver: Address,
@@ -993,7 +802,8 @@ impl IErc4626 for Erc4626 {
         Ok(assets)
     }
 
-    fn withdraw(
+    /// See [`IErc4626::withdraw`].
+    pub fn withdraw(
         &mut self,
         assets: U256,
         receiver: Address,
@@ -1014,13 +824,14 @@ impl IErc4626 for Erc4626 {
         Ok(shares)
     }
 
-    fn redeem(
+    /// See [`IErc4626::redeem`].
+    pub fn redeem(
         &mut self,
         shares: U256,
         receiver: Address,
         owner: Address,
         erc20: &mut Erc20,
-    ) -> Result<U256, <Self as IErc4626>::Error> {
+    ) -> Result<U256, Error> {
         let max_shares = self.max_redeem(owner, erc20);
         if shares > max_shares {
             return Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem {
@@ -1117,7 +928,7 @@ impl Erc4626 {
     ///
     /// * If decimal offset calculation overflows in the power operation.
     /// * If multiplication or division operations overflow during conversion.
-    fn _convert_to_shares(
+    pub fn _convert_to_shares(
         &mut self,
         assets: U256,
         rounding: Rounding,
@@ -1162,7 +973,7 @@ impl Erc4626 {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow.
-    fn _convert_to_assets(
+    pub fn _convert_to_assets(
         &mut self,
         shares: U256,
         rounding: Rounding,
@@ -1207,7 +1018,7 @@ impl Erc4626 {
     /// # Events
     ///
     /// * [`Deposit`]
-    fn _deposit(
+    pub fn _deposit(
         &mut self,
         caller: Address,
         receiver: Address,
@@ -1259,7 +1070,7 @@ impl Erc4626 {
     /// # Events
     ///
     /// * [`Withdraw`]
-    fn _withdraw(
+    pub fn _withdraw(
         &mut self,
         caller: Address,
         receiver: Address,
@@ -1293,27 +1104,20 @@ impl Erc4626 {
     /// Returns the decimals offset between the underlying asset and vault
     /// shares.
     /// Currently, always returns `U8::ZERO`.
-    fn _decimals_offset(&self) -> U8 {
+    pub fn _decimals_offset(&self) -> U8 {
         self.decimals_offset.get()
-    }
-}
-
-impl IErc165 for Erc4626 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc4626>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
     }
 }
 
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{address, Address, U256, U8};
+    use alloy_primitives::{address, Address, FixedBytes, U256, U8};
     use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
-    use super::{Erc4626, IErc4626};
-    use crate::{token::erc20::Erc20, utils::introspection::erc165::IErc165};
+    use super::*;
+    use crate::token::erc20::Erc20;
 
     #[storage]
     struct Erc4626TestExample {
@@ -1322,23 +1126,117 @@ mod tests {
     }
 
     #[public]
-    impl Erc4626TestExample {
+    #[implements(IErc4626<Error = Error>)]
+    impl Erc4626TestExample {}
+
+    #[public]
+    impl IErc4626 for Erc4626TestExample {
+        type Error = Error;
+
         fn asset(&self) -> Address {
             self.erc4626.asset()
+        }
+
+        fn total_assets(&mut self) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.total_assets()
+        }
+
+        fn convert_to_shares(
+            &mut self,
+            assets: U256,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.convert_to_shares(assets, &self.erc20)
+        }
+
+        fn convert_to_assets(
+            &mut self,
+            shares: U256,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.convert_to_assets(shares, &self.erc20)
         }
 
         fn max_deposit(&self, receiver: Address) -> U256 {
             self.erc4626.max_deposit(receiver)
         }
 
+        fn preview_deposit(
+            &mut self,
+            assets: U256,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.preview_deposit(assets, &self.erc20)
+        }
+
+        fn deposit(
+            &mut self,
+            assets: U256,
+            receiver: Address,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.deposit(assets, receiver, &mut self.erc20)
+        }
+
         fn max_mint(&self, receiver: Address) -> U256 {
             self.erc4626.max_mint(receiver)
+        }
+
+        fn preview_mint(
+            &mut self,
+            shares: U256,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.preview_mint(shares, &self.erc20)
+        }
+
+        fn mint(
+            &mut self,
+            shares: U256,
+            receiver: Address,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.mint(shares, receiver, &mut self.erc20)
+        }
+
+        fn max_withdraw(
+            &mut self,
+            owner: Address,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.max_withdraw(owner, &self.erc20)
+        }
+
+        fn preview_withdraw(
+            &mut self,
+            assets: U256,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.preview_withdraw(assets, &self.erc20)
+        }
+
+        fn withdraw(
+            &mut self,
+            assets: U256,
+            receiver: Address,
+            owner: Address,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.withdraw(assets, receiver, owner, &mut self.erc20)
         }
 
         fn max_redeem(&self, owner: Address) -> U256 {
             self.erc4626.max_redeem(owner, &self.erc20)
         }
+
+        fn preview_redeem(
+            &mut self,
+            shares: U256,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.preview_redeem(shares, &self.erc20)
+        }
+
+        fn redeem(
+            &mut self,
+            shares: U256,
+            receiver: Address,
+            owner: Address,
+        ) -> Result<U256, <Self as IErc4626>::Error> {
+            self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)
+        }
     }
+
     unsafe impl TopLevelStorage for Erc4626TestExample {}
 
     #[motsu::test]
@@ -1353,6 +1251,7 @@ mod tests {
         let max_deposit = contract.sender(alice).max_deposit(alice);
         assert_eq!(max_deposit, U256::MAX);
     }
+
     #[motsu::test]
     fn max_mint(contract: Contract<Erc4626TestExample>, alice: Address) {
         let max_mint = contract.sender(alice).max_mint(alice);
@@ -1405,21 +1304,8 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc4626 as IErc4626>::interface_id();
-        let expected = 0x87dfe5a0.into();
+        let actual = <Erc4626TestExample as IErc4626>::interface_id();
+        let expected: FixedBytes<4> = 0x87dfe5a0u32.into();
         assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc4626>::interface_id()
-        ));
-        assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc165>::interface_id()
-        ));
-
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc4626::supports_interface(fake_interface_id.into()));
     }
 }

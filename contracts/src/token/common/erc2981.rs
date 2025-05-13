@@ -161,6 +161,10 @@ pub trait IErc2981: IErc165 {
 unsafe impl TopLevelStorage for Erc2981 {}
 
 #[public]
+#[implements(IErc2981, IErc165)]
+impl Erc2981 {}
+
+#[public]
 impl IErc2981 for Erc2981 {
     fn royalty_info(
         &self,
@@ -190,6 +194,7 @@ impl IErc2981 for Erc2981 {
     }
 }
 
+#[public]
 impl IErc165 for Erc2981 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc2981>::interface_id() == interface_id
@@ -871,20 +876,22 @@ mod tests {
         let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
-        let expected = 0x2a55_205a.into();
+        let expected: FixedBytes<4> = 0x2a55_205a.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc2981>::interface_id()
-        ));
-        assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc165>::interface_id()
-        ));
+    fn supports_interface(contract: Contract<Erc2981>, bob: Address) {
+        assert!(contract
+            .sender(bob)
+            .supports_interface(<Erc2981 as IErc2981>::interface_id()));
+        assert!(contract
+            .sender(bob)
+            .supports_interface(<Erc2981 as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc2981::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(bob)
+            .supports_interface(fake_interface_id.into()));
     }
 }

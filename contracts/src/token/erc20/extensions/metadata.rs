@@ -58,6 +58,11 @@ pub trait IErc20Metadata: IErc165 {
     fn decimals(&self) -> u8;
 }
 
+#[public]
+#[implements(IErc20Metadata, IErc165)]
+impl Erc20Metadata {}
+
+#[public]
 impl IErc20Metadata for Erc20Metadata {
     fn name(&self) -> String {
         self.metadata.name()
@@ -85,6 +90,7 @@ impl Erc20Metadata {
     }
 }
 
+#[public]
 impl IErc165 for Erc20Metadata {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20Metadata>::interface_id() == interface_id
@@ -94,25 +100,33 @@ impl IErc165 for Erc20Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
+    use alloy_primitives::{Address, FixedBytes};
+    use motsu::prelude::Contract;
+    use stylus_sdk::prelude::TopLevelStorage;
+
     use super::{Erc20Metadata, IErc165, IErc20Metadata};
+
+    unsafe impl TopLevelStorage for Erc20Metadata {}
 
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
-        let expected = 0xa219a025.into();
+        let expected: FixedBytes<4> = 0xa219a025u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20Metadata::supports_interface(
+    fn supports_interface(contract: Contract<Erc20Metadata>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
             <Erc20Metadata as IErc20Metadata>::interface_id()
         ));
-        assert!(Erc20Metadata::supports_interface(
-            <Erc20Metadata as IErc165>::interface_id()
-        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc20Metadata as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20Metadata::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

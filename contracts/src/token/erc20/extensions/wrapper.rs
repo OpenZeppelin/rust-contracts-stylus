@@ -356,11 +356,10 @@ impl Erc20Wrapper {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::uint;
+    use alloy_primitives::{uint, FixedBytes};
     use motsu::prelude::*;
 
     use super::*;
-    use crate::utils::introspection::erc165::IErc165;
 
     #[storage]
     struct Erc20WrapperTestExample {
@@ -369,7 +368,17 @@ mod tests {
     }
 
     #[public]
+    #[implements(IErc20Wrapper<Error = Error>)]
     impl Erc20WrapperTestExample {
+        fn recover(&mut self, account: Address) -> Result<U256, Error> {
+            self.wrapper._recover(account, &mut self.erc20)
+        }
+    }
+
+    #[public]
+    impl IErc20Wrapper for Erc20WrapperTestExample {
+        type Error = Error;
+
         fn decimals(&self) -> U8 {
             self.wrapper.decimals()
         }
@@ -382,7 +391,7 @@ mod tests {
             &mut self,
             account: Address,
             value: U256,
-        ) -> Result<bool, Error> {
+        ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
             self.wrapper.deposit_for(account, value, &mut self.erc20)
         }
 
@@ -390,12 +399,8 @@ mod tests {
             &mut self,
             account: Address,
             value: U256,
-        ) -> Result<bool, Error> {
+        ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
             self.wrapper.withdraw_to(account, value, &mut self.erc20)
-        }
-
-        fn recover(&mut self, account: Address) -> Result<U256, Error> {
-            self.wrapper._recover(account, &mut self.erc20)
         }
     }
 
@@ -782,13 +787,21 @@ mod tests {
         );
     }
 
+    #[storage]
+    struct NonErc20;
+
+    #[public]
+    impl NonErc20 {}
+
+    unsafe impl TopLevelStorage for NonErc20 {}
+
     // TODO: Should be a test for the `Error::InvalidUnderlying` error,
     // but impossible with current motsu limitations.
     #[motsu::test]
     #[ignore]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
-        invalid_underlying: Contract<crate::access::ownable::Ownable>,
+        invalid_underlying: Contract<NonErc20>,
         alice: Address,
     ) {
         contract.init(alice, |contract| {
@@ -931,21 +944,8 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20Wrapper as IErc20Wrapper>::interface_id();
-        let expected = 0x511f913e.into();
+        let actual = <Erc20WrapperTestExample as IErc20Wrapper>::interface_id();
+        let expected: FixedBytes<4> = 0x511f913e.into();
         assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc20Wrapper>::interface_id()
-        ));
-        assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc165>::interface_id()
-        ));
-
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20Wrapper::supports_interface(fake_interface_id.into()));
     }
 }
