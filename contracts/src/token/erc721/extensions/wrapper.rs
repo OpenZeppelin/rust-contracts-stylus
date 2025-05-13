@@ -10,6 +10,7 @@ use alloc::{
 };
 
 use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
@@ -118,6 +119,7 @@ unsafe impl TopLevelStorage for Erc721Wrapper {}
 
 /// Interface of an extension of the ERC-721 token contract that supports token
 /// wrapping.
+#[interface_id]
 pub trait IErc721Wrapper {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -196,10 +198,10 @@ pub trait IErc721Wrapper {
     ///   interface id or returned with an error.
     fn on_erc721_received(
         &mut self,
-        _operator: Address,
+        operator: Address,
         from: Address,
         token_id: U256,
-        _data: Bytes,
+        data: Bytes,
     ) -> Result<FixedBytes<4>, <Self as IErc721Wrapper>::Error>;
 
     /// Returns the underlying token.

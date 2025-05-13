@@ -7,11 +7,12 @@ use alloc::{
 };
 
 use alloy_primitives::{FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::{
     token::erc721::{self, IErc721},
-    utils::{introspection::erc165::IErc165, Metadata},
+    utils::Metadata,
 };
 
 /// State of an [`Erc721Metadata`] contract.
@@ -26,24 +27,11 @@ pub struct Erc721Metadata {
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
+#[interface_id]
 pub trait IErc721Metadata: IErc165 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    // Manually calculated, as the trait is missing
-    // [`Erc721Metadata::token_uri`].
-    /// Solidity interface id associated with [`IErc721Metadata`] trait.
-    /// Computed as a XOR of selectors for each function in the trait.
-    fn interface_id() -> FixedBytes<4>
-    where
-        Self: Sized,
-    {
-        FixedBytes::<4>::new(stylus_sdk::function_selector!("name"))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!("symbol"))
-            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
-                "tokenURI", U256
-            ))
-    }
     /// Returns the token collection name.
     ///
     /// # Arguments
@@ -71,6 +59,7 @@ pub trait IErc721Metadata: IErc165 {
     /// # Errors
     ///
     /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
+    #[selector(name = "tokenURI")]
     fn token_uri(
         &self,
         token_id: U256,

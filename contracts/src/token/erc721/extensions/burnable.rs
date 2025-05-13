@@ -1,8 +1,10 @@
 //! Optional Burnable extension of the ERC-721 standard.
 
-use alloy_primitives::U256;
+use alloy_primitives::{FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
 
 /// An [`crate::token::erc721::Erc721`] token that can be burned (destroyed).
+#[interface_id]
 pub trait IErc721Burnable {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
