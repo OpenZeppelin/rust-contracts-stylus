@@ -139,12 +139,15 @@ pub trait IErc20Permit: INonces {
     /// Returns the domain separator used in the encoding of the signature for
     /// [`Self::permit`], as defined by EIP712.
     ///
+    /// NOTE: The implementation should use `#[selector(name =
+    /// "DOMAIN_SEPARATOR")]` to match Solidity's camelCase naming
+    /// convention.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     #[must_use]
-    #[allow(non_snake_case)]
-    fn DOMAIN_SEPARATOR(&self) -> B256;
+    fn domain_separator(&self) -> B256;
 
     /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
     /// given `owner`'s signed approval.

@@ -99,7 +99,7 @@ impl IErc20Permit for Erc20PermitExample {
     type Error = permit::Error;
 
     #[selector(name = "DOMAIN_SEPARATOR")]
-    fn DOMAIN_SEPARATOR(&self) -> B256 {
+    fn domain_separator(&self) -> B256 {
         self.erc20_permit.domain_separator()
     }
 
