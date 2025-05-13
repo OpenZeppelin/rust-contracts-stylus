@@ -201,7 +201,7 @@ unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
 #[interface_id]
-pub trait IErc4626 {
+pub trait IErc4626: IErc20Metadata {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 

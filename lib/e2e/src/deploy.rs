@@ -11,7 +11,7 @@ use alloy::{
 };
 use eyre::{Context, ContextCompat};
 use regex::Regex;
-use stylus_sdk::function_selector;
+use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
 
 use crate::{system::DEPLOYER_ADDRESS, Receipt};
 
@@ -20,6 +20,9 @@ const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
 
 const PROGRAM_UP_TO_DATE_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ProgramUpToDate");
+
+const CONTRACT_DEPLOYMENT_ERROR_SELECTOR: [u8; 4] =
+    function_selector!("ContractDeploymentError", Bytes);
 
 /// Represents the `ContractInitializationError(address)` error in
 /// StylusDeployer.
@@ -46,6 +49,30 @@ impl std::fmt::Display for ContractInitializationError {
 }
 
 impl std::error::Error for ContractInitializationError {}
+
+/// Represents the `ContractDeploymentError(bytes)` error in StylusDeployer.
+///
+/// See: <https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L15>
+#[derive(Debug)]
+pub struct ContractDeploymentError {
+    /// Contract bytecode.
+    pub bytecode: alloy_primitives::Bytes,
+}
+
+impl ContractDeploymentError {
+    /// Convert [`eyre::Report`] into [`ContractDeploymentError`].
+    pub fn from_report(report: &eyre::Report) -> Option<&Self> {
+        report.downcast_ref::<ContractDeploymentError>()
+    }
+}
+
+impl std::fmt::Display for ContractDeploymentError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ContractDeploymentError {")
+    }
+}
+
+impl std::error::Error for ContractDeploymentError {}
 
 /// A basic smart contract deployer.
 pub struct Deployer {
@@ -167,6 +194,10 @@ impl Deployer {
                     // This is probably some weird nitro-testnode issue, but for
                     // now this quick-fix should work.
                     return self.get_receipt(output).await;
+                } else if error_selector == CONTRACT_DEPLOYMENT_ERROR_SELECTOR {
+                    return Err(eyre::Report::new(ContractDeploymentError {
+                        bytecode: data[4..].to_vec().into(),
+                    }));
                 } else {
                     return Err(eyre::eyre!(hex_str.to_string()));
                 }

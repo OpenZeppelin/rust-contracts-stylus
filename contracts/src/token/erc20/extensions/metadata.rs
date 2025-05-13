@@ -3,7 +3,10 @@
 use alloc::{string::String, vec, vec::Vec};
 
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{alloy_primitives::FixedBytes, prelude::*};
+use stylus_sdk::{
+    alloy_primitives::{uint, FixedBytes, U8},
+    prelude::*,
+};
 
 use crate::utils::{
     introspection::erc165::{Erc165, IErc165},
@@ -11,7 +14,7 @@ use crate::utils::{
 };
 
 /// Number of decimals used by default on implementors of [`Metadata`].
-pub const DEFAULT_DECIMALS: u8 = 18;
+pub const DEFAULT_DECIMALS: U8 = uint!(18_U8);
 
 /// State of an [`Erc20Metadata`] contract.
 #[storage]
@@ -55,7 +58,7 @@ pub trait IErc20Metadata: IErc165 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn decimals(&self) -> u8;
+    fn decimals(&self) -> U8;
 }
 
 #[public]
@@ -72,7 +75,7 @@ impl IErc20Metadata for Erc20Metadata {
         self.metadata.symbol()
     }
 
-    fn decimals(&self) -> u8 {
+    fn decimals(&self) -> U8 {
         DEFAULT_DECIMALS
     }
 }

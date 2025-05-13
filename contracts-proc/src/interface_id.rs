@@ -75,7 +75,7 @@ pub(crate) fn interface_id(
             #[doc = concat!("Solidity interface id associated with ", stringify!(#name), " trait.")]
             #[doc = "Computed as a XOR of selectors for each function in the trait."]
             fn interface_id() -> alloy_primitives::FixedBytes<4>
-            where 
+            where
                 Self: Sized,
             {
                 #(#selectors)^*
