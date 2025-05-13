@@ -144,14 +144,6 @@ mod tests {
         fn constructor(&mut self, name: String, symbol: String) {
             self.metadata.constructor(name, symbol);
         }
-
-        fn mint(
-            &mut self,
-            to: Address,
-            token_id: U256,
-        ) -> Result<(), erc721::Error> {
-            self.erc721._mint(to, token_id)
-        }
     }
 
     #[public]

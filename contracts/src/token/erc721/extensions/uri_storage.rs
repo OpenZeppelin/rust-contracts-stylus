@@ -110,7 +110,7 @@ mod tests {
     use alloy_primitives::FixedBytes;
 
     #[storage]
-    struct Erc721UriStorageExample {
+    struct Erc721MetadataExample {
         pub erc721: Erc721,
         pub metadata: Erc721Metadata,
         pub uri_storage: Erc721UriStorage,
@@ -118,18 +118,10 @@ mod tests {
 
     #[public]
     #[implements(IErc721Metadata<Error=erc721::Error>, IErc165)]
-    impl Erc721UriStorageExample {
+    impl Erc721MetadataExample {
         #[constructor]
         fn constructor(&mut self, name: String, symbol: String) {
             self.metadata.constructor(name, symbol);
-        }
-
-        fn mint(
-            &mut self,
-            to: Address,
-            token_id: U256,
-        ) -> Result<(), erc721::Error> {
-            self.erc721._mint(to, token_id)
         }
 
         #[selector(name = "setTokenURI")]
@@ -139,7 +131,7 @@ mod tests {
     }
 
     #[public]
-    impl IErc721Metadata for Erc721UriStorageExample {
+    impl IErc721Metadata for Erc721MetadataExample {
         type Error = erc721::Error;
 
         fn name(&self) -> String {
@@ -157,33 +149,32 @@ mod tests {
     }
 
     #[public]
-    impl IErc165 for Erc721UriStorageExample {
+    impl IErc165 for Erc721MetadataExample {
         fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
             <Self as IErc721Metadata>::interface_id() == interface_id
                 || Erc165::interface_id() == interface_id
         }
     }
 
-    unsafe impl TopLevelStorage for Erc721UriStorageExample {}
+    unsafe impl TopLevelStorage for Erc721MetadataExample {}
 
     #[motsu::test]
     fn interface_id() {
-        let actual =
-            <Erc721UriStorageExample as IErc721Metadata>::interface_id();
+        let actual = <Erc721MetadataExample as IErc721Metadata>::interface_id();
         let expected: FixedBytes<4> = 0x5b5e139f.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface(
-        contract: Contract<Erc721UriStorageExample>,
+        contract: Contract<Erc721MetadataExample>,
         alice: Address,
     ) {
         assert!(contract.sender(alice).supports_interface(
-            <Erc721UriStorageExample as IErc721Metadata>::interface_id()
+            <Erc721MetadataExample as IErc721Metadata>::interface_id()
         ));
         assert!(contract.sender(alice).supports_interface(
-            <Erc721UriStorageExample as IErc165>::interface_id()
+            <Erc721MetadataExample as IErc165>::interface_id()
         ));
 
         let fake_interface_id: FixedBytes<4> = 0x12345678u32.into();
@@ -191,12 +182,13 @@ mod tests {
     }
     #[motsu::test]
     fn token_uri_works(
-        contract: Contract<Erc721UriStorageExample>,
+        contract: Contract<Erc721MetadataExample>,
         alice: Address,
     ) {
         contract
             .sender(alice)
-            .mint(alice, TOKEN_ID)
+            .erc721
+            ._mint(alice, TOKEN_ID)
             .expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");

@@ -354,17 +354,17 @@ mod tests {
     use crate::token::erc721::Erc721;
 
     #[storage]
-    struct Erc721EnumerableExample {
+    struct Erc721EnumerableTestExample {
         pub erc721: Erc721,
         pub enumerable: Erc721Enumerable,
     }
 
     #[public]
     #[implements(IErc721Enumerable<Error=Error>, IErc165)]
-    impl Erc721EnumerableExample {}
+    impl Erc721EnumerableTestExample {}
 
     #[public]
-    impl IErc721Enumerable for Erc721EnumerableExample {
+    impl IErc721Enumerable for Erc721EnumerableTestExample {
         type Error = Error;
 
         fn total_supply(&self) -> U256 {
@@ -385,19 +385,19 @@ mod tests {
     }
 
     #[public]
-    impl IErc165 for Erc721EnumerableExample {
+    impl IErc165 for Erc721EnumerableTestExample {
         fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-            <Erc721EnumerableExample as IErc721Enumerable>::interface_id()
+            <Erc721EnumerableTestExample as IErc721Enumerable>::interface_id()
                 == interface_id
                 || Erc165::interface_id() == interface_id
         }
     }
 
-    unsafe impl TopLevelStorage for Erc721EnumerableExample {}
+    unsafe impl TopLevelStorage for Erc721EnumerableTestExample {}
 
     #[motsu::test]
     fn total_supply_no_tokens(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         assert_eq!(
@@ -408,7 +408,7 @@ mod tests {
 
     #[motsu::test]
     fn reverts_when_token_by_index_is_out_of_bound(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         let token_idx = uint!(2024_U256);
@@ -430,7 +430,7 @@ mod tests {
 
     #[motsu::test]
     fn add_token_to_all_tokens_enumeration_works(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         let tokens_len = 10;
@@ -477,7 +477,7 @@ mod tests {
 
     #[motsu::test]
     fn remove_token_from_all_tokens_enumeration_works(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         let initial_tokens_len = 10;
@@ -573,7 +573,7 @@ mod tests {
 
     #[motsu::test]
     fn token_of_owner_by_index_works(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         let token_id = uint!(1_U256);
@@ -611,7 +611,7 @@ mod tests {
 
     #[motsu::test]
     fn reverts_when_token_of_owner_for_index_out_of_bound(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         let token_id = uint!(1_U256);
@@ -656,7 +656,7 @@ mod tests {
 
     #[motsu::test]
     fn reverts_when_token_of_owner_does_not_own_any_token(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         let token_idx = U256::ZERO;
@@ -676,7 +676,7 @@ mod tests {
 
     #[motsu::test]
     fn token_of_owner_by_index_after_transfer_works(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
         bob: Address,
     ) {
@@ -757,7 +757,7 @@ mod tests {
 
     #[motsu::test]
     fn supports_interface(
-        contract: Contract<Erc721EnumerableExample>,
+        contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
         assert!(contract.sender(alice).enumerable.supports_interface(
