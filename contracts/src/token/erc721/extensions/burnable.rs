@@ -2,7 +2,7 @@
 
 use alloy_primitives::U256;
 
-/// An [`Erc721`] token that can be burned (destroyed).
+/// An [`crate::token::erc721::Erc721`] token that can be burned (destroyed).
 pub trait IErc721Burnable {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

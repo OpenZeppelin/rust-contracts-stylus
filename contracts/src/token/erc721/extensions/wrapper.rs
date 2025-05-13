@@ -447,6 +447,7 @@ mod tests {
             self.erc721.safe_transfer_from(from, to, token_id)
         }
 
+        #[selector(name = "safeTransferFrom")]
         fn safe_transfer_from_with_data(
             &mut self,
             from: Address,
@@ -912,8 +913,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiverWithReason(erc721::InvalidReceiverWithReason { reason })
-                if reason == expected_error
+            Error::InvalidReceiverWithReason(
+                erc721::InvalidReceiverWithReason { reason }
+            ) if reason == expected_error
         ));
     }
 

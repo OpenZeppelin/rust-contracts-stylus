@@ -2058,10 +2058,7 @@ mod tests {
         contract: Contract<Erc721Example>,
         alice: Address,
     ) {
-        let owner = contract
-            .sender(alice)
-            .owner_of(TOKEN_ID)
-            .expect("should return an owner");
+        let owner = contract.sender(alice).erc721._owner_of(TOKEN_ID);
         assert_eq!(Address::ZERO, owner);
     }
 
@@ -2865,7 +2862,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721 as IErc721>::interface_id();
-        let expected: FixedBytes<4> = 0x80ac58cd.into();
+        let expected: FixedBytes<4> = fixed_bytes!("80ac58cd");
         assert_eq!(actual, expected);
     }
 
