@@ -12,7 +12,7 @@ use openzeppelin_stylus::{
         },
         Erc721, IErc721,
     },
-    utils::introspection::erc165::{Erc165, IErc165},
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -152,7 +152,6 @@ impl IErc721Wrapper for Erc721WrapperExample {
 #[public]
 impl IErc165 for Erc721WrapperExample {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        Erc721::supports_interface(&self.erc721, interface_id)
-            || Erc165::interface_id() == interface_id
+        self.erc721.supports_interface(interface_id)
     }
 }

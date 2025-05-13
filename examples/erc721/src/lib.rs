@@ -271,10 +271,7 @@ impl IErc721Enumerable for Erc721Example {
 #[public]
 impl IErc165 for Erc721Example {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        Erc721::supports_interface(&self.erc721, interface_id)
-            || Erc721Enumerable::supports_interface(
-                &self.enumerable,
-                interface_id,
-            )
+        self.erc721.supports_interface(interface_id)
+            || self.enumerable.supports_interface(interface_id)
     }
 }
