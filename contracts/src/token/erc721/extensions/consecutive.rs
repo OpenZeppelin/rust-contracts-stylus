@@ -31,10 +31,11 @@ use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{
-        self, Approval, ERC721IncorrectOwner, ERC721InsufficientApproval,
-        ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
-        ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, IErc721, InvalidReceiverWithReason, Transfer,
+        self, extensions::IErc721Burnable, Approval, ERC721IncorrectOwner,
+        ERC721InsufficientApproval, ERC721InvalidApprover,
+        ERC721InvalidOperator, ERC721InvalidOwner, ERC721InvalidReceiver,
+        ERC721InvalidSender, ERC721NonexistentToken, Erc721, IErc721,
+        InvalidReceiverWithReason, Transfer,
     },
     utils::{
         introspection::erc165::{Erc165, IErc165},
@@ -318,6 +319,15 @@ impl IErc721 for Erc721Consecutive {
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
         self.erc721.is_approved_for_all(owner, operator)
+    }
+}
+
+impl IErc721Burnable for Erc721Consecutive {
+    type Error = Error;
+
+    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
+        self._update(Address::ZERO, token_id, msg::sender())?;
+        Ok(())
     }
 }
 

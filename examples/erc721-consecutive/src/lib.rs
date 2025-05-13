@@ -122,7 +122,7 @@ impl IErc721Burnable for Erc721ConsecutiveExample {
     type Error = consecutive::Error;
 
     fn burn(&mut self, token_id: U256) -> Result<(), consecutive::Error> {
-        self.erc721._burn(token_id)
+        self.erc721.burn(token_id)
     }
 }
 

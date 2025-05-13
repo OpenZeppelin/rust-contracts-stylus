@@ -1,9 +1,12 @@
 //! Optional Burnable extension of the ERC-721 standard.
 
-use alloy_primitives::{FixedBytes, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
+use stylus_sdk::msg;
 
-/// An [`crate::token::erc721::Erc721`] token that can be burned (destroyed).
+use crate::token::erc721::{self, Erc721};
+
+/// An [`Erc721`] token that can be burned (destroyed).
 #[interface_id]
 pub trait IErc721Burnable {
     /// The error type associated to this trait implementation.
@@ -18,20 +21,36 @@ pub trait IErc721Burnable {
     ///
     /// # Errors
     ///
-    /// * [`crate::token::erc721::Error::NonexistentToken`] - If token does not
-    ///   exist.
-    /// * [`crate::token::erc721::Error::InsufficientApproval`] - If the caller
-    ///   does not have the right to approve.
+    /// * [`erc721::Error::NonexistentToken`] - If token does not exist.
+    /// * [`erc721::Error::InsufficientApproval`] - If the caller does not have
+    ///   the right to approve.
     ///
     /// # Events
     ///
-    /// * [`crate::token::erc721::Transfer`].
+    /// * [`erc721::Transfer`].
     fn burn(
         &mut self,
         token_id: U256,
     ) -> Result<(), <Self as IErc721Burnable>::Error>;
 }
 
+impl IErc721Burnable for Erc721 {
+    type Error = erc721::Error;
+
+    fn burn(
+        &mut self,
+        token_id: U256,
+    ) -> Result<(), <Self as IErc721Burnable>::Error> {
+        // Setting an "auth" arguments enables the
+        // [`super::super::Erc721::_is_authorized`] check which verifies that
+        // the token exists (from != `Address::ZERO`).
+        //
+        // Therefore, it is not needed to verify that the return value is not 0
+        // here.
+        self._update(Address::ZERO, token_id, msg::sender())?;
+        Ok(())
+    }
+}
 #[cfg(all(test, feature = "std"))]
 mod tests {
     use alloy_primitives::{uint, Address};
@@ -151,7 +170,7 @@ mod tests {
         type Error = erc721::Error;
 
         fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
-            self.erc721._burn(token_id)
+            self.erc721.burn(token_id)
         }
     }
 
