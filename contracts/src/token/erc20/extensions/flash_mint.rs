@@ -294,8 +294,7 @@ impl Erc20FlashMint {
     // preserves the property that the amount minted at the beginning is always
     // recovered and burned at the end, or else the entire function will revert.
     /// See [`IErc3156FlashLender::flash_loan`].
-    #[allow(clippy::missing_errors_doc)]
-    #[allow(clippy::missing_panics_doc)]
+    #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
     pub fn flash_loan(
         &mut self,
         receiver: Address,
