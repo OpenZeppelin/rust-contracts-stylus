@@ -34,6 +34,7 @@ mod const_helpers;
 pub mod hash;
 pub mod keccak;
 pub mod merkle;
+pub mod pedersen;
 pub mod poseidon2;
 
 pub use keccak::KeccakBuilder;

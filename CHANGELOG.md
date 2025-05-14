@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add Pedersen hash with Starknet parameters. #644
+- Add shift left, right operators to Uint. #644
 - `Erc721Wrapper` extension to support token wrapping. #461
 - Add callable interface for ERC-721. #461
 - Add missing functions to callable ERC-20 interface. #461
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Optimize Stylus SDK imports. #598
+- Updated the recommended way to inherit errors. #602
 
 ### Changed (Breaking)
 

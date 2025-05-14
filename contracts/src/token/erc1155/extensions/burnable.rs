@@ -37,7 +37,7 @@ pub trait IErc1155Burnable {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc1155Burnable>::Error>;
 
     /// Destroys a batch of tokens from `account`.
     ///
@@ -64,7 +64,7 @@ pub trait IErc1155Burnable {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IErc1155Burnable>::Error>;
 }
 
 impl IErc1155Burnable for Erc1155 {
@@ -75,7 +75,7 @@ impl IErc1155Burnable for Erc1155 {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IErc1155Burnable>::Error> {
         self.ensure_approved_or_owner(account)?;
         self._burn(account, token_id, value)
     }
@@ -85,7 +85,7 @@ impl IErc1155Burnable for Erc1155 {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IErc1155Burnable>::Error> {
         self.ensure_approved_or_owner(account)?;
         self._burn_batch(account, token_ids, values)
     }

@@ -102,7 +102,7 @@ pub trait IOwnable {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), <Self as IOwnable>::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// functions that require `only_owner`. Can only be called by the current
@@ -122,7 +122,7 @@ pub trait IOwnable {
     /// # Events
     ///
     /// * [`OwnershipTransferred`].
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), <Self as IOwnable>::Error>;
 }
 
 #[public]
@@ -136,7 +136,7 @@ impl IOwnable for Ownable {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), <Self as IOwnable>::Error> {
         self.only_owner()?;
 
         if new_owner.is_zero() {
@@ -150,7 +150,7 @@ impl IOwnable for Ownable {
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), <Self as IOwnable>::Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
