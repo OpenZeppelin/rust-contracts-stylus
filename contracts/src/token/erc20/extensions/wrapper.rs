@@ -282,6 +282,7 @@ impl Erc20Wrapper {
     }
 }
 
+#[public]
 impl Erc20Wrapper {
     /// Constructor.
     ///
@@ -293,6 +294,7 @@ impl Erc20Wrapper {
     /// # Errors
     ///
     /// * [`Error::InvalidUnderlying`] - If underlying token is this contract.
+    #[constructor]
     pub fn constructor(
         &mut self,
         underlying_token: Address,

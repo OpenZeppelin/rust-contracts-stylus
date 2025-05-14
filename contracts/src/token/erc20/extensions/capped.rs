@@ -65,15 +65,6 @@ pub trait ICapped {
 
 #[public]
 #[implements(ICapped)]
-impl Capped {}
-
-#[public]
-impl ICapped for Capped {
-    fn cap(&self) -> U256 {
-        self.cap.get()
-    }
-}
-
 impl Capped {
     /// Constructor.
     ///
@@ -85,12 +76,20 @@ impl Capped {
     /// # Errors
     ///
     /// * [`Error::InvalidCap`] - If cap is `U256::ZERO`.
+    #[constructor]
     pub fn constructor(&mut self, cap: U256) -> Result<(), Error> {
         if cap.is_zero() {
             return Err(Error::InvalidCap(ERC20InvalidCap { cap }));
         }
         self.cap.set(cap);
         Ok(())
+    }
+}
+
+#[public]
+impl ICapped for Capped {
+    fn cap(&self) -> U256 {
+        self.cap.get()
     }
 }
 

@@ -63,7 +63,19 @@ pub trait IErc20Metadata: IErc165 {
 
 #[public]
 #[implements(IErc20Metadata, IErc165)]
-impl Erc20Metadata {}
+impl Erc20Metadata {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
+    #[constructor]
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+}
 
 #[public]
 impl IErc20Metadata for Erc20Metadata {
@@ -77,19 +89,6 @@ impl IErc20Metadata for Erc20Metadata {
 
     fn decimals(&self) -> U8 {
         DEFAULT_DECIMALS
-    }
-}
-
-impl Erc20Metadata {
-    /// Constructor.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `name` - Token name.
-    /// * `symbol` - Token symbol.
-    pub fn constructor(&mut self, name: String, symbol: String) {
-        self.metadata.constructor(name, symbol);
     }
 }
 

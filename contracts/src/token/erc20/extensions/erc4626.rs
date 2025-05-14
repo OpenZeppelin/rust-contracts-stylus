@@ -849,6 +849,7 @@ impl Erc4626 {
     }
 }
 
+#[public]
 impl Erc4626 {
     // TODO: remove `decimals_offset` once function overriding is possible.
     /// Constructor.
@@ -858,6 +859,7 @@ impl Erc4626 {
     /// * `&mut self` - Write access to the contract's state.
     /// * `asset` - The underlying vault asset.
     /// * `decimals_offset` - The decimal offset of the vault shares.
+    #[constructor]
     pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
         let underlying_decimals =
             self.try_get_asset_decimals(asset).unwrap_or(18);
@@ -865,15 +867,6 @@ impl Erc4626 {
         self.underlying_decimals.set(U8::from(underlying_decimals));
         self.asset.set(asset);
         self.decimals_offset.set(decimals_offset);
-    }
-
-    /// Attempts to fetch the asset decimals. Returns None if the attempt failed
-    /// in any way. This follows Rust's idiomatic Option pattern rather than
-    /// Solidity's boolean tuple return.
-    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
-        let erc20 = IErc20MetadataInterface::new(asset);
-        let call = Call::new_in(self);
-        erc20.decimals(call).ok()
     }
 }
 
@@ -1106,6 +1099,17 @@ impl Erc4626 {
     /// Currently, always returns `U8::ZERO`.
     pub fn _decimals_offset(&self) -> U8 {
         self.decimals_offset.get()
+    }
+}
+
+impl Erc4626 {
+    /// Attempts to fetch the asset decimals. Returns None if the attempt failed
+    /// in any way. This follows Rust's idiomatic Option pattern rather than
+    /// Solidity's boolean tuple return.
+    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
+        let erc20 = IErc20MetadataInterface::new(asset);
+        let call = Call::new_in(self);
+        erc20.decimals(call).ok()
     }
 }
 
