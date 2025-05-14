@@ -876,7 +876,7 @@ mod tests {
         let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
-        let expected: FixedBytes<4> = 0x2a55_205a.into();
+        let expected: FixedBytes<4> = 0x2a55_205au32.into();
         assert_eq!(actual, expected);
     }
 

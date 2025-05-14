@@ -948,7 +948,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20 as IErc20>::interface_id();
-        let expected: FixedBytes<4> = 0x36372b07.into();
+        let expected: FixedBytes<4> = 0x36372b07u32.into();
         assert_eq!(actual, expected);
     }
 
