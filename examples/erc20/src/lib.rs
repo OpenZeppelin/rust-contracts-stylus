@@ -3,7 +3,6 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc20::{
         self,
@@ -15,9 +14,12 @@ use openzeppelin_stylus::{
     },
     utils::{introspection::erc165::IErc165, pausable, IPausable, Pausable},
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    alloy_primitives::{uint, Address, FixedBytes, U256, U8},
+    prelude::*,
+};
 
-const DECIMALS: u8 = 10;
+const DECIMALS: U8 = uint!(10_U8);
 
 #[derive(SolidityError, Debug)]
 enum Error {
@@ -192,7 +194,7 @@ impl IErc20Metadata for Erc20Example {
     //
     // If you don't provide this method in the `entrypoint` contract, it will
     // default to `18`.
-    fn decimals(&self) -> u8 {
+    fn decimals(&self) -> U8 {
         DECIMALS
     }
 }
