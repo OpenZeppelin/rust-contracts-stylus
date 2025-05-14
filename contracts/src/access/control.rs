@@ -256,6 +256,10 @@ pub trait IAccessControl {
 }
 
 #[public]
+#[implements(IAccessControl<Error = Error>, IErc165)]
+impl AccessControl {}
+
+#[public]
 impl IAccessControl for AccessControl {
     type Error = Error;
 
@@ -412,6 +416,7 @@ impl AccessControl {
     }
 }
 
+#[public]
 impl IErc165 for AccessControl {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IAccessControl>::interface_id() == interface_id
