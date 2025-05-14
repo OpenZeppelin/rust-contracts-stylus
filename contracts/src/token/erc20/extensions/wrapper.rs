@@ -140,6 +140,7 @@ pub trait IErc20Wrapper {
     ///     self.erc20_wrapper.decimals()
     /// }
     /// ```
+    #[must_use]
     fn decimals(&self) -> U8;
 
     /// Returns the address of the underlying ERC-20 token that is being
@@ -156,6 +157,7 @@ pub trait IErc20Wrapper {
     ///     self.erc20_wrapper.underlying()
     /// }
     /// ```
+    #[must_use]
     fn underlying(&self) -> Address;
 
     /// Allow a user to deposit underlying tokens and mint the corresponding
@@ -220,16 +222,19 @@ unsafe impl TopLevelStorage for Erc20Wrapper {}
 
 impl Erc20Wrapper {
     /// See [`IErc20Wrapper::decimals`].
+    #[must_use]
     pub fn decimals(&self) -> U8 {
         self.underlying_decimals.get()
     }
 
     /// See [`IErc20Wrapper::underlying`].
+    #[must_use]
     pub fn underlying(&self) -> Address {
         self.underlying.get()
     }
 
     /// See [`IErc20Wrapper::deposit_for`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn deposit_for(
         &mut self,
         account: Address,
@@ -262,6 +267,7 @@ impl Erc20Wrapper {
     }
 
     /// See [`IErc20Wrapper::withdraw_to`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn withdraw_to(
         &mut self,
         account: Address,

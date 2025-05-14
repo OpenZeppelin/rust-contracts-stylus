@@ -31,6 +31,7 @@ pub trait IErc20Metadata: IErc165 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     fn name(&self) -> String;
 
     /// Returns the symbol of the token, usually a shorter version of the name.
@@ -38,6 +39,7 @@ pub trait IErc20Metadata: IErc165 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     fn symbol(&self) -> String;
 
     /// Returns the number of decimals used to get a user-friendly
@@ -58,6 +60,7 @@ pub trait IErc20Metadata: IErc165 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     fn decimals(&self) -> U8;
 }
 

@@ -190,6 +190,7 @@ pub trait IErc3156FlashLender {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `token` - The address of the token that is requested.
+    #[must_use]
     fn max_flash_loan(&self, token: Address) -> U256;
 
     /// Returns the fee applied when doing flash loans.
@@ -266,6 +267,7 @@ pub trait IErc3156FlashLender {
 
 impl Erc20FlashMint {
     /// See [`IErc3156FlashLender::max_flash_loan`].
+    #[must_use]
     pub fn max_flash_loan(&self, token: Address, erc20: &erc20::Erc20) -> U256 {
         if token == contract::address() {
             U256::MAX - erc20.total_supply()
@@ -275,6 +277,7 @@ impl Erc20FlashMint {
     }
 
     /// See [`IErc3156FlashLender::flash_fee`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn flash_fee(
         &self,
         token: Address,
@@ -291,12 +294,14 @@ impl Erc20FlashMint {
     // preserves the property that the amount minted at the beginning is always
     // recovered and burned at the end, or else the entire function will revert.
     /// See [`IErc3156FlashLender::flash_loan`].
+    #[allow(clippy::missing_errors_doc)]
+    #[allow(clippy::missing_panics_doc)]
     pub fn flash_loan(
         &mut self,
         receiver: Address,
         token: Address,
         value: U256,
-        data: Bytes,
+        data: &Bytes,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
         let max_loan = self.max_flash_loan(token, erc20);

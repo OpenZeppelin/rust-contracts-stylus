@@ -211,6 +211,7 @@ pub trait IErc4626: IErc20Metadata {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     fn asset(&self) -> Address;
 
     /// Returns the total amount of the underlying asset that is “managed” by
@@ -301,6 +302,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `receiver` - The address of the entity receiving the shares.
+    #[must_use]
     fn max_deposit(&self, receiver: Address) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
@@ -384,6 +386,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `receiver` - The address of the entity receiving the shares.
+    #[must_use]
     fn max_mint(&self, receiver: Address) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
@@ -582,6 +585,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address of the entity owning the shares.
+    #[must_use]
     fn max_redeem(&self, owner: Address) -> U256;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
@@ -663,11 +667,13 @@ pub trait IErc4626: IErc20Metadata {
 
 impl Erc4626 {
     /// See [`IErc4626::asset`].
+    #[must_use]
     pub fn asset(&self) -> Address {
         self.asset.get()
     }
 
     /// See [`IErc4626::total_assets`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn total_assets(&mut self) -> Result<U256, Error> {
         let erc20 = Erc20Interface::new(self.asset());
         let call = Call::new_in(self);
@@ -677,6 +683,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::convert_to_shares`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn convert_to_shares(
         &mut self,
         assets: U256,
@@ -686,6 +693,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::convert_to_assets`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn convert_to_assets(
         &mut self,
         shares: U256,
@@ -695,16 +703,19 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::max_deposit`].
+    #[must_use]
     pub fn max_deposit(&self, _receiver: Address) -> U256 {
         U256::MAX
     }
 
     /// See [`IErc4626::max_mint`].
+    #[must_use]
     pub fn max_mint(&self, _receiver: Address) -> U256 {
         U256::MAX
     }
 
     /// See [`IErc4626::max_withdraw`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn max_withdraw(
         &mut self,
         owner: Address,
@@ -715,11 +726,13 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::max_redeem`].
+    #[must_use]
     pub fn max_redeem(&self, owner: Address, erc20: &Erc20) -> U256 {
         erc20.balance_of(owner)
     }
 
     /// See [`IErc4626::preview_deposit`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn preview_deposit(
         &mut self,
         assets: U256,
@@ -729,6 +742,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::preview_mint`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn preview_mint(
         &mut self,
         shares: U256,
@@ -738,6 +752,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::preview_withdraw`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn preview_withdraw(
         &mut self,
         assets: U256,
@@ -747,6 +762,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::preview_redeem`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn preview_redeem(
         &mut self,
         shares: U256,
@@ -756,6 +772,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::deposit`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn deposit(
         &mut self,
         assets: U256,
@@ -780,6 +797,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::mint`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn mint(
         &mut self,
         shares: U256,
@@ -803,6 +821,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::withdraw`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn withdraw(
         &mut self,
         assets: U256,
@@ -825,6 +844,7 @@ impl Erc4626 {
     }
 
     /// See [`IErc4626::redeem`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn redeem(
         &mut self,
         shares: U256,
@@ -1097,6 +1117,7 @@ impl Erc4626 {
     /// Returns the decimals offset between the underlying asset and vault
     /// shares.
     /// Currently, always returns `U8::ZERO`.
+    #[must_use]
     pub fn _decimals_offset(&self) -> U8 {
         self.decimals_offset.get()
     }

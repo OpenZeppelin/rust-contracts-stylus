@@ -74,7 +74,7 @@ impl IErc3156FlashLender for Erc20FlashMintExample {
             receiver,
             token,
             value,
-            data,
+            &data,
             &mut self.erc20,
         )?)
     }

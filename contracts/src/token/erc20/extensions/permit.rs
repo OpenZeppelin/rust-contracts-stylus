@@ -194,12 +194,13 @@ pub trait IErc20Permit: INonces {
 
 impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// See [`IErc20Permit::domain_separator`].
+    #[must_use]
     pub fn domain_separator(&self) -> B256 {
         self.eip712.domain_separator_v4()
     }
 
     /// See [`IErc20Permit::permit`].
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, clippy::missing_errors_doc)]
     pub fn permit(
         &mut self,
         owner: Address,
