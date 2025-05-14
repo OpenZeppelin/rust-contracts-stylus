@@ -426,9 +426,11 @@ impl IErc165 for AccessControl {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::{
+        alloy_primitives::{Address, FixedBytes},
+        prelude::TopLevelStorage,
+    };
 
     use super::{AccessControl, Error, IAccessControl};
     use crate::utils::introspection::erc165::IErc165;
@@ -739,20 +741,22 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <AccessControl as IAccessControl>::interface_id();
-        let expected = 0x7965db0b.into();
+        let expected: FixedBytes<4> = 0x7965db0bu32.into();
         assert_ne!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(AccessControl::supports_interface(
+    fn supports_interface(contract: Contract<AccessControl>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
             <AccessControl as IAccessControl>::interface_id()
         ));
-        assert!(AccessControl::supports_interface(
-            <AccessControl as IErc165>::interface_id()
-        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<AccessControl as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!AccessControl::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }
