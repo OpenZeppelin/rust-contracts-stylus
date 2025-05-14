@@ -11,6 +11,7 @@ use stylus_sdk::{
 };
 
 use super::metadata_uri::{IErc1155MetadataUri, URI};
+use crate::token::erc1155::IErc1155;
 
 /// State of an [`Erc1155UriStorage`] contract.
 #[storage]
