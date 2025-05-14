@@ -61,6 +61,7 @@ pub trait INonces {
 }
 
 #[public]
+#[implements(INonces)]
 impl Nonces {}
 
 #[public]
