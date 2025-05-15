@@ -81,11 +81,7 @@ impl IErc20 for Ownable2StepExample {
         self.erc20.balance_of(account)
     }
 
-    fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
         self.ownable.only_owner()?;
         Ok(self.erc20.transfer(to, value)?)
     }
@@ -98,7 +94,7 @@ impl IErc20 for Ownable2StepExample {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Error> {
         Ok(self.erc20.approve(spender, value)?)
     }
 
@@ -107,7 +103,7 @@ impl IErc20 for Ownable2StepExample {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Error> {
         Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
@@ -124,22 +120,15 @@ impl IOwnable2Step for Ownable2StepExample {
         self.ownable.pending_owner()
     }
 
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), <Self as IOwnable2Step>::Error> {
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn accept_ownership(
-        &mut self,
-    ) -> Result<(), <Self as IOwnable2Step>::Error> {
+    fn accept_ownership(&mut self) -> Result<(), Error> {
         Ok(self.ownable.accept_ownership()?)
     }
 
-    fn renounce_ownership(
-        &mut self,
-    ) -> Result<(), <Self as IOwnable2Step>::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 }

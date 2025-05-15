@@ -86,7 +86,7 @@ impl IErc165 for Erc1155MetadataUri {
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::{alloy_primitives::uint, prelude::TopLevelStorage};
+    use stylus_sdk::{alloy_primitives::uint, prelude::*};
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 

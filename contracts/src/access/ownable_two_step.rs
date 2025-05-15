@@ -24,7 +24,6 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
-use super::ownable::OwnableInvalidOwner;
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     utils::introspection::erc165::{Erc165, IErc165},
@@ -165,29 +164,14 @@ pub trait IOwnable2Step {
 #[public]
 #[implements(IOwnable2Step<Error = ownable::Error>, IErc165)]
 impl Ownable2Step {
-    /// Constructor.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `initial_owner` - The initial owner of this contract.
-    ///
-    /// # Errors
-    ///
-    /// * [`ownable::Error::InvalidOwner`] - If initial owner is
-    ///   `Address::ZERO`.
+    /// See [`Ownable::constructor`].
+    #[allow(clippy::missing_errors_doc)]
     #[constructor]
     pub fn constructor(
         &mut self,
         initial_owner: Address,
     ) -> Result<(), ownable::Error> {
-        if initial_owner.is_zero() {
-            return Err(ownable::Error::InvalidOwner(OwnableInvalidOwner {
-                owner: Address::ZERO,
-            }));
-        }
-        self._transfer_ownership(initial_owner);
-        Ok(())
+        self.ownable.constructor(initial_owner)
     }
 }
 
@@ -267,7 +251,7 @@ impl Ownable2Step {
 impl IErc165 for Ownable2Step {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IOwnable2Step>::interface_id() == interface_id
-            || <Ownable as IOwnable>::interface_id() == interface_id
+            || self.ownable.supports_interface(interface_id)
             || Erc165::interface_id() == interface_id
     }
 }
@@ -277,7 +261,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
         alloy_primitives::{Address, FixedBytes},
-        prelude::TopLevelStorage,
+        prelude::*,
     };
 
     use super::*;
