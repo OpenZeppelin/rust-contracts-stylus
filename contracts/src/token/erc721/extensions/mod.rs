@@ -10,5 +10,5 @@ pub use burnable::IErc721Burnable;
 pub use consecutive::Erc721Consecutive;
 pub use enumerable::{Erc721Enumerable, IErc721Enumerable};
 pub use metadata::{Erc721Metadata, IErc721Metadata};
-pub use uri_storage::Erc721UriStorage;
-pub use wrapper::Erc721Wrapper;
+pub use uri_storage::{Erc721UriStorage, IErc721UriStorage};
+pub use wrapper::{Erc721Wrapper, IErc721Wrapper};

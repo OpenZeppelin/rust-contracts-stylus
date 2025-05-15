@@ -419,6 +419,10 @@ pub trait IErc721: IErc165 {
 }
 
 #[public]
+#[implements(IErc721<Error=Error>, IErc165)]
+impl Erc721 {}
+
+#[public]
 impl IErc721 for Erc721 {
     type Error = Error;
 
@@ -516,6 +520,7 @@ impl IErc721 for Erc721 {
     }
 }
 
+#[public]
 impl IErc165 for Erc721 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721>::interface_id() == interface_id
@@ -2703,21 +2708,23 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721 as IErc721>::interface_id();
-        let expected = 0x80ac58cd.into();
+        let expected: FixedBytes<4> = fixed_bytes!("80ac58cd");
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(
-            Erc721::supports_interface(<Erc721 as IErc721>::interface_id())
-        );
-        assert!(
-            Erc721::supports_interface(<Erc721 as IErc165>::interface_id())
-        );
+    fn supports_interface(contract: Contract<Erc721>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc721 as IErc721>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc721 as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 
     sol_storage! {
