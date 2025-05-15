@@ -3,7 +3,8 @@
 //! Inspired by the [`crate::token::erc721::extensions::Erc721UriStorage`]
 use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::U256;
+use alloy_primitives::{FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     evm,
     prelude::*,
@@ -23,6 +24,7 @@ pub struct Erc1155UriStorage {
 
 /// Interface of an optional extension for ERC-1155 with storage based token URI
 /// management.
+#[interface_id]
 pub trait IErc1155UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///
