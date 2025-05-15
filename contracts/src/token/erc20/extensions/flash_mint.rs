@@ -390,7 +390,7 @@ mod tests {
             &self,
             token: Address,
             value: U256,
-        ) -> Result<U256, super::Error> {
+        ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
             self.erc20_flash_mint.flash_fee(token, value)
         }
 
@@ -400,7 +400,7 @@ mod tests {
             token: Address,
             value: U256,
             data: Bytes,
-        ) -> Result<bool, super::Error> {
+        ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
             self.erc20_flash_mint.flash_loan(
                 receiver,
                 token,
