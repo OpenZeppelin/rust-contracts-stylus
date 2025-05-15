@@ -551,7 +551,7 @@ impl<const N: usize> Ord for Uint<N> {
             match a.cmp(b) {
                 Ordering::Equal => {}
                 order => return order,
-            };
+            }
         });
 
         Ordering::Equal
