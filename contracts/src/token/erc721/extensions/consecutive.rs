@@ -27,13 +27,7 @@ use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{aliases::U96, uint, Address, FixedBytes, U256};
-use stylus_sdk::{
-    abi::Bytes,
-    call::MethodError,
-    evm, msg,
-    prelude::*,
-    stylus_proc::{public, SolidityError},
-};
+use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{
@@ -254,7 +248,6 @@ impl IErc721 for Erc721Consecutive {
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
-    #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
         &mut self,
         from: Address,
@@ -329,6 +322,8 @@ impl IErc721 for Erc721Consecutive {
     }
 }
 
+#[public]
+#[implements(IErc721<Error = Error>, IErc165)]
 impl Erc721Consecutive {
     // TODO: remove once function overriding is possible, so `max_batch_size`
     // can be set that way.
@@ -337,6 +332,7 @@ impl Erc721Consecutive {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
+    #[constructor]
     pub fn constructor(&mut self) {
         self.max_batch_size.set(U96::from(5000));
     }
@@ -859,6 +855,7 @@ impl Erc721Consecutive {
     }
 }
 
+#[public]
 impl IErc165 for Erc721Consecutive {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721>::interface_id() == interface_id
@@ -868,19 +865,10 @@ impl IErc165 for Erc721Consecutive {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;
 
-    use crate::{
-        token::erc721::{
-            extensions::consecutive::{
-                ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
-            },
-            ERC721IncorrectOwner, ERC721InvalidApprover, ERC721InvalidReceiver,
-            ERC721InvalidSender, ERC721NonexistentToken, IErc721,
-        },
-        utils::introspection::erc165::IErc165,
-    };
+    use super::*;
 
     const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
     const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
@@ -1481,17 +1469,22 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc721>::interface_id()
-        ));
-        assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc165>::interface_id()
-        ));
+    fn supports_interface(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+    ) {
+        assert!(
+            contract.sender(alice).supports_interface(
+                <Erc721Consecutive as IErc721>::interface_id()
+            )
+        );
+        assert!(
+            contract.sender(alice).supports_interface(
+                <Erc721Consecutive as IErc165>::interface_id()
+            )
+        );
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721Consecutive::supports_interface(
-            fake_interface_id.into()
-        ));
+        let fake_interface_id: FixedBytes<4> = 0x12345678u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }
