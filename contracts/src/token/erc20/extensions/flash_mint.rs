@@ -358,15 +358,14 @@ impl Erc20FlashMint {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;
-    use stylus_sdk::{abi::Bytes, prelude::*};
-
-    use super::{
-        ERC3156ExceededMaxLoan, ERC3156InvalidReceiver,
-        ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
-        IErc3156FlashLender,
+    use stylus_sdk::{
+        abi::Bytes,
+        alloy_primitives::{uint, Address, FixedBytes, U256},
+        prelude::*,
     };
+
+    use super::*;
 
     #[storage]
     struct Erc20FlashMintTestExample {
@@ -390,7 +389,7 @@ mod tests {
             &self,
             token: Address,
             value: U256,
-        ) -> Result<U256, super::Error> {
+        ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
             self.erc20_flash_mint.flash_fee(token, value)
         }
 
@@ -400,12 +399,12 @@ mod tests {
             token: Address,
             value: U256,
             data: Bytes,
-        ) -> Result<bool, super::Error> {
+        ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
             self.erc20_flash_mint.flash_loan(
                 receiver,
                 token,
                 value,
-                data,
+                &data,
                 &mut self.erc20,
             )
         }
