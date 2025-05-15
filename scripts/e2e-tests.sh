@@ -20,7 +20,7 @@ cd "$ROOT_DIR" || exit
 
 # Function to retrieve all Cargo.toml paths in the ./examples directory
 get_example_dirs() {
-    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | grep -v "erc721\|erc1155" | sort
+    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
 }
 
 run_test() {
