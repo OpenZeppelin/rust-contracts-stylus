@@ -388,7 +388,7 @@ impl IErc165 for Erc1155Supply {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{Address, U256};
+    use alloy_primitives::{Address, FixedBytes, U256};
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::TopLevelStorage;
 
@@ -624,29 +624,28 @@ mod tests {
         assert!(!contract.sender(alice).exists(token_ids[0]));
     }
 
-    // TODO#q: uncomment interface_id tests
-    /*
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155Supply as IErc1155Supply>::interface_id();
-        let expected = 0xeac6339d.into();
+        let expected: FixedBytes<4> = 0xeac6339d_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc1155Supply::supports_interface(
+    fn supports_interface(contract: Contract<Erc1155Supply>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
             <Erc1155Supply as IErc1155Supply>::interface_id()
         ));
-        assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc165>::interface_id()
-        ));
-        assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc1155>::interface_id()
-        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155Supply as IErc165>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155Supply as IErc1155>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc1155Supply::supports_interface(fake_interface_id.into()));
+        let fake_interface_id = 0x12345678_u32;
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
-    */
 }

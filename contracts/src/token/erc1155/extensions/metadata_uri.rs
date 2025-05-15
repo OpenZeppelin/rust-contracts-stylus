@@ -116,7 +116,7 @@ mod tests {
     fn interface_id() {
         let actual =
             <Erc1155MetadataUri as IErc1155MetadataUri>::interface_id();
-        let expected: FixedBytes<4> = 0x0e89341c.into();
+        let expected: FixedBytes<4> = 0x0e89341c_u32.into();
         assert_eq!(actual, expected);
     }
 
