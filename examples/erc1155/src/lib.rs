@@ -3,9 +3,10 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
-use openzeppelin_stylus::token::erc1155::{
-    self, extensions::IErc1155Burnable, Erc1155, IErc1155,
+use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus::{
+    token::erc1155::{self, extensions::IErc1155Burnable, Erc1155, IErc1155},
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -16,7 +17,7 @@ struct Erc1155Example {
 }
 
 #[public]
-#[implements(IErc1155<Error=erc1155::Error>, IErc1155Burnable<Error=erc1155::Error>)]
+#[implements(IErc1155<Error=erc1155::Error>, IErc1155Burnable<Error=erc1155::Error>, IErc165)]
 impl Erc1155Example {
     fn mint(
         &mut self,
@@ -110,5 +111,12 @@ impl IErc1155Burnable for Erc1155Example {
         values: Vec<U256>,
     ) -> Result<(), erc1155::Error> {
         self.erc1155.burn_batch(account, token_ids, values)
+    }
+}
+
+#[public]
+impl IErc165 for Erc1155Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc1155.supports_interface(interface_id)
     }
 }
