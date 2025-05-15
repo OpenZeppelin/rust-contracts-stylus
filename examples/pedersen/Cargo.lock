@@ -1526,7 +1526,7 @@ dependencies = [
  "eyre",
  "once_cell",
  "regex",
- "stylus-sdk",
+ "stylus-sdk 0.8.3",
  "tokio",
  "toml",
 ]
@@ -2390,6 +2390,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mini-alloc"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "miniz_oxide"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2634,7 +2642,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
- "stylus-sdk",
+ "stylus-sdk 0.8.1",
  "tokio",
 ]
 
@@ -3411,9 +3419,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "stylus-core"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "cfg-if",
+ "dyn-clone",
+]
+
+[[package]]
 name = "stylus-proc"
 version = "0.8.1"
 source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=76d0454defed46b2cfaab82e566aeb8ddde5944a#76d0454defed46b2cfaab82e566aeb8ddde5944a"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "cfg-if",
+ "convert_case",
+ "lazy_static",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "sha3",
+ "syn 2.0.101",
+ "syn-solidity",
+ "trybuild",
+]
+
+[[package]]
+name = "stylus-proc"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3443,11 +3482,29 @@ dependencies = [
  "hex",
  "keccak-const",
  "lazy_static",
- "mini-alloc",
+ "mini-alloc 0.8.1",
  "regex",
- "stylus-core",
- "stylus-proc",
+ "stylus-core 0.8.1",
+ "stylus-proc 0.8.1",
  "stylus-test",
+]
+
+[[package]]
+name = "stylus-sdk"
+version = "0.8.3"
+source = "git+https://github.com/OffchainLabs/stylus-sdk-rs.git?rev=b7310ef#b7310ef87d05182a946555ae8754f13c97c21c8b"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "cfg-if",
+ "clap",
+ "derivative",
+ "hex",
+ "keccak-const",
+ "lazy_static",
+ "mini-alloc 0.8.3",
+ "stylus-core 0.8.3",
+ "stylus-proc 0.8.3",
 ]
 
 [[package]]
@@ -3458,7 +3515,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-provider 0.11.1",
  "alloy-sol-types",
- "stylus-core",
+ "stylus-core 0.8.1",
  "tokio",
  "url",
 ]
