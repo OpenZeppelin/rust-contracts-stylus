@@ -105,9 +105,11 @@ impl IErc165 for Erc20Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::{
+        alloy_primitives::{Address, FixedBytes},
+        prelude::*,
+    };
 
     use super::{Erc20Metadata, IErc165, IErc20Metadata};
 

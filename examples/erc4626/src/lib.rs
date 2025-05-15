@@ -210,7 +210,7 @@ impl IErc20Metadata for Erc4626Example {
 impl IErc165 for Erc4626Example {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc4626>::interface_id() == interface_id
-            || <Self as IErc20>::interface_id() == interface_id
-            || <Self as IErc20Metadata>::interface_id() == interface_id
+            || self.erc20.supports_interface(interface_id)
+            || self.metadata.supports_interface(interface_id)
     }
 }
