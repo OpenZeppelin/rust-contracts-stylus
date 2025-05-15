@@ -1,29 +1,19 @@
 #![cfg(feature = "e2e")]
 
 use abi::{Erc20, Erc20Wrapper};
-use alloy::{
-    primitives::{uint, Address, U256},
-    sol,
-};
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt};
+use alloy::primitives::{uint, Address, U256};
+use e2e::{receipt, watch, Account, EventExt};
 use eyre::Result;
-
-use crate::Erc20WrapperExample::constructorCall;
 
 mod abi;
 mod mock;
 
 use mock::{erc20, erc20::ERC20Mock};
 
-sol!("src/constructor.sol");
-
 const DECIMALS: u8 = 18;
 
-fn ctr(asset_addr: Address) -> constructorCall {
-    Erc20WrapperExample::constructorCall {
-        underlyingToken_: asset_addr,
-        decimals_: DECIMALS,
-    }
+fn ctr(asset_addr: Address) -> Vec<String> {
+    vec![asset_addr.to_string(), DECIMALS.to_string()]
 }
 
 /// Deploy a new [`Erc20`] contract and [`Erc20Wrapper`] contract and mint
@@ -39,7 +29,7 @@ async fn deploy(
         .with_constructor(ctr(asset_addr))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     if initial_tokens > U256::ZERO {
         let asset = ERC20Mock::new(asset_addr, &account.wallet);
@@ -57,7 +47,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .with_constructor(ctr(asset_address))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20Wrapper::new(contract_addr, alice.wallet);
 
     let underlying = contract.underlying().call().await?.underlying;

@@ -19,7 +19,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::U96, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -33,7 +33,6 @@ use crate::utils::{
     structs::checkpoints::{Size, S160},
 };
 
-type U96 = <S160 as Size>::Key;
 type StorageU96 = <S160 as Size>::KeyStorage;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -192,9 +191,9 @@ impl IErc2981 for Erc2981 {
 }
 
 impl IErc165 for Erc2981 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc2981>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc2981>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -869,20 +868,20 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc2981 as IErc2981>::INTERFACE_ID;
+        let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
-        let expected = 0x2a55_205a;
+        let expected = 0x2a55_205a.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc2981>::INTERFACE_ID.into()
+            <Erc2981 as IErc2981>::interface_id()
         ));
         assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc165>::INTERFACE_ID.into()
+            <Erc2981 as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

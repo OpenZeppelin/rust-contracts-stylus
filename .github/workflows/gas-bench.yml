@@ -4,9 +4,12 @@ name: gas-bench
 permissions:
   contents: read
 on:
-  push:
-    branches: [main, v*]
-  pull_request:
+  workflow_dispatch:
+  # TODO: uncomment when benches are fixed,
+  # which will be when cargo-stylus CLI supports workspaces.
+  # push:
+  #   branches: [main, v*]
+  # pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -26,7 +29,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.11
+        run: cargo install cargo-stylus@0.5.12
 
       - name: Install wasm-opt
         run: cargo install wasm-opt@0.116.1

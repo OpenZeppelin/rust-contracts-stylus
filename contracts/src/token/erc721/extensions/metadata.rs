@@ -22,8 +22,10 @@ use crate::{
 pub struct Erc721Metadata {
     /// [`Metadata`] contract.
     pub(crate) metadata: Metadata,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Base URI for tokens.
-    pub(crate) base_uri: StorageString,
+    pub base_uri: StorageString,
 }
 
 /// Interface for the optional metadata functions from the ERC-721 standard.
@@ -32,13 +34,16 @@ pub trait IErc721Metadata {
     // [`Erc721Metadata::token_uri`].
     /// Solidity interface id associated with [`IErc721Metadata`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 =
-        u32::from_be_bytes(stylus_sdk::function_selector!("name"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!("symbol"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+    fn interface_id() -> FixedBytes<4>
+    where
+        Self: Sized,
+    {
+        FixedBytes::<4>::new(stylus_sdk::function_selector!("name"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!("symbol"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "tokenURI", U256
-            ));
-
+            ))
+    }
     /// Returns the token collection name.
     ///
     /// # Arguments
@@ -68,11 +73,23 @@ impl IErc721Metadata for Erc721Metadata {
     }
 }
 
+impl Erc721Metadata {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+}
+
 impl IErc165 for Erc721Metadata {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721Metadata>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721Metadata>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -140,18 +157,18 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc721Metadata as IErc721Metadata>::INTERFACE_ID;
-        let expected = 0x5b5e139f;
+        let actual = <Erc721Metadata as IErc721Metadata>::interface_id();
+        let expected = 0x5b5e139f.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Metadata::supports_interface(
-            <Erc721Metadata as IErc721Metadata>::INTERFACE_ID.into()
+            <Erc721Metadata as IErc721Metadata>::interface_id()
         ));
         assert!(Erc721Metadata::supports_interface(
-            <Erc721Metadata as IErc165>::INTERFACE_ID.into()
+            <Erc721Metadata as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

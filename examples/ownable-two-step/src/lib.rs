@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -62,6 +62,11 @@ struct Ownable2StepExample {
 #[public]
 #[inherit(Erc20, Ownable2Step)]
 impl Ownable2StepExample {
+    #[constructor]
+    fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
+        Ok(self.ownable.constructor(initial_owner)?)
+    }
+
     fn transfer(&mut self, to: Address, value: U256) -> Result<(), Error> {
         self.ownable.only_owner()?;
         self.erc20.transfer(to, value)?;

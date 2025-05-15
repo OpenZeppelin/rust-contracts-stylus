@@ -9,8 +9,6 @@ sol!(
         function setTokenURI(uint256 tokenId, string memory tokenURI) external;
         function setBaseURI(string memory tokenURI) external;
 
-        function supportsInterface(bytes4 interfaceId) external view returns (bool);
-
         #[derive(Debug, PartialEq)]
         event URI(string value, uint256 indexed id);
     }

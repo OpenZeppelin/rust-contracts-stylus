@@ -3,10 +3,7 @@
 use abi::{Erc20, SafeErc20};
 use alloy::primitives::uint;
 use alloy_primitives::U256;
-use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
-};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use mock::{erc20_no_return, erc20_no_return::ERC20NoReturnMock};
 
 mod abi;
@@ -20,7 +17,8 @@ mod transfers {
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
-        let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
         let bob_addr = bob.address();
 
@@ -66,7 +64,8 @@ mod transfers {
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
-        let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
         let bob_addr = bob.address();
 
@@ -105,7 +104,8 @@ mod transfers {
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
-        let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
         let alice_addr = alice.address();
         let bob_addr = bob.address();
@@ -153,7 +153,8 @@ mod transfers {
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
-        let safe_erc20_addr = alice.as_deployer().deploy().await?.address()?;
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
         let alice_addr = alice.address();
         let bob_addr = bob.address();
@@ -200,7 +201,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -244,7 +245,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -286,7 +287,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -330,7 +331,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -364,7 +365,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -407,7 +408,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -453,7 +454,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -497,7 +498,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -543,7 +544,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();
@@ -589,7 +590,7 @@ mod approvals {
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
-                alice.as_deployer().deploy().await?.address()?;
+                alice.as_deployer().deploy().await?.contract_address;
             let safe_erc20_alice =
                 SafeErc20::new(safe_erc20_addr, &alice.wallet);
             let spender_addr = alice.address();

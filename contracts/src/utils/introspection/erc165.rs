@@ -24,6 +24,7 @@ pub trait IErc165 {
     ///
     /// # Arguments
     ///
+    /// * `self` - The contract instance.
     /// * `interface_id` - The interface identifier, as specified in the [ERC].
     ///
     /// # Examples
@@ -39,7 +40,7 @@ pub trait IErc165 {
     /// ```
     ///
     /// [ERC]: https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool;
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool;
 }
 
 /// Implementation of the [`IErc165`] trait.
@@ -50,16 +51,16 @@ pub trait IErc165 {
 ///
 /// ```rust,ignore
 /// impl IErc165 for Erc20 {
-///     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-///         <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-///             || Erc165::supports_interface(interface_id)
+///     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+///         <Self as IErc20>::interface_id() == interface_id
+///             || Erc165::supports_interface(&self, interface_id)
 ///     }
 /// }
 /// ```
 pub struct Erc165;
 
 impl IErc165 for Erc165 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Self::INTERFACE_ID == u32::from_be_bytes(*interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        Self::interface_id() == interface_id
     }
 }

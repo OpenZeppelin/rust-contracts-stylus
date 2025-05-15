@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Erc20` events derive `Debug`. #498
 - Implement `MethodError` for all contracts' errors. #594
 - Implement `IErc165` for all base contracts for standard interface detection. #603
-- Expose `INTERFACE_ID` for `Erc20Wrapper`, `Erc4626` and `Erc20FlashMint`. #603
+- Expose interface ID for `Erc20Wrapper`, `Erc4626` and `Erc20FlashMint`. #603
 - Short Weierstrass elliptic curves primitives. #589
 
 ### Changed
@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Convert associated `const INTERFACE_ID` into an associated `fn interface_id()` on all traits.
 - Moved `Erc20` callable interface to _/erc20/interface.rs_ module and renamed it to `Erc20Interface`. #461
 - Bump `cargo-stylus` to `v0.5.11`. #617
 - Bump Stylus SDK to `v0.8.4`. #624
@@ -38,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `IErc20Metadata::INTERFACE_ID` now has the correct value.
+- `IErc721Metadata::interface_id()` now has the correct value.
 
 ## [v0.2.0-alpha.4] - 2025-03-06
 

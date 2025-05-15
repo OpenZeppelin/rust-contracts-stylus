@@ -158,6 +158,28 @@ impl IOwnable for Ownable {
 }
 
 impl Ownable {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `initial_owner` - The initial owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidOwner`] - If initial owner is `Address::ZERO`.
+    pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
+        if initial_owner.is_zero() {
+            return Err(Error::InvalidOwner(OwnableInvalidOwner {
+                owner: Address::ZERO,
+            }));
+        }
+        self._transfer_ownership(initial_owner);
+        Ok(())
+    }
+}
+
+impl Ownable {
     /// Checks if the [`msg::sender`] is set as the owner.
     ///
     /// # Arguments
@@ -198,9 +220,9 @@ impl Ownable {
 }
 
 impl IErc165 for Ownable {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IOwnable>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IOwnable>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -306,18 +328,18 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Ownable as IOwnable>::INTERFACE_ID;
-        let expected = 0xe083076;
+        let actual = <Ownable as IOwnable>::interface_id();
+        let expected = 0xe083076.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Ownable::supports_interface(
-            <Ownable as IOwnable>::INTERFACE_ID.into()
+            <Ownable as IOwnable>::interface_id()
         ));
         assert!(Ownable::supports_interface(
-            <Ownable as IErc165>::INTERFACE_ID.into()
+            <Ownable as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

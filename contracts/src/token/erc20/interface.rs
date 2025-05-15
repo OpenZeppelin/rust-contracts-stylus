@@ -18,4 +18,13 @@ mod token {
             function transferFrom(address from, address to, uint256 value) external returns (bool);
         }
     }
+
+    sol_interface! {
+        /// Solidity Interface of the ERC-20 Metadata token.
+        interface IErc20MetadataInterface {
+            function name() external view returns (string);
+            function symbol() external view returns (string);
+            function decimals() external view returns (uint8);
+        }
+    }
 }

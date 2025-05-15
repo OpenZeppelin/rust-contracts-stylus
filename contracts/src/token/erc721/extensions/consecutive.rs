@@ -13,8 +13,7 @@
 //!
 //! Fields `first_consecutive_id` (used to offset first token id) and
 //! `max_batch_size` (used to restrict maximum batch size) can be assigned
-//! during construction with `koba` (stylus construction tooling) within
-//! solidity constructor file.
+//! during construction.
 //!
 //! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
 //! inside the contract's Solidity constructor.
@@ -27,7 +26,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{uint, Address, FixedBytes, U256};
+use alloy_primitives::{aliases::U96, uint, Address, FixedBytes, U256};
 use stylus_sdk::{
     abi::Bytes,
     call::MethodError,
@@ -55,7 +54,6 @@ use crate::{
     },
 };
 
-type U96 = <S160 as Size>::Key;
 type StorageU96 = <S160 as Size>::KeyStorage;
 
 pub use sol::*;
@@ -185,19 +183,25 @@ impl MethodError for Error {
 /// State of an [`Erc721Consecutive`] token.
 #[storage]
 pub struct Erc721Consecutive {
+    // Must be public so that internal fields can be accessed in inheriting
+    // contracts' constructors.
     /// [`Erc721`] contract.
     pub erc721: Erc721,
     /// [`Trace`] contract for sequential ownership.
     pub(crate) sequential_ownership: Trace<S160>,
     /// [`BitMap`] contract for sequential burn of tokens.
     pub(crate) sequential_burn: BitMap,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Used to offset the first token id in `next_consecutive_id` calculation.
-    pub(crate) first_consecutive_id: StorageU96,
+    pub first_consecutive_id: StorageU96,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Maximum size of a batch of consecutive tokens. This is designed to
     /// limit stress on off-chain indexing services that have to record one
     /// entry per token, and have protections against "unreasonably large"
     /// batches of tokens.
-    pub(crate) max_batch_size: StorageU96,
+    pub max_batch_size: StorageU96,
 }
 
 impl Deref for Erc721Consecutive {
@@ -322,6 +326,19 @@ impl IErc721 for Erc721Consecutive {
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
         self.erc721.is_approved_for_all(owner, operator)
+    }
+}
+
+impl Erc721Consecutive {
+    // TODO: remove once function overriding is possible, so `max_batch_size`
+    // can be set that way.
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    pub fn constructor(&mut self) {
+        self.max_batch_size.set(U96::from(5000));
     }
 }
 
@@ -844,9 +861,9 @@ impl Erc721Consecutive {
 }
 
 impl IErc165 for Erc721Consecutive {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -1467,10 +1484,10 @@ mod tests {
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
+            <Erc721Consecutive as IErc721>::interface_id()
         ));
         assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
+            <Erc721Consecutive as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

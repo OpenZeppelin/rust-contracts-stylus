@@ -395,9 +395,9 @@ impl SafeErc20 {
 }
 
 impl IErc165 for SafeErc20 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as ISafeErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as ISafeErc20>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -438,18 +438,18 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <SafeErc20 as ISafeErc20>::INTERFACE_ID;
-        let expected = 0xf71993e3;
+        let actual = <SafeErc20 as ISafeErc20>::interface_id();
+        let expected = 0xf71993e3.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(SafeErc20::supports_interface(
-            <SafeErc20 as IErc165>::INTERFACE_ID.into()
+            <SafeErc20 as IErc165>::interface_id()
         ));
         assert!(SafeErc20::supports_interface(
-            <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
+            <SafeErc20 as ISafeErc20>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

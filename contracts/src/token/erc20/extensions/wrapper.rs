@@ -115,8 +115,10 @@ impl MethodError for Error {
 pub struct Erc20Wrapper {
     /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Underlying token decimals.
-    pub(crate) underlying_decimals: StorageU8,
+    pub underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
@@ -130,19 +132,23 @@ pub trait IErc20Wrapper {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
     /// as a XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 =
-        u32::from_be_bytes(stylus_sdk::function_selector!("decimals"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!("underlying"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+    fn interface_id() -> FixedBytes<4>
+    where
+        Self: Sized,
+    {
+        FixedBytes::<4>::new(stylus_sdk::function_selector!("decimals"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!("underlying"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "depositFor",
                 Address,
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "withdrawTo",
                 Address,
                 U256
-            ));
+            ))
+    }
 
     /// Returns the number of decimals used to get its user representation.
     ///
@@ -318,6 +324,31 @@ impl IErc20Wrapper for Erc20Wrapper {
 }
 
 impl Erc20Wrapper {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `underlying_token` - The wrapped token.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidUnderlying`] - If underlying token is this contract.
+    pub fn constructor(
+        &mut self,
+        underlying_token: Address,
+    ) -> Result<(), Error> {
+        if underlying_token == contract::address() {
+            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
+                token: underlying_token,
+            }));
+        }
+        self.underlying.set(underlying_token);
+        Ok(())
+    }
+}
+
+impl Erc20Wrapper {
     /// Mint wrapped token to cover any underlying tokens that would have been
     /// transferred by mistake or acquired from rebasing mechanisms.
     ///
@@ -365,10 +396,9 @@ impl Erc20Wrapper {
 }
 
 impl IErc165 for Erc20Wrapper {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Wrapper>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc20Wrapper>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -949,18 +979,18 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID;
-        let expected = 0x511f913e;
+        let actual = <Erc20Wrapper as IErc20Wrapper>::interface_id();
+        let expected = 0x511f913e.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID.into()
+            <Erc20Wrapper as IErc20Wrapper>::interface_id()
         ));
         assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc165>::INTERFACE_ID.into()
+            <Erc20Wrapper as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

@@ -24,6 +24,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
+use super::ownable::OwnableInvalidOwner;
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     utils::introspection::erc165::{Erc165, IErc165},
@@ -212,6 +213,32 @@ impl IOwnable2Step for Ownable2Step {
 }
 
 impl Ownable2Step {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `initial_owner` - The initial owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If initial owner is
+    ///   `Address::ZERO`.
+    pub fn constructor(
+        &mut self,
+        initial_owner: Address,
+    ) -> Result<(), ownable::Error> {
+        if initial_owner.is_zero() {
+            return Err(ownable::Error::InvalidOwner(OwnableInvalidOwner {
+                owner: Address::ZERO,
+            }));
+        }
+        self._transfer_ownership(initial_owner);
+        Ok(())
+    }
+}
+
+impl Ownable2Step {
     /// Transfers ownership of the contract to a new account (`new_owner`) and
     /// sets [`Self::pending_owner`] to [`Address::ZERO`] to avoid situations
     /// where the transfer has been completed or the current owner renounces,
@@ -234,12 +261,10 @@ impl Ownable2Step {
 }
 
 impl IErc165 for Ownable2Step {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IOwnable2Step>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || <Ownable as IOwnable>::INTERFACE_ID
-                == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IOwnable2Step>::interface_id() == interface_id
+            || <Ownable as IOwnable>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -476,21 +501,21 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Ownable2Step as IOwnable2Step>::INTERFACE_ID;
-        let expected = 0x94be5999;
+        let actual = <Ownable2Step as IOwnable2Step>::interface_id();
+        let expected = 0x94be5999.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IOwnable2Step>::INTERFACE_ID.into()
+            <Ownable2Step as IOwnable2Step>::interface_id()
         ));
         assert!(Ownable2Step::supports_interface(
-            <Ownable as IOwnable>::INTERFACE_ID.into()
+            <Ownable as IOwnable>::interface_id()
         ));
         assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IErc165>::INTERFACE_ID.into()
+            <Ownable2Step as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

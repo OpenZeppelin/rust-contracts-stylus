@@ -21,7 +21,7 @@ use stylus_sdk::{
 use crate::{
     token::erc20::{
         self,
-        interface::Erc20Interface,
+        interface::{Erc20Interface, IErc20MetadataInterface},
         utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
@@ -210,60 +210,66 @@ pub trait IErc4626 {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc4626`] trait. Computed as a
     /// XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 =
-        u32::from_be_bytes(stylus_sdk::function_selector!("asset"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!("totalAssets"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+    fn interface_id() -> FixedBytes<4>
+    where
+        Self: Sized,
+    {
+        FixedBytes::<4>::new(stylus_sdk::function_selector!("asset"))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
+                "totalAssets"
+            ))
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "convertToShares",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "convertToAssets",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxDeposit",
                 Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewDeposit",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "deposit", U256, Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxMint", Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewMint",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "mint", U256, Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxWithdraw",
                 Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewWithdraw",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "withdraw", U256, Address, Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "maxRedeem",
                 Address
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "previewRedeem",
                 U256
             ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
+            ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
                 "redeem", U256, Address, Address
-            ));
+            ))
+    }
 
     /// Returns the address of the underlying token used for the Vault for
     /// accounting, depositing, and withdrawing.
@@ -1033,6 +1039,34 @@ impl IErc4626 for Erc4626 {
 }
 
 impl Erc4626 {
+    // TODO: remove `decimals_offset` once function overriding is possible.
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `asset` - The underlying vault asset.
+    /// * `decimals_offset` - The decimal offset of the vault shares.
+    pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
+        let underlying_decimals =
+            self.try_get_asset_decimals(asset).unwrap_or(18);
+
+        self.underlying_decimals.set(U8::from(underlying_decimals));
+        self.asset.set(asset);
+        self.decimals_offset.set(decimals_offset);
+    }
+
+    /// Attempts to fetch the asset decimals. Returns None if the attempt failed
+    /// in any way. This follows Rust's idiomatic Option pattern rather than
+    /// Solidity's boolean tuple return.
+    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
+        let erc20 = IErc20MetadataInterface::new(asset);
+        let call = Call::new_in(self);
+        erc20.decimals(call).ok()
+    }
+}
+
+impl Erc4626 {
     /// Returns the number of decimals used in representing vault shares. Adds
     /// the decimals offset to the underlying token's decimals.
     ///
@@ -1266,9 +1300,9 @@ impl Erc4626 {
 }
 
 impl IErc165 for Erc4626 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc4626>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc4626>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -1372,18 +1406,18 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc4626 as IErc4626>::INTERFACE_ID;
-        let expected = 0x87dfe5a0;
+        let actual = <Erc4626 as IErc4626>::interface_id();
+        let expected = 0x87dfe5a0.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc4626>::INTERFACE_ID.into()
+            <Erc4626 as IErc4626>::interface_id()
         ));
         assert!(Erc4626::supports_interface(
-            <Erc4626 as IErc165>::INTERFACE_ID.into()
+            <Erc4626 as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

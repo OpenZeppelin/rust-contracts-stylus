@@ -1,24 +1,43 @@
 [package]
 name = "poseidon-example"
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
 publish = false
-version.workspace = true
+version = "0.0.0"
 
 [dependencies]
-openzeppelin-crypto.workspace = true
-alloy-primitives.workspace = true
-stylus-sdk.workspace = true
+openzeppelin-crypto = { path = "../../lib/crypto" }
+alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+    "tiny-keccak",
+] }
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "b7310ef", default-features = false, features = [
+    "mini-alloc",
+] }
 
 [dev-dependencies]
-alloy.workspace = true
-e2e.workspace = true
-tokio.workspace = true
-eyre.workspace = true
+alloy = { version = "=0.7.3", features = ["contract"] }
+e2e = { path = "../../lib/e2e" }
+tokio = { version = "1.12.0", features = ["full"] }
+eyre = "0.6.8"
 
 [lib]
 crate-type = ["lib", "cdylib"]
 
+[[bin]]
+name = "poseidon-example"
+path = "src/main.rs"
+
 [features]
+# If you need to reduce the binary size, it is advisable to try other
+# optimization levels, such as "s" and "z"
 e2e = []
+export-abi = ["stylus-sdk/export-abi"]
+
+[profile.release]
+codegen-units = 1
+strip = true
+lto = true
+panic = "abort"
+
+opt-level = 3

@@ -540,6 +540,32 @@ impl IVestingWallet for VestingWallet {
 }
 
 impl VestingWallet {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `beneficiary` - The wallet owner.
+    /// * `start_timestamp` - The point in time when token vesting starts.
+    /// * `duration_seconds` - The vesting duration in seconds.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If beneficiary is `Address::ZERO`.
+    pub fn constructor(
+        &mut self,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
+    ) -> Result<(), Error> {
+        self.ownable.constructor(beneficiary)?;
+        self.start.set(start_timestamp);
+        self.duration.set(duration_seconds);
+        Ok(())
+    }
+}
+
+impl VestingWallet {
     /// Virtual implementation of the vesting formula. This returns the amount
     /// vested, as a function of time, for an asset given its total
     /// historical allocation.
@@ -578,10 +604,9 @@ impl VestingWallet {
 }
 
 impl IErc165 for VestingWallet {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IVestingWallet>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IVestingWallet>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -725,18 +750,18 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <VestingWallet as IVestingWallet>::INTERFACE_ID;
-        let expected = 0x23a2649d;
+        let actual = <VestingWallet as IVestingWallet>::interface_id();
+        let expected = 0x23a2649d.into();
         assert_ne!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(VestingWallet::supports_interface(
-            <VestingWallet as IVestingWallet>::INTERFACE_ID.into()
+            <VestingWallet as IVestingWallet>::interface_id()
         ));
         assert!(VestingWallet::supports_interface(
-            <VestingWallet as IErc165>::INTERFACE_ID.into()
+            <VestingWallet as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;

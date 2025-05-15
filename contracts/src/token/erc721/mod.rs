@@ -517,9 +517,9 @@ impl IErc721 for Erc721 {
 }
 
 impl IErc165 for Erc721 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -2702,19 +2702,19 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc721 as IErc721>::INTERFACE_ID;
-        let expected = 0x80ac58cd;
+        let actual = <Erc721 as IErc721>::interface_id();
+        let expected = 0x80ac58cd.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
-        assert!(Erc721::supports_interface(
-            <Erc721 as IErc721>::INTERFACE_ID.into()
-        ));
-        assert!(Erc721::supports_interface(
-            <Erc721 as IErc165>::INTERFACE_ID.into()
-        ));
+        assert!(
+            Erc721::supports_interface(<Erc721 as IErc721>::interface_id())
+        );
+        assert!(
+            Erc721::supports_interface(<Erc721 as IErc165>::interface_id())
+        );
 
         let fake_interface_id = 0x12345678u32;
         assert!(!Erc721::supports_interface(fake_interface_id.into()));

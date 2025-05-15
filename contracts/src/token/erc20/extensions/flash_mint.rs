@@ -158,10 +158,14 @@ mod borrower {
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
 pub struct Erc20FlashMint {
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Fee applied when doing flash loans.
-    pub(crate) flash_fee_value: StorageU256,
+    pub flash_fee_value: StorageU256,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Receiver address of the flash fee.
-    pub(crate) flash_fee_receiver_address: StorageAddress,
+    pub flash_fee_receiver_address: StorageAddress,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -180,19 +184,23 @@ pub trait IErc3156FlashLender {
     // implement AbiType.
     /// Solidity interface id associated with [`IErc3156FlashLender`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 = u32::from_be_bytes(
-        stylus_sdk::function_selector!("maxFlashLoan", Address),
-    ) ^ u32::from_be_bytes(
-        stylus_sdk::function_selector!("flashFee", Address, U256),
-    ) ^ u32::from_be_bytes(
-        stylus_sdk::function_selector!(
+    fn interface_id() -> FixedBytes<4>
+    where
+        Self: Sized,
+    {
+        FixedBytes::<4>::new(stylus_sdk::function_selector!(
+            "maxFlashLoan",
+            Address
+        )) ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
+            "flashFee", Address, U256
+        )) ^ FixedBytes::<4>::new(stylus_sdk::function_selector!(
             "flashLoan",
             Address,
             Address,
             U256,
             Bytes
-        ),
-    );
+        ))
+    }
 
     /// Returns the maximum amount of tokens available for loan.
     ///
@@ -398,10 +406,9 @@ impl IErc3156FlashLender for Erc20FlashMint {
 }
 
 impl IErc165 for Erc20FlashMint {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc3156FlashLender>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc3156FlashLender>::interface_id() == interface_id
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -607,18 +614,18 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID;
-        let expected = 0xe4143091;
+        let actual = <Erc20FlashMint as IErc3156FlashLender>::interface_id();
+        let expected = 0xe4143091.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
     fn supports_interface() {
         assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc3156FlashLender>::INTERFACE_ID.into()
+            <Erc20FlashMint as IErc3156FlashLender>::interface_id()
         ));
         assert!(Erc20FlashMint::supports_interface(
-            <Erc20FlashMint as IErc165>::INTERFACE_ID.into()
+            <Erc20FlashMint as IErc165>::interface_id()
         ));
 
         let fake_interface_id = 0x12345678u32;
