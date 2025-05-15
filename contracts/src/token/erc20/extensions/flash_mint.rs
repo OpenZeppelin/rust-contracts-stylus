@@ -405,7 +405,7 @@ mod tests {
                 receiver,
                 token,
                 value,
-                data,
+                &data,
                 &mut self.erc20,
             )
         }
