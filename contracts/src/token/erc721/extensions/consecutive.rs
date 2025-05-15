@@ -438,7 +438,7 @@ impl Erc721Consecutive {
                 from_address: Address::ZERO,
                 to_address: to,
             });
-        };
+        }
         Ok(next)
     }
 

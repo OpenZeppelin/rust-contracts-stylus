@@ -99,6 +99,7 @@ impl Erc721Metadata {
     }
 
     /// Check [`IErc721Metadata::token_uri()`] for more details.
+    #[allow(clippy::missing_errors_doc)]
     pub fn token_uri(
         &self,
         token_id: U256,

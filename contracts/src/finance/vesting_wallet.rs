@@ -439,6 +439,11 @@ impl VestingWallet {
     }
 
     /// The contract should be able to receive Eth.
+    ///
+    /// # Errors
+    ///
+    /// * If the transaction includes data (non-zero calldata).
+    /// * If the contract doesn't have enough gas to execute the function.
     #[receive]
     pub fn receive(&mut self) -> Result<(), Vec<u8>> {
         Ok(())
