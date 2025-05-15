@@ -4,10 +4,7 @@ extern crate alloc;
 use alloy_primitives::{aliases::U96, Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
-        extensions::{
-            consecutive::{self, Erc721Consecutive},
-            IErc721Burnable,
-        },
+        extensions::{consecutive, Erc721Consecutive, IErc721Burnable},
         IErc721,
     },
     utils::introspection::erc165::IErc165,
@@ -122,7 +119,7 @@ impl IErc721Burnable for Erc721ConsecutiveExample {
     type Error = consecutive::Error;
 
     fn burn(&mut self, token_id: U256) -> Result<(), consecutive::Error> {
-        self.erc721.burn(token_id)
+        self.erc721._burn(token_id)
     }
 }
 

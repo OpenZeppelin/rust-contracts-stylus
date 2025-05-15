@@ -7,9 +7,7 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
         self,
-        extensions::{
-            wrapper, wrapper::IErc721Wrapper, Erc721Wrapper, IErc721Burnable,
-        },
+        extensions::{wrapper, Erc721Wrapper, IErc721Burnable, IErc721Wrapper},
         Erc721, IErc721,
     },
     utils::introspection::erc165::IErc165,

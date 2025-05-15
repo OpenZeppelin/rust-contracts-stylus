@@ -8,8 +8,8 @@ use openzeppelin_stylus::{
     token::erc721::{
         self,
         extensions::{
-            uri_storage::IErc721UriStorage, Erc721Metadata, Erc721UriStorage,
-            IErc721Burnable, IErc721Metadata,
+            Erc721Metadata, Erc721UriStorage, IErc721Burnable, IErc721Metadata,
+            IErc721UriStorage,
         },
         Erc721, IErc721,
     },
