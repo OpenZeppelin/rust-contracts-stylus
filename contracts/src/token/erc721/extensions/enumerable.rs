@@ -137,6 +137,11 @@ pub trait IErc721Enumerable {
     ) -> Result<U256, <Self as IErc721Enumerable>::Error>;
 }
 
+#[public]
+#[implements(IErc721Enumerable<Error = Error>, IErc165)]
+impl Erc721Enumerable {}
+
+#[public]
 impl IErc721Enumerable for Erc721Enumerable {
     type Error = Error;
 
@@ -169,6 +174,7 @@ impl IErc721Enumerable for Erc721Enumerable {
     }
 }
 
+#[public]
 impl IErc165 for Erc721Enumerable {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721Enumerable>::interface_id() == interface_id
@@ -400,10 +406,7 @@ mod tests {
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
-        assert_eq!(
-            U256::ZERO,
-            contract.sender(alice).enumerable.total_supply()
-        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
     }
 
     #[motsu::test]
@@ -415,7 +418,6 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .enumerable
             .token_by_index(token_idx)
             .expect_err("should return Error::OutOfBoundsIndex");
 
@@ -448,13 +450,12 @@ mod tests {
 
         assert_eq!(
             U256::from(tokens_len),
-            contract.sender(alice).enumerable.total_supply()
+            contract.sender(alice).total_supply()
         );
 
         tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
                 .sender(alice)
-                .enumerable
                 .token_by_index(U256::from(idx))
                 .expect("should return token id for");
             assert_eq!(*expected_token_id, token_id);
@@ -462,7 +463,6 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .enumerable
             .token_by_index(U256::from(tokens_len))
             .expect_err("should return Error::OutOfBoundsIndex");
 
@@ -495,7 +495,7 @@ mod tests {
         }
         assert_eq!(
             U256::from(initial_tokens_len),
-            contract.sender(alice).enumerable.total_supply()
+            contract.sender(alice).total_supply()
         );
 
         // Remove the last token.
@@ -506,7 +506,7 @@ mod tests {
             ._remove_token_from_all_tokens_enumeration(last_token_id);
         assert_eq!(
             U256::from(initial_tokens_len - 1),
-            contract.sender(alice).enumerable.total_supply()
+            contract.sender(alice).total_supply()
         );
 
         // Remove the second (`idx = 1`) element
@@ -518,7 +518,7 @@ mod tests {
             ._remove_token_from_all_tokens_enumeration(token_to_remove);
         assert_eq!(
             U256::from(initial_tokens_len - 2),
-            contract.sender(alice).enumerable.total_supply()
+            contract.sender(alice).total_supply()
         );
 
         // Add a new token.
@@ -530,14 +530,13 @@ mod tests {
             ._add_token_to_all_tokens_enumeration(token_id);
         assert_eq!(
             U256::from(initial_tokens_len - 1),
-            contract.sender(alice).enumerable.total_supply()
+            contract.sender(alice).total_supply()
         );
 
         // Check proper indices of tokens.
         tokens_ids.iter().enumerate().for_each(|(idx, expected_token_id)| {
             let token_id = contract
                 .sender(alice)
-                .enumerable
                 .token_by_index(U256::from(idx))
                 .expect("should return token id");
             assert_eq!(*expected_token_id, token_id);
@@ -545,7 +544,6 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .enumerable
             .token_by_index(U256::from(initial_tokens_len - 1))
             .expect_err("should return Error::OutOfBoundsIndex");
 
@@ -602,7 +600,6 @@ mod tests {
 
         let test_token_id = contract
             .sender(alice)
-            .enumerable
             .token_of_owner_by_index(alice, U256::ZERO)
             .expect("should return `token_id`");
 
@@ -643,7 +640,6 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .enumerable
             .token_of_owner_by_index(alice, token_idx)
             .expect_err("should return Error::OutOfBoundsIndex");
 
@@ -663,7 +659,6 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .enumerable
             .token_of_owner_by_index(alice, token_idx)
             .expect_err("should return Error::OutOfBoundsIndex");
 
@@ -729,7 +724,6 @@ mod tests {
 
         let test_token_id = contract
             .sender(bob)
-            .enumerable
             .token_of_owner_by_index(bob, token_idx)
             .expect("should return `token_id`");
 
@@ -737,7 +731,6 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .enumerable
             .token_of_owner_by_index(alice, token_idx)
             .expect_err("should return Error::OutOfBoundsIndex");
 
@@ -765,13 +758,11 @@ mod tests {
         ));
         assert!(contract
             .sender(alice)
-            .enumerable
             .supports_interface(<Erc721Enumerable as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
         assert!(!contract
             .sender(alice)
-            .enumerable
             .supports_interface(fake_interface_id.into()));
     }
 }

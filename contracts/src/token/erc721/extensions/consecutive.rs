@@ -334,6 +334,7 @@ impl IErc721Burnable for Erc721Consecutive {
 }
 
 #[public]
+#[implements(IErc721<Error = Error>, IErc165)]
 impl Erc721Consecutive {
     // TODO: remove once function overriding is possible, so `max_batch_size`
     // can be set that way.

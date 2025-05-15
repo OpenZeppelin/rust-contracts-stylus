@@ -131,9 +131,7 @@ mod tests {
 
     #[storage]
     struct Erc721MetadataExample {
-        #[borrow]
         erc721: Erc721,
-        #[borrow]
         metadata: Erc721Metadata,
     }
 
