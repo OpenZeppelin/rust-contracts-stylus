@@ -9,50 +9,14 @@ use openzeppelin_stylus::token::erc1155::{
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 
-#[derive(SolidityError, Debug)]
-enum Error {
-    InsufficientBalance(erc1155::ERC1155InsufficientBalance),
-    InvalidSender(erc1155::ERC1155InvalidSender),
-    InvalidReceiver(erc1155::ERC1155InvalidReceiver),
-    InvalidReceiverWithReason(erc1155::InvalidReceiverWithReason),
-    MissingApprovalForAll(erc1155::ERC1155MissingApprovalForAll),
-    InvalidApprover(erc1155::ERC1155InvalidApprover),
-    InvalidOperator(erc1155::ERC1155InvalidOperator),
-    InvalidArrayLength(erc1155::ERC1155InvalidArrayLength),
-}
-
-impl From<erc1155::Error> for Error {
-    fn from(value: erc1155::Error) -> Self {
-        match value {
-            erc1155::Error::InsufficientBalance(e) => {
-                Error::InsufficientBalance(e)
-            }
-            erc1155::Error::InvalidSender(e) => Error::InvalidSender(e),
-            erc1155::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
-            erc1155::Error::InvalidReceiverWithReason(e) => {
-                Error::InvalidReceiverWithReason(e)
-            }
-            erc1155::Error::MissingApprovalForAll(e) => {
-                Error::MissingApprovalForAll(e)
-            }
-            erc1155::Error::InvalidApprover(e) => Error::InvalidApprover(e),
-            erc1155::Error::InvalidOperator(e) => Error::InvalidOperator(e),
-            erc1155::Error::InvalidArrayLength(e) => {
-                Error::InvalidArrayLength(e)
-            }
-        }
-    }
-}
-
 #[entrypoint]
 #[storage]
 struct Erc1155Example {
-    #[borrow]
     erc1155: Erc1155,
 }
 
 #[public]
-#[implements(IErc1155<Error=Error>)]
+#[implements(IErc1155<Error=erc1155::Error>, IErc1155Burnable<Error=erc1155::Error>)]
 impl Erc1155Example {
     fn mint(
         &mut self,
@@ -60,9 +24,8 @@ impl Erc1155Example {
         token_id: U256,
         amount: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
-        self.erc1155._mint(to, token_id, amount, &data)?;
-        Ok(())
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155._mint(to, token_id, amount, &data)
     }
 
     fn mint_batch(
@@ -71,35 +34,14 @@ impl Erc1155Example {
         token_ids: Vec<U256>,
         amounts: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Error> {
-        self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
-        Ok(())
-    }
-
-    fn burn(
-        &mut self,
-        account: Address,
-        token_id: U256,
-        value: U256,
-    ) -> Result<(), Error> {
-        self.erc1155.burn(account, token_id, value)?;
-        Ok(())
-    }
-
-    fn burn_batch(
-        &mut self,
-        account: Address,
-        token_ids: Vec<U256>,
-        values: Vec<U256>,
-    ) -> Result<(), Error> {
-        self.erc1155.burn_batch(account, token_ids, values)?;
-        Ok(())
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155._mint_batch(to, token_ids, amounts, &data)
     }
 }
 
 #[public]
 impl IErc1155 for Erc1155Example {
-    type Error = Error;
+    type Error = erc1155::Error;
 
     fn balance_of(&self, account: Address, id: U256) -> U256 {
         self.erc1155.balance_of(account, id)
@@ -109,16 +51,16 @@ impl IErc1155 for Erc1155Example {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, <Self as IErc1155>::Error> {
-        Ok(self.erc1155.balance_of_batch(accounts, ids)?)
+    ) -> Result<Vec<U256>, erc1155::Error> {
+        self.erc1155.balance_of_batch(accounts, ids)
     }
 
     fn set_approval_for_all(
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc1155>::Error> {
-        Ok(self.erc1155.set_approval_for_all(operator, approved)?)
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155.set_approval_for_all(operator, approved)
     }
 
     fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
@@ -132,8 +74,8 @@ impl IErc1155 for Erc1155Example {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
-        Ok(self.erc1155.safe_transfer_from(from, to, id, value, data)?)
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155.safe_transfer_from(from, to, id, value, data)
     }
 
     fn safe_batch_transfer_from(
@@ -143,9 +85,30 @@ impl IErc1155 for Erc1155Example {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
-        Ok(self
-            .erc1155
-            .safe_batch_transfer_from(from, to, ids, values, data)?)
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155.safe_batch_transfer_from(from, to, ids, values, data)
+    }
+}
+
+#[public]
+impl IErc1155Burnable for Erc1155Example {
+    type Error = erc1155::Error;
+
+    fn burn(
+        &mut self,
+        account: Address,
+        token_id: U256,
+        value: U256,
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155.burn(account, token_id, value)
+    }
+
+    fn burn_batch(
+        &mut self,
+        account: Address,
+        token_ids: Vec<U256>,
+        values: Vec<U256>,
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155.burn_batch(account, token_ids, values)
     }
 }
