@@ -429,7 +429,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
         alloy_primitives::{Address, FixedBytes},
-        prelude::TopLevelStorage,
+        prelude::*,
     };
 
     use super::{AccessControl, Error, IAccessControl};

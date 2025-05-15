@@ -329,8 +329,8 @@ impl Erc2981 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use motsu::prelude::Contract;
-    use stylus_sdk::alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::uint;
+    use motsu::prelude::*;
 
     use super::*;
     use crate::utils::introspection::erc165::IErc165;
@@ -881,17 +881,17 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supports_interface(contract: Contract<Erc2981>, bob: Address) {
+    fn supports_interface(contract: Contract<Erc2981>, alice: Address) {
         assert!(contract
-            .sender(bob)
+            .sender(alice)
             .supports_interface(<Erc2981 as IErc2981>::interface_id()));
         assert!(contract
-            .sender(bob)
+            .sender(alice)
             .supports_interface(<Erc2981 as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
         assert!(!contract
-            .sender(bob)
+            .sender(alice)
             .supports_interface(fake_interface_id.into()));
     }
 }
