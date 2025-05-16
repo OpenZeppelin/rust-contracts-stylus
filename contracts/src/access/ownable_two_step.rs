@@ -492,7 +492,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable2Step as IOwnable2Step>::interface_id();
-        let expected: FixedBytes<4> = 0x94be5999u32.into();
+        let expected: FixedBytes<4> = 0x94be5999_u32.into();
         assert_eq!(actual, expected);
     }
 

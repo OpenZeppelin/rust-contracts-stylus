@@ -564,7 +564,7 @@ mod tests {
     fn interface_id() {
         let actual =
             <Erc20FlashMintTestExample as IErc3156FlashLender>::interface_id();
-        let expected: FixedBytes<4> = 0xe4143091u32.into();
+        let expected: FixedBytes<4> = 0xe4143091_u32.into();
         assert_eq!(actual, expected);
     }
 }

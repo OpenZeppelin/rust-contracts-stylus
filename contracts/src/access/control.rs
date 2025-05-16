@@ -741,7 +741,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <AccessControl as IAccessControl>::interface_id();
-        let expected: FixedBytes<4> = 0x7965db0bu32.into();
+        let expected: FixedBytes<4> = 0x7965db0b_u32.into();
         assert_ne!(actual, expected);
     }
 

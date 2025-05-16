@@ -769,7 +769,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <VestingWallet as IVestingWallet>::interface_id();
-        let expected: FixedBytes<4> = 0x23a2649du32.into();
+        let expected: FixedBytes<4> = 0x23a2649d_u32.into();
         assert_ne!(actual, expected);
     }
 
