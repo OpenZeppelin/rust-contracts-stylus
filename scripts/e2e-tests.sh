@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+
+source ./scripts/helpers.sh
 # Invoke the script by passing any non-zero number of arguments.
 # The first argument is always the test project(s) to run and all the other arguments are valid `cargo test` arguments.
 #
@@ -18,10 +20,6 @@ export DEPLOYER_ADDRESS=0x6ac4839Bfe169CadBBFbDE3f29bd8459037Bf64e
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR" || exit
 
-# Function to retrieve all Cargo.toml paths in the ./examples directory
-get_example_dirs() {
-    find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
-}
 
 run_test() {
     local project_path=$1

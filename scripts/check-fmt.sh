@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source ./scripts/helpers.sh
+
 # Get the root directory of the git repository
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR" || exit
@@ -25,10 +27,6 @@ check_wasm() {
   cd "$ROOT_DIR"
 }
 
-# Function to retrieve all Cargo.toml paths in the ./examples directory
-get_example_dirs() {
-  find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs -n1 dirname | sort
-}
 
 # no need to set TOOLCHAIN_ARG as the toolchain is overriden automatically
 # format main crates
