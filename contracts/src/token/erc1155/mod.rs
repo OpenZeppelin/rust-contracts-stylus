@@ -362,6 +362,10 @@ pub trait IErc1155: IErc165 {
 }
 
 #[public]
+#[implements(IErc1155<Error = Error>, IErc165)]
+impl Erc1155 {}
+
+#[public]
 impl IErc1155 for Erc1155 {
     type Error = Error;
 
@@ -422,6 +426,7 @@ impl IErc1155 for Erc1155 {
     }
 }
 
+#[public]
 impl IErc165 for Erc1155 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155>::interface_id() == interface_id
@@ -1142,7 +1147,7 @@ enum Transfer {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;
 
     use super::{
@@ -2365,20 +2370,22 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155 as IErc1155>::interface_id();
-        let expected = 0xd9b67a26.into();
+        let expected: FixedBytes<4> = 0xd9b67a26_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc1155::supports_interface(
-            <Erc1155 as IErc1155>::interface_id()
-        ));
-        assert!(Erc1155::supports_interface(
-            <Erc1155 as IErc165>::interface_id()
-        ));
+    fn supports_interface(contract: Contract<Erc1155>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155 as IErc1155>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155 as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc1155::supports_interface(fake_interface_id.into()));
+        let fake_interface_id = 0x12345678_u32;
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

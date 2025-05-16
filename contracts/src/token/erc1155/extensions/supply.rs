@@ -24,7 +24,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::erc1155::{self, Erc1155, IErc1155},
+    token::erc1155::{self, Erc1155, Error, IErc1155},
     utils::{
         introspection::erc165::{Erc165, IErc165},
         math::storage::{AddAssignChecked, SubAssignUnchecked},
@@ -56,9 +56,13 @@ impl DerefMut for Erc1155Supply {
     }
 }
 
+#[public]
+#[implements(IErc1155<Error = Error>, IErc1155Supply, IErc165)]
+impl Erc1155Supply {}
+
 /// Required interface of a [`Erc1155Supply`] contract.
 #[interface_id]
-pub trait IErc1155Supply {
+pub trait IErc1155Supply: IErc165 {
     /// Total value of tokens in with a given id.
     ///
     /// # Arguments
@@ -84,6 +88,7 @@ pub trait IErc1155Supply {
     fn exists(&self, id: U256) -> bool;
 }
 
+#[public]
 impl IErc1155Supply for Erc1155Supply {
     fn total_supply(&self, id: U256) -> U256 {
         self.total_supply.get(id)
@@ -148,6 +153,15 @@ impl IErc1155 for Erc1155Supply {
     ) -> Result<(), <Self as IErc1155>::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
+    }
+}
+
+#[public]
+impl IErc165 for Erc1155Supply {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc1155Supply>::interface_id() == interface_id
+            || self.erc1155.supports_interface(interface_id)
+            || Erc165::interface_id() == interface_id
     }
 }
 
@@ -373,27 +387,15 @@ impl Erc1155Supply {
     }
 }
 
-impl IErc165 for Erc1155Supply {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc1155Supply>::interface_id() == interface_id
-            || <Self as IErc1155>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
-    }
-}
-
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{Address, U256};
+    use alloy_primitives::{fixed_bytes, Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
 
-    use super::{Erc1155Supply, IErc1155Supply};
-    use crate::{
-        token::erc1155::{
-            tests::{random_token_ids, random_values},
-            ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
-        },
-        utils::introspection::erc165::IErc165,
+    use super::*;
+    use crate::token::erc1155::{
+        tests::{random_token_ids, random_values},
+        ERC1155InvalidReceiver, ERC1155InvalidSender,
     };
 
     unsafe impl TopLevelStorage for Erc1155Supply {}
@@ -622,23 +624,25 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155Supply as IErc1155Supply>::interface_id();
-        let expected = 0xeac6339d.into();
+        let expected: FixedBytes<4> = fixed_bytes!("0xeac6339d");
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc1155Supply::supports_interface(
+    fn supports_interface(contract: Contract<Erc1155Supply>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
             <Erc1155Supply as IErc1155Supply>::interface_id()
         ));
-        assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc165>::interface_id()
-        ));
-        assert!(Erc1155Supply::supports_interface(
-            <Erc1155Supply as IErc1155>::interface_id()
-        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155Supply as IErc165>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155Supply as IErc1155>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc1155Supply::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }
