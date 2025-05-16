@@ -160,7 +160,7 @@ impl IErc1155 for Erc1155Supply {
 impl IErc165 for Erc1155Supply {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155Supply>::interface_id() == interface_id
-            || <Self as IErc1155>::interface_id() == interface_id
+            || self.erc1155.supports_interface(interface_id)
             || Erc165::interface_id() == interface_id
     }
 }
