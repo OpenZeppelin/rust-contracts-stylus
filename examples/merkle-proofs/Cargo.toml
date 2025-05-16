@@ -33,8 +33,11 @@ crate-type = ["lib", "cdylib"]
 
 [profile.release]
 codegen-units = 1
+panic = "abort"
+opt-level = "z"
 strip = true
 lto = true
-panic = "abort"
-
-opt-level = 3
+debug = false
+rpath = false
+debug-assertions = false
+incremental = false

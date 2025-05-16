@@ -29,16 +29,19 @@ path = "src/main.rs"
 [lib]
 crate-type = ["lib", "cdylib"]
 
-[profile.release]
-codegen-units = 1
-strip = true
-lto = true
-panic = "abort"
-
-opt-level = 3
-
 [features]
 # If you need to reduce the binary size, it is advisable to try other
 # optimization levels, such as "s" and "z"
 e2e = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
+
+[profile.release]
+codegen-units = 1
+panic = "abort"
+opt-level = "z"
+strip = true
+lto = true
+debug = false
+rpath = false
+debug-assertions = false
+incremental = false
