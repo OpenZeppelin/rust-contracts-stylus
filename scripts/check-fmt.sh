@@ -5,6 +5,8 @@ set -e
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR" || exit
 
+# nested example projects are not able to use the installed toolchain unless
+# explicitly instructed to do so
 TOOLCHAIN_ARG=""
 if [ -n "$RUST_TOOLCHAIN" ]; then
   TOOLCHAIN_ARG="+$RUST_TOOLCHAIN"

@@ -41,6 +41,7 @@ jobs:
           components: rustfmt
           rustflags: ""
 
+        # we store the toolchain so that we can pass it as an environment variable to nested example projects
       - name: Set Rust channel version as environment variable
         run: echo "RUST_TOOLCHAIN=$(rustup show active-toolchain | cut -d' ' -f1)" >> $GITHUB_ENV
 
