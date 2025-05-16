@@ -3,7 +3,7 @@
 //! Inspired by the [`crate::token::erc721::extensions::Erc721UriStorage`]
 use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{FixedBytes, U256};
+use alloy_primitives::U256;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     evm,

@@ -78,6 +78,7 @@ impl Erc1155MetadataUri {
     }
 }
 
+#[public]
 impl IErc165 for Erc1155MetadataUri {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155MetadataUri>::interface_id() == interface_id
@@ -89,7 +90,7 @@ impl IErc165 for Erc1155MetadataUri {
 mod tests {
     use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
-    use stylus_sdk::{alloy_primitives::uint, prelude::*};
+    use stylus_sdk::prelude::*;
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 

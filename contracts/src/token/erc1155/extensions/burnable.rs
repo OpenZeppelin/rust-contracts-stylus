@@ -2,7 +2,7 @@
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::msg;
 

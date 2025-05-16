@@ -57,7 +57,7 @@ impl DerefMut for Erc1155Supply {
 }
 
 #[public]
-#[implements(IErc1155<Error = Error>, IErc1155Supply)]
+#[implements(IErc1155<Error = Error>, IErc1155Supply, IErc165)]
 impl Erc1155Supply {}
 
 /// Required interface of a [`Erc1155Supply`] contract.
