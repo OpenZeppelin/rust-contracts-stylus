@@ -88,9 +88,11 @@ impl IErc165 for Erc1155MetadataUri {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::*;
+    use stylus_sdk::{
+        alloy_primitives::{uint, Address, FixedBytes},
+        prelude::*,
+    };
 
     use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
 
