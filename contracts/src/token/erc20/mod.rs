@@ -138,6 +138,11 @@ pub struct Erc20 {
     pub(crate) total_supply: StorageU256,
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc20 {}
+
 /// Required interface of an [`Erc20`] compliant contract.
 #[interface_id]
 pub trait IErc20 {
@@ -266,6 +271,10 @@ pub trait IErc20 {
         value: U256,
     ) -> Result<bool, <Self as IErc20>::Error>;
 }
+
+#[public]
+#[implements(IErc20<Error = Error>)]
+impl Erc20 {}
 
 #[public]
 impl IErc20 for Erc20 {
@@ -584,13 +593,10 @@ impl IErc165 for Erc20 {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;
-    use stylus_sdk::prelude::*;
 
     use super::{Approval, Erc20, Error, IErc165, IErc20, Transfer};
-
-    unsafe impl TopLevelStorage for Erc20 {}
 
     #[motsu::test]
     fn mint(contract: Contract<Erc20>, alice: Address) {
@@ -942,16 +948,22 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20 as IErc20>::interface_id();
-        let expected = 0x36372b07.into();
+        let expected: FixedBytes<4> = 0x36372b07u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20::supports_interface(<Erc20 as IErc20>::interface_id()));
-        assert!(Erc20::supports_interface(<Erc20 as IErc165>::interface_id()));
+    fn supports_interface(contract: Contract<Erc20>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc20 as IErc20>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc20 as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

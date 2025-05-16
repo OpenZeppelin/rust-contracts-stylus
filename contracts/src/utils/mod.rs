@@ -8,4 +8,4 @@ pub mod pausable;
 pub mod structs;
 
 pub use metadata::Metadata;
-pub use pausable::Pausable;
+pub use pausable::{IPausable, Pausable};

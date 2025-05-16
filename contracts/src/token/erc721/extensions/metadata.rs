@@ -6,7 +6,7 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{FixedBytes, U256};
+use alloy_primitives::U256;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{prelude::*, storage::StorageString};
 
@@ -120,7 +120,7 @@ impl Erc721Metadata {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::Address;
+    use alloy_primitives::{uint, Address, FixedBytes};
     use motsu::prelude::Contract;
 
     use super::*;

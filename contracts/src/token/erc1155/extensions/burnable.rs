@@ -3,6 +3,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::msg;
 
 use crate::token::erc1155::{
@@ -11,6 +12,7 @@ use crate::token::erc1155::{
 
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
 /// own tokens and those that they have been approved to use.
+#[interface_id]
 pub trait IErc1155Burnable {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
