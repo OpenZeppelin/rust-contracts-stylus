@@ -40,7 +40,7 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error OwnableUnauthorizedAccount(address account);
-        /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+        /// The owner is not a valid owner account. (eg. [`Address::ZERO`])
         ///
         /// * `owner` - Account that's not allowed to become the owner.
         #[derive(Debug)]
@@ -54,7 +54,7 @@ mod sol {
 pub enum Error {
     /// The caller account is not authorized to perform an operation.
     UnauthorizedAccount(OwnableUnauthorizedAccount),
-    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+    /// The owner is not a valid owner account. (eg. [`Address::ZERO`])
     InvalidOwner(OwnableInvalidOwner),
 }
 
@@ -95,7 +95,7 @@ pub trait IOwnable {
     ///
     /// # Errors
     ///
-    /// * [`OwnableInvalidOwner`] - If `new_owner` is the `Address::ZERO`.
+    /// * [`OwnableInvalidOwner`] - If `new_owner` is the [`Address::ZERO`].
     ///
     /// # Events
     ///

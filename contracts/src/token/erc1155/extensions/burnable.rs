@@ -30,7 +30,8 @@ pub trait IErc1155Burnable {
     ///
     /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
     ///   `account` address and the `account` has not been approved.
-    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the
+    ///   [`Address::ZERO`].
     /// * [`erc1155::Error::InsufficientBalance`] - If `value` is greater than
     ///   the balance of the `from` account.
     fn burn(
@@ -53,7 +54,8 @@ pub trait IErc1155Burnable {
     ///
     /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
     ///   `account` address and the `account` has not been approved.
-    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the
+    ///   [`Address::ZERO`].
     /// * [`erc1155::Error::InvalidArrayLength`] - If length of `ids` is not
     ///   equal to length of `values`.
     /// * [`erc1155::Error::InsufficientBalance`] - If any of the `values` is

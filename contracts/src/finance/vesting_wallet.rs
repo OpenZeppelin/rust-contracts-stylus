@@ -86,7 +86,7 @@ mod sol {
         #[allow(missing_docs)]
         error FailedCall();
 
-        /// The token address is not valid (eg. `Address::ZERO`).
+        /// The token address is not valid (eg. [`Address::ZERO`]).
         ///
         /// * `token` - Address of the token being released.
         #[derive(Debug)]
@@ -100,7 +100,7 @@ mod sol {
 pub enum Error {
     /// The caller account is not authorized to perform an operation.
     UnauthorizedAccount(ownable::OwnableUnauthorizedAccount),
-    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+    /// The owner is not a valid owner account. (eg. [`Address::ZERO`]).
     InvalidOwner(ownable::OwnableInvalidOwner),
     /// Indicates an error related to the underlying Ether transfer.
     ReleaseEtherFailed(ReleaseEtherFailed),
@@ -112,7 +112,7 @@ pub enum Error {
     SafeErc20FailedDecreaseAllowance(
         safe_erc20::SafeErc20FailedDecreaseAllowance,
     ),
-    /// The token address is not valid. (eg. `Address::ZERO`).
+    /// The token address is not valid. (eg. [`Address::ZERO`]).
     InvalidToken(InvalidToken),
 }
 
@@ -215,7 +215,7 @@ pub trait IVestingWallet {
     /// * [`ownable::Error::UnauthorizedAccount`] - If called by any account
     ///   other than the owner.
     /// * [`ownable::Error::InvalidOwner`] - If `new_owner` is the
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///

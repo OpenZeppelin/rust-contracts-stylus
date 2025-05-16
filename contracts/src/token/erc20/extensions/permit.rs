@@ -172,9 +172,9 @@ pub trait IErc20Permit: INonces {
     /// * [`ecdsa::Error::InvalidSignatureS`] - If the `s` value is grater than
     ///   [`ecdsa::SIGNATURE_S_UPPER_BOUND`].
     /// * [`ecdsa::Error::InvalidSignature`] - If the recovered address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     /// * [`erc20::Error::InvalidSpender`] - If the `spender` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
