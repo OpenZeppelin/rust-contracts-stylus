@@ -399,7 +399,7 @@ mod tests {
             &mut self,
             account: Address,
             value: U256,
-        ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
+        ) -> Result<bool, Error> {
             self.wrapper.deposit_for(account, value, &mut self.erc20)
         }
 
@@ -407,7 +407,7 @@ mod tests {
             &mut self,
             account: Address,
             value: U256,
-        ) -> Result<bool, <Self as IErc20Wrapper>::Error> {
+        ) -> Result<bool, Error> {
             self.wrapper.withdraw_to(account, value, &mut self.erc20)
         }
     }
