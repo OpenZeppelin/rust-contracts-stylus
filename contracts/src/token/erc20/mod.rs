@@ -176,7 +176,7 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the caller doesn't have a balance
     ///   of at least `value`.
     ///
@@ -223,7 +223,7 @@ pub trait IErc20 {
     /// # Errors
     ///
     /// * [`Error::InvalidSpender`] - If the `spender` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -253,8 +253,8 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
-    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
     /// * [`Error::InsufficientAllowance`] - If not enough allowance is
     ///   available.
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
@@ -339,7 +339,7 @@ impl Erc20 {
     /// # Errors
     ///
     /// * [`Error::InvalidSpender`] - If the `spender` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -381,8 +381,8 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
-    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     ///
@@ -412,12 +412,12 @@ impl Erc20 {
     }
 
     /// Creates a `value` amount of tokens and assigns them to `account`,
-    /// by transferring it from `Address::ZERO`.
+    /// by transferring it from [`Address::ZERO`].
     ///
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If the `account` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -520,7 +520,7 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     ///

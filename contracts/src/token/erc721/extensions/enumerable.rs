@@ -33,7 +33,7 @@ mod sol {
         /// Indicates an error when an `owner`'s token query
         /// was out of bounds for `index`.
         ///
-        /// NOTE: The owner being `Address::ZERO`
+        /// NOTE: The owner being [`Address::ZERO`]
         /// indicates a global out of bounds index.
         #[derive(Debug)]
         #[allow(missing_docs)]
@@ -52,7 +52,7 @@ pub enum Error {
     /// Indicates an error when an `owner`'s token query
     /// was out of bounds for `index`.
     ///
-    /// NOTE: The owner being `Address::ZERO`
+    /// NOTE: The owner being [`Address::ZERO`]
     /// indicates a global out of bounds index.
     OutOfBoundsIndex(ERC721OutOfBoundsIndex),
 
@@ -196,7 +196,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidOwner`] - If owner address is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is
+    ///   [`Address::ZERO`].
     pub fn _add_token_to_owner_enumeration(
         &mut self,
         to: Address,
@@ -246,7 +247,8 @@ impl Erc721Enumerable {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidOwner`] - If owner address is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidOwner`] - If owner address is
+    ///   [`Address::ZERO`].
     pub fn _remove_token_from_owner_enumeration(
         &mut self,
         from: Address,

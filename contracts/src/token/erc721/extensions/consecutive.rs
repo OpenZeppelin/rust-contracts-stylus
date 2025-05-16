@@ -389,7 +389,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::ExceededMaxBatchMint`] - If `batch_size` exceeds
     ///   `max_batch_size` of the contract.
     ///
@@ -455,9 +455,9 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::NonexistentToken`] - If token does not exist and
-    ///   `auth` is not `Address::ZERO`.
+    ///   `auth` is not [`Address::ZERO`].
     /// * [`erc721::Error::InsufficientApproval`] - If `auth` is not
-    ///   `Address::ZERO` and `auth` does not have a right to approve this
+    ///   [`Address::ZERO`] and `auth` does not have a right to approve this
     ///   token.
     ///
     /// # Events
@@ -526,8 +526,9 @@ impl Erc721Consecutive {
 
 impl Erc721Consecutive {
     /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
-    /// Returns the owner of the `token_id` before the update.
+    /// mints (or burns) if the current owner (or `to`) is the
+    /// [`Address::ZERO`]. Returns the owner of the `token_id` before the
+    /// update.
     ///
     /// The `auth` argument is optional. If the value passed is non-zero, then
     /// this function will check that `auth` is either the owner of the
@@ -582,7 +583,7 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -622,7 +623,7 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`, or
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`], or
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
@@ -689,7 +690,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`erc721::Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
     ///   `from`.
@@ -751,7 +752,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`erc721::Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
     ///   `from`.
@@ -779,7 +780,7 @@ impl Erc721Consecutive {
     /// Approve `to` to operate on `token_id`.
     ///
     /// The `auth` argument is optional. If the value passed is non
-    /// `Address::ZERO`, then this function will check that `auth` is either
+    /// [`Address::ZERO`], then this function will check that `auth` is either
     /// the owner of the token, or approved to operate on all tokens held by
     /// this owner.
     ///
