@@ -42,7 +42,7 @@ jobs:
           rustflags: ""
 
       - name: Set Rust channel version as environment variable
-        run: echo "RUST_TOOLCHAIN=$(rustup show active-toolchain)" >> $GITHUB_ENV
+        run: echo "RUST_TOOLCHAIN=$(rustup show active-toolchain | cut -d' ' -f1)" >> $GITHUB_ENV
 
       - name: Check formatting
         run: ./scripts/check-fmt.sh
