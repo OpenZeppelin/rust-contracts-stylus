@@ -64,7 +64,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUri {
 }
 
 #[public]
-#[implements(IErc1155MetadataUri)]
+#[implements(IErc1155MetadataUri, IErc165)]
 impl Erc1155MetadataUri {
     /// Constructor.
     ///
