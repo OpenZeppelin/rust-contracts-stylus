@@ -23,7 +23,7 @@ use crate::{
         BigInteger,
     },
     bits::BitIteratorBE,
-    ct_for, ct_for_unroll6,
+    ct_for, ct_for_unroll6, ct_rev_for,
 };
 
 /// Stack-allocated big unsigned integer.
@@ -932,27 +932,24 @@ impl<const N: usize> WideUint<N> {
         assert!(!rhs.ct_is_zero(), "should not divide by zero");
 
         let mut remainder = Uint::<N>::ZERO;
+        let num_bits = self.ct_num_bits();
 
-        // Start with the last bit.
-        let mut index = self.ct_num_bits() - 1;
-        loop {
+        // Start from the last bit.
+        ct_rev_for!((index in 0..num_bits) {
             // Shift the remainder to the left by 1,
             let (result, carry) = remainder.ct_checked_mul2();
             remainder = result;
 
-            // and set the first bit to reminder from the dividend.
+            // and set the first bit to a reminder from the dividend.
             remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
 
             // If the remainder overflows, subtract the divisor.
             if remainder.ct_ge(rhs) || carry {
                 (remainder, _) = remainder.ct_checked_sub(rhs);
             }
+        });
 
-            if index == 0 {
-                break remainder;
-            }
-            index -= 1;
-        }
+        remainder
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
@@ -1063,8 +1060,22 @@ mod test {
         let dividend = from_num!("43129923721897334698312931");
         let divisor = from_num!("375923422");
         let result =
-            WideUint::<4>::new(dividend, Uint::<4>::ZERO).ct_rem(&divisor);
+            WideUint::<4>::new(dividend, from_num!("0")).ct_rem(&divisor);
         assert_eq!(result, from_num!("216456157"));
+    }
+
+    #[test]
+    #[should_panic = "should not divide by zero"]
+    fn ct_rem_zero() {
+        let divisor = from_num!("375923422");
+        let result =
+            WideUint::<4>::new(from_num!("0"), from_num!("0")).ct_rem(&divisor);
+        assert_eq!(result, from_num!("0"));
+
+        let dividend = from_num!("43129923721897334698312931");
+        let divisor = from_num!("0");
+        let result =
+            WideUint::<4>::new(dividend, from_num!("0")).ct_rem(&divisor);
     }
 
     #[test]
