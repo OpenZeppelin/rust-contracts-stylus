@@ -29,6 +29,7 @@ run_test() {
     echo "Processing: $project_path"
     cd "$project_path"
     cargo test --features e2e $test_args
+    cargo clean
     cd "$ROOT_DIR"
 }
 
