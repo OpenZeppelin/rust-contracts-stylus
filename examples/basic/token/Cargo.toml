@@ -12,7 +12,6 @@ alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 
 [features]
-std = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
