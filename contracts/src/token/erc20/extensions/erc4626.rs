@@ -1136,7 +1136,7 @@ impl Erc4626 {
 }
 
 // TODO: Add missing tests once `motsu` supports calling external contracts.
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{address, Address, FixedBytes, U256, U8};
     use motsu::prelude::*;

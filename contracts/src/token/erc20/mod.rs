@@ -591,7 +591,7 @@ impl IErc165 for Erc20 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;

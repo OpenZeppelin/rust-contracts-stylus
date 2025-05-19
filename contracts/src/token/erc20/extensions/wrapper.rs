@@ -362,7 +362,7 @@ impl Erc20Wrapper {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, FixedBytes};
     use motsu::prelude::*;

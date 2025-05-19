@@ -79,7 +79,7 @@ impl IErc20Burnable for Erc20 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::*;

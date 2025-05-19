@@ -23,12 +23,8 @@ alloy-primitives = { workspace = true, features = ["arbitrary"] }
 motsu.workspace = true
 
 [features]
-# Enables using the standard library. This is not included in the default
-# features, because this crate is meant to be used in a `no_std` environment.
-# Currently, the std feature is only used for testing purposes.
-std = []
 reentrant = ["stylus-sdk/reentrant"]
-export-abi = ["stylus-sdk/export-abi", "std"]
+export-abi = ["stylus-sdk/export-abi"]
 
 [lib]
 crate-type = ["lib"]
