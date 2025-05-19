@@ -68,6 +68,7 @@ impl Erc721UriStorage {
     }
 
     /// Check [`IErc721Metadata::token_uri()`] for more details.
+    #[allow(clippy::missing_errors_doc)]
     pub fn token_uri(
         &self,
         token_id: U256,
@@ -177,7 +178,7 @@ mod tests {
             <Erc721MetadataExample as IErc165>::interface_id()
         ));
 
-        let fake_interface_id: FixedBytes<4> = 0x12345678u32.into();
+        let fake_interface_id: FixedBytes<4> = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
     #[motsu::test]

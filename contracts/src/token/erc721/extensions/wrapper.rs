@@ -225,6 +225,7 @@ impl Erc721Wrapper {
     }
 
     /// Check [`IErc721Wrapper::deposit_for()`] for more information.
+    #[allow(clippy::missing_errors_doc)]
     pub fn deposit_for(
         &mut self,
         account: Address,
@@ -271,6 +272,7 @@ impl Erc721Wrapper {
     }
 
     /// Check [`IErc721Wrapper::withdraw_to()`] for more information.
+    #[allow(clippy::missing_errors_doc)]
     pub fn withdraw_to(
         &mut self,
         account: Address,
@@ -316,6 +318,7 @@ impl Erc721Wrapper {
     }
 
     /// Check [`IErc721Wrapper::on_erc721_received()`] for more information.
+    #[allow(clippy::missing_errors_doc)]
     pub fn on_erc721_received(
         &mut self,
         _operator: Address,

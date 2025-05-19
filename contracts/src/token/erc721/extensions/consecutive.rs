@@ -438,7 +438,7 @@ impl Erc721Consecutive {
                 from_address: Address::ZERO,
                 to_address: to,
             });
-        };
+        }
         Ok(next)
     }
 
@@ -1485,7 +1485,7 @@ mod tests {
             )
         );
 
-        let fake_interface_id: FixedBytes<4> = 0x12345678u32.into();
+        let fake_interface_id: FixedBytes<4> = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

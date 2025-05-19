@@ -389,8 +389,11 @@ impl Erc1155Supply {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{fixed_bytes, Address, U256};
     use motsu::prelude::Contract;
+    use stylus_sdk::{
+        alloy_primitives::{fixed_bytes, Address, U256},
+        prelude::*,
+    };
 
     use super::*;
     use crate::token::erc1155::{

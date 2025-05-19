@@ -97,7 +97,7 @@ impl ICapped for Capped {
 mod tests {
     use alloy_primitives::{uint, Address};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::*;
 

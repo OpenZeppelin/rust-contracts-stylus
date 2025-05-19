@@ -5,7 +5,10 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::{
-    access::{ownable, ownable_two_step::Ownable2Step},
+    access::{
+        ownable,
+        ownable_two_step::{IOwnable2Step, Ownable2Step},
+    },
     token::erc20::{self, Erc20, IErc20},
 };
 use stylus_sdk::prelude::*;
@@ -53,23 +56,79 @@ impl From<ownable::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Ownable2StepExample {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     ownable: Ownable2Step,
 }
 
 #[public]
-#[inherit(Erc20, Ownable2Step)]
+#[implements(IErc20<Error = Error>, IOwnable2Step<Error = Error>)]
 impl Ownable2StepExample {
     #[constructor]
     fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
         Ok(self.ownable.constructor(initial_owner)?)
     }
+}
 
-    fn transfer(&mut self, to: Address, value: U256) -> Result<(), Error> {
+#[public]
+impl IErc20 for Ownable2StepExample {
+    type Error = Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
         self.ownable.only_owner()?;
-        self.erc20.transfer(to, value)?;
-        Ok(())
+        Ok(self.erc20.transfer(to, value)?)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Error> {
+        Ok(self.erc20.approve(spender, value)?)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Error> {
+        Ok(self.erc20.transfer_from(from, to, value)?)
+    }
+}
+
+#[public]
+impl IOwnable2Step for Ownable2StepExample {
+    type Error = Error;
+
+    fn owner(&self) -> Address {
+        self.ownable.owner()
+    }
+
+    fn pending_owner(&self) -> Address {
+        self.ownable.pending_owner()
+    }
+
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Error> {
+        Ok(self.ownable.transfer_ownership(new_owner)?)
+    }
+
+    fn accept_ownership(&mut self) -> Result<(), Error> {
+        Ok(self.ownable.accept_ownership()?)
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Error> {
+        Ok(self.ownable.renounce_ownership()?)
     }
 }

@@ -358,15 +358,14 @@ impl Erc20FlashMint {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;
-    use stylus_sdk::{abi::Bytes, prelude::*};
-
-    use super::{
-        ERC3156ExceededMaxLoan, ERC3156InvalidReceiver,
-        ERC3156UnsupportedToken, Erc20, Erc20FlashMint, Error,
-        IErc3156FlashLender,
+    use stylus_sdk::{
+        abi::Bytes,
+        alloy_primitives::{uint, Address, FixedBytes, U256},
+        prelude::*,
     };
+
+    use super::*;
 
     #[storage]
     struct Erc20FlashMintTestExample {
@@ -565,7 +564,7 @@ mod tests {
     fn interface_id() {
         let actual =
             <Erc20FlashMintTestExample as IErc3156FlashLender>::interface_id();
-        let expected: FixedBytes<4> = 0xe4143091u32.into();
+        let expected: FixedBytes<4> = 0xe4143091_u32.into();
         assert_eq!(actual, expected);
     }
 }

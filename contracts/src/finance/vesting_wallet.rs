@@ -411,6 +411,46 @@ pub trait IVestingWallet {
 }
 
 #[public]
+#[implements(IVestingWallet<Error = Error>, IErc165)]
+impl VestingWallet {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `beneficiary` - The wallet owner.
+    /// * `start_timestamp` - The point in time when token vesting starts.
+    /// * `duration_seconds` - The vesting duration in seconds.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If beneficiary is `Address::ZERO`.
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
+    ) -> Result<(), Error> {
+        self.ownable.constructor(beneficiary)?;
+        self.start.set(start_timestamp);
+        self.duration.set(duration_seconds);
+        Ok(())
+    }
+
+    /// The contract should be able to receive Eth.
+    ///
+    /// # Errors
+    ///
+    /// * If the transaction includes data (non-zero calldata).
+    /// * If the contract doesn't have enough gas to execute the function.
+    #[receive]
+    pub fn receive(&mut self) -> Result<(), Vec<u8>> {
+        Ok(())
+    }
+}
+
+#[public]
 impl IVestingWallet for VestingWallet {
     type Error = Error;
 
@@ -540,32 +580,6 @@ impl IVestingWallet for VestingWallet {
 }
 
 impl VestingWallet {
-    /// Constructor.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `beneficiary` - The wallet owner.
-    /// * `start_timestamp` - The point in time when token vesting starts.
-    /// * `duration_seconds` - The vesting duration in seconds.
-    ///
-    /// # Errors
-    ///
-    /// * [`ownable::Error::InvalidOwner`] - If beneficiary is `Address::ZERO`.
-    pub fn constructor(
-        &mut self,
-        beneficiary: Address,
-        start_timestamp: U64,
-        duration_seconds: U64,
-    ) -> Result<(), Error> {
-        self.ownable.constructor(beneficiary)?;
-        self.start.set(start_timestamp);
-        self.duration.set(duration_seconds);
-        Ok(())
-    }
-}
-
-impl VestingWallet {
     /// Virtual implementation of the vesting formula. This returns the amount
     /// vested, as a function of time, for an asset given its total
     /// historical allocation.
@@ -603,21 +617,25 @@ impl VestingWallet {
     }
 }
 
+#[public]
 impl IErc165 for VestingWallet {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IVestingWallet>::interface_id() == interface_id
+            || self.ownable.supports_interface(interface_id)
             || Erc165::interface_id() == interface_id
     }
 }
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-    use alloy_primitives::{uint, Address, U256, U64};
     use motsu::prelude::Contract;
-    use stylus_sdk::block;
+    use stylus_sdk::{
+        alloy_primitives::{uint, Address, FixedBytes, U256, U64},
+        block,
+    };
 
-    use super::{IVestingWallet, VestingWallet};
-    use crate::{token::erc20::Erc20, utils::introspection::erc165::IErc165};
+    use super::*;
+    use crate::token::erc20::Erc20;
 
     const BALANCE: u64 = 1000;
 
@@ -751,20 +769,22 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <VestingWallet as IVestingWallet>::interface_id();
-        let expected = 0x23a2649d.into();
+        let expected: FixedBytes<4> = 0x23a2649d_u32.into();
         assert_ne!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(VestingWallet::supports_interface(
+    fn supports_interface(contract: Contract<VestingWallet>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
             <VestingWallet as IVestingWallet>::interface_id()
         ));
-        assert!(VestingWallet::supports_interface(
-            <VestingWallet as IErc165>::interface_id()
-        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<VestingWallet as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!VestingWallet::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

@@ -131,7 +131,7 @@ impl Nonces {
 mod tests {
     use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::ONE;
     use crate::utils::nonces::{Error, INonces, Nonces};
