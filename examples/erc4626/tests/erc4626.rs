@@ -23,7 +23,7 @@ mod mock;
 
 fn ctr(asset: Address) -> Constructor {
     Constructor {
-        signature: "constructor(address,uint8,string,string)",
+        signature: "constructor(address,uint8,string,string)".to_string(),
         args: vec![
             asset.to_string(),
             DECIMALS_OFFSET.to_string(),
@@ -35,7 +35,7 @@ fn ctr(asset: Address) -> Constructor {
 
 fn dec_offset_overflow_ctr(asset: Address) -> Constructor {
     Constructor {
-        signature: "constructor(address,uint8,string,string)",
+        signature: "constructor(address,uint8,string,string)".to_string(),
         args: vec![
             asset.to_string(),
             MIN_OVERFLOW_DECIMAL_OFFSET.to_string(),

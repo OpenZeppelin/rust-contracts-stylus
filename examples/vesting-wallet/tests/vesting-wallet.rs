@@ -26,7 +26,7 @@ fn ctr(
     duration_seconds: u64,
 ) -> Constructor {
     Constructor {
-        signature: "constructor(address,uint64,uint64)",
+        signature: "constructor(address,uint64,uint64)".to_string(),
         args: vec![
             beneficiary.to_string(),
             start_timestamp.to_string(),
