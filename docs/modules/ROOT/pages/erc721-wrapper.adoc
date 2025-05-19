@@ -71,21 +71,3 @@ impl Erc721WrapperExample {
     }
 }
 ----
-
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
-
-[source,solidity]
-----
-contract Erc721WrapperExample {
-    mapping(address account => uint256) private _balances;
-    mapping(address account => mapping(address spender => uint256))
-        private _allowances;
-    uint256 private _totalSupply;
-
-    address private _underlyingToken;
-
-    constructor(address underlyingToken_) {
-        _underlyingToken = underlyingToken_;
-    }
-}
-----

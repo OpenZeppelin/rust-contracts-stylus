@@ -55,23 +55,3 @@ impl Erc20FlashMintExample {
     }
 }
 ----
-
-Additionally, if you wish to set a flash loan fee and/or a fee receiver, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
-Make sure to include the following code in your Solidity Constructor:
-
-[source,solidity]
-----
-contract Erc20FlashMintExample {
-    // ...
-
-    uint256 private _flashFeeAmount;
-    address private _flashFeeReceiverAddress;
-
-    constructor(address flashFeeReceiverAddress_, uint256 flashFeeAmount_) {
-        // ...
-        _flashFeeReceiverAddress = flashFeeReceiverAddress_;
-        _flashFeeAmount = flashFeeAmount_;
-        // ...
-    }
-}
-----
