@@ -130,6 +130,10 @@ incremental = false
 [profile.dev]
 panic = "abort"
 
+[profile.test]
+inherits = "dev"
+panic = "unwind" # Override for tests
+
 [workspace.metadata.typos]
 default = { extend-ignore-identifiers-re = [
   # ignore hex data samples.

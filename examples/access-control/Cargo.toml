@@ -8,7 +8,7 @@ version.workspace = true
 
 [dependencies]
 openzeppelin-stylus.workspace = true
-alloy-primitives.workspace = true
+alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 stylus-sdk.workspace = true
 keccak-const.workspace = true
 

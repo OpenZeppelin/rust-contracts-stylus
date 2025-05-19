@@ -76,9 +76,12 @@ impl std::error::Error for ContractDeploymentError {}
 
 /// Constructor data.
 pub struct Constructor {
-    signature: String,
-    args: Vec<String>,
+    /// Constructor signature.
+    pub signature: String,
+    /// Constructor arguments.
+    pub args: Vec<String>,
 }
+
 /// A basic smart contract deployer.
 pub struct Deployer {
     rpc_url: String,
