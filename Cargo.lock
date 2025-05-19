@@ -1208,6 +1208,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "benches"
+version = "0.2.0-alpha.4"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "futures",
+ "itertools 0.13.0",
+ "keccak-const",
+ "openzeppelin-crypto",
+ "openzeppelin-stylus",
+ "serde",
+ "tokio",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

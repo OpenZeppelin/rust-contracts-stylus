@@ -2,9 +2,8 @@ use std::process::Command;
 
 use alloy::primitives::Address;
 use alloy_primitives::U128;
-use e2e::Account;
+use e2e::{Account, Constructor};
 use eyre::WrapErr;
-use koba::config::{Deploy, Generate, PrivateKey};
 use serde::Deserialize;
 
 pub mod access_control;
@@ -44,7 +43,7 @@ pub enum Opt {
 async fn deploy(
     account: &Account,
     contract_name: &str,
-    args: Option<String>,
+    constructor: Option<Constructor>,
     opt: Opt,
 ) -> eyre::Result<Address> {
     let manifest_dir =
@@ -64,37 +63,15 @@ async fn deploy(
             contract_name.replace('-', "_"),
             contract_type
         ));
-    let sol_path = args.as_ref().map(|_| {
-        manifest_dir
-            .join("examples")
-            .join(contract_name)
-            .join("src")
-            .join("constructor.sol")
-    });
 
-    let pk = account.pk();
-    let config = Deploy {
-        generate_config: Generate {
-            wasm: wasm_path.clone(),
-            sol: sol_path,
-            args,
-            legacy: false,
-        },
-        auth: PrivateKey {
-            private_key_path: None,
-            private_key: Some(pk),
-            keystore_path: None,
-            keystore_password_path: None,
-        },
-        endpoint: env("RPC_URL")?,
-        deploy_only: false,
-        quiet: true,
+    let deployer = match constructor {
+        Some(constructor) => {
+            account.as_deployer().with_constructor(constructor)
+        }
+        None => account.as_deployer(),
     };
 
-    let address = koba::deploy(&config)
-        .await
-        .expect("should deploy contract")
-        .address()?;
+    let address = deployer.deploy_wasm(&wasm_path).await?.contract_address;
 
     match opt {
         Opt::Cache | Opt::CacheWasmOpt => {

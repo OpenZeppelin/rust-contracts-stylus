@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "benches",
   "contracts",
   "contracts-proc",
   "lib/crypto",
@@ -57,11 +58,7 @@ default-members = [
   "examples/pedersen",
   "examples/basic/token",
 ]
-exclude = [
-  "fuzz",
-  # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
-  "benches",
-]
+exclude = ["fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.

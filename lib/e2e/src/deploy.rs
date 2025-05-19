@@ -1,4 +1,4 @@
-use std::{process::Command, str::FromStr};
+use std::{path::PathBuf, process::Command, str::FromStr};
 
 use alloy::{
     consensus::Transaction,
@@ -101,6 +101,14 @@ impl Deployer {
         self
     }
 
+    /// See [`Deployer::deploy_wasm()`] for more details.
+    pub async fn deploy(self) -> eyre::Result<Receipt> {
+        let pkg = Crate::new()?;
+        let wasm_path = pkg.wasm;
+
+        self.deploy_wasm(&wasm_path).await
+    }
+
     /// Deploy and activate the contract implemented as `#[entrypoint]` in the
     /// current crate.
     /// Consumes currently configured deployer.
@@ -111,13 +119,12 @@ impl Deployer {
     ///
     /// - Unable to collect information about the crate required for deployment.
     /// - `cargo stylus deploy` errors.
-    pub async fn deploy(self) -> eyre::Result<Receipt> {
-        let pkg = Crate::new()?;
-        let wasm_path = pkg.wasm;
-
-        let mut command = self.create_command(
-            wasm_path.to_str().expect("wasm file should exist"),
-        );
+    pub async fn deploy_wasm(
+        self,
+        wasm_path: &PathBuf,
+    ) -> eyre::Result<Receipt> {
+        let wasm_path = wasm_path.to_str().expect("wasm file should exist");
+        let mut command = self.create_command(wasm_path);
 
         let output = command
             .output()
