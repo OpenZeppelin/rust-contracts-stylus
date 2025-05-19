@@ -1189,6 +1189,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89e25b6adfb930f02d1981565a6e5d9c547ac15a96606256d3b59040e5cd4ca3"
 
 [[package]]
+name = "basic-example"
+version = "0.2.0-alpha.4"
+dependencies = [
+ "alloy-primitives",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+]
+
+[[package]]
+name = "basic-example-script"
+version = "0.2.0-alpha.4"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "basic-example",
+ "tokio",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

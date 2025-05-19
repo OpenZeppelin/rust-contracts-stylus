@@ -13,6 +13,7 @@ stylus-sdk.workspace = true
 
 [features]
 std = []
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]

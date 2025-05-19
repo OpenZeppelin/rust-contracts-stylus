@@ -2,7 +2,7 @@ use std::process::Command;
 
 use alloy::primitives::Address;
 use alloy_primitives::U128;
-use e2e::{Account};
+use e2e::Account;
 use eyre::WrapErr;
 use koba::config::{Deploy, Generate, PrivateKey};
 use serde::Deserialize;

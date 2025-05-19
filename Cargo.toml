@@ -26,6 +26,8 @@ members = [
   "examples/ownable-two-step",
   "examples/poseidon",
   "examples/pedersen",
+  "examples/basic/token",
+  "examples/basic/script",
 ]
 default-members = [
   "contracts",
@@ -53,9 +55,9 @@ default-members = [
   "examples/ownable-two-step",
   "examples/poseidon",
   "examples/pedersen",
+  "examples/basic/token",
 ]
 exclude = [
-  "examples/basic/token",
   "fuzz",
   # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
   "benches",
