@@ -1,27 +1,18 @@
 [package]
 name = "basic-example"
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 publish = false
-version = "0.0.0"
+version.workspace = true
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts" }
-alloy-primitives = { version = "=0.8.20", default-features = false, features = [
-    "tiny-keccak",
-] }
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "b7310ef", default-features = false, features = [
-    "mini-alloc",
-] }
+openzeppelin-stylus.workspace = true
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
 
 [features]
 std = []
-export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]
-
-[[bin]]
-name = "basic-example"
-path = "src/main.rs"

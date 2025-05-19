@@ -6,7 +6,6 @@ use alloy::{
     sol,
     sol_types::SolConstructor,
 };
-use koba::config::Deploy;
 
 sol!(
     #[sol(rpc)]

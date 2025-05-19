@@ -11,7 +11,10 @@ mod mock;
 use mock::{erc721, erc721::ERC721Mock};
 
 fn ctr(asset_addr: Address) -> Vec<String> {
-    vec![asset_addr.to_string()]
+    Constructor {
+        signature: "constructor(address)".to_string(),
+        args: vec![asset_addr.to_string()],
+    }
 }
 
 async fn deploy(account: &Account) -> Result<(Address, Address)> {

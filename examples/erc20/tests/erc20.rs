@@ -3,8 +3,8 @@
 use abi::Erc20;
 use alloy::primitives::{uint, Address, U256};
 use e2e::{
-    receipt, send, watch, Account, ContractInitializationError, EventExt,
-    Panic, PanicCode, Revert,
+    receipt, send, watch, Account, Constructor, ContractInitializationError,
+    EventExt, Panic, PanicCode, Revert,
 };
 use eyre::Result;
 
@@ -14,12 +14,19 @@ const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-fn ctr(cap: U256) -> Vec<String> {
-    vec![TOKEN_NAME.to_string(), TOKEN_SYMBOL.to_string(), cap.to_string()]
+fn ctr(cap: U256) -> Constructor {
+    Constructor {
+        signature: "constructor(string,string,uint256)".to_string(),
+        args: vec![
+            TOKEN_NAME.to_string(),
+            TOKEN_SYMBOL.to_string(),
+            cap.to_string(),
+        ],
+    }
 }
 
-fn default_ctr() -> Vec<String> {
-    vec![TOKEN_NAME.to_string(), TOKEN_SYMBOL.to_string(), CAP.to_string()]
+fn default_ctr() -> Constructor {
+    ctr(CAP)
 }
 
 // ============================================================================
