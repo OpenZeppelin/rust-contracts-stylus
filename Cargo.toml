@@ -5,10 +5,16 @@ members = [
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
-]
-default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
-exclude = [
   "examples/access-control",
+]
+default-members = [
+  "contracts",
+  "contracts-proc",
+  "lib/crypto",
+  "lib/e2e-proc",
+  "examples/access-control",
+]
+exclude = [
   "examples/ecdsa",
   "examples/erc20",
   "examples/erc20-permit",
