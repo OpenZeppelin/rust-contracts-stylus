@@ -1791,7 +1791,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "erc20-wrapper"
+name = "erc20-wrapper-example"
 version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",

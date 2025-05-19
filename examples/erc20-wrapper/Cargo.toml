@@ -1,5 +1,5 @@
 [package]
-name = "erc20-wrapper"
+name = "erc20-wrapper-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
