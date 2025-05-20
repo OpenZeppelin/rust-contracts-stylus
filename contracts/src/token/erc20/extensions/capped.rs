@@ -93,7 +93,7 @@ impl ICapped for Capped {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address};
     use motsu::prelude::Contract;

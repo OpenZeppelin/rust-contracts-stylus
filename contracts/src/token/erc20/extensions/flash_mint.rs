@@ -356,7 +356,7 @@ impl Erc20FlashMint {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::*;
     use stylus_sdk::{

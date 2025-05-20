@@ -111,7 +111,7 @@ impl Erc1155 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
 
     use alloy_primitives::{Address, U256};

@@ -387,7 +387,7 @@ impl Erc1155Supply {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{

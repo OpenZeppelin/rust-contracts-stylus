@@ -405,7 +405,7 @@ impl IErc165 for SafeErc20 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::alloy_primitives::{Address, FixedBytes};

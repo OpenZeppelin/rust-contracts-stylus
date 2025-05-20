@@ -992,7 +992,7 @@ macro_rules! fp_from_hex {
     }};
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use proptest::prelude::*;
 

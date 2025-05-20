@@ -1074,7 +1074,7 @@ impl Erc721 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U256};
     use motsu::prelude::*;

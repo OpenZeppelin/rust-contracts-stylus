@@ -256,7 +256,7 @@ impl IErc165 for Ownable2Step {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{

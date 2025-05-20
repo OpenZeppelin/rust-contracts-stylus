@@ -1145,7 +1145,7 @@ enum Transfer {
     Batch { ids: Vec<U256>, values: Vec<U256> },
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;

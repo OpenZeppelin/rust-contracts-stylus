@@ -119,7 +119,7 @@ impl Erc721Metadata {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;

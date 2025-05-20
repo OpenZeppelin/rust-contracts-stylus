@@ -86,7 +86,7 @@ impl IErc165 for Erc1155MetadataUri {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
