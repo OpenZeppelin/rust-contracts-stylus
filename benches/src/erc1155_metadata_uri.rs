@@ -3,10 +3,10 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
     uint,
 };
-use e2e::{receipt, Account};
+use e2e::{receipt, Account, Constructor};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -21,8 +21,6 @@ sol!(
         function setBaseURI(string memory tokenURI) external;
     }
 );
-
-sol!("../examples/erc1155-metadata-uri/src/constructor.sol");
 
 const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 const BASE_URI: &str = "https://github.com";
@@ -61,9 +59,12 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         .collect::<eyre::Result<Vec<_>>>()
 }
 
+fn ctr() -> Constructor {
+    Constructor {
+        signature: "constructor(string)".to_string(),
+        args: vec![URI.to_string()],
+    }
+}
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    let args =
-        Erc1155MetadataUriExample::constructorCall { uri_: URI.to_owned() };
-    let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc1155-metadata-uri", Some(args), cache_opt).await
+    crate::deploy(account, "erc1155-metadata-uri", Some(ctr()), cache_opt).await
 }

@@ -2,16 +2,18 @@
 
 use abi::{Erc721, Erc721Wrapper};
 use alloy::primitives::{uint, Address};
-use e2e::{receipt, watch, Account, EventExt, Revert};
+use e2e::{receipt, watch, Account, Constructor, EventExt, Revert};
 use eyre::Result;
 
 mod abi;
 mod mock;
-
 use mock::{erc721, erc721::ERC721Mock};
 
-fn ctr(asset_addr: Address) -> Vec<String> {
-    vec![asset_addr.to_string()]
+fn ctr(asset_addr: Address) -> Constructor {
+    Constructor {
+        signature: "constructor(address)".to_string(),
+        args: vec![asset_addr.to_string()],
+    }
 }
 
 async fn deploy(account: &Account) -> Result<(Address, Address)> {

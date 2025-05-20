@@ -3,7 +3,8 @@
 use alloy::primitives::{Address, U256};
 use alloy_primitives::{aliases::U96, uint};
 use e2e::{
-    receipt, watch, Account, ContractInitializationError, EventExt, Revert,
+    receipt, watch, Account, Constructor, ContractInitializationError,
+    EventExt, Revert,
 };
 
 use crate::abi::Erc721;
@@ -18,17 +19,21 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> Vec<String> {
+fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> Constructor {
     let receivers =
         receivers.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
     let amounts =
         amounts.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
-    vec![
-        format!("[{receivers}]"),
-        format!("[{amounts}]"),
-        FIRST_CONSECUTIVE_ID.to_string(),
-        MAX_BATCH_SIZE.to_string(),
-    ]
+
+    Constructor {
+        signature: "constructor(address[],uint96[],uint96,uint96)".to_string(),
+        args: vec![
+            format!("[{receivers}]"),
+            format!("[{amounts}]"),
+            FIRST_CONSECUTIVE_ID.to_string(),
+            MAX_BATCH_SIZE.to_string(),
+        ],
+    }
 }
 
 #[e2e::test]

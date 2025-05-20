@@ -60,7 +60,7 @@ impl IErc3156FlashLender for Erc20FlashMintExample {
         token: Address,
         value: U256,
     ) -> Result<U256, flash_mint::Error> {
-        Ok(self.flash_mint.flash_fee(token, value)?)
+        self.flash_mint.flash_fee(token, value)
     }
 
     fn flash_loan(
@@ -70,13 +70,13 @@ impl IErc3156FlashLender for Erc20FlashMintExample {
         value: U256,
         data: Bytes,
     ) -> Result<bool, flash_mint::Error> {
-        Ok(self.flash_mint.flash_loan(
+        self.flash_mint.flash_loan(
             receiver,
             token,
             value,
             &data,
             &mut self.erc20,
-        )?)
+        )
     }
 }
 

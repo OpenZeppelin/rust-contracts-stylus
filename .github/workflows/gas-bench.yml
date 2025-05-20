@@ -4,12 +4,9 @@ name: gas-bench
 permissions:
   contents: read
 on:
-  workflow_dispatch:
-  # TODO: uncomment when benches are fixed,
-  # which will be when cargo-stylus CLI supports workspaces.
-  # push:
-  #   branches: [main, v*]
-  # pull_request:
+  push:
+    branches: [main, release/*]
+  pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
