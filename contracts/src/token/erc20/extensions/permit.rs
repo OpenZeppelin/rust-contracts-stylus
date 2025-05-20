@@ -14,9 +14,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{keccak256, Address, B256, U256};
+use alloy_primitives::{keccak256, Address, FixedBytes, B256, U256, U8};
 use alloy_sol_types::SolType;
-use stylus_sdk::{block, call::MethodError, prelude::*};
+use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
 
 use crate::{
     token::erc20::{self, Erc20},
@@ -135,6 +135,19 @@ unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 pub trait IErc20Permit: INonces {
     /// The error type associated to this interface.
     type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Calculated manually to include [`INonces::nonces`].
+    /// Solidity interface id associated with [`IErc20Permit`] trait.
+    /// Computed as a XOR of selectors for each function in the trait.
+    fn interface_id() -> FixedBytes<4>
+    where
+        Self: Sized,
+    {
+        FixedBytes::<4>::new(function_selector!(
+            "permit", Address, Address, U256, U256, U8, B256, B256
+        )) ^ FixedBytes::<4>::new(function_selector!("nonces", Address,))
+            ^ FixedBytes::<4>::new(function_selector!("DOMAIN_SEPARATOR",))
+    }
 
     /// Returns the domain separator used in the encoding of the signature for
     /// [`Self::permit`], as defined by EIP712.
