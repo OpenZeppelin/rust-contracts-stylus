@@ -11,7 +11,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [ main, v* ]
+    branches: [main, v*]
     paths-ignore:
       - "**.md"
       - "**.adoc"
@@ -32,7 +32,7 @@ jobs:
       matrix:
         # Run on stable and beta to ensure that tests won't break on the next
         # version of the rust toolchain.
-        toolchain: [ stable, beta ]
+        toolchain: [stable, beta]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-latest ]
+        os: [macos-latest]
         # Windows fails because of `stylus-proc`.
         # os: [macos-latest, windows-latest]
     steps:
