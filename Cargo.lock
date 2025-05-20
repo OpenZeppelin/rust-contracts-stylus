@@ -1198,12 +1198,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "basic-example-script"
+name = "basic-script-example"
 version = "0.2.0-alpha.4"
 dependencies = [
  "alloy",
  "alloy-primitives",
  "basic-example",
+ "e2e",
  "tokio",
 ]
 
