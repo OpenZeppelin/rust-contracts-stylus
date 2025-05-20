@@ -29,7 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Convert associated `const INTERFACE_ID` into an associated `fn interface_id()` on all traits.
+- Convert associated `const INTERFACE_ID` into an associated `fn interface_id()` on all traits. #639
+- `IErc165::supports_interface` now accepts `&self` as first parameter. #639
+- Removed `Erc165` struct. #639
 - Moved `Erc20` callable interface to _/erc20/interface.rs_ module and renamed it to `Erc20Interface`. #461
 - Bump `cargo-stylus` to `v0.5.11`. #617
 - Bump Stylus SDK to `v0.8.4`. #624
