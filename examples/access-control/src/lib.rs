@@ -11,7 +11,7 @@ use openzeppelin_stylus::{
 use stylus_sdk::prelude::*;
 
 #[derive(SolidityError, Debug)]
-enum Error {
+pub enum Error {
     UnauthorizedAccount(control::AccessControlUnauthorizedAccount),
     BadConfirmation(control::AccessControlBadConfirmation),
     InsufficientBalance(erc20::ERC20InsufficientBalance),
@@ -52,7 +52,7 @@ impl From<erc20::Error> for Error {
 
 #[entrypoint]
 #[storage]
-struct AccessControlExample {
+pub struct AccessControlExample {
     erc20: Erc20,
     access: AccessControl,
 }
