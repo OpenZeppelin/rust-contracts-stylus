@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Contracts now support constructors. #639
 - Add Pedersen hash with Starknet parameters. #644
 - Add shift left, right operators to Uint. #644
 - `Erc721Wrapper` extension to support token wrapping. #461
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Convert associated `const INTERFACE_ID` into an associated `fn interface_id()` on all traits. #639
 - `IErc165::supports_interface` now accepts `&self` as first parameter. #639
 - Removed `Erc165` struct. #639
+- Contracts now use the new Stylus SDK inheritance model. #639
 - Moved `Erc20` callable interface to _/erc20/interface.rs_ module and renamed it to `Erc20Interface`. #461
 - Bump `cargo-stylus` to `v0.5.11`. #617
 - Bump Stylus SDK to `v0.8.4`. #624
