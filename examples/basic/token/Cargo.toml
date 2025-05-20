@@ -16,7 +16,6 @@ stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = 
 ] }
 
 [features]
-std = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
