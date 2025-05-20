@@ -43,7 +43,7 @@ impl MyContract { }
     clippy::used_underscore_items,
     deprecated
 )]
-#![cfg_attr(not(test), no_std, no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_std, no_main)]
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
