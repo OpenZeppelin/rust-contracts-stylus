@@ -233,7 +233,7 @@ impl IErc721Burnable for Erc721Example {
         // Retrieve the owner.
         let owner = self.erc721.owner_of(token_id)?;
 
-        self.erc721._burn(token_id)?;
+        self.erc721.burn(token_id)?;
 
         // Update the extension's state.
         self.enumerable._remove_token_from_owner_enumeration(

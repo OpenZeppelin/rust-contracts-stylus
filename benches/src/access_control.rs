@@ -4,9 +4,9 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
 };
-use e2e::{receipt, Account};
+use e2e::{receipt, Account, Constructor};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -80,8 +80,18 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         .collect::<eyre::Result<Vec<_>>>()
 }
 
+fn ctr(admin: Address) -> Constructor {
+    Constructor {
+        signature: "constructor(address)".to_string(),
+        args: vec![admin.to_string()],
+    }
+}
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    let args = AccessControl::constructorCall {};
-    let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "access-control", Some(args), cache_opt).await
+    crate::deploy(
+        account,
+        "access-control",
+        Some(ctr(account.address())),
+        cache_opt,
+    )
+    .await
 }

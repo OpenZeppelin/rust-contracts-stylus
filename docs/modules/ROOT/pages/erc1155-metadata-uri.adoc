@@ -37,21 +37,3 @@ impl Erc1155Example {
     // ...
 }
 ----
-
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
-Make sure to include the following code in your Solidity Constructor:
-
-[source,solidity]
-----
-contract Erc1155Example {
-    // ...
-
-    string private _uri;
-
-    constructor(string memory uri_) {
-        // ...
-        _uri = uri_;
-        // ...
-    }
-}
-----

@@ -1,41 +1,29 @@
 [package]
 name = "erc20-flash-mint-example"
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 publish = false
-version = "0.0.0"
+version.workspace = true
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts", features = ["reentrant"] }
-alloy-primitives = { version = "=0.8.20", default-features = false, features = [
-    "tiny-keccak",
-] }
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "b7310ef", default-features = false, features = [
-    "mini-alloc",
-] }
+openzeppelin-stylus = { workspace = true, features = ["reentrant"] }
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
 
 [dev-dependencies]
-alloy = { version = "=0.7.3", features = ["contract"] }
-eyre = "0.6.8"
-tokio = { version = "1.12.0", features = ["full"] }
-e2e = { path = "../../lib/e2e" }
+alloy.workspace = true
+eyre.workspace = true
+tokio.workspace = true
+e2e.workspace = true
 
 [features]
 e2e = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
-[[bin]]
-name = "erc20-flash-mint-example"
-path = "src/main.rs"
-
 [lib]
 crate-type = ["lib", "cdylib"]
 
-[profile.release]
-codegen-units = 1
-strip = true
-lto = true
-panic = "abort"
-
-opt-level = 3
+[[bin]]
+name = "erc20-flash-mint-example"
+path = "src/main.rs"

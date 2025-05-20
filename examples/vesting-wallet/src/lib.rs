@@ -26,11 +26,11 @@ impl VestingWalletExample {
         start_timestamp: U64,
         duration_seconds: U64,
     ) -> Result<(), vesting_wallet::Error> {
-        Ok(self.vesting_wallet.constructor(
+        self.vesting_wallet.constructor(
             beneficiary,
             start_timestamp,
             duration_seconds,
-        )?)
+        )
     }
 
     #[receive]
@@ -51,13 +51,13 @@ impl IVestingWallet for VestingWalletExample {
         &mut self,
         new_owner: Address,
     ) -> Result<(), <Self as IVestingWallet>::Error> {
-        Ok(self.vesting_wallet.transfer_ownership(new_owner)?)
+        self.vesting_wallet.transfer_ownership(new_owner)
     }
 
     fn renounce_ownership(
         &mut self,
     ) -> Result<(), <Self as IVestingWallet>::Error> {
-        Ok(self.vesting_wallet.renounce_ownership()?)
+        self.vesting_wallet.renounce_ownership()
     }
 
     fn start(&self) -> U256 {
@@ -92,12 +92,12 @@ impl IVestingWallet for VestingWalletExample {
         &mut self,
         token: Address,
     ) -> Result<U256, <Self as IVestingWallet>::Error> {
-        Ok(self.vesting_wallet.releasable_erc20(token)?)
+        self.vesting_wallet.releasable_erc20(token)
     }
 
     #[selector(name = "release")]
     fn release_eth(&mut self) -> Result<(), <Self as IVestingWallet>::Error> {
-        Ok(self.vesting_wallet.release_eth()?)
+        self.vesting_wallet.release_eth()
     }
 
     #[selector(name = "release")]
@@ -105,7 +105,7 @@ impl IVestingWallet for VestingWalletExample {
         &mut self,
         token: Address,
     ) -> Result<(), <Self as IVestingWallet>::Error> {
-        Ok(self.vesting_wallet.release_erc20(token)?)
+        self.vesting_wallet.release_erc20(token)
     }
 
     #[selector(name = "vestedAmount")]
@@ -119,6 +119,6 @@ impl IVestingWallet for VestingWalletExample {
         token: Address,
         timestamp: u64,
     ) -> Result<U256, <Self as IVestingWallet>::Error> {
-        Ok(self.vesting_wallet.vested_amount_erc20(token, timestamp)?)
+        self.vesting_wallet.vested_amount_erc20(token, timestamp)
     }
 }

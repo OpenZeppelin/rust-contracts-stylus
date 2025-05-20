@@ -53,24 +53,3 @@ impl Erc1155MetadataUriExample {
     }
 }
 ----
-
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
-Make sure to include the following code in your Solidity Constructor:
-
-[source,solidity]
-----
-contract Erc1155Example {
-    // ...
-
-    string private _uri;
-    string private _baseUri;
-
-    mapping(uint256 => string) _tokenUris;
-
-    constructor(string memory uri_) {
-        // ...
-        _uri = uri_;
-        // ...
-    }
-}
-----

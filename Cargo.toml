@@ -1,13 +1,11 @@
 [workspace]
 members = [
+  "benches",
   "contracts",
   "contracts-proc",
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
-]
-default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
-exclude = [
   "examples/access-control",
   "examples/ecdsa",
   "examples/erc20",
@@ -27,13 +25,40 @@ exclude = [
   "examples/ownable",
   "examples/vesting-wallet",
   "examples/ownable-two-step",
-  "examples/basic/token",
   "examples/poseidon",
   "examples/pedersen",
-  "fuzz",
-  # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
-  "benches",
+  "examples/basic/token",
+  "examples/basic/script",
 ]
+default-members = [
+  "contracts",
+  "contracts-proc",
+  "lib/crypto",
+  "lib/e2e-proc",
+  "examples/access-control",
+  "examples/ecdsa",
+  "examples/erc20",
+  "examples/erc20-permit",
+  "examples/erc20-flash-mint",
+  "examples/erc20-wrapper",
+  "examples/erc721",
+  "examples/erc721-consecutive",
+  "examples/erc721-metadata",
+  "examples/erc721-wrapper",
+  "examples/erc1155",
+  "examples/erc1155-metadata-uri",
+  "examples/erc1155-supply",
+  "examples/erc4626",
+  "examples/safe-erc20",
+  "examples/merkle-proofs",
+  "examples/ownable",
+  "examples/vesting-wallet",
+  "examples/ownable-two-step",
+  "examples/poseidon",
+  "examples/pedersen",
+  "examples/basic/token",
+]
+exclude = ["fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
@@ -76,7 +101,9 @@ alloy = { version = "=0.7.3", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.20", default-features = false }
+alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+  "tiny-keccak",
+] }
 alloy-sol-types = { version = "=0.8.20", default-features = false }
 alloy-sol-macro = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }

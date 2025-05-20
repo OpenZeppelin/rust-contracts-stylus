@@ -1,45 +1,30 @@
 [package]
 name = "erc721-example"
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 publish = false
-version = "0.0.0"
+version.workspace = true
 
 [dependencies]
-openzeppelin-stylus = { path = "../../contracts" }
-alloy-primitives = { version = "=0.8.20", default-features = false, features = [
-    "tiny-keccak",
-] }
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "b7310ef", default-features = false, features = [
-    "mini-alloc",
-] }
+openzeppelin-stylus.workspace = true
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
 
 [dev-dependencies]
-alloy = { version = "=0.7.3", features = ["contract"] }
-e2e = { path = "../../lib/e2e" }
-tokio = { version = "1.12.0", features = ["full"] }
-eyre = "0.6.8"
-rand = "0.9.0"
+alloy.workspace = true
+e2e.workspace = true
+tokio.workspace = true
+eyre.workspace = true
+rand.workspace = true
 
 [features]
 e2e = []
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
-[[bin]]
-name = "erc721-example"
-path = "src/main.rs"
-
 [lib]
 crate-type = ["lib", "cdylib"]
 
-[profile.release]
-codegen-units = 1
-panic = "abort"
-opt-level = "z"
-strip = true
-lto = true
-debug = false
-rpath = false
-debug-assertions = false
-incremental = false
+[[bin]]
+name = "erc721-example"
+path = "src/main.rs"
