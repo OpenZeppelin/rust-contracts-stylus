@@ -905,7 +905,7 @@ impl Erc4626 {
     /// # Panics
     ///
     /// * When adding the offset decimals to the underlying token's decimals
-    ///   would exceed `U8::MAX`.
+    ///   would exceed [`U8::MAX`].
     ///
     /// # Examples
     ///
@@ -1117,7 +1117,7 @@ impl Erc4626 {
 
     /// Returns the decimals offset between the underlying asset and vault
     /// shares.
-    /// Currently, always returns `U8::ZERO`.
+    /// Currently, always returns [`U8::ZERO`].
     #[must_use]
     pub fn _decimals_offset(&self) -> U8 {
         self.decimals_offset.get()
