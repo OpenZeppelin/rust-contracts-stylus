@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
 - Poseidon babybear and goldilocks (64-bit) instances now have 256-bit security (capacity 4). #613
 - `BitIteratorBE` (bit iteration) trait at `openzeppelin_crypto` now accepts `self` by value. #589
+- Feature `std` was removed from libraries. #662
 
 ### Fixed
 
