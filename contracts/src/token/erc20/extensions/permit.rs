@@ -139,14 +139,16 @@ pub trait IErc20Permit: INonces {
     // Calculated manually to include [`INonces::nonces`].
     /// Solidity interface id associated with [`IErc20Permit`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
+    #[must_use]
     fn interface_id() -> FixedBytes<4>
     where
         Self: Sized,
     {
-        FixedBytes::<4>::new(function_selector!(
-            "permit", Address, Address, U256, U256, U8, B256, B256
-        )) ^ FixedBytes::<4>::new(function_selector!("nonces", Address,))
-            ^ FixedBytes::<4>::new(function_selector!("DOMAIN_SEPARATOR",))
+        FixedBytes::<4>::new(function_selector!("DOMAIN_SEPARATOR",))
+            ^ FixedBytes::<4>::new(function_selector!("nonces", Address,))
+            ^ FixedBytes::<4>::new(function_selector!(
+                "permit", Address, Address, U256, U256, U8, B256, B256
+            ))
     }
 
     /// Returns the domain separator used in the encoding of the signature for
