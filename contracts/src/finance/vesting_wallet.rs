@@ -48,10 +48,7 @@ use crate::{
         interface::Erc20Interface,
         utils::{safe_erc20, ISafeErc20, SafeErc20},
     },
-    utils::{
-        introspection::erc165::{Erc165, IErc165},
-        math::storage::AddAssignChecked,
-    },
+    utils::{introspection::erc165::IErc165, math::storage::AddAssignChecked},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -623,7 +620,7 @@ impl IErc165 for VestingWallet {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IVestingWallet>::interface_id() == interface_id
             || self.ownable.supports_interface(interface_id)
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 

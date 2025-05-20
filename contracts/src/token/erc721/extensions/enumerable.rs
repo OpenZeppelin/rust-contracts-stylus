@@ -22,7 +22,7 @@ use stylus_sdk::{
 
 use crate::{
     token::erc721::{self, IErc721},
-    utils::introspection::erc165::{Erc165, IErc165},
+    utils::introspection::erc165::IErc165,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -178,7 +178,7 @@ impl IErc721Enumerable for Erc721Enumerable {
 impl IErc165 for Erc721Enumerable {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721Enumerable>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -397,7 +397,7 @@ mod tests {
         fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
             <Erc721EnumerableTestExample as IErc721Enumerable>::interface_id()
                 == interface_id
-                || Erc165::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
         }
     }
 

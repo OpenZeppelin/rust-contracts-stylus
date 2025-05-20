@@ -10,7 +10,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{prelude::*, storage::StorageString};
 
-use crate::utils::introspection::erc165::{Erc165, IErc165};
+use crate::utils::introspection::erc165::IErc165;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -82,7 +82,7 @@ impl Erc1155MetadataUri {
 impl IErc165 for Erc1155MetadataUri {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155MetadataUri>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 

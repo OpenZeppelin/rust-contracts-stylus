@@ -16,7 +16,7 @@ use stylus_sdk::{
 };
 
 use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
+    introspection::erc165::IErc165,
     math::storage::{AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked},
 };
 
@@ -587,7 +587,7 @@ impl Erc20 {
 impl IErc165 for Erc20 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 

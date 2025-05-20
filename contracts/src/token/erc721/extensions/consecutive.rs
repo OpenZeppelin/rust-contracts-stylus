@@ -37,7 +37,7 @@ use crate::{
         Erc721, IErc721, InvalidReceiverWithReason, Transfer,
     },
     utils::{
-        introspection::erc165::{Erc165, IErc165},
+        introspection::erc165::IErc165,
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
@@ -860,7 +860,7 @@ impl Erc721Consecutive {
 impl IErc165 for Erc721Consecutive {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 

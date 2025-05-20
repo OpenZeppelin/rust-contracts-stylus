@@ -26,7 +26,7 @@ use stylus_sdk::{
 use crate::{
     token::erc1155::{self, Erc1155, Error, IErc1155},
     utils::{
-        introspection::erc165::{Erc165, IErc165},
+        introspection::erc165::IErc165,
         math::storage::{AddAssignChecked, SubAssignUnchecked},
     },
 };
@@ -161,7 +161,7 @@ impl IErc165 for Erc1155Supply {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155Supply>::interface_id() == interface_id
             || self.erc1155.supports_interface(interface_id)
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 

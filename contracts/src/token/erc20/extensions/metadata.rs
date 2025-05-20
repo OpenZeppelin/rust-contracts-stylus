@@ -8,10 +8,7 @@ use stylus_sdk::{
     prelude::*,
 };
 
-use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
-    Metadata,
-};
+use crate::utils::{introspection::erc165::IErc165, Metadata};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: U8 = uint!(18_U8);
@@ -99,7 +96,7 @@ impl IErc20Metadata for Erc20Metadata {
 impl IErc165 for Erc20Metadata {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20Metadata>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 

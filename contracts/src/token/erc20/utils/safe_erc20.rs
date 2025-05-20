@@ -23,7 +23,7 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::utils::introspection::erc165::{Erc165, IErc165};
+use crate::utils::introspection::erc165::IErc165;
 
 const BOOL_TYPE_SIZE: usize = 32;
 
@@ -401,7 +401,7 @@ impl SafeErc20 {
 impl IErc165 for SafeErc20 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as ISafeErc20>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
