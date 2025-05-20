@@ -464,7 +464,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`, may happen during `mint`
+    /// * If updated balance exceeds [`U256::MAX`], may happen during `mint`
     ///   operation.
     fn _update(
         &mut self,
@@ -525,7 +525,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`, may happen during `mint`
+    /// * If updated balance exceeds [`U256::MAX`], may happen during `mint`
     ///   operation.
     fn _update_with_acceptance_check(
         &mut self,
@@ -575,7 +575,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     pub fn _mint(
         &mut self,
         to: Address,
@@ -615,7 +615,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     pub fn _mint_batch(
         &mut self,
         to: Address,
@@ -841,7 +841,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn _do_mint(
         &mut self,
         to: Address,
@@ -942,7 +942,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn do_safe_transfer_from(
         &mut self,
         from: Address,
@@ -982,7 +982,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn do_update(
         &mut self,
         from: Address,

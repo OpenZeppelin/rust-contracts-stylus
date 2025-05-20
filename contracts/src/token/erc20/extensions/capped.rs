@@ -75,7 +75,7 @@ impl Capped {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidCap`] - If cap is `U256::ZERO`.
+    /// * [`Error::InvalidCap`] - If cap is [`U256::ZERO`].
     #[constructor]
     pub fn constructor(&mut self, cap: U256) -> Result<(), Error> {
         if cap.is_zero() {

@@ -253,9 +253,9 @@ pub trait IErc3156FlashLender {
     ///
     /// # Panics
     ///
-    /// * If the new (temporary) total supply exceeds `U256::MAX`.
+    /// * If the new (temporary) total supply exceeds [`U256::MAX`].
     /// * If the sum of the loan value and fee exceeds the maximum value of
-    ///   `U256::MAX`.
+    ///   [`U256::MAX`].
     fn flash_loan(
         &mut self,
         receiver: Address,

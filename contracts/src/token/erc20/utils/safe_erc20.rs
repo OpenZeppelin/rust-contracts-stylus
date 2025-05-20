@@ -166,7 +166,7 @@ pub trait ISafeErc20 {
     ///
     /// # Panics
     ///
-    /// * If increased allowance exceeds `U256::MAX`.
+    /// * If increased allowance exceeds [`U256::MAX`].
     fn safe_increase_allowance(
         &mut self,
         token: Address,

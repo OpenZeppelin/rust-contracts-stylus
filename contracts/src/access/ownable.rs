@@ -138,7 +138,7 @@ impl Ownable {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOwner`] - If initial owner is `Address::ZERO`.
+    /// * [`Error::InvalidOwner`] - If initial owner is [`Address::ZERO`].
     #[constructor]
     pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
         if initial_owner.is_zero() {

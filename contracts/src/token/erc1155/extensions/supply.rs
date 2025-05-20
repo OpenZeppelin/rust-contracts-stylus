@@ -252,7 +252,7 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// * If updated balance and/or supply exceeds `U256::MAX`, may happen
+    /// * If updated balance and/or supply exceeds [`U256::MAX`], may happen
     ///   during the `mint` operation.
     fn _update(
         &mut self,

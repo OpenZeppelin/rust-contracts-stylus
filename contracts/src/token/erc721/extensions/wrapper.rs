@@ -50,7 +50,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(erc721::ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -140,7 +140,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
     ///   [`erc721::IErc721::transfer_from`] operation on the underlying token.
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with an error.
@@ -167,9 +167,9 @@ pub trait IErc721Wrapper {
     ///   [`erc721::IErc721::safe_transfer_from`] operation on the underlying
     ///   token.
     /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
-    ///   is not `Address::ZERO`.
-    /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
-    ///   `auth` does not have a right to approve this token.
+    ///   is not [`Address::ZERO`].
+    /// * [`Error::InsufficientApproval`] - If `auth` is not [`Address::ZERO`]
+    ///   and `auth` does not have a right to approve this token.
     fn withdraw_to(
         &mut self,
         account: Address,
@@ -192,7 +192,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
     ///   token.
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with an error.
@@ -362,7 +362,7 @@ impl Erc721Wrapper {
     /// * [`Error::IncorrectOwner`] - If the underlying token is not owned by
     ///   the contract.
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with an error.

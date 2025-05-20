@@ -81,7 +81,7 @@ pub enum Error {
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals. approver Address initiating an approval operation.
     InvalidApprover(erc20::ERC20InvalidApprover),
-    /// The signature derives the `Address::ZERO`.
+    /// The signature derives the [`Address::ZERO`].
     InvalidSignature(ECDSAInvalidSignature),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),

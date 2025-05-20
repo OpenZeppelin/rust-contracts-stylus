@@ -240,7 +240,7 @@ pub trait IErc20 {
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
-    /// NOTE: If `value` is the maximum `U256::MAX`, the allowance is not
+    /// NOTE: If `value` is the maximum [`U256::MAX`], the allowance is not
     /// updated on `transfer_from`. This is semantically equivalent to
     /// an infinite approval.
     ///
@@ -425,7 +425,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// * If `total_supply` exceeds `U256::MAX`.
+    /// * If `total_supply` exceeds [`U256::MAX`].
     pub fn _mint(
         &mut self,
         account: Address,
@@ -462,7 +462,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// * If `total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    /// * If `total_supply` exceeds [`U256::MAX`]. It may happen during `mint`
     ///   operation.
     pub fn _update(
         &mut self,
