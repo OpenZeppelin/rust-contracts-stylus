@@ -118,7 +118,7 @@ jobs:
         # target in this context means one of `--lib`, `--bin`, etc, and not the
         # target triple.
       - name: Cargo hack
-        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --skip std --workspace --exclude e2e --exclude basic-script-example --exclude benches
+        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --workspace --exclude e2e --exclude basic-script-example --exclude benches
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
