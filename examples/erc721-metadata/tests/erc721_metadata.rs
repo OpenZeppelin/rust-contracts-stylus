@@ -2,7 +2,9 @@
 
 use abi::Erc721;
 use alloy::primitives::{Address, U256};
-use e2e::{receipt, watch, Account, Constructor, EventExt, Revert};
+use e2e::{
+    constructor, receipt, watch, Account, Constructor, EventExt, Revert,
+};
 
 mod abi;
 
@@ -15,14 +17,11 @@ fn random_token_id() -> U256 {
 }
 
 fn ctr(base_uri: &str) -> Constructor {
-    Constructor {
-        signature: "constructor(string,string,string)".to_string(),
-        args: vec![
-            TOKEN_NAME.to_string(),
-            TOKEN_SYMBOL.to_string(),
-            base_uri.to_string(),
-        ],
-    }
+    constructor!(
+        TOKEN_NAME.to_string(),
+        TOKEN_SYMBOL.to_string(),
+        base_uri.to_string()
+    )
 }
 
 // ============================================================================
