@@ -16,7 +16,6 @@ use openzeppelin_stylus::token::erc721::{
 #[entrypoint]
 #[storage]
 struct Erc721Example {
-    #[borrow]
     erc721: Erc721,
 }
 

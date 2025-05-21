@@ -24,11 +24,8 @@ use openzeppelin_stylus::token::erc20::{
 #[entrypoint]
 #[storage]
 struct Erc4626Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     metadata: Erc20Metadata,
-    #[borrow]
     erc4626: Erc4626,
 }
 

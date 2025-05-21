@@ -18,7 +18,6 @@ Contracts for Stylus provides helpers for implementing ERC-165 in your contracts
 #[entrypoint]
 #[storage]
 struct Erc721Example {
-    #[borrow]
     erc721: Erc721,
 }
 

@@ -56,9 +56,7 @@ impl From<erc20::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     capped: Capped,
 }
 

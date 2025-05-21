@@ -20,7 +20,6 @@ use openzeppelin_stylus::{
 #[entrypoint]
 #[storage]
 struct Erc721ConsecutiveExample {
-    #[borrow]
     erc721_consecutive: Erc721Consecutive,
 }
 

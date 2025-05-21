@@ -17,9 +17,7 @@ use stylus_sdk::{abi::Bytes, prelude::*};
 #[entrypoint]
 #[storage]
 struct Erc721WrapperExample {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     erc721_wrapper: Erc721Wrapper,
 }
 

@@ -17,9 +17,7 @@ use openzeppelin_stylus::token::erc20::{
 #[entrypoint]
 #[storage]
 struct Erc20FlashMintExample {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     flash_mint: Erc20FlashMint,
 }
 

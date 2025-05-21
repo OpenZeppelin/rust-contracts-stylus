@@ -18,7 +18,6 @@ use stylus_sdk::{abi::Bytes, prelude::*};
 #[entrypoint]
 #[storage]
 struct Erc1155Example {
-    #[borrow]
     erc1155_supply: Erc1155Supply,
 }
 

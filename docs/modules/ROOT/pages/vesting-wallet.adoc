@@ -52,7 +52,6 @@ use stylus_sdk::prelude::*;
 #[entrypoint]
 #[storage]
 struct VestingWalletExample {
-    #[borrow]
     vesting_wallet: VestingWallet,
 }
 

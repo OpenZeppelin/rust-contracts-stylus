@@ -14,7 +14,6 @@ use stylus_sdk::{abi::Bytes, prelude::*};
 #[entrypoint]
 #[storage]
 struct Erc721ConsecutiveExample {
-    #[borrow]
     erc721: Erc721Consecutive,
 }
 

@@ -24,7 +24,6 @@ use openzeppelin_stylus::{
 #[entrypoint]
 #[storage]
 struct Erc1155Example {
-    #[borrow]
     erc1155_supply: Erc1155Supply,
 }
 

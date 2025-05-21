@@ -18,9 +18,7 @@ Here's what our GLD token might look like.
 #[entrypoint]
 #[storage]
 struct GLDToken {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     metadata: Erc20Metadata,
 }
 

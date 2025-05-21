@@ -69,9 +69,7 @@ impl From<erc721::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Erc721Example {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     enumerable: Erc721Enumerable,
 }
 

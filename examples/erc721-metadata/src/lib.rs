@@ -20,9 +20,7 @@ use stylus_sdk::{abi::Bytes, prelude::*};
 #[entrypoint]
 #[storage]
 struct Erc721MetadataExample {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     metadata: Erc721Metadata,
     uri_storage: Erc721UriStorage,
 }

@@ -19,9 +19,7 @@ use openzeppelin_stylus::{
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     metadata: Erc20Metadata,
 }
 

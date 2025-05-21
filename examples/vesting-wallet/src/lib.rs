@@ -12,7 +12,6 @@ use stylus_sdk::{
 #[entrypoint]
 #[storage]
 struct VestingWalletExample {
-    #[borrow]
     vesting_wallet: VestingWallet,
 }
 

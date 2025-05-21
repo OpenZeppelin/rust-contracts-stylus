@@ -3,12 +3,14 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus::{
     access::control::{self, AccessControl, IAccessControl},
     token::erc20::{self, Erc20, IErc20},
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    alloy_primitives::{Address, B256, U256},
+    prelude::*,
+};
 
 #[derive(SolidityError, Debug)]
 enum Error {
@@ -52,38 +54,26 @@ impl From<erc20::Error> for Error {
 
 #[entrypoint]
 #[storage]
-struct AccessControlExample {
+struct Example {
     erc20: Erc20,
     access: AccessControl,
 }
 
-pub const TRANSFER_ROLE: [u8; 32] =
-    keccak_const::Keccak256::new().update(b"TRANSFER_ROLE").finalize();
+const MINTER_ROLE: [u8; 32] =
+    keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
 #[public]
 #[implements(IErc20<Error = Error>, IAccessControl<Error = Error>)]
-impl AccessControlExample {
-    #[constructor]
-    fn constructor(&mut self, admin: Address) {
-        self.access
-            ._grant_role(AccessControl::DEFAULT_ADMIN_ROLE.into(), admin);
-    }
-
-    fn make_admin(&mut self, account: Address) -> Result<(), Error> {
-        self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
-        self.access.grant_role(TRANSFER_ROLE.into(), account)?;
+impl Example {
+    fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
+        self.access.only_role(MINTER_ROLE.into())?;
+        self.erc20._mint(to, amount)?;
         Ok(())
-    }
-
-    // WARNING: This should not be part of the public API, it's here for testing
-    // purposes only.
-    fn set_role_admin(&mut self, role: B256, new_admin_role: B256) {
-        self.access._set_role_admin(role, new_admin_role)
     }
 }
 
 #[public]
-impl IErc20 for AccessControlExample {
+impl IErc20 for Example {
     type Error = Error;
 
     fn total_supply(&self) -> U256 {
@@ -98,7 +88,7 @@ impl IErc20 for AccessControlExample {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.transfer(to, value)?)
     }
 
@@ -110,7 +100,7 @@ impl IErc20 for AccessControlExample {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.approve(spender, value)?)
     }
 
@@ -119,25 +109,20 @@ impl IErc20 for AccessControlExample {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
-        self.access.only_role(TRANSFER_ROLE.into())?;
-        let transfer_result = self.erc20.transfer_from(from, to, value)?;
-        Ok(transfer_result)
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
 
 #[public]
-impl IAccessControl for AccessControlExample {
+impl IAccessControl for Example {
     type Error = Error;
 
     fn has_role(&self, role: B256, account: Address) -> bool {
         self.access.has_role(role, account)
     }
 
-    fn only_role(
-        &self,
-        role: B256,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
         Ok(self.access.only_role(role)?)
     }
 
@@ -149,7 +134,7 @@ impl IAccessControl for AccessControlExample {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.access.grant_role(role, account)?)
     }
 
@@ -157,7 +142,7 @@ impl IAccessControl for AccessControlExample {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.access.revoke_role(role, account)?)
     }
 
@@ -165,7 +150,7 @@ impl IAccessControl for AccessControlExample {
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.access.renounce_role(role, confirmation)?)
     }
 }

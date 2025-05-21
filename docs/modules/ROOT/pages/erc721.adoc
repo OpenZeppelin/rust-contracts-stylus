@@ -28,9 +28,7 @@ use openzeppelin_stylus::token::erc721::{
 #[entrypoint]
 #[storage]
 struct GameItem {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     metadata: Erc721Metadata,
     next_token_id: StorageU256,
 }

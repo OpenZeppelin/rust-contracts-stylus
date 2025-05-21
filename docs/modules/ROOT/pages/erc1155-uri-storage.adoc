@@ -24,7 +24,6 @@ use openzeppelin_stylus::{
 #[entrypoint]
 #[storage]
 struct Erc1155MetadataUriExample {
-    #[borrow]
     erc1155: Erc1155,
     metadata_uri: Erc1155MetadataUri,
     uri_storage: Erc1155UriStorage,

@@ -13,9 +13,7 @@ use stylus_sdk::prelude::*;
 #[entrypoint]
 #[storage]
 struct Erc20WrapperExample {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     erc20_wrapper: Erc20Wrapper,
 }
 

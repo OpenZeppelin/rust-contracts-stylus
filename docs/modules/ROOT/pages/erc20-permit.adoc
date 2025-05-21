@@ -22,11 +22,8 @@ use openzeppelin_stylus::{
 #[entrypoint]
 #[storage]
 struct Erc20PermitExample {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     nonces: Nonces,
-    #[borrow]
     erc20_permit: Erc20Permit<Eip712>,
 }
 
