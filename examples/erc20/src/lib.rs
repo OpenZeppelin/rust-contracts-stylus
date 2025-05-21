@@ -152,7 +152,7 @@ impl IErc20 for Erc20Example {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer(to, value).map_err(|e| e.into())
     }
@@ -165,7 +165,7 @@ impl IErc20 for Erc20Example {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.approve(spender, value)?)
     }
 
@@ -174,7 +174,7 @@ impl IErc20 for Erc20Example {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         self.pausable.when_not_paused()?;
         self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
     }
@@ -211,10 +211,7 @@ impl IErc165 for Erc20Example {
 impl IErc20Burnable for Erc20Example {
     type Error = Error;
 
-    fn burn(
-        &mut self,
-        value: U256,
-    ) -> Result<(), <Self as IErc20Burnable>::Error> {
+    fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
         self.pausable.when_not_paused()?;
         self.erc20.burn(value).map_err(|e| e.into())
     }
@@ -223,7 +220,7 @@ impl IErc20Burnable for Erc20Example {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), <Self as IErc20Burnable>::Error> {
+    ) -> Result<(), Self::Error> {
         self.pausable.when_not_paused()?;
         self.erc20.burn_from(account, value).map_err(|e| e.into())
     }

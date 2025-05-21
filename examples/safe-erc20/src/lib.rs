@@ -28,7 +28,7 @@ impl ISafeErc20 for SafeErc20Example {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         self.safe_erc20.safe_transfer(token, to, value)
     }
 
@@ -38,7 +38,7 @@ impl ISafeErc20 for SafeErc20Example {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         self.safe_erc20.safe_transfer_from(token, from, to, value)
     }
 
@@ -47,7 +47,7 @@ impl ISafeErc20 for SafeErc20Example {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         self.safe_erc20.safe_increase_allowance(token, spender, value)
     }
 
@@ -56,7 +56,7 @@ impl ISafeErc20 for SafeErc20Example {
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         self.safe_erc20.safe_decrease_allowance(
             token,
             spender,
@@ -69,7 +69,7 @@ impl ISafeErc20 for SafeErc20Example {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         self.safe_erc20.force_approve(token, spender, value)
     }
 }

@@ -148,7 +148,7 @@ pub trait IErc721Wrapper {
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, <Self as IErc721Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn wrapped tokens and withdraw the corresponding
     /// `token_ids` of the underlying tokens.
@@ -174,7 +174,7 @@ pub trait IErc721Wrapper {
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, <Self as IErc721Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
     /// minting on direct ERC-721 transfers to this contract.
@@ -202,7 +202,7 @@ pub trait IErc721Wrapper {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<FixedBytes<4>, <Self as IErc721Wrapper>::Error>;
+    ) -> Result<FixedBytes<4>, Self::Error>;
 
     /// Returns the underlying token.
     ///
