@@ -24,7 +24,7 @@ struct Erc20Example {
 }
 
 #[public]
-#[implements(IErc20<Error = erc20::Error>, IErc20Metadata)]
+#[implements(IErc20<Error = erc20::Error>, IErc20Metadata, IErc165)]
 impl Erc20Example {
     #[constructor]
     fn constructor(&mut self, name: String, symbol: String) {
