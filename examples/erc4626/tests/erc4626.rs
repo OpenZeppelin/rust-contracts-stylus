@@ -3,8 +3,8 @@
 use abi::Erc4626;
 use alloy::primitives::{uint, Address, U256};
 use e2e::{
-    receipt, send, watch, Account, Constructor, EventExt, Panic, PanicCode,
-    Revert,
+    constructor, receipt, send, watch, Account, Constructor, EventExt, Panic,
+    PanicCode, Revert,
 };
 use eyre::Result;
 use mock::{
@@ -22,27 +22,21 @@ mod abi;
 mod mock;
 
 fn ctr(asset: Address) -> Constructor {
-    Constructor {
-        signature: "constructor(address,uint8,string,string)".to_string(),
-        args: vec![
-            asset.to_string(),
-            DECIMALS_OFFSET.to_string(),
-            TOKEN_NAME.to_string(),
-            TOKEN_SYMBOL.to_string(),
-        ],
-    }
+    constructor!(
+        asset,
+        DECIMALS_OFFSET,
+        TOKEN_NAME.to_string(),
+        TOKEN_SYMBOL.to_string()
+    )
 }
 
 fn dec_offset_overflow_ctr(asset: Address) -> Constructor {
-    Constructor {
-        signature: "constructor(address,uint8,string,string)".to_string(),
-        args: vec![
-            asset.to_string(),
-            MIN_OVERFLOW_DECIMAL_OFFSET.to_string(),
-            TOKEN_NAME.to_string(),
-            TOKEN_SYMBOL.to_string(),
-        ],
-    }
+    constructor!(
+        asset,
+        MIN_OVERFLOW_DECIMAL_OFFSET,
+        TOKEN_NAME.to_string(),
+        TOKEN_SYMBOL.to_string()
+    )
 }
 
 async fn deploy(

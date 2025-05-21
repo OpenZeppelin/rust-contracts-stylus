@@ -17,11 +17,16 @@ macro_rules! constructor {
     }};
 
     ($first:expr $(, $rest:expr)* $(,)?) => {{
-        fn get_abi_str<T: stylus_sdk::abi::AbiType>(_: &T) -> &'static str {
+        fn get_abi_str<T: stylus_sdk::abi::AbiType>(_: T) -> &'static str {
             <T as stylus_sdk::abi::AbiType>::ABI.as_str()
         }
 
-        let signature_params = vec![get_abi_str($first)$(, get_abi_str($rest))*].join(",");
+        let signature_params = {
+            let mut params = vec![get_abi_str($first)];
+            $(params.push(get_abi_str($rest));)*
+            params.join(",")
+        };
+
         let args = vec![$first.to_string()$(, $rest.to_string())*];
 
         $crate::Constructor {
