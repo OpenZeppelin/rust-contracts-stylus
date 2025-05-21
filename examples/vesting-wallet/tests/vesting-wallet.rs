@@ -9,8 +9,8 @@ use alloy::{
     rpc::types::{BlockTransactionsKind, TransactionRequest},
 };
 use e2e::{
-    receipt, send, watch, Account, Constructor, ContractInitializationError,
-    EventExt, Panic, PanicCode, Revert,
+    constructor, receipt, send, watch, Account, Constructor,
+    ContractInitializationError, EventExt, Panic, PanicCode, Revert,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
@@ -25,14 +25,7 @@ fn ctr(
     start_timestamp: u64,
     duration_seconds: u64,
 ) -> Constructor {
-    Constructor {
-        signature: "constructor(address,uint64,uint64)".to_string(),
-        args: vec![
-            beneficiary.to_string(),
-            start_timestamp.to_string(),
-            duration_seconds.to_string(),
-        ],
-    }
+    constructor!(beneficiary, start_timestamp, duration_seconds)
 }
 
 async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
