@@ -315,7 +315,19 @@ impl IErc721 for Erc721Consecutive {
 
 #[public]
 #[implements(IErc721<Error = Error>, IErc165)]
-impl Erc721Consecutive {}
+impl Erc721Consecutive {
+    // TODO: remove once function overriding is possible, so `max_batch_size`
+    // can be set that way.
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    #[constructor]
+    pub fn constructor(&mut self) {
+        self.max_batch_size.set(U96::from(5000));
+    }
+}
 
 // ************** Consecutive **************
 
