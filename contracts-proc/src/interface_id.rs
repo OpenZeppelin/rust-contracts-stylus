@@ -65,11 +65,18 @@ pub(crate) fn interface_id(
     let (_impl_generics, ty_generics, where_clause) =
         input.generics.split_for_impl();
 
+    let supertrait_tokens = if input.supertraits.is_empty() {
+        quote! {}
+    } else {
+        let supertraits = &input.supertraits;
+        quote! { : #supertraits }
+    };
+
     // Keep the same trait with an additional associated constant
     // `INTERFACE_ID`.
     quote! {
         #(#attrs)*
-        #vis trait #name #ty_generics #where_clause {
+        #vis trait #name #ty_generics #supertrait_tokens #where_clause {
             #(#trait_items)*
 
             #[doc = concat!("Solidity interface id associated with ", stringify!(#name), " trait.")]
