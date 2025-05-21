@@ -211,10 +211,7 @@ impl IErc165 for Erc20Example {
 impl IErc20Burnable for Erc20Example {
     type Error = Error;
 
-    fn burn(
-        &mut self,
-        value: U256,
-    ) -> Result<(), Self::Error> {
+    fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
         self.pausable.when_not_paused()?;
         self.erc20.burn(value).map_err(|e| e.into())
     }

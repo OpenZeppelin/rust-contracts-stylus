@@ -223,17 +223,11 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
-    fn balance_of(
-        &self,
-        owner: Address,
-    ) -> Result<U256, Self::Error> {
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
         Ok(self.erc721.balance_of(owner)?)
     }
 
-    fn owner_of(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, Self::Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)
     }
 
@@ -309,10 +303,7 @@ impl IErc721 for Erc721Consecutive {
         Ok(self.erc721.set_approval_for_all(operator, approved)?)
     }
 
-    fn get_approved(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, Self::Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)?;
         Ok(self.erc721._get_approved(token_id))
     }

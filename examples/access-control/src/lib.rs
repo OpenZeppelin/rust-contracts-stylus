@@ -134,10 +134,7 @@ impl IAccessControl for AccessControlExample {
         self.access.has_role(role, account)
     }
 
-    fn only_role(
-        &self,
-        role: B256,
-    ) -> Result<(), Self::Error> {
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
         Ok(self.access.only_role(role)?)
     }
 

@@ -54,9 +54,7 @@ impl IVestingWallet for VestingWalletExample {
         self.vesting_wallet.transfer_ownership(new_owner)
     }
 
-    fn renounce_ownership(
-        &mut self,
-    ) -> Result<(), Self::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         self.vesting_wallet.renounce_ownership()
     }
 
@@ -101,10 +99,7 @@ impl IVestingWallet for VestingWalletExample {
     }
 
     #[selector(name = "release")]
-    fn release_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<(), Self::Error> {
+    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
         self.vesting_wallet.release_erc20(token)
     }
 

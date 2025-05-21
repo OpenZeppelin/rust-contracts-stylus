@@ -242,9 +242,7 @@ pub trait IVestingWallet {
     /// # Events
     ///
     /// * [`ownable::OwnershipTransferred`].
-    fn renounce_ownership(
-        &mut self,
-    ) -> Result<(), Self::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Getter for the start timestamp.
     ///
@@ -314,10 +312,8 @@ pub trait IVestingWallet {
     /// * If total allocation exceeds [`U256::MAX`].
     /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "releasable")]
-    fn releasable_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<U256, Self::Error>;
+    fn releasable_erc20(&mut self, token: Address)
+        -> Result<U256, Self::Error>;
 
     /// Release the native tokens (Ether) that have already vested.
     ///
@@ -362,10 +358,7 @@ pub trait IVestingWallet {
     /// * If total allocation exceeds [`U256::MAX`].
     /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "release")]
-    fn release_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<(), Self::Error>;
+    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
     /// Calculates the amount of Ether that has already vested.
     /// The Default implementation is a linear vesting curve.
@@ -463,9 +456,7 @@ impl IVestingWallet for VestingWallet {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(
-        &mut self,
-    ) -> Result<(), Self::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 
@@ -530,10 +521,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<(), Self::Error> {
+    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 

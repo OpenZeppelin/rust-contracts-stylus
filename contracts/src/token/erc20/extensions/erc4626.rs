@@ -257,10 +257,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow.
-    fn convert_to_shares(
-        &mut self,
-        assets: U256,
-    ) -> Result<U256, Self::Error>;
+    fn convert_to_shares(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
     /// amount of shares provided, in an ideal scenario where all the conditions
@@ -291,10 +288,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow.
-    fn convert_to_assets(
-        &mut self,
-        shares: U256,
-    ) -> Result<U256, Self::Error>;
+    fn convert_to_assets(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be deposited
     /// into the Vault for the receiver, through a deposit call.
@@ -334,10 +328,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_deposit(
-        &mut self,
-        assets: U256,
-    ) -> Result<U256, Self::Error>;
+    fn preview_deposit(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Deposits exactly `assets` amount of underlying tokens into the Vault and
     /// mints corresponding Vault shares to `receiver`.
@@ -418,10 +409,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_mint(
-        &mut self,
-        shares: U256,
-    ) -> Result<U256, Self::Error>;
+    fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Mints the specified number of shares to `receiver` by pulling the
     /// required amount of underlying tokens from caller.
@@ -490,10 +478,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn max_withdraw(
-        &mut self,
-        owner: Address,
-    ) -> Result<U256, Self::Error>;
+    fn max_withdraw(&mut self, owner: Address) -> Result<U256, Self::Error>;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// withdrawal at the current block, given current on-chain conditions.
@@ -518,10 +503,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_withdraw(
-        &mut self,
-        assets: U256,
-    ) -> Result<U256, Self::Error>;
+    fn preview_withdraw(&mut self, assets: U256) -> Result<U256, Self::Error>;
 
     /// Withdraws the specified amount of underlying tokens to `receiver` by
     /// burning the required number of shares from `owner`.
@@ -617,10 +599,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * If decimal offset calculation overflows.
     /// * If multiplication or division operations overflow during conversion.
-    fn preview_redeem(
-        &mut self,
-        shares: U256,
-    ) -> Result<U256, Self::Error>;
+    fn preview_redeem(&mut self, shares: U256) -> Result<U256, Self::Error>;
 
     /// Burns the specified number of shares from `owner` and sends the
     /// corresponding amount of underlying tokens to `receiver`.
@@ -1221,10 +1200,7 @@ mod tests {
             self.erc4626.max_mint(receiver)
         }
 
-        fn preview_mint(
-            &mut self,
-            shares: U256,
-        ) -> Result<U256, Self::Error> {
+        fn preview_mint(&mut self, shares: U256) -> Result<U256, Self::Error> {
             self.erc4626.preview_mint(shares, &self.erc20)
         }
 
