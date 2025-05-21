@@ -23,8 +23,30 @@ struct GLDToken {
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata)]
-impl GLDToken {}
+#[implements(IErc20<Error = Error>, IErc20Metadata, IErc165)]
+impl GLDToken {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+}
+
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = Error;
+
+    // ...
+}
+
+#[public]
+impl IErc20Metadata for Erc20Example {
+    // ...
+}
+
+#[public]
+impl IErc165 for Erc20Example {
+    // ...
+}
 ----
 
 Our contracts are often used via stylus-sdk https://docs.arbitrum.io/stylus/reference/rust-sdk-guide#inheritance-inherit-and-borrow[inheritance], and here we're reusing https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/struct.Erc20.html[`ERC20`] for both the basic standard implementation and with optional extensions.
@@ -55,8 +77,8 @@ To use a different value, you will need to override the `decimals()` function in
 
 [source,rust]
 ----
-fn decimals(&self) -> u8 {
-    16
+fn decimals(&self) -> U8 {
+    U8::from(16)
 }
 ----
 
