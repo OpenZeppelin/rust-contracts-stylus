@@ -110,7 +110,9 @@ impl IErc20 for Example {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        Ok(self.erc20.transfer_from(from, to, value)?)
+        self.access.only_role(TRANSFER_ROLE.into())?;
+        let transfer_result = self.erc20.transfer_from(from, to, value)?;
+        Ok(transfer_result)
     }
 }
 

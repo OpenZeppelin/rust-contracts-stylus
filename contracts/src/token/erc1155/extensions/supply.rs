@@ -115,7 +115,7 @@ impl IErc1155 for Erc1155Supply {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, <Self as IErc1155>::Error> {
+    ) -> Result<Vec<U256>, Self::Error> {
         self.erc1155.balance_of_batch(accounts, ids)
     }
 
@@ -123,7 +123,7 @@ impl IErc1155 for Erc1155Supply {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.set_approval_for_all(operator, approved)
     }
 
@@ -138,7 +138,7 @@ impl IErc1155 for Erc1155Supply {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, vec![id], vec![value], &data)
     }
@@ -150,7 +150,7 @@ impl IErc1155 for Erc1155Supply {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
     }

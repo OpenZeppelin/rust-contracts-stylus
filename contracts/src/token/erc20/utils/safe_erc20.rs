@@ -120,7 +120,7 @@ pub trait ISafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the
     /// approval given by `from` to the calling contract. If `token` returns
@@ -145,7 +145,7 @@ pub trait ISafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
@@ -172,7 +172,7 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Decrease the calling contract's allowance toward `spender` by
     /// `requested_decrease`. If `token` returns no value, non-reverting
@@ -197,7 +197,7 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Set the calling contract's allowance toward `spender` to `value`. If
     /// `token` returns no value, non-reverting calls are assumed to be
@@ -221,7 +221,7 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 #[public]
@@ -237,7 +237,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let call = IErc20::transferCall { to, value };
 
         Self::call_optional_return(token, &call)
@@ -249,7 +249,7 @@ impl ISafeErc20 for SafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let call = IErc20::transferFromCall { from, to, value };
 
         Self::call_optional_return(token, &call)
@@ -260,7 +260,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let current_allowance = Self::allowance(token, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
@@ -273,7 +273,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let current_allowance = Self::allowance(token, spender)?;
 
         if current_allowance < requested_decrease {
@@ -297,7 +297,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let approve_call = IErc20::approveCall { spender, value };
 
         // Try performing the approval with the desired value.

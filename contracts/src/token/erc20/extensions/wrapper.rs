@@ -188,7 +188,7 @@ pub trait IErc20Wrapper {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn a number of wrapped tokens and withdraw the
     /// corresponding number of underlying tokens.
@@ -212,7 +212,7 @@ pub trait IErc20Wrapper {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

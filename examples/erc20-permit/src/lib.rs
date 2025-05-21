@@ -61,7 +61,7 @@ impl IErc20 for Erc20PermitExample {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.transfer(to, value)?)
     }
 
@@ -73,7 +73,7 @@ impl IErc20 for Erc20PermitExample {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.approve(spender, value)?)
     }
 
@@ -82,7 +82,7 @@ impl IErc20 for Erc20PermitExample {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
@@ -112,7 +112,7 @@ impl IErc20Permit for Erc20PermitExample {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<(), <Self as IErc20Permit>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc20_permit.permit(
             owner,
             spender,

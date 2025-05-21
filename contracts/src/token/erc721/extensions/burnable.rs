@@ -29,20 +29,14 @@ pub trait IErc721Burnable {
     /// # Events
     ///
     /// * [`erc721::Transfer`].
-    fn burn(
-        &mut self,
-        token_id: U256,
-    ) -> Result<(), <Self as IErc721Burnable>::Error>;
+    fn burn(&mut self, token_id: U256) -> Result<(), Self::Error>;
 }
 
 #[public]
 impl IErc721Burnable for Erc721 {
     type Error = erc721::Error;
 
-    fn burn(
-        &mut self,
-        token_id: U256,
-    ) -> Result<(), <Self as IErc721Burnable>::Error> {
+    fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
         // Setting an "auth" arguments enables the
         // [`super::super::Erc721::_is_authorized`] check which verifies that
         // the token exists (from != [`Address::ZERO`]).

@@ -60,10 +60,7 @@ pub trait IErc721Metadata: IErc165 {
     ///
     /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
     #[selector(name = "tokenURI")]
-    fn token_uri(
-        &self,
-        token_id: U256,
-    ) -> Result<String, <Self as IErc721Metadata>::Error>;
+    fn token_uri(&self, token_id: U256) -> Result<String, Self::Error>;
 }
 
 impl Erc721Metadata {

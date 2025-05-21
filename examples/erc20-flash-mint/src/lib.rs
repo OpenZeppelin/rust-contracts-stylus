@@ -96,7 +96,7 @@ impl IErc20 for Erc20FlashMintExample {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.transfer(to, value)?)
     }
 
@@ -108,7 +108,7 @@ impl IErc20 for Erc20FlashMintExample {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.approve(spender, value)?)
     }
 
@@ -117,7 +117,7 @@ impl IErc20 for Erc20FlashMintExample {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
