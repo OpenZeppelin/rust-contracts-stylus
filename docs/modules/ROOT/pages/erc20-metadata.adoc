@@ -11,8 +11,9 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 ----
 use openzeppelin_stylus::{
     token::erc20::{
-        extensions::Erc20Metadata,
-        Erc20,
+        self,
+        extensions::{Erc20Metadata, IErc20Metadata},
+        Erc20, IErc20,
     },
 };
 
@@ -24,8 +25,36 @@ struct Erc20Example {
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
+#[implements(IErc20<Error = erc20::Error>, IErc20Metadata, IErc165)]
 impl Erc20Example {
     // ...
+}
+
+#[public]
+impl IErc20 for Erc20Example {
+    // ...
+}
+
+#[public]
+impl IErc20Metadata for Erc20Example {
+    fn name(&self) -> String {
+        self.metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
+    fn decimals(&self) -> U8 {
+        self.metadata.decimals()
+    }
+}
+
+#[public]
+impl IErc165 for Erc20Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc20.supports_interface(interface_id)
+            || self.metadata.supports_interface(interface_id)
+    }
 }
 ----

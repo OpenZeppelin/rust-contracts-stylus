@@ -12,8 +12,8 @@ In order to make your ERC20 token `pausable`, you need to use the https://docs.r
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc20::{self, extensions::IErc20Burnable, Erc20, IErc20},
-    utils::{pausable, Pausable},
+    token::erc20::{self, Erc20, IErc20},
+    utils::{pausable, IPausable, Pausable},
 };
 
 #[derive(SolidityError, Debug)]
@@ -62,26 +62,8 @@ struct Erc20Example {
 }
 
 #[public]
-#[inherit(Erc20, Pausable)]
+#[implements(IErc20<Error = Error>, IPausable)]
 impl Erc20Example {
-    fn burn(&mut self, value: U256) -> Result<(), Error> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc20.burn(value).map_err(|e| e.into())
-    }
-
-    fn burn_from(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Error> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc20.burn_from(account, value).map_err(|e| e.into())
-    }
-
     fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
@@ -89,12 +71,19 @@ impl Erc20Example {
         self.erc20._mint(account, value)?;
         Ok(())
     }
+}
+
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = Error;
 
     fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
-        self.erc20.transfer(to, value).map_err(|e| e.into())
+        let result = self.erc20.transfer(to, value)?;
+        // ...
+        Ok(result)
     }
 
     fn transfer_from(
@@ -106,7 +95,11 @@ impl Erc20Example {
         // ...
         self.pausable.when_not_paused()?;
         // ...
-        self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+        let result = self.erc20.transfer_from(from, to, value)?;
+        // ...
+        Ok(result)
     }
+    
+    // ...
 }
 ----
