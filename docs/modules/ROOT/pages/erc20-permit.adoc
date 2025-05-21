@@ -76,7 +76,7 @@ impl IErc20Permit for Erc20PermitExample {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<(), <Self as IErc20Permit>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc20_permit.permit(
             owner,
             spender,
