@@ -21,7 +21,7 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "=0.1.1"
+openzeppelin-stylus = "=0.1.2"
 ```
 
 If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
@@ -40,7 +40,7 @@ We put great effort in testing the contracts before releasing an alpha, but thes
 > ```toml
 > [dependencies]
 > alloy-primitives = { version = "=0.8.20", default-features = false }
-> stylus-sdk = { version = "=0.8.4", default-features = false, features = [
+> stylus-sdk = { version = "=0.9.0", default-features = false, features = [
 >   "mini-alloc",
 > ] }
 > ```

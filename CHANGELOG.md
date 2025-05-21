@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Bump Stylus SDK to `v0.9.0`. #639
 - Convert associated `const INTERFACE_ID` into an associated `fn interface_id()` on all traits. #639
 - `IErc165::supports_interface` now accepts `&self` as first parameter. #639
 - Removed `Erc165` struct. #639
