@@ -11,7 +11,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 ----
 use openzeppelin_stylus::token::erc20::{
     extensions::{flash_mint, Erc20FlashMint, IErc3156FlashLender},
-    Erc20,
+    Erc20, IErc20,
 };
 
 #[entrypoint]
@@ -22,7 +22,7 @@ struct Erc20FlashMintExample {
 }
 
 #[public]
-#[inherit(Erc20)]
+#[implements(IErc20<Error = flash_mint::Error>, IErc3156FlashLender<Error = flash_mint::Error>)]
 impl Erc20FlashMintExample {
     fn max_flash_loan(&self, token: Address) -> U256 {
         self.flash_mint.max_flash_loan(token, &self.erc20)

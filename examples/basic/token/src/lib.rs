@@ -3,13 +3,16 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use openzeppelin_stylus::token::erc20::{
-    self,
-    extensions::{Erc20Metadata, IErc20Metadata},
-    Erc20, IErc20,
+use openzeppelin_stylus::{
+    token::erc20::{
+        self,
+        extensions::{Erc20Metadata, IErc20Metadata},
+        Erc20, IErc20,
+    },
+    utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{
-    alloy_primitives::{Address, U256, U8},
+    alloy_primitives::{Address, FixedBytes, U256, U8},
     prelude::*,
 };
 
@@ -91,5 +94,13 @@ impl IErc20Metadata for Erc20Example {
 
     fn decimals(&self) -> U8 {
         self.metadata.decimals()
+    }
+}
+
+#[public]
+impl IErc165 for Erc20Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc20.supports_interface(interface_id)
+            || self.metadata.supports_interface(interface_id)
     }
 }
