@@ -8,7 +8,7 @@ use alloy::{
     uint,
 };
 use alloy_primitives::U256;
-use e2e::{receipt, Account, Constructor};
+use e2e::{constructor, receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -97,40 +97,33 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         .collect::<eyre::Result<Vec<_>>>()
 }
 
-fn ctr(beneficiary: Address) -> Constructor {
-    Constructor {
-        signature: "constructor(address,uint64,uint64)".to_string(),
-        args: vec![
-            beneficiary.to_string(),
-            START_TIMESTAMP.to_string(),
-            DURATION_SECONDS.to_string(),
-        ],
-    }
-}
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
     crate::deploy(
         account,
         "vesting-wallet",
-        Some(ctr(account.address())),
+        Some(constructor!(
+            account.address(),
+            START_TIMESTAMP.to_string(),
+            DURATION_SECONDS.to_string()
+        )),
         cache_opt,
     )
     .await
-}
-
-fn ctr_erc20() -> Constructor {
-    Constructor {
-        signature: "constructor(string,string,uint256)".to_string(),
-        args: vec![
-            TOKEN_NAME.to_string(),
-            TOKEN_SYMBOL.to_string(),
-            CAP.to_string(),
-        ],
-    }
 }
 
 async fn deploy_token(
     account: &Account,
     cache_opt: Opt,
 ) -> eyre::Result<Address> {
-    crate::deploy(account, "erc20", Some(ctr_erc20()), cache_opt).await
+    crate::deploy(
+        account,
+        "erc20",
+        Some(constructor!(
+            TOKEN_NAME.to_string(),
+            TOKEN_SYMBOL.to_string(),
+            CAP.to_string()
+        )),
+        cache_opt,
+    )
+    .await
 }
