@@ -1,4 +1,5 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
+#![allow(clippy::result_large_err)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -7,8 +8,8 @@ use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc1155::{
         self,
-        extensions::{Erc1155Supply, IErc1155Supply},
-        Erc1155,
+        extensions::{Erc1155Supply, IErc1155Burnable, IErc1155Supply},
+        IErc1155,
     },
     utils::introspection::erc165::IErc165,
 };
@@ -22,21 +23,8 @@ struct Erc1155Example {
 }
 
 #[public]
-#[inherit(Erc1155Supply)]
+#[implements(IErc1155<Error = erc1155::Error>, IErc1155Burnable<Error = erc1155::Error>, IErc1155Supply, IErc165)]
 impl Erc1155Example {
-    fn total_supply(&self, id: U256) -> U256 {
-        self.erc1155_supply.total_supply(id)
-    }
-
-    #[selector(name = "totalSupply")]
-    fn total_supply_all(&self) -> U256 {
-        self.erc1155_supply.total_supply_all()
-    }
-
-    fn exists(&self, id: U256) -> bool {
-        self.erc1155_supply.exists(id)
-    }
-
     // Add token minting feature.
     fn mint(
         &mut self,
@@ -57,6 +45,63 @@ impl Erc1155Example {
     ) -> Result<(), erc1155::Error> {
         self.erc1155_supply._mint_batch(to, ids, values, &data)
     }
+}
+
+#[public]
+impl IErc1155 for Erc1155Example {
+    type Error = erc1155::Error;
+
+    fn balance_of(&self, account: Address, id: U256) -> U256 {
+        self.erc1155_supply.balance_of(account, id)
+    }
+
+    fn balance_of_batch(
+        &self,
+        accounts: Vec<Address>,
+        ids: Vec<U256>,
+    ) -> Result<Vec<U256>, erc1155::Error> {
+        self.erc1155_supply.balance_of_batch(accounts, ids)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155_supply.set_approval_for_all(operator, approved)
+    }
+
+    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
+        self.erc1155_supply.is_approved_for_all(account, operator)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155_supply.safe_transfer_from(from, to, id, value, data)
+    }
+
+    fn safe_batch_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155_supply
+            .safe_batch_transfer_from(from, to, ids, values, data)
+    }
+}
+
+#[public]
+impl IErc1155Burnable for Erc1155Example {
+    type Error = erc1155::Error;
 
     // Add token burning feature.
     fn burn(
@@ -76,8 +121,27 @@ impl Erc1155Example {
     ) -> Result<(), erc1155::Error> {
         self.erc1155_supply._burn_batch(from, ids, values)
     }
+}
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc1155::supports_interface(interface_id)
+#[public]
+impl IErc1155Supply for Erc1155Example {
+    fn total_supply(&self, id: U256) -> U256 {
+        self.erc1155_supply.total_supply(id)
+    }
+
+    #[selector(name = "totalSupply")]
+    fn total_supply_all(&self) -> U256 {
+        self.erc1155_supply.total_supply_all()
+    }
+
+    fn exists(&self, id: U256) -> bool {
+        self.erc1155_supply.exists(id)
+    }
+}
+
+#[public]
+impl IErc165 for Erc1155Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc1155_supply.supports_interface(interface_id)
     }
 }

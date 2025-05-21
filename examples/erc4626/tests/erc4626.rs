@@ -2,7 +2,10 @@
 
 use abi::Erc4626;
 use alloy::primitives::{uint, Address, U256};
-use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
+use e2e::{
+    receipt, send, watch, Account, Constructor, EventExt, Panic, PanicCode,
+    Revert,
+};
 use eyre::Result;
 use mock::{
     erc20, erc20::ERC20Mock, erc20_failing_transfer,
@@ -12,16 +15,34 @@ use mock::{
 const DECIMALS_OFFSET: u8 = 0;
 /// The minimum decimal offset needed to induce overflow
 const MIN_OVERFLOW_DECIMAL_OFFSET: u8 = 78;
+const TOKEN_NAME: &str = "Test Token";
+const TOKEN_SYMBOL: &str = "TTK";
 
 mod abi;
 mod mock;
 
-fn ctr(asset: Address) -> Vec<String> {
-    vec![asset.to_string(), DECIMALS_OFFSET.to_string()]
+fn ctr(asset: Address) -> Constructor {
+    Constructor {
+        signature: "constructor(address,uint8,string,string)".to_string(),
+        args: vec![
+            asset.to_string(),
+            DECIMALS_OFFSET.to_string(),
+            TOKEN_NAME.to_string(),
+            TOKEN_SYMBOL.to_string(),
+        ],
+    }
 }
 
-fn dec_offset_overflow_ctr(asset: Address) -> Vec<String> {
-    vec![asset.to_string(), MIN_OVERFLOW_DECIMAL_OFFSET.to_string()]
+fn dec_offset_overflow_ctr(asset: Address) -> Constructor {
+    Constructor {
+        signature: "constructor(address,uint8,string,string)".to_string(),
+        args: vec![
+            asset.to_string(),
+            MIN_OVERFLOW_DECIMAL_OFFSET.to_string(),
+            TOKEN_NAME.to_string(),
+            TOKEN_SYMBOL.to_string(),
+        ],
+    }
 }
 
 async fn deploy(

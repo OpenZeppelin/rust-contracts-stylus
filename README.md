@@ -44,19 +44,6 @@ We put great effort in testing the contracts before releasing an alpha, but thes
 >   "mini-alloc",
 > ] }
 > ```
->
-> You will also need to define your own panic handler for `cargo stylus check` to pass.
-> Here's an example of a simple panic handler you can use in your `lib.rs` file:
->
-> ```rust
-> #[cfg(target_arch = "wasm32")]
-> #[panic_handler]
-> fn panic(_info: &core::panic::PanicInfo) -> ! {
->     loop {}
-> }
-> ```
->
-> The library also works on an `std` environment, without the need to define a panic handler or making extra changes to your project.
 
 Once defined as a dependency, use one of our pre-defined implementations by
 importing them:

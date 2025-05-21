@@ -6,21 +6,21 @@ use alloc::vec::Vec;
 use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus::{
     token::erc20::{
-        extensions::{permit, Erc20Permit},
-        Erc20,
+        extensions::{permit, Erc20Permit, IErc20Permit},
+        Erc20, IErc20,
     },
-    utils::{cryptography::eip712::IEip712, nonces::Nonces},
+    utils::{
+        cryptography::eip712::IEip712,
+        nonces::{INonces, Nonces},
+    },
 };
 use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
 struct Erc20PermitExample {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     nonces: Nonces,
-    #[borrow]
     erc20_permit: Erc20Permit<Eip712>,
 }
 
@@ -33,7 +33,7 @@ impl IEip712 for Eip712 {
 }
 
 #[public]
-#[inherit(Erc20, Nonces, Erc20Permit<Eip712>)]
+#[implements(IErc20<Error = permit::Error>, INonces, IErc20Permit<Error = permit::Error>)]
 impl Erc20PermitExample {
     // Add token minting feature.
     fn mint(
@@ -43,8 +43,66 @@ impl Erc20PermitExample {
     ) -> Result<(), permit::Error> {
         Ok(self.erc20._mint(account, value)?)
     }
+}
 
-    #[allow(clippy::too_many_arguments)]
+#[public]
+impl IErc20 for Erc20PermitExample {
+    type Error = permit::Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer(to, value)?)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.approve(spender, value)?)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer_from(from, to, value)?)
+    }
+}
+
+#[public]
+impl INonces for Erc20PermitExample {
+    fn nonces(&self, owner: Address) -> U256 {
+        self.nonces.nonces(owner)
+    }
+}
+
+#[public]
+impl IErc20Permit for Erc20PermitExample {
+    type Error = permit::Error;
+
+    #[selector(name = "DOMAIN_SEPARATOR")]
+    fn domain_separator(&self) -> B256 {
+        self.erc20_permit.domain_separator()
+    }
+
     fn permit(
         &mut self,
         owner: Address,
@@ -54,7 +112,7 @@ impl Erc20PermitExample {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<(), permit::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc20_permit.permit(
             owner,
             spender,

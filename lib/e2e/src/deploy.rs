@@ -1,4 +1,4 @@
-use std::{process::Command, str::FromStr};
+use std::{path::PathBuf, process::Command, str::FromStr};
 
 use alloy::{
     consensus::Transaction,
@@ -11,15 +11,18 @@ use alloy::{
 };
 use eyre::{Context, ContextCompat};
 use regex::Regex;
-use stylus_sdk::function_selector;
+use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
 
-use crate::{system::DEPLOYER_ADDRESS, Receipt};
+use crate::{project::Crate, system::DEPLOYER_ADDRESS, Receipt};
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address);
 
 const PROGRAM_UP_TO_DATE_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ProgramUpToDate");
+
+const CONTRACT_DEPLOYMENT_ERROR_SELECTOR: [u8; 4] =
+    function_selector!("ContractDeploymentError", Bytes);
 
 /// Represents the `ContractInitializationError(address)` error in
 /// StylusDeployer.
@@ -47,23 +50,63 @@ impl std::fmt::Display for ContractInitializationError {
 
 impl std::error::Error for ContractInitializationError {}
 
+/// Represents the `ContractDeploymentError(bytes)` error in StylusDeployer.
+///
+/// See: <https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L15>
+#[derive(Debug)]
+pub struct ContractDeploymentError {
+    /// Contract bytecode.
+    pub bytecode: alloy_primitives::Bytes,
+}
+
+impl ContractDeploymentError {
+    /// Convert [`eyre::Report`] into [`ContractDeploymentError`].
+    pub fn from_report(report: &eyre::Report) -> Option<&Self> {
+        report.downcast_ref::<ContractDeploymentError>()
+    }
+}
+
+impl std::fmt::Display for ContractDeploymentError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ContractDeploymentError {")
+    }
+}
+
+impl std::error::Error for ContractDeploymentError {}
+
+/// Constructor data.
+pub struct Constructor {
+    /// Constructor signature.
+    pub signature: String,
+    /// Constructor arguments.
+    pub args: Vec<String>,
+}
+
 /// A basic smart contract deployer.
 pub struct Deployer {
     rpc_url: String,
     private_key: String,
-    ctor_args: Option<Vec<String>>,
+    ctor: Option<Constructor>,
 }
 
 impl Deployer {
     pub fn new(rpc_url: String, private_key: String) -> Self {
-        Self { rpc_url, private_key, ctor_args: None }
+        Self { rpc_url, private_key, ctor: None }
     }
 
     /// Add solidity constructor to the deployer.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn with_constructor(mut self, ctr_args: Vec<String>) -> Deployer {
-        self.ctor_args = Some(ctr_args);
+    pub fn with_constructor(mut self, ctor: Constructor) -> Deployer {
+        self.ctor = Some(ctor);
         self
+    }
+
+    /// See [`Deployer::deploy_wasm()`] for more details.
+    pub async fn deploy(self) -> eyre::Result<Receipt> {
+        let pkg = Crate::new()?;
+        let wasm_path = pkg.wasm;
+
+        self.deploy_wasm(&wasm_path).await
     }
 
     /// Deploy and activate the contract implemented as `#[entrypoint]` in the
@@ -76,8 +119,12 @@ impl Deployer {
     ///
     /// - Unable to collect information about the crate required for deployment.
     /// - `cargo stylus deploy` errors.
-    pub async fn deploy(self) -> eyre::Result<Receipt> {
-        let mut command = self.create_command();
+    pub async fn deploy_wasm(
+        self,
+        wasm_path: &PathBuf,
+    ) -> eyre::Result<Receipt> {
+        let wasm_path = wasm_path.to_str().expect("wasm file should exist");
+        let mut command = self.create_command(wasm_path);
 
         let output = command
             .output()
@@ -93,12 +140,13 @@ impl Deployer {
         }
     }
 
-    fn create_command(&self) -> Command {
+    fn create_command(&self, wasm_path: &str) -> Command {
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
             .args(["-e", &self.rpc_url])
             .args(["--private-key", &self.private_key])
+            .args(["--wasm-file", wasm_path])
             .args(["--no-verify"]);
 
         // There are 3 possible cases when it comes to invoking constructors:
@@ -112,16 +160,17 @@ impl Deployer {
         // The deployer address and constructor-args must both be set if the
         // constructor is to be invoked on a contract. Otherwise,
         // neither should be set.
-        if let Some(ctor_args) = self.ctor_args.as_ref() {
+        if let Some(ctor) = self.ctor.as_ref() {
             let deployer_address = std::env::var(DEPLOYER_ADDRESS)
                 .expect("deployer address should be set");
 
             command
                 .args(["--experimental-deployer-address", &deployer_address])
+                .args(["--experimental-constructor-signature", &ctor.signature])
                 .args(
                     [
                         &["--experimental-constructor-args".to_string()],
-                        ctor_args.as_slice(),
+                        ctor.args.as_slice(),
                     ]
                     .concat(),
                 );
@@ -140,9 +189,8 @@ impl Deployer {
         let stderr = &String::from_utf8_lossy(&output.stderr);
 
         // Look for the error pattern with hex data
-        let error_data_regex =
-            Regex::new(r#"data: Some\(String\("(0x[a-fA-F0-9]+)"\)\)"#)
-                .context("failed to create error data regex")?;
+        let error_data_regex = Regex::new(r#"data:.+"(0x[a-fA-F0-9]+)""#)
+            .context("failed to create error data regex")?;
 
         if let Some(captures) = error_data_regex.captures(stderr) {
             if let Some(hex_data) = captures.get(1) {
@@ -168,6 +216,10 @@ impl Deployer {
                     // This is probably some weird nitro-testnode issue, but for
                     // now this quick-fix should work.
                     return self.get_receipt(output).await;
+                } else if error_selector == CONTRACT_DEPLOYMENT_ERROR_SELECTOR {
+                    return Err(eyre::Report::new(ContractDeploymentError {
+                        bytecode: data[4..].to_vec().into(),
+                    }));
                 } else {
                     return Err(eyre::eyre!(hex_str.to_string()));
                 }

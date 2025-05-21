@@ -551,7 +551,7 @@ impl<const N: usize> Ord for Uint<N> {
             match a.cmp(b) {
                 Ordering::Equal => {}
                 order => return order,
-            };
+            }
         });
 
         Ordering::Equal
@@ -977,7 +977,7 @@ impl<const N: usize> WideUint<N> {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod test {
     use proptest::prelude::*;
 

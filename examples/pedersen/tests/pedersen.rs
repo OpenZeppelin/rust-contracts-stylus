@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use e2e::{Account, ReceiptExt};
+use e2e::Account;
 use eyre::Result;
 use openzeppelin_crypto::arithmetic::{
     uint::{from_str_hex, U256},
@@ -32,7 +32,7 @@ async fn pedersen_works(alice: Account) -> Result<()> {
         "30e480bed5fe53fa909cc0f8c4d99b8f9f2c016be4c41e13a4848797979c662",
     ));
 
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PedersenExample::new(contract_addr, &alice.wallet);
 
     let PedersenExample::hashReturn { hash } =

@@ -1,13 +1,11 @@
 [workspace]
 members = [
+  "benches",
   "contracts",
   "contracts-proc",
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
-]
-default-members = ["contracts", "contracts-proc", "lib/crypto", "lib/e2e-proc"]
-exclude = [
   "examples/access-control",
   "examples/ecdsa",
   "examples/erc20",
@@ -27,13 +25,40 @@ exclude = [
   "examples/ownable",
   "examples/vesting-wallet",
   "examples/ownable-two-step",
-  "examples/basic/token",
   "examples/poseidon",
   "examples/pedersen",
-  "fuzz",
-  # TODO: move benches to `members` when fixed (when cargo-stylus CLI supports workspaces)
-  "benches",
+  "examples/basic/token",
+  "examples/basic/script",
 ]
+default-members = [
+  "contracts",
+  "contracts-proc",
+  "lib/crypto",
+  "lib/e2e-proc",
+  "examples/access-control",
+  "examples/ecdsa",
+  "examples/erc20",
+  "examples/erc20-permit",
+  "examples/erc20-flash-mint",
+  "examples/erc20-wrapper",
+  "examples/erc721",
+  "examples/erc721-consecutive",
+  "examples/erc721-metadata",
+  "examples/erc721-wrapper",
+  "examples/erc1155",
+  "examples/erc1155-metadata-uri",
+  "examples/erc1155-supply",
+  "examples/erc4626",
+  "examples/safe-erc20",
+  "examples/merkle-proofs",
+  "examples/ownable",
+  "examples/vesting-wallet",
+  "examples/ownable-two-step",
+  "examples/poseidon",
+  "examples/pedersen",
+  "examples/basic/token",
+]
+exclude = ["fuzz"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
@@ -58,10 +83,10 @@ pedantic = "warn"
 all = "warn"
 
 [workspace.dependencies]
-stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "76d0454defed46b2cfaab82e566aeb8ddde5944a", default-features = false, features = [
+# Stylus SDK related
+stylus-sdk = { git = "https://github.com/OffchainLabs/stylus-sdk-rs.git", rev = "b7310ef", default-features = false, features = [
   "mini-alloc",
-  "reentrant",  # TODO: delete this when using audited 0.9 version
-] } # Stylus SDK related
+] }
 
 alloy = { version = "=0.7.3", features = [
   "contract",
@@ -76,7 +101,9 @@ alloy = { version = "=0.7.3", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.20", default-features = false }
+alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+  "tiny-keccak",
+] }
 alloy-sol-types = { version = "=0.8.20", default-features = false }
 alloy-sol-macro = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
@@ -101,11 +128,11 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
-motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "bddced2" }
+motsu = { git = "https://github.com/OpenZeppelin/stylus-test-helpers.git", rev = "9b038630f682e33d5b70c477e904b7858370a5f4" }
 
 # members
 openzeppelin-stylus = { path = "contracts" }
-openzeppelin-stylus-proc = { path = "contracts-proc", version = ">=0.1.0, <=0.2.0" }
+openzeppelin-stylus-proc = { path = "contracts-proc", version = "0.2.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }

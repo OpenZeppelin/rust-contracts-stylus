@@ -373,7 +373,7 @@ impl<S: Size> Trace<S> {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address};
     use stylus_sdk::prelude::*;

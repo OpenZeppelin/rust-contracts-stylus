@@ -14,9 +14,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{keccak256, Address, B256, U256};
+use alloy_primitives::{keccak256, Address, FixedBytes, B256, U256, U8};
 use alloy_sol_types::SolType;
-use stylus_sdk::{block, call::MethodError, prelude::*};
+use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
 
 use crate::{
     token::erc20::{self, Erc20},
@@ -25,7 +25,7 @@ use crate::{
             ecdsa::{self, ECDSAInvalidSignature, ECDSAInvalidSignatureS},
             eip712::IEip712,
         },
-        nonces::Nonces,
+        nonces::{INonces, Nonces},
     },
 };
 
@@ -81,7 +81,7 @@ pub enum Error {
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals. approver Address initiating an approval operation.
     InvalidApprover(erc20::ERC20InvalidApprover),
-    /// The signature derives the `Address::ZERO`.
+    /// The signature derives the [`Address::ZERO`].
     InvalidSignature(ECDSAInvalidSignature),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),
@@ -131,22 +131,39 @@ pub struct Erc20Permit<T: IEip712 + StorageType> {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
-#[public]
-impl<T: IEip712 + StorageType> Erc20Permit<T> {
+/// Interface for [`Erc20Permit`]
+pub trait IErc20Permit: INonces {
+    /// The error type associated to this interface.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
+    // Calculated manually to include [`INonces::nonces`].
+    /// Solidity interface id associated with [`IErc20Permit`] trait.
+    /// Computed as a XOR of selectors for each function in the trait.
+    #[must_use]
+    fn interface_id() -> FixedBytes<4>
+    where
+        Self: Sized,
+    {
+        FixedBytes::<4>::new(function_selector!("DOMAIN_SEPARATOR",))
+            ^ FixedBytes::<4>::new(function_selector!("nonces", Address,))
+            ^ FixedBytes::<4>::new(function_selector!(
+                "permit", Address, Address, U256, U256, U8, B256, B256
+            ))
+    }
+
     /// Returns the domain separator used in the encoding of the signature for
     /// [`Self::permit`], as defined by EIP712.
+    ///
+    /// NOTE: The implementation should use `#[selector(name =
+    /// "DOMAIN_SEPARATOR")]` to match Solidity's camelCase naming
+    /// convention.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    #[selector(name = "DOMAIN_SEPARATOR")]
     #[must_use]
-    pub fn domain_separator(&self) -> B256 {
-        self.eip712.domain_separator_v4()
-    }
-}
+    fn domain_separator(&self) -> B256;
 
-impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// Sets `value` as the allowance of `spender` over `owner`'s tokens,
     /// given `owner`'s signed approval.
     ///
@@ -161,8 +178,6 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// * `v` - v value from the `owner`'s signature.
     /// * `r` - r value from the `owner`'s signature.
     /// * `s` - s value from the `owner`'s signature.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
-    /// * `nonces` - Write access to a [`Nonces`] contract.
     ///
     /// # Errors
     ///
@@ -172,14 +187,35 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
     /// * [`ecdsa::Error::InvalidSignatureS`] - If the `s` value is grater than
     ///   [`ecdsa::SIGNATURE_S_UPPER_BOUND`].
     /// * [`ecdsa::Error::InvalidSignature`] - If the recovered address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     /// * [`erc20::Error::InvalidSpender`] - If the `spender` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
     /// * [`erc20::Approval`]
     #[allow(clippy::too_many_arguments)]
+    fn permit(
+        &mut self,
+        owner: Address,
+        spender: Address,
+        value: U256,
+        deadline: U256,
+        v: u8,
+        r: B256,
+        s: B256,
+    ) -> Result<(), Self::Error>;
+}
+
+impl<T: IEip712 + StorageType> Erc20Permit<T> {
+    /// See [`IErc20Permit::domain_separator`].
+    #[must_use]
+    pub fn domain_separator(&self) -> B256 {
+        self.eip712.domain_separator_v4()
+    }
+
+    /// See [`IErc20Permit::permit`].
+    #[allow(clippy::too_many_arguments, clippy::missing_errors_doc)]
     pub fn permit(
         &mut self,
         owner: Address,

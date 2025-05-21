@@ -23,7 +23,7 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::utils::introspection::erc165::{Erc165, IErc165};
+use crate::utils::introspection::erc165::IErc165;
 
 const BOOL_TYPE_SIZE: usize = 32;
 
@@ -120,7 +120,7 @@ pub trait ISafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the
     /// approval given by `from` to the calling contract. If `token` returns
@@ -145,7 +145,7 @@ pub trait ISafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
@@ -166,13 +166,13 @@ pub trait ISafeErc20 {
     ///
     /// # Panics
     ///
-    /// * If increased allowance exceeds `U256::MAX`.
+    /// * If increased allowance exceeds [`U256::MAX`].
     fn safe_increase_allowance(
         &mut self,
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Decrease the calling contract's allowance toward `spender` by
     /// `requested_decrease`. If `token` returns no value, non-reverting
@@ -197,7 +197,7 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Set the calling contract's allowance toward `spender` to `value`. If
     /// `token` returns no value, non-reverting calls are assumed to be
@@ -221,8 +221,12 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error>;
+    ) -> Result<(), Self::Error>;
 }
+
+#[public]
+#[implements(ISafeErc20<Error = Error>)]
+impl SafeErc20 {}
 
 #[public]
 impl ISafeErc20 for SafeErc20 {
@@ -233,7 +237,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let call = IErc20::transferCall { to, value };
 
         Self::call_optional_return(token, &call)
@@ -245,7 +249,7 @@ impl ISafeErc20 for SafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let call = IErc20::transferFromCall { from, to, value };
 
         Self::call_optional_return(token, &call)
@@ -256,7 +260,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let current_allowance = Self::allowance(token, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
@@ -269,7 +273,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let current_allowance = Self::allowance(token, spender)?;
 
         if current_allowance < requested_decrease {
@@ -293,7 +297,7 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), <Self as ISafeErc20>::Error> {
+    ) -> Result<(), Self::Error> {
         let approve_call = IErc20::approveCall { spender, value };
 
         // Try performing the approval with the desired value.
@@ -395,14 +399,17 @@ impl SafeErc20 {
 }
 
 impl IErc165 for SafeErc20 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as ISafeErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as ISafeErc20>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
+    use motsu::prelude::Contract;
+    use stylus_sdk::alloy_primitives::{Address, FixedBytes};
+
     use super::{ISafeErc20, SafeErc20};
     use crate::utils::introspection::erc165::IErc165;
 
@@ -438,21 +445,23 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <SafeErc20 as ISafeErc20>::INTERFACE_ID;
-        let expected = 0xf71993e3;
+        let actual = <SafeErc20 as ISafeErc20>::interface_id();
+        let expected: FixedBytes<4> = 0xf71993e3_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(SafeErc20::supports_interface(
-            <SafeErc20 as IErc165>::INTERFACE_ID.into()
-        ));
-        assert!(SafeErc20::supports_interface(
-            <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(contract: Contract<SafeErc20>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<SafeErc20 as IErc165>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<SafeErc20 as ISafeErc20>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

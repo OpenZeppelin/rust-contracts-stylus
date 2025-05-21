@@ -3,11 +3,11 @@ use alloy::{
     primitives::Address,
     providers::ProviderBuilder,
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
     uint,
 };
 use alloy_primitives::U256;
-use e2e::{receipt, Account};
+use e2e::{receipt, Account, Constructor};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -35,8 +35,6 @@ sol!(
         function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     }
 );
-
-sol!("../examples/erc20/src/constructor.sol");
 
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
@@ -93,12 +91,17 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         .collect::<eyre::Result<Vec<_>>>()
 }
 
+fn ctr() -> Constructor {
+    Constructor {
+        signature: "constructor(string,string,uint256)".to_string(),
+        args: vec![
+            TOKEN_NAME.to_string(),
+            TOKEN_SYMBOL.to_string(),
+            CAP.to_string(),
+        ],
+    }
+}
+
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    let args = Erc20Example::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: CAP,
-    };
-    let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc20", Some(args), cache_opt).await
+    crate::deploy(account, "erc20", Some(ctr()), cache_opt).await
 }
