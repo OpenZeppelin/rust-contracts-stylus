@@ -921,7 +921,7 @@ impl<const N: usize> WideUint<N> {
         Self { low, high }
     }
 
-    /// Compute a reminder of division `self` by `rhs` (constant).
+    /// Compute the remainder of division `self` by `rhs` (constant).
     ///
     /// Basic division algorithm based on [wiki].
     /// Fine to be used for constant evaluation, but slow in runtime.
@@ -940,7 +940,7 @@ impl<const N: usize> WideUint<N> {
             let (result, carry) = remainder.ct_checked_mul2();
             remainder = result;
 
-            // and set the first bit to a reminder from the dividend.
+            // and set the first bit to remainder from the dividend.
             remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
 
             // If the remainder overflows, subtract the divisor.
