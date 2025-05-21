@@ -20,8 +20,20 @@ struct Erc20Example {
 }
 
 #[public]
-#[inherit(Erc20)]
-impl Erc20Example {
+#[implements(IErc20<Error = erc20::Error>, IErc20Burnable<Error = erc20::Error>)]
+impl Erc20Example {}
+
+
+#[public]
+impl IErc20 for Erc20Example {
+    // ...
+}
+
+
+#[public]
+impl IErc20Burnable for Erc20Example {
+    type Error = erc20::Error;
+
     fn burn(&mut self, value: U256) -> Result<(), erc20::Error> {
         // ...
         self.erc20.burn(value)
