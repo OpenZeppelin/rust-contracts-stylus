@@ -1060,22 +1060,21 @@ mod test {
         let dividend = from_num!("43129923721897334698312931");
         let divisor = from_num!("375923422");
         let result =
-            WideUint::<4>::new(dividend, from_num!("0")).ct_rem(&divisor);
+            WideUint::<4>::new(dividend, Uint::<4>::ZERO).ct_rem(&divisor);
         assert_eq!(result, from_num!("216456157"));
     }
 
     #[test]
     #[should_panic = "should not divide by zero"]
     fn ct_rem_zero() {
+        let zero = Uint::<4>::ZERO;
         let divisor = from_num!("375923422");
-        let result =
-            WideUint::<4>::new(from_num!("0"), from_num!("0")).ct_rem(&divisor);
-        assert_eq!(result, from_num!("0"));
+        let result = WideUint::<4>::new(zero, zero).ct_rem(&divisor);
+        assert_eq!(result, zero);
 
         let dividend = from_num!("43129923721897334698312931");
-        let divisor = from_num!("0");
-        let result =
-            WideUint::<4>::new(dividend, from_num!("0")).ct_rem(&divisor);
+        let divisor = zero;
+        let result = WideUint::<4>::new(dividend, zero).ct_rem(&divisor);
     }
 
     #[test]
