@@ -12,7 +12,7 @@ use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::{
     token::erc721::{self, IErc721},
-    utils::Metadata,
+    utils::{introspection::erc165::IErc165, Metadata},
 };
 
 /// State of an [`Erc721Metadata`] contract.

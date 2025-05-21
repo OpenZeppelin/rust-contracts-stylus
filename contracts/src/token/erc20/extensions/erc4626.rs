@@ -19,6 +19,7 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU8},
 };
 
+use super::IErc20Metadata;
 use crate::{
     token::erc20::{
         self,
@@ -1135,6 +1136,15 @@ impl Erc4626 {
     }
 }
 
+// TODO: implement `IErc165` once `IErc4626` is implemented for `Erc4626`.
+// #[public]
+// impl IErc165 for Erc4626 {
+//     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+//         <Self as IErc4626>::interface_id() == interface_id
+//             || <Self as IErc165>::interface_id() == interface_id
+//     }
+// }
+
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(test)]
 mod tests {
@@ -1143,16 +1153,23 @@ mod tests {
     use stylus_sdk::prelude::*;
 
     use super::*;
-    use crate::token::erc20::Erc20;
+    use crate::{
+        token::erc20::{
+            extensions::{Erc20Metadata, IErc20Metadata},
+            Erc20,
+        },
+        utils::introspection::erc165::IErc165,
+    };
 
     #[storage]
     struct Erc4626TestExample {
         erc4626: Erc4626,
         erc20: Erc20,
+        metadata: Erc20Metadata,
     }
 
     #[public]
-    #[implements(IErc4626<Error = Error>)]
+    #[implements(IErc4626<Error = Error>, IErc20Metadata, IErc165)]
     impl Erc4626TestExample {}
 
     #[public]
@@ -1260,6 +1277,30 @@ mod tests {
             owner: Address,
         ) -> Result<U256, <Self as IErc4626>::Error> {
             self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)
+        }
+    }
+
+    #[public]
+    impl IErc20Metadata for Erc4626TestExample {
+        fn name(&self) -> String {
+            self.metadata.name()
+        }
+
+        fn symbol(&self) -> String {
+            self.metadata.symbol()
+        }
+
+        fn decimals(&self) -> U8 {
+            self.metadata.decimals()
+        }
+    }
+
+    #[public]
+    impl IErc165 for Erc4626TestExample {
+        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+            <Self as IErc4626>::interface_id() == interface_id
+                || self.erc20.supports_interface(interface_id)
+                || self.metadata.supports_interface(interface_id)
         }
     }
 

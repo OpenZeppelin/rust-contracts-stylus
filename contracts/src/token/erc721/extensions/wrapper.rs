@@ -407,7 +407,10 @@ mod tests {
     use stylus_sdk::abi::Bytes;
 
     use super::*;
-    use crate::token::erc721::{self, IErc721};
+    use crate::{
+        token::erc721::{self, IErc721},
+        utils::introspection::erc165::IErc165,
+    };
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
         (0..size).map(U256::from).collect()
@@ -420,7 +423,7 @@ mod tests {
     }
 
     #[public]
-    #[implements(IErc721<Error=erc721::Error>, IErc721Wrapper<Error=Error>)]
+    #[implements(IErc721<Error=erc721::Error>, IErc721Wrapper<Error=Error>, IErc165)]
     impl Erc721WrapperTestExample {
         #[constructor]
         fn constructor(&mut self, underlying_token: Address) {
@@ -546,6 +549,13 @@ mod tests {
                 &data,
                 &mut self.erc721,
             )
+        }
+    }
+
+    #[public]
+    impl IErc165 for Erc721WrapperTestExample {
+        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+            self.erc721.supports_interface(interface_id)
         }
     }
 
