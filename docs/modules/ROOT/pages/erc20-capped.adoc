@@ -11,7 +11,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 ----
 use openzeppelin_stylus::token::erc20::{
     self,
-    extensions::{capped, Capped},
+    extensions::{capped, Capped, ICapped},
     Erc20, IErc20,
 };
 
@@ -61,12 +61,17 @@ struct Erc20Example {
 }
 
 #[public]
-#[inherit(Erc20, Capped)]
+#[implements(IErc20<Error = Error>, ICapped)]
 impl Erc20Example {
+    #[constructor]
+    fn constructor(&mut self, cap: U256) -> Result<(), Error> {
+        Ok(self.capped.constructor(cap)?)
+    }
+
     // Add token minting feature.
     //
     // Make sure to handle `Capped` properly. You should not call
-    // [`Erc20::_update`] to mint tokens -- it will the break `Capped`
+    // [`Erc20::_update`] to mint tokens -- it will break the `Capped`
     // mechanism.
     fn mint(
         &mut self,
@@ -94,5 +99,17 @@ impl Erc20Example {
         self.erc20._mint(account, value)?;
         Ok(())
     }
+}
+
+#[public]
+impl ICapped for Erc20Example {
+    fn cap(&self) -> U256 {
+        self.capped.cap()
+    }
+}
+
+#[public]
+impl IErc20 for Erc20Example {
+    // ...
 }
 ----
