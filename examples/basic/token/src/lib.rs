@@ -3,23 +3,25 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::{
-    self, extensions::Erc20Metadata, Erc20,
+    self,
+    extensions::{Erc20Metadata, IErc20Metadata},
+    Erc20, IErc20,
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    alloy_primitives::{Address, U256, U8},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     metadata: Erc20Metadata,
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata)]
+#[implements(IErc20<Error = erc20::Error>, IErc20Metadata)]
 impl Erc20Example {
     #[constructor]
     fn constructor(&mut self, name: String, symbol: String) {
@@ -32,5 +34,62 @@ impl Erc20Example {
         value: U256,
     ) -> Result<(), erc20::Error> {
         self.erc20._mint(account, value)
+    }
+}
+
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = erc20::Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer(to, value)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.approve(spender, value)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer_from(from, to, value)
+    }
+}
+
+#[public]
+impl IErc20Metadata for Erc20Example {
+    fn name(&self) -> String {
+        self.metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
+    fn decimals(&self) -> U8 {
+        self.metadata.decimals()
     }
 }
