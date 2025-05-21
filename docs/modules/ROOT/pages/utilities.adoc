@@ -22,13 +22,22 @@ struct Erc721Example {
 }
 
 #[public]
-#[inherit(Erc721)]
+#[implements(IErc721<Error = Error>, IErc165)]
 impl Erc721Example {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc721::supports_interface(interface_id)
+    // ...
+}
+
+#[public]
+impl IErc165 for Erc721Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc721.supports_interface(interface_id)
     }
 }
 
+#[public]
+impl IErc721 for Erc721Example {
+    // ...
+}
 ----
 
 [[structures]]
