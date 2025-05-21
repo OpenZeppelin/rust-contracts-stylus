@@ -98,7 +98,7 @@ impl IErc20 for AccessControlExample {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.transfer(to, value)?)
     }
 
@@ -110,7 +110,7 @@ impl IErc20 for AccessControlExample {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.approve(spender, value)?)
     }
 
@@ -119,7 +119,7 @@ impl IErc20 for AccessControlExample {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         self.access.only_role(TRANSFER_ROLE.into())?;
         let transfer_result = self.erc20.transfer_from(from, to, value)?;
         Ok(transfer_result)
@@ -137,7 +137,7 @@ impl IAccessControl for AccessControlExample {
     fn only_role(
         &self,
         role: B256,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.access.only_role(role)?)
     }
 
@@ -149,7 +149,7 @@ impl IAccessControl for AccessControlExample {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.access.grant_role(role, account)?)
     }
 
@@ -157,7 +157,7 @@ impl IAccessControl for AccessControlExample {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.access.revoke_role(role, account)?)
     }
 
@@ -165,7 +165,7 @@ impl IAccessControl for AccessControlExample {
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.access.renounce_role(role, confirmation)?)
     }
 }

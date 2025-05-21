@@ -216,7 +216,7 @@ pub trait IErc3156FlashLender {
         &self,
         token: Address,
         value: U256,
-    ) -> Result<U256, <Self as IErc3156FlashLender>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Performs a flash loan.
     ///
@@ -262,7 +262,7 @@ pub trait IErc3156FlashLender {
         token: Address,
         value: U256,
         data: Bytes,
-    ) -> Result<bool, <Self as IErc3156FlashLender>::Error>;
+    ) -> Result<bool, Self::Error>;
 }
 
 impl Erc20FlashMint {
@@ -389,7 +389,7 @@ mod tests {
             &self,
             token: Address,
             value: U256,
-        ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc20_flash_mint.flash_fee(token, value)
         }
 
@@ -399,7 +399,7 @@ mod tests {
             token: Address,
             value: U256,
             data: Bytes,
-        ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
+        ) -> Result<bool, Self::Error> {
             self.erc20_flash_mint.flash_loan(
                 receiver,
                 token,

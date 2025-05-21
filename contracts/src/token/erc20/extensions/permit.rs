@@ -204,7 +204,7 @@ pub trait IErc20Permit: INonces {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<(), <Self as IErc20Permit>::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 impl<T: IEip712 + StorageType> Erc20Permit<T> {

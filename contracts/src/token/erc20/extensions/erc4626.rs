@@ -226,7 +226,7 @@ pub trait IErc4626: IErc20Metadata {
     ///
     /// * [`Error::InvalidAsset`] - If the [`IErc4626::asset()`] is not a ERC-20
     ///   Token address.
-    fn total_assets(&mut self) -> Result<U256, <Self as IErc4626>::Error>;
+    fn total_assets(&mut self) -> Result<U256, Self::Error>;
 
     /// Returns the amount of shares that the Vault would exchange for the
     /// amount of assets provided, in an ideal scenario where all the conditions
@@ -260,7 +260,7 @@ pub trait IErc4626: IErc20Metadata {
     fn convert_to_shares(
         &mut self,
         assets: U256,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the amount of assets that the Vault would exchange for the
     /// amount of shares provided, in an ideal scenario where all the conditions
@@ -294,7 +294,7 @@ pub trait IErc4626: IErc20Metadata {
     fn convert_to_assets(
         &mut self,
         shares: U256,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be deposited
     /// into the Vault for the receiver, through a deposit call.
@@ -337,7 +337,7 @@ pub trait IErc4626: IErc20Metadata {
     fn preview_deposit(
         &mut self,
         assets: U256,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Deposits exactly `assets` amount of underlying tokens into the Vault and
     /// mints corresponding Vault shares to `receiver`.
@@ -378,7 +378,7 @@ pub trait IErc4626: IErc20Metadata {
         &mut self,
         assets: U256,
         receiver: Address,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the Vault shares that can be minted for
     /// the receiver, through a mint call.
@@ -421,7 +421,7 @@ pub trait IErc4626: IErc20Metadata {
     fn preview_mint(
         &mut self,
         shares: U256,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Mints the specified number of shares to `receiver` by pulling the
     /// required amount of underlying tokens from caller.
@@ -465,7 +465,7 @@ pub trait IErc4626: IErc20Metadata {
         &mut self,
         shares: U256,
         receiver: Address,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of the underlying asset that can be withdrawn
     /// from the owner balance in the Vault, through a withdraw call.
@@ -493,7 +493,7 @@ pub trait IErc4626: IErc20Metadata {
     fn max_withdraw(
         &mut self,
         owner: Address,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Allows an on-chain or off-chain user to simulate the effects of their
     /// withdrawal at the current block, given current on-chain conditions.
@@ -521,7 +521,7 @@ pub trait IErc4626: IErc20Metadata {
     fn preview_withdraw(
         &mut self,
         assets: U256,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Withdraws the specified amount of underlying tokens to `receiver` by
     /// burning the required number of shares from `owner`.
@@ -571,7 +571,7 @@ pub trait IErc4626: IErc20Metadata {
         assets: U256,
         receiver: Address,
         owner: Address,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the maximum amount of Vault shares that can be redeemed from the
     /// owner balance in the Vault, through a redeem call.
@@ -620,7 +620,7 @@ pub trait IErc4626: IErc20Metadata {
     fn preview_redeem(
         &mut self,
         shares: U256,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Burns the specified number of shares from `owner` and sends the
     /// corresponding amount of underlying tokens to `receiver`.
@@ -663,7 +663,7 @@ pub trait IErc4626: IErc20Metadata {
         shares: U256,
         receiver: Address,
         owner: Address,
-    ) -> Result<U256, <Self as IErc4626>::Error>;
+    ) -> Result<U256, Self::Error>;
 }
 
 impl Erc4626 {
@@ -1180,21 +1180,21 @@ mod tests {
             self.erc4626.asset()
         }
 
-        fn total_assets(&mut self) -> Result<U256, <Self as IErc4626>::Error> {
+        fn total_assets(&mut self) -> Result<U256, Self::Error> {
             self.erc4626.total_assets()
         }
 
         fn convert_to_shares(
             &mut self,
             assets: U256,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.convert_to_shares(assets, &self.erc20)
         }
 
         fn convert_to_assets(
             &mut self,
             shares: U256,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.convert_to_assets(shares, &self.erc20)
         }
 
@@ -1205,7 +1205,7 @@ mod tests {
         fn preview_deposit(
             &mut self,
             assets: U256,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.preview_deposit(assets, &self.erc20)
         }
 
@@ -1213,7 +1213,7 @@ mod tests {
             &mut self,
             assets: U256,
             receiver: Address,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.deposit(assets, receiver, &mut self.erc20)
         }
 
@@ -1224,7 +1224,7 @@ mod tests {
         fn preview_mint(
             &mut self,
             shares: U256,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.preview_mint(shares, &self.erc20)
         }
 
@@ -1232,21 +1232,21 @@ mod tests {
             &mut self,
             shares: U256,
             receiver: Address,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.mint(shares, receiver, &mut self.erc20)
         }
 
         fn max_withdraw(
             &mut self,
             owner: Address,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.max_withdraw(owner, &self.erc20)
         }
 
         fn preview_withdraw(
             &mut self,
             assets: U256,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.preview_withdraw(assets, &self.erc20)
         }
 
@@ -1255,7 +1255,7 @@ mod tests {
             assets: U256,
             receiver: Address,
             owner: Address,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.withdraw(assets, receiver, owner, &mut self.erc20)
         }
 
@@ -1266,7 +1266,7 @@ mod tests {
         fn preview_redeem(
             &mut self,
             shares: U256,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.preview_redeem(shares, &self.erc20)
         }
 
@@ -1275,7 +1275,7 @@ mod tests {
             shares: U256,
             receiver: Address,
             owner: Address,
-        ) -> Result<U256, <Self as IErc4626>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc4626.redeem(shares, receiver, owner, &mut self.erc20)
         }
     }

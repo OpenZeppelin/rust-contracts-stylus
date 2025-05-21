@@ -30,7 +30,7 @@ pub trait IErc20Burnable {
     fn burn(
         &mut self,
         value: U256,
-    ) -> Result<(), <Self as IErc20Burnable>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
     /// supply.
@@ -56,7 +56,7 @@ pub trait IErc20Burnable {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), <Self as IErc20Burnable>::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 impl IErc20Burnable for Erc20 {
@@ -65,7 +65,7 @@ impl IErc20Burnable for Erc20 {
     fn burn(
         &mut self,
         value: U256,
-    ) -> Result<(), <Self as IErc20Burnable>::Error> {
+    ) -> Result<(), Self::Error> {
         self._burn(msg::sender(), value)
     }
 
@@ -73,7 +73,7 @@ impl IErc20Burnable for Erc20 {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), <Self as IErc20Burnable>::Error> {
+    ) -> Result<(), Self::Error> {
         self._spend_allowance(account, msg::sender(), value)?;
         self._burn(account, value)
     }

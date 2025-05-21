@@ -63,7 +63,7 @@ pub trait IErc721Metadata: IErc165 {
     fn token_uri(
         &self,
         token_id: U256,
-    ) -> Result<String, <Self as IErc721Metadata>::Error>;
+    ) -> Result<String, Self::Error>;
 }
 
 impl Erc721Metadata {
