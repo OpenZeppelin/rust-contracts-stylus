@@ -1074,7 +1074,7 @@ mod test {
 
         let dividend = from_num!("43129923721897334698312931");
         let divisor = zero;
-        let result = WideUint::<4>::new(dividend, zero).ct_rem(&divisor);
+        let _ = WideUint::<4>::new(dividend, zero).ct_rem(&divisor);
     }
 
     #[test]
