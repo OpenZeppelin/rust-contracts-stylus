@@ -54,26 +54,38 @@ impl From<erc20::Error> for Error {
 
 #[entrypoint]
 #[storage]
-struct Example {
+struct AccessControlExample {
     erc20: Erc20,
     access: AccessControl,
 }
 
-const MINTER_ROLE: [u8; 32] =
-    keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
+const TRANSFER_ROLE: [u8; 32] =
+    keccak_const::Keccak256::new().update(b"TRANSFER_ROLE").finalize();
 
 #[public]
 #[implements(IErc20<Error = Error>, IAccessControl<Error = Error>)]
-impl Example {
-    fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
-        self.access.only_role(MINTER_ROLE.into())?;
-        self.erc20._mint(to, amount)?;
+impl AccessControlExample {
+    #[constructor]
+    fn constructor(&mut self, admin: Address) {
+        self.access
+            ._grant_role(AccessControl::DEFAULT_ADMIN_ROLE.into(), admin);
+    }
+
+    fn make_admin(&mut self, account: Address) -> Result<(), Error> {
+        self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
+        self.access.grant_role(TRANSFER_ROLE.into(), account)?;
         Ok(())
+    }
+
+    // WARNING: This should not be part of the public API, it's here for testing
+    // purposes only.
+    fn set_role_admin(&mut self, role: B256, new_admin_role: B256) {
+        self.access._set_role_admin(role, new_admin_role)
     }
 }
 
 #[public]
-impl IErc20 for Example {
+impl IErc20 for AccessControlExample {
     type Error = Error;
 
     fn total_supply(&self) -> U256 {
@@ -117,7 +129,7 @@ impl IErc20 for Example {
 }
 
 #[public]
-impl IAccessControl for Example {
+impl IAccessControl for AccessControlExample {
     type Error = Error;
 
     fn has_role(&self, role: B256, account: Address) -> bool {
