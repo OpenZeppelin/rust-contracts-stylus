@@ -442,46 +442,6 @@ impl VestingWallet {
 }
 
 #[public]
-#[implements(IVestingWallet<Error = Error>, IErc165)]
-impl VestingWallet {
-    /// Constructor.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `beneficiary` - The wallet owner.
-    /// * `start_timestamp` - The point in time when token vesting starts.
-    /// * `duration_seconds` - The vesting duration in seconds.
-    ///
-    /// # Errors
-    ///
-    /// * [`ownable::Error::InvalidOwner`] - If beneficiary is `Address::ZERO`.
-    #[constructor]
-    pub fn constructor(
-        &mut self,
-        beneficiary: Address,
-        start_timestamp: U64,
-        duration_seconds: U64,
-    ) -> Result<(), Error> {
-        self.ownable.constructor(beneficiary)?;
-        self.start.set(start_timestamp);
-        self.duration.set(duration_seconds);
-        Ok(())
-    }
-
-    /// The contract should be able to receive Eth.
-    ///
-    /// # Errors
-    ///
-    /// * If the transaction includes data (non-zero calldata).
-    /// * If the contract doesn't have enough gas to execute the function.
-    #[receive]
-    pub fn receive(&mut self) -> Result<(), Vec<u8>> {
-        Ok(())
-    }
-}
-
-#[public]
 impl IVestingWallet for VestingWallet {
     type Error = Error;
 

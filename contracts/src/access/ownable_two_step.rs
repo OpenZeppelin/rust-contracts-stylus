@@ -172,20 +172,6 @@ impl Ownable2Step {
 }
 
 #[public]
-#[implements(IOwnable2Step<Error = ownable::Error>, IErc165)]
-impl Ownable2Step {
-    /// See [`Ownable::constructor`].
-    #[allow(clippy::missing_errors_doc)]
-    #[constructor]
-    pub fn constructor(
-        &mut self,
-        initial_owner: Address,
-    ) -> Result<(), ownable::Error> {
-        self.ownable.constructor(initial_owner)
-    }
-}
-
-#[public]
 impl IOwnable2Step for Ownable2Step {
     type Error = ownable::Error;
 
