@@ -7,7 +7,7 @@ use abi::AccessControl::{
 use alloy::hex;
 use alloy_primitives::Address;
 use e2e::{
-    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
+    receipt, send, watch, Account, Constructor, EventExt, Revert,
     DEPLOYER_ADDRESS,
 };
 use eyre::Result;
@@ -21,7 +21,10 @@ const NEW_ADMIN_ROLE: [u8; 32] =
     hex!("879ce0d4bfd332649ca3552efe772a38d64a315eb70ab69689fd309c735946b5");
 
 fn ctr(admin: Address) -> Constructor {
-    constructor!(admin)
+    Constructor {
+        signature: "constructor(address)".to_string(),
+        args: vec![admin.to_string()],
+    }
 }
 
 // ============================================================================

@@ -216,7 +216,7 @@ pub trait IErc3156FlashLender {
         &self,
         token: Address,
         value: U256,
-    ) -> Result<U256, <Self as IErc3156FlashLender>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Performs a flash loan.
     ///
@@ -253,16 +253,16 @@ pub trait IErc3156FlashLender {
     ///
     /// # Panics
     ///
-    /// * If the new (temporary) total supply exceeds `U256::MAX`.
+    /// * If the new (temporary) total supply exceeds [`U256::MAX`].
     /// * If the sum of the loan value and fee exceeds the maximum value of
-    ///   `U256::MAX`.
+    ///   [`U256::MAX`].
     fn flash_loan(
         &mut self,
         receiver: Address,
         token: Address,
         value: U256,
         data: Bytes,
-    ) -> Result<bool, <Self as IErc3156FlashLender>::Error>;
+    ) -> Result<bool, Self::Error>;
 }
 
 impl Erc20FlashMint {
@@ -356,7 +356,7 @@ impl Erc20FlashMint {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::*;
     use stylus_sdk::{
@@ -389,7 +389,7 @@ mod tests {
             &self,
             token: Address,
             value: U256,
-        ) -> Result<U256, <Self as IErc3156FlashLender>::Error> {
+        ) -> Result<U256, Self::Error> {
             self.erc20_flash_mint.flash_fee(token, value)
         }
 
@@ -399,7 +399,7 @@ mod tests {
             token: Address,
             value: U256,
             data: Bytes,
-        ) -> Result<bool, <Self as IErc3156FlashLender>::Error> {
+        ) -> Result<bool, Self::Error> {
             self.erc20_flash_mint.flash_loan(
                 receiver,
                 token,

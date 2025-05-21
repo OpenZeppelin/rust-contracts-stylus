@@ -118,7 +118,7 @@ jobs:
         # target in this context means one of `--lib`, `--bin`, etc, and not the
         # target triple.
       - name: Cargo hack
-        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --skip std --workspace --exclude e2e --exclude basic-script-example --exclude benches
+        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --workspace --exclude e2e --exclude basic-script-example --exclude benches
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
@@ -128,3 +128,27 @@ jobs:
 
       - name: Check spelling of files in the workspace
         uses: crate-ci/typos@v1
+  nostd:
+    # This job checks whether the library is able to run without the std
+    # library.
+    runs-on: ubuntu-latest
+    name: ${{ matrix.target }}
+    strategy:
+      matrix:
+        target: [wasm32-unknown-unknown]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          rustflags: ""
+
+      - name: Add rust targets ${{ matrix.target }}
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Cargo check
+        run: cargo check --release --target ${{ matrix.target }} --no-default-features

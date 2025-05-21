@@ -16,7 +16,7 @@ use stylus_sdk::{
 };
 
 use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
+    introspection::erc165::IErc165,
     math::storage::{AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked},
 };
 
@@ -187,7 +187,7 @@ pub trait IErc20 {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Returns the remaining number of tokens that `spender` will be allowed
     /// to spend on behalf of `owner` through `transfer_from`. This is zero by
@@ -232,7 +232,7 @@ pub trait IErc20 {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Moves a `value` number of tokens from `from` to `to` using the
     /// allowance mechanism. `value` is then deducted from the caller's
@@ -240,7 +240,7 @@ pub trait IErc20 {
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
-    /// NOTE: If `value` is the maximum `U256::MAX`, the allowance is not
+    /// NOTE: If `value` is the maximum [`U256::MAX`], the allowance is not
     /// updated on `transfer_from`. This is semantically equivalent to
     /// an infinite approval.
     ///
@@ -269,7 +269,7 @@ pub trait IErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error>;
+    ) -> Result<bool, Self::Error>;
 }
 
 #[public]
@@ -292,7 +292,7 @@ impl IErc20 for Erc20 {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         let from = msg::sender();
         self._transfer(from, to, value)?;
         Ok(true)
@@ -306,7 +306,7 @@ impl IErc20 for Erc20 {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         let owner = msg::sender();
         self._approve(owner, spender, value, true)
     }
@@ -316,7 +316,7 @@ impl IErc20 for Erc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         let spender = msg::sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
@@ -425,7 +425,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// * If `total_supply` exceeds `U256::MAX`.
+    /// * If `total_supply` exceeds [`U256::MAX`].
     pub fn _mint(
         &mut self,
         account: Address,
@@ -462,7 +462,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// * If `total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    /// * If `total_supply` exceeds [`U256::MAX`]. It may happen during `mint`
     ///   operation.
     pub fn _update(
         &mut self,
@@ -587,11 +587,11 @@ impl Erc20 {
 impl IErc165 for Erc20 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;

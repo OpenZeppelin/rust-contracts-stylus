@@ -81,7 +81,7 @@ impl Nonces {
     ///
     /// # Panics
     ///
-    /// * If the nonce for the given `owner` exceeds `U256::MAX`.
+    /// * If the nonce for the given `owner` exceeds [`U256::MAX`].
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self.nonces.get(owner);
 
@@ -108,7 +108,7 @@ impl Nonces {
     ///
     /// # Panics
     ///
-    /// * If the nonce for the given `owner` exceeds `U256::MAX`.
+    /// * If the nonce for the given `owner` exceeds [`U256::MAX`].
     pub fn use_checked_nonce(
         &mut self,
         owner: Address,
@@ -127,7 +127,7 @@ impl Nonces {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;

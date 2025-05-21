@@ -360,7 +360,7 @@ impl core::fmt::Display for MultiProofError {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     //! NOTE: The values used as input for these tests were all generated using
     //! <https://github.com/OpenZeppelin/merkle-tree>.

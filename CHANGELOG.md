@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Contracts now support constructors. #639
 - Add Pedersen hash with Starknet parameters. #644
 - Add shift left, right operators to Uint. #644
 - `Erc721Wrapper` extension to support token wrapping. #461
@@ -29,16 +30,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Convert associated `const INTERFACE_ID` into an associated `fn interface_id()` on all traits.
+- Convert associated `const INTERFACE_ID` into an associated `fn interface_id()` on all traits. #639
+- `IErc165::supports_interface` now accepts `&self` as first parameter. #639
+- Removed `Erc165` struct. #639
+- Contracts now use the new Stylus SDK inheritance model. #639
 - Moved `Erc20` callable interface to _/erc20/interface.rs_ module and renamed it to `Erc20Interface`. #461
 - Bump `cargo-stylus` to `v0.5.11`. #617
 - Bump Stylus SDK to `v0.8.4`. #624
 - Remove `ownable_two_step::Error` wrapper in `Ownable2Step`, and emit `ownable::Error` directly. #594
 - Poseidon babybear and goldilocks (64-bit) instances now have 256-bit security (capacity 4). #613
 - `BitIteratorBE` (bit iteration) trait at `openzeppelin_crypto` now accepts `self` by value. #589
+- Feature `std` was removed from libraries. #662
 
 ### Fixed
 
+- The `#[interface_id]` attribute now correctly copies supertraits. #651
 - `IErc721Metadata::interface_id()` now has the correct value.
 
 ## [v0.2.0-alpha.4] - 2025-03-06

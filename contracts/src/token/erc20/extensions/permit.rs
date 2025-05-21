@@ -14,9 +14,9 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{keccak256, Address, B256, U256};
+use alloy_primitives::{keccak256, Address, FixedBytes, B256, U256, U8};
 use alloy_sol_types::SolType;
-use stylus_sdk::{block, call::MethodError, prelude::*};
+use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
 
 use crate::{
     token::erc20::{self, Erc20},
@@ -81,7 +81,7 @@ pub enum Error {
     /// Indicates a failure with the `approver` of a token to be approved. Used
     /// in approvals. approver Address initiating an approval operation.
     InvalidApprover(erc20::ERC20InvalidApprover),
-    /// The signature derives the `Address::ZERO`.
+    /// The signature derives the [`Address::ZERO`].
     InvalidSignature(ECDSAInvalidSignature),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),
@@ -136,6 +136,21 @@ pub trait IErc20Permit: INonces {
     /// The error type associated to this interface.
     type Error: Into<alloc::vec::Vec<u8>>;
 
+    // Calculated manually to include [`INonces::nonces`].
+    /// Solidity interface id associated with [`IErc20Permit`] trait.
+    /// Computed as a XOR of selectors for each function in the trait.
+    #[must_use]
+    fn interface_id() -> FixedBytes<4>
+    where
+        Self: Sized,
+    {
+        FixedBytes::<4>::new(function_selector!("DOMAIN_SEPARATOR",))
+            ^ FixedBytes::<4>::new(function_selector!("nonces", Address,))
+            ^ FixedBytes::<4>::new(function_selector!(
+                "permit", Address, Address, U256, U256, U8, B256, B256
+            ))
+    }
+
     /// Returns the domain separator used in the encoding of the signature for
     /// [`Self::permit`], as defined by EIP712.
     ///
@@ -189,7 +204,7 @@ pub trait IErc20Permit: INonces {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<(), <Self as IErc20Permit>::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 impl<T: IEip712 + StorageType> Erc20Permit<T> {

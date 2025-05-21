@@ -96,7 +96,7 @@ impl Erc721UriStorage {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address};
     use motsu::prelude::*;
@@ -105,7 +105,7 @@ mod tests {
     use super::*;
     use crate::{
         token::erc721::{self, extensions::Erc721Metadata, Erc721},
-        utils::introspection::erc165::{Erc165, IErc165},
+        utils::introspection::erc165::IErc165,
     };
     const TOKEN_ID: U256 = uint!(1_U256);
     use alloy_primitives::FixedBytes;
@@ -153,7 +153,7 @@ mod tests {
     impl IErc165 for Erc721MetadataExample {
         fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
             <Self as IErc721Metadata>::interface_id() == interface_id
-                || Erc165::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
         }
     }
 

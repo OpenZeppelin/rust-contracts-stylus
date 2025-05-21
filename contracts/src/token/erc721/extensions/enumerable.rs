@@ -22,7 +22,7 @@ use stylus_sdk::{
 
 use crate::{
     token::erc721::{self, IErc721},
-    utils::introspection::erc165::{Erc165, IErc165},
+    utils::introspection::erc165::IErc165,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -107,7 +107,7 @@ pub trait IErc721Enumerable {
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, <Self as IErc721Enumerable>::Error>;
+    ) -> Result<U256, Self::Error>;
 
     /// Returns the total amount of tokens stored by the contract.
     ///
@@ -131,10 +131,7 @@ pub trait IErc721Enumerable {
     ///
     /// * [`Error::OutOfBoundsIndex`] - If an `owner`'s token query is out of
     ///   bounds for `index`.
-    fn token_by_index(
-        &self,
-        index: U256,
-    ) -> Result<U256, <Self as IErc721Enumerable>::Error>;
+    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error>;
 }
 
 #[public]
@@ -149,7 +146,7 @@ impl IErc721Enumerable for Erc721Enumerable {
         &self,
         owner: Address,
         index: U256,
-    ) -> Result<U256, <Self as IErc721Enumerable>::Error> {
+    ) -> Result<U256, Self::Error> {
         let token = self.owned_tokens.getter(owner).get(index);
 
         if token.is_zero() {
@@ -164,10 +161,7 @@ impl IErc721Enumerable for Erc721Enumerable {
         U256::from(tokens_length)
     }
 
-    fn token_by_index(
-        &self,
-        index: U256,
-    ) -> Result<U256, <Self as IErc721Enumerable>::Error> {
+    fn token_by_index(&self, index: U256) -> Result<U256, Self::Error> {
         self.all_tokens.get(index).ok_or(
             ERC721OutOfBoundsIndex { owner: Address::ZERO, index }.into(),
         )
@@ -178,7 +172,7 @@ impl IErc721Enumerable for Erc721Enumerable {
 impl IErc165 for Erc721Enumerable {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721Enumerable>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -353,7 +347,7 @@ impl Erc721Enumerable {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::*;
     use stylus_sdk::prelude::*;
@@ -397,7 +391,7 @@ mod tests {
         fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
             <Erc721EnumerableTestExample as IErc721Enumerable>::interface_id()
                 == interface_id
-                || Erc165::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
         }
     }
 

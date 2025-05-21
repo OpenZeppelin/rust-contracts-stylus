@@ -51,7 +51,7 @@ use stylus_sdk::{
     storage::{StorageBool, StorageFixedBytes, StorageMap},
 };
 
-use crate::utils::introspection::erc165::{Erc165, IErc165};
+use crate::utils::introspection::erc165::IErc165;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -162,10 +162,7 @@ pub trait IAccessControl {
     ///
     /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
     ///   granted `role`.
-    fn only_role(
-        &self,
-        role: B256,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    fn only_role(&self, role: B256) -> Result<(), Self::Error>;
 
     /// Returns the admin role that controls `role`. See
     /// [`IAccessControl::grant_role`] and [`IAccessControl::revoke_role`].
@@ -201,7 +198,7 @@ pub trait IAccessControl {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from `account`.
     ///
@@ -225,7 +222,7 @@ pub trait IAccessControl {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Revokes `role` from the calling account.
     ///
@@ -252,7 +249,7 @@ pub trait IAccessControl {
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 #[public]
@@ -267,10 +264,7 @@ impl IAccessControl for AccessControl {
         self.roles.getter(role).has_role.get(account)
     }
 
-    fn only_role(
-        &self,
-        role: B256,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
         self._check_role(role, msg::sender())
     }
 
@@ -282,7 +276,7 @@ impl IAccessControl for AccessControl {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         let admin_role = self.get_role_admin(role);
         self.only_role(admin_role)?;
         self._grant_role(role, account);
@@ -293,7 +287,7 @@ impl IAccessControl for AccessControl {
         &mut self,
         role: B256,
         account: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         let admin_role = self.get_role_admin(role);
         self.only_role(admin_role)?;
         self._revoke_role(role, account);
@@ -304,7 +298,7 @@ impl IAccessControl for AccessControl {
         &mut self,
         role: B256,
         confirmation: Address,
-    ) -> Result<(), <Self as IAccessControl>::Error> {
+    ) -> Result<(), Self::Error> {
         if msg::sender() != confirmation {
             return Err(Error::BadConfirmation(
                 AccessControlBadConfirmation {},
@@ -420,11 +414,11 @@ impl AccessControl {
 impl IErc165 for AccessControl {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IAccessControl>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{

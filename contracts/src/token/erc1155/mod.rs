@@ -16,7 +16,7 @@ use stylus_sdk::{
 };
 
 use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
+    introspection::erc165::IErc165,
     math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
@@ -246,7 +246,7 @@ pub trait IErc1155: IErc165 {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, <Self as IErc1155>::Error>;
+    ) -> Result<Vec<U256>, Self::Error>;
 
     /// Grants or revokes permission to `operator`
     /// to transfer the caller's tokens, according to `approved`.
@@ -270,7 +270,7 @@ pub trait IErc1155: IErc165 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc1155>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Returns true if `operator` is approved to transfer `account`'s
     /// tokens.
@@ -318,7 +318,7 @@ pub trait IErc1155: IErc165 {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Batched version of [`IErc1155::safe_transfer_from`].
     ///
@@ -358,7 +358,7 @@ pub trait IErc1155: IErc165 {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 #[public]
@@ -377,7 +377,7 @@ impl IErc1155 for Erc1155 {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, <Self as IErc1155>::Error> {
+    ) -> Result<Vec<U256>, Self::Error> {
         Self::require_equal_arrays_length(&ids, &accounts)?;
 
         let balances: Vec<U256> = accounts
@@ -393,7 +393,7 @@ impl IErc1155 for Erc1155 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self._set_approval_for_all(msg::sender(), operator, approved)
     }
 
@@ -408,7 +408,7 @@ impl IErc1155 for Erc1155 {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, vec![id], vec![value], &data)
     }
@@ -420,7 +420,7 @@ impl IErc1155 for Erc1155 {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
     }
@@ -430,7 +430,7 @@ impl IErc1155 for Erc1155 {
 impl IErc165 for Erc1155 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -464,7 +464,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`, may happen during `mint`
+    /// * If updated balance exceeds [`U256::MAX`], may happen during `mint`
     ///   operation.
     fn _update(
         &mut self,
@@ -525,7 +525,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`, may happen during `mint`
+    /// * If updated balance exceeds [`U256::MAX`], may happen during `mint`
     ///   operation.
     fn _update_with_acceptance_check(
         &mut self,
@@ -575,7 +575,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     pub fn _mint(
         &mut self,
         to: Address,
@@ -615,7 +615,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     pub fn _mint_batch(
         &mut self,
         to: Address,
@@ -841,7 +841,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn _do_mint(
         &mut self,
         to: Address,
@@ -942,7 +942,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn do_safe_transfer_from(
         &mut self,
         from: Address,
@@ -982,7 +982,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn do_update(
         &mut self,
         from: Address,
@@ -1145,7 +1145,7 @@ enum Transfer {
     Batch { ids: Vec<U256>, values: Vec<U256> },
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;

@@ -3,15 +3,18 @@
 use abi::{Ownable, Ownable::OwnershipTransferred};
 use alloy::primitives::Address;
 use e2e::{
-    constructor, receipt, send, Account, Constructor,
-    ContractInitializationError, EventExt, Revert,
+    receipt, send, Account, Constructor, ContractInitializationError, EventExt,
+    Revert,
 };
 use eyre::Result;
 
 mod abi;
 
 fn ctr(owner: Address) -> Constructor {
-    constructor!(owner)
+    Constructor {
+        signature: "constructor(address)".to_string(),
+        args: vec![owner.to_string()],
+    }
 }
 
 // ============================================================================

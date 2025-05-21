@@ -13,7 +13,7 @@ use eyre::{Context, ContextCompat};
 use regex::Regex;
 use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
 
-use crate::{project::Crate, system::DEPLOYER_ADDRESS, Constructor, Receipt};
+use crate::{project::Crate, system::DEPLOYER_ADDRESS, Receipt};
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address);
@@ -73,6 +73,14 @@ impl std::fmt::Display for ContractDeploymentError {
 }
 
 impl std::error::Error for ContractDeploymentError {}
+
+/// Constructor data.
+pub struct Constructor {
+    /// Constructor signature.
+    pub signature: String,
+    /// Constructor arguments.
+    pub args: Vec<String>,
+}
 
 /// A basic smart contract deployer.
 pub struct Deployer {

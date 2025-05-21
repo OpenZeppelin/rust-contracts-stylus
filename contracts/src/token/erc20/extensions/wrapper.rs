@@ -179,7 +179,7 @@ pub trait IErc20Wrapper {
     ///   balance or hasn't approved enough tokens to the [`Erc20Wrapper`]
     ///   contract.
     /// * [`Error::InvalidReceiver`] - If the `account` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Panics
     ///
@@ -188,7 +188,7 @@ pub trait IErc20Wrapper {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn a number of wrapped tokens and withdraw the
     /// corresponding number of underlying tokens.
@@ -203,7 +203,7 @@ pub trait IErc20Wrapper {
     ///
     /// * [`Error::InvalidReceiver`] - If the `account`'s address is a
     ///   `contract:address()`.
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     /// * [`Error::SafeErc20FailedOperation`] - If the [`Erc20Wrapper`] contract
@@ -212,7 +212,7 @@ pub trait IErc20Wrapper {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -332,7 +332,7 @@ impl Erc20Wrapper {
     /// * [`Error::InvalidUnderlying`]  - If the external call for
     ///   [`IErc20::balance_of`] fails.
     /// * [`Error::InvalidReceiver`] - If the `account` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Panics
     ///
@@ -362,7 +362,7 @@ impl Erc20Wrapper {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, FixedBytes};
     use motsu::prelude::*;

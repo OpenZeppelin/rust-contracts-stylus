@@ -12,7 +12,7 @@ use stylus_sdk::{prelude::*, storage::StorageString};
 
 use crate::{
     token::erc721::{self, IErc721},
-    utils::Metadata,
+    utils::{introspection::erc165::IErc165, Metadata},
 };
 
 /// State of an [`Erc721Metadata`] contract.
@@ -60,10 +60,7 @@ pub trait IErc721Metadata: IErc165 {
     ///
     /// * [`erc721::Error::NonexistentToken`] - If the token does not exist.
     #[selector(name = "tokenURI")]
-    fn token_uri(
-        &self,
-        token_id: U256,
-    ) -> Result<String, <Self as IErc721Metadata>::Error>;
+    fn token_uri(&self, token_id: U256) -> Result<String, Self::Error>;
 }
 
 impl Erc721Metadata {
@@ -119,7 +116,7 @@ impl Erc721Metadata {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{Address, FixedBytes};
     use motsu::prelude::Contract;
@@ -127,7 +124,7 @@ mod tests {
     use super::*;
     use crate::{
         token::erc721::{self, Erc721},
-        utils::introspection::erc165::{Erc165, IErc165},
+        utils::introspection::erc165::IErc165,
     };
 
     #[storage]
@@ -167,7 +164,7 @@ mod tests {
     impl IErc165 for Erc721MetadataExample {
         fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
             <Self as IErc721Metadata>::interface_id() == interface_id
-                || Erc165::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
         }
     }
 

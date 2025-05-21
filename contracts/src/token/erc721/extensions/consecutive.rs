@@ -37,7 +37,7 @@ use crate::{
         Erc721, IErc721, InvalidReceiverWithReason, Transfer,
     },
     utils::{
-        introspection::erc165::{Erc165, IErc165},
+        introspection::erc165::IErc165,
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
@@ -101,7 +101,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -223,17 +223,11 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
-    fn balance_of(
-        &self,
-        owner: Address,
-    ) -> Result<U256, <Self as IErc721>::Error> {
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
         Ok(self.erc721.balance_of(owner)?)
     }
 
-    fn owner_of(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)
     }
 
@@ -242,7 +236,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         // TODO: Once the SDK supports the conversion,
         // use alloy_primitives::bytes!("") here.
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
@@ -254,7 +248,7 @@ impl IErc721 for Erc721Consecutive {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         self.transfer_from(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
             msg::sender(),
@@ -270,7 +264,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
                 ERC721InvalidReceiver { receiver: Address::ZERO },
@@ -297,7 +291,7 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -305,14 +299,11 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.erc721.set_approval_for_all(operator, approved)?)
     }
 
-    fn get_approved(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)?;
         Ok(self.erc721._get_approved(token_id))
     }
@@ -324,7 +315,19 @@ impl IErc721 for Erc721Consecutive {
 
 #[public]
 #[implements(IErc721<Error = Error>, IErc165)]
-impl Erc721Consecutive {}
+impl Erc721Consecutive {
+    // TODO: remove once function overriding is possible, so `max_batch_size`
+    // can be set that way.
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    #[constructor]
+    pub fn constructor(&mut self) {
+        self.max_batch_size.set(U96::from(5000));
+    }
+}
 
 // ************** Consecutive **************
 
@@ -848,11 +851,11 @@ impl Erc721Consecutive {
 impl IErc165 for Erc721Consecutive {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc721>::interface_id() == interface_id
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;

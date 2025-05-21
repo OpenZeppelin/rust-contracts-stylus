@@ -50,7 +50,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(erc721::ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -140,7 +140,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
     ///   [`erc721::IErc721::transfer_from`] operation on the underlying token.
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with an error.
@@ -148,7 +148,7 @@ pub trait IErc721Wrapper {
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, <Self as IErc721Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn wrapped tokens and withdraw the corresponding
     /// `token_ids` of the underlying tokens.
@@ -167,14 +167,14 @@ pub trait IErc721Wrapper {
     ///   [`erc721::IErc721::safe_transfer_from`] operation on the underlying
     ///   token.
     /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
-    ///   is not `Address::ZERO`.
-    /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
-    ///   `auth` does not have a right to approve this token.
+    ///   is not [`Address::ZERO`].
+    /// * [`Error::InsufficientApproval`] - If `auth` is not [`Address::ZERO`]
+    ///   and `auth` does not have a right to approve this token.
     fn withdraw_to(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, <Self as IErc721Wrapper>::Error>;
+    ) -> Result<bool, Self::Error>;
 
     /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
     /// minting on direct ERC-721 transfers to this contract.
@@ -192,7 +192,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
     ///   token.
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with an error.
@@ -202,7 +202,7 @@ pub trait IErc721Wrapper {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<FixedBytes<4>, <Self as IErc721Wrapper>::Error>;
+    ) -> Result<FixedBytes<4>, Self::Error>;
 
     /// Returns the underlying token.
     ///
@@ -362,7 +362,7 @@ impl Erc721Wrapper {
     /// * [`Error::IncorrectOwner`] - If the underlying token is not owned by
     ///   the contract.
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with an error.
@@ -400,14 +400,17 @@ impl Erc721Wrapper {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::uint;
     use motsu::prelude::*;
     use stylus_sdk::abi::Bytes;
 
     use super::*;
-    use crate::token::erc721::{self, IErc721};
+    use crate::{
+        token::erc721::{self, IErc721},
+        utils::introspection::erc165::IErc165,
+    };
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
         (0..size).map(U256::from).collect()
@@ -420,7 +423,7 @@ mod tests {
     }
 
     #[public]
-    #[implements(IErc721<Error=erc721::Error>, IErc721Wrapper<Error=Error>)]
+    #[implements(IErc721<Error=erc721::Error>, IErc721Wrapper<Error=Error>, IErc165)]
     impl Erc721WrapperTestExample {
         #[constructor]
         fn constructor(&mut self, underlying_token: Address) {
@@ -546,6 +549,13 @@ mod tests {
                 &data,
                 &mut self.erc721,
             )
+        }
+    }
+
+    #[public]
+    impl IErc165 for Erc721WrapperTestExample {
+        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+            self.erc721.supports_interface(interface_id)
         }
     }
 

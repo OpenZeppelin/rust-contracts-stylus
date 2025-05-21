@@ -48,10 +48,7 @@ use crate::{
         interface::Erc20Interface,
         utils::{safe_erc20, ISafeErc20, SafeErc20},
     },
-    utils::{
-        introspection::erc165::{Erc165, IErc165},
-        math::storage::AddAssignChecked,
-    },
+    utils::{introspection::erc165::IErc165, math::storage::AddAssignChecked},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -223,7 +220,7 @@ pub trait IVestingWallet {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), <Self as IVestingWallet>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// [`Ownable::only_owner`] functions. Can only be called by the current
@@ -245,9 +242,7 @@ pub trait IVestingWallet {
     /// # Events
     ///
     /// * [`ownable::OwnershipTransferred`].
-    fn renounce_ownership(
-        &mut self,
-    ) -> Result<(), <Self as IVestingWallet>::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 
     /// Getter for the start timestamp.
     ///
@@ -295,8 +290,8 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// * If total allocation exceeds `U256::MAX`.
-    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds [`U256::MAX`].
+    /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "releasable")]
     fn releasable_eth(&self) -> U256;
 
@@ -314,13 +309,11 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// * If total allocation exceeds `U256::MAX`.
-    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds [`U256::MAX`].
+    /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "releasable")]
-    fn releasable_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<U256, <Self as IVestingWallet>::Error>;
+    fn releasable_erc20(&mut self, token: Address)
+        -> Result<U256, Self::Error>;
 
     /// Release the native tokens (Ether) that have already vested.
     ///
@@ -338,10 +331,10 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// * If total allocation exceeds `U256::MAX`.
-    /// * If scaled total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds [`U256::MAX`].
+    /// * If scaled total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), <Self as IVestingWallet>::Error>;
+    fn release_eth(&mut self) -> Result<(), Self::Error>;
 
     /// Release the tokens that have already vested.
     ///
@@ -362,13 +355,10 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// * If total allocation exceeds `U256::MAX`.
-    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds [`U256::MAX`].
+    /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "release")]
-    fn release_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<(), <Self as IVestingWallet>::Error>;
+    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error>;
 
     /// Calculates the amount of Ether that has already vested.
     /// The Default implementation is a linear vesting curve.
@@ -380,8 +370,8 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// * If total allocation exceeds `U256::MAX`.
-    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds [`U256::MAX`].
+    /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256;
 
@@ -400,14 +390,55 @@ pub trait IVestingWallet {
     ///
     /// # Panics
     ///
-    /// * If total allocation exceeds `U256::MAX`.
-    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If total allocation exceeds [`U256::MAX`].
+    /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     #[selector(name = "vestedAmount")]
     fn vested_amount_erc20(
         &mut self,
         token: Address,
         timestamp: u64,
-    ) -> Result<U256, <Self as IVestingWallet>::Error>;
+    ) -> Result<U256, Self::Error>;
+}
+
+#[public]
+#[implements(IVestingWallet<Error = Error>, IErc165)]
+impl VestingWallet {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `beneficiary` - The wallet owner.
+    /// * `start_timestamp` - The point in time when token vesting starts.
+    /// * `duration_seconds` - The vesting duration in seconds.
+    ///
+    /// # Errors
+    ///
+    /// * [`ownable::Error::InvalidOwner`] - If beneficiary is
+    ///   [`Address::ZERO`].
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
+    ) -> Result<(), Error> {
+        self.ownable.constructor(beneficiary)?;
+        self.start.set(start_timestamp);
+        self.duration.set(duration_seconds);
+        Ok(())
+    }
+
+    /// The contract should be able to receive Eth.
+    ///
+    /// # Errors
+    ///
+    /// * If the transaction includes data (non-zero calldata).
+    /// * If the contract doesn't have enough gas to execute the function.
+    #[receive]
+    pub fn receive(&mut self) -> Result<(), Vec<u8>> {
+        Ok(())
+    }
 }
 
 #[public]
@@ -461,13 +492,11 @@ impl IVestingWallet for VestingWallet {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), <Self as IVestingWallet>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(
-        &mut self,
-    ) -> Result<(), <Self as IVestingWallet>::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 
@@ -506,7 +535,7 @@ impl IVestingWallet for VestingWallet {
     fn releasable_erc20(
         &mut self,
         token: Address,
-    ) -> Result<U256, <Self as IVestingWallet>::Error> {
+    ) -> Result<U256, Self::Error> {
         let vested = self.vested_amount_erc20(token, block::timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
@@ -514,7 +543,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_eth(&mut self) -> Result<(), <Self as IVestingWallet>::Error> {
+    fn release_eth(&mut self) -> Result<(), Self::Error> {
         let amount = self.releasable_eth();
 
         self.released.add_assign_checked(
@@ -532,10 +561,7 @@ impl IVestingWallet for VestingWallet {
     }
 
     #[selector(name = "release")]
-    fn release_erc20(
-        &mut self,
-        token: Address,
-    ) -> Result<(), <Self as IVestingWallet>::Error> {
+    fn release_erc20(&mut self, token: Address) -> Result<(), Self::Error> {
         let amount = self.releasable_erc20(token)?;
         let owner = self.ownable.owner();
 
@@ -565,7 +591,7 @@ impl IVestingWallet for VestingWallet {
         &mut self,
         token: Address,
         timestamp: u64,
-    ) -> Result<U256, <Self as IVestingWallet>::Error> {
+    ) -> Result<U256, Self::Error> {
         let erc20 = Erc20Interface::new(token);
         let balance = erc20
             .balance_of(Call::new_in(self), contract::address())
@@ -592,7 +618,7 @@ impl VestingWallet {
     ///
     /// # Panics
     ///
-    /// * If scaled, total allocation (mid calculation) exceeds `U256::MAX`.
+    /// * If scaled, total allocation (mid calculation) exceeds [`U256::MAX`].
     fn vesting_schedule(&self, total_allocation: U256, timestamp: U64) -> U256 {
         let timestamp = U256::from(timestamp);
 
@@ -622,11 +648,11 @@ impl IErc165 for VestingWallet {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IVestingWallet>::interface_id() == interface_id
             || self.ownable.supports_interface(interface_id)
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{

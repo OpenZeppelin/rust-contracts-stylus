@@ -82,7 +82,7 @@ impl IErc20 for OwnableExample {
         &mut self,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         self.ownable.only_owner()?;
         Ok(self.erc20.transfer(to, value)?)
     }
@@ -95,7 +95,7 @@ impl IErc20 for OwnableExample {
         &mut self,
         spender: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.approve(spender, value)?)
     }
 
@@ -104,7 +104,7 @@ impl IErc20 for OwnableExample {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, <Self as IErc20>::Error> {
+    ) -> Result<bool, Self::Error> {
         Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
@@ -120,11 +120,11 @@ impl IOwnable for OwnableExample {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), <Self as IOwnable>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), <Self as IOwnable>::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 }

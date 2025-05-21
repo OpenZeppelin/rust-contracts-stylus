@@ -977,7 +977,7 @@ impl<const N: usize> WideUint<N> {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod test {
     use proptest::prelude::*;
 

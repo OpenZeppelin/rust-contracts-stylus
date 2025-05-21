@@ -26,7 +26,7 @@ use stylus_sdk::{
 use crate::{
     token::erc1155::{self, Erc1155, Error, IErc1155},
     utils::{
-        introspection::erc165::{Erc165, IErc165},
+        introspection::erc165::IErc165,
         math::storage::{AddAssignChecked, SubAssignUnchecked},
     },
 };
@@ -115,7 +115,7 @@ impl IErc1155 for Erc1155Supply {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, <Self as IErc1155>::Error> {
+    ) -> Result<Vec<U256>, Self::Error> {
         self.erc1155.balance_of_batch(accounts, ids)
     }
 
@@ -123,7 +123,7 @@ impl IErc1155 for Erc1155Supply {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.set_approval_for_all(operator, approved)
     }
 
@@ -138,7 +138,7 @@ impl IErc1155 for Erc1155Supply {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, vec![id], vec![value], &data)
     }
@@ -150,7 +150,7 @@ impl IErc1155 for Erc1155Supply {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), <Self as IErc1155>::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
     }
@@ -161,7 +161,7 @@ impl IErc165 for Erc1155Supply {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc1155Supply>::interface_id() == interface_id
             || self.erc1155.supports_interface(interface_id)
-            || Erc165::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -252,7 +252,7 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// * If updated balance and/or supply exceeds `U256::MAX`, may happen
+    /// * If updated balance and/or supply exceeds [`U256::MAX`], may happen
     ///   during the `mint` operation.
     fn _update(
         &mut self,
@@ -387,7 +387,7 @@ impl Erc1155Supply {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
