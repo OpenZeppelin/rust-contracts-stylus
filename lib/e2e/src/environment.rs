@@ -11,24 +11,16 @@ pub(crate) fn get_node_path() -> eyre::Result<PathBuf> {
 /// Runs the following command to get the worskpace root:
 ///
 /// ```bash
-/// dirname "$(cargo locate-project --workspace --message-format plain)"
+/// git rev-parse --show-toplevel
 /// ```
 pub(crate) fn get_workspace_root() -> eyre::Result<PathBuf> {
-    let output = Command::new("cargo")
-        .arg("locate-project")
-        .arg("--workspace")
-        .arg("--message-format")
-        .arg("plain")
+    let output = Command::new("git")
+        .arg("rev-parse")
+        .arg("--show-toplevel")
         .output()
-        .wrap_err("should run `cargo locate-project`")?;
+        .wrap_err("should run `git rev-parse --show-toplevel`")?;
 
-    let manifest_path = String::from_utf8_lossy(&output.stdout);
-    let manifest_dir = Command::new("dirname")
-        .arg(&*manifest_path)
-        .output()
-        .wrap_err("should run `dirname`")?;
-
-    let path = String::from_utf8_lossy(&manifest_dir.stdout)
+    let path = String::from_utf8_lossy(&output.stdout)
         .trim()
         .to_string()
         .parse::<PathBuf>()

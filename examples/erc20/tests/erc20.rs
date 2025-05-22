@@ -1,38 +1,25 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc20;
-use alloy::{
-    primitives::{uint, Address, U256},
-    sol,
-};
+use alloy::primitives::{uint, Address, U256};
 use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
+    constructor, receipt, send, watch, Account, Constructor,
+    ContractInitializationError, EventExt, Panic, PanicCode, Revert,
 };
 use eyre::Result;
 
-use crate::Erc20Example::constructorCall;
-
 mod abi;
-
-sol!("src/constructor.sol");
 
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "TTK";
 const CAP: U256 = uint!(1_000_000_U256);
 
-impl Default for constructorCall {
-    fn default() -> Self {
-        ctr(CAP)
-    }
+fn ctr(cap: U256) -> Constructor {
+    constructor!(TOKEN_NAME.to_string(), TOKEN_SYMBOL.to_string(), cap)
 }
 
-fn ctr(cap: U256) -> constructorCall {
-    Erc20Example::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: cap,
-    }
+fn default_ctr() -> Constructor {
+    ctr(CAP)
 }
 
 // ============================================================================
@@ -43,10 +30,10 @@ fn ctr(cap: U256) -> constructorCall {
 async fn constructs(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let name = contract.name().call().await?.name;
@@ -70,10 +57,10 @@ async fn constructs(alice: Account) -> Result<()> {
 async fn mints(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -107,10 +94,10 @@ async fn mints(alice: Account) -> Result<()> {
 async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let invalid_receiver = Address::ZERO;
 
@@ -145,7 +132,7 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
         .with_constructor(ctr(max_cap))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -180,10 +167,10 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
 async fn transfers(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -229,10 +216,10 @@ async fn transfer_rejects_insufficient_balance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -275,10 +262,10 @@ async fn transfer_rejects_insufficient_balance(
 async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_receiver = Address::ZERO;
@@ -319,10 +306,10 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
 async fn approves(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -391,10 +378,10 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
 async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_spender = Address::ZERO;
@@ -446,10 +433,10 @@ async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
 async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -506,10 +493,10 @@ async fn transfer_from_reverts_insufficient_balance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -566,10 +553,10 @@ async fn transfer_from_rejects_insufficient_allowance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -626,10 +613,10 @@ async fn transfer_from_rejects_invalid_receiver(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -687,10 +674,10 @@ async fn transfer_from_rejects_invalid_receiver(
 async fn burns(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -727,10 +714,10 @@ async fn burns(alice: Account) -> Result<()> {
 async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -767,10 +754,10 @@ async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
 async fn burns_from(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -826,10 +813,10 @@ async fn burn_from_reverts_insufficient_balance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -886,10 +873,10 @@ async fn burn_from_rejects_insufficient_allowance(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -947,10 +934,10 @@ async fn burn_from_rejects_insufficient_allowance(
 async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -988,10 +975,10 @@ async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
 async fn mint_rejects_when_cap_reached(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -1036,7 +1023,12 @@ async fn should_not_deploy_capped_with_invalid_cap(
         .await
         .expect_err("should not deploy due to `ERC20InvalidCap`");
 
-    assert!(err.reverted_with(Erc20::ERC20InvalidCap { cap: invalid_cap }));
+    // TODO: assert the actual `OwnableInvalidOwner` error was returned once
+    // StylusDeployer is able to return the exact revert reason from
+    // constructors. assert!(err.reverted_with(Erc20::ERC20InvalidCap { cap:
+    // invalid_cap }));
+
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }
@@ -1049,10 +1041,10 @@ async fn should_not_deploy_capped_with_invalid_cap(
 async fn pauses(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let receipt = receipt!(contract.pause())?;
@@ -1070,10 +1062,10 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
@@ -1091,10 +1083,10 @@ async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 async fn unpauses(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     watch!(contract.pause())?;
@@ -1114,10 +1106,10 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
@@ -1137,10 +1129,10 @@ async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
 async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -1178,10 +1170,10 @@ async fn error_when_burn_from_in_paused_state(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -1232,10 +1224,10 @@ async fn error_when_burn_from_in_paused_state(
 async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
@@ -1270,10 +1262,10 @@ async fn error_when_transfer_in_paused_state(
 ) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
@@ -1313,10 +1305,10 @@ async fn error_when_transfer_in_paused_state(
 async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let contract_bob = Erc20::new(contract_addr, &bob.wallet);
 
@@ -1371,10 +1363,10 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
 async fn supports_interface(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
-        .with_default_constructor::<constructorCall>()
+        .with_constructor(default_ctr())
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
     let invalid_interface_id: u32 = 0xffffffff;

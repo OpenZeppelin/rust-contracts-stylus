@@ -6,7 +6,7 @@ cd "$MYDIR"
 cd ..
 
 # Optimize contract's wasm binary by crate name.
-opt_wasm () {
+opt_wasm() {
   local CONTRACT_CRATE_NAME=$1
   local CONTRACT_BIN_NAME="${CONTRACT_CRATE_NAME//-/_}.wasm"
   local CONTRACT_OPT_BIN_NAME="${CONTRACT_CRATE_NAME//-/_}_opt.wasm"
@@ -18,7 +18,7 @@ opt_wasm () {
 }
 
 # Retrieve all alphanumeric contract's crate names in `./examples` directory.
-get_example_crate_names () {
+get_example_crate_names() {
   # shellcheck disable=SC2038
   # NOTE: optimistically relying on the 'name = ' string at Cargo.toml file
   find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
@@ -27,12 +27,12 @@ get_example_crate_names () {
 cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
 
 # Optimize contract's wasm for gas usage.
-for CRATE_NAME in $(get_example_crate_names)
-do
+for CRATE_NAME in $(get_example_crate_names); do
   opt_wasm "$CRATE_NAME"
 done
 
 export RPC_URL=http://localhost:8547
+export DEPLOYER_ADDRESS=0x6ac4839Bfe169CadBBFbDE3f29bd8459037Bf64e
 
 # No need to compile benchmarks with `--release`
 # since this only runs the benchmarking code and the contracts have already been compiled with `--release`.

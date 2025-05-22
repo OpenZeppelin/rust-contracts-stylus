@@ -22,3 +22,8 @@ crate-type = ["lib", "cdylib"]
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
+
+[[bin]]
+name = "ownable-two-step-example"
+path = "src/main.rs"

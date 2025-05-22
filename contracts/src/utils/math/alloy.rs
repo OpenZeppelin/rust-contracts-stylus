@@ -196,7 +196,7 @@ impl Math for U256 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{
         private::proptest::{prop_assume, proptest},

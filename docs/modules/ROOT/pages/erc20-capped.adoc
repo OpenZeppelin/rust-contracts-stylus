@@ -11,7 +11,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_sty
 ----
 use openzeppelin_stylus::token::erc20::{
     self,
-    extensions::{capped, Capped},
+    extensions::{capped, Capped, ICapped},
     Erc20, IErc20,
 };
 
@@ -56,19 +56,22 @@ impl From<erc20::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     capped: Capped,
 }
 
 #[public]
-#[inherit(Erc20, Capped)]
+#[implements(IErc20<Error = Error>, ICapped)]
 impl Erc20Example {
+    #[constructor]
+    fn constructor(&mut self, cap: U256) -> Result<(), Error> {
+        Ok(self.capped.constructor(cap)?)
+    }
+
     // Add token minting feature.
     //
     // Make sure to handle `Capped` properly. You should not call
-    // [`Erc20::_update`] to mint tokens -- it will the break `Capped`
+    // [`Erc20::_update`] to mint tokens -- it will break the `Capped`
     // mechanism.
     fn mint(
         &mut self,
@@ -97,28 +100,53 @@ impl Erc20Example {
         Ok(())
     }
 }
-----
 
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
+#[public]
+impl ICapped for Erc20Example {
+    fn cap(&self) -> U256 {
+        self.capped.cap()
+    }
+}
 
-[source,solidity]
-----
-contract Erc20Example {
-    // ...
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = Error;
 
-    uint256 private _cap;
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
 
-    error ERC20InvalidCap(uint256 cap);
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
 
-    constructor(uint256 cap_) {
-        // ...
-        if (cap_ == 0) {
-            revert ERC20InvalidCap(0);
-        }
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer(to, value)?)
+    }
 
-        _cap = cap_;
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
 
-        // ...
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.approve(spender, value)?)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
 ----
