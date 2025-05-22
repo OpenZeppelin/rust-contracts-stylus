@@ -37,7 +37,7 @@ impl GLDToken {
     fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
     }
-    
+
     // ...
 }
 
