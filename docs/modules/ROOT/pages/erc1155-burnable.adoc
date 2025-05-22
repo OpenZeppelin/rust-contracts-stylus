@@ -11,20 +11,44 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc1155::{self, extensions::IErc1155Burnable, Erc1155},
+    token::erc1155::{self, extensions::IErc1155Burnable, Erc1155, IErc1155},
     utils::introspection::erc165::IErc165,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc1155Example {
-    #[borrow]
     erc1155: Erc1155,
 }
 
 #[public]
-#[inherit(Erc1155)]
+#[implements(IErc1155<Error = erc1155::Error>, IErc1155Burnable<Error = erc1155::Error>, IErc165)]
 impl Erc1155Example {
+    fn mint(
+        &mut self,
+        to: Address,
+        token_id: U256,
+        amount: U256,
+        data: Bytes,
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155._mint(to, token_id, amount, &data)
+    }
+
+    fn mint_batch(
+        &mut self,
+        to: Address,
+        token_ids: Vec<U256>,
+        amounts: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), erc1155::Error> {
+        self.erc1155._mint_batch(to, token_ids, amounts, &data)
+    }
+}
+
+#[public]
+impl IErc1155Burnable for Erc1155Example {
+    type Error = erc1155::Error;
+
     fn burn(
         &mut self,
         account: Address,
@@ -48,9 +72,63 @@ impl Erc1155Example {
         // ...
         Ok(())
     }
+}
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc1155::supports_interface(interface_id)
+#[public]
+impl IErc1155 for Erc1155Example {
+    type Error = erc1155::Error;
+
+    fn balance_of(&self, account: Address, id: U256) -> U256 {
+        self.erc1155.balance_of(account, id)
+    }
+
+    fn balance_of_batch(
+        &self,
+        accounts: Vec<Address>,
+        ids: Vec<U256>,
+    ) -> Result<Vec<U256>, Self::Error> {
+        self.erc1155.balance_of_batch(accounts, ids)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error> {
+        self.erc1155.set_approval_for_all(operator, approved)
+    }
+
+    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
+        self.erc1155.is_approved_for_all(account, operator)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.erc1155.safe_transfer_from(from, to, id, value, data)
+    }
+
+    fn safe_batch_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.erc1155.safe_batch_transfer_from(from, to, ids, values, data)
+    }
+}
+
+#[public]
+impl IErc165 for Erc1155Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc1155.supports_interface(interface_id)
     }
 }
 ----

@@ -15,18 +15,96 @@ Here's what our GLD token might look like.
 
 [source,rust]
 ----
+use openzeppelin_stylus::{
+    token::erc20::{
+        self,
+        extensions::{Erc20Metadata, IErc20Metadata},
+        Erc20, IErc20,
+    },
+};
+
 #[entrypoint]
 #[storage]
 struct GLDToken {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     metadata: Erc20Metadata,
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata)]
-impl GLDToken {}
+#[implements(IErc20<Error = erc20::Error>, IErc20Metadata, IErc165)]
+impl GLDToken {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+
+    // ...
+}
+
+#[public]
+impl IErc20 for GLDToken {
+    type Error = erc20::Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer(to, value)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.approve(spender, value)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer_from(from, to, value)
+    }
+}
+
+#[public]
+impl IErc20Metadata for GLDToken {
+    fn name(&self) -> String {
+        self.metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
+    fn decimals(&self) -> U8 {
+        self.metadata.decimals()
+    }
+}
+
+#[public]
+impl IErc165 for GLDToken {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc20.supports_interface(interface_id)
+            || self.metadata.supports_interface(interface_id)
+    }
+}
 ----
 
 Our contracts are often used via stylus-sdk https://docs.arbitrum.io/stylus/reference/rust-sdk-guide#inheritance-inherit-and-borrow[inheritance], and here we're reusing https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/struct.Erc20.html[`ERC20`] for both the basic standard implementation and with optional extensions.
@@ -57,8 +135,8 @@ To use a different value, you will need to override the `decimals()` function in
 
 [source,rust]
 ----
-fn decimals(&self) -> u8 {
-    16
+fn decimals(&self) -> U8 {
+    U8::from(16)
 }
 ----
 

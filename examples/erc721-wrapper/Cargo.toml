@@ -1,5 +1,5 @@
 [package]
-name = "erc721-wrapper"
+name = "erc721-wrapper-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -19,6 +19,11 @@ e2e.workspace = true
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "erc721-wrapper-example"
+path = "src/main.rs"

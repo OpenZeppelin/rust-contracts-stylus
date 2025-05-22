@@ -11,44 +11,92 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 ----
 use openzeppelin_stylus::{
     token::erc20::{
-        extensions::Erc20Metadata,
-        Erc20,
+        self,
+        extensions::{Erc20Metadata, IErc20Metadata},
+        Erc20, IErc20,
     },
 };
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     metadata: Erc20Metadata,
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
+#[implements(IErc20<Error = erc20::Error>, IErc20Metadata, IErc165)]
 impl Erc20Example {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+
     // ...
 }
-----
 
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = erc20::Error;
 
-[source,solidity]
-----
-contract Erc20Example {
-    // ...
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
 
-    string private _name;
-    string private _symbol;
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
 
-    constructor(string memory name_, string memory symbol_) {
-        // ...
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer(to, value)
+    }
 
-        _name = name_;
-        _symbol = symbol_;
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
 
-        // ...
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.approve(spender, value)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer_from(from, to, value)
+    }
+}
+
+#[public]
+impl IErc20Metadata for Erc20Example {
+    fn name(&self) -> String {
+        self.metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
+    fn decimals(&self) -> U8 {
+        self.metadata.decimals()
+    }
+}
+
+#[public]
+impl IErc165 for Erc20Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc20.supports_interface(interface_id)
+            || self.metadata.supports_interface(interface_id)
     }
 }
 ----

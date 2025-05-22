@@ -12,7 +12,7 @@ In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_
 use openzeppelin_stylus::{
     token::erc721::{
         extensions::{consecutive, Erc721Consecutive},
-        Erc721,
+        Erc721, IErc721,
     },
     utils::introspection::erc165::IErc165,
 };
@@ -20,158 +20,98 @@ use openzeppelin_stylus::{
 #[entrypoint]
 #[storage]
 struct Erc721ConsecutiveExample {
-    #[borrow]
     erc721_consecutive: Erc721Consecutive,
 }
 
 #[public]
-#[inherit(Erc721Consecutive)]
+#[inherit(IErc721<Error = consecutive::Error>, IErc165)]
 impl Erc721ConsecutiveExample {
-    fn burn(&mut self, token_id: U256) -> Result<(), consecutive::Error> {
-        self.erc721_consecutive._burn(token_id)
+    #[constructor]
+    fn constructor(
+        &mut self,
+        receivers: Vec<Address>,
+        amounts: Vec<U96>,
+        first_consecutive_id: U96,
+        max_batch_size: U96,
+    ) -> Result<(), consecutive::Error> {
+        self.erc721_consecutive.first_consecutive_id.set(first_consecutive_id);
+        self.erc721_consecutive.max_batch_size.set(max_batch_size);
+        for (&receiver, &amount) in receivers.iter().zip(amounts.iter()) {
+            self.erc721_consecutive._mint_consecutive(receiver, amount)?;
+        }
+        Ok(())
+    }
+}
+
+#[public]
+impl IErc721 for Erc721ConsecutiveExample {
+    type Error = consecutive::Error;
+
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
+        self.erc721.balance_of(owner)
     }
 
-    fn mint(
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
+        self.erc721.owner_of(token_id)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.safe_transfer_from(from, to, token_id)
+    }
+
+    fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.erc721.safe_transfer_from_with_data(from, to, token_id, data)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.transfer_from(from, to, token_id)
+    }
+
+    fn approve(
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), consecutive::Error> {
-        self.erc721_consecutive._mint(to, token_id)
+    ) -> Result<(), Self::Error> {
+        self.erc721.approve(to, token_id)
     }
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc721::supports_interface(interface_id)
+    fn set_approval_for_all(
+        &mut self,
+        to: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error> {
+        self.erc721.set_approval_for_all(to, approved)
+    }
+
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
+        self.erc721.get_approved(token_id)
+    }
+
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
+        self.erc721.is_approved_for_all(owner, operator)
     }
 }
-----
 
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
-
-[source,solidity]
-----
-contract Erc721ConsecutiveExample {
-    mapping(uint256 tokenId => address) private _owners;
-    mapping(address owner => uint256) private _balances;
-    mapping(uint256 tokenId => address) private _tokenApprovals;
-    mapping(address owner => mapping(address operator => bool)) private _operatorApprovals;
-
-    Checkpoint160[] private _checkpoints; // _sequentialOwnership
-    mapping(uint256 bucket => uint256) private _data; // _sequentialBurn
-    uint96 private _firstConsecutiveId;
-    uint96 private _maxBatchSize;
-
-    error ERC721InvalidReceiver(address receiver);
-    error ERC721ForbiddenBatchMint();
-    error ERC721ExceededMaxBatchMint(uint256 batchSize, uint256 maxBatch);
-    error ERC721ForbiddenMint();
-    error ERC721ForbiddenBatchBurn();
-    error CheckpointUnorderedInsertion();
-
-    event ConsecutiveTransfer(
-        uint256 indexed fromTokenId,
-        uint256 toTokenId,
-        address indexed fromAddress,
-        address indexed toAddress
-    );
-
-    struct Checkpoint160 {
-        uint96 _key;
-        uint160 _value;
-    }
-
-    constructor(
-        address[] memory receivers,
-        uint96[] memory amounts,
-        uint96 firstConsecutiveId,
-        uint96 maxBatchSize)
-    {
-        _firstConsecutiveId = firstConsecutiveId;
-        _maxBatchSize = maxBatchSize;
-        for (uint256 i = 0; i < receivers.length; ++i) {
-            _mintConsecutive(receivers[i], amounts[i]);
-        }
-    }
-
-    function latestCheckpoint() internal view returns (bool exists, uint96 _key, uint160 _value) {
-        uint256 pos = _checkpoints.length;
-        if (pos == 0) {
-            return (false, 0, 0);
-        } else {
-            Checkpoint160 storage ckpt = _checkpoints[pos - 1];
-            return (true, ckpt._key, ckpt._value);
-        }
-    }
-
-    function push(uint96 key, uint160 value) internal returns (uint160, uint160) {
-        return _insert(key, value);
-    }
-
-    function _insert(uint96 key, uint160 value) private returns (uint160, uint160) {
-        uint256 pos = _checkpoints.length;
-
-        if (pos > 0) {
-            Checkpoint160 storage last = _checkpoints[pos - 1];
-            uint96 lastKey = last._key;
-            uint160 lastValue = last._value;
-
-            // Checkpoint keys must be non-decreasing.
-            if (lastKey > key) {
-                revert CheckpointUnorderedInsertion();
-            }
-
-            // Update or push new checkpoint.
-            if (lastKey == key) {
-                _checkpoints[pos - 1]._value = value;
-            } else {
-                _checkpoints.push(Checkpoint160({_key: key, _value: value}));
-            }
-            return (lastValue, value);
-        } else {
-            _checkpoints.push(Checkpoint160({_key: key, _value: value}));
-            return (0, value);
-        }
-    }
-
-    function _mintConsecutive(address to, uint96 batchSize) internal virtual returns (uint96) {
-        uint96 next = _nextConsecutiveId();
-
-        // minting a batch of size 0 is a no-op.
-        if (batchSize > 0) {
-            if (address(this).code.length > 0) {
-                revert ERC721ForbiddenBatchMint();
-            }
-            if (to == address(0)) {
-                revert ERC721InvalidReceiver(address(0));
-            }
-
-            uint256 maxBatchSize = _maxBatchSize;
-            if (batchSize > maxBatchSize) {
-                revert ERC721ExceededMaxBatchMint(batchSize, maxBatchSize);
-            }
-
-            // push an ownership checkpoint & emit event.
-            uint96 last = next + batchSize - 1;
-            push(last, uint160(to));
-
-            // The invariant required by this function is preserved because the new sequentialOwnership checkpoint
-            // is attributing ownership of `batchSize` new tokens to account `to`.
-            _increaseBalance(to, batchSize);
-
-            emit ConsecutiveTransfer(next, last, address(0), to);
-        }
-
-        return next;
-    }
-
-    function _nextConsecutiveId() private view returns (uint96) {
-        (bool exists, uint96 latestId,) = latestCheckpoint();
-        return exists ? latestId + 1 : _firstConsecutiveId;
-    }
-
-    function _increaseBalance(address account, uint128 value) internal virtual {
-        unchecked {
-            _balances[account] += value;
-        }
+#[public]
+impl IErc165 for Erc721ConsecutiveExample {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc721.supports_interface(interface_id)
     }
 }
 ----
