@@ -7,7 +7,7 @@ use alloy::{
     uint,
 };
 use alloy_primitives::U256;
-use e2e::{receipt, Account, Constructor};
+use e2e::{constructor, receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -91,17 +91,16 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         .collect::<eyre::Result<Vec<_>>>()
 }
 
-fn ctr() -> Constructor {
-    Constructor {
-        signature: "constructor(string,string,uint256)".to_string(),
-        args: vec![
+async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
+    crate::deploy(
+        account,
+        "erc20",
+        Some(constructor!(
             TOKEN_NAME.to_string(),
             TOKEN_SYMBOL.to_string(),
-            CAP.to_string(),
-        ],
-    }
-}
-
-async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    crate::deploy(account, "erc20", Some(ctr()), cache_opt).await
+            CAP
+        )),
+        cache_opt,
+    )
+    .await
 }

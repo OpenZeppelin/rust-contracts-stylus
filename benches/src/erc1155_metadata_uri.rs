@@ -6,7 +6,7 @@ use alloy::{
     sol_types::SolCall,
     uint,
 };
-use e2e::{receipt, Account, Constructor};
+use e2e::{constructor, receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -59,12 +59,12 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         .collect::<eyre::Result<Vec<_>>>()
 }
 
-fn ctr() -> Constructor {
-    Constructor {
-        signature: "constructor(string)".to_string(),
-        args: vec![URI.to_string()],
-    }
-}
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    crate::deploy(account, "erc1155-metadata-uri", Some(ctr()), cache_opt).await
+    crate::deploy(
+        account,
+        "erc1155-metadata-uri",
+        Some(constructor!(URI.to_string())),
+        cache_opt,
+    )
+    .await
 }
