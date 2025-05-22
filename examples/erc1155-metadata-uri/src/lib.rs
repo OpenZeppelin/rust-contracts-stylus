@@ -18,6 +18,7 @@ use stylus_sdk::{
     alloy_primitives::{Address, FixedBytes, U256},
     prelude::*,
 };
+
 #[entrypoint]
 #[storage]
 struct Erc1155MetadataUriExample {
