@@ -410,7 +410,7 @@ pub trait IErc721: IErc165 {
 }
 
 #[public]
-#[implements(IErc721<Error=Error>, IErc165)]
+#[implements(IErc721<Error = Error>, IErc165)]
 impl Erc721 {}
 
 #[public]

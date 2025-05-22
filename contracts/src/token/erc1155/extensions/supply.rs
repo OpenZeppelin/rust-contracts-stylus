@@ -56,10 +56,6 @@ impl DerefMut for Erc1155Supply {
     }
 }
 
-#[public]
-#[implements(IErc1155<Error = Error>, IErc1155Supply, IErc165)]
-impl Erc1155Supply {}
-
 /// Required interface of a [`Erc1155Supply`] contract.
 #[interface_id]
 pub trait IErc1155Supply: IErc165 {
@@ -87,6 +83,10 @@ pub trait IErc1155Supply: IErc165 {
     /// * `id` - Token id as a number.
     fn exists(&self, id: U256) -> bool;
 }
+
+#[public]
+#[implements(IErc1155<Error = Error>, IErc1155Supply, IErc165)]
+impl Erc1155Supply {}
 
 #[public]
 impl IErc1155Supply for Erc1155Supply {

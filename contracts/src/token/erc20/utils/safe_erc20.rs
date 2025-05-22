@@ -5,9 +5,9 @@
 //! throw on failure) are also supported, non-reverting calls are assumed to be
 //! successful.
 //!
-//! To use this library, you can add a `#[inherit(SafeErc20)]` attribute to
-//! your contract, which allows you to call the safe operations as
-//! `contract.safe_transfer(token_addr, ...)`, etc.
+//! To use this library, you can add a `#[implements(ISafeErc20<Error =
+//! Error>)]` attribute to your contract, which allows you to call the safe
+//! operations as `contract.safe_transfer(token_addr, ...)`, etc.
 
 use alloc::{vec, vec::Vec};
 

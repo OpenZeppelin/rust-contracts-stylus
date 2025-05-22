@@ -3,12 +3,14 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus::{
     access::control::{self, AccessControl, IAccessControl},
     token::erc20::{self, Erc20, IErc20},
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    alloy_primitives::{Address, B256, U256},
+    prelude::*,
+};
 
 #[derive(SolidityError, Debug)]
 enum Error {

@@ -3,19 +3,19 @@ extern crate alloc;
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus::token::erc20::{
     extensions::{wrapper, Erc20Wrapper, IErc20Wrapper},
     Erc20, IErc20,
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    alloy_primitives::{Address, U256, U8},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
 struct Erc20WrapperExample {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     erc20_wrapper: Erc20Wrapper,
 }
 

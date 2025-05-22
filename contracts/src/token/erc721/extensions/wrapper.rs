@@ -423,7 +423,7 @@ mod tests {
     }
 
     #[public]
-    #[implements(IErc721<Error=erc721::Error>, IErc721Wrapper<Error=Error>, IErc165)]
+    #[implements(IErc721<Error = erc721::Error>, IErc721Wrapper<Error = Error>, IErc165)]
     impl Erc721WrapperTestExample {
         #[constructor]
         fn constructor(&mut self, underlying_token: Address) {

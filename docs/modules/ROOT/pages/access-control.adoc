@@ -34,12 +34,11 @@ impl From<ownable::Error> for Error {
 #[entrypoint]
 #[storage]
 struct OwnableExample {
-    #[borrow]
     ownable: Ownable,
 }
 
 #[public]
-#[inherit(Ownable)]
+#[implements(IOwnable<Error = Error>)]
 impl MyContract {
     fn normal_thing(&self) {
         // anyone can call this normal_thing()
@@ -51,6 +50,26 @@ impl MyContract {
         // only the owner can call special_thing()!
 
         Ok(())
+    }
+}
+
+#[public]
+impl IOwnable for MyContract {
+    type Error = Error;
+
+    fn owner(&self) -> Address {
+        self.ownable.owner()
+    }
+
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
+        Ok(self.ownable.transfer_ownership(new_owner)?)
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+        Ok(self.ownable.renounce_ownership()?)
     }
 }
 ----
@@ -136,9 +155,7 @@ impl From<erc20::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     access: AccessControl,
 }
 
@@ -146,12 +163,95 @@ const MINTER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"MINTER_ROLE").finalize();
 
 #[public]
-#[inherit(Erc20, AccessControl)]
+#[implements(IErc20<Error = Error>, IAccessControl<Error = Error>)]
 impl Example {
     fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(MINTER_ROLE.into())?;
         self.erc20._mint(to, amount)?;
         Ok(())
+    }
+}
+
+#[public]
+impl IErc20 for Example {
+    type Error = Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer(to, value)?)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.approve(spender, value)?)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer_from(from, to, value)?)
+    }
+}
+
+#[public]
+impl IAccessControl for Example {
+    type Error = Error;
+
+    fn has_role(&self, role: B256, account: Address) -> bool {
+        self.access.has_role(role, account)
+    }
+
+    fn only_role(&self, role: B256) -> Result<(), Self::Error> {
+        Ok(self.access.only_role(role)?)
+    }
+
+    fn get_role_admin(&self, role: B256) -> B256 {
+        self.access.get_role_admin(role)
+    }
+
+    fn grant_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        Ok(self.access.grant_role(role, account)?)
+    }
+
+    fn revoke_role(
+        &mut self,
+        role: B256,
+        account: Address,
+    ) -> Result<(), Self::Error> {
+        Ok(self.access.revoke_role(role, account)?)
+    }
+
+    fn renounce_role(
+        &mut self,
+        role: B256,
+        confirmation: Address,
+    ) -> Result<(), Self::Error> {
+        Ok(self.access.renounce_role(role, confirmation)?)
     }
 }
 ----
@@ -178,9 +278,7 @@ enum Error {
 #[entrypoint]
 #[storage]
 struct Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     access: AccessControl,
 }
 
@@ -191,7 +289,7 @@ const BURNER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"BURNER_ROLE").finalize();
 
 #[public]
-#[inherit(Erc20, AccessControl)]
+#[implements(IErc20<Error = Error>, IAccessControl<Error = Error>)]
 impl Example {
     fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(MINTER_ROLE.into())?;
@@ -204,6 +302,16 @@ impl Example {
         self.erc20._burn(from, amount)?;
         Ok(())
     }
+}
+
+#[public]
+impl IErc20 for Example {
+    // ...
+}
+
+#[public]
+impl IAccessControl for Example {
+    // ...
 }
 ----
 

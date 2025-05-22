@@ -362,7 +362,7 @@ mod tests {
     }
 
     #[public]
-    #[implements(IErc721Enumerable<Error=Error>, IErc165)]
+    #[implements(IErc721Enumerable<Error = Error>, IErc165)]
     impl Erc721EnumerableTestExample {}
 
     #[public]

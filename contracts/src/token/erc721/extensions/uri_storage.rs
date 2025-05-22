@@ -118,7 +118,7 @@ mod tests {
     }
 
     #[public]
-    #[implements(IErc721Metadata<Error=erc721::Error>, IErc165)]
+    #[implements(IErc721Metadata<Error = erc721::Error>, IErc165)]
     impl Erc721MetadataExample {
         #[constructor]
         fn constructor(&mut self, name: String, symbol: String) {

@@ -3,7 +3,6 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
         self,
@@ -15,20 +14,22 @@ use openzeppelin_stylus::{
     },
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::{abi::Bytes, prelude::*};
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::{Address, FixedBytes, U256},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
 struct Erc721MetadataExample {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     metadata: Erc721Metadata,
     uri_storage: Erc721UriStorage,
 }
 
 #[public]
-#[implements(IErc721<Error=erc721::Error>, IErc721Burnable<Error=erc721::Error>, IErc721Metadata<Error=erc721::Error>, IErc165)]
+#[implements(IErc721<Error = erc721::Error>, IErc721Burnable<Error = erc721::Error>, IErc721Metadata<Error = erc721::Error>, IErc165)]
 impl Erc721MetadataExample {
     #[constructor]
     fn constructor(&mut self, name: String, symbol: String, base_uri: String) {

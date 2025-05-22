@@ -4,12 +4,15 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc1155::{self, extensions::IErc1155Burnable, Erc1155, IErc1155},
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::{abi::Bytes, prelude::*};
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::{Address, FixedBytes, U256},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
@@ -18,7 +21,7 @@ struct Erc1155Example {
 }
 
 #[public]
-#[implements(IErc1155<Error=erc1155::Error>, IErc1155Burnable<Error=erc1155::Error>, IErc165)]
+#[implements(IErc1155<Error = erc1155::Error>, IErc1155Burnable<Error = erc1155::Error>, IErc165)]
 impl Erc1155Example {
     fn mint(
         &mut self,

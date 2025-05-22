@@ -3,7 +3,6 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
         self,
@@ -14,7 +13,11 @@ use openzeppelin_stylus::{
     },
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::{abi::Bytes, prelude::*};
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::{Address, FixedBytes, U256},
+    prelude::*,
+};
 
 #[derive(SolidityError, Debug)]
 enum Error {
@@ -69,14 +72,12 @@ impl From<erc721::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Erc721Example {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     enumerable: Erc721Enumerable,
 }
 
 #[public]
-#[implements(IErc721<Error=Error>, IErc721Burnable<Error=Error>, IErc721Enumerable<Error=Error>, IErc165)]
+#[implements(IErc721<Error = Error>, IErc721Burnable<Error = Error>, IErc721Enumerable<Error = Error>, IErc165)]
 impl Erc721Example {
     fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         self.erc721._mint(to, token_id)?;
