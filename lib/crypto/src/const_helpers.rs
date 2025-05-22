@@ -45,6 +45,8 @@ macro_rules! ct_rev_for {
     }};
 }
 
+// TODO#q: add ct_rev_for_unroll6
+
 /// Allows writing `for` cycle in constant context, with 2 stages loop unroll
 /// optimization.
 #[macro_export]

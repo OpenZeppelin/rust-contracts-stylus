@@ -100,6 +100,8 @@ impl<const N: usize> Uint<N> {
         self.limbs[0] & 1 == 0
     }
 
+    // TODO#q: use ct_rev_for_unroll6
+
     /// Checks `self` is greater or equal then `rhs` (constant).
     #[must_use]
     #[inline(always)]
