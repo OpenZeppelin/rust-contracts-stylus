@@ -50,31 +50,9 @@ async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
 
 ### Contracts
 
-We use `koba` to deploy contracts to the blockchain. This is not required, a
-separate mechanism for deployment can be used. `Deployer` type exposes `Deployer::deploy`
-method that abstracts away the mechanism used in our workflow.
-
-Given a Solidity contract with a constructor at path `src/constructor.sol` like
-this:
-
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
-
-contract Example {
-    mapping(address account => uint256) private _balances;
-    mapping(address account => mapping(address spender => uint256))
-    private _allowances;
-    uint256 private _totalSupply;
-    string private _name;
-    string private _symbol;
-
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
-    }
-}
-```
+We use [cargo-stylus] to deploy contracts to the blockchain. `Deployer` type
+exposes `Deployer::deploy` method that abstracts away the mechanism used in our
+workflow.
 
 Account type exposes `Account::as_deployer` method that returns `Deployer` type.
 It will facilitate deployment of the contract marked with the `#[entrypoint]` macro.
@@ -85,14 +63,13 @@ let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 ```
 
 Or with a custom constructor.
-Note that the abi-encodable `Example::constructorCall` should be generated
-with `sol!("src/constructor.sol")` macro.
+Note that you can use the `e2e::constructor!` macro to instantiate a valid constructor struct.
 
 ```rust,ignore
-let ctr = Example::constructorCall {
-    name_: "Token".to_owned(),
-    symbol_: "TKN".to_owned(),
-};
+let ctr = e2e::constructor!(
+    "Token".to_owned(),
+    "TKN".to_owned()
+);
 let receipt = alice
     .as_deployer()
     .with_constructor(ctr)
@@ -103,14 +80,12 @@ let receipt = alice
 Then altogether, your first test case can look like this:
 
 ```rust,ignore
-sol!("src/constructor.sol")
-
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
-    let ctr = Example::constructorCall {
-        name_: "Token".to_owned(),
-        symbol_: "TKN".to_owned(),
-    };
+    let ctr = e2e::constructor!(
+        "Token".to_owned(),
+        "TKN".to_owned()
+    );
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr)
@@ -119,8 +94,8 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
-    let Erc20::nameReturn { name } = contract.name().call().await?;
-    let Erc20::symbolReturn { symbol } = contract.symbol().call().await?;
+    let name = contract.name().call().await?.name;
+    let symbol = contract.symbol().call().await?.symbol;
 
     assert_eq!(name, TOKEN_NAME.to_owned());
     assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
