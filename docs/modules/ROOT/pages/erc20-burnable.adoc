@@ -5,7 +5,7 @@ Extension of xref:erc20.adoc[ERC-20] that allows token holders to destroy both t
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/extensions/burnable/index.html[`ERC-20 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc20/extensions/burnable/index.html[`ERC-20 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
 
 [source,rust]
 ----
