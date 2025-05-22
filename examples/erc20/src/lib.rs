@@ -128,11 +128,11 @@ impl Erc20Example {
     /// pausing or unpausing, which can disrupt contract functionality. Remove
     /// or secure these functions before deployment.
     fn pause(&mut self) -> Result<(), Error> {
-        self.pausable.pause().map_err(|e| e.into())
+        Ok(self.pausable.pause()?)
     }
 
     fn unpause(&mut self) -> Result<(), Error> {
-        self.pausable.unpause().map_err(|e| e.into())
+        Ok(self.pausable.unpause()?)
     }
 }
 
@@ -154,7 +154,7 @@ impl IErc20 for Erc20Example {
         value: U256,
     ) -> Result<bool, Self::Error> {
         self.pausable.when_not_paused()?;
-        self.erc20.transfer(to, value).map_err(|e| e.into())
+        Ok(self.erc20.transfer(to, value)?)
     }
 
     fn allowance(&self, owner: Address, spender: Address) -> U256 {
@@ -176,7 +176,7 @@ impl IErc20 for Erc20Example {
         value: U256,
     ) -> Result<bool, Self::Error> {
         self.pausable.when_not_paused()?;
-        self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+        Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
 
@@ -213,7 +213,7 @@ impl IErc20Burnable for Erc20Example {
 
     fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
         self.pausable.when_not_paused()?;
-        self.erc20.burn(value).map_err(|e| e.into())
+        Ok(self.erc20.burn(value)?)
     }
 
     fn burn_from(
@@ -222,7 +222,7 @@ impl IErc20Burnable for Erc20Example {
         value: U256,
     ) -> Result<(), Self::Error> {
         self.pausable.when_not_paused()?;
-        self.erc20.burn_from(account, value).map_err(|e| e.into())
+        Ok(self.erc20.burn_from(account, value)?)
     }
 }
 

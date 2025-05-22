@@ -678,7 +678,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         // Initialize state for the test case:
-        // Alice's balance as `U256::MAX`.
+        // Alice's balance as [`U256::MAX`].
         contract
             .sender(alice)
             ._mint(alice, U256::MAX)
@@ -922,7 +922,7 @@ mod tests {
         contract: Contract<Erc20>,
         alice: Address,
     ) {
-        // alice approves `Address::ZERO`
+        // alice approves [`Address::ZERO`].
         let one = uint!(1_U256);
         let err = contract
             .sender(alice)

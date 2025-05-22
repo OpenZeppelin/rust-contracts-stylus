@@ -49,11 +49,11 @@ impl Erc721ConsecutiveExample {
 impl IErc721 for Erc721ConsecutiveExample {
     type Error = consecutive::Error;
 
-    fn balance_of(&self, owner: Address) -> Result<U256, consecutive::Error> {
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
         self.erc721.balance_of(owner)
     }
 
-    fn owner_of(&self, token_id: U256) -> Result<Address, consecutive::Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
         self.erc721.owner_of(token_id)
     }
 
@@ -62,7 +62,7 @@ impl IErc721 for Erc721ConsecutiveExample {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), consecutive::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc721.safe_transfer_from(from, to, token_id)
     }
 
@@ -72,7 +72,7 @@ impl IErc721 for Erc721ConsecutiveExample {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), consecutive::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc721.safe_transfer_from_with_data(from, to, token_id, data)
     }
 
@@ -81,7 +81,7 @@ impl IErc721 for Erc721ConsecutiveExample {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), consecutive::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc721.transfer_from(from, to, token_id)
     }
 
@@ -89,7 +89,7 @@ impl IErc721 for Erc721ConsecutiveExample {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), consecutive::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc721.approve(to, token_id)
     }
 
@@ -97,14 +97,11 @@ impl IErc721 for Erc721ConsecutiveExample {
         &mut self,
         to: Address,
         approved: bool,
-    ) -> Result<(), consecutive::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc721.set_approval_for_all(to, approved)
     }
 
-    fn get_approved(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, consecutive::Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
         self.erc721.get_approved(token_id)
     }
 
@@ -117,7 +114,7 @@ impl IErc721 for Erc721ConsecutiveExample {
 impl IErc721Burnable for Erc721ConsecutiveExample {
     type Error = consecutive::Error;
 
-    fn burn(&mut self, token_id: U256) -> Result<(), consecutive::Error> {
+    fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
         self.erc721._burn(token_id)
     }
 }

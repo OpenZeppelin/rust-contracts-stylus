@@ -53,7 +53,7 @@ impl IErc1155 for Erc1155Example {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, erc1155::Error> {
+    ) -> Result<Vec<U256>, Self::Error> {
         self.erc1155.balance_of_batch(accounts, ids)
     }
 
@@ -61,7 +61,7 @@ impl IErc1155 for Erc1155Example {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.set_approval_for_all(operator, approved)
     }
 
@@ -76,7 +76,7 @@ impl IErc1155 for Erc1155Example {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.safe_transfer_from(from, to, id, value, data)
     }
 
@@ -87,7 +87,7 @@ impl IErc1155 for Erc1155Example {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.safe_batch_transfer_from(from, to, ids, values, data)
     }
 }
@@ -101,7 +101,7 @@ impl IErc1155Burnable for Erc1155Example {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.burn(account, token_id, value)
     }
 
@@ -110,7 +110,7 @@ impl IErc1155Burnable for Erc1155Example {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.burn_batch(account, token_ids, values)
     }
 }

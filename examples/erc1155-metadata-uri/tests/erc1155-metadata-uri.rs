@@ -2,7 +2,7 @@
 
 use abi::Erc1155;
 use alloy::primitives::U256;
-use e2e::{receipt, watch, Account, Constructor, EventExt};
+use e2e::{constructor, receipt, watch, Account, Constructor, EventExt};
 
 mod abi;
 
@@ -10,10 +10,7 @@ const URI: &str = "https://github.com/OpenZeppelin/rust-contracts-stylus";
 const BASE_URI: &str = "https://github.com";
 
 fn ctr(uri: &str) -> Constructor {
-    Constructor {
-        signature: "constructor(string)".to_string(),
-        args: vec![uri.to_string()],
-    }
+    constructor!(uri.to_string())
 }
 
 // ============================================================================
