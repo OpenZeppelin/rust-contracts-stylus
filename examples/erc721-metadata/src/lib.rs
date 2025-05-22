@@ -6,7 +6,10 @@ use alloc::{string::String, vec::Vec};
 use openzeppelin_stylus::{
     token::erc721::{
         self,
-        extensions::{Erc721Metadata, IErc721Metadata},
+        extensions::{
+            Erc721Metadata, Erc721UriStorage, IErc721Burnable, IErc721Metadata,
+            IErc721UriStorage,
+        },
         Erc721, IErc721,
     },
     utils::introspection::erc165::IErc165,
@@ -22,10 +25,11 @@ use stylus_sdk::{
 struct Erc721MetadataExample {
     erc721: Erc721,
     metadata: Erc721Metadata,
+    uri_storage: Erc721UriStorage,
 }
 
 #[public]
-#[implements(IErc721<Error = erc721::Error>, IErc721Metadata<Error = erc721::Error>, IErc165)]
+#[implements(IErc721<Error = erc721::Error>, IErc721Burnable<Error = erc721::Error>, IErc721Metadata<Error = erc721::Error>, IErc165)]
 impl Erc721MetadataExample {
     #[constructor]
     fn constructor(&mut self, name: String, symbol: String, base_uri: String) {
@@ -39,6 +43,11 @@ impl Erc721MetadataExample {
         token_id: U256,
     ) -> Result<(), erc721::Error> {
         self.erc721._mint(to, token_id)
+    }
+
+    #[selector(name = "setTokenURI")]
+    fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
+        self.uri_storage._set_token_uri(token_id, token_uri)
     }
 }
 
@@ -108,6 +117,15 @@ impl IErc721 for Erc721MetadataExample {
 }
 
 #[public]
+impl IErc721Burnable for Erc721MetadataExample {
+    type Error = erc721::Error;
+
+    fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
+        self.erc721._burn(token_id)
+    }
+}
+
+#[public]
 impl IErc721Metadata for Erc721MetadataExample {
     type Error = erc721::Error;
 
@@ -121,9 +139,11 @@ impl IErc721Metadata for Erc721MetadataExample {
 
     #[selector(name = "tokenURI")]
     fn token_uri(&self, token_id: U256) -> Result<String, Self::Error> {
-        self.metadata.token_uri(token_id, &self.erc721)
+        self.uri_storage.token_uri(token_id, &self.erc721, &self.metadata)
     }
 }
+
+impl IErc721UriStorage for Erc721MetadataExample {}
 
 #[public]
 impl IErc165 for Erc721MetadataExample {
