@@ -99,7 +99,32 @@ impl IErc20 for Erc20Example {
         // ...
         Ok(result)
     }
-    
-    // ...
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.approve(spender, value)?)
+    }
+}
+
+#[public]
+impl IPausable for Erc20Example {
+    fn paused(&self) -> bool {
+        self.pausable.paused()
+    }
 }
 ----
