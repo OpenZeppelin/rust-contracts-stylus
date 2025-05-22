@@ -46,7 +46,7 @@ async fn main() {
     assert_eq!(call_result.symbol, TOKEN_SYMBOL.to_owned());
 }
 
-/// Deploy a `BasicToken` contract to `RPC_URL` using `koba`.
+/// Deploy a `BasicToken` contract to `RPC_URL` using `cargo-stylus`.
 async fn deploy(account: &Account) -> Address {
     let manifest_dir =
         std::env::current_dir().expect("should get current dir from env");
