@@ -18,7 +18,7 @@ struct Erc721ConsecutiveExample {
 }
 
 #[public]
-#[implements(IErc721<Error=consecutive::Error>, IErc721Burnable<Error=consecutive::Error>, IErc165)]
+#[implements(IErc721<Error = consecutive::Error>, IErc721Burnable<Error = consecutive::Error>, IErc165)]
 impl Erc721ConsecutiveExample {
     #[constructor]
     fn constructor(

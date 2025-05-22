@@ -34,7 +34,7 @@ struct GameItem {
 }
 
 #[public]
-#[inherit(Erc721, Erc721Metadata)]
+#[implements(IErc721<Error = Error>, Erc721Metadata)]
 impl GameItem {
     fn award_item(&mut self, player: Address) -> Result<U256, erc721::Error> {
         let token_id = self.next_token_id.get() + uint!(1_U256);

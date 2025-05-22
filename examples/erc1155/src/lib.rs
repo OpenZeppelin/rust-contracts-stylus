@@ -18,7 +18,7 @@ struct Erc1155Example {
 }
 
 #[public]
-#[implements(IErc1155<Error=erc1155::Error>, IErc1155Burnable<Error=erc1155::Error>, IErc165)]
+#[implements(IErc1155<Error = erc1155::Error>, IErc1155Burnable<Error = erc1155::Error>, IErc165)]
 impl Erc1155Example {
     fn mint(
         &mut self,

@@ -27,7 +27,7 @@ struct Erc1155MetadataUriExample {
 }
 
 #[public]
-#[implements(IErc1155<Error=erc1155::Error>, IErc1155MetadataUri, IErc165)]
+#[implements(IErc1155<Error = erc1155::Error>, IErc1155MetadataUri, IErc165)]
 impl Erc1155MetadataUriExample {
     #[constructor]
     fn constructor(&mut self, uri: String) {
