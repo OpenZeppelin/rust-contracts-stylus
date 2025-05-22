@@ -59,7 +59,7 @@ struct AccessControlExample {
     access: AccessControl,
 }
 
-const TRANSFER_ROLE: [u8; 32] =
+pub const TRANSFER_ROLE: [u8; 32] =
     keccak_const::Keccak256::new().update(b"TRANSFER_ROLE").finalize();
 
 #[public]
