@@ -5,7 +5,7 @@ use alloy::{
     sol,
     sol_types::SolCall,
 };
-use e2e::{receipt, Account, Constructor};
+use e2e::{constructor, receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -61,14 +61,12 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         .collect::<eyre::Result<Vec<_>>>()
 }
 
-fn ctr(owner: Address) -> Constructor {
-    Constructor {
-        signature: "constructor(address)".to_string(),
-        args: vec![owner.to_string()],
-    }
-}
-
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    crate::deploy(account, "ownable", Some(ctr(account.address())), cache_opt)
-        .await
+    crate::deploy(
+        account,
+        "ownable",
+        Some(constructor!(account.address())),
+        cache_opt,
+    )
+    .await
 }

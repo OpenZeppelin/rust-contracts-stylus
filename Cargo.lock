@@ -1222,6 +1222,7 @@ dependencies = [
  "openzeppelin-crypto",
  "openzeppelin-stylus",
  "serde",
+ "stylus-sdk",
  "tokio",
 ]
 
