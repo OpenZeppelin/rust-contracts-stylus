@@ -1,5 +1,4 @@
 * xref:index.adoc[Overview]
-* xref:deploy.adoc[Deploying Contracts]
 
 * xref:tokens.adoc[Tokens]
 ** xref:erc20.adoc[ERC-20]

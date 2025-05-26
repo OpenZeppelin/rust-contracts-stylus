@@ -18,7 +18,7 @@ fuzz_target!(|input: Input| {
         if let Ok(multi_verif) = multi_verif {
             assert_eq!(single_verif, multi_verif);
         }
-        
+
         // the reason we don't make any assumptions in case of multi-proof
         // errors is that it is possible that fuzzer generates invalid
         // proof_flags for valid merkle tree, returning an error

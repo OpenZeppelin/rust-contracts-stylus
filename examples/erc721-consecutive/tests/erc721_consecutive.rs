@@ -1,32 +1,38 @@
 #![cfg(feature = "e2e")]
 
-use alloy::{
-    primitives::{Address, U256},
-    sol,
-};
+use alloy::primitives::{Address, U256};
 use alloy_primitives::{aliases::U96, uint};
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
+use e2e::{
+    receipt, watch, Account, Constructor, ContractInitializationError,
+    EventExt, Revert,
+};
 
-use crate::{abi::Erc721, Erc721ConsecutiveExample::constructorCall};
+use crate::abi::Erc721;
 
 mod abi;
 
-sol!("src/constructor.sol");
-
-const FIRST_CONSECUTIVE_ID: u128 = 0;
-const MAX_BATCH_SIZE: u128 = 5000;
+const FIRST_CONSECUTIVE_ID: U96 = U96::ZERO;
+const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
 
 fn random_token_id() -> U256 {
     let num: u32 = rand::random();
     U256::from(num)
 }
 
-fn ctr(receivers: Vec<Address>, amounts: Vec<u128>) -> constructorCall {
-    constructorCall {
-        receivers,
-        amounts: amounts.iter().map(|v| U96::from(*v)).collect(),
-        firstConsecutiveId: U96::from(FIRST_CONSECUTIVE_ID),
-        maxBatchSize: U96::from(MAX_BATCH_SIZE),
+fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> Constructor {
+    let receivers =
+        receivers.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
+    let amounts =
+        amounts.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
+
+    Constructor {
+        signature: "constructor(address[],uint96[],uint96,uint96)".to_string(),
+        args: vec![
+            format!("[{receivers}]"),
+            format!("[{amounts}]"),
+            FIRST_CONSECUTIVE_ID.to_string(),
+            MAX_BATCH_SIZE.to_string(),
+        ],
     }
 }
 
@@ -34,13 +40,13 @@ fn ctr(receivers: Vec<Address>, amounts: Vec<u128>) -> constructorCall {
 async fn constructs(alice: Account) -> eyre::Result<()> {
     let alice_addr = alice.address();
     let receivers = vec![alice_addr];
-    let amounts = vec![10_u128];
+    let amounts = vec![uint!(10_U96)];
     let receipt = alice
         .as_deployer()
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.contract_address, &alice.wallet);
 
     let balance = contract.balanceOf(alice_addr).call().await?.balance;
     assert_eq!(balance, uint!(10_U256));
@@ -49,7 +55,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn mints(alice: Account) -> eyre::Result<()> {
-    let batch_size = 10_u128;
+    let batch_size = uint!(10_U96);
     let receivers = vec![alice.address()];
     let amounts = vec![batch_size];
     let receipt = alice
@@ -57,7 +63,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.contract_address, &alice.wallet);
 
     assert!(receipt.emits(Erc721::ConsecutiveTransfer {
         fromTokenId: U256::from(FIRST_CONSECUTIVE_ID),
@@ -83,7 +89,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 #[e2e::test]
 async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
     let receivers = vec![Address::ZERO];
-    let amounts = vec![10_u128];
+    let amounts = vec![uint!(10_U96)];
     let err = alice
         .as_deployer()
         .with_constructor(ctr(receivers, amounts))
@@ -91,16 +97,22 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
         .await
         .expect_err("should not mint consecutive");
 
-    assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
-        receiver: Address::ZERO
-    }));
+    // TODO: assert the actual `ERC721InvalidReceiver` error was returned once
+    // StylusDeployer is able to return the exact revert reason from
+    // constructors.
+    // assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
+    //     receiver: Address::ZERO
+    // }));
+
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
+
     Ok(())
 }
 
 #[e2e::test]
 async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
-    let amounts = vec![MAX_BATCH_SIZE + 1];
+    let amounts = vec![MAX_BATCH_SIZE + uint!(1_U96)];
     let err = alice
         .as_deployer()
         .with_constructor(ctr(receivers, amounts))
@@ -108,24 +120,30 @@ async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
         .await
         .expect_err("should not mint consecutive");
 
-    assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
-        batchSize: U256::from(MAX_BATCH_SIZE + 1),
-        maxBatch: U256::from(MAX_BATCH_SIZE),
-    }));
+    // TODO: assert the actual `ERC721ExceededMaxBatchMint` error was returned
+    // once StylusDeployer is able to return the exact revert reason from
+    // constructors.
+    // assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
+    //     batchSize: U256::from(MAX_BATCH_SIZE + uint!(1_U96)),
+    //     maxBatch: U256::from(MAX_BATCH_SIZE),
+    // }));
+
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
+
     Ok(())
 }
 
 #[e2e::test]
 async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address(), bob.address()];
-    let amounts = vec![1000_u128, 1000_u128];
+    let amounts = vec![uint!(1000_U96), uint!(1000_U96)];
     // Deploy and mint batches of 1000 tokens to Alice and Bob.
     let receipt = alice
         .as_deployer()
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.contract_address, &alice.wallet);
 
     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 
@@ -166,14 +184,14 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 #[e2e::test]
 async fn burns(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
-    let amounts = vec![1000_u128];
+    let amounts = vec![uint!(1000_U96)];
     // Mint batch of 1000 tokens to Alice.
     let receipt = alice
         .as_deployer()
         .with_constructor(ctr(receivers, amounts))
         .deploy()
         .await?;
-    let contract = Erc721::new(receipt.address()?, &alice.wallet);
+    let contract = Erc721::new(receipt.contract_address, &alice.wallet);
 
     let first_consecutive_token_id = U256::from(FIRST_CONSECUTIVE_ID);
 

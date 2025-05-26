@@ -48,8 +48,8 @@ pub struct Nonces {
     pub(crate) nonces: StorageMap<Address, StorageU256>,
 }
 
-#[public]
-impl Nonces {
+/// Interface for [`Nonces`]
+pub trait INonces {
     /// Returns the unused nonce for the given account.
     ///
     /// # Arguments
@@ -57,7 +57,16 @@ impl Nonces {
     /// * `&self` - Read access to the contract's state.
     /// * `owner` - The address for which to return the nonce.
     #[must_use]
-    pub fn nonces(&self, owner: Address) -> U256 {
+    fn nonces(&self, owner: Address) -> U256;
+}
+
+#[public]
+#[implements(INonces)]
+impl Nonces {}
+
+#[public]
+impl INonces for Nonces {
+    fn nonces(&self, owner: Address) -> U256 {
         self.nonces.get(owner)
     }
 }
@@ -72,7 +81,7 @@ impl Nonces {
     ///
     /// # Panics
     ///
-    /// * If the nonce for the given `owner` exceeds `U256::MAX`.
+    /// * If the nonce for the given `owner` exceeds [`U256::MAX`].
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self.nonces.get(owner);
 
@@ -99,7 +108,7 @@ impl Nonces {
     ///
     /// # Panics
     ///
-    /// * If the nonce for the given `owner` exceeds `U256::MAX`.
+    /// * If the nonce for the given `owner` exceeds [`U256::MAX`].
     pub fn use_checked_nonce(
         &mut self,
         owner: Address,
@@ -118,14 +127,14 @@ impl Nonces {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
     use super::ONE;
-    use crate::utils::nonces::{Error, Nonces};
+    use crate::utils::nonces::{Error, INonces, Nonces};
 
     unsafe impl TopLevelStorage for Nonces {}
 

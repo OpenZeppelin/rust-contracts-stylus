@@ -3,15 +3,15 @@
 use alloc::{string::String, vec, vec::Vec};
 
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{alloy_primitives::FixedBytes, prelude::*};
-
-use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
-    Metadata,
+use stylus_sdk::{
+    alloy_primitives::{uint, FixedBytes, U8},
+    prelude::*,
 };
 
+use crate::utils::{introspection::erc165::IErc165, Metadata};
+
 /// Number of decimals used by default on implementors of [`Metadata`].
-pub const DEFAULT_DECIMALS: u8 = 18;
+pub const DEFAULT_DECIMALS: U8 = uint!(18_U8);
 
 /// State of an [`Erc20Metadata`] contract.
 #[storage]
@@ -22,12 +22,13 @@ pub struct Erc20Metadata {
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
 #[interface_id]
-pub trait IErc20Metadata {
+pub trait IErc20Metadata: IErc165 {
     /// Returns the name of the token.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     fn name(&self) -> String;
 
     /// Returns the symbol of the token, usually a shorter version of the name.
@@ -35,6 +36,7 @@ pub trait IErc20Metadata {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     fn symbol(&self) -> String;
 
     /// Returns the number of decimals used to get a user-friendly
@@ -55,7 +57,24 @@ pub trait IErc20Metadata {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn decimals(&self) -> u8;
+    #[must_use]
+    fn decimals(&self) -> U8;
+}
+
+#[public]
+#[implements(IErc20Metadata, IErc165)]
+impl Erc20Metadata {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
+    #[constructor]
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
 }
 
 #[public]
@@ -68,40 +87,50 @@ impl IErc20Metadata for Erc20Metadata {
         self.metadata.symbol()
     }
 
-    fn decimals(&self) -> u8 {
+    fn decimals(&self) -> U8 {
         DEFAULT_DECIMALS
     }
 }
 
+#[public]
 impl IErc165 for Erc20Metadata {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Metadata>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc20Metadata>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
+    use motsu::prelude::Contract;
+    use stylus_sdk::{
+        alloy_primitives::{Address, FixedBytes},
+        prelude::*,
+    };
+
     use super::{Erc20Metadata, IErc165, IErc20Metadata};
+
+    unsafe impl TopLevelStorage for Erc20Metadata {}
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20Metadata as IErc20Metadata>::INTERFACE_ID;
-        let expected = 0xa219a025;
+        let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
+        let expected: FixedBytes<4> = 0xa219a025_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20Metadata::supports_interface(
-            <Erc20Metadata as IErc20Metadata>::INTERFACE_ID.into()
+    fn supports_interface(contract: Contract<Erc20Metadata>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
+            <Erc20Metadata as IErc20Metadata>::interface_id()
         ));
-        assert!(Erc20Metadata::supports_interface(
-            <Erc20Metadata as IErc165>::INTERFACE_ID.into()
-        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc20Metadata as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20Metadata::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }
