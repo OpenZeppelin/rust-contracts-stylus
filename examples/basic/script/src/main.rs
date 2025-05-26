@@ -1,12 +1,8 @@
 use alloy::{
-    network::{EthereumWallet, ReceiptResponse},
-    primitives::Address,
-    providers::ProviderBuilder,
-    signers::local::PrivateKeySigner,
-    sol,
-    sol_types::SolConstructor,
+    network::EthereumWallet, primitives::Address, providers::ProviderBuilder,
+    signers::local::PrivateKeySigner, sol,
 };
-use koba::config::Deploy;
+use e2e::{Account, Constructor};
 
 sol!(
     #[sol(rpc)]
@@ -25,21 +21,21 @@ const TOKEN_SYMBOL: &str = "TTK";
 
 #[tokio::main]
 async fn main() {
-    let contract_address = deploy().await;
-
     // WARNING: Please use a more secure method for storing your privaket key
     // than a string at the top of this file. The following code is for testing
     // purposes only.
     let signer = PRIVATE_KEY
         .parse::<PrivateKeySigner>()
         .expect("should parse the private key");
-    let wallet = EthereumWallet::from(signer);
-
+    let wallet = EthereumWallet::from(signer.clone());
     let rpc_url = RPC_URL.parse().expect("should parse rpc url");
     let provider = ProviderBuilder::new()
         .with_recommended_fillers()
         .wallet(wallet)
         .on_http(rpc_url);
+    let account = Account { signer, wallet: provider.clone() };
+
+    let contract_address = deploy(&account).await;
 
     let contract = BasicToken::new(contract_address, &provider);
 
@@ -50,14 +46,8 @@ async fn main() {
     assert_eq!(call_result.symbol, TOKEN_SYMBOL.to_owned());
 }
 
-/// Deploy a `BasicToken` contract to `RPC_URL` using `koba`.
-async fn deploy() -> Address {
-    let args = BasicToken::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-    };
-    let args = alloy::hex::encode(args.abi_encode());
-
+/// Deploy a `BasicToken` contract to `RPC_URL` using `cargo-stylus`.
+async fn deploy(account: &Account) -> Address {
     let manifest_dir =
         std::env::current_dir().expect("should get current dir from env");
 
@@ -70,34 +60,18 @@ async fn deploy() -> Address {
         .join("wasm32-unknown-unknown")
         .join("release")
         .join("basic_example.wasm");
-    let sol_path = manifest_dir
-        .join("examples")
-        .join("basic")
-        .join("token")
-        .join("src")
-        .join("constructor.sol");
 
-    let config = Deploy {
-        generate_config: koba::config::Generate {
-            wasm: wasm_path.clone(),
-            sol: Some(sol_path),
-            args: Some(args),
-            legacy: false,
-        },
-        auth: koba::config::PrivateKey {
-            private_key_path: None,
-            private_key: Some(PRIVATE_KEY.to_owned()),
-            keystore_path: None,
-            keystore_password_path: None,
-        },
-        endpoint: RPC_URL.to_owned(),
-        deploy_only: false,
-        quiet: false,
+    let constructor = Constructor {
+        signature: "constructor(string,string)".to_string(),
+        args: vec![TOKEN_NAME.to_owned(), TOKEN_SYMBOL.to_owned()],
     };
 
-    koba::deploy(&config)
+    let deployer = account.as_deployer().with_constructor(constructor);
+    let address = deployer
+        .deploy_wasm(&wasm_path)
         .await
-        .expect("should deploy contract")
-        .contract_address()
-        .expect("should return contract address")
+        .expect("contract should be deployed")
+        .contract_address;
+
+    address
 }

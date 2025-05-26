@@ -5,27 +5,30 @@ Extension of xref:erc20.adoc[ERC-20] that provides flash loan support at the tok
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/extensions/flash_mint/index.html[`ERC-20 Flash Mint`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc20/extensions/flash_mint/index.html[`ERC-20 Flash Mint`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
 
 [source,rust]
 ----
 use openzeppelin_stylus::token::erc20::{
     extensions::{flash_mint, Erc20FlashMint, IErc3156FlashLender},
-    Erc20,
+    Erc20, IErc20,
 };
 
 #[entrypoint]
 #[storage]
 struct Erc20FlashMintExample {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     flash_mint: Erc20FlashMint,
 }
 
 #[public]
-#[inherit(Erc20)]
-impl Erc20FlashMintExample {
+#[implements(IErc20<Error = flash_mint::Error>, IErc3156FlashLender<Error = flash_mint::Error>)]
+impl Erc20FlashMintExample {}
+
+#[public]
+impl IErc3156FlashLender for Erc20FlashMintExample {
+    type Error = flash_mint::Error;
+
     fn max_flash_loan(&self, token: Address) -> U256 {
         self.flash_mint.max_flash_loan(token, &self.erc20)
     }
@@ -34,8 +37,8 @@ impl Erc20FlashMintExample {
         &self,
         token: Address,
         value: U256,
-    ) -> Result<U256, flash_mint::Error> {
-        Ok(self.flash_mint.flash_fee(token, value)?)
+    ) -> Result<U256, Self::Error> {
+        self.flash_mint.flash_fee(token, value)
     }
 
     fn flash_loan(
@@ -44,34 +47,56 @@ impl Erc20FlashMintExample {
         token: Address,
         value: U256,
         data: Bytes,
-    ) -> Result<bool, flash_mint::Error> {
-        Ok(self.flash_mint.flash_loan(
+    ) -> Result<bool, Self::Error> {
+        self.flash_mint.flash_loan(
             receiver,
             token,
             value,
-            data,
+            &data,
             &mut self.erc20,
-        )?)
+        )
     }
 }
-----
 
-Additionally, if you wish to set a flash loan fee and/or a fee receiver, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
-Make sure to include the following code in your Solidity Constructor:
+#[public]
+impl IErc20 for Erc20FlashMintExample {
+    type Error = flash_mint::Error;
 
-[source,solidity]
-----
-contract Erc20FlashMintExample {
-    // ...
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
 
-    uint256 private _flashFeeAmount;
-    address private _flashFeeReceiverAddress;
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
 
-    constructor(address flashFeeReceiverAddress_, uint256 flashFeeAmount_) {
-        // ...
-        _flashFeeReceiverAddress = flashFeeReceiverAddress_;
-        _flashFeeAmount = flashFeeAmount_;
-        // ...
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer(to, value)?)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.approve(spender, value)?)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.transfer_from(from, to, value)?)
     }
 }
 ----

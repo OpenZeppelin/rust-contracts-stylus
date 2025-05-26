@@ -4,11 +4,11 @@ use alloy::{
     providers::{Provider, ProviderBuilder},
     rpc::types::{serde_helpers::WithOtherFields, TransactionRequest},
     sol,
-    sol_types::{SolCall, SolConstructor},
+    sol_types::SolCall,
     uint,
 };
 use alloy_primitives::U256;
-use e2e::{receipt, Account};
+use e2e::{constructor, receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -37,9 +37,6 @@ sol!(
         function mint(address account, uint256 amount) external;
     }
 );
-
-sol!("../examples/vesting-wallet/src/constructor.sol");
-sol!("../examples/erc20/src/constructor.sol");
 
 const START_TIMESTAMP: u64 = 1000;
 const DURATION_SECONDS: u64 = 1000;
@@ -101,24 +98,32 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 }
 
 async fn deploy(account: &Account, cache_opt: Opt) -> eyre::Result<Address> {
-    let args = VestingWalletExample::constructorCall {
-        beneficiary: account.address(),
-        startTimestamp: START_TIMESTAMP,
-        durationSeconds: DURATION_SECONDS,
-    };
-    let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "vesting-wallet", Some(args), cache_opt).await
+    crate::deploy(
+        account,
+        "vesting-wallet",
+        Some(constructor!(
+            account.address(),
+            START_TIMESTAMP,
+            DURATION_SECONDS
+        )),
+        cache_opt,
+    )
+    .await
 }
 
 async fn deploy_token(
     account: &Account,
     cache_opt: Opt,
 ) -> eyre::Result<Address> {
-    let args = Erc20Example::constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        cap_: CAP,
-    };
-    let args = alloy::hex::encode(args.abi_encode());
-    crate::deploy(account, "erc20", Some(args), cache_opt).await
+    crate::deploy(
+        account,
+        "erc20",
+        Some(constructor!(
+            TOKEN_NAME.to_string(),
+            TOKEN_SYMBOL.to_string(),
+            CAP
+        )),
+        cache_opt,
+    )
+    .await
 }

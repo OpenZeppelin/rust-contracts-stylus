@@ -244,7 +244,7 @@ Run the following command and wait till script exit successfully:
 Then you will be able to run e2e tests:
 
 ```shell
-./scripts/e2e-tests.sh
+./scripts/e2e-tests.sh "*"
 ```
 
 ### Running fuzz tests

@@ -126,7 +126,6 @@ pub fn sbb_assign(a: &mut Limb, b: Limb, borrow: bool) -> bool {
     borrow1 | borrow2
 }
 
-#[cfg(all(test, feature = "std"))]
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;

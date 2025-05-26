@@ -98,7 +98,7 @@ impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
         );
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use proptest::proptest;
 

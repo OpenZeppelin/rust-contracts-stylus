@@ -8,14 +8,14 @@ This crate offers procedural macros for OpenZeppelin Stylus Contracts, specifica
 
 ### Key Features
 
-- **`#[interface_id]` Macro:** Automatically computes Solidity-compatible `INTERFACE_ID` constants for traits.
+- **`#[interface_id]` Macro:** Adds `interface_id()` function that computes Solidity-compatible interface ID for traits.
 - **`#[selector]` Attribute:** Overrides function names to align with Solidity method signatures.
 
 ## Usage
 
 ### `#[interface_id]`
 
-Annotate a Rust trait with `#[interface_id]` to compute the Solidity-compatible `INTERFACE_ID`:
+Annotate a Rust trait with `#[interface_id]` to add the Solidity-compatible interface ID calculation:
 
 ```rust,ignore
 use openzeppelin_stylus_proc::interface_id;
@@ -31,7 +31,7 @@ pub trait IErc721 {
 }
 ```
 
-This will generate an `INTERFACE_ID` constant based on the XOR of the function selectors.
+This will add `interface_id()` function that caluclates interface ID based on the XOR of the function selectors.
 
 ### `#[selector]`
 

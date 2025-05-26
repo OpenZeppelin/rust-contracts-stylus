@@ -13,8 +13,7 @@
 //!
 //! Fields `first_consecutive_id` (used to offset first token id) and
 //! `max_batch_size` (used to restrict maximum batch size) can be assigned
-//! during construction with `koba` (stylus construction tooling) within
-//! solidity constructor file.
+//! during construction.
 //!
 //! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
 //! inside the contract's Solidity constructor.
@@ -27,14 +26,8 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{uint, Address, FixedBytes, U256};
-use stylus_sdk::{
-    abi::Bytes,
-    call::MethodError,
-    evm, msg,
-    prelude::*,
-    stylus_proc::{public, SolidityError},
-};
+use alloy_primitives::{aliases::U96, uint, Address, FixedBytes, U256};
+use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
     token::erc721::{
@@ -44,7 +37,7 @@ use crate::{
         Erc721, IErc721, InvalidReceiverWithReason, Transfer,
     },
     utils::{
-        introspection::erc165::{Erc165, IErc165},
+        introspection::erc165::IErc165,
         math::storage::{AddAssignUnchecked, SubAssignUnchecked},
         structs::{
             bitmap::BitMap,
@@ -55,7 +48,6 @@ use crate::{
     },
 };
 
-type U96 = <S160 as Size>::Key;
 type StorageU96 = <S160 as Size>::KeyStorage;
 
 pub use sol::*;
@@ -109,7 +101,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -185,19 +177,25 @@ impl MethodError for Error {
 /// State of an [`Erc721Consecutive`] token.
 #[storage]
 pub struct Erc721Consecutive {
+    // Must be public so that internal fields can be accessed in inheriting
+    // contracts' constructors.
     /// [`Erc721`] contract.
     pub erc721: Erc721,
     /// [`Trace`] contract for sequential ownership.
     pub(crate) sequential_ownership: Trace<S160>,
     /// [`BitMap`] contract for sequential burn of tokens.
     pub(crate) sequential_burn: BitMap,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Used to offset the first token id in `next_consecutive_id` calculation.
-    pub(crate) first_consecutive_id: StorageU96,
+    pub first_consecutive_id: StorageU96,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Maximum size of a batch of consecutive tokens. This is designed to
     /// limit stress on off-chain indexing services that have to record one
     /// entry per token, and have protections against "unreasonably large"
     /// batches of tokens.
-    pub(crate) max_batch_size: StorageU96,
+    pub max_batch_size: StorageU96,
 }
 
 impl Deref for Erc721Consecutive {
@@ -225,17 +223,11 @@ unsafe impl TopLevelStorage for Erc721Consecutive {}
 impl IErc721 for Erc721Consecutive {
     type Error = Error;
 
-    fn balance_of(
-        &self,
-        owner: Address,
-    ) -> Result<U256, <Self as IErc721>::Error> {
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
         Ok(self.erc721.balance_of(owner)?)
     }
 
-    fn owner_of(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)
     }
 
@@ -244,20 +236,19 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         // TODO: Once the SDK supports the conversion,
         // use alloy_primitives::bytes!("") here.
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
-    #[selector(name = "safeTransferFrom")]
     fn safe_transfer_from_with_data(
         &mut self,
         from: Address,
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         self.transfer_from(from, to, token_id)?;
         Ok(self.erc721._check_on_erc721_received(
             msg::sender(),
@@ -273,7 +264,7 @@ impl IErc721 for Erc721Consecutive {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         if to.is_zero() {
             return Err(erc721::Error::InvalidReceiver(
                 ERC721InvalidReceiver { receiver: Address::ZERO },
@@ -300,7 +291,7 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         to: Address,
         token_id: U256,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -308,20 +299,33 @@ impl IErc721 for Erc721Consecutive {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), <Self as IErc721>::Error> {
+    ) -> Result<(), Self::Error> {
         Ok(self.erc721.set_approval_for_all(operator, approved)?)
     }
 
-    fn get_approved(
-        &self,
-        token_id: U256,
-    ) -> Result<Address, <Self as IErc721>::Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)?;
         Ok(self.erc721._get_approved(token_id))
     }
 
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
         self.erc721.is_approved_for_all(owner, operator)
+    }
+}
+
+#[public]
+#[implements(IErc721<Error = Error>, IErc165)]
+impl Erc721Consecutive {
+    // TODO: remove once function overriding is possible, so `max_batch_size`
+    // can be set that way.
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    #[constructor]
+    pub fn constructor(&mut self) {
+        self.max_batch_size.set(U96::from(5000));
     }
 }
 
@@ -376,7 +380,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::ExceededMaxBatchMint`] - If `batch_size` exceeds
     ///   `max_batch_size` of the contract.
     ///
@@ -425,7 +429,7 @@ impl Erc721Consecutive {
                 from_address: Address::ZERO,
                 to_address: to,
             });
-        };
+        }
         Ok(next)
     }
 
@@ -442,9 +446,9 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::NonexistentToken`] - If token does not exist and
-    ///   `auth` is not `Address::ZERO`.
+    ///   `auth` is not [`Address::ZERO`].
     /// * [`erc721::Error::InsufficientApproval`] - If `auth` is not
-    ///   `Address::ZERO` and `auth` does not have a right to approve this
+    ///   [`Address::ZERO`] and `auth` does not have a right to approve this
     ///   token.
     ///
     /// # Events
@@ -513,8 +517,9 @@ impl Erc721Consecutive {
 
 impl Erc721Consecutive {
     /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
-    /// Returns the owner of the `token_id` before the update.
+    /// mints (or burns) if the current owner (or `to`) is the
+    /// [`Address::ZERO`]. Returns the owner of the `token_id` before the
+    /// update.
     ///
     /// The `auth` argument is optional. If the value passed is non-zero, then
     /// this function will check that `auth` is either the owner of the
@@ -569,7 +574,7 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -609,7 +614,7 @@ impl Erc721Consecutive {
     /// # Errors
     ///
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`, or
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`], or
     ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
@@ -676,7 +681,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`erc721::Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
     ///   `from`.
@@ -738,7 +743,7 @@ impl Erc721Consecutive {
     ///
     /// # Errors
     ///
-    /// * [`erc721::Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`erc721::Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`erc721::Error::IncorrectOwner`] - If the previous owner is not
     ///   `from`.
@@ -766,7 +771,7 @@ impl Erc721Consecutive {
     /// Approve `to` to operate on `token_id`.
     ///
     /// The `auth` argument is optional. If the value passed is non
-    /// `Address::ZERO`, then this function will check that `auth` is either
+    /// [`Address::ZERO`], then this function will check that `auth` is either
     /// the owner of the token, or approved to operate on all tokens held by
     /// this owner.
     ///
@@ -842,28 +847,19 @@ impl Erc721Consecutive {
     }
 }
 
+#[public]
 impl IErc165 for Erc721Consecutive {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc721.supports_interface(interface_id)
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;
 
-    use crate::{
-        token::erc721::{
-            extensions::consecutive::{
-                ERC721ExceededMaxBatchMint, Erc721Consecutive, Error, U96,
-            },
-            ERC721IncorrectOwner, ERC721InvalidApprover, ERC721InvalidReceiver,
-            ERC721InvalidSender, ERC721NonexistentToken, IErc721,
-        },
-        utils::introspection::erc165::IErc165,
-    };
+    use super::*;
 
     const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
     const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
@@ -1464,17 +1460,22 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc721>::INTERFACE_ID.into()
-        ));
-        assert!(Erc721Consecutive::supports_interface(
-            <Erc721Consecutive as IErc165>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+    ) {
+        assert!(
+            contract.sender(alice).supports_interface(
+                <Erc721Consecutive as IErc721>::interface_id()
+            )
+        );
+        assert!(
+            contract.sender(alice).supports_interface(
+                <Erc721Consecutive as IErc165>::interface_id()
+            )
+        );
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721Consecutive::supports_interface(
-            fake_interface_id.into()
-        ));
+        let fake_interface_id: FixedBytes<4> = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }
