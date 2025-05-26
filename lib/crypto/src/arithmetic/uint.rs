@@ -23,7 +23,7 @@ use crate::{
         BigInteger,
     },
     bits::BitIteratorBE,
-    ct_for, ct_for_unroll6, ct_rev_for,
+    ct_for, ct_for_unroll6, ct_rev_for, ct_rev_for_unroll6,
 };
 
 /// Stack-allocated big unsigned integer.
@@ -100,15 +100,13 @@ impl<const N: usize> Uint<N> {
         self.limbs[0] & 1 == 0
     }
 
-    // TODO#q: use ct_rev_for_unroll6
-
     /// Checks `self` is greater or equal then `rhs` (constant).
     #[must_use]
     #[inline(always)]
     pub const fn ct_ge(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a > b {
                 return true;
             } else if a < b {
@@ -122,9 +120,9 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[inline(always)]
     pub const fn ct_gt(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a > b {
                 return true;
             } else if a < b {
@@ -138,9 +136,9 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[inline(always)]
     pub const fn ct_le(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a < b {
                 return true;
             } else if a > b {
@@ -153,9 +151,9 @@ impl<const N: usize> Uint<N> {
     /// Checks `self` is less then `rhs` (constant).
     #[must_use]
     pub const fn ct_lt(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a < b {
                 return true;
             } else if a > b {

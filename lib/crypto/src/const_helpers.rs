@@ -45,8 +45,6 @@ macro_rules! ct_rev_for {
     }};
 }
 
-// TODO#q: add ct_rev_for_unroll6
-
 /// Allows writing `for` cycle in constant context, with 2 stages loop unroll
 /// optimization.
 #[macro_export]
@@ -88,6 +86,25 @@ macro_rules! ct_for_unroll6 {
             $crate::cycle!($i, $end, $code);
             $crate::cycle!($i, $end, $code);
             $crate::cycle!($i, $end, $code);
+        }
+    }};
+}
+
+/// Allows writing reversed `for` cycle in constant context, with 6 stages loop
+/// unroll optimization.
+///
+/// Start (`$start`) index is not inclusive.
+#[macro_export]
+macro_rules! ct_rev_for_unroll6 {
+    (($i:ident in $end:tt.. $start:tt) $code:expr) => {{
+        let mut $i = $start;
+        loop {
+            $crate::rev_cycle!($i, $end, $code);
+            $crate::rev_cycle!($i, $end, $code);
+            $crate::rev_cycle!($i, $end, $code);
+            $crate::rev_cycle!($i, $end, $code);
+            $crate::rev_cycle!($i, $end, $code);
+            $crate::rev_cycle!($i, $end, $code);
         }
     }};
 }
