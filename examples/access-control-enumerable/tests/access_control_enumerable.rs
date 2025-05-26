@@ -279,4 +279,4 @@ async fn test_role_management(
     assert!(result.is_err(), "Should not be able to mint after role revocation");
 
     Ok(())
-} 
+}

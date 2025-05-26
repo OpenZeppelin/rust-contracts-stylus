@@ -48,4 +48,4 @@ contract AccessControlEnumerableExample {
         }
         return false;
     }
-} 
+}

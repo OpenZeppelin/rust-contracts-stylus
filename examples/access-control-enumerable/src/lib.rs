@@ -46,56 +46,56 @@ impl AccessControlEnumerableExample {
     fn constructor(&mut self, name: String, symbol: String) -> Result<(), Error> {
         // Initialize ERC20 token
         self.erc20.init(name, symbol, 18)?;
-        
+
         // Setup the DEFAULT_ADMIN_ROLE to the deployer
         let sender = msg::sender();
         self.access.grant_role(AccessControl::DEFAULT_ADMIN_ROLE.into(), sender)
             .map_err(Error::AccessControlEnumerable)?;
-        
+
         Ok(())
     }
-    
+
     /// Adds a minter role to the specified account.
     /// Only callable by an account with the DEFAULT_ADMIN_ROLE.
     fn add_minter(&mut self, account: Address) -> Result<(), Error> {
         // Only admin can add minters
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())
             .map_err(Error::AccessControl)?;
-            
+
         self.access.grant_role(MINTER_ROLE.into(), account)
             .map_err(Error::AccessControlEnumerable)
     }
-    
+
     /// Adds a burner role to the specified account.
     /// Only callable by an account with the DEFAULT_ADMIN_ROLE.
     fn add_burner(&mut self, account: Address) -> Result<(), Error> {
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())
             .map_err(Error::AccessControl)?;
-            
+
         self.access.grant_role(BURNER_ROLE.into(), account)
             .map_err(Error::AccessControlEnumerable)
     }
-    
+
     /// Removes the minter role from the specified account.
     /// Only callable by an account with the DEFAULT_ADMIN_ROLE.
     fn remove_minter(&mut self, account: Address) -> Result<(), Error> {
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())
             .map_err(Error::AccessControl)?;
-            
+
         self.access.revoke_role(MINTER_ROLE.into(), account)
             .map_err(Error::AccessControlEnumerable)
     }
-    
+
     /// Removes the burner role from the specified account.
     /// Only callable by an account with the DEFAULT_ADMIN_ROLE.
     fn remove_burner(&mut self, account: Address) -> Result<(), Error> {
         self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())
             .map_err(Error::AccessControl)?;
-            
+
         self.access.revoke_role(BURNER_ROLE.into(), account)
             .map_err(Error::AccessControlEnumerable)
     }
-    
+
     /// Returns a list of all accounts that have been granted the minter role.
     /// Demonstrates how to enumerate role members using AccessControlEnumerable.
     fn get_minters(&self) -> Vec<Address> {
@@ -108,7 +108,7 @@ impl AccessControlEnumerableExample {
         }
         minters
     }
-    
+
     /// Returns a list of all accounts that have been granted the burner role.
     /// Demonstrates how to enumerate role members using AccessControlEnumerable.
     fn get_burners(&self) -> Vec<Address> {
@@ -121,24 +121,24 @@ impl AccessControlEnumerableExample {
         }
         burners
     }
-    
+
     /// Mints tokens to the specified address.
     /// Only callable by accounts with the MINTER_ROLE.
     fn mint(&mut self, to: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(MINTER_ROLE.into())
             .map_err(Error::AccessControl)?;
-            
+
         self.erc20.mint(to, amount)
             .map_err(Error::Erc20)
     }
-    
+
     /// Burns tokens from the specified address.
     /// Only callable by accounts with the BURNER_ROLE.
     fn burn(&mut self, from: Address, amount: U256) -> Result<(), Error> {
         self.access.only_role(BURNER_ROLE.into())
             .map_err(Error::AccessControl)?;
-            
+
         self.erc20.burn(from, amount)
             .map_err(Error::Erc20)
     }
-} 
+}
