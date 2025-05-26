@@ -7,47 +7,88 @@ Useful for scenarios such as preventing trades until the end of an evaluation pe
 [[usage]]
 == Usage
 
-In order to make your ERC721 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC721 token functions as follows:
+In order to make your ERC721 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC721 token functions as follows:
 
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc721::{self, extensions::IErc721Burnable, Erc721, IErc721},
-    utils::{pausable, Pausable},
+    token::erc721::{self, Erc721, IErc721},
+    utils::{introspection::erc165::IErc165, pausable, IPausable, Pausable},
 };
 
 #[derive(SolidityError, Debug)]
 enum Error {
-    Erc721(erc721::Error),
-    Pausable(pausable::Error),
+    InvalidOwner(erc721::ERC721InvalidOwner),
+    NonexistentToken(erc721::ERC721NonexistentToken),
+    IncorrectOwner(erc721::ERC721IncorrectOwner),
+    InvalidSender(erc721::ERC721InvalidSender),
+    InvalidReceiver(erc721::ERC721InvalidReceiver),
+    InvalidReceiverWithReason(erc721::InvalidReceiverWithReason),
+    InsufficientApproval(erc721::ERC721InsufficientApproval),
+    InvalidApprover(erc721::ERC721InvalidApprover),
+    InvalidOperator(erc721::ERC721InvalidOperator),
+    EnforcedPause(pausable::EnforcedPause),
+    ExpectedPause(pausable::ExpectedPause),
+}
+
+impl From<erc721::Error> for Error {
+    fn from(value: erc721::Error) -> Self {
+        match value {
+            erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+            erc721::Error::NonexistentToken(e) => Error::NonexistentToken(e),
+            erc721::Error::IncorrectOwner(e) => Error::IncorrectOwner(e),
+            erc721::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc721::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc721::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc721::Error::InsufficientApproval(e) => {
+                Error::InsufficientApproval(e)
+            }
+            erc721::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc721::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+        }
+    }
+}
+
+impl From<pausable::Error> for Error {
+    fn from(value: pausable::Error) -> Self {
+        match value {
+            pausable::Error::EnforcedPause(e) => Error::EnforcedPause(e),
+            pausable::Error::ExpectedPause(e) => Error::ExpectedPause(e),
+        }
+    }
 }
 
 #[entrypoint]
 #[storage]
 struct Erc721Example {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     pausable: Pausable,
 }
 
 #[public]
-#[inherit(Erc721, Pausable)]
+#[implements(IErc721<Error = Error>, IPausable, IErc165)]
 impl Erc721Example {
-    fn burn(&mut self, token_id: U256) -> Result<(), Error> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc721.burn(token_id)?;
-        Ok(())
-    }
-
     fn mint(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
         self.erc721._mint(to, token_id)?;
         Ok(())
+    }
+}
+
+#[public]
+impl IErc721 for Erc721Example {
+    type Error = Error;
+
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
+        Ok(self.erc721.balance_of(owner)?)
+    }
+
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
+        Ok(self.erc721.owner_of(token_id)?)
     }
 
     fn safe_transfer_from(
@@ -89,6 +130,44 @@ impl Erc721Example {
         // ...
         self.erc721.transfer_from(from, to, token_id)?;
         Ok(())
+    }
+
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        Ok(self.erc721.approve(to, token_id)?)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        to: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error> {
+        Ok(self.erc721.set_approval_for_all(to, approved)?)
+    }
+
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
+        Ok(self.erc721.get_approved(token_id)?)
+    }
+
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
+        self.erc721.is_approved_for_all(owner, operator)
+    }
+}
+
+#[public]
+impl IPausable for Erc721Example {
+    fn paused(&self) -> bool {
+        self.pausable.paused()
+    }
+}
+
+#[public]
+impl IErc165 for Erc721Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc721.supports_interface(interface_id)
     }
 }
 ----

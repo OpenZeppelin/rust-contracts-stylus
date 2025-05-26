@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use alloy_primitives::{hex, uint, U256};
-use e2e::{Account, ReceiptExt};
+use e2e::Account;
 use eyre::Result;
 
 use crate::abi::PoseidonExample;
@@ -14,7 +14,7 @@ mod abi;
 
 #[e2e::test]
 async fn poseidon_works(alice: Account) -> Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PoseidonExample::new(contract_addr, &alice.wallet);
 
     let PoseidonExample::hashReturn { hash } =

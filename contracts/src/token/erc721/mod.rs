@@ -1,5 +1,9 @@
 //! Implementation of the [`Erc721`] token standard.
-use alloc::{vec, vec::Vec};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -12,7 +16,7 @@ use stylus_sdk::{
 };
 
 use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
+    introspection::erc165::IErc165,
     math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
 
@@ -72,7 +76,7 @@ mod sol {
 
     sol! {
         /// Indicates that an address can't be an owner.
-        /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+        /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
         /// Used in balance queries.
         ///
         /// * `owner` - The address deemed to be an invalid owner.
@@ -136,6 +140,13 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC721InvalidOperator(address operator);
+
+        /// Indicates a failure with the receiver reverting with a reason.
+        ///
+        /// * `reason` - Revert reason.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidReceiverWithReason(string reason);
     }
 }
 
@@ -145,7 +156,7 @@ mod sol {
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates that an address can't be an owner.
-    /// For example, `Address::ZERO` is a forbidden owner in [`Erc721`].
+    /// For example, [`Address::ZERO`] is a forbidden owner in [`Erc721`].
     /// Used in balance queries.
     InvalidOwner(ERC721InvalidOwner),
     /// Indicates a `token_id` whose `owner` is the zero address.
@@ -159,14 +170,7 @@ pub enum Error {
     InvalidReceiver(ERC721InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
-    ///
-    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
-    /// return data, this error will be encoded either as `Error(string)` or
-    /// `Panic(uint256)`, as those are the built-in errors emitted by default
-    /// by Solidity's special functions `assert`, `require`, and `revert`.
-    ///
-    /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    InvalidReceiverWithReason(call::Error),
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     InsufficientApproval(ERC721InsufficientApproval),
     /// Indicates a failure with the `approver` of a token to be approved. Used
@@ -217,7 +221,7 @@ pub trait IErc721: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOwner`] - If owner address is `Address::ZERO`.
+    /// * [`Error::InvalidOwner`] - If owner address is [`Address::ZERO`].
     fn balance_of(&self, owner: Address) -> Result<U256, Self::Error>;
 
     /// Returns the owner of the `token_id` token.
@@ -251,7 +255,7 @@ pub trait IErc721: IErc165 {
     /// * [`Error::NonexistentToken`] - If the token does not exist.
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    /// interface id or returned with error, `to` is `Address::ZERO`.
+    /// interface id or returned with error, `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -282,7 +286,7 @@ pub trait IErc721: IErc165 {
     ///  * [`Error::NonexistentToken`] - If the token does not exist.
     ///  * [`Error::InvalidReceiver`] - If
     ///    [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///    interface id or returned with error, or `to` is `Address::ZERO`.
+    ///    interface id or returned with error, or `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -313,7 +317,7 @@ pub trait IErc721: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     /// * [`Error::InsufficientApproval`] - If the caller does not have the
     ///   right to approve.
@@ -333,7 +337,7 @@ pub trait IErc721: IErc165 {
     /// account. The approval is cleared when the token is transferred.
     ///
     /// Only a single account can be approved at a time,
-    /// so approving the `Address::ZERO` clears previous approvals.
+    /// so approving the [`Address::ZERO`] clears previous approvals.
     ///
     /// # Arguments
     ///
@@ -371,7 +375,7 @@ pub trait IErc721: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -406,17 +410,21 @@ pub trait IErc721: IErc165 {
 }
 
 #[public]
+#[implements(IErc721<Error = Error>, IErc165)]
+impl Erc721 {}
+
+#[public]
 impl IErc721 for Erc721 {
     type Error = Error;
 
-    fn balance_of(&self, owner: Address) -> Result<U256, Error> {
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
         if owner.is_zero() {
             return Err(ERC721InvalidOwner { owner: Address::ZERO }.into());
         }
         Ok(self.balances.get(owner))
     }
 
-    fn owner_of(&self, token_id: U256) -> Result<Address, Error> {
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)
     }
 
@@ -425,7 +433,7 @@ impl IErc721 for Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         self.safe_transfer_from_with_data(from, to, token_id, vec![].into())
     }
 
@@ -436,7 +444,7 @@ impl IErc721 for Erc721 {
         to: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         self.transfer_from(from, to, token_id)?;
         self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
     }
@@ -446,7 +454,7 @@ impl IErc721 for Erc721 {
         from: Address,
         to: Address,
         token_id: U256,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         if to.is_zero() {
             return Err(
                 ERC721InvalidReceiver { receiver: Address::ZERO }.into()
@@ -468,7 +476,11 @@ impl IErc721 for Erc721 {
         Ok(())
     }
 
-    fn approve(&mut self, to: Address, token_id: U256) -> Result<(), Error> {
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
         self._approve(to, token_id, msg::sender(), true)
     }
 
@@ -476,11 +488,11 @@ impl IErc721 for Erc721 {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         self._set_approval_for_all(msg::sender(), operator, approved)
     }
 
-    fn get_approved(&self, token_id: U256) -> Result<Address, Error> {
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
         self._require_owned(token_id)?;
         Ok(self._get_approved(token_id))
     }
@@ -490,10 +502,11 @@ impl IErc721 for Erc721 {
     }
 }
 
+#[public]
 impl IErc165 for Erc721 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc721>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc721>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -614,8 +627,9 @@ impl Erc721 {
     }
 
     /// Transfers `token_id` from its current owner to `to`, or alternatively
-    /// mints (or burns) if the current owner (or `to`) is the `Address::ZERO`.
-    /// Returns the owner of the `token_id` before the update.
+    /// mints (or burns) if the current owner (or `to`) is the
+    /// [`Address::ZERO`]. Returns the owner of the `token_id` before the
+    /// update.
     ///
     /// The `auth` argument is optional. If the value passed is non-zero, then
     /// this function will check that `auth` is either the owner of the
@@ -634,9 +648,9 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
-    ///   is not `Address::ZERO`.
-    /// * [`Error::InsufficientApproval`] - If `auth` is not `Address::ZERO` and
-    ///   `auth` does not have a right to approve this token.
+    ///   is not [`Address::ZERO`].
+    /// * [`Error::InsufficientApproval`] - If `auth` is not [`Address::ZERO`]
+    ///   and `auth` does not have a right to approve this token.
     ///
     /// # Events
     ///
@@ -685,7 +699,7 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -721,7 +735,7 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
     ///   id or returned with an error.
@@ -786,7 +800,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
@@ -842,7 +856,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::NonexistentToken`] - If `token_id` does not exist.
     /// * [`Error::IncorrectOwner`] - If the previous owner is not `from`.
     ///
@@ -923,7 +937,7 @@ impl Erc721 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -989,7 +1003,9 @@ impl Erc721 {
     ///
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
-    ///   id or returned with error.
+    ///   id or returned an error.
+    /// * [`Error::InvalidReceiverWithReason`] - If
+    ///   [`IERC721Receiver::on_erc_721_received`] reverted with revert data.
     pub fn _check_on_erc721_received(
         &mut self,
         operator: Address,
@@ -1017,11 +1033,16 @@ impl Erc721 {
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
-                        // Non-IERC721Receiver implementer.
-                        return Err(e.into());
+                        return Err(Error::InvalidReceiverWithReason(
+                            InvalidReceiverWithReason {
+                                reason: String::from_utf8_lossy(reason)
+                                    .to_string(),
+                            },
+                        ));
                     }
                 }
 
+                // Non-IERC721Receiver implementer.
                 return Err(ERC721InvalidReceiver { receiver: to }.into());
             }
         };
@@ -1035,7 +1056,7 @@ impl Erc721 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U256};
     use motsu::prelude::*;
@@ -2668,22 +2689,24 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc721 as IErc721>::INTERFACE_ID;
-        let expected = 0x80ac58cd;
+        let actual = <Erc721 as IErc721>::interface_id();
+        let expected: FixedBytes<4> = fixed_bytes!("80ac58cd");
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc721::supports_interface(
-            <Erc721 as IErc721>::INTERFACE_ID.into()
-        ));
-        assert!(Erc721::supports_interface(
-            <Erc721 as IErc165>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(contract: Contract<Erc721>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc721 as IErc721>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc721 as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc721::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 
     sol_storage! {

@@ -127,6 +127,14 @@ pub trait BuildHasher {
 }
 
 /// Hash the pair `(a, b)` with `state`.
+///
+/// Returns the finalized hash output from the hasher.
+///
+/// # Arguments
+///
+/// * `a` - The first value to hash.
+/// * `b` - The second value to hash.
+/// * `state` - The hasher state to use.
 #[inline]
 pub fn hash_pair<S, H>(a: &H, b: &H, mut state: S) -> S::Output
 where
@@ -153,7 +161,7 @@ where
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use proptest::prelude::*;
 

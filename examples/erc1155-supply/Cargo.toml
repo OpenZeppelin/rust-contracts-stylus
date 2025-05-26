@@ -19,6 +19,11 @@ e2e.workspace = true
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "erc1155-supply-example"
+path = "src/main.rs"

@@ -23,3 +23,8 @@ crate-type = ["lib", "cdylib"]
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
+
+[[bin]]
+name = "access-control-example"
+path = "src/main.rs"

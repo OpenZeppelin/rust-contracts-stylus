@@ -1,7 +1,7 @@
 = Utilities
 
 The OpenZeppelin Stylus Contracts provides a ton of useful utilities that you can use in your project.
-For a complete list, check out the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/index.html[API Reference].
+For a complete list, check out the https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/index.html[API Reference].
 Here are some of the more popular ones.
 
 [[introspection]]
@@ -11,25 +11,33 @@ It's frequently helpful to know whether a contract supports an interface you'd l
 https://eips.ethereum.org/EIPS/eip-165[`ERC-165`] is a standard that helps do runtime interface detection.
 Contracts for Stylus provides helpers for implementing ERC-165 in your contracts:
 
-* https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html[`IERC165`] — this is the ERC-165 trait that defines https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html#tymethod.supports_interface[`supportsInterface`]. In order to implement ERC-165 interface detection, you should manually expose https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html#tymethod.supports_interface[`supportsInterface`] function in your contract.
+* https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html[`IERC165`] — this is the ERC-165 trait that defines https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html#tymethod.supports_interface[`supportsInterface`]. In order to implement ERC-165 interface detection, you should manually expose https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/introspection/erc165/trait.IErc165.html#tymethod.supports_interface[`supportsInterface`] function in your contract.
 
 [source,rust]
 ----
 #[entrypoint]
 #[storage]
 struct Erc721Example {
-    #[borrow]
     erc721: Erc721,
 }
 
 #[public]
-#[inherit(Erc721)]
+#[implements(IErc721<Error = Error>, IErc165)]
 impl Erc721Example {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc721::supports_interface(interface_id)
+    // ...
+}
+
+#[public]
+impl IErc165 for Erc721Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc721.supports_interface(interface_id)
     }
 }
 
+#[public]
+impl IErc721 for Erc721Example {
+    // ...
+}
 ----
 
 [[structures]]
@@ -38,5 +46,5 @@ impl Erc721Example {
 Some use cases require more powerful data structures than arrays and mappings offered natively in alloy and the Stylus sdk.
 Contracts for Stylus provides these libraries for enhanced data structure management:
 
-- https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
-- https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/structs/checkpoints/index.html[`Checkpoints`]: Checkpoint values with built-in lookups.
+- https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
+- https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/structs/checkpoints/index.html[`Checkpoints`]: Checkpoint values with built-in lookups.

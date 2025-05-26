@@ -16,11 +16,11 @@ educe.workspace = true
 hex-literal.workspace = true
 
 [dev-dependencies]
+alloy-primitives = { workspace = true, features = ["arbitrary"] }
 rand.workspace = true
 proptest.workspace = true
 
 [features]
-std = []
 
 [lints]
 workspace = true

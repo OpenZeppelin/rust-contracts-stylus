@@ -1,7 +1,7 @@
 [package]
 name = "e2e"
 description = "End-to-end Testing for Stylus"
-version = "0.2.0"
+version = "0.3.0"
 categories = ["development-tools::testing", "cryptography::cryptocurrencies"]
 keywords = ["arbitrum", "ethereum", "stylus", "integration-testing", "tests"]
 authors.workspace = true
@@ -15,7 +15,6 @@ tokio = { workspace = true, features = ["process"] }
 eyre.workspace = true
 regex.workspace = true
 once_cell.workspace = true
-koba.workspace = true
 e2e-proc.workspace = true
 stylus-sdk.workspace = true
 toml = "0.8.13"
