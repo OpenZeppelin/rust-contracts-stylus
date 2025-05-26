@@ -19,6 +19,11 @@ eyre.workspace = true
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "erc1155-metadata-uri-example"
+path = "src/main.rs"

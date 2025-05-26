@@ -22,3 +22,8 @@ crate-type = ["lib", "cdylib"]
 
 [features]
 e2e = []
+export-abi = ["stylus-sdk/export-abi"]
+
+[[bin]]
+name = "pedersen-example"
+path = "src/main.rs"

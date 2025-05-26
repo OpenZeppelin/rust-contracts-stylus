@@ -22,19 +22,63 @@ Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
 ```ignore
-use stylus_sdk::prelude::*;
-use openzeppelin_stylus::token::erc20::Erc20;
+use openzeppelin_stylus::token::erc20::{self, Erc20, IErc20};
+use stylus_sdk::{
+    alloy_primitives::{Address, U256},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
 struct MyContract {
-    #[borrow]
     pub erc20: Erc20,
 }
 
 #[public]
-#[inherit(Erc20)]
-impl MyContract { }
+#[implements(IErc20<Error = erc20::Error>)]
+impl MyContract {}
+
+#[public]
+impl IErc20 for MyContract {
+    type Error = erc20::Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer(to, value)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.approve(spender, value)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer_from(from, to, value)
+    }
+}
 ```
 */
 
@@ -43,7 +87,7 @@ impl MyContract { }
     clippy::used_underscore_items,
     deprecated
 )]
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_std, no_main)]
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;

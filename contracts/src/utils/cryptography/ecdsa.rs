@@ -28,7 +28,7 @@ mod sol {
     use alloy_sol_macro::sol;
 
     sol! {
-        /// The signature derives the `Address::ZERO`.
+        /// The signature derives the [`Address::ZERO`].
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ECDSAInvalidSignature();
@@ -60,7 +60,7 @@ mod sol {
 /// An error that occurred in the implementation of an `ECDSA` library.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// The signature derives the `Address::ZERO`.
+    /// The signature derives the [`Address::ZERO`].
     InvalidSignature(ECDSAInvalidSignature),
     /// The signature has an `S` value that is in the upper half order.
     InvalidSignatureS(ECDSAInvalidSignatureS),
@@ -86,7 +86,8 @@ impl MethodError for ecdsa::Error {
 ///
 /// * [`Error::InvalidSignatureS`] - If the `s` value is grater than
 ///   [`SIGNATURE_S_UPPER_BOUND`].
-/// * [`Error::InvalidSignature`] - If the recovered address is `Address::ZERO`.
+/// * [`Error::InvalidSignature`] - If the recovered address is
+///   [`Address::ZERO`].
 ///
 /// # Panics
 ///
@@ -119,7 +120,8 @@ pub fn recover(
 ///
 /// # Errors
 ///
-/// * [`Error::InvalidSignature`] - If the recovered address is `Address::ZERO`.
+/// * [`Error::InvalidSignature`] - If the recovered address is
+///   [`Address::ZERO`].
 ///
 /// # Panics
 ///
@@ -204,7 +206,7 @@ fn check_if_malleable(s: &B256) -> Result<(), Error> {
     Ok(())
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{b256, B256};
 

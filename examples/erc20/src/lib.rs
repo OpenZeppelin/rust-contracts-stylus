@@ -1,20 +1,25 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc20::{
         self,
-        extensions::{capped, Capped, Erc20Metadata, IErc20Burnable},
+        extensions::{
+            capped, Capped, Erc20Metadata, ICapped, IErc20Burnable,
+            IErc20Metadata,
+        },
         Erc20, IErc20,
     },
-    utils::{introspection::erc165::IErc165, pausable, Pausable},
+    utils::{introspection::erc165::IErc165, pausable, IPausable, Pausable},
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    alloy_primitives::{uint, Address, FixedBytes, U256, U8},
+    prelude::*,
+};
 
-const DECIMALS: u8 = 10;
+const DECIMALS: U8 = uint!(10_U8);
 
 #[derive(SolidityError, Debug)]
 enum Error {
@@ -68,39 +73,25 @@ impl From<pausable::Error> for Error {
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     metadata: Erc20Metadata,
-    #[borrow]
     capped: Capped,
-    #[borrow]
     pausable: Pausable,
 }
 
 #[public]
-#[inherit(Erc20, Erc20Metadata, Capped, Pausable)]
+#[implements(IErc20<Error = Error>, IErc20Burnable<Error = Error>, IErc20Metadata, ICapped, IPausable, IErc165)]
 impl Erc20Example {
-    // Overrides the default [`Metadata::decimals`], and sets it to `10`.
-    //
-    // If you don't provide this method in the `entrypoint` contract, it will
-    // default to `18`.
-    fn decimals(&self) -> u8 {
-        DECIMALS
-    }
-
-    fn burn(&mut self, value: U256) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-        self.erc20.burn(value).map_err(|e| e.into())
-    }
-
-    fn burn_from(
+    #[constructor]
+    pub fn constructor(
         &mut self,
-        account: Address,
-        value: U256,
+        name: String,
+        symbol: String,
+        cap: U256,
     ) -> Result<(), Error> {
-        self.pausable.when_not_paused()?;
-        self.erc20.burn_from(account, value).map_err(|e| e.into())
+        self.metadata.constructor(name, symbol);
+        self.capped.constructor(cap)?;
+        Ok(())
     }
 
     // Add token minting feature.
@@ -132,9 +123,50 @@ impl Erc20Example {
         Ok(())
     }
 
-    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
+    /// WARNING: These functions are intended for **testing purposes** only. In
+    /// **production**, ensure strict access control to prevent unauthorized
+    /// pausing or unpausing, which can disrupt contract functionality. Remove
+    /// or secure these functions before deployment.
+    fn pause(&mut self) -> Result<(), Error> {
+        Ok(self.pausable.pause()?)
+    }
+
+    fn unpause(&mut self) -> Result<(), Error> {
+        Ok(self.pausable.unpause()?)
+    }
+}
+
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
         self.pausable.when_not_paused()?;
-        self.erc20.transfer(to, value).map_err(|e| e.into())
+        Ok(self.erc20.transfer(to, value)?)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.approve(spender, value)?)
     }
 
     fn transfer_from(
@@ -142,25 +174,68 @@ impl Erc20Example {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Error> {
+    ) -> Result<bool, Self::Error> {
         self.pausable.when_not_paused()?;
-        self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+        Ok(self.erc20.transfer_from(from, to, value)?)
+    }
+}
+
+#[public]
+impl IErc20Metadata for Erc20Example {
+    fn name(&self) -> String {
+        self.metadata.name()
     }
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc20::supports_interface(interface_id)
-            || Erc20Metadata::supports_interface(interface_id)
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
     }
 
-    /// WARNING: These functions are intended for **testing purposes** only. In
-    /// **production**, ensure strict access control to prevent unauthorized
-    /// pausing or unpausing, which can disrupt contract functionality. Remove
-    /// or secure these functions before deployment.
-    fn pause(&mut self) -> Result<(), Error> {
-        self.pausable.pause().map_err(|e| e.into())
+    // Overrides the default [`IErc20Metadata::decimals`], and sets it to `10`.
+    //
+    // If you don't provide this method in the `entrypoint` contract, it will
+    // default to `18`.
+    fn decimals(&self) -> U8 {
+        DECIMALS
+    }
+}
+
+#[public]
+impl IErc165 for Erc20Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        Erc20::supports_interface(&self.erc20, interface_id)
+            || Erc20Metadata::supports_interface(&self.metadata, interface_id)
+    }
+}
+
+#[public]
+impl IErc20Burnable for Erc20Example {
+    type Error = Error;
+
+    fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
+        self.pausable.when_not_paused()?;
+        Ok(self.erc20.burn(value)?)
     }
 
-    fn unpause(&mut self) -> Result<(), Error> {
-        self.pausable.unpause().map_err(|e| e.into())
+    fn burn_from(
+        &mut self,
+        account: Address,
+        value: U256,
+    ) -> Result<(), Self::Error> {
+        self.pausable.when_not_paused()?;
+        Ok(self.erc20.burn_from(account, value)?)
+    }
+}
+
+#[public]
+impl ICapped for Erc20Example {
+    fn cap(&self) -> U256 {
+        self.capped.cap()
+    }
+}
+
+#[public]
+impl IPausable for Erc20Example {
+    fn paused(&self) -> bool {
+        self.pausable.paused()
     }
 }

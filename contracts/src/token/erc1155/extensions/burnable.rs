@@ -3,6 +3,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::msg;
 
 use crate::token::erc1155::{
@@ -11,6 +12,7 @@ use crate::token::erc1155::{
 
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
 /// own tokens and those that they have been approved to use.
+#[interface_id]
 pub trait IErc1155Burnable {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -28,7 +30,8 @@ pub trait IErc1155Burnable {
     ///
     /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
     ///   `account` address and the `account` has not been approved.
-    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the
+    ///   [`Address::ZERO`].
     /// * [`erc1155::Error::InsufficientBalance`] - If `value` is greater than
     ///   the balance of the `from` account.
     fn burn(
@@ -36,7 +39,7 @@ pub trait IErc1155Burnable {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error>;
+    ) -> Result<(), Self::Error>;
 
     /// Destroys a batch of tokens from `account`.
     ///
@@ -51,7 +54,8 @@ pub trait IErc1155Burnable {
     ///
     /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
     ///   `account` address and the `account` has not been approved.
-    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the
+    ///   [`Address::ZERO`].
     /// * [`erc1155::Error::InvalidArrayLength`] - If length of `ids` is not
     ///   equal to length of `values`.
     /// * [`erc1155::Error::InsufficientBalance`] - If any of the `values` is
@@ -62,7 +66,7 @@ pub trait IErc1155Burnable {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error>;
+    ) -> Result<(), Self::Error>;
 }
 
 impl IErc1155Burnable for Erc1155 {
@@ -73,7 +77,7 @@ impl IErc1155Burnable for Erc1155 {
         account: Address,
         token_id: U256,
         value: U256,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error> {
+    ) -> Result<(), Self::Error> {
         self.ensure_approved_or_owner(account)?;
         self._burn(account, token_id, value)
     }
@@ -83,7 +87,7 @@ impl IErc1155Burnable for Erc1155 {
         account: Address,
         token_ids: Vec<U256>,
         values: Vec<U256>,
-    ) -> Result<(), <Self as IErc1155Burnable>::Error> {
+    ) -> Result<(), Self::Error> {
         self.ensure_approved_or_owner(account)?;
         self._burn_batch(account, token_ids, values)
     }
@@ -107,7 +111,7 @@ impl Erc1155 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
 
     use alloy_primitives::{Address, U256};

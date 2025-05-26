@@ -57,11 +57,11 @@ jobs:
 
         # https://twitter.com/jonhoo/status/1571290371124260865
       - name: Run unit tests
-        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+        run: cargo nextest run --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
-        run: cargo test --locked --features std --doc
+        run: cargo test --locked --doc
   os-check:
     # Run cargo test on MacOS and Windows.
     runs-on: ${{ matrix.os }}
@@ -93,7 +93,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Run unit tests
-        run: cargo nextest run --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+        run: cargo nextest run --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
@@ -147,13 +147,13 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Cargo llvm-cov
-        run: cargo llvm-cov --locked --features std --lcov --output-path lcov.info -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+        run: cargo llvm-cov --locked --lcov --output-path lcov.info -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
 
       - name: Prepare report for Codecov
-        run: cargo nextest run --profile ci --locked --features std --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
+        run: cargo nextest run --profile ci --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
