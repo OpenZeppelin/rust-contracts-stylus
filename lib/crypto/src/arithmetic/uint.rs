@@ -822,8 +822,12 @@ pub const fn from_str_radix<const LIMBS: usize>(
 /// This implementation performs faster than [`from_str_radix`], since it
 /// assumes the radix is already `16`.
 ///
-/// If the string number is shorter, then [`Uint`] can store.
-/// Returns a [`Uint`] with leading zeroes.
+/// If the string number is shorter, then [`Uint`] can store, returns a [`Uint`]
+/// with leading zeroes.
+///
+/// # Panics
+///
+/// * If hex encoded number is too large to fit in [`Uint`].
 #[must_use]
 pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
     let bytes = s.as_bytes();
@@ -845,10 +849,12 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
     loop {
         let digit = parse_digit(bytes[index], digit_radix) as Limb;
 
+        let limb_index = (num_index / digits_in_limb) as usize;
+        assert!(limb_index < num.len(), "hex number is too large");
+
         // Since a base-16 digit can be represented with the same bits, we can
         // copy these bits.
-        let digit_mask = digit << ((num_index % digits_in_limb) * digit_size);
-        num[(num_index / digits_in_limb) as usize] |= digit_mask;
+        num[limb_index] |= digit << ((num_index % digits_in_limb) * digit_size);
 
         // If we reached the beginning of the string, return the number.
         if index == 0 {
@@ -979,11 +985,14 @@ impl<const N: usize> WideUint<N> {
 
 #[cfg(test)]
 mod test {
+    use num_traits::ConstZero;
     use proptest::prelude::*;
 
     use crate::{
         arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
+            uint::{
+                from_str_hex, from_str_radix, parse_digit, Uint, WideUint, U256,
+            },
             *,
         },
         bits::BitIteratorBE,
@@ -1021,6 +1030,14 @@ mod test {
             let expected: Uint<4> = from_str_radix(&hex, 16);
             prop_assert_eq!(uint_from_hex, expected);
         });
+    }
+
+    #[test]
+    #[should_panic = "hex number is too large"]
+    fn from_str_hex_should_panic_on_overflow() {
+        let _ = from_str_hex::<4>(
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0",
+        );
     }
 
     #[test]
