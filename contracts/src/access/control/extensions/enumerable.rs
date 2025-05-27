@@ -8,12 +8,14 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     prelude::*,
-    storage::{StorageAddress, StorageMap, StorageVec},
+    storage::{StorageAddress, StorageMap},
 };
 
 use crate::{
     access::control::{self, AccessControl},
-    utils::introspection::erc165::IErc165,
+    utils::{
+        introspection::erc165::IErc165, structs::enumerable_set::EnumerableSet,
+    },
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -76,13 +78,20 @@ pub trait IAccessControlEnumerable {
 /// State of an [`AccessControlEnumerable`] contract.
 #[storage]
 pub struct AccessControlEnumerable {
-    // TODO: is it the best way to store the role members enumeration?
-    role_members: StorageMap<FixedBytes<32>, StorageVec<StorageAddress>>,
+    /// TODO: docs
+    role_members:
+        StorageMap<FixedBytes<32>, EnumerableSet<Address, StorageAddress>>,
 }
+
+unsafe impl TopLevelStorage for AccessControlEnumerable {}
 
 #[public]
 #[implements(IAccessControlEnumerable<Error = Error>, IErc165)]
-impl AccessControlEnumerable {}
+impl AccessControlEnumerable {
+    fn get_role_members(&self, role: FixedBytes<32>) -> Vec<Address> {
+        self.role_members.get(role).values()
+    }
+}
 
 #[public]
 impl IAccessControlEnumerable for AccessControlEnumerable {
@@ -90,27 +99,23 @@ impl IAccessControlEnumerable for AccessControlEnumerable {
 
     fn get_role_member(
         &self,
-        _role: FixedBytes<32>,
-        _index: U256,
+        role: FixedBytes<32>,
+        index: U256,
     ) -> Result<Address, Self::Error> {
-        // let members = self.role_members.get(role);
-        // if index >= U256::from(members.len()) {
-        //     return Err(Error::OutOfBounds(
-        //         AccessControlEnumerableOutOfBounds { role, index },
-        //     ));
-        // }
-        // Ok(members[index.as_usize()])
-
-        unimplemented!()
+        let members = self.role_members.get(role);
+        match members.at(index) {
+            Some(member) => Ok(member),
+            None => {
+                Err(Error::OutOfBounds(AccessControlEnumerableOutOfBounds {
+                    role,
+                    index,
+                }))
+            }
+        }
     }
 
-    fn get_role_member_count(&self, _role: FixedBytes<32>) -> U256 {
-        // let members = self.enumeration.role_members.get(role);
-        // // SAFETY: members.len() is always <= usize::MAX, so conversion to
-        // U256 // is safe
-        // U256::from(members.len())
-
-        unimplemented!()
+    fn get_role_member_count(&self, role: FixedBytes<32>) -> U256 {
+        self.role_members.get(role).length()
     }
 }
 
@@ -125,20 +130,17 @@ impl AccessControlEnumerable {
     /// - the caller must have ``role``'s admin role.
     pub fn _grant_role(
         &mut self,
-        _role: FixedBytes<32>,
-        _account: Address,
-        _access_control: &mut AccessControl,
-    ) -> Result<(), Error> {
-        // if self
-        //     .access
-        //     ._grant_role(role, account)
-        //     .map_err(Error::AccessControl)?
-        // {
-        //     let members = self.enumeration.role_members.get(role);
-        //     members.push(account);
-        // }
-        // Ok(())
-        unimplemented!()
+        role: FixedBytes<32>,
+        account: Address,
+        access_control: &mut AccessControl,
+    ) -> bool {
+        let granted = access_control._grant_role(role, account);
+
+        if granted {
+            self.role_members.setter(role).add(account)
+        }
+
+        granted
     }
 
     /// TODO: improve docs
@@ -150,32 +152,17 @@ impl AccessControlEnumerable {
     /// - the caller must have ``role``'s admin role.
     pub fn revoke_role(
         &mut self,
-        _role: FixedBytes<32>,
-        _account: Address,
-        _access_control: &mut AccessControl,
-    ) -> Result<(), Error> {
-        // if self
-        //     .access
-        //     ._revoke_role(role, account)
-        //     .map_err(Error::AccessControl)?
-        // {
-        //     let members = self.enumeration.role_members.get(role);
-        //     // Find and remove account from members array
-        //     for i in 0..members.len() {
-        //         if members[i] == account {
-        //             // Move last member to the removed position
-        //             let last_idx = members.len() - 1;
-        //             if i != last_idx {
-        //                 members[i] = members[last_idx];
-        //             }
-        //             members.pop();
-        //             break;
-        //         }
-        //     }
-        // }
-        // Ok(())
+        role: FixedBytes<32>,
+        account: Address,
+        access_control: &mut AccessControl,
+    ) -> bool {
+        let revoked = access_control._revoke_role(role, account);
 
-        unimplemented!()
+        if revoked {
+            self.role_members.setter(role).remove(account);
+        }
+
+        revoked
     }
 }
 
@@ -189,10 +176,9 @@ impl IErc165 for AccessControlEnumerable {
 
 #[cfg(test)]
 mod tests {
-    // TODO: fix tests
-    /*
+
     use alloy_primitives::Address;
-    use stylus_sdk::contract::Contract;
+    use motsu::prelude::*;
 
     use super::*;
 
@@ -207,18 +193,27 @@ mod tests {
         let count = contract.sender(alice).get_role_member_count(ROLE.into());
         assert_eq!(count, U256::ZERO);
     }
-
+    /*
     #[motsu::test]
     fn get_role_member_fails_for_empty_role(
         contract: Contract<AccessControlEnumerable>,
         alice: Address,
     ) {
+        let role = ROLE.into();
+        let index = U256::ZERO;
+
         let err = contract
             .sender(alice)
-            .get_role_member(ROLE.into(), U256::ZERO)
-            .unwrap_err();
-        assert!(matches!(err, Error::OutOfBounds(_)));
+            .get_role_member(role, index)
+            .motsu_expect_err("should fail for an empty role");
+
+        assert!(matches!(
+            err,
+            Error::OutOfBounds(AccessControlEnumerableOutOfBounds { role: r, index: idx })
+                if r == role && idx == index
+        ));
     }
+
 
     #[motsu::test]
     fn can_enumerate_role_members(
