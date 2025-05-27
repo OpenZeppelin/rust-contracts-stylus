@@ -150,6 +150,9 @@ where
     /// `proof` and a custom hashing algorithm defined by `builder`. See
     /// [`BuildHasher`] for more information on how to construct a builder.
     ///
+    /// Merkle tree hashing process must be constructed commutatively when using
+    /// custom hashing algorithms.
+    ///
     /// WARNING: This is a lower-level function. For most use cases,
     /// [`Verifier::verify`], which uses `keccak256` as a hashing algorithm,
     /// should be enough. Using other hashing algorithm may have unexpected
@@ -192,6 +195,9 @@ where
     /// a Merkle tree defined by `root` by using a `proof` with `proof_flags`
     /// and a custom hashing algorithm defined by `builder`. See
     /// [`BuildHasher`] for more information on how to construct a builder.
+    ///
+    /// Merkle tree hashing process must be constructed commutatively when using
+    /// custom hashing algorithms.
     ///
     /// WARNING: This is a lower-level function. For most use cases,
     /// [`Verifier::verify_multi_proof`], which uses `keccak256` as a hashing
