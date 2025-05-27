@@ -5,7 +5,7 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_lossless)]
 
-use num_traits::{ConstOne, ConstZero};
+use num_traits::ConstOne;
 
 /// A single limb of a big integer represented by 64-bits.
 pub type Limb = u64;
@@ -84,12 +84,12 @@ pub const fn carrying_mac(
 #[inline(always)]
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
-pub const fn adc(a: Limb, b: Limb, carry: Limb) -> (Limb, Limb) {
+pub const fn adc(a: Limb, b: Limb, carry: bool) -> (Limb, bool) {
     let a = a as WideLimb;
     let b = b as WideLimb;
     let carry = carry as WideLimb;
     let tmp = a + b + carry;
-    let carry = (tmp >> Limb::BITS) as Limb;
+    let carry = (tmp >> Limb::BITS) != 0;
     (tmp as Limb, carry)
 }
 
@@ -105,14 +105,14 @@ pub fn adc_assign(a: &mut Limb, b: Limb, carry: bool) -> bool {
 /// Calculate `a = a - b - borrow` and return the result and borrow.
 #[inline(always)]
 #[must_use]
-pub const fn sbb(a: Limb, b: Limb, borrow: Limb) -> (Limb, Limb) {
+pub const fn sbb(a: Limb, b: Limb, borrow: bool) -> (Limb, bool) {
     let a = a as WideLimb;
     let b = b as WideLimb;
     let borrow = borrow as WideLimb;
     // Protects from overflow, when `a < b + borrow`.
     let overflow_protection = WideLimb::ONE << Limb::BITS;
     let tmp = overflow_protection + a - b - borrow;
-    let borrow = if tmp >> Limb::BITS == 0 { Limb::ONE } else { Limb::ZERO };
+    let borrow = tmp >> Limb::BITS == 0;
     // overflow_protection will be truncated on cast.
     (tmp as Limb, borrow)
 }

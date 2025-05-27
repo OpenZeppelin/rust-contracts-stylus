@@ -277,13 +277,13 @@ impl<const N: usize> Uint<N> {
     #[inline(always)]
     #[must_use]
     pub const fn ct_checked_sub(mut self, rhs: &Self) -> (Self, bool) {
-        let mut borrow = 0;
+        let mut borrow = false;
 
         ct_for_unroll6!((i in 0..N) {
             (self.limbs[i], borrow) = limb::sbb(self.limbs[i], rhs.limbs[i], borrow);
         });
 
-        (self, borrow != 0)
+        (self, borrow)
     }
 
     /// Subtract `rhs` from `self`, returning the result wrapping around the
@@ -299,13 +299,13 @@ impl<const N: usize> Uint<N> {
     #[inline]
     #[must_use]
     pub const fn ct_checked_add(mut self, rhs: &Self) -> (Self, bool) {
-        let mut carry = 0;
+        let mut carry = false;
 
         ct_for!((i in 0..N) {
             (self.limbs[i], carry) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
         });
 
-        (self, carry != 0)
+        (self, carry)
     }
 
     /// Add `rhs` to `self` in-place, returning whether overflow occurred.
@@ -390,22 +390,22 @@ impl<const N: usize> Uint<N> {
     /// Add two numbers and panic on overflow.
     #[must_use]
     pub const fn ct_add(&self, rhs: &Self) -> Self {
-        let (low, carry) = self.ct_adc(rhs, Limb::ZERO);
-        assert!(carry == 0, "overflow on addition");
+        let (low, carry) = self.ct_adc(rhs, false);
+        assert!(!carry, "overflow on addition");
         low
     }
 
     /// Add two numbers wrapping around the upper boundary.
     #[must_use]
     pub const fn ct_wrapping_add(&self, rhs: &Self) -> Self {
-        let (low, _) = self.ct_adc(rhs, Limb::ZERO);
+        let (low, _) = self.ct_adc(rhs, false);
         low
     }
 
     /// Computes `a + b + carry`, returning the result along with the new carry.
     #[inline(always)]
     #[must_use]
-    pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: Limb) -> (Self, Limb) {
+    pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: bool) -> (Self, bool) {
         let mut limbs = [Limb::ZERO; N];
 
         ct_for!((i in 0..N) {
