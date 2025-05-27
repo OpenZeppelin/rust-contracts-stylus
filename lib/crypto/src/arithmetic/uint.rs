@@ -9,6 +9,7 @@ use core::{
     fmt::{Debug, Display, Result, UpperHex},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
+        Shl, ShlAssign, Shr, ShrAssign,
     },
 };
 
@@ -75,6 +76,12 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     pub const fn as_limbs(&self) -> &Limbs<N> {
         &self.limbs
+    }
+
+    /// Returns inner [`Limbs`] array (constant).
+    #[must_use]
+    pub const fn into_limbs(self) -> Limbs<N> {
+        self.limbs
     }
 
     /// Returns true if this number is odd (constant).
@@ -544,7 +551,7 @@ impl<const N: usize> Ord for Uint<N> {
             match a.cmp(b) {
                 Ordering::Equal => {}
                 order => return order,
-            };
+            }
         });
 
         Ordering::Equal
@@ -635,6 +642,88 @@ impl<const N: usize> Not for Uint<N> {
     }
 }
 
+impl<const N: usize> Shr<u32> for Uint<N> {
+    type Output = Self;
+
+    fn shr(mut self, rhs: u32) -> Self::Output {
+        self >>= rhs;
+        self
+    }
+}
+
+impl<const N: usize> ShrAssign<u32> for Uint<N> {
+    fn shr_assign(&mut self, rhs: u32) {
+        let shift = rhs as usize;
+        let bits = Limb::BITS as usize;
+
+        // If the shift is greater than the number of bits in the number.
+        if N * bits <= shift {
+            *self = Self::ZERO;
+            return;
+        }
+
+        // Shift bits in limbs array in-place.
+        for index in 0..N {
+            let limb_shift = shift % bits;
+            let index_shift = shift / bits;
+
+            let current_limb = self.limbs[index];
+            self.limbs[index] = 0;
+
+            if index_shift < index {
+                let index1 = index - index_shift - 1;
+                self.limbs[index1] |= current_limb << (bits - limb_shift);
+            }
+
+            if index_shift <= index {
+                let index2 = index - index_shift;
+                self.limbs[index2] |= current_limb >> limb_shift;
+            }
+        }
+    }
+}
+
+impl<const N: usize> Shl<u32> for Uint<N> {
+    type Output = Self;
+
+    fn shl(mut self, rhs: u32) -> Self::Output {
+        self <<= rhs;
+        self
+    }
+}
+
+impl<const N: usize> ShlAssign<u32> for Uint<N> {
+    fn shl_assign(&mut self, rhs: u32) {
+        let shift = rhs as usize;
+        let bits = Limb::BITS as usize;
+
+        // If the shift is greater than the number of bits in the number.
+        if N * bits <= shift {
+            *self = Self::ZERO;
+            return;
+        }
+
+        // Shift bits in limbs array in-place.
+        for index in (0..N).rev() {
+            let limb_shift = shift % bits;
+            let index_shift = shift / bits;
+
+            let current_limb = self.limbs[index];
+            self.limbs[index] = 0;
+
+            let index1 = index + index_shift;
+            if index1 < N {
+                self.limbs[index1] |= current_limb << limb_shift;
+            }
+
+            let index2 = index1 + 1;
+            if index2 < N {
+                self.limbs[index2] |= current_limb >> (bits - limb_shift);
+            }
+        }
+    }
+}
+
 impl<const N: usize> BigInteger for Uint<N> {
     const LIMB_BITS: usize = Limb::BITS as usize;
     const MAX: Self = Self { limbs: [u64::MAX; N] };
@@ -676,8 +765,14 @@ impl<const N: usize> BigInteger for Uint<N> {
 }
 
 impl<const N: usize> BitIteratorBE for Uint<N> {
-    fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
-        self.as_limbs().iter().rev().flat_map(Limb::bit_be_iter)
+    fn bit_be_iter(self) -> impl Iterator<Item = bool> {
+        self.into_limbs().into_iter().rev().flat_map(Limb::bit_be_iter)
+    }
+}
+
+impl BitIteratorBE for &[Limb] {
+    fn bit_be_iter(self) -> impl Iterator<Item = bool> {
+        self.iter().rev().copied().flat_map(Limb::bit_be_iter)
     }
 }
 
@@ -777,7 +872,18 @@ const fn parse_digit(utf8_digit: u8, digit_radix: u32) -> u32 {
     }
 }
 
-/// Parse a single UTF-8 byte.
+/// Parse a single UTF-8 byte into a char.
+///
+/// Converts bytes to characters during compile-time string evaluation.
+/// Only handles ASCII bytes (0x00-0x7F).
+///
+/// # Arguments
+///
+/// * `byte` - Byte to convert.
+///
+/// # Panics
+///
+/// * If the byte is non-ASCII (>= 0x80).
 pub(crate) const fn parse_utf8_byte(byte: u8) -> char {
     match byte {
         0x00..=0x7F => byte as char,
@@ -871,13 +977,13 @@ impl<const N: usize> WideUint<N> {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod test {
     use proptest::prelude::*;
 
     use crate::{
         arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint},
+            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
             *,
         },
         bits::BitIteratorBE,
@@ -989,5 +1095,64 @@ mod test {
         assert!(!a.ct_lt(&b));
         assert!(a.ct_eq(&b));
         assert!(!a.ct_ne(&b));
+    }
+
+    #[test]
+    fn shl() {
+        // The first limb is the lowest order part of the number.
+        let num = Uint::<4>::new([0b1100000000, 0, 0, 0]);
+
+        let expected = Uint::<4>::new([0, 0b11000000, 0, 0]);
+        assert_eq!(num << 62, expected);
+
+        let expected = Uint::<4>::new([0, 0, 0b110000, 0]);
+        assert_eq!(num << (60 + 64), expected);
+
+        let expected = Uint::<4>::new([0, 0, 0, 0b1100]);
+        assert_eq!(num << (58 + 64 + 64), expected);
+
+        // edge case to make shift the number into all zeroes
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num << (56 + 64 + 64 + 64), expected);
+
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num << 1000, expected);
+    }
+
+    #[test]
+    fn shr() {
+        // The last limb is the highest order part of the number.
+        let num = Uint::<4>::new([0, 0, 0, 0b11]);
+
+        let expected = Uint::<4>::new([0, 0, 0b1100, 0]);
+        assert_eq!(num >> 62, expected);
+
+        let expected = Uint::<4>::new([0, 0b110000, 0, 0]);
+        assert_eq!(num >> (60 + 64), expected);
+
+        let expected = Uint::<4>::new([0b11000000, 0, 0, 0]);
+        assert_eq!(num >> (58 + 64 + 64), expected);
+
+        // edge case to make shift the number into all zeroes
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num >> (2 + 64 + 64 + 64), expected);
+
+        let expected = Uint::<4>::new([0, 0, 0, 0]);
+        assert_eq!(num >> 1000, expected);
+    }
+
+    #[test]
+    fn test_process_single_element_masks_correctly() {
+        let low_part_bits = 248;
+        let low_part_mask: U256 = from_str_hex(
+            "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        );
+        let element: U256 = from_str_hex(
+            "01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        );
+        let high_part = element >> low_part_bits;
+        let low_part = element & low_part_mask;
+        assert_eq!(high_part, U256::ONE);
+        assert_eq!(low_part, low_part_mask);
     }
 }

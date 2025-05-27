@@ -1,5 +1,9 @@
 //! Implementation of the ERC-1155 token standard.
-use alloc::{vec, vec::Vec};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -12,7 +16,7 @@ use stylus_sdk::{
 };
 
 use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
+    introspection::erc165::IErc165,
     math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
@@ -49,6 +53,7 @@ mod sol {
     sol! {
         /// Emitted when `value` amount of tokens of type `id` are
         /// transferred from `from` to `to` by `operator`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event TransferSingle(
             address indexed operator,
@@ -60,6 +65,7 @@ mod sol {
 
         /// Equivalent to multiple [`TransferSingle`] events, where `operator`
         /// `from` and `to` are the same for all transfers.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event TransferBatch(
             address indexed operator,
@@ -71,6 +77,7 @@ mod sol {
 
         /// Emitted when `account` grants or revokes permission to `operator`
         /// to transfer their tokens, according to `approved`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event ApprovalForAll(
             address indexed account,
@@ -148,6 +155,13 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC1155InvalidArrayLength(uint256 ids_length, uint256 values_length);
+
+        /// Indicates a failure with the receiver reverting with a reason.
+        ///
+        /// * `reason` - Revert reason.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidReceiverWithReason(string reason);
     }
 }
 
@@ -165,14 +179,7 @@ pub enum Error {
     InvalidReceiver(ERC1155InvalidReceiver),
     /// Indicates a failure with the token `receiver`, with the reason
     /// specified by it.
-    ///
-    /// Since encoding [`stylus_sdk::call::Error`] returns the underlying
-    /// return data, this error will be encoded either as `Error(string)` or
-    /// `Panic(uint256)`, as those are the built-in errors emitted by default
-    /// by Solidity's special functions `assert`, `require`, and `revert`.
-    ///
-    /// See: <https://docs.soliditylang.org/en/v0.8.28/control-structures.html#error-handling-assert-require-revert-and-exceptions>
-    InvalidReceiverWithReason(call::Error),
+    InvalidReceiverWithReason(InvalidReceiverWithReason),
     /// Indicates a failure with the `operator`’s approval. Used in transfers.
     MissingApprovalForAll(ERC1155MissingApprovalForAll),
     /// Indicates a failure with the `approver` of a token to be approved.
@@ -210,7 +217,7 @@ unsafe impl TopLevelStorage for Erc1155 {}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]
-pub trait IErc1155 {
+pub trait IErc1155: IErc165 {
     /// The error type associated to this ERC-1155 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
@@ -254,7 +261,7 @@ pub trait IErc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -290,10 +297,10 @@ pub trait IErc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - Returned when `to` is `Address::ZERO` or
-    ///   when [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`]
+    ///   or when [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
-    /// * [`Error::InvalidSender`] - Returned when `from` is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::MissingApprovalForAll`] - Returned when `from` is not the
     ///   caller (`msg::sender()`), and the caller does not have the right to
     ///   approve.
@@ -327,10 +334,10 @@ pub trait IErc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - Returned when `to` is `Address::ZERO` or
-    ///   when [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned
-    ///   its interface id or returned with error.
-    /// * [`Error::InvalidSender`] - Returned when `from` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`]
+    ///   or when [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't
+    ///   returned its interface id or returned with error.
+    /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - Returned when the length of `ids` is
     ///   not equal to the length of `values`.
     /// * [`Error::InsufficientBalance`] - Returned when any of the `values` is
@@ -353,6 +360,10 @@ pub trait IErc1155 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 }
+
+#[public]
+#[implements(IErc1155<Error = Error>, IErc165)]
+impl Erc1155 {}
 
 #[public]
 impl IErc1155 for Erc1155 {
@@ -415,16 +426,17 @@ impl IErc1155 for Erc1155 {
     }
 }
 
+#[public]
 impl IErc165 for Erc1155 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc1155>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc1155>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
 impl Erc1155 {
     /// Transfers a `value` amount of tokens of type `ids` from `from` to
-    /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
+    /// `to`. Will mint (or burn) if `from` (or `to`) is the [`Address::ZERO`].
     ///
     /// NOTE: The ERC-1155 acceptance check is not performed in this function.
     /// See [`Self::_update_with_acceptance_check`] instead.
@@ -452,7 +464,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`, may happen during `mint`
+    /// * If updated balance exceeds [`U256::MAX`], may happen during `mint`
     ///   operation.
     fn _update(
         &mut self,
@@ -513,7 +525,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`, may happen during `mint`
+    /// * If updated balance exceeds [`U256::MAX`], may happen during `mint`
     ///   operation.
     fn _update_with_acceptance_check(
         &mut self,
@@ -552,7 +564,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
@@ -563,7 +575,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     pub fn _mint(
         &mut self,
         to: Address,
@@ -587,7 +599,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] -  If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] -  If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`IERC1155Receiver::on_erc_1155_received`] - If  hasn't returned its
@@ -603,7 +615,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     pub fn _mint_batch(
         &mut self,
         to: Address,
@@ -625,7 +637,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`]  - If `value` is greater than the
     ///   balance of the `from` account.
     ///
@@ -653,7 +665,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`Error::InsufficientBalance`] - If any of the `values` is greater
@@ -687,7 +699,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidOperator`] - If `operator` is the `Address::ZERO`.
+    /// * [`Error::InvalidOperator`] - If `operator` is the [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -737,11 +749,13 @@ impl Erc1155 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
-    ///   interface id or returned with error.
-    /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
-    ///   interface id or returned with error.
+    ///   [`IERC1155Receiver::on_erc_1155_received`] or
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] haven't returned the
+    ///   interface id or returned an error.
+    /// * [`Error::InvalidReceiverWithReason`] - If
+    ///   [`IERC1155Receiver::on_erc_1155_received`] or
+    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] reverted with revert
+    ///   data.
     fn _check_on_erc1155_received(
         &mut self,
         operator: Address,
@@ -771,11 +785,16 @@ impl Erc1155 {
             Err(e) => {
                 if let call::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
-                        // Non-IERC1155Receiver implementer.
-                        return Err(e.into());
+                        return Err(Error::InvalidReceiverWithReason(
+                            InvalidReceiverWithReason {
+                                reason: String::from_utf8_lossy(reason)
+                                    .to_string(),
+                            },
+                        ));
                     }
                 }
 
+                // Non-IERC1155Receiver implementer.
                 return Err(ERC1155InvalidReceiver { receiver: to }.into());
             }
         };
@@ -805,7 +824,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
     ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
     ///   interface id or returned with error.
@@ -822,7 +841,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn _do_mint(
         &mut self,
         to: Address,
@@ -856,7 +875,7 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`Error::InsufficientBalance`] -If any of the `values` is greater than
@@ -903,8 +922,8 @@ impl Erc1155 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If `to` is the `Address::ZERO`.
-    /// * [`Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If `to` is the [`Address::ZERO`].
+    /// * [`Error::InvalidSender`] - If `from` is the [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
     /// * [`Error::InsufficientBalance`] - If `value` is greater than the
@@ -923,7 +942,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn do_safe_transfer_from(
         &mut self,
         from: Address,
@@ -946,7 +965,7 @@ impl Erc1155 {
     }
 
     /// Transfers a `value` amount of `token_id` from `from` to
-    /// `to`. Will mint (or burn) if `from` (or `to`) is the `Address::ZERO`.
+    /// `to`. Will mint (or burn) if `from` (or `to`) is the [`Address::ZERO`].
     ///
     /// # Arguments
     ///
@@ -963,7 +982,7 @@ impl Erc1155 {
     ///
     /// # Panics
     ///
-    /// * If updated balance exceeds `U256::MAX`.
+    /// * If updated balance exceeds [`U256::MAX`].
     fn do_update(
         &mut self,
         from: Address,
@@ -1126,9 +1145,9 @@ enum Transfer {
     Batch { ids: Vec<U256>, values: Vec<U256> },
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::Contract;
 
     use super::{
@@ -2350,22 +2369,23 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc1155 as IErc1155>::INTERFACE_ID;
-        let expected = 0xd9b67a26;
-        assert_eq!(actual, expected);
-
-        let actual = <Erc1155 as IErc165>::INTERFACE_ID;
-        let expected = 0x01ffc9a7;
+        let actual = <Erc1155 as IErc1155>::interface_id();
+        let expected: FixedBytes<4> = 0xd9b67a26_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc1155::supports_interface(
-            <Erc1155 as IErc1155>::INTERFACE_ID.into()
-        ));
-        assert!(Erc1155::supports_interface(
-            <Erc1155 as IErc165>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(contract: Contract<Erc1155>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155 as IErc1155>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155 as IErc165>::interface_id()));
+
+        let fake_interface_id = 0x12345678_u32;
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

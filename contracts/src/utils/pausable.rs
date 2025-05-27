@@ -27,10 +27,12 @@ mod sol {
 
     sol! {
         /// Emitted when pause is triggered by `account`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Paused(address account);
 
         /// Emitted when the pause is lifted by `account`.
+        #[derive(Debug)]
         #[allow(missing_docs)]
         event Unpaused(address account);
     }
@@ -74,13 +76,22 @@ pub struct Pausable {
     pub(crate) paused: StorageBool,
 }
 
-#[public]
-impl Pausable {
+/// Pausable interface.
+pub trait IPausable {
     /// Returns true if the contract is paused, and false otherwise.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    fn paused(&self) -> bool;
+}
+
+#[public]
+#[implements(IPausable)]
+impl Pausable {}
+
+#[public]
+impl IPausable for Pausable {
     fn paused(&self) -> bool {
         self.paused.get()
     }
@@ -154,13 +165,13 @@ impl Pausable {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
-    use crate::utils::pausable::{Error, Pausable};
+    use crate::utils::pausable::{Error, IPausable, Pausable};
 
     unsafe impl TopLevelStorage for Pausable {}
 

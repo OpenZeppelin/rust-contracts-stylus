@@ -519,6 +519,10 @@ impl<P: FpParams<N>, const N: usize> AdditiveGroup for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
     const ONE: Self = Fp::new_unchecked(P::R);
 
+    fn extension_degree() -> usize {
+        1
+    }
+
     #[inline]
     fn square(&self) -> Self {
         let mut temp = *self;
@@ -988,7 +992,7 @@ macro_rules! fp_from_hex {
     }};
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use proptest::prelude::*;
 
@@ -1019,7 +1023,7 @@ mod tests {
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, (a + b).rem_euclid(MODULUS));
-        })
+        });
     }
 
     #[test]
@@ -1029,7 +1033,7 @@ mod tests {
             let res: i128 = res.into();
             let a = i128::from(a);
             prop_assert_eq!(res, (a + a).rem_euclid(MODULUS));
-        })
+        });
     }
 
     #[test]
@@ -1040,7 +1044,7 @@ mod tests {
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, (a - b).rem_euclid(MODULUS));
-        })
+        });
     }
 
     #[test]
@@ -1051,7 +1055,7 @@ mod tests {
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, (a * b).rem_euclid(MODULUS));
-        })
+        });
     }
 
     #[test]
@@ -1061,7 +1065,7 @@ mod tests {
             let res: i128 = res.into();
             let a = i128::from(a);
             prop_assert_eq!(res, (a * a).rem_euclid(MODULUS));
-        })
+        });
     }
 
     prop_compose! {
@@ -1085,7 +1089,7 @@ mod tests {
             let b = i128::from(b);
             // a / b = res mod M => res * b = a mod M
             prop_assert_eq!((res * b).rem_euclid(MODULUS), a.rem_euclid(MODULUS));
-        })
+        });
     }
 
     /// Compute a^b in an expensive and iterative way.
@@ -1101,7 +1105,7 @@ mod tests {
             let a = i128::from(a);
             let b = i128::from(b);
             prop_assert_eq!(res, dumb_pow(a, b));
-        })
+        });
     }
 
     #[test]
@@ -1111,7 +1115,7 @@ mod tests {
             let res: i128 = res.into();
             let a = i128::from(a);
             prop_assert_eq!(res, (-a).rem_euclid(MODULUS));
-        })
+        });
     }
 
     #[test]
@@ -1125,7 +1129,7 @@ mod tests {
             let res: i128 = res.into();
             let a: i128 = a.into();
             prop_assert_eq!(res, a.rem_euclid(MODULUS));
-        })
+        });
     }
 
     #[test]
@@ -1139,6 +1143,6 @@ mod tests {
             let res: i128 = res.into();
             let a: i128 = a.into();
             prop_assert_eq!(res, a.rem_euclid(MODULUS));
-        })
+        });
     }
 }

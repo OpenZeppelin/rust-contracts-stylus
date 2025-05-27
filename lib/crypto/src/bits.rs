@@ -1,14 +1,14 @@
 //! Bit manipulation utilities.
 
 /// Iterates over bits in big-endian order.
-pub trait BitIteratorBE {
+pub trait BitIteratorBE: Sized {
     /// Returns an iterator over the bits of the integer, starting from the most
     /// significant bit.
-    fn bit_be_iter(&self) -> impl Iterator<Item = bool>;
+    fn bit_be_iter(self) -> impl Iterator<Item = bool>;
 
     /// Returns an iterator over the bits of the integer, starting from the most
     /// significant bit, and without leading zeroes.
-    fn bit_be_trimmed_iter(&self) -> impl Iterator<Item = bool> {
+    fn bit_be_trimmed_iter(self) -> impl Iterator<Item = bool> {
         self.bit_be_iter().skip_while(|&b| !b)
     }
 }
@@ -16,7 +16,7 @@ pub trait BitIteratorBE {
 macro_rules! impl_bit_iter_be {
     ($int:ty) => {
         impl BitIteratorBE for $int {
-            fn bit_be_iter(&self) -> impl Iterator<Item = bool> {
+            fn bit_be_iter(self) -> impl Iterator<Item = bool> {
                 (0..<$int>::BITS).rev().map(move |i| self & (1 << i) != 0)
             }
         }
@@ -30,7 +30,7 @@ impl_bit_iter_be!(u64);
 impl_bit_iter_be!(u128);
 impl_bit_iter_be!(usize);
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use num_traits::ConstOne;
     use proptest::prelude::*;

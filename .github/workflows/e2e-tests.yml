@@ -3,7 +3,6 @@
 # It roughly follows these steps:
 # - Install rust
 # - Install `cargo-stylus`
-# - Install `solc`
 # - Spin up `nitro-testnode`
 #
 # Contract deployments and account funding happen on a per-test basis.
@@ -12,7 +11,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [ main, release/* ]
+    branches: [main, v*]
   pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -33,15 +32,10 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.8
-
-      - name: Install solc
-        run: |
-          curl -LO https://github.com/ethereum/solidity/releases/download/v0.8.24/solc-static-linux
-          sudo mv solc-static-linux /usr/bin/solc
-          sudo chmod a+x /usr/bin/solc
+        run: cargo install cargo-stylus@0.5.12
 
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
+
       - name: run integration tests
         run: ./scripts/e2e-tests.sh

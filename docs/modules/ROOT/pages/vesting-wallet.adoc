@@ -42,56 +42,124 @@ native currency (totaling 75 A). Consider disabling one of the withdrawal method
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/finance/vesting_wallet/index.html[`VestingWallet`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/finance/vesting_wallet/index.html[`VestingWallet`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
 
 [source,rust]
 ----
-use openzeppelin_stylus::finance::vesting_wallet::VestingWallet;
-use stylus_sdk::prelude::*;
+use openzeppelin_stylus::finance::vesting_wallet::{
+    self, IVestingWallet, VestingWallet,
+};
 
 #[entrypoint]
 #[storage]
 struct VestingWalletExample {
-    #[borrow]
     vesting_wallet: VestingWallet,
 }
 
 #[public]
-#[inherit(VestingWallet)]
+#[implements(IVestingWallet<Error = vesting_wallet::Error>)]
 impl VestingWalletExample {
+    #[constructor]
+    fn constructor(
+        &mut self,
+        beneficiary: Address,
+        start_timestamp: U64,
+        duration_seconds: U64,
+    ) -> Result<(), vesting_wallet::Error> {
+        self.vesting_wallet.constructor(
+            beneficiary,
+            start_timestamp,
+            duration_seconds,
+        )
+    }
+
     #[receive]
     fn receive(&mut self) -> Result<(), Vec<u8>> {
-        Ok(())
+        self.vesting_wallet.receive()
     }
 }
-----
 
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment]. Make sure to include the following code in your Solidity Constructor:
+#[public]
+impl IVestingWallet for VestingWalletExample {
+    type Error = vesting_wallet::Error;
 
-[source,solidity]
-----
-contract VestingWalletExample {
-    address private _owner;
+    fn owner(&self) -> Address {
+        self.vesting_wallet.owner()
+    }
 
-    uint256 private _released;
-    mapping(address => uint256) private _erc20Released;
-    uint64 private _start;
-    uint64 private _duration;
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
+        self.vesting_wallet.transfer_ownership(new_owner)
+    }
 
-    error OwnableInvalidOwner(address owner);
+    fn renounce_ownership(
+        &mut self,
+    ) -> Result<(), Self::Error> {
+        self.vesting_wallet.renounce_ownership()
+    }
 
-    constructor(
-        address beneficiary,
-        uint64 startTimestamp,
-        uint64 durationSeconds
-    ) payable {
-        if (beneficiary == address(0)) {
-            revert OwnableInvalidOwner(address(0));
-        }
-        _owner = beneficiary;
+    fn start(&self) -> U256 {
+        self.vesting_wallet.start()
+    }
 
-        _start = startTimestamp;
-        _duration = durationSeconds;
+    fn duration(&self) -> U256 {
+        self.vesting_wallet.duration()
+    }
+
+    fn end(&self) -> U256 {
+        self.vesting_wallet.end()
+    }
+
+    #[selector(name = "released")]
+    fn released_eth(&self) -> U256 {
+        self.vesting_wallet.released_eth()
+    }
+
+    #[selector(name = "released")]
+    fn released_erc20(&self, token: Address) -> U256 {
+        self.vesting_wallet.released_erc20(token)
+    }
+
+    #[selector(name = "releasable")]
+    fn releasable_eth(&self) -> U256 {
+        self.vesting_wallet.releasable_eth()
+    }
+
+    #[selector(name = "releasable")]
+    fn releasable_erc20(
+        &mut self,
+        token: Address,
+    ) -> Result<U256, Self::Error> {
+        self.vesting_wallet.releasable_erc20(token)
+    }
+
+    #[selector(name = "release")]
+    fn release_eth(&mut self) -> Result<(), Self::Error> {
+        self.vesting_wallet.release_eth()
+    }
+
+    #[selector(name = "release")]
+    fn release_erc20(
+        &mut self,
+        token: Address,
+    ) -> Result<(), Self::Error> {
+        self.vesting_wallet.release_erc20(token)
+    }
+
+    #[selector(name = "vestedAmount")]
+    fn vested_amount_eth(&self, timestamp: u64) -> U256 {
+        self.vesting_wallet.vested_amount_eth(timestamp)
+    }
+
+    #[selector(name = "vestedAmount")]
+    fn vested_amount_erc20(
+        &mut self,
+        token: Address,
+        timestamp: u64,
+    ) -> Result<U256, Self::Error> {
+        self.vesting_wallet.vested_amount_erc20(token, timestamp)
     }
 }
 ----

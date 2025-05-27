@@ -2,9 +2,7 @@
 
 use abi::Erc1155Supply;
 use alloy::primitives::{Address, U256};
-use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
 mod abi;
@@ -24,7 +22,7 @@ fn random_values(size: usize) -> Vec<U256> {
 
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let token_id = random_token_ids(1)[0];
@@ -42,7 +40,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn mint(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -76,7 +74,7 @@ async fn mint(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -125,7 +123,7 @@ async fn mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn mint_batch(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -180,7 +178,7 @@ async fn mint_batch(alice: Account, bob: Account) -> eyre::Result<()> {
 async fn mint_batch_transfer_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -251,7 +249,7 @@ async fn mint_panics_on_total_supply_overflow(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -280,7 +278,7 @@ async fn mint_panics_on_total_supply_overflow(
 async fn mint_panics_on_total_supply_all_overflow(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -303,7 +301,7 @@ async fn mint_panics_on_total_supply_all_overflow(
 
 #[e2e::test]
 async fn burn(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -338,7 +336,7 @@ async fn burn(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn burn_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155Supply::new(contract_addr, &bob.wallet);
 
@@ -376,7 +374,7 @@ async fn burn_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn burn_batch(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -426,7 +424,7 @@ async fn burn_batch_with_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155Supply::new(contract_addr, &bob.wallet);
 
@@ -480,7 +478,7 @@ async fn supply_unaffected_by_safe_transfer_from(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -546,7 +544,7 @@ async fn supply_unaffected_by_safe_transfer_from_batch(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -630,7 +628,7 @@ async fn supply_unaffected_by_safe_transfer_from_batch(
 
 #[e2e::test]
 async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
     let token_ids = random_token_ids(1);
 
@@ -648,7 +646,7 @@ async fn balance_of_batch_zero_balance(
     dave: Account,
     charlie: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
     let accounts =
         vec![alice.address(), bob.address(), dave.address(), charlie.address()];
@@ -666,7 +664,7 @@ async fn set_approval_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -705,7 +703,7 @@ async fn set_approval_for_all(
 
 #[e2e::test]
 async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let invalid_operator = Address::ZERO;
@@ -722,7 +720,7 @@ async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
 
 #[e2e::test]
 async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -773,7 +771,7 @@ async fn safe_transfer_from_with_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc1155Supply::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155Supply::new(contract_addr, &bob.wallet);
 
@@ -827,7 +825,7 @@ async fn safe_transfer_from_with_approval(
 async fn safe_transfer_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -890,7 +888,7 @@ async fn safe_batch_transfer_from(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let alice_addr = alice.address();
@@ -958,7 +956,7 @@ async fn safe_batch_transfer_from(
 async fn safe_batch_transfer_to_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
     let receiver_addr =
@@ -1046,7 +1044,7 @@ async fn safe_batch_transfer_from_with_approval(
     bob: Account,
     dave: Account,
 ) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc1155Supply::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155Supply::new(contract_addr, &bob.wallet);
 
@@ -1119,7 +1117,7 @@ async fn safe_batch_transfer_from_with_approval(
 
 #[e2e::test]
 async fn supports_interface(alice: Account) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.address()?;
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
     let invalid_interface_id: u32 = 0xffffffff;
     let supports_interface = contract

@@ -7,51 +7,63 @@ Useful for scenarios such as preventing trades until the end of an evaluation pe
 [[usage]]
 == Usage
 
-In order to make your ERC20 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC20 token functions as follows:
+In order to make your ERC20 token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC20 token functions as follows:
 
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc20::{self, extensions::IErc20Burnable, Erc20, IErc20},
-    utils::{pausable, Pausable},
+    token::erc20::{self, Erc20, IErc20},
+    utils::{pausable, IPausable, Pausable},
 };
 
 #[derive(SolidityError, Debug)]
 enum Error {
-    Erc20(erc20::Error),
-    Pausable(pausable::Error),
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
+    InvalidSender(erc20::ERC20InvalidSender),
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
+    InvalidSpender(erc20::ERC20InvalidSpender),
+    InvalidApprover(erc20::ERC20InvalidApprover),
+    EnforcedPause(pausable::EnforcedPause),
+    ExpectedPause(pausable::ExpectedPause),
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
+}
+
+impl From<pausable::Error> for Error {
+    fn from(value: pausable::Error) -> Self {
+        match value {
+            pausable::Error::EnforcedPause(e) => Error::EnforcedPause(e),
+            pausable::Error::ExpectedPause(e) => Error::ExpectedPause(e),
+        }
+    }
 }
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
-    #[borrow]
     pausable: Pausable,
 }
 
 #[public]
-#[inherit(Erc20, Pausable)]
+#[implements(IErc20<Error = Error>, IPausable)]
 impl Erc20Example {
-    fn burn(&mut self, value: U256) -> Result<(), Error> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc20.burn(value).map_err(|e| e.into())
-    }
-
-    fn burn_from(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Error> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc20.burn_from(account, value).map_err(|e| e.into())
-    }
-
     fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
         // ...
         self.pausable.when_not_paused()?;
@@ -59,12 +71,19 @@ impl Erc20Example {
         self.erc20._mint(account, value)?;
         Ok(())
     }
+}
+
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = Error;
 
     fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
-        self.erc20.transfer(to, value).map_err(|e| e.into())
+        let result = self.erc20.transfer(to, value)?;
+        // ...
+        Ok(result)
     }
 
     fn transfer_from(
@@ -76,7 +95,36 @@ impl Erc20Example {
         // ...
         self.pausable.when_not_paused()?;
         // ...
-        self.erc20.transfer_from(from, to, value).map_err(|e| e.into())
+        let result = self.erc20.transfer_from(from, to, value)?;
+        // ...
+        Ok(result)
+    }
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.erc20.approve(spender, value)?)
+    }
+}
+
+#[public]
+impl IPausable for Erc20Example {
+    fn paused(&self) -> bool {
+        self.pausable.paused()
     }
 }
 ----

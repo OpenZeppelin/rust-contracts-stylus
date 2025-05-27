@@ -19,7 +19,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::U96, Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -29,11 +29,10 @@ use stylus_sdk::{
 };
 
 use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
+    introspection::erc165::IErc165,
     structs::checkpoints::{Size, S160},
 };
 
-type U96 = <S160 as Size>::Key;
 type StorageU96 = <S160 as Size>::KeyStorage;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -162,6 +161,10 @@ pub trait IErc2981: IErc165 {
 unsafe impl TopLevelStorage for Erc2981 {}
 
 #[public]
+#[implements(IErc2981, IErc165)]
+impl Erc2981 {}
+
+#[public]
 impl IErc2981 for Erc2981 {
     fn royalty_info(
         &self,
@@ -170,7 +173,7 @@ impl IErc2981 for Erc2981 {
     ) -> (Address, U256) {
         let royalty_info = self.token_royalty_info.get(token_id);
         let (royalty_receiver, royalty_fraction) =
-            if royalty_info.receiver.is_zero() {
+            if royalty_info.receiver.get().is_zero() {
                 (
                     &self.default_royalty_info.receiver,
                     &self.default_royalty_info.royalty_fraction,
@@ -191,10 +194,11 @@ impl IErc2981 for Erc2981 {
     }
 }
 
+#[public]
 impl IErc165 for Erc2981 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc2981>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc2981>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -209,6 +213,7 @@ impl Erc2981 {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     pub fn _fee_denominator(&self) -> U96 {
         self.fee_denominator.get()
     }
@@ -226,7 +231,7 @@ impl Erc2981 {
     ///
     /// * [`Error::InvalidDefaultRoyalty`] - If `fee_numerator` > denominator.
     /// * [`Error::InvalidDefaultRoyaltyReceiver`] - If `receiver` is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     pub fn _set_default_royalty(
         &mut self,
         receiver: Address,
@@ -279,7 +284,7 @@ impl Erc2981 {
     /// * [`Error::InvalidTokenRoyalty`] - If `fee_numerator` >
     ///   [`Self::_fee_denominator()`].
     /// * [`Error::InvalidTokenRoyaltyReceiver`] - If `receiver` is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     pub fn _set_token_royalty(
         &mut self,
         token_id: U256,
@@ -322,10 +327,10 @@ impl Erc2981 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
-    use stylus_sdk::alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::uint;
+    use motsu::prelude::*;
 
     use super::*;
     use crate::utils::introspection::erc165::IErc165;
@@ -760,8 +765,8 @@ mod tests {
 
         // With no default royalty, should return zero address and zero amount
         let token_royalty = contract.token_royalty_info.get(TOKEN_ID);
-        assert!(token_royalty.receiver.is_zero());
-        assert_eq!(U96::ZERO, *token_royalty.royalty_fraction);
+        assert!(token_royalty.receiver.get().is_zero());
+        assert_eq!(U96::ZERO, token_royalty.royalty_fraction.get());
     }
 
     #[motsu::test]
@@ -868,23 +873,25 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc2981 as IErc2981>::INTERFACE_ID;
+        let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
-        let expected = 0x2a55_205a;
+        let expected: FixedBytes<4> = 0x2a55205a_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc2981>::INTERFACE_ID.into()
-        ));
-        assert!(Erc2981::supports_interface(
-            <Erc2981 as IErc165>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(contract: Contract<Erc2981>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc2981 as IErc2981>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc2981 as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc2981::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

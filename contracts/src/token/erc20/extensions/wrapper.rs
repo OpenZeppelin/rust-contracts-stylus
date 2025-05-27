@@ -14,7 +14,8 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256, U8};
-use alloy_sol_macro::sol;
+use openzeppelin_stylus_proc::interface_id;
+pub use sol::*;
 use stylus_sdk::{
     call::{Call, MethodError},
     contract, msg,
@@ -24,51 +25,81 @@ use stylus_sdk::{
 
 use crate::token::erc20::{
     self,
-    utils::{safe_erc20, IErc20 as IErc20Solidity, ISafeErc20, SafeErc20},
+    interface::Erc20Interface,
+    utils::{safe_erc20, ISafeErc20, SafeErc20},
     Erc20, IErc20,
 };
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod sol {
+    use alloy_sol_macro::sol;
 
-sol! {
-    /// Indicates that the address is not a valid ERC-20 token.
-    ///
-    /// * `token` - Address of the invalid ERC-20 token.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidUnderlying(address token);
-
-    /// Indicates that the address is not a valid sender address.
-    ///
-    /// * `sender` - Address of the invalid sender.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidSender(address sender);
-
-    /// Indicates that the address is not a valid receiver addresss.
-    ///
-    /// * `receiver` - Address of the invalid receiver.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    error ERC20InvalidReceiver(address receiver);
-
+    sol! {
+        /// Indicates that the address is not a valid ERC-20 token.
+        ///
+        /// * `token` - Address of the invalid ERC-20 token.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error ERC20InvalidUnderlying(address token);
+    }
 }
 
 /// An [`Erc20Wrapper`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
-
-    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-    SafeErc20(safe_erc20::Error),
-
-    /// The Sender Address is not valid.
-    InvalidSender(ERC20InvalidSender),
-
-    /// The Receiver Address is not valid.
-    InvalidReceiver(ERC20InvalidReceiver),
-
+    /// Indicates an error related to the current balance of `sender`. Used in
+    /// transfers.
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(erc20::ERC20InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
+    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// transfers.
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
+    /// Indicates a failure with the `spender` to be approved. Used in
+    /// approvals.
+    InvalidSpender(erc20::ERC20InvalidSpender),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals. approver Address initiating an approval operation.
+    InvalidApprover(erc20::ERC20InvalidApprover),
+    /// An operation with an ERC-20 token failed.
+    SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation),
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+    SafeErc20FailedDecreaseAllowance(
+        safe_erc20::SafeErc20FailedDecreaseAllowance,
+    ),
     /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
+}
+
+impl From<safe_erc20::Error> for Error {
+    fn from(value: safe_erc20::Error) -> Self {
+        match value {
+            safe_erc20::Error::SafeErc20FailedOperation(e) => {
+                Error::SafeErc20FailedOperation(e)
+            }
+            safe_erc20::Error::SafeErc20FailedDecreaseAllowance(e) => {
+                Error::SafeErc20FailedDecreaseAllowance(e)
+            }
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -80,15 +111,18 @@ impl MethodError for Error {
 /// State of an [`Erc20Wrapper`] token.
 #[storage]
 pub struct Erc20Wrapper {
-    /// Token Address of the  underline token
+    /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
-    /// Token decimals.
-    pub(crate) underlying_decimals: StorageU8,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
+    /// Underlying token decimals.
+    pub underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
 
 /// ERC-20 Wrapper Standard Interface
+#[interface_id]
 pub trait IErc20Wrapper {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -106,6 +140,7 @@ pub trait IErc20Wrapper {
     ///     self.erc20_wrapper.decimals()
     /// }
     /// ```
+    #[must_use]
     fn decimals(&self) -> U8;
 
     /// Returns the address of the underlying ERC-20 token that is being
@@ -122,17 +157,17 @@ pub trait IErc20Wrapper {
     ///     self.erc20_wrapper.underlying()
     /// }
     /// ```
+    #[must_use]
     fn underlying(&self) -> Address;
 
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// number of wrapped tokens.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
     /// * `value` - The amount of tokens to deposit.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -140,60 +175,43 @@ pub trait IErc20Wrapper {
     ///   `contract:address()`.
     /// * [`Error::InvalidReceiver`] - If the `account` address is a
     ///   `contract:address()`.
-    /// * [`Error::SafeErc20`] - If caller lacks sufficient balance or hasn't
-    ///   approved enough tokens to the [`Erc20Wrapper`] contract.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
-    ///   operation.
+    /// * [`Error::SafeErc20FailedOperation`] - If caller lacks sufficient
+    ///   balance or hasn't approved enough tokens to the [`Erc20Wrapper`]
+    ///   contract.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   [`Address::ZERO`].
     ///
     /// # Panics
     ///
     /// * If [`Erc20::_mint`] operation panics.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn deposit_for(&mut self, account: Address, value: U256) -> Result<bool, wrapper::Error> {
-    ///     self.erc20_wrapper.deposit_for(account, value, &mut self.erc20)
-    /// }
-    /// ```
     fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
-        erc20: &mut Erc20,
     ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn a number of wrapped tokens and withdraw the
     /// corresponding number of underlying tokens.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to withdraw tokens from.
     /// * `value` - The amount of tokens to withdraw.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If the `account`'s address is a
     ///   `contract:address()`.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_burn`]
-    ///   operation.
-    /// * [`Error::SafeErc20`] - If the [`Erc20Wrapper`] contract lacks
-    ///   sufficient balance.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn withdraw_to(&mut self, account: Address, value: U256,) -> Result<bool, wrapper::Error> {
-    ///    self.erc20_wrapper.withdraw_to(account, value, &mut self.erc20)
-    /// }
-    /// ```
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens.
+    /// * [`Error::SafeErc20FailedOperation`] - If the [`Erc20Wrapper`] contract
+    ///   lacks sufficient balance.
     fn withdraw_to(
         &mut self,
         account: Address,
         value: U256,
-        erc20: &mut Erc20,
     ) -> Result<bool, Self::Error>;
 }
 
@@ -202,32 +220,38 @@ pub trait IErc20Wrapper {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc20Wrapper {}
 
-impl IErc20Wrapper for Erc20Wrapper {
-    type Error = Error;
-
-    fn decimals(&self) -> U8 {
+impl Erc20Wrapper {
+    /// See [`IErc20Wrapper::decimals`].
+    #[must_use]
+    pub fn decimals(&self) -> U8 {
         self.underlying_decimals.get()
     }
 
-    fn underlying(&self) -> Address {
+    /// See [`IErc20Wrapper::underlying`].
+    #[must_use]
+    pub fn underlying(&self) -> Address {
         self.underlying.get()
     }
 
-    fn deposit_for(
+    /// See [`IErc20Wrapper::deposit_for`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         let contract_address = contract::address();
         let sender = msg::sender();
 
         if sender == contract_address {
-            return Err(ERC20InvalidSender { sender }.into());
+            return Err(erc20::ERC20InvalidSender { sender }.into());
         }
 
         if account == contract_address {
-            return Err(ERC20InvalidReceiver { receiver: account }.into());
+            return Err(
+                erc20::ERC20InvalidReceiver { receiver: account }.into()
+            );
         }
 
         self.safe_erc20.safe_transfer_from(
@@ -242,14 +266,18 @@ impl IErc20Wrapper for Erc20Wrapper {
         Ok(true)
     }
 
-    fn withdraw_to(
+    /// See [`IErc20Wrapper::withdraw_to`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn withdraw_to(
         &mut self,
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         if account == contract::address() {
-            return Err(ERC20InvalidReceiver { receiver: account }.into());
+            return Err(
+                erc20::ERC20InvalidReceiver { receiver: account }.into()
+            );
         }
 
         erc20._burn(msg::sender(), value)?;
@@ -260,13 +288,40 @@ impl IErc20Wrapper for Erc20Wrapper {
     }
 }
 
+#[public]
+impl Erc20Wrapper {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `underlying_token` - The wrapped token.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidUnderlying`] - If underlying token is this contract.
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        underlying_token: Address,
+    ) -> Result<(), Error> {
+        if underlying_token == contract::address() {
+            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
+                token: underlying_token,
+            }));
+        }
+        self.underlying.set(underlying_token);
+        Ok(())
+    }
+}
+
 impl Erc20Wrapper {
     /// Mint wrapped token to cover any underlying tokens that would have been
     /// transferred by mistake or acquired from rebasing mechanisms.
     ///
     /// Internal function that can be exposed with access control if desired.
     ///
-    /// Arguments:
+    /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to mint tokens to.
@@ -276,8 +331,8 @@ impl Erc20Wrapper {
     ///
     /// * [`Error::InvalidUnderlying`]  - If the external call for
     ///   [`IErc20::balance_of`] fails.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
-    ///   operation.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   [`Address::ZERO`].
     ///
     /// # Panics
     ///
@@ -289,7 +344,7 @@ impl Erc20Wrapper {
     ) -> Result<U256, Error> {
         let contract_address = contract::address();
 
-        let underline_token = IErc20Solidity::new(self.underlying());
+        let underline_token = Erc20Interface::new(self.underlying());
 
         let underlying_balance = underline_token
             .balance_of(Call::new_in(self), contract_address)
@@ -307,10 +362,10 @@ impl Erc20Wrapper {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::uint;
-    use motsu::prelude::Contract;
+    use alloy_primitives::{uint, FixedBytes};
+    use motsu::prelude::*;
 
     use super::*;
 
@@ -321,7 +376,17 @@ mod tests {
     }
 
     #[public]
+    #[implements(IErc20Wrapper<Error = Error>)]
     impl Erc20WrapperTestExample {
+        fn recover(&mut self, account: Address) -> Result<U256, Error> {
+            self.wrapper._recover(account, &mut self.erc20)
+        }
+    }
+
+    #[public]
+    impl IErc20Wrapper for Erc20WrapperTestExample {
+        type Error = Error;
+
         fn decimals(&self) -> U8 {
             self.wrapper.decimals()
         }
@@ -344,10 +409,6 @@ mod tests {
             value: U256,
         ) -> Result<bool, Error> {
             self.wrapper.withdraw_to(account, value, &mut self.erc20)
-        }
-
-        fn recover(&mut self, account: Address) -> Result<U256, Error> {
-            self.wrapper._recover(account, &mut self.erc20)
         }
     }
 
@@ -394,13 +455,13 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(invalid_asset, uint!(10_U256))
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == invalid_asset
+            ) if token == invalid_asset
         ));
     }
 
@@ -419,11 +480,11 @@ mod tests {
         let err = contract
             .sender(invalid_sender)
             .deposit_for(alice, uint!(10_U256))
-            .expect_err("should return Error::InvalidSender");
+            .motsu_expect_err("should return Error::InvalidSender");
 
         assert!(matches!(
             err,
-            Error::InvalidSender(ERC20InvalidSender { sender }) if sender == invalid_sender
+            Error::InvalidSender(erc20::ERC20InvalidSender { sender }) if sender == invalid_sender
         ));
     }
 
@@ -442,11 +503,11 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(invalid_receiver, uint!(10_U256))
-            .expect_err("should return Error::InvalidReceiver");
+            .motsu_expect_err("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+            Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
     }
 
@@ -462,18 +523,21 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         let err = contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == erc20_contract.address()
+            ) if token == erc20_contract.address()
         ));
     }
 
@@ -491,23 +555,26 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), exceeding_value)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         let err = contract
             .sender(alice)
             .deposit_for(alice, exceeding_value)
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == erc20_contract.address()
+            ) if token == erc20_contract.address()
         ));
     }
 
@@ -523,7 +590,10 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         let initial_balance = erc20_contract.sender(alice).balance_of(alice);
         let initial_wrapped_balance =
@@ -538,12 +608,12 @@ mod tests {
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         assert!(contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit"));
+            .motsu_expect("should deposit"));
 
         erc20_contract.assert_emitted(&erc20::Transfer {
             from: alice,
@@ -594,11 +664,11 @@ mod tests {
         let err = contract
             .sender(alice)
             .withdraw_to(invalid_receiver, uint!(10_U256))
-            .expect_err("should return Error::InvalidReceiver");
+            .motsu_expect_err("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+            Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
     }
 
@@ -614,34 +684,37 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         let exceeding_value = amount + uint!(1_U256);
 
         let err = contract
             .sender(alice)
             .withdraw_to(alice, exceeding_value)
-            .expect_err("should return Error::SafeErc20");
+            .motsu_expect_err("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
-            Error::Erc20(erc20::Error::InsufficientBalance(
+            Error::InsufficientBalance(
                 erc20::ERC20InsufficientBalance {
                     sender,
                     balance,
                     needed
                 }
-            )) if sender == alice && balance == amount && needed == exceeding_value
+            ) if sender == alice && balance == amount && needed == exceeding_value
         ));
     }
 
@@ -657,17 +730,20 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         let initial_balance = erc20_contract.sender(alice).balance_of(alice);
         let initial_wrapped_balance =
@@ -682,7 +758,7 @@ mod tests {
         assert!(contract
             .sender(alice)
             .withdraw_to(alice, amount)
-            .expect("should withdraw"));
+            .motsu_expect("should withdraw"));
 
         contract.assert_emitted(&erc20::Transfer {
             from: alice,
@@ -719,13 +795,21 @@ mod tests {
         );
     }
 
+    #[storage]
+    struct NonErc20;
+
+    #[public]
+    impl NonErc20 {}
+
+    unsafe impl TopLevelStorage for NonErc20 {}
+
     // TODO: Should be a test for the `Error::InvalidUnderlying` error,
     // but impossible with current motsu limitations.
     #[motsu::test]
     #[ignore]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
-        invalid_underlying: Contract<crate::access::ownable::Ownable>,
+        invalid_underlying: Contract<NonErc20>,
         alice: Address,
     ) {
         contract.init(alice, |contract| {
@@ -735,7 +819,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .recover(alice)
-            .expect_err("should return Error::InvalidUnderlying");
+            .motsu_expect_err("should return Error::InvalidUnderlying");
 
         assert!(matches!(
             err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == invalid_underlying.address()
@@ -755,20 +839,27 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         // Unexpected mint.
-        contract.sender(alice).erc20._mint(alice, amount).expect("should mint");
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         // This should panic.
         _ = contract.sender(alice).recover(alice);
@@ -786,20 +877,26 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         assert_eq!(
-            contract.sender(alice).recover(alice).expect("should recover"),
+            contract
+                .sender(alice)
+                .recover(alice)
+                .motsu_expect("should recover"),
             U256::ZERO
         );
     }
@@ -816,27 +913,33 @@ mod tests {
             contract.wrapper.underlying.set(erc20_contract.address());
         });
 
-        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
+        erc20_contract
+            .sender(alice)
+            ._mint(alice, amount)
+            .motsu_expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .expect("should approve");
+            .motsu_expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .expect("should deposit");
+            .motsu_expect("should deposit");
 
         // Unexpected mint.
         let unexpected_delta = uint!(1_U256);
         erc20_contract
             .sender(alice)
             ._mint(contract.address(), unexpected_delta)
-            .expect("should mint");
+            .motsu_expect("should mint");
 
         assert_eq!(
-            contract.sender(alice).recover(alice).expect("should recover"),
+            contract
+                .sender(alice)
+                .recover(alice)
+                .motsu_expect("should recover"),
             unexpected_delta
         );
 
@@ -845,5 +948,12 @@ mod tests {
             to: alice,
             value: unexpected_delta,
         });
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20WrapperTestExample as IErc20Wrapper>::interface_id();
+        let expected: FixedBytes<4> = 0x511f913e_u32.into();
+        assert_eq!(actual, expected);
     }
 }

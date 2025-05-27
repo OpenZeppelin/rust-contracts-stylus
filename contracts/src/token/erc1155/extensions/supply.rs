@@ -14,7 +14,7 @@
 use alloc::{vec, vec::Vec};
 use core::ops::{Deref, DerefMut};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -24,8 +24,11 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::erc1155::{self, Erc1155, IErc1155},
-    utils::math::storage::{AddAssignChecked, SubAssignUnchecked},
+    token::erc1155::{self, Erc1155, Error, IErc1155},
+    utils::{
+        introspection::erc165::IErc165,
+        math::storage::{AddAssignChecked, SubAssignUnchecked},
+    },
 };
 
 /// State of an [`Erc1155Supply`] contract.
@@ -55,7 +58,7 @@ impl DerefMut for Erc1155Supply {
 
 /// Required interface of a [`Erc1155Supply`] contract.
 #[interface_id]
-pub trait IErc1155Supply {
+pub trait IErc1155Supply: IErc165 {
     /// Total value of tokens in with a given id.
     ///
     /// # Arguments
@@ -81,13 +84,18 @@ pub trait IErc1155Supply {
     fn exists(&self, id: U256) -> bool;
 }
 
+#[public]
+#[implements(IErc1155<Error = Error>, IErc1155Supply, IErc165)]
+impl Erc1155Supply {}
+
+#[public]
 impl IErc1155Supply for Erc1155Supply {
     fn total_supply(&self, id: U256) -> U256 {
         self.total_supply.get(id)
     }
 
     fn total_supply_all(&self) -> U256 {
-        *self.total_supply_all
+        self.total_supply_all.get()
     }
 
     fn exists(&self, id: U256) -> bool {
@@ -107,7 +115,7 @@ impl IErc1155 for Erc1155Supply {
         &self,
         accounts: Vec<Address>,
         ids: Vec<U256>,
-    ) -> Result<Vec<U256>, erc1155::Error> {
+    ) -> Result<Vec<U256>, Self::Error> {
         self.erc1155.balance_of_batch(accounts, ids)
     }
 
@@ -115,7 +123,7 @@ impl IErc1155 for Erc1155Supply {
         &mut self,
         operator: Address,
         approved: bool,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.set_approval_for_all(operator, approved)
     }
 
@@ -130,7 +138,7 @@ impl IErc1155 for Erc1155Supply {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, vec![id], vec![value], &data)
     }
@@ -142,9 +150,18 @@ impl IErc1155 for Erc1155Supply {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), erc1155::Error> {
+    ) -> Result<(), Self::Error> {
         self.erc1155.authorize_transfer(from)?;
         self.do_safe_transfer_from(from, to, ids, values, &data)
+    }
+}
+
+#[public]
+impl IErc165 for Erc1155Supply {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc1155Supply>::interface_id() == interface_id
+            || self.erc1155.supports_interface(interface_id)
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -235,7 +252,7 @@ impl Erc1155Supply {
     ///
     /// # Panics
     ///
-    /// * If updated balance and/or supply exceeds `U256::MAX`, may happen
+    /// * If updated balance and/or supply exceeds [`U256::MAX`], may happen
     ///   during the `mint` operation.
     fn _update(
         &mut self,
@@ -370,16 +387,18 @@ impl Erc1155Supply {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::{Address, U256};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::{
+        alloy_primitives::{fixed_bytes, Address, U256},
+        prelude::*,
+    };
 
-    use super::{Erc1155Supply, IErc1155Supply};
+    use super::*;
     use crate::token::erc1155::{
         tests::{random_token_ids, random_values},
-        ERC1155InvalidReceiver, ERC1155InvalidSender, Error, IErc1155,
+        ERC1155InvalidReceiver, ERC1155InvalidSender,
     };
 
     unsafe impl TopLevelStorage for Erc1155Supply {}
@@ -607,8 +626,26 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc1155Supply as IErc1155Supply>::INTERFACE_ID;
-        let expected = 0xeac6339d;
+        let actual = <Erc1155Supply as IErc1155Supply>::interface_id();
+        let expected: FixedBytes<4> = fixed_bytes!("0xeac6339d");
         assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface(contract: Contract<Erc1155Supply>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
+            <Erc1155Supply as IErc1155Supply>::interface_id()
+        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155Supply as IErc165>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc1155Supply as IErc1155>::interface_id()));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

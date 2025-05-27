@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 mod account;
+mod constructor_macro;
 mod deploy;
 mod environment;
 mod error;
@@ -9,11 +10,13 @@ mod receipt;
 mod system;
 
 pub use account::Account;
+pub use constructor_macro::Constructor;
+pub use deploy::{ContractDeploymentError, ContractInitializationError};
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert};
 pub use event::Ext as EventExt;
-pub use receipt::Ext as ReceiptExt;
-pub use system::{fund_account, Wallet};
+pub use receipt::Receipt;
+pub use system::{fund_account, Wallet, DEPLOYER_ADDRESS};
 
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.
@@ -25,7 +28,7 @@ pub use system::{fund_account, Wallet};
 /// ```rust,ignore
 /// #[e2e::test]
 /// async fn foo(alice: Account) -> eyre::Result<()> {
-///     let contract_addr = alice.as_deployer().deploy().await?.address()?;
+///     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
@@ -50,7 +53,7 @@ macro_rules! send {
 /// ```rust,ignore
 /// #[e2e::test]
 /// async fn foo(alice: Account) -> eyre::Result<()> {
-///     let contract_addr = alice.as_deployer().deploy().await?.address()?;
+///     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();
@@ -76,7 +79,7 @@ macro_rules! watch {
 /// ```rust,ignore
 /// #[e2e::test]
 /// async fn foo(alice: Account) -> eyre::Result<()> {
-///     let contract_addr = alice.as_deployer().deploy().await?.address()?;
+///     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 ///     let contract = Erc721::new(contract_addr, &alice.wallet);
 ///
 ///     let alice_addr = alice.address();

@@ -6,7 +6,7 @@ ERC-721 is a standard for representing ownership of xref:tokens.adoc#different-k
 
 ERC-721 is a more complex standard than ERC-20, with multiple optional extensions, and is split across a number of contracts.
 The OpenZeppelin Contracts provide flexibility regarding how these are combined, along with custom useful extensions.
-Check out the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/struct.Erc721.html[`API reference`] to learn more about these.
+Check out the https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc721/struct.Erc721.html[`API reference`] to learn more about these.
 
 == Constructing an ERC-721 Token Contract
 
@@ -21,23 +21,32 @@ Here's what a contract for tokenized items might look like:
 
 [source,rust]
 ----
-use openzeppelin_stylus::token::erc721::{
-    self, extensions::Erc721Metadata, Erc721,
+use openzeppelin_stylus::{
+    token::erc721::{
+        self,
+        extensions::{Erc721Metadata, IErc721Metadata},
+        Erc721, IErc721,
+    },
+    utils::introspection::erc165::IErc165,
 };
 
 #[entrypoint]
 #[storage]
 struct GameItem {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
     metadata: Erc721Metadata,
     next_token_id: StorageU256,
 }
 
 #[public]
-#[inherit(Erc721, Erc721Metadata)]
+#[implements(IErc721<Error = Error>, IErc721Metadata<Error = erc721::Error>, IErc165)]
 impl GameItem {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String, base_uri: String) {
+        self.metadata.constructor(name, symbol);
+        self.metadata.base_uri.set_str(base_uri);
+    }
+
     fn award_item(&mut self, player: Address) -> Result<U256, erc721::Error> {
         let token_id = self.next_token_id.get() + uint!(1_U256);
         self.next_token_id.set(token_id);
@@ -47,9 +56,100 @@ impl GameItem {
         Ok(token_id)
     }
 }
+
+#[public]
+impl IErc721 for GameItem {
+    type Error = erc721::Error;
+
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
+        self.erc721.balance_of(owner)
+    }
+
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
+        self.erc721.owner_of(token_id)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.safe_transfer_from(from, to, token_id)
+    }
+
+    fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.erc721.safe_transfer_from_with_data(from, to, token_id, data)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.transfer_from(from, to, token_id)
+    }
+
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.approve(to, token_id)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        to: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error> {
+        self.erc721.set_approval_for_all(to, approved)
+    }
+
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
+        self.erc721.get_approved(token_id)
+    }
+
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
+        self.erc721.is_approved_for_all(owner, operator)
+    }
+}
+
+#[public]
+impl IErc721Metadata for GameItem {
+    type Error = erc721::Error;
+
+    fn name(&self) -> String {
+        self.metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
+    #[selector(name = "tokenURI")]
+    fn token_uri(&self, token_id: U256) -> Result<String, Self::Error> {
+        self.metadata.token_uri(token_id, &self.erc721)
+    }
+}
+
+#[public]
+impl IErc165 for GameItem {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc721.supports_interface(interface_id)
+            || <Self as IErc721Metadata>::interface_id() == interface_id
+    }
+}
 ----
 
-The https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
+The https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc721/extensions/metadata/struct.Erc721Metadata.html[`Erc721Metadata`] contract is an extension contract of ERC-721.
 It extends the contract itself with the name, symbol and base uri for the token.
 
 Also note that, unlike ERC-20, ERC-721 lacks a `decimals` field, since each token is distinct and cannot be partitioned.
@@ -75,3 +175,5 @@ Additionally, there are multiple custom extensions, including:
 * xref:erc721-pausable.adoc[ERC-721 Pausable]: A primitive to pause contract operation.
 
 * xref:erc721-uri-storage.adoc[ERC-721 Uri Storage]: A more flexible but more expensive way of storing metadata.
+
+* xref:erc721-wrapper.adoc[ERC-721 Wrapper]: Wrapper to create an ERC-721 backed by another ERC-721, with deposit and withdraw methods.

@@ -1,5 +1,5 @@
 [package]
-name = "basic-example-script"
+name = "basic-script-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -10,5 +10,5 @@ version.workspace = true
 basic-example = { path = "../token" }
 alloy-primitives.workspace = true
 alloy.workspace = true
-koba.workspace = true
 tokio.workspace = true
+e2e.workspace = true
