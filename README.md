@@ -8,11 +8,9 @@
 - Security-first smart contracts, ported from the [`openzeppelin-contracts`]
   library.
 - First-class `no_std` support.
-- Solidity constructors powered by [`koba`].
 - [Unit] and [integration] test affordances, used in our own tests.
 
 [`openzeppelin-contracts`]: https://github.com/OpenZeppelin/openzeppelin-contracts
-[`koba`]: https://github.com/OpenZeppelin/koba
 [Unit]: https://github.com/OpenZeppelin/stylus-test-helpers
 [integration]: ./lib/e2e/README.md
 
@@ -23,14 +21,14 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "=0.1.1"
+openzeppelin-stylus = "=0.1.2"
 ```
 
 If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "=0.2.0-alpha.4"
+openzeppelin-stylus = "=0.2.0-rc.0"
 ```
 
 We put great effort in testing the contracts before releasing an alpha, but these are not yet audited and we don't guarantee any backwards compatibility between alpha version.
@@ -42,41 +40,72 @@ We put great effort in testing the contracts before releasing an alpha, but thes
 > ```toml
 > [dependencies]
 > alloy-primitives = { version = "=0.8.20", default-features = false }
-> stylus-sdk = { version = "=0.8.1", default-features = false, features = [
+> stylus-sdk = { version = "=0.9.0", default-features = false, features = [
 >   "mini-alloc",
 > ] }
 > ```
->
-> You will also need to define your own panic handler for `cargo stylus check` to pass.
-> Here's an example of a simple panic handler you can use in your `lib.rs` file:
->
-> ```rust
-> #[cfg(target_arch = "wasm32")]
-> #[panic_handler]
-> fn panic(_info: &core::panic::PanicInfo) -> ! {
->     loop {}
-> }
-> ```
->
-> The library also works on an `std` environment, without the need to define a panic handler or making extra changes to your project.
 
 Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
 
 ```rust
-use stylus_sdk::prelude::*;
-use openzeppelin_stylus::token::erc20::Erc20;
+use openzeppelin_stylus::token::erc20::{self, Erc20, IErc20};
+use stylus_sdk::{
+    alloy_primitives::{Address, U256},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
 }
 
 #[public]
-#[inherit(Erc20)]
+#[implements(IErc20<Error = erc20::Error>)]
 impl Erc20Example {}
+
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = erc20::Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer(to, value)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.approve(spender, value)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer_from(from, to, value)
+    }
+}
 ```
 
 For a more complex display of what this library offers, refer to our

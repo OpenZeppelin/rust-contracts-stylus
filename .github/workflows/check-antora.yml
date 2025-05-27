@@ -1,0 +1,16 @@
+name: Check Antora Docs
+# This workflow checks that all links in the documentation are valid.
+# It does this for antora docs(adoc).
+on: workflow_dispatch
+
+jobs:
+  check-links-adoc:
+    name: Check AsciiDoc Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run linkspector
+        uses: umbrelladocs/action-linkspector@v1
+        with:
+          fail_on_error: true

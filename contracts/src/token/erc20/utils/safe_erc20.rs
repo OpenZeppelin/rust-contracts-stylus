@@ -5,9 +5,9 @@
 //! throw on failure) are also supported, non-reverting calls are assumed to be
 //! successful.
 //!
-//! To use this library, you can add a `#[inherit(SafeErc20)]` attribute to
-//! your contract, which allows you to call the safe operations as
-//! `contract.safe_transfer(token_addr, ...)`, etc.
+//! To use this library, you can add a `#[implements(ISafeErc20<Error =
+//! Error>)]` attribute to your contract, which allows you to call the safe
+//! operations as `contract.safe_transfer(token_addr, ...)`, etc.
 
 use alloc::{vec, vec::Vec};
 
@@ -23,13 +23,9 @@ use stylus_sdk::{
     types::AddressVM,
 };
 
-use crate::{
-    token::erc20,
-    utils::{
-        introspection::erc165::{Erc165, IErc165},
-        ReentrantCallHandler,
-    },
-};
+use crate::utils::introspection::erc165::IErc165;
+
+const BOOL_TYPE_SIZE: usize = 32;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -61,8 +57,6 @@ mod sol {
 /// A [`SafeErc20`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`erc20::Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
     /// An operation with an ERC-20 token failed.
     SafeErc20FailedOperation(SafeErc20FailedOperation),
     /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
@@ -172,7 +166,7 @@ pub trait ISafeErc20 {
     ///
     /// # Panics
     ///
-    /// * If increased allowance exceeds `U256::MAX`.
+    /// * If increased allowance exceeds [`U256::MAX`].
     fn safe_increase_allowance(
         &mut self,
         token: Address,
@@ -229,6 +223,10 @@ pub trait ISafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error>;
 }
+
+#[public]
+#[implements(ISafeErc20<Error = Error>)]
+impl SafeErc20 {}
 
 #[public]
 impl ISafeErc20 for SafeErc20 {
@@ -339,12 +337,17 @@ impl SafeErc20 {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        match RawCall::new()
-            .limit_return_data(0, 32)
-            .call_with_reentrant_handling(token, &call.abi_encode())
-        {
-            Ok(data) if data.is_empty() || Self::encodes_true(&data) => Ok(()),
-            _ => Err(SafeErc20FailedOperation { token }.into()),
+        unsafe {
+            match RawCall::new()
+                .limit_return_data(0, BOOL_TYPE_SIZE)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+            {
+                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
+                    Ok(())
+                }
+                _ => Err(SafeErc20FailedOperation { token }.into()),
+            }
         }
     }
 
@@ -368,14 +371,17 @@ impl SafeErc20 {
         }
 
         let call = IErc20::allowanceCall { owner: address(), spender };
-        let result = RawCall::new()
-            .limit_return_data(0, 32)
-            .call_with_reentrant_handling(token, &call.abi_encode())
-            .map_err(|_| {
-                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                    token,
-                })
-            })?;
+        let result = unsafe {
+            RawCall::new()
+                .limit_return_data(0, BOOL_TYPE_SIZE)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+                .map_err(|_| {
+                    Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                        token,
+                    })
+                })?
+        };
 
         Ok(U256::from_be_slice(&result))
     }
@@ -393,14 +399,17 @@ impl SafeErc20 {
 }
 
 impl IErc165 for SafeErc20 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as ISafeErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as ISafeErc20>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
+    use motsu::prelude::Contract;
+    use stylus_sdk::alloy_primitives::{Address, FixedBytes};
+
     use super::{ISafeErc20, SafeErc20};
     use crate::utils::introspection::erc165::IErc165;
 
@@ -436,21 +445,23 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <SafeErc20 as ISafeErc20>::INTERFACE_ID;
-        let expected = 0xf71993e3;
+        let actual = <SafeErc20 as ISafeErc20>::interface_id();
+        let expected: FixedBytes<4> = 0xf71993e3_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(SafeErc20::supports_interface(
-            <SafeErc20 as IErc165>::INTERFACE_ID.into()
-        ));
-        assert!(SafeErc20::supports_interface(
-            <SafeErc20 as ISafeErc20>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(contract: Contract<SafeErc20>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<SafeErc20 as IErc165>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<SafeErc20 as ISafeErc20>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!SafeErc20::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

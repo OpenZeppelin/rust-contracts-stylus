@@ -95,7 +95,7 @@ impl BitMap {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{
         private::proptest::{prop_assert, proptest},

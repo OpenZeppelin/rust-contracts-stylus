@@ -7,16 +7,21 @@ This is particularly useful for non-fungible tokens (NFTs) where each token is u
 [[usage]]
 == Usage
 
-In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/uri_storage/index.html[URI Storage] flavour,
-your token should also use https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[`ERC-1155 Metadata URI`] extension to provide additional URI metadata for each token.
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc1155/extensions/uri_storage/index.html[URI Storage] flavour,
+your token should also use https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[`ERC-1155 Metadata URI`] extension to provide additional URI metadata for each token.
 You need to create a specified contract as follows:
 
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc1155::{
-        extensions::{Erc1155MetadataUri, Erc1155UriStorage},
-        Erc1155,
+    token::{
+        erc1155,
+        erc1155::{
+            extensions::{
+                Erc1155MetadataUri, Erc1155UriStorage, IErc1155MetadataUri,
+            },
+            Erc1155, IErc1155,
+        },
     },
     utils::introspection::erc165::IErc165,
 };
@@ -24,17 +29,17 @@ use openzeppelin_stylus::{
 #[entrypoint]
 #[storage]
 struct Erc1155MetadataUriExample {
-    #[borrow]
     erc1155: Erc1155,
     metadata_uri: Erc1155MetadataUri,
     uri_storage: Erc1155UriStorage,
 }
 
 #[public]
-#[inherit(Erc1155)]
+#[implements(IErc1155<Error = erc1155::Error>, IErc1155MetadataUri, IErc165)]
 impl Erc1155MetadataUriExample {
-    fn uri(&self, token_id: U256) -> String {
-        self.uri_storage.uri(token_id, &self.metadata_uri)
+    #[constructor]
+    fn constructor(&mut self, uri: String) {
+        self.metadata_uri.constructor(uri);
     }
 
     #[selector(name = "setTokenURI")]
@@ -46,31 +51,71 @@ impl Erc1155MetadataUriExample {
     fn set_base_uri(&mut self, base_uri: String) {
         self.uri_storage.set_base_uri(base_uri)
     }
+}
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc1155::supports_interface(interface_id)
-            || Erc1155MetadataUri::supports_interface(interface_id)
+#[public]
+impl IErc1155 for Erc1155MetadataUriExample {
+    type Error = erc1155::Error;
+
+    fn balance_of(&self, account: Address, id: U256) -> U256 {
+        self.erc1155.balance_of(account, id)
+    }
+
+    fn balance_of_batch(
+        &self,
+        accounts: Vec<Address>,
+        ids: Vec<U256>,
+    ) -> Result<Vec<U256>, Self::Error> {
+        self.erc1155.balance_of_batch(accounts, ids)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error> {
+        self.erc1155.set_approval_for_all(operator, approved)
+    }
+
+    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
+        self.erc1155.is_approved_for_all(account, operator)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        id: U256,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.erc1155.safe_transfer_from(from, to, id, value, data)
+    }
+
+    fn safe_batch_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        ids: Vec<U256>,
+        values: Vec<U256>,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.erc1155.safe_batch_transfer_from(from, to, ids, values, data)
     }
 }
-----
 
-Additionally, you need to ensure proper initialization during xref:deploy.adoc[contract deployment].
-Make sure to include the following code in your Solidity Constructor:
+#[public]
+impl IErc1155MetadataUri for Erc1155MetadataUriExample {
+    fn uri(&self, token_id: U256) -> String {
+        self.uri_storage.uri(token_id, &self.metadata_uri)
+    }
+}
 
-[source,solidity]
-----
-contract Erc1155Example {
-    // ...
-
-    string private _uri;
-    string private _baseUri;
-
-    mapping(uint256 => string) _tokenUris;
-
-    constructor(string memory uri_) {
-        // ...
-        _uri = uri_;
-        // ...
+#[public]
+impl IErc165 for Erc1155MetadataUriExample {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc1155.supports_interface(interface_id)
+            || self.metadata_uri.supports_interface(interface_id)
     }
 }
 ----

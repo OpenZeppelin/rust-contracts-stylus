@@ -100,6 +100,7 @@ impl<E: MethodError> Revert<E> for alloy::contract::Error {
 
 impl<E: SolError> Revert<E> for eyre::Report {
     fn reverted_with(&self, expected: E) -> bool {
+        // Generic revert error
         let Some(received) = self
             .chain()
             .find_map(|err| err.downcast_ref::<RpcError<TransportErrorKind>>())

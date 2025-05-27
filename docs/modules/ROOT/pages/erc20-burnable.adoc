@@ -5,7 +5,7 @@ Extension of xref:erc20.adoc[ERC-20] that allows token holders to destroy both t
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/token/erc20/extensions/burnable/index.html[`ERC-20 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/token/erc20/extensions/burnable/index.html[`ERC-20 Burnable`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
 
 [source,rust]
 ----
@@ -16,13 +16,61 @@ use openzeppelin_stylus::token::erc20::{
 #[entrypoint]
 #[storage]
 struct Erc20Example {
-    #[borrow]
     erc20: Erc20,
 }
 
 #[public]
-#[inherit(Erc20)]
-impl Erc20Example {
+#[implements(IErc20<Error = erc20::Error>, IErc20Burnable<Error = erc20::Error>)]
+impl Erc20Example {}
+
+
+#[public]
+impl IErc20 for Erc20Example {
+    type Error = erc20::Error;
+
+    fn total_supply(&self) -> U256 {
+        self.erc20.total_supply()
+    }
+
+    fn balance_of(&self, account: Address) -> U256 {
+        self.erc20.balance_of(account)
+    }
+
+    fn transfer(
+        &mut self,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer(to, value)
+    }
+
+    fn allowance(&self, owner: Address, spender: Address) -> U256 {
+        self.erc20.allowance(owner, spender)
+    }
+
+    fn approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.approve(spender, value)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.erc20.transfer_from(from, to, value)
+    }
+}
+
+
+#[public]
+impl IErc20Burnable for Erc20Example {
+    type Error = erc20::Error;
+
     fn burn(&mut self, value: U256) -> Result<(), erc20::Error> {
         // ...
         self.erc20.burn(value)

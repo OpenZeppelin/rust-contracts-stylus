@@ -46,7 +46,7 @@ impl Hash for [u8; 32] {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use proptest::prelude::*;
 

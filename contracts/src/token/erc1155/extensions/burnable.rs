@@ -3,6 +3,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
+use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::msg;
 
 use crate::token::erc1155::{
@@ -11,6 +12,7 @@ use crate::token::erc1155::{
 
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
 /// own tokens and those that they have been approved to use.
+#[interface_id]
 pub trait IErc1155Burnable {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -28,7 +30,8 @@ pub trait IErc1155Burnable {
     ///
     /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
     ///   `account` address and the `account` has not been approved.
-    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the
+    ///   [`Address::ZERO`].
     /// * [`erc1155::Error::InsufficientBalance`] - If `value` is greater than
     ///   the balance of the `from` account.
     fn burn(
@@ -51,7 +54,8 @@ pub trait IErc1155Burnable {
     ///
     /// * [`erc1155::Error::MissingApprovalForAll`] - If the caller is not
     ///   `account` address and the `account` has not been approved.
-    /// * [`erc1155::Error::InvalidSender`] - If `from` is the `Address::ZERO`.
+    /// * [`erc1155::Error::InvalidSender`] - If `from` is the
+    ///   [`Address::ZERO`].
     /// * [`erc1155::Error::InvalidArrayLength`] - If length of `ids` is not
     ///   equal to length of `values`.
     /// * [`erc1155::Error::InsufficientBalance`] - If any of the `values` is
@@ -107,7 +111,7 @@ impl Erc1155 {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
 
     use alloy_primitives::{Address, U256};
