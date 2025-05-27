@@ -985,15 +985,12 @@ impl<const N: usize> WideUint<N> {
 
 #[cfg(test)]
 mod test {
-    use num_traits::ConstZero;
     use proptest::prelude::*;
 
     use crate::{
         arithmetic::{
-            uint::{
-                from_str_hex, from_str_radix, parse_digit, Uint, WideUint, U256,
-            },
-            *,
+            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
+            BigInteger, Limb,
         },
         bits::BitIteratorBE,
     };
