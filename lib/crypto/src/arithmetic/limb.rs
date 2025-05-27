@@ -112,7 +112,7 @@ pub const fn sbb(a: Limb, b: Limb, borrow: bool) -> (Limb, bool) {
     // Protects from overflow, when `a < b + borrow`.
     let overflow_protection = WideLimb::ONE << Limb::BITS;
     let tmp = overflow_protection + a - b - borrow;
-    let borrow = if tmp >> Limb::BITS == 0 { true } else { false };
+    let borrow = tmp >> Limb::BITS == 0;
     // overflow_protection will be truncated on cast.
     (tmp as Limb, borrow)
 }
