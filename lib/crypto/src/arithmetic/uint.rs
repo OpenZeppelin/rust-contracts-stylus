@@ -658,7 +658,6 @@ impl<const N: usize> ShrAssign<u32> for Uint<N> {
         let shift = rhs as usize;
         let bits = Limb::BITS as usize;
 
-        // Panic if the shift is greater than the number of bits in the number.
         assert!(N * bits > shift, "attempt to shift right with overflow");
 
         // Limb shift will probably affect changes in two limbs.
@@ -714,7 +713,6 @@ impl<const N: usize> ShlAssign<u32> for Uint<N> {
         let shift = rhs as usize;
         let bits = Limb::BITS as usize;
 
-        // Panic if the shift is greater than the number of bits in the number.
         assert!(N * bits > shift, "attempt to shift left with overflow");
 
         // Limb shift will probably affect changes in two limbs.
