@@ -9,10 +9,6 @@ There are two crates in the example: a library crate for our contract
 implementation, which is a simple `ERC-20` token extended with `Metadata`, and
 a binary crate, which holds the deployment script.
 
-The deployment script uses [`koba`] to deploy the token with name `Test Token`
-and symbol `TTK`. This means we should have a `solc` installation with a version
-previous to `0.8.25` (see [limitations]).
-
 Before running the example, set the `PRIVATE_KEY` const variable and compile
 your contract with:
 
@@ -23,7 +19,7 @@ cargo build --release --target wasm32-unknown-unknown
 You should now be able to run your contract with:
 
 ```bash
-$ cargo run -p basic-example-script
+$ cargo run -p basic-script-example
 wasm data fee: Ξ0.000097
 init code size: 17.0 KB
 deploying to RPC: https://sepolia-rollup.arbitrum.io/rpc
@@ -36,9 +32,6 @@ activation tx hash: 0x88c992c4c6e36fd2f49f2b30ea12412a2d5436bbfe80df8d10606abdb1
 
 Note that the script asserts that the deployed contract has the correct name and
 symbol.
-
-[`koba`]: https://github.com/OpenZeppelin/koba
-[limitations]: https://github.com/OpenZeppelin/koba#limitations
 
 ## Why two crates?
 

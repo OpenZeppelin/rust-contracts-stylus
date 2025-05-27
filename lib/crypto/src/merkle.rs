@@ -306,7 +306,7 @@ where
                     .get(proof_pos)
                     .ok_or(MultiProofError::InvalidProofLength)?;
                 proof_pos += 1;
-            };
+            }
 
             let hash = commutative_hash_pair(&a, b, builder.build_hasher());
             hashes.push(hash);
@@ -360,7 +360,7 @@ impl core::fmt::Display for MultiProofError {
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     //! NOTE: The values used as input for these tests were all generated using
     //! <https://github.com/OpenZeppelin/merkle-tree>.

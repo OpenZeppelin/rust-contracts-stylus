@@ -1,4 +1,8 @@
+use std::fmt::Debug;
+
 use alloy::{rpc::types::eth::TransactionReceipt, sol_types::SolEvent};
+
+use crate::Receipt;
 
 /// Extension trait for asserting an event gets emitted.
 pub trait Ext<E> {
@@ -19,5 +23,15 @@ where
             .filter_map(|log| log.log_decode().ok())
             .map(|log| log.inner.data)
             .any(|event| expected == event)
+    }
+}
+
+impl<E: Debug> Ext<E> for Receipt
+where
+    E: SolEvent,
+    E: PartialEq,
+{
+    fn emits(&self, expected: E) -> bool {
+        self.inner.emits(expected)
     }
 }

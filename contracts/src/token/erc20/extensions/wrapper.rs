@@ -13,7 +13,8 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256, U8};
+use alloy_primitives::{Address, U256, U8};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
@@ -23,14 +24,11 @@ use stylus_sdk::{
     storage::{StorageAddress, StorageU8},
 };
 
-use crate::{
-    token::erc20::{
-        self,
-        interface::Erc20Interface,
-        utils::{safe_erc20, ISafeErc20, SafeErc20},
-        Erc20, IErc20,
-    },
-    utils::introspection::erc165::{Erc165, IErc165},
+use crate::token::erc20::{
+    self,
+    interface::Erc20Interface,
+    utils::{safe_erc20, ISafeErc20, SafeErc20},
+    Erc20, IErc20,
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -43,40 +41,66 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC20InvalidUnderlying(address token);
-
-        /// Indicates that the address is not a valid sender address.
-        ///
-        /// * `sender` - Address of the invalid sender.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ERC20InvalidSender(address sender);
-
-        /// Indicates that the address is not a valid receiver addresss.
-        ///
-        /// * `receiver` - Address of the invalid receiver.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ERC20InvalidReceiver(address receiver);
     }
 }
 
 /// An [`Erc20Wrapper`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Error type from [`Erc20`] contract [`erc20::Error`].
-    Erc20(erc20::Error),
-
-    /// Error type from [`SafeErc20`] contract [`safe_erc20::Error`].
-    SafeErc20(safe_erc20::Error),
-
-    /// The Sender Address is not valid.
-    InvalidSender(ERC20InvalidSender),
-
-    /// The Receiver Address is not valid.
-    InvalidReceiver(ERC20InvalidReceiver),
-
+    /// Indicates an error related to the current balance of `sender`. Used in
+    /// transfers.
+    InsufficientBalance(erc20::ERC20InsufficientBalance),
+    /// Indicates a failure with the token `sender`. Used in transfers.
+    InvalidSender(erc20::ERC20InvalidSender),
+    /// Indicates a failure with the token `receiver`. Used in transfers.
+    InvalidReceiver(erc20::ERC20InvalidReceiver),
+    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// transfers.
+    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
+    /// Indicates a failure with the `spender` to be approved. Used in
+    /// approvals.
+    InvalidSpender(erc20::ERC20InvalidSpender),
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals. approver Address initiating an approval operation.
+    InvalidApprover(erc20::ERC20InvalidApprover),
+    /// An operation with an ERC-20 token failed.
+    SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation),
+    /// Indicates a failed [`ISafeErc20::safe_decrease_allowance`] request.
+    SafeErc20FailedDecreaseAllowance(
+        safe_erc20::SafeErc20FailedDecreaseAllowance,
+    ),
     /// The underlying token couldn't be wrapped.
     InvalidUnderlying(ERC20InvalidUnderlying),
+}
+
+impl From<erc20::Error> for Error {
+    fn from(value: erc20::Error) -> Self {
+        match value {
+            erc20::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc20::Error::InsufficientAllowance(e) => {
+                Error::InsufficientAllowance(e)
+            }
+            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+        }
+    }
+}
+
+impl From<safe_erc20::Error> for Error {
+    fn from(value: safe_erc20::Error) -> Self {
+        match value {
+            safe_erc20::Error::SafeErc20FailedOperation(e) => {
+                Error::SafeErc20FailedOperation(e)
+            }
+            safe_erc20::Error::SafeErc20FailedDecreaseAllowance(e) => {
+                Error::SafeErc20FailedDecreaseAllowance(e)
+            }
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -90,34 +114,19 @@ impl MethodError for Error {
 pub struct Erc20Wrapper {
     /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
+    // TODO: Remove this field once function overriding is possible. For now we
+    // keep this field `pub`, since this is used to simulate overriding.
     /// Underlying token decimals.
-    pub(crate) underlying_decimals: StorageU8,
+    pub underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
 
 /// ERC-20 Wrapper Standard Interface
+#[interface_id]
 pub trait IErc20Wrapper {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
-
-    // Manually calculated, as some of the functions' parameters do not
-    // implement AbiType.
-    /// Solidity interface id associated with [`IErc20Wrapper`] trait. Computed
-    /// as a XOR of selectors for each function in the trait.
-    const INTERFACE_ID: u32 =
-        u32::from_be_bytes(stylus_sdk::function_selector!("decimals"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!("underlying"))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
-                "depositFor",
-                Address,
-                U256
-            ))
-            ^ u32::from_be_bytes(stylus_sdk::function_selector!(
-                "withdrawTo",
-                Address,
-                U256
-            ));
 
     /// Returns the number of decimals used to get its user representation.
     ///
@@ -132,6 +141,7 @@ pub trait IErc20Wrapper {
     ///     self.erc20_wrapper.decimals()
     /// }
     /// ```
+    #[must_use]
     fn decimals(&self) -> U8;
 
     /// Returns the address of the underlying ERC-20 token that is being
@@ -148,6 +158,7 @@ pub trait IErc20Wrapper {
     ///     self.erc20_wrapper.underlying()
     /// }
     /// ```
+    #[must_use]
     fn underlying(&self) -> Address;
 
     /// Allow a user to deposit underlying tokens and mint the corresponding
@@ -158,7 +169,6 @@ pub trait IErc20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to deposit tokens to.
     /// * `value` - The amount of tokens to deposit.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
@@ -166,27 +176,19 @@ pub trait IErc20Wrapper {
     ///   `contract:address()`.
     /// * [`Error::InvalidReceiver`] - If the `account` address is a
     ///   `contract:address()`.
-    /// * [`Error::SafeErc20`] - If caller lacks sufficient balance or hasn't
-    ///   approved enough tokens to the [`Erc20Wrapper`] contract.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
-    ///   operation.
+    /// * [`Error::SafeErc20FailedOperation`] - If caller lacks sufficient
+    ///   balance or hasn't approved enough tokens to the [`Erc20Wrapper`]
+    ///   contract.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   [`Address::ZERO`].
     ///
     /// # Panics
     ///
     /// * If [`Erc20::_mint`] operation panics.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn deposit_for(&mut self, account: Address, value: U256) -> Result<bool, wrapper::Error> {
-    ///     self.erc20_wrapper.deposit_for(account, value, &mut self.erc20)
-    /// }
-    /// ```
     fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
-        erc20: &mut Erc20,
     ) -> Result<bool, Self::Error>;
 
     /// Allow a user to burn a number of wrapped tokens and withdraw the
@@ -197,29 +199,20 @@ pub trait IErc20Wrapper {
     /// * `&mut self` - Write access to the contract's state.
     /// * `account` - The account to withdraw tokens from.
     /// * `value` - The amount of tokens to withdraw.
-    /// * `erc20` - Write access to an [`Erc20`] contract.
     ///
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If the `account`'s address is a
     ///   `contract:address()`.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_burn`]
-    ///   operation.
-    /// * [`Error::SafeErc20`] - If the [`Erc20Wrapper`] contract lacks
-    ///   sufficient balance.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// fn withdraw_to(&mut self, account: Address, value: U256,) -> Result<bool, wrapper::Error> {
-    ///    self.erc20_wrapper.withdraw_to(account, value, &mut self.erc20)
-    /// }
-    /// ```
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens.
+    /// * [`Error::SafeErc20FailedOperation`] - If the [`Erc20Wrapper`] contract
+    ///   lacks sufficient balance.
     fn withdraw_to(
         &mut self,
         account: Address,
         value: U256,
-        erc20: &mut Erc20,
     ) -> Result<bool, Self::Error>;
 }
 
@@ -228,10 +221,10 @@ pub trait IErc20Wrapper {
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc20Wrapper {}
 
-impl IErc20Wrapper for Erc20Wrapper {
-    type Error = Error;
-
-    fn decimals(&self) -> U8 {
+impl Erc20Wrapper {
+    /// See [`IErc20Wrapper::decimals`].
+    #[must_use]
+    pub fn decimals(&self) -> U8 {
         // Selector for decimals() -> 0x313ce567
         const DECIMALS_SELECTOR: FixedBytes<4> =
             FixedBytes([0x31, 0x3c, 0xe5, 0x67]);
@@ -263,25 +256,31 @@ impl IErc20Wrapper for Erc20Wrapper {
         }
     }
 
-    fn underlying(&self) -> Address {
+    /// See [`IErc20Wrapper::underlying`].
+    #[must_use]
+    pub fn underlying(&self) -> Address {
         self.underlying.get()
     }
 
-    fn deposit_for(
+    /// See [`IErc20Wrapper::deposit_for`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn deposit_for(
         &mut self,
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         let contract_address = contract::address();
         let sender = msg::sender();
 
         if sender == contract_address {
-            return Err(ERC20InvalidSender { sender }.into());
+            return Err(erc20::ERC20InvalidSender { sender }.into());
         }
 
         if account == contract_address {
-            return Err(ERC20InvalidReceiver { receiver: account }.into());
+            return Err(
+                erc20::ERC20InvalidReceiver { receiver: account }.into()
+            );
         }
 
         self.safe_erc20.safe_transfer_from(
@@ -296,14 +295,18 @@ impl IErc20Wrapper for Erc20Wrapper {
         Ok(true)
     }
 
-    fn withdraw_to(
+    /// See [`IErc20Wrapper::withdraw_to`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn withdraw_to(
         &mut self,
         account: Address,
         value: U256,
         erc20: &mut Erc20,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Error> {
         if account == contract::address() {
-            return Err(ERC20InvalidReceiver { receiver: account }.into());
+            return Err(
+                erc20::ERC20InvalidReceiver { receiver: account }.into()
+            );
         }
 
         erc20._burn(msg::sender(), value)?;
@@ -311,6 +314,33 @@ impl IErc20Wrapper for Erc20Wrapper {
         self.safe_erc20.safe_transfer(self.underlying(), account, value)?;
 
         Ok(true)
+    }
+}
+
+#[public]
+impl Erc20Wrapper {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `underlying_token` - The wrapped token.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidUnderlying`] - If underlying token is this contract.
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        underlying_token: Address,
+    ) -> Result<(), Error> {
+        if underlying_token == contract::address() {
+            return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
+                token: underlying_token,
+            }));
+        }
+        self.underlying.set(underlying_token);
+        Ok(())
     }
 }
 
@@ -330,8 +360,8 @@ impl Erc20Wrapper {
     ///
     /// * [`Error::InvalidUnderlying`]  - If the external call for
     ///   [`IErc20::balance_of`] fails.
-    /// * [`Error::Erc20`] - If an error occurrs during [`Erc20::_mint`]
-    ///   operation.
+    /// * [`Error::InvalidReceiver`] - If the `account` address is
+    ///   [`Address::ZERO`].
     ///
     /// # Panics
     ///
@@ -361,21 +391,12 @@ impl Erc20Wrapper {
     }
 }
 
-impl IErc165 for Erc20Wrapper {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Wrapper>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
-    }
-}
-
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::uint;
+    use alloy_primitives::{uint, FixedBytes};
     use motsu::prelude::*;
 
     use super::*;
-    use crate::utils::introspection::erc165::IErc165;
 
     #[storage]
     struct Erc20WrapperTestExample {
@@ -384,7 +405,17 @@ mod tests {
     }
 
     #[public]
+    #[implements(IErc20Wrapper<Error = Error>)]
     impl Erc20WrapperTestExample {
+        fn recover(&mut self, account: Address) -> Result<U256, Error> {
+            self.wrapper._recover(account, &mut self.erc20)
+        }
+    }
+
+    #[public]
+    impl IErc20Wrapper for Erc20WrapperTestExample {
+        type Error = Error;
+
         fn decimals(&self) -> U8 {
             self.wrapper.decimals()
         }
@@ -407,10 +438,6 @@ mod tests {
             value: U256,
         ) -> Result<bool, Error> {
             self.wrapper.withdraw_to(account, value, &mut self.erc20)
-        }
-
-        fn recover(&mut self, account: Address) -> Result<U256, Error> {
-            self.wrapper._recover(account, &mut self.erc20)
         }
     }
 
@@ -461,9 +488,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == invalid_asset
+            ) if token == invalid_asset
         ));
     }
 
@@ -486,7 +513,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidSender(ERC20InvalidSender { sender }) if sender == invalid_sender
+            Error::InvalidSender(erc20::ERC20InvalidSender { sender }) if sender == invalid_sender
         ));
     }
 
@@ -509,7 +536,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+            Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
     }
 
@@ -537,9 +564,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == erc20_contract.address()
+            ) if token == erc20_contract.address()
         ));
     }
 
@@ -574,9 +601,9 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::SafeErc20(safe_erc20::Error::SafeErc20FailedOperation(
+            Error::SafeErc20FailedOperation(
                 safe_erc20::SafeErc20FailedOperation { token }
-            )) if token == erc20_contract.address()
+            ) if token == erc20_contract.address()
         ));
     }
 
@@ -670,7 +697,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
+            Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if receiver == invalid_receiver
         ));
     }
 
@@ -710,13 +737,13 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::Erc20(erc20::Error::InsufficientBalance(
+            Error::InsufficientBalance(
                 erc20::ERC20InsufficientBalance {
                     sender,
                     balance,
                     needed
                 }
-            )) if sender == alice && balance == amount && needed == exceeding_value
+            ) if sender == alice && balance == amount && needed == exceeding_value
         ));
     }
 
@@ -797,13 +824,21 @@ mod tests {
         );
     }
 
+    #[storage]
+    struct NonErc20;
+
+    #[public]
+    impl NonErc20 {}
+
+    unsafe impl TopLevelStorage for NonErc20 {}
+
     // TODO: Should be a test for the `Error::InvalidUnderlying` error,
     // but impossible with current motsu limitations.
     #[motsu::test]
     #[ignore]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
-        invalid_underlying: Contract<crate::access::ownable::Ownable>,
+        invalid_underlying: Contract<NonErc20>,
         alice: Address,
     ) {
         contract.init(alice, |contract| {
@@ -946,21 +981,8 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID;
-        let expected = 0x511f913e;
+        let actual = <Erc20WrapperTestExample as IErc20Wrapper>::interface_id();
+        let expected: FixedBytes<4> = 0x511f913e_u32.into();
         assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc20Wrapper>::INTERFACE_ID.into()
-        ));
-        assert!(Erc20Wrapper::supports_interface(
-            <Erc20Wrapper as IErc165>::INTERFACE_ID.into()
-        ));
-
-        let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20Wrapper::supports_interface(fake_interface_id.into()));
     }
 }
