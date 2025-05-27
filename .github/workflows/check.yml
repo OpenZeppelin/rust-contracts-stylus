@@ -43,6 +43,7 @@ jobs:
 
       - name: Check formatting
         run: cargo fmt --all --check
+
   clippy:
     runs-on: ubuntu-latest
     name: ${{ matrix.toolchain }} / clippy
@@ -94,6 +95,7 @@ jobs:
         run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: --cfg docsrs
+
   hack:
     # `cargo-hack` checks combinations of feature flags to ensure that features
     # are all additive which is required for feature unification.
