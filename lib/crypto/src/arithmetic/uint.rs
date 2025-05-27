@@ -188,6 +188,8 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Return the minimum number of bits needed to encode this number.
+    ///
+    /// Returns zero bits to encode `self` if zero.
     #[doc(hidden)]
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
@@ -956,6 +958,8 @@ impl<const N: usize> WideUint<N> {
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
+    ///
+    /// Returns zero bits to encode `self` if zero.
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
         let high_num_bits = self.high.ct_num_bits();
