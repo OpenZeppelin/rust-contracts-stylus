@@ -26,12 +26,12 @@ macro_rules! ct_for {
 ///
 /// ```rust,ignore
 /// // This loop:
-/// ct_rev_for!((i in 0..10 {
-///     ...
+/// ct_rev_for!((i in 0..10) {
+///
 /// });
 /// // is similar to the following loop:
 /// for i in (0..10).rev() {
-///     ...
+///
 /// }
 /// // Will start from 9 till 0 inclusive.
 /// ```
