@@ -26,5 +26,5 @@ cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abo
 
 for CRATE_NAME in $(get_example_crate_names); do
   check_wasm "$CRATE_NAME"
-  sleep 1
+  sleep 2
 done
