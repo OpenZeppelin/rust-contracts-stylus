@@ -33,5 +33,6 @@ jobs:
 
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
+
       - name: run benches
         run: ./scripts/bench.sh
