@@ -188,15 +188,21 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Return the minimum number of bits needed to encode this number.
+    ///
+    /// One bit is necessary to encode zero.
     #[doc(hidden)]
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
+        // One bit is necessary to encode zero.
+        if self.ct_is_zero() {
+            return 1;
+        }
+
         // Total number of bits.
         let mut num_bits = Self::BITS;
 
         // Start with the last (highest) limb.
-        let mut index = N - 1;
-        loop {
+        ct_rev_for!((index in 0..N) {
             // Subtract leading zeroes, from the total number of limbs.
             let leading = self.limbs[index].leading_zeros() as usize;
             num_bits -= leading;
@@ -205,12 +211,7 @@ impl<const N: usize> Uint<N> {
             if leading != 64 {
                 break;
             }
-
-            if index == 0 {
-                break;
-            }
-            index -= 1;
-        }
+        });
 
         // And return the result.
         num_bits
@@ -953,13 +954,14 @@ impl<const N: usize> WideUint<N> {
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
+    ///
+    /// One bit is necessary to encode zero.
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
-        let high_num_bits = self.high.ct_num_bits();
-        if high_num_bits == 0 {
+        if self.high.ct_is_zero() {
             self.low.ct_num_bits()
         } else {
-            high_num_bits + Uint::<N>::BITS
+            self.high.ct_num_bits() + Uint::<N>::BITS
         }
     }
 
