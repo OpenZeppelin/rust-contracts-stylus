@@ -23,7 +23,7 @@ use crate::{
         BigInteger,
     },
     bits::BitIteratorBE,
-    ct_for, ct_for_unroll6,
+    ct_for, ct_for_unroll6, ct_rev_for, ct_rev_for_unroll6,
 };
 
 /// Stack-allocated big unsigned integer.
@@ -104,9 +104,9 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[inline(always)]
     pub const fn ct_ge(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a > b {
                 return true;
             } else if a < b {
@@ -120,9 +120,9 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[inline(always)]
     pub const fn ct_gt(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a > b {
                 return true;
             } else if a < b {
@@ -136,9 +136,9 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[inline(always)]
     pub const fn ct_le(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a < b {
                 return true;
             } else if a > b {
@@ -151,9 +151,9 @@ impl<const N: usize> Uint<N> {
     /// Checks `self` is less then `rhs` (constant).
     #[must_use]
     pub const fn ct_lt(&self, rhs: &Self) -> bool {
-        ct_for_unroll6!((i in 0..N) {
-            let a = self.limbs[N - i - 1];
-            let b = rhs.limbs[N - i - 1];
+        ct_rev_for_unroll6!((i in 0..N) {
+            let a = self.limbs[i];
+            let b = rhs.limbs[i];
             if a < b {
                 return true;
             } else if a > b {
@@ -188,15 +188,21 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Return the minimum number of bits needed to encode this number.
+    ///
+    /// One bit is necessary to encode zero.
     #[doc(hidden)]
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
+        // One bit is necessary to encode zero.
+        if self.ct_is_zero() {
+            return 1;
+        }
+
         // Total number of bits.
         let mut num_bits = Self::BITS;
 
         // Start with the last (highest) limb.
-        let mut index = N - 1;
-        loop {
+        ct_rev_for!((index in 0..N) {
             // Subtract leading zeroes, from the total number of limbs.
             let leading = self.limbs[index].leading_zeros() as usize;
             num_bits -= leading;
@@ -205,12 +211,7 @@ impl<const N: usize> Uint<N> {
             if leading != 64 {
                 break;
             }
-
-            if index == 0 {
-                break;
-            }
-            index -= 1;
-        }
+        });
 
         // And return the result.
         num_bits
@@ -921,7 +922,7 @@ impl<const N: usize> WideUint<N> {
         Self { low, high }
     }
 
-    /// Compute a reminder of division `self` by `rhs` (constant).
+    /// Compute the remainder of division `self` by `rhs` (constant).
     ///
     /// Basic division algorithm based on [wiki].
     /// Fine to be used for constant evaluation, but slow in runtime.
@@ -932,37 +933,35 @@ impl<const N: usize> WideUint<N> {
         assert!(!rhs.ct_is_zero(), "should not divide by zero");
 
         let mut remainder = Uint::<N>::ZERO;
+        let num_bits = self.ct_num_bits();
 
-        // Start with the last bit.
-        let mut index = self.ct_num_bits() - 1;
-        loop {
+        // Start from the last bit.
+        ct_rev_for!((index in 0..num_bits) {
             // Shift the remainder to the left by 1,
             let (result, carry) = remainder.ct_checked_mul2();
             remainder = result;
 
-            // and set the first bit to reminder from the dividend.
+            // and set the first bit to remainder from the dividend.
             remainder.limbs[0] |= self.ct_get_bit(index) as Limb;
 
             // If the remainder overflows, subtract the divisor.
             if remainder.ct_ge(rhs) || carry {
                 (remainder, _) = remainder.ct_checked_sub(rhs);
             }
+        });
 
-            if index == 0 {
-                break remainder;
-            }
-            index -= 1;
-        }
+        remainder
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
+    ///
+    /// One bit is necessary to encode zero.
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
-        let high_num_bits = self.high.ct_num_bits();
-        if high_num_bits == 0 {
+        if self.high.ct_is_zero() {
             self.low.ct_num_bits()
         } else {
-            high_num_bits + Uint::<N>::BITS
+            self.high.ct_num_bits() + Uint::<N>::BITS
         }
     }
 
@@ -1065,6 +1064,19 @@ mod test {
         let result =
             WideUint::<4>::new(dividend, Uint::<4>::ZERO).ct_rem(&divisor);
         assert_eq!(result, from_num!("216456157"));
+    }
+
+    #[test]
+    #[should_panic = "should not divide by zero"]
+    fn ct_rem_zero() {
+        let zero = Uint::<4>::ZERO;
+        let divisor = from_num!("375923422");
+        let result = WideUint::<4>::new(zero, zero).ct_rem(&divisor);
+        assert_eq!(result, zero);
+
+        let dividend = from_num!("43129923721897334698312931");
+        let divisor = zero;
+        let _ = WideUint::<4>::new(dividend, zero).ct_rem(&divisor);
     }
 
     #[test]

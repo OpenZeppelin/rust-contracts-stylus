@@ -110,12 +110,14 @@ pub trait BigInteger:
 
     /// Return the minimum number of bits needed to encode this number.
     ///
+    /// One bit is necessary to encode zero.
+    ///
     /// # Examples
     /// ```
     /// use openzeppelin_crypto::arithmetic::{BigInteger, uint::U64};
     ///
     /// let zero = U64::from(0u64);
-    /// assert_eq!(zero.num_bits(), 0);
+    /// assert_eq!(zero.num_bits(), 1);
     /// let one = U64::from(1u64);
     /// assert_eq!(one.num_bits(), 1);
     /// let max = U64::from(u64::MAX);
