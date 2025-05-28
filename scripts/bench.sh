@@ -14,7 +14,7 @@ opt_wasm() {
   echo
   echo "Optimizing $CONTRACT_CRATE_NAME WASM binary"
   # https://rustwasm.github.io/book/reference/code-size.html#use-the-wasm-opt-tool
-  wasm-opt -O3 -o ./target/wasm32-unknown-unknown/release/"$CONTRACT_OPT_BIN_NAME" ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
+  wasm-opt --enable-bulk-memory -O3 -o ./target/wasm32-unknown-unknown/release/"$CONTRACT_OPT_BIN_NAME" ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
 }
 
 # Retrieve all alphanumeric contract's crate names in `./examples` directory.
@@ -24,7 +24,9 @@ get_example_crate_names() {
   find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
 }
 
-cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+cargo build --release --target wasm32-unknown-unknown \
+  -Z build-std=std,panic_abort \
+  -Z build-std-features=panic_immediate_abort
 
 # Optimize contract's wasm for gas usage.
 for CRATE_NAME in $(get_example_crate_names); do
