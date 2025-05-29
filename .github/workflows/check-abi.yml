@@ -24,7 +24,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.5.12
+        run: cargo install cargo-stylus@0.6.0
 
       - name: Run export-abi
         run: ./scripts/check-abi.sh
