@@ -158,13 +158,10 @@ impl Deployer {
 
             command
                 .args(["--deployer-address", &deployer_address])
-                .args(["--experimental-constructor-signature", &ctor.signature])
+                .args(["--constructor-signature", &ctor.signature])
                 .args(
-                    [
-                        &["--experimental-constructor-args".to_string()],
-                        ctor.args.as_slice(),
-                    ]
-                    .concat(),
+                    [&["--constructor-args".to_string()], ctor.args.as_slice()]
+                        .concat(),
                 );
         }
 
