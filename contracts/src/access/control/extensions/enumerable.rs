@@ -6,10 +6,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    prelude::*,
-    storage::{StorageAddress, StorageMap},
-};
+use stylus_sdk::{prelude::*, storage::StorageMap};
 
 use crate::{
     access::control::{self, AccessControl},
@@ -79,8 +76,7 @@ pub trait IAccessControlEnumerable {
 #[storage]
 pub struct AccessControlEnumerable {
     /// TODO: docs
-    role_members:
-        StorageMap<FixedBytes<32>, EnumerableSet<Address, StorageAddress>>,
+    role_members: StorageMap<FixedBytes<32>, EnumerableSet>,
 }
 
 unsafe impl TopLevelStorage for AccessControlEnumerable {}
@@ -193,9 +189,9 @@ mod tests {
         let count = contract.sender(alice).get_role_member_count(ROLE.into());
         assert_eq!(count, U256::ZERO);
     }
-    /*
+
     #[motsu::test]
-    fn get_role_member_fails_for_empty_role(
+    fn get_role_member_reverts_when_empty_role(
         contract: Contract<AccessControlEnumerable>,
         alice: Address,
     ) {
@@ -205,7 +201,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .get_role_member(role, index)
-            .motsu_expect_err("should fail for an empty role");
+            .motsu_expect_err("should return `Error::OutOfBounds`");
 
         assert!(matches!(
             err,
@@ -214,7 +210,7 @@ mod tests {
         ));
     }
 
-
+    /*
     #[motsu::test]
     fn can_enumerate_role_members(
         mut contract: Contract<AccessControlEnumerable>,
