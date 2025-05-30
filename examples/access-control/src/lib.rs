@@ -14,6 +14,7 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     alloy_primitives::{Address, FixedBytes, B256, U256},
+    msg,
     prelude::*,
 };
 
@@ -155,7 +156,10 @@ impl IAccessControl for AccessControlExample {
         role: B256,
         account: Address,
     ) -> Result<(), Self::Error> {
-        self.access.grant_role(role, account)
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self.access_enumerable._grant_role(role, account, &mut self.access);
+        Ok(())
     }
 
     fn revoke_role(
@@ -163,15 +167,30 @@ impl IAccessControl for AccessControlExample {
         role: B256,
         account: Address,
     ) -> Result<(), Self::Error> {
-        self.access.revoke_role(role, account)
+        let admin_role = self.get_role_admin(role);
+        self.only_role(admin_role)?;
+        self.access_enumerable._revoke_role(role, account, &mut self.access);
+        Ok(())
     }
 
+    #[allow(deprecated)]
     fn renounce_role(
         &mut self,
         role: B256,
         confirmation: Address,
     ) -> Result<(), Self::Error> {
-        self.access.renounce_role(role, confirmation)
+        if msg::sender() != confirmation {
+            return Err(control::Error::BadConfirmation(
+                control::AccessControlBadConfirmation {},
+            ));
+        }
+
+        self.access_enumerable._revoke_role(
+            role,
+            confirmation,
+            &mut self.access,
+        );
+        Ok(())
     }
 }
 

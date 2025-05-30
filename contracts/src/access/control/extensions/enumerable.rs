@@ -83,11 +83,7 @@ unsafe impl TopLevelStorage for AccessControlEnumerable {}
 
 #[public]
 #[implements(IAccessControlEnumerable<Error = Error>, IErc165)]
-impl AccessControlEnumerable {
-    fn get_role_members(&self, role: B256) -> Vec<Address> {
-        self.role_members.get(role).values()
-    }
-}
+impl AccessControlEnumerable {}
 
 #[public]
 impl IAccessControlEnumerable for AccessControlEnumerable {
@@ -193,11 +189,7 @@ mod tests {
 
     #[public]
     #[implements(IAccessControl<Error = control::Error>, IAccessControlEnumerable<Error = Error>,  IErc165)]
-    impl AccessControlEnumerableExample {
-        fn get_role_members(&self, role: B256) -> Vec<Address> {
-            self.enumerable.get_role_members(role)
-        }
-    }
+    impl AccessControlEnumerableExample {}
 
     #[public]
     impl IAccessControl for AccessControlEnumerableExample {
