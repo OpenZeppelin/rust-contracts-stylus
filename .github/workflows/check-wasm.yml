@@ -1,4 +1,4 @@
-name: gas-bench
+name: check-wasm
 # This workflow checks that the compiled wasm binary of every example contract
 # can be deployed to Arbitrum Stylus.
 permissions:
@@ -13,8 +13,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  required:
-    name: Gas usage report
+  check-wasm:
+    name: Check WASM binary
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,17 +22,10 @@ jobs:
       - name: Install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache-key: "gas-bench"
           rustflags: ""
 
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.5.12
 
-      - name: Install wasm-opt
-        run: cargo install wasm-opt@0.116.1
-
-      - name: Setup nitro node
-        run: ./scripts/nitro-testnode.sh -d -i
-
-      - name: run benches
-        run: ./scripts/bench.sh
+      - name: Run wasm check
+        run: ./scripts/check-wasm.sh
