@@ -11,7 +11,8 @@ use stylus_sdk::{prelude::*, storage::StorageMap};
 use crate::{
     access::control::{self, AccessControl},
     utils::{
-        introspection::erc165::IErc165, structs::enumerable_set::EnumerableSet,
+        introspection::erc165::IErc165,
+        structs::enumerable_set::EnumerableAddressSet,
     },
 };
 
@@ -20,7 +21,7 @@ mod sol {
     use alloy_sol_macro::sol;
 
     sol! {
-        /// Error returned when trying to query a role member at an invalid index.
+        /// The caller attempted to query a `role` member at an invalid `index`.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error AccessControlEnumerableOutOfBounds(bytes32 role, uint256 index);
@@ -31,7 +32,7 @@ mod sol {
 /// [`AccessControlEnumerable`] contract.
 #[derive(SolidityError, Debug)]
 pub enum Error {
-    /// Attempted to query a role member at an invalid index.
+    /// The caller attempted to query a `role` member at an invalid `index`.
     OutOfBounds(AccessControlEnumerableOutOfBounds),
     /// The caller account is missing a role.
     UnauthorizedAccount(control::AccessControlUnauthorizedAccount),
@@ -51,39 +52,59 @@ impl From<control::Error> for Error {
         }
     }
 }
-/// Interface for the AccessControlEnumerable extension
+
+/// State of an [`AccessControlEnumerable`] contract.
+#[storage]
+pub struct AccessControlEnumerable {
+    /// Role identifier -> [`EnumerableSet`] of accounts.
+    pub(crate) role_members: StorageMap<B256, EnumerableAddressSet>,
+}
+
+/// Interface for the [`AccessControlEnumerable`] extension.
 #[interface_id]
 pub trait IAccessControlEnumerable {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
-    /// TODO: improve docs
     /// Returns one of the accounts that have `role`.
-    /// `index` must be a value between 0 and {get_role_member_count},
-    /// non-inclusive.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `role` - The role identifier.
+    /// * `index` - The index of the account at `role`'s members list.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::OutOfBounds`] - If `index` is out of bounds.
     fn get_role_member(
         &self,
         role: B256,
         index: U256,
     ) -> Result<Address, Error>;
 
-    /// TODO: improve docs
-    /// Returns the number of accounts that have `role`.
+    /// Returns the number of accounts that have role.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `role` - The role identifier.
     fn get_role_member_count(&self, role: B256) -> U256;
 }
 
-/// State of an [`AccessControlEnumerable`] contract.
-#[storage]
-pub struct AccessControlEnumerable {
-    /// TODO: docs
-    role_members: StorageMap<B256, EnumerableSet>,
-}
-
-unsafe impl TopLevelStorage for AccessControlEnumerable {}
-
 #[public]
 #[implements(IAccessControlEnumerable<Error = Error>, IErc165)]
-impl AccessControlEnumerable {}
+impl AccessControlEnumerable {
+    /// Returns the members of `role`.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `role` - The role identifier.
+    pub fn get_role_members(&self, role: B256) -> Vec<Address> {
+        self.role_members.get(role).values()
+    }
+}
 
 #[public]
 impl IAccessControlEnumerable for AccessControlEnumerable {
@@ -112,14 +133,9 @@ impl IAccessControlEnumerable for AccessControlEnumerable {
 }
 
 impl AccessControlEnumerable {
-    /// TODO: improve docs
-    /// Grants `role` to `account`.
-    ///
-    /// If `account` had not been already granted `role`, emits a {RoleGranted}
-    /// event.
-    ///
-    /// Requirements:
-    /// - the caller must have ``role``'s admin role.
+    /// Extension of [`AccessControl::_grant_role`] that adds the `account` to
+    /// `role`'s members list.
+    #[allow(clippy::missing_errors_doc)]
     pub fn _grant_role(
         &mut self,
         role: B256,
@@ -135,13 +151,9 @@ impl AccessControlEnumerable {
         granted
     }
 
-    /// TODO: improve docs
-    /// Revokes `role` from `account`.
-    ///
-    /// If `account` had been granted `role`, emits a {RoleRevoked} event.
-    ///
-    /// Requirements:
-    /// - the caller must have ``role``'s admin role.
+    /// Extension of [`AccessControl::_revoke_role`] that removes the `account`
+    /// from `role`'s members list.
+    #[allow(clippy::missing_errors_doc)]
     pub fn _revoke_role(
         &mut self,
         role: B256,
@@ -189,7 +201,11 @@ mod tests {
 
     #[public]
     #[implements(IAccessControl<Error = control::Error>, IAccessControlEnumerable<Error = Error>,  IErc165)]
-    impl AccessControlEnumerableExample {}
+    impl AccessControlEnumerableExample {
+        fn get_role_members(&self, role: B256) -> Vec<Address> {
+            self.enumerable.get_role_members(role)
+        }
+    }
 
     #[public]
     impl IAccessControl for AccessControlEnumerableExample {
@@ -289,6 +305,11 @@ mod tests {
     ) {
         let count = contract.sender(alice).get_role_member_count(ROLE.into());
         assert_eq!(count, U256::ZERO);
+
+        assert!(contract
+            .sender(alice)
+            .get_role_members(ROLE.into())
+            .is_empty());
     }
 
     #[motsu::test]
@@ -309,6 +330,8 @@ mod tests {
             Error::OutOfBounds(AccessControlEnumerableOutOfBounds { role: r, index: idx })
                 if r == role && idx == index
         ));
+
+        assert!(contract.sender(alice).get_role_members(role).is_empty());
     }
 
     #[motsu::test]
@@ -357,6 +380,11 @@ mod tests {
                 .motsu_expect("should return bob"),
             bob
         );
+
+        assert_eq!(
+            contract.sender(alice).get_role_members(ROLE.into()),
+            vec![alice, bob]
+        );
     }
 
     #[motsu::test]
@@ -386,6 +414,11 @@ mod tests {
             contract.sender(alice).get_role_member_count(ROLE.into()),
             U256::ZERO
         );
+
+        assert!(contract
+            .sender(alice)
+            .get_role_members(ROLE.into())
+            .is_empty());
     }
 
     #[motsu::test]
@@ -442,6 +475,11 @@ mod tests {
             .get_role_member(ROLE.into(), U256::ZERO)
             .motsu_expect("should return alice");
         assert_eq!(member, alice);
+
+        assert_eq!(
+            contract.sender(alice).get_role_members(ROLE.into()),
+            vec![alice]
+        );
     }
 
     #[motsu::test]
@@ -480,6 +518,11 @@ mod tests {
                 .get_role_member(ROLE.into(), U256::ZERO)
                 .motsu_expect("should return alice"),
             alice
+        );
+
+        assert_eq!(
+            contract.sender(alice).get_role_members(ROLE.into()),
+            vec![alice]
         );
     }
 }

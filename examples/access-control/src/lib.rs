@@ -89,6 +89,10 @@ impl AccessControlExample {
     fn set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         self.access._set_role_admin(role, new_admin_role)
     }
+
+    fn get_role_members(&self, role: B256) -> Vec<Address> {
+        self.access_enumerable.get_role_members(role)
+    }
 }
 
 #[public]

@@ -1,4 +1,12 @@
-//! TODO: docs
+//! Smart contract for managing sets of [`Address`] type.
+
+/// Sets have the following properties:
+///
+/// * Elements are added, removed, and checked for existence in constant
+///   time (O(1)).
+/// * Elements are enumerated in O(n). No guarantees are made on the
+///   ordering.
+/// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
@@ -9,16 +17,16 @@ use stylus_sdk::{
     },
 };
 
-/// TODO: docs
+/// State of an [`EnumerableAddressSet`] contract.
 #[storage]
-pub struct EnumerableSet {
-    /// TODO: docs
+pub struct EnumerableAddressSet {
+    /// Values in the set.
     values: StorageVec<StorageAddress>,
-    /// TODO: docs
+    /// Value -> Index of the value in the `values` array.
     positions: StorageMap<Address, StorageU256>,
 }
 
-impl EnumerableSet {
+impl EnumerableAddressSet {
     /// Adds a value to a set. O(1).
     ///
     /// Returns true if the `value` was added to the set, that is if it was not
@@ -89,9 +97,9 @@ impl EnumerableSet {
             // Delete the tracked position for the deleted slot
             self.positions.delete(value);
 
-            return true;
+            true
         } else {
-            return false;
+            false
         }
     }
 
@@ -147,14 +155,14 @@ mod tests {
 
     use super::*;
 
-    unsafe impl TopLevelStorage for EnumerableSet {}
+    unsafe impl TopLevelStorage for EnumerableAddressSet {}
 
     #[public]
-    impl EnumerableSet {}
+    impl EnumerableAddressSet {}
 
     #[motsu::test]
     fn add_multiple_values(
-        contract: Contract<EnumerableSet>,
+        contract: Contract<EnumerableAddressSet>,
         alice: Address,
         bob: Address,
         charlie: Address,
@@ -175,7 +183,7 @@ mod tests {
 
     #[motsu::test]
     fn does_not_duplicate_values(
-        contract: Contract<EnumerableSet>,
+        contract: Contract<EnumerableAddressSet>,
         alice: Address,
     ) {
         assert!(contract.sender(alice).add(alice));
@@ -188,7 +196,7 @@ mod tests {
 
     #[motsu::test]
     fn removes_first_value(
-        contract: Contract<EnumerableSet>,
+        contract: Contract<EnumerableAddressSet>,
         alice: Address,
         bob: Address,
         charlie: Address,
@@ -209,7 +217,7 @@ mod tests {
 
     #[motsu::test]
     fn removes_last_value(
-        contract: Contract<EnumerableSet>,
+        contract: Contract<EnumerableAddressSet>,
         alice: Address,
         bob: Address,
         charlie: Address,
@@ -230,7 +238,7 @@ mod tests {
 
     #[motsu::test]
     fn removes_middle_value(
-        contract: Contract<EnumerableSet>,
+        contract: Contract<EnumerableAddressSet>,
         alice: Address,
         bob: Address,
         charlie: Address,
@@ -251,7 +259,7 @@ mod tests {
 
     #[motsu::test]
     fn does_not_remove_after_removal(
-        contract: Contract<EnumerableSet>,
+        contract: Contract<EnumerableAddressSet>,
         alice: Address,
         bob: Address,
         charlie: Address,
@@ -273,7 +281,7 @@ mod tests {
 
     #[motsu::test]
     fn does_not_remove_value_not_in_set(
-        contract: Contract<EnumerableSet>,
+        contract: Contract<EnumerableAddressSet>,
         alice: Address,
         bob: Address,
         charlie: Address,
