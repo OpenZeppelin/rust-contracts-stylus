@@ -9,7 +9,7 @@ pub use sol::*;
 use stylus_sdk::{prelude::*, storage::StorageMap};
 
 use crate::{
-    access::control::{self, AccessControl},
+    access::control::AccessControl,
     utils::{
         introspection::erc165::IErc165,
         structs::enumerable_set::EnumerableAddressSet,
@@ -34,23 +34,6 @@ mod sol {
 pub enum Error {
     /// The caller attempted to query a `role` member at an invalid `index`.
     OutOfBounds(AccessControlEnumerableOutOfBounds),
-    /// The caller account is missing a role.
-    UnauthorizedAccount(control::AccessControlUnauthorizedAccount),
-    /// The caller of a afunction is not the expected one.
-    BadConfirmation(control::AccessControlBadConfirmation),
-}
-
-impl From<control::Error> for Error {
-    fn from(error: control::Error) -> Self {
-        match error {
-            control::Error::UnauthorizedAccount(error) => {
-                Self::UnauthorizedAccount(error)
-            }
-            control::Error::BadConfirmation(error) => {
-                Self::BadConfirmation(error)
-            }
-        }
-    }
 }
 
 /// State of an [`AccessControlEnumerable`] contract.
@@ -187,7 +170,7 @@ mod tests {
     use stylus_sdk::msg;
 
     use super::*;
-    use crate::access::control::IAccessControl;
+    use crate::access::control::{self, IAccessControl};
 
     const ROLE: [u8; 32] =
         keccak_const::Keccak256::new().update(b"ROLE").finalize();

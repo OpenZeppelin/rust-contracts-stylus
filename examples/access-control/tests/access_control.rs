@@ -587,4 +587,3 @@ async fn error_when_previous_admin_revokes_roles(
 
     Ok(())
 }
-
