@@ -15,7 +15,7 @@ stylus-sdk.workspace = true
 export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
 
 [lib]
-crate-type = ["lib", "cdylib"]
+crate-type = ["lib"]
 
 [[bin]]
 name = "basic-example"
