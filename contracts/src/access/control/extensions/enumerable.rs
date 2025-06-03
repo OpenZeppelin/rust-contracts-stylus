@@ -101,6 +101,7 @@ impl AccessControlEnumerable {
     ///
     /// * `&self` - Read access to the contract's state.
     /// * `role` - The role identifier.
+    #[must_use]
     pub fn get_role_members(&self, role: B256) -> Vec<Address> {
         self.role_members.get(role).values()
     }

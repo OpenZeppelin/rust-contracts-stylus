@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `AccessControlEnumerable` extension to support role member enumeration. #361
+- Add `AccessControlEnumerable` extension that supports role member enumeration. #622
+- Add `EnumerableAddressSet`. #622
 
 ### Changed
 

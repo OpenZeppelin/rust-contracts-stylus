@@ -74,13 +74,16 @@ pub const TRANSFER_ROLE: [u8; 32] =
 impl AccessControlExample {
     #[constructor]
     fn constructor(&mut self, admin: Address) {
-        self.access
-            ._grant_role(AccessControl::DEFAULT_ADMIN_ROLE.into(), admin);
+        self.access_enumerable._grant_role(
+            AccessControl::DEFAULT_ADMIN_ROLE.into(),
+            admin,
+            &mut self.access,
+        );
     }
 
     fn make_admin(&mut self, account: Address) -> Result<(), Error> {
-        self.access.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
-        self.access.grant_role(TRANSFER_ROLE.into(), account)?;
+        self.only_role(AccessControl::DEFAULT_ADMIN_ROLE.into())?;
+        self.grant_role(TRANSFER_ROLE.into(), account)?;
         Ok(())
     }
 

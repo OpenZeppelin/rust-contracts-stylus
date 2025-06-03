@@ -37,14 +37,14 @@ impl EnumerableAddressSet {
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to add to the set.
     pub fn add(&mut self, value: Address) -> bool {
-        if !self.contains(value) {
+        if self.contains(value) {
+            false
+        } else {
             self.values.push(value);
             // The value is stored at length-1, but we add 1 to all indexes
             // and use [`U256::ZERO`] as a sentinel value.
             self.positions.setter(value).set(U256::from(self.values.len()));
             true
-        } else {
-            false
         }
     }
 
@@ -57,12 +57,18 @@ impl EnumerableAddressSet {
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to remove from the set.
+    ///
+    /// # Panics
+    ///
+    /// * Should never panic.
     pub fn remove(&mut self, value: Address) -> bool {
         // We cache the value's position to prevent multiple reads from the same
         // storage slot
         let position = self.positions.get(value);
 
-        if !position.is_zero() {
+        if position.is_zero() {
+            false
+        } else {
             // To delete an element from the `self.values` array in O(1),
             // we swap the element to delete with the last one in the array,
             // and then remove the last element (sometimes called as 'swap and
@@ -98,8 +104,6 @@ impl EnumerableAddressSet {
             self.positions.delete(value);
 
             true
-        } else {
-            false
         }
     }
 
@@ -140,10 +144,18 @@ impl EnumerableAddressSet {
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
+    ///
+    /// # Panics
+    ///
+    /// * Should never panic.
     pub fn values(&self) -> Vec<Address> {
         let mut values = Vec::new();
-        for i in 0..self.values.len() {
-            values.push(self.values.get(i).unwrap());
+        for idx in 0..self.values.len() {
+            values.push(
+                self.values
+                    .get(idx)
+                    .expect("element at index: {idx} must exist"),
+            );
         }
         values
     }

@@ -13,6 +13,10 @@ sol!(
 
         function setRoleAdmin(bytes32 role, bytes32 adminRole) public virtual;
 
+        function getRoleMember(bytes32 role, uint256 index) public view virtual returns (address member);
+        function getRoleMemberCount(bytes32 role) public view virtual returns (uint256 count);
+        function getRoleMembers(bytes32 role) public view virtual returns (address[] memory members);
+
         error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);
         error AccessControlBadConfirmation();
 
