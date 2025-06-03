@@ -63,7 +63,7 @@ impl EnumerableAddressSet {
     /// * Should never panic.
     pub fn remove(&mut self, value: Address) -> bool {
         // We cache the value's position to prevent multiple reads from the same
-        // storage slot
+        // storage slot.
         let position = self.positions.get(value);
 
         if position.is_zero() {
@@ -93,14 +93,14 @@ impl EnumerableAddressSet {
                     )
                     .set(last_value);
                 // Update the tracked position of the lastValue (that was just
-                // moved)
+                // moved).
                 self.positions.setter(last_value).set(position);
             }
 
-            // Delete the slot where the moved value was stored
+            // Delete the slot where the moved value was stored.
             self.values.pop();
 
-            // Delete the tracked position for the deleted slot
+            // Delete the tracked position for the deleted slot.
             self.positions.delete(value);
 
             true

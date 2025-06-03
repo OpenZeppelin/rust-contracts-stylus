@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use alloy::sol;
 
-// TODO: add AccessControlEnumerable interface.
 sol!(
     #[sol(rpc)]
    contract AccessControl {
