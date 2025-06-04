@@ -57,10 +57,6 @@ impl EnumerableAddressSet {
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to remove from the set.
-    ///
-    /// # Panics
-    ///
-    /// * Should never panic.
     pub fn remove(&mut self, value: Address) -> bool {
         // We cache the value's position to prevent multiple reads from the same
         // storage slot.
@@ -144,10 +140,6 @@ impl EnumerableAddressSet {
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
-    ///
-    /// # Panics
-    ///
-    /// * Should never panic.
     pub fn values(&self) -> Vec<Address> {
         let mut values = Vec::new();
         for idx in 0..self.values.len() {
