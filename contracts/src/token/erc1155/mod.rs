@@ -310,7 +310,6 @@ pub trait IErc1155: IErc165 {
     /// # Events
     ///
     /// * [`TransferSingle`].
-
     fn safe_transfer_from(
         &mut self,
         from: Address,
@@ -350,7 +349,6 @@ pub trait IErc1155: IErc165 {
     ///
     /// * [`TransferSingle`] - If the arrays contain one element.
     /// * [`TransferBatch`] - If the arrays contain multiple elements.
-
     fn safe_batch_transfer_from(
         &mut self,
         from: Address,
@@ -644,7 +642,6 @@ impl Erc1155 {
     /// # Events
     ///
     /// * [`TransferSingle`].
-
     pub fn _burn(
         &mut self,
         from: Address,
@@ -676,7 +673,6 @@ impl Erc1155 {
     ///
     /// * [`TransferSingle`] - If the arrays contain one element.
     /// * [`TransferBatch`] - If the arrays contain multiple elements.
-
     pub fn _burn_batch(
         &mut self,
         from: Address,
@@ -886,7 +882,6 @@ impl Erc1155 {
     ///
     /// * [`TransferSingle`] - If the arrays contain one element.
     /// * [`TransferBatch`] - If the arrays contain multiple elements.
-
     fn _do_burn(
         &mut self,
         from: Address,
