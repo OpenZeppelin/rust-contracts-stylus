@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `AccessControlEnumerable` extension that supports role member enumeration. #622
+- Add `EnumerableAddressSet`. #622
+
 ### Changed
+
+- Bump `cargo-stylus` to `v0.6.0`. #683
 
 ### Changed (Breaking)
 
