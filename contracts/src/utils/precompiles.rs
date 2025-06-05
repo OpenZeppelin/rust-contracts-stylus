@@ -1,9 +1,19 @@
 //! `ArbOS` precompile wrapper enabling easier precompile invocation.
 use alloy_primitives::{Address, B256};
+use primitives::ecrecover::{recover, Error};
 use stylus_sdk::prelude::*;
 
-pub use crate::utils::cryptography::ecdsa as ecrecover;
-use crate::utils::cryptography::ecdsa::{recover, Error};
+/// Ethereum ecrecover precompile primitives.
+///
+/// This module provides the cryptographic primitives needed for Ethereum's
+/// `ecrecover` precompile, which recovers the Ethereum address from an
+/// ECDSA signature and message hash.
+///
+/// Re-exports selected ECDSA types and constants specifically relevant
+/// to the ecrecover operation.
+pub mod primitives {
+    pub use crate::utils::cryptography::ecdsa as ecrecover;
+}
 
 /// Trait providing access to Arbitrum precompiles for Stylus contracts.
 ///

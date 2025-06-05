@@ -24,7 +24,9 @@ use crate::{
         cryptography::eip712::IEip712,
         nonces::{INonces, Nonces},
         precompiles::{
-            ecrecover::{self, ECDSAInvalidSignature, ECDSAInvalidSignatureS},
+            primitives::ecrecover::{
+                self, ECDSAInvalidSignature, ECDSAInvalidSignatureS,
+            },
             Precompiles,
         },
     },
