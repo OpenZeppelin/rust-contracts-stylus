@@ -217,8 +217,8 @@ pub trait IErc20 {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
+    /// * `value` - Number of tokens the spender is allowed to spend.
     ///
     /// # Errors
     ///
