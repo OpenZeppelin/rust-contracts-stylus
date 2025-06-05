@@ -27,11 +27,14 @@ use crate::utils::cryptography::ecdsa::{recover, Error};
 /// use openzeppelin_stylus::utils::cryptography::Precompiles;
 ///
 /// #[storage]
+/// #[entrypoint]
 /// struct MyContract {
 ///     // your fields...
 /// }
 ///
-/// // The `Precompiles` trait is automatically implemented for all contracts.
+/// // The `Precompiles` trait is automatically implemented for all
+/// // contracts annotated with `#[entrypoint]` or that implement
+/// // `stylus_sdk::prelude::TopLevelStorage`.
 ///
 /// #[public]
 /// impl MyContract {
