@@ -187,9 +187,9 @@ pub trait IErc20Permit: INonces {
     /// * [`ERC2612ExpiredSignature`] - If the `deadline` param is from the
     ///   past.
     /// * [`ERC2612InvalidSigner`] - If signer is not an `owner`.
-    /// * [`ecdsa::Error::InvalidSignatureS`] - If the `s` value is grater than
-    ///   [`ecdsa::SIGNATURE_S_UPPER_BOUND`].
-    /// * [`ecdsa::Error::InvalidSignature`] - If the recovered address is
+    /// * [`ecrecover::Error::InvalidSignatureS`] - If the `s` value is grater
+    ///   than [`ecrecover::SIGNATURE_S_UPPER_BOUND`].
+    /// * [`ecrecover::Error::InvalidSignature`] - If the recovered address is
     ///   [`Address::ZERO`].
     /// * [`erc20::Error::InvalidSpender`] - If the `spender` address is
     ///   [`Address::ZERO`].

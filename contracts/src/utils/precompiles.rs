@@ -1,4 +1,4 @@
-//! ArbOS precompile wrapper enabling easier precompile invocation.
+//! `ArbOS` precompile wrapper enabling easier precompile invocation.
 use alloy_primitives::{Address, B256};
 use stylus_sdk::prelude::*;
 
@@ -64,7 +64,7 @@ pub trait Precompiles: TopLevelStorage {
     /// # Errors
     ///
     /// * [`Error::InvalidSignatureS`] - If the `s` value is grater than
-    ///   [`SIGNATURE_S_UPPER_BOUND`].
+    ///   [`ecrecover::SIGNATURE_S_UPPER_BOUND`].
     /// * [`Error::InvalidSignature`] - If the recovered address is
     ///   [`Address::ZERO`].
     ///
