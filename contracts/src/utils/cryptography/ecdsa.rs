@@ -11,8 +11,6 @@ use stylus_sdk::{
     prelude::*,
 };
 
-use crate::utils::cryptography::ecdsa;
-
 /// Address of the `ecrecover` EVM precompile.
 pub const ECRECOVER_ADDR: Address =
     address!("0000000000000000000000000000000000000001");
@@ -66,7 +64,7 @@ pub enum Error {
     InvalidSignatureS(ECDSAInvalidSignatureS),
 }
 
-impl MethodError for ecdsa::Error {
+impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }

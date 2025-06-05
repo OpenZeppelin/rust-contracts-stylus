@@ -21,11 +21,12 @@ use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
 use crate::{
     token::erc20::{self, Erc20},
     utils::{
-        cryptography::{
-            ecdsa::{self, ECDSAInvalidSignature, ECDSAInvalidSignatureS},
-            eip712::IEip712,
-        },
+        cryptography::eip712::IEip712,
         nonces::{INonces, Nonces},
+        precompiles::{
+            ecrecover::{self, ECDSAInvalidSignature, ECDSAInvalidSignatureS},
+            Precompiles,
+        },
     },
 };
 
@@ -104,11 +105,13 @@ impl From<erc20::Error> for Error {
     }
 }
 
-impl From<ecdsa::Error> for Error {
-    fn from(value: ecdsa::Error) -> Self {
+impl From<ecrecover::Error> for Error {
+    fn from(value: ecrecover::Error) -> Self {
         match value {
-            ecdsa::Error::InvalidSignature(e) => Error::InvalidSignature(e),
-            ecdsa::Error::InvalidSignatureS(e) => Error::InvalidSignatureS(e),
+            ecrecover::Error::InvalidSignature(e) => Error::InvalidSignature(e),
+            ecrecover::Error::InvalidSignatureS(e) => {
+                Error::InvalidSignatureS(e)
+            }
         }
     }
 }
@@ -243,7 +246,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
 
         let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 
-        let signer: Address = ecdsa::recover(self, hash, v, r, s)?;
+        let signer: Address = self.ecrecover(hash, v, r, s)?;
 
         if signer != owner {
             return Err(ERC2612InvalidSigner { signer, owner }.into());
