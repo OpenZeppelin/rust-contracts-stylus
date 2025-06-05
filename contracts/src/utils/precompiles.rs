@@ -82,7 +82,7 @@ pub trait Precompiles: TopLevelStorage {
     /// # Errors
     ///
     /// * [`Error::InvalidSignatureS`] - If the `s` value is grater than
-    ///   [`ecrecover::SIGNATURE_S_UPPER_BOUND`].
+    ///   [`primitives::ecrecover::SIGNATURE_S_UPPER_BOUND`].
     /// * [`Error::InvalidSignature`] - If the recovered address is
     ///   [`Address::ZERO`].
     ///
