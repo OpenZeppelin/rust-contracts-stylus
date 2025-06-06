@@ -684,17 +684,429 @@ mod tests {
 
     #[motsu::test]
     fn mint(contract: Contract<Erc6909>, alice: Address) {
-        let one = uint!(1_U256);
-        let two = uint!(2_U256);
+        let id = uint!(1_U256);
+        let ten = uint!(10_U256);
 
         // Store the initial balance & supply.
         contract
             .sender(alice)
-            ._mint(alice, one, two)
+            ._mint(alice, id, ten)
             .expect("should mint tokens for Alice");
 
-        let balance = contract.sender(alice).balance_of(alice, one);
+        let balance = contract.sender(alice).balance_of(alice, id);
 
-        assert_eq!(balance, two, "Alice's balance should be 2");
+        assert_eq!(balance, ten, "Alice's balance should be 10");
+
+        contract.assert_emitted(&Transfer {
+            caller: alice,
+            sender: Address::ZERO,
+            receiver: alice,
+            id,
+            amount: ten,
+        });
+    }
+
+    #[motsu::test]
+    fn mint_errors_invalid_receiver(contract: Contract<Erc6909>, alice: Address) {
+        let receiver = Address::ZERO;
+        let id = uint!(1_U256);
+        let ten = uint!(10_U256);
+
+        let initial_balance = contract.sender(alice).balance_of(receiver, id);
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, ten)
+            .expect("should mint tokens for Alice");
+
+        let err = contract
+            .sender(alice)
+            ._mint(receiver, id, ten)
+            .motsu_unwrap_err();
+
+        assert!(matches!(err, Error::InvalidReceiver(_)));
+
+        assert_eq!(
+            initial_balance,
+            contract.sender(alice).balance_of(receiver, id)
+        );
+    }
+
+    #[motsu::test]
+    fn burn(contract: Contract<Erc6909>, alice: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+        let ten = uint!(10_U256);
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, ten)
+            .expect("should mint tokens for Alice");
+
+        let balance = contract.sender(alice).balance_of(alice, id);
+        
+        contract
+            .sender(alice)
+            ._burn(alice, id, one)
+            .motsu_unwrap();
+
+        assert_eq!(
+            balance - one,
+            contract.sender(alice).balance_of(alice, id)
+        )
+    }
+
+    #[motsu::test]
+    fn burn_errors_insufficient_balance(contract: Contract<Erc6909>, alice: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+        let ten = uint!(10_U256);
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, one)
+            .expect("should mint tokens for Alice");
+
+        let balance = contract.sender(alice).balance_of(alice, id);
+        
+        let err = contract
+            .sender(alice)
+            ._burn(alice, id, ten)
+            .motsu_unwrap_err();
+
+        assert!(matches!(err, Error::InsufficientBalance(_)));
+
+        assert_eq!(
+            balance,
+            contract.sender(alice).balance_of(alice, id)
+        )
+    }
+
+    #[motsu::test]
+    fn burn_errors_invalid_sender(contract: Contract<Erc6909>, alice: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        let invalid_sender = Address::ZERO;
+
+        let err = contract
+            .sender(alice)
+            ._burn(invalid_sender, id, one)
+            .expect_err("should not burn token for invalid sender");
+
+        assert!(matches!(err, Error::InvalidSender(_)));
+    }
+
+
+    #[motsu::test]
+    fn transfer(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, one)
+            .motsu_expect("should mint tokens for Alice");
+
+        contract
+            .sender(alice)
+            ._mint(bob, id, one)
+            .motsu_expect("should mint tokens for Bob");
+
+        let alice_balance = contract.sender(alice).balance_of(alice, id);
+        let bob_balance = contract.sender(alice).balance_of(bob, id);
+
+        let result = contract.sender(alice).transfer(bob, id, one);
+        assert!(result.is_ok());
+
+        assert_eq!(
+            alice_balance - one,
+            contract.sender(alice).balance_of(alice, id)
+        );
+
+        assert_eq!(
+            bob_balance + one,
+            contract.sender(alice).balance_of(bob, id)
+        );
+
+        contract.assert_emitted(&Transfer {
+            caller: alice,
+            sender: alice,
+            receiver: bob,
+            id,
+            amount: one,
+        });
+    }
+
+    #[motsu::test]
+    fn transfer_errors_insufficient_balance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, one)
+            .motsu_expect("should mint tokens for Alice");
+
+        contract
+            .sender(alice)
+            ._mint(bob, id, one)
+            .motsu_expect("should mint tokens for Bob");
+
+        let alice_balance = contract.sender(alice).balance_of(alice, id);
+        let bob_balance = contract.sender(alice).balance_of(bob, id);
+
+        let err = 
+            contract.sender(alice).transfer(bob, id, one + one).motsu_unwrap_err();
+        assert!(matches!(err, Error::InsufficientBalance(_)));
+
+        assert_eq!(
+            alice_balance,
+            contract.sender(alice).balance_of(alice, id)
+        );
+
+        assert_eq!(
+            bob_balance,
+            contract.sender(alice).balance_of(bob, id)
+        );
+
+    }
+
+    #[motsu::test]
+    fn transfer_from(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+        let ten = uint!(10_U256);
+
+        contract
+            .sender(alice)
+            .approve(bob, id, one)
+            .motsu_expect("should Alice approves Bob");
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, ten)
+            .motsu_expect("should mint tokens for Alice");
+        
+        assert_eq!(
+            ten,
+            contract.sender(alice).balance_of(alice, id)
+        );
+
+        contract
+            .sender(bob)
+            .transfer_from(alice, bob, id, one)
+            .motsu_expect("should transfer from Alice to Bob");
+
+        assert_eq!(
+            ten - one,
+            contract.sender(alice).balance_of(alice, id)
+        );
+
+        assert_eq!(
+            one,
+            contract.sender(alice).balance_of(bob, id)
+        );
+
+        contract.assert_emitted(&Transfer {
+            caller: bob,
+            sender: alice,
+            receiver: bob,
+            id,
+            amount: one,
+        });
+
+    }
+
+    #[motsu::test]
+    fn transfer_from_errors_insufficient_balance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+        let ten = uint!(10_U256);
+
+        contract
+            .sender(alice)
+            .approve(bob, id, ten)
+            .motsu_expect("should Alice approves Bob");
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, one)
+            .motsu_expect("should mint tokens for Alice");
+        
+        assert_eq!(
+            one,
+            contract.sender(alice).balance_of(alice, id)
+        );
+
+        let err = contract
+            .sender(bob)
+            .transfer_from(alice, bob, id, ten)
+            .motsu_unwrap_err();
+
+        assert!(matches!(err, Error::InsufficientBalance(_)));
+
+        assert_eq!(
+            one,
+            contract.sender(alice).balance_of(alice, id)
+        );
+    }
+
+    #[motsu::test]
+    fn transfer_from_errors_invalid_receiver(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        contract
+            .sender(alice)
+            .approve(bob, id, one)
+            .motsu_expect("should Alice approves Bob");
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, one)
+            .motsu_expect("should mint tokens for Alice");
+
+        let err = contract
+            .sender(bob)
+            .transfer_from(alice, Address::ZERO, id, one)
+            .motsu_unwrap_err();
+
+        assert!(matches!(err, Error::InvalidReceiver(_)));
+
+        assert_eq!(
+            one,
+            contract.sender(alice).balance_of(alice, id)
+        );
+    }
+
+    #[motsu::test]
+    fn transfer_from_errors_insufficient_allowance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        contract
+            .sender(alice)
+            ._mint(alice, id, one)
+            .motsu_expect("should mint tokens for Alice");
+
+        let err = contract
+            .sender(bob)
+            .transfer_from(alice, bob, id, one)
+            .motsu_unwrap_err();
+
+        assert!(matches!(err, Error::InsufficientAllowance(_)));
+    }
+
+    #[motsu::test]
+    fn approves_and_reads_allowance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        let allowance = contract.sender(alice).allowance(alice, bob, id);
+        assert_eq!(U256::ZERO, allowance);
+
+        contract
+            .sender(alice)
+            .approve(bob, id, one)
+            .motsu_expect("should Alice approves Bob");
+
+        let current_allowance = contract.sender(alice).allowance(alice, bob, id);
+        assert_eq!(one, current_allowance);
+
+        contract.assert_emitted(&Approval {
+            owner: alice,
+            spender: bob,
+            id,
+            amount: one,
+        });
+    }
+
+    #[motsu::test]
+    fn approve_errors_invalid_spender(contract: Contract<Erc6909>, alice: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        let err = contract
+            .sender(alice)
+            .approve(Address::ZERO, id, one)
+            .motsu_unwrap_err();
+
+        assert!(matches!(err, Error::InvalidSpender(_)));
+    }
+
+    #[motsu::test]
+    fn approve_errors_invalid_approver(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let id = uint!(2_U256);
+        let one = uint!(1_U256);
+
+        let err = contract
+            .sender(alice)
+            ._approve(Address::ZERO, bob, id, one, false)
+            .motsu_unwrap_err();
+
+        assert!(matches!(err, Error::InvalidApprover(_)));
+    }
+
+    #[motsu::test]
+    fn set_operator_and_reads_operator(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let is_operator = contract.sender(alice).is_operator(alice, bob);
+        assert_eq!(false, is_operator);
+
+        contract
+            .sender(alice)
+            .set_operator(bob, true)
+            .motsu_expect("should Alice sets Bob as operator");
+        
+        let is_operator = contract.sender(alice).is_operator(alice, bob);
+        assert_eq!(true, is_operator);
+
+        contract.assert_emitted(&OperatorSet {
+            owner: alice,
+            spender: bob,
+            approved: true,
+        });
+    }
+
+    #[motsu::test]
+    fn set_operator_errors_invalid_spender(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let err = contract
+            .sender(alice)
+            .set_operator(Address::ZERO, true)
+            .motsu_unwrap_err();
+        
+        assert!(matches!(err, Error::InvalidSpender(_)));
+    }
+
+    #[motsu::test]
+    fn set_operator_errors_invalid_approver(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+        let err = contract
+            .sender(alice)
+            ._set_operator(Address::ZERO, bob, true)
+            .motsu_unwrap_err();
+        
+        assert!(matches!(err, Error::InvalidApprover(_)));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc6909 as IErc6909>::interface_id();
+        let expected: FixedBytes<4> = 0x0f632fb3.into();
+        assert_eq!(actual, expected);
+    }
+
+    #[motsu::test]
+    fn supports_interface(contract: Contract<Erc6909>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc6909 as IErc6909>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc6909 as IErc165>::interface_id()));
+
+        let fake_interface_id = 0x12345678u32;
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }
