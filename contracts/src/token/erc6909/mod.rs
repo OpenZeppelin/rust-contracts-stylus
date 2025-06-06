@@ -15,6 +15,8 @@ use crate::utils::{
     math::storage::AddAssignUnchecked,
 };
 
+pub mod extensions;
+
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
