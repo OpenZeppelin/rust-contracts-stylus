@@ -22,8 +22,11 @@ get_example_crate_names() {
   find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
 }
 
-cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+cargo build --release --target wasm32-unknown-unknown \
+  -Z build-std=std,panic_abort \
+  -Z build-std-features=panic_immediate_abort
 
 for CRATE_NAME in $(get_example_crate_names); do
   check_wasm "$CRATE_NAME"
+  sleep 2
 done

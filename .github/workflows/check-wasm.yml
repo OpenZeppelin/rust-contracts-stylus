@@ -1,5 +1,6 @@
-name: check-abi
-# This workflow checks that the example contracts can export their ABI.
+name: check-wasm
+# This workflow checks that the compiled wasm binary of every example contract
+# can be deployed to Arbitrum Stylus.
 permissions:
   contents: read
 on:
@@ -12,8 +13,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  check-abi:
-    name: Check ABI
+  check-wasm:
+    name: Check WASM binary
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,5 +27,5 @@ jobs:
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
 
-      - name: Run export-abi
-        run: ./scripts/check-abi.sh
+      - name: Run wasm check
+        run: ./scripts/check-wasm.sh

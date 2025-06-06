@@ -53,6 +53,8 @@ use stylus_sdk::{
 
 use crate::utils::introspection::erc165::IErc165;
 
+pub mod extensions;
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
