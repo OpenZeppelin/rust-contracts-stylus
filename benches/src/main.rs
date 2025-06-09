@@ -1,5 +1,7 @@
 use benches::{
-    access_control, erc1155, erc1155_metadata_uri, erc20, erc6909, erc721, merkle_proofs, ownable, pedersen, poseidon, poseidon_asm_sol, poseidon_sol, report::BenchmarkReport
+    access_control, erc1155, erc1155_metadata_uri, erc20, erc6909, erc721,
+    merkle_proofs, ownable, pedersen, poseidon, poseidon_asm_sol, poseidon_sol,
+    report::BenchmarkReport,
 };
 use futures::FutureExt;
 use itertools::Itertools;
