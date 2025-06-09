@@ -3,8 +3,8 @@
 use abi::Erc6909;
 use alloy::primitives::{uint, Address, U256};
 use e2e::{
-    constructor, receipt, send, watch, Account, Constructor,
-    ContractInitializationError, EventExt, Panic, PanicCode, Revert,
+    receipt, send, watch, Account,
+    EventExt, Revert,
 };
 use eyre::Result;
 
@@ -339,14 +339,14 @@ async fn transfer_from_reverts_insufficient_balance(
         bob_addr,
         id,
         balance_plus_one,
-        id
     ))
     .expect_err("should not transfer when balance is insufficient");
 
     assert!(err.reverted_with(Erc6909::ERC6909InsufficientBalance {
         sender: alice_addr,
         balance,
-        needed: balance_plus_one
+        needed: balance_plus_one,
+        id
     }));
 
     let Erc6909::balanceOfReturn { balance: alice_balance } =
