@@ -131,7 +131,8 @@ async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
     assert!(err.reverted_with(Erc6909::ERC6909InsufficientBalance {
         sender: alice_addr,
         balance,
-        needed: balance_plus_one
+        needed: balance_plus_one,
+        id
     }));
 
     let Erc6909::balanceOfReturn { balance: balance } =
@@ -147,7 +148,6 @@ async fn burn_rejects_invalid_sender(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 
     let contract = Erc6909::new(contract_addr, &alice.wallet);
-    let alice_addr = alice.address();
     let invalid_sender = Address::ZERO;
 
     let id = uint!(2_U256);
@@ -236,7 +236,8 @@ async fn transfer_rejects_insufficient_balance(
     assert!(err.reverted_with(Erc6909::ERC6909InsufficientBalance {
         sender: alice_addr,
         balance,
-        needed: balance_plus_one
+        needed: balance_plus_one,
+        id
     }));
 
     let Erc6909::balanceOfReturn { balance: alice_balance } =
@@ -337,7 +338,8 @@ async fn transfer_from_reverts_insufficient_balance(
         alice_addr,
         bob_addr,
         id,
-        balance_plus_one
+        balance_plus_one,
+        id
     ))
     .expect_err("should not transfer when balance is insufficient");
 
@@ -398,7 +400,8 @@ async fn transfer_from_rejects_insufficient_allowance(
     assert!(err.reverted_with(Erc6909::ERC6909InsufficientAllowance {
         spender: bob_addr,
         allowance: U256::ZERO,
-        needed: one
+        needed: one,
+        id
     }));
 
     let Erc6909::balanceOfReturn { balance: alice_balance } =
@@ -501,7 +504,6 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
     let receipt = receipt!(contract_alice.approve(bob_addr, id, one))?;
 
     assert!(receipt.emits(Erc6909::Approval {
-        caller: alice_addr,
         owner: alice_addr,
         spender: bob_addr,
         id,
@@ -580,22 +582,20 @@ async fn sets_operator(alice: Account, bob: Account) -> Result<()> {
     let balance = uint!(10_U256);
 
     let Erc6909::isOperatorReturn { approved: initial_approved } =
-        contract.isOperator(alice_addr, bob_addr, id).call().await?;
+        contract.isOperator(alice_addr, bob_addr).call().await?;
 
     assert_eq!(false, initial_approved);
 
-    let receipt = receipt!(contract.setOperator(bob_addr, id, true))?;
+    let receipt = receipt!(contract.setOperator(bob_addr, true))?;
 
     let Erc6909::isOperatorReturn { approved } =
-        contract.isOperator(alice_addr, bob_addr, id).call().await?;
+        contract.isOperator(alice_addr, bob_addr).call().await?;
 
     assert_eq!(true, approved);
 
     assert!(receipt.emits(Erc6909::OperatorSet {
-        caller: alice_addr,
         owner: alice_addr,
-        operator: bob_addr,
-        id,
+        spender: bob_addr,
         approved: true,
     }));
 
@@ -614,11 +614,11 @@ async fn set_operator_rejects_invalid_spender(alice: Account) -> Result<()> {
     let one = uint!(1_U256);
 
     let Erc6909::isOperatorReturn { approved: initial_approved } =
-        contract.isOperator(alice_addr, invalid_spender, id).call().await?;
+        contract.isOperator(alice_addr, invalid_spender).call().await?;
 
     assert_eq!(false, initial_approved);
 
-    let err = send!(contract.setOperator(invalid_spender, id, true))
+    let err = send!(contract.setOperator(invalid_spender, true))
         .expect_err("should not set operator for Address::ZERO");
 
     assert!(err.reverted_with(Erc6909::ERC6909InvalidSpender {
@@ -626,7 +626,7 @@ async fn set_operator_rejects_invalid_spender(alice: Account) -> Result<()> {
     }));
 
     let Erc6909::isOperatorReturn { approved } =
-        contract.isOperator(alice_addr, invalid_spender, id).call().await?;
+        contract.isOperator(alice_addr, invalid_spender).call().await?;
 
     assert_eq!(false, approved);
 
