@@ -5,7 +5,6 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, FixedBytes, U256};
-
 use openzeppelin_stylus::{
     token::erc6909::{
         self,
@@ -14,7 +13,6 @@ use openzeppelin_stylus::{
     },
     utils::introspection::erc165::IErc165,
 };
-
 use stylus_sdk::prelude::*;
 
 #[entrypoint]
@@ -53,12 +51,7 @@ impl IErc6909 for Erc6909TokenSupplyExample {
         self.erc6909_token_supply.balance_of(owner, id)
     }
 
-    fn allowance(
-        &self,
-        owner: Address,
-        spender: Address,
-        id: U256,
-    ) -> U256 {
+    fn allowance(&self, owner: Address, spender: Address, id: U256) -> U256 {
         self.erc6909_token_supply.allowance(owner, spender, id)
     }
 

@@ -5,14 +5,14 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    call::MethodError, evm, msg,
+    call::MethodError,
+    evm, msg,
     prelude::*,
-    storage::{StorageMap, StorageU256, StorageBool},
+    storage::{StorageBool, StorageMap, StorageU256},
 };
 
 use crate::utils::{
-    introspection::erc165::IErc165,
-    math::storage::AddAssignUnchecked,
+    introspection::erc165::IErc165, math::storage::AddAssignUnchecked,
 };
 
 pub mod extensions;
@@ -102,7 +102,8 @@ pub enum Error {
     /// Indicates a failure with the `spender`’s `allowance`. Used in
     /// transfers.
     InsufficientAllowance(ERC6909InsufficientAllowance),
-    /// Indicates a failure with the `approver` of a token to be approved. Used in approvals.
+    /// Indicates a failure with the `approver` of a token to be approved. Used
+    /// in approvals.
     InvalidApprover(ERC6909InvalidApprover),
     /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC6909InvalidReceiver),
@@ -123,8 +124,10 @@ impl MethodError for Error {
 #[storage]
 pub struct Erc6909 {
     pub(crate) balances: StorageMap<Address, StorageMap<U256, StorageU256>>,
-    pub(crate) operator_approvals: StorageMap<Address, StorageMap<Address, StorageBool>>,
-    pub(crate) allowances: StorageMap<Address, StorageMap<Address, StorageMap<U256, StorageU256>>>
+    pub(crate) operator_approvals:
+        StorageMap<Address, StorageMap<Address, StorageBool>>,
+    pub(crate) allowances:
+        StorageMap<Address, StorageMap<Address, StorageMap<U256, StorageU256>>>,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -146,8 +149,9 @@ pub trait IErc6909: IErc165 {
     /// * `owner` - Account that owns the tokens.
     /// * `id` - Token id as a number.
     fn balance_of(&self, owner: Address, id: U256) -> U256;
-    
-    /// Returns the amount of tokens of type `id` that `spender` is allowed to spend on behalf of `owner`.
+
+    /// Returns the amount of tokens of type `id` that `spender` is allowed to
+    /// spend on behalf of `owner`.
     ///
     /// NOTE: Does not include operator allowances.
     ///
@@ -157,13 +161,8 @@ pub trait IErc6909: IErc165 {
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
     /// * `id` - Token id as a number.
-    fn allowance(
-        &self, 
-        owner: Address, 
-        spender: Address, 
-        id: U256,
-    ) -> U256;
-    
+    fn allowance(&self, owner: Address, spender: Address, id: U256) -> U256;
+
     /// Returns true if `spender` is set as an operator for `owner`.
     ///
     /// # Arguments
@@ -172,9 +171,10 @@ pub trait IErc6909: IErc165 {
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that is an operator for the owner.
     fn is_operator(&self, owner: Address, spender: Address) -> bool;
-    
-    /// Sets an approval to `spender` for `amount` of tokens of type `id` from the caller's tokens.
-    /// An `amount` of [`U256::MAX`] signifies an unlimited approval.
+
+    /// Sets an approval to `spender` for `amount` of tokens of type `id` from
+    /// the caller's tokens. An `amount` of [`U256::MAX`] signifies an
+    /// unlimited approval.
     ///
     /// Must return true.
     ///
@@ -192,13 +192,14 @@ pub trait IErc6909: IErc165 {
     ///
     /// * [`Approval`].
     fn approve(
-        &mut self, 
-        spender: Address, 
-        id: U256, 
+        &mut self,
+        spender: Address,
+        id: U256,
         amount: U256,
     ) -> Result<bool, Self::Error>;
-    
-    /// Grants or revokes unlimited transfer permission of any token id to `spender` for the caller's tokens.
+
+    /// Grants or revokes unlimited transfer permission of any token id to
+    /// `spender` for the caller's tokens.
     ///
     /// Must return true.
     ///
@@ -217,12 +218,13 @@ pub trait IErc6909: IErc165 {
     ///
     /// * [`OperatorSet`].
     fn set_operator(
-        &mut self, 
-        spender: Address, 
+        &mut self,
+        spender: Address,
         approved: bool,
     ) -> Result<bool, Self::Error>;
-    
-    /// Transfers `amount` of token type `id` from the caller's account to `receiver`.
+
+    /// Transfers `amount` of token type `id` from the caller's account to
+    /// `receiver`.
     ///
     /// Must return true.
     ///
@@ -235,21 +237,22 @@ pub trait IErc6909: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If the `receiver` address is [`Address::ZERO`].
+    /// * [`Error::InvalidReceiver`] - If the `receiver` address is
+    ///   [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the caller doesn't have a balance
     ///
     /// # Events
     ///
     /// * [`Transfer`].
     fn transfer(
-        &mut self, 
-        receiver: Address, 
-        id: U256, 
+        &mut self,
+        receiver: Address,
+        id: U256,
         amount: U256,
     ) -> Result<bool, Self::Error>;
-    
+
     /// Transfers `amount` of token type `id` from `sender` to `receiver`.
-    /// 
+    ///
     /// Must return true.
     ///
     /// # Arguments
@@ -262,18 +265,21 @@ pub trait IErc6909: IErc165 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `sender` address is [`Address::ZERO`].
-    /// * [`Error::InvalidReceiver`] - If the `receiver` address is [`Address::ZERO`].
-    /// * [`Error::InsufficientBalance`] - If the `sender` doesn't have a balance
+    /// * [`Error::InvalidSender`] - If the `sender` address is
+    ///   [`Address::ZERO`].
+    /// * [`Error::InvalidReceiver`] - If the `receiver` address is
+    ///   [`Address::ZERO`].
+    /// * [`Error::InsufficientBalance`] - If the `sender` doesn't have a
+    ///   balance
     ///
     /// # Events
     ///
     /// * [`Transfer`].
     fn transfer_from(
-        &mut self, 
-        sender: Address, 
-        receiver: Address, 
-        id: U256, 
+        &mut self,
+        sender: Address,
+        receiver: Address,
+        id: U256,
         amount: U256,
     ) -> Result<bool, Self::Error>;
 }
@@ -290,12 +296,7 @@ impl IErc6909 for Erc6909 {
         self.balances.get(owner).get(id)
     }
 
-    fn allowance(
-        &self, 
-        owner: Address, 
-        spender: Address, 
-        id: U256,
-    ) -> U256 {
+    fn allowance(&self, owner: Address, spender: Address, id: U256) -> U256 {
         self.allowances.get(owner).get(spender).get(id)
     }
 
@@ -348,14 +349,14 @@ impl IErc6909 for Erc6909 {
         self._transfer(sender, receiver, id, amount)?;
         Ok(true)
     }
-    
 }
 
 impl Erc6909 {
-    /// Sets `amount` as the allowance of `spender` over the `owner`'s `id` tokens.
+    /// Sets `amount` as the allowance of `spender` over the `owner`'s `id`
+    /// tokens.
     ///
-    /// This internal function is equivalent to `approve`, and can be used to e.g. 
-    /// set automatic allowances for certain subsystems, etc.
+    /// This internal function is equivalent to `approve`, and can be used to
+    /// e.g. set automatic allowances for certain subsystems, etc.
     ///
     /// # Arguments
     ///
@@ -370,7 +371,7 @@ impl Erc6909 {
     ///
     /// * [`Error::InvalidSpender`] - If the `spender` address is
     ///   [`Address::ZERO`].
-    /// * [`Error::InvalidApprover`] - If the `owner` address is 
+    /// * [`Error::InvalidApprover`] - If the `owner` address is
     ///   [`Address::ZERO`].
     ///
     /// # Events
@@ -385,13 +386,13 @@ impl Erc6909 {
         emit_event: bool,
     ) -> Result<bool, Error> {
         if owner.is_zero() {
-            return Err(Error::InvalidApprover(ERC6909InvalidApprover{
+            return Err(Error::InvalidApprover(ERC6909InvalidApprover {
                 approver: Address::ZERO,
             }));
         }
 
         if spender.is_zero() {
-            return Err(Error::InvalidSpender(ERC6909InvalidSpender{
+            return Err(Error::InvalidSpender(ERC6909InvalidSpender {
                 spender: Address::ZERO,
             }));
         }
@@ -399,7 +400,7 @@ impl Erc6909 {
         self.allowances.setter(owner).setter(spender).insert(id, amount);
 
         if emit_event {
-            evm::log(Approval {owner, spender, id, amount});
+            evm::log(Approval { owner, spender, id, amount });
         }
 
         Ok(true)
@@ -407,8 +408,8 @@ impl Erc6909 {
 
     /// Approve `spender` to operate on all of `owner`'s tokens
     ///
-    /// This internal function is equivalent to `setOperator`, and can be used to e.g. 
-    /// set automatic allowances for certain subsystems, etc.
+    /// This internal function is equivalent to `setOperator`, and can be used
+    /// to e.g. set automatic allowances for certain subsystems, etc.
     ///
     /// # Arguments
     ///
@@ -435,30 +436,33 @@ impl Erc6909 {
         approved: bool,
     ) -> Result<bool, Error> {
         if owner.is_zero() {
-            return Err(Error::InvalidApprover(ERC6909InvalidApprover{
+            return Err(Error::InvalidApprover(ERC6909InvalidApprover {
                 approver: Address::ZERO,
             }));
         }
 
         if spender.is_zero() {
-            return Err(Error::InvalidSpender(ERC6909InvalidSpender{
+            return Err(Error::InvalidSpender(ERC6909InvalidSpender {
                 spender: Address::ZERO,
             }));
         }
 
         self.operator_approvals.setter(owner).insert(spender, approved);
 
-        evm::log(OperatorSet {owner, spender, approved});
+        evm::log(OperatorSet { owner, spender, approved });
 
         Ok(true)
     }
-    /// Moves `amount` of token `id` from `from` to `to` without checking for approvals. 
-    /// This function verifies that neither the sender nor the receiver are [`Address::ZERO`], 
-    /// which means it cannot mint or burn tokens.
+
+    /// Moves `amount` of token `id` from `from` to `to` without checking for
+    /// approvals. This function verifies that neither the sender nor the
+    /// receiver are [`Address::ZERO`], which means it cannot mint or burn
+    /// tokens.
     ///
     /// Relies on the `_update` mechanism.
     ///
-    /// NOTE: This function is not virtual, {_update} should be overridden instead.
+    /// NOTE: This function is not virtual, {_update} should be overridden
+    /// instead.
     ///
     /// # Arguments
     ///
@@ -502,9 +506,10 @@ impl Erc6909 {
         Ok(())
     }
 
-    /// Transfers `amount` of token `id` from `from` to `to`, or alternatively 
-    /// mints (or burns) if `from` (or `to`) is the zero address. 
-    /// All customizations to transfers, mints, and burns should be done by overriding this function.
+    /// Transfers `amount` of token `id` from `from` to `to`, or alternatively
+    /// mints (or burns) if `from` (or `to`) is the zero address.
+    /// All customizations to transfers, mints, and burns should be done by
+    /// overriding this function.
     ///
     /// # Arguments
     ///
@@ -534,12 +539,14 @@ impl Erc6909 {
         if !from.is_zero() {
             let from_balance = self.balances.get(from).get(id);
             if from_balance < amount {
-                return Err(Error::InsufficientBalance(ERC6909InsufficientBalance {
-                    sender: from,
-                    balance: from_balance,
-                    needed: amount,
-                    id,
-                }));
+                return Err(Error::InsufficientBalance(
+                    ERC6909InsufficientBalance {
+                        sender: from,
+                        balance: from_balance,
+                        needed: amount,
+                        id,
+                    },
+                ));
             }
             self.balances.setter(from).setter(id).set(from_balance - amount);
         }
@@ -548,7 +555,7 @@ impl Erc6909 {
             self.balances.setter(to).setter(id).add_assign_unchecked(amount);
         }
 
-        evm::log(Transfer {caller, sender: from, receiver: to, id, amount});
+        evm::log(Transfer { caller, sender: from, receiver: to, id, amount });
         Ok(())
     }
 
@@ -571,7 +578,7 @@ impl Erc6909 {
     ///   enough allowance to spend `amount` of tokens.
     /// * [`Error::InvalidSpender`] - If the `spender` address is
     ///   [`Address::ZERO`].
-    /// * [`Error::InvalidApprover`] - If the `owner` address is 
+    /// * [`Error::InvalidApprover`] - If the `owner` address is
     ///   [`Address::ZERO`].
     ///
     /// # Events
@@ -587,21 +594,32 @@ impl Erc6909 {
         let current_allowance = self.allowances.get(owner).get(spender).get(id);
         if current_allowance < U256::MAX {
             if current_allowance < amount {
-                return Err(Error::InsufficientAllowance(ERC6909InsufficientAllowance {
-                    spender,
-                    allowance: current_allowance,
-                    needed: amount,
-                    id,
-                }));
+                return Err(Error::InsufficientAllowance(
+                    ERC6909InsufficientAllowance {
+                        spender,
+                        allowance: current_allowance,
+                        needed: amount,
+                        id,
+                    },
+                ));
             }
-            self._approve(owner, spender, id, current_allowance - amount, false)?;
+            self._approve(
+                owner,
+                spender,
+                id,
+                current_allowance - amount,
+                false,
+            )?;
         }
         Ok(())
     }
-    /// Creates `amount` of token `id` and assigns them to `account`, by transferring it from [`Address::ZERO`].
-    /// Relies on the `_update` mechanism.
+
+    /// Creates `amount` of token `id` and assigns them to `account`, by
+    /// transferring it from [`Address::ZERO`]. Relies on the `_update`
+    /// mechanism.
     ///
-    /// NOTE: This function is not virtual, {_update} should be overridden instead.
+    /// NOTE: This function is not virtual, {_update} should be overridden
+    /// instead.
     ///
     /// # Arguments
     ///
@@ -635,7 +653,8 @@ impl Erc6909 {
     /// Destroys a `amount` of token `id` from `account`.
     /// Relies on the `_update` mechanism.
     ///
-    /// NOTE: This function is not virtual, {_update} should be overridden instead.
+    /// NOTE: This function is not virtual, {_update} should be overridden
+    /// instead.
     ///
     /// # Arguments
     ///
@@ -666,7 +685,7 @@ impl Erc6909 {
         }
 
         self._update(from, Address::ZERO, id, amount)
-    }   
+    }
 }
 
 #[public]
@@ -682,7 +701,9 @@ mod tests {
     use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;
 
-    use super::{Approval, Transfer, OperatorSet, IErc165, IErc6909, Erc6909, Error};
+    use super::{
+        Approval, Erc6909, Error, IErc165, IErc6909, OperatorSet, Transfer,
+    };
 
     #[motsu::test]
     fn mint(contract: Contract<Erc6909>, alice: Address) {
@@ -709,7 +730,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_errors_invalid_receiver(contract: Contract<Erc6909>, alice: Address) {
+    fn mint_errors_invalid_receiver(
+        contract: Contract<Erc6909>,
+        alice: Address,
+    ) {
         let receiver = Address::ZERO;
         let id = uint!(1_U256);
         let ten = uint!(10_U256);
@@ -721,10 +745,8 @@ mod tests {
             ._mint(alice, id, ten)
             .expect("should mint tokens for Alice");
 
-        let err = contract
-            .sender(alice)
-            ._mint(receiver, id, ten)
-            .motsu_unwrap_err();
+        let err =
+            contract.sender(alice)._mint(receiver, id, ten).motsu_unwrap_err();
 
         assert!(matches!(err, Error::InvalidReceiver(_)));
 
@@ -746,20 +768,17 @@ mod tests {
             .expect("should mint tokens for Alice");
 
         let balance = contract.sender(alice).balance_of(alice, id);
-        
-        contract
-            .sender(alice)
-            ._burn(alice, id, one)
-            .motsu_unwrap();
 
-        assert_eq!(
-            balance - one,
-            contract.sender(alice).balance_of(alice, id)
-        )
+        contract.sender(alice)._burn(alice, id, one).motsu_unwrap();
+
+        assert_eq!(balance - one, contract.sender(alice).balance_of(alice, id))
     }
 
     #[motsu::test]
-    fn burn_errors_insufficient_balance(contract: Contract<Erc6909>, alice: Address) {
+    fn burn_errors_insufficient_balance(
+        contract: Contract<Erc6909>,
+        alice: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
         let ten = uint!(10_U256);
@@ -770,18 +789,13 @@ mod tests {
             .expect("should mint tokens for Alice");
 
         let balance = contract.sender(alice).balance_of(alice, id);
-        
-        let err = contract
-            .sender(alice)
-            ._burn(alice, id, ten)
-            .motsu_unwrap_err();
+
+        let err =
+            contract.sender(alice)._burn(alice, id, ten).motsu_unwrap_err();
 
         assert!(matches!(err, Error::InsufficientBalance(_)));
 
-        assert_eq!(
-            balance,
-            contract.sender(alice).balance_of(alice, id)
-        )
+        assert_eq!(balance, contract.sender(alice).balance_of(alice, id))
     }
 
     #[motsu::test]
@@ -798,7 +812,6 @@ mod tests {
 
         assert!(matches!(err, Error::InvalidSender(_)));
     }
-
 
     #[motsu::test]
     fn transfer(contract: Contract<Erc6909>, alice: Address, bob: Address) {
@@ -841,7 +854,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_errors_insufficient_balance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn transfer_errors_insufficient_balance(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
 
@@ -858,24 +875,23 @@ mod tests {
         let alice_balance = contract.sender(alice).balance_of(alice, id);
         let bob_balance = contract.sender(alice).balance_of(bob, id);
 
-        let err = 
-            contract.sender(alice).transfer(bob, id, one + one).motsu_unwrap_err();
+        let err = contract
+            .sender(alice)
+            .transfer(bob, id, one + one)
+            .motsu_unwrap_err();
         assert!(matches!(err, Error::InsufficientBalance(_)));
 
-        assert_eq!(
-            alice_balance,
-            contract.sender(alice).balance_of(alice, id)
-        );
+        assert_eq!(alice_balance, contract.sender(alice).balance_of(alice, id));
 
-        assert_eq!(
-            bob_balance,
-            contract.sender(alice).balance_of(bob, id)
-        );
-
+        assert_eq!(bob_balance, contract.sender(alice).balance_of(bob, id));
     }
 
     #[motsu::test]
-    fn transfer_from(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn transfer_from(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
         let ten = uint!(10_U256);
@@ -889,26 +905,17 @@ mod tests {
             .sender(alice)
             ._mint(alice, id, ten)
             .motsu_expect("should mint tokens for Alice");
-        
-        assert_eq!(
-            ten,
-            contract.sender(alice).balance_of(alice, id)
-        );
+
+        assert_eq!(ten, contract.sender(alice).balance_of(alice, id));
 
         contract
             .sender(bob)
             .transfer_from(alice, bob, id, one)
             .motsu_expect("should transfer from Alice to Bob");
 
-        assert_eq!(
-            ten - one,
-            contract.sender(alice).balance_of(alice, id)
-        );
+        assert_eq!(ten - one, contract.sender(alice).balance_of(alice, id));
 
-        assert_eq!(
-            one,
-            contract.sender(alice).balance_of(bob, id)
-        );
+        assert_eq!(one, contract.sender(alice).balance_of(bob, id));
 
         contract.assert_emitted(&Transfer {
             caller: bob,
@@ -917,11 +924,14 @@ mod tests {
             id,
             amount: one,
         });
-
     }
 
     #[motsu::test]
-    fn transfer_from_errors_insufficient_balance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn transfer_from_errors_insufficient_balance(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
         let ten = uint!(10_U256);
@@ -935,11 +945,8 @@ mod tests {
             .sender(alice)
             ._mint(alice, id, one)
             .motsu_expect("should mint tokens for Alice");
-        
-        assert_eq!(
-            one,
-            contract.sender(alice).balance_of(alice, id)
-        );
+
+        assert_eq!(one, contract.sender(alice).balance_of(alice, id));
 
         let err = contract
             .sender(bob)
@@ -948,14 +955,15 @@ mod tests {
 
         assert!(matches!(err, Error::InsufficientBalance(_)));
 
-        assert_eq!(
-            one,
-            contract.sender(alice).balance_of(alice, id)
-        );
+        assert_eq!(one, contract.sender(alice).balance_of(alice, id));
     }
 
     #[motsu::test]
-    fn transfer_from_errors_invalid_receiver(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn transfer_from_errors_invalid_receiver(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
 
@@ -976,14 +984,15 @@ mod tests {
 
         assert!(matches!(err, Error::InvalidReceiver(_)));
 
-        assert_eq!(
-            one,
-            contract.sender(alice).balance_of(alice, id)
-        );
+        assert_eq!(one, contract.sender(alice).balance_of(alice, id));
     }
 
     #[motsu::test]
-    fn transfer_from_errors_insufficient_allowance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn transfer_from_errors_insufficient_allowance(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
 
@@ -1001,7 +1010,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approves_and_reads_allowance(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn approves_and_reads_allowance(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
 
@@ -1013,7 +1026,8 @@ mod tests {
             .approve(bob, id, one)
             .motsu_expect("should Alice approves Bob");
 
-        let current_allowance = contract.sender(alice).allowance(alice, bob, id);
+        let current_allowance =
+            contract.sender(alice).allowance(alice, bob, id);
         assert_eq!(one, current_allowance);
 
         contract.assert_emitted(&Approval {
@@ -1025,7 +1039,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_errors_invalid_spender(contract: Contract<Erc6909>, alice: Address) {
+    fn approve_errors_invalid_spender(
+        contract: Contract<Erc6909>,
+        alice: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
 
@@ -1038,7 +1055,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_errors_invalid_approver(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn approve_errors_invalid_approver(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
 
@@ -1051,7 +1072,11 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_operator_and_reads_operator(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn set_operator_and_reads_operator(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let is_operator = contract.sender(alice).is_operator(alice, bob);
         assert_eq!(false, is_operator);
 
@@ -1059,7 +1084,7 @@ mod tests {
             .sender(alice)
             .set_operator(bob, true)
             .motsu_expect("should Alice sets Bob as operator");
-        
+
         let is_operator = contract.sender(alice).is_operator(alice, bob);
         assert_eq!(true, is_operator);
 
@@ -1071,22 +1096,30 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_operator_errors_invalid_spender(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn set_operator_errors_invalid_spender(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let err = contract
             .sender(alice)
             .set_operator(Address::ZERO, true)
             .motsu_unwrap_err();
-        
+
         assert!(matches!(err, Error::InvalidSpender(_)));
     }
 
     #[motsu::test]
-    fn set_operator_errors_invalid_approver(contract: Contract<Erc6909>, alice: Address, bob: Address) {
+    fn set_operator_errors_invalid_approver(
+        contract: Contract<Erc6909>,
+        alice: Address,
+        bob: Address,
+    ) {
         let err = contract
             .sender(alice)
             ._set_operator(Address::ZERO, bob, true)
             .motsu_unwrap_err();
-        
+
         assert!(matches!(err, Error::InvalidApprover(_)));
     }
 

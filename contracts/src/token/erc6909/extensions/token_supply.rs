@@ -74,12 +74,7 @@ impl IErc6909 for Erc6909TokenSupply {
         self.erc6909.balance_of(owner, id)
     }
 
-    fn allowance(
-        &self, 
-        owner: Address, 
-        spender: Address, 
-        id: U256,
-    ) -> U256 {
+    fn allowance(&self, owner: Address, spender: Address, id: U256) -> U256 {
         self.erc6909.allowance(owner, spender, id)
     }
 
@@ -97,13 +92,13 @@ impl IErc6909 for Erc6909TokenSupply {
     }
 
     fn set_operator(
-        &mut self, 
-        spender: Address, 
+        &mut self,
+        spender: Address,
         approved: bool,
     ) -> Result<bool, Self::Error> {
         self.erc6909.set_operator(spender, approved)
     }
-    
+
     fn transfer(
         &mut self,
         receiver: Address,
@@ -129,12 +124,12 @@ impl IErc6909 for Erc6909TokenSupply {
         self._transfer(sender, receiver, id, amount)?;
         Ok(true)
     }
-    
 }
 
-impl Erc6909TokenSupply{
-    /// Creates `amount` of token `id` and assigns them to `account`, by transferring it from [`Address::ZERO`].
-    /// Relies on the `_update` mechanism.
+impl Erc6909TokenSupply {
+    /// Creates `amount` of token `id` and assigns them to `account`, by
+    /// transferring it from [`Address::ZERO`]. Relies on the `_update`
+    /// mechanism.
     ///
     /// Re-export of [`Erc6909::_mint`].
     pub fn _mint(
@@ -144,9 +139,9 @@ impl Erc6909TokenSupply{
         amount: U256,
     ) -> Result<(), Error> {
         if to.is_zero() {
-            return Err(erc6909::Error::InvalidReceiver(erc6909::ERC6909InvalidReceiver {
-                receiver: Address::ZERO,
-            }));
+            return Err(erc6909::Error::InvalidReceiver(
+                erc6909::ERC6909InvalidReceiver { receiver: Address::ZERO },
+            ));
         }
 
         self._update(Address::ZERO, to, id, amount)
@@ -163,20 +158,21 @@ impl Erc6909TokenSupply{
         amount: U256,
     ) -> Result<(), Error> {
         if from.is_zero() {
-            return Err(erc6909::Error::InvalidSender(erc6909::ERC6909InvalidSender {
-                sender: Address::ZERO,
-            }));
+            return Err(erc6909::Error::InvalidSender(
+                erc6909::ERC6909InvalidSender { sender: Address::ZERO },
+            ));
         }
 
         self._update(from, Address::ZERO, id, amount)
     }
 
-    /// Moves `amount` of token `id` from `from` to `to` without checking for approvals. 
-    /// This function verifies that neither the sender nor the receiver are [`Address::ZERO`], 
-    /// which means it cannot mint or burn tokens.
+    /// Moves `amount` of token `id` from `from` to `to` without checking for
+    /// approvals. This function verifies that neither the sender nor the
+    /// receiver are [`Address::ZERO`], which means it cannot mint or burn
+    /// tokens.
     ///
     /// Relies on the `_update` mechanism.
-    /// 
+    ///
     /// Re-export of [`Erc6909::_transfer`].
     fn _transfer(
         &mut self,
@@ -186,15 +182,15 @@ impl Erc6909TokenSupply{
         amount: U256,
     ) -> Result<(), Error> {
         if from.is_zero() {
-            return Err(erc6909::Error::InvalidSender(erc6909::ERC6909InvalidSender {
-                sender: Address::ZERO,
-            }));
+            return Err(erc6909::Error::InvalidSender(
+                erc6909::ERC6909InvalidSender { sender: Address::ZERO },
+            ));
         }
 
         if to.is_zero() {
-            return Err(erc6909::Error::InvalidReceiver(erc6909::ERC6909InvalidReceiver {
-                receiver: Address::ZERO,
-            }));
+            return Err(erc6909::Error::InvalidReceiver(
+                erc6909::ERC6909InvalidReceiver { receiver: Address::ZERO },
+            ));
         }
 
         self._update(from, to, id, amount)?;
@@ -203,7 +199,7 @@ impl Erc6909TokenSupply{
     }
 }
 
-impl Erc6909TokenSupply{
+impl Erc6909TokenSupply {
     /// Extended version of [`Erc6909::_update`] that updates the supply of
     /// tokens.
     ///
@@ -233,7 +229,7 @@ impl Erc6909TokenSupply{
         from: Address,
         to: Address,
         id: U256,
-        amount: U256
+        amount: U256,
     ) -> Result<(), erc6909::Error> {
         self.erc6909._update(from, to, id, amount)?;
 
@@ -263,55 +259,44 @@ impl IErc165 for Erc6909TokenSupply {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::*;
-
     use stylus_sdk::{
-        alloy_primitives::{uint, Address, fixed_bytes, FixedBytes, U256},
+        alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U256},
         prelude::*,
     };
 
     use super::*;
-    use crate::token::erc6909::{
-        ERC6909InvalidReceiver, ERC6909InvalidSender
-    };
+    use crate::token::erc6909::{ERC6909InvalidReceiver, ERC6909InvalidSender};
 
     unsafe impl TopLevelStorage for Erc6909TokenSupply {}
-    
+
     #[motsu::test]
     fn mint(contract: Contract<Erc6909TokenSupply>, alice: Address) {
         let id = uint!(1_U256);
         let ten = uint!(10_U256);
 
-        assert_eq!(
-            U256::ZERO,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply(id));
 
         contract
             .sender(alice)
             ._mint(alice, id, ten)
             .expect("should mint tokens for Alice");
 
-        assert_eq!(
-            ten,
-            contract.sender(alice).balance_of(alice, id)
-        );
+        assert_eq!(ten, contract.sender(alice).balance_of(alice, id));
 
-        assert_eq!(
-            ten,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(ten, contract.sender(alice).total_supply(id));
     }
 
     #[motsu::test]
-    fn mint_twice(contract: Contract<Erc6909TokenSupply>, alice: Address, bob: Address) {
+    fn mint_twice(
+        contract: Contract<Erc6909TokenSupply>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(1_U256);
         let five = uint!(5_U256);
         let ten = uint!(10_U256);
 
-        assert_eq!(
-            U256::ZERO,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply(id));
 
         contract
             .sender(alice)
@@ -323,31 +308,22 @@ mod tests {
             ._mint(bob, id, five)
             .expect("should mint tokens for Bob");
 
-        assert_eq!(
-            ten,
-            contract.sender(alice).balance_of(alice, id)
-        );
+        assert_eq!(ten, contract.sender(alice).balance_of(alice, id));
 
-        assert_eq!(
-            five,
-            contract.sender(alice).balance_of(bob, id)
-        );
+        assert_eq!(five, contract.sender(alice).balance_of(bob, id));
 
-        assert_eq!(
-            ten + five,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(ten + five, contract.sender(alice).total_supply(id));
     }
 
     #[motsu::test]
-    fn mint_errors_invalid_receiver(contract: Contract<Erc6909TokenSupply>, alice: Address) {
+    fn mint_errors_invalid_receiver(
+        contract: Contract<Erc6909TokenSupply>,
+        alice: Address,
+    ) {
         let id = uint!(1_U256);
         let ten = uint!(10_U256);
 
-        assert_eq!(
-            U256::ZERO,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply(id));
 
         let invalid_receiver = Address::ZERO;
 
@@ -361,15 +337,16 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `total_supplies`"]
-    fn mint_panics_on_total_supply_overflow(contract: Contract<Erc6909TokenSupply>, alice: Address, bob: Address) {
+    fn mint_panics_on_total_supply_overflow(
+        contract: Contract<Erc6909TokenSupply>,
+        alice: Address,
+        bob: Address,
+    ) {
         let id = uint!(2_U256);
         let one = uint!(1_U256);
         let ten = uint!(10_U256);
 
-        assert_eq!(
-            U256::ZERO,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply(id));
 
         contract
             .sender(alice)
@@ -389,10 +366,7 @@ mod tests {
         let ten = uint!(10_U256);
         let one = uint!(1_U256);
 
-        assert_eq!(
-            U256::ZERO,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply(id));
 
         contract
             .sender(alice)
@@ -404,49 +378,52 @@ mod tests {
             ._burn(alice, id, one)
             .expect("should burn tokens for Alice");
 
-        assert_eq!(
-            ten - one,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(ten - one, contract.sender(alice).total_supply(id));
     }
 
     #[motsu::test]
-    fn burn_errors_invalid_sender(contract: Contract<Erc6909TokenSupply>, alice: Address) {
+    fn burn_errors_invalid_sender(
+        contract: Contract<Erc6909TokenSupply>,
+        alice: Address,
+    ) {
         let id = uint!(2_U256);
         let ten = uint!(10_U256);
 
         let invalid_sender = Address::ZERO;
 
-        assert_eq!(
-            U256::ZERO,
-            contract.sender(alice).total_supply(id)
-        );
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply(id));
 
         let err = contract
             .sender(alice)
             ._burn(invalid_sender, id, ten)
             .motsu_unwrap_err();
-        assert!(matches!(err, Error::InvalidSender(ERC6909InvalidSender { sender }) if sender == invalid_sender));
+        assert!(
+            matches!(err, Error::InvalidSender(ERC6909InvalidSender { sender }) if sender == invalid_sender)
+        );
     }
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc6909TokenSupply as IErc6909TokenSupply>::interface_id();
+        let actual =
+            <Erc6909TokenSupply as IErc6909TokenSupply>::interface_id();
         let expected: FixedBytes<4> = fixed_bytes!("0xbd85b039");
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface(contract: Contract<Erc6909TokenSupply>, alice: Address) {
+    fn supports_interface(
+        contract: Contract<Erc6909TokenSupply>,
+        alice: Address,
+    ) {
         assert!(contract.sender(alice).supports_interface(
             <Erc6909TokenSupply as IErc6909TokenSupply>::interface_id()
         ));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<Erc6909TokenSupply as IErc165>::interface_id()));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<Erc6909TokenSupply as IErc6909>::interface_id()));
+        assert!(contract.sender(alice).supports_interface(
+            <Erc6909TokenSupply as IErc165>::interface_id()
+        ));
+        assert!(contract.sender(alice).supports_interface(
+            <Erc6909TokenSupply as IErc6909>::interface_id()
+        ));
 
         let fake_interface_id = 0x12345678u32;
         assert!(!contract
