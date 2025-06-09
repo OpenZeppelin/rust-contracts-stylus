@@ -21,10 +21,10 @@ async fn mints(alice: Account) -> Result<()> {
     let contract = Erc6909::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let id = uint!(2);
-    let one = uint!(1);
+    let id = uint!(2_U256);
+    let one = uint!(1_U256);
 
-    let Erc6909::balanceOfReturn { initial_balance } =
+    let Erc6909::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     assert_eq!(U256::ZERO, initial_balance);
@@ -39,10 +39,38 @@ async fn mints(alice: Account) -> Result<()> {
         amount: one,
     }));
 
-    let Erc6909::balanceOfReturn { balance } =
+    let Erc6909::balanceOfReturn { balance: balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     assert_eq!(one, balance);
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
+    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
+
+    let contract = Erc6909::new(contract_addr, &alice.wallet);
+    let invalid_receiver = Address::ZERO;
+
+    let id = uint!(2_U256);
+    let one = uint!(1_U256);
+
+    let Erc6909::balanceOfReturn { balance: initial_balance } =
+        contract.balanceOf(invalid_receiver, id).call().await?;
+
+    let error = send!(contract.mint(invalid_receiver, id, one))
+        .expect_err("should not mint tokens for Address::ZERO");
+
+    assert!(err.reverted_with(Erc6909::ERC6909InvalidReceiver {
+        receiver: invalid_receiver
+    }));
+
+    let Erc6909::balanceOfReturn { balance: balance } =
+        contract.balanceOf(invalid_receiver, id).call().await?;
+
+    assert_eq!(initial_balance, balance);
 
     Ok(())
 }
