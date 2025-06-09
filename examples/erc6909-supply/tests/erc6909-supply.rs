@@ -154,15 +154,16 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
     let id = uint!(2_U256);
     let one = uint!(1_U256);
 
+    watch!(contract.mint(alice_addr, id, max_cap))?;
+
     let Erc6909TokenSupply::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: initial_supply } =
         contract.totalSupply(id).call().await?;
 
-    assert_eq!(U256::ZERO, initial_supply);
-
-    watch!(contract.mint(alice_addr, id, max_cap))?;
+    assert_eq!(initial_supply, max_cap);
+    assert_eq!(initial_balance, max_cap);
 
     let err = send!(contract.mint(alice_addr, id, one))
         .expect_err("should not exceed U256::MAX");
