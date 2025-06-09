@@ -7,6 +7,10 @@ use eyre::Result;
 
 mod abi;
 
+// ============================================================================
+// Integration Tests: ERC-6909 Token Supply Extension
+// ============================================================================
+
 #[e2e::test]
 async fn mints(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
