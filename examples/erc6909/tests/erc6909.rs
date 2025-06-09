@@ -257,7 +257,8 @@ async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 
     let contract_alice = Erc6909::new(contract_addr, &alice.wallet);
-    let contract_bob = Erc6909::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc6909::new(contract_addr, &bob.wallet);
+
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -313,7 +314,7 @@ async fn transfer_from_reverts_insufficient_balance(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 
     let contract_alice = Erc6909::new(contract_addr, &alice.wallet);
-    let contract_bob = Erc6909::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc6909::new(contract_addr, &bob.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -373,7 +374,7 @@ async fn transfer_from_rejects_insufficient_allowance(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 
     let contract_alice = Erc6909::new(contract_addr, &alice.wallet);
-    let contract_bob = Erc6909::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc6909::new(contract_addr, &bob.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
@@ -428,7 +429,7 @@ async fn transfer_from_rejects_invalid_receiver(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
 
     let contract_alice = Erc6909::new(contract_addr, &alice.wallet);
-    let contract_bob = Erc6909::new(contract_addr, &alice.wallet);
+    let contract_bob = Erc6909::new(contract_addr, &bob.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let invalid_receiver = Address::ZERO;
