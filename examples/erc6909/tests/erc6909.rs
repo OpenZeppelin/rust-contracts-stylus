@@ -36,7 +36,7 @@ async fn mints(alice: Account) -> Result<()> {
         amount: one,
     }));
 
-    let Erc6909::balanceOfReturn { balance: balance } =
+    let Erc6909::balanceOfReturn { balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     assert_eq!(one, balance);
@@ -64,7 +64,7 @@ async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
         receiver: invalid_receiver
     }));
 
-    let Erc6909::balanceOfReturn { balance: balance } =
+    let Erc6909::balanceOfReturn { balance } =
         contract.balanceOf(invalid_receiver, id).call().await?;
 
     assert_eq!(initial_balance, balance);
@@ -90,7 +90,7 @@ async fn burns(alice: Account) -> Result<()> {
 
     let receipt = receipt!(contract.burn(alice_addr, id, one))?;
 
-    let Erc6909::balanceOfReturn { balance: balance } =
+    let Erc6909::balanceOfReturn { balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     assert!(receipt.emits(Erc6909::Transfer {
@@ -132,7 +132,7 @@ async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
         id
     }));
 
-    let Erc6909::balanceOfReturn { balance: balance } =
+    let Erc6909::balanceOfReturn { balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     assert_eq!(initial_balance, balance);
@@ -573,8 +573,6 @@ async fn sets_operator(alice: Account, bob: Account) -> Result<()> {
     let contract = Erc6909::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let bob_addr = bob.address();
-
-    let balance = uint!(10_U256);
 
     let Erc6909::isOperatorReturn { approved: initial_approved } =
         contract.isOperator(alice_addr, bob_addr).call().await?;

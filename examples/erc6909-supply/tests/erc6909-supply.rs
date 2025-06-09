@@ -2,7 +2,7 @@
 
 use abi::Erc6909TokenSupply;
 use alloy::primitives::{uint, Address, U256};
-use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode};
+use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
 use eyre::Result;
 
 mod abi;
@@ -24,7 +24,7 @@ async fn mints(alice: Account) -> Result<()> {
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: initial_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     assert_eq!(U256::ZERO, initial_balance);
 
@@ -42,7 +42,7 @@ async fn mints(alice: Account) -> Result<()> {
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: total_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     assert_eq!(initial_balance + one, balance);
     assert_eq!(initial_supply + one, total_supply);
@@ -69,9 +69,9 @@ async fn mints_twice(alice: Account, bob: Account) -> Result<()> {
         contract.balanceOf(bob_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: initial_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
-    assert_eq!(U256::ZERO, initial_balance);
+    assert_eq!(U256::ZERO, initial_supply);
 
     let receipt = receipt!(contract.mint(alice_addr, id, one))?;
     let receipt = receipt!(contract.mint(bob_addr, id, ten))?;
@@ -99,10 +99,10 @@ async fn mints_twice(alice: Account, bob: Account) -> Result<()> {
         contract.balanceOf(bob_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: total_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
-    assert_eq!(initial_balance + one, initial_balance_alice);
-    assert_eq!(initial_balance + ten, initial_balance_bob);
+    assert_eq!(initial_balance_alice + one, balance_alice);
+    assert_eq!(initial_balance_bob + ten, balance_bob);
     assert_eq!(initial_supply + one + ten, total_supply);
 
     Ok(())
@@ -122,22 +122,20 @@ async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
         contract.balanceOf(invalid_receiver, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: initial_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     let err = send!(contract.mint(invalid_receiver, id, one))
         .expect_err("should not mint tokens for Address::ZERO");
 
-    assert!(err.reverted_with(
-        Erc6909TokenSupply::ERC6909TokenSupplyInvalidReceiver {
-            receiver: invalid_receiver
-        }
-    ));
+    assert!(err.reverted_with(Erc6909TokenSupply::ERC6909InvalidReceiver {
+        receiver: invalid_receiver
+    }));
 
     let Erc6909TokenSupply::balanceOfReturn { balance: balance } =
         contract.balanceOf(invalid_receiver, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: total_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     assert_eq!(initial_balance, balance);
     assert_eq!(initial_supply, total_supply);
@@ -162,7 +160,7 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: initial_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     assert_eq!(U256::ZERO, initial_balance);
     assert_eq!(U256::ZERO, initial_supply);
@@ -170,13 +168,13 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
     let err = send!(contract.mint(alice_addr, id, one))
         .expect_err("should not exceed U256::MAX");
 
-    assert!(err.panicked_with(Panic::new(PanicCode::ArithmeticOverflow)));
+    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
 
     let Erc6909TokenSupply::balanceOfReturn { balance: balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: total_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     assert_eq!(initial_balance, balance);
     assert_eq!(initial_supply, total_supply);
@@ -201,7 +199,7 @@ async fn burns(alice: Account) -> Result<()> {
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: initial_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     let receipt = receipt!(contract.burn(alice_addr, id, one))?;
 
@@ -209,9 +207,9 @@ async fn burns(alice: Account) -> Result<()> {
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: total_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
-    assert!(receipt.emits(Erc6909::Transfer {
+    assert!(receipt.emits(Erc6909TokenSupply::Transfer {
         caller: alice_addr,
         sender: alice_addr,
         receiver: Address::ZERO,
@@ -241,22 +239,20 @@ async fn burn_rejects_invalid_sender(alice: Account) -> Result<()> {
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: initial_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
-    let err = send!(contract.burn(invalid_sender, id, balance_plus_one))
+    let err = send!(contract.burn(invalid_sender, id, one))
         .expect_err("should not burn when balance is insufficient");
 
-    assert!(err.reverted_with(
-        Erc6909TokenSupply::ERC6909TokenSupplyInvalidSender {
-            sender: invalid_sender
-        }
-    ));
+    assert!(err.reverted_with(Erc6909TokenSupply::ERC6909InvalidSender {
+        sender: invalid_sender
+    }));
 
     let Erc6909TokenSupply::balanceOfReturn { balance: balance } =
         contract.balanceOf(alice_addr, id).call().await?;
 
     let Erc6909TokenSupply::totalSupplyReturn { totalSupply: total_supply } =
-        contract.totalSupply().call().await?;
+        contract.totalSupply(id).call().await?;
 
     assert_eq!(initial_balance, balance);
     assert_eq!(initial_supply, total_supply);
