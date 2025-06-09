@@ -2,10 +2,7 @@
 
 use abi::Erc6909;
 use alloy::primitives::{uint, Address, U256};
-use e2e::{
-    receipt, send, watch, Account,
-    EventExt, Revert,
-};
+use e2e::{receipt, send, watch, Account, EventExt, Revert};
 use eyre::Result;
 
 mod abi;
@@ -330,7 +327,7 @@ async fn transfer_from_reverts_insufficient_balance(
     let Erc6909::balanceOfReturn { balance: initial_bob_balance } =
         contract_alice.balanceOf(bob_addr, id).call().await?;
 
-    watch!(contract_alice.approve(bob_addr, id, balance))?;
+    watch!(contract_alice.approve(bob_addr, id, balance_plus_one))?;
 
     let Erc6909::allowanceReturn { allowance: initial_allowance } =
         contract_alice.allowance(alice_addr, bob_addr, id).call().await?;
@@ -485,7 +482,6 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
 
     let id = uint!(2_U256);
     let one = uint!(1_U256);
-    let balance = uint!(10_U256);
 
     let Erc6909::allowanceReturn { allowance: initial_alice_to_bob_allowance } =
         contract_alice.allowance(alice_addr, bob_addr, id).call().await?;
@@ -578,8 +574,6 @@ async fn sets_operator(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let id = uint!(2_U256);
-    let one = uint!(1_U256);
     let balance = uint!(10_U256);
 
     let Erc6909::isOperatorReturn { approved: initial_approved } =
@@ -610,9 +604,6 @@ async fn set_operator_rejects_invalid_spender(alice: Account) -> Result<()> {
     let contract = Erc6909::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
     let invalid_spender = Address::ZERO;
-
-    let id = uint!(2_U256);
-    let one = uint!(1_U256);
 
     let Erc6909::isOperatorReturn { approved: initial_approved } =
         contract.isOperator(alice_addr, invalid_spender).call().await?;
