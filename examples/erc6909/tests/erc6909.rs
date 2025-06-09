@@ -60,7 +60,7 @@ async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
     let Erc6909::balanceOfReturn { balance: initial_balance } =
         contract.balanceOf(invalid_receiver, id).call().await?;
 
-    let error = send!(contract.mint(invalid_receiver, id, one))
+    let err = send!(contract.mint(invalid_receiver, id, one))
         .expect_err("should not mint tokens for Address::ZERO");
 
     assert!(err.reverted_with(Erc6909::ERC6909InvalidReceiver {
