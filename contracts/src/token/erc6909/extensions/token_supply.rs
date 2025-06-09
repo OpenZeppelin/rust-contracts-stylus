@@ -7,7 +7,6 @@ use core::ops::{Deref, DerefMut};
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    abi::Bytes,
     msg,
     prelude::*,
     storage::{StorageMap, StorageU256},
