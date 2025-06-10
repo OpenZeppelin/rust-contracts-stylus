@@ -10,11 +10,10 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256, U8};
-use alloy_sol_types::SolCall;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError, RawCall},
+    call::{Call, MethodError},
     contract, evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
@@ -24,7 +23,7 @@ use super::IErc20Metadata;
 use crate::{
     token::erc20::{
         self,
-        interface::IErc20MetadataInterface,
+        interface::{Erc20Interface, IErc20MetadataInterface},
         utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
@@ -646,19 +645,6 @@ pub trait IErc4626: IErc20Metadata {
     ) -> Result<U256, Self::Error>;
 }
 
-const U256_TYPE_SIZE: usize = 32;
-
-mod token {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-    alloy_sol_types::sol! {
-        /// Interface of the ERC-20 token.
-        interface IErc20 {
-            function balanceOf(address account) external view returns (uint256);
-        }
-    }
-}
-
 impl Erc4626 {
     /// See [`IErc4626::asset`].
     #[must_use]
@@ -669,18 +655,10 @@ impl Erc4626 {
     /// See [`IErc4626::total_assets`].
     #[allow(clippy::missing_errors_doc)]
     pub fn total_assets(&self) -> Result<U256, Error> {
-        let call =
-            token::IErc20::balanceOfCall { account: contract::address() };
-        unsafe {
-            match RawCall::new()
-                .limit_return_data(0, U256_TYPE_SIZE)
-                .flush_storage_cache()
-                .call(self.asset(), &call.abi_encode())
-            {
-                Ok(data) if !data.is_empty() => Ok(U256::from_be_slice(&data)),
-                _ => Err(InvalidAsset { asset: self.asset() }.into()),
-            }
-        }
+        let erc20 = Erc20Interface::new(self.asset());
+        erc20
+            .balance_of(self, contract::address())
+            .map_err(|_| InvalidAsset { asset: self.asset() }.into())
     }
 
     /// See [`IErc4626::convert_to_shares`].
