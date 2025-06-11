@@ -3,9 +3,17 @@
 //!
 //! [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{b256, Address, B256};
 pub use sol::*;
-use stylus_sdk::abi::Bytes;
+use stylus_sdk::{abi::Bytes, call::Call, evm, msg, prelude::*};
+
+use crate::{
+    proxy::{beacon::IBeacon, erc1967},
+    utils::{address::AddressHelper, storage_slot::StorageSlot},
+};
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -15,24 +23,57 @@ mod sol {
         /// of the proxy is invalid.
         ///
         /// * `implementation` - Address of the invalid implementation.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
         error ERC1967InvalidImplementation(address implementation);
 
         /// Indicates an error related to the fact that the `admin` of the
         /// proxy is invalid.
         ///
         /// * `admin` - Address of the invalid admin.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
         error ERC1967InvalidAdmin(address admin);
 
         /// Indicates an error related to the fact that the `beacon`
         /// of the proxy is invalid.
         ///
         /// * `beacon` - Address of the invalid `beacon` of the proxy.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
         error ERC1967InvalidBeacon(address beacon);
 
         /// Indicates an error relatoed to the fact that an upgrade function
-        /// sees `stylus_sdk::msg::value() > 0` that may be lost.
+        /// sees [`stylus_sdk::msg::value()`] > [`U256::ZERO`] that may be lost.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
         error ERC1967NonPayable();
     }
+}
+
+/// An [`Erc1967Utils`] error.
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    /// Indicates an error related to the fact that the `implementation`
+    /// of the proxy is invalid.
+    InvalidImplementation(ERC1967InvalidImplementation),
+    /// Indicates an error related to the fact that the `admin` of the
+    /// proxy is invalid.
+    InvalidAdmin(ERC1967InvalidAdmin),
+    /// Indicates an error related to the fact that the `beacon`
+    /// of the proxy is invalid.
+    InvalidBeacon(ERC1967InvalidBeacon),
+    /// Indicates an error relatoed to the fact that an upgrade function
+    /// sees [`stylus_sdk::msg::value()`] > [`alloy_primitives::U256::ZERO`]
+    /// that may be lost.
+    NonPayable(ERC1967NonPayable),
+}
+
+/// State of an [`Erc1967Utils`] contract.
+#[storage]
+pub struct Erc1967Utils {
+    storage_slot: StorageSlot,
+    address_helper: AddressHelper,
 }
 
 /// Storage slot with the address of the current implementation.
@@ -52,53 +93,242 @@ const ADMIN_SLOT: B256 =
 const BEACON_SLOT: B256 =
     b256!("a3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50");
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc1967Utils {}
+
+/// Interface for the [`Erc1967Utils`] contract.
 pub trait IErc1967Utils {
-    /**
-     * @dev Returns the current implementation address.
-     */
+    /// The error type associated with this interface implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
+    /// Returns the current implementation address.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn get_implementation(&self) -> Address;
 
-    /**
-     * @dev Performs implementation upgrade with additional setup call if
-     * data is nonempty. This function is payable only if the setup call
-     * is performed, otherwise `msg.value` is rejected to avoid stuck
-     * value in the contract.
-     *
-     * Emits an {IERC1967-Upgraded} event.
-     */
-    fn upgrade_to_and_call(&mut self, new_implementation: Address, data: Bytes);
+    /// Performs implementation upgrade with additional setup call if
+    /// data is nonempty. This function is payable only if the setup call
+    /// is performed, otherwise [`msg::value()`] is rejected to avoid stuck
+    /// value in the contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `new_implementation` - The new implementation address.
+    /// * `data` - The data to pass to the setup call.
+    ///
+    /// # Errors (TODO)
+    fn upgrade_to_and_call(
+        &mut self,
+        new_implementation: Address,
+        data: Bytes,
+    ) -> Result<(), Self::Error>;
 
-    /**
-     * @dev Returns the current admin.
-     *
-     * TIP: To get this value clients can read directly from the storage
-     * slot shown below (specified by ERC-1967) using the https://eth.wiki/json-rpc/API#eth_getstorageat[`eth_getStorageAt`] RPC call.
-     * `0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103`
-     */
+    /// Returns the current admin.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn get_admin(&self) -> Address;
 
-    /**
-     * @dev Changes the admin of the proxy.
-     *
-     * Emits an {IERC1967-AdminChanged} event.
-     */
+    /// Changes the admin of the proxy.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `new_admin` - The new admin address.
     fn change_admin(&mut self, new_admin: Address);
 
-    /**
-     * @dev Returns the current beacon.
-     */
+    /// Returns the current beacon.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
     fn get_beacon(&self) -> Address;
-    /**
-     * @dev Change the beacon and trigger a setup call if data is nonempty.
-     * This function is payable only if the setup call is performed,
-     * otherwise `msg.value` is rejected to avoid stuck value in the
-     * contract.
-     *
-     * Emits an {IERC1967-BeaconUpgraded} event.
-     *
-     * CAUTION: Invoking this function has no effect on an instance of
-     * {BeaconProxy} since v5, since it uses an immutable beacon without
-     * looking at the value of the ERC-1967 beacon slot for efficiency.
-     */
-    fn upgrade_beacon_to_and_call(&mut self, new_beacon: Address, data: Bytes);
+
+    /// Change the beacon and trigger a setup call if data is nonempty.
+    /// This function is payable only if the setup call is performed,
+    /// otherwise [`msg::value()`] is rejected to avoid stuck value in the
+    /// contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `new_beacon` - The new beacon address.
+    /// * `data` - The data to pass to the setup call.
+    fn upgrade_beacon_to_and_call(
+        &mut self,
+        new_beacon: Address,
+        data: Bytes,
+    ) -> Result<(), Self::Error>;
+}
+
+impl IErc1967Utils for Erc1967Utils {
+    type Error = Error;
+
+    fn get_implementation(&self) -> Address {
+        self.storage_slot.get_address_slot(IMPLEMENTATION_SLOT)
+    }
+
+    fn upgrade_to_and_call(
+        &mut self,
+        new_implementation: Address,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self._set_implementation(new_implementation)?;
+        evm::log(erc1967::Upgraded { implementation: new_implementation });
+
+        if data.len() > 0 {
+            self._check_non_payable()?;
+        } else {
+            self.address_helper
+                .function_delegate_call(new_implementation, data)
+                .expect("TODO: handle error");
+        }
+
+        Ok(())
+    }
+
+    fn get_admin(&self) -> Address {
+        self.storage_slot.get_address_slot(ADMIN_SLOT)
+    }
+
+    fn change_admin(&mut self, new_admin: Address) {
+        evm::log(erc1967::AdminChanged {
+            previous_admin: self.get_admin(),
+            new_admin,
+        });
+
+        self._set_admin(new_admin).expect("TODO: handle error");
+    }
+
+    fn get_beacon(&self) -> Address {
+        self.storage_slot.get_address_slot(BEACON_SLOT)
+    }
+
+    fn upgrade_beacon_to_and_call(
+        &mut self,
+        new_beacon: Address,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self._set_beacon(new_beacon)?;
+        evm::log(erc1967::BeaconUpgraded { beacon: new_beacon });
+
+        if data.len() > 0 {
+            let beacon_implementation =
+                self.get_beacon_implementation(new_beacon)?;
+
+            _ = self
+                .address_helper
+                .function_delegate_call(beacon_implementation, data)
+                .map_err(|e| {
+                    panic!("TODO: handle error: {:?}", e);
+                });
+        } else {
+            self._check_non_payable()?;
+        }
+
+        Ok(())
+    }
+}
+
+impl Erc1967Utils {
+    /// TODO: docs
+    fn _set_implementation(
+        &mut self,
+        new_implementation: Address,
+    ) -> Result<(), Error> {
+        if self.vm().code_size(new_implementation) == 0 {
+            return Err(ERC1967InvalidImplementation {
+                implementation: new_implementation,
+            }
+            .into());
+        }
+
+        self.storage_slot
+            .set_address_slot(IMPLEMENTATION_SLOT, new_implementation);
+
+        Ok(())
+    }
+
+    /// Reverts if [`msg::value()`] is not [`alloy_primitives::U256::ZERO`]. It
+    /// can be used to avoid [`msg::value()`] stuck in the contract if an
+    /// upgrade does not perform an initialization call.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::NonPayable`] - If [`msg::value()`] is not
+    ///   [`alloy_primitives::U256::ZERO`].
+    fn _check_non_payable(&self) -> Result<(), Error> {
+        if msg::value().is_zero() {
+            Ok(())
+        } else {
+            Err(ERC1967NonPayable {}.into())
+        }
+    }
+
+    /// Stores a new address in the ERC-1967 admin slot.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `new_admin` - The new admin address.
+    ///
+    /// # Errors (TODO)
+    fn _set_admin(&mut self, new_admin: Address) -> Result<(), Error> {
+        if new_admin.is_zero() {
+            return Err(ERC1967InvalidAdmin { admin: new_admin }.into());
+        }
+
+        self.storage_slot.set_address_slot(ADMIN_SLOT, new_admin);
+
+        Ok(())
+    }
+
+    /// Stores a new beacon in the ERC-1967 beacon slot.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `new_beacon` - The new beacon address.
+    ///
+    /// # Errors (TODO)
+    fn _set_beacon(&mut self, new_beacon: Address) -> Result<(), Error> {
+        if self.vm().code_size(new_beacon) == 0 {
+            return Err(ERC1967InvalidBeacon { beacon: new_beacon }.into());
+        }
+
+        self.storage_slot.set_address_slot(BEACON_SLOT, new_beacon);
+
+        let beacon_implementation =
+            self.get_beacon_implementation(new_beacon)?;
+
+        if self.vm().code_size(beacon_implementation) == 0 {
+            return Err(ERC1967InvalidImplementation {
+                implementation: beacon_implementation.into(),
+            }
+            .into());
+        }
+
+        Ok(())
+    }
+}
+
+impl Erc1967Utils {
+    fn get_beacon_implementation(
+        &mut self,
+        beacon: Address,
+    ) -> Result<Address, Error> {
+        IBeacon::new(beacon).implementation(Call::new_in(self)).map_err(|e| {
+            panic!("TODO: handle error: {:?}", e);
+        })
+    }
 }

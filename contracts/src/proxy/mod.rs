@@ -1,6 +1,7 @@
 use alloy_primitives::Address;
 use stylus_sdk::ArbResult;
 
+pub mod beacon;
 pub mod erc1967;
 
 /**
