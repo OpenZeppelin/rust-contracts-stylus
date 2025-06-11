@@ -114,13 +114,18 @@ pub trait MontCurveConfig: super::CurveConfig {
 mod test {
     use alloc::vec::Vec;
 
+    use num_traits::Zero;
+
     use crate::{
         arithmetic::uint::U256,
         curve::{
-            te::{Affine, MontCurveConfig, TECurveConfig},
+            te::{Affine, MontCurveConfig, Projective, TECurveConfig},
             AffineRepr, CurveConfig, CurveGroup,
         },
-        field::fp::{Fp256, FpParams, LIMBS_256},
+        field::{
+            fp::{Fp256, FpParams, LIMBS_256},
+            group::AdditiveGroup,
+        },
         fp_from_hex, fp_from_num, from_num,
     };
 
@@ -219,5 +224,44 @@ mod test {
             assert_eq!(result.x, expected_x);
             assert_eq!(result.y, expected_y);
         }
+    }
+
+    #[test]
+    fn point_add() {
+        let g = Affine::<Config>::generator();
+        let g_proj: Projective<Config> = g.into();
+
+        // Test G + G = 2G
+        let expected_g2 = Affine::new_unchecked(
+            fp_from_hex!("36AB384C9F5A046C3D043B7D1833E7AC080D8E4515D7A45F83C5A14E2843CE0E"),
+            fp_from_hex!("2260CDF3092329C21DA25EE8C9A21F5697390F51643851560E5F46AE6AF8A3C9"),
+        );
+        let g2 = g_proj + g;
+        let g2_affine = g2.into_affine();
+        assert_eq!(g2_affine, expected_g2);
+        let g2_affine = g_proj.double().into_affine();
+        assert_eq!(g2_affine, expected_g2);
+
+        // Test G + (-G) = 0
+        let neg_g = -g_proj;
+        let zero = g_proj + neg_g;
+        assert!(zero.is_zero());
+    }
+
+    #[test]
+    fn point_sub() {
+        let g = Affine::<Config>::generator();
+        let g_proj: Projective<Config> = g.into();
+
+        // Test G - G = 0
+        let zero = g_proj - g_proj;
+        assert!(zero.is_zero());
+
+        // Test 2G - G = G
+        let g2: Projective<Config> = Affine::new_unchecked(
+            fp_from_hex!("36AB384C9F5A046C3D043B7D1833E7AC080D8E4515D7A45F83C5A14E2843CE0E"),
+            fp_from_hex!("2260CDF3092329C21DA25EE8C9A21F5697390F51643851560E5F46AE6AF8A3C9"),
+        ).into();
+        assert_eq!(g2 - g_proj, g_proj);
     }
 }
