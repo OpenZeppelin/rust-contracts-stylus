@@ -34,6 +34,7 @@ use crate::token::erc20::{
 ///
 /// [ERC-20]: <https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.3.0/contracts/token/ERC20/ERC20.sol>
 const DEFAULT_DECIMALS: u8 = 18;
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
