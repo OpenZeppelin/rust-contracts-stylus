@@ -31,9 +31,13 @@ use crate::{
 #[educe(Copy, Clone, Eq(bound(P: TECurveConfig)), Debug)]
 #[must_use]
 pub struct Projective<P: TECurveConfig> {
+    /// The x-coordinate of the point in projective coordinates.
     pub x: P::BaseField,
+    /// The y-coordinate of the point in projective coordinates.
     pub y: P::BaseField,
+    /// The t-coordinate of the point in projective coordinates.
     pub t: P::BaseField,
+    /// The z-coordinate of the point in projective coordinates.
     pub z: P::BaseField,
 }
 
@@ -404,24 +408,5 @@ impl<P: TECurveConfig, T: Borrow<Affine<P>>> core::iter::Sum<T>
 impl<P: TECurveConfig> From<Affine<P>> for Projective<P> {
     fn from(p: Affine<P>) -> Projective<P> {
         Self::new_unchecked(p.x, p.y, p.x * p.y, P::BaseField::one())
-    }
-}
-
-#[derive(Educe)]
-#[educe(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct MontgomeryAffine<P: MontCurveConfig> {
-    pub x: P::BaseField,
-    pub y: P::BaseField,
-}
-
-impl<P: MontCurveConfig> Display for MontgomeryAffine<P> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "MontgomeryAffine(x={}, y={})", self.x, self.y)
-    }
-}
-
-impl<P: MontCurveConfig> MontgomeryAffine<P> {
-    pub fn new(x: P::BaseField, y: P::BaseField) -> Self {
-        Self { x, y }
     }
 }
