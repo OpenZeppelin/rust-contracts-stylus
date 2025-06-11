@@ -1,6 +1,6 @@
 //! Defines the `#[interface_id]` procedural macro.
 
-use std::mem;
+use std::{collections::HashMap, mem};
 
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
@@ -18,7 +18,8 @@ pub(crate) fn interface_id(
 ) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemTrait);
 
-    let mut selectors = Vec::new();
+    let mut selectors_map =
+        HashMap::<String, (String, proc_macro2::TokenStream)>::new();
     for item in &mut input.items {
         let TraitItem::Fn(func) = item else {
             continue;
@@ -52,10 +53,30 @@ pub(crate) fn interface_id(
             FnArg::Receiver(_) => None,
         });
 
+        // Build the function signature string for selector computation
+        let type_strings: Vec<String> = arg_types
+            .clone()
+            .map(|ty| quote!(#ty).to_string().replace(' ', ""))
+            .collect();
+        let signature =
+            format!("{}({})", solidity_fn_name, type_strings.join(","));
+
+        let selector = quote! { alloy_primitives::FixedBytes::<4>::new(stylus_sdk::function_selector!(#solidity_fn_name #(, #arg_types )*)) };
+
         // Store selector expression from every function in the trait.
-        selectors.push(
-            quote! { alloy_primitives::FixedBytes::<4>::new(stylus_sdk::function_selector!(#solidity_fn_name #(, #arg_types )*)) }
-        );
+        match selectors_map.get(&signature) {
+            Some((existing_rust_fn_name, _)) => {
+                error!(
+                    existing_rust_fn_name,
+                    "selector collision detected: function '{}' has the same selector as function '{}': {}",
+                    func.sig.ident.to_string(),
+                    existing_rust_fn_name,
+                    signature,
+                );
+            }
+            None => selectors_map
+                .insert(signature, (func.sig.ident.to_string(), selector)),
+        };
     }
 
     let name = input.ident;
@@ -72,6 +93,7 @@ pub(crate) fn interface_id(
         quote! { : #supertraits }
     };
 
+    let selectors = selectors_map.values().map(|v| v.1.clone());
     // Keep the same trait with an additional associated constant
     // `INTERFACE_ID`.
     quote! {
