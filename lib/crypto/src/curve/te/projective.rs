@@ -14,7 +14,7 @@ use educe::Educe;
 use num_traits::{One, Zero};
 use zeroize::Zeroize;
 
-use super::{Affine, MontCurveConfig, TECurveConfig};
+use super::{Affine, TECurveConfig};
 use crate::{
     bits::BitIteratorBE,
     curve::{batch_inversion, AffineRepr, CurveGroup, PrimeGroup},
