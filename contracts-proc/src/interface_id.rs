@@ -42,10 +42,10 @@ pub(crate) fn interface_id(
             }
         }
 
-        let solidity_fn_name = override_fn_name.unwrap_or_else(|| {
-            let rust_fn_name = func.sig.ident.to_string();
-            rust_fn_name.to_case(Case::Camel)
-        });
+        let rust_fn_name = func.sig.ident.to_string();
+
+        let solidity_fn_name =
+            override_fn_name.unwrap_or(rust_fn_name.to_case(Case::Camel));
 
         let arg_types = func.sig.inputs.iter().filter_map(|arg| match arg {
             FnArg::Typed(t) => Some(t.ty.clone()),
@@ -54,10 +54,8 @@ pub(crate) fn interface_id(
         });
 
         // Build the function signature string for selector computation
-        let type_strings: Vec<String> = arg_types
-            .clone()
-            .map(|ty| quote!(#ty).to_string().replace(' ', ""))
-            .collect();
+        let type_strings: Vec<String> =
+            arg_types.clone().map(|ty| quote!(#ty).to_string()).collect();
         let signature =
             format!("{}({})", solidity_fn_name, type_strings.join(","));
 
@@ -69,13 +67,12 @@ pub(crate) fn interface_id(
                 error!(
                     existing_rust_fn_name,
                     "selector collision detected: function '{}' has the same selector as function '{}': {}",
-                    func.sig.ident.to_string(),
+                    rust_fn_name,
                     existing_rust_fn_name,
                     signature,
                 );
             }
-            None => selectors_map
-                .insert(signature, (func.sig.ident.to_string(), selector)),
+            None => selectors_map.insert(signature, (rust_fn_name, selector)),
         };
     }
 
@@ -93,7 +90,8 @@ pub(crate) fn interface_id(
         quote! { : #supertraits }
     };
 
-    let selectors = selectors_map.values().map(|v| v.1.clone());
+    let selectors = selectors_map.values().map(|(_, tokens)| tokens);
+
     // Keep the same trait with an additional associated constant
     // `INTERFACE_ID`.
     quote! {
