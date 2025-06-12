@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bump `cargo-stylus` to `v0.6.0`. #683
+
 ### Changed (Breaking)
 
 ### Fixed
