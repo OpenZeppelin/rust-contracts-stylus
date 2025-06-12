@@ -655,10 +655,11 @@ impl Erc4626 {
     /// See [`IErc4626::total_assets`].
     #[allow(clippy::missing_errors_doc)]
     pub fn total_assets(&self) -> Result<U256, Error> {
-        let erc20 = Erc20Interface::new(self.asset());
+        let asset = self.asset();
+        let erc20 = Erc20Interface::new(asset);
         erc20
             .balance_of(self, contract::address())
-            .map_err(|_| InvalidAsset { asset: self.asset() }.into())
+            .map_err(|_| InvalidAsset { asset }.into())
     }
 
     /// See [`IErc4626::convert_to_shares`].
