@@ -18,6 +18,7 @@ pub(crate) fn interface_id(
 ) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemTrait);
 
+    let trait_unsafety = input.unsafety.clone();
     let mut selectors = Vec::new();
     for item in &mut input.items {
         let TraitItem::Fn(func) = item else {
@@ -76,7 +77,7 @@ pub(crate) fn interface_id(
     // `INTERFACE_ID`.
     quote! {
         #(#attrs)*
-        #vis trait #name #ty_generics #supertrait_tokens #where_clause {
+        #vis #trait_unsafety trait #name #ty_generics #supertrait_tokens #where_clause {
             #(#trait_items)*
 
             #[doc = concat!("Solidity interface id associated with ", stringify!(#name), " trait.")]
