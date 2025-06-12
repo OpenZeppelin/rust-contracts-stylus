@@ -20,7 +20,7 @@ mod interface_id;
 
 /// Automatically computes the ERC-165 interface ID for a trait.
 ///
-/// Adds an `interface_id` associated function to your trait by XORing all
+/// Adds an `interface_id` associated function to your trait by XOR-ing all
 /// method selectors together, following the ERC-165 standard.
 ///
 /// ## Method naming
