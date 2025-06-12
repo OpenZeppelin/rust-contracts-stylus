@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Custom Solidity selector names in traits with `#[interface_id]` error out on conflicting function selectors. #702
+
 ### Changed (Breaking)
 
 ## [v0.2.0-rc.0] - 2025-05-22
