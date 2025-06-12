@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Custom Solidity selector names in traits with `#[interface_id]` error out on conflicting function selectors. #702
+- Bump `cargo-stylus` to `v0.6.0`. #683
 
 ### Changed (Breaking)
 
