@@ -126,7 +126,7 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
-motsu = "=0.9.0"
+motsu = "=0.9.1"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
