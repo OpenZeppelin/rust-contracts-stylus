@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+### Fixed
+
+- Fixed `#[interface_id]` macro to re-export `unsafe` keyword for traits. #705
+
 ## [v0.2.0-rc.0] - 2025-05-22
 
 ### Added
