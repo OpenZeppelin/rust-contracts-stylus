@@ -157,14 +157,11 @@ impl Deployer {
                 .expect("deployer address should be set");
 
             command
-                .args(["--experimental-deployer-address", &deployer_address])
-                .args(["--experimental-constructor-signature", &ctor.signature])
+                .args(["--deployer-address", &deployer_address])
+                .args(["--constructor-signature", &ctor.signature])
                 .args(
-                    [
-                        &["--experimental-constructor-args".to_string()],
-                        ctor.args.as_slice(),
-                    ]
-                    .concat(),
+                    [&["--constructor-args".to_string()], ctor.args.as_slice()]
+                        .concat(),
                 );
         }
 
