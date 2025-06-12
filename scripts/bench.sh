@@ -14,7 +14,7 @@ opt_wasm() {
   echo
   echo "Optimizing $CONTRACT_CRATE_NAME WASM binary"
   # https://rustwasm.github.io/book/reference/code-size.html#use-the-wasm-opt-tool
-  wasm-opt -O3 -o ./target/wasm32-unknown-unknown/release/"$CONTRACT_OPT_BIN_NAME" ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
+  wasm-opt --enable-bulk-memory -O3 -o ./target/wasm32-unknown-unknown/release/"$CONTRACT_OPT_BIN_NAME" ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
 }
 
 # Retrieve all alphanumeric contract's crate names in `./examples` directory.
