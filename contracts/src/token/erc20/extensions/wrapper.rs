@@ -344,9 +344,9 @@ impl Erc20Wrapper {
     ) -> Result<U256, Error> {
         let contract_address = contract::address();
 
-        let underline_token = Erc20Interface::new(self.underlying());
+        let underlying_token = Erc20Interface::new(self.underlying());
 
-        let underlying_balance = underline_token
+        let underlying_balance = underlying_token
             .balance_of(Call::new_in(self), contract_address)
             .map_err(|_| ERC20InvalidUnderlying { token: contract_address })?;
 
