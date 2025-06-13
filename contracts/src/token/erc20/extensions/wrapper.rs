@@ -20,15 +20,21 @@ use stylus_sdk::{
     call::{Call, MethodError},
     contract, msg,
     prelude::*,
-    storage::{StorageAddress, StorageU8},
+    storage::StorageAddress,
 };
 
 use crate::token::erc20::{
     self,
-    interface::Erc20Interface,
+    interface::{Erc20Interface, IErc20MetadataInterface},
     utils::{safe_erc20, ISafeErc20, SafeErc20},
     Erc20, IErc20,
 };
+
+/// Default number of decimals for an [ERC-20] token.
+///
+/// [ERC-20]: <https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.3.0/contracts/token/ERC20/ERC20.sol>
+const DEFAULT_DECIMALS: u8 = 18;
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -113,10 +119,6 @@ impl MethodError for Error {
 pub struct Erc20Wrapper {
     /// Address of the underlying token.
     pub(crate) underlying: StorageAddress,
-    // TODO: Remove this field once function overriding is possible. For now we
-    // keep this field `pub`, since this is used to simulate overriding.
-    /// Underlying token decimals.
-    pub underlying_decimals: StorageU8,
     /// [`SafeErc20`] contract.
     safe_erc20: SafeErc20,
 }
@@ -224,7 +226,11 @@ impl Erc20Wrapper {
     /// See [`IErc20Wrapper::decimals`].
     #[must_use]
     pub fn decimals(&self) -> U8 {
-        self.underlying_decimals.get()
+        U8::from(
+            IErc20MetadataInterface::new(self.underlying())
+                .decimals(self)
+                .unwrap_or(DEFAULT_DECIMALS),
+        )
     }
 
     /// See [`IErc20Wrapper::underlying`].
@@ -368,6 +374,43 @@ mod tests {
     use motsu::prelude::*;
 
     use super::*;
+    use crate::{
+        token::erc20::extensions::IErc20Metadata,
+        utils::introspection::erc165::IErc165,
+    };
+
+    const DUMMY_TEST_DECIMALS: u8 = 12;
+    #[storage]
+    struct DummyErc20Metadata {}
+
+    #[public]
+    #[implements(IErc20Metadata, IErc165)]
+    impl DummyErc20Metadata {}
+
+    #[public]
+    impl IErc20Metadata for DummyErc20Metadata {
+        fn name(&self) -> String {
+            "DummyErc20Metadata".into()
+        }
+
+        fn symbol(&self) -> String {
+            "TTK".into()
+        }
+
+        fn decimals(&self) -> U8 {
+            U8::from(DUMMY_TEST_DECIMALS)
+        }
+    }
+
+    #[public]
+    impl IErc165 for DummyErc20Metadata {
+        fn supports_interface(&self, _interface_id: FixedBytes<4>) -> bool {
+            // dummy implementation, required by [`IErc20Metadata`] trait.
+            true
+        }
+    }
+
+    unsafe impl TopLevelStorage for DummyErc20Metadata {}
 
     #[storage]
     struct Erc20WrapperTestExample {
@@ -417,14 +460,16 @@ mod tests {
     #[motsu::test]
     fn decimals_works(
         contract: Contract<Erc20WrapperTestExample>,
+        metadata: Contract<DummyErc20Metadata>,
         alice: Address,
     ) {
-        let decimals = uint!(18_U8);
         contract.init(alice, |contract| {
-            contract.wrapper.underlying_decimals.set(decimals);
+            contract.wrapper.underlying.set(metadata.address());
         });
-
-        assert_eq!(contract.sender(alice).decimals(), decimals);
+        assert_eq!(
+            contract.sender(alice).decimals(),
+            U8::from(DUMMY_TEST_DECIMALS)
+        );
     }
 
     #[motsu::test]
