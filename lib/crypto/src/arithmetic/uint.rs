@@ -192,15 +192,21 @@ impl<const N: usize> Uint<N> {
     }
 
     /// Return the minimum number of bits needed to encode this number.
+    ///
+    /// One bit is necessary to encode zero.
     #[doc(hidden)]
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
+        // One bit is necessary to encode zero.
+        if self.ct_is_zero() {
+            return 1;
+        }
+
         // Total number of bits.
         let mut num_bits = Self::BITS;
 
         // Start with the last (highest) limb.
-        let mut index = N - 1;
-        loop {
+        ct_rev_for!((index in 0..N) {
             // Subtract leading zeroes, from the total number of limbs.
             let leading = self.limbs[index].leading_zeros() as usize;
             num_bits -= leading;
@@ -209,12 +215,7 @@ impl<const N: usize> Uint<N> {
             if leading != 64 {
                 break;
             }
-
-            if index == 0 {
-                break;
-            }
-            index -= 1;
-        }
+        });
 
         // And return the result.
         num_bits
@@ -281,13 +282,13 @@ impl<const N: usize> Uint<N> {
     #[inline(always)]
     #[must_use]
     pub const fn ct_checked_sub(mut self, rhs: &Self) -> (Self, bool) {
-        let mut borrow = 0;
+        let mut borrow = false;
 
         ct_for_unroll6!((i in 0..N) {
             (self.limbs[i], borrow) = limb::sbb(self.limbs[i], rhs.limbs[i], borrow);
         });
 
-        (self, borrow != 0)
+        (self, borrow)
     }
 
     /// Subtract `rhs` from `self`, returning the result wrapping around the
@@ -303,13 +304,13 @@ impl<const N: usize> Uint<N> {
     #[inline]
     #[must_use]
     pub const fn ct_checked_add(mut self, rhs: &Self) -> (Self, bool) {
-        let mut carry = 0;
+        let mut carry = false;
 
         ct_for!((i in 0..N) {
             (self.limbs[i], carry) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
         });
 
-        (self, carry != 0)
+        (self, carry)
     }
 
     /// Add `rhs` to `self` in-place, returning whether overflow occurred.
@@ -394,22 +395,22 @@ impl<const N: usize> Uint<N> {
     /// Add two numbers and panic on overflow.
     #[must_use]
     pub const fn ct_add(&self, rhs: &Self) -> Self {
-        let (low, carry) = self.ct_adc(rhs, Limb::ZERO);
-        assert!(carry == 0, "overflow on addition");
+        let (low, carry) = self.ct_adc(rhs, false);
+        assert!(!carry, "overflow on addition");
         low
     }
 
     /// Add two numbers wrapping around the upper boundary.
     #[must_use]
     pub const fn ct_wrapping_add(&self, rhs: &Self) -> Self {
-        let (low, _) = self.ct_adc(rhs, Limb::ZERO);
+        let (low, _) = self.ct_adc(rhs, false);
         low
     }
 
     /// Computes `a + b + carry`, returning the result along with the new carry.
     #[inline(always)]
     #[must_use]
-    pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: Limb) -> (Self, Limb) {
+    pub const fn ct_adc(&self, rhs: &Uint<N>, mut carry: bool) -> (Self, bool) {
         let mut limbs = [Limb::ZERO; N];
 
         ct_for!((i in 0..N) {
@@ -827,8 +828,12 @@ pub const fn from_str_radix<const LIMBS: usize>(
 /// This implementation performs faster than [`from_str_radix`], since it
 /// assumes the radix is already `16`.
 ///
-/// If the string number is shorter, then [`Uint`] can store.
-/// Returns a [`Uint`] with leading zeroes.
+/// If the string number is shorter, then [`Uint`] can store, returns a [`Uint`]
+/// with leading zeroes.
+///
+/// # Panics
+///
+/// * If hex encoded number is too large to fit in [`Uint`].
 #[must_use]
 pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
     let bytes = s.as_bytes();
@@ -850,10 +855,12 @@ pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
     loop {
         let digit = parse_digit(bytes[index], digit_radix) as Limb;
 
+        let limb_index = (num_index / digits_in_limb) as usize;
+        assert!(limb_index < num.len(), "hex number is too large");
+
         // Since a base-16 digit can be represented with the same bits, we can
         // copy these bits.
-        let digit_mask = digit << ((num_index % digits_in_limb) * digit_size);
-        num[(num_index / digits_in_limb) as usize] |= digit_mask;
+        num[limb_index] |= digit << ((num_index % digits_in_limb) * digit_size);
 
         // If we reached the beginning of the string, return the number.
         if index == 0 {
@@ -958,13 +965,14 @@ impl<const N: usize> WideUint<N> {
     }
 
     /// Find the number of bits in the binary decomposition of `self`.
+    ///
+    /// One bit is necessary to encode zero.
     #[must_use]
     pub const fn ct_num_bits(&self) -> usize {
-        let high_num_bits = self.high.ct_num_bits();
-        if high_num_bits == 0 {
+        if self.high.ct_is_zero() {
             self.low.ct_num_bits()
         } else {
-            high_num_bits + Uint::<N>::BITS
+            self.high.ct_num_bits() + Uint::<N>::BITS
         }
     }
 
@@ -986,7 +994,7 @@ mod test {
     use crate::{
         arithmetic::{
             uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
-            *,
+            BigInteger, Limb,
         },
         bits::BitIteratorBE,
     };
@@ -1023,6 +1031,14 @@ mod test {
             let expected: Uint<4> = from_str_radix(&hex, 16);
             prop_assert_eq!(uint_from_hex, expected);
         });
+    }
+
+    #[test]
+    #[should_panic = "hex number is too large"]
+    fn from_str_hex_should_panic_on_overflow() {
+        let _ = from_str_hex::<4>(
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0",
+        );
     }
 
     #[test]
