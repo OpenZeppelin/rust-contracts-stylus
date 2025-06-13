@@ -66,8 +66,8 @@ impl<P: SWCurveConfig> PartialEq for Projective<P> {
         }
 
         // The points (X, Y, Z) and (X', Y', Z')
-        // are equal when (X * Z^2) = (X' * Z'^2)
-        // and (Y * Z^3) = (Y' * Z'^3).
+        // are equal when (X * Z'^2) = (X' * Z^2)
+        // and (Y * Z'^3) = (Y' * Z^3).
         let z1z1 = self.z.square();
         let z2z2 = other.z.square();
 
