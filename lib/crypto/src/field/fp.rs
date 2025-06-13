@@ -401,7 +401,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         mut lo: Uint<N>,
         mut hi: Uint<N>,
     ) -> (bool, Uint<N>) {
-        let mut carry2 = 0;
+        let mut carry2 = false;
         ct_for_unroll6!((i in 0..N) {
             let tmp = lo.limbs[i].wrapping_mul(P::INV);
 
@@ -428,7 +428,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             (hi.limbs[i], carry2) = limb::adc(hi.limbs[i], carry, carry2);
         });
 
-        (carry2 != 0, hi)
+        (carry2, hi)
     }
 
     /// Apply the Montgomery reduction to `self`.

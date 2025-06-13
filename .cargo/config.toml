@@ -1,5 +1,12 @@
 [target.wasm32-unknown-unknown]
-rustflags = ["-C", "link-arg=-zstack-size=8192", "-C", "target-cpu=mvp"]
+rustflags = [
+    "-C",
+    "link-arg=-zstack-size=8192",
+    "-C",
+    "target-cpu=mvp",
+    "-C",
+    "target-feature=+bulk-memory",
+]
 
 [target.aarch64-apple-darwin]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
