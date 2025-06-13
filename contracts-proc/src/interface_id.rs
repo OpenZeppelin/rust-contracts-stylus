@@ -19,7 +19,6 @@ pub(crate) fn interface_id(
     let mut input = parse_macro_input!(input as ItemTrait);
 
     let unsafety = input.unsafety;
-    let mut selectors = Vec::new();
     let mut selectors_map =
         HashMap::<String, (String, proc_macro2::TokenStream)>::new();
 
