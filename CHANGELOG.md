@@ -11,11 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Custom Solidity selector names in traits with `#[interface_id]` error out on conflicting function selectors. #702
 - Bump `cargo-stylus` to `v0.6.0`. #683
 
 ### Changed (Breaking)
 
 - Read-only functions in `IErc4626` now accept `&self`. #698
+
+### Fixed
+
+- `Erc20Wrapper::decimals` matches Solidity implementation. #699
 
 ## [v0.2.0-rc.0] - 2025-05-22
 
