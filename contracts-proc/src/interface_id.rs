@@ -1,6 +1,6 @@
 //! Defines the `#[interface_id]` procedural macro.
 
-use std::mem;
+use std::{collections::HashMap, mem};
 
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
@@ -18,7 +18,8 @@ pub(crate) fn interface_id(
 ) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemTrait);
 
-    let mut selectors = Vec::new();
+    let mut selectors_map =
+        HashMap::<String, (String, proc_macro2::TokenStream)>::new();
     for item in &mut input.items {
         let TraitItem::Fn(func) = item else {
             continue;
@@ -41,10 +42,10 @@ pub(crate) fn interface_id(
             }
         }
 
-        let solidity_fn_name = override_fn_name.unwrap_or_else(|| {
-            let rust_fn_name = func.sig.ident.to_string();
-            rust_fn_name.to_case(Case::Camel)
-        });
+        let rust_fn_name = func.sig.ident.to_string();
+
+        let solidity_fn_name =
+            override_fn_name.unwrap_or(rust_fn_name.to_case(Case::Camel));
 
         let arg_types = func.sig.inputs.iter().filter_map(|arg| match arg {
             FnArg::Typed(t) => Some(t.ty.clone()),
@@ -52,10 +53,27 @@ pub(crate) fn interface_id(
             FnArg::Receiver(_) => None,
         });
 
+        // Build the function signature string for selector computation
+        let type_strings: Vec<String> =
+            arg_types.clone().map(|ty| quote!(#ty).to_string()).collect();
+        let signature =
+            format!("{}({})", solidity_fn_name, type_strings.join(","));
+
+        let selector = quote! { alloy_primitives::FixedBytes::<4>::new(stylus_sdk::function_selector!(#solidity_fn_name #(, #arg_types )*)) };
+
         // Store selector expression from every function in the trait.
-        selectors.push(
-            quote! { alloy_primitives::FixedBytes::<4>::new(stylus_sdk::function_selector!(#solidity_fn_name #(, #arg_types )*)) }
-        );
+        match selectors_map.get(&signature) {
+            Some((existing_rust_fn_name, _)) => {
+                error!(
+                    existing_rust_fn_name,
+                    "selector collision detected: function '{}' has the same selector as function '{}': {}",
+                    rust_fn_name,
+                    existing_rust_fn_name,
+                    signature,
+                );
+            }
+            None => selectors_map.insert(signature, (rust_fn_name, selector)),
+        };
     }
 
     let name = input.ident;
@@ -71,6 +89,8 @@ pub(crate) fn interface_id(
         let supertraits = &input.supertraits;
         quote! { : #supertraits }
     };
+
+    let selectors = selectors_map.values().map(|(_, tokens)| tokens);
 
     // Keep the same trait with an additional associated constant
     // `INTERFACE_ID`.
