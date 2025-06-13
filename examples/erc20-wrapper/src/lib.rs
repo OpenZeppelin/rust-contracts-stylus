@@ -26,10 +26,8 @@ impl Erc20WrapperExample {
     fn constructor(
         &mut self,
         underlying_token: Address,
-        decimals: U8,
     ) -> Result<(), wrapper::Error> {
         self.erc20_wrapper.constructor(underlying_token)?;
-        self.erc20_wrapper.underlying_decimals.set(decimals);
         Ok(())
     }
 }
