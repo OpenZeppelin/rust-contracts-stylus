@@ -660,8 +660,9 @@ impl<const N: usize> ShrAssign<u32> for Uint<N> {
 
         assert!(N * bits > shift, "attempt to shift right with overflow");
 
-        // Limb shift will probably affect changes in two limbs.
-        // Compute indexes of both limbs that can be changed.
+        // Limb shift will probably affect changes between two adjacent limbs.
+        // Compute indexes of both limbs that can be changed during a single
+        // iteration.
         let index2_shift = shift / bits;
         let index1_shift = index2_shift + 1;
 
@@ -715,8 +716,9 @@ impl<const N: usize> ShlAssign<u32> for Uint<N> {
 
         assert!(N * bits > shift, "attempt to shift left with overflow");
 
-        // Limb shift will probably affect changes in two limbs.
-        // Compute indexes of both limbs that can be changed.
+        // Limb shift will probably affect changes between two adjacent limbs.
+        // Compute indexes of both limbs that can be changed during a single
+        // iteration.
         let index1_shift = shift / bits;
         let index2_shift = index1_shift + 1;
 
