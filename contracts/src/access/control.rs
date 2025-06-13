@@ -108,7 +108,7 @@ mod sol {
 pub enum Error {
     /// The caller account is missing a role.
     UnauthorizedAccount(AccessControlUnauthorizedAccount),
-    /// The caller of a afunction is not the expected one.
+    /// The caller of a function is not the expected one.
     BadConfirmation(AccessControlBadConfirmation),
 }
 
