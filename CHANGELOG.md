@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `#[interface_id]` does not skip now `unsafe` keyword for unsafe traits. #705
+- `#[interface_id]` now correctly retains full trait generics. #705
 - `Erc20Wrapper::decimals` matches Solidity implementation. #699
 
 ## [v0.2.0-rc.0] - 2025-05-22
