@@ -2,6 +2,9 @@
 //! Implementations of some used fields provided in the [`instance`]
 //! module.
 //!
+//! Abstractions and api in this module are similar to Arkworks Algebra [ark-ff
+//! library].
+//!
 //! Here is an example operations over a prime finite field (aka Fp) with a
 //! prime modulus `17` and generator element `3`.
 //!
@@ -39,6 +42,8 @@
 //! assert_eq!(a / b, a * b.inverse().unwrap());    // need to unwrap since `b` could be 0 which is not invertible
 //! # }
 //! ```
+//!
+//! [ark-ff library]: https://github.com/arkworks-rs/algebra/tree/master/ff
 use core::{
     fmt::{Debug, Display},
     hash::Hash,
