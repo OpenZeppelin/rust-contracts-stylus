@@ -88,6 +88,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
 
     /// Absorb a single element into the sponge.
     ///
+    /// Transitions from [`Mode::Absorbing`] to [`Mode::Squeezing`] mode are
+    /// unidirectional.
+    ///
     /// # Panics
     ///
     /// May panic if absorbing while squeezing.
@@ -160,6 +163,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Squeeze a single element from the sponge.
+    ///
+    /// When invoked from [`Mode::Absorbing`] mode, this function triggers a
+    /// permutation and transitions to [`Mode::Squeezing`] mode.
     #[inline]
     pub fn squeeze(&mut self) -> F {
         if self.mode == Mode::Absorbing || self.index == Self::state_size() {
