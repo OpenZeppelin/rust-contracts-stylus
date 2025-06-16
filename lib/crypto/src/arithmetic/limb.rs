@@ -83,7 +83,6 @@ pub const fn carrying_mac(
 /// Calculate `a = a + b + carry` and return the result and carry.
 #[inline(always)]
 #[must_use]
-#[allow(clippy::cast_possible_truncation)]
 pub const fn adc(a: Limb, b: Limb, carry: bool) -> (Limb, bool) {
     let a = a as WideLimb;
     let b = b as WideLimb;
