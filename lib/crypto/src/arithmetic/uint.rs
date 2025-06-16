@@ -150,6 +150,7 @@ impl<const N: usize> Uint<N> {
 
     /// Checks `self` is less then `rhs` (constant).
     #[must_use]
+    #[inline(always)]
     pub const fn ct_lt(&self, rhs: &Self) -> bool {
         ct_rev_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
@@ -165,12 +166,14 @@ impl<const N: usize> Uint<N> {
 
     /// Checks `self` is zero (constant).
     #[must_use]
+    #[inline(always)]
     pub const fn ct_is_zero(&self) -> bool {
         self.ct_eq(&Self::ZERO)
     }
 
     /// Checks if `self` is equal to `rhs` (constant).
     #[must_use]
+    #[inline(always)]
     pub const fn ct_eq(&self, rhs: &Self) -> bool {
         ct_for!((i in 0..N) {
             if self.limbs[i] != rhs.limbs[i] {
