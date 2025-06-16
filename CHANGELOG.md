@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Read-only functions in `IErc4626` now accept `&self`. #698
+
 ### Fixed
 
 - `#[interface_id]` does not skip now `unsafe` keyword for unsafe traits. #705
