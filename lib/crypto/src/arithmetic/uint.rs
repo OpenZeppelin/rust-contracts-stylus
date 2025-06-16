@@ -23,7 +23,7 @@ use crate::{
         BigInteger,
     },
     bits::BitIteratorBE,
-    ct_for, ct_for_unroll6, ct_rev_for, ct_rev_for_unroll6,
+    ct_for, ct_for_unroll6, ct_rev_for,
 };
 
 /// Stack-allocated big unsigned integer.
@@ -104,64 +104,68 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[inline(always)]
     pub const fn ct_ge(&self, rhs: &Self) -> bool {
-        ct_rev_for_unroll6!((i in 0..N) {
+        let mut result = true;
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a > b {
-                return true;
+                result = true;
             } else if a < b {
-                return false;
+                result = false;
             }
         });
-        true
+        result
     }
 
     /// Checks `self` is greater then `rhs` (constant).
     #[must_use]
     #[inline(always)]
     pub const fn ct_gt(&self, rhs: &Self) -> bool {
-        ct_rev_for_unroll6!((i in 0..N) {
+        let mut result = false;
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a > b {
-                return true;
+                result = true;
             } else if a < b {
-                return false;
+                result = false;
             }
         });
-        false
+        result
     }
 
     /// Checks `self` is less or equal then `rhs` (constant).
     #[must_use]
     #[inline(always)]
     pub const fn ct_le(&self, rhs: &Self) -> bool {
-        ct_rev_for_unroll6!((i in 0..N) {
+        let mut result = true;
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a < b {
-                return true;
+                result = true;
             } else if a > b {
-                return false;
+                result = false;
             }
         });
-        true
+        result
     }
 
     /// Checks `self` is less then `rhs` (constant).
     #[must_use]
     #[inline(always)]
     pub const fn ct_lt(&self, rhs: &Self) -> bool {
-        ct_rev_for_unroll6!((i in 0..N) {
+        let mut result = false;
+        ct_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a < b {
-                return true;
+                result = true;
             } else if a > b {
-                return false;
+                result = false;
             }
         });
-        false
+        result
     }
 
     /// Checks `self` is zero (constant).
@@ -549,16 +553,17 @@ impl<const N: usize> Debug for Uint<N> {
 impl<const N: usize> Ord for Uint<N> {
     #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
+        let mut result = Ordering::Equal;
         ct_for_unroll6!((i in 0..N) {
-            let a = &self.limbs[N - i - 1];
-            let b = &rhs.limbs[N - i - 1];
+            let a = &self.limbs[i];
+            let b = &rhs.limbs[i];
             match a.cmp(b) {
                 Ordering::Equal => {}
-                order => return order,
+                order => {result = order},
             }
         });
 
-        Ordering::Equal
+        result
     }
 }
 
