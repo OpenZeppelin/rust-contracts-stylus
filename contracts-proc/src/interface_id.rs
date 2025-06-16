@@ -11,15 +11,17 @@ use syn::{
     parse_macro_input, FnArg, ItemTrait, LitStr, Result, Token, TraitItem,
 };
 
-/// Computes an interface id as an associated constant for the trait.
+/// Computes an interface id as an associated function for the trait.
 pub(crate) fn interface_id(
     _attr: &TokenStream,
     input: TokenStream,
 ) -> TokenStream {
     let mut input = parse_macro_input!(input as ItemTrait);
 
+    let unsafety = input.unsafety;
     let mut selectors_map =
         HashMap::<String, (String, proc_macro2::TokenStream)>::new();
+
     for item in &mut input.items {
         let TraitItem::Fn(func) = item else {
             continue;
@@ -53,7 +55,7 @@ pub(crate) fn interface_id(
             FnArg::Receiver(_) => None,
         });
 
-        // Build the function signature string for selector computation
+        // Build the function signature string for selector computation.
         let type_strings: Vec<String> =
             arg_types.clone().map(|ty| quote!(#ty).to_string()).collect();
         let signature =
@@ -80,8 +82,8 @@ pub(crate) fn interface_id(
     let vis = input.vis;
     let attrs = input.attrs;
     let trait_items = input.items;
-    let (_impl_generics, ty_generics, where_clause) =
-        input.generics.split_for_impl();
+    let generics = input.generics.clone();
+    let where_clause = &generics.where_clause;
 
     let supertrait_tokens = if input.supertraits.is_empty() {
         quote! {}
@@ -92,11 +94,11 @@ pub(crate) fn interface_id(
 
     let selectors = selectors_map.values().map(|(_, tokens)| tokens);
 
-    // Keep the same trait with an additional associated constant
-    // `INTERFACE_ID`.
+    // Keep the same trait with an additional associated function
+    // `interface_id`.
     quote! {
         #(#attrs)*
-        #vis trait #name #ty_generics #supertrait_tokens #where_clause {
+        #vis #unsafety trait #name #generics #supertrait_tokens #where_clause {
             #(#trait_items)*
 
             #[doc = concat!("Solidity interface id associated with ", stringify!(#name), " trait.")]
