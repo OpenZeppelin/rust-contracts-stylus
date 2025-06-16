@@ -653,32 +653,47 @@ impl<const N: usize> Shr<u32> for Uint<N> {
 }
 
 impl<const N: usize> ShrAssign<u32> for Uint<N> {
+    #[allow(clippy::similar_names)]
+    #[allow(clippy::cast_possible_truncation)]
     fn shr_assign(&mut self, rhs: u32) {
         let shift = rhs as usize;
         let bits = Limb::BITS as usize;
 
-        // If the shift is greater than the number of bits in the number.
-        if N * bits <= shift {
-            *self = Self::ZERO;
-            return;
-        }
+        assert!(N * bits > shift, "attempt to shift right with overflow");
+
+        // Limb shift will probably affect changes between two adjacent limbs.
+        // Compute indexes of both limbs that can be changed during a single
+        // iteration.
+        let index2_shift = shift / bits;
+        let index1_shift = index2_shift + 1;
+
+        // The following shifts can overflow.
+        // Overflow should be interpreted with zero output.
+        let limb_right_shift = (shift % bits) as u32;
+        let limb_left_shift = (bits - shift % bits) as u32;
 
         // Shift bits in limbs array in-place.
+        // Start from the lowest order limb.
         for index in 0..N {
-            let limb_shift = shift % bits;
-            let index_shift = shift / bits;
+            // Take limb from index leaving 0.
+            let current_limb = core::mem::take(&mut self.limbs[index]);
 
-            let current_limb = self.limbs[index];
-            self.limbs[index] = 0;
-
-            if index_shift < index {
-                let index1 = index - index_shift - 1;
-                self.limbs[index1] |= current_limb << (bits - limb_shift);
+            if index1_shift <= index {
+                let index1 = index - index1_shift;
+                // Possible to copy the first part of limb with bit AND
+                // operation, since the previous limbs were left zero.
+                self.limbs[index1] |= current_limb
+                    .checked_shl(limb_left_shift)
+                    .unwrap_or_default();
             }
 
-            if index_shift <= index {
-                let index2 = index - index_shift;
-                self.limbs[index2] |= current_limb >> limb_shift;
+            if index2_shift <= index {
+                let index2 = index - index2_shift;
+                // Possible to copy the second part of limb with bit AND
+                // operation, since the previous limbs were left zero.
+                self.limbs[index2] |= current_limb
+                    .checked_shr(limb_right_shift)
+                    .unwrap_or_default();
             }
         }
     }
@@ -694,32 +709,47 @@ impl<const N: usize> Shl<u32> for Uint<N> {
 }
 
 impl<const N: usize> ShlAssign<u32> for Uint<N> {
+    #[allow(clippy::similar_names)]
+    #[allow(clippy::cast_possible_truncation)]
     fn shl_assign(&mut self, rhs: u32) {
         let shift = rhs as usize;
         let bits = Limb::BITS as usize;
 
-        // If the shift is greater than the number of bits in the number.
-        if N * bits <= shift {
-            *self = Self::ZERO;
-            return;
-        }
+        assert!(N * bits > shift, "attempt to shift left with overflow");
+
+        // Limb shift will probably affect changes between two adjacent limbs.
+        // Compute indexes of both limbs that can be changed during a single
+        // iteration.
+        let index1_shift = shift / bits;
+        let index2_shift = index1_shift + 1;
+
+        // The following shifts can overflow.
+        // Overflow should be interpreted with zero output.
+        let limb_left_shift = (shift % bits) as u32;
+        let limb_right_shift = (bits - shift % bits) as u32;
 
         // Shift bits in limbs array in-place.
+        // Start from the highest order limb.
         for index in (0..N).rev() {
-            let limb_shift = shift % bits;
-            let index_shift = shift / bits;
+            // Take limb from index leaving 0.
+            let current_limb = core::mem::take(&mut self.limbs[index]);
 
-            let current_limb = self.limbs[index];
-            self.limbs[index] = 0;
-
-            let index1 = index + index_shift;
+            let index1 = index + index1_shift;
             if index1 < N {
-                self.limbs[index1] |= current_limb << limb_shift;
+                // Possible to copy the first part of limb with bit AND
+                // operation, since the previous limbs were left zero.
+                self.limbs[index1] |= current_limb
+                    .checked_shl(limb_left_shift)
+                    .unwrap_or_default();
             }
 
-            let index2 = index1 + 1;
+            let index2 = index + index2_shift;
             if index2 < N {
-                self.limbs[index2] |= current_limb >> (bits - limb_shift);
+                // Possible to copy the second part of limb with bit AND
+                // operation, since the previous limbs were left zero.
+                self.limbs[index2] |= current_limb
+                    .checked_shr(limb_right_shift)
+                    .unwrap_or_default();
             }
         }
     }
@@ -1140,9 +1170,13 @@ mod test {
         // edge case to make shift the number into all zeroes
         let expected = Uint::<4>::new([0, 0, 0, 0]);
         assert_eq!(num << (56 + 64 + 64 + 64), expected);
+    }
 
-        let expected = Uint::<4>::new([0, 0, 0, 0]);
-        assert_eq!(num << 1000, expected);
+    #[test]
+    #[should_panic = "attempt to shift left with overflow"]
+    fn shl_overflow_should_panic() {
+        let num = Uint::<4>::ONE;
+        let _ = num << (64 * 4);
     }
 
     #[test]
@@ -1162,9 +1196,37 @@ mod test {
         // edge case to make shift the number into all zeroes
         let expected = Uint::<4>::new([0, 0, 0, 0]);
         assert_eq!(num >> (2 + 64 + 64 + 64), expected);
+    }
 
-        let expected = Uint::<4>::new([0, 0, 0, 0]);
-        assert_eq!(num >> 1000, expected);
+    #[test]
+    #[should_panic = "attempt to shift right with overflow"]
+    fn shr_overflow_should_panic() {
+        let num = Uint::<4>::ONE;
+        let _ = num >> (64 * 4);
+    }
+
+    #[test]
+    fn shr_shl_edge_case() {
+        let num = Uint::<4>::ONE;
+        assert_eq!(num >> 0, num);
+        assert_eq!(num << 0, num);
+
+        let num = Uint::<4>::new([
+            0xffffffffffffffff,
+            0xffffffffffffffff,
+            0,
+            0xffffffffffffffff,
+        ]);
+
+        assert_eq!(
+            num >> 64,
+            Uint::<4>::new([0xffffffffffffffff, 0, 0xffffffffffffffff, 0])
+        );
+
+        assert_eq!(
+            num << 64,
+            Uint::<4>::new([0, 0xffffffffffffffff, 0xffffffffffffffff, 0])
+        );
     }
 
     #[test]
