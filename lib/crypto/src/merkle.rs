@@ -125,6 +125,7 @@ impl Verifier<KeccakBuilder> {
     ///     Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
     /// assert!(verification.unwrap());
     /// ```
+    #[must_use]
     pub fn verify_multi_proof(
         proof: &[Bytes32],
         proof_flags: &[bool],
