@@ -21,7 +21,7 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "=0.1.2"
+openzeppelin-stylus = "=0.2.0"
 ```
 
 If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
