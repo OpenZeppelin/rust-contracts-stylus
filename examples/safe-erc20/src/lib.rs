@@ -1,5 +1,6 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
+
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus::token::erc20::utils::safe_erc20::SafeErc20;
@@ -16,6 +17,7 @@ impl SafeErc20Example {}
 #[external]
 impl SafeErc20Example {
     pub fn transfer_and_call(
+
         &mut self,
         token: Address,
         to: Address,
@@ -26,6 +28,7 @@ impl SafeErc20Example {
     }
 
     pub fn transfer_from_and_call(
+
         &mut self,
         token: Address,
         from: Address,

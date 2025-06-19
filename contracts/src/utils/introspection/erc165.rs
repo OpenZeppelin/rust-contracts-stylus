@@ -10,7 +10,16 @@ use openzeppelin_stylus_proc::interface_id;
 /// Implementers can declare support of contract interfaces, which others can
 /// query.
 ///
-/// For an implementation, see [`Erc165`].
+/// # Example
+///
+/// ```rust,ignore
+/// impl IErc165 for Erc20 {
+///     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+///         <Self as IErc20>::interface_id() == interface_id
+///             || <Self as IErc165>::interface_id() == interface_id
+///     }
+/// }
+/// ```
 ///
 /// [ERC]: https://eips.ethereum.org/EIPS/eip-165
 #[interface_id]
@@ -19,47 +28,11 @@ pub trait IErc165 {
     /// `interface_id`. See the corresponding [ERC] to learn more about how
     /// these ids are created.
     ///
-    /// NOTE: Method [`IErc165::supports_interface`] should be reexported with
-    /// `#[public]` macro manually, see the Example section.
-    ///
     /// # Arguments
     ///
+    /// * `&self` - Read access to the contract's state.
     /// * `interface_id` - The interface identifier, as specified in the [ERC].
     ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// #[public]
-    /// impl Erc20Example {
-    ///     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-    ///         Erc20::supports_interface(interface_id)
-    ///             || Erc20Metadata::supports_interface(interface_id)
-    ///     }
-    /// }
-    /// ```
-    ///
     /// [ERC]: https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool;
-}
-
-/// Implementation of the [`IErc165`] trait.
-///
-/// Contracts that want to support ERC-165 should implement the [`IErc165`]
-/// trait for the additional interface id that will be supported and call
-/// [`Erc165::supports_interface`] like:
-///
-/// ```rust,ignore
-/// impl IErc165 for Erc20 {
-///     fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-///         <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-///             || Erc165::supports_interface(interface_id)
-///     }
-/// }
-/// ```
-pub struct Erc165;
-
-impl IErc165 for Erc165 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Self::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-    }
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool;
 }

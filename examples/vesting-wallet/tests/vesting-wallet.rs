@@ -7,20 +7,15 @@ use alloy::{
     primitives::{Address, U256},
     providers::Provider,
     rpc::types::{BlockTransactionsKind, TransactionRequest},
-    sol,
 };
 use e2e::{
-    receipt, send, watch, Account, EventExt, Panic, PanicCode, ReceiptExt,
-    Revert,
+    constructor, receipt, send, watch, Account, Constructor,
+    ContractInitializationError, EventExt, Panic, PanicCode, Revert,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
-use crate::VestingWalletExample::constructorCall;
-
 mod abi;
 mod mock;
-
-sol!("src/constructor.sol");
 
 const BALANCE: u64 = 1000;
 const DURATION: u64 = 365 * 86400; // 1 year
@@ -29,12 +24,8 @@ fn ctr(
     beneficiary: Address,
     start_timestamp: u64,
     duration_seconds: u64,
-) -> constructorCall {
-    constructorCall {
-        beneficiary,
-        startTimestamp: start_timestamp,
-        durationSeconds: duration_seconds,
-    }
+) -> Constructor {
+    constructor!(beneficiary, start_timestamp, duration_seconds)
 }
 
 async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
@@ -70,7 +61,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(alice.address(), start_timestamp, DURATION))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
     let owner = contract.owner().call().await?.owner;
@@ -98,9 +89,13 @@ async fn rejects_zero_address_for_beneficiary(
         .await
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
-    assert!(err.reverted_with(VestingWallet::OwnableInvalidOwner {
-        owner: Address::ZERO
-    }));
+    // TODO: assert the actual `OwnableInvalidOwner` error was returned once
+    // StylusDeployer is able to return the exact revert reason from
+    // constructors. assert!(err.
+    // reverted_with(VestingWallet::OwnableInvalidOwner {     owner:
+    // Address::ZERO }));
+
+    assert!(err.downcast_ref::<ContractInitializationError>().is_some());
 
     Ok(())
 }
@@ -119,7 +114,7 @@ mod ether_vesting {
             .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
-            .address()?;
+            .contract_address;
 
         let tx = TransactionRequest::default()
             .with_from(account.address())
@@ -242,7 +237,7 @@ mod erc20_vesting {
             .with_constructor(ctr(account.address(), start, duration))
             .deploy()
             .await?
-            .address()?;
+            .contract_address;
         Ok(contract_addr)
     }
 

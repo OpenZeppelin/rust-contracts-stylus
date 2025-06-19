@@ -13,7 +13,7 @@ permissions:
 # main branch ensures that the PR only gets built once.
 on:
   push:
-    branches: [ main, release/* ]
+    branches: [main, v*]
   pull_request:
 # If new code is pushed to a PR branch, then cancel in progress workflows for
 # that PR. Ensures that we don't waste CI time, and returns results quicker.
@@ -43,6 +43,7 @@ jobs:
 
       - name: Check formatting
         run: cargo fmt --all --check
+
   clippy:
     runs-on: ubuntu-latest
     name: ${{ matrix.toolchain }} / clippy
@@ -54,7 +55,7 @@ jobs:
       matrix:
         # Get early warning of new lints which are regularly introduced in beta
         # channels.
-        toolchain: [ stable, beta ]
+        toolchain: [stable, beta]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,7 +71,7 @@ jobs:
       - name: Cargo clippy
         uses: giraffate/clippy-action@v1
         with:
-          reporter: 'github-pr-check'
+          reporter: "github-pr-check"
           github_token: ${{ secrets.GITHUB_TOKEN }}
   doc:
     # Run docs generation on nightly rather than stable. This enables features
@@ -94,6 +95,7 @@ jobs:
         run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: --cfg docsrs
+
   hack:
     # `cargo-hack` checks combinations of feature flags to ensure that features
     # are all additive which is required for feature unification.
@@ -118,7 +120,8 @@ jobs:
         # target in this context means one of `--lib`, `--bin`, etc, and not the
         # target triple.
       - name: Cargo hack
-        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --skip std --workspace --exclude e2e --exclude basic-example-script --exclude benches
+        run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --workspace --exclude e2e --exclude basic-script-example --exclude benches
+
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
@@ -128,3 +131,28 @@ jobs:
 
       - name: Check spelling of files in the workspace
         uses: crate-ci/typos@v1
+
+  nostd:
+    # This job checks whether the library is able to run without the std
+    # library.
+    runs-on: ubuntu-latest
+    name: ${{ matrix.target }}
+    strategy:
+      matrix:
+        target: [wasm32-unknown-unknown]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          rustflags: ""
+
+      - name: Add rust targets ${{ matrix.target }}
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Cargo check
+        run: cargo check --release --target ${{ matrix.target }} --no-default-features

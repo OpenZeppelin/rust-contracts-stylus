@@ -1,17 +1,12 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc721;
-use alloy::{
-    primitives::{Address, U256},
-    sol,
+use alloy::primitives::{Address, U256};
+use e2e::{
+    constructor, receipt, watch, Account, Constructor, EventExt, Revert,
 };
-use e2e::{receipt, watch, Account, EventExt, ReceiptExt, Revert};
-
-use crate::Erc721MetadataExample::constructorCall;
 
 mod abi;
-
-sol!("src/constructor.sol");
 
 const TOKEN_NAME: &str = "Test Token";
 const TOKEN_SYMBOL: &str = "NFT";
@@ -21,12 +16,12 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn ctr(base_uri: &str) -> constructorCall {
-    constructorCall {
-        name_: TOKEN_NAME.to_owned(),
-        symbol_: TOKEN_SYMBOL.to_owned(),
-        baseUri_: base_uri.to_owned(),
-    }
+fn ctr(base_uri: &str) -> Constructor {
+    constructor!(
+        TOKEN_NAME.to_string(),
+        TOKEN_SYMBOL.to_string(),
+        base_uri.to_string()
+    )
 }
 
 // ============================================================================
@@ -42,7 +37,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         ))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let Erc721::nameReturn { name } = contract.name().call().await?;
@@ -67,7 +62,7 @@ async fn error_when_checking_token_uri_for_nonexistent_token(
         .with_constructor(ctr(""))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -94,7 +89,7 @@ async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
         .with_constructor(ctr(""))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -121,7 +116,7 @@ async fn return_token_uri_with_base_uri_and_without_token_uri(
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -147,7 +142,7 @@ async fn return_token_uri_with_base_uri_and_token_uri(
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -180,7 +175,7 @@ async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -227,7 +222,7 @@ async fn return_token_uri_after_burn_and_remint(
         .with_constructor(ctr(base_uri))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
 
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -285,7 +280,7 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
         ))
         .deploy()
         .await?
-        .address()?;
+        .contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let erc721_metadata_interface_id: u32 = 0x5b5e139f;

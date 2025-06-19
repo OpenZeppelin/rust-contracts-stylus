@@ -7,32 +7,70 @@ Useful for scenarios such as preventing trades until the end of an evaluation pe
 [[usage]]
 == Usage
 
-In order to make your xref:erc1155.adoc[ERC-1155] token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-alpha.4/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC1155 token functions as follows:
+In order to make your xref:erc1155.adoc[ERC-1155] token `pausable`, you need to use the https://docs.rs/openzeppelin-stylus/0.2.0-rc.0/openzeppelin_stylus/utils/pausable/index.html[`Pausable`] contract and apply its mechanisms to ERC1155 token functions as follows:
 
 [source,rust]
 ----
 use openzeppelin_stylus::{
-    token::erc1155::{self, extensions::IErc1155Burnable, Erc1155, IErc1155},
-    utils::{introspection::erc165::IErc165, pausable, Pausable},
+    token::erc1155::{self, Erc1155, IErc1155},
+    utils::{introspection::erc165::IErc165, pausable, IPausable, Pausable},
 };
 
 #[derive(SolidityError, Debug)]
 enum Error {
-    Erc1155(erc1155::Error),
-    Pausable(pausable::Error),
+    InsufficientBalance(erc1155::ERC1155InsufficientBalance),
+    InvalidSender(erc1155::ERC1155InvalidSender),
+    InvalidReceiver(erc1155::ERC1155InvalidReceiver),
+    InvalidReceiverWithReason(erc1155::InvalidReceiverWithReason),
+    MissingApprovalForAll(erc1155::ERC1155MissingApprovalForAll),
+    InvalidApprover(erc1155::ERC1155InvalidApprover),
+    InvalidOperator(erc1155::ERC1155InvalidOperator),
+    InvalidArrayLength(erc1155::ERC1155InvalidArrayLength),
+    EnforcedPause(pausable::EnforcedPause),
+    ExpectedPause(pausable::ExpectedPause),
+}
+
+impl From<erc1155::Error> for Error {
+    fn from(value: erc1155::Error) -> Self {
+        match value {
+            erc1155::Error::InsufficientBalance(e) => {
+                Error::InsufficientBalance(e)
+            }
+            erc1155::Error::InvalidSender(e) => Error::InvalidSender(e),
+            erc1155::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+            erc1155::Error::InvalidReceiverWithReason(e) => {
+                Error::InvalidReceiverWithReason(e)
+            }
+            erc1155::Error::MissingApprovalForAll(e) => {
+                Error::MissingApprovalForAll(e)
+            }
+            erc1155::Error::InvalidApprover(e) => Error::InvalidApprover(e),
+            erc1155::Error::InvalidOperator(e) => Error::InvalidOperator(e),
+            erc1155::Error::InvalidArrayLength(e) => {
+                Error::InvalidArrayLength(e)
+            }
+        }
+    }
+}
+
+impl From<pausable::Error> for Error {
+    fn from(value: pausable::Error) -> Self {
+        match value {
+            pausable::Error::EnforcedPause(e) => Error::EnforcedPause(e),
+            pausable::Error::ExpectedPause(e) => Error::ExpectedPause(e),
+        }
+    }
 }
 
 #[entrypoint]
 #[storage]
 struct Erc1155Example {
-    #[borrow]
     erc1155: Erc1155,
-    #[borrow]
     pausable: Pausable,
 }
 
 #[public]
-#[inherit(Erc1155, Pausable)]
+#[implements(IErc1155<Error = Error>, IPausable)]
 impl Erc1155Example {
     fn mint(
         &mut self,
@@ -61,32 +99,18 @@ impl Erc1155Example {
         self.erc1155._mint_batch(to, token_ids, amounts, &data)?;
         Ok(())
     }
+}
 
-    fn burn(
-        &mut self,
-        account: Address,
-        token_id: U256,
-        value: U256,
-    ) -> Result<(), Error> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc1155.burn(account, token_id, value)?;
-        Ok(())
+#[public]
+impl IPausable for Erc1155Example {
+    fn paused(&self) -> bool {
+        self.pausable.paused()
     }
+}
 
-    fn burn_batch(
-        &mut self,
-        account: Address,
-        token_ids: Vec<U256>,
-        values: Vec<U256>,
-    ) -> Result<(), Error> {
-        // ...
-        self.pausable.when_not_paused()?;
-        // ...
-        self.erc1155.burn_batch(account, token_ids, values)?;
-        Ok(())
-    }
+#[public]
+impl IErc1155 for Erc1155Example {
+    type Error = Error;
 
     fn safe_transfer_from(
         &mut self,
@@ -95,7 +119,7 @@ impl Erc1155Example {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -110,7 +134,7 @@ impl Erc1155Example {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Self::Error> {
         // ...
         self.pausable.when_not_paused()?;
         // ...
@@ -118,8 +142,35 @@ impl Erc1155Example {
         Ok(())
     }
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc1155::supports_interface(interface_id)
+    fn balance_of(&self, account: Address, id: U256) -> U256 {
+        self.erc1155.balance_of(account, id)
+    }
+
+    fn balance_of_batch(
+        &self,
+        accounts: Vec<Address>,
+        ids: Vec<U256>,
+    ) -> Result<Vec<U256>, Self::Error> {
+        Ok(self.erc1155.balance_of_batch(accounts, ids)?)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        operator: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error> {
+        Ok(self.erc1155.set_approval_for_all(operator, approved)?)
+    }
+
+    fn is_approved_for_all(&self, account: Address, operator: Address) -> bool {
+        self.erc1155.is_approved_for_all(account, operator)
+    }
+}
+
+#[public]
+impl IErc165 for Erc1155Example {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc1155.supports_interface(interface_id)
     }
 }
 ----

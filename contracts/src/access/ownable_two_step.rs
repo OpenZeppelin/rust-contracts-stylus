@@ -25,8 +25,8 @@ pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
 use crate::{
-    access::ownable::{self, IOwnable, Ownable, OwnableUnauthorizedAccount},
-    utils::introspection::erc165::{Erc165, IErc165},
+    access::ownable::{self, IOwnable, Ownable},
+    utils::introspection::erc165::IErc165,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -98,7 +98,7 @@ pub trait IOwnable2Step {
     /// Replaces the pending transfer if there is one. Can only be called by the
     /// current owner.
     ///
-    /// Setting `new_owner` to `Address::ZERO` is allowed; this can be used
+    /// Setting `new_owner` to [`Address::ZERO`] is allowed; this can be used
     /// to cancel an initiated ownership transfer.
     ///
     /// # Arguments
@@ -158,6 +158,20 @@ pub trait IOwnable2Step {
 }
 
 #[public]
+#[implements(IOwnable2Step<Error = ownable::Error>, IErc165)]
+impl Ownable2Step {
+    /// See [`Ownable::constructor`].
+    #[allow(clippy::missing_errors_doc)]
+    #[constructor]
+    pub fn constructor(
+        &mut self,
+        initial_owner: Address,
+    ) -> Result<(), ownable::Error> {
+        self.ownable.constructor(initial_owner)
+    }
+}
+
+#[public]
 impl IOwnable2Step for Ownable2Step {
     type Error = ownable::Error;
 
@@ -189,7 +203,7 @@ impl IOwnable2Step for Ownable2Step {
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
             return Err(ownable::Error::UnauthorizedAccount(
-                OwnableUnauthorizedAccount { account: sender },
+                ownable::OwnableUnauthorizedAccount { account: sender },
             ));
         }
         self._transfer_ownership(sender);
@@ -205,7 +219,7 @@ impl IOwnable2Step for Ownable2Step {
 
 impl Ownable2Step {
     /// Transfers ownership of the contract to a new account (`new_owner`) and
-    /// sets [`Self::pending_owner`] to `Address::ZERO` to avoid situations
+    /// sets [`Self::pending_owner`] to [`Address::ZERO`] to avoid situations
     /// where the transfer has been completed or the current owner renounces,
     /// but [`Self::pending_owner`] can still accept ownership.
     ///
@@ -225,27 +239,24 @@ impl Ownable2Step {
     }
 }
 
+#[public]
 impl IErc165 for Ownable2Step {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IOwnable2Step>::INTERFACE_ID
-            == u32::from_be_bytes(*interface_id)
-            || <Ownable as IOwnable>::INTERFACE_ID
-                == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IOwnable2Step>::interface_id() == interface_id
+            || self.ownable.supports_interface(interface_id)
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
-
-    use super::{
-        ownable::Error, IOwnable, IOwnable2Step, Ownable, Ownable2Step,
-        OwnableUnauthorizedAccount,
+    use stylus_sdk::{
+        alloy_primitives::{Address, FixedBytes},
+        prelude::*,
     };
-    use crate::utils::introspection::erc165::IErc165;
+
+    use super::*;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -304,7 +315,7 @@ mod tests {
         let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));
@@ -344,7 +355,7 @@ mod tests {
         let err = contract.sender(alice).accept_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));
@@ -401,7 +412,7 @@ mod tests {
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(
             err,
-            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+            ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
                 account
             }) if account == alice
         ));
@@ -472,24 +483,26 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Ownable2Step as IOwnable2Step>::INTERFACE_ID;
-        let expected = 0x94be5999;
+        let actual = <Ownable2Step as IOwnable2Step>::interface_id();
+        let expected: FixedBytes<4> = 0x94be5999_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IOwnable2Step>::INTERFACE_ID.into()
+    fn supports_interface(contract: Contract<Ownable2Step>, alice: Address) {
+        assert!(contract.sender(alice).supports_interface(
+            <Ownable2Step as IOwnable2Step>::interface_id()
         ));
-        assert!(Ownable2Step::supports_interface(
-            <Ownable as IOwnable>::INTERFACE_ID.into()
-        ));
-        assert!(Ownable2Step::supports_interface(
-            <Ownable2Step as IErc165>::INTERFACE_ID.into()
-        ));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Ownable as IOwnable>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Ownable2Step as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Ownable2Step::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

@@ -135,7 +135,7 @@ pub fn sw_double_and_add_projective<P: SWCurveConfig>(
     res
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod test {
     use num_traits::Zero;
 

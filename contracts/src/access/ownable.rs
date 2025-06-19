@@ -17,7 +17,7 @@ use stylus_sdk::{
     call::MethodError, evm, msg, prelude::*, storage::StorageAddress,
 };
 
-use crate::utils::introspection::erc165::{Erc165, IErc165};
+use crate::utils::introspection::erc165::IErc165;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -40,7 +40,7 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error OwnableUnauthorizedAccount(address account);
-        /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+        /// The owner is not a valid owner account. (eg. [`Address::ZERO`])
         ///
         /// * `owner` - Account that's not allowed to become the owner.
         #[derive(Debug)]
@@ -54,7 +54,7 @@ mod sol {
 pub enum Error {
     /// The caller account is not authorized to perform an operation.
     UnauthorizedAccount(OwnableUnauthorizedAccount),
-    /// The owner is not a valid owner account. (eg. `Address::ZERO`)
+    /// The owner is not a valid owner account. (eg. [`Address::ZERO`])
     InvalidOwner(OwnableInvalidOwner),
 }
 
@@ -82,6 +82,7 @@ pub trait IOwnable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     fn owner(&self) -> Address;
 
     /// Transfers ownership of the contract to a new account (`new_owner`).
@@ -94,7 +95,7 @@ pub trait IOwnable {
     ///
     /// # Errors
     ///
-    /// * [`OwnableInvalidOwner`] - If `new_owner` is the `Address::ZERO`.
+    /// * [`OwnableInvalidOwner`] - If `new_owner` is the [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -123,6 +124,31 @@ pub trait IOwnable {
     ///
     /// * [`OwnershipTransferred`].
     fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+}
+
+#[public]
+#[implements(IOwnable<Error = Error>, IErc165)]
+impl Ownable {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `initial_owner` - The initial owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidOwner`] - If initial owner is [`Address::ZERO`].
+    #[constructor]
+    pub fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
+        if initial_owner.is_zero() {
+            return Err(Error::InvalidOwner(OwnableInvalidOwner {
+                owner: Address::ZERO,
+            }));
+        }
+        self._transfer_ownership(initial_owner);
+        Ok(())
+    }
 }
 
 #[public]
@@ -197,18 +223,21 @@ impl Ownable {
     }
 }
 
+#[public]
 impl IErc165 for Ownable {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IOwnable>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IOwnable>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::Address;
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::{
+        alloy_primitives::{Address, FixedBytes},
+        prelude::*,
+    };
 
     use super::{Error, IOwnable, Ownable};
     use crate::utils::introspection::erc165::IErc165;
@@ -306,21 +335,23 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Ownable as IOwnable>::INTERFACE_ID;
-        let expected = 0xe083076;
+        let actual = <Ownable as IOwnable>::interface_id();
+        let expected: FixedBytes<4> = 0xe083076_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Ownable::supports_interface(
-            <Ownable as IOwnable>::INTERFACE_ID.into()
-        ));
-        assert!(Ownable::supports_interface(
-            <Ownable as IErc165>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(contract: Contract<Ownable>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Ownable as IOwnable>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Ownable as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Ownable::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

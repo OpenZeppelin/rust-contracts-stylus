@@ -8,12 +8,13 @@ version.workspace = true
 
 [dependencies]
 openzeppelin-stylus.workspace = true
+openzeppelin-crypto.workspace = true
 alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 alloy.workspace = true
+stylus-sdk.workspace = true
 tokio.workspace = true
 futures.workspace = true
 eyre.workspace = true
-koba.workspace = true
 e2e.workspace = true
 serde = "1.0.203"
 keccak-const = "0.2.0"

@@ -1,13 +1,16 @@
 //! Optional Burnable extension of the ERC-721 standard.
+use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
+use openzeppelin_stylus_proc::interface_id;
+use stylus_sdk::{msg, prelude::*};
 
 use crate::token::erc721::{self, Erc721};
 
 /// An [`Erc721`] token that can be burned (destroyed).
+#[interface_id]
 pub trait IErc721Burnable {
-    /// The error type associated to this ERC-721 burnable trait implementation.
+    /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
 
     /// Burns `token_id`.
@@ -29,13 +32,14 @@ pub trait IErc721Burnable {
     fn burn(&mut self, token_id: U256) -> Result<(), Self::Error>;
 }
 
+#[public]
 impl IErc721Burnable for Erc721 {
     type Error = erc721::Error;
 
     fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
         // Setting an "auth" arguments enables the
         // [`super::super::Erc721::_is_authorized`] check which verifies that
-        // the token exists (from != `Address::ZERO`).
+        // the token exists (from != [`Address::ZERO`]).
         //
         // Therefore, it is not needed to verify that the return value is not 0
         // here.
@@ -43,13 +47,12 @@ impl IErc721Burnable for Erc721 {
         Ok(())
     }
 }
-
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
-    use motsu::prelude::Contract;
+    use alloy_primitives::{uint, Address};
+    use motsu::prelude::*;
 
-    use super::IErc721Burnable;
+    use super::*;
     use crate::token::erc721::{
         ERC721InsufficientApproval, ERC721NonexistentToken, Erc721, Error,
         IErc721,

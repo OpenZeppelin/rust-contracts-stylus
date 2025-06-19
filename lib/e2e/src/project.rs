@@ -11,8 +11,6 @@ use toml::Table;
 
 /// Information about the crate subject of an integration test.
 pub(crate) struct Crate {
-    /// Path to the directory where the crate's manifest lives.
-    pub(crate) manifest_dir: PathBuf,
     /// Path to the compiled wasm binary.
     pub(crate) wasm: PathBuf,
 }
@@ -32,7 +30,7 @@ impl Crate {
         let name = read_pkg_name(&manifest_dir)?;
         let wasm = get_wasm(&name)?;
 
-        Ok(Self { manifest_dir, wasm })
+        Ok(Self { wasm })
     }
 }
 
